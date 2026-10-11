@@ -76,6 +76,7 @@ const chapterSynthTasks = [
   "sql:infra:synth",
   "uploads:infra:synth",
   "ssr:infra:synth",
+  "obs:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -311,6 +312,22 @@ export default defineConfig({
       "ssr:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/09-ssr" }),
       "ssr:unpublish": live(`${node} tools/src/site/unpublish.ts examples/09-ssr AihSsr`),
       // <<< chapter 09
+
+      // >>> chapter 19
+      // ---- chapter 19: observability -------------------------------------
+      // The notes API with spans printed to the console. No Docker, no AWS.
+      "dev:obs": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/19-observability" }),
+      // Prints the text of a Logs Insights query. Runs nothing.
+      "obs:query:print": fresh("node scripts/query.ts --print", { cwd: "examples/19-observability" }),
+      ...infra("obs", "examples/19-observability", "AihObservability"),
+      // Creates and deletes one note through the deployed API.
+      "obs:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/19-observability" }),
+      // BILLED by the amount of log data scanned.
+      "obs:query": live("node --env-file-if-exists=../../.env scripts/query.ts", { cwd: "examples/19-observability" }),
+      "obs:alarms": live("node --env-file-if-exists=../../.env scripts/alarms.ts", {
+        cwd: "examples/19-observability",
+      }),
+      // <<< chapter 19
 
       // ---- chapter task blocks are inserted above this line ----
 

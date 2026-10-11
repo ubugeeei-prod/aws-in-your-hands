@@ -97,6 +97,13 @@ generated: true
 | 09 | `vp run ssr:infra:synth` | ローカル | 成功 | 2026-10-11 | cdkd で synth。template に function URL（AWS_IAM）、OAC、2 つの Lambda::Permission、cache policy、response headers policy があることを確認 |
 | 09 | `vp run dev:ssr + HTTP requests` | ローカル | 成功 | 2026-10-11 | AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない |
 | 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | 未実行 | - | distribution、Lambda の関数と function URL、bucket を作る |
+| 19 | `vp run test:unit (examples/19-observability)` | ローカル | 成功 | 2026-10-12 | 実際に書かれるログの形と大きさ、ログの query と metric filter の条件を本物のログ行で評価、traceparent と X-Ray の trace ID の変換、span とログの相互参照、属性の許可リスト、sampling されない要求と欠けた span の再現、アラームの条件、料金計算の入力、インフラの assertion |
+| 19 | `vp run dev:obs + curl` | ローカル | 成功 | 2026-10-12 | 本文の curl を実行。ログの行に traceId が付くこと、span がコンソールに出ること、traceparent を付けた要求が同じ trace ID を引き継ぐこと、TRACE_SAMPLE_RATIO=0 で span が出ずログは残ることを確認 |
+| 19 | `vp run obs:query:print` | ローカル | 成功 | 2026-10-12 | Logs Insights の query の文字列を出力するだけ。AWS には問い合わせない |
+| 19 | `vp run obs:infra:synth` | ローカル | 成功 | 2026-10-12 | 関数を OpenTelemetry の API ごと esbuild で bundle。-c otelLayerArn を付けた場合も synth できることを確認。AWS には問い合わせない |
+| 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | DynamoDB の table、Lambda、HTTP API、SNS の topic、アラーム 2 つ、ダッシュボード、metric filter を作る。ダッシュボードと metric filter は cdkd が Cloud Control API 経由で扱う |
+| 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | 未実行 | - | デプロイ済みの stack が必要。obs:smoke はノートを 1 件作って消す。obs:query は走査したログの量に課金される |
+| 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | 未実行 | - | AWS Lambda Layer for OpenTelemetry を付けた構成。Node.js 24 の runtime はこの layer の対応一覧に無い |
 
 ## 未解決事項と再開手順
 
@@ -333,3 +340,33 @@ cdkd 0.296.28 は AWS::CloudFront::CachePolicy と AWS::CloudFront::ResponseHead
 09章の BFF（サインイン、session、token の保持）は手元でしか動かない。session がプロセスのメモリにあり、サインインが POST で、function URL と OAC の組み合わせがブラウザの form からの POST をそのままでは通さないため。デプロイした環境で「cookie を持つ人にその人のページが返る」ことは確かめていない。
 
 再開手順: 著者が方針を決める（session を DynamoDB に置き、POST の入口を API Gateway にする、など）。決まったら examples/09-ssr に実装し、ssr:smoke に本物の session での検査を足す。
+
+### obs-lambda-json-log-shape
+
+Lambda の JSON ログ形式で、アプリが console.log に渡した JSON の行が、そのままの形で CloudWatch Logs に入るかを実機で確かめていない。metric filter の JSON pattern と Logs Insights の項目名がこれに依存する。
+
+再開手順: vp run obs:infra:deploy、vp run obs:smoke の後、vp run obs:query --name request --id <x-request-id> を実行する。行が見つかり、status などの項目が取れること、NoteConflicts にデータ点が出ることを確かめる。形が違えば、src/compose.ts の出力先を process.stdout に替えるか、query の項目名を直す。
+
+### obs-otel-layer-node24
+
+AWS Lambda Layer for OpenTelemetry を Node.js 24 の関数に付けた構成を動かしていない。ADOT のドキュメントの対応 runtime は Node.js 22 まで。esbuild で bundle した ESM の関数で、手書きの span が layer の SDK に届くか、AWS SDK の自動計装が効くか、実行 role の権限が xray:PutTraceSegments で足りるかも未確認。
+
+再開手順: ADOT のドキュメントの Node.js の表から東京リージョンの layer の ARN を取り、vp run obs:infra:deploy -c otelLayerArn=<ARN> を実行する。vp run obs:smoke の後、X-Ray の画面で notes.* の span が Lambda の segment の下に出るか確かめる。出なければ、関数のログで layer のエラーを探し、runtime を nodejs22.x にして比べる。
+
+### obs-alarm-behavior
+
+アラームの実際の状態遷移を確かめていない。metric math の IF の式が受け付けられること、リクエストが無い間に 5xx と Count のデータ点が欠損になること、SNS の通知が届くことは、ドキュメントからの読み取り。
+
+再開手順: vp run obs:infra:deploy -c alarmEmail=<自分のアドレス> の後、届いた確認メールを承認し、vp run obs:alarms で状態を見る。5xx を起こすには、table の権限を一時的に外す変更を別の branch で deploy するなど、練習用アカウントで行う。
+
+### obs-cdkd-cloud-control
+
+cdkd 0.296.28 は AWS::CloudWatch::Dashboard と AWS::Logs::MetricFilter を Cloud Control API 経由で扱う。作成、更新、drift の読み戻しが実際に動くかは未確認。
+
+再開手順: vp run obs:infra:deploy と vp run obs:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
+
+### obs-pricing-gaps
+
+ダッシュボードの単価（4 つ目から）、Lambda が JSON 形式で書くシステムログの大きさ、layer 経由で送った span が X-Ray の trace として課金されるのかを確認できていない。
+
+再開手順: 料金ページを JavaScript が動くブラウザで開いてダッシュボードの単価を読む。デプロイ後、Logs Insights で 1 リクエストあたりの @message の合計バイト数を測り、data/fragments/19.json の仮定を直す。数日後に Cost Explorer の usage type を見る。

@@ -114,3 +114,15 @@ generated: true
 | cache key | cache key | 09 | CloudFront が「同じリクエスト」とみなす基準。path に加えて、cache policy で選んだ query string、header、cookie からできる。 |
 | cache policy | cache policy | 09 | cache key に入れる値と、TTL の下限・既定・上限をまとめた CloudFront の設定。 |
 | backend for frontend (BFF) | backend for frontend (BFF) | 09 | ある画面のためだけに置くサーバー。ブラウザの代わりに token を持ち、裏の API を呼ぶ。 |
+| 構造化ログ | structured log | 19 | 1 行が 1 つの JSON になっているログ。項目の名前で絞り込みや集計ができる。 |
+| メトリクス | metric | 19 | 時刻ごとの数値の列。リクエスト数、エラー数、応答時間など。CloudWatch では名前、namespace、dimension の組が 1 つのメトリクスになる。 |
+| アラーム | alarm | 19 | メトリクスが条件を満たし続けたときに状態を変え、通知などの操作を起こす CloudWatch の仕組み。状態は OK、ALARM、INSUFFICIENT_DATA。 |
+| metric filter | metric filter | 19 | log group に届くログの行を条件で数え、メトリクスにする CloudWatch Logs の設定。作成より前のログには効かない。 |
+| embedded metric format（EMF） | embedded metric format (EMF) | 19 | 決まった形の JSON をログに書くと、CloudWatch がそこからメトリクスを取り出す仕組み。 |
+| trace | trace | 19 | 1 つのリクエストが通った処理の記録。trace ID を共有する span の集まり。 |
+| span | span | 19 | trace の中の 1 区間。名前、開始と終了の時刻、親の span、属性を持つ。X-Ray では segment や subsegment になる。 |
+| OpenTelemetry | OpenTelemetry | 19 | trace、メトリクス、ログの計装と送信のための、ベンダーに依らない仕様とライブラリ。 |
+| sampling | sampling | 19 | 全部のリクエストではなく、一部だけを trace として記録すること。 |
+| trace context（traceparent） | trace context (traceparent) | 19 | trace ID、呼び出し元の span ID、sampling の決定を次の処理へ渡すための W3C の仕様。HTTP では traceparent ヘッダー。 |
+| RUM（real user monitoring） | RUM (real user monitoring) | 19 | 実際の利用者のブラウザで、ページの表示時間やエラーを計測して集めること。 |
+| canary（Synthetics） | canary (Synthetics) | 19 | 決まった間隔で外から API やページを呼び、応答を確かめるスクリプト。利用者がいない時間にも動く。 |

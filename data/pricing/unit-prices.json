@@ -1299,6 +1299,171 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-10-09T22:31:22Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudwatch.metric.custom",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "F96ZRPX8AM4T93NV",
+      "usageType": "APN1-CW:MetricMonitorUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Metrics",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.3000000000",
+          "description": "$0.30 per metric-month for the first 10,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 10000,
+          "to": 250000,
+          "usd": "0.1000000000",
+          "description": "$0.10 per metric-month for the next 240,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 250000,
+          "to": 1000000,
+          "usd": "0.0500000000",
+          "description": "$0.05 per metric-month for the next 750,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 1000000,
+          "to": null,
+          "usd": "0.0200000000",
+          "description": "$0.02 per metric-month for over 1,000,000 metrics - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.alarm.standard",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "FBMB6TVC844YGZ3J",
+      "usageType": "APN1-CW:AlarmMonitorUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Alarms",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per alarm metric month (standard resolution) - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "logs.insights.scanned",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "QE3CDKDURP2A2WR5",
+      "usageType": "APN1-DataScanned-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0076000000",
+          "description": "$0.0076 per GB log data scanned by CloudWatch Logs Insights queries - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "xray.trace.recorded",
+      "offerCode": "AWSXRay",
+      "region": "ap-northeast-1",
+      "sku": "A2DFYMNB5KZNWKX4",
+      "usageType": "APN1-XRay-TracesStored",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "traces",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000050000",
+          "description": "AWS X-Ray - Total Traces Stored - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "xray.trace.retrieved",
+      "offerCode": "AWSXRay",
+      "region": "ap-northeast-1",
+      "sku": "ZF5AQUZ2PJQESZQR",
+      "usageType": "APN1-XRay-TracesAccessed",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "traces",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000005000",
+          "description": "AWS X-Ray - Total Traces Accessed - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.rum.event",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "UMUKYCB9NNDT49U2",
+      "usageType": "APN1-CW:RUM-events",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Events",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$1 per 100k RUM events in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.synthetics.run",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "TVDGJTPNCD29VTN5",
+      "usageType": "APN1-CW:Canary-runs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Runs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0019000000",
+          "description": "$0.0019 per canary run per month - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

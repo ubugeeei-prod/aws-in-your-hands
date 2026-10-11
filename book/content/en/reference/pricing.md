@@ -635,6 +635,117 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 0.01** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
 
+## Observed notes API: deployed, but never called for a month
+
+ID: `obs-idle` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+
+Assumptions:
+
+- No requests: no log lines, no traces, and no data points for the custom metric
+- The two alarms refer to three metrics in total (Count and 5xx for the error rate, Latency for slowness)
+- The one dashboard is assumed to be within the free tier (3 dashboards of up to 50 metrics); the price beyond that could not be confirmed and is not included
+- The API, Lambda and DynamoDB themselves are priced in chapters 04 and 05 and are not included here
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
+
+- List subtotal: **USD 0.30** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## Observed notes API: what observing 1,000,000 requests a month costs
+
+ID: `obs-small` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+
+Assumptions:
+
+- 1 KB of logs per request. The application's line measures 255 bytes with trace fields; the rest is what Lambda writes, whose size in the JSON format is an unmeasured assumption
+- 7-day log retention; average stored volume assumed to be 7/30 of the monthly ingest
+- Requests assumed to arrive at a steady rate: 0.38 per second, so Lambda's default sampling (the first each second plus 5% of the rest) traces every one. This is the upper bound; uneven arrival lowers it
+- The number of spans in a trace is assumed not to change the price (charged per trace)
+- 10,000 traces opened a month, and 1 GB of logs scanned by Logs Insights
+- One custom metric (NoteConflicts) and three metrics referred to by alarms
+- The dashboard is assumed to be within the free tier. SNS notifications and the API, Lambda and DynamoDB themselves are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `logs.ingest.standard` | 0.954 | GB | 1,000,000 x 1,024 bytes, in GB | 0.72 | 5 | 0 |
+| `logs.storage` | 0.223 | GB-Mo | 0.953674 GB x 7/30, in GB-month | 0.01 | 5 | 0 |
+| `logs.insights.scanned` | 1 | GB | 1 GB scanned by queries | 0.01 | 5 | 0 |
+| `cloudwatch.metric.custom` | 1 | Metrics | NoteConflicts | 0.30 | 10 | 0 |
+| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
+| `xray.trace.recorded` | 1,000,000 | traces | every request traced at 0.38 requests per second | 5.00 | 100,000 | 4.50 |
+| `xray.trace.retrieved` | 10,000 | traces | 10,000 traces opened | 0.01 | 1,000,000 | 0 |
+
+- List subtotal: **USD 6.34** / month
+- Subtotal after monthly free allowance: **USD 4.50** / month
+
+## One more log line per request: 1,000,000 requests a month
+
+ID: `obs-one-more-line` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+
+Assumptions:
+
+- The added line is 167 bytes, the measured size of the request line without trace fields
+- 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `logs.ingest.standard` | 0.156 | GB | 1,000,000 x 167 bytes, in GB | 0.12 | 5 | 0 |
+| `logs.storage` | 0.036 | GB-Mo | 0.15553 GB x 7/30, in GB-month | 0.001198 | 5 | 0 |
+
+- List subtotal: **USD 0.12** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## One more custom metric
+
+ID: `obs-one-more-metric` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+
+Assumptions:
+
+- One custom metric without dimensions, receiving data points every hour for a month
+- With dimensions, every distinct combination of values counts as one metric
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.metric.custom` | 1 | Metrics | 1 metric for a full month | 0.30 | 10 | 0 |
+
+- List subtotal: **USD 0.30** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## Synthetics: one canary every 5 minutes
+
+ID: `obs-canary-5min` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+
+Assumptions:
+
+- 730 hours x 12 runs an hour = 8,760 runs
+- The Lambda, S3, log and metric charges a canary incurs are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.synthetics.run` | 8,760 | Runs | 730 h x 12 runs | 16.64 | 100 | 16.45 |
+
+- List subtotal: **USD 16.64** / month
+- Subtotal after monthly free allowance: **USD 16.45** / month
+
+## RUM: 10,000 visits a month, all collected
+
+ID: `obs-rum-small` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+
+Assumptions:
+
+- 20 events per visit (the number in the pricing page's example), 100% of sessions collected
+- The one-time free trial of 1 million events is not deducted
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.rum.event` | 200,000 | Events | 10,000 visits x 20 events | 2.00 | - | 2.00 |
+
+- List subtotal: **USD 2.00** / month
+- Subtotal after monthly free allowance: **USD 2.00** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `cloudwatch.rum.event`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -690,6 +801,13 @@ Assumptions:
 | `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
 | `datatransfer.out.internet` | ap-northeast-1 | APN1-DataTransfer-Out-Bytes | GB | 0 - 10,240: 0.1140000000<br>10,240 - 51,200: 0.0890000000<br>51,200 - 153,600: 0.0860000000<br>153,600 - ∞: 0.0840000000 | 2026-09-16 | 2026-10-11 |
 | `lambda.streaming.arm` | ap-northeast-1 | APN1-Lambda-Streaming-Response-Processed-Bytes-ARM | Processed-Gigabytes | 0 - ∞: 0.0080000000 | 2026-10-09 | 2026-10-11 |
+| `cloudwatch.metric.custom` | ap-northeast-1 | APN1-CW:MetricMonitorUsage | Metrics | 0 - 10,000: 0.3000000000<br>10,000 - 250,000: 0.1000000000<br>250,000 - 1,000,000: 0.0500000000<br>1,000,000 - ∞: 0.0200000000 | 2026-10-07 | 2026-10-12 |
+| `cloudwatch.alarm.standard` | ap-northeast-1 | APN1-CW:AlarmMonitorUsage | Alarms | 0 - ∞: 0.1000000000 | 2026-10-07 | 2026-10-12 |
+| `logs.insights.scanned` | ap-northeast-1 | APN1-DataScanned-Bytes | GB | 0 - ∞: 0.0076000000 | 2026-10-07 | 2026-10-12 |
+| `xray.trace.recorded` | ap-northeast-1 | APN1-XRay-TracesStored | traces | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
+| `xray.trace.retrieved` | ap-northeast-1 | APN1-XRay-TracesAccessed | traces | 0 - ∞: 0.0000005000 | 2026-09-11 | 2026-10-12 |
+| `cloudwatch.rum.event` | ap-northeast-1 | APN1-CW:RUM-events | Events | 0 - ∞: 0.0000100000 | 2026-10-07 | 2026-10-12 |
+| `cloudwatch.synthetics.run` | ap-northeast-1 | APN1-CW:Canary-runs | Runs | 0 - ∞: 0.0019000000 | 2026-10-07 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -710,6 +828,12 @@ Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is rec
 | `dsql.dpu` | 100,000 | `dsql-pricing` | First 100,000 DPUs each month. The pricing page does not say whether it expires. |
 | `dsql.storage` | 1 | `dsql-pricing` | First GB of storage each month. The pricing page does not say whether it expires. |
 | `lambda.streaming.arm` | 100 | `lambda-pricing` | GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100). |
+| `cloudwatch.metric.custom` | 10 | `aws-price-list-cloudwatch-observability` | Metrics. From the Global-CW:MetricMonitorUsage USD 0 tier; the pricing page lists 10 custom and detailed monitoring metrics. |
+| `cloudwatch.alarm.standard` | 10 | `aws-price-list-cloudwatch-observability` | Alarm metrics. From the Global-CW:AlarmMonitorUsage USD 0 tier; standard-resolution alarms that list metrics directly. |
+| `logs.insights.scanned` | 5 | `aws-price-list-cloudwatch-observability` | GB. From the Global-DataScanned-Bytes USD 0 tier. |
+| `cloudwatch.synthetics.run` | 100 | `aws-price-list-cloudwatch-observability` | Runs. From the Global-CW:Canary-runs USD 0 tier. |
+| `xray.trace.recorded` | 100,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesStored USD 0 tier. |
+| `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
 
 Allowances that could not be confirmed (treated as unknown, not as zero; nothing is deducted):
 
@@ -729,3 +853,4 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `datatransfer.out.internet`: The price list calls the first tier "beyond the global free tier". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied.
 - `s3.request.tier1`: No always-free S3 request allowance was confirmed; none is applied.
 - `s3.request.tier2`: No always-free S3 request allowance was confirmed; none is applied.
+- `cloudwatch.rum.event`: The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied.

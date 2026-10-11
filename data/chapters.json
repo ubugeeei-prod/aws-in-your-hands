@@ -892,45 +892,75 @@
         "en": "See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics"
       },
       "prerequisites": ["04"],
-      "services": ["CloudWatch", "X-Ray", "CloudWatch RUM", "CloudWatch Synthetics"],
+      "services": [
+        "CloudWatch",
+        "CloudWatch Logs",
+        "X-Ray",
+        "SNS",
+        "Lambda",
+        "API Gateway HTTP API",
+        "DynamoDB",
+        "CloudWatch RUM",
+        "CloudWatch Synthetics"
+      ],
       "samplePath": "examples/19-observability",
+      "sourceIds": [
+        "xray-sdk-timeline",
+        "xray-otel-migration",
+        "xray-otel-migration-nodejs",
+        "adot-lambda",
+        "appsignals-lambda",
+        "lambda-xray",
+        "lambda-nodejs-tracing",
+        "lambda-nodejs-logging",
+        "lambda-log-format",
+        "lambda-metrics",
+        "apigw-http-metrics",
+        "apigw-http-logging",
+        "dynamodb-metrics",
+        "cloudwatch-alarm-missing-data",
+        "cloudwatch-alarm-evaluation",
+        "cloudwatch-metric-math",
+        "cloudwatch-alarm-sns",
+        "logs-insights-syntax",
+        "logs-insights-filter",
+        "logs-insights-stats",
+        "logs-insights-fields",
+        "logs-metric-filters",
+        "logs-filter-pattern-syntax",
+        "cloudwatch-emf",
+        "cloudwatch-emf-spec",
+        "logs-retention",
+        "xray-concepts",
+        "xray-sending-trace-ids",
+        "xray-sampling-rules",
+        "xray-sqs",
+        "cloudwatch-otlp-endpoints",
+        "cloudwatch-transaction-search",
+        "w3c-trace-context",
+        "cloudwatch-rum",
+        "cloudwatch-synthetics",
+        "cloudwatch-pricing",
+        "aws-price-list-cloudwatch-observability",
+        "aws-price-list-xray",
+        "cdkd-register-providers-observability",
+        "cloud-control-supported-resources",
+        "opentelemetry-js-npm",
+        "cloudflare-workers-logs",
+        "cloudflare-workers-traces",
+        "cdkd-npm",
+        "aws-price-list-cloudwatch",
+        "apigw-http-vs-rest"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["cloudwatch-rum", "xray-sdk-timeline"],
-      "outline": {
-        "outcome": {
-          "ja": "1 つのリクエストを browser から Lambda、queue の worker まで同じ ID で追える。",
-          "en": "You follow one request from the browser through Lambda to the queue worker by a single ID."
-        },
-        "architecture": {
-          "ja": "構造化ログ → CloudWatch Logs。trace は OpenTelemetry → X-Ray。alarm → 通知。",
-          "en": "Structured logs → CloudWatch Logs. Traces via OpenTelemetry → X-Ray. Alarms → notification."
-        },
-        "topics": {
-          "ja": [
-            "04章のログ形式を土台にする",
-            "新規計装は OpenTelemetry。X-Ray SDK/daemon の寿命と X-Ray service は別",
-            "log の取込みと保存の費用",
-            "症状に対する alarm"
-          ],
-          "en": [
-            "Building on the chapter 04 log format",
-            "OpenTelemetry for new instrumentation; the X-Ray SDK/daemon lifecycle is not the X-Ray service",
-            "Log ingestion and storage cost",
-            "Alarming on symptoms"
-          ]
-        },
-        "requiredSource": {
-          "ja": ["計装の設定", "alarm の CDK と assertion", "log 量から費用を出す計算入力"],
-          "en": ["Instrumentation setup", "Alarm CDK with assertions", "Pricing inputs deriving cost from log volume"]
-        },
-        "distributed": {
-          "ja": "trace は sampling される。欠けた span を障害と誤読しない。",
-          "en": "Traces are sampled; a missing span is not necessarily a failure."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "20",

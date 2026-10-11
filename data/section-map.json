@@ -1942,6 +1942,185 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "19.overview",
+      "sources": ["examples/19-observability/infra/lib/observability-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.alarms",
+      "sources": [
+        "examples/19-observability/src/alarm-math.ts",
+        "examples/19-observability/test/alarm-math.test.ts",
+        "examples/19-observability/infra/lib/monitoring.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.metrics",
+      "sources": [
+        "examples/19-observability/infra/lib/monitoring.ts",
+        "examples/19-observability/infra/test/observability-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "obs:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.logs",
+      "sources": [
+        "examples/19-observability/src/log-shape.ts",
+        "examples/19-observability/src/conditions.ts",
+        "examples/19-observability/src/queries.ts",
+        "examples/19-observability/test/log-shape.test.ts",
+        "examples/19-observability/test/queries.test.ts",
+        "examples/19-observability/scripts/query.ts"
+      ],
+      "tasks": ["test:unit", "obs:query:print"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.log-metrics",
+      "sources": [
+        "examples/19-observability/src/conditions.ts",
+        "examples/19-observability/src/queries.ts",
+        "examples/19-observability/infra/lib/monitoring.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.tracing",
+      "sources": [
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/src/traced-repository.ts",
+        "examples/19-observability/src/app.ts",
+        "examples/19-observability/src/compose.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.lambda-tracing",
+      "sources": [
+        "examples/19-observability/src/lambda.ts",
+        "examples/19-observability/infra/lib/observability-stack.ts",
+        "examples/19-observability/infra/bin/app.ts"
+      ],
+      "tasks": ["obs:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.ids",
+      "sources": [
+        "examples/19-observability/src/trace-context.ts",
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/test/trace-context.test.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "19.sampling",
+      "sources": [
+        "examples/19-observability/src/local-tracing.ts",
+        "examples/19-observability/src/cost-inputs.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "19.privacy",
+      "sources": [
+        "examples/19-observability/src/log-shape.ts",
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/test/log-shape.test.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.local",
+      "sources": [
+        "examples/19-observability/src/dev.ts",
+        "examples/19-observability/src/local-tracing.ts",
+        "examples/19-observability/.env.example"
+      ],
+      "tasks": ["dev:obs", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.deploy",
+      "sources": [
+        "examples/19-observability/infra/bin/app.ts",
+        "examples/19-observability/scripts/smoke.ts",
+        "examples/19-observability/scripts/query.ts",
+        "examples/19-observability/scripts/alarms.ts"
+      ],
+      "tasks": ["obs:infra:diff", "obs:infra:deploy", "obs:smoke", "obs:query", "obs:alarms", "obs:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.browser-and-probes",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.cost",
+      "sources": ["examples/19-observability/src/cost-inputs.ts", "examples/19-observability/test/cost-inputs.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.workers",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "19.cleanup",
+      "sources": [],
+      "tasks": ["obs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
     }
   ]
 }

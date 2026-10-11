@@ -1,0 +1,1401 @@
+{
+  "chapterId": "19",
+  "manifest": {
+    "id": "19",
+    "slug": "observability",
+    "title": {
+      "ja": "本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics",
+      "en": "See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics"
+    },
+    "prerequisites": ["04"],
+    "services": [
+      "CloudWatch",
+      "CloudWatch Logs",
+      "X-Ray",
+      "SNS",
+      "Lambda",
+      "API Gateway HTTP API",
+      "DynamoDB",
+      "CloudWatch RUM",
+      "CloudWatch Synthetics"
+    ],
+    "samplePath": "examples/19-observability",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "xray-sdk-timeline",
+      "xray-otel-migration",
+      "xray-otel-migration-nodejs",
+      "adot-lambda",
+      "appsignals-lambda",
+      "lambda-xray",
+      "lambda-nodejs-tracing",
+      "lambda-nodejs-logging",
+      "lambda-log-format",
+      "lambda-metrics",
+      "apigw-http-metrics",
+      "apigw-http-logging",
+      "dynamodb-metrics",
+      "cloudwatch-alarm-missing-data",
+      "cloudwatch-alarm-evaluation",
+      "cloudwatch-metric-math",
+      "cloudwatch-alarm-sns",
+      "logs-insights-syntax",
+      "logs-insights-filter",
+      "logs-insights-stats",
+      "logs-insights-fields",
+      "logs-metric-filters",
+      "logs-filter-pattern-syntax",
+      "cloudwatch-emf",
+      "cloudwatch-emf-spec",
+      "logs-retention",
+      "xray-concepts",
+      "xray-sending-trace-ids",
+      "xray-sampling-rules",
+      "xray-sqs",
+      "cloudwatch-otlp-endpoints",
+      "cloudwatch-transaction-search",
+      "w3c-trace-context",
+      "cloudwatch-rum",
+      "cloudwatch-synthetics",
+      "cloudwatch-pricing",
+      "aws-price-list-cloudwatch-observability",
+      "aws-price-list-xray",
+      "cdkd-register-providers-observability",
+      "cloud-control-supported-resources",
+      "opentelemetry-js-npm",
+      "cloudflare-workers-logs",
+      "cloudflare-workers-traces",
+      "cdkd-npm",
+      "aws-price-list-cloudwatch",
+      "apigw-http-vs-rest"
+    ]
+  },
+  "sources": [
+    {
+      "id": "xray-sdk-timeline",
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+      "title": "X-Ray SDK and Daemon Support timeline",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The X-Ray SDKs and daemon entered maintenance mode on February 25th, 2026: releases are limited to security issues, with no new features",
+        "The page lists no end date for maintenance mode",
+        "AWS recommends migrating to OpenTelemetry for instrumenting applications and sending traces to AWS X-Ray"
+      ],
+      "note": "The page is about the SDKs and the daemon. It says nothing about the X-Ray service ending; traces are still sent to X-Ray."
+    },
+    {
+      "id": "xray-otel-migration",
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-migration.html",
+      "title": "Migrating from X-Ray instrumentation to OpenTelemetry instrumentation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For Lambda, the options are an auto-instrumentation layer (recommended: AWS Lambda Layer for OpenTelemetry; also the AWS managed Lambda layer for ADOT) or a manual setup with a simple span processor, an X-Ray UDP span exporter and an X-Ray Lambda propagator",
+        "To use only tracing with the AWS Lambda Layer for OpenTelemetry, set OTEL_AWS_APPLICATION_SIGNALS_ENABLED=false",
+        "When sent to X-Ray, server spans become segments, other spans become subsegments, and attributes become metadata by default"
+      ]
+    },
+    {
+      "id": "xray-otel-migration-nodejs",
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/migrate-xray-to-opentelemetry-nodejs.html",
+      "title": "Migrate to OpenTelemetry Node.js",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Manual spans in a Lambda function that has the layer are created with @opentelemetry/api, whose version is recommended to match the one the ADOT JavaScript SDK uses"
+      ]
+    },
+    {
+      "id": "adot-lambda",
+      "url": "https://aws-otel.github.io/docs/getting-started/lambda",
+      "title": "AWS Distro for OpenTelemetry: Lambda",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The layer is enabled with AWS_LAMBDA_EXEC_WRAPPER=/opt/otel-instrument, and its ARN is listed per Region and language",
+        "On 2026-10-12 the Node.js ARN for ap-northeast-1 was arn:aws:lambda:ap-northeast-1:615299751070:layer:AWSOpenTelemetryDistroJs:16",
+        "Supported Node.js runtimes listed: 18.x, 20.x, 22.x. Node.js 24.x is not in the list",
+        "By default only the AWS SDK and HTTP instrumentations are enabled; sampling is parent-based and adjustable with OTEL_TRACES_SAMPLER",
+        "Traces are exported through the Lambda embedded agent to X-Ray by default; the older layers that bundle a collector are marked not recommended",
+        "The documented CDK setup attaches the managed policy CloudWatchLambdaApplicationSignalsExecutionRolePolicy"
+      ],
+      "note": "The ARN and runtime tables are rendered by script. They were read from the page's source, src/config/lambdaLayerArns.js and src/config/supportedRuntimes.js in github.com/aws-otel/aws-otel.github.io (main)."
+    },
+    {
+      "id": "appsignals-lambda",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Signals-Enable-LambdaMain.html",
+      "title": "Enable your applications on Lambda (Application Signals)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The AWS Lambda Layer for OpenTelemetry is also a component of Lambda OpenTelemetry support and provides tracing",
+        "Manual steps: add the layer, set AWS_LAMBDA_EXEC_WRAPPER=/opt/otel-instrument, attach CloudWatchLambdaApplicationSignalsExecutionRolePolicy, and optionally enable Lambda active tracing"
+      ],
+      "note": "CloudWatch-Application-Signals-Enable-Lambda.html redirects here."
+    },
+    {
+      "id": "lambda-xray",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-xray.html",
+      "title": "Visualize Lambda function invocations using AWS X-Ray",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With Active tracing Lambda records two segments per trace for sampled requests; PassThrough only forwards the tracing header",
+        "The sampling rate is 1 request per second and 5 percent of additional requests, and it cannot be configured for functions",
+        "The execution role needs xray:PutTraceSegments and xray:PutTelemetryRecords",
+        "An upstream service's tracing header decides whether Lambda sends a trace"
+      ]
+    },
+    {
+      "id": "lambda-nodejs-tracing",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-tracing.html",
+      "title": "Instrumenting Node.js code in AWS Lambda",
+      "checkedAt": "2026-10-12",
+      "supports": ["Lambda's Node.js guide offers ADOT layers or the X-Ray SDK for Node.js to send trace data to X-Ray"]
+    },
+    {
+      "id": "lambda-nodejs-logging",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-logging.html",
+      "title": "Log and monitor Node.js Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "In the text format the Node.js runtime adds a timestamp, the request ID and a log level in front of each line the function logs",
+        "With the JSON log format Lambda doesn't double-encode logs that are already JSON encoded",
+        "Code that emits embedded metric format with console.log should write to process.stdout instead when the log format is JSON",
+        "Log-level filtering needs a level and an RFC 3339 timestamp in the JSON; without a valid timestamp Lambda assigns INFO"
+      ]
+    },
+    {
+      "id": "lambda-log-format",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-logformat.html",
+      "title": "Configuring JSON and plain text log formats",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The default log format for all Lambda runtimes is plain text",
+        "The log format applies to both system logs and application logs, and JSON formatting can increase the size of log messages"
+      ]
+    },
+    {
+      "id": "lambda-metrics",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "title": "Types of metrics for Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Errors counts invocations that end in a function error: exceptions the code throws and those the runtime throws, such as timeouts",
+        "Throttled requests count as neither Invocations nor Errors",
+        "Duration supports percentile statistics and does not include cold start time",
+        "ConcurrentExecutions is read with the Max statistic"
+      ]
+    },
+    {
+      "id": "apigw-http-metrics",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-metrics.html",
+      "title": "Monitor CloudWatch metrics for HTTP APIs in API Gateway",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "HTTP API metrics: 4xx, 5xx, Count, IntegrationLatency, Latency, DataProcessed, sent in one-minute periods",
+        "Latency runs from receiving the request to returning the response; IntegrationLatency is the backend part",
+        "Route-level metrics need detailed metrics to be enabled"
+      ]
+    },
+    {
+      "id": "apigw-http-logging",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging.html",
+      "title": "Configure logging for HTTP APIs in API Gateway",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An HTTP API stage can write access logs to a CloudWatch Logs group in a format built from $context variables"
+      ]
+    },
+    {
+      "id": "dynamodb-metrics",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/metrics-dimensions.html",
+      "title": "DynamoDB metrics and dimensions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ThrottledRequests, SystemErrors, SuccessfulRequestLatency and ConditionalCheckFailedRequests exist as table metrics",
+        "SystemErrors counts requests that generate an HTTP 500"
+      ]
+    },
+    {
+      "id": "cloudwatch-alarm-missing-data",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html",
+      "title": "Configuring how CloudWatch alarms treat missing data",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Missing data points can be treated as notBreaching, breaching, ignore or missing; the default is missing",
+        "For a metric that reports only when an error occurs, notBreaching is the suggested treatment",
+        "When points are missing, CloudWatch evaluates over a wider evaluation range than the evaluation periods"
+      ]
+    },
+    {
+      "id": "cloudwatch-alarm-evaluation",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-evaluation.html",
+      "title": "Alarm evaluation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Datapoints to Alarm (M) out of Evaluation Periods (N): the breaching points need not be consecutive"
+      ]
+    },
+    {
+      "id": "cloudwatch-metric-math",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html",
+      "title": "Using math expressions with CloudWatch metrics",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IF(condition, trueValue, falseValue) with a time series compared to a scalar; the result is 0 when the chosen metric has no data point at that time",
+        "FILL in an alarm can leave the alarm stuck when the latest minute never has data; an M out of N alarm is the suggested workaround"
+      ]
+    },
+    {
+      "id": "cloudwatch-alarm-sns",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html",
+      "title": "Notifying users on alarm changes",
+      "checkedAt": "2026-10-12",
+      "supports": ["An email subscription to the SNS topic stays pending until the recipient confirms it"]
+    },
+    {
+      "id": "logs-insights-syntax",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html",
+      "title": "CloudWatch Logs Insights language query syntax",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Commands are separated by the pipe character; fields, filter, stats, sort and limit are commands",
+        "Queries are charged by data scanned: select only the needed log groups and the narrowest time range"
+      ]
+    },
+    {
+      "id": "logs-insights-filter",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html",
+      "title": "Logs Insights: filter",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Conditions are combined with and / or; string values are written in double quotes, as in filter requestId = \"1234656\"",
+        "Field indexes speed up equality filters; filters with like do not use them"
+      ]
+    },
+    {
+      "id": "logs-insights-stats",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html",
+      "title": "Logs Insights: stats",
+      "checkedAt": "2026-10-12",
+      "supports": ["stats count(*) by field groups and counts, and an alias is given with as"]
+    },
+    {
+      "id": "logs-insights-fields",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData-discoverable-fields.html",
+      "title": "Supported logs and discovered fields",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For Lambda logs, fields are discovered automatically only for the first embedded JSON fragment in each log event",
+        "Lambda logs get @requestId, @duration, @billedDuration, @maxMemoryUsed, and @xrayTraceId when the line has a trace ID",
+        "Field discovery is supported only in the Standard log class"
+      ]
+    },
+    {
+      "id": "logs-metric-filters",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html",
+      "title": "Creating metrics from log events using filters",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Metric filters are not retroactive: they publish data points only for events after the filter was created",
+        "The default value is reported for periods in which logs are ingested and nothing matches; with no logs at all, nothing is reported",
+        "A filter with dimensions cannot have a default value, and each distinct dimension value creates another metric",
+        "Delivery to the metric is at least once; duplicates may occasionally occur"
+      ]
+    },
+    {
+      "id": "logs-filter-pattern-syntax",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html",
+      "title": "Filter pattern syntax for metric filters",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "JSON patterns are written in braces with $. property selectors, and combined with && and ||, as in { ($.user.id = 1) && ($.users[0].email = \"John.Doe@example.com\") }"
+      ]
+    },
+    {
+      "id": "cloudwatch-emf",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format.html",
+      "title": "Embedding metrics within logs",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Embedded metric format needs logs:PutLogEvents and not cloudwatch:PutMetricData; charges are log ingestion and storage plus the custom metrics generated",
+        "A high-cardinality dimension such as requestId creates one custom metric per distinct value",
+        "Delivery is at least once; duplicate metric values may occasionally occur"
+      ]
+    },
+    {
+      "id": "cloudwatch-emf-spec",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html",
+      "title": "Embedded metric format specification",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The log event must be a valid JSON object with no additional data at the beginning or end",
+        "At most 100 metric definitions per event and 30 dimension keys per dimension set"
+      ]
+    },
+    {
+      "id": "logs-retention",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html",
+      "title": "Working with log groups and log streams",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default log data is stored indefinitely; retention is set per log group",
+        "Expired log events are not deleted immediately; it can take up to 72 hours"
+      ]
+    },
+    {
+      "id": "xray-concepts",
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-concepts.html",
+      "title": "AWS X-Ray concepts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Trace data is retained for 30 days",
+        "The tracing header is X-Amzn-Trace-Id, with Root, Parent and Sampled fields",
+        "By default the first request each second and five percent of additional requests are recorded"
+      ]
+    },
+    {
+      "id": "xray-sending-trace-ids",
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-sendingdata.html",
+      "title": "Sending trace data to AWS X-Ray",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "X-Ray accepts trace IDs that follow the W3C Trace Context specification, written in X-Ray's format: 4efaaf4d1e8720b39541901950019ee5 becomes 1-4efaaf4d-1e8720b39541901950019ee5"
+      ]
+    },
+    {
+      "id": "xray-sampling-rules",
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-sampling.html",
+      "title": "Configuring sampling rules",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "X-Ray sampling is parent-based: the decision is made once by the first service, and downstream services honor it regardless of their own rules",
+        "The default is a reservoir of one request per second plus five percent of the rest"
+      ]
+    },
+    {
+      "id": "xray-sqs",
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sqs.html",
+      "title": "Amazon SQS and AWS X-Ray",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SQS carries the trace header in the AWSTraceHeader message system attribute, which does not count against message size or attribute quotas",
+        "With a Lambda consumer, trace context propagation is automatic"
+      ]
+    },
+    {
+      "id": "cloudwatch-otlp-endpoints",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPEndpoint.html",
+      "title": "OTLP Endpoints",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Traces can be sent over OTLP/HTTP to https://xray.<region>.amazonaws.com/v1/traces with Signature Version 4"
+      ]
+    },
+    {
+      "id": "cloudwatch-transaction-search",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+      "title": "Transaction Search",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With Transaction Search enabled, spans sent to X-Ray are ingested as logs in the aws/spans log group"
+      ]
+    },
+    {
+      "id": "w3c-trace-context",
+      "url": "https://www.w3.org/TR/trace-context/",
+      "title": "W3C Trace Context",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "traceparent is version-traceid-parentid-flags: 2, 32, 16 and 2 lowercase hex characters",
+        "Version ff is invalid, and an all-zero trace-id or parent-id is forbidden",
+        "The lowest bit of trace-flags is the sampled flag"
+      ]
+    },
+    {
+      "id": "cloudwatch-rum",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM.html",
+      "title": "CloudWatch RUM",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "RUM collects client-side data from real user sessions: page load times, client-side errors and user behavior for web applications",
+        "An app monitor generates a snippet for the page, and collects from a chosen percentage of sessions",
+        "Data is retained for 30 days; copies can be sent to CloudWatch Logs to keep them longer",
+        "With X-Ray active tracing on the app monitor, client page requests appear connected to the services they call"
+      ]
+    },
+    {
+      "id": "cloudwatch-synthetics",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Synthetics_Canaries.html",
+      "title": "Synthetic monitoring (canaries)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Canaries are scripts that run on a schedule, as often as once per minute, and check endpoints even when there is no customer traffic",
+        "Canaries create Lambda functions in the account and publish metrics in the CloudWatchSynthetics namespace"
+      ]
+    },
+    {
+      "id": "cloudwatch-pricing",
+      "url": "https://aws.amazon.com/cloudwatch/pricing/",
+      "title": "Amazon CloudWatch Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Free tier: 5 GB of log data (ingestion, storage, and data scanned by Logs Insights), 10 custom metrics, 10 alarm metrics, 3 dashboards of up to 50 metrics, 100 canary runs a month, 100,000 traces recorded and 1,000,000 retrieved or scanned a month",
+        "RUM has a one-time free trial of 1 million web RUM events per account, not a monthly allowance",
+        "Custom metric charges are prorated by the hour and incurred only when metrics are sent in that hour",
+        "A metric alarm is charged for each metric listed in its expression",
+        "Each canary run may also incur Lambda, S3, CloudWatch Logs and CloudWatch Metrics charges",
+        "RUM pricing example: 20 data events per visit"
+      ],
+      "note": "Most prices on the page are filled in by script and were not visible in the fetched HTML; the dashboard price could not be read. https://aws.amazon.com/xray/pricing/ redirects to a CloudWatch page."
+    },
+    {
+      "id": "aws-price-list-cloudwatch-observability",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: CloudWatch, ap-northeast-1 (metrics, alarms, queries, RUM, Synthetics)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Unit prices for custom metrics, standard alarms, Logs Insights data scanned, RUM events and canary runs in data/pricing/unit-prices.json",
+        "USD 0 tiers: 10 metrics, 10 alarms, 5 GB of data scanned, 100 canary runs",
+        "No dashboard price appears in the ap-northeast-1 offer file"
+      ]
+    },
+    {
+      "id": "aws-price-list-xray",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: X-Ray, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Traces stored USD 0.000005 each, traces retrieved or scanned USD 0.0000005 each",
+        "USD 0 tiers: 100,000 traces stored and 1,000,000 traces accessed"
+      ]
+    },
+    {
+      "id": "cdkd-register-providers-observability",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: src/provisioning/register-providers.ts (CloudWatch, Logs, SNS)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dedicated providers are registered for AWS::CloudWatch::Alarm, AWS::SNS::Topic, AWS::SNS::Subscription and AWS::Logs::LogGroup",
+        "No dedicated provider is registered for AWS::CloudWatch::Dashboard, AWS::Logs::MetricFilter, AWS::RUM::AppMonitor or AWS::Synthetics::Canary, so they go through Cloud Control API"
+      ],
+      "note": "Also checked in the published tarball's dist. No cdkd command was run against AWS."
+    },
+    {
+      "id": "cloud-control-supported-resources",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS::CloudWatch::Dashboard, AWS::Logs::MetricFilter, AWS::RUM::AppMonitor and AWS::Synthetics::Canary are listed as supported"
+      ]
+    },
+    {
+      "id": "opentelemetry-js-npm",
+      "url": "https://www.npmjs.com/package/@opentelemetry/api/v/1.9.1",
+      "title": "@opentelemetry/api 1.9.1 and @opentelemetry/sdk-trace-node 2.12.0 (npm tarballs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Without a registered SDK the API returns no-op tracers and spans",
+        "A caller's API version is accepted when the registered global has the same major version and an equal or higher minor version; otherwise the caller gets the no-op implementation",
+        "NodeTracerProvider.register() installs an AsyncLocalStorage context manager and the W3C trace context propagator"
+      ],
+      "note": "Read from build/src/internal/semver.js and the type definitions of the installed packages."
+    },
+    {
+      "id": "cloudflare-workers-logs",
+      "url": "https://developers.cloudflare.com/workers/observability/logs/workers-logs/",
+      "title": "Cloudflare Workers Logs",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "New Workers have observability enabled by default, and JSON logs have their fields extracted and indexed",
+        "Retention is at most 7 days; the paid plan includes 20 million log events a month and charges USD 0.60 per additional million",
+        "From December 1, 2026, Workers Logs moves to Cloudflare Observability pricing"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-traces",
+      "url": "https://developers.cloudflare.com/workers/observability/traces/",
+      "title": "Cloudflare Workers tracing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Tracing is enabled in the Wrangler configuration and instruments Workers without code changes or an SDK; it is in beta",
+        "The default head sampling rate is 1 (every request); head_sampling_rate lowers it",
+        "Traces are kept for seven days and can be exported to an OpenTelemetry endpoint"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "structured-log",
+      "ja": "構造化ログ",
+      "en": "structured log",
+      "firstUse": "19",
+      "definition": {
+        "ja": "1 行が 1 つの JSON になっているログ。項目の名前で絞り込みや集計ができる。",
+        "en": "A log whose every line is one JSON object, so it can be filtered and counted by field name."
+      }
+    },
+    {
+      "id": "metric",
+      "ja": "メトリクス",
+      "en": "metric",
+      "firstUse": "19",
+      "definition": {
+        "ja": "時刻ごとの数値の列。リクエスト数、エラー数、応答時間など。CloudWatch では名前、namespace、dimension の組が 1 つのメトリクスになる。",
+        "en": "A series of numbers over time, such as request counts, error counts or latency. In CloudWatch a name, a namespace and a set of dimensions make one metric."
+      }
+    },
+    {
+      "id": "alarm",
+      "ja": "アラーム",
+      "en": "alarm",
+      "firstUse": "19",
+      "definition": {
+        "ja": "メトリクスが条件を満たし続けたときに状態を変え、通知などの操作を起こす CloudWatch の仕組み。状態は OK、ALARM、INSUFFICIENT_DATA。",
+        "en": "The CloudWatch feature that changes state, and triggers actions such as a notification, when a metric keeps meeting a condition. States are OK, ALARM and INSUFFICIENT_DATA."
+      }
+    },
+    {
+      "id": "metric-filter",
+      "ja": "metric filter",
+      "en": "metric filter",
+      "firstUse": "19",
+      "definition": {
+        "ja": "log group に届くログの行を条件で数え、メトリクスにする CloudWatch Logs の設定。作成より前のログには効かない。",
+        "en": "A CloudWatch Logs setting that counts incoming log lines matching a pattern and publishes the count as a metric. It does not apply to logs from before it was created."
+      }
+    },
+    {
+      "id": "emf",
+      "ja": "embedded metric format（EMF）",
+      "en": "embedded metric format (EMF)",
+      "firstUse": "19",
+      "definition": {
+        "ja": "決まった形の JSON をログに書くと、CloudWatch がそこからメトリクスを取り出す仕組み。",
+        "en": "A JSON shape that, written to a log, makes CloudWatch extract metrics from it."
+      }
+    },
+    {
+      "id": "trace",
+      "ja": "trace",
+      "en": "trace",
+      "firstUse": "19",
+      "definition": {
+        "ja": "1 つのリクエストが通った処理の記録。trace ID を共有する span の集まり。",
+        "en": "The record of the work one request passed through: a set of spans that share a trace ID."
+      }
+    },
+    {
+      "id": "span",
+      "ja": "span",
+      "en": "span",
+      "firstUse": "19",
+      "definition": {
+        "ja": "trace の中の 1 区間。名前、開始と終了の時刻、親の span、属性を持つ。X-Ray では segment や subsegment になる。",
+        "en": "One timed step in a trace, with a name, start and end times, a parent span and attributes. In X-Ray it becomes a segment or a subsegment."
+      }
+    },
+    {
+      "id": "opentelemetry",
+      "ja": "OpenTelemetry",
+      "en": "OpenTelemetry",
+      "firstUse": "19",
+      "definition": {
+        "ja": "trace、メトリクス、ログの計装と送信のための、ベンダーに依らない仕様とライブラリ。",
+        "en": "Vendor-neutral specifications and libraries for instrumenting and exporting traces, metrics and logs."
+      }
+    },
+    {
+      "id": "sampling",
+      "ja": "sampling",
+      "en": "sampling",
+      "firstUse": "19",
+      "definition": {
+        "ja": "全部のリクエストではなく、一部だけを trace として記録すること。",
+        "en": "Recording only a share of requests as traces instead of all of them."
+      }
+    },
+    {
+      "id": "trace-context",
+      "ja": "trace context（traceparent）",
+      "en": "trace context (traceparent)",
+      "firstUse": "19",
+      "definition": {
+        "ja": "trace ID、呼び出し元の span ID、sampling の決定を次の処理へ渡すための W3C の仕様。HTTP では traceparent ヘッダー。",
+        "en": "The W3C specification for passing the trace ID, the caller's span ID and the sampling decision to the next process. In HTTP it is the traceparent header."
+      }
+    },
+    {
+      "id": "rum",
+      "ja": "RUM（real user monitoring）",
+      "en": "RUM (real user monitoring)",
+      "firstUse": "19",
+      "definition": {
+        "ja": "実際の利用者のブラウザで、ページの表示時間やエラーを計測して集めること。",
+        "en": "Measuring page load times and errors in real users' browsers and collecting them."
+      }
+    },
+    {
+      "id": "canary",
+      "ja": "canary（Synthetics）",
+      "en": "canary (Synthetics)",
+      "firstUse": "19",
+      "definition": {
+        "ja": "決まった間隔で外から API やページを呼び、応答を確かめるスクリプト。利用者がいない時間にも動く。",
+        "en": "A script that calls an API or page from outside on a schedule and checks the response. It runs even when no user is around."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "19.overview",
+      "sources": ["examples/19-observability/infra/lib/observability-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.alarms",
+      "sources": [
+        "examples/19-observability/src/alarm-math.ts",
+        "examples/19-observability/test/alarm-math.test.ts",
+        "examples/19-observability/infra/lib/monitoring.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.metrics",
+      "sources": [
+        "examples/19-observability/infra/lib/monitoring.ts",
+        "examples/19-observability/infra/test/observability-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "obs:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.logs",
+      "sources": [
+        "examples/19-observability/src/log-shape.ts",
+        "examples/19-observability/src/conditions.ts",
+        "examples/19-observability/src/queries.ts",
+        "examples/19-observability/test/log-shape.test.ts",
+        "examples/19-observability/test/queries.test.ts",
+        "examples/19-observability/scripts/query.ts"
+      ],
+      "tasks": ["test:unit", "obs:query:print"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.log-metrics",
+      "sources": [
+        "examples/19-observability/src/conditions.ts",
+        "examples/19-observability/src/queries.ts",
+        "examples/19-observability/infra/lib/monitoring.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.tracing",
+      "sources": [
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/src/traced-repository.ts",
+        "examples/19-observability/src/app.ts",
+        "examples/19-observability/src/compose.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.lambda-tracing",
+      "sources": [
+        "examples/19-observability/src/lambda.ts",
+        "examples/19-observability/infra/lib/observability-stack.ts",
+        "examples/19-observability/infra/bin/app.ts"
+      ],
+      "tasks": ["obs:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.ids",
+      "sources": [
+        "examples/19-observability/src/trace-context.ts",
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/test/trace-context.test.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "19.sampling",
+      "sources": [
+        "examples/19-observability/src/local-tracing.ts",
+        "examples/19-observability/src/cost-inputs.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "19.privacy",
+      "sources": [
+        "examples/19-observability/src/log-shape.ts",
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/test/log-shape.test.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.local",
+      "sources": [
+        "examples/19-observability/src/dev.ts",
+        "examples/19-observability/src/local-tracing.ts",
+        "examples/19-observability/.env.example"
+      ],
+      "tasks": ["dev:obs", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.deploy",
+      "sources": [
+        "examples/19-observability/infra/bin/app.ts",
+        "examples/19-observability/scripts/smoke.ts",
+        "examples/19-observability/scripts/query.ts",
+        "examples/19-observability/scripts/alarms.ts"
+      ],
+      "tasks": ["obs:infra:diff", "obs:infra:deploy", "obs:smoke", "obs:query", "obs:alarms", "obs:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.browser-and-probes",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.cost",
+      "sources": ["examples/19-observability/src/cost-inputs.ts", "examples/19-observability/test/cost-inputs.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.workers",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "19.cleanup",
+      "sources": [],
+      "tasks": ["obs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "cloudwatch.metric.custom",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "F96ZRPX8AM4T93NV",
+      "usageType": "APN1-CW:MetricMonitorUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Metrics",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.3000000000",
+          "description": "$0.30 per metric-month for the first 10,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 10000,
+          "to": 250000,
+          "usd": "0.1000000000",
+          "description": "$0.10 per metric-month for the next 240,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 250000,
+          "to": 1000000,
+          "usd": "0.0500000000",
+          "description": "$0.05 per metric-month for the next 750,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 1000000,
+          "to": null,
+          "usd": "0.0200000000",
+          "description": "$0.02 per metric-month for over 1,000,000 metrics - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.alarm.standard",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "FBMB6TVC844YGZ3J",
+      "usageType": "APN1-CW:AlarmMonitorUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Alarms",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per alarm metric month (standard resolution) - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "logs.insights.scanned",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "QE3CDKDURP2A2WR5",
+      "usageType": "APN1-DataScanned-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0076000000",
+          "description": "$0.0076 per GB log data scanned by CloudWatch Logs Insights queries - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "xray.trace.recorded",
+      "offerCode": "AWSXRay",
+      "region": "ap-northeast-1",
+      "sku": "A2DFYMNB5KZNWKX4",
+      "usageType": "APN1-XRay-TracesStored",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "traces",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000050000",
+          "description": "AWS X-Ray - Total Traces Stored - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "xray.trace.retrieved",
+      "offerCode": "AWSXRay",
+      "region": "ap-northeast-1",
+      "sku": "ZF5AQUZ2PJQESZQR",
+      "usageType": "APN1-XRay-TracesAccessed",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "traces",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000005000",
+          "description": "AWS X-Ray - Total Traces Accessed - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.rum.event",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "UMUKYCB9NNDT49U2",
+      "usageType": "APN1-CW:RUM-events",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Events",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$1 per 100k RUM events in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.synthetics.run",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "TVDGJTPNCD29VTN5",
+      "usageType": "APN1-CW:Canary-runs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Runs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0019000000",
+          "description": "$0.0019 per canary run per month - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "cloudwatch.metric.custom",
+      "quantity": 10,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "Metrics. From the Global-CW:MetricMonitorUsage USD 0 tier; the pricing page lists 10 custom and detailed monitoring metrics."
+    },
+    {
+      "priceId": "cloudwatch.alarm.standard",
+      "quantity": 10,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "Alarm metrics. From the Global-CW:AlarmMonitorUsage USD 0 tier; standard-resolution alarms that list metrics directly."
+    },
+    {
+      "priceId": "logs.insights.scanned",
+      "quantity": 5,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "GB. From the Global-DataScanned-Bytes USD 0 tier."
+    },
+    {
+      "priceId": "cloudwatch.synthetics.run",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "Runs. From the Global-CW:Canary-runs USD 0 tier."
+    },
+    {
+      "priceId": "xray.trace.recorded",
+      "quantity": 100000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-xray",
+      "note": "Traces. From the Global-XRay-TracesStored USD 0 tier."
+    },
+    {
+      "priceId": "xray.trace.retrieved",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-xray",
+      "note": "Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces."
+    }
+  ],
+  "unknownAllowances": [
+    {
+      "priceId": "cloudwatch.rum.event",
+      "reason": "The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "obs-idle",
+      "chapter": "19",
+      "title": {
+        "ja": "監視つきノート API: デプロイ済みで呼ばれない月",
+        "en": "Observed notes API: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ。ログ、trace、custom metric のデータ点はどれも発生しない",
+          "アラーム 2 つが参照するメトリクスは合計 3 つ（5xx の率が Count と 5xx、遅さが Latency）",
+          "ダッシュボード 1 つは無料枠（3 つまで、各 50 メトリクスまで）の内と仮定。4 つ目からの単価は確認できていないため、金額に含めていない",
+          "API、Lambda、DynamoDB そのものの料金は 04章と 05章の計算のとおりで、ここには含めていない"
+        ],
+        "en": [
+          "No requests: no log lines, no traces, and no data points for the custom metric",
+          "The two alarms refer to three metrics in total (Count and 5xx for the error rate, Latency for slowness)",
+          "The one dashboard is assumed to be within the free tier (3 dashboards of up to 50 metrics); the price beyond that could not be confirmed and is not included",
+          "The API, Lambda and DynamoDB themselves are priced in chapters 04 and 05 and are not included here"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "2 alarms listing 3 metrics"
+        }
+      ]
+    },
+    {
+      "id": "obs-small",
+      "chapter": "19",
+      "title": {
+        "ja": "監視つきノート API: 月 100 万リクエストの観測の料金",
+        "en": "Observed notes API: what observing 1,000,000 requests a month costs"
+      },
+      "assumptions": {
+        "ja": [
+          "1 リクエストあたりログ 1 KB。アプリの 1 行は実測で 255 バイト（trace の項目つき）、残りは Lambda が書く行で、JSON 形式での大きさは未計測の仮定",
+          "ログの保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定",
+          "リクエストが一定の間隔で届くと仮定。毎秒 0.38 件で、Lambda の既定の sampling（毎秒最初の 1 件と残りの 5%）では全件が trace になる。これは上限で、実際の到着が偏れば減る",
+          "1 つの trace に含まれる span の数は料金に影響しない（trace 単位の課金）と仮定",
+          "trace を画面で開くのは月 10,000 件、Logs Insights で調べるログは月 1 GB",
+          "custom metric は NoteConflicts の 1 つ、アラームが参照するメトリクスは 3 つ",
+          "ダッシュボードは無料枠の内と仮定。SNS の通知、API・Lambda・DynamoDB そのものの料金は未算入"
+        ],
+        "en": [
+          "1 KB of logs per request. The application's line measures 255 bytes with trace fields; the rest is what Lambda writes, whose size in the JSON format is an unmeasured assumption",
+          "7-day log retention; average stored volume assumed to be 7/30 of the monthly ingest",
+          "Requests assumed to arrive at a steady rate: 0.38 per second, so Lambda's default sampling (the first each second plus 5% of the rest) traces every one. This is the upper bound; uneven arrival lowers it",
+          "The number of spans in a trace is assumed not to change the price (charged per trace)",
+          "10,000 traces opened a month, and 1 GB of logs scanned by Logs Insights",
+          "One custom metric (NoteConflicts) and three metrics referred to by alarms",
+          "The dashboard is assumed to be within the free tier. SNS notifications and the API, Lambda and DynamoDB themselves are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.953674,
+          "basis": "1,000,000 x 1,024 bytes, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.222524,
+          "basis": "0.953674 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "logs.insights.scanned",
+          "quantity": 1,
+          "basis": "1 GB scanned by queries"
+        },
+        {
+          "priceId": "cloudwatch.metric.custom",
+          "quantity": 1,
+          "basis": "NoteConflicts"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "2 alarms listing 3 metrics"
+        },
+        {
+          "priceId": "xray.trace.recorded",
+          "quantity": 1000000,
+          "basis": "every request traced at 0.38 requests per second"
+        },
+        {
+          "priceId": "xray.trace.retrieved",
+          "quantity": 10000,
+          "basis": "10,000 traces opened"
+        }
+      ]
+    },
+    {
+      "id": "obs-one-more-line",
+      "chapter": "19",
+      "title": {
+        "ja": "ログを 1 行増やす: 月 100 万リクエスト",
+        "en": "One more log line per request: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "増やす 1 行はリクエストの行と同じ 167 バイト（実測。trace の項目なし）",
+          "保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定"
+        ],
+        "en": [
+          "The added line is 167 bytes, the measured size of the request line without trace fields",
+          "7-day retention; average stored volume assumed to be 7/30 of the monthly ingest"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.15553,
+          "basis": "1,000,000 x 167 bytes, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.03629,
+          "basis": "0.15553 GB x 7/30, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "obs-one-more-metric",
+      "chapter": "19",
+      "title": {
+        "ja": "メトリクスを 1 つ増やす",
+        "en": "One more custom metric"
+      },
+      "assumptions": {
+        "ja": [
+          "dimension なしの custom metric を 1 つ、毎時間データ点が届く状態で 1 か月",
+          "dimension を付けると、値の組み合わせ 1 つごとに 1 メトリクスと数える"
+        ],
+        "en": [
+          "One custom metric without dimensions, receiving data points every hour for a month",
+          "With dimensions, every distinct combination of values counts as one metric"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.metric.custom",
+          "quantity": 1,
+          "basis": "1 metric for a full month"
+        }
+      ]
+    },
+    {
+      "id": "obs-canary-5min",
+      "chapter": "19",
+      "title": {
+        "ja": "Synthetics: 5 分ごとの canary 1 つ",
+        "en": "Synthetics: one canary every 5 minutes"
+      },
+      "assumptions": {
+        "ja": ["730 時間 x 毎時 12 回 = 8,760 回の実行", "canary が使う Lambda、S3、ログ、メトリクスの料金は未算入"],
+        "en": [
+          "730 hours x 12 runs an hour = 8,760 runs",
+          "The Lambda, S3, log and metric charges a canary incurs are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.synthetics.run",
+          "quantity": 8760,
+          "basis": "730 h x 12 runs"
+        }
+      ]
+    },
+    {
+      "id": "obs-rum-small",
+      "chapter": "19",
+      "title": {
+        "ja": "RUM: 月 1 万回の訪問を全件収集",
+        "en": "RUM: 10,000 visits a month, all collected"
+      },
+      "assumptions": {
+        "ja": [
+          "1 回の訪問で 20 イベント（料金ページの計算例と同じ数）、session の収集率 100%",
+          "初回の無料トライアル（100 万イベント、1 回限り）は引いていない"
+        ],
+        "en": [
+          "20 events per visit (the number in the pricing page's example), 100% of sessions collected",
+          "The one-time free trial of 1 million events is not deducted"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.rum.event",
+          "quantity": 200000,
+          "basis": "10,000 visits x 20 events"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "19",
+        "command": "vp run test:unit (examples/19-observability)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "実際に書かれるログの形と大きさ、ログの query と metric filter の条件を本物のログ行で評価、traceparent と X-Ray の trace ID の変換、span とログの相互参照、属性の許可リスト、sampling されない要求と欠けた span の再現、アラームの条件、料金計算の入力、インフラの assertion",
+          "en": "The shape and size of the lines really written, log queries and the metric filter condition evaluated on real lines, traceparent and X-Ray trace ID conversion, cross-references between spans and log lines, the attribute allow-list, unsampled requests and a lost span reproduced, the alarm conditions, the pricing inputs, and infrastructure assertions"
+        }
+      },
+      {
+        "scope": "19",
+        "command": "vp run dev:obs + curl",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "本文の curl を実行。ログの行に traceId が付くこと、span がコンソールに出ること、traceparent を付けた要求が同じ trace ID を引き継ぐこと、TRACE_SAMPLE_RATIO=0 で span が出ずログは残ることを確認",
+          "en": "Ran the curl commands from the chapter: log lines carry a traceId, spans are printed to the console, a request with traceparent continues that trace ID, and with TRACE_SAMPLE_RATIO=0 no span is printed while the log line remains"
+        }
+      },
+      {
+        "scope": "19",
+        "command": "vp run obs:query:print",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "Logs Insights の query の文字列を出力するだけ。AWS には問い合わせない",
+          "en": "Prints the text of a Logs Insights query. Makes no call to AWS"
+        }
+      },
+      {
+        "scope": "19",
+        "command": "vp run obs:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "関数を OpenTelemetry の API ごと esbuild で bundle。-c otelLayerArn を付けた場合も synth できることを確認。AWS には問い合わせない",
+          "en": "Bundles the function, the OpenTelemetry API included, with esbuild. Also synthesized with -c otelLayerArn. Makes no call to AWS"
+        }
+      },
+      {
+        "scope": "19",
+        "command": "vp run obs:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "DynamoDB の table、Lambda、HTTP API、SNS の topic、アラーム 2 つ、ダッシュボード、metric filter を作る。ダッシュボードと metric filter は cdkd が Cloud Control API 経由で扱う",
+          "en": "Creates a DynamoDB table, a Lambda function, an HTTP API, an SNS topic, two alarms, a dashboard and a metric filter. cdkd handles the dashboard and the metric filter through Cloud Control API"
+        }
+      },
+      {
+        "scope": "19",
+        "command": "vp run obs:smoke / obs:query / obs:alarms",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイ済みの stack が必要。obs:smoke はノートを 1 件作って消す。obs:query は走査したログの量に課金される",
+          "en": "Need the deployed stack. obs:smoke creates and deletes one note. obs:query is billed by the amount of log data scanned"
+        }
+      },
+      {
+        "scope": "19",
+        "command": "vp run obs:infra:deploy -c otelLayerArn=...",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS Lambda Layer for OpenTelemetry を付けた構成。Node.js 24 の runtime はこの layer の対応一覧に無い",
+          "en": "The configuration with the AWS Lambda Layer for OpenTelemetry. The Node.js 24 runtime is not in the layer's list of supported runtimes"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "obs-lambda-json-log-shape",
+        "summary": {
+          "ja": "Lambda の JSON ログ形式で、アプリが console.log に渡した JSON の行が、そのままの形で CloudWatch Logs に入るかを実機で確かめていない。metric filter の JSON pattern と Logs Insights の項目名がこれに依存する。",
+          "en": "Not checked in AWS: that under Lambda's JSON log format the JSON line the application passes to console.log reaches CloudWatch Logs unchanged. The metric filter's JSON pattern and the field names in the Logs Insights queries depend on it."
+        },
+        "resume": {
+          "ja": "vp run obs:infra:deploy、vp run obs:smoke の後、vp run obs:query --name request --id <x-request-id> を実行する。行が見つかり、status などの項目が取れること、NoteConflicts にデータ点が出ることを確かめる。形が違えば、src/compose.ts の出力先を process.stdout に替えるか、query の項目名を直す。",
+          "en": "After vp run obs:infra:deploy and vp run obs:smoke, run vp run obs:query --name request --id <x-request-id>. Check that the lines are found with fields such as status, and that NoteConflicts gets a data point. If the shape differs, write through process.stdout in src/compose.ts or change the field names in the queries."
+        }
+      },
+      {
+        "id": "obs-otel-layer-node24",
+        "summary": {
+          "ja": "AWS Lambda Layer for OpenTelemetry を Node.js 24 の関数に付けた構成を動かしていない。ADOT のドキュメントの対応 runtime は Node.js 22 まで。esbuild で bundle した ESM の関数で、手書きの span が layer の SDK に届くか、AWS SDK の自動計装が効くか、実行 role の権限が xray:PutTraceSegments で足りるかも未確認。",
+          "en": "The configuration with the AWS Lambda Layer for OpenTelemetry on a Node.js 24 function has not been run. The ADOT documentation lists runtimes up to Node.js 22. Also unconfirmed for an ESM function bundled by esbuild: whether hand-written spans reach the layer's SDK, whether the AWS SDK auto-instrumentation takes effect, and whether xray:PutTraceSegments on the execution role is enough."
+        },
+        "resume": {
+          "ja": "ADOT のドキュメントの Node.js の表から東京リージョンの layer の ARN を取り、vp run obs:infra:deploy -c otelLayerArn=<ARN> を実行する。vp run obs:smoke の後、X-Ray の画面で notes.* の span が Lambda の segment の下に出るか確かめる。出なければ、関数のログで layer のエラーを探し、runtime を nodejs22.x にして比べる。",
+          "en": "Take the Tokyo layer ARN from the Node.js table in the ADOT documentation and run vp run obs:infra:deploy -c otelLayerArn=<ARN>. After vp run obs:smoke, check in the X-Ray console that notes.* spans appear under Lambda's segment. If not, look for layer errors in the function's log and compare with the nodejs22.x runtime."
+        }
+      },
+      {
+        "id": "obs-alarm-behavior",
+        "summary": {
+          "ja": "アラームの実際の状態遷移を確かめていない。metric math の IF の式が受け付けられること、リクエストが無い間に 5xx と Count のデータ点が欠損になること、SNS の通知が届くことは、ドキュメントからの読み取り。",
+          "en": "The alarms' real state changes have not been observed. That the metric math IF expression is accepted, that 5xx and Count have no data points while there are no requests, and that the SNS notification arrives are read from the documentation."
+        },
+        "resume": {
+          "ja": "vp run obs:infra:deploy -c alarmEmail=<自分のアドレス> の後、届いた確認メールを承認し、vp run obs:alarms で状態を見る。5xx を起こすには、table の権限を一時的に外す変更を別の branch で deploy するなど、練習用アカウントで行う。",
+          "en": "After vp run obs:infra:deploy -c alarmEmail=<your address>, confirm the subscription mail and check the states with vp run obs:alarms. To cause 5xx responses, deploy a change that temporarily removes the table permission, from another branch and in a practice account."
+        }
+      },
+      {
+        "id": "obs-cdkd-cloud-control",
+        "summary": {
+          "ja": "cdkd 0.296.28 は AWS::CloudWatch::Dashboard と AWS::Logs::MetricFilter を Cloud Control API 経由で扱う。作成、更新、drift の読み戻しが実際に動くかは未確認。",
+          "en": "cdkd 0.296.28 handles AWS::CloudWatch::Dashboard and AWS::Logs::MetricFilter through Cloud Control API. Whether create, update and drift read-back work in practice is unconfirmed."
+        },
+        "resume": {
+          "ja": "vp run obs:infra:deploy と vp run obs:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
+          "en": "Run vp run obs:infra:deploy and vp run obs:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool."
+        }
+      },
+      {
+        "id": "obs-pricing-gaps",
+        "summary": {
+          "ja": "ダッシュボードの単価（4 つ目から）、Lambda が JSON 形式で書くシステムログの大きさ、layer 経由で送った span が X-Ray の trace として課金されるのかを確認できていない。",
+          "en": "Not confirmed: the price of a dashboard beyond the third, the size of the system log lines Lambda writes in the JSON format, and whether spans sent through the layer are billed as X-Ray traces."
+        },
+        "resume": {
+          "ja": "料金ページを JavaScript が動くブラウザで開いてダッシュボードの単価を読む。デプロイ後、Logs Insights で 1 リクエストあたりの @message の合計バイト数を測り、data/fragments/19.json の仮定を直す。数日後に Cost Explorer の usage type を見る。",
+          "en": "Open the pricing page in a browser that runs JavaScript and read the dashboard price. After deploying, measure the total bytes of @message per request with Logs Insights and correct the assumption in data/fragments/19.json. A few days later, look at the usage types in Cost Explorer."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 19: observability -------------------------------------\n      // The notes API with spans printed to the console. No Docker, no AWS.\n      \"dev:obs\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/19-observability\" }),\n      // Prints the text of a Logs Insights query. Runs nothing.\n      \"obs:query:print\": fresh(\"node scripts/query.ts --print\", { cwd: \"examples/19-observability\" }),\n      ...infra(\"obs\", \"examples/19-observability\", \"AihObservability\"),\n      // Creates and deletes one note through the deployed API.\n      \"obs:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/19-observability\" }),\n      // BILLED by the amount of log data scanned.\n      \"obs:query\": live(\"node --env-file-if-exists=../../.env scripts/query.ts\", { cwd: \"examples/19-observability\" }),\n      \"obs:alarms\": live(\"node --env-file-if-exists=../../.env scripts/alarms.ts\", { cwd: \"examples/19-observability\" }),",
+    "synth": ["obs:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/19-observability"]
+  }
+}

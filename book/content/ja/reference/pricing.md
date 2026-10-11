@@ -635,6 +635,117 @@ ID: `ssr-small` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動
 - 毎月の無料枠適用後の小計: **USD 0.01** / 月
 - 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
 
+## 監視つきノート API: デプロイ済みで呼ばれない月
+
+ID: `obs-idle` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- リクエストゼロ。ログ、trace、custom metric のデータ点はどれも発生しない
+- アラーム 2 つが参照するメトリクスは合計 3 つ（5xx の率が Count と 5xx、遅さが Latency）
+- ダッシュボード 1 つは無料枠（3 つまで、各 50 メトリクスまで）の内と仮定。4 つ目からの単価は確認できていないため、金額に含めていない
+- API、Lambda、DynamoDB そのものの料金は 04章と 05章の計算のとおりで、ここには含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
+
+- 定価の小計: **USD 0.30** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 監視つきノート API: 月 100 万リクエストの観測の料金
+
+ID: `obs-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 1 リクエストあたりログ 1 KB。アプリの 1 行は実測で 255 バイト（trace の項目つき）、残りは Lambda が書く行で、JSON 形式での大きさは未計測の仮定
+- ログの保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定
+- リクエストが一定の間隔で届くと仮定。毎秒 0.38 件で、Lambda の既定の sampling（毎秒最初の 1 件と残りの 5%）では全件が trace になる。これは上限で、実際の到着が偏れば減る
+- 1 つの trace に含まれる span の数は料金に影響しない（trace 単位の課金）と仮定
+- trace を画面で開くのは月 10,000 件、Logs Insights で調べるログは月 1 GB
+- custom metric は NoteConflicts の 1 つ、アラームが参照するメトリクスは 3 つ
+- ダッシュボードは無料枠の内と仮定。SNS の通知、API・Lambda・DynamoDB そのものの料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `logs.ingest.standard` | 0.954 | GB | 1,000,000 x 1,024 bytes, in GB | 0.72 | 5 | 0 |
+| `logs.storage` | 0.223 | GB-Mo | 0.953674 GB x 7/30, in GB-month | 0.01 | 5 | 0 |
+| `logs.insights.scanned` | 1 | GB | 1 GB scanned by queries | 0.01 | 5 | 0 |
+| `cloudwatch.metric.custom` | 1 | Metrics | NoteConflicts | 0.30 | 10 | 0 |
+| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
+| `xray.trace.recorded` | 1,000,000 | traces | every request traced at 0.38 requests per second | 5.00 | 100,000 | 4.50 |
+| `xray.trace.retrieved` | 10,000 | traces | 10,000 traces opened | 0.01 | 1,000,000 | 0 |
+
+- 定価の小計: **USD 6.34** / 月
+- 毎月の無料枠適用後の小計: **USD 4.50** / 月
+
+## ログを 1 行増やす: 月 100 万リクエスト
+
+ID: `obs-one-more-line` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 増やす 1 行はリクエストの行と同じ 167 バイト（実測。trace の項目なし）
+- 保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `logs.ingest.standard` | 0.156 | GB | 1,000,000 x 167 bytes, in GB | 0.12 | 5 | 0 |
+| `logs.storage` | 0.036 | GB-Mo | 0.15553 GB x 7/30, in GB-month | 0.001198 | 5 | 0 |
+
+- 定価の小計: **USD 0.12** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## メトリクスを 1 つ増やす
+
+ID: `obs-one-more-metric` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- dimension なしの custom metric を 1 つ、毎時間データ点が届く状態で 1 か月
+- dimension を付けると、値の組み合わせ 1 つごとに 1 メトリクスと数える
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.metric.custom` | 1 | Metrics | 1 metric for a full month | 0.30 | 10 | 0 |
+
+- 定価の小計: **USD 0.30** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## Synthetics: 5 分ごとの canary 1 つ
+
+ID: `obs-canary-5min` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 730 時間 x 毎時 12 回 = 8,760 回の実行
+- canary が使う Lambda、S3、ログ、メトリクスの料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.synthetics.run` | 8,760 | Runs | 730 h x 12 runs | 16.64 | 100 | 16.45 |
+
+- 定価の小計: **USD 16.64** / 月
+- 毎月の無料枠適用後の小計: **USD 16.45** / 月
+
+## RUM: 月 1 万回の訪問を全件収集
+
+ID: `obs-rum-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 1 回の訪問で 20 イベント（料金ページの計算例と同じ数）、session の収集率 100%
+- 初回の無料トライアル（100 万イベント、1 回限り）は引いていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.rum.event` | 200,000 | Events | 10,000 visits x 20 events | 2.00 | - | 2.00 |
+
+- 定価の小計: **USD 2.00** / 月
+- 毎月の無料枠適用後の小計: **USD 2.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `cloudwatch.rum.event`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -690,6 +801,13 @@ ID: `ssr-small` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動
 | `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
 | `datatransfer.out.internet` | ap-northeast-1 | APN1-DataTransfer-Out-Bytes | GB | 0 - 10,240: 0.1140000000<br>10,240 - 51,200: 0.0890000000<br>51,200 - 153,600: 0.0860000000<br>153,600 - ∞: 0.0840000000 | 2026-09-16 | 2026-10-11 |
 | `lambda.streaming.arm` | ap-northeast-1 | APN1-Lambda-Streaming-Response-Processed-Bytes-ARM | Processed-Gigabytes | 0 - ∞: 0.0080000000 | 2026-10-09 | 2026-10-11 |
+| `cloudwatch.metric.custom` | ap-northeast-1 | APN1-CW:MetricMonitorUsage | Metrics | 0 - 10,000: 0.3000000000<br>10,000 - 250,000: 0.1000000000<br>250,000 - 1,000,000: 0.0500000000<br>1,000,000 - ∞: 0.0200000000 | 2026-10-07 | 2026-10-12 |
+| `cloudwatch.alarm.standard` | ap-northeast-1 | APN1-CW:AlarmMonitorUsage | Alarms | 0 - ∞: 0.1000000000 | 2026-10-07 | 2026-10-12 |
+| `logs.insights.scanned` | ap-northeast-1 | APN1-DataScanned-Bytes | GB | 0 - ∞: 0.0076000000 | 2026-10-07 | 2026-10-12 |
+| `xray.trace.recorded` | ap-northeast-1 | APN1-XRay-TracesStored | traces | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
+| `xray.trace.retrieved` | ap-northeast-1 | APN1-XRay-TracesAccessed | traces | 0 - ∞: 0.0000005000 | 2026-09-11 | 2026-10-12 |
+| `cloudwatch.rum.event` | ap-northeast-1 | APN1-CW:RUM-events | Events | 0 - ∞: 0.0000100000 | 2026-10-07 | 2026-10-12 |
+| `cloudwatch.synthetics.run` | ap-northeast-1 | APN1-CW:Canary-runs | Runs | 0 - ∞: 0.0019000000 | 2026-10-07 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -710,6 +828,12 @@ ID: `ssr-small` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動
 | `dsql.dpu` | 100,000 | `dsql-pricing` | First 100,000 DPUs each month. The pricing page does not say whether it expires. |
 | `dsql.storage` | 1 | `dsql-pricing` | First GB of storage each month. The pricing page does not say whether it expires. |
 | `lambda.streaming.arm` | 100 | `lambda-pricing` | GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100). |
+| `cloudwatch.metric.custom` | 10 | `aws-price-list-cloudwatch-observability` | Metrics. From the Global-CW:MetricMonitorUsage USD 0 tier; the pricing page lists 10 custom and detailed monitoring metrics. |
+| `cloudwatch.alarm.standard` | 10 | `aws-price-list-cloudwatch-observability` | Alarm metrics. From the Global-CW:AlarmMonitorUsage USD 0 tier; standard-resolution alarms that list metrics directly. |
+| `logs.insights.scanned` | 5 | `aws-price-list-cloudwatch-observability` | GB. From the Global-DataScanned-Bytes USD 0 tier. |
+| `cloudwatch.synthetics.run` | 100 | `aws-price-list-cloudwatch-observability` | Runs. From the Global-CW:Canary-runs USD 0 tier. |
+| `xray.trace.recorded` | 100,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesStored USD 0 tier. |
+| `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 
@@ -729,3 +853,4 @@ ID: `ssr-small` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動
 - `datatransfer.out.internet`: The price list calls the first tier "beyond the global free tier". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied.
 - `s3.request.tier1`: No always-free S3 request allowance was confirmed; none is applied.
 - `s3.request.tier2`: No always-free S3 request allowance was confirmed; none is applied.
+- `cloudwatch.rum.event`: The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied.

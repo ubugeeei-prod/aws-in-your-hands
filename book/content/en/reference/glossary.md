@@ -114,3 +114,15 @@ The term pairs that keep both languages using one word for one concept. API name
 | cache key | cache key | 09 | What CloudFront treats as the same request: the path plus whichever query strings, headers, and cookies the cache policy selects. |
 | cache policy | cache policy | 09 | A CloudFront setting that holds what goes into the cache key and the minimum, default, and maximum TTL. |
 | backend for frontend (BFF) | backend for frontend (BFF) | 09 | A server that exists for one front end. It holds tokens on the browser's behalf and calls the APIs behind it. |
+| 構造化ログ | structured log | 19 | A log whose every line is one JSON object, so it can be filtered and counted by field name. |
+| メトリクス | metric | 19 | A series of numbers over time, such as request counts, error counts or latency. In CloudWatch a name, a namespace and a set of dimensions make one metric. |
+| アラーム | alarm | 19 | The CloudWatch feature that changes state, and triggers actions such as a notification, when a metric keeps meeting a condition. States are OK, ALARM and INSUFFICIENT_DATA. |
+| metric filter | metric filter | 19 | A CloudWatch Logs setting that counts incoming log lines matching a pattern and publishes the count as a metric. It does not apply to logs from before it was created. |
+| embedded metric format（EMF） | embedded metric format (EMF) | 19 | A JSON shape that, written to a log, makes CloudWatch extract metrics from it. |
+| trace | trace | 19 | The record of the work one request passed through: a set of spans that share a trace ID. |
+| span | span | 19 | One timed step in a trace, with a name, start and end times, a parent span and attributes. In X-Ray it becomes a segment or a subsegment. |
+| OpenTelemetry | OpenTelemetry | 19 | Vendor-neutral specifications and libraries for instrumenting and exporting traces, metrics and logs. |
+| sampling | sampling | 19 | Recording only a share of requests as traces instead of all of them. |
+| trace context（traceparent） | trace context (traceparent) | 19 | The W3C specification for passing the trace ID, the caller's span ID and the sampling decision to the next process. In HTTP it is the traceparent header. |
+| RUM（real user monitoring） | RUM (real user monitoring) | 19 | Measuring page load times and errors in real users' browsers and collecting them. |
+| canary（Synthetics） | canary (Synthetics) | 19 | A script that calls an API or page from outside on a schedule and checks the response. It runs even when no user is around. |

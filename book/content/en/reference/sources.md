@@ -90,7 +90,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-cloudwatch`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04, 17
+- Chapters: 04, 17, 19
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudWatch
   - The price list has a USD 0 tier for the first 5 GB of log ingestion and 5 GB-month of log storage
@@ -181,7 +181,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `apigw-http-vs-rest`
 - URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html>
 - Checked: 2026-10-11
-- Chapters: 04, 09
+- Chapters: 04, 09, 19
 - Claims this source supports:
   - HTTP APIs are designed with minimal features so that they can be offered at a lower price
   - REST API only: AWS WAF, API keys, per-client throttling, request validation, caching, private endpoints, X-Ray tracing, response streaming
@@ -1899,7 +1899,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - Checked: 2026-10-11
-- Chapters: 02, 03, 04, 05, 06, 07, 09, 10, 17
+- Chapters: 02, 03, 04, 05, 06, 07, 09, 10, 17, 19
 - Claims this source supports:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -2918,6 +2918,461 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - `CachePolicy.CACHING_DISABLED` is 4135ea2d-6df8-44a3-9df3-4b5a84be39ad and `OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER` is b689b0a8-53d0-40ab-baf2-68738e2966ac
 - Note: Read from the type definitions and from cdk.out/AihSsr.template.json produced by `vp run ssr:infra:synth`.
 
+### X-Ray SDK and Daemon Support timeline
+
+- ID: `xray-sdk-timeline`
+- URL: <https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - The X-Ray SDKs and daemon entered maintenance mode on February 25th, 2026: releases are limited to security issues, with no new features
+  - The page lists no end date for maintenance mode
+  - AWS recommends migrating to OpenTelemetry for instrumenting applications and sending traces to AWS X-Ray
+- Note: The page is about the SDKs and the daemon. It says nothing about the X-Ray service ending; traces are still sent to X-Ray.
+
+### Migrating from X-Ray instrumentation to OpenTelemetry instrumentation
+
+- ID: `xray-otel-migration`
+- URL: <https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-migration.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - For Lambda, the options are an auto-instrumentation layer (recommended: AWS Lambda Layer for OpenTelemetry; also the AWS managed Lambda layer for ADOT) or a manual setup with a simple span processor, an X-Ray UDP span exporter and an X-Ray Lambda propagator
+  - To use only tracing with the AWS Lambda Layer for OpenTelemetry, set OTEL_AWS_APPLICATION_SIGNALS_ENABLED=false
+  - When sent to X-Ray, server spans become segments, other spans become subsegments, and attributes become metadata by default
+
+### Migrate to OpenTelemetry Node.js
+
+- ID: `xray-otel-migration-nodejs`
+- URL: <https://docs.aws.amazon.com/xray/latest/devguide/migrate-xray-to-opentelemetry-nodejs.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Manual spans in a Lambda function that has the layer are created with @opentelemetry/api, whose version is recommended to match the one the ADOT JavaScript SDK uses
+
+### AWS Distro for OpenTelemetry: Lambda
+
+- ID: `adot-lambda`
+- URL: <https://aws-otel.github.io/docs/getting-started/lambda>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - The layer is enabled with AWS_LAMBDA_EXEC_WRAPPER=/opt/otel-instrument, and its ARN is listed per Region and language
+  - On 2026-10-12 the Node.js ARN for ap-northeast-1 was arn:aws:lambda:ap-northeast-1:615299751070:layer:AWSOpenTelemetryDistroJs:16
+  - Supported Node.js runtimes listed: 18.x, 20.x, 22.x. Node.js 24.x is not in the list
+  - By default only the AWS SDK and HTTP instrumentations are enabled; sampling is parent-based and adjustable with OTEL_TRACES_SAMPLER
+  - Traces are exported through the Lambda embedded agent to X-Ray by default; the older layers that bundle a collector are marked not recommended
+  - The documented CDK setup attaches the managed policy CloudWatchLambdaApplicationSignalsExecutionRolePolicy
+- Note: The ARN and runtime tables are rendered by script. They were read from the page's source, src/config/lambdaLayerArns.js and src/config/supportedRuntimes.js in github.com/aws-otel/aws-otel.github.io (main).
+
+### Enable your applications on Lambda (Application Signals)
+
+- ID: `appsignals-lambda`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Signals-Enable-LambdaMain.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - The AWS Lambda Layer for OpenTelemetry is also a component of Lambda OpenTelemetry support and provides tracing
+  - Manual steps: add the layer, set AWS_LAMBDA_EXEC_WRAPPER=/opt/otel-instrument, attach CloudWatchLambdaApplicationSignalsExecutionRolePolicy, and optionally enable Lambda active tracing
+- Note: CloudWatch-Application-Signals-Enable-Lambda.html redirects here.
+
+### Visualize Lambda function invocations using AWS X-Ray
+
+- ID: `lambda-xray`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/services-xray.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - With Active tracing Lambda records two segments per trace for sampled requests; PassThrough only forwards the tracing header
+  - The sampling rate is 1 request per second and 5 percent of additional requests, and it cannot be configured for functions
+  - The execution role needs xray:PutTraceSegments and xray:PutTelemetryRecords
+  - An upstream service's tracing header decides whether Lambda sends a trace
+
+### Instrumenting Node.js code in AWS Lambda
+
+- ID: `lambda-nodejs-tracing`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/nodejs-tracing.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Lambda's Node.js guide offers ADOT layers or the X-Ray SDK for Node.js to send trace data to X-Ray
+
+### Log and monitor Node.js Lambda functions
+
+- ID: `lambda-nodejs-logging`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/nodejs-logging.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - In the text format the Node.js runtime adds a timestamp, the request ID and a log level in front of each line the function logs
+  - With the JSON log format Lambda doesn't double-encode logs that are already JSON encoded
+  - Code that emits embedded metric format with console.log should write to process.stdout instead when the log format is JSON
+  - Log-level filtering needs a level and an RFC 3339 timestamp in the JSON; without a valid timestamp Lambda assigns INFO
+
+### Configuring JSON and plain text log formats
+
+- ID: `lambda-log-format`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-logformat.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - The default log format for all Lambda runtimes is plain text
+  - The log format applies to both system logs and application logs, and JSON formatting can increase the size of log messages
+
+### Types of metrics for Lambda functions
+
+- ID: `lambda-metrics`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Errors counts invocations that end in a function error: exceptions the code throws and those the runtime throws, such as timeouts
+  - Throttled requests count as neither Invocations nor Errors
+  - Duration supports percentile statistics and does not include cold start time
+  - ConcurrentExecutions is read with the Max statistic
+
+### Monitor CloudWatch metrics for HTTP APIs in API Gateway
+
+- ID: `apigw-http-metrics`
+- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-metrics.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - HTTP API metrics: 4xx, 5xx, Count, IntegrationLatency, Latency, DataProcessed, sent in one-minute periods
+  - Latency runs from receiving the request to returning the response; IntegrationLatency is the backend part
+  - Route-level metrics need detailed metrics to be enabled
+
+### Configure logging for HTTP APIs in API Gateway
+
+- ID: `apigw-http-logging`
+- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-logging.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - An HTTP API stage can write access logs to a CloudWatch Logs group in a format built from $context variables
+
+### DynamoDB metrics and dimensions
+
+- ID: `dynamodb-metrics`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/metrics-dimensions.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - ThrottledRequests, SystemErrors, SuccessfulRequestLatency and ConditionalCheckFailedRequests exist as table metrics
+  - SystemErrors counts requests that generate an HTTP 500
+
+### Configuring how CloudWatch alarms treat missing data
+
+- ID: `cloudwatch-alarm-missing-data`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Missing data points can be treated as notBreaching, breaching, ignore or missing; the default is missing
+  - For a metric that reports only when an error occurs, notBreaching is the suggested treatment
+  - When points are missing, CloudWatch evaluates over a wider evaluation range than the evaluation periods
+
+### Alarm evaluation
+
+- ID: `cloudwatch-alarm-evaluation`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-evaluation.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Datapoints to Alarm (M) out of Evaluation Periods (N): the breaching points need not be consecutive
+
+### Using math expressions with CloudWatch metrics
+
+- ID: `cloudwatch-metric-math`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - IF(condition, trueValue, falseValue) with a time series compared to a scalar; the result is 0 when the chosen metric has no data point at that time
+  - FILL in an alarm can leave the alarm stuck when the latest minute never has data; an M out of N alarm is the suggested workaround
+
+### Notifying users on alarm changes
+
+- ID: `cloudwatch-alarm-sns`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - An email subscription to the SNS topic stays pending until the recipient confirms it
+
+### CloudWatch Logs Insights language query syntax
+
+- ID: `logs-insights-syntax`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Commands are separated by the pipe character; fields, filter, stats, sort and limit are commands
+  - Queries are charged by data scanned: select only the needed log groups and the narrowest time range
+
+### Logs Insights: filter
+
+- ID: `logs-insights-filter`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Filter.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Conditions are combined with and / or; string values are written in double quotes, as in filter requestId = "1234656"
+  - Field indexes speed up equality filters; filters with like do not use them
+
+### Logs Insights: stats
+
+- ID: `logs-insights-stats`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - stats count(*) by field groups and counts, and an alias is given with as
+
+### Supported logs and discovered fields
+
+- ID: `logs-insights-fields`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData-discoverable-fields.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - For Lambda logs, fields are discovered automatically only for the first embedded JSON fragment in each log event
+  - Lambda logs get @requestId, @duration, @billedDuration, @maxMemoryUsed, and @xrayTraceId when the line has a trace ID
+  - Field discovery is supported only in the Standard log class
+
+### Creating metrics from log events using filters
+
+- ID: `logs-metric-filters`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Metric filters are not retroactive: they publish data points only for events after the filter was created
+  - The default value is reported for periods in which logs are ingested and nothing matches; with no logs at all, nothing is reported
+  - A filter with dimensions cannot have a default value, and each distinct dimension value creates another metric
+  - Delivery to the metric is at least once; duplicates may occasionally occur
+
+### Filter pattern syntax for metric filters
+
+- ID: `logs-filter-pattern-syntax`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - JSON patterns are written in braces with $. property selectors, and combined with && and ||, as in { ($.user.id = 1) && ($.users[0].email = "John.Doe@example.com") }
+
+### Embedding metrics within logs
+
+- ID: `cloudwatch-emf`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Embedded metric format needs logs:PutLogEvents and not cloudwatch:PutMetricData; charges are log ingestion and storage plus the custom metrics generated
+  - A high-cardinality dimension such as requestId creates one custom metric per distinct value
+  - Delivery is at least once; duplicate metric values may occasionally occur
+
+### Embedded metric format specification
+
+- ID: `cloudwatch-emf-spec`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format_Specification.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - The log event must be a valid JSON object with no additional data at the beginning or end
+  - At most 100 metric definitions per event and 30 dimension keys per dimension set
+
+### Working with log groups and log streams
+
+- ID: `logs-retention`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - By default log data is stored indefinitely; retention is set per log group
+  - Expired log events are not deleted immediately; it can take up to 72 hours
+
+### AWS X-Ray concepts
+
+- ID: `xray-concepts`
+- URL: <https://docs.aws.amazon.com/xray/latest/devguide/xray-concepts.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Trace data is retained for 30 days
+  - The tracing header is X-Amzn-Trace-Id, with Root, Parent and Sampled fields
+  - By default the first request each second and five percent of additional requests are recorded
+
+### Sending trace data to AWS X-Ray
+
+- ID: `xray-sending-trace-ids`
+- URL: <https://docs.aws.amazon.com/xray/latest/devguide/xray-api-sendingdata.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - X-Ray accepts trace IDs that follow the W3C Trace Context specification, written in X-Ray's format: 4efaaf4d1e8720b39541901950019ee5 becomes 1-4efaaf4d-1e8720b39541901950019ee5
+
+### Configuring sampling rules
+
+- ID: `xray-sampling-rules`
+- URL: <https://docs.aws.amazon.com/xray/latest/devguide/xray-console-sampling.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - X-Ray sampling is parent-based: the decision is made once by the first service, and downstream services honor it regardless of their own rules
+  - The default is a reservoir of one request per second plus five percent of the rest
+
+### Amazon SQS and AWS X-Ray
+
+- ID: `xray-sqs`
+- URL: <https://docs.aws.amazon.com/xray/latest/devguide/xray-services-sqs.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - SQS carries the trace header in the AWSTraceHeader message system attribute, which does not count against message size or attribute quotas
+  - With a Lambda consumer, trace context propagation is automatic
+
+### OTLP Endpoints
+
+- ID: `cloudwatch-otlp-endpoints`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPEndpoint.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Traces can be sent over OTLP/HTTP to https://xray.<region>.amazonaws.com/v1/traces with Signature Version 4
+
+### Transaction Search
+
+- ID: `cloudwatch-transaction-search`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - With Transaction Search enabled, spans sent to X-Ray are ingested as logs in the aws/spans log group
+
+### W3C Trace Context
+
+- ID: `w3c-trace-context`
+- URL: <https://www.w3.org/TR/trace-context/>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - traceparent is version-traceid-parentid-flags: 2, 32, 16 and 2 lowercase hex characters
+  - Version ff is invalid, and an all-zero trace-id or parent-id is forbidden
+  - The lowest bit of trace-flags is the sampled flag
+
+### CloudWatch RUM
+
+- ID: `cloudwatch-rum`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - RUM collects client-side data from real user sessions: page load times, client-side errors and user behavior for web applications
+  - An app monitor generates a snippet for the page, and collects from a chosen percentage of sessions
+  - Data is retained for 30 days; copies can be sent to CloudWatch Logs to keep them longer
+  - With X-Ray active tracing on the app monitor, client page requests appear connected to the services they call
+
+### Synthetic monitoring (canaries)
+
+- ID: `cloudwatch-synthetics`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Synthetics_Canaries.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Canaries are scripts that run on a schedule, as often as once per minute, and check endpoints even when there is no customer traffic
+  - Canaries create Lambda functions in the account and publish metrics in the CloudWatchSynthetics namespace
+
+### Amazon CloudWatch Pricing
+
+- ID: `cloudwatch-pricing`
+- URL: <https://aws.amazon.com/cloudwatch/pricing/>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Free tier: 5 GB of log data (ingestion, storage, and data scanned by Logs Insights), 10 custom metrics, 10 alarm metrics, 3 dashboards of up to 50 metrics, 100 canary runs a month, 100,000 traces recorded and 1,000,000 retrieved or scanned a month
+  - RUM has a one-time free trial of 1 million web RUM events per account, not a monthly allowance
+  - Custom metric charges are prorated by the hour and incurred only when metrics are sent in that hour
+  - A metric alarm is charged for each metric listed in its expression
+  - Each canary run may also incur Lambda, S3, CloudWatch Logs and CloudWatch Metrics charges
+  - RUM pricing example: 20 data events per visit
+- Note: Most prices on the page are filled in by script and were not visible in the fetched HTML; the dashboard price could not be read. https://aws.amazon.com/xray/pricing/ redirects to a CloudWatch page.
+
+### AWS Price List bulk API: CloudWatch, ap-northeast-1 (metrics, alarms, queries, RUM, Synthetics)
+
+- ID: `aws-price-list-cloudwatch-observability`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Unit prices for custom metrics, standard alarms, Logs Insights data scanned, RUM events and canary runs in data/pricing/unit-prices.json
+  - USD 0 tiers: 10 metrics, 10 alarms, 5 GB of data scanned, 100 canary runs
+  - No dashboard price appears in the ap-northeast-1 offer file
+
+### AWS Price List bulk API: X-Ray, ap-northeast-1
+
+- ID: `aws-price-list-xray`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Traces stored USD 0.000005 each, traces retrieved or scanned USD 0.0000005 each
+  - USD 0 tiers: 100,000 traces stored and 1,000,000 traces accessed
+
+### cdkd v0.296.28: src/provisioning/register-providers.ts (CloudWatch, Logs, SNS)
+
+- ID: `cdkd-register-providers-observability`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Dedicated providers are registered for AWS::CloudWatch::Alarm, AWS::SNS::Topic, AWS::SNS::Subscription and AWS::Logs::LogGroup
+  - No dedicated provider is registered for AWS::CloudWatch::Dashboard, AWS::Logs::MetricFilter, AWS::RUM::AppMonitor or AWS::Synthetics::Canary, so they go through Cloud Control API
+- Note: Also checked in the published tarball's dist. No cdkd command was run against AWS.
+
+### Resource types that support Cloud Control API
+
+- ID: `cloud-control-supported-resources`
+- URL: <https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - AWS::CloudWatch::Dashboard, AWS::Logs::MetricFilter, AWS::RUM::AppMonitor and AWS::Synthetics::Canary are listed as supported
+
+### @opentelemetry/api 1.9.1 and @opentelemetry/sdk-trace-node 2.12.0 (npm tarballs)
+
+- ID: `opentelemetry-js-npm`
+- URL: <https://www.npmjs.com/package/@opentelemetry/api/v/1.9.1>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Without a registered SDK the API returns no-op tracers and spans
+  - A caller's API version is accepted when the registered global has the same major version and an equal or higher minor version; otherwise the caller gets the no-op implementation
+  - NodeTracerProvider.register() installs an AsyncLocalStorage context manager and the W3C trace context propagator
+- Note: Read from build/src/internal/semver.js and the type definitions of the installed packages.
+
+### Cloudflare Workers Logs
+
+- ID: `cloudflare-workers-logs`
+- URL: <https://developers.cloudflare.com/workers/observability/logs/workers-logs/>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - New Workers have observability enabled by default, and JSON logs have their fields extracted and indexed
+  - Retention is at most 7 days; the paid plan includes 20 million log events a month and charges USD 0.60 per additional million
+  - From December 1, 2026, Workers Logs moves to Cloudflare Observability pricing
+
+### Cloudflare Workers tracing
+
+- ID: `cloudflare-workers-traces`
+- URL: <https://developers.cloudflare.com/workers/observability/traces/>
+- Checked: 2026-10-12
+- Chapters: 19
+- Claims this source supports:
+  - Tracing is enabled in the Wrangler configuration and instruments Workers without code changes or an SDK; it is in beta
+  - The default head sampling rate is 1 (every request); head_sampling_rate lowers it
+  - Traces are kept for seven days and can be exported to an OpenTelemetry endpoint
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### Security best practices in IAM
@@ -3159,24 +3614,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html>
 - Claims this source supports:
   - Service overview
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### CloudWatch RUM
-
-- ID: `cloudwatch-rum`
-- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-RUM.html>
-- Chapters: 19
-- Claims this source supports:
-  - Real-user monitoring
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### X-Ray SDK and daemon support timeline
-
-- ID: `xray-sdk-timeline`
-- URL: <https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html>
-- Chapters: 19
-- Claims this source supports:
-  - The X-Ray SDKs and daemon move to maintenance; OpenTelemetry is recommended. The X-Ray service itself continues
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### What is Amazon Inspector?

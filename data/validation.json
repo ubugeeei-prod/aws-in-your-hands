@@ -929,6 +929,83 @@
         "ja": "distribution、Lambda の関数と function URL、bucket を作る",
         "en": "Creates a distribution, a Lambda function with a function URL, and a bucket"
       }
+    },
+    {
+      "scope": "19",
+      "command": "vp run test:unit (examples/19-observability)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "実際に書かれるログの形と大きさ、ログの query と metric filter の条件を本物のログ行で評価、traceparent と X-Ray の trace ID の変換、span とログの相互参照、属性の許可リスト、sampling されない要求と欠けた span の再現、アラームの条件、料金計算の入力、インフラの assertion",
+        "en": "The shape and size of the lines really written, log queries and the metric filter condition evaluated on real lines, traceparent and X-Ray trace ID conversion, cross-references between spans and log lines, the attribute allow-list, unsampled requests and a lost span reproduced, the alarm conditions, the pricing inputs, and infrastructure assertions"
+      }
+    },
+    {
+      "scope": "19",
+      "command": "vp run dev:obs + curl",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "本文の curl を実行。ログの行に traceId が付くこと、span がコンソールに出ること、traceparent を付けた要求が同じ trace ID を引き継ぐこと、TRACE_SAMPLE_RATIO=0 で span が出ずログは残ることを確認",
+        "en": "Ran the curl commands from the chapter: log lines carry a traceId, spans are printed to the console, a request with traceparent continues that trace ID, and with TRACE_SAMPLE_RATIO=0 no span is printed while the log line remains"
+      }
+    },
+    {
+      "scope": "19",
+      "command": "vp run obs:query:print",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "Logs Insights の query の文字列を出力するだけ。AWS には問い合わせない",
+        "en": "Prints the text of a Logs Insights query. Makes no call to AWS"
+      }
+    },
+    {
+      "scope": "19",
+      "command": "vp run obs:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "関数を OpenTelemetry の API ごと esbuild で bundle。-c otelLayerArn を付けた場合も synth できることを確認。AWS には問い合わせない",
+        "en": "Bundles the function, the OpenTelemetry API included, with esbuild. Also synthesized with -c otelLayerArn. Makes no call to AWS"
+      }
+    },
+    {
+      "scope": "19",
+      "command": "vp run obs:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "DynamoDB の table、Lambda、HTTP API、SNS の topic、アラーム 2 つ、ダッシュボード、metric filter を作る。ダッシュボードと metric filter は cdkd が Cloud Control API 経由で扱う",
+        "en": "Creates a DynamoDB table, a Lambda function, an HTTP API, an SNS topic, two alarms, a dashboard and a metric filter. cdkd handles the dashboard and the metric filter through Cloud Control API"
+      }
+    },
+    {
+      "scope": "19",
+      "command": "vp run obs:smoke / obs:query / obs:alarms",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "デプロイ済みの stack が必要。obs:smoke はノートを 1 件作って消す。obs:query は走査したログの量に課金される",
+        "en": "Need the deployed stack. obs:smoke creates and deletes one note. obs:query is billed by the amount of log data scanned"
+      }
+    },
+    {
+      "scope": "19",
+      "command": "vp run obs:infra:deploy -c otelLayerArn=...",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "AWS Lambda Layer for OpenTelemetry を付けた構成。Node.js 24 の runtime はこの layer の対応一覧に無い",
+        "en": "The configuration with the AWS Lambda Layer for OpenTelemetry. The Node.js 24 runtime is not in the layer's list of supported runtimes"
+      }
     }
   ],
   "open": [
@@ -1359,6 +1436,61 @@
       "resume": {
         "ja": "著者が方針を決める（session を DynamoDB に置き、POST の入口を API Gateway にする、など）。決まったら examples/09-ssr に実装し、ssr:smoke に本物の session での検査を足す。",
         "en": "The author decides the approach (for example, sessions in DynamoDB and API Gateway as the POST entry point). Once decided, implement it in examples/09-ssr and add a check with a real session to ssr:smoke."
+      }
+    },
+    {
+      "id": "obs-lambda-json-log-shape",
+      "summary": {
+        "ja": "Lambda の JSON ログ形式で、アプリが console.log に渡した JSON の行が、そのままの形で CloudWatch Logs に入るかを実機で確かめていない。metric filter の JSON pattern と Logs Insights の項目名がこれに依存する。",
+        "en": "Not checked in AWS: that under Lambda's JSON log format the JSON line the application passes to console.log reaches CloudWatch Logs unchanged. The metric filter's JSON pattern and the field names in the Logs Insights queries depend on it."
+      },
+      "resume": {
+        "ja": "vp run obs:infra:deploy、vp run obs:smoke の後、vp run obs:query --name request --id <x-request-id> を実行する。行が見つかり、status などの項目が取れること、NoteConflicts にデータ点が出ることを確かめる。形が違えば、src/compose.ts の出力先を process.stdout に替えるか、query の項目名を直す。",
+        "en": "After vp run obs:infra:deploy and vp run obs:smoke, run vp run obs:query --name request --id <x-request-id>. Check that the lines are found with fields such as status, and that NoteConflicts gets a data point. If the shape differs, write through process.stdout in src/compose.ts or change the field names in the queries."
+      }
+    },
+    {
+      "id": "obs-otel-layer-node24",
+      "summary": {
+        "ja": "AWS Lambda Layer for OpenTelemetry を Node.js 24 の関数に付けた構成を動かしていない。ADOT のドキュメントの対応 runtime は Node.js 22 まで。esbuild で bundle した ESM の関数で、手書きの span が layer の SDK に届くか、AWS SDK の自動計装が効くか、実行 role の権限が xray:PutTraceSegments で足りるかも未確認。",
+        "en": "The configuration with the AWS Lambda Layer for OpenTelemetry on a Node.js 24 function has not been run. The ADOT documentation lists runtimes up to Node.js 22. Also unconfirmed for an ESM function bundled by esbuild: whether hand-written spans reach the layer's SDK, whether the AWS SDK auto-instrumentation takes effect, and whether xray:PutTraceSegments on the execution role is enough."
+      },
+      "resume": {
+        "ja": "ADOT のドキュメントの Node.js の表から東京リージョンの layer の ARN を取り、vp run obs:infra:deploy -c otelLayerArn=<ARN> を実行する。vp run obs:smoke の後、X-Ray の画面で notes.* の span が Lambda の segment の下に出るか確かめる。出なければ、関数のログで layer のエラーを探し、runtime を nodejs22.x にして比べる。",
+        "en": "Take the Tokyo layer ARN from the Node.js table in the ADOT documentation and run vp run obs:infra:deploy -c otelLayerArn=<ARN>. After vp run obs:smoke, check in the X-Ray console that notes.* spans appear under Lambda's segment. If not, look for layer errors in the function's log and compare with the nodejs22.x runtime."
+      }
+    },
+    {
+      "id": "obs-alarm-behavior",
+      "summary": {
+        "ja": "アラームの実際の状態遷移を確かめていない。metric math の IF の式が受け付けられること、リクエストが無い間に 5xx と Count のデータ点が欠損になること、SNS の通知が届くことは、ドキュメントからの読み取り。",
+        "en": "The alarms' real state changes have not been observed. That the metric math IF expression is accepted, that 5xx and Count have no data points while there are no requests, and that the SNS notification arrives are read from the documentation."
+      },
+      "resume": {
+        "ja": "vp run obs:infra:deploy -c alarmEmail=<自分のアドレス> の後、届いた確認メールを承認し、vp run obs:alarms で状態を見る。5xx を起こすには、table の権限を一時的に外す変更を別の branch で deploy するなど、練習用アカウントで行う。",
+        "en": "After vp run obs:infra:deploy -c alarmEmail=<your address>, confirm the subscription mail and check the states with vp run obs:alarms. To cause 5xx responses, deploy a change that temporarily removes the table permission, from another branch and in a practice account."
+      }
+    },
+    {
+      "id": "obs-cdkd-cloud-control",
+      "summary": {
+        "ja": "cdkd 0.296.28 は AWS::CloudWatch::Dashboard と AWS::Logs::MetricFilter を Cloud Control API 経由で扱う。作成、更新、drift の読み戻しが実際に動くかは未確認。",
+        "en": "cdkd 0.296.28 handles AWS::CloudWatch::Dashboard and AWS::Logs::MetricFilter through Cloud Control API. Whether create, update and drift read-back work in practice is unconfirmed."
+      },
+      "resume": {
+        "ja": "vp run obs:infra:deploy と vp run obs:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
+        "en": "Run vp run obs:infra:deploy and vp run obs:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool."
+      }
+    },
+    {
+      "id": "obs-pricing-gaps",
+      "summary": {
+        "ja": "ダッシュボードの単価（4 つ目から）、Lambda が JSON 形式で書くシステムログの大きさ、layer 経由で送った span が X-Ray の trace として課金されるのかを確認できていない。",
+        "en": "Not confirmed: the price of a dashboard beyond the third, the size of the system log lines Lambda writes in the JSON format, and whether spans sent through the layer are billed as X-Ray traces."
+      },
+      "resume": {
+        "ja": "料金ページを JavaScript が動くブラウザで開いてダッシュボードの単価を読む。デプロイ後、Logs Insights で 1 リクエストあたりの @message の合計バイト数を測り、data/fragments/19.json の仮定を直す。数日後に Cost Explorer の usage type を見る。",
+        "en": "Open the pricing page in a browser that runs JavaScript and read the dashboard price. After deploying, measure the total bytes of @message per request with Logs Insights and correct the assumption in data/fragments/19.json. A few days later, look at the usage types in Cost Explorer."
       }
     }
   ]

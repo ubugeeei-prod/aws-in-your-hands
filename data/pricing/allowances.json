@@ -103,6 +103,54 @@
       "kind": "always-free",
       "sourceId": "lambda-pricing",
       "note": "GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100)."
+    },
+    {
+      "priceId": "cloudwatch.metric.custom",
+      "quantity": 10,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "Metrics. From the Global-CW:MetricMonitorUsage USD 0 tier; the pricing page lists 10 custom and detailed monitoring metrics."
+    },
+    {
+      "priceId": "cloudwatch.alarm.standard",
+      "quantity": 10,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "Alarm metrics. From the Global-CW:AlarmMonitorUsage USD 0 tier; standard-resolution alarms that list metrics directly."
+    },
+    {
+      "priceId": "logs.insights.scanned",
+      "quantity": 5,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "GB. From the Global-DataScanned-Bytes USD 0 tier."
+    },
+    {
+      "priceId": "cloudwatch.synthetics.run",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch-observability",
+      "note": "Runs. From the Global-CW:Canary-runs USD 0 tier."
+    },
+    {
+      "priceId": "xray.trace.recorded",
+      "quantity": 100000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-xray",
+      "note": "Traces. From the Global-XRay-TracesStored USD 0 tier."
+    },
+    {
+      "priceId": "xray.trace.retrieved",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-xray",
+      "note": "Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces."
     }
   ],
   "unknown": [
@@ -169,6 +217,10 @@
     {
       "priceId": "s3.request.tier2",
       "reason": "No always-free S3 request allowance was confirmed; none is applied."
+    },
+    {
+      "priceId": "cloudwatch.rum.event",
+      "reason": "The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied."
     }
   ]
 }

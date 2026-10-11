@@ -97,6 +97,13 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 09 | `vp run ssr:infra:synth` | local | passed | 2026-10-11 | Synthesized with cdkd. The template has the function URL (AWS_IAM), the OAC, two Lambda::Permission resources, the cache policy, and the response headers policy |
 | 09 | `vp run dev:ssr + HTTP requests` | local | passed | 2026-10-11 | Started with AIH_SSR_SIGN_IN=dev and checked public pages, the 404, /me, sign-in, sign-out, the 403 for a cross-site POST, and /feed arriving in three chunks. Not exercised in a browser |
 | 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | not run | - | Creates a distribution, a Lambda function with a function URL, and a bucket |
+| 19 | `vp run test:unit (examples/19-observability)` | local | passed | 2026-10-12 | The shape and size of the lines really written, log queries and the metric filter condition evaluated on real lines, traceparent and X-Ray trace ID conversion, cross-references between spans and log lines, the attribute allow-list, unsampled requests and a lost span reproduced, the alarm conditions, the pricing inputs, and infrastructure assertions |
+| 19 | `vp run dev:obs + curl` | local | passed | 2026-10-12 | Ran the curl commands from the chapter: log lines carry a traceId, spans are printed to the console, a request with traceparent continues that trace ID, and with TRACE_SAMPLE_RATIO=0 no span is printed while the log line remains |
+| 19 | `vp run obs:query:print` | local | passed | 2026-10-12 | Prints the text of a Logs Insights query. Makes no call to AWS |
+| 19 | `vp run obs:infra:synth` | local | passed | 2026-10-12 | Bundles the function, the OpenTelemetry API included, with esbuild. Also synthesized with -c otelLayerArn. Makes no call to AWS |
+| 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table, a Lambda function, an HTTP API, an SNS topic, two alarms, a dashboard and a metric filter. cdkd handles the dashboard and the metric filter through Cloud Control API |
+| 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | not run | - | Need the deployed stack. obs:smoke creates and deletes one note. obs:query is billed by the amount of log data scanned |
+| 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | not run | - | The configuration with the AWS Lambda Layer for OpenTelemetry. The Node.js 24 runtime is not in the layer's list of supported runtimes |
 
 ## Open items and how to resume
 
@@ -333,3 +340,33 @@ To resume: Run vp run ssr:infra:deploy and ssr:infra:drift. If they fail, record
 Chapter 09's BFF (sign-in, sessions, holding the token) works only locally: sessions sit in process memory, sign-in is a POST, and a function URL with OAC does not pass a browser form POST as it is. That a deployed environment returns each cookie holder their own page was not checked.
 
 To resume: The author decides the approach (for example, sessions in DynamoDB and API Gateway as the POST entry point). Once decided, implement it in examples/09-ssr and add a check with a real session to ssr:smoke.
+
+### obs-lambda-json-log-shape
+
+Not checked in AWS: that under Lambda's JSON log format the JSON line the application passes to console.log reaches CloudWatch Logs unchanged. The metric filter's JSON pattern and the field names in the Logs Insights queries depend on it.
+
+To resume: After vp run obs:infra:deploy and vp run obs:smoke, run vp run obs:query --name request --id <x-request-id>. Check that the lines are found with fields such as status, and that NoteConflicts gets a data point. If the shape differs, write through process.stdout in src/compose.ts or change the field names in the queries.
+
+### obs-otel-layer-node24
+
+The configuration with the AWS Lambda Layer for OpenTelemetry on a Node.js 24 function has not been run. The ADOT documentation lists runtimes up to Node.js 22. Also unconfirmed for an ESM function bundled by esbuild: whether hand-written spans reach the layer's SDK, whether the AWS SDK auto-instrumentation takes effect, and whether xray:PutTraceSegments on the execution role is enough.
+
+To resume: Take the Tokyo layer ARN from the Node.js table in the ADOT documentation and run vp run obs:infra:deploy -c otelLayerArn=<ARN>. After vp run obs:smoke, check in the X-Ray console that notes.* spans appear under Lambda's segment. If not, look for layer errors in the function's log and compare with the nodejs22.x runtime.
+
+### obs-alarm-behavior
+
+The alarms' real state changes have not been observed. That the metric math IF expression is accepted, that 5xx and Count have no data points while there are no requests, and that the SNS notification arrives are read from the documentation.
+
+To resume: After vp run obs:infra:deploy -c alarmEmail=<your address>, confirm the subscription mail and check the states with vp run obs:alarms. To cause 5xx responses, deploy a change that temporarily removes the table permission, from another branch and in a practice account.
+
+### obs-cdkd-cloud-control
+
+cdkd 0.296.28 handles AWS::CloudWatch::Dashboard and AWS::Logs::MetricFilter through Cloud Control API. Whether create, update and drift read-back work in practice is unconfirmed.
+
+To resume: Run vp run obs:infra:deploy and vp run obs:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool.
+
+### obs-pricing-gaps
+
+Not confirmed: the price of a dashboard beyond the third, the size of the system log lines Lambda writes in the JSON format, and whether spans sent through the layer are billed as X-Ray traces.
+
+To resume: Open the pricing page in a browser that runs JavaScript and read the dashboard price. After deploying, measure the total bytes of @message per request with Logs Insights and correct the assumption in data/fragments/19.json. A few days later, look at the usage types in Cost Explorer.

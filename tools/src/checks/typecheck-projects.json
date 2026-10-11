@@ -15,5 +15,6 @@
   "examples/10-edge",
   "examples/13-sql",
   "examples/07-uploads",
-  "examples/09-ssr"
+  "examples/09-ssr",
+  "examples/19-observability"
 ]

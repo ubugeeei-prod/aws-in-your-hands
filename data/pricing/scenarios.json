@@ -1173,6 +1173,202 @@
           "basis": "5 MB, in GB-month"
         }
       ]
+    },
+    {
+      "id": "obs-idle",
+      "chapter": "19",
+      "title": {
+        "ja": "監視つきノート API: デプロイ済みで呼ばれない月",
+        "en": "Observed notes API: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ。ログ、trace、custom metric のデータ点はどれも発生しない",
+          "アラーム 2 つが参照するメトリクスは合計 3 つ（5xx の率が Count と 5xx、遅さが Latency）",
+          "ダッシュボード 1 つは無料枠（3 つまで、各 50 メトリクスまで）の内と仮定。4 つ目からの単価は確認できていないため、金額に含めていない",
+          "API、Lambda、DynamoDB そのものの料金は 04章と 05章の計算のとおりで、ここには含めていない"
+        ],
+        "en": [
+          "No requests: no log lines, no traces, and no data points for the custom metric",
+          "The two alarms refer to three metrics in total (Count and 5xx for the error rate, Latency for slowness)",
+          "The one dashboard is assumed to be within the free tier (3 dashboards of up to 50 metrics); the price beyond that could not be confirmed and is not included",
+          "The API, Lambda and DynamoDB themselves are priced in chapters 04 and 05 and are not included here"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "2 alarms listing 3 metrics"
+        }
+      ]
+    },
+    {
+      "id": "obs-small",
+      "chapter": "19",
+      "title": {
+        "ja": "監視つきノート API: 月 100 万リクエストの観測の料金",
+        "en": "Observed notes API: what observing 1,000,000 requests a month costs"
+      },
+      "assumptions": {
+        "ja": [
+          "1 リクエストあたりログ 1 KB。アプリの 1 行は実測で 255 バイト（trace の項目つき）、残りは Lambda が書く行で、JSON 形式での大きさは未計測の仮定",
+          "ログの保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定",
+          "リクエストが一定の間隔で届くと仮定。毎秒 0.38 件で、Lambda の既定の sampling（毎秒最初の 1 件と残りの 5%）では全件が trace になる。これは上限で、実際の到着が偏れば減る",
+          "1 つの trace に含まれる span の数は料金に影響しない（trace 単位の課金）と仮定",
+          "trace を画面で開くのは月 10,000 件、Logs Insights で調べるログは月 1 GB",
+          "custom metric は NoteConflicts の 1 つ、アラームが参照するメトリクスは 3 つ",
+          "ダッシュボードは無料枠の内と仮定。SNS の通知、API・Lambda・DynamoDB そのものの料金は未算入"
+        ],
+        "en": [
+          "1 KB of logs per request. The application's line measures 255 bytes with trace fields; the rest is what Lambda writes, whose size in the JSON format is an unmeasured assumption",
+          "7-day log retention; average stored volume assumed to be 7/30 of the monthly ingest",
+          "Requests assumed to arrive at a steady rate: 0.38 per second, so Lambda's default sampling (the first each second plus 5% of the rest) traces every one. This is the upper bound; uneven arrival lowers it",
+          "The number of spans in a trace is assumed not to change the price (charged per trace)",
+          "10,000 traces opened a month, and 1 GB of logs scanned by Logs Insights",
+          "One custom metric (NoteConflicts) and three metrics referred to by alarms",
+          "The dashboard is assumed to be within the free tier. SNS notifications and the API, Lambda and DynamoDB themselves are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.953674,
+          "basis": "1,000,000 x 1,024 bytes, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.222524,
+          "basis": "0.953674 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "logs.insights.scanned",
+          "quantity": 1,
+          "basis": "1 GB scanned by queries"
+        },
+        {
+          "priceId": "cloudwatch.metric.custom",
+          "quantity": 1,
+          "basis": "NoteConflicts"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "2 alarms listing 3 metrics"
+        },
+        {
+          "priceId": "xray.trace.recorded",
+          "quantity": 1000000,
+          "basis": "every request traced at 0.38 requests per second"
+        },
+        {
+          "priceId": "xray.trace.retrieved",
+          "quantity": 10000,
+          "basis": "10,000 traces opened"
+        }
+      ]
+    },
+    {
+      "id": "obs-one-more-line",
+      "chapter": "19",
+      "title": {
+        "ja": "ログを 1 行増やす: 月 100 万リクエスト",
+        "en": "One more log line per request: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "増やす 1 行はリクエストの行と同じ 167 バイト（実測。trace の項目なし）",
+          "保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定"
+        ],
+        "en": [
+          "The added line is 167 bytes, the measured size of the request line without trace fields",
+          "7-day retention; average stored volume assumed to be 7/30 of the monthly ingest"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.15553,
+          "basis": "1,000,000 x 167 bytes, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.03629,
+          "basis": "0.15553 GB x 7/30, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "obs-one-more-metric",
+      "chapter": "19",
+      "title": {
+        "ja": "メトリクスを 1 つ増やす",
+        "en": "One more custom metric"
+      },
+      "assumptions": {
+        "ja": [
+          "dimension なしの custom metric を 1 つ、毎時間データ点が届く状態で 1 か月",
+          "dimension を付けると、値の組み合わせ 1 つごとに 1 メトリクスと数える"
+        ],
+        "en": [
+          "One custom metric without dimensions, receiving data points every hour for a month",
+          "With dimensions, every distinct combination of values counts as one metric"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.metric.custom",
+          "quantity": 1,
+          "basis": "1 metric for a full month"
+        }
+      ]
+    },
+    {
+      "id": "obs-canary-5min",
+      "chapter": "19",
+      "title": {
+        "ja": "Synthetics: 5 分ごとの canary 1 つ",
+        "en": "Synthetics: one canary every 5 minutes"
+      },
+      "assumptions": {
+        "ja": ["730 時間 x 毎時 12 回 = 8,760 回の実行", "canary が使う Lambda、S3、ログ、メトリクスの料金は未算入"],
+        "en": [
+          "730 hours x 12 runs an hour = 8,760 runs",
+          "The Lambda, S3, log and metric charges a canary incurs are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.synthetics.run",
+          "quantity": 8760,
+          "basis": "730 h x 12 runs"
+        }
+      ]
+    },
+    {
+      "id": "obs-rum-small",
+      "chapter": "19",
+      "title": {
+        "ja": "RUM: 月 1 万回の訪問を全件収集",
+        "en": "RUM: 10,000 visits a month, all collected"
+      },
+      "assumptions": {
+        "ja": [
+          "1 回の訪問で 20 イベント（料金ページの計算例と同じ数）、session の収集率 100%",
+          "初回の無料トライアル（100 万イベント、1 回限り）は引いていない"
+        ],
+        "en": [
+          "20 events per visit (the number in the pricing page's example), 100% of sessions collected",
+          "The one-time free trial of 1 million events is not deducted"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.rum.event",
+          "quantity": 200000,
+          "basis": "10,000 visits x 20 events"
+        }
+      ]
     }
   ]
 }
