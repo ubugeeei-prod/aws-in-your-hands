@@ -586,6 +586,55 @@ ID: `uploads-small` / 章: [07 画像をアップロードする: presigned URL 
 - 毎月の無料枠適用後の小計: **USD 11.67** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`, `s3.standard.storage`, `datatransfer.out.internet`, `s3.request.tier1`, `s3.request.tier2`
 
+## SSR: デプロイ済みで誰も来ない月
+
+ID: `ssr-idle` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
+
+前提:
+
+- リクエストゼロ、publish ゼロ
+- bucket に 5 MB の静的 asset
+- log は 1 週間で失効し、保存量ゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB stored for the month, in GB-month | 0.000125 | - | 0.000125 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+
+## SSR: 月 10 万ページビュー
+
+ID: `ssr-small` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
+
+前提:
+
+- 1 ページビューあたり CloudFront へ平均 4 リクエスト（HTML か API の JSON が 1、asset が平均 3）、合計 100 KB と仮定
+- すべて日本の edge から配信、HTTPS
+- HTML と API の 10 万リクエストのうち、半分が CloudFront の cache で返り、残り 5 万が Lambda に届くと仮定
+- Lambda は平均 200 ms、512 MB、arm64、buffered。200 ms は仮定で、計測値ではない
+- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く START/END/REPORT 行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
+- asset の 30 万リクエストのうち 1/10 が S3 に届くと仮定
+- publish は月 10 回、各 20 object を PUT。bucket に 5 MB
+- Lambda から CloudFront へのデータ転送、標準ログ、WAF、独自ドメインは含めていない（未算入）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudfront.jp.request.https` | 400,000 | Requests | 100,000 page views x 4 requests | 0.48 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 9.537 | GB | 100,000 page views x 100 KB, in GB | 1.09 | 1,024 | 0 |
+| `lambda.request.arm` | 50,000 | Requests | half of 100,000 HTML and API requests | 0.01 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 5,000 | Lambda-GB-Second | 50,000 x 0.2 s x 0.5 GB, in GB-seconds | 0.07 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.014 | GB | 50,000 x 0.3 KB, in GB | 0.01 | 5 | 0 |
+| `logs.storage` | 0.003 | GB-Mo | 0.0143 GB x 7/30, in GB-month | 0.000109 | 5 | 0 |
+| `s3.request.tier2` | 30,000 | Requests | one tenth of 300,000 asset requests reach S3 as GET | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 200 | Requests | 10 publishes x 20 PUTs | 0.000940 | - | 0.000940 |
+| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB, in GB-month | 0.000125 | - | 0.000125 |
+
+- 定価の小計: **USD 1.67** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -640,6 +689,7 @@ ID: `uploads-small` / 章: [07 画像をアップロードする: presigned URL 
 | `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
 | `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
 | `datatransfer.out.internet` | ap-northeast-1 | APN1-DataTransfer-Out-Bytes | GB | 0 - 10,240: 0.1140000000<br>10,240 - 51,200: 0.0890000000<br>51,200 - 153,600: 0.0860000000<br>153,600 - ∞: 0.0840000000 | 2026-09-16 | 2026-10-11 |
+| `lambda.streaming.arm` | ap-northeast-1 | APN1-Lambda-Streaming-Response-Processed-Bytes-ARM | Processed-Gigabytes | 0 - ∞: 0.0080000000 | 2026-10-09 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -659,6 +709,7 @@ ID: `uploads-small` / 章: [07 画像をアップロードする: presigned URL 
 | `cloudfront.kvs.read` | 2,000,000 | `cloudfront-pricing-payg` | Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only. |
 | `dsql.dpu` | 100,000 | `dsql-pricing` | First 100,000 DPUs each month. The pricing page does not say whether it expires. |
 | `dsql.storage` | 1 | `dsql-pricing` | First GB of storage each month. The pricing page does not say whether it expires. |
+| `lambda.streaming.arm` | 100 | `lambda-pricing` | GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100). |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 

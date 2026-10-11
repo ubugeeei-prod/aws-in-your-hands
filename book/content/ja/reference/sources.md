@@ -57,23 +57,12 @@ generated: true
   - Flat-rate plans cannot be combined with other offers or discounts
 - 注記: Which features and origins each plan allows, and CloudFormation/CDK support for selecting a plan, were not verified. The book's examples use pay-as-you-go.
 
-### AWS Lambda pricing
-
-- ID: `lambda-pricing`
-- URL: <https://aws.amazon.com/lambda/pricing/>
-- 確認日: 2026-10-11
-- 参照する章: 04, 17
-- この出典が支える主張:
-  - Free tier: 1,000,000 requests and 400,000 GB-seconds per month
-  - Response streaming: first 6 MB per request free, then per GB
-- 注記: The page does not say whether the free tier expires.
-
 ### AWS Price List bulk API: Lambda, ap-northeast-1
 
 - ID: `aws-price-list-lambda`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 04, 17
+- 参照する章: 04, 09, 17
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AWSLambda
 
@@ -92,7 +81,7 @@ generated: true
 - ID: `aws-price-list-s3`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 03, 07
+- 参照する章: 03, 07, 09
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonS3
 
@@ -111,7 +100,7 @@ generated: true
 - ID: `aws-price-list-cloudfront`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 03, 10
+- 参照する章: 03, 09, 10
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudFront
 
@@ -192,7 +181,7 @@ generated: true
 - ID: `apigw-http-vs-rest`
 - URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html>
 - 確認日: 2026-10-11
-- 参照する章: 04
+- 参照する章: 04, 09
 - この出典が支える主張:
   - HTTP APIs are designed with minimal features so that they can be offered at a lower price
   - REST API only: AWS WAF, API keys, per-client throttling, request validation, caching, private endpoints, X-Ray tracing, response streaming
@@ -1159,19 +1148,6 @@ generated: true
   - Model inference is controlled by per-model quotas on token usage
   - The quotas that apply to an account can be lower than the published defaults; Service Quotas shows the applied values
 
-### Response streaming for Lambda functions
-
-- ID: `lambda-response-streaming`
-- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html>
-- 確認日: 2026-10-11
-- 参照する章: 09, 17
-- この出典が支える主張:
-  - Streaming is available through function URLs, InvokeWithResponseStream, and API Gateway proxy integrations
-  - A streamed response is not interrupted when the client disconnects, and the full function duration is billed
-  - Node.js managed runtimes support response streaming natively
-  - Streamed payloads can be up to 200 MB; the first 6 MB is not rate limited
-  - Function URLs do not support response streaming for a function in a VPC
-
 ### Writing response streaming-enabled Lambda functions
 
 - ID: `lambda-response-streaming-write`
@@ -1180,17 +1156,6 @@ generated: true
 - 参照する章: 17
 - この出典が支える主張:
   - A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides
-
-### Control access to Lambda function URLs
-
-- ID: `lambda-urls-auth`
-- URL: <https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - AuthType is AWS_IAM or NONE
-  - With AWS_IAM, a caller in the same account needs lambda:InvokeFunctionUrl and lambda:InvokeFunction in an identity policy or in the function's resource-based policy
-  - With NONE, anyone with the URL can invoke the function once the resource-based policy grants public access
 
 ### Stream the integration response for your proxy integrations in API Gateway
 
@@ -1869,7 +1834,7 @@ generated: true
 - ID: `cloudfront-pricing-payg`
 - URL: <https://aws.amazon.com/cloudfront/pricing/pay-as-you-go/>
 - 確認日: 2026-10-11
-- 参照する章: 03, 10
+- 参照する章: 03, 09, 10
 - この出典が支える主張:
   - Always-free each month: 1 TB data transfer out, 10,000,000 HTTP/HTTPS requests, 2,000,000 CloudFront Function invocations, 2,000,000 KeyValueStore reads
   - First 1,000 invalidation paths per month are free, then USD 0.005 per path
@@ -1934,7 +1899,7 @@ generated: true
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - 確認日: 2026-10-11
-- 参照する章: 02, 03, 04, 05, 06, 07, 10, 17
+- 参照する章: 02, 03, 04, 05, 06, 07, 09, 10, 17
 - この出典が支える主張:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -2711,6 +2676,247 @@ generated: true
 - この出典が支える主張:
   - Lambda sets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN to the access keys obtained from the function's execution role
 - 注記: The page does not say how long these credentials stay valid.
+
+### nuxt 4.6.1 (npm registry metadata and tarball)
+
+- ID: `nuxt-npm`
+- URL: <https://www.npmjs.com/package/nuxt/v/4.6.1>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - 4.6.1 was the `latest` dist-tag on 2026-10-11
+  - Its server builder @nuxt/nitro-server 4.6.1 depends on nitropack ^2.13.4 (Nitro 2, not the nitro 3 beta)
+  - engines.node is ^22.22.3 || ^24.15.0 || >=26.0.0
+  - `nuxt build` with the aws-lambda preset writes .output/server (handler and traced node_modules), .output/public/_nuxt, and .output/nitro.json
+- 注記: The last item was observed by building examples/09-ssr. That Nuxt renders a page into one string before the handler writes it is an observation of the built handler (one write per page), not a documented guarantee.
+
+### nitropack 2.13.4 (npm tarball: dist/presets/aws-lambda)
+
+- ID: `nitropack-npm`
+- URL: <https://www.npmjs.com/package/nitropack/v/2.13.4>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - The preset is named `aws-lambda`; its only option is `awsLambda.streaming` (boolean, default false)
+  - With streaming false the entry exports `handler(event, context)` returning { statusCode, headers, cookies, body, isBase64Encoded }
+  - With streaming true the entry is `awslambda.streamifyResponse(...)`, writes metadata through `awslambda.HttpResponseStream.from`, and adds `Transfer-Encoding: chunked`
+  - Both entries rebuild the Cookie header from the event's `cookies` array and decode a base64 request body as UTF-8 text
+  - .output/nitro.json records the preset and `config.awsLambda.streaming`
+- 注記: Read from the installed package, dist/presets/aws-lambda/preset.mjs, types.d.ts, and runtime/aws-lambda{,-streaming}.mjs. The Nitro documentation site was not used as the basis.
+
+### @vizejs/nuxt 0.443.0 (npm tarball and local build)
+
+- ID: `vize-nuxt-npm`
+- URL: <https://www.npmjs.com/package/@vizejs/nuxt/v/0.443.0>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - `@vizejs/nuxt` is a Nuxt module with the config key `vize`; its peer range for nuxt is ^2.16.0 || ^3.0.0 || ^4.0.0
+  - With the module listed in `modules`, Nuxt 4.6.1 `nuxt dev` and `nuxt build` compiled the .vue files of examples/09-ssr
+  - `vize check` and `vize lint` ran on the Nuxt app directory with explicit imports from `nuxt/app`
+- 注記: The package depends on @nuxt/kit 3.11.2, whose c12 reports an unmet peer (magicast ^0.3.4, found 0.5.5) at install. The build and dev server worked regardless. Auto-imported composables were not used, so type checking them through Vize is unverified. `vize check` reported no error for the globally registered NuxtLink and NuxtPage components; whether it type-checks their props was not examined.
+
+### Restrict access to an AWS Lambda function URL origin
+
+- ID: `cloudfront-oac-lambda`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - To use OAC the function URL's AuthType must be AWS_IAM
+  - CloudFront needs lambda:InvokeFunctionUrl and lambda:InvokeFunction, granted to cloudfront.amazonaws.com with the distribution as source ARN
+  - For PUT or POST, the viewer must send the SHA256 of the body in x-amz-content-sha256; Lambda does not support unsigned payloads
+  - With signing behavior `always`, CloudFront signs every origin request; `no-override` passes a viewer Authorization header through instead
+
+### Control access to Lambda function URLs
+
+- ID: `lambda-urls-auth`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html>
+- 確認日: 2026-10-11
+- 参照する章: 09, 17
+- この出典が支える主張:
+  - AuthType AWS_IAM authenticates and authorizes requests with IAM; NONE performs no authentication
+  - Starting in October 2025, new function URLs require both lambda:InvokeFunctionUrl and lambda:InvokeFunction
+  - Without those permissions in the resource-based policy, callers get 403 Forbidden
+
+### Invoking Lambda function URLs
+
+- ID: `lambda-urls-invocation`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/urls-invocation.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - Function URL events and responses follow API Gateway payload format version 2.0
+  - Request cookies arrive in a `cookies` array; response cookies are returned in a `cookies` array
+
+### Invoking a response streaming enabled function using Lambda function URLs
+
+- ID: `lambda-furl-invoke-mode`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/config-rs-invoke-furls.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - InvokeMode BUFFERED is the default, uses the Invoke API, and has a 6 MB maximum payload
+  - InvokeMode RESPONSE_STREAM uses InvokeWithResponseStream and has a 200 MB maximum response payload
+- 注記: The page does not describe what a client receives when the invoke mode and the handler type disagree.
+
+### Select a method to invoke your Lambda function using an HTTP request
+
+- ID: `lambda-furl-vs-apigw`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/furls-http-invoke-decision.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - Function URLs have no charge beyond Lambda's own; authentication is IAM or none
+  - API Gateway adds authorizers, throttling, request validation, custom domain names, and WAF integration
+  - A function URL answers HTTP 429 once the function's concurrency limit is reached
+
+### Response streaming for Lambda functions
+
+- ID: `lambda-response-streaming`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html>
+- 確認日: 2026-10-11
+- 参照する章: 09, 17
+- この出典が支える主張:
+  - Streaming is available through function URLs, InvokeWithResponseStream, and the API Gateway proxy integration
+  - Streamed responses can be up to 200 MB; buffered ones up to 6 MB
+  - The first 6 MB is uncapped; the rest is limited to 2 MBps
+  - Managed Node.js runtimes support streaming
+  - A streamed response is not stopped when the client disconnects; the full duration is billed
+  - Function URLs do not support response streaming inside a VPC
+
+### Manage how long content stays in the cache (expiration)
+
+- ID: `cloudfront-expiration`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - With minimum TTL 0, CloudFront respects Cache-Control: no-cache, no-store, and private from the origin
+  - With minimum TTL above 0, CloudFront caches for the minimum TTL even when those directives are present
+  - With both max-age and s-maxage, CloudFront uses the lesser of s-maxage and the maximum TTL; browsers use max-age
+  - Without Cache-Control, CloudFront caches for the default TTL
+  - CloudFront supports stale-while-revalidate and stale-if-error, bounded by the maximum TTL
+
+### Understand cache policies
+
+- ID: `cloudfront-cache-policy`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cache-key-understand-cache-policy.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - Values in the cache key are automatically included in origin requests
+  - Cookies set to None are not in the cache key and not automatically sent to the origin
+  - Minimum, maximum, and default TTL all 0 disables caching
+
+### Cache content based on cookies
+
+- ID: `cloudfront-cookies`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Cookies.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - By default CloudFront ignores cookies and removes them before forwarding a request to the origin
+  - When cookies are forwarded, CloudFront caches Set-Cookie with the object and sends it on every cache hit
+  - With cookies not forwarded, CloudFront removes Set-Cookie from responses before returning them
+- 注記: The page is written in terms of the legacy forwarding settings. Whether Set-Cookie is removed under a cache policy with cookies set to None was not confirmed, which is why the stack also removes it with a response headers policy.
+
+### Understand response headers policies
+
+- ID: `cloudfront-response-headers-policy`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/understanding-response-headers-policies.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - Removed headers are removed from every response sent to viewers, whether served from the cache or from the origin
+  - Set-Cookie is not in the list of headers that cannot be removed
+
+### Serve compressed files
+
+- ID: `cloudfront-compression`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - CloudFront compresses only when the origin response has a Content-Length header, between 1,000 and 10,000,000 bytes
+  - A response with Content-Encoding is passed through uncompressed-by-CloudFront
+  - Compression needs Gzip or Brotli enabled in the cache policy
+
+### How CloudFront processes HTTP 4xx and 5xx status codes from your origin
+
+- ID: `cloudfront-error-caching`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - CloudFront caches 404, 414, and 5xx responses for the error caching minimum TTL, 10 seconds by default
+  - With the CachingDisabled managed policy, those status codes are not cached
+  - CloudFront caches responses to GET and HEAD, optionally OPTIONS, and no other method
+- 注記: How a `no-store` on a 404 interacts with the 10-second error caching minimum TTL is not stated plainly on the page.
+
+### Origin settings
+
+- ID: `cloudfront-origin-settings`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesOrigin.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - The default origin response timeout is 30 seconds
+
+### Working with Lambda environment variables
+
+- ID: `lambda-envvars`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - AWS_LAMBDA_FUNCTION_NAME is a defined runtime environment variable holding the function's name
+
+### MDN: Set-Cookie header
+
+- ID: `mdn-set-cookie`
+- URL: <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - HttpOnly forbids JavaScript from accessing the cookie
+  - SameSite=Lax sends the cookie on same-site requests and on a limited set of cross-site navigations
+  - A __Host- cookie must be Secure, set from HTTPS, have no Domain, and have Path=/
+
+### Cloudflare Workers: Nuxt
+
+- ID: `cloudflare-workers-nuxt`
+- URL: <https://developers.cloudflare.com/workers/framework-guides/web-apps/more-web-frameworks/nuxt/>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - `wrangler deploy` detects Nuxt and generates a configuration with main .output/server/index.mjs, assets directory .output/public, and the nodejs_compat flag
+  - Nuxt applications reach Cloudflare products through bindings, in local development and in production
+- 注記: How Workers static assets are cached and billed was not read for this chapter.
+
+### AWS Lambda pricing
+
+- ID: `lambda-pricing`
+- URL: <https://aws.amazon.com/lambda/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 04, 09, 17
+- この出典が支える主張:
+  - Free tier: 1,000,000 requests and 400,000 GB-seconds per month
+  - Response streaming: first 6 MB per request free, then per GB
+  - Response streaming is USD 0.008 per GB streamed, with 100 GB per month in the free tier
+- 注記: The page does not say whether the free tier expires. It lists no separate charge for function URLs.
+
+### aws-cdk-lib 2.273.0 (installed package and synthesized template)
+
+- ID: `aws-cdk-lib-npm`
+- URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
+- 確認日: 2026-10-11
+- 参照する章: 09
+- この出典が支える主張:
+  - `FunctionUrlOrigin.withOriginAccessControl` synthesizes an OAC of origin type lambda and two AWS::Lambda::Permission resources: lambda:InvokeFunctionUrl, and lambda:InvokeFunction with InvokedViaFunctionUrl true, both limited to the distribution's ARN
+  - `ResponseHeadersPolicy` accepts `removeHeaders`
+  - `CachePolicy.CACHING_DISABLED` is 4135ea2d-6df8-44a3-9df3-4b5a84be39ad and `OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER` is b689b0a8-53d0-40ab-baf2-68738e2966ac
+- 注記: Read from the type definitions and from cdk.out/AihSsr.template.json produced by `vp run ssr:infra:synth`.
 
 ## 未再確認の出典（後続章の調査の出発点）
 

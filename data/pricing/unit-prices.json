@@ -1278,6 +1278,27 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-16T13:22:08Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambda.streaming.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "SU5948MRY5A8GWNM",
+      "usageType": "APN1-Lambda-Streaming-Response-Processed-Bytes-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Processed-Gigabytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0080000000",
+          "description": "$0.008 per GiB for Lambda-Streaming-Response-Processed-Bytes-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

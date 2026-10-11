@@ -95,6 +95,14 @@
       "kind": "always-free",
       "sourceId": "dsql-pricing",
       "note": "First GB of storage each month. The pricing page does not say whether it expires."
+    },
+    {
+      "priceId": "lambda.streaming.arm",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "lambda-pricing",
+      "note": "GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100)."
     }
   ],
   "unknown": [

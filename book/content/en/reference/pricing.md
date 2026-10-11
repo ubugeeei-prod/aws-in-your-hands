@@ -586,6 +586,55 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 11.67** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`, `s3.standard.storage`, `datatransfer.out.internet`, `s3.request.tier1`, `s3.request.tier2`
 
+## SSR: deployed, but nobody visits for a month
+
+ID: `ssr-idle` / chapter: [09 SSR and a BFF: Nuxt on Regional Lambda](/en/chapters/09-ssr.md)
+
+Assumptions:
+
+- No requests and no publishes
+- 5 MB of static assets in the bucket
+- Logs expire after a week; nothing is stored
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB stored for the month, in GB-month | 0.000125 | - | 0.000125 |
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`
+
+## SSR: 100,000 page views a month
+
+ID: `ssr-small` / chapter: [09 SSR and a BFF: Nuxt on Regional Lambda](/en/chapters/09-ssr.md)
+
+Assumptions:
+
+- Each page view is assumed to be 4 requests to CloudFront on average (1 for HTML or API JSON, 3 for assets) and 100 KB in total
+- Served entirely from Japan edge locations over HTTPS
+- Of the 100,000 HTML and API requests, half are assumed answered from CloudFront's cache and 50,000 reach Lambda
+- Lambda averages 200 ms at 512 MB, arm64, buffered. The 200 ms is an assumption, not a measurement
+- 0.3 KB of logs per invocation (only Lambda's START/END/REPORT lines). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest
+- One tenth of the 300,000 asset requests are assumed to reach S3
+- 10 publishes a month, 20 object PUTs each. 5 MB in the bucket
+- Data transfer from Lambda to CloudFront, standard logging, WAF, and a custom domain are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudfront.jp.request.https` | 400,000 | Requests | 100,000 page views x 4 requests | 0.48 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 9.537 | GB | 100,000 page views x 100 KB, in GB | 1.09 | 1,024 | 0 |
+| `lambda.request.arm` | 50,000 | Requests | half of 100,000 HTML and API requests | 0.01 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 5,000 | Lambda-GB-Second | 50,000 x 0.2 s x 0.5 GB, in GB-seconds | 0.07 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.014 | GB | 50,000 x 0.3 KB, in GB | 0.01 | 5 | 0 |
+| `logs.storage` | 0.003 | GB-Mo | 0.0143 GB x 7/30, in GB-month | 0.000109 | 5 | 0 |
+| `s3.request.tier2` | 30,000 | Requests | one tenth of 300,000 asset requests reach S3 as GET | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 200 | Requests | 10 publishes x 20 PUTs | 0.000940 | - | 0.000940 |
+| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB, in GB-month | 0.000125 | - | 0.000125 |
+
+- List subtotal: **USD 1.67** / month
+- Subtotal after monthly free allowance: **USD 0.01** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -640,6 +689,7 @@ Assumptions:
 | `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
 | `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
 | `datatransfer.out.internet` | ap-northeast-1 | APN1-DataTransfer-Out-Bytes | GB | 0 - 10,240: 0.1140000000<br>10,240 - 51,200: 0.0890000000<br>51,200 - 153,600: 0.0860000000<br>153,600 - ∞: 0.0840000000 | 2026-09-16 | 2026-10-11 |
+| `lambda.streaming.arm` | ap-northeast-1 | APN1-Lambda-Streaming-Response-Processed-Bytes-ARM | Processed-Gigabytes | 0 - ∞: 0.0080000000 | 2026-10-09 | 2026-10-11 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -659,6 +709,7 @@ Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is rec
 | `cloudfront.kvs.read` | 2,000,000 | `cloudfront-pricing-payg` | Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only. |
 | `dsql.dpu` | 100,000 | `dsql-pricing` | First 100,000 DPUs each month. The pricing page does not say whether it expires. |
 | `dsql.storage` | 1 | `dsql-pricing` | First GB of storage each month. The pricing page does not say whether it expires. |
+| `lambda.streaming.arm` | 100 | `lambda-pricing` | GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100). |
 
 Allowances that could not be confirmed (treated as unknown, not as zero; nothing is deducted):
 

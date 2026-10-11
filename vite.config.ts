@@ -75,6 +75,7 @@ const chapterSynthTasks = [
   "edge:infra:synth",
   "sql:infra:synth",
   "uploads:infra:synth",
+  "ssr:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -89,6 +90,9 @@ const chapterCheckTasks = [
   "lint:uploads:web",
   "typecheck:uploads:web",
   "build:uploads:web",
+  "lint:ssr",
+  "typecheck:ssr",
+  "ssr:check:output",
 ];
 
 export default defineConfig({
@@ -276,6 +280,37 @@ export default defineConfig({
         cwd: "examples/07-uploads",
       }),
       // <<< chapter 07
+
+      // >>> chapter 09
+      // ---- chapter 09: SSR and a BFF ------------------------------------
+      // Nuxt's own dev server. No Docker, no AWS.
+      "dev:ssr": fresh("./node_modules/.bin/nuxt dev", { cwd: "examples/09-ssr" }),
+      // Never cached: the stack deploys whatever .output holds, so it has to be this checkout's build.
+      "build:ssr": fresh("./node_modules/.bin/nuxt build", { cwd: "examples/09-ssr" }),
+      // The same app with Nitro's streaming Lambda handler. Overwrites .output.
+      "build:ssr:stream": fresh("AIH_SSR_STREAMING=true ./node_modules/.bin/nuxt build", { cwd: "examples/09-ssr" }),
+      // Runs the built handler in this process and checks the headers it sends.
+      "ssr:check:output": fresh("node scripts/check-output.ts", { cwd: "examples/09-ssr", dependsOn: ["build:ssr"] }),
+      "ssr:check:output:stream": fresh("node scripts/check-output.ts", {
+        cwd: "examples/09-ssr",
+        dependsOn: ["build:ssr:stream"],
+      }),
+      "typecheck:ssr": { command: "../node_modules/.bin/vize check", cwd: "examples/09-ssr/app" },
+      "lint:ssr": { command: "../node_modules/.bin/vize lint . --preset essential", cwd: "examples/09-ssr/app" },
+      ...infra("ssr", "examples/09-ssr", "AihSsr"),
+      // Replaces the synth task from infra(): this stack needs the build to exist.
+      "ssr:infra:synth": fresh(`${node} tools/src/infra/cdkd.ts synth examples/09-ssr AihSsr`, {
+        dependsOn: ["build:ssr"],
+      }),
+      "ssr:assets:plan": live("node --env-file-if-exists=../../.env scripts/publish-assets.ts --dry-run", {
+        cwd: "examples/09-ssr",
+      }),
+      "ssr:assets:publish": live("node --env-file-if-exists=../../.env scripts/publish-assets.ts", {
+        cwd: "examples/09-ssr",
+      }),
+      "ssr:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/09-ssr" }),
+      "ssr:unpublish": live(`${node} tools/src/site/unpublish.ts examples/09-ssr AihSsr`),
+      // <<< chapter 09
 
       // ---- chapter task blocks are inserted above this line ----
 

@@ -852,6 +852,83 @@
         "ja": "bucket を 2 つ、user pool、distribution、table を作る。S3 への presigned POST、lifecycle rule、CORS、DynamoDB への添付の記録は、どれも実環境で未確認",
         "en": "Creates two buckets, a user pool, a distribution, and a table. The presigned POST to S3, the lifecycle rules, CORS, and attachment records in DynamoDB are all unconfirmed in AWS"
       }
+    },
+    {
+      "scope": "09",
+      "command": "vp run test:unit (examples/09-ssr)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "cache の判定、共有 cache 越しの漏れの再現、session、publish の計画、smoke の判定、CDK の assertion",
+        "en": "The cache decision, the leak replayed through a shared cache, sessions, the publish plan, the smoke verdicts, and the CDK assertions"
+      }
+    },
+    {
+      "scope": "09",
+      "command": "vp run typecheck / typecheck:ssr / lint:ssr",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "tsc で core、server、infra、scripts、test。Vize で app の .vue。わざと入れた型エラーで vize check が失敗することも確認",
+        "en": "tsc over core, server, infra, scripts, and test; Vize over the .vue files in app. A type error introduced on purpose made vize check fail"
+      }
+    },
+    {
+      "scope": "09",
+      "command": "vp run ssr:check:output (runs build:ssr first)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "Nuxt 4.6.1 と nitropack 2.13.4 の buffered な Lambda handler を function URL の形の event で呼び、ヘッダー、サインイン、共有 cache 越しの再現を確認。/feed は 1 回、HTML は 1 回で書かれた。Lambda では実行していない",
+        "en": "Called the buffered Lambda handler built by Nuxt 4.6.1 and nitropack 2.13.4 with function URL shaped events and checked headers, sign-in, and the replay through a shared cache. /feed and the HTML were each written in one write. Not run on Lambda"
+      }
+    },
+    {
+      "scope": "09",
+      "command": "vp run ssr:check:output:stream (runs build:ssr:stream first)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "awslambda を記録用の偽物に差し替えて streaming の handler を呼んだ。/feed は 3 回（約 300 ms おき）、HTML は 1 回で書かれた。Lambda の runtime、function URL、CloudFront は通していない",
+        "en": "Called the streaming handler with the awslambda global replaced by a recording fake. /feed was written in three writes about 300 ms apart, the HTML in one. The Lambda runtime, a function URL, and CloudFront were not involved"
+      }
+    },
+    {
+      "scope": "09",
+      "command": "vp run ssr:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "cdkd で synth。template に function URL（AWS_IAM）、OAC、2 つの Lambda::Permission、cache policy、response headers policy があることを確認",
+        "en": "Synthesized with cdkd. The template has the function URL (AWS_IAM), the OAC, two Lambda::Permission resources, the cache policy, and the response headers policy"
+      }
+    },
+    {
+      "scope": "09",
+      "command": "vp run dev:ssr + HTTP requests",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない",
+        "en": "Started with AIH_SSR_SIGN_IN=dev and checked public pages, the 404, /me, sign-in, sign-out, the 403 for a cross-site POST, and /feed arriving in three chunks. Not exercised in a browser"
+      }
+    },
+    {
+      "scope": "09",
+      "command": "vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "distribution、Lambda の関数と function URL、bucket を作る",
+        "en": "Creates a distribution, a Lambda function with a function URL, and a bucket"
+      }
     }
   ],
   "open": [
@@ -1238,6 +1315,50 @@
       "resume": {
         "ja": "presigned PUT と If-None-Match に替える（Content-Length の署名で大きさを固定できるかを先に実機で確かめる）か、許可証の期限後に tag をもう一度外す処理を足す。",
         "en": "Switch to a presigned PUT with If-None-Match (after confirming on real S3 that a signed Content-Length pins the size), or add a step that removes the tag again after the permit expires."
+      }
+    },
+    {
+      "id": "ssr-aws-path",
+      "summary": {
+        "ja": "09章の構成を AWS で一度も動かしていない。Nitro の handler が Node.js 24 の runtime と function URL で動くこと、OAC の署名を function URL が受け入れ直接のリクエストを断ること、cache policy と response headers policy が意図どおり働くこと、smoke が見る x-cache と age ヘッダーの実際の値、許可していない method への応答が未確認。",
+        "en": "The chapter 09 setup has never run in AWS. Unconfirmed: that Nitro's handler runs on the Node.js 24 runtime behind a function URL, that the function URL accepts OAC-signed requests and refuses direct ones, that the cache policy and the response headers policy behave as intended, the real values of the x-cache and age headers the smoke test reads, and the response to a method that is not allowed."
+      },
+      "resume": {
+        "ja": "vp run build:ssr、ssr:infra:deploy、ssr:assets:publish、ssr:smoke の順に実行する。smoke が落ちたら、判定（examples/09-ssr/scripts/smoke-spec.ts）と実際のヘッダーのどちらが違うのかを記録してから直す。終わったら ssr:unpublish --yes と ssr:infra:destroy。",
+        "en": "Run vp run build:ssr, ssr:infra:deploy, ssr:assets:publish, and ssr:smoke in that order. If the smoke test fails, record whether the verdict (examples/09-ssr/scripts/smoke-spec.ts) or the real headers differ before changing anything. Finish with ssr:unpublish --yes and ssr:infra:destroy."
+      }
+    },
+    {
+      "id": "ssr-streaming-path",
+      "summary": {
+        "ja": "response streaming が、Lambda、function URL（RESPONSE_STREAM）、CloudFront、ブラウザまで通して少しずつ届くかは未確認。stream した応答を CloudFront が圧縮しないこと、handler の形と InvokeMode が食い違ったときの応答も未確認。手元で確かめたのは Nitro の handler が書き込む回数と間隔だけ。",
+        "en": "Whether a streamed response arrives piece by piece across Lambda, the function URL (RESPONSE_STREAM), CloudFront, and a browser is unconfirmed. So are CloudFront not compressing a streamed response and what is returned when the handler's shape and InvokeMode disagree. Only the number and timing of the Nitro handler's writes were checked locally."
+      },
+      "resume": {
+        "ja": "vp run ssr:check:output:stream、ssr:assets:publish、ssr:infra:deploy のあと、curl -sN で /feed を、curl -s -o /dev/null -D - --compressed で / を取得し、行が届く間隔と content-encoding を記録する。function URL を直接ではなく distribution 経由で見ること。",
+        "en": "After vp run ssr:check:output:stream, ssr:assets:publish, and ssr:infra:deploy, fetch /feed with curl -sN and / with curl -s -o /dev/null -D - --compressed, and record the spacing of the lines and the content-encoding. Go through the distribution, not the function URL directly."
+      }
+    },
+    {
+      "id": "ssr-cdkd-cloudfront-policies",
+      "summary": {
+        "ja": "cdkd 0.296.28 は AWS::CloudFront::CachePolicy と AWS::CloudFront::ResponseHeadersPolicy に専用の実装を持たず、Cloud Control API 経由で扱う。作成、更新、drift の読み戻し、削除が実際に動くかは未確認。minTtl と defaultTtl が 0、maxTtl が 60 の cache policy で圧縮の設定を有効にできるかも未確認。",
+        "en": "cdkd 0.296.28 has no dedicated implementation for AWS::CloudFront::CachePolicy or AWS::CloudFront::ResponseHeadersPolicy and handles them through Cloud Control API. Whether create, update, drift read-back, and delete work in practice is unconfirmed, as is whether a cache policy with minTtl and defaultTtl of 0 and maxTtl of 60 accepts the compression settings."
+      },
+      "resume": {
+        "ja": "vp run ssr:infra:deploy と ssr:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
+        "en": "Run vp run ssr:infra:deploy and ssr:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool."
+      }
+    },
+    {
+      "id": "ssr-bff-deployed",
+      "summary": {
+        "ja": "09章の BFF（サインイン、session、token の保持）は手元でしか動かない。session がプロセスのメモリにあり、サインインが POST で、function URL と OAC の組み合わせがブラウザの form からの POST をそのままでは通さないため。デプロイした環境で「cookie を持つ人にその人のページが返る」ことは確かめていない。",
+        "en": "Chapter 09's BFF (sign-in, sessions, holding the token) works only locally: sessions sit in process memory, sign-in is a POST, and a function URL with OAC does not pass a browser form POST as it is. That a deployed environment returns each cookie holder their own page was not checked."
+      },
+      "resume": {
+        "ja": "著者が方針を決める（session を DynamoDB に置き、POST の入口を API Gateway にする、など）。決まったら examples/09-ssr に実装し、ssr:smoke に本物の session での検査を足す。",
+        "en": "The author decides the approach (for example, sessions in DynamoDB and API Gateway as the POST entry point). Once decided, implement it in examples/09-ssr and add a check with a real session to ssr:smoke."
       }
     }
   ]

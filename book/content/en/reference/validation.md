@@ -90,6 +90,13 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 07 | `vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck` | local | passed | 2026-10-11 | The same 19 resource types as chapter 06. The Cognito code path and scripts/ are type-checked only |
 | 07 | `S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation` | local | not run | - | No task is provided. It needs a Docker daemon, which was not running where this was written |
 | 07 | `vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish` | AWS | not run | - | Creates two buckets, a user pool, a distribution, and a table. The presigned POST to S3, the lifecycle rules, CORS, and attachment records in DynamoDB are all unconfirmed in AWS |
+| 09 | `vp run test:unit (examples/09-ssr)` | local | passed | 2026-10-11 | The cache decision, the leak replayed through a shared cache, sessions, the publish plan, the smoke verdicts, and the CDK assertions |
+| 09 | `vp run typecheck / typecheck:ssr / lint:ssr` | local | passed | 2026-10-11 | tsc over core, server, infra, scripts, and test; Vize over the .vue files in app. A type error introduced on purpose made vize check fail |
+| 09 | `vp run ssr:check:output (runs build:ssr first)` | local | passed | 2026-10-11 | Called the buffered Lambda handler built by Nuxt 4.6.1 and nitropack 2.13.4 with function URL shaped events and checked headers, sign-in, and the replay through a shared cache. /feed and the HTML were each written in one write. Not run on Lambda |
+| 09 | `vp run ssr:check:output:stream (runs build:ssr:stream first)` | local | passed | 2026-10-11 | Called the streaming handler with the awslambda global replaced by a recording fake. /feed was written in three writes about 300 ms apart, the HTML in one. The Lambda runtime, a function URL, and CloudFront were not involved |
+| 09 | `vp run ssr:infra:synth` | local | passed | 2026-10-11 | Synthesized with cdkd. The template has the function URL (AWS_IAM), the OAC, two Lambda::Permission resources, the cache policy, and the response headers policy |
+| 09 | `vp run dev:ssr + HTTP requests` | local | passed | 2026-10-11 | Started with AIH_SSR_SIGN_IN=dev and checked public pages, the 404, /me, sign-in, sign-out, the 403 for a cross-site POST, and /feed arriving in three chunks. Not exercised in a browser |
+| 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | not run | - | Creates a distribution, a Lambda function with a function URL, and a bucket |
 
 ## Open items and how to resume
 
@@ -302,3 +309,27 @@ To resume: Look for a figure in the official Lambda documentation. Failing that,
 Chapter 07: replaying the same form within the permit's lifetime (5 minutes) after finishing puts the object back to pending, and a day later only the record is left. Written up as a gap in the prose and in a test, and not closed.
 
 To resume: Switch to a presigned PUT with If-None-Match (after confirming on real S3 that a signed Content-Length pins the size), or add a step that removes the tag again after the permit expires.
+
+### ssr-aws-path
+
+The chapter 09 setup has never run in AWS. Unconfirmed: that Nitro's handler runs on the Node.js 24 runtime behind a function URL, that the function URL accepts OAC-signed requests and refuses direct ones, that the cache policy and the response headers policy behave as intended, the real values of the x-cache and age headers the smoke test reads, and the response to a method that is not allowed.
+
+To resume: Run vp run build:ssr, ssr:infra:deploy, ssr:assets:publish, and ssr:smoke in that order. If the smoke test fails, record whether the verdict (examples/09-ssr/scripts/smoke-spec.ts) or the real headers differ before changing anything. Finish with ssr:unpublish --yes and ssr:infra:destroy.
+
+### ssr-streaming-path
+
+Whether a streamed response arrives piece by piece across Lambda, the function URL (RESPONSE_STREAM), CloudFront, and a browser is unconfirmed. So are CloudFront not compressing a streamed response and what is returned when the handler's shape and InvokeMode disagree. Only the number and timing of the Nitro handler's writes were checked locally.
+
+To resume: After vp run ssr:check:output:stream, ssr:assets:publish, and ssr:infra:deploy, fetch /feed with curl -sN and / with curl -s -o /dev/null -D - --compressed, and record the spacing of the lines and the content-encoding. Go through the distribution, not the function URL directly.
+
+### ssr-cdkd-cloudfront-policies
+
+cdkd 0.296.28 has no dedicated implementation for AWS::CloudFront::CachePolicy or AWS::CloudFront::ResponseHeadersPolicy and handles them through Cloud Control API. Whether create, update, drift read-back, and delete work in practice is unconfirmed, as is whether a cache policy with minTtl and defaultTtl of 0 and maxTtl of 60 accepts the compression settings.
+
+To resume: Run vp run ssr:infra:deploy and ssr:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool.
+
+### ssr-bff-deployed
+
+Chapter 09's BFF (sign-in, sessions, holding the token) works only locally: sessions sit in process memory, sign-in is a POST, and a function URL with OAC does not pass a browser form POST as it is. That a deployed environment returns each cookie holder their own page was not checked.
+
+To resume: The author decides the approach (for example, sessions in DynamoDB and API Gateway as the POST entry point). Once decided, implement it in examples/09-ssr and add a check with a real session to ssr:smoke.

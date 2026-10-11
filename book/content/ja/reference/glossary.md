@@ -109,3 +109,8 @@ generated: true
 | Block Public Access | Block Public Access | 07 | ACL や bucket policy で bucket や object を公開する設定を、拒否または無効にする S3 の 4 つの設定。 |
 | 孤立した object | orphaned object | 07 | bucket にはあるが、それを指す記録がどこにも無い object。誰にも見えないまま、保存料金だけがかかる。 |
 | multipart upload | multipart upload | 07 | 大きな object を複数の part に分けて送る S3 の仕組み。完了も中止もされなかった part は、保存されたまま残る。 |
+| server-side rendering (SSR) | server-side rendering (SSR) | 09 | リクエストごとにサーバーで HTML を組み立てて返すこと。ブラウザは届いた HTML をまず表示し、そのあと JavaScript が引き継ぐ。 |
+| 共有 cache | shared cache | 09 | 1 つの応答を保存して、複数の利用者に返す cache。CDN がその例。ブラウザの中の cache は 1 人のものなので private cache と呼ぶ。 |
+| cache key | cache key | 09 | CloudFront が「同じリクエスト」とみなす基準。path に加えて、cache policy で選んだ query string、header、cookie からできる。 |
+| cache policy | cache policy | 09 | cache key に入れる値と、TTL の下限・既定・上限をまとめた CloudFront の設定。 |
+| backend for frontend (BFF) | backend for frontend (BFF) | 09 | ある画面のためだけに置くサーバー。ブラウザの代わりに token を持ち、裏の API を呼ぶ。 |

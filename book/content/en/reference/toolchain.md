@@ -32,6 +32,9 @@ The combination of versions this book's code was checked with (recorded 2026-10-
 | esbuild | 0.28.2 | pnpm | `package.json, pnpm-lock.yaml` |
 | Vize (vize, @vizejs/vite-plugin) | 0.443.0 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
 | DynamoDB Local (container image, not run yet) | amazon/dynamodb-local:3.3.1 | Docker, outside the Nix shell | `examples/05-dynamodb/scripts/local-db.ts` |
+| Nuxt (nuxt, @nuxt/nitro-server) | 4.6.1 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
+| Nitro (nitropack) and h3 | 2.13.4 and 1.15.11 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
+| Vize Nuxt module (@vizejs/nuxt) | 0.443.0 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 
 - Verified platforms: aarch64-darwin (macOS 26, Darwin 25.6.0)
 - Platforms with a Nix expression but no verification: x86_64-darwin, aarch64-linux, x86_64-linux

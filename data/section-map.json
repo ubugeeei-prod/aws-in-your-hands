@@ -1791,6 +1791,157 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "09.architecture",
+      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.nitro",
+      "sources": [
+        "examples/09-ssr/nuxt.config.ts",
+        "examples/09-ssr/scripts/lambda-harness.ts",
+        "examples/09-ssr/core/env.ts"
+      ],
+      "tasks": ["build:ssr", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.app",
+      "sources": [
+        "examples/09-ssr/app",
+        "examples/09-ssr/server/api",
+        "examples/09-ssr/server/context.ts",
+        "examples/09-ssr/core/notes.ts",
+        "examples/09-ssr/core/seed.ts"
+      ],
+      "tasks": ["dev:ssr", "typecheck:ssr", "lint:ssr"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.connect",
+      "sources": [
+        "examples/09-ssr/infra/lib/ssr-stack.ts",
+        "examples/09-ssr/infra/bin/app.ts",
+        "examples/09-ssr/infra/test/ssr-stack.test.ts"
+      ],
+      "tasks": ["ssr:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "09.cache",
+      "sources": [
+        "examples/09-ssr/core/cache-control.ts",
+        "examples/09-ssr/core/routes.ts",
+        "examples/09-ssr/server/plugins/cache-control.ts",
+        "examples/09-ssr/infra/lib/ssr-stack.ts",
+        "examples/09-ssr/test/cache-control.test.ts",
+        "examples/09-ssr/test/support/shared-cache.ts",
+        "examples/09-ssr/infra/test/ssr-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ssr:check:output"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.bff",
+      "sources": [
+        "examples/09-ssr/core/session.ts",
+        "examples/09-ssr/core/profile.ts",
+        "examples/09-ssr/server/routes/me",
+        "examples/09-ssr/test/session.test.ts",
+        "examples/09-ssr/.env.example"
+      ],
+      "tasks": ["dev:ssr", "test:unit", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "09.streaming",
+      "sources": [
+        "examples/09-ssr/server/routes/feed.get.ts",
+        "examples/09-ssr/scripts/lambda-harness.ts",
+        "examples/09-ssr/scripts/check-output.ts"
+      ],
+      "tasks": ["build:ssr:stream", "ssr:check:output:stream"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.local",
+      "sources": [
+        "examples/09-ssr/scripts/check-output.ts",
+        "examples/09-ssr/test",
+        "examples/09-ssr/tsconfig.json",
+        "examples/09-ssr/app/tsconfig.json"
+      ],
+      "tasks": ["dev:ssr", "test:unit", "typecheck", "typecheck:ssr", "lint:ssr", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.deploy",
+      "sources": [
+        "examples/09-ssr/scripts/publish-assets.ts",
+        "examples/09-ssr/scripts/asset-plan.ts",
+        "examples/09-ssr/scripts/smoke.ts",
+        "examples/09-ssr/scripts/smoke-spec.ts",
+        "examples/09-ssr/test/asset-plan.test.ts",
+        "examples/09-ssr/test/smoke-spec.test.ts"
+      ],
+      "tasks": [
+        "ssr:infra:diff",
+        "ssr:infra:deploy",
+        "ssr:assets:plan",
+        "ssr:assets:publish",
+        "ssr:smoke",
+        "ssr:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "09.stale",
+      "sources": [
+        "examples/09-ssr/core/cache-control.ts",
+        "examples/09-ssr/scripts/asset-plan.ts",
+        "examples/09-ssr/test/cache-control.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.workers",
+      "sources": ["examples/09-ssr/nuxt.config.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "09.cleanup",
+      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
+      "tasks": ["ssr:unpublish", "ssr:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

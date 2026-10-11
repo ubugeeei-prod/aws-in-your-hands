@@ -1,0 +1,764 @@
+{
+  "chapterId": "09",
+  "manifest": {
+    "id": "09",
+    "slug": "ssr",
+    "title": {
+      "ja": "SSR と BFF: Nuxt をリージョンの Lambda で動かす",
+      "en": "SSR and a BFF: Nuxt on Regional Lambda"
+    },
+    "prerequisites": ["03", "04"],
+    "services": ["Lambda", "Lambda function URLs", "CloudFront", "S3"],
+    "samplePath": "examples/09-ssr",
+    "writing": { "ja": "complete", "en": "complete" },
+    "sourceRevision": 1,
+    "translatedRevision": { "en": 1 },
+    "checkedAt": "2026-10-11",
+    "sourceIds": [
+      "nuxt-npm",
+      "nitropack-npm",
+      "vize-nuxt-npm",
+      "cloudfront-oac-lambda",
+      "lambda-urls-auth",
+      "lambda-urls-invocation",
+      "lambda-furl-invoke-mode",
+      "lambda-furl-vs-apigw",
+      "lambda-response-streaming",
+      "cloudfront-expiration",
+      "cloudfront-cache-policy",
+      "cloudfront-cookies",
+      "cloudfront-response-headers-policy",
+      "cloudfront-compression",
+      "cloudfront-error-caching",
+      "cloudfront-origin-settings",
+      "lambda-envvars",
+      "mdn-set-cookie",
+      "cloudflare-workers-nuxt",
+      "lambda-pricing",
+      "aws-price-list-lambda",
+      "aws-price-list-cloudfront",
+      "aws-price-list-s3",
+      "cloudfront-pricing-payg",
+      "apigw-http-vs-rest",
+      "aws-cdk-lib-npm",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "nuxt-npm",
+      "url": "https://www.npmjs.com/package/nuxt/v/4.6.1",
+      "title": "nuxt 4.6.1 (npm registry metadata and tarball)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "4.6.1 was the `latest` dist-tag on 2026-10-11",
+        "Its server builder @nuxt/nitro-server 4.6.1 depends on nitropack ^2.13.4 (Nitro 2, not the nitro 3 beta)",
+        "engines.node is ^22.22.3 || ^24.15.0 || >=26.0.0",
+        "`nuxt build` with the aws-lambda preset writes .output/server (handler and traced node_modules), .output/public/_nuxt, and .output/nitro.json"
+      ],
+      "note": "The last item was observed by building examples/09-ssr. That Nuxt renders a page into one string before the handler writes it is an observation of the built handler (one write per page), not a documented guarantee."
+    },
+    {
+      "id": "nitropack-npm",
+      "url": "https://www.npmjs.com/package/nitropack/v/2.13.4",
+      "title": "nitropack 2.13.4 (npm tarball: dist/presets/aws-lambda)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The preset is named `aws-lambda`; its only option is `awsLambda.streaming` (boolean, default false)",
+        "With streaming false the entry exports `handler(event, context)` returning { statusCode, headers, cookies, body, isBase64Encoded }",
+        "With streaming true the entry is `awslambda.streamifyResponse(...)`, writes metadata through `awslambda.HttpResponseStream.from`, and adds `Transfer-Encoding: chunked`",
+        "Both entries rebuild the Cookie header from the event's `cookies` array and decode a base64 request body as UTF-8 text",
+        ".output/nitro.json records the preset and `config.awsLambda.streaming`"
+      ],
+      "note": "Read from the installed package, dist/presets/aws-lambda/preset.mjs, types.d.ts, and runtime/aws-lambda{,-streaming}.mjs. The Nitro documentation site was not used as the basis."
+    },
+    {
+      "id": "vize-nuxt-npm",
+      "url": "https://www.npmjs.com/package/@vizejs/nuxt/v/0.443.0",
+      "title": "@vizejs/nuxt 0.443.0 (npm tarball and local build)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`@vizejs/nuxt` is a Nuxt module with the config key `vize`; its peer range for nuxt is ^2.16.0 || ^3.0.0 || ^4.0.0",
+        "With the module listed in `modules`, Nuxt 4.6.1 `nuxt dev` and `nuxt build` compiled the .vue files of examples/09-ssr",
+        "`vize check` and `vize lint` ran on the Nuxt app directory with explicit imports from `nuxt/app`"
+      ],
+      "note": "The package depends on @nuxt/kit 3.11.2, whose c12 reports an unmet peer (magicast ^0.3.4, found 0.5.5) at install. The build and dev server worked regardless. Auto-imported composables were not used, so type checking them through Vize is unverified. `vize check` reported no error for the globally registered NuxtLink and NuxtPage components; whether it type-checks their props was not examined."
+    },
+    {
+      "id": "cloudfront-oac-lambda",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html",
+      "title": "Restrict access to an AWS Lambda function URL origin",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "To use OAC the function URL's AuthType must be AWS_IAM",
+        "CloudFront needs lambda:InvokeFunctionUrl and lambda:InvokeFunction, granted to cloudfront.amazonaws.com with the distribution as source ARN",
+        "For PUT or POST, the viewer must send the SHA256 of the body in x-amz-content-sha256; Lambda does not support unsigned payloads",
+        "With signing behavior `always`, CloudFront signs every origin request; `no-override` passes a viewer Authorization header through instead"
+      ]
+    },
+    {
+      "id": "lambda-urls-auth",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html",
+      "title": "Control access to Lambda function URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "AuthType AWS_IAM authenticates and authorizes requests with IAM; NONE performs no authentication",
+        "Starting in October 2025, new function URLs require both lambda:InvokeFunctionUrl and lambda:InvokeFunction",
+        "Without those permissions in the resource-based policy, callers get 403 Forbidden"
+      ]
+    },
+    {
+      "id": "lambda-urls-invocation",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-invocation.html",
+      "title": "Invoking Lambda function URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Function URL events and responses follow API Gateway payload format version 2.0",
+        "Request cookies arrive in a `cookies` array; response cookies are returned in a `cookies` array"
+      ]
+    },
+    {
+      "id": "lambda-furl-invoke-mode",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/config-rs-invoke-furls.html",
+      "title": "Invoking a response streaming enabled function using Lambda function URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "InvokeMode BUFFERED is the default, uses the Invoke API, and has a 6 MB maximum payload",
+        "InvokeMode RESPONSE_STREAM uses InvokeWithResponseStream and has a 200 MB maximum response payload"
+      ],
+      "note": "The page does not describe what a client receives when the invoke mode and the handler type disagree."
+    },
+    {
+      "id": "lambda-furl-vs-apigw",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/furls-http-invoke-decision.html",
+      "title": "Select a method to invoke your Lambda function using an HTTP request",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Function URLs have no charge beyond Lambda's own; authentication is IAM or none",
+        "API Gateway adds authorizers, throttling, request validation, custom domain names, and WAF integration",
+        "A function URL answers HTTP 429 once the function's concurrency limit is reached"
+      ]
+    },
+    {
+      "id": "lambda-response-streaming",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html",
+      "title": "Response streaming for Lambda functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Streaming is available through function URLs, InvokeWithResponseStream, and the API Gateway proxy integration",
+        "Streamed responses can be up to 200 MB; buffered ones up to 6 MB",
+        "The first 6 MB is uncapped; the rest is limited to 2 MBps",
+        "Managed Node.js runtimes support streaming",
+        "A streamed response is not stopped when the client disconnects; the full duration is billed",
+        "Function URLs do not support response streaming inside a VPC"
+      ]
+    },
+    {
+      "id": "cloudfront-expiration",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html",
+      "title": "Manage how long content stays in the cache (expiration)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "With minimum TTL 0, CloudFront respects Cache-Control: no-cache, no-store, and private from the origin",
+        "With minimum TTL above 0, CloudFront caches for the minimum TTL even when those directives are present",
+        "With both max-age and s-maxage, CloudFront uses the lesser of s-maxage and the maximum TTL; browsers use max-age",
+        "Without Cache-Control, CloudFront caches for the default TTL",
+        "CloudFront supports stale-while-revalidate and stale-if-error, bounded by the maximum TTL"
+      ]
+    },
+    {
+      "id": "cloudfront-cache-policy",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cache-key-understand-cache-policy.html",
+      "title": "Understand cache policies",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Values in the cache key are automatically included in origin requests",
+        "Cookies set to None are not in the cache key and not automatically sent to the origin",
+        "Minimum, maximum, and default TTL all 0 disables caching"
+      ]
+    },
+    {
+      "id": "cloudfront-cookies",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Cookies.html",
+      "title": "Cache content based on cookies",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "By default CloudFront ignores cookies and removes them before forwarding a request to the origin",
+        "When cookies are forwarded, CloudFront caches Set-Cookie with the object and sends it on every cache hit",
+        "With cookies not forwarded, CloudFront removes Set-Cookie from responses before returning them"
+      ],
+      "note": "The page is written in terms of the legacy forwarding settings. Whether Set-Cookie is removed under a cache policy with cookies set to None was not confirmed, which is why the stack also removes it with a response headers policy."
+    },
+    {
+      "id": "cloudfront-response-headers-policy",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/understanding-response-headers-policies.html",
+      "title": "Understand response headers policies",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Removed headers are removed from every response sent to viewers, whether served from the cache or from the origin",
+        "Set-Cookie is not in the list of headers that cannot be removed"
+      ]
+    },
+    {
+      "id": "cloudfront-compression",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html",
+      "title": "Serve compressed files",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront compresses only when the origin response has a Content-Length header, between 1,000 and 10,000,000 bytes",
+        "A response with Content-Encoding is passed through uncompressed-by-CloudFront",
+        "Compression needs Gzip or Brotli enabled in the cache policy"
+      ]
+    },
+    {
+      "id": "cloudfront-error-caching",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html",
+      "title": "How CloudFront processes HTTP 4xx and 5xx status codes from your origin",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront caches 404, 414, and 5xx responses for the error caching minimum TTL, 10 seconds by default",
+        "With the CachingDisabled managed policy, those status codes are not cached",
+        "CloudFront caches responses to GET and HEAD, optionally OPTIONS, and no other method"
+      ],
+      "note": "How a `no-store` on a 404 interacts with the 10-second error caching minimum TTL is not stated plainly on the page."
+    },
+    {
+      "id": "cloudfront-origin-settings",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesOrigin.html",
+      "title": "Origin settings",
+      "checkedAt": "2026-10-11",
+      "supports": ["The default origin response timeout is 30 seconds"]
+    },
+    {
+      "id": "lambda-envvars",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+      "title": "Working with Lambda environment variables",
+      "checkedAt": "2026-10-11",
+      "supports": ["AWS_LAMBDA_FUNCTION_NAME is a defined runtime environment variable holding the function's name"]
+    },
+    {
+      "id": "mdn-set-cookie",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+      "title": "MDN: Set-Cookie header",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "HttpOnly forbids JavaScript from accessing the cookie",
+        "SameSite=Lax sends the cookie on same-site requests and on a limited set of cross-site navigations",
+        "A __Host- cookie must be Secure, set from HTTPS, have no Domain, and have Path=/"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-nuxt",
+      "url": "https://developers.cloudflare.com/workers/framework-guides/web-apps/more-web-frameworks/nuxt/",
+      "title": "Cloudflare Workers: Nuxt",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`wrangler deploy` detects Nuxt and generates a configuration with main .output/server/index.mjs, assets directory .output/public, and the nodejs_compat flag",
+        "Nuxt applications reach Cloudflare products through bindings, in local development and in production"
+      ],
+      "note": "How Workers static assets are cached and billed was not read for this chapter."
+    },
+    {
+      "id": "lambda-pricing",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Free tier: 1,000,000 requests and 400,000 GB-seconds per month",
+        "Response streaming: first 6 MB per request free, then per GB",
+        "Response streaming is USD 0.008 per GB streamed, with 100 GB per month in the free tier"
+      ],
+      "note": "The page does not say whether the free tier expires. It lists no separate charge for function URLs."
+    },
+    {
+      "id": "aws-cdk-lib-npm",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (installed package and synthesized template)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`FunctionUrlOrigin.withOriginAccessControl` synthesizes an OAC of origin type lambda and two AWS::Lambda::Permission resources: lambda:InvokeFunctionUrl, and lambda:InvokeFunction with InvokedViaFunctionUrl true, both limited to the distribution's ARN",
+        "`ResponseHeadersPolicy` accepts `removeHeaders`",
+        "`CachePolicy.CACHING_DISABLED` is 4135ea2d-6df8-44a3-9df3-4b5a84be39ad and `OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER` is b689b0a8-53d0-40ab-baf2-68738e2966ac"
+      ],
+      "note": "Read from the type definitions and from cdk.out/AihSsr.template.json produced by `vp run ssr:infra:synth`."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "ssr",
+      "ja": "server-side rendering (SSR)",
+      "en": "server-side rendering (SSR)",
+      "firstUse": "09",
+      "definition": {
+        "ja": "リクエストごとにサーバーで HTML を組み立てて返すこと。ブラウザは届いた HTML をまず表示し、そのあと JavaScript が引き継ぐ。",
+        "en": "Building the HTML on a server for each request. The browser shows that HTML first, and JavaScript takes over afterwards."
+      }
+    },
+    {
+      "id": "function-url",
+      "ja": "Lambda function URL",
+      "en": "Lambda function URL",
+      "firstUse": "09",
+      "definition": {
+        "ja": "Lambda の関数 1 つに付く専用の HTTPS endpoint。API Gateway を挟まずに関数を HTTP で呼べる。",
+        "en": "A dedicated HTTPS endpoint attached to one Lambda function, which lets HTTP reach the function without API Gateway."
+      }
+    },
+    {
+      "id": "shared-cache",
+      "ja": "共有 cache",
+      "en": "shared cache",
+      "firstUse": "09",
+      "definition": {
+        "ja": "1 つの応答を保存して、複数の利用者に返す cache。CDN がその例。ブラウザの中の cache は 1 人のものなので private cache と呼ぶ。",
+        "en": "A cache that stores one response and returns it to many users, such as a CDN. The cache inside a browser belongs to one person and is called a private cache."
+      }
+    },
+    {
+      "id": "cache-key",
+      "ja": "cache key",
+      "en": "cache key",
+      "firstUse": "09",
+      "definition": {
+        "ja": "CloudFront が「同じリクエスト」とみなす基準。path に加えて、cache policy で選んだ query string、header、cookie からできる。",
+        "en": "What CloudFront treats as the same request: the path plus whichever query strings, headers, and cookies the cache policy selects."
+      }
+    },
+    {
+      "id": "cache-policy",
+      "ja": "cache policy",
+      "en": "cache policy",
+      "firstUse": "09",
+      "definition": {
+        "ja": "cache key に入れる値と、TTL の下限・既定・上限をまとめた CloudFront の設定。",
+        "en": "A CloudFront setting that holds what goes into the cache key and the minimum, default, and maximum TTL."
+      }
+    },
+    {
+      "id": "bff",
+      "ja": "backend for frontend (BFF)",
+      "en": "backend for frontend (BFF)",
+      "firstUse": "09",
+      "definition": {
+        "ja": "ある画面のためだけに置くサーバー。ブラウザの代わりに token を持ち、裏の API を呼ぶ。",
+        "en": "A server that exists for one front end. It holds tokens on the browser's behalf and calls the APIs behind it."
+      }
+    },
+    {
+      "id": "response-streaming",
+      "ja": "response streaming",
+      "en": "response streaming",
+      "firstUse": "09",
+      "definition": {
+        "ja": "応答を全部作り終える前に、できた分から送り始めること。",
+        "en": "Sending a response piece by piece as it is produced, before all of it exists."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "09.architecture",
+      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.nitro",
+      "sources": [
+        "examples/09-ssr/nuxt.config.ts",
+        "examples/09-ssr/scripts/lambda-harness.ts",
+        "examples/09-ssr/core/env.ts"
+      ],
+      "tasks": ["build:ssr", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.app",
+      "sources": [
+        "examples/09-ssr/app",
+        "examples/09-ssr/server/api",
+        "examples/09-ssr/server/context.ts",
+        "examples/09-ssr/core/notes.ts",
+        "examples/09-ssr/core/seed.ts"
+      ],
+      "tasks": ["dev:ssr", "typecheck:ssr", "lint:ssr"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.connect",
+      "sources": [
+        "examples/09-ssr/infra/lib/ssr-stack.ts",
+        "examples/09-ssr/infra/bin/app.ts",
+        "examples/09-ssr/infra/test/ssr-stack.test.ts"
+      ],
+      "tasks": ["ssr:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "09.cache",
+      "sources": [
+        "examples/09-ssr/core/cache-control.ts",
+        "examples/09-ssr/core/routes.ts",
+        "examples/09-ssr/server/plugins/cache-control.ts",
+        "examples/09-ssr/infra/lib/ssr-stack.ts",
+        "examples/09-ssr/test/cache-control.test.ts",
+        "examples/09-ssr/test/support/shared-cache.ts",
+        "examples/09-ssr/infra/test/ssr-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ssr:check:output"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.bff",
+      "sources": [
+        "examples/09-ssr/core/session.ts",
+        "examples/09-ssr/core/profile.ts",
+        "examples/09-ssr/server/routes/me",
+        "examples/09-ssr/test/session.test.ts",
+        "examples/09-ssr/.env.example"
+      ],
+      "tasks": ["dev:ssr", "test:unit", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "09.streaming",
+      "sources": [
+        "examples/09-ssr/server/routes/feed.get.ts",
+        "examples/09-ssr/scripts/lambda-harness.ts",
+        "examples/09-ssr/scripts/check-output.ts"
+      ],
+      "tasks": ["build:ssr:stream", "ssr:check:output:stream"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.local",
+      "sources": [
+        "examples/09-ssr/scripts/check-output.ts",
+        "examples/09-ssr/test",
+        "examples/09-ssr/tsconfig.json",
+        "examples/09-ssr/app/tsconfig.json"
+      ],
+      "tasks": ["dev:ssr", "test:unit", "typecheck", "typecheck:ssr", "lint:ssr", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.deploy",
+      "sources": [
+        "examples/09-ssr/scripts/publish-assets.ts",
+        "examples/09-ssr/scripts/asset-plan.ts",
+        "examples/09-ssr/scripts/smoke.ts",
+        "examples/09-ssr/scripts/smoke-spec.ts",
+        "examples/09-ssr/test/asset-plan.test.ts",
+        "examples/09-ssr/test/smoke-spec.test.ts"
+      ],
+      "tasks": [
+        "ssr:infra:diff",
+        "ssr:infra:deploy",
+        "ssr:assets:plan",
+        "ssr:assets:publish",
+        "ssr:smoke",
+        "ssr:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "09.stale",
+      "sources": [
+        "examples/09-ssr/core/cache-control.ts",
+        "examples/09-ssr/scripts/asset-plan.ts",
+        "examples/09-ssr/test/cache-control.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.workers",
+      "sources": ["examples/09-ssr/nuxt.config.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "09.cleanup",
+      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
+      "tasks": ["ssr:unpublish", "ssr:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "lambda.streaming.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "SU5948MRY5A8GWNM",
+      "usageType": "APN1-Lambda-Streaming-Response-Processed-Bytes-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Processed-Gigabytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0080000000",
+          "description": "$0.008 per GiB for Lambda-Streaming-Response-Processed-Bytes-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-11"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "lambda.streaming.arm",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "lambda-pricing",
+      "note": "GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100)."
+    }
+  ],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "ssr-idle",
+      "chapter": "09",
+      "title": {
+        "ja": "SSR: デプロイ済みで誰も来ない月",
+        "en": "SSR: deployed, but nobody visits for a month"
+      },
+      "assumptions": {
+        "ja": ["リクエストゼロ、publish ゼロ", "bucket に 5 MB の静的 asset", "log は 1 週間で失効し、保存量ゼロ"],
+        "en": [
+          "No requests and no publishes",
+          "5 MB of static assets in the bucket",
+          "Logs expire after a week; nothing is stored"
+        ]
+      },
+      "items": [
+        { "priceId": "s3.standard.storage", "quantity": 0.005, "basis": "5 MB stored for the month, in GB-month" }
+      ]
+    },
+    {
+      "id": "ssr-small",
+      "chapter": "09",
+      "title": {
+        "ja": "SSR: 月 10 万ページビュー",
+        "en": "SSR: 100,000 page views a month"
+      },
+      "assumptions": {
+        "ja": [
+          "1 ページビューあたり CloudFront へ平均 4 リクエスト（HTML か API の JSON が 1、asset が平均 3）、合計 100 KB と仮定",
+          "すべて日本の edge から配信、HTTPS",
+          "HTML と API の 10 万リクエストのうち、半分が CloudFront の cache で返り、残り 5 万が Lambda に届くと仮定",
+          "Lambda は平均 200 ms、512 MB、arm64、buffered。200 ms は仮定で、計測値ではない",
+          "1 回の呼び出しあたり log 0.3 KB（Lambda が書く START/END/REPORT 行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定",
+          "asset の 30 万リクエストのうち 1/10 が S3 に届くと仮定",
+          "publish は月 10 回、各 20 object を PUT。bucket に 5 MB",
+          "Lambda から CloudFront へのデータ転送、標準ログ、WAF、独自ドメインは含めていない（未算入）"
+        ],
+        "en": [
+          "Each page view is assumed to be 4 requests to CloudFront on average (1 for HTML or API JSON, 3 for assets) and 100 KB in total",
+          "Served entirely from Japan edge locations over HTTPS",
+          "Of the 100,000 HTML and API requests, half are assumed answered from CloudFront's cache and 50,000 reach Lambda",
+          "Lambda averages 200 ms at 512 MB, arm64, buffered. The 200 ms is an assumption, not a measurement",
+          "0.3 KB of logs per invocation (only Lambda's START/END/REPORT lines). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest",
+          "One tenth of the 300,000 asset requests are assumed to reach S3",
+          "10 publishes a month, 20 object PUTs each. 5 MB in the bucket",
+          "Data transfer from Lambda to CloudFront, standard logging, WAF, and a custom domain are not included"
+        ]
+      },
+      "items": [
+        { "priceId": "cloudfront.jp.request.https", "quantity": 400000, "basis": "100,000 page views x 4 requests" },
+        { "priceId": "cloudfront.jp.transfer", "quantity": 9.537, "basis": "100,000 page views x 100 KB, in GB" },
+        { "priceId": "lambda.request.arm", "quantity": 50000, "basis": "half of 100,000 HTML and API requests" },
+        { "priceId": "lambda.duration.arm", "quantity": 5000, "basis": "50,000 x 0.2 s x 0.5 GB, in GB-seconds" },
+        { "priceId": "logs.ingest.standard", "quantity": 0.0143, "basis": "50,000 x 0.3 KB, in GB" },
+        { "priceId": "logs.storage", "quantity": 0.0033, "basis": "0.0143 GB x 7/30, in GB-month" },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 30000,
+          "basis": "one tenth of 300,000 asset requests reach S3 as GET"
+        },
+        { "priceId": "s3.request.tier1", "quantity": 200, "basis": "10 publishes x 20 PUTs" },
+        { "priceId": "s3.standard.storage", "quantity": 0.005, "basis": "5 MB, in GB-month" }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "09",
+        "command": "vp run test:unit (examples/09-ssr)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "cache の判定、共有 cache 越しの漏れの再現、session、publish の計画、smoke の判定、CDK の assertion",
+          "en": "The cache decision, the leak replayed through a shared cache, sessions, the publish plan, the smoke verdicts, and the CDK assertions"
+        }
+      },
+      {
+        "scope": "09",
+        "command": "vp run typecheck / typecheck:ssr / lint:ssr",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "tsc で core、server、infra、scripts、test。Vize で app の .vue。わざと入れた型エラーで vize check が失敗することも確認",
+          "en": "tsc over core, server, infra, scripts, and test; Vize over the .vue files in app. A type error introduced on purpose made vize check fail"
+        }
+      },
+      {
+        "scope": "09",
+        "command": "vp run ssr:check:output (runs build:ssr first)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "Nuxt 4.6.1 と nitropack 2.13.4 の buffered な Lambda handler を function URL の形の event で呼び、ヘッダー、サインイン、共有 cache 越しの再現を確認。/feed は 1 回、HTML は 1 回で書かれた。Lambda では実行していない",
+          "en": "Called the buffered Lambda handler built by Nuxt 4.6.1 and nitropack 2.13.4 with function URL shaped events and checked headers, sign-in, and the replay through a shared cache. /feed and the HTML were each written in one write. Not run on Lambda"
+        }
+      },
+      {
+        "scope": "09",
+        "command": "vp run ssr:check:output:stream (runs build:ssr:stream first)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "awslambda を記録用の偽物に差し替えて streaming の handler を呼んだ。/feed は 3 回（約 300 ms おき）、HTML は 1 回で書かれた。Lambda の runtime、function URL、CloudFront は通していない",
+          "en": "Called the streaming handler with the awslambda global replaced by a recording fake. /feed was written in three writes about 300 ms apart, the HTML in one. The Lambda runtime, a function URL, and CloudFront were not involved"
+        }
+      },
+      {
+        "scope": "09",
+        "command": "vp run ssr:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "cdkd で synth。template に function URL（AWS_IAM）、OAC、2 つの Lambda::Permission、cache policy、response headers policy があることを確認",
+          "en": "Synthesized with cdkd. The template has the function URL (AWS_IAM), the OAC, two Lambda::Permission resources, the cache policy, and the response headers policy"
+        }
+      },
+      {
+        "scope": "09",
+        "command": "vp run dev:ssr + HTTP requests",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない",
+          "en": "Started with AIH_SSR_SIGN_IN=dev and checked public pages, the 404, /me, sign-in, sign-out, the 403 for a cross-site POST, and /feed arriving in three chunks. Not exercised in a browser"
+        }
+      },
+      {
+        "scope": "09",
+        "command": "vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "distribution、Lambda の関数と function URL、bucket を作る",
+          "en": "Creates a distribution, a Lambda function with a function URL, and a bucket"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "ssr-aws-path",
+        "summary": {
+          "ja": "09章の構成を AWS で一度も動かしていない。Nitro の handler が Node.js 24 の runtime と function URL で動くこと、OAC の署名を function URL が受け入れ直接のリクエストを断ること、cache policy と response headers policy が意図どおり働くこと、smoke が見る x-cache と age ヘッダーの実際の値、許可していない method への応答が未確認。",
+          "en": "The chapter 09 setup has never run in AWS. Unconfirmed: that Nitro's handler runs on the Node.js 24 runtime behind a function URL, that the function URL accepts OAC-signed requests and refuses direct ones, that the cache policy and the response headers policy behave as intended, the real values of the x-cache and age headers the smoke test reads, and the response to a method that is not allowed."
+        },
+        "resume": {
+          "ja": "vp run build:ssr、ssr:infra:deploy、ssr:assets:publish、ssr:smoke の順に実行する。smoke が落ちたら、判定（examples/09-ssr/scripts/smoke-spec.ts）と実際のヘッダーのどちらが違うのかを記録してから直す。終わったら ssr:unpublish --yes と ssr:infra:destroy。",
+          "en": "Run vp run build:ssr, ssr:infra:deploy, ssr:assets:publish, and ssr:smoke in that order. If the smoke test fails, record whether the verdict (examples/09-ssr/scripts/smoke-spec.ts) or the real headers differ before changing anything. Finish with ssr:unpublish --yes and ssr:infra:destroy."
+        }
+      },
+      {
+        "id": "ssr-streaming-path",
+        "summary": {
+          "ja": "response streaming が、Lambda、function URL（RESPONSE_STREAM）、CloudFront、ブラウザまで通して少しずつ届くかは未確認。stream した応答を CloudFront が圧縮しないこと、handler の形と InvokeMode が食い違ったときの応答も未確認。手元で確かめたのは Nitro の handler が書き込む回数と間隔だけ。",
+          "en": "Whether a streamed response arrives piece by piece across Lambda, the function URL (RESPONSE_STREAM), CloudFront, and a browser is unconfirmed. So are CloudFront not compressing a streamed response and what is returned when the handler's shape and InvokeMode disagree. Only the number and timing of the Nitro handler's writes were checked locally."
+        },
+        "resume": {
+          "ja": "vp run ssr:check:output:stream、ssr:assets:publish、ssr:infra:deploy のあと、curl -sN で /feed を、curl -s -o /dev/null -D - --compressed で / を取得し、行が届く間隔と content-encoding を記録する。function URL を直接ではなく distribution 経由で見ること。",
+          "en": "After vp run ssr:check:output:stream, ssr:assets:publish, and ssr:infra:deploy, fetch /feed with curl -sN and / with curl -s -o /dev/null -D - --compressed, and record the spacing of the lines and the content-encoding. Go through the distribution, not the function URL directly."
+        }
+      },
+      {
+        "id": "ssr-cdkd-cloudfront-policies",
+        "summary": {
+          "ja": "cdkd 0.296.28 は AWS::CloudFront::CachePolicy と AWS::CloudFront::ResponseHeadersPolicy に専用の実装を持たず、Cloud Control API 経由で扱う。作成、更新、drift の読み戻し、削除が実際に動くかは未確認。minTtl と defaultTtl が 0、maxTtl が 60 の cache policy で圧縮の設定を有効にできるかも未確認。",
+          "en": "cdkd 0.296.28 has no dedicated implementation for AWS::CloudFront::CachePolicy or AWS::CloudFront::ResponseHeadersPolicy and handles them through Cloud Control API. Whether create, update, drift read-back, and delete work in practice is unconfirmed, as is whether a cache policy with minTtl and defaultTtl of 0 and maxTtl of 60 accepts the compression settings."
+        },
+        "resume": {
+          "ja": "vp run ssr:infra:deploy と ssr:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
+          "en": "Run vp run ssr:infra:deploy and ssr:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool."
+        }
+      },
+      {
+        "id": "ssr-bff-deployed",
+        "summary": {
+          "ja": "09章の BFF（サインイン、session、token の保持）は手元でしか動かない。session がプロセスのメモリにあり、サインインが POST で、function URL と OAC の組み合わせがブラウザの form からの POST をそのままでは通さないため。デプロイした環境で「cookie を持つ人にその人のページが返る」ことは確かめていない。",
+          "en": "Chapter 09's BFF (sign-in, sessions, holding the token) works only locally: sessions sit in process memory, sign-in is a POST, and a function URL with OAC does not pass a browser form POST as it is. That a deployed environment returns each cookie holder their own page was not checked."
+        },
+        "resume": {
+          "ja": "著者が方針を決める（session を DynamoDB に置き、POST の入口を API Gateway にする、など）。決まったら examples/09-ssr に実装し、ssr:smoke に本物の session での検査を足す。",
+          "en": "The author decides the approach (for example, sessions in DynamoDB and API Gateway as the POST entry point). Once decided, implement it in examples/09-ssr and add a check with a real session to ssr:smoke."
+        }
+      }
+    ]
+  },
+  "toolchain": [
+    {
+      "name": "Nuxt (nuxt, @nuxt/nitro-server)",
+      "version": "4.6.1",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/09-ssr/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Nitro (nitropack) and h3",
+      "version": "2.13.4 and 1.15.11",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/09-ssr/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Vize Nuxt module (@vizejs/nuxt)",
+      "version": "0.443.0",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/09-ssr/package.json, pnpm-lock.yaml"
+    }
+  ],
+  "tasks": {
+    "snippet": "      // ---- chapter 09: SSR and a BFF ------------------------------------\n      // Nuxt's own dev server. No Docker, no AWS.\n      \"dev:ssr\": fresh(\"./node_modules/.bin/nuxt dev\", { cwd: \"examples/09-ssr\" }),\n      // Never cached: the stack deploys whatever .output holds, so it has to be this checkout's build.\n      \"build:ssr\": fresh(\"./node_modules/.bin/nuxt build\", { cwd: \"examples/09-ssr\" }),\n      // The same app with Nitro's streaming Lambda handler. Overwrites .output.\n      \"build:ssr:stream\": fresh(\"AIH_SSR_STREAMING=true ./node_modules/.bin/nuxt build\", { cwd: \"examples/09-ssr\" }),\n      // Runs the built handler in this process and checks the headers it sends.\n      \"ssr:check:output\": fresh(\"node scripts/check-output.ts\", { cwd: \"examples/09-ssr\", dependsOn: [\"build:ssr\"] }),\n      \"ssr:check:output:stream\": fresh(\"node scripts/check-output.ts\", {\n        cwd: \"examples/09-ssr\",\n        dependsOn: [\"build:ssr:stream\"],\n      }),\n      \"typecheck:ssr\": { command: \"../node_modules/.bin/vize check\", cwd: \"examples/09-ssr/app\" },\n      \"lint:ssr\": { command: \"../node_modules/.bin/vize lint . --preset essential\", cwd: \"examples/09-ssr/app\" },\n      ...infra(\"ssr\", \"examples/09-ssr\", \"AihSsr\"),\n      // Replaces the synth task from infra(): this stack needs the build to exist.\n      \"ssr:infra:synth\": fresh(`${node} tools/src/infra/cdkd.ts synth examples/09-ssr AihSsr`, {\n        dependsOn: [\"build:ssr\"],\n      }),\n      \"ssr:assets:plan\": live(\"node --env-file-if-exists=../../.env scripts/publish-assets.ts --dry-run\", {\n        cwd: \"examples/09-ssr\",\n      }),\n      \"ssr:assets:publish\": live(\"node --env-file-if-exists=../../.env scripts/publish-assets.ts\", {\n        cwd: \"examples/09-ssr\",\n      }),\n      \"ssr:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/09-ssr\" }),\n      \"ssr:unpublish\": live(`${node} tools/src/site/unpublish.ts examples/09-ssr AihSsr`),",
+    "synth": ["ssr:infra:synth"],
+    "checkAll": ["lint:ssr", "typecheck:ssr", "ssr:check:output"],
+    "typecheck": ["examples/09-ssr"]
+  }
+}

@@ -342,53 +342,46 @@
         "en": "SSR and a BFF: Nuxt on Regional Lambda"
       },
       "prerequisites": ["03", "04"],
-      "services": ["Lambda", "CloudFront", "S3"],
+      "services": ["Lambda", "Lambda function URLs", "CloudFront", "S3"],
       "samplePath": "examples/09-ssr",
+      "sourceIds": [
+        "nuxt-npm",
+        "nitropack-npm",
+        "vize-nuxt-npm",
+        "cloudfront-oac-lambda",
+        "lambda-urls-auth",
+        "lambda-urls-invocation",
+        "lambda-furl-invoke-mode",
+        "lambda-furl-vs-apigw",
+        "lambda-response-streaming",
+        "cloudfront-expiration",
+        "cloudfront-cache-policy",
+        "cloudfront-cookies",
+        "cloudfront-response-headers-policy",
+        "cloudfront-compression",
+        "cloudfront-error-caching",
+        "cloudfront-origin-settings",
+        "lambda-envvars",
+        "mdn-set-cookie",
+        "cloudflare-workers-nuxt",
+        "lambda-pricing",
+        "aws-price-list-lambda",
+        "aws-price-list-cloudfront",
+        "aws-price-list-s3",
+        "cloudfront-pricing-payg",
+        "apigw-http-vs-rest",
+        "aws-cdk-lib-npm",
+        "cdkd-npm"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["lambda-response-streaming"],
-      "outline": {
-        "outcome": {
-          "ja": "Nuxt アプリが東京リージョンの Lambda で HTML を返し、静的 asset は S3 から配信される。",
-          "en": "A Nuxt app renders HTML on Lambda in the Tokyo region while static assets come from S3."
-        },
-        "architecture": {
-          "ja": "CloudFront → (/_nuxt/* は S3) / (その他は Lambda の SSR)。これは edge rendering ではなく regional SSR。",
-          "en": "CloudFront → (/_nuxt/* from S3) / (everything else to SSR on Lambda). This is regional SSR, not edge rendering."
-        },
-        "topics": {
-          "ja": [
-            "Nitro の AWS Lambda preset（固定版で確認）",
-            "cookie と個人別ページを共有 cache に載せない cache key 設計",
-            "response streaming の経路全体での確認",
-            "BFF として API を呼ぶときの認証の受け渡し"
-          ],
-          "en": [
-            "Nitro's AWS Lambda preset (verified at the pinned version)",
-            "Cache-key design that keeps cookies and personalized pages out of the shared cache",
-            "Verifying response streaming across the whole path",
-            "Passing authentication through a BFF"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "Nuxt アプリと CDK",
-            "Cache-Control / cache policy を検証する assertion とローカル test",
-            "ログイン済みページが cache されないことの smoke test 手順"
-          ],
-          "en": [
-            "Nuxt app and CDK",
-            "Assertions and local tests for Cache-Control and cache policies",
-            "Smoke-test procedure showing signed-in pages are not cached"
-          ]
-        },
-        "distributed": {
-          "ja": "CDN cache は古い内容を返し得る。誰の、どの期間の stale を許すかを明示する。",
-          "en": "A CDN cache can serve stale content; state whose staleness is acceptable and for how long."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "10",

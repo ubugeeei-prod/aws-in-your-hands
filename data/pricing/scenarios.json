@@ -1073,6 +1073,106 @@
           "basis": "one record per finished upload"
         }
       ]
+    },
+    {
+      "id": "ssr-idle",
+      "chapter": "09",
+      "title": {
+        "ja": "SSR: デプロイ済みで誰も来ない月",
+        "en": "SSR: deployed, but nobody visits for a month"
+      },
+      "assumptions": {
+        "ja": ["リクエストゼロ、publish ゼロ", "bucket に 5 MB の静的 asset", "log は 1 週間で失効し、保存量ゼロ"],
+        "en": [
+          "No requests and no publishes",
+          "5 MB of static assets in the bucket",
+          "Logs expire after a week; nothing is stored"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.005,
+          "basis": "5 MB stored for the month, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "ssr-small",
+      "chapter": "09",
+      "title": {
+        "ja": "SSR: 月 10 万ページビュー",
+        "en": "SSR: 100,000 page views a month"
+      },
+      "assumptions": {
+        "ja": [
+          "1 ページビューあたり CloudFront へ平均 4 リクエスト（HTML か API の JSON が 1、asset が平均 3）、合計 100 KB と仮定",
+          "すべて日本の edge から配信、HTTPS",
+          "HTML と API の 10 万リクエストのうち、半分が CloudFront の cache で返り、残り 5 万が Lambda に届くと仮定",
+          "Lambda は平均 200 ms、512 MB、arm64、buffered。200 ms は仮定で、計測値ではない",
+          "1 回の呼び出しあたり log 0.3 KB（Lambda が書く START/END/REPORT 行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定",
+          "asset の 30 万リクエストのうち 1/10 が S3 に届くと仮定",
+          "publish は月 10 回、各 20 object を PUT。bucket に 5 MB",
+          "Lambda から CloudFront へのデータ転送、標準ログ、WAF、独自ドメインは含めていない（未算入）"
+        ],
+        "en": [
+          "Each page view is assumed to be 4 requests to CloudFront on average (1 for HTML or API JSON, 3 for assets) and 100 KB in total",
+          "Served entirely from Japan edge locations over HTTPS",
+          "Of the 100,000 HTML and API requests, half are assumed answered from CloudFront's cache and 50,000 reach Lambda",
+          "Lambda averages 200 ms at 512 MB, arm64, buffered. The 200 ms is an assumption, not a measurement",
+          "0.3 KB of logs per invocation (only Lambda's START/END/REPORT lines). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest",
+          "One tenth of the 300,000 asset requests are assumed to reach S3",
+          "10 publishes a month, 20 object PUTs each. 5 MB in the bucket",
+          "Data transfer from Lambda to CloudFront, standard logging, WAF, and a custom domain are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 400000,
+          "basis": "100,000 page views x 4 requests"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 9.537,
+          "basis": "100,000 page views x 100 KB, in GB"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 50000,
+          "basis": "half of 100,000 HTML and API requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 5000,
+          "basis": "50,000 x 0.2 s x 0.5 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0143,
+          "basis": "50,000 x 0.3 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0033,
+          "basis": "0.0143 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 30000,
+          "basis": "one tenth of 300,000 asset requests reach S3 as GET"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 200,
+          "basis": "10 publishes x 20 PUTs"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.005,
+          "basis": "5 MB, in GB-month"
+        }
+      ]
     }
   ]
 }

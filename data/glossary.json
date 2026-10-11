@@ -979,6 +979,56 @@
         "ja": "大きな object を複数の part に分けて送る S3 の仕組み。完了も中止もされなかった part は、保存されたまま残る。",
         "en": "S3's way of sending a large object in parts. Parts of an upload that is neither completed nor aborted stay stored."
       }
+    },
+    {
+      "id": "ssr",
+      "ja": "server-side rendering (SSR)",
+      "en": "server-side rendering (SSR)",
+      "firstUse": "09",
+      "definition": {
+        "ja": "リクエストごとにサーバーで HTML を組み立てて返すこと。ブラウザは届いた HTML をまず表示し、そのあと JavaScript が引き継ぐ。",
+        "en": "Building the HTML on a server for each request. The browser shows that HTML first, and JavaScript takes over afterwards."
+      }
+    },
+    {
+      "id": "shared-cache",
+      "ja": "共有 cache",
+      "en": "shared cache",
+      "firstUse": "09",
+      "definition": {
+        "ja": "1 つの応答を保存して、複数の利用者に返す cache。CDN がその例。ブラウザの中の cache は 1 人のものなので private cache と呼ぶ。",
+        "en": "A cache that stores one response and returns it to many users, such as a CDN. The cache inside a browser belongs to one person and is called a private cache."
+      }
+    },
+    {
+      "id": "cache-key",
+      "ja": "cache key",
+      "en": "cache key",
+      "firstUse": "09",
+      "definition": {
+        "ja": "CloudFront が「同じリクエスト」とみなす基準。path に加えて、cache policy で選んだ query string、header、cookie からできる。",
+        "en": "What CloudFront treats as the same request: the path plus whichever query strings, headers, and cookies the cache policy selects."
+      }
+    },
+    {
+      "id": "cache-policy",
+      "ja": "cache policy",
+      "en": "cache policy",
+      "firstUse": "09",
+      "definition": {
+        "ja": "cache key に入れる値と、TTL の下限・既定・上限をまとめた CloudFront の設定。",
+        "en": "A CloudFront setting that holds what goes into the cache key and the minimum, default, and maximum TTL."
+      }
+    },
+    {
+      "id": "bff",
+      "ja": "backend for frontend (BFF)",
+      "en": "backend for frontend (BFF)",
+      "firstUse": "09",
+      "definition": {
+        "ja": "ある画面のためだけに置くサーバー。ブラウザの代わりに token を持ち、裏の API を呼ぶ。",
+        "en": "A server that exists for one front end. It holds tokens on the browser's behalf and calls the APIs behind it."
+      }
     }
   ]
 }

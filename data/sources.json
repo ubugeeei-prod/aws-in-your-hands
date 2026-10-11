@@ -47,17 +47,6 @@
       "note": "Which features and origins each plan allows, and CloudFormation/CDK support for selecting a plan, were not verified. The book's examples use pay-as-you-go."
     },
     {
-      "id": "lambda-pricing",
-      "url": "https://aws.amazon.com/lambda/pricing/",
-      "title": "AWS Lambda pricing",
-      "checkedAt": "2026-10-11",
-      "supports": [
-        "Free tier: 1,000,000 requests and 400,000 GB-seconds per month",
-        "Response streaming: first 6 MB per request free, then per GB"
-      ],
-      "note": "The page does not say whether the free tier expires."
-    },
-    {
       "id": "aws-price-list-lambda",
       "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
       "title": "AWS Price List bulk API: Lambda, ap-northeast-1",
@@ -1127,36 +1116,12 @@
       ]
     },
     {
-      "id": "lambda-response-streaming",
-      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html",
-      "title": "Response streaming for Lambda functions",
-      "checkedAt": "2026-10-11",
-      "supports": [
-        "Streaming is available through function URLs, InvokeWithResponseStream, and API Gateway proxy integrations",
-        "A streamed response is not interrupted when the client disconnects, and the full function duration is billed",
-        "Node.js managed runtimes support response streaming natively",
-        "Streamed payloads can be up to 200 MB; the first 6 MB is not rate limited",
-        "Function URLs do not support response streaming for a function in a VPC"
-      ]
-    },
-    {
       "id": "lambda-response-streaming-write",
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/config-rs-write-functions.html",
       "title": "Writing response streaming-enabled Lambda functions",
       "checkedAt": "2026-10-11",
       "supports": [
         "A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides"
-      ]
-    },
-    {
-      "id": "lambda-urls-auth",
-      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html",
-      "title": "Control access to Lambda function URLs",
-      "checkedAt": "2026-10-11",
-      "supports": [
-        "AuthType is AWS_IAM or NONE",
-        "With AWS_IAM, a caller in the same account needs lambda:InvokeFunctionUrl and lambda:InvokeFunction in an identity policy or in the function's resource-based policy",
-        "With NONE, anyone with the URL can invoke the function once the resource-based policy grants public access"
       ]
     },
     {
@@ -2642,6 +2607,243 @@
         "Lambda sets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN to the access keys obtained from the function's execution role"
       ],
       "note": "The page does not say how long these credentials stay valid."
+    },
+    {
+      "id": "nuxt-npm",
+      "url": "https://www.npmjs.com/package/nuxt/v/4.6.1",
+      "title": "nuxt 4.6.1 (npm registry metadata and tarball)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "4.6.1 was the `latest` dist-tag on 2026-10-11",
+        "Its server builder @nuxt/nitro-server 4.6.1 depends on nitropack ^2.13.4 (Nitro 2, not the nitro 3 beta)",
+        "engines.node is ^22.22.3 || ^24.15.0 || >=26.0.0",
+        "`nuxt build` with the aws-lambda preset writes .output/server (handler and traced node_modules), .output/public/_nuxt, and .output/nitro.json"
+      ],
+      "note": "The last item was observed by building examples/09-ssr. That Nuxt renders a page into one string before the handler writes it is an observation of the built handler (one write per page), not a documented guarantee."
+    },
+    {
+      "id": "nitropack-npm",
+      "url": "https://www.npmjs.com/package/nitropack/v/2.13.4",
+      "title": "nitropack 2.13.4 (npm tarball: dist/presets/aws-lambda)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The preset is named `aws-lambda`; its only option is `awsLambda.streaming` (boolean, default false)",
+        "With streaming false the entry exports `handler(event, context)` returning { statusCode, headers, cookies, body, isBase64Encoded }",
+        "With streaming true the entry is `awslambda.streamifyResponse(...)`, writes metadata through `awslambda.HttpResponseStream.from`, and adds `Transfer-Encoding: chunked`",
+        "Both entries rebuild the Cookie header from the event's `cookies` array and decode a base64 request body as UTF-8 text",
+        ".output/nitro.json records the preset and `config.awsLambda.streaming`"
+      ],
+      "note": "Read from the installed package, dist/presets/aws-lambda/preset.mjs, types.d.ts, and runtime/aws-lambda{,-streaming}.mjs. The Nitro documentation site was not used as the basis."
+    },
+    {
+      "id": "vize-nuxt-npm",
+      "url": "https://www.npmjs.com/package/@vizejs/nuxt/v/0.443.0",
+      "title": "@vizejs/nuxt 0.443.0 (npm tarball and local build)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`@vizejs/nuxt` is a Nuxt module with the config key `vize`; its peer range for nuxt is ^2.16.0 || ^3.0.0 || ^4.0.0",
+        "With the module listed in `modules`, Nuxt 4.6.1 `nuxt dev` and `nuxt build` compiled the .vue files of examples/09-ssr",
+        "`vize check` and `vize lint` ran on the Nuxt app directory with explicit imports from `nuxt/app`"
+      ],
+      "note": "The package depends on @nuxt/kit 3.11.2, whose c12 reports an unmet peer (magicast ^0.3.4, found 0.5.5) at install. The build and dev server worked regardless. Auto-imported composables were not used, so type checking them through Vize is unverified. `vize check` reported no error for the globally registered NuxtLink and NuxtPage components; whether it type-checks their props was not examined."
+    },
+    {
+      "id": "cloudfront-oac-lambda",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html",
+      "title": "Restrict access to an AWS Lambda function URL origin",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "To use OAC the function URL's AuthType must be AWS_IAM",
+        "CloudFront needs lambda:InvokeFunctionUrl and lambda:InvokeFunction, granted to cloudfront.amazonaws.com with the distribution as source ARN",
+        "For PUT or POST, the viewer must send the SHA256 of the body in x-amz-content-sha256; Lambda does not support unsigned payloads",
+        "With signing behavior `always`, CloudFront signs every origin request; `no-override` passes a viewer Authorization header through instead"
+      ]
+    },
+    {
+      "id": "lambda-urls-auth",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html",
+      "title": "Control access to Lambda function URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "AuthType AWS_IAM authenticates and authorizes requests with IAM; NONE performs no authentication",
+        "Starting in October 2025, new function URLs require both lambda:InvokeFunctionUrl and lambda:InvokeFunction",
+        "Without those permissions in the resource-based policy, callers get 403 Forbidden"
+      ]
+    },
+    {
+      "id": "lambda-urls-invocation",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-invocation.html",
+      "title": "Invoking Lambda function URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Function URL events and responses follow API Gateway payload format version 2.0",
+        "Request cookies arrive in a `cookies` array; response cookies are returned in a `cookies` array"
+      ]
+    },
+    {
+      "id": "lambda-furl-invoke-mode",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/config-rs-invoke-furls.html",
+      "title": "Invoking a response streaming enabled function using Lambda function URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "InvokeMode BUFFERED is the default, uses the Invoke API, and has a 6 MB maximum payload",
+        "InvokeMode RESPONSE_STREAM uses InvokeWithResponseStream and has a 200 MB maximum response payload"
+      ],
+      "note": "The page does not describe what a client receives when the invoke mode and the handler type disagree."
+    },
+    {
+      "id": "lambda-furl-vs-apigw",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/furls-http-invoke-decision.html",
+      "title": "Select a method to invoke your Lambda function using an HTTP request",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Function URLs have no charge beyond Lambda's own; authentication is IAM or none",
+        "API Gateway adds authorizers, throttling, request validation, custom domain names, and WAF integration",
+        "A function URL answers HTTP 429 once the function's concurrency limit is reached"
+      ]
+    },
+    {
+      "id": "lambda-response-streaming",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html",
+      "title": "Response streaming for Lambda functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Streaming is available through function URLs, InvokeWithResponseStream, and the API Gateway proxy integration",
+        "Streamed responses can be up to 200 MB; buffered ones up to 6 MB",
+        "The first 6 MB is uncapped; the rest is limited to 2 MBps",
+        "Managed Node.js runtimes support streaming",
+        "A streamed response is not stopped when the client disconnects; the full duration is billed",
+        "Function URLs do not support response streaming inside a VPC"
+      ]
+    },
+    {
+      "id": "cloudfront-expiration",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html",
+      "title": "Manage how long content stays in the cache (expiration)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "With minimum TTL 0, CloudFront respects Cache-Control: no-cache, no-store, and private from the origin",
+        "With minimum TTL above 0, CloudFront caches for the minimum TTL even when those directives are present",
+        "With both max-age and s-maxage, CloudFront uses the lesser of s-maxage and the maximum TTL; browsers use max-age",
+        "Without Cache-Control, CloudFront caches for the default TTL",
+        "CloudFront supports stale-while-revalidate and stale-if-error, bounded by the maximum TTL"
+      ]
+    },
+    {
+      "id": "cloudfront-cache-policy",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cache-key-understand-cache-policy.html",
+      "title": "Understand cache policies",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Values in the cache key are automatically included in origin requests",
+        "Cookies set to None are not in the cache key and not automatically sent to the origin",
+        "Minimum, maximum, and default TTL all 0 disables caching"
+      ]
+    },
+    {
+      "id": "cloudfront-cookies",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Cookies.html",
+      "title": "Cache content based on cookies",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "By default CloudFront ignores cookies and removes them before forwarding a request to the origin",
+        "When cookies are forwarded, CloudFront caches Set-Cookie with the object and sends it on every cache hit",
+        "With cookies not forwarded, CloudFront removes Set-Cookie from responses before returning them"
+      ],
+      "note": "The page is written in terms of the legacy forwarding settings. Whether Set-Cookie is removed under a cache policy with cookies set to None was not confirmed, which is why the stack also removes it with a response headers policy."
+    },
+    {
+      "id": "cloudfront-response-headers-policy",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/understanding-response-headers-policies.html",
+      "title": "Understand response headers policies",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Removed headers are removed from every response sent to viewers, whether served from the cache or from the origin",
+        "Set-Cookie is not in the list of headers that cannot be removed"
+      ]
+    },
+    {
+      "id": "cloudfront-compression",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/ServingCompressedFiles.html",
+      "title": "Serve compressed files",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront compresses only when the origin response has a Content-Length header, between 1,000 and 10,000,000 bytes",
+        "A response with Content-Encoding is passed through uncompressed-by-CloudFront",
+        "Compression needs Gzip or Brotli enabled in the cache policy"
+      ]
+    },
+    {
+      "id": "cloudfront-error-caching",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HTTPStatusCodes.html",
+      "title": "How CloudFront processes HTTP 4xx and 5xx status codes from your origin",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront caches 404, 414, and 5xx responses for the error caching minimum TTL, 10 seconds by default",
+        "With the CachingDisabled managed policy, those status codes are not cached",
+        "CloudFront caches responses to GET and HEAD, optionally OPTIONS, and no other method"
+      ],
+      "note": "How a `no-store` on a 404 interacts with the 10-second error caching minimum TTL is not stated plainly on the page."
+    },
+    {
+      "id": "cloudfront-origin-settings",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesOrigin.html",
+      "title": "Origin settings",
+      "checkedAt": "2026-10-11",
+      "supports": ["The default origin response timeout is 30 seconds"]
+    },
+    {
+      "id": "lambda-envvars",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+      "title": "Working with Lambda environment variables",
+      "checkedAt": "2026-10-11",
+      "supports": ["AWS_LAMBDA_FUNCTION_NAME is a defined runtime environment variable holding the function's name"]
+    },
+    {
+      "id": "mdn-set-cookie",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+      "title": "MDN: Set-Cookie header",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "HttpOnly forbids JavaScript from accessing the cookie",
+        "SameSite=Lax sends the cookie on same-site requests and on a limited set of cross-site navigations",
+        "A __Host- cookie must be Secure, set from HTTPS, have no Domain, and have Path=/"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-nuxt",
+      "url": "https://developers.cloudflare.com/workers/framework-guides/web-apps/more-web-frameworks/nuxt/",
+      "title": "Cloudflare Workers: Nuxt",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`wrangler deploy` detects Nuxt and generates a configuration with main .output/server/index.mjs, assets directory .output/public, and the nodejs_compat flag",
+        "Nuxt applications reach Cloudflare products through bindings, in local development and in production"
+      ],
+      "note": "How Workers static assets are cached and billed was not read for this chapter."
+    },
+    {
+      "id": "lambda-pricing",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Free tier: 1,000,000 requests and 400,000 GB-seconds per month",
+        "Response streaming: first 6 MB per request free, then per GB",
+        "Response streaming is USD 0.008 per GB streamed, with 100 GB per month in the free tier"
+      ],
+      "note": "The page does not say whether the free tier expires. It lists no separate charge for function URLs."
+    },
+    {
+      "id": "aws-cdk-lib-npm",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (installed package and synthesized template)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`FunctionUrlOrigin.withOriginAccessControl` synthesizes an OAC of origin type lambda and two AWS::Lambda::Permission resources: lambda:InvokeFunctionUrl, and lambda:InvokeFunction with InvokedViaFunctionUrl true, both limited to the distribution's ARN",
+        "`ResponseHeadersPolicy` accepts `removeHeaders`",
+        "`CachePolicy.CACHING_DISABLED` is 4135ea2d-6df8-44a3-9df3-4b5a84be39ad and `OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER` is b689b0a8-53d0-40ab-baf2-68738e2966ac"
+      ],
+      "note": "Read from the type definitions and from cdk.out/AihSsr.template.json produced by `vp run ssr:infra:synth`."
     },
     {
       "id": "iam-best-practices",

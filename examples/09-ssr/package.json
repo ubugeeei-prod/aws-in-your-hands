@@ -1,0 +1,26 @@
+{
+  "name": "@aih/example-09-ssr",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "h3": "1.15.11",
+    "nuxt": "4.6.1",
+    "vue": "3.5.43",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@aws-sdk/client-s3": "3.1149.0",
+    "@go-to-k/cdkd": "0.296.28",
+    "@nuxt/nitro-server": "4.6.1",
+    "@types/aws-lambda": "8.10.164",
+    "@vizejs/nuxt": "0.443.0",
+    "nitropack": "2.13.4",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0",
+    "vize": "0.443.0"
+  }
+}

@@ -109,3 +109,8 @@ The term pairs that keep both languages using one word for one concept. API name
 | Block Public Access | Block Public Access | 07 | Four S3 settings that reject or ignore ACLs and bucket policies that would make a bucket or object public. |
 | 孤立した object | orphaned object | 07 | An object that is in the bucket while no record points at it. Nobody sees it, and it is still billed for storage. |
 | multipart upload | multipart upload | 07 | S3's way of sending a large object in parts. Parts of an upload that is neither completed nor aborted stay stored. |
+| server-side rendering (SSR) | server-side rendering (SSR) | 09 | Building the HTML on a server for each request. The browser shows that HTML first, and JavaScript takes over afterwards. |
+| 共有 cache | shared cache | 09 | A cache that stores one response and returns it to many users, such as a CDN. The cache inside a browser belongs to one person and is called a private cache. |
+| cache key | cache key | 09 | What CloudFront treats as the same request: the path plus whichever query strings, headers, and cookies the cache policy selects. |
+| cache policy | cache policy | 09 | A CloudFront setting that holds what goes into the cache key and the minimum, default, and maximum TTL. |
+| backend for frontend (BFF) | backend for frontend (BFF) | 09 | A server that exists for one front end. It holds tokens on the browser's behalf and calls the APIs behind it. |

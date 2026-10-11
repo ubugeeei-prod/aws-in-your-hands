@@ -90,6 +90,13 @@ generated: true
 | 07 | `vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck` | ローカル | 成功 | 2026-10-11 | 06章と同じ 19 種類のリソース。Cognito 用のコードと scripts/ は型検査のみ |
 | 07 | `S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation` | ローカル | 未実行 | - | タスクを用意していない。Docker の daemon が要り、執筆環境では動いていなかった |
 | 07 | `vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish` | AWS | 未実行 | - | bucket を 2 つ、user pool、distribution、table を作る。S3 への presigned POST、lifecycle rule、CORS、DynamoDB への添付の記録は、どれも実環境で未確認 |
+| 09 | `vp run test:unit (examples/09-ssr)` | ローカル | 成功 | 2026-10-11 | cache の判定、共有 cache 越しの漏れの再現、session、publish の計画、smoke の判定、CDK の assertion |
+| 09 | `vp run typecheck / typecheck:ssr / lint:ssr` | ローカル | 成功 | 2026-10-11 | tsc で core、server、infra、scripts、test。Vize で app の .vue。わざと入れた型エラーで vize check が失敗することも確認 |
+| 09 | `vp run ssr:check:output (runs build:ssr first)` | ローカル | 成功 | 2026-10-11 | Nuxt 4.6.1 と nitropack 2.13.4 の buffered な Lambda handler を function URL の形の event で呼び、ヘッダー、サインイン、共有 cache 越しの再現を確認。/feed は 1 回、HTML は 1 回で書かれた。Lambda では実行していない |
+| 09 | `vp run ssr:check:output:stream (runs build:ssr:stream first)` | ローカル | 成功 | 2026-10-11 | awslambda を記録用の偽物に差し替えて streaming の handler を呼んだ。/feed は 3 回（約 300 ms おき）、HTML は 1 回で書かれた。Lambda の runtime、function URL、CloudFront は通していない |
+| 09 | `vp run ssr:infra:synth` | ローカル | 成功 | 2026-10-11 | cdkd で synth。template に function URL（AWS_IAM）、OAC、2 つの Lambda::Permission、cache policy、response headers policy があることを確認 |
+| 09 | `vp run dev:ssr + HTTP requests` | ローカル | 成功 | 2026-10-11 | AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない |
+| 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | 未実行 | - | distribution、Lambda の関数と function URL、bucket を作る |
 
 ## 未解決事項と再開手順
 
@@ -302,3 +309,27 @@ cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Cont
 07章: 完了した後、許可証の期限内（5 分）に同じ form を再送すると、object が pending に戻り、1 日後に記録だけが残る。invariant の穴として本文とテストに書いたが、閉じていない。
 
 再開手順: presigned PUT と If-None-Match に替える（Content-Length の署名で大きさを固定できるかを先に実機で確かめる）か、許可証の期限後に tag をもう一度外す処理を足す。
+
+### ssr-aws-path
+
+09章の構成を AWS で一度も動かしていない。Nitro の handler が Node.js 24 の runtime と function URL で動くこと、OAC の署名を function URL が受け入れ直接のリクエストを断ること、cache policy と response headers policy が意図どおり働くこと、smoke が見る x-cache と age ヘッダーの実際の値、許可していない method への応答が未確認。
+
+再開手順: vp run build:ssr、ssr:infra:deploy、ssr:assets:publish、ssr:smoke の順に実行する。smoke が落ちたら、判定（examples/09-ssr/scripts/smoke-spec.ts）と実際のヘッダーのどちらが違うのかを記録してから直す。終わったら ssr:unpublish --yes と ssr:infra:destroy。
+
+### ssr-streaming-path
+
+response streaming が、Lambda、function URL（RESPONSE_STREAM）、CloudFront、ブラウザまで通して少しずつ届くかは未確認。stream した応答を CloudFront が圧縮しないこと、handler の形と InvokeMode が食い違ったときの応答も未確認。手元で確かめたのは Nitro の handler が書き込む回数と間隔だけ。
+
+再開手順: vp run ssr:check:output:stream、ssr:assets:publish、ssr:infra:deploy のあと、curl -sN で /feed を、curl -s -o /dev/null -D - --compressed で / を取得し、行が届く間隔と content-encoding を記録する。function URL を直接ではなく distribution 経由で見ること。
+
+### ssr-cdkd-cloudfront-policies
+
+cdkd 0.296.28 は AWS::CloudFront::CachePolicy と AWS::CloudFront::ResponseHeadersPolicy に専用の実装を持たず、Cloud Control API 経由で扱う。作成、更新、drift の読み戻し、削除が実際に動くかは未確認。minTtl と defaultTtl が 0、maxTtl が 60 の cache policy で圧縮の設定を有効にできるかも未確認。
+
+再開手順: vp run ssr:infra:deploy と ssr:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
+
+### ssr-bff-deployed
+
+09章の BFF（サインイン、session、token の保持）は手元でしか動かない。session がプロセスのメモリにあり、サインインが POST で、function URL と OAC の組み合わせがブラウザの form からの POST をそのままでは通さないため。デプロイした環境で「cookie を持つ人にその人のページが返る」ことは確かめていない。
+
+再開手順: 著者が方針を決める（session を DynamoDB に置き、POST の入口を API Gateway にする、など）。決まったら examples/09-ssr に実装し、ssr:smoke に本物の session での検査を足す。

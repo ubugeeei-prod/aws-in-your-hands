@@ -14,5 +14,6 @@
   "examples/15-email",
   "examples/10-edge",
   "examples/13-sql",
-  "examples/07-uploads"
+  "examples/07-uploads",
+  "examples/09-ssr"
 ]
