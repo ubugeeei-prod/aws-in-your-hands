@@ -81,6 +81,7 @@ docs/                           editorial policy, continuation prompts, CI examp
 
 - 編集方針 / Editorial policy: [`docs/EDITORIAL.md`](docs/EDITORIAL.md)
 - 人と agent 向けの執筆規約 / Rules for contributors and agents: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- agent の入口 / Entry point for coding agents: [`AGENTS.md`](AGENTS.md)。global の gitignore で `AGENTS.md` を除外している環境では `git add -f` が要ります / where a global gitignore excludes `AGENTS.md`, it needs `git add -f`
 - 次の章を書くための指示 / Prompts for the next chapter: [`docs/CONTINUATION.md`](docs/CONTINUATION.md)
 
 ## ソースの配布 / Source distribution
