@@ -392,7 +392,7 @@ First out of the load balancer, then SIGTERM. Thanks to that order, new requests
 
 The **deregistration delay** is how long the load balancer waits for requests in flight on a task it has decided to remove. The default is 300 seconds. That is up to five minutes of waiting for every task that is stopped, so I cut it to 30 seconds, on the assumption that this app's requests take 10 seconds at most. If you have long requests, such as file uploads or streaming, cutting it too far cuts them off.
 
-"Then graceful shutdown isn't needed?" you might think. It is. Requests longer than the deregistration delay are still there, and as you saw, the process can't finish unless keep-alive connections are cleaned up. Work that doesn't come through a load balancer (queue processing, planned for chapter 08) has no first half at all.
+"Then graceful shutdown isn't needed?" you might think. It is. Requests longer than the deregistration delay are still there, and as you saw, the process can't finish unless keep-alive connections are cleaned up. Work that doesn't come through a load balancer (queue processing, as in [chapter 08](/en/chapters/08-async.md)) has no first half at all.
 
 To be honest, I read this order off the sequence of task states in the ECS documentation (deregistration during DEACTIVATING, then SIGTERM in STOPPING). I have not run it and compared log timestamps. A task for checking it is ready.
 
@@ -678,8 +678,8 @@ Apart from the first two rows, these were put together from the documentation, n
 - **Add authentication and authorization.** As in chapter 04, anyone who knows the URL can call it (chapter 06)
 - **Keep data outside the tasks.** Right now it is gone on every update (chapters 05 and 13). At that point the rules from "Old and new run side by side" become real constraints
 - **Put the tasks in private subnets.** Whether the way out is a NAT gateway or endpoints is decided with the table in chapter 11
-- **Don't write secrets directly into environment variables.** With `secrets` in the task definition they are passed in at start from Secrets Manager or similar. The permission to read them goes on the execution role (planned for chapter 21)
-- **Stop updates on application metrics too.** The circuit breaker only sees starting and health checks. ECS can also fail a deployment on a CloudWatch alarm (planned for chapter 19)
+- **Don't write secrets directly into environment variables.** With `secrets` in the task definition they are passed in at start from Secrets Manager or similar. The permission to read them goes on the execution role (for handling secrets, see [chapter 21](/en/chapters/21-security.md); its example is a Lambda function)
+- **Stop updates on application metrics too.** The circuit breaker only sees starting and health checks. ECS can also fail a deployment on a CloudWatch alarm (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md))
 - **Pin the base image by digest.** The tag `node:24-bookworm-slim` keeps getting new contents. If every build should use the same image, name it by digest
 - **Use three zones and three or more tasks.** With two, the moment one zone stops you are at half capacity
 - **Review the log retention, the load balancer's deletion protection, and the repository's `emptyOnDelete`.** All of them lean toward "easy to delete", for practice

@@ -200,7 +200,7 @@ The other is cdkd. It reads the same template but, without going through CloudFo
 
 cdkd is not a faster alias for `cdk deploy`. The creation path is different, and so is the place the record is kept. Three things follow from this.
 
-1. cdkd's official documentation describes cdkd as intended for development and testing, and recommends the AWS CDK CLI for production (checked 2026-10-11; the pinned version is 0.296.28). This book uses cdkd for short iterations while learning. The production path is planned for Chapter 20.
+1. cdkd's official documentation describes cdkd as intended for development and testing, and recommends the AWS CDK CLI for production (checked 2026-10-11; the pinned version is 0.296.28). This book uses cdkd for short iterations while learning. The production path is covered in [Chapter 20](/en/chapters/20-shipping.md).
 2. Don't manage the same resource through both paths in turn. If you update a stack created with cdkd using `cdk deploy`, or the reverse, the two records disagree.
 3. If the state is lost, cdkd no longer knows what it created. The state bucket has versioning enabled, and `cdkd import` exists as a means of recovery. This book has not run a recovery to confirm it, though.
 
@@ -264,7 +264,7 @@ drift compares the state with the actual resource. It's a confirmation: "is the 
 
 So **an empty diff doesn't mean there is no drift**. If you suspend the bucket's versioning in the console, neither the code nor the state changes, so diff reports no changes.
 
-The CloudFormation path has the same distinction. `cdk diff` compares one template with another, and comparison with the actual resources is a separate feature, CloudFormation drift detection. That is planned for Chapter 20.
+The CloudFormation path has the same distinction. `cdk diff` compares one template with another, and comparison with the actual resources is a separate feature, CloudFormation drift detection. That is covered in [Chapter 20](/en/chapters/20-shipping.md).
 
 ## Finding drift
 
@@ -371,7 +371,7 @@ If you delete the state bucket while a stack still exists, cdkd can no longer de
 
 - Make the AWS CDK CLI and CloudFormation the deployment path. cdkd itself recommends this. The same CDK code works unchanged
 - Set `RemovalPolicy.RETAIN` on resources that hold data. The sample's `prod` is an example
-- Don't deploy with a person's credentials. Run from CI with short-lived credentials (planned for Chapter 20)
+- Don't deploy with a person's credentials. Run from CI with short-lived credentials ([Chapter 20](/en/chapters/20-shipping.md))
 - Run drift detection on a schedule. An example is in `docs/examples/drift-schedule.yml`
 
 ::: details Verification notes for this chapter

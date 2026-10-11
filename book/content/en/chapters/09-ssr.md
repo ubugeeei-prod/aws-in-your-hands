@@ -46,7 +46,7 @@ The HTML is built by a Lambda function in the Tokyo region. Not at a CloudFront 
 
 CloudFront stands in front, so a response that is in the cache comes back from near the reader. One that isn't travels to Tokyo, runs Lambda, and travels back. A reader in London who opens a page that isn't cached waits for the round trip to Tokyo.
 
-You can't say "it's behind a CDN, so it runs at the edge." This book calls it regional SSR. What code can run at the edge, and under which limits, is planned for [chapter 10](/en/chapters/10-edge.md).
+You can't say "it's behind a CDN, so it runs at the edge." This book calls it regional SSR. What code can run at the edge, and under which limits, is covered in [chapter 10](/en/chapters/10-edge.md).
 
 ### When you don't need SSR
 
@@ -269,7 +269,7 @@ The same sequence is also run against the real, built handler. That comes after 
 
 <!-- section: 09.bff -->
 
-The SPA in chapter 06 kept the access token in the browser's memory. The table under ["Where does the token live?"](/en/chapters/06-auth.md) listed a third option: "A server-side session and a cookie (planned for chapter 09)." This is the continuation.
+The SPA in chapter 06 kept the access token in the browser's memory. The table under ["Where does the token live?"](/en/chapters/06-auth.md) listed a third option: "A server-side session and a cookie (chapter 09)." This is the continuation.
 
 If the server builds the HTML, the server is what calls the API. Then the server may as well hold the token. The browser gets a session ID that means nothing by itself. A server that exists for one front end and holds the token on the browser's behalf is called a backend for frontend (BFF).
 

@@ -244,7 +244,7 @@ I checked two Valkey clients for Node.js on npm.
 - `@valkey/valkey-glide` 2.5.3: the official Valkey client, with IAM authentication built in. Its core is Rust, shipped as native packages per OS and CPU
 - `iovalkey` 0.4.0: a client forked from ioredis, written in JavaScript only
 
-This book bundles Lambda code into one file with esbuild at synth time, without Docker. A native package needs a different build on the machine that bundles (macOS, say) and the place that runs it (Linux on arm64), which doesn't sit well with that. So the sample uses iovalkey. GLIDE would probably need less authentication code. If you run in a container (planned for chapter 12), choose again.
+This book bundles Lambda code into one file with esbuild at synth time, without Docker. A native package needs a different build on the machine that bundles (macOS, say) and the place that runs it (Linux on arm64), which doesn't sit well with that. So the sample uses iovalkey. GLIDE would probably need less authentication code. If you run in a container ([chapter 12](/en/chapters/12-containers.md)), choose again.
 
 <<< @/examples/14-kv-cache/src/valkey-client.ts{elasticache}
 
@@ -329,7 +329,7 @@ If a load of the same key is already running, don't start another; wait for its 
 
 <<< @/examples/14-kv-cache/test/read-through.test.ts{single-flight-test}
 
-It only works inside one process, though. And Lambda provisions a separate execution environment for each concurrent request, so one environment handles one request at a time. **On Lambda, single flight has almost nothing to do.** It earns its keep in a container or a long-running server (planned for chapter 12). It is here so that the code stays the same in both places.
+It only works inside one process, though. And Lambda provisions a separate execution environment for each concurrent request, so one environment handles one request at a time. **On Lambda, single flight has almost nothing to do.** It earns its keep in a container or a long-running server ([chapter 12](/en/chapters/12-containers.md)). It is here so that the code stays the same in both places.
 
 ### Across environments, put a lock in the store
 
@@ -637,7 +637,7 @@ Delete the stack and this chapter's charges stop.
 - **Put protection in front of the rate limit too.** Start with throttling on the HTTP API stage. AWS WAF cannot be attached to an HTTP API, so needing it means choosing the layout again ([chapter 04](/en/chapters/04-http-api.md)). A rate limit in the app shares capacity fairly; it does not absorb an attack
 - **Reconsider the table's `removalPolicy`.** This chapter's table holds only disposable items, but in a table shared with data it owns, that is `RETAIN`
 - **Choose a TTL you can put into words.** Can you say "the list is at most 36 seconds old" (30 seconds plus 20% jitter)?
-- **Watch the hit rate.** `x-cache` is in the logs. Metrics and alarms are planned for chapter 19
+- **Watch the hit rate.** `x-cache` is in the logs. For counting from logs and alarming on the result, see [chapter 19](/en/chapters/19-observability.md)
 - **If you use Valkey, decide whether a public endpoint is acceptable.** It is protected by IAM, but some organizations rule out any data store reachable from the internet. Then the connection type is VPC and the function moves into chapter 11's VPC. The `elasticache:ConnectionType` condition key can forbid creating public caches at all
 - **Give Valkey users one purpose each.** This chapter uses `default.iam-user`, which may do anything. In production, create users limited to the commands and keys they need
 - **Deploy through the AWS CDK CLI and CloudFormation.** As chapter 02 said

@@ -56,7 +56,7 @@ user pool は、Amazon Cognito が持つ利用者の名簿です。パスワー�
 
 Amplify は使いません。Cognito の user pool は、OAuth 2.0 と OpenID Connect（OIDC）という標準の手順で使えます。この章の SPA は、汎用の OAuth ライブラリ（oauth4webapi）で標準の endpoint を呼ぶだけ。Cognito を別の OIDC 対応のサービスに替えても、SPA のコードの大半は変わりません。
 
-SPA と API は別の origin のままにして、token を `Authorization` ヘッダーで送ります。cookie は使いません。別のやり方として、サーバー側（BFF）が token を持って、ブラウザには cookie だけを渡す方法もあります。ブラウザの JavaScript から token が見えなくなるのが利点です。そちらは 09章（planned）で扱います。
+SPA と API は別の origin のままにして、token を `Authorization` ヘッダーで送ります。cookie は使いません。別のやり方として、サーバー側（BFF）が token を持って、ブラウザには cookie だけを渡す方法もあります。ブラウザの JavaScript から token が見えなくなるのが利点です。そちらは [09章](/ja/chapters/09-ssr.md)で扱います。
 
 ## 言葉をそろえる
 
@@ -242,7 +242,7 @@ SPA は、access token をメモリの変数にだけ持ちます。localStorage
 | --- | --- | --- |
 | メモリ（この章） | 消える。もう一度サインインする | ページが開いている間は読める |
 | localStorage | 残る | いつでも読める。タブを閉じた後も残る |
-| サーバー側の session と cookie（09章の予定） | 残る | 読めない（`HttpOnly` の場合） |
+| サーバー側の session と cookie（[09章](/ja/chapters/09-ssr.md)） | 残る | 読めない（`HttpOnly` の場合） |
 
 再読み込みのたびにサインインし直すのは、正直ちょっと不便です。ただ、managed login 自身が 1 時間有効の session cookie を持っているので、その間はパスワードを打ち直さずに戻ってこられます。
 
@@ -402,7 +402,7 @@ Cloudflare で同じことをするなら、Cloudflare Access を前に置くか
 
 利用者が 100 人なら、定価で月 USD 1.50。無料枠の範囲内なら 0 です。
 
-メールと SMS は別料金です。この章の構成では、利用者を作るときの仮パスワードのメールを、Cognito の既定の送信機能で送ります。その上限と料金は確認していません。利用者が多いアプリでは Amazon SES を使います（15章の予定）。
+メールと SMS は別料金です。この章の構成では、利用者を作るときの仮パスワードのメールを、Cognito の既定の送信機能で送ります。その上限と料金は確認していません。利用者が多いアプリでは Amazon SES を使います（[15章](/ja/chapters/15-email.md)）。
 
 JWT authorizer はどうでしょう。東京リージョンの API Gateway の価格表に、authorizer の項目はありません。拒否されたリクエストでは関数が起動しないので、Lambda の料金はかかりません。そのリクエストが API Gateway のリクエスト料金に数えられるかどうかは、確認していません。
 
@@ -440,7 +440,7 @@ API Gateway が返す 401 と 403 の本文は、この本のエラーの形（`
 - **MFA を有効にする。** この章の user pool は、パスワードだけです
 - **手元の origin を外す。** callback URL と CORS から `http://localhost:5173` を消します。開発用には別の stack を使います
 - **独自ドメインを使う。** サインイン画面のドメインが `...amazoncognito.com` のままだと、利用者にとって本物かどうか見分けにくくなります
-- **メールを SES から送る。** Cognito の既定の送信は、少量向けです（15章の予定）
+- **メールを SES から送る。** Cognito の既定の送信は、少量向けです（[15章](/ja/chapters/15-email.md)）
 - **token の寿命と失効の方針を決める。** 「無効にしても、しばらく通る」の表から選びます
 - **Content-Security-Policy を設定する。** XSS の被害を減らします。03章で話したとおり、管理ポリシーには含まれません
 - **利用者の削除とデータの削除をつなぐ。** 利用者を消しても、その `sub` の下のノートは table に残ります。消す処理が要ります

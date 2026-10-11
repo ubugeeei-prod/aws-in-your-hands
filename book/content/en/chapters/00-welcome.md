@@ -21,12 +21,12 @@ The subject is a small notes app that accepts image attachments. It starts out a
 05                                      Lambda -> DynamoDB
 06  Browser -> Cognito (login)          API checks whose note it is
 07  Browser -> S3 (presigned upload)
-08  S3 event -> SQS -> Lambda (thumbnail)
+08  S3 event -> SQS -> Lambda (image check)
 ```
 
-Chapters 03 through 06 are written. Chapter 07 onward is planned.
+All chapters, 00 through 24, are written.
 
-The features are not stacked into one huge sample. Each chapter has its own `examples/<chapter number>-<name>/` directory, and it holds only what that chapter needs to explain. Email, AI, live streaming, and celld will be recipes you can work through independently of the notes app.
+The features are not stacked into one huge sample. Each chapter has its own `examples/<chapter number>-<name>/` directory, and it holds only what that chapter needs to explain. Email ([chapter 15](/en/chapters/15-email.md)), AI ([chapter 17](/en/chapters/17-ai.md)), live streaming ([chapter 18](/en/chapters/18-live.md)), and celld ([chapter 24](/en/chapters/24-celld.md)) are recipes you can work through independently of the notes app.
 
 ## What order should you read in?
 
@@ -101,7 +101,7 @@ Calculations use the Tokyo Region (`ap-northeast-1`), prices in USD, and a month
 
 The book does not use AWS Amplify. With CDK and the SDK used directly, it is easier to follow what gets created where.
 
-One thing about cdkd before we go on. cdkd is a tool that applies CDK code to AWS without going through CloudFormation. Its official documentation describes it as intended for development and testing, and recommends the AWS CDK CLI for production. This book uses cdkd anyway, because it suits the short iterations you do while learning. The standard path for production is planned for chapter 20. Chapter 02 goes into the details.
+One thing about cdkd before we go on. cdkd is a tool that applies CDK code to AWS without going through CloudFormation. Its official documentation describes it as intended for development and testing, and recommends the AWS CDK CLI for production. This book uses cdkd anyway, because it suits the short iterations you do while learning. The standard path for production is covered in [chapter 20](/en/chapters/20-shipping.md). Chapter 02 goes into the details.
 
 ## Next
 

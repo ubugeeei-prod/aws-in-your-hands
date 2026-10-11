@@ -392,7 +392,7 @@ t1+30    ECS sends SIGKILL if the process is still there     (stopTimeout = 30)
 
 **deregistration delay** は、ALB が「外す」と決めた task について、進行中のリクエストが終わるのを待つ時間です。既定は 300 秒。task を 1 つ止めるたびに最大 5 分待つことになるので、30 秒に縮めました。このアプリのリクエストは長くても 10 秒、という前提です。ファイルの upload や streaming のような長いリクエストがあるなら、縮めすぎると途中で切れます。
 
-「じゃあ graceful shutdown は要らないのでは？」と思うかもしれません。要ります。deregistration delay より長いリクエストは残りますし、さっき見たとおり、keep-alive の接続を片付けないとプロセスが終われません。ALB を通らない仕事（08章で扱う予定の、キューの処理など）には、そもそも前半がありません。
+「じゃあ graceful shutdown は要らないのでは？」と思うかもしれません。要ります。deregistration delay より長いリクエストは残りますし、さっき見たとおり、keep-alive の接続を片付けないとプロセスが終われません。ALB を通らない仕事（[08章](/ja/chapters/08-async.md)の、queue の処理など）には、そもそも前半がありません。
 
 正直に言うと、この順序は、ECS のドキュメントが書いている task の状態の並び（DEACTIVATING で登録解除、そのあと STOPPING で SIGTERM）から読み取ったものです。実際に動かして、ログの時刻で確かめてはいません。確かめるためのタスクは用意してあります。
 
@@ -678,8 +678,8 @@ SIGTERM を受けて、進行中の仕事を終えてから止まる、という
 - **認証と認可を足す。** 04章と同じで、URL を知っている人は誰でも呼べます（06章）
 - **データを task の外に置く。** いまは更新のたびに消えます（05章、13章）。そのとき、「新旧が同時に動く」の決まりが本物の制約になります
 - **task を private subnet に置く。** 出口を NAT にするか endpoint にするかは、11章の表で決めます
-- **秘密は環境変数に直接書かない。** task definition の `secrets` で、Secrets Manager などから起動時に渡します。読む権限は execution role に付けます（21章の予定）
-- **アプリの指標でも更新を止める。** circuit breaker は起動と health check しか見ません。ECS には、CloudWatch のアラームで更新を失敗にする仕組みもあります（19章の予定）
+- **秘密は環境変数に直接書かない。** task definition の `secrets` で、Secrets Manager などから起動時に渡します。読む権限は execution role に付けます（secret の扱いは [21章](/ja/chapters/21-security.md)。あちらは Lambda の例です）
+- **アプリの指標でも更新を止める。** circuit breaker は起動と health check しか見ません。ECS には、CloudWatch のアラームで更新を失敗にする仕組みもあります（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）
 - **base image を digest で固定する。** `node:24-bookworm-slim` という tag は、中身が更新されていきます。いつ build しても同じ image にしたいなら、digest で指定します
 - **AZ を 3 つにして、task も 3 つ以上にする。** 2 つだと、片方の AZ が止まった瞬間に処理能力が半分になります
 - **ログの保持期間、ALB の削除保護、repository の `emptyOnDelete` を見直す。** どれも、練習用に「消しやすい」ほうへ倒してあります

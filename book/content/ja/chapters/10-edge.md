@@ -413,7 +413,7 @@ origin request で動いて、origin には聞かずに自分で応答を返し�
 
 <<< @/examples/10-edge/src/lambda-edge/body-digest.ts{event}
 
-### この本でただ 1 つ、東京の外にある stack
+### 東京の外にある stack
 
 <<< @/examples/10-edge/infra/bin/app.ts{stacks}
 
@@ -553,7 +553,7 @@ Lambda@Edge は、100 万リクエストあたり USD 0.60 と、1 GB 秒あた�
 
 - **KVS を書ける人を絞る。** `edge-data.json` を review して merge し、CI だけが sync する。コンソールからの直接の編集は、緊急時だけにします。この章の script は、直接の編集を次の `edge:kvs:plan` で差分として見せてくれます
 - **メンテナンスのスイッチを、唯一の防御にしない。** 伝播には遅れがあり、KVS が読めないあいだは効きません。データを守るための締め出しは、origin の側でも行います
-- **関数の指標を見る。** エラーと compute utilization です（19章の予定）。utilization が上限に近いなら、読み取りの回数や JSON の大きさを見直します
+- **関数の指標を見る。** エラーと compute utilization です（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）。utilization が上限に近いなら、読み取りの回数や JSON の大きさを見直します
 - **表の大きさを見積もる。** 5 MB、値は 1 KB。数万件の redirect を入れるつもりなら、先に計算を
 - **Lambda@Edge の log group に保持期間を付ける。** 実行されたリージョンごとに自動で作られます。stack の外にあるので、自分で設定します
 - **反映の経路を AWS CDK CLI と CloudFormation にする。** 02章で話したとおりです

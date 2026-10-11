@@ -617,7 +617,7 @@ No free allowance is deducted in any of these tables. Whether restores and AWS B
 
 - **Protect the table and the bucket.** That is `-c protect=on`: `RETAIN` and deletion protection. It protects the table itself, and only that. The contents are protected by PITR and versioning
 - **Set targets first, and check them with a drill.** RTO and RPO, once chosen, are only numbers. Measuring is what tells you whether you meet them. As the table grows, so does the restore time. Do it regularly
-- **Have a way to know when the accident happened.** PITR restores to whatever time you give it. Only you know that time. Record API calls so you can trace who deleted what, and when (planned for chapter 21)
+- **Have a way to know when the accident happened.** PITR restores to whatever time you give it. Only you know that time. Record API calls so you can trace who deleted what, and when (the tool is CloudTrail. The event history read in [chapter 21](/en/chapters/21-security.md) records management events, so check beforehand what will be in it)
 - **Have a way to stop writes during the cutover.** Cut over on a running service, and the check's grace period and the count of lost data both keep moving. This chapter builds no way to stop
 - **Put "stop the cleanup" into the recovery procedure.** Chapter 08's schedule deletes images whose records were lost
 - **Return the restored table to the source.** Adopt it, or rebuild. Don't keep running the service on "a table outside the stack"

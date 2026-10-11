@@ -74,7 +74,7 @@ AWS で PostgreSQL 系の SQL を使う道は、大きく 3 つあります。
 - **1 つの transaction で大量の行を書く。** 3,000 行を超える一括更新や、5 分を超える処理。分割できないなら DSQL には載りません
 - **同じ行に書き込みが集中する。** カウンターや在庫のような行を、たくさんの transaction が同時に更新する。DSQL は待たせる代わりに失敗させるので、再試行ばかりになります
 
-RDS と Aurora を選ぶと、VPC が付いてきます。DB の instance は VPC の中に置くものなので、Lambda も VPC に入れて、subnet と security group を用意します。その話は [11章](/ja/chapters/11-network.md)の予定で、この章では作りません。
+RDS と Aurora を選ぶと、VPC が付いてきます。DB の instance は VPC の中に置くものなので、Lambda も VPC に入れて、subnet と security group を用意します。その話は [11章](/ja/chapters/11-network.md)でしました。この章では作りません。
 
 Aurora Serverless v2 の「止まる」には条件があります。最小容量を 0 ACU にすると、利用者の接続が無い状態が一定時間（既定は 5 分、最長 1 日）続いたときに instance が止まって、instance の料金が 0 になります。ただし、接続が 1 本でも開いていれば止まりません。RDS Proxy を付けると、proxy が接続を持ち続けるので止まりません。論理レプリケーションや zero-ETL を使っていても止まりません。止まったあとの最初の接続は、再開に 15 秒ほど。24 時間を超えて止まっていたら、30 秒以上かかることがあります。そして、止まっている間も storage の料金は残ります。
 
@@ -540,8 +540,8 @@ stack を消せば、この章のぶんの料金は止まります。
 - **削除保護を入れて、stack を消しても cluster が残るようにする。** いまは逆です
 - **backup の計画を作って、restore を一度は練習する。** 新しい cluster への切り替えまで含めて
 - **認証を足す。** いまは owner が全員 `anonymous` です（[06章](/ja/chapters/06-auth.md)）
-- **競合の回数を見張る。** `transaction retry` の行と 503 の数にアラームを付けます（19章の予定）
-- **migration を、手元からではなく決まった経路で流す。** `dsql:DbConnectAdmin` を持つ人と場所を絞ります（20章の予定）
+- **競合の回数を見張る。** `transaction retry` の行と 503 の数にアラームを付けます（ログの行を数えてアラームにする方法は [19章](/ja/chapters/19-observability.md)）
+- **migration を、手元からではなく決まった経路で流す。** `dsql:DbConnectAdmin` を持つ人と場所を絞ります（CI の経路の作り方は [20章](/ja/chapters/20-shipping.md)）
 - **作成を、呼ぶ側からも安全に送り直せるようにする。** いまは ID をサーバーが決めるので、応答が届かなかった `POST` を送り直すと、2 件目ができます。呼ぶ側が決めた key を受け取る作りに変えます
 - **接続が切れたときの再試行を決める。** この章がやり直すのは `40001` だけです。接続のエラーでは、commit されたかどうかがわかりません。やり直していいのは、何度実行しても同じ結果になる処理だけです
 - **反映の経路を AWS CDK CLI と CloudFormation にする。** 02章で話したとおりです

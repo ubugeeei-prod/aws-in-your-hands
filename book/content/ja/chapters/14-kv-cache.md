@@ -244,7 +244,7 @@ Node.js の Valkey client は、npm で 2 つ確かめました。
 - `@valkey/valkey-glide` 2.5.3: Valkey の公式 client。IAM 認証を内蔵。中身は Rust で、OS と CPU ごとの native のパッケージを使う
 - `iovalkey` 0.4.0: ioredis から分かれた client。JavaScript だけで書かれている
 
-この本は、Lambda のコードを synth のときに esbuild で 1 つのファイルにまとめています。Docker は使いません。native のパッケージは、まとめるマシン（たとえば macOS）と動かす場所（Linux の arm64）で別のものが要るので、このやり方に素直にのりません。そこで、JavaScript だけの iovalkey を選びました。GLIDE のほうが、認証まわりで書くコードは少なくなるはずです。コンテナで動かす（12章の予定）なら、選び直していいと思います。
+この本は、Lambda のコードを synth のときに esbuild で 1 つのファイルにまとめています。Docker は使いません。native のパッケージは、まとめるマシン（たとえば macOS）と動かす場所（Linux の arm64）で別のものが要るので、このやり方に素直にのりません。そこで、JavaScript だけの iovalkey を選びました。GLIDE のほうが、認証まわりで書くコードは少なくなるはずです。コンテナで動かす（[12章](/ja/chapters/12-containers.md)）なら、選び直していいと思います。
 
 <<< @/examples/14-kv-cache/src/valkey-client.ts{elasticache}
 
@@ -329,7 +329,7 @@ cache がうまく効いている API ほど、危ない瞬間があります。
 
 <<< @/examples/14-kv-cache/test/read-through.test.ts{single-flight-test}
 
-ただし、これが効くのは 1 つのプロセスの中だけです。そして Lambda は、同時に来たリクエストごとに別の実行環境を用意します。1 つの実行環境が同時にさばくリクエストは 1 件なので、**Lambda では single flight は、ほぼ出番がありません。** コンテナや常駐のサーバー（12章の予定）で動かすときに効く対策です。コードを共通にしておきたいので、入れてあります。
+ただし、これが効くのは 1 つのプロセスの中だけです。そして Lambda は、同時に来たリクエストごとに別の実行環境を用意します。1 つの実行環境が同時にさばくリクエストは 1 件なので、**Lambda では single flight は、ほぼ出番がありません。** コンテナや常駐のサーバー（[12章](/ja/chapters/12-containers.md)）で動かすときに効く対策です。コードを共通にしておきたいので、入れてあります。
 
 ### 実行環境をまたぐなら、store に lock を置く
 
@@ -637,7 +637,7 @@ stack を消せば、この章のぶんの料金は止まります。
 - **rate limit の手前にも守りを置く。** まずは HTTP API の stage の throttling。AWS WAF は HTTP API には付けられないので、要るなら構成から選び直しです（[04章](/ja/chapters/04-http-api.md)）。アプリの rate limit は、公平に配るためのもので、攻撃を受け止めるためのものではありません
 - **table の `removalPolicy` を見直す。** この章の table は消えていいものしか入っていませんが、持ち主のデータと同じ table に置くなら `RETAIN` です
 - **TTL を、言葉で説明できる長さにする。** 「一覧は最大 36 秒古い」と言えますか（30 秒 + 揺らぎ 20%）
-- **cache の hit 率を見る。** `x-cache` をログに出してあります。メトリクスとアラームは 19章の予定
+- **cache の hit 率を見る。** `x-cache` をログに出してあります。ログから数えてアラームにする方法は [19章](/ja/chapters/19-observability.md)
 - **Valkey を使うなら、public endpoint でよいかを決める。** IAM で守られてはいますが、組織によっては「インターネットから届くデータストアは不可」です。その場合は接続の種類を VPC にして、11章の VPC に関数ごと入れます。`elasticache:ConnectionType` という条件キーで、public な cache を作れなくすることもできます
 - **Valkey の利用者を、用途ごとに分ける。** この章は、何でもできる `default.iam-user` を使っています。本番では、使えるコマンドと key を絞った利用者を作ります
 - **反映の経路を AWS CDK CLI と CloudFormation にする。** 02章で話したとおりです

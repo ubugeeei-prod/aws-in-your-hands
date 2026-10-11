@@ -111,7 +111,7 @@ Here's the honest part: this has not been run against real S3. The tag in the fo
 
 S3 checks that the `Content-Type` written in the form matches the policy. It does not check that the file really is a PNG. HTML calling itself `image/png` can be stored.
 
-This chapter does two things about that. It narrows the allowed types to four image formats (SVG is left out because it can contain script). And it serves images from an origin other than the app's (the S3 domain). Inspecting the content needs a process that runs after the upload (planned for chapter 08).
+This chapter does two things about that. It narrows the allowed types to four image formats (SVG is left out because it can contain script). And it serves images from an origin other than the app's (the S3 domain). Inspecting the content needs a process that runs after the upload ([chapter 08](/en/chapters/08-async.md) adds one).
 
 ## The API decides the key
 
@@ -261,7 +261,7 @@ vp run uploads:sweep
 vp run uploads:sweep --delete
 ```
 
-Running it on a schedule needs a scheduler (planned for chapter 08).
+Running it on a schedule needs a scheduler ([chapter 08](/en/chapters/08-async.md) adds one).
 
 ### A gap this design leaves open
 
@@ -476,13 +476,13 @@ Destroying the stack deletes the bucket and the images in it. What remains is li
 ## Before production
 
 - **Close the replay of a form.** See "A gap this design leaves open"
-- **Run the sweep on a schedule.** As a task run by hand, it will be forgotten one day (planned for chapter 08)
+- **Run the sweep on a schedule.** As a task run by hand, it will be forgotten one day ([chapter 08](/en/chapters/08-async.md))
 - **Inspect the content.** S3 does not look at whether a file really is an image. Add a check that runs after the upload
 - **Rethink delivery.** With many views, put CloudFront in front. Both the data transfer charges and the caching change
 - **Protect the bucket.** Set `removalPolicy` to `RETAIN` and consider versioning. With versioning on, lifecycle rules behave differently
 - **Set a limit per user.** This chapter's only limit is 10 images per note. Nothing limits how many notes one user creates
 - **Remove the local origin.** Take `http://localhost:5173` out of the bucket's CORS and the API's CORS
-- **Record access.** Who used a presigned URL does not appear in the API's logs. You need records on the S3 side (planned for chapter 19)
+- **Record access.** Who used a presigned URL does not appear in the API's logs. You need records on the S3 side (this book does not cover them)
 
 ## Cleaning up
 

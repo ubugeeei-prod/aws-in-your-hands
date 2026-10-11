@@ -398,7 +398,7 @@ vp run celld:start
 
 `celld:backup` は、動いている node が 1 台でもあれば何もしません。止まっていることを確かめたら、node ごとに data volume の snapshot を取り、fleet の prefix を backup 用の bucket に copy して、どの snapshot がどの node のものかを manifest に書きます。
 
-動かしたままの backup は、用意していません。動いている fleet の bucket を copy したものが、戻せる状態である保証を、公式文書のどこにも見つけられなかったからです。22章の PITR や versioning は、「その時点の bucket」を戻す道具です。celld の状態は bucket と複数の disk にまたがっているので、bucket だけをある時点に戻しても、揃った状態にはなりません。
+動かしたままの backup は、用意していません。動いている fleet の bucket を copy したものが、戻せる状態である保証を、公式文書のどこにも見つけられなかったからです。[22章](/ja/chapters/22-recovery.md)の PITR は DynamoDB の table を、versioning は bucket の object を 1 つずつ、前の状態に戻す道具です。あの章で見たとおり、別々に戻した置き場所は食い違います。celld の状態は bucket と複数の disk にまたがっているので、bucket だけを戻しても、揃った状態にはなりません。
 
 restore は、消す操作です。なので既定は dry-run にしました。
 
@@ -510,7 +510,7 @@ invariant は celld のものです。cell の持ち主は同時に 1 台。応�
 
 **まだ確かめていないこと。** AWS に対しては、何も実行していません。`celld:infra:diff`、`celld:infra:deploy`、`celld:infra:drift`、`celld:infra:destroy` と、`celld:status` から `celld:bucket-empty` までの、node に触るタスクすべてです。celld の binary も一度も実行していません（`celld dev`、`celld deploy`、node の起動、`celld diagnose`）。そのため、次のことは読んだだけです。celld が instance role（IMDSv2 必須、hop limit 1）から credentials を得られること。S3 の gateway endpoint だけで fleet の bucket に届くこと。この章の IAM の action の一覧で足りること。systemd の `ProtectSystem=strict` の下で celld が動くこと。`t4g.small` で足りること。`celld diagnose --json` の実際の出力（テストの sample は、v0.6.2 の `fleet.rs` の書式から組み立てたもので、実物の写しではありません）。SIGTERM での引き渡しと health の gate の実際の振る舞い。`--skip-os-shutdown` の後に残った node が cell を引き継ぐこと。backup から戻した fleet が起動すること。cdkd が volume の置き換えを伴う restore の deploy を通せること。`vp run` のタスクに `-c` や `--yes` を渡す形は、23章までと同じ書き方に揃えました。
 
-一次情報で確かめられなかったこと。celld が必要とする S3 の action の一覧（Azure 向けの記述からの読み替えです）。bucket の versioning と celld の組み合わせ。`CELLD_NODE` を再起動をまたいで固定してよいか。動いている fleet の bucket の copy が戻せる状態かどうか。celld の最小の memory 要件。Amazon Linux 2023 の systemd の版（v252 の man page を読みましたが、instance では確かめていません）。Cloudflare 側の Durable Objects の保証や料金は調べていません。22章はこの章の執筆時点で未完成で、内容を読めていません。
+一次情報で確かめられなかったこと。celld が必要とする S3 の action の一覧（Azure 向けの記述からの読み替えです）。bucket の versioning と celld の組み合わせ。`CELLD_NODE` を再起動をまたいで固定してよいか。動いている fleet の bucket の copy が戻せる状態かどうか。celld の最小の memory 要件。Amazon Linux 2023 の systemd の版（v252 の man page を読みましたが、instance では確かめていません）。Cloudflare 側の Durable Objects の保証や料金は調べていません。
 
 依頼された構成から変えた点。「peer の通信は private と TLS」は、celld が TLS を持たないので「private な network だけ」になりました。node の喪失の検査は、ownership record を直接読むのではなく、client から見える counter の履歴で判定します（record の形式が公開された interface ではないため）。
 

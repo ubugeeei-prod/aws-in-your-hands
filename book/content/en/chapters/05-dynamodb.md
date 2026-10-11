@@ -13,7 +13,7 @@ This chapter builds on [chapter 04](/en/chapters/04-http-api.md). The code is in
 
 There's still no authentication. Anyone who knows the URL can read and write (authentication is [chapter 06](/en/chapters/06-auth.md)). Please don't put in data you'd mind other people seeing.
 
-If your data is something you want to query with SQL, you can skip this chapter and go on to chapter 13 (planned). The section "When DynamoDB doesn't fit", later on, gives some guidance for deciding.
+If your data is something you want to query with SQL, you can skip this chapter and go on to [chapter 13](/en/chapters/13-sql.md). The section "When DynamoDB doesn't fit", later on, gives some guidance for deciding.
 
 ## The big picture
 
@@ -220,7 +220,7 @@ If the stored note is exactly one version ahead and has the content that was sen
 
 This decision has a limit. It can't tell this case apart from one where someone else saved exactly the same content at the same version. Even then, the stored content is what you wanted, so treating it as a success does no harm. In the opposite case, where your write went through and someone else saved again before your retry, the client returns a conflict. Your save did happen once, but what is stored now is someone else's content, so showing that is the safe outcome.
 
-Creation, by the way, doesn't have this protection. `POST /notes` has nothing with which to tell a retry from the creation of a new note, so losing a response and retrying produces two notes with the same content. A test records this behavior as the specification. Fixing it requires the caller to send a value that shows "this is the same request" (idempotency, planned for chapter 08).
+Creation, by the way, doesn't have this protection. `POST /notes` has nothing with which to tell a retry from the creation of a new note, so losing a response and retrying produces two notes with the same content. A test records this behavior as the specification. Fixing it requires the caller to send a value that shows "this is the same request". This book doesn't take the fix that far (the idea is the same one [chapter 08](/en/chapters/08-async.md) uses to make its worker idempotent).
 
 ## Run it on your machine
 
@@ -322,6 +322,8 @@ Writing `table.grantReadWriteData(role)` would do this in one line. But those pe
 
 `externalModules: []` tells the bundler to include the AWS SDK in the bundle. If nothing is specified, the SDK is left out of the bundle and the version that ships in the Lambda runtime is used. That version has nothing to do with this repository's lockfile. With the SDK included, the version that runs is the one that was tested. The price is a larger bundle.
 
+The `banner` line deals with a side effect of that. The bundled SDK calls `require()` internally, and an ES module has no `require`, so without help the function fails the moment it is loaded. The banner defines `require` at the top of the bundle. Unit tests cannot catch this, because the test runner supplies its own `require`. That is why `vp run bundles:check` loads each synthesized bundle in plain Node.js.
+
 ## Deploy it and check
 
 <!-- section: 05.deploy -->
@@ -354,9 +356,9 @@ This chapter's design worked because there were only two ways of reading. Dynamo
 - Aggregations and joins across several kinds of data
 - Constraints that span several items. A rule such as "at most 100 notes per user" can't be kept by a conditional write on one item. There is a transaction feature, but it has limits on the number and size of items it can handle at once
 
-There is also a limit of 400 KB per item. Large data such as images doesn't go in an item; it goes in S3 (chapter 07, planned).
+There is also a limit of 400 KB per item. Large data such as images doesn't go in an item; it goes in S3 ([chapter 07](/en/chapters/07-uploads.md)).
 
-If requirements like these are central, a SQL database is the more straightforward choice. Chapter 13 (planned) compares Aurora DSQL, RDS for PostgreSQL, and Aurora Serverless v2. If you're used to D1, that should be the closer experience. DynamoDB isn't "D1 without SQL". It's a different kind of tool.
+If requirements like these are central, a SQL database is the more straightforward choice. [Chapter 13](/en/chapters/13-sql.md) compares Aurora DSQL, RDS for PostgreSQL, and Aurora Serverless v2. If you're used to D1, that should be the closer experience. DynamoDB isn't "D1 without SQL". It's a different kind of tool.
 
 ### If you want it in several Regions
 
@@ -415,10 +417,10 @@ Delete the stack and the table is deleted with it. Nothing remains.
 ## If you take this to production
 
 - **Add authentication and separation between owners.** Right now everyone reads and writes the same notes (chapter 06)
-- **Protect the table.** Set `removalPolicy` to `RETAIN`, and enable deletion protection and point-in-time recovery. The procedure for restoring data deleted by accident is planned for chapter 22
+- **Protect the table.** Set `removalPolicy` to `RETAIN`, and enable deletion protection and point-in-time recovery. The procedure for restoring data deleted by accident is practiced in [chapter 22](/en/chapters/22-recovery.md)
 - **Set a limit on traffic.** An on-demand table lets you set maximum reads and writes per second. A public API with no limit has no limit on its cost either
-- **Make creation idempotent.** This fixes the duplicates caused by retries (chapter 08, planned)
-- **Watch throttling and failures.** Look at DynamoDB errors and the proportion of 409s (chapter 19, planned). A high proportion of 409s is a signal to reconsider how the screen is built or how notes are divided up
+- **Make creation idempotent.** This fixes the duplicates caused by retries. The caller sends a value such as an `Idempotency-Key`, and the server writes conditionally with that as the key. This book doesn't implement it. [Chapter 08](/en/chapters/08-async.md) uses the same idea in the worker that processes S3 events
+- **Watch throttling and failures.** Look at DynamoDB errors and the proportion of 409s ([chapter 19](/en/chapters/19-observability.md)). A high proportion of 409s is a signal to reconsider how the screen is built or how notes are divided up
 - **Deploy through the AWS CDK CLI and CloudFormation.** As discussed in chapter 02
 
 ## Clean up

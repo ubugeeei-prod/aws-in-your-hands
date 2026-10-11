@@ -200,7 +200,7 @@ template を AWS に反映する経路は、2 つあります。
 
 cdkd は `cdk deploy` の速い別名ではありません。作る経路も、記録の場所も別です。ここから、3 つのことが言えます。
 
-1. cdkd の公式ドキュメントは、cdkd を開発・テスト用途向けとし、本番には AWS CDK CLI を勧めています（確認日 2026-10-11、固定した版は 0.296.28）。この本は、学習中の短い反復のために cdkd を使います。本番向けの経路は 20章で扱う予定です。
+1. cdkd の公式ドキュメントは、cdkd を開発・テスト用途向けとし、本番には AWS CDK CLI を勧めています（確認日 2026-10-11、固定した版は 0.296.28）。この本は、学習中の短い反復のために cdkd を使います。本番向けの経路は [20章](/ja/chapters/20-shipping.md)で扱います。
 2. 同じリソースを 2 つの経路で交互に管理しない。cdkd で作った stack を `cdk deploy` で更新する、あるいはその逆をすると、2 つの記録が食い違います。
 3. state を失うと、cdkd は自分が何を作ったか分からなくなる。state の bucket は versioning が有効で、復旧の手段として `cdkd import` があります。ただ、この本では復旧を実行して確かめてはいません。
 
@@ -264,7 +264,7 @@ drift は、state と実物を比べます。「記録どおりの設定が、�
 
 だから、**diff が空でも、drift が無いとは言えません**。コンソールで bucket の versioning を止めても、コードも state も変わらないので、diff は「変更なし」と言います。
 
-CloudFormation の経路にも、同じ区別があります。`cdk diff` は template どうしの比較で、実物との比較は CloudFormation の drift detection という別の機能です。そちらは 20章で扱う予定です。
+CloudFormation の経路にも、同じ区別があります。`cdk diff` は template どうしの比較で、実物との比較は CloudFormation の drift detection という別の機能です。そちらは [20章](/ja/chapters/20-shipping.md)で扱います。
 
 ## drift を見つける
 
@@ -371,7 +371,7 @@ stack が残っているのに state の bucket を消すと、cdkd はその st
 
 - 反映の経路を AWS CDK CLI と CloudFormation にする。cdkd 自身がそう勧めています。同じ CDK のコードをそのまま使えます
 - データを持つリソースは `RemovalPolicy.RETAIN` にする。サンプルの `prod` がその例です
-- 人の認証情報でデプロイしない。CI から、期限の短い認証情報で実行します（20章の予定）
+- 人の認証情報でデプロイしない。CI から、期限の短い認証情報で実行します（[20章](/ja/chapters/20-shipping.md)）
 - drift の検出を定期的に実行する。例を `docs/examples/drift-schedule.yml` に置いています
 
 ::: details この章の検証メモ

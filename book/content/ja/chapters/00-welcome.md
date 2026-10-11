@@ -21,12 +21,12 @@ revision: 2
 05                                      Lambda -> DynamoDB
 06  Browser -> Cognito (login)          API checks whose note it is
 07  Browser -> S3 (presigned upload)
-08  S3 event -> SQS -> Lambda (thumbnail)
+08  S3 event -> SQS -> Lambda (image check)
 ```
 
-03章から 06章までは書き終えています。07章以降は planned です。
+00章から 24章まで、すべての章を書き終えています。
 
-全部の機能を 1 つの巨大なサンプルに積み上げる、ということはしません。章ごとに `examples/<章番号>-<名前>/` があって、その章の説明に必要なものだけが入っています。メール、AI、ライブ配信、celld は、ノートアプリとは独立に取り組めるレシピにする予定です。
+全部の機能を 1 つの巨大なサンプルに積み上げる、ということはしません。章ごとに `examples/<章番号>-<名前>/` があって、その章の説明に必要なものだけが入っています。メール（[15章](/ja/chapters/15-email.md)）、AI（[17章](/ja/chapters/17-ai.md)）、ライブ配信（[18章](/ja/chapters/18-live.md)）、celld（[24章](/ja/chapters/24-celld.md)）は、ノートアプリとは独立に取り組めるレシピになっています。
 
 ## どの順で読む？
 
@@ -101,7 +101,7 @@ Cloudflare の D1、Workers、Workers AI に慣れている人向けの経路は
 
 AWS Amplify は使いません。CDK と SDK を直接使うほうが、何がどこに作られるのかを追いやすいからです。
 
-cdkd については、先に 1 つだけ断っておきますね。cdkd は、CDK のコードを CloudFormation を通さずに AWS へ反映するツールです。公式ドキュメントは開発・テスト用途向けと説明していて、本番には AWS CDK CLI を勧めています。それでもこの本が cdkd を使うのは、学習中の短い反復に向いているから。本番向けの標準の経路は 20章で扱う予定です。詳しい話は 02章でします。
+cdkd については、先に 1 つだけ断っておきますね。cdkd は、CDK のコードを CloudFormation を通さずに AWS へ反映するツールです。公式ドキュメントは開発・テスト用途向けと説明していて、本番には AWS CDK CLI を勧めています。それでもこの本が cdkd を使うのは、学習中の短い反復に向いているから。本番向けの標準の経路は [20章](/ja/chapters/20-shipping.md)で扱います。詳しい話は 02章でします。
 
 ## 次へ
 

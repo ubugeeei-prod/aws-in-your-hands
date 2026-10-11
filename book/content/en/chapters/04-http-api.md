@@ -57,9 +57,9 @@ On the other hand, if you want WAF right in front of the API, or you want to str
 
 What's nice about Lambda is that it costs 0 while nobody is using it, and that you can add one API without designing a network. There are cases where it doesn't fit, though.
 
-- One unit of work takes more than 30 seconds. An HTTP API waits at most 30 seconds for Lambda's response (chapters 08 and 16, planned)
-- You need connections that stay open, or you want to run a container you already have as it is (chapter 12, planned)
-- You want to run right next to the reader (chapter 10, planned)
+- One unit of work takes more than 30 seconds. An HTTP API waits at most 30 seconds for Lambda's response ([chapter 08](/en/chapters/08-async.md) and [chapter 16](/en/chapters/16-long-jobs.md))
+- You need connections that stay open, or you want to run a container you already have as it is ([chapter 12](/en/chapters/12-containers.md))
+- You want to run right next to the reader ([chapter 10](/en/chapters/10-edge.md))
 
 ## Start with the contract
 
@@ -113,7 +113,7 @@ Environment variables are values that come from outside the type system, too. Th
 
 The check happens once, at startup. If something is missing, the first invocation fails with a message that names the variable. That's a lot easier to find than "it reads `undefined` and breaks only under certain conditions", isn't it?
 
-By the way, what lives here is configuration, not secrets. Lambda environment variables can be read by anyone who can see the function's configuration in the console. Secrets such as API keys don't go directly into environment variables; you fetch them at run time from Secrets Manager or something like it. This chapter's example has no secrets, so that code isn't here yet (chapter 21, planned).
+By the way, what lives here is configuration, not secrets. Lambda environment variables can be read by anyone who can see the function's configuration in the console. Secrets such as API keys don't go directly into environment variables; you fetch them at run time from Secrets Manager or something like it. This chapter's example has no secrets, so that code isn't in this chapter ([chapter 21](/en/chapters/21-security.md) covers it).
 
 ## Run it on your machine
 
@@ -307,13 +307,13 @@ vp run api:logs --follow
 
 This task picks up the log group's name from the stack outputs and runs `aws logs tail`.
 
-Each log line is one JSON object.
+The app writes one line of JSON per request. With Lambda's default log format, a timestamp and Lambda's request ID are put in front of it, so one entry in CloudWatch Logs is "a prefix plus JSON" ([chapter 19](/en/chapters/19-observability.md) comes back to this).
 
 <<< @/examples/04-http-api/src/log.ts{logger}
 
 When you want to chase a single request, note the response's `x-request-id` header (or, for an error, the `requestId` in the body) and search the logs for that value. You'll find `status`, `durationMs`, and, for an error, the stack trace in `error`. A test confirms that the same ID shows up in all three places: the response header, the error body, and the log.
 
-Lambda itself also writes `START`, `END`, and `REPORT` lines for every invocation. `REPORT` has the duration, the billed duration, and the maximum memory used. On a cold start, `Init Duration` is there too. Metrics and alarms are planned for chapter 19.
+Lambda itself also writes `START`, `END`, and `REPORT` lines for every invocation. `REPORT` has the duration, the billed duration, and the maximum memory used. On a cold start, `Init Duration` is there too. Metrics and alarms are covered in [chapter 19](/en/chapters/19-observability.md).
 
 The drift check is the same as in chapter 02.
 
@@ -382,7 +382,7 @@ One tip. When an error comes back, first check whether the `x-request-id` header
 - **Add authentication and authorization.** Right now anyone can call it (chapter 06)
 - **Save the data.** Right now it disappears (chapter 05)
 - **Limit the request rate.** The stage of an HTTP API has throttling settings. A public API with no limit has no limit on its bill either
-- **Set up alarms.** Keep watch on the error rate and the duration (chapter 19, planned)
+- **Set up alarms.** Keep watch on the share of 5xx responses and on slowness. This app catches exceptions and returns a 500, so Lambda's `Errors` does not go up. What you watch is API Gateway's `5xx` and `Latency` ([chapter 19](/en/chapters/19-observability.md))
 - **Decide how long to keep logs.** 7 days is a value for learning
 - **Make the deployment path the AWS CDK CLI and CloudFormation.** As we talked about in chapter 02
 - **Check the concurrency limit.** The default is 1,000 per Region, shared by every function in the account. New accounts start from a lower value

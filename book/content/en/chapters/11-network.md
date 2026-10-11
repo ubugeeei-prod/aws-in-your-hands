@@ -22,7 +22,7 @@ Chapters 03 through 06 used CloudFront, S3, API Gateway, Lambda, DynamoDB, and C
 A VPC (Virtual Private Cloud) is your own IP network inside a Region. You need one when you use **something that can only live inside a VPC**.
 
 - RDS and Aurora databases (chapter 13)
-- Node-based ElastiCache clusters (planned for chapter 14; ElastiCache Serverless also offers a public endpoint that needs no VPC configuration)
+- Node-based ElastiCache clusters ([chapter 14](/en/chapters/14-kv-cache.md); ElastiCache Serverless also offers a public endpoint that needs no VPC configuration)
 - ECS tasks (chapter 12)
 - EC2 instances (chapter 23)
 

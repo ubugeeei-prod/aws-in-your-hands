@@ -74,7 +74,7 @@ There are clear cases where DSQL does not fit, though.
 - **One transaction writes a lot of rows.** A bulk update over 3,000 rows, or work that takes more than 5 minutes. If it cannot be split, it does not go on DSQL
 - **Writes pile up on the same row.** Many transactions updating one counter or one stock row at once. DSQL fails them instead of making them wait, so you end up retrying constantly
 
-Choosing RDS or Aurora brings a VPC with it. A DB instance lives inside a VPC, so the Lambda function goes into the VPC as well, with subnets and security groups. That is planned for [chapter 11](/en/chapters/11-network.md), and nothing of it is built here.
+Choosing RDS or Aurora brings a VPC with it. A DB instance lives inside a VPC, so the Lambda function goes into the VPC as well, with subnets and security groups. [Chapter 11](/en/chapters/11-network.md) covered that, so nothing of it is built here.
 
 "Pauses" for Aurora Serverless v2 comes with conditions. With a minimum capacity of 0 ACUs, the instance pauses after a period with no user connections (5 minutes by default, one day at most), and the instance charge drops to zero. But a single open connection keeps it running. An attached RDS Proxy keeps it running, because the proxy holds connections open. Logical replication and zero-ETL integrations keep it running. The first connection after a pause waits about 15 seconds for the resume, and 30 seconds or longer if the pause lasted more than 24 hours. And storage is still charged while it is paused.
 
@@ -540,8 +540,8 @@ The last row is written from imagination. What error a dropped connection produc
 - **Turn on deletion protection, and keep the cluster when the stack is destroyed.** Right now it is the other way around
 - **Set up a backup plan and rehearse a restore at least once.** Including the switch to the new cluster
 - **Add authentication.** Every owner is `anonymous` for now ([chapter 06](/en/chapters/06-auth.md))
-- **Watch the number of conflicts.** Put alarms on the `transaction retry` lines and on 503s (planned for chapter 19)
-- **Run migrations through a fixed path, not from a laptop.** Narrow down who and what holds `dsql:DbConnectAdmin` (planned for chapter 20)
+- **Watch the number of conflicts.** Put alarms on the `transaction retry` lines and on 503s (for counting log lines and alarming on them, see [chapter 19](/en/chapters/19-observability.md))
+- **Run migrations through a fixed path, not from a laptop.** Narrow down who and what holds `dsql:DbConnectAdmin` (for building the CI path, see [chapter 20](/en/chapters/20-shipping.md))
 - **Make creates safe to resend from the caller's side.** The server picks the ID today, so resending a `POST` whose response never arrived creates a second note. Change it to accept a key chosen by the caller
 - **Decide what to retry when a connection drops.** This chapter retries only `40001`. After a connection error you do not know whether the commit happened. Only work that gives the same result however often it runs may be retried
 - **Deploy through the AWS CDK CLI and CloudFormation.** As discussed in chapter 02

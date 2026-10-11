@@ -535,7 +535,7 @@ What happens when uploads suddenly increase and the worker cannot keep up?
 
 Nothing fails. Messages just pile up on the queue. At most two workers run at once, so requests to DynamoDB and S3 do not suddenly increase either. The delay shows up as "inspection results take longer to appear". This is backpressure. A queue takes on the difference in flow as the length of a waiting line.
 
-It can only take it on up to the retention period, though. This chapter's queue keeps a message for 4 days. A message still unprocessed after 4 days is gone. It does not go to the DLQ either. The number to watch is not the length of the queue but the age of its oldest message (`ApproximateAgeOfOldestMessage` in CloudWatch). Alarms are planned for chapter 19.
+It can only take it on up to the retention period, though. This chapter's queue keeps a message for 4 days. A message still unprocessed after 4 days is gone. It does not go to the DLQ either. The number to watch is not the length of the queue but the age of its oldest message (`ApproximateAgeOfOldestMessage` in CloudWatch). How to put an alarm together is in [chapter 19](/en/chapters/19-observability.md).
 
 ### Looking at the DLQ
 
@@ -639,7 +639,7 @@ Delete the stack and the queues, the functions, and the schedule are gone, and t
 
 ## Before production
 
-- **Put an alarm on the DLQ.** A DLQ that nobody looks at is just a bin. Raise an alert when `ApproximateNumberOfMessagesVisible` is no longer 0. On the source queue, alarm on the age of the oldest message (planned for chapter 19)
+- **Put an alarm on the DLQ.** A DLQ that nobody looks at is just a bin. Raise an alert when `ApproximateNumberOfMessagesVisible` is no longer 0. On the source queue, alarm on the age of the oldest message (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md))
 - **Do not show an image until it is inspected.** The API in this chapter does not look at the inspection result. A "rejected" image is listed until housekeeping deletes it. Read the inspection record when listing attachments and give a URL only to the ones that are `ok`
 - **Stop housekeeping from growing with the number of images.** Look only at recent objects instead of all of them. Or use S3 Inventory (a feature in which S3 periodically writes a listing of the bucket to files) as the input. This chapter tried neither
 - **Check the sequencer.** Look at the real shape of POST events and lifecycle events, then settle the worker's assumptions again

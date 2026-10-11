@@ -347,7 +347,7 @@ Browser                    API (Lambda)                 Queue              Worke
 
 When the browser calls with a `traceparent`, the API continues that trace. When the API puts a message on a queue, it puts the same information on the message. The worker picks up from there. Everyone's log has the same `traceId`, so one query returns all the lines.
 
-Chapter 08 (planned) builds the queue and the worker. According to the X-Ray documentation, SQS carries the X-Ray trace header in a message attribute called `AWSTraceHeader`, and a Lambda consumer continues from it automatically. This chapter uses no SQS; the tests reproduce only "put it on the message, and the receiver continues". When the same message is delivered twice, there are two spans with the same parent. The duplicate delivery shows up in the trace.
+[Chapter 08](/en/chapters/08-async.md) built the queue and the worker. According to the X-Ray documentation, SQS carries the X-Ray trace header in a message attribute called `AWSTraceHeader`, and a Lambda consumer continues from it automatically. This chapter uses no SQS; the tests reproduce only "put it on the message, and the receiver continues". When the same message is delivered twice, there are two spans with the same parent. The duplicate delivery shows up in the trace.
 
 One thing has not been checked on a real function. Inside Lambda, the layer has already opened a span for the invocation. In that case this chapter's code does not read `traceparent` itself and goes under the layer's span. Whether the browser's `traceparent` and Lambda's trace end up connected depends on how the layer and Lambda behave. Even if they don't, the `traceId` in the log and the request ID still let you follow the request.
 

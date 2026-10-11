@@ -259,7 +259,7 @@ workflow の実物は `examples/20-shipping/workflows/` にあります。`.gith
 - それぞれの role を、trust policy が想定した種類の job が使っている（DeployRole を使う job は `environment: production` を持つ、など）
 - pull request の番号のような外から来る値を、shell のコマンドに直接埋め込んでいない
 
-`aws-actions/configure-aws-credentials` は、確認した日（2026-10-12）の最新が v6.3.0 でした。`docs/examples/` にある 02章からの例は v4 のままです。使っている入力は 3 つ。`role-to-assume`、`aws-region`、そして `allowed-account-ids`。最後のは、受け取った認証情報が想定と違うアカウントのものだったら、その場で止めるためのものです。01章の `AIH_AWS_ACCOUNT_ID` と同じ考え方ですね。
+`aws-actions/configure-aws-credentials` は、確認した日（2026-10-12）の最新が v6.3.0 でした。`docs/examples/` にある例も、同じ版にそろえてあります。使っている入力は 3 つ。`role-to-assume`、`aws-region`、そして `allowed-account-ids`。最後のは、受け取った認証情報が想定と違うアカウントのものだったら、その場で止めるためのものです。01章の `AIH_AWS_ACCOUNT_ID` と同じ考え方ですね。
 
 ## pull request ごとの preview
 
@@ -313,7 +313,7 @@ Lambda の version は、関数のコードと設定の、番号付きの写し�
 
 古い version は消さずに残しています（`RemovalPolicy.RETAIN`）。CloudFormation が更新を rollback するとき、`live` を前の version に戻せるように、です。そのぶん、version はデプロイのたびに増えていきます。stack を消して関数が消えるまで、残ります。
 
-alias は、2 つの version に重みを付けて振り分けることもできます。新しい版に 10% だけ流して様子を見る、というやり方です。AWS のドキュメントによれば、振り分けは確率的で、リクエストが少ないと設定した割合から大きくずれることがあります。CodeDeploy には、これを時間をかけて自動で進める設定が用意されています。どちらも、この章では実装していません。エラー率を見て止める仕組み（19章の予定）が無いまま段階的に切り替えても、問題に気づくのが遅くなるだけだからです。
+alias は、2 つの version に重みを付けて振り分けることもできます。新しい版に 10% だけ流して様子を見る、というやり方です。AWS のドキュメントによれば、振り分けは確率的で、リクエストが少ないと設定した割合から大きくずれることがあります。CodeDeploy には、これを時間をかけて自動で進める設定が用意されています。どちらも、この章では実装していません。エラー率のアラーム（[19章](/ja/chapters/19-observability.md)）につないで止める仕組みが無いまま段階的に切り替えても、問題に気づくのが遅くなるだけだからです。
 
 急いでいるとき、コンソールで `live` を前の version に付け替えたくなるかもしれません。戻りはしますが、それは CloudFormation の外での変更、つまり drift です。template は新しい version を指したままなので、次のデプロイで、また新しいほうに向きます。戻すなら、コードを戻してデプロイする。緊急で手で戻したなら、あとで必ずコードを合わせる。後半の drift 検出は、これを見つけるためにもあります。
 
@@ -328,7 +328,7 @@ alias は、2 つの version に重みを付けて振り分けることもでき
 3. 古い行を埋める
 4. 古い列を、もう誰も読んでいないことを確かめてから消す。消すのは別のデプロイで
 
-4 を 2 と同じデプロイに入れると、そのデプロイは戻せなくなります。[13章](/ja/chapters/13-sql.md)の「動いている DB の schema を変えるとき」は、この話の DSQL 版です。schema のない DynamoDB（[05章](/ja/chapters/05-dynamodb.md)）でも、item の形について同じことが言えます。コンテナで新旧の版が同時に動く時間をどう扱うかは、12章の予定です。
+4 を 2 と同じデプロイに入れると、そのデプロイは戻せなくなります。[13章](/ja/chapters/13-sql.md)の「動いている DB の schema を変えるとき」は、この話の DSQL 版です。schema のない DynamoDB（[05章](/ja/chapters/05-dynamodb.md)）でも、item の形について同じことが言えます。コンテナで新旧の版が同時に動く時間をどう扱うかは、[12章](/ja/chapters/12-containers.md)で扱います。
 
 ## deploy は途中で止まる
 
@@ -533,7 +533,7 @@ preview の stack の料金は、中身しだいです。上の節に書いた�
 - **cfn-exec role を絞る。** 既定は `AdministratorAccess` です。bootstrap のときに、必要な policy だけを渡します
 - **アカウントを分ける。** dev、preview、prod を同じアカウントに置くかぎり、名前でしか分かれていません
 - **`production` environment に保護を付ける。** デプロイできる branch を main に限り、承認を必須にします。trust policy が信用しているのは、この environment の名前です
-- **エラー率で止める仕組みを足してから、段階的に切り替える。** alias の重み付けと CodeDeploy は、アラーム（19章の予定）と組にして使います
+- **エラー率で止める仕組みを足してから、段階的に切り替える。** alias の重み付けと CodeDeploy は、アラーム（[19章](/ja/chapters/19-observability.md)）と組にして使います
 - **drift の report を、人が見る場所に流す。** 落ちた job の通知だけに頼らない。定期実行は止まることがあります
 - **asset を片付ける。** 固定した版の CLI には `cdk gc` があります。この章では試していません
 - **OIDC provider と CI の role も、drift を見る。** この章の DriftRole は、`AihShipApi` で始まる stack しか読めません。`AihShipCi` を誰かが書き換えても、気づけません

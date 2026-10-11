@@ -413,7 +413,7 @@ The event is a value from outside the type system. A schema checks just the part
 
 <<< @/examples/10-edge/src/lambda-edge/body-digest.ts{event}
 
-### The one stack in this book outside Tokyo
+### A stack outside Tokyo
 
 <<< @/examples/10-edge/infra/bin/app.ts{stacks}
 
@@ -553,7 +553,7 @@ The free allowances apply to pay-as-you-go and are shared across the account.
 
 - **Limit who can write to the KVS.** Review and merge `edge-data.json`, and let only CI run the sync. Keep direct edits in the console for emergencies. This chapter's script shows a direct edit as a diff on the next `edge:kvs:plan`
 - **Don't make the maintenance switch your only defense.** Propagation is delayed, and it doesn't work while KVS can't be read. A lockout that protects data has to happen at the origin as well
-- **Watch the function's metrics.** Errors and compute utilization (planned for chapter 19). If utilization is close to the limit, revisit the number of reads and the size of the JSON
+- **Watch the function's metrics.** Errors and compute utilization (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md)). If utilization is close to the limit, revisit the number of reads and the size of the JSON
 - **Estimate the size of the table.** 5 MB, 1 KB per value. If you plan on tens of thousands of redirects, do the math first
 - **Set a retention period on the Lambda@Edge log groups.** They're created automatically in each Region where the function runs. They're outside the stack, so you set it yourself
 - **Deploy through the AWS CDK CLI and CloudFormation.** As discussed in chapter 02

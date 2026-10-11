@@ -45,7 +45,7 @@ S3 has a feature called static website hosting: make the bucket public and it be
 That said, other choices fit some cases better.
 
 - If what you mainly want is to publish by pushing to Git, or to have preview environments, Cloudflare Pages or Vercel will probably take fewer steps. With this chapter's architecture you run that machinery yourself, and in return you can later connect an API and authentication inside the same account
-- If you need server rendering, that is chapter 09 (planned). This chapter's architecture returns static files only
+- If you need server rendering, that is [chapter 09](/en/chapters/09-ssr.md). This chapter's architecture returns static files only
 
 ## Run it locally
 
@@ -110,7 +110,7 @@ Now for the AWS side. The bucket comes first.
 
 `BLOCK_ALL` turns on all four Block Public Access settings. With it in place, S3 refuses if someone later tries by mistake to attach a bucket policy that makes the bucket public.
 
-`removalPolicy` is `DESTROY`, because the contents can be rebuilt from the repository at any time. For a bucket that holds things that cannot be recreated, such as images uploaded by users, use `RETAIN` (chapter 07, planned).
+`removalPolicy` is `DESTROY`, because the contents can be rebuilt from the repository at any time. For a bucket that holds things that cannot be recreated, such as images uploaded by users, use `RETAIN` (it comes up again under "Before production" in [chapter 07](/en/chapters/07-uploads.md)).
 
 ## What if someone opens /notes/abc directly?
 
@@ -298,11 +298,11 @@ By the way, besides pay-as-you-go, CloudFront also has flat-rate monthly plans (
 ## If you take this to production
 
 - **Add a custom domain and a certificate.** This uses Route 53 and ACM. The certificate has to be created in `us-east-1`. This book does not cover it yet
-- **Keep access logs.** They record who requested what and when. Storing them costs money (chapter 19, planned)
-- **Consider AWS WAF.** It costs money, so it can wait until you have something to protect (chapter 21, planned)
+- **Keep access logs.** They record who requested what and when. Storing them costs money (for how to think about log cost and retention, see [chapter 19](/en/chapters/19-observability.md))
+- **Consider AWS WAF.** It costs money, so it can wait until you have something to protect ([chapter 21](/en/chapters/21-security.md))
 - **Set a Content-Security-Policy.** The managed policy `SECURITY_HEADERS` does not include one. Define your own response headers policy that fits your app
 - **Deploy through the AWS CDK CLI and CloudFormation.** As discussed in chapter 02
-- **Publish from CI.** Run it with short-lived credentials, not from a person's machine (chapter 20, planned)
+- **Publish from CI.** Run it with short-lived credentials, not from a person's machine (for getting into AWS from CI without stored keys, see [chapter 20](/en/chapters/20-shipping.md))
 
 ## Clean up
 

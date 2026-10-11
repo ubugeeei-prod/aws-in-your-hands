@@ -56,7 +56,7 @@ You could store passwords yourself, check them, and build the reset procedure. T
 
 We don't use Amplify. A Cognito user pool works through the standard procedures of OAuth 2.0 and OpenID Connect (OIDC), and the SPA in this chapter calls those standard endpoints with a general-purpose OAuth library (oauth4webapi). Swap Cognito for another service that supports OIDC, and most of the SPA code stays the same.
 
-The SPA and the API stay on separate origins, and the token travels in the `Authorization` header. No cookies. The other way to do it is to let the server side (a BFF) hold the token and give the browser only a cookie. Its advantage is that JavaScript in the browser can no longer see the token. Chapter 09 (planned) covers that.
+The SPA and the API stay on separate origins, and the token travels in the `Authorization` header. No cookies. The other way to do it is to let the server side (a BFF) hold the token and give the browser only a cookie. Its advantage is that JavaScript in the browser can no longer see the token. [Chapter 09](/en/chapters/09-ssr.md) covers that.
 
 ## A few words first
 
@@ -242,7 +242,7 @@ The SPA holds the access token only in a variable in memory. It doesn't put it i
 | --- | --- | --- |
 | Memory (this chapter) | Gone. You sign in again | Readable while the page is open |
 | localStorage | Remains | Readable at any time. Remains after the tab is closed |
-| A server-side session and a cookie (planned for chapter 09) | Remains | Not readable (when `HttpOnly`) |
+| A server-side session and a cookie ([chapter 09](/en/chapters/09-ssr.md)) | Remains | Not readable (when `HttpOnly`) |
 
 Signing in again on every reload is, frankly, a bit inconvenient. But managed login itself holds a session cookie that is valid for 1 hour, so during that time you can come back without retyping the password.
 
@@ -402,7 +402,7 @@ Cognito first. A user pool is charged by the number of monthly active users (MAU
 
 With 100 users, that is USD 1.50 per month at the list price. Within the free allowance, it is 0.
 
-Email and SMS are charged separately. In this chapter's setup, the temporary password email sent when a user is created goes through Cognito's default sending feature. Its limits and charges have not been checked. An app with many users uses Amazon SES (planned for chapter 15).
+Email and SMS are charged separately. In this chapter's setup, the temporary password email sent when a user is created goes through Cognito's default sending feature. Its limits and charges have not been checked. An app with many users uses Amazon SES ([chapter 15](/en/chapters/15-email.md)).
 
 What about the JWT authorizer? The API Gateway price list for the Tokyo Region has no item for authorizers. A rejected request doesn't invoke the function, so there is no Lambda charge. Whether that request is counted toward the API Gateway request charge has not been checked.
 
@@ -440,7 +440,7 @@ The body of a 401 or 403 returned by API Gateway is not in this book's error sha
 - **Enable MFA.** This chapter's user pool uses a password only
 - **Remove the local origin.** Delete `http://localhost:5173` from the callback URLs and from CORS. Use a separate stack for development
 - **Use a custom domain.** While the sign-in page's domain is still `...amazoncognito.com`, it is harder for users to tell whether it is genuine
-- **Send email from SES.** Cognito's default sending is for small volumes (planned for chapter 15)
+- **Send email from SES.** Cognito's default sending is for small volumes ([chapter 15](/en/chapters/15-email.md))
 - **Decide the token lifetime and the revocation policy.** Choose from the table in "Disabled, and still getting through for a while"
 - **Set a Content-Security-Policy.** It reduces the damage from XSS. As we said in chapter 03, it is not included in the managed policy
 - **Connect deleting a user to deleting their data.** When you delete a user, the notes under that `sub` remain in the table. You need a process that deletes them

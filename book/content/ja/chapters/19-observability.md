@@ -347,7 +347,7 @@ Browser                    API (Lambda)                 Queue              Worke
 
 ブラウザが `traceparent` を付けて呼ぶと、API はその trace を引き継ぎます。API が queue にメッセージを入れるとき、同じ情報をメッセージに載せます。worker はそこから続きを始めます。全員のログに同じ `traceId` が残るので、1 つの query で全部の行が出てきます。
 
-08章（予定）で queue と worker を作ります。SQS は、X-Ray の trace ヘッダーを `AWSTraceHeader` というメッセージの属性で運び、受け手が Lambda なら自動で引き継ぐ、と X-Ray のドキュメントにあります。この章では SQS を使わず、「メッセージに載せて、受け手が続ける」ところだけをテストで再現しています。同じメッセージが 2 回配送されると、同じ親を持つ span が 2 つできます。重複配送が trace の上で見える、ということです。
+[08章](/ja/chapters/08-async.md)で queue と worker を作りました。SQS は、X-Ray の trace ヘッダーを `AWSTraceHeader` というメッセージの属性で運び、受け手が Lambda なら自動で引き継ぐ、と X-Ray のドキュメントにあります。この章では SQS を使わず、「メッセージに載せて、受け手が続ける」ところだけをテストで再現しています。同じメッセージが 2 回配送されると、同じ親を持つ span が 2 つできます。重複配送が trace の上で見える、ということです。
 
 1 つ、実機で確かめていないことがあります。Lambda の中では、layer がすでに呼び出しの span を開いています。この章のコードは、その場合 `traceparent` を自分では読まず、layer の span の下に入ります。ブラウザの `traceparent` と Lambda の trace がつながるかどうかは、layer と Lambda の振る舞い次第です。つながらなかった場合でも、ログの `traceId` と request ID で辿ることはできます。
 

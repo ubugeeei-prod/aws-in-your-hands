@@ -259,7 +259,7 @@ Tests pin what all the workflows have in common.
 - Each role is used by the kind of job its trust policy expects (a job using the DeployRole has `environment: production`, and so on)
 - Values from outside, such as the pull request number, are never embedded directly in a shell command
 
-On the day this was checked (2026-10-12), the latest `aws-actions/configure-aws-credentials` was v6.3.0. The examples in `docs/examples/` from chapter 02 still use v4. Three inputs are used: `role-to-assume`, `aws-region`, and `allowed-account-ids`. The last one stops the job on the spot if the credentials it received belong to an account other than the expected one. It is the same idea as `AIH_AWS_ACCOUNT_ID` in chapter 01.
+On the day this was checked (2026-10-12), the latest `aws-actions/configure-aws-credentials` was v6.3.0. The examples in `docs/examples/` are pinned to the same version. Three inputs are used: `role-to-assume`, `aws-region`, and `allowed-account-ids`. The last one stops the job on the spot if the credentials it received belong to an account other than the expected one. It is the same idea as `AIH_AWS_ACCOUNT_ID` in chapter 01.
 
 ## A preview per pull request
 
@@ -313,7 +313,7 @@ A Lambda version is a numbered copy of the function's code and configuration. It
 
 Old versions are kept, not deleted (`RemovalPolicy.RETAIN`), so that CloudFormation can point `live` back to the previous version when it rolls an update back. In exchange, versions pile up with every deploy. They stay until the stack is deleted and the function goes with it.
 
-An alias can also split traffic between two versions by weight: send 10% to the new one and watch. According to AWS's documentation the split is probabilistic, so with few requests the actual share can differ widely from the configured one. CodeDeploy has configurations that advance this automatically over time. Neither is implemented in this chapter. Shifting gradually without something that stops on error rate (planned for chapter 19) only means noticing a problem later.
+An alias can also split traffic between two versions by weight: send 10% to the new one and watch. According to AWS's documentation the split is probabilistic, so with few requests the actual share can differ widely from the configured one. CodeDeploy has configurations that advance this automatically over time. Neither is implemented in this chapter. Shifting gradually without something wired to an error-rate alarm ([chapter 19](/en/chapters/19-observability.md)) to stop it only means noticing a problem later.
 
 In a hurry, you may want to move `live` back to the previous version in the console. That does put it back, but it is a change outside CloudFormation, which is drift. The template still points at the new version, so the next deploy moves it forward again. To go back, revert the code and deploy. If you did go back by hand in an emergency, always bring the code in line afterwards. The drift detection in the second half exists to find this too.
 
@@ -328,7 +328,7 @@ So a schema change is split into an order in which the previous version of the c
 3. Fill in the old rows
 4. Drop the old column, after confirming nobody reads it any more, and in a separate deploy
 
-Put step 4 in the same deploy as step 2, and that deploy can no longer be rolled back. "Changing the schema of a running database" in [chapter 13](/en/chapters/13-sql.md) is the DSQL version of this. For DynamoDB, which has no schema ([chapter 05](/en/chapters/05-dynamodb.md)), the same goes for the shape of items. How to handle the time when old and new versions run side by side in containers is planned for chapter 12.
+Put step 4 in the same deploy as step 2, and that deploy can no longer be rolled back. "Changing the schema of a running database" in [chapter 13](/en/chapters/13-sql.md) is the DSQL version of this. For DynamoDB, which has no schema ([chapter 05](/en/chapters/05-dynamodb.md)), the same goes for the shape of items. How to handle the time when old and new versions run side by side in containers is covered in [chapter 12](/en/chapters/12-containers.md).
 
 ## A deploy stops half-way
 
@@ -533,7 +533,7 @@ These were not met by running anything. They are the places the documentation an
 - **Narrow the cfn-exec role.** The default is `AdministratorAccess`. Pass only the policies you need when bootstrapping
 - **Separate the accounts.** As long as dev, preview, and prod share an account, only names keep them apart
 - **Protect the `production` environment.** Limit the branches that may deploy to main, and require approval. What the trust policy trusts is this environment's name
-- **Add something that stops on error rate, then shift gradually.** Alias weights and CodeDeploy go together with alarms (planned for chapter 19)
+- **Add something that stops on error rate, then shift gradually.** Alias weights and CodeDeploy go together with alarms ([chapter 19](/en/chapters/19-observability.md))
 - **Send the drift report somewhere people look.** Do not rely only on the notification of a failed job. Schedules can stop
 - **Clean up assets.** The pinned CLI has `cdk gc`. This chapter has not tried it
 - **Watch the OIDC provider and the CI roles for drift too.** This chapter's DriftRole can read only stacks whose names begin with `AihShipApi`. If someone rewrites `AihShipCi`, it goes unnoticed

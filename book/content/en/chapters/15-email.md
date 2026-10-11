@@ -12,7 +12,7 @@ The awkward thing about email is that sending it isn't the end of the story. The
 Three things before we start.
 
 - The prerequisite is [chapter 04](/en/chapters/04-http-api.md). Records are kept in DynamoDB, but everything you need to know is explained here (the details are in [chapter 05](/en/chapters/05-dynamodb.md))
-- The outline placed this chapter behind the queue of [chapter 08](/en/chapters/08-async.md). Chapter 08 isn't written yet, so this is a recipe that works on its own. Where a queue would connect is pointed out along the way
+- The outline placed this chapter behind the queue of [chapter 08](/en/chapters/08-async.md). As it turned out, this is a recipe that works on its own. Where a queue would connect is pointed out along the way
 - Run it in AWS and real mail goes out. Verifying the sender, setting up DNS, and requesting that the sending limits be lifted are things a person does by hand. This chapter gives you the steps and the commands. It doesn't do them for you
 
 The code is in `examples/15-email/`.
@@ -56,7 +56,7 @@ The JWT authorizer from [chapter 06](/en/chapters/06-auth.md) is another option.
 
 ### Other shapes this could take
 
-- **No API: send from a queue.** The sharing code puts a message on a queue, and a function takes it off and sends. The caller no longer waits on SES being slow or failing. That's planned for chapter 08, and `sendShareNotification` in this chapter is written so that it can sit behind a queue as it is
+- **No API: send from a queue.** The sharing code puts a message on a queue, and a function takes it off and sends. The caller no longer waits on SES being slow or failing. How to build the queue and the worker is in [chapter 08](/en/chapters/08-async.md). `sendShareNotification` in this chapter is written so that it can sit behind a queue as it is
 - **A queue between SNS and the function.** It lets you keep the events that failed to process. Also a chapter 08 topic
 - **Not SES.** If you'd rather not manage your sender reputation or request a limit increase yourself, an email SaaS is easier in some situations. SES is cheap and is managed with the same permissions as the rest of AWS. In exchange, it comes with the work in the second half of this chapter
 
@@ -333,7 +333,7 @@ This is the part that actually writes.
 
 Failures are handled in two ways. An event that can't be read is logged as an error and dropped. Retrying won't make it readable. A failed write to the table throws. SNS invokes the function asynchronously, and when the function returns an error, Lambda runs it again with the same event (up to two more times by default).
 
-Dropping unreadable events also means that if the shape changes, bounces get missed. That error log is one to watch (alarms are planned for chapter 19).
+Dropping unreadable events also means that if the shape changes, bounces get missed. That error log is one to watch (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md)).
 
 ### Delivered twice, out of order
 
@@ -705,9 +705,9 @@ Delete the stack, and this chapter's charges stop.
 ## If you take this to production
 
 - **Narrow who can call it.** IAM authorization narrows callers only to "anyone with `execute-api` permission". Give that permission to the role of the code that sends notifications, and to nothing else
-- **Put a queue in front of the API.** It decouples callers from SES being slow, and lets you wait and retry when you hit the rate limit (planned for chapter 08)
-- **Prepare for missed events.** An event the function fails on all three times is discarded by Lambda. Give the function a dead-letter queue or an on-failure destination so that it's kept (planned for chapter 08)
-- **Watch the number of bounces and complaints.** When there's a problem with your reputation as a sender, SES puts the account under review (`PROBATION`) or pauses sending (`SHUTDOWN`). The current state is in `EnforcementStatus` from `aws sesv2 get-account`. Alarm on it, together with the log of unreadable events (planned for chapter 19)
+- **Put a queue in front of the API.** It decouples callers from SES being slow, and lets you wait and retry when you hit the rate limit ([chapter 08](/en/chapters/08-async.md))
+- **Prepare for missed events.** An event the function fails on all three times is discarded by Lambda. Give the function a dead-letter queue or an on-failure destination so that it's kept (for the thinking behind a dead-letter queue, see [chapter 08](/en/chapters/08-async.md); there it is attached to an SQS queue)
+- **Watch the number of bounces and complaints.** When there's a problem with your reputation as a sender, SES puts the account under review (`PROBATION`) or pauses sending (`SHUTDOWN`). The current state is in `EnforcementStatus` from `aws sesv2 get-account`. Alarm on it, together with the log of unreadable events (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md))
 - **Pick up records stuck at `claimed`.** You need a routine that lists the records that haven't moved after some time, and decides whether to send again
 - **Protect the table.** Set `removalPolicy` to `RETAIN` and turn on point-in-time recovery. Lose the suppression list, and you'll be mailing bounced addresses again
 - **Encrypt the topic.** Events contain recipients' email addresses. This chapter's topic only enforces encryption in transit (HTTPS). What encryption at rest requires is unchecked

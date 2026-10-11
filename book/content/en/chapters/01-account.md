@@ -76,7 +76,7 @@ On the IAM pages of the console, create a user like this:
 
 `SignInLocalDevelopmentAccess` is an AWS managed policy that `aws login`, used in the next section, requires.
 
-`AdministratorAccess` grants broad permissions. We use it here anyway because CDK creates IAM roles on every deployment. An identity that can't work with IAM can't create this book's samples. That said, this choice is reasonable only for **a learning account that you alone use**. Don't use it in a shared account or in an account that holds data you need to protect. Narrowing the permissions is planned for chapter 21.
+`AdministratorAccess` grants broad permissions. We use it here anyway because CDK creates IAM roles on every deployment. An identity that can't work with IAM can't create this book's samples. That said, this choice is reasonable only for **a learning account that you alone use**. Don't use it in a shared account or in an account that holds data you need to protect. Narrowing the permissions is covered in [chapter 21](/en/chapters/21-security.md).
 
 Why no access keys? Because they are secrets with no expiry. They get saved in files and committed by accident, and when they leak they don't expire on their own. With the method in the next section, the only credentials left on your machine are ones that expire.
 

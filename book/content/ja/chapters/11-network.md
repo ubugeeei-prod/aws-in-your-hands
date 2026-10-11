@@ -22,7 +22,7 @@ revision: 1
 VPC（Virtual Private Cloud）は、リージョンの中に作る自分専用の IP ネットワークです。要るのは、**VPC の中にしか置けないもの**を使うときです。
 
 - RDS や Aurora のデータベース（13章）
-- ElastiCache の node ベースの cluster（14章の予定。ElastiCache Serverless には、VPC の設定が要らない public endpoint もあります）
+- ElastiCache の node ベースの cluster（[14章](/ja/chapters/14-kv-cache.md)。ElastiCache Serverless には、VPC の設定が要らない public endpoint もあります）
 - ECS の task（12章）
 - EC2 の instance（23章）
 
