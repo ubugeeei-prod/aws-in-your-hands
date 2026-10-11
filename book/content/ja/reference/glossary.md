@@ -204,3 +204,13 @@ generated: true
 | 条件付き書き込み | conditional write | 16 | 「まだ無ければ」「この版のままなら」といった条件を付けた書き込み。条件の検査と書き込みを、保存する側が 1 つの手順として実行する。 |
 | Standard workflow | Standard workflow | 16 | Step Functions の workflow の種類の 1 つ。最長 1 年、state の間で状態を保存し、state transition の数で課金される。もう 1 つは最長 5 分の Express。 |
 | AWS Batch | AWS Batch | 16 | コンテナの job を queue に積み、必要な計算資源（Fargate や EC2）を用意して実行するサービス。 |
+| 最小権限 | least privilege | 21 | 仕事に必要な action を、必要な resource に対してだけ許すこと。「あとで要るかもしれない」権限は足さない。 |
+| secret | secret | 21 | 漏れたら困る値（署名鍵、API キー、パスワード）。Secrets Manager では、暗号化された値と、その version、誰が読めるかの設定をまとめた 1 つの resource。 |
+| staging label | staging label | 21 | Secrets Manager が secret の version に付ける名札。AWSCURRENT（いまの値）、AWSPREVIOUS（1 つ前）、AWSPENDING（rotation の途中）の 3 つを Secrets Manager が管理する。 |
+| rotation | rotation | 21 | secret の値を新しいものに入れ替えること。入れ替えた瞬間に全員が新しい値を持っているわけではないので、古い値もしばらく受け入れる期間を作る。 |
+| KMS key | KMS key | 21 | AWS KMS が持つ暗号鍵。鍵そのものは取り出せず、API を呼んで暗号化・復号してもらう。自分で作る customer managed key は月額がかかり、サービスが作る AWS managed key は月額がかからない。 |
+| web ACL | web ACL | 21 | AWS WAF の設定の単位。rule を順番に並べたもので、CloudFront や ALB などに関連付けると、リクエストが届く前に検査する。置いてあるだけで月額がかかる。 |
+| managed rule group | managed rule group | 21 | AWS や第三者が保守している WAF の rule のまとまり。中身は提供者が更新する。web ACL の中では 1 つの rule として数える。 |
+| management event | management event | 21 | リソースを作る・変える・消す、設定を読む、といった API 呼び出しの記録。CloudTrail が既定で 90 日ぶん持っている。S3 の object の読み書きのような data event は含まない。 |
+| SCP（service control policy） | SCP (service control policy) | 21 | AWS Organizations で、メンバーアカウントの IAM user と role に許せる権限の上限を決める policy。権限は与えない。management account には効かない。 |
+| management account | management account | 21 | organization を作ったアカウント。請求をまとめ、SCP を付ける側。SCP の制限を受けないので、ふだんの作業には使わない。 |

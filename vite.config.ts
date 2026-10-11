@@ -83,6 +83,7 @@ const chapterSynthTasks = [
   "async:infra:synth",
   "ec2:infra:synth",
   "export:infra:synth",
+  "sec:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -102,6 +103,7 @@ const chapterCheckTasks = [
   "ssr:check:output",
   "ecs:bundle:check",
   "ec2:app:build",
+  "sec:iam:lint",
 ];
 
 export default defineConfig({
@@ -505,6 +507,31 @@ export default defineConfig({
         cwd: "examples/16-long-jobs",
       }),
       // <<< chapter 16
+
+      // >>> chapter 21
+      // ---- chapter 21: security and governance -----------------------------
+      // The token API with a made-up signing key in memory. No AWS.
+      "dev:sec": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/21-security" }),
+      // Lints IAM policies in synthesized templates. Pass other cdk.out directories to lint other chapters.
+      "sec:iam:lint": fresh("node examples/21-security/scripts/iam-lint.ts", { dependsOn: ["sec:infra:synth"] }),
+      // One secret is the only monthly fee. `-c cmk=on` adds a KMS key, `-c webAclArn=...` attaches a web ACL.
+      ...infra("sec", "examples/21-security", "AihSecurity"),
+      // The web ACL for CloudFront, in us-east-1 whatever AIH_AWS_REGION says. Billed by the month while it exists.
+      ...infra("sec:waf", "examples/21-security", "AihSecurityWaf"),
+      "sec:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/21-security" }),
+      // Lists the secret's versions and staging labels. Never prints a value.
+      "sec:secret:versions": live("node --env-file-if-exists=../../.env scripts/rotate.ts versions", {
+        cwd: "examples/21-security",
+      }),
+      // Writes a new version of the signing secret. The previous one stays accepted.
+      "sec:secret:rotate": live("node --env-file-if-exists=../../.env scripts/rotate.ts rotate", {
+        cwd: "examples/21-security",
+      }),
+      // Which account-level protections are on. Reads only.
+      "sec:posture": live("node --env-file-if-exists=../../.env scripts/posture.ts", { cwd: "examples/21-security" }),
+      // Recent IAM changes from CloudTrail event history in us-east-1. Reads only.
+      "sec:trail:iam": live("node --env-file-if-exists=../../.env scripts/trail.ts", { cwd: "examples/21-security" }),
+      // <<< chapter 21
 
       // ---- chapter task blocks are inserted above this line ----
 

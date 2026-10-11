@@ -1172,54 +1172,84 @@
         "KMS",
         "CloudTrail",
         "AWS Config",
-        "Organizations"
+        "Organizations",
+        "IAM",
+        "CloudFront",
+        "Lambda"
       ],
       "samplePath": "examples/21-security",
+      "sourceIds": [
+        "iam-eventual-consistency",
+        "iam-best-practices",
+        "iam-access-analyzer-policy-generation",
+        "iam-policy-evaluation-logic",
+        "aws-service-reference-security",
+        "waf-protectable-resources",
+        "waf-rate-based-statement",
+        "waf-rate-based-caveats",
+        "waf-managed-baseline",
+        "waf-managed-ip-reputation",
+        "waf-capacity-units",
+        "waf-testing",
+        "cfn-wafv2-webacl",
+        "cfn-wafv2-ratebasedstatement",
+        "cloudfront-waf",
+        "cloudfront-oac-lambda-security",
+        "aws-price-list-waf",
+        "secretsmanager-secret",
+        "secretsmanager-put-secret-value",
+        "secretsmanager-get-secret-value",
+        "secretsmanager-delete-secret",
+        "secretsmanager-best-practices",
+        "secretsmanager-rotation-lambda",
+        "secretsmanager-pricing",
+        "aws-price-list-secretsmanager",
+        "cfn-secretsmanager-secret",
+        "lambda-env-vars-secrets",
+        "lambda-secrets-manager",
+        "kms-concepts",
+        "kms-rotate-keys",
+        "kms-deleting-keys",
+        "kms-pricing",
+        "aws-price-list-kms",
+        "guardduty-what-is",
+        "guardduty-getting-started",
+        "guardduty-costs",
+        "aws-price-list-guardduty",
+        "inspector-what-is",
+        "inspector-scanning-lambda",
+        "inspector-getting-started",
+        "inspector-pricing",
+        "aws-price-list-inspector",
+        "cloudtrail-event-history",
+        "cloudtrail-concepts",
+        "cloudtrail-lookup-events",
+        "cloudtrail-pricing",
+        "config-what-is",
+        "config-pricing",
+        "aws-price-list-config",
+        "organizations-scps",
+        "organizations-scp-evaluation",
+        "organizations-scp-syntax",
+        "organizations-quotas",
+        "organizations-create",
+        "organizations-faqs",
+        "aws-scp-examples",
+        "cdkd-npm-security",
+        "aws-sdk-security-clients",
+        "cloudflare-workers-secrets",
+        "cloudflare-waf-managed-rules",
+        "cloudflare-rate-limiting-rules"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["inspector-what-is", "guardduty-what-is", "iam-best-practices"],
-      "outline": {
-        "outcome": {
-          "ja": "個人利用で入れるものと、組織になったら必要なものを分けて設定できる。",
-          "en": "You configure what an individual needs and know what an organization adds."
-        },
-        "architecture": {
-          "ja": "CloudFront + WAF。secret は Secrets Manager。監査は CloudTrail。脆弱性は Inspector、脅威は GuardDuty。",
-          "en": "CloudFront + WAF. Secrets in Secrets Manager. Audit through CloudTrail. Vulnerabilities via Inspector, threats via GuardDuty."
-        },
-        "topics": {
-          "ja": [
-            "Inspector（脆弱性検査）と GuardDuty（脅威検出）は別物",
-            "WAF を付けられる入口と付けられない入口",
-            "secret ごと・key ごとの月額",
-            "SCP は権限を与えず上限を決める"
-          ],
-          "en": [
-            "Inspector (vulnerability scanning) and GuardDuty (threat detection) are different things",
-            "Which entry points can and cannot carry WAF",
-            "Per-secret and per-key monthly charges",
-            "SCPs set limits; they grant nothing"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "WAF rule の CDK",
-            "secret を読む adapter と rotation の手順",
-            "IAM policy の wildcard を検出する assertion"
-          ],
-          "en": [
-            "WAF rule CDK",
-            "Secret-reading adapter and a rotation procedure",
-            "Assertions that detect wildcard IAM policies"
-          ]
-        },
-        "distributed": {
-          "ja": "IAM の変更は結果整合。直後の拒否/許可を前提にしない。",
-          "en": "IAM changes are eventually consistent; do not rely on an immediate allow or deny."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "22",

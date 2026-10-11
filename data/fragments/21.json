@@ -1,0 +1,1542 @@
+{
+  "chapterId": "21",
+  "manifest": {
+    "id": "21",
+    "slug": "security",
+    "title": {
+      "ja": "守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations",
+      "en": "Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
+    },
+    "prerequisites": ["06", "20"],
+    "services": [
+      "WAF",
+      "Inspector",
+      "GuardDuty",
+      "Secrets Manager",
+      "KMS",
+      "CloudTrail",
+      "AWS Config",
+      "Organizations",
+      "IAM",
+      "CloudFront",
+      "Lambda"
+    ],
+    "samplePath": "examples/21-security",
+    "writing": { "ja": "complete", "en": "complete" },
+    "sourceRevision": 1,
+    "translatedRevision": { "en": 1 },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "iam-eventual-consistency",
+      "iam-best-practices",
+      "iam-access-analyzer-policy-generation",
+      "iam-policy-evaluation-logic",
+      "aws-service-reference-security",
+      "waf-protectable-resources",
+      "waf-rate-based-statement",
+      "waf-rate-based-caveats",
+      "waf-managed-baseline",
+      "waf-managed-ip-reputation",
+      "waf-capacity-units",
+      "waf-testing",
+      "cfn-wafv2-webacl",
+      "cfn-wafv2-ratebasedstatement",
+      "cloudfront-waf",
+      "cloudfront-oac-lambda-security",
+      "aws-price-list-waf",
+      "secretsmanager-secret",
+      "secretsmanager-put-secret-value",
+      "secretsmanager-get-secret-value",
+      "secretsmanager-delete-secret",
+      "secretsmanager-best-practices",
+      "secretsmanager-rotation-lambda",
+      "secretsmanager-pricing",
+      "aws-price-list-secretsmanager",
+      "cfn-secretsmanager-secret",
+      "lambda-env-vars-secrets",
+      "lambda-secrets-manager",
+      "kms-concepts",
+      "kms-rotate-keys",
+      "kms-deleting-keys",
+      "kms-pricing",
+      "aws-price-list-kms",
+      "guardduty-what-is",
+      "guardduty-getting-started",
+      "guardduty-costs",
+      "aws-price-list-guardduty",
+      "inspector-what-is",
+      "inspector-scanning-lambda",
+      "inspector-getting-started",
+      "inspector-pricing",
+      "aws-price-list-inspector",
+      "cloudtrail-event-history",
+      "cloudtrail-concepts",
+      "cloudtrail-lookup-events",
+      "cloudtrail-pricing",
+      "config-what-is",
+      "config-pricing",
+      "aws-price-list-config",
+      "organizations-scps",
+      "organizations-scp-evaluation",
+      "organizations-scp-syntax",
+      "organizations-quotas",
+      "organizations-create",
+      "organizations-faqs",
+      "aws-scp-examples",
+      "cdkd-npm-security",
+      "aws-sdk-security-clients",
+      "cloudflare-workers-secrets",
+      "cloudflare-waf-managed-rules",
+      "cloudflare-rate-limiting-rules"
+    ]
+  },
+  "sources": [
+    {
+      "id": "iam-eventual-consistency",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot.html",
+      "title": "Troubleshoot IAM: Changes that I make are not always immediately visible",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IAM uses a distributed computing model called eventual consistency; changes take time to become visible from all possible endpoints",
+        "IAM also uses caching, so a change might not be visible until previously cached data times out",
+        "AWS recommends not including IAM changes in critical, high-availability code paths, and verifying that changes have propagated before production workflows depend on them"
+      ]
+    },
+    {
+      "id": "iam-best-practices",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
+      "title": "Security best practices in IAM",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Human users should use federation and temporary credentials; workloads should use IAM roles",
+        "Apply least-privilege permissions: grant only the permissions required to perform a task",
+        "Get started with AWS managed policies and move toward least-privilege permissions",
+        "Use IAM Access Analyzer to generate least-privilege policies based on access activity",
+        "Establish permissions guardrails across multiple accounts"
+      ]
+    },
+    {
+      "id": "iam-access-analyzer-policy-generation",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html",
+      "title": "IAM Access Analyzer policy generation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IAM Access Analyzer reviews CloudTrail logs and generates a policy template containing the permissions an entity used",
+        "You specify a time period of up to 90 days, and the CloudTrail trail that is logging events for the account"
+      ]
+    },
+    {
+      "id": "iam-policy-evaluation-logic",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html",
+      "title": "Policy evaluation logic",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An explicit deny in any policy overrides an allow",
+        "With SCPs, the resulting permissions are the intersection of the identity's policies and the service control policies"
+      ]
+    },
+    {
+      "id": "aws-service-reference-security",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/secretsmanager/secretsmanager.json",
+      "title": "AWS service reference (secretsmanager, kms, cloudtrail, guardduty, config, organizations, inspector2, iam, cloudformation, logs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "secretsmanager:GetSecretValue, PutSecretValue, and ListSecretVersionIds take the Secret resource type; kms:Decrypt takes the key resource type",
+        "The action names used in the SCP exist: organizations:LeaveOrganization, cloudtrail:StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, guardduty:DeleteDetector, DisassociateFromAdministratorAccount, config:StopConfigurationRecorder, DeleteConfigurationRecorder, DeleteDeliveryChannel",
+        "The five actions chapter 20 leaves on Resource \"*\" list no resource type: cloudformation:DescribeStackDriftDetectionStatus, cloudformation:BatchDescribeTypeConfigurations, logs:DescribeLogGroups, logs:DescribeIndexPolicies, logs:DescribeResourcePolicies"
+      ],
+      "note": "Same URL pattern per service: /v1/<service>/<service>.json."
+    },
+    {
+      "id": "waf-protectable-resources",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/how-aws-waf-works-resources.html",
+      "title": "Resources that you can protect with AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A web ACL can be associated with CloudFront distributions and, regionally, with API Gateway REST APIs, Application Load Balancers, AppSync GraphQL APIs, Cognito user pools, App Runner services, Bedrock AgentCore Gateway, Verified Access instances, and Amplify; API Gateway HTTP APIs and Lambda function URLs are not in the list",
+        "For CloudFront, the web ACL and everything it uses must be created in US East (N. Virginia)",
+        "Each resource can have one web ACL; a web ACL associated with CloudFront distributions cannot be associated with other resource types"
+      ]
+    },
+    {
+      "id": "waf-rate-based-statement",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based.html",
+      "title": "Using rate-based rule statements in AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": ["A rate-based rule costs 2 WCUs as a base", "Each use of a rate-based rule is tracked separately"]
+    },
+    {
+      "id": "waf-rate-based-caveats",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-caveats.html",
+      "title": "Rate-based rule caveats in AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS WAF applies rate limiting near the limit that you set, but does not guarantee an exact limit match",
+        "Requests can come in at too high a rate for up to several minutes before AWS WAF detects and rate limits them; usually the delay is below 30 seconds",
+        "Changing a rate limit setting resets the rule's counts and can pause rate limiting for up to a minute"
+      ]
+    },
+    {
+      "id": "waf-managed-baseline",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html",
+      "title": "Baseline rule groups (AWS Managed Rules)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWSManagedRulesCommonRuleSet uses 700 WCUs",
+        "Its SizeRestrictions_BODY rule blocks request bodies over 8 KB",
+        "For CloudFront the default body inspection limit is 16 KB, and can be raised to 64 KB"
+      ]
+    },
+    {
+      "id": "waf-managed-ip-reputation",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html",
+      "title": "IP reputation rule groups (AWS Managed Rules)",
+      "checkedAt": "2026-10-12",
+      "supports": ["AWSManagedRulesAmazonIpReputationList uses 25 WCUs"]
+    },
+    {
+      "id": "waf-capacity-units",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-waf-capacity-units.html",
+      "title": "Web ACL capacity units (WCUs) in AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The basic price for a web ACL includes up to 1,500 WCUs; using more incurs additional fees",
+        "The maximum capacity for a web ACL is 5,000 WCUs"
+      ]
+    },
+    {
+      "id": "waf-testing",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-testing.html",
+      "title": "Testing and tuning your AWS WAF protections",
+      "checkedAt": "2026-10-12",
+      "supports": ["AWS recommends testing and tuning rules in count mode with production traffic before enabling them"]
+    },
+    {
+      "id": "cfn-wafv2-webacl",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-wafv2-webacl.html",
+      "title": "AWS::WAFv2::WebACL",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Scope is CLOUDFRONT or REGIONAL; for CLOUDFRONT the resource must be created in us-east-1",
+        "DefaultAction, Scope, and VisibilityConfig are required"
+      ]
+    },
+    {
+      "id": "cfn-wafv2-ratebasedstatement",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-wafv2-webacl-ratebasedstatement.html",
+      "title": "AWS::WAFv2::WebACL RateBasedStatement",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Limit has a minimum of 10",
+        "EvaluationWindowSec may be 60, 120, 300, or 600, and defaults to 300",
+        "AWS WAF checks the rate about every 10 seconds"
+      ]
+    },
+    {
+      "id": "cloudfront-waf",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html",
+      "title": "Use AWS WAF protections (CloudFront)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS WAF can be enabled on a distribution with one-click protection in the CloudFront console or with a preconfigured web ACL"
+      ]
+    },
+    {
+      "id": "cloudfront-oac-lambda-security",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html",
+      "title": "Restrict access to an AWS Lambda function URL origin",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With origin access control, PUT and POST requests need the SHA-256 of the body in the x-amz-content-sha256 header, supplied by the caller",
+        "CloudFront signs an origin request by adding its own Authorization header; the no-override setting passes the viewer's Authorization header through instead"
+      ]
+    },
+    {
+      "id": "aws-price-list-waf",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "title": "AWS Price List: AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Global-WebACLV2: USD 5.00 per web ACL per month, prorated hourly",
+        "Global-RuleV2: USD 1.00 per rule per month, prorated hourly",
+        "Global-RequestV2-Tier1: USD 0.60 per million requests",
+        "The same three prices appear under the ap-northeast-1 and us-east-1 usage types"
+      ],
+      "note": "Which usage type a CLOUDFRONT-scope web ACL is metered under was not confirmed on a bill; the Global-* SKUs are described as being for CloudFront."
+    },
+    {
+      "id": "secretsmanager-secret",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/whats-in-a-secret.html",
+      "title": "What's in a Secrets Manager secret?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A secret has versions; Secrets Manager tracks three by staging label: AWSCURRENT, AWSPREVIOUS, and AWSPENDING",
+        "A secret always has a version labeled AWSCURRENT, and that version is returned by default",
+        "Unlabeled versions are deprecated and removed when there are more than 100; versions created less than 24 hours ago are not removed",
+        "The secret ARN ends in six random characters, so a secret re-created under the same name has a different ARN"
+      ]
+    },
+    {
+      "id": "secretsmanager-put-secret-value",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_PutSecretValue.html",
+      "title": "PutSecretValue",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Without VersionStages, AWSCURRENT moves to the new version and AWSPREVIOUS moves to the version AWSCURRENT was removed from",
+        "The operation is idempotent: the same ClientRequestToken with the same secret data succeeds and does nothing; with different data it fails",
+        "ClientRequestToken becomes the VersionId of the new version",
+        "Do not call PutSecretValue at a sustained rate of more than once every 10 minutes"
+      ]
+    },
+    {
+      "id": "secretsmanager-get-secret-value",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html",
+      "title": "GetSecretValue",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "VersionStage selects a version by staging label; without it AWSCURRENT is returned",
+        "AWS recommends caching secret values on the client to improve speed and reduce cost",
+        "With a customer managed key the caller also needs kms:Decrypt on that key"
+      ]
+    },
+    {
+      "id": "secretsmanager-delete-secret",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_DeleteSecret.html",
+      "title": "DeleteSecret",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A deleted secret has a recovery window: minimum 7 days, default 30 days",
+        "While scheduled for deletion, the secret value cannot be retrieved"
+      ]
+    },
+    {
+      "id": "secretsmanager-best-practices",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/best-practices.html",
+      "title": "AWS Secrets Manager best practices",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The supported caching components are for Java, Python, .NET, Go, and Rust, plus the AWS Parameters and Secrets Lambda Extension; none is listed for JavaScript"
+      ]
+    },
+    {
+      "id": "secretsmanager-rotation-lambda",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_lambda-functions.html",
+      "title": "Rotation by Lambda function",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A rotation function has four steps: createSecret, setSecret, testSecret, finishSecret",
+        "Secrets Manager uses staging labels to identify versions during rotation"
+      ]
+    },
+    {
+      "id": "secretsmanager-pricing",
+      "url": "https://aws.amazon.com/secrets-manager/pricing/",
+      "title": "AWS Secrets Manager pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Secrets are billed per secret per month, prorated by the hour for secrets stored less than a month",
+        "A replica secret is billed as a distinct secret"
+      ]
+    },
+    {
+      "id": "aws-price-list-secretsmanager",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Secrets Manager (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": ["USD 0.40 per secret per month", "USD 0.05 per 10,000 API requests"]
+    },
+    {
+      "id": "cfn-secretsmanager-secret",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-secretsmanager-secret.html",
+      "title": "AWS::SecretsManager::Secret",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GenerateSecretString generates the value; SecretString sets a specific one",
+        "Without KmsKeyId, Secrets Manager uses the key aws/secretsmanager"
+      ]
+    },
+    {
+      "id": "lambda-env-vars-secrets",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+      "title": "Working with Lambda environment variables",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS recommends Secrets Manager instead of environment variables for database credentials, API keys, and authorization tokens"
+      ]
+    },
+    {
+      "id": "lambda-secrets-manager",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-secrets-manager.html",
+      "title": "Use Secrets Manager secrets in Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS describes two ready-made approaches: the AWS Parameters and Secrets Lambda Extension and the Powertools for AWS Lambda parameters utility; both keep a local cache",
+        "The extension caches secrets for 300 seconds by default"
+      ]
+    },
+    {
+      "id": "kms-concepts",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html",
+      "title": "AWS KMS keys",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Customer managed keys carry a monthly fee and a per-use fee; AWS managed keys carry no monthly fee",
+        "AWS managed keys are created, managed, and used on your behalf by an AWS service; they rotate every year",
+        "Unless you are required to control the key, an AWS managed key is a good choice"
+      ]
+    },
+    {
+      "id": "kms-rotate-keys",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html",
+      "title": "Rotate AWS KMS keys",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With automatic rotation enabled, AWS KMS generates new key material every year by default",
+        "AWS KMS charges a monthly fee for the first and second rotation of key material; the increase is capped at the second rotation"
+      ]
+    },
+    {
+      "id": "kms-deleting-keys",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html",
+      "title": "Delete an AWS KMS key",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Deleting a KMS key requires a waiting period of 7 to 30 days; the default is 30",
+        "A key pending deletion cannot be used in any cryptographic operation",
+        "Deletion can be cancelled before the waiting period ends, and not after"
+      ]
+    },
+    {
+      "id": "kms-pricing",
+      "url": "https://aws.amazon.com/kms/pricing/",
+      "title": "AWS KMS pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Each KMS key you create costs USD 1 a month, prorated hourly",
+        "The first and second rotation of a key each add USD 1 a month",
+        "AWS KMS provides a free tier of 20,000 requests a month, calculated across all Regions",
+        "There is no charge for creating and storing AWS managed keys"
+      ]
+    },
+    {
+      "id": "aws-price-list-kms",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS KMS (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "USD 1 per customer managed KMS key version per month",
+        "USD 0.03 per 10,000 requests",
+        "A Global-KMS-Requests SKU at USD 0 covers the first 20,000 requests a month"
+      ]
+    },
+    {
+      "id": "guardduty-what-is",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html",
+      "title": "What is Amazon GuardDuty?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GuardDuty is a threat detection service that monitors and analyzes AWS data sources and logs",
+        "It detects, for example, compromised credentials, cryptomining, and unusual login patterns",
+        "Foundational threat detection starts ingesting CloudTrail events, VPC flow logs, and DNS logs when GuardDuty is enabled"
+      ]
+    },
+    {
+      "id": "guardduty-getting-started",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html",
+      "title": "Getting started with GuardDuty",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Enabling GuardDuty for the first time in a Region also enables, by default, all protection types available in that Region",
+        "AWS recommends enabling GuardDuty in all supported Regions"
+      ]
+    },
+    {
+      "id": "guardduty-costs",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/monitoring_costs.html",
+      "title": "Monitoring GuardDuty usage and estimating costs",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GuardDuty offers a 30-day free trial per account for most protection plans",
+        "Usage and estimated cost can be monitored in the GuardDuty console"
+      ]
+    },
+    {
+      "id": "aws-price-list-guardduty",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon GuardDuty (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": ["USD 0.00000472 per CloudTrail event analyzed (USD 4.72 per million)"]
+    },
+    {
+      "id": "inspector-what-is",
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html",
+      "title": "What is Amazon Inspector?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Inspector is a vulnerability management service that scans workloads for software vulnerabilities and unintended network exposure",
+        "It scans EC2 instances, container images in ECR, and Lambda functions"
+      ]
+    },
+    {
+      "id": "inspector-scanning-lambda",
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/scanning-lambda.html",
+      "title": "Scanning AWS Lambda functions with Amazon Inspector",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Lambda standard scanning checks application dependencies for package vulnerabilities; code scanning is a separate, optional type",
+        "On activation Inspector scans functions invoked or updated in the last 90 days, and rescans on deploys and when a new CVE is added",
+        "Inspector does not scan Lambda functions encrypted with customer managed keys"
+      ]
+    },
+    {
+      "id": "inspector-getting-started",
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html",
+      "title": "Getting started with Amazon Inspector",
+      "checkedAt": "2026-10-12",
+      "supports": ["Activating Inspector for a standalone account in the console activates all scan types by default"]
+    },
+    {
+      "id": "inspector-pricing",
+      "url": "https://aws.amazon.com/inspector/pricing/",
+      "title": "Amazon Inspector pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Accounts new to Inspector get a 15-day free trial",
+        "Lambda standard scanning is billed per function, prorated by coverage hours"
+      ]
+    },
+    {
+      "id": "aws-price-list-inspector",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon Inspector (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": ["Lambda standard scanning: USD 0.0005 per function-hour"]
+    },
+    {
+      "id": "cloudtrail-event-history",
+      "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html",
+      "title": "Working with CloudTrail event history",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CloudTrail is enabled by default; event history holds the past 90 days of management events in a Region",
+        "Event history is immutable, and there is no CloudTrail charge for viewing it"
+      ]
+    },
+    {
+      "id": "cloudtrail-concepts",
+      "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html",
+      "title": "CloudTrail concepts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Events created by CloudFront, IAM, and AWS STS are recorded in us-east-1",
+        "Event history and lookup-events show global service events in the Region where they occurred"
+      ]
+    },
+    {
+      "id": "cloudtrail-lookup-events",
+      "url": "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_LookupEvents.html",
+      "title": "LookupEvents",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Looks up management events from the last 90 days in a Region",
+        "At most 50 results per call; lookup requests are limited to two per second per account per Region"
+      ]
+    },
+    {
+      "id": "cloudtrail-pricing",
+      "url": "https://aws.amazon.com/cloudtrail/pricing/",
+      "title": "AWS CloudTrail pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The 90-day event history is available at no additional cost",
+        "One copy of ongoing management events can be delivered to S3 for free by creating a trail; additional copies cost USD 2.00 per 100,000 events"
+      ]
+    },
+    {
+      "id": "config-what-is",
+      "url": "https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html",
+      "title": "What is AWS Config?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS Config records the configuration of resources and how configurations and relationships change over time"
+      ]
+    },
+    {
+      "id": "config-pricing",
+      "url": "https://aws.amazon.com/config/pricing/",
+      "title": "AWS Config pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "You pay per configuration item delivered, per account per Region",
+        "Recording can be continuous or periodic (once every 24 hours, only if a change occurred)"
+      ]
+    },
+    {
+      "id": "aws-price-list-config",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Config (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "USD 0.003 per configuration item recorded continuously",
+        "USD 0.012 per configuration item recorded daily"
+      ]
+    },
+    {
+      "id": "organizations-scps",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html",
+      "title": "Service control policies (SCPs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SCPs do not grant permissions; they set the maximum available permissions for IAM users and roles in member accounts",
+        "SCPs need an organization with all features enabled",
+        "SCPs do not affect users or roles in the management account, or service-linked roles",
+        "AWS strongly recommends not attaching SCPs to the root without testing; removing FullAWSAccess without a replacement makes all actions fail"
+      ]
+    },
+    {
+      "id": "organizations-scp-evaluation",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html",
+      "title": "SCP evaluation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An action needs an explicit Allow at every level from the root through each OU to the account",
+        "A Deny at any level denies the action for everything beneath it",
+        "Organizations attaches the AWS managed SCP FullAWSAccess when SCPs are enabled"
+      ]
+    },
+    {
+      "id": "organizations-scp-syntax",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html",
+      "title": "SCP syntax",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Principal and NotPrincipal are not supported in SCPs",
+        "Action, NotAction, Resource, NotResource, and Condition are supported in Allow and Deny statements",
+        "The example that denies operations outside chosen Regions uses NotAction with cloudfront:*, iam:*, route53:*, support:* and StringNotEquals on aws:RequestedRegion"
+      ]
+    },
+    {
+      "id": "organizations-quotas",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html",
+      "title": "Quotas and service limits for AWS Organizations",
+      "checkedAt": "2026-10-12",
+      "supports": ["The maximum size of a service control policy document is 10,240 characters"]
+    },
+    {
+      "id": "organizations-create",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html",
+      "title": "Create an organization with AWS Organizations",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The account that creates an organization becomes its management account",
+        "An organization supports all features by default, or consolidated billing only"
+      ]
+    },
+    {
+      "id": "organizations-faqs",
+      "url": "https://aws.amazon.com/organizations/faqs/",
+      "title": "AWS Organizations FAQs",
+      "checkedAt": "2026-10-12",
+      "supports": ["AWS Organizations is offered at no additional charge"]
+    },
+    {
+      "id": "aws-scp-examples",
+      "url": "https://github.com/aws-samples/service-control-policy-examples",
+      "title": "aws-samples/service-control-policy-examples",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The root-user example denies with ArnLike on aws:PrincipalArn arn:aws:iam::*:root",
+        "The Region example exempts about forty global or cross-Region services through NotAction"
+      ],
+      "note": "Linked from the Organizations user guide's SCP examples page. Read: Deny-the-root-user-from-performing-actions-except-S3-bucketpolicy-changes.json and Deny-access-to-AWS-based-on-the-requested-AWS-region.json on the main branch."
+    },
+    {
+      "id": "cdkd-npm-security",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (npm tarball, dist/)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "cdkd registers dedicated providers for AWS::SecretsManager::Secret, AWS::KMS::Key, AWS::WAFv2::WebACL, AWS::CloudFront::Distribution, AWS::CloudFront::OriginAccessControl, AWS::Lambda::Function, AWS::Lambda::Url, AWS::Lambda::Permission, AWS::IAM::Role, and AWS::Logs::LogGroup",
+        "No provider is registered for AWS::GuardDuty::Detector",
+        "The secret provider generates the GenerateSecretString value in the cdkd process and passes it to CreateSecret",
+        "The secret provider deletes with ForceDeleteWithoutRecovery; the KMS provider schedules key deletion with PendingWindowInDays, 7 when unset"
+      ]
+    },
+    {
+      "id": "aws-sdk-security-clients",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-secrets-manager/v/3.1149.0",
+      "title": "AWS SDK for JavaScript v3 3.1149.0: client-secrets-manager, client-iam, client-cloudtrail, client-guardduty, client-inspector2, client-config-service, client-organizations (type definitions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The request and response shapes used by the adapters and scripts",
+        "The Secrets Manager client has no AccessDeniedException class; a denial is matched by error name",
+        "The Organizations client's endpoint rules use organizations.us-east-1.amazonaws.com in the aws partition"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-secrets",
+      "url": "https://developers.cloudflare.com/workers/configuration/secrets/",
+      "title": "Cloudflare Workers: Secrets",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Secrets are a type of binding that attaches encrypted text values to a Worker",
+        "Secrets on that page are per Worker; account-level secrets are the Secrets Store, in beta",
+        "Local development reads secrets from .dev.vars or .env"
+      ]
+    },
+    {
+      "id": "cloudflare-waf-managed-rules",
+      "url": "https://developers.cloudflare.com/waf/managed-rules/",
+      "title": "Cloudflare WAF: Managed Rules",
+      "checkedAt": "2026-10-12",
+      "supports": ["The Cloudflare Free Managed Ruleset is available on all Cloudflare plans"]
+    },
+    {
+      "id": "cloudflare-rate-limiting-rules",
+      "url": "https://developers.cloudflare.com/waf/rate-limiting-rules/",
+      "title": "Cloudflare WAF: Rate limiting rules",
+      "checkedAt": "2026-10-12",
+      "supports": ["Rate limiting rules are available on the Free plan, with features that depend on the plan"]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "least-privilege",
+      "ja": "最小権限",
+      "en": "least privilege",
+      "firstUse": "21",
+      "definition": {
+        "ja": "仕事に必要な action を、必要な resource に対してだけ許すこと。「あとで要るかもしれない」権限は足さない。",
+        "en": "Allowing only the actions a job needs, on only the resources it needs. Permissions that might be useful later are left out."
+      }
+    },
+    {
+      "id": "secret",
+      "ja": "secret",
+      "en": "secret",
+      "firstUse": "21",
+      "definition": {
+        "ja": "漏れたら困る値（署名鍵、API キー、パスワード）。Secrets Manager では、暗号化された値と、その version、誰が読めるかの設定をまとめた 1 つの resource。",
+        "en": "A value that must not leak, such as a signing key, an API key, or a password. In Secrets Manager, one resource holding the encrypted value, its versions, and who may read it."
+      }
+    },
+    {
+      "id": "staging-label",
+      "ja": "staging label",
+      "en": "staging label",
+      "firstUse": "21",
+      "definition": {
+        "ja": "Secrets Manager が secret の version に付ける名札。AWSCURRENT（いまの値）、AWSPREVIOUS（1 つ前）、AWSPENDING（rotation の途中）の 3 つを Secrets Manager が管理する。",
+        "en": "A name tag Secrets Manager puts on a version of a secret. It manages three: AWSCURRENT (the value now), AWSPREVIOUS (the one before), and AWSPENDING (mid-rotation)."
+      }
+    },
+    {
+      "id": "secret-rotation",
+      "ja": "rotation",
+      "en": "rotation",
+      "firstUse": "21",
+      "definition": {
+        "ja": "secret の値を新しいものに入れ替えること。入れ替えた瞬間に全員が新しい値を持っているわけではないので、古い値もしばらく受け入れる期間を作る。",
+        "en": "Replacing a secret's value with a new one. Not everyone holds the new value the moment it changes, so the old one stays accepted for a while."
+      }
+    },
+    {
+      "id": "kms-key",
+      "ja": "KMS key",
+      "en": "KMS key",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS KMS が持つ暗号鍵。鍵そのものは取り出せず、API を呼んで暗号化・復号してもらう。自分で作る customer managed key は月額がかかり、サービスが作る AWS managed key は月額がかからない。",
+        "en": "An encryption key held by AWS KMS. The key cannot be taken out; you call an API to encrypt or decrypt. A customer managed key you create has a monthly fee; an AWS managed key a service creates does not."
+      }
+    },
+    {
+      "id": "web-acl",
+      "ja": "web ACL",
+      "en": "web ACL",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS WAF の設定の単位。rule を順番に並べたもので、CloudFront や ALB などに関連付けると、リクエストが届く前に検査する。置いてあるだけで月額がかかる。",
+        "en": "The unit of AWS WAF configuration: an ordered list of rules. Associated with CloudFront, an ALB, and so on, it inspects requests before they arrive. It carries a monthly fee just for existing."
+      }
+    },
+    {
+      "id": "managed-rule-group",
+      "ja": "managed rule group",
+      "en": "managed rule group",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS や第三者が保守している WAF の rule のまとまり。中身は提供者が更新する。web ACL の中では 1 つの rule として数える。",
+        "en": "A set of WAF rules maintained by AWS or a third party, who also updates them. Inside a web ACL it counts as one rule."
+      }
+    },
+    {
+      "id": "management-event",
+      "ja": "management event",
+      "en": "management event",
+      "firstUse": "21",
+      "definition": {
+        "ja": "リソースを作る・変える・消す、設定を読む、といった API 呼び出しの記録。CloudTrail が既定で 90 日ぶん持っている。S3 の object の読み書きのような data event は含まない。",
+        "en": "The record of an API call that creates, changes, deletes, or reads the configuration of a resource. CloudTrail keeps 90 days of them by default. Data events, such as reading an S3 object, are not included."
+      }
+    },
+    {
+      "id": "scp",
+      "ja": "SCP（service control policy）",
+      "en": "SCP (service control policy)",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS Organizations で、メンバーアカウントの IAM user と role に許せる権限の上限を決める policy。権限は与えない。management account には効かない。",
+        "en": "In AWS Organizations, a policy that sets the upper bound on what IAM users and roles in member accounts can be allowed. It grants nothing, and does not apply to the management account."
+      }
+    },
+    {
+      "id": "management-account",
+      "ja": "management account",
+      "en": "management account",
+      "firstUse": "21",
+      "definition": {
+        "ja": "organization を作ったアカウント。請求をまとめ、SCP を付ける側。SCP の制限を受けないので、ふだんの作業には使わない。",
+        "en": "The account that created the organization. It pays the consolidated bill and attaches SCPs. SCPs do not restrict it, so it is not used for everyday work."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "21.tiers",
+      "sources": [
+        "examples/21-security/src/posture.ts",
+        "examples/21-security/scripts/posture.ts",
+        "examples/21-security/test/posture.test.ts"
+      ],
+      "tasks": ["sec:posture", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.architecture",
+      "sources": ["examples/21-security/infra/bin/app.ts", "examples/21-security/infra/lib/security-stack.ts"],
+      "tasks": ["sec:infra:synth"],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.least-privilege",
+      "sources": [
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/test/security-stack.test.ts"
+      ],
+      "tasks": ["sec:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "21.iam-lint",
+      "sources": [
+        "examples/21-security/src/iam-lint.ts",
+        "examples/21-security/test/iam-lint.test.ts",
+        "examples/21-security/scripts/iam-lint.ts",
+        "examples/21-security/policies/iam-lint-exceptions.json"
+      ],
+      "tasks": ["sec:iam:lint", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.secret",
+      "sources": [
+        "examples/21-security/src/secret-source.ts",
+        "examples/21-security/src/secrets-manager-source.ts",
+        "examples/21-security/src/env.ts",
+        "examples/21-security/src/compose.ts",
+        "examples/21-security/test/secrets-manager-source.test.ts",
+        "examples/21-security/infra/lib/security-stack.ts"
+      ],
+      "tasks": ["dev:sec", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.keyring",
+      "sources": [
+        "examples/21-security/src/keyring.ts",
+        "examples/21-security/src/token.ts",
+        "examples/21-security/src/app.ts",
+        "examples/21-security/test/keyring.test.ts",
+        "examples/21-security/test/token.test.ts",
+        "examples/21-security/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.rotation",
+      "sources": [
+        "examples/21-security/src/rotation.ts",
+        "examples/21-security/src/secrets-manager-source.ts",
+        "examples/21-security/scripts/rotate.ts",
+        "examples/21-security/test/rotation.test.ts"
+      ],
+      "tasks": ["sec:secret:versions", "sec:secret:rotate", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.kms",
+      "sources": [
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/lib/config.ts",
+        "examples/21-security/infra/test/security-stack.test.ts"
+      ],
+      "tasks": ["sec:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.waf",
+      "sources": [
+        "examples/21-security/infra/lib/waf-stack.ts",
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/test/waf-stack.test.ts"
+      ],
+      "tasks": ["sec:waf:infra:deploy", "sec:waf:infra:destroy", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.iam-consistency",
+      "sources": [
+        "examples/21-security/src/propagation.ts",
+        "examples/21-security/test/propagation.test.ts",
+        "examples/21-security/scripts/smoke.ts",
+        "examples/21-security/scripts/trail.ts"
+      ],
+      "tasks": ["sec:smoke", "sec:trail:iam", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.detect",
+      "sources": ["examples/21-security/scripts/posture.ts", "examples/21-security/scripts/trail.ts"],
+      "tasks": ["sec:posture", "sec:trail:iam"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "21.organizations",
+      "sources": [
+        "examples/21-security/policies/scp-guardrails.json",
+        "examples/21-security/src/policy-model.ts",
+        "examples/21-security/test/scp.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "21.deploy",
+      "sources": ["examples/21-security/scripts/smoke.ts", "examples/21-security/infra/bin/app.ts"],
+      "tasks": ["sec:infra:diff", "sec:infra:deploy", "sec:smoke", "sec:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "21.cost",
+      "sources": ["data/pricing", "examples/21-security/infra/test/security-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.workers",
+      "sources": ["examples/21-security/src/compose.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.cleanup",
+      "sources": ["examples/21-security/infra/lib/security-stack.ts"],
+      "tasks": ["sec:infra:destroy", "sec:waf:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "secretsmanager.secret",
+      "offerCode": "AWSSecretsManager",
+      "region": "ap-northeast-1",
+      "sku": "GVA2ZKT9KD5RYX6P",
+      "usageType": "APN1-AWSSecretsManager-Secrets",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Secrets",
+      "tiers": [{ "from": 0, "to": null, "usd": "0.4000000000", "description": "$0.40 per Secret" }],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:10Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "secretsmanager.api",
+      "offerCode": "AWSSecretsManager",
+      "region": "ap-northeast-1",
+      "sku": "JC68V52M47AA94EZ",
+      "usageType": "APN1-AWSSecretsManagerAPIRequest",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "API Requests",
+      "tiers": [{ "from": 0, "to": null, "usd": "0.0000050000", "description": "$0.05 per 10000 API Requests" }],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:10Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "kms.key",
+      "offerCode": "awskms",
+      "region": "ap-northeast-1",
+      "sku": "VJNSHSJEC3XAPATF",
+      "usageType": "ap-northeast-1-KMS-Keys",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Keys",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.0000000000",
+          "description": "$1 per customer managed KMS key version in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:01Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "kms.request",
+      "offerCode": "awskms",
+      "region": "ap-northeast-1",
+      "sku": "ZXP6ZS4WWG9FNXHG",
+      "usageType": "ap-northeast-1-KMS-Requests",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000030000",
+          "description": "$0.03 per 10000 KMS requests in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:01Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.webacl",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "DYTQ8YBXB7SEXYTZ",
+      "usageType": "Global-WebACLV2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        { "from": 0, "to": null, "usd": "5.0000000000", "description": "$5.00 per web ACL created (prorated hourly)" }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.rule",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "VRM2EPFJG75YBY5A",
+      "usageType": "Global-RuleV2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        { "from": 0, "to": null, "usd": "1.0000000000", "description": "$1.00 per rule created (prorated hourly)" }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.request",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "8D94VMB3JSN7FAX3",
+      "usageType": "Global-RequestV2-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        { "from": 0, "to": null, "usd": "0.0000006000", "description": "$0.60 per million requests processed" }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "guardduty.cloudtrail.event",
+      "offerCode": "AmazonGuardDuty",
+      "region": "ap-northeast-1",
+      "sku": "TFHCE6Z4YPX3UBZM",
+      "usageType": "APN1-PaidEventsAnalyzed",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Events",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000047200",
+          "description": "$0.00000472 per CloudTrail event analyzed in Asia Pacific (Tokyo) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:12:03Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "inspector.lambda.standard",
+      "offerCode": "AmazonInspectorV2",
+      "region": "ap-northeast-1",
+      "sku": "TKG5JCZ3WXG5PJ3W",
+      "usageType": "APN1-Lambda-Standard-Scanning",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hourly",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0005000000",
+          "description": "$0.0005 per Hourly for Lambda-Standard-Scanning in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "config.item.continuous",
+      "offerCode": "AWSConfig",
+      "region": "ap-northeast-1",
+      "sku": "JHD3G7BJYKRN97JU",
+      "usageType": "APN1-ConfigurationItemRecorded",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "APN1-ConfigurationItemRecorded",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0030000000",
+          "description": "$0.003 per  Configuration Item recorded in Asia Pacific (Tokyo) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:34Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "kms.request",
+      "quantity": 20000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "kms-pricing",
+      "note": "Calculated across all Regions. Requests on asymmetric keys and GenerateDataKeyPair are excluded."
+    }
+  ],
+  "unknownAllowances": [
+    {
+      "priceId": "secretsmanager.secret",
+      "reason": "No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied."
+    },
+    {
+      "priceId": "secretsmanager.api",
+      "reason": "No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied."
+    },
+    {
+      "priceId": "kms.key",
+      "reason": "The KMS free tier covers requests, not keys; none is applied."
+    },
+    {
+      "priceId": "waf.global.webacl",
+      "reason": "No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans were not examined in this chapter."
+    },
+    {
+      "priceId": "waf.global.rule",
+      "reason": "No free allowance for rules was confirmed for the pay-as-you-go model; none is applied."
+    },
+    {
+      "priceId": "waf.global.request",
+      "reason": "No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied."
+    },
+    {
+      "priceId": "guardduty.cloudtrail.event",
+      "reason": "GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "inspector.lambda.standard",
+      "reason": "Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "config.item.continuous",
+      "reason": "No free allowance for configuration items was found on the pricing page; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "sec-idle-default",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: 既定の stack を置いたまま、誰も呼ばない月",
+        "en": "Security: the default stack, deployed but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c cmk=on` も `-c webAclArn=...` も付けていない。web ACL の stack（AihSecurityWaf）も作っていない",
+          "リクエストゼロ。関数が動かないので、Secrets Manager の API も呼ばれない",
+          "secret は 1 つを 730 時間。暗号化は aws/secretsmanager（月額なし）",
+          "CloudFront の distribution、Lambda、IAM の role は、呼ばれなければ料金がかからない。log は失効して保存量ゼロ"
+        ],
+        "en": [
+          "Neither `-c cmk=on` nor `-c webAclArn=...`; the web ACL stack (AihSecurityWaf) does not exist",
+          "No requests. The function never runs, so no Secrets Manager API call is made",
+          "One secret for 730 hours, encrypted with aws/secretsmanager (no monthly fee)",
+          "The CloudFront distribution, Lambda, and the IAM role cost nothing uncalled; logs have expired and nothing is stored"
+        ]
+      },
+      "items": [{ "priceId": "secretsmanager.secret", "quantity": 1, "basis": "1 secret for the whole month" }]
+    },
+    {
+      "id": "sec-idle-cmk",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月",
+        "en": "Security: with `-c cmk=on`, deployed but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の stack に、customer managed key を 1 つ足したもの",
+          "鍵は作ってから 1 年未満で、まだ一度も自動 rotation していない。rotation のたびに、2 回目まで月 USD 1 ずつ増える",
+          "リクエストゼロ"
+        ],
+        "en": [
+          "The default stack plus one customer managed key",
+          "The key is less than a year old and has not rotated yet. Each of the first two rotations adds USD 1 a month",
+          "No requests"
+        ]
+      },
+      "items": [
+        { "priceId": "secretsmanager.secret", "quantity": 1, "basis": "1 secret for the whole month" },
+        { "priceId": "kms.key", "quantity": 1, "basis": "1 customer managed key, one key version" }
+      ]
+    },
+    {
+      "id": "sec-waf-month",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査",
+        "en": "Security: the web ACL (AihSecurityWaf) for a month, inspecting one million requests"
+      },
+      "assumptions": {
+        "ja": [
+          "web ACL 1 つと rule 3 つ（rate-based rule 1 つ、AWS managed rule group 2 つ。managed rule group は 1 つの rule として数える）",
+          "合計 727 WCU で、基本料金に含まれる 1,500 WCU の内側",
+          "検査するリクエストは月 100 万。0 なら月 USD 8.00",
+          "CloudFront 用の web ACL が Global-* の usage type で課金されるという対応は、請求では確かめていない。ap-northeast-1 と us-east-1 の単価も同じ値",
+          "この小計に、既定の stack の料金は含まない。WAF のログ、Bot Control などの追加機能は使っていない"
+        ],
+        "en": [
+          "One web ACL and three rules (one rate-based rule, two AWS managed rule groups; a managed rule group counts as one rule)",
+          "727 WCUs in total, inside the 1,500 WCUs the base price includes",
+          "One million requests inspected in the month. With none, USD 8.00 a month",
+          "That a web ACL for CloudFront is metered under the Global-* usage types was not confirmed on a bill. The ap-northeast-1 and us-east-1 prices are the same numbers",
+          "This subtotal excludes the default stack. No WAF logging, no Bot Control or other add-ons"
+        ]
+      },
+      "items": [
+        { "priceId": "waf.global.webacl", "quantity": 1, "basis": "1 web ACL for the whole month" },
+        { "priceId": "waf.global.rule", "quantity": 3, "basis": "3 rules for the whole month" },
+        { "priceId": "waf.global.request", "quantity": 1000000, "basis": "1,000,000 requests inspected" }
+      ]
+    },
+    {
+      "id": "sec-small",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: 既定の stack で、token の発行と検証を月 10 万回ずつ",
+        "en": "Security: the default stack, 100,000 tokens issued and 100,000 verified a month"
+      },
+      "assumptions": {
+        "ja": [
+          "CloudFront へ 20 万リクエスト（HTTPS、日本の edge）。cache しないので、すべて Lambda に届く",
+          "応答は 1 回あたり 0.5 KB と仮定",
+          "Lambda は平均 50 ms、256 MB、arm64。50 ms は仮定で、計測値ではない",
+          "実行環境 1 つが 1 か月動き続け、5 分ごとに鍵を読み直すと仮定（730 時間 x 12 回 x GetSecretValue 2 回）。実行環境が増えれば、そのぶん増える",
+          "1 回の呼び出しあたり log 0.3 KB（Lambda が書く行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定",
+          "customer managed key、web ACL は無し。Lambda から CloudFront へのデータ転送は含めていない（未算入）"
+        ],
+        "en": [
+          "200,000 requests to CloudFront (HTTPS, Japan edge locations). Nothing is cached, so all of them reach Lambda",
+          "0.5 KB per response, assumed",
+          "Lambda averages 50 ms at 256 MB, arm64. The 50 ms is an assumption, not a measurement",
+          "One execution environment running all month and reloading its keys every five minutes (730 hours x 12 x 2 GetSecretValue calls). More environments mean proportionally more",
+          "0.3 KB of logs per invocation (only the lines Lambda writes). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest",
+          "No customer managed key and no web ACL. Data transfer from Lambda to CloudFront is not included"
+        ]
+      },
+      "items": [
+        { "priceId": "secretsmanager.secret", "quantity": 1, "basis": "1 secret for the whole month" },
+        {
+          "priceId": "secretsmanager.api",
+          "quantity": 17520,
+          "basis": "730 hours x 12 reloads x 2 GetSecretValue calls"
+        },
+        { "priceId": "cloudfront.jp.request.https", "quantity": 200000, "basis": "100,000 /token + 100,000 /verify" },
+        { "priceId": "cloudfront.jp.transfer", "quantity": 0.095367, "basis": "200,000 x 0.5 KB, in GB" },
+        { "priceId": "lambda.request.arm", "quantity": 200000, "basis": "every request reaches the function" },
+        { "priceId": "lambda.duration.arm", "quantity": 2500, "basis": "200,000 x 0.05 s x 0.25 GB, in GB-seconds" },
+        { "priceId": "logs.ingest.standard", "quantity": 0.05722, "basis": "200,000 x 0.3 KB, in GB" },
+        { "priceId": "logs.storage", "quantity": 0.013351, "basis": "0.057220 GB x 7/30, in GB-month" }
+      ]
+    },
+    {
+      "id": "sec-detect-example",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）",
+        "en": "Security: GuardDuty, Inspector, and AWS Config on a small account for a month (an order-of-magnitude example)"
+      },
+      "assumptions": {
+        "ja": [
+          "無料の試用期間が終わったあとの月",
+          "GuardDuty が分析する CloudTrail の management event を月 10 万件と仮定。実際の件数は、アカウントで何をしているかで決まる。この数字は計測値ではない",
+          "GuardDuty のほかの課金対象（VPC flow log と DNS log の分析量、S3、Lambda、Malware Protection などの protection plan）は含めていない。初めて有効にすると、既定ですべての protection plan が有効になる",
+          "Inspector は Lambda standard scanning だけで、関数 1 つを 730 時間。ECR の image と EC2 instance の検査は含めていない",
+          "AWS Config は連続記録で、月 500 件の configuration item と仮定。rule の評価と、記録を置く S3 の料金は含めていない"
+        ],
+        "en": [
+          "A month after the free trials have ended",
+          "100,000 CloudTrail management events analyzed by GuardDuty, assumed. The real count depends on what the account does; this is not a measurement",
+          "GuardDuty's other charges (VPC flow log and DNS log volume, and protection plans such as S3, Lambda, and Malware Protection) are not included. Enabling GuardDuty for the first time turns every protection plan on by default",
+          "Inspector with Lambda standard scanning only, one function for 730 hours. ECR image and EC2 instance scanning are not included",
+          "AWS Config with continuous recording and 500 configuration items in the month, assumed. Rule evaluations and the S3 storage for the records are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "guardduty.cloudtrail.event",
+          "quantity": 100000,
+          "basis": "100,000 management events analyzed (assumed)"
+        },
+        { "priceId": "inspector.lambda.standard", "quantity": 730, "basis": "1 function x 730 hours" },
+        { "priceId": "config.item.continuous", "quantity": 500, "basis": "500 configuration items (assumed)" }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "21",
+        "command": "vp run test:unit (examples/21-security)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "token の署名と検証、rotation をまたぐ鍵の cache（古い cache の実行環境、2 回の rotation、でたらめな version id の連打、Secrets Manager の停止、同時リクエスト）、rotation の手順（応答の喪失後の再実行、早すぎる 2 回目、version id の使い回し）、SDK の client を差し替えた secret の読み取り、wildcard の lint と理由つきの例外、20章の CI role への適用、SCP の JSON と評価の model、IAM の伝播待ち、posture の判定、stack の assertion（既定で月額がかかるのは secret 1 つだけ、cmk と web ACL は opt-in）",
+          "en": "Token signing and verification; the key cache across a rotation (an environment with a stale cache, two rotations, a flood of made-up version ids, Secrets Manager down, concurrent requests); the rotation procedure (a rerun after a lost response, a second rotation too soon, a reused version id); reading the secret through a substituted SDK client; the wildcard lint and its reasoned exceptions; the lint applied to chapter 20's CI roles; the SCP JSON and the evaluation model; waiting for IAM propagation; the posture verdicts; stack assertions (by default only one secret has a monthly fee; the key and the web ACL are opt-in)"
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run sec:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "固定した cdkd 0.296.28 で synth。認証情報なし。AihSecurity と AihSecurityWaf の template が cdk.out に出ること、-c cmk=on と -c webAclArn=... で template が変わること、形の違う webAclArn で synth が止まることを確認",
+          "en": "Synthesized with the pinned cdkd 0.296.28 and no credentials. Checked that cdk.out holds the AihSecurity and AihSecurityWaf templates, that -c cmk=on and -c webAclArn=... change the template, and that a malformed webAclArn stops the synth"
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "この章の 2 つの template は例外なしで合格。`vp run infra:synth` のあとに全章の cdk.out を渡した結果は、本文の「本全体に当ててみる」に書いたとおり",
+          "en": "This chapter's two templates pass with no exceptions. The result of passing every chapter's cdk.out after `vp run infra:synth` is as written in the chapter's \"Running it over the whole book\""
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run dev:sec",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "手元の server で /health、/token、/verify を curl で確認。鍵はメモリの中だけで、AWS は呼ばない",
+          "en": "Checked /health, /token, and /verify on the local server with curl. The key exists only in memory; AWS is not called"
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。CloudFront、function URL、Secrets Manager を通した動作、デプロイ直後の 503 の有無、destroy 後に secret が残らないこと",
+          "en": "Not run. Behavior through CloudFront, the function URL, and Secrets Manager; whether a 503 appears right after a deploy; that no secret remains after destroy"
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run sec:secret:versions / sec:secret:rotate",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。PutSecretValue 後の staging label の動き、同じ version id での再実行、rotation 後に古い cache の実行環境が新しい token を受け入れること",
+          "en": "Not run. How the staging labels move after PutSecretValue, a rerun with the same version id, and an environment with a stale cache accepting new tokens after a rotation"
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。us-east-1 への web ACL の作成、distribution への関連付け、rate-based rule が実際に block を始めるまでの時間、count にした rule group の記録",
+          "en": "Not run. Creating the web ACL in us-east-1, associating it with the distribution, how long the rate-based rule takes to start blocking, and what the counted rule group records"
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run sec:infra:deploy -c cmk=on",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。customer managed key での secret の暗号化、kms:ViaService の条件つきで関数が読めること、destroy 後の鍵の状態",
+          "en": "Not run. Encrypting the secret with a customer managed key, the function reading it under the kms:ViaService condition, and the state of the key after destroy"
+        }
+      },
+      {
+        "scope": "21",
+        "command": "vp run sec:posture / sec:trail:iam",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示",
+          "en": "Not run. The actual responses of the read APIs of six services, and the output when a permission is missing"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "21-deploy",
+        "summary": {
+          "ja": "既定の stack（CloudFront、function URL、Secrets Manager）を実環境で通していない",
+          "en": "The default stack (CloudFront, the function URL, Secrets Manager) has not been run in a real account"
+        },
+        "resume": {
+          "ja": "`vp run sec:infra:deploy` のあと、すぐに `vp run sec:smoke` を実行し、「after N refusals」の N を記録する。function URL を直接 curl して 403 になること、`vp run sec:infra:drift` の結果、`vp run sec:infra:destroy` のあとに Secrets Manager のコンソールで secret が「削除予定」としても残っていないことを確かめる",
+          "en": "After `vp run sec:infra:deploy`, run `vp run sec:smoke` immediately and record the N in \"after N refusals\". Check that a direct curl of the function URL gets 403, record the result of `vp run sec:infra:drift`, and after `vp run sec:infra:destroy` confirm in the Secrets Manager console that no secret remains, not even as scheduled for deletion"
+        }
+      },
+      {
+        "id": "21-rotation",
+        "summary": {
+          "ja": "secret の rotation を実環境で試していない",
+          "en": "Rotating the secret has not been tried in a real account"
+        },
+        "resume": {
+          "ja": "デプロイ後に `vp run sec:smoke`、`vp run sec:secret:rotate`、もう一度 `vp run sec:smoke` の順に実行する。rotation の直後に、古い key version で発行した token が検証を通ること、`sec:secret:versions` の表示が AWSCURRENT と AWSPREVIOUS になっていること、同じ `--version-id` での再実行が already-rotated になること、10 分以内の 2 回目が too-soon で止まることを記録する。AWSPREVIOUS が無い secret に GetSecretValue したときのエラー名が ResourceNotFoundException かどうかも確かめる",
+          "en": "After deploying, run `vp run sec:smoke`, `vp run sec:secret:rotate`, and `vp run sec:smoke` again. Record that a token issued with the old key version verifies right after the rotation, that `sec:secret:versions` shows AWSCURRENT and AWSPREVIOUS, that a rerun with the same `--version-id` reports already-rotated, and that a second rotation within ten minutes stops with too-soon. Also check whether GetSecretValue on a secret with no AWSPREVIOUS fails with ResourceNotFoundException"
+        }
+      },
+      {
+        "id": "21-waf",
+        "summary": {
+          "ja": "web ACL を作っていない。rate-based rule の動きも見ていない",
+          "en": "The web ACL has not been created, and the rate-based rule has not been observed"
+        },
+        "resume": {
+          "ja": "`vp run sec:waf:infra:deploy` の出力 WebAclArn を `vp run sec:infra:deploy -c webAclArn=<ARN>` に渡す。5 分間に 300 回を超えるリクエストを 1 つの IP から送り、403 が返り始めるまでの時間と回数を記録する。WAF のコンソールで AwsCommonRules が count として記録していることを確かめる。請求で usage type が Global-* か USE1-* かを確かめる。終わったら `sec:infra:deploy`（webAclArn なし）で外してから `vp run sec:waf:infra:destroy`",
+          "en": "Pass the WebAclArn output of `vp run sec:waf:infra:deploy` to `vp run sec:infra:deploy -c webAclArn=<ARN>`. Send more than 300 requests in five minutes from one IP address and record how long, and how many requests, it takes before 403s begin. Confirm in the WAF console that AwsCommonRules records matches as counts. Check on the bill whether the usage type is Global-* or USE1-*. Afterwards detach with `sec:infra:deploy` (no webAclArn), then `vp run sec:waf:infra:destroy`"
+        }
+      },
+      {
+        "id": "21-cmk",
+        "summary": {
+          "ja": "customer managed key を使う構成を実環境で試していない",
+          "en": "The customer managed key variant has not been tried in a real account"
+        },
+        "resume": {
+          "ja": "`vp run sec:infra:deploy -c cmk=on` のあと `vp run sec:smoke`。関数が kms:ViaService の条件つきの kms:Decrypt だけで secret を読めることを確かめる。`vp run sec:infra:destroy` のあと、KMS のコンソールで鍵が「削除保留中」で、7 日後に消える予定になっていること、その間の請求に鍵の料金が載るかどうかを記録する",
+          "en": "Run `vp run sec:infra:deploy -c cmk=on`, then `vp run sec:smoke`. Confirm the function reads the secret with only kms:Decrypt under the kms:ViaService condition. After `vp run sec:infra:destroy`, record that the key is pending deletion in the KMS console and due to disappear in 7 days, and whether the bill shows a key charge for that period"
+        }
+      },
+      {
+        "id": "21-iam-propagation",
+        "summary": {
+          "ja": "IAM の変更が伝わるまでの遅れを、実際には観測していない",
+          "en": "The delay before an IAM change takes effect has not been observed"
+        },
+        "resume": {
+          "ja": "デプロイ直後の `vp run sec:smoke` で refusals が 0 かどうかを数回記録する。次に、コンソールで HandlerRole の ReadSigningKey を消し、実行環境が新しくなるのを待ってから `/token` を繰り返し呼び、503 になるまでの時間と、一度 503 になったあとに 200 が混ざるかどうかを記録する。終わったら `vp run sec:infra:drift` で差を確かめ、revert する",
+          "en": "Record over several deploys whether `vp run sec:smoke` right after a deploy reports 0 refusals. Then delete ReadSigningKey from HandlerRole in the console, wait for a new execution environment, call `/token` repeatedly, and record how long it takes to get a 503 and whether a 200 appears again after the first 503. Afterwards check the difference with `vp run sec:infra:drift` and revert"
+        }
+      },
+      {
+        "id": "21-posture",
+        "summary": {
+          "ja": "`sec:posture` と `sec:trail:iam` を実アカウントで動かしていない。GuardDuty、Inspector、Config、trail、Organizations も有効にしていない",
+          "en": "`sec:posture` and `sec:trail:iam` have not been run against a real account, and GuardDuty, Inspector, Config, a trail, and Organizations have not been enabled"
+        },
+        "resume": {
+          "ja": "`vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す",
+          "en": "Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU"
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 21: security and governance -----------------------------\n      // The token API with a made-up signing key in memory. No AWS.\n      \"dev:sec\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/21-security\" }),\n      // Lints IAM policies in synthesized templates. Pass other cdk.out directories to lint other chapters.\n      \"sec:iam:lint\": fresh(\"node examples/21-security/scripts/iam-lint.ts\", { dependsOn: [\"sec:infra:synth\"] }),\n      // One secret is the only monthly fee. `-c cmk=on` adds a KMS key, `-c webAclArn=...` attaches a web ACL.\n      ...infra(\"sec\", \"examples/21-security\", \"AihSecurity\"),\n      // The web ACL for CloudFront, in us-east-1 whatever AIH_AWS_REGION says. Billed by the month while it exists.\n      ...infra(\"sec:waf\", \"examples/21-security\", \"AihSecurityWaf\"),\n      \"sec:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/21-security\" }),\n      // Lists the secret's versions and staging labels. Never prints a value.\n      \"sec:secret:versions\": live(\"node --env-file-if-exists=../../.env scripts/rotate.ts versions\", {\n        cwd: \"examples/21-security\",\n      }),\n      // Writes a new version of the signing secret. The previous one stays accepted.\n      \"sec:secret:rotate\": live(\"node --env-file-if-exists=../../.env scripts/rotate.ts rotate\", {\n        cwd: \"examples/21-security\",\n      }),\n      // Which account-level protections are on. Reads only.\n      \"sec:posture\": live(\"node --env-file-if-exists=../../.env scripts/posture.ts\", { cwd: \"examples/21-security\" }),\n      // Recent IAM changes from CloudTrail event history in us-east-1. Reads only.\n      \"sec:trail:iam\": live(\"node --env-file-if-exists=../../.env scripts/trail.ts\", { cwd: \"examples/21-security\" }),",
+    "synth": ["sec:infra:synth"],
+    "checkAll": ["sec:iam:lint"],
+    "typecheck": ["examples/21-security"]
+  }
+}

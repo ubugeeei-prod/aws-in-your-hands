@@ -204,3 +204,13 @@ The term pairs that keep both languages using one word for one concept. API name
 | 条件付き書き込み | conditional write | 16 | A write with a condition such as "only if absent" or "only if still this version", where the store checks the condition and writes as a single step. |
 | Standard workflow | Standard workflow | 16 | One of the two Step Functions workflow types: up to a year, state persisted between states, billed per state transition. The other is Express, up to five minutes. |
 | AWS Batch | AWS Batch | 16 | A service that queues container jobs and provisions the compute (Fargate or EC2) to run them. |
+| 最小権限 | least privilege | 21 | Allowing only the actions a job needs, on only the resources it needs. Permissions that might be useful later are left out. |
+| secret | secret | 21 | A value that must not leak, such as a signing key, an API key, or a password. In Secrets Manager, one resource holding the encrypted value, its versions, and who may read it. |
+| staging label | staging label | 21 | A name tag Secrets Manager puts on a version of a secret. It manages three: AWSCURRENT (the value now), AWSPREVIOUS (the one before), and AWSPENDING (mid-rotation). |
+| rotation | rotation | 21 | Replacing a secret's value with a new one. Not everyone holds the new value the moment it changes, so the old one stays accepted for a while. |
+| KMS key | KMS key | 21 | An encryption key held by AWS KMS. The key cannot be taken out; you call an API to encrypt or decrypt. A customer managed key you create has a monthly fee; an AWS managed key a service creates does not. |
+| web ACL | web ACL | 21 | The unit of AWS WAF configuration: an ordered list of rules. Associated with CloudFront, an ALB, and so on, it inspects requests before they arrive. It carries a monthly fee just for existing. |
+| managed rule group | managed rule group | 21 | A set of WAF rules maintained by AWS or a third party, who also updates them. Inside a web ACL it counts as one rule. |
+| management event | management event | 21 | The record of an API call that creates, changes, deletes, or reads the configuration of a resource. CloudTrail keeps 90 days of them by default. Data events, such as reading an S3 object, are not included. |
+| SCP（service control policy） | SCP (service control policy) | 21 | In AWS Organizations, a policy that sets the upper bound on what IAM users and roles in member accounts can be allowed. It grants nothing, and does not apply to the management account. |
+| management account | management account | 21 | The account that created the organization. It pays the consolidated bill and attaches SCPs. SCPs do not restrict it, so it is not used for everyday work. |

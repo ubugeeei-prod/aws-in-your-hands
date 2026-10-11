@@ -2600,6 +2600,217 @@
           "basis": "one public IPv4 address for 30 hours"
         }
       ]
+    },
+    {
+      "id": "sec-idle-default",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: 既定の stack を置いたまま、誰も呼ばない月",
+        "en": "Security: the default stack, deployed but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c cmk=on` も `-c webAclArn=...` も付けていない。web ACL の stack（AihSecurityWaf）も作っていない",
+          "リクエストゼロ。関数が動かないので、Secrets Manager の API も呼ばれない",
+          "secret は 1 つを 730 時間。暗号化は aws/secretsmanager（月額なし）",
+          "CloudFront の distribution、Lambda、IAM の role は、呼ばれなければ料金がかからない。log は失効して保存量ゼロ"
+        ],
+        "en": [
+          "Neither `-c cmk=on` nor `-c webAclArn=...`; the web ACL stack (AihSecurityWaf) does not exist",
+          "No requests. The function never runs, so no Secrets Manager API call is made",
+          "One secret for 730 hours, encrypted with aws/secretsmanager (no monthly fee)",
+          "The CloudFront distribution, Lambda, and the IAM role cost nothing uncalled; logs have expired and nothing is stored"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "1 secret for the whole month"
+        }
+      ]
+    },
+    {
+      "id": "sec-idle-cmk",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月",
+        "en": "Security: with `-c cmk=on`, deployed but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の stack に、customer managed key を 1 つ足したもの",
+          "鍵は作ってから 1 年未満で、まだ一度も自動 rotation していない。rotation のたびに、2 回目まで月 USD 1 ずつ増える",
+          "リクエストゼロ"
+        ],
+        "en": [
+          "The default stack plus one customer managed key",
+          "The key is less than a year old and has not rotated yet. Each of the first two rotations adds USD 1 a month",
+          "No requests"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "1 secret for the whole month"
+        },
+        {
+          "priceId": "kms.key",
+          "quantity": 1,
+          "basis": "1 customer managed key, one key version"
+        }
+      ]
+    },
+    {
+      "id": "sec-waf-month",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査",
+        "en": "Security: the web ACL (AihSecurityWaf) for a month, inspecting one million requests"
+      },
+      "assumptions": {
+        "ja": [
+          "web ACL 1 つと rule 3 つ（rate-based rule 1 つ、AWS managed rule group 2 つ。managed rule group は 1 つの rule として数える）",
+          "合計 727 WCU で、基本料金に含まれる 1,500 WCU の内側",
+          "検査するリクエストは月 100 万。0 なら月 USD 8.00",
+          "CloudFront 用の web ACL が Global-* の usage type で課金されるという対応は、請求では確かめていない。ap-northeast-1 と us-east-1 の単価も同じ値",
+          "この小計に、既定の stack の料金は含まない。WAF のログ、Bot Control などの追加機能は使っていない"
+        ],
+        "en": [
+          "One web ACL and three rules (one rate-based rule, two AWS managed rule groups; a managed rule group counts as one rule)",
+          "727 WCUs in total, inside the 1,500 WCUs the base price includes",
+          "One million requests inspected in the month. With none, USD 8.00 a month",
+          "That a web ACL for CloudFront is metered under the Global-* usage types was not confirmed on a bill. The ap-northeast-1 and us-east-1 prices are the same numbers",
+          "This subtotal excludes the default stack. No WAF logging, no Bot Control or other add-ons"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "waf.global.webacl",
+          "quantity": 1,
+          "basis": "1 web ACL for the whole month"
+        },
+        {
+          "priceId": "waf.global.rule",
+          "quantity": 3,
+          "basis": "3 rules for the whole month"
+        },
+        {
+          "priceId": "waf.global.request",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests inspected"
+        }
+      ]
+    },
+    {
+      "id": "sec-small",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: 既定の stack で、token の発行と検証を月 10 万回ずつ",
+        "en": "Security: the default stack, 100,000 tokens issued and 100,000 verified a month"
+      },
+      "assumptions": {
+        "ja": [
+          "CloudFront へ 20 万リクエスト（HTTPS、日本の edge）。cache しないので、すべて Lambda に届く",
+          "応答は 1 回あたり 0.5 KB と仮定",
+          "Lambda は平均 50 ms、256 MB、arm64。50 ms は仮定で、計測値ではない",
+          "実行環境 1 つが 1 か月動き続け、5 分ごとに鍵を読み直すと仮定（730 時間 x 12 回 x GetSecretValue 2 回）。実行環境が増えれば、そのぶん増える",
+          "1 回の呼び出しあたり log 0.3 KB（Lambda が書く行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定",
+          "customer managed key、web ACL は無し。Lambda から CloudFront へのデータ転送は含めていない（未算入）"
+        ],
+        "en": [
+          "200,000 requests to CloudFront (HTTPS, Japan edge locations). Nothing is cached, so all of them reach Lambda",
+          "0.5 KB per response, assumed",
+          "Lambda averages 50 ms at 256 MB, arm64. The 50 ms is an assumption, not a measurement",
+          "One execution environment running all month and reloading its keys every five minutes (730 hours x 12 x 2 GetSecretValue calls). More environments mean proportionally more",
+          "0.3 KB of logs per invocation (only the lines Lambda writes). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest",
+          "No customer managed key and no web ACL. Data transfer from Lambda to CloudFront is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "1 secret for the whole month"
+        },
+        {
+          "priceId": "secretsmanager.api",
+          "quantity": 17520,
+          "basis": "730 hours x 12 reloads x 2 GetSecretValue calls"
+        },
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 200000,
+          "basis": "100,000 /token + 100,000 /verify"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 0.095367,
+          "basis": "200,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 200000,
+          "basis": "every request reaches the function"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 2500,
+          "basis": "200,000 x 0.05 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.05722,
+          "basis": "200,000 x 0.3 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.013351,
+          "basis": "0.057220 GB x 7/30, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "sec-detect-example",
+      "chapter": "21",
+      "title": {
+        "ja": "守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）",
+        "en": "Security: GuardDuty, Inspector, and AWS Config on a small account for a month (an order-of-magnitude example)"
+      },
+      "assumptions": {
+        "ja": [
+          "無料の試用期間が終わったあとの月",
+          "GuardDuty が分析する CloudTrail の management event を月 10 万件と仮定。実際の件数は、アカウントで何をしているかで決まる。この数字は計測値ではない",
+          "GuardDuty のほかの課金対象（VPC flow log と DNS log の分析量、S3、Lambda、Malware Protection などの protection plan）は含めていない。初めて有効にすると、既定ですべての protection plan が有効になる",
+          "Inspector は Lambda standard scanning だけで、関数 1 つを 730 時間。ECR の image と EC2 instance の検査は含めていない",
+          "AWS Config は連続記録で、月 500 件の configuration item と仮定。rule の評価と、記録を置く S3 の料金は含めていない"
+        ],
+        "en": [
+          "A month after the free trials have ended",
+          "100,000 CloudTrail management events analyzed by GuardDuty, assumed. The real count depends on what the account does; this is not a measurement",
+          "GuardDuty's other charges (VPC flow log and DNS log volume, and protection plans such as S3, Lambda, and Malware Protection) are not included. Enabling GuardDuty for the first time turns every protection plan on by default",
+          "Inspector with Lambda standard scanning only, one function for 730 hours. ECR image and EC2 instance scanning are not included",
+          "AWS Config with continuous recording and 500 configuration items in the month, assumed. Rule evaluations and the S3 storage for the records are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "guardduty.cloudtrail.event",
+          "quantity": 100000,
+          "basis": "100,000 management events analyzed (assumed)"
+        },
+        {
+          "priceId": "inspector.lambda.standard",
+          "quantity": 730,
+          "basis": "1 function x 730 hours"
+        },
+        {
+          "priceId": "config.item.continuous",
+          "quantity": 500,
+          "basis": "500 configuration items (assumed)"
+        }
+      ]
     }
   ]
 }

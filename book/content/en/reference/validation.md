@@ -146,6 +146,15 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 16 | `vp run export:local` | local | passed | 2026-10-12 | Ran the default (250 notes), `--notes 450 --lose 2 --break 4` (a lost answer, then retries running out and a resume), and `--notes 1000 --pages-per-call 20`, and checked that the manifest's line count and distinct note count equal the number of notes. The stores were in memory: not Step Functions, S3, or DynamoDB |
 | 16 | `vp run export:infra:synth / typecheck` | local | passed | 2026-10-12 | Synthesized the default layout and `-c durable=true`, including the esbuild bundles (the durable variant bundles the SDK too). The default has nine resource types, each with a dedicated provider in cdkd 0.296.28; the durable variant adds Lambda::Version and Lambda::Alias, which go through Cloud Control API. scripts/ is type-checked only |
 | 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | not run | - | Creates a bucket, a table, three functions, a state machine, and a schedule; with `-c durable=true` also a durable function, a version, and an alias. Step Functions, the start from Scheduler, S3 conditional writes, the DynamoDB Scan, and the durable function are all unconfirmed in AWS |
+| 21 | `vp run test:unit (examples/21-security)` | local | passed | 2026-10-12 | Token signing and verification; the key cache across a rotation (an environment with a stale cache, two rotations, a flood of made-up version ids, Secrets Manager down, concurrent requests); the rotation procedure (a rerun after a lost response, a second rotation too soon, a reused version id); reading the secret through a substituted SDK client; the wildcard lint and its reasoned exceptions; the lint applied to chapter 20's CI roles; the SCP JSON and the evaluation model; waiting for IAM propagation; the posture verdicts; stack assertions (by default only one secret has a monthly fee; the key and the web ACL are opt-in) |
+| 21 | `vp run sec:infra:synth` | local | passed | 2026-10-12 | Synthesized with the pinned cdkd 0.296.28 and no credentials. Checked that cdk.out holds the AihSecurity and AihSecurityWaf templates, that -c cmk=on and -c webAclArn=... change the template, and that a malformed webAclArn stops the synth |
+| 21 | `vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)` | local | passed | 2026-10-12 | This chapter's two templates pass with no exceptions. The result of passing every chapter's cdk.out after `vp run infra:synth` is as written in the chapter's "Running it over the whole book" |
+| 21 | `vp run dev:sec` | local | passed | 2026-10-12 | Checked /health, /token, and /verify on the local server with curl. The key exists only in memory; AWS is not called |
+| 21 | `vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy` | AWS | not run | - | Not run. Behavior through CloudFront, the function URL, and Secrets Manager; whether a 503 appears right after a deploy; that no secret remains after destroy |
+| 21 | `vp run sec:secret:versions / sec:secret:rotate` | AWS | not run | - | Not run. How the staging labels move after PutSecretValue, a rerun with the same version id, and an environment with a stale cache accepting new tokens after a rotation |
+| 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | not run | - | Not run. Creating the web ACL in us-east-1, associating it with the distribution, how long the rate-based rule takes to start blocking, and what the counted rule group records |
+| 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | not run | - | Not run. Encrypting the secret with a customer managed key, the function reading it under the kms:ViaService condition, and the state of the key after destroy |
+| 21 | `vp run sec:posture / sec:trail:iam` | AWS | not run | - | Not run. The actual responses of the read APIs of six services, and the output when a permission is missing |
 
 ## Open items and how to resume
 
@@ -580,3 +589,39 @@ To resume: Run `vp run export:infra:deploy -c durable=true`, then `vp run export
 Running a step as an ECS task (`ecs:runTask.sync`) or an AWS Batch job is described in prose only; there is no code and no test. The IAM, the networking, how a task's exit code is handled, and the measured cost are unconfirmed.
 
 To resume: Package the export worker as an image the way chapter 12 does (immutable tags, no `fromAsset`) and replace the ExportPages state with `arn:aws:states:::ecs:runTask.sync`. Progress then has to live in S3, since a task returns no value. This needs a Docker daemon.
+
+### 21-deploy
+
+The default stack (CloudFront, the function URL, Secrets Manager) has not been run in a real account
+
+To resume: After `vp run sec:infra:deploy`, run `vp run sec:smoke` immediately and record the N in "after N refusals". Check that a direct curl of the function URL gets 403, record the result of `vp run sec:infra:drift`, and after `vp run sec:infra:destroy` confirm in the Secrets Manager console that no secret remains, not even as scheduled for deletion
+
+### 21-rotation
+
+Rotating the secret has not been tried in a real account
+
+To resume: After deploying, run `vp run sec:smoke`, `vp run sec:secret:rotate`, and `vp run sec:smoke` again. Record that a token issued with the old key version verifies right after the rotation, that `sec:secret:versions` shows AWSCURRENT and AWSPREVIOUS, that a rerun with the same `--version-id` reports already-rotated, and that a second rotation within ten minutes stops with too-soon. Also check whether GetSecretValue on a secret with no AWSPREVIOUS fails with ResourceNotFoundException
+
+### 21-waf
+
+The web ACL has not been created, and the rate-based rule has not been observed
+
+To resume: Pass the WebAclArn output of `vp run sec:waf:infra:deploy` to `vp run sec:infra:deploy -c webAclArn=<ARN>`. Send more than 300 requests in five minutes from one IP address and record how long, and how many requests, it takes before 403s begin. Confirm in the WAF console that AwsCommonRules records matches as counts. Check on the bill whether the usage type is Global-* or USE1-*. Afterwards detach with `sec:infra:deploy` (no webAclArn), then `vp run sec:waf:infra:destroy`
+
+### 21-cmk
+
+The customer managed key variant has not been tried in a real account
+
+To resume: Run `vp run sec:infra:deploy -c cmk=on`, then `vp run sec:smoke`. Confirm the function reads the secret with only kms:Decrypt under the kms:ViaService condition. After `vp run sec:infra:destroy`, record that the key is pending deletion in the KMS console and due to disappear in 7 days, and whether the bill shows a key charge for that period
+
+### 21-iam-propagation
+
+The delay before an IAM change takes effect has not been observed
+
+To resume: Record over several deploys whether `vp run sec:smoke` right after a deploy reports 0 refusals. Then delete ReadSigningKey from HandlerRole in the console, wait for a new execution environment, call `/token` repeatedly, and record how long it takes to get a 503 and whether a 200 appears again after the first 503. Afterwards check the difference with `vp run sec:infra:drift` and revert
+
+### 21-posture
+
+`sec:posture` and `sec:trail:iam` have not been run against a real account, and GuardDuty, Inspector, Config, a trail, and Organizations have not been enabled
+
+To resume: Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU

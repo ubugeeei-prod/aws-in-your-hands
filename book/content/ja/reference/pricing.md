@@ -1331,6 +1331,116 @@ ID: `export-step-fargate-1h` / 章: [16 長い処理を動かす: ECS task、Ste
 - 毎月の無料枠適用後の小計: **USD 0.52** / 月
 - 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
 
+## 守り: 既定の stack を置いたまま、誰も呼ばない月
+
+ID: `sec-idle-default` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- `-c cmk=on` も `-c webAclArn=...` も付けていない。web ACL の stack（AihSecurityWaf）も作っていない
+- リクエストゼロ。関数が動かないので、Secrets Manager の API も呼ばれない
+- secret は 1 つを 730 時間。暗号化は aws/secretsmanager（月額なし）
+- CloudFront の distribution、Lambda、IAM の role は、呼ばれなければ料金がかからない。log は失効して保存量ゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+
+- 定価の小計: **USD 0.40** / 月
+- 毎月の無料枠適用後の小計: **USD 0.40** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`
+
+## 守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月
+
+ID: `sec-idle-cmk` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- 既定の stack に、customer managed key を 1 つ足したもの
+- 鍵は作ってから 1 年未満で、まだ一度も自動 rotation していない。rotation のたびに、2 回目まで月 USD 1 ずつ増える
+- リクエストゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
+
+- 定価の小計: **USD 1.40** / 月
+- 毎月の無料枠適用後の小計: **USD 1.40** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `kms.key`
+
+## 守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査
+
+ID: `sec-waf-month` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- web ACL 1 つと rule 3 つ（rate-based rule 1 つ、AWS managed rule group 2 つ。managed rule group は 1 つの rule として数える）
+- 合計 727 WCU で、基本料金に含まれる 1,500 WCU の内側
+- 検査するリクエストは月 100 万。0 なら月 USD 8.00
+- CloudFront 用の web ACL が Global-* の usage type で課金されるという対応は、請求では確かめていない。ap-northeast-1 と us-east-1 の単価も同じ値
+- この小計に、既定の stack の料金は含まない。WAF のログ、Bot Control などの追加機能は使っていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
+| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
+| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
+
+- 定価の小計: **USD 8.60** / 月
+- 毎月の無料枠適用後の小計: **USD 8.60** / 月
+- 無料枠を確認できず、何も引いていない単価: `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
+
+## 守り: 既定の stack で、token の発行と検証を月 10 万回ずつ
+
+ID: `sec-small` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- CloudFront へ 20 万リクエスト（HTTPS、日本の edge）。cache しないので、すべて Lambda に届く
+- 応答は 1 回あたり 0.5 KB と仮定
+- Lambda は平均 50 ms、256 MB、arm64。50 ms は仮定で、計測値ではない
+- 実行環境 1 つが 1 か月動き続け、5 分ごとに鍵を読み直すと仮定（730 時間 x 12 回 x GetSecretValue 2 回）。実行環境が増えれば、そのぶん増える
+- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
+- customer managed key、web ACL は無し。Lambda から CloudFront へのデータ転送は含めていない（未算入）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
+| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
+| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
+| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
+
+- 定価の小計: **USD 0.86** / 月
+- 毎月の無料枠適用後の小計: **USD 0.49** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `secretsmanager.api`
+
+## 守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）
+
+ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- 無料の試用期間が終わったあとの月
+- GuardDuty が分析する CloudTrail の management event を月 10 万件と仮定。実際の件数は、アカウントで何をしているかで決まる。この数字は計測値ではない
+- GuardDuty のほかの課金対象（VPC flow log と DNS log の分析量、S3、Lambda、Malware Protection などの protection plan）は含めていない。初めて有効にすると、既定ですべての protection plan が有効になる
+- Inspector は Lambda standard scanning だけで、関数 1 つを 730 時間。ECR の image と EC2 instance の検査は含めていない
+- AWS Config は連続記録で、月 500 件の configuration item と仮定。rule の評価と、記録を置く S3 の料金は含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
+| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
+| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
+
+- 定価の小計: **USD 2.34** / 月
+- 毎月の無料枠適用後の小計: **USD 2.34** / 月
+- 無料枠を確認できず、何も引いていない単価: `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -1414,6 +1524,16 @@ ID: `export-step-fargate-1h` / 章: [16 長い処理を動かす: ECS task、Ste
 | `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
+| `secretsmanager.secret` | ap-northeast-1 | APN1-AWSSecretsManager-Secrets | Secrets | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-12 |
+| `secretsmanager.api` | ap-northeast-1 | APN1-AWSSecretsManagerAPIRequest | API Requests | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
+| `kms.key` | ap-northeast-1 | ap-northeast-1-KMS-Keys | Keys | 0 - ∞: 1.0000000000 | 2026-09-11 | 2026-10-12 |
+| `kms.request` | ap-northeast-1 | ap-northeast-1-KMS-Requests | Requests | 0 - ∞: 0.0000030000 | 2026-09-11 | 2026-10-12 |
+| `waf.global.webacl` | global | Global-WebACLV2 | Month | 0 - ∞: 5.0000000000 | 2026-09-14 | 2026-10-12 |
+| `waf.global.rule` | global | Global-RuleV2 | Month | 0 - ∞: 1.0000000000 | 2026-09-14 | 2026-10-12 |
+| `waf.global.request` | global | Global-RequestV2-Tier1 | Request | 0 - ∞: 0.0000006000 | 2026-09-14 | 2026-10-12 |
+| `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
+| `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
+| `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -1442,6 +1562,7 @@ ID: `export-step-fargate-1h` / 章: [16 長い処理を動かす: ECS task、Ste
 | `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
 | `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
 | `sfn.standard.transition` | 4,000 | `sfn-pricing` | 4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000). |
+| `kms.request` | 20,000 | `kms-pricing` | Calculated across all Regions. Requests on asymmetric keys and GenerateDataKeyPair are excluded. |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 
@@ -1472,3 +1593,12 @@ ID: `export-step-fargate-1h` / 章: [16 長い処理を動かす: ECS task、Ste
 - `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `secretsmanager.secret`: No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied.
+- `secretsmanager.api`: No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied.
+- `kms.key`: The KMS free tier covers requests, not keys; none is applied.
+- `waf.global.webacl`: No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans were not examined in this chapter.
+- `waf.global.rule`: No free allowance for rules was confirmed for the pay-as-you-go model; none is applied.
+- `waf.global.request`: No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied.
+- `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
+- `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
+- `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.

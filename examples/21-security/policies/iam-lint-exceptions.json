@@ -1,0 +1,34 @@
+{
+  "AihShipCi": [
+    {
+      "action": "cloudformation:DescribeStackDriftDetectionStatus",
+      "reason": "Takes a detection ID, not a stack. The AWS service reference lists no resource type for it."
+    },
+    {
+      "action": "cloudformation:BatchDescribeTypeConfigurations",
+      "reason": "Drift detection calls it for the resource types in the stack. The service reference lists no resource type."
+    },
+    {
+      "action": "logs:DescribeLogGroups",
+      "reason": "A list call. The AWS service reference lists no resource type that could narrow it."
+    },
+    {
+      "action": "logs:DescribeIndexPolicies",
+      "reason": "Called by the AWS::Logs::LogGroup read handler. The service reference lists no resource type for it."
+    },
+    {
+      "action": "logs:DescribeResourcePolicies",
+      "reason": "Reads the account's CloudWatch Logs resource policies. The service reference lists no resource type."
+    }
+  ],
+  "AihObservability": [
+    {
+      "action": "xray:PutTraceSegments",
+      "reason": "Added by CDK for Tracing.ACTIVE. The AWS service reference lists no resource type for it."
+    },
+    {
+      "action": "xray:PutTelemetryRecords",
+      "reason": "Added by CDK for Tracing.ACTIVE. The AWS service reference lists no resource type for it."
+    }
+  ]
+}

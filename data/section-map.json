@@ -3153,6 +3153,182 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "21.tiers",
+      "sources": [
+        "examples/21-security/src/posture.ts",
+        "examples/21-security/scripts/posture.ts",
+        "examples/21-security/test/posture.test.ts"
+      ],
+      "tasks": ["sec:posture", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.architecture",
+      "sources": ["examples/21-security/infra/bin/app.ts", "examples/21-security/infra/lib/security-stack.ts"],
+      "tasks": ["sec:infra:synth"],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.least-privilege",
+      "sources": [
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/test/security-stack.test.ts"
+      ],
+      "tasks": ["sec:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "21.iam-lint",
+      "sources": [
+        "examples/21-security/src/iam-lint.ts",
+        "examples/21-security/test/iam-lint.test.ts",
+        "examples/21-security/scripts/iam-lint.ts",
+        "examples/21-security/policies/iam-lint-exceptions.json"
+      ],
+      "tasks": ["sec:iam:lint", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.secret",
+      "sources": [
+        "examples/21-security/src/secret-source.ts",
+        "examples/21-security/src/secrets-manager-source.ts",
+        "examples/21-security/src/env.ts",
+        "examples/21-security/src/compose.ts",
+        "examples/21-security/test/secrets-manager-source.test.ts",
+        "examples/21-security/infra/lib/security-stack.ts"
+      ],
+      "tasks": ["dev:sec", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.keyring",
+      "sources": [
+        "examples/21-security/src/keyring.ts",
+        "examples/21-security/src/token.ts",
+        "examples/21-security/src/app.ts",
+        "examples/21-security/test/keyring.test.ts",
+        "examples/21-security/test/token.test.ts",
+        "examples/21-security/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.rotation",
+      "sources": [
+        "examples/21-security/src/rotation.ts",
+        "examples/21-security/src/secrets-manager-source.ts",
+        "examples/21-security/scripts/rotate.ts",
+        "examples/21-security/test/rotation.test.ts"
+      ],
+      "tasks": ["sec:secret:versions", "sec:secret:rotate", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.kms",
+      "sources": [
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/lib/config.ts",
+        "examples/21-security/infra/test/security-stack.test.ts"
+      ],
+      "tasks": ["sec:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.waf",
+      "sources": [
+        "examples/21-security/infra/lib/waf-stack.ts",
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/test/waf-stack.test.ts"
+      ],
+      "tasks": ["sec:waf:infra:deploy", "sec:waf:infra:destroy", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.iam-consistency",
+      "sources": [
+        "examples/21-security/src/propagation.ts",
+        "examples/21-security/test/propagation.test.ts",
+        "examples/21-security/scripts/smoke.ts",
+        "examples/21-security/scripts/trail.ts"
+      ],
+      "tasks": ["sec:smoke", "sec:trail:iam", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.detect",
+      "sources": ["examples/21-security/scripts/posture.ts", "examples/21-security/scripts/trail.ts"],
+      "tasks": ["sec:posture", "sec:trail:iam"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "21.organizations",
+      "sources": [
+        "examples/21-security/policies/scp-guardrails.json",
+        "examples/21-security/src/policy-model.ts",
+        "examples/21-security/test/scp.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "21.deploy",
+      "sources": ["examples/21-security/scripts/smoke.ts", "examples/21-security/infra/bin/app.ts"],
+      "tasks": ["sec:infra:diff", "sec:infra:deploy", "sec:smoke", "sec:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "21.cost",
+      "sources": ["data/pricing", "examples/21-security/infra/test/security-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.workers",
+      "sources": ["examples/21-security/src/compose.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.cleanup",
+      "sources": ["examples/21-security/infra/lib/security-stack.ts"],
+      "tasks": ["sec:infra:destroy", "sec:waf:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

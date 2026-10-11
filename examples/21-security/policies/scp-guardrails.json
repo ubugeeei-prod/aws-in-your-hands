@@ -1,0 +1,49 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyLeavingTheOrganization",
+      "Effect": "Deny",
+      "Action": ["organizations:LeaveOrganization"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenySwitchingOffTheAuditTrail",
+      "Effect": "Deny",
+      "Action": [
+        "cloudtrail:StopLogging",
+        "cloudtrail:DeleteTrail",
+        "cloudtrail:UpdateTrail",
+        "cloudtrail:PutEventSelectors",
+        "guardduty:DeleteDetector",
+        "guardduty:DisassociateFromAdministratorAccount",
+        "config:StopConfigurationRecorder",
+        "config:DeleteConfigurationRecorder",
+        "config:DeleteDeliveryChannel"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyRegionsThisBookDoesNotUse",
+      "Effect": "Deny",
+      "NotAction": ["cloudfront:*", "iam:*", "route53:*", "support:*"],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestedRegion": ["ap-northeast-1", "us-east-1"]
+        }
+      }
+    },
+    {
+      "Sid": "DenyTheRootUser",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": "*",
+      "Condition": {
+        "ArnLike": {
+          "aws:PrincipalArn": "arn:aws:iam::*:root"
+        }
+      }
+    }
+  ]
+}

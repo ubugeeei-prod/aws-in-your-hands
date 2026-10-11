@@ -1923,6 +1923,216 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-10-09T22:31:22Z",
       "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "secretsmanager.secret",
+      "offerCode": "AWSSecretsManager",
+      "region": "ap-northeast-1",
+      "sku": "GVA2ZKT9KD5RYX6P",
+      "usageType": "APN1-AWSSecretsManager-Secrets",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Secrets",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4000000000",
+          "description": "$0.40 per Secret"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:10Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "secretsmanager.api",
+      "offerCode": "AWSSecretsManager",
+      "region": "ap-northeast-1",
+      "sku": "JC68V52M47AA94EZ",
+      "usageType": "APN1-AWSSecretsManagerAPIRequest",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "API Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000050000",
+          "description": "$0.05 per 10000 API Requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:10Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "kms.key",
+      "offerCode": "awskms",
+      "region": "ap-northeast-1",
+      "sku": "VJNSHSJEC3XAPATF",
+      "usageType": "ap-northeast-1-KMS-Keys",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Keys",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.0000000000",
+          "description": "$1 per customer managed KMS key version in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:01Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "kms.request",
+      "offerCode": "awskms",
+      "region": "ap-northeast-1",
+      "sku": "ZXP6ZS4WWG9FNXHG",
+      "usageType": "ap-northeast-1-KMS-Requests",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000030000",
+          "description": "$0.03 per 10000 KMS requests in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:01Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.webacl",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "DYTQ8YBXB7SEXYTZ",
+      "usageType": "Global-WebACLV2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.0000000000",
+          "description": "$5.00 per web ACL created (prorated hourly)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.rule",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "VRM2EPFJG75YBY5A",
+      "usageType": "Global-RuleV2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.0000000000",
+          "description": "$1.00 per rule created (prorated hourly)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.request",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "8D94VMB3JSN7FAX3",
+      "usageType": "Global-RequestV2-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000006000",
+          "description": "$0.60 per million requests processed"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "guardduty.cloudtrail.event",
+      "offerCode": "AmazonGuardDuty",
+      "region": "ap-northeast-1",
+      "sku": "TFHCE6Z4YPX3UBZM",
+      "usageType": "APN1-PaidEventsAnalyzed",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Events",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000047200",
+          "description": "$0.00000472 per CloudTrail event analyzed in Asia Pacific (Tokyo) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:12:03Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "inspector.lambda.standard",
+      "offerCode": "AmazonInspectorV2",
+      "region": "ap-northeast-1",
+      "sku": "TKG5JCZ3WXG5PJ3W",
+      "usageType": "APN1-Lambda-Standard-Scanning",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hourly",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0005000000",
+          "description": "$0.0005 per Hourly for Lambda-Standard-Scanning in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "config.item.continuous",
+      "offerCode": "AWSConfig",
+      "region": "ap-northeast-1",
+      "sku": "JHD3G7BJYKRN97JU",
+      "usageType": "APN1-ConfigurationItemRecorded",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "APN1-ConfigurationItemRecorded",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0030000000",
+          "description": "$0.003 per  Configuration Item recorded in Asia Pacific (Tokyo) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:34Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

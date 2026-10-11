@@ -6300,12 +6300,611 @@
       "note": "Read from aws-lambda/lib/durable-config.d.ts, function.js, and aws-stepfunctions in the installed package."
     },
     {
+      "id": "iam-eventual-consistency",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot.html",
+      "title": "Troubleshoot IAM: Changes that I make are not always immediately visible",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IAM uses a distributed computing model called eventual consistency; changes take time to become visible from all possible endpoints",
+        "IAM also uses caching, so a change might not be visible until previously cached data times out",
+        "AWS recommends not including IAM changes in critical, high-availability code paths, and verifying that changes have propagated before production workflows depend on them"
+      ]
+    },
+    {
       "id": "iam-best-practices",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
       "title": "Security best practices in IAM",
-      "checkedAt": null,
-      "supports": ["Prefer temporary credentials; protect the root user with MFA and do not use it for everyday work"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Human users should use federation and temporary credentials; workloads should use IAM roles",
+        "Apply least-privilege permissions: grant only the permissions required to perform a task",
+        "Get started with AWS managed policies and move toward least-privilege permissions",
+        "Use IAM Access Analyzer to generate least-privilege policies based on access activity",
+        "Establish permissions guardrails across multiple accounts"
+      ]
+    },
+    {
+      "id": "iam-access-analyzer-policy-generation",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html",
+      "title": "IAM Access Analyzer policy generation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IAM Access Analyzer reviews CloudTrail logs and generates a policy template containing the permissions an entity used",
+        "You specify a time period of up to 90 days, and the CloudTrail trail that is logging events for the account"
+      ]
+    },
+    {
+      "id": "iam-policy-evaluation-logic",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html",
+      "title": "Policy evaluation logic",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An explicit deny in any policy overrides an allow",
+        "With SCPs, the resulting permissions are the intersection of the identity's policies and the service control policies"
+      ]
+    },
+    {
+      "id": "aws-service-reference-security",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/secretsmanager/secretsmanager.json",
+      "title": "AWS service reference (secretsmanager, kms, cloudtrail, guardduty, config, organizations, inspector2, iam, cloudformation, logs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "secretsmanager:GetSecretValue, PutSecretValue, and ListSecretVersionIds take the Secret resource type; kms:Decrypt takes the key resource type",
+        "The action names used in the SCP exist: organizations:LeaveOrganization, cloudtrail:StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, guardduty:DeleteDetector, DisassociateFromAdministratorAccount, config:StopConfigurationRecorder, DeleteConfigurationRecorder, DeleteDeliveryChannel",
+        "The five actions chapter 20 leaves on Resource \"*\" list no resource type: cloudformation:DescribeStackDriftDetectionStatus, cloudformation:BatchDescribeTypeConfigurations, logs:DescribeLogGroups, logs:DescribeIndexPolicies, logs:DescribeResourcePolicies"
+      ],
+      "note": "Same URL pattern per service: /v1/<service>/<service>.json."
+    },
+    {
+      "id": "waf-protectable-resources",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/how-aws-waf-works-resources.html",
+      "title": "Resources that you can protect with AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A web ACL can be associated with CloudFront distributions and, regionally, with API Gateway REST APIs, Application Load Balancers, AppSync GraphQL APIs, Cognito user pools, App Runner services, Bedrock AgentCore Gateway, Verified Access instances, and Amplify; API Gateway HTTP APIs and Lambda function URLs are not in the list",
+        "For CloudFront, the web ACL and everything it uses must be created in US East (N. Virginia)",
+        "Each resource can have one web ACL; a web ACL associated with CloudFront distributions cannot be associated with other resource types"
+      ]
+    },
+    {
+      "id": "waf-rate-based-statement",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based.html",
+      "title": "Using rate-based rule statements in AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": ["A rate-based rule costs 2 WCUs as a base", "Each use of a rate-based rule is tracked separately"]
+    },
+    {
+      "id": "waf-rate-based-caveats",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-caveats.html",
+      "title": "Rate-based rule caveats in AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS WAF applies rate limiting near the limit that you set, but does not guarantee an exact limit match",
+        "Requests can come in at too high a rate for up to several minutes before AWS WAF detects and rate limits them; usually the delay is below 30 seconds",
+        "Changing a rate limit setting resets the rule's counts and can pause rate limiting for up to a minute"
+      ]
+    },
+    {
+      "id": "waf-managed-baseline",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html",
+      "title": "Baseline rule groups (AWS Managed Rules)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWSManagedRulesCommonRuleSet uses 700 WCUs",
+        "Its SizeRestrictions_BODY rule blocks request bodies over 8 KB",
+        "For CloudFront the default body inspection limit is 16 KB, and can be raised to 64 KB"
+      ]
+    },
+    {
+      "id": "waf-managed-ip-reputation",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html",
+      "title": "IP reputation rule groups (AWS Managed Rules)",
+      "checkedAt": "2026-10-12",
+      "supports": ["AWSManagedRulesAmazonIpReputationList uses 25 WCUs"]
+    },
+    {
+      "id": "waf-capacity-units",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-waf-capacity-units.html",
+      "title": "Web ACL capacity units (WCUs) in AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The basic price for a web ACL includes up to 1,500 WCUs; using more incurs additional fees",
+        "The maximum capacity for a web ACL is 5,000 WCUs"
+      ]
+    },
+    {
+      "id": "waf-testing",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-testing.html",
+      "title": "Testing and tuning your AWS WAF protections",
+      "checkedAt": "2026-10-12",
+      "supports": ["AWS recommends testing and tuning rules in count mode with production traffic before enabling them"]
+    },
+    {
+      "id": "cfn-wafv2-webacl",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-wafv2-webacl.html",
+      "title": "AWS::WAFv2::WebACL",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Scope is CLOUDFRONT or REGIONAL; for CLOUDFRONT the resource must be created in us-east-1",
+        "DefaultAction, Scope, and VisibilityConfig are required"
+      ]
+    },
+    {
+      "id": "cfn-wafv2-ratebasedstatement",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-wafv2-webacl-ratebasedstatement.html",
+      "title": "AWS::WAFv2::WebACL RateBasedStatement",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Limit has a minimum of 10",
+        "EvaluationWindowSec may be 60, 120, 300, or 600, and defaults to 300",
+        "AWS WAF checks the rate about every 10 seconds"
+      ]
+    },
+    {
+      "id": "cloudfront-waf",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html",
+      "title": "Use AWS WAF protections (CloudFront)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS WAF can be enabled on a distribution with one-click protection in the CloudFront console or with a preconfigured web ACL"
+      ]
+    },
+    {
+      "id": "cloudfront-oac-lambda-security",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html",
+      "title": "Restrict access to an AWS Lambda function URL origin",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With origin access control, PUT and POST requests need the SHA-256 of the body in the x-amz-content-sha256 header, supplied by the caller",
+        "CloudFront signs an origin request by adding its own Authorization header; the no-override setting passes the viewer's Authorization header through instead"
+      ]
+    },
+    {
+      "id": "aws-price-list-waf",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "title": "AWS Price List: AWS WAF",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Global-WebACLV2: USD 5.00 per web ACL per month, prorated hourly",
+        "Global-RuleV2: USD 1.00 per rule per month, prorated hourly",
+        "Global-RequestV2-Tier1: USD 0.60 per million requests",
+        "The same three prices appear under the ap-northeast-1 and us-east-1 usage types"
+      ],
+      "note": "Which usage type a CLOUDFRONT-scope web ACL is metered under was not confirmed on a bill; the Global-* SKUs are described as being for CloudFront."
+    },
+    {
+      "id": "secretsmanager-secret",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/whats-in-a-secret.html",
+      "title": "What's in a Secrets Manager secret?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A secret has versions; Secrets Manager tracks three by staging label: AWSCURRENT, AWSPREVIOUS, and AWSPENDING",
+        "A secret always has a version labeled AWSCURRENT, and that version is returned by default",
+        "Unlabeled versions are deprecated and removed when there are more than 100; versions created less than 24 hours ago are not removed",
+        "The secret ARN ends in six random characters, so a secret re-created under the same name has a different ARN"
+      ]
+    },
+    {
+      "id": "secretsmanager-put-secret-value",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_PutSecretValue.html",
+      "title": "PutSecretValue",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Without VersionStages, AWSCURRENT moves to the new version and AWSPREVIOUS moves to the version AWSCURRENT was removed from",
+        "The operation is idempotent: the same ClientRequestToken with the same secret data succeeds and does nothing; with different data it fails",
+        "ClientRequestToken becomes the VersionId of the new version",
+        "Do not call PutSecretValue at a sustained rate of more than once every 10 minutes"
+      ]
+    },
+    {
+      "id": "secretsmanager-get-secret-value",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html",
+      "title": "GetSecretValue",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "VersionStage selects a version by staging label; without it AWSCURRENT is returned",
+        "AWS recommends caching secret values on the client to improve speed and reduce cost",
+        "With a customer managed key the caller also needs kms:Decrypt on that key"
+      ]
+    },
+    {
+      "id": "secretsmanager-delete-secret",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_DeleteSecret.html",
+      "title": "DeleteSecret",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A deleted secret has a recovery window: minimum 7 days, default 30 days",
+        "While scheduled for deletion, the secret value cannot be retrieved"
+      ]
+    },
+    {
+      "id": "secretsmanager-best-practices",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/best-practices.html",
+      "title": "AWS Secrets Manager best practices",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The supported caching components are for Java, Python, .NET, Go, and Rust, plus the AWS Parameters and Secrets Lambda Extension; none is listed for JavaScript"
+      ]
+    },
+    {
+      "id": "secretsmanager-rotation-lambda",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_lambda-functions.html",
+      "title": "Rotation by Lambda function",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A rotation function has four steps: createSecret, setSecret, testSecret, finishSecret",
+        "Secrets Manager uses staging labels to identify versions during rotation"
+      ]
+    },
+    {
+      "id": "secretsmanager-pricing",
+      "url": "https://aws.amazon.com/secrets-manager/pricing/",
+      "title": "AWS Secrets Manager pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Secrets are billed per secret per month, prorated by the hour for secrets stored less than a month",
+        "A replica secret is billed as a distinct secret"
+      ]
+    },
+    {
+      "id": "aws-price-list-secretsmanager",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Secrets Manager (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": ["USD 0.40 per secret per month", "USD 0.05 per 10,000 API requests"]
+    },
+    {
+      "id": "cfn-secretsmanager-secret",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-secretsmanager-secret.html",
+      "title": "AWS::SecretsManager::Secret",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GenerateSecretString generates the value; SecretString sets a specific one",
+        "Without KmsKeyId, Secrets Manager uses the key aws/secretsmanager"
+      ]
+    },
+    {
+      "id": "lambda-env-vars-secrets",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+      "title": "Working with Lambda environment variables",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS recommends Secrets Manager instead of environment variables for database credentials, API keys, and authorization tokens"
+      ]
+    },
+    {
+      "id": "lambda-secrets-manager",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-secrets-manager.html",
+      "title": "Use Secrets Manager secrets in Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS describes two ready-made approaches: the AWS Parameters and Secrets Lambda Extension and the Powertools for AWS Lambda parameters utility; both keep a local cache",
+        "The extension caches secrets for 300 seconds by default"
+      ]
+    },
+    {
+      "id": "kms-concepts",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html",
+      "title": "AWS KMS keys",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Customer managed keys carry a monthly fee and a per-use fee; AWS managed keys carry no monthly fee",
+        "AWS managed keys are created, managed, and used on your behalf by an AWS service; they rotate every year",
+        "Unless you are required to control the key, an AWS managed key is a good choice"
+      ]
+    },
+    {
+      "id": "kms-rotate-keys",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html",
+      "title": "Rotate AWS KMS keys",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With automatic rotation enabled, AWS KMS generates new key material every year by default",
+        "AWS KMS charges a monthly fee for the first and second rotation of key material; the increase is capped at the second rotation"
+      ]
+    },
+    {
+      "id": "kms-deleting-keys",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html",
+      "title": "Delete an AWS KMS key",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Deleting a KMS key requires a waiting period of 7 to 30 days; the default is 30",
+        "A key pending deletion cannot be used in any cryptographic operation",
+        "Deletion can be cancelled before the waiting period ends, and not after"
+      ]
+    },
+    {
+      "id": "kms-pricing",
+      "url": "https://aws.amazon.com/kms/pricing/",
+      "title": "AWS KMS pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Each KMS key you create costs USD 1 a month, prorated hourly",
+        "The first and second rotation of a key each add USD 1 a month",
+        "AWS KMS provides a free tier of 20,000 requests a month, calculated across all Regions",
+        "There is no charge for creating and storing AWS managed keys"
+      ]
+    },
+    {
+      "id": "aws-price-list-kms",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS KMS (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "USD 1 per customer managed KMS key version per month",
+        "USD 0.03 per 10,000 requests",
+        "A Global-KMS-Requests SKU at USD 0 covers the first 20,000 requests a month"
+      ]
+    },
+    {
+      "id": "guardduty-what-is",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html",
+      "title": "What is Amazon GuardDuty?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GuardDuty is a threat detection service that monitors and analyzes AWS data sources and logs",
+        "It detects, for example, compromised credentials, cryptomining, and unusual login patterns",
+        "Foundational threat detection starts ingesting CloudTrail events, VPC flow logs, and DNS logs when GuardDuty is enabled"
+      ]
+    },
+    {
+      "id": "guardduty-getting-started",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html",
+      "title": "Getting started with GuardDuty",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Enabling GuardDuty for the first time in a Region also enables, by default, all protection types available in that Region",
+        "AWS recommends enabling GuardDuty in all supported Regions"
+      ]
+    },
+    {
+      "id": "guardduty-costs",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/monitoring_costs.html",
+      "title": "Monitoring GuardDuty usage and estimating costs",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GuardDuty offers a 30-day free trial per account for most protection plans",
+        "Usage and estimated cost can be monitored in the GuardDuty console"
+      ]
+    },
+    {
+      "id": "aws-price-list-guardduty",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon GuardDuty (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": ["USD 0.00000472 per CloudTrail event analyzed (USD 4.72 per million)"]
+    },
+    {
+      "id": "inspector-what-is",
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html",
+      "title": "What is Amazon Inspector?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Inspector is a vulnerability management service that scans workloads for software vulnerabilities and unintended network exposure",
+        "It scans EC2 instances, container images in ECR, and Lambda functions"
+      ]
+    },
+    {
+      "id": "inspector-scanning-lambda",
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/scanning-lambda.html",
+      "title": "Scanning AWS Lambda functions with Amazon Inspector",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Lambda standard scanning checks application dependencies for package vulnerabilities; code scanning is a separate, optional type",
+        "On activation Inspector scans functions invoked or updated in the last 90 days, and rescans on deploys and when a new CVE is added",
+        "Inspector does not scan Lambda functions encrypted with customer managed keys"
+      ]
+    },
+    {
+      "id": "inspector-getting-started",
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html",
+      "title": "Getting started with Amazon Inspector",
+      "checkedAt": "2026-10-12",
+      "supports": ["Activating Inspector for a standalone account in the console activates all scan types by default"]
+    },
+    {
+      "id": "inspector-pricing",
+      "url": "https://aws.amazon.com/inspector/pricing/",
+      "title": "Amazon Inspector pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Accounts new to Inspector get a 15-day free trial",
+        "Lambda standard scanning is billed per function, prorated by coverage hours"
+      ]
+    },
+    {
+      "id": "aws-price-list-inspector",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon Inspector (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": ["Lambda standard scanning: USD 0.0005 per function-hour"]
+    },
+    {
+      "id": "cloudtrail-event-history",
+      "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html",
+      "title": "Working with CloudTrail event history",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CloudTrail is enabled by default; event history holds the past 90 days of management events in a Region",
+        "Event history is immutable, and there is no CloudTrail charge for viewing it"
+      ]
+    },
+    {
+      "id": "cloudtrail-concepts",
+      "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html",
+      "title": "CloudTrail concepts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Events created by CloudFront, IAM, and AWS STS are recorded in us-east-1",
+        "Event history and lookup-events show global service events in the Region where they occurred"
+      ]
+    },
+    {
+      "id": "cloudtrail-lookup-events",
+      "url": "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_LookupEvents.html",
+      "title": "LookupEvents",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Looks up management events from the last 90 days in a Region",
+        "At most 50 results per call; lookup requests are limited to two per second per account per Region"
+      ]
+    },
+    {
+      "id": "cloudtrail-pricing",
+      "url": "https://aws.amazon.com/cloudtrail/pricing/",
+      "title": "AWS CloudTrail pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The 90-day event history is available at no additional cost",
+        "One copy of ongoing management events can be delivered to S3 for free by creating a trail; additional copies cost USD 2.00 per 100,000 events"
+      ]
+    },
+    {
+      "id": "config-what-is",
+      "url": "https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html",
+      "title": "What is AWS Config?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS Config records the configuration of resources and how configurations and relationships change over time"
+      ]
+    },
+    {
+      "id": "config-pricing",
+      "url": "https://aws.amazon.com/config/pricing/",
+      "title": "AWS Config pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "You pay per configuration item delivered, per account per Region",
+        "Recording can be continuous or periodic (once every 24 hours, only if a change occurred)"
+      ]
+    },
+    {
+      "id": "aws-price-list-config",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Config (ap-northeast-1)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "USD 0.003 per configuration item recorded continuously",
+        "USD 0.012 per configuration item recorded daily"
+      ]
+    },
+    {
+      "id": "organizations-scps",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html",
+      "title": "Service control policies (SCPs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SCPs do not grant permissions; they set the maximum available permissions for IAM users and roles in member accounts",
+        "SCPs need an organization with all features enabled",
+        "SCPs do not affect users or roles in the management account, or service-linked roles",
+        "AWS strongly recommends not attaching SCPs to the root without testing; removing FullAWSAccess without a replacement makes all actions fail"
+      ]
+    },
+    {
+      "id": "organizations-scp-evaluation",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html",
+      "title": "SCP evaluation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An action needs an explicit Allow at every level from the root through each OU to the account",
+        "A Deny at any level denies the action for everything beneath it",
+        "Organizations attaches the AWS managed SCP FullAWSAccess when SCPs are enabled"
+      ]
+    },
+    {
+      "id": "organizations-scp-syntax",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html",
+      "title": "SCP syntax",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Principal and NotPrincipal are not supported in SCPs",
+        "Action, NotAction, Resource, NotResource, and Condition are supported in Allow and Deny statements",
+        "The example that denies operations outside chosen Regions uses NotAction with cloudfront:*, iam:*, route53:*, support:* and StringNotEquals on aws:RequestedRegion"
+      ]
+    },
+    {
+      "id": "organizations-quotas",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html",
+      "title": "Quotas and service limits for AWS Organizations",
+      "checkedAt": "2026-10-12",
+      "supports": ["The maximum size of a service control policy document is 10,240 characters"]
+    },
+    {
+      "id": "organizations-create",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html",
+      "title": "Create an organization with AWS Organizations",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The account that creates an organization becomes its management account",
+        "An organization supports all features by default, or consolidated billing only"
+      ]
+    },
+    {
+      "id": "organizations-faqs",
+      "url": "https://aws.amazon.com/organizations/faqs/",
+      "title": "AWS Organizations FAQs",
+      "checkedAt": "2026-10-12",
+      "supports": ["AWS Organizations is offered at no additional charge"]
+    },
+    {
+      "id": "aws-scp-examples",
+      "url": "https://github.com/aws-samples/service-control-policy-examples",
+      "title": "aws-samples/service-control-policy-examples",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The root-user example denies with ArnLike on aws:PrincipalArn arn:aws:iam::*:root",
+        "The Region example exempts about forty global or cross-Region services through NotAction"
+      ],
+      "note": "Linked from the Organizations user guide's SCP examples page. Read: Deny-the-root-user-from-performing-actions-except-S3-bucketpolicy-changes.json and Deny-access-to-AWS-based-on-the-requested-AWS-region.json on the main branch."
+    },
+    {
+      "id": "cdkd-npm-security",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (npm tarball, dist/)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "cdkd registers dedicated providers for AWS::SecretsManager::Secret, AWS::KMS::Key, AWS::WAFv2::WebACL, AWS::CloudFront::Distribution, AWS::CloudFront::OriginAccessControl, AWS::Lambda::Function, AWS::Lambda::Url, AWS::Lambda::Permission, AWS::IAM::Role, and AWS::Logs::LogGroup",
+        "No provider is registered for AWS::GuardDuty::Detector",
+        "The secret provider generates the GenerateSecretString value in the cdkd process and passes it to CreateSecret",
+        "The secret provider deletes with ForceDeleteWithoutRecovery; the KMS provider schedules key deletion with PendingWindowInDays, 7 when unset"
+      ]
+    },
+    {
+      "id": "aws-sdk-security-clients",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-secrets-manager/v/3.1149.0",
+      "title": "AWS SDK for JavaScript v3 3.1149.0: client-secrets-manager, client-iam, client-cloudtrail, client-guardduty, client-inspector2, client-config-service, client-organizations (type definitions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The request and response shapes used by the adapters and scripts",
+        "The Secrets Manager client has no AccessDeniedException class; a denial is matched by error name",
+        "The Organizations client's endpoint rules use organizations.us-east-1.amazonaws.com in the aws partition"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-secrets",
+      "url": "https://developers.cloudflare.com/workers/configuration/secrets/",
+      "title": "Cloudflare Workers: Secrets",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Secrets are a type of binding that attaches encrypted text values to a Worker",
+        "Secrets on that page are per Worker; account-level secrets are the Secrets Store, in beta",
+        "Local development reads secrets from .dev.vars or .env"
+      ]
+    },
+    {
+      "id": "cloudflare-waf-managed-rules",
+      "url": "https://developers.cloudflare.com/waf/managed-rules/",
+      "title": "Cloudflare WAF: Managed Rules",
+      "checkedAt": "2026-10-12",
+      "supports": ["The Cloudflare Free Managed Ruleset is available on all Cloudflare plans"]
+    },
+    {
+      "id": "cloudflare-rate-limiting-rules",
+      "url": "https://developers.cloudflare.com/waf/rate-limiting-rules/",
+      "title": "Cloudflare WAF: Rate limiting rules",
+      "checkedAt": "2026-10-12",
+      "supports": ["Rate limiting rules are available on the Free plan, with features that depend on the plan"]
     },
     {
       "id": "nix-develop",
@@ -6417,22 +7016,6 @@
       "title": "What is Amazon Bedrock?",
       "checkedAt": null,
       "supports": ["Service overview"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "inspector-what-is",
-      "url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html",
-      "title": "What is Amazon Inspector?",
-      "checkedAt": null,
-      "supports": ["Vulnerability scanning"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "guardduty-what-is",
-      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html",
-      "title": "What is Amazon GuardDuty?",
-      "checkedAt": null,
-      "supports": ["Threat detection"],
       "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
     },
     {

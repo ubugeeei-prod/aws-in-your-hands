@@ -1929,6 +1929,106 @@
         "ja": "コンテナの job を queue に積み、必要な計算資源（Fargate や EC2）を用意して実行するサービス。",
         "en": "A service that queues container jobs and provisions the compute (Fargate or EC2) to run them."
       }
+    },
+    {
+      "id": "least-privilege",
+      "ja": "最小権限",
+      "en": "least privilege",
+      "firstUse": "21",
+      "definition": {
+        "ja": "仕事に必要な action を、必要な resource に対してだけ許すこと。「あとで要るかもしれない」権限は足さない。",
+        "en": "Allowing only the actions a job needs, on only the resources it needs. Permissions that might be useful later are left out."
+      }
+    },
+    {
+      "id": "secret",
+      "ja": "secret",
+      "en": "secret",
+      "firstUse": "21",
+      "definition": {
+        "ja": "漏れたら困る値（署名鍵、API キー、パスワード）。Secrets Manager では、暗号化された値と、その version、誰が読めるかの設定をまとめた 1 つの resource。",
+        "en": "A value that must not leak, such as a signing key, an API key, or a password. In Secrets Manager, one resource holding the encrypted value, its versions, and who may read it."
+      }
+    },
+    {
+      "id": "staging-label",
+      "ja": "staging label",
+      "en": "staging label",
+      "firstUse": "21",
+      "definition": {
+        "ja": "Secrets Manager が secret の version に付ける名札。AWSCURRENT（いまの値）、AWSPREVIOUS（1 つ前）、AWSPENDING（rotation の途中）の 3 つを Secrets Manager が管理する。",
+        "en": "A name tag Secrets Manager puts on a version of a secret. It manages three: AWSCURRENT (the value now), AWSPREVIOUS (the one before), and AWSPENDING (mid-rotation)."
+      }
+    },
+    {
+      "id": "secret-rotation",
+      "ja": "rotation",
+      "en": "rotation",
+      "firstUse": "21",
+      "definition": {
+        "ja": "secret の値を新しいものに入れ替えること。入れ替えた瞬間に全員が新しい値を持っているわけではないので、古い値もしばらく受け入れる期間を作る。",
+        "en": "Replacing a secret's value with a new one. Not everyone holds the new value the moment it changes, so the old one stays accepted for a while."
+      }
+    },
+    {
+      "id": "kms-key",
+      "ja": "KMS key",
+      "en": "KMS key",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS KMS が持つ暗号鍵。鍵そのものは取り出せず、API を呼んで暗号化・復号してもらう。自分で作る customer managed key は月額がかかり、サービスが作る AWS managed key は月額がかからない。",
+        "en": "An encryption key held by AWS KMS. The key cannot be taken out; you call an API to encrypt or decrypt. A customer managed key you create has a monthly fee; an AWS managed key a service creates does not."
+      }
+    },
+    {
+      "id": "web-acl",
+      "ja": "web ACL",
+      "en": "web ACL",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS WAF の設定の単位。rule を順番に並べたもので、CloudFront や ALB などに関連付けると、リクエストが届く前に検査する。置いてあるだけで月額がかかる。",
+        "en": "The unit of AWS WAF configuration: an ordered list of rules. Associated with CloudFront, an ALB, and so on, it inspects requests before they arrive. It carries a monthly fee just for existing."
+      }
+    },
+    {
+      "id": "managed-rule-group",
+      "ja": "managed rule group",
+      "en": "managed rule group",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS や第三者が保守している WAF の rule のまとまり。中身は提供者が更新する。web ACL の中では 1 つの rule として数える。",
+        "en": "A set of WAF rules maintained by AWS or a third party, who also updates them. Inside a web ACL it counts as one rule."
+      }
+    },
+    {
+      "id": "management-event",
+      "ja": "management event",
+      "en": "management event",
+      "firstUse": "21",
+      "definition": {
+        "ja": "リソースを作る・変える・消す、設定を読む、といった API 呼び出しの記録。CloudTrail が既定で 90 日ぶん持っている。S3 の object の読み書きのような data event は含まない。",
+        "en": "The record of an API call that creates, changes, deletes, or reads the configuration of a resource. CloudTrail keeps 90 days of them by default. Data events, such as reading an S3 object, are not included."
+      }
+    },
+    {
+      "id": "scp",
+      "ja": "SCP（service control policy）",
+      "en": "SCP (service control policy)",
+      "firstUse": "21",
+      "definition": {
+        "ja": "AWS Organizations で、メンバーアカウントの IAM user と role に許せる権限の上限を決める policy。権限は与えない。management account には効かない。",
+        "en": "In AWS Organizations, a policy that sets the upper bound on what IAM users and roles in member accounts can be allowed. It grants nothing, and does not apply to the management account."
+      }
+    },
+    {
+      "id": "management-account",
+      "ja": "management account",
+      "en": "management account",
+      "firstUse": "21",
+      "definition": {
+        "ja": "organization を作ったアカウント。請求をまとめ、SCP を付ける側。SCP の制限を受けないので、ふだんの作業には使わない。",
+        "en": "The account that created the organization. It pays the consolidated bill and attaches SCPs. SCPs do not restrict it, so it is not used for everyday work."
+      }
     }
   ]
 }

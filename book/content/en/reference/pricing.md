@@ -1331,6 +1331,116 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 0.52** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
 
+## Security: the default stack, deployed but never called for a month
+
+ID: `sec-idle-default` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- Neither `-c cmk=on` nor `-c webAclArn=...`; the web ACL stack (AihSecurityWaf) does not exist
+- No requests. The function never runs, so no Secrets Manager API call is made
+- One secret for 730 hours, encrypted with aws/secretsmanager (no monthly fee)
+- The CloudFront distribution, Lambda, and the IAM role cost nothing uncalled; logs have expired and nothing is stored
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+
+- List subtotal: **USD 0.40** / month
+- Subtotal after monthly free allowance: **USD 0.40** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`
+
+## Security: with `-c cmk=on`, deployed but never called for a month
+
+ID: `sec-idle-cmk` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- The default stack plus one customer managed key
+- The key is less than a year old and has not rotated yet. Each of the first two rotations adds USD 1 a month
+- No requests
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
+
+- List subtotal: **USD 1.40** / month
+- Subtotal after monthly free allowance: **USD 1.40** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`, `kms.key`
+
+## Security: the web ACL (AihSecurityWaf) for a month, inspecting one million requests
+
+ID: `sec-waf-month` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- One web ACL and three rules (one rate-based rule, two AWS managed rule groups; a managed rule group counts as one rule)
+- 727 WCUs in total, inside the 1,500 WCUs the base price includes
+- One million requests inspected in the month. With none, USD 8.00 a month
+- That a web ACL for CloudFront is metered under the Global-* usage types was not confirmed on a bill. The ap-northeast-1 and us-east-1 prices are the same numbers
+- This subtotal excludes the default stack. No WAF logging, no Bot Control or other add-ons
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
+| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
+| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
+
+- List subtotal: **USD 8.60** / month
+- Subtotal after monthly free allowance: **USD 8.60** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
+
+## Security: the default stack, 100,000 tokens issued and 100,000 verified a month
+
+ID: `sec-small` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- 200,000 requests to CloudFront (HTTPS, Japan edge locations). Nothing is cached, so all of them reach Lambda
+- 0.5 KB per response, assumed
+- Lambda averages 50 ms at 256 MB, arm64. The 50 ms is an assumption, not a measurement
+- One execution environment running all month and reloading its keys every five minutes (730 hours x 12 x 2 GetSecretValue calls). More environments mean proportionally more
+- 0.3 KB of logs per invocation (only the lines Lambda writes). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest
+- No customer managed key and no web ACL. Data transfer from Lambda to CloudFront is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
+| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
+| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
+| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
+
+- List subtotal: **USD 0.86** / month
+- Subtotal after monthly free allowance: **USD 0.49** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`, `secretsmanager.api`
+
+## Security: GuardDuty, Inspector, and AWS Config on a small account for a month (an order-of-magnitude example)
+
+ID: `sec-detect-example` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- A month after the free trials have ended
+- 100,000 CloudTrail management events analyzed by GuardDuty, assumed. The real count depends on what the account does; this is not a measurement
+- GuardDuty's other charges (VPC flow log and DNS log volume, and protection plans such as S3, Lambda, and Malware Protection) are not included. Enabling GuardDuty for the first time turns every protection plan on by default
+- Inspector with Lambda standard scanning only, one function for 730 hours. ECR image and EC2 instance scanning are not included
+- AWS Config with continuous recording and 500 configuration items in the month, assumed. Rule evaluations and the S3 storage for the records are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
+| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
+| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
+
+- List subtotal: **USD 2.34** / month
+- Subtotal after monthly free allowance: **USD 2.34** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -1414,6 +1524,16 @@ Assumptions:
 | `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
+| `secretsmanager.secret` | ap-northeast-1 | APN1-AWSSecretsManager-Secrets | Secrets | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-12 |
+| `secretsmanager.api` | ap-northeast-1 | APN1-AWSSecretsManagerAPIRequest | API Requests | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
+| `kms.key` | ap-northeast-1 | ap-northeast-1-KMS-Keys | Keys | 0 - ∞: 1.0000000000 | 2026-09-11 | 2026-10-12 |
+| `kms.request` | ap-northeast-1 | ap-northeast-1-KMS-Requests | Requests | 0 - ∞: 0.0000030000 | 2026-09-11 | 2026-10-12 |
+| `waf.global.webacl` | global | Global-WebACLV2 | Month | 0 - ∞: 5.0000000000 | 2026-09-14 | 2026-10-12 |
+| `waf.global.rule` | global | Global-RuleV2 | Month | 0 - ∞: 1.0000000000 | 2026-09-14 | 2026-10-12 |
+| `waf.global.request` | global | Global-RequestV2-Tier1 | Request | 0 - ∞: 0.0000006000 | 2026-09-14 | 2026-10-12 |
+| `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
+| `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
+| `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -1442,6 +1562,7 @@ Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is rec
 | `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
 | `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
 | `sfn.standard.transition` | 4,000 | `sfn-pricing` | 4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000). |
+| `kms.request` | 20,000 | `kms-pricing` | Calculated across all Regions. Requests on asymmetric keys and GenerateDataKeyPair are excluded. |
 
 Allowances that could not be confirmed (treated as unknown, not as zero; nothing is deducted):
 
@@ -1472,3 +1593,12 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `secretsmanager.secret`: No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied.
+- `secretsmanager.api`: No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied.
+- `kms.key`: The KMS free tier covers requests, not keys; none is applied.
+- `waf.global.webacl`: No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans were not examined in this chapter.
+- `waf.global.rule`: No free allowance for rules was confirmed for the pay-as-you-go model; none is applied.
+- `waf.global.request`: No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied.
+- `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
+- `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
+- `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.

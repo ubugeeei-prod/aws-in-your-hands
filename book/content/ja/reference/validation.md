@@ -146,6 +146,15 @@ generated: true
 | 16 | `vp run export:local` | ローカル | 成功 | 2026-10-12 | 既定（250 件）、`--notes 450 --lose 2 --break 4`（応答の喪失と、再試行の打ち切りからの再開）、`--notes 1000 --pages-per-call 20` を実行し、manifest の行数と重複のない件数がノートの件数と一致することを確かめた。相手はメモリ上の store で、Step Functions でも S3 でも DynamoDB でもない |
 | 16 | `vp run export:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 既定の構成と `-c durable=true` の両方で synth した（esbuild の bundle 込み。durable 版は SDK も bundle する）。既定は 9 種類で、どれも cdkd 0.296.28 に専用の実装がある。durable 版は Lambda::Version と Lambda::Alias が増え、この 2 つは Cloud Control API 経由。scripts/ は型検査のみ |
 | 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | 未実行 | - | bucket、table、関数 3 つ、state machine、schedule を作る。`-c durable=true` では durable function と version、alias が増える。Step Functions、Scheduler からの起動、S3 の条件付き書き込み、DynamoDB の Scan、durable function は、どれも実環境で未確認 |
+| 21 | `vp run test:unit (examples/21-security)` | ローカル | 成功 | 2026-10-12 | token の署名と検証、rotation をまたぐ鍵の cache（古い cache の実行環境、2 回の rotation、でたらめな version id の連打、Secrets Manager の停止、同時リクエスト）、rotation の手順（応答の喪失後の再実行、早すぎる 2 回目、version id の使い回し）、SDK の client を差し替えた secret の読み取り、wildcard の lint と理由つきの例外、20章の CI role への適用、SCP の JSON と評価の model、IAM の伝播待ち、posture の判定、stack の assertion（既定で月額がかかるのは secret 1 つだけ、cmk と web ACL は opt-in） |
+| 21 | `vp run sec:infra:synth` | ローカル | 成功 | 2026-10-12 | 固定した cdkd 0.296.28 で synth。認証情報なし。AihSecurity と AihSecurityWaf の template が cdk.out に出ること、-c cmk=on と -c webAclArn=... で template が変わること、形の違う webAclArn で synth が止まることを確認 |
+| 21 | `vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)` | ローカル | 成功 | 2026-10-12 | この章の 2 つの template は例外なしで合格。`vp run infra:synth` のあとに全章の cdk.out を渡した結果は、本文の「本全体に当ててみる」に書いたとおり |
+| 21 | `vp run dev:sec` | ローカル | 成功 | 2026-10-12 | 手元の server で /health、/token、/verify を curl で確認。鍵はメモリの中だけで、AWS は呼ばない |
+| 21 | `vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy` | AWS | 未実行 | - | 未実行。CloudFront、function URL、Secrets Manager を通した動作、デプロイ直後の 503 の有無、destroy 後に secret が残らないこと |
+| 21 | `vp run sec:secret:versions / sec:secret:rotate` | AWS | 未実行 | - | 未実行。PutSecretValue 後の staging label の動き、同じ version id での再実行、rotation 後に古い cache の実行環境が新しい token を受け入れること |
+| 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | 未実行 | - | 未実行。us-east-1 への web ACL の作成、distribution への関連付け、rate-based rule が実際に block を始めるまでの時間、count にした rule group の記録 |
+| 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | 未実行 | - | 未実行。customer managed key での secret の暗号化、kms:ViaService の条件つきで関数が読めること、destroy 後の鍵の状態 |
+| 21 | `vp run sec:posture / sec:trail:iam` | AWS | 未実行 | - | 未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示 |
 
 ## 未解決事項と再開手順
 
@@ -580,3 +589,39 @@ Lambda durable function は一度も deploy していない。未確認: ap-nort
 step を ECS task（`ecs:runTask.sync`）や AWS Batch の job にする構成は、本文で説明しただけで、コードもテストもない。必要な IAM、ネットワーク、task の終了コードの扱い、料金の実測は未確認。
 
 再開手順: 12章の image の扱い（tag は immutable、`fromAsset` を使わない）で export の worker を image にし、state machine の ExportPages を `arn:aws:states:::ecs:runTask.sync` に置き換える。進捗は task の戻り値ではなく S3 に置く必要がある。Docker の daemon が要る。
+
+### 21-deploy
+
+既定の stack（CloudFront、function URL、Secrets Manager）を実環境で通していない
+
+再開手順: `vp run sec:infra:deploy` のあと、すぐに `vp run sec:smoke` を実行し、「after N refusals」の N を記録する。function URL を直接 curl して 403 になること、`vp run sec:infra:drift` の結果、`vp run sec:infra:destroy` のあとに Secrets Manager のコンソールで secret が「削除予定」としても残っていないことを確かめる
+
+### 21-rotation
+
+secret の rotation を実環境で試していない
+
+再開手順: デプロイ後に `vp run sec:smoke`、`vp run sec:secret:rotate`、もう一度 `vp run sec:smoke` の順に実行する。rotation の直後に、古い key version で発行した token が検証を通ること、`sec:secret:versions` の表示が AWSCURRENT と AWSPREVIOUS になっていること、同じ `--version-id` での再実行が already-rotated になること、10 分以内の 2 回目が too-soon で止まることを記録する。AWSPREVIOUS が無い secret に GetSecretValue したときのエラー名が ResourceNotFoundException かどうかも確かめる
+
+### 21-waf
+
+web ACL を作っていない。rate-based rule の動きも見ていない
+
+再開手順: `vp run sec:waf:infra:deploy` の出力 WebAclArn を `vp run sec:infra:deploy -c webAclArn=<ARN>` に渡す。5 分間に 300 回を超えるリクエストを 1 つの IP から送り、403 が返り始めるまでの時間と回数を記録する。WAF のコンソールで AwsCommonRules が count として記録していることを確かめる。請求で usage type が Global-* か USE1-* かを確かめる。終わったら `sec:infra:deploy`（webAclArn なし）で外してから `vp run sec:waf:infra:destroy`
+
+### 21-cmk
+
+customer managed key を使う構成を実環境で試していない
+
+再開手順: `vp run sec:infra:deploy -c cmk=on` のあと `vp run sec:smoke`。関数が kms:ViaService の条件つきの kms:Decrypt だけで secret を読めることを確かめる。`vp run sec:infra:destroy` のあと、KMS のコンソールで鍵が「削除保留中」で、7 日後に消える予定になっていること、その間の請求に鍵の料金が載るかどうかを記録する
+
+### 21-iam-propagation
+
+IAM の変更が伝わるまでの遅れを、実際には観測していない
+
+再開手順: デプロイ直後の `vp run sec:smoke` で refusals が 0 かどうかを数回記録する。次に、コンソールで HandlerRole の ReadSigningKey を消し、実行環境が新しくなるのを待ってから `/token` を繰り返し呼び、503 になるまでの時間と、一度 503 になったあとに 200 が混ざるかどうかを記録する。終わったら `vp run sec:infra:drift` で差を確かめ、revert する
+
+### 21-posture
+
+`sec:posture` と `sec:trail:iam` を実アカウントで動かしていない。GuardDuty、Inspector、Config、trail、Organizations も有効にしていない
+
+再開手順: `vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す

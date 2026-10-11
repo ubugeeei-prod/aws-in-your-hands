@@ -167,6 +167,14 @@
       "kind": "always-free",
       "sourceId": "sfn-pricing",
       "note": "4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000)."
+    },
+    {
+      "priceId": "kms.request",
+      "quantity": 20000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "kms-pricing",
+      "note": "Calculated across all Regions. Requests on asymmetric keys and GenerateDataKeyPair are excluded."
     }
   ],
   "unknown": [
@@ -277,6 +285,42 @@
     {
       "priceId": "lambda.durable.retained",
       "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "secretsmanager.secret",
+      "reason": "No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied."
+    },
+    {
+      "priceId": "secretsmanager.api",
+      "reason": "No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied."
+    },
+    {
+      "priceId": "kms.key",
+      "reason": "The KMS free tier covers requests, not keys; none is applied."
+    },
+    {
+      "priceId": "waf.global.webacl",
+      "reason": "No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans were not examined in this chapter."
+    },
+    {
+      "priceId": "waf.global.rule",
+      "reason": "No free allowance for rules was confirmed for the pay-as-you-go model; none is applied."
+    },
+    {
+      "priceId": "waf.global.request",
+      "reason": "No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied."
+    },
+    {
+      "priceId": "guardduty.cloudtrail.event",
+      "reason": "GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "inspector.lambda.standard",
+      "reason": "Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "config.item.continuous",
+      "reason": "No free allowance for configuration items was found on the pricing page; none is applied."
     }
   ]
 }

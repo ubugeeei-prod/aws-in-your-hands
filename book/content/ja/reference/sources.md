@@ -6438,16 +6438,638 @@ generated: true
   - CfnStateMachine accepts definitionString, roleArn, and stateMachineType
 - 注記: Read from aws-lambda/lib/durable-config.d.ts, function.js, and aws-stepfunctions in the installed package.
 
-## 未再確認の出典（後続章の調査の出発点）
+### Troubleshoot IAM: Changes that I make are not always immediately visible
+
+- ID: `iam-eventual-consistency`
+- URL: <https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - IAM uses a distributed computing model called eventual consistency; changes take time to become visible from all possible endpoints
+  - IAM also uses caching, so a change might not be visible until previously cached data times out
+  - AWS recommends not including IAM changes in critical, high-availability code paths, and verifying that changes have propagated before production workflows depend on them
 
 ### Security best practices in IAM
 
 - ID: `iam-best-practices`
 - URL: <https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html>
+- 確認日: 2026-10-12
 - 参照する章: 01, 21
 - この出典が支える主張:
-  - Prefer temporary credentials; protect the root user with MFA and do not use it for everyday work
-- 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
+  - Human users should use federation and temporary credentials; workloads should use IAM roles
+  - Apply least-privilege permissions: grant only the permissions required to perform a task
+  - Get started with AWS managed policies and move toward least-privilege permissions
+  - Use IAM Access Analyzer to generate least-privilege policies based on access activity
+  - Establish permissions guardrails across multiple accounts
+
+### IAM Access Analyzer policy generation
+
+- ID: `iam-access-analyzer-policy-generation`
+- URL: <https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - IAM Access Analyzer reviews CloudTrail logs and generates a policy template containing the permissions an entity used
+  - You specify a time period of up to 90 days, and the CloudTrail trail that is logging events for the account
+
+### Policy evaluation logic
+
+- ID: `iam-policy-evaluation-logic`
+- URL: <https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - An explicit deny in any policy overrides an allow
+  - With SCPs, the resulting permissions are the intersection of the identity's policies and the service control policies
+
+### AWS service reference (secretsmanager, kms, cloudtrail, guardduty, config, organizations, inspector2, iam, cloudformation, logs)
+
+- ID: `aws-service-reference-security`
+- URL: <https://servicereference.us-east-1.amazonaws.com/v1/secretsmanager/secretsmanager.json>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - secretsmanager:GetSecretValue, PutSecretValue, and ListSecretVersionIds take the Secret resource type; kms:Decrypt takes the key resource type
+  - The action names used in the SCP exist: organizations:LeaveOrganization, cloudtrail:StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, guardduty:DeleteDetector, DisassociateFromAdministratorAccount, config:StopConfigurationRecorder, DeleteConfigurationRecorder, DeleteDeliveryChannel
+  - The five actions chapter 20 leaves on Resource "*" list no resource type: cloudformation:DescribeStackDriftDetectionStatus, cloudformation:BatchDescribeTypeConfigurations, logs:DescribeLogGroups, logs:DescribeIndexPolicies, logs:DescribeResourcePolicies
+- 注記: Same URL pattern per service: /v1/<service>/<service>.json.
+
+### Resources that you can protect with AWS WAF
+
+- ID: `waf-protectable-resources`
+- URL: <https://docs.aws.amazon.com/waf/latest/developerguide/how-aws-waf-works-resources.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - A web ACL can be associated with CloudFront distributions and, regionally, with API Gateway REST APIs, Application Load Balancers, AppSync GraphQL APIs, Cognito user pools, App Runner services, Bedrock AgentCore Gateway, Verified Access instances, and Amplify; API Gateway HTTP APIs and Lambda function URLs are not in the list
+  - For CloudFront, the web ACL and everything it uses must be created in US East (N. Virginia)
+  - Each resource can have one web ACL; a web ACL associated with CloudFront distributions cannot be associated with other resource types
+
+### Using rate-based rule statements in AWS WAF
+
+- ID: `waf-rate-based-statement`
+- URL: <https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - A rate-based rule costs 2 WCUs as a base
+  - Each use of a rate-based rule is tracked separately
+
+### Rate-based rule caveats in AWS WAF
+
+- ID: `waf-rate-based-caveats`
+- URL: <https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-caveats.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWS WAF applies rate limiting near the limit that you set, but does not guarantee an exact limit match
+  - Requests can come in at too high a rate for up to several minutes before AWS WAF detects and rate limits them; usually the delay is below 30 seconds
+  - Changing a rate limit setting resets the rule's counts and can pause rate limiting for up to a minute
+
+### Baseline rule groups (AWS Managed Rules)
+
+- ID: `waf-managed-baseline`
+- URL: <https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWSManagedRulesCommonRuleSet uses 700 WCUs
+  - Its SizeRestrictions_BODY rule blocks request bodies over 8 KB
+  - For CloudFront the default body inspection limit is 16 KB, and can be raised to 64 KB
+
+### IP reputation rule groups (AWS Managed Rules)
+
+- ID: `waf-managed-ip-reputation`
+- URL: <https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWSManagedRulesAmazonIpReputationList uses 25 WCUs
+
+### Web ACL capacity units (WCUs) in AWS WAF
+
+- ID: `waf-capacity-units`
+- URL: <https://docs.aws.amazon.com/waf/latest/developerguide/aws-waf-capacity-units.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The basic price for a web ACL includes up to 1,500 WCUs; using more incurs additional fees
+  - The maximum capacity for a web ACL is 5,000 WCUs
+
+### Testing and tuning your AWS WAF protections
+
+- ID: `waf-testing`
+- URL: <https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-testing.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWS recommends testing and tuning rules in count mode with production traffic before enabling them
+
+### AWS::WAFv2::WebACL
+
+- ID: `cfn-wafv2-webacl`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-wafv2-webacl.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Scope is CLOUDFRONT or REGIONAL; for CLOUDFRONT the resource must be created in us-east-1
+  - DefaultAction, Scope, and VisibilityConfig are required
+
+### AWS::WAFv2::WebACL RateBasedStatement
+
+- ID: `cfn-wafv2-ratebasedstatement`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-wafv2-webacl-ratebasedstatement.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Limit has a minimum of 10
+  - EvaluationWindowSec may be 60, 120, 300, or 600, and defaults to 300
+  - AWS WAF checks the rate about every 10 seconds
+
+### Use AWS WAF protections (CloudFront)
+
+- ID: `cloudfront-waf`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWS WAF can be enabled on a distribution with one-click protection in the CloudFront console or with a preconfigured web ACL
+
+### Restrict access to an AWS Lambda function URL origin
+
+- ID: `cloudfront-oac-lambda-security`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - With origin access control, PUT and POST requests need the SHA-256 of the body in the x-amz-content-sha256 header, supplied by the caller
+  - CloudFront signs an origin request by adding its own Authorization header; the no-override setting passes the viewer's Authorization header through instead
+
+### AWS Price List: AWS WAF
+
+- ID: `aws-price-list-waf`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Global-WebACLV2: USD 5.00 per web ACL per month, prorated hourly
+  - Global-RuleV2: USD 1.00 per rule per month, prorated hourly
+  - Global-RequestV2-Tier1: USD 0.60 per million requests
+  - The same three prices appear under the ap-northeast-1 and us-east-1 usage types
+- 注記: Which usage type a CLOUDFRONT-scope web ACL is metered under was not confirmed on a bill; the Global-* SKUs are described as being for CloudFront.
+
+### What's in a Secrets Manager secret?
+
+- ID: `secretsmanager-secret`
+- URL: <https://docs.aws.amazon.com/secretsmanager/latest/userguide/whats-in-a-secret.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - A secret has versions; Secrets Manager tracks three by staging label: AWSCURRENT, AWSPREVIOUS, and AWSPENDING
+  - A secret always has a version labeled AWSCURRENT, and that version is returned by default
+  - Unlabeled versions are deprecated and removed when there are more than 100; versions created less than 24 hours ago are not removed
+  - The secret ARN ends in six random characters, so a secret re-created under the same name has a different ARN
+
+### PutSecretValue
+
+- ID: `secretsmanager-put-secret-value`
+- URL: <https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_PutSecretValue.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Without VersionStages, AWSCURRENT moves to the new version and AWSPREVIOUS moves to the version AWSCURRENT was removed from
+  - The operation is idempotent: the same ClientRequestToken with the same secret data succeeds and does nothing; with different data it fails
+  - ClientRequestToken becomes the VersionId of the new version
+  - Do not call PutSecretValue at a sustained rate of more than once every 10 minutes
+
+### GetSecretValue
+
+- ID: `secretsmanager-get-secret-value`
+- URL: <https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - VersionStage selects a version by staging label; without it AWSCURRENT is returned
+  - AWS recommends caching secret values on the client to improve speed and reduce cost
+  - With a customer managed key the caller also needs kms:Decrypt on that key
+
+### DeleteSecret
+
+- ID: `secretsmanager-delete-secret`
+- URL: <https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_DeleteSecret.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - A deleted secret has a recovery window: minimum 7 days, default 30 days
+  - While scheduled for deletion, the secret value cannot be retrieved
+
+### AWS Secrets Manager best practices
+
+- ID: `secretsmanager-best-practices`
+- URL: <https://docs.aws.amazon.com/secretsmanager/latest/userguide/best-practices.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The supported caching components are for Java, Python, .NET, Go, and Rust, plus the AWS Parameters and Secrets Lambda Extension; none is listed for JavaScript
+
+### Rotation by Lambda function
+
+- ID: `secretsmanager-rotation-lambda`
+- URL: <https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_lambda-functions.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - A rotation function has four steps: createSecret, setSecret, testSecret, finishSecret
+  - Secrets Manager uses staging labels to identify versions during rotation
+
+### AWS Secrets Manager pricing
+
+- ID: `secretsmanager-pricing`
+- URL: <https://aws.amazon.com/secrets-manager/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Secrets are billed per secret per month, prorated by the hour for secrets stored less than a month
+  - A replica secret is billed as a distinct secret
+
+### AWS Price List: AWS Secrets Manager (ap-northeast-1)
+
+- ID: `aws-price-list-secretsmanager`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - USD 0.40 per secret per month
+  - USD 0.05 per 10,000 API requests
+
+### AWS::SecretsManager::Secret
+
+- ID: `cfn-secretsmanager-secret`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-secretsmanager-secret.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - GenerateSecretString generates the value; SecretString sets a specific one
+  - Without KmsKeyId, Secrets Manager uses the key aws/secretsmanager
+
+### Working with Lambda environment variables
+
+- ID: `lambda-env-vars-secrets`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWS recommends Secrets Manager instead of environment variables for database credentials, API keys, and authorization tokens
+
+### Use Secrets Manager secrets in Lambda functions
+
+- ID: `lambda-secrets-manager`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/with-secrets-manager.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWS describes two ready-made approaches: the AWS Parameters and Secrets Lambda Extension and the Powertools for AWS Lambda parameters utility; both keep a local cache
+  - The extension caches secrets for 300 seconds by default
+
+### AWS KMS keys
+
+- ID: `kms-concepts`
+- URL: <https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Customer managed keys carry a monthly fee and a per-use fee; AWS managed keys carry no monthly fee
+  - AWS managed keys are created, managed, and used on your behalf by an AWS service; they rotate every year
+  - Unless you are required to control the key, an AWS managed key is a good choice
+
+### Rotate AWS KMS keys
+
+- ID: `kms-rotate-keys`
+- URL: <https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - With automatic rotation enabled, AWS KMS generates new key material every year by default
+  - AWS KMS charges a monthly fee for the first and second rotation of key material; the increase is capped at the second rotation
+
+### Delete an AWS KMS key
+
+- ID: `kms-deleting-keys`
+- URL: <https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Deleting a KMS key requires a waiting period of 7 to 30 days; the default is 30
+  - A key pending deletion cannot be used in any cryptographic operation
+  - Deletion can be cancelled before the waiting period ends, and not after
+
+### AWS KMS pricing
+
+- ID: `kms-pricing`
+- URL: <https://aws.amazon.com/kms/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Each KMS key you create costs USD 1 a month, prorated hourly
+  - The first and second rotation of a key each add USD 1 a month
+  - AWS KMS provides a free tier of 20,000 requests a month, calculated across all Regions
+  - There is no charge for creating and storing AWS managed keys
+
+### AWS Price List: AWS KMS (ap-northeast-1)
+
+- ID: `aws-price-list-kms`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - USD 1 per customer managed KMS key version per month
+  - USD 0.03 per 10,000 requests
+  - A Global-KMS-Requests SKU at USD 0 covers the first 20,000 requests a month
+
+### What is Amazon GuardDuty?
+
+- ID: `guardduty-what-is`
+- URL: <https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - GuardDuty is a threat detection service that monitors and analyzes AWS data sources and logs
+  - It detects, for example, compromised credentials, cryptomining, and unusual login patterns
+  - Foundational threat detection starts ingesting CloudTrail events, VPC flow logs, and DNS logs when GuardDuty is enabled
+
+### Getting started with GuardDuty
+
+- ID: `guardduty-getting-started`
+- URL: <https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Enabling GuardDuty for the first time in a Region also enables, by default, all protection types available in that Region
+  - AWS recommends enabling GuardDuty in all supported Regions
+
+### Monitoring GuardDuty usage and estimating costs
+
+- ID: `guardduty-costs`
+- URL: <https://docs.aws.amazon.com/guardduty/latest/ug/monitoring_costs.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - GuardDuty offers a 30-day free trial per account for most protection plans
+  - Usage and estimated cost can be monitored in the GuardDuty console
+
+### AWS Price List: Amazon GuardDuty (ap-northeast-1)
+
+- ID: `aws-price-list-guardduty`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - USD 0.00000472 per CloudTrail event analyzed (USD 4.72 per million)
+
+### What is Amazon Inspector?
+
+- ID: `inspector-what-is`
+- URL: <https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Inspector is a vulnerability management service that scans workloads for software vulnerabilities and unintended network exposure
+  - It scans EC2 instances, container images in ECR, and Lambda functions
+
+### Scanning AWS Lambda functions with Amazon Inspector
+
+- ID: `inspector-scanning-lambda`
+- URL: <https://docs.aws.amazon.com/inspector/latest/user/scanning-lambda.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Lambda standard scanning checks application dependencies for package vulnerabilities; code scanning is a separate, optional type
+  - On activation Inspector scans functions invoked or updated in the last 90 days, and rescans on deploys and when a new CVE is added
+  - Inspector does not scan Lambda functions encrypted with customer managed keys
+
+### Getting started with Amazon Inspector
+
+- ID: `inspector-getting-started`
+- URL: <https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Activating Inspector for a standalone account in the console activates all scan types by default
+
+### Amazon Inspector pricing
+
+- ID: `inspector-pricing`
+- URL: <https://aws.amazon.com/inspector/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Accounts new to Inspector get a 15-day free trial
+  - Lambda standard scanning is billed per function, prorated by coverage hours
+
+### AWS Price List: Amazon Inspector (ap-northeast-1)
+
+- ID: `aws-price-list-inspector`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Lambda standard scanning: USD 0.0005 per function-hour
+
+### Working with CloudTrail event history
+
+- ID: `cloudtrail-event-history`
+- URL: <https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - CloudTrail is enabled by default; event history holds the past 90 days of management events in a Region
+  - Event history is immutable, and there is no CloudTrail charge for viewing it
+
+### CloudTrail concepts
+
+- ID: `cloudtrail-concepts`
+- URL: <https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Events created by CloudFront, IAM, and AWS STS are recorded in us-east-1
+  - Event history and lookup-events show global service events in the Region where they occurred
+
+### LookupEvents
+
+- ID: `cloudtrail-lookup-events`
+- URL: <https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_LookupEvents.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Looks up management events from the last 90 days in a Region
+  - At most 50 results per call; lookup requests are limited to two per second per account per Region
+
+### AWS CloudTrail pricing
+
+- ID: `cloudtrail-pricing`
+- URL: <https://aws.amazon.com/cloudtrail/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The 90-day event history is available at no additional cost
+  - One copy of ongoing management events can be delivered to S3 for free by creating a trail; additional copies cost USD 2.00 per 100,000 events
+
+### What is AWS Config?
+
+- ID: `config-what-is`
+- URL: <https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWS Config records the configuration of resources and how configurations and relationships change over time
+
+### AWS Config pricing
+
+- ID: `config-pricing`
+- URL: <https://aws.amazon.com/config/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - You pay per configuration item delivered, per account per Region
+  - Recording can be continuous or periodic (once every 24 hours, only if a change occurred)
+
+### AWS Price List: AWS Config (ap-northeast-1)
+
+- ID: `aws-price-list-config`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - USD 0.003 per configuration item recorded continuously
+  - USD 0.012 per configuration item recorded daily
+
+### Service control policies (SCPs)
+
+- ID: `organizations-scps`
+- URL: <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - SCPs do not grant permissions; they set the maximum available permissions for IAM users and roles in member accounts
+  - SCPs need an organization with all features enabled
+  - SCPs do not affect users or roles in the management account, or service-linked roles
+  - AWS strongly recommends not attaching SCPs to the root without testing; removing FullAWSAccess without a replacement makes all actions fail
+
+### SCP evaluation
+
+- ID: `organizations-scp-evaluation`
+- URL: <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - An action needs an explicit Allow at every level from the root through each OU to the account
+  - A Deny at any level denies the action for everything beneath it
+  - Organizations attaches the AWS managed SCP FullAWSAccess when SCPs are enabled
+
+### SCP syntax
+
+- ID: `organizations-scp-syntax`
+- URL: <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Principal and NotPrincipal are not supported in SCPs
+  - Action, NotAction, Resource, NotResource, and Condition are supported in Allow and Deny statements
+  - The example that denies operations outside chosen Regions uses NotAction with cloudfront:*, iam:*, route53:*, support:* and StringNotEquals on aws:RequestedRegion
+
+### Quotas and service limits for AWS Organizations
+
+- ID: `organizations-quotas`
+- URL: <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The maximum size of a service control policy document is 10,240 characters
+
+### Create an organization with AWS Organizations
+
+- ID: `organizations-create`
+- URL: <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The account that creates an organization becomes its management account
+  - An organization supports all features by default, or consolidated billing only
+
+### AWS Organizations FAQs
+
+- ID: `organizations-faqs`
+- URL: <https://aws.amazon.com/organizations/faqs/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - AWS Organizations is offered at no additional charge
+
+### aws-samples/service-control-policy-examples
+
+- ID: `aws-scp-examples`
+- URL: <https://github.com/aws-samples/service-control-policy-examples>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The root-user example denies with ArnLike on aws:PrincipalArn arn:aws:iam::*:root
+  - The Region example exempts about forty global or cross-Region services through NotAction
+- 注記: Linked from the Organizations user guide's SCP examples page. Read: Deny-the-root-user-from-performing-actions-except-S3-bucketpolicy-changes.json and Deny-access-to-AWS-based-on-the-requested-AWS-region.json on the main branch.
+
+### @go-to-k/cdkd 0.296.28 (npm tarball, dist/)
+
+- ID: `cdkd-npm-security`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - cdkd registers dedicated providers for AWS::SecretsManager::Secret, AWS::KMS::Key, AWS::WAFv2::WebACL, AWS::CloudFront::Distribution, AWS::CloudFront::OriginAccessControl, AWS::Lambda::Function, AWS::Lambda::Url, AWS::Lambda::Permission, AWS::IAM::Role, and AWS::Logs::LogGroup
+  - No provider is registered for AWS::GuardDuty::Detector
+  - The secret provider generates the GenerateSecretString value in the cdkd process and passes it to CreateSecret
+  - The secret provider deletes with ForceDeleteWithoutRecovery; the KMS provider schedules key deletion with PendingWindowInDays, 7 when unset
+
+### AWS SDK for JavaScript v3 3.1149.0: client-secrets-manager, client-iam, client-cloudtrail, client-guardduty, client-inspector2, client-config-service, client-organizations (type definitions)
+
+- ID: `aws-sdk-security-clients`
+- URL: <https://www.npmjs.com/package/@aws-sdk/client-secrets-manager/v/3.1149.0>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The request and response shapes used by the adapters and scripts
+  - The Secrets Manager client has no AccessDeniedException class; a denial is matched by error name
+  - The Organizations client's endpoint rules use organizations.us-east-1.amazonaws.com in the aws partition
+
+### Cloudflare Workers: Secrets
+
+- ID: `cloudflare-workers-secrets`
+- URL: <https://developers.cloudflare.com/workers/configuration/secrets/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Secrets are a type of binding that attaches encrypted text values to a Worker
+  - Secrets on that page are per Worker; account-level secrets are the Secrets Store, in beta
+  - Local development reads secrets from .dev.vars or .env
+
+### Cloudflare WAF: Managed Rules
+
+- ID: `cloudflare-waf-managed-rules`
+- URL: <https://developers.cloudflare.com/waf/managed-rules/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - The Cloudflare Free Managed Ruleset is available on all Cloudflare plans
+
+### Cloudflare WAF: Rate limiting rules
+
+- ID: `cloudflare-rate-limiting-rules`
+- URL: <https://developers.cloudflare.com/waf/rate-limiting-rules/>
+- 確認日: 2026-10-12
+- 参照する章: 21
+- この出典が支える主張:
+  - Rate limiting rules are available on the Free plan, with features that depend on the plan
+
+## 未再確認の出典（後続章の調査の出発点）
 
 ### nix develop
 
@@ -6570,24 +7192,6 @@ generated: true
 - URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html>
 - この出典が支える主張:
   - Service overview
-- 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### What is Amazon Inspector?
-
-- ID: `inspector-what-is`
-- URL: <https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html>
-- 参照する章: 21
-- この出典が支える主張:
-  - Vulnerability scanning
-- 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### What is Amazon GuardDuty?
-
-- ID: `guardduty-what-is`
-- URL: <https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html>
-- 参照する章: 21
-- この出典が支える主張:
-  - Threat detection
 - 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### celld source
