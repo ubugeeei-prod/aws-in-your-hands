@@ -21,5 +21,6 @@
   "examples/20-shipping",
   "examples/12-containers",
   "examples/08-async",
-  "examples/23-ec2"
+  "examples/23-ec2",
+  "examples/16-long-jobs"
 ]

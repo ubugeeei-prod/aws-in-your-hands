@@ -142,6 +142,10 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | not run | - | Reaches the instance through Systems Manager, ships a release, and checks it. ec2:session and ec2:forward need the Session Manager plugin, which the devShell does not include |
 | 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | not run | - | Runs dnf on the instance, unmounts and mounts the data volume, and deletes release objects |
 | 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | not run | - | The procedure in the text was not run. The flags were checked against the help of AWS CLI 2.35.11 in the devShell |
+| 16 | `vp run test:unit (examples/16-long-jobs)` | local | passed | 2026-10-12 | A step that runs again (the same step twice, the table changing after a lost answer, a failure in the middle of a call, a failed read), two workers (a stalled worker writing late, two runs of the same export overlapping), the same output whatever the checkpoint size, the manifest and the compensation (a missing part, an interrupted discard, never deleting a finished export), the workflow definition run by the local runner (a lost answer, retries running out and a resume, a restart from the beginning, a discard), the requests sent to S3 and DynamoDB, the durable-function variant (the SDK's LocalDurableTestRunner), and stack assertions. Two conditions were also broken on purpose; each made two tests fail |
+| 16 | `vp run export:local` | local | passed | 2026-10-12 | Ran the default (250 notes), `--notes 450 --lose 2 --break 4` (a lost answer, then retries running out and a resume), and `--notes 1000 --pages-per-call 20`, and checked that the manifest's line count and distinct note count equal the number of notes. The stores were in memory: not Step Functions, S3, or DynamoDB |
+| 16 | `vp run export:infra:synth / typecheck` | local | passed | 2026-10-12 | Synthesized the default layout and `-c durable=true`, including the esbuild bundles (the durable variant bundles the SDK too). The default has nine resource types, each with a dedicated provider in cdkd 0.296.28; the durable variant adds Lambda::Version and Lambda::Alias, which go through Cloud Control API. scripts/ is type-checked only |
+| 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | not run | - | Creates a bucket, a table, three functions, a state machine, and a schedule; with `-c durable=true` also a durable function, a version, and an alias. Step Functions, the start from Scheduler, S3 conditional writes, the DynamoDB Scan, and the durable function are all unconfirmed in AWS |
 
 ## Open items and how to resume
 
@@ -558,3 +562,21 @@ To resume: Create one note, run `vp run ec2:data:unmount`, then deploy with `-c 
 `ec2:patch:check` and `ec2:patch:apply` have not been run on a real instance. Patch Manager (`AWS-RunPatchBaseline`) is described only; there is no task for it.
 
 To resume: Deploy with an AMI a few weeks old through `-c amiId=...`, confirm that `vp run ec2:patch:check` lists a newer release, and run `vp run ec2:patch:apply <releasever>`. If the kernel was updated, reboot with `aws ec2 reboot-instances` and run `vp run ec2:smoke`.
+
+### 16-deploy
+
+The chapter 16 stack has never been deployed. Unconfirmed: that cdkd 0.296.28 creates the state machine from an inline DefinitionString (an Fn::Join); that the trust policy conditions on the state machine's role are accepted; that Scheduler calls StartExecution with `<aws.scheduler.scheduled-time>` replaced in the input; the input and output of a Task whose Resource is a function ARN; that the name of a Lambda exception matches the `ExportCorrupt` catcher; that S3 answers 412 to `If-None-Match: *` and the SDK throws it as an exception with status 412; that HeadObject returns metadata keys in lower case; whether the Lambda function keeps running after a Task times out; and the real number of state transitions.
+
+To resume: Run `vp run export:infra:deploy`, `vp run export:seed --notes 250`, and `vp run export:start --id check-1 --wait`, then look at the manifest and the history count with `vp run export:status`. Run `export:start` again with the same ID and check for ExecutionAlreadyExists. For the failure paths, delete one part in the S3 console during a run, or shorten the ExportPages function's timeout for a while. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy`.
+
+### 16-durable
+
+The Lambda durable function has never been deployed. Unconfirmed: that it is available in ap-northeast-1 (the only evidence is the Tokyo SKUs in the Price List); that cdkd 0.296.28 creates a function with DurableConfig, and Lambda::Version and Lambda::Alias through Cloud Control API; that the execution role's permissions (CheckpointDurableExecution and GetDurableExecutionState on `function:<name>:*`) are enough; that SDK 2.6.0 bundled by esbuild runs on nodejs24.x; that `DurableExecutionName` prevents a duplicate start; what really happens when one invocation hits the function timeout; and the real number of durable operations and their cost.
+
+To resume: Run `vp run export:infra:deploy -c durable=true`, then `vp run export:seed` and `vp run export:durable:start --id check-1`, and follow it in the Durable executions tab of the Lambda console and with `vp run export:logs --function durable`. Start the same ID again and check that no new execution appears. Check the manifest with `vp run export:status`. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy -c durable=true`.
+
+### 16-containers
+
+Running a step as an ECS task (`ecs:runTask.sync`) or an AWS Batch job is described in prose only; there is no code and no test. The IAM, the networking, how a task's exit code is handled, and the measured cost are unconfirmed.
+
+To resume: Package the export worker as an image the way chapter 12 does (immutable tags, no `fromAsset`) and replace the ExportPages state with `arn:aws:states:::ecs:runTask.sync`. Progress then has to live in S3, since a task returns no value. This needs a Docker daemon.

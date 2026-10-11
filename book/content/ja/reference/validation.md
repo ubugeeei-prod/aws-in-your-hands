@@ -142,6 +142,10 @@ generated: true
 | 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | 未実行 | - | Systems Manager を通して instance に入る、release を配る、動作を確かめる。ec2:session と ec2:forward は Session Manager plugin が要る（devShell には入っていない） |
 | 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | 未実行 | - | instance の上で dnf を実行する、data volume を unmount、mount する、release の object を消す |
 | 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | 未実行 | - | 本文の手順は実行していない。flag は devShell の AWS CLI 2.35.11 の help で確かめた |
+| 16 | `vp run test:unit (examples/16-long-jobs)` | ローカル | 成功 | 2026-10-12 | step の再実行（同じ step の 2 回目、応答が失われた後に table が変わった場合、呼び出しの途中での失敗、読み取りの失敗）、2 つの worker（止まっていた worker が遅れて書く、同じ export の 2 つの実行が重なる）、checkpoint の大きさを変えても出力が同じこと、manifest と補償処理（欠けた part、途中で止まった破棄、完成した export を消さないこと）、workflow の定義を手元の実行器で動かす（応答の喪失、再試行の打ち切りと再開、最初からのやり直し、破棄）、S3 と DynamoDB へのリクエストの形、durable function 版（SDK の LocalDurableTestRunner）、stack の assertion。条件を 2 か所わざと壊して、どちらもテストが 2 つ落ちることも確かめた |
+| 16 | `vp run export:local` | ローカル | 成功 | 2026-10-12 | 既定（250 件）、`--notes 450 --lose 2 --break 4`（応答の喪失と、再試行の打ち切りからの再開）、`--notes 1000 --pages-per-call 20` を実行し、manifest の行数と重複のない件数がノートの件数と一致することを確かめた。相手はメモリ上の store で、Step Functions でも S3 でも DynamoDB でもない |
+| 16 | `vp run export:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 既定の構成と `-c durable=true` の両方で synth した（esbuild の bundle 込み。durable 版は SDK も bundle する）。既定は 9 種類で、どれも cdkd 0.296.28 に専用の実装がある。durable 版は Lambda::Version と Lambda::Alias が増え、この 2 つは Cloud Control API 経由。scripts/ は型検査のみ |
+| 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | 未実行 | - | bucket、table、関数 3 つ、state machine、schedule を作る。`-c durable=true` では durable function と version、alias が増える。Step Functions、Scheduler からの起動、S3 の条件付き書き込み、DynamoDB の Scan、durable function は、どれも実環境で未確認 |
 
 ## 未解決事項と再開手順
 
@@ -558,3 +562,21 @@ instance を作り直したときに data volume が残って付け直される�
 `ec2:patch:check` と `ec2:patch:apply` を実機で実行していない。Patch Manager（`AWS-RunPatchBaseline`）は手順を書いただけで、タスクも無い。
 
 再開手順: 数週間前の AMI を `-c amiId=...` で指定して deploy し、`vp run ec2:patch:check` で新しい release が出ることを確かめ、`vp run ec2:patch:apply <releasever>` を実行する。kernel が更新されたら `aws ec2 reboot-instances` で再起動し、`vp run ec2:smoke` を通す。
+
+### 16-deploy
+
+16章の stack を AWS に一度も deploy していない。未確認: cdkd 0.296.28 が inline の DefinitionString（Fn::Join）で state machine を作れること。state machine の role の trust policy の条件が通ること。Scheduler が `<aws.scheduler.scheduled-time>` を置き換えた入力で StartExecution を呼ぶこと。関数の ARN を Resource に直接書いた Task の入出力。Lambda の例外の name が Catch の `ExportCorrupt` に一致すること。S3 が `If-None-Match: *` に 412 を返し、SDK がそれを status 412 の例外として投げること。HeadObject の metadata のキーが小文字で返ること。Task の timeout の後も Lambda が動き続けるかどうか。state transition の実際の数。
+
+再開手順: `vp run export:infra:deploy`、`vp run export:seed --notes 250`、`vp run export:start --id check-1 --wait` の順に実行し、`vp run export:status` で manifest と history の件数を見る。同じ ID でもう一度 `export:start` を実行して ExecutionAlreadyExists になることを確かめる。失敗の経路は、実行中に S3 の console で part を 1 つ消すか、ExportPages の関数の timeout を一時的に短くして確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy`。
+
+### 16-durable
+
+Lambda durable function は一度も deploy していない。未確認: ap-northeast-1 で使えること（根拠は Price List に東京の SKU があることだけ）。cdkd 0.296.28 が DurableConfig つきの関数を作れること、Lambda::Version と Lambda::Alias を Cloud Control API 経由で作れること。実行 role の権限（`function:<名前>:*` への CheckpointDurableExecution と GetDurableExecutionState）で足りること。esbuild で bundle した SDK 2.6.0 が nodejs24.x で動くこと。`DurableExecutionName` による重複起動の抑止。1 回の呼び出しが関数の timeout に当たったときの実際の動き。durable operation の実際の数と料金。
+
+再開手順: `vp run export:infra:deploy -c durable=true` のあと `vp run export:seed`、`vp run export:durable:start --id check-1` を実行し、Lambda の console の Durable executions タブと `vp run export:logs --function durable` で経過を見る。同じ ID でもう一度起動して、新しい実行が増えないことを確かめる。`vp run export:status` で manifest を確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy -c durable=true`。
+
+### 16-containers
+
+step を ECS task（`ecs:runTask.sync`）や AWS Batch の job にする構成は、本文で説明しただけで、コードもテストもない。必要な IAM、ネットワーク、task の終了コードの扱い、料金の実測は未確認。
+
+再開手順: 12章の image の扱い（tag は immutable、`fromAsset` を使わない）で export の worker を image にし、state machine の ExportPages を `arn:aws:states:::ecs:runTask.sync` に置き換える。進捗は task の戻り値ではなく S3 に置く必要がある。Docker の daemon が要る。

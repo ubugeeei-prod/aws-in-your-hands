@@ -5782,6 +5782,524 @@
       "supports": ["The agent's logs section can collect systemd journal entries on Linux through a journald section"]
     },
     {
+      "id": "lambda-durable-functions",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html",
+      "title": "Lambda durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A durable execution can run for up to one year; it uses checkpoints and recovers through replay, re-executing from the beginning while skipping completed work",
+        "Waits suspend execution without compute charges",
+        "The page's own comparison: durable functions run within Lambda in standard programming languages; Step Functions is a standalone service with a graph-based DSL and native integrations to 220+ services",
+        "The SDK is available for JavaScript, TypeScript, Python, and Java"
+      ]
+    },
+    {
+      "id": "lambda-durable-concepts",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-basic-concepts.html",
+      "title": "Lambda durable functions: Basic concepts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "On resume Lambda invokes the function again from the beginning and substitutes stored values for completed operations",
+        "Code must be deterministic during replay; random numbers and the current time belong inside steps",
+        "DurableConfig has ExecutionTimeout (default 86,400 s, 60 s to 31,536,000 s) and RetentionPeriodInDays (default 14, 1 to 90)",
+        "The Lambda function timeout (at most 15 minutes) limits each invocation; the execution timeout limits the whole durable execution"
+      ]
+    },
+    {
+      "id": "lambda-durable-idempotency",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-idempotency.html",
+      "title": "Lambda durable functions: Idempotency",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Steps have at-least-once execution semantics by default; a step that fails or is interrupted before completing might execute multiple times",
+        "An execution name acts as an idempotency key: the same name with the same payload returns the existing execution, a different payload returns DurableExecutionAlreadyStartedException",
+        "Event source mappings do not support execution-name idempotency at launch"
+      ]
+    },
+    {
+      "id": "lambda-durable-invoking",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-invoking.html",
+      "title": "Invoking durable Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A durable function must be invoked with a qualified identifier: a version number, an alias, or $LATEST",
+        "An execution is pinned to the function version that started it; $LATEST executions can resume on updated code",
+        "Synchronous invocations are limited to 15 minutes; asynchronous invocations support executions up to one year",
+        "Durable functions support dead-letter queues but not Lambda destinations"
+      ]
+    },
+    {
+      "id": "lambda-durable-security",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-security.html",
+      "title": "Security and permissions for Lambda durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The execution role needs lambda:CheckpointDurableExecution and lambda:GetDurableExecutionState",
+        "Lambda authorizes most durable execution actions against the durable execution ARN, which extends a qualified function ARN; a policy naming the unqualified function ARN does not match",
+        "The managed policy AWSLambdaBasicDurableExecutionRolePolicy contains these permissions together with basic logging"
+      ]
+    },
+    {
+      "id": "lambda-durable-iac",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-getting-started-iac.html",
+      "title": "Deploy Lambda durable functions with Infrastructure as Code",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CloudFormation: AWS::Lambda::Function takes DurableConfig with ExecutionTimeout and RetentionPeriodInDays",
+        "The CDK example sets durableConfig on lambda.Function and invokes through an alias of currentVersion",
+        "IaC deployments must enable durable execution, grant checkpoint permissions, and publish a version or alias"
+      ]
+    },
+    {
+      "id": "lambda-durable-runtimes",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-supported-runtimes.html",
+      "title": "Supported runtimes for durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Managed runtimes that support durable functions include nodejs22.x and nodejs24.x",
+        "The Node.js runtimes include the SDK, and the page recommends bundling it in the deployment package anyway",
+        "The JavaScript SDK is the npm package @aws/durable-execution-sdk-js"
+      ]
+    },
+    {
+      "id": "lambda-durable-metering",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk.html",
+      "title": "Durable execution SDK: how durable operations are metered",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Starting an execution counts as one operation; a step counts as one plus one per retry; a wait counts as one",
+        "Data persisted is the input payload and the payload returned by each step attempt"
+      ]
+    },
+    {
+      "id": "lambda-durable-vs-sfn",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-step-functions.html",
+      "title": "Durable functions or Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS's own guidance: durable functions when the logic lives mostly in Lambda and the team prefers code; Step Functions for orchestration across many AWS services, visual workflows, and zero-maintenance infrastructure"
+      ]
+    },
+    {
+      "id": "lambda-durable-best-practices",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-best-practices.html",
+      "title": "Best practices for Lambda durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Do not rename steps or change their behavior while executions are in progress: replay matches saved state to step definitions",
+        "Unlike standard functions, Lambda does not automatically retry a failed durable execution after an asynchronous invocation; configure a dead-letter queue"
+      ]
+    },
+    {
+      "id": "lambda-quotas-durable",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas (function timeout and durable functions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Function timeout: 900 seconds (15 minutes); the function configuration quotas cannot be changed except as noted, and the one noted exception is 5,400 seconds for Lambda Managed Instances",
+        "At most 3,000 durable operations per durable execution; cannot be increased",
+        "At most 100 MB of durable execution storage written per execution; cannot be increased",
+        "Durable function quotas apply per Region, with higher defaults in three named Regions"
+      ],
+      "note": "The page lists no Regions where durable functions are unavailable. Availability in ap-northeast-1 was inferred only from the Price List entries (source aws-price-list-lambda-durable), not confirmed by running anything."
+    },
+    {
+      "id": "lambda-nodejs-context",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html",
+      "title": "Using the Lambda context object to retrieve Node.js function information",
+      "checkedAt": "2026-10-12",
+      "supports": ["context.getRemainingTimeInMillis() returns the milliseconds left before the execution times out"]
+    },
+    {
+      "id": "durable-sdk-key-concepts",
+      "url": "https://docs.aws.amazon.com/durable-execution/getting-started/key-concepts/",
+      "title": "AWS Durable Execution SDK Developer Guide: Key concepts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For each durable operation the SDK checks for an existing checkpoint, runs the operation if there is none, serializes the result, and persists the checkpoint before continuing",
+        "The orchestration code must make the same sequence of durable operation calls on every invocation",
+        "After a wait, the SDK terminates the current Lambda invocation and the service invokes the function again later"
+      ]
+    },
+    {
+      "id": "durable-sdk-idempotency",
+      "url": "https://docs.aws.amazon.com/durable-execution/patterns/best-practices/idempotency/",
+      "title": "AWS Durable Execution SDK Developer Guide: Idempotency and retries",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "At-least-once per retry is the default: if an attempt is interrupted (the sandbox dies, the network drops, the runtime hits the invocation timeout), the step runs again on replay",
+        "At-most-once per retry waits for the START checkpoint and raises StepInterrupted on replay instead of re-executing; neither semantic guarantees exactly one run across the workflow"
+      ]
+    },
+    {
+      "id": "durable-sdk-npm",
+      "url": "https://www.npmjs.com/package/@aws/durable-execution-sdk-js/v/2.6.0",
+      "title": "@aws/durable-execution-sdk-js 2.6.0 and @aws/durable-execution-sdk-js-testing 1.3.0 (npm tarballs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "withDurableExecution wraps a handler that receives (event, DurableContext); context.step(name, fn, config) returns the checkpointed result",
+        "StepConfig accepts retryStrategy(error, attempt) returning { shouldRetry, delay } and semantics (StepSemantics.AtLeastOncePerRetry by default)",
+        "The testing package's LocalDurableTestRunner runs a handler against a checkpoint store in the local process, with skipTime to skip waits and retry delays",
+        "Both packages require Node.js 22 or later and depend on @aws-sdk/client-lambda"
+      ],
+      "note": "Read from the installed tarballs (README and dist-types). Version 2.6.0 was published on 2026-10-02."
+    },
+    {
+      "id": "sfn-workflow-types",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html",
+      "title": "Choosing workflow type in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard workflows run up to one year and are billed by state transition; Express workflows run up to five minutes and are billed by executions, duration, and memory",
+        "Standard workflows follow an exactly-once model: tasks and states are never run more than once unless Retry is specified in the definition",
+        "Asynchronous Express workflows are at-least-once",
+        "The workflow type cannot be changed after the state machine is created",
+        "Standard: starting an execution with the same name as a running one returns an idempotent response; execution history is removed after 90 days",
+        "Express workflows do not support the .sync or .waitForTaskToken integration patterns"
+      ]
+    },
+    {
+      "id": "sfn-error-handling",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html",
+      "title": "Handling errors in Step Functions workflows",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Retry fields: ErrorEquals, IntervalSeconds (default 1), MaxAttempts (default 3; 0 means never retried), BackoffRate (default 2.0), MaxDelaySeconds, JitterStrategy (FULL or NONE)",
+        "States.ALL matches any known error name but not States.DataLimitExceeded or States.Runtime; States.TaskFailed matches any error except States.Timeout",
+        "Catch has ErrorEquals, Next, and ResultPath; catchers apply when there is no Retry or retries are exhausted",
+        "Catchers exist for Task, Parallel, and Map states, not for top-level execution failures",
+        "Retries are treated as state transitions",
+        "Without Retry or Catch, an error fails the entire execution"
+      ]
+    },
+    {
+      "id": "sfn-task-state",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-task.html",
+      "title": "Task workflow state",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "TimeoutSeconds: the maximum time a task can run before it fails with States.Timeout; the default is 99,999,999",
+        "The timeout counts from the task's start event; if the worker does not respond in time, Step Functions marks the task as failed"
+      ],
+      "note": "The page says what Step Functions does when the time runs out. It does not say that the Lambda function is stopped."
+    },
+    {
+      "id": "sfn-connect-lambda",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-lambda.html",
+      "title": "Invoke an AWS Lambda function with Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A function ARN can be given directly in Resource; the task result is then the function's output alone, and .waitForTaskToken is not available",
+        "With the optimized integration (arn:aws:states:::lambda:invoke) the function output is nested under Payload"
+      ]
+    },
+    {
+      "id": "sfn-custom-error",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/tutorial-handling-error-conditions.html",
+      "title": "Handling error conditions in a Step Functions state machine",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An error thrown by a Node.js Lambda function is matched in Retry and Catch by the error's name (the tutorial sets this.name = 'CustomError' and catches \"CustomError\")",
+        "The tutorial retries Lambda.ServiceException, Lambda.AWSLambdaException, Lambda.SdkClientException, and Lambda.TooManyRequestsException"
+      ]
+    },
+    {
+      "id": "sfn-resultpath",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/input-output-resultpath.html",
+      "title": "Specifying state output using ResultPath in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": ["ResultPath in a Catch keeps the state's input and adds the error under the given field"]
+    },
+    {
+      "id": "sfn-redrive",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/redrive-executions.html",
+      "title": "Restarting state machine executions with redrive in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A failed, aborted, or timed-out Standard execution can be redriven for 14 days; it continues from the unsuccessful step with the same input and the same definition",
+        "Successful steps are not rerun; a redriven Task state is scheduled and started again with its retry count reset",
+        "A redrive re-enters a Fail state and fails again",
+        "Redrives count as state transitions; an execution with 24,999 or more history events cannot be redriven"
+      ]
+    },
+    {
+      "id": "sfn-quotas",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/service-quotas.html",
+      "title": "Step Functions service quotas",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard workflows: at most 25,000 events in one execution history; reaching it fails the execution",
+        "Input or output of a task, state, or execution is at most 256 KiB as a UTF-8 string",
+        "Execution history is kept for 90 days after an execution closes"
+      ]
+    },
+    {
+      "id": "sfn-best-practices",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/sfn-best-practices.html",
+      "title": "Best practices for Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Without TimeoutSeconds on a Task, an execution can be stuck waiting for a response that never comes",
+        "To stay under the history quota, use a Distributed Map or start a new execution from a Task state"
+      ]
+    },
+    {
+      "id": "sfn-iam-role",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/procedure-create-iam-role.html",
+      "title": "Creating an IAM role for your state machine in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The state machine's role is assumed by states.amazonaws.com",
+        "The documented trust policy limits it with ArnLike aws:SourceArn arn:aws:states:<region>:<account>:stateMachine:* and StringEquals aws:SourceAccount"
+      ]
+    },
+    {
+      "id": "sfn-connect-ecs",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-ecs.html",
+      "title": "Run Amazon ECS or Fargate tasks with Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The optimized integration calls ecs:runTask and supports the Run a Job (.sync) pattern",
+        "With .sync, a non-empty Failures field fails the task with AmazonECS.Unknown",
+        "Input reaches the container through overrides (ContainerOverride)"
+      ]
+    },
+    {
+      "id": "sfn-integration-patterns",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html",
+      "title": "Discover service integration patterns in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With .sync Step Functions waits for the job to complete before moving on; AWS Batch submitJob.sync and ECS runTask.sync are examples",
+        "If a .sync task is aborted and Step Functions cannot cancel the job, the integrated service may keep charging"
+      ]
+    },
+    {
+      "id": "sfn-start-execution",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_StartExecution.html",
+      "title": "StartExecution",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "StartExecution is idempotent for STANDARD workflows: the same name and input as a running execution returns the same response",
+        "If the execution is closed or the input differs, it returns 400 ExecutionAlreadyExists; a name can be reused 90 days after the execution closes",
+        "An execution name is at most 80 characters and must not contain, among others, colons, slashes, brackets, or white space; without a name Step Functions generates a UUID"
+      ]
+    },
+    {
+      "id": "cfn-sfn-statemachine",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-stepfunctions-statemachine.html",
+      "title": "AWS::StepFunctions::StateMachine",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Properties include DefinitionString, RoleArn, StateMachineType, LoggingConfiguration, and DefinitionSubstitutions"
+      ]
+    },
+    {
+      "id": "sfn-pricing",
+      "url": "https://aws.amazon.com/step-functions/pricing/",
+      "title": "AWS Step Functions pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard workflows are charged per state transition, retries included",
+        "The free tier is 4,000 state transitions a month, does not expire, and applies to existing and new customers",
+        "The page's example counts four transitions for a workflow of two states: Start, the two states, and End"
+      ],
+      "note": "Prices on the page are filled in by script; the numbers used in the book come from the Price List (source aws-price-list-states)."
+    },
+    {
+      "id": "aws-price-list-states",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Step Functions, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SKU BTKF2VQUME7BCFVV (APN1-StateTransition): USD 0.000025 per state transition",
+        "SKU DCMZZXP5RBUG8FGP (Global-StateTransition): USD 0 for the first 4,000 state transitions",
+        "Express workflows: SKU DAVXY63QBMD93BC2, USD 0.000001 per request, plus a tiered GB-second duration charge"
+      ],
+      "note": "Offer publication date 2026-09-11T12:45:11Z."
+    },
+    {
+      "id": "aws-price-list-lambda-durable",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Lambda durable execution, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SKU 38G2CJHVYQC45MTY (APN1-Lambda-Durable-Execution-Operations): USD 0.0000106 per durable operation",
+        "SKU MVB47QVZRQ9MSHUU (APN1-Lambda-Durable-Execution-Written-Bytes): USD 0.33 per GB written",
+        "SKU A7USWCXHVDSE3RNW (APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs): USD 0.20 per GB-month retained"
+      ],
+      "note": "Offer publication date 2026-10-09T22:31:22Z. The presence of APN1 SKUs is the only evidence gathered that durable functions are offered in ap-northeast-1."
+    },
+    {
+      "id": "lambda-pricing-durable",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda pricing: Lambda Durable Functions Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Durable functions are charged for durable operations (starting executions, completing steps, creating waits), for data written, and for data retained during and after execution, on top of normal Lambda compute",
+        "During a wait an on-demand function incurs no duration charge until execution resumes",
+        "Compute charges apply to the invocations that replays cause"
+      ],
+      "note": "The section names no free allowance for durable operations or storage."
+    },
+    {
+      "id": "scheduler-context-attributes",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html",
+      "title": "Adding context attributes in EventBridge Scheduler",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "<aws.scheduler.scheduled-time> in the target's payload is replaced with the time the schedule was due, for example 2022-03-22T18:59:43Z",
+        "<aws.scheduler.execution-id> is unique per attempted invocation, and <aws.scheduler.attempt-number> counts attempts"
+      ]
+    },
+    {
+      "id": "scheduler-templated-sfn",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-templated.html",
+      "title": "Using templated targets in EventBridge Scheduler: Step Functions StartExecution",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Step Functions StartExecution is a templated target: the target ARN is the state machine's, and Input is the execution input",
+        "The schedule's execution role needs states:StartExecution"
+      ],
+      "note": "The page's example policy uses Resource \"*\"; the chapter's role names the one state machine instead."
+    },
+    {
+      "id": "s3-conditional-writes-if-none-match",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
+      "title": "How to prevent object overwrites with conditional writes (re-read for chapter 16)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "PutObject with If-None-Match: * succeeds only if no object has the key; otherwise S3 answers 412 Precondition Failed",
+        "When several conditional writes target the same key, the first to finish succeeds and the rest get 412",
+        "A 409 Conflict is possible when a delete of the key succeeds before the conditional write completes; a PutObject may be retried after it",
+        "If-None-Match needs only the s3:PutObject permission"
+      ]
+    },
+    {
+      "id": "dynamodb-scan",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html",
+      "title": "Scanning tables in DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "One Scan request reads at most 1 MB; the limit and the Limit parameter apply before the filter expression",
+        "The absence of LastEvaluatedKey is the only way to know the last page was reached; it is passed back as ExclusiveStartKey",
+        "Read capacity is consumed by the items read, whether or not a filter or projection drops them"
+      ]
+    },
+    {
+      "id": "s3-head-object-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html",
+      "title": "HeadObject (permissions, re-read for chapter 16)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "HEAD needs the s3:GetObject permission",
+        "For a missing object S3 answers 404 if the caller has s3:ListBucket on the bucket and 403 if not"
+      ]
+    },
+    {
+      "id": "dynamodb-export-s3",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/S3DataExport.HowItWorks.html",
+      "title": "DynamoDB data export to Amazon S3: how it works",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Export to S3 exports a table as of any time within its point-in-time recovery window; PITR must be enabled on the table"
+      ],
+      "note": "Read only to point at the alternative; not used or tried in the chapter."
+    },
+    {
+      "id": "sfn-eventbridge",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/eventbridge-integration.html",
+      "title": "Automating Step Functions event delivery with EventBridge",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Step Functions sends an Execution Status Change event to EventBridge when the status of a Standard workflow execution changes"
+      ]
+    },
+    {
+      "id": "batch-what-is",
+      "url": "https://docs.aws.amazon.com/batch/latest/userguide/what-is-batch.html",
+      "title": "What is AWS Batch?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS Batch plans, schedules, and runs containerized batch jobs on ECS, EKS, Fargate, and EC2 (Spot or On-Demand), provisioning compute in response to submitted jobs"
+      ]
+    },
+    {
+      "id": "batch-fargate",
+      "url": "https://docs.aws.amazon.com/batch/latest/userguide/fargate.html",
+      "title": "AWS Batch: Fargate compute environments",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Batch can run jobs on Fargate without managing instances; Fargate is available only for Batch compute environments that use ECS as the orchestrator"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows",
+      "url": "https://developers.cloudflare.com/workflows/",
+      "title": "Cloudflare Workflows",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Workflows chain steps with step.do, retry failed steps automatically, and persist state; a WorkflowEntrypoint class defines run(event, step)"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows-rules",
+      "url": "https://developers.cloudflare.com/workflows/build/rules-of-workflows/",
+      "title": "Cloudflare Workflows: Rules of Workflows",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A step might be retried multiple times, so steps should be idempotent",
+        "A Workflow may hibernate and lose in-memory state; state must be built from step.do return values, and non-deterministic calls belong inside steps"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows-limits",
+      "url": "https://developers.cloudflare.com/workflows/reference/limits/",
+      "title": "Cloudflare Workflows: Limits",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Wall-clock duration per step is unlimited; CPU time per step is 30 seconds by default on the paid plan, configurable to 5 minutes",
+        "A step result is at most 1 MiB; a Workflow has at most 10,000 steps by default on the paid plan (1,024 on free)",
+        "step.sleep can last up to 365 days",
+        "Workers invoked by Cron Triggers and Durable Object alarm handlers have a 15-minute wall time limit"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows-pricing",
+      "url": "https://developers.cloudflare.com/workflows/reference/pricing/",
+      "title": "Cloudflare Workflows: Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Workflows are billed on CPU time, requests, storage, and steps; a sleeping or waiting Workflow incurs no CPU time",
+        "Billing for steps and storage started on 2026-08-10; the paid plan includes 500,000 steps a month"
+      ]
+    },
+    {
+      "id": "cdkd-source-long-jobs",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: providers used by chapter 16 (read from the npm tarball's dist)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dedicated providers are registered for AWS::StepFunctions::StateMachine, AWS::Scheduler::Schedule, AWS::Lambda::Function, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::DynamoDB::Table, AWS::Logs::LogGroup, AWS::IAM::Role, and AWS::IAM::Policy",
+        "No provider is registered for AWS::Lambda::Version or AWS::Lambda::Alias, so they go through Cloud Control API",
+        "The Step Functions provider applies DefinitionSubstitutions only to a definition fetched from DefinitionS3Location; an inline DefinitionString or Definition is sent as it is",
+        "The Lambda function provider passes DurableConfig to CreateFunction and UpdateFunctionConfiguration, and treats adding or removing DurableConfig as a replacement"
+      ],
+      "note": "Checked in the installed package (dist/program-*.js, provider-classes-*.js, deploy-engine-*.js), not on GitHub."
+    },
+    {
+      "id": "aws-cdk-lib-durable",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: durableConfig and CfnStateMachine (type definitions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "FunctionProps.durableConfig takes { executionTimeout: Duration; retentionPeriod?: Duration } and renders CfnFunction.DurableConfig",
+        "When no role is passed, a function with durableConfig gets the managed policy AWSLambdaBasicDurableExecutionRolePolicy; with a role of your own, nothing is added",
+        "CfnStateMachine accepts definitionString, roleArn, and stateMachineType"
+      ],
+      "note": "Read from aws-lambda/lib/durable-config.d.ts, function.js, and aws-stepfunctions in the installed package."
+    },
+    {
       "id": "iam-best-practices",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
       "title": "Security best practices in IAM",
@@ -5851,14 +6369,6 @@
       "title": "Ox Content: Site generation",
       "checkedAt": null,
       "supports": ["Static site generation options"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "lambda-durable-functions",
-      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html",
-      "title": "Lambda durable functions",
-      "checkedAt": null,
-      "supports": ["Durable functions checkpoint progress and resume"],
       "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
     },
     {

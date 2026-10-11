@@ -2275,6 +2275,331 @@
           "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
         }
       ]
+    },
+    {
+      "id": "export-idle",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: デプロイ済みで、ノートが 1 件もない月",
+        "en": "Long jobs: deployed, with no notes at all, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "schedule は 1 日 1 回、月 30 回 workflow を起動する。table は空",
+          "1 回の実行は ExportPages、MorePages、Finish、Exported を 1 回ずつ通る。開始と終了を足して state transition は 6 と数える（料金ページの例の数え方。実測ではない）",
+          "関数の呼び出しは 1 回の実行につき 2 回。それぞれ 0.5 秒、256 MB、arm64 と仮定",
+          "空の Scan は 1 回につき読み取り 1 unit と多めに数える。S3 は LIST 1 回と manifest の PUT 1 回",
+          "ログは関数の呼び出し 1 回につき 1 KB"
+        ],
+        "en": [
+          "The schedule starts the workflow once a day, 30 times a month. The table is empty",
+          "One execution passes ExportPages, MorePages, Finish, and Exported once each. With start and end that is counted as 6 state transitions (the pricing page's way of counting; not measured)",
+          "Two function invocations per execution, each assumed to take 0.5 s with 256 MB on arm64",
+          "An empty Scan is counted as one read unit, generously. S3 sees one LIST and one manifest PUT",
+          "1 KB of logs per function invocation"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "one start a day"
+        },
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 180,
+          "basis": "30 executions x 6 transitions"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 60,
+          "basis": "30 executions x 2 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 7.5,
+          "basis": "60 x 0.5 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 30,
+          "basis": "one empty Scan per run, counted as 1 unit"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 60,
+          "basis": "30 runs x (1 LIST + 1 manifest PUT)"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000057,
+          "basis": "60 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-daily-10k-coarse",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: 10,000 件を毎日 export。1 回の呼び出しで全ページ（この章の既定）",
+        "en": "Long jobs: 10,000 notes exported daily, every page in one invocation (this chapter's default)"
+      },
+      "assumptions": {
+        "ja": [
+          "table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する",
+          "1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定",
+          "Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit",
+          "export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）",
+          "関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない",
+          "state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない",
+          "未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送",
+          "ExportPages は 1 回の呼び出しで 100 ページを書き終える（20 秒）。state transition は 1 回の実行で 6"
+        ],
+        "en": [
+          "10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month",
+          "100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed",
+          "The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB",
+          "Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)",
+          "Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured",
+          "State transitions are estimated the way the pricing page's example counts them (start and end count as one each), not measured",
+          "Not included: retries, redrives, data transfer out of S3 and DynamoDB",
+          "ExportPages writes all 100 pages in one invocation (20 s). 6 state transitions per execution"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "one start a day"
+        },
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 180,
+          "basis": "30 executions x 6 transitions"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 60,
+          "basis": "30 executions x 2 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 157.5,
+          "basis": "30 x (20 s + 1 s) x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 38400,
+          "basis": "30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent)"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 3060,
+          "basis": "30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST)"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.082,
+          "basis": "7 exports of 12 MB kept at any time, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000057,
+          "basis": "60 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-daily-10k-fine",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: 10,000 件を毎日 export。1 ページごとに workflow に戻る",
+        "en": "Long jobs: 10,000 notes exported daily, returning to the workflow after every page"
+      },
+      "assumptions": {
+        "ja": [
+          "table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する",
+          "1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定",
+          "Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit",
+          "export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）",
+          "関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない",
+          "state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない",
+          "未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送",
+          "ExportPages は 1 ページ書くごとに戻る。1 回の実行で ExportPages と MorePages を 100 回ずつ通り、state transition は 204"
+        ],
+        "en": [
+          "10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month",
+          "100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed",
+          "The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB",
+          "Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)",
+          "Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured",
+          "State transitions are estimated the way the pricing page's example counts them (start and end count as one each), not measured",
+          "Not included: retries, redrives, data transfer out of S3 and DynamoDB",
+          "ExportPages returns after every page: 100 passes through ExportPages and MorePages each, 204 state transitions per execution"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "one start a day"
+        },
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 6120,
+          "basis": "30 executions x (100 x 2 + 4) transitions"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 3030,
+          "basis": "30 executions x (100 pages + 1 finish)"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 157.5,
+          "basis": "30 x (100 x 0.2 s + 1 s) x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 38400,
+          "basis": "30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent)"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 3060,
+          "basis": "30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST)"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.082,
+          "basis": "7 exports of 12 MB kept at any time, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.00289,
+          "basis": "3,030 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-daily-10k-durable",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: 10,000 件を毎日 export。durable function 版（`-c durable=true`）",
+        "en": "Long jobs: 10,000 notes exported daily with the durable-function variant (`-c durable=true`)"
+      },
+      "assumptions": {
+        "ja": [
+          "table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する",
+          "1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定",
+          "Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit",
+          "export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）",
+          "関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない",
+          "未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送",
+          "1 日 1 回、手で（または別の schedule で）起動するものとする。Step Functions は通らない",
+          "step は 20 ページごとに 1 つで 5 つ、それに finish。実行の開始を足して durable operation は 1 回の実行で 7",
+          "待機がないので、関数の呼び出しは 1 回の実行につき 1 回（21 秒）と仮定",
+          "checkpoint に書かれるのは進捗だけ。1 operation あたり 1 KB、保持は 1 日と仮定"
+        ],
+        "en": [
+          "10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month",
+          "100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed",
+          "The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB",
+          "Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)",
+          "Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured",
+          "Not included: retries, redrives, data transfer out of S3 and DynamoDB",
+          "Started once a day by hand or by a schedule of your own; Step Functions is not involved",
+          "One step per 20 pages makes 5 steps, plus finish. With the start of the execution that is 7 durable operations per execution",
+          "No waits, so one function invocation per execution (21 s), assumed",
+          "Only the progress is checkpointed: 1 KB per operation, retained for one day, assumed"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.durable.operation",
+          "quantity": 210,
+          "basis": "30 executions x (1 start + 5 page steps + 1 finish)"
+        },
+        {
+          "priceId": "lambda.durable.written",
+          "quantity": 0.0002,
+          "basis": "210 operations x 1 KB, in GB"
+        },
+        {
+          "priceId": "lambda.durable.retained",
+          "quantity": 0.000007,
+          "basis": "0.0002 GB x 1/30, in GB-month"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 30,
+          "basis": "one invocation per execution"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 157.5,
+          "basis": "30 x 21 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 38400,
+          "basis": "30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent)"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 3060,
+          "basis": "30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST)"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.082,
+          "basis": "7 exports of 12 MB kept at any time, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000029,
+          "basis": "30 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-step-fargate-1h",
+      "chapter": "16",
+      "title": {
+        "ja": "比較: 1 時間かかる step を、1 日 1 回 Fargate の task で動かす月",
+        "en": "For comparison: a step that takes an hour, run once a day as a Fargate task for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "この章の stack は作らない構成。料金の比較のためだけに計算",
+          "0.25 vCPU、0.5 GB、arm64 の task を 1 日 1 回、1 時間。月 30 時間",
+          "public subnet で public IPv4 を付けて動かす（12章の構成）。task が動いている間だけ課金される",
+          "未算入: image の保存（ECR）、ログ、データ転送、Step Functions の state transition"
+        ],
+        "en": [
+          "Not something this chapter's stack creates; computed only to compare prices",
+          "A task of 0.25 vCPU and 0.5 GB on arm64, once a day for an hour: 30 hours a month",
+          "Run in a public subnet with a public IPv4 address (chapter 12's layout), billed only while the task runs",
+          "Not included: image storage in ECR, logs, data transfer, Step Functions state transitions"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 7.5,
+          "basis": "30 hours x 0.25 vCPU"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 15,
+          "basis": "30 hours x 0.5 GB"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 30,
+          "basis": "one public IPv4 address for 30 hours"
+        }
+      ]
     }
   ]
 }

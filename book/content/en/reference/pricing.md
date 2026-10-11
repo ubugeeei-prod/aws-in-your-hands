@@ -1191,6 +1191,146 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 1.54** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `ebs.gp3.storage`
 
+## Long jobs: deployed, with no notes at all, for a month
+
+ID: `export-idle` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+
+Assumptions:
+
+- The schedule starts the workflow once a day, 30 times a month. The table is empty
+- One execution passes ExportPages, MorePages, Finish, and Exported once each. With start and end that is counted as 6 state transitions (the pricing page's way of counting; not measured)
+- Two function invocations per execution, each assumed to take 0.5 s with 256 MB on arm64
+- An empty Scan is counted as one read unit, generously. S3 sees one LIST and one manifest PUT
+- 1 KB of logs per function invocation
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
+| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 7.5 | Lambda-GB-Second | 60 x 0.5 s x 0.25 GB, in GB-seconds | 0.000100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 30 | ReadRequestUnits | one empty Scan per run, counted as 1 unit | 0.000004 | - | 0.000004 |
+| `s3.request.tier1` | 60 | Requests | 30 runs x (1 LIST + 1 manifest PUT) | 0.000282 | - | 0.000282 |
+| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.request.tier1`
+
+## Long jobs: 10,000 notes exported daily, every page in one invocation (this chapter's default)
+
+ID: `export-daily-10k-coarse` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+
+Assumptions:
+
+- 10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month
+- 100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed
+- The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB
+- Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)
+- Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured
+- State transitions are estimated the way the pricing page's example counts them (start and end count as one each), not measured
+- Not included: retries, redrives, data transfer out of S3 and DynamoDB
+- ExportPages writes all 100 pages in one invocation (20 s). 6 state transitions per execution
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
+| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (20 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
+
+- List subtotal: **USD 0.03** / month
+- Subtotal after monthly free allowance: **USD 0.02** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`
+
+## Long jobs: 10,000 notes exported daily, returning to the workflow after every page
+
+ID: `export-daily-10k-fine` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+
+Assumptions:
+
+- 10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month
+- 100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed
+- The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB
+- Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)
+- Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured
+- State transitions are estimated the way the pricing page's example counts them (start and end count as one each), not measured
+- Not included: retries, redrives, data transfer out of S3 and DynamoDB
+- ExportPages returns after every page: 100 passes through ExportPages and MorePages each, 204 state transitions per execution
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 6,120 | StateTransitions | 30 executions x (100 x 2 + 4) transitions | 0.15 | 4,000 | 0.05 |
+| `lambda.request.arm` | 3,030 | Requests | 30 executions x (100 pages + 1 finish) | 0.000606 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (100 x 0.2 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0.003 | GB | 3,030 x 1 KB, in GB | 0.002196 | 5 | 0 |
+
+- List subtotal: **USD 0.18** / month
+- Subtotal after monthly free allowance: **USD 0.07** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`
+
+## Long jobs: 10,000 notes exported daily with the durable-function variant (`-c durable=true`)
+
+ID: `export-daily-10k-durable` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+
+Assumptions:
+
+- 10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month
+- 100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed
+- The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB
+- Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)
+- Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured
+- Not included: retries, redrives, data transfer out of S3 and DynamoDB
+- Started once a day by hand or by a schedule of your own; Step Functions is not involved
+- One step per 20 pages makes 5 steps, plus finish. With the start of the execution that is 7 durable operations per execution
+- No waits, so one function invocation per execution (21 s), assumed
+- Only the progress is checkpointed: 1 KB per operation, retained for one day, assumed
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.durable.operation` | 210 | DurableOperations | 30 executions x (1 start + 5 page steps + 1 finish) | 0.002226 | - | 0.002226 |
+| `lambda.durable.written` | 0 | GigaBytes | 210 operations x 1 KB, in GB | 0.000066 | - | 0.000066 |
+| `lambda.durable.retained` | 0 | GigaBytesMonth | 0.0002 GB x 1/30, in GB-month | 0.000001 | - | 0.000001 |
+| `lambda.request.arm` | 30 | Requests | one invocation per execution | 0.000006 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x 21 s x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0 | GB | 30 x 1 KB, in GB | 0.000022 | 5 | 0 |
+
+- List subtotal: **USD 0.03** / month
+- Subtotal after monthly free allowance: **USD 0.02** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`, `lambda.durable.operation`, `lambda.durable.written`, `lambda.durable.retained`
+
+## For comparison: a step that takes an hour, run once a day as a Fargate task for a month
+
+ID: `export-step-fargate-1h` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+
+Assumptions:
+
+- Not something this chapter's stack creates; computed only to compare prices
+- A task of 0.25 vCPU and 0.5 GB on arm64, once a day for an hour: 30 hours a month
+- Run in a public subnet with a public IPv4 address (chapter 12's layout), billed only while the task runs
+- Not included: image storage in ECR, logs, data transfer, Step Functions state transitions
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 7.5 | hours | 30 hours x 0.25 vCPU | 0.30 | - | 0.30 |
+| `fargate.arm.memory.gb-hour` | 15 | hours | 30 hours x 0.5 GB | 0.07 | - | 0.07 |
+| `vpc.public-ipv4.in-use.hour` | 30 | Hrs | one public IPv4 address for 30 hours | 0.15 | - | 0.15 |
+
+- List subtotal: **USD 0.52** / month
+- Subtotal after monthly free allowance: **USD 0.52** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -1270,6 +1410,10 @@ Assumptions:
 | `ec2.t4g.cpu-credit` | ap-northeast-1 | APN1-CPUCredits:t4g | vCPU-Hours | 0 - ∞: 0.0400000000 | 2026-10-09 | 2026-10-12 |
 | `ebs.gp3.storage` | ap-northeast-1 | APN1-EBS:VolumeUsage.gp3 | GB-Mo | 0 - ∞: 0.0960000000 | 2026-10-09 | 2026-10-12 |
 | `ebs.snapshot.storage` | ap-northeast-1 | APN1-EBS:SnapshotUsage | GB-Mo | 0 - ∞: 0.0500000000 | 2026-10-09 | 2026-10-12 |
+| `sfn.standard.transition` | ap-northeast-1 | APN1-StateTransition | StateTransitions | 0 - ∞: 0.0000250000 | 2026-09-11 | 2026-10-12 |
+| `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
+| `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
+| `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -1297,6 +1441,7 @@ Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is rec
 | `xray.trace.recorded` | 100,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesStored USD 0 tier. |
 | `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
 | `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
+| `sfn.standard.transition` | 4,000 | `sfn-pricing` | 4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000). |
 
 Allowances that could not be confirmed (treated as unknown, not as zero; nothing is deducted):
 
@@ -1324,3 +1469,6 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.
 - `ec2.t4g-micro.linux.hour`: The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted.
 - `ebs.gp3.storage`: The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted.
+- `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.

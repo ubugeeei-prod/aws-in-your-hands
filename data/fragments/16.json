@@ -1,0 +1,1437 @@
+{
+  "chapterId": "16",
+  "manifest": {
+    "id": "16",
+    "slug": "long-jobs",
+    "title": {
+      "ja": "長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch",
+      "en": "Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
+    },
+    "prerequisites": ["08", "12"],
+    "services": [
+      "Step Functions",
+      "Lambda durable functions",
+      "Lambda",
+      "S3",
+      "DynamoDB",
+      "ECS",
+      "AWS Batch",
+      "EventBridge Scheduler",
+      "IAM"
+    ],
+    "samplePath": "examples/16-long-jobs",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "lambda-durable-functions",
+      "lambda-durable-concepts",
+      "lambda-durable-idempotency",
+      "lambda-durable-invoking",
+      "lambda-durable-security",
+      "lambda-durable-iac",
+      "lambda-durable-runtimes",
+      "lambda-durable-metering",
+      "lambda-durable-vs-sfn",
+      "lambda-durable-best-practices",
+      "lambda-quotas-durable",
+      "lambda-nodejs-context",
+      "durable-sdk-key-concepts",
+      "durable-sdk-idempotency",
+      "durable-sdk-npm",
+      "sfn-workflow-types",
+      "sfn-error-handling",
+      "sfn-task-state",
+      "sfn-connect-lambda",
+      "sfn-custom-error",
+      "sfn-resultpath",
+      "sfn-redrive",
+      "sfn-quotas",
+      "sfn-best-practices",
+      "sfn-iam-role",
+      "sfn-connect-ecs",
+      "sfn-integration-patterns",
+      "sfn-start-execution",
+      "cfn-sfn-statemachine",
+      "sfn-pricing",
+      "aws-price-list-states",
+      "aws-price-list-lambda-durable",
+      "lambda-pricing-durable",
+      "scheduler-context-attributes",
+      "scheduler-templated-sfn",
+      "s3-conditional-writes-if-none-match",
+      "dynamodb-scan",
+      "s3-head-object-permissions",
+      "dynamodb-export-s3",
+      "sfn-eventbridge",
+      "batch-what-is",
+      "batch-fargate",
+      "cloudflare-workflows",
+      "cloudflare-workflows-rules",
+      "cloudflare-workflows-limits",
+      "cloudflare-workflows-pricing",
+      "cdkd-source-long-jobs",
+      "aws-cdk-lib-durable",
+      "eventbridge-scheduler",
+      "scheduler-templated-targets",
+      "scheduler-execution-role",
+      "scheduler-confused-deputy",
+      "scheduler-retry-policy",
+      "scheduler-schedule-types",
+      "lambda-quotas",
+      "aws-price-list-events",
+      "aws-price-list-lambda",
+      "lambda-pricing",
+      "aws-price-list-s3",
+      "aws-price-list-dynamodb",
+      "aws-price-list-cloudwatch",
+      "aws-price-list-ecs",
+      "aws-price-list-vpc",
+      "fargate-pricing",
+      "ecs-welcome",
+      "ecs-task-lifecycle",
+      "cloudflare-durable-objects-what",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "lambda-durable-functions",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html",
+      "title": "Lambda durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A durable execution can run for up to one year; it uses checkpoints and recovers through replay, re-executing from the beginning while skipping completed work",
+        "Waits suspend execution without compute charges",
+        "The page's own comparison: durable functions run within Lambda in standard programming languages; Step Functions is a standalone service with a graph-based DSL and native integrations to 220+ services",
+        "The SDK is available for JavaScript, TypeScript, Python, and Java"
+      ]
+    },
+    {
+      "id": "lambda-durable-concepts",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-basic-concepts.html",
+      "title": "Lambda durable functions: Basic concepts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "On resume Lambda invokes the function again from the beginning and substitutes stored values for completed operations",
+        "Code must be deterministic during replay; random numbers and the current time belong inside steps",
+        "DurableConfig has ExecutionTimeout (default 86,400 s, 60 s to 31,536,000 s) and RetentionPeriodInDays (default 14, 1 to 90)",
+        "The Lambda function timeout (at most 15 minutes) limits each invocation; the execution timeout limits the whole durable execution"
+      ]
+    },
+    {
+      "id": "lambda-durable-idempotency",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-idempotency.html",
+      "title": "Lambda durable functions: Idempotency",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Steps have at-least-once execution semantics by default; a step that fails or is interrupted before completing might execute multiple times",
+        "An execution name acts as an idempotency key: the same name with the same payload returns the existing execution, a different payload returns DurableExecutionAlreadyStartedException",
+        "Event source mappings do not support execution-name idempotency at launch"
+      ]
+    },
+    {
+      "id": "lambda-durable-invoking",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-invoking.html",
+      "title": "Invoking durable Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A durable function must be invoked with a qualified identifier: a version number, an alias, or $LATEST",
+        "An execution is pinned to the function version that started it; $LATEST executions can resume on updated code",
+        "Synchronous invocations are limited to 15 minutes; asynchronous invocations support executions up to one year",
+        "Durable functions support dead-letter queues but not Lambda destinations"
+      ]
+    },
+    {
+      "id": "lambda-durable-security",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-security.html",
+      "title": "Security and permissions for Lambda durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The execution role needs lambda:CheckpointDurableExecution and lambda:GetDurableExecutionState",
+        "Lambda authorizes most durable execution actions against the durable execution ARN, which extends a qualified function ARN; a policy naming the unqualified function ARN does not match",
+        "The managed policy AWSLambdaBasicDurableExecutionRolePolicy contains these permissions together with basic logging"
+      ]
+    },
+    {
+      "id": "lambda-durable-iac",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-getting-started-iac.html",
+      "title": "Deploy Lambda durable functions with Infrastructure as Code",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CloudFormation: AWS::Lambda::Function takes DurableConfig with ExecutionTimeout and RetentionPeriodInDays",
+        "The CDK example sets durableConfig on lambda.Function and invokes through an alias of currentVersion",
+        "IaC deployments must enable durable execution, grant checkpoint permissions, and publish a version or alias"
+      ]
+    },
+    {
+      "id": "lambda-durable-runtimes",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-supported-runtimes.html",
+      "title": "Supported runtimes for durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Managed runtimes that support durable functions include nodejs22.x and nodejs24.x",
+        "The Node.js runtimes include the SDK, and the page recommends bundling it in the deployment package anyway",
+        "The JavaScript SDK is the npm package @aws/durable-execution-sdk-js"
+      ]
+    },
+    {
+      "id": "lambda-durable-metering",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk.html",
+      "title": "Durable execution SDK: how durable operations are metered",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Starting an execution counts as one operation; a step counts as one plus one per retry; a wait counts as one",
+        "Data persisted is the input payload and the payload returned by each step attempt"
+      ]
+    },
+    {
+      "id": "lambda-durable-vs-sfn",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-step-functions.html",
+      "title": "Durable functions or Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS's own guidance: durable functions when the logic lives mostly in Lambda and the team prefers code; Step Functions for orchestration across many AWS services, visual workflows, and zero-maintenance infrastructure"
+      ]
+    },
+    {
+      "id": "lambda-durable-best-practices",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/durable-best-practices.html",
+      "title": "Best practices for Lambda durable functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Do not rename steps or change their behavior while executions are in progress: replay matches saved state to step definitions",
+        "Unlike standard functions, Lambda does not automatically retry a failed durable execution after an asynchronous invocation; configure a dead-letter queue"
+      ]
+    },
+    {
+      "id": "lambda-quotas-durable",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas (function timeout and durable functions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Function timeout: 900 seconds (15 minutes); the function configuration quotas cannot be changed except as noted, and the one noted exception is 5,400 seconds for Lambda Managed Instances",
+        "At most 3,000 durable operations per durable execution; cannot be increased",
+        "At most 100 MB of durable execution storage written per execution; cannot be increased",
+        "Durable function quotas apply per Region, with higher defaults in three named Regions"
+      ],
+      "note": "The page lists no Regions where durable functions are unavailable. Availability in ap-northeast-1 was inferred only from the Price List entries (source aws-price-list-lambda-durable), not confirmed by running anything."
+    },
+    {
+      "id": "lambda-nodejs-context",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html",
+      "title": "Using the Lambda context object to retrieve Node.js function information",
+      "checkedAt": "2026-10-12",
+      "supports": ["context.getRemainingTimeInMillis() returns the milliseconds left before the execution times out"]
+    },
+    {
+      "id": "durable-sdk-key-concepts",
+      "url": "https://docs.aws.amazon.com/durable-execution/getting-started/key-concepts/",
+      "title": "AWS Durable Execution SDK Developer Guide: Key concepts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For each durable operation the SDK checks for an existing checkpoint, runs the operation if there is none, serializes the result, and persists the checkpoint before continuing",
+        "The orchestration code must make the same sequence of durable operation calls on every invocation",
+        "After a wait, the SDK terminates the current Lambda invocation and the service invokes the function again later"
+      ]
+    },
+    {
+      "id": "durable-sdk-idempotency",
+      "url": "https://docs.aws.amazon.com/durable-execution/patterns/best-practices/idempotency/",
+      "title": "AWS Durable Execution SDK Developer Guide: Idempotency and retries",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "At-least-once per retry is the default: if an attempt is interrupted (the sandbox dies, the network drops, the runtime hits the invocation timeout), the step runs again on replay",
+        "At-most-once per retry waits for the START checkpoint and raises StepInterrupted on replay instead of re-executing; neither semantic guarantees exactly one run across the workflow"
+      ]
+    },
+    {
+      "id": "durable-sdk-npm",
+      "url": "https://www.npmjs.com/package/@aws/durable-execution-sdk-js/v/2.6.0",
+      "title": "@aws/durable-execution-sdk-js 2.6.0 and @aws/durable-execution-sdk-js-testing 1.3.0 (npm tarballs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "withDurableExecution wraps a handler that receives (event, DurableContext); context.step(name, fn, config) returns the checkpointed result",
+        "StepConfig accepts retryStrategy(error, attempt) returning { shouldRetry, delay } and semantics (StepSemantics.AtLeastOncePerRetry by default)",
+        "The testing package's LocalDurableTestRunner runs a handler against a checkpoint store in the local process, with skipTime to skip waits and retry delays",
+        "Both packages require Node.js 22 or later and depend on @aws-sdk/client-lambda"
+      ],
+      "note": "Read from the installed tarballs (README and dist-types). Version 2.6.0 was published on 2026-10-02."
+    },
+    {
+      "id": "sfn-workflow-types",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html",
+      "title": "Choosing workflow type in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard workflows run up to one year and are billed by state transition; Express workflows run up to five minutes and are billed by executions, duration, and memory",
+        "Standard workflows follow an exactly-once model: tasks and states are never run more than once unless Retry is specified in the definition",
+        "Asynchronous Express workflows are at-least-once",
+        "The workflow type cannot be changed after the state machine is created",
+        "Standard: starting an execution with the same name as a running one returns an idempotent response; execution history is removed after 90 days",
+        "Express workflows do not support the .sync or .waitForTaskToken integration patterns"
+      ]
+    },
+    {
+      "id": "sfn-error-handling",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html",
+      "title": "Handling errors in Step Functions workflows",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Retry fields: ErrorEquals, IntervalSeconds (default 1), MaxAttempts (default 3; 0 means never retried), BackoffRate (default 2.0), MaxDelaySeconds, JitterStrategy (FULL or NONE)",
+        "States.ALL matches any known error name but not States.DataLimitExceeded or States.Runtime; States.TaskFailed matches any error except States.Timeout",
+        "Catch has ErrorEquals, Next, and ResultPath; catchers apply when there is no Retry or retries are exhausted",
+        "Catchers exist for Task, Parallel, and Map states, not for top-level execution failures",
+        "Retries are treated as state transitions",
+        "Without Retry or Catch, an error fails the entire execution"
+      ]
+    },
+    {
+      "id": "sfn-task-state",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-task.html",
+      "title": "Task workflow state",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "TimeoutSeconds: the maximum time a task can run before it fails with States.Timeout; the default is 99,999,999",
+        "The timeout counts from the task's start event; if the worker does not respond in time, Step Functions marks the task as failed"
+      ],
+      "note": "The page says what Step Functions does when the time runs out. It does not say that the Lambda function is stopped."
+    },
+    {
+      "id": "sfn-connect-lambda",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-lambda.html",
+      "title": "Invoke an AWS Lambda function with Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A function ARN can be given directly in Resource; the task result is then the function's output alone, and .waitForTaskToken is not available",
+        "With the optimized integration (arn:aws:states:::lambda:invoke) the function output is nested under Payload"
+      ]
+    },
+    {
+      "id": "sfn-custom-error",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/tutorial-handling-error-conditions.html",
+      "title": "Handling error conditions in a Step Functions state machine",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An error thrown by a Node.js Lambda function is matched in Retry and Catch by the error's name (the tutorial sets this.name = 'CustomError' and catches \"CustomError\")",
+        "The tutorial retries Lambda.ServiceException, Lambda.AWSLambdaException, Lambda.SdkClientException, and Lambda.TooManyRequestsException"
+      ]
+    },
+    {
+      "id": "sfn-resultpath",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/input-output-resultpath.html",
+      "title": "Specifying state output using ResultPath in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": ["ResultPath in a Catch keeps the state's input and adds the error under the given field"]
+    },
+    {
+      "id": "sfn-redrive",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/redrive-executions.html",
+      "title": "Restarting state machine executions with redrive in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A failed, aborted, or timed-out Standard execution can be redriven for 14 days; it continues from the unsuccessful step with the same input and the same definition",
+        "Successful steps are not rerun; a redriven Task state is scheduled and started again with its retry count reset",
+        "A redrive re-enters a Fail state and fails again",
+        "Redrives count as state transitions; an execution with 24,999 or more history events cannot be redriven"
+      ]
+    },
+    {
+      "id": "sfn-quotas",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/service-quotas.html",
+      "title": "Step Functions service quotas",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard workflows: at most 25,000 events in one execution history; reaching it fails the execution",
+        "Input or output of a task, state, or execution is at most 256 KiB as a UTF-8 string",
+        "Execution history is kept for 90 days after an execution closes"
+      ]
+    },
+    {
+      "id": "sfn-best-practices",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/sfn-best-practices.html",
+      "title": "Best practices for Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Without TimeoutSeconds on a Task, an execution can be stuck waiting for a response that never comes",
+        "To stay under the history quota, use a Distributed Map or start a new execution from a Task state"
+      ]
+    },
+    {
+      "id": "sfn-iam-role",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/procedure-create-iam-role.html",
+      "title": "Creating an IAM role for your state machine in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The state machine's role is assumed by states.amazonaws.com",
+        "The documented trust policy limits it with ArnLike aws:SourceArn arn:aws:states:<region>:<account>:stateMachine:* and StringEquals aws:SourceAccount"
+      ]
+    },
+    {
+      "id": "sfn-connect-ecs",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-ecs.html",
+      "title": "Run Amazon ECS or Fargate tasks with Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The optimized integration calls ecs:runTask and supports the Run a Job (.sync) pattern",
+        "With .sync, a non-empty Failures field fails the task with AmazonECS.Unknown",
+        "Input reaches the container through overrides (ContainerOverride)"
+      ]
+    },
+    {
+      "id": "sfn-integration-patterns",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html",
+      "title": "Discover service integration patterns in Step Functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With .sync Step Functions waits for the job to complete before moving on; AWS Batch submitJob.sync and ECS runTask.sync are examples",
+        "If a .sync task is aborted and Step Functions cannot cancel the job, the integrated service may keep charging"
+      ]
+    },
+    {
+      "id": "sfn-start-execution",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_StartExecution.html",
+      "title": "StartExecution",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "StartExecution is idempotent for STANDARD workflows: the same name and input as a running execution returns the same response",
+        "If the execution is closed or the input differs, it returns 400 ExecutionAlreadyExists; a name can be reused 90 days after the execution closes",
+        "An execution name is at most 80 characters and must not contain, among others, colons, slashes, brackets, or white space; without a name Step Functions generates a UUID"
+      ]
+    },
+    {
+      "id": "cfn-sfn-statemachine",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-stepfunctions-statemachine.html",
+      "title": "AWS::StepFunctions::StateMachine",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Properties include DefinitionString, RoleArn, StateMachineType, LoggingConfiguration, and DefinitionSubstitutions"
+      ]
+    },
+    {
+      "id": "sfn-pricing",
+      "url": "https://aws.amazon.com/step-functions/pricing/",
+      "title": "AWS Step Functions pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard workflows are charged per state transition, retries included",
+        "The free tier is 4,000 state transitions a month, does not expire, and applies to existing and new customers",
+        "The page's example counts four transitions for a workflow of two states: Start, the two states, and End"
+      ],
+      "note": "Prices on the page are filled in by script; the numbers used in the book come from the Price List (source aws-price-list-states)."
+    },
+    {
+      "id": "aws-price-list-states",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Step Functions, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SKU BTKF2VQUME7BCFVV (APN1-StateTransition): USD 0.000025 per state transition",
+        "SKU DCMZZXP5RBUG8FGP (Global-StateTransition): USD 0 for the first 4,000 state transitions",
+        "Express workflows: SKU DAVXY63QBMD93BC2, USD 0.000001 per request, plus a tiered GB-second duration charge"
+      ],
+      "note": "Offer publication date 2026-09-11T12:45:11Z."
+    },
+    {
+      "id": "aws-price-list-lambda-durable",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Lambda durable execution, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SKU 38G2CJHVYQC45MTY (APN1-Lambda-Durable-Execution-Operations): USD 0.0000106 per durable operation",
+        "SKU MVB47QVZRQ9MSHUU (APN1-Lambda-Durable-Execution-Written-Bytes): USD 0.33 per GB written",
+        "SKU A7USWCXHVDSE3RNW (APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs): USD 0.20 per GB-month retained"
+      ],
+      "note": "Offer publication date 2026-10-09T22:31:22Z. The presence of APN1 SKUs is the only evidence gathered that durable functions are offered in ap-northeast-1."
+    },
+    {
+      "id": "lambda-pricing-durable",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda pricing: Lambda Durable Functions Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Durable functions are charged for durable operations (starting executions, completing steps, creating waits), for data written, and for data retained during and after execution, on top of normal Lambda compute",
+        "During a wait an on-demand function incurs no duration charge until execution resumes",
+        "Compute charges apply to the invocations that replays cause"
+      ],
+      "note": "The section names no free allowance for durable operations or storage."
+    },
+    {
+      "id": "scheduler-context-attributes",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html",
+      "title": "Adding context attributes in EventBridge Scheduler",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "<aws.scheduler.scheduled-time> in the target's payload is replaced with the time the schedule was due, for example 2022-03-22T18:59:43Z",
+        "<aws.scheduler.execution-id> is unique per attempted invocation, and <aws.scheduler.attempt-number> counts attempts"
+      ]
+    },
+    {
+      "id": "scheduler-templated-sfn",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-templated.html",
+      "title": "Using templated targets in EventBridge Scheduler: Step Functions StartExecution",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Step Functions StartExecution is a templated target: the target ARN is the state machine's, and Input is the execution input",
+        "The schedule's execution role needs states:StartExecution"
+      ],
+      "note": "The page's example policy uses Resource \"*\"; the chapter's role names the one state machine instead."
+    },
+    {
+      "id": "s3-conditional-writes-if-none-match",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
+      "title": "How to prevent object overwrites with conditional writes (re-read for chapter 16)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "PutObject with If-None-Match: * succeeds only if no object has the key; otherwise S3 answers 412 Precondition Failed",
+        "When several conditional writes target the same key, the first to finish succeeds and the rest get 412",
+        "A 409 Conflict is possible when a delete of the key succeeds before the conditional write completes; a PutObject may be retried after it",
+        "If-None-Match needs only the s3:PutObject permission"
+      ]
+    },
+    {
+      "id": "dynamodb-scan",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html",
+      "title": "Scanning tables in DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "One Scan request reads at most 1 MB; the limit and the Limit parameter apply before the filter expression",
+        "The absence of LastEvaluatedKey is the only way to know the last page was reached; it is passed back as ExclusiveStartKey",
+        "Read capacity is consumed by the items read, whether or not a filter or projection drops them"
+      ]
+    },
+    {
+      "id": "s3-head-object-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html",
+      "title": "HeadObject (permissions, re-read for chapter 16)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "HEAD needs the s3:GetObject permission",
+        "For a missing object S3 answers 404 if the caller has s3:ListBucket on the bucket and 403 if not"
+      ]
+    },
+    {
+      "id": "dynamodb-export-s3",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/S3DataExport.HowItWorks.html",
+      "title": "DynamoDB data export to Amazon S3: how it works",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Export to S3 exports a table as of any time within its point-in-time recovery window; PITR must be enabled on the table"
+      ],
+      "note": "Read only to point at the alternative; not used or tried in the chapter."
+    },
+    {
+      "id": "sfn-eventbridge",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/eventbridge-integration.html",
+      "title": "Automating Step Functions event delivery with EventBridge",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Step Functions sends an Execution Status Change event to EventBridge when the status of a Standard workflow execution changes"
+      ]
+    },
+    {
+      "id": "batch-what-is",
+      "url": "https://docs.aws.amazon.com/batch/latest/userguide/what-is-batch.html",
+      "title": "What is AWS Batch?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS Batch plans, schedules, and runs containerized batch jobs on ECS, EKS, Fargate, and EC2 (Spot or On-Demand), provisioning compute in response to submitted jobs"
+      ]
+    },
+    {
+      "id": "batch-fargate",
+      "url": "https://docs.aws.amazon.com/batch/latest/userguide/fargate.html",
+      "title": "AWS Batch: Fargate compute environments",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Batch can run jobs on Fargate without managing instances; Fargate is available only for Batch compute environments that use ECS as the orchestrator"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows",
+      "url": "https://developers.cloudflare.com/workflows/",
+      "title": "Cloudflare Workflows",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Workflows chain steps with step.do, retry failed steps automatically, and persist state; a WorkflowEntrypoint class defines run(event, step)"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows-rules",
+      "url": "https://developers.cloudflare.com/workflows/build/rules-of-workflows/",
+      "title": "Cloudflare Workflows: Rules of Workflows",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A step might be retried multiple times, so steps should be idempotent",
+        "A Workflow may hibernate and lose in-memory state; state must be built from step.do return values, and non-deterministic calls belong inside steps"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows-limits",
+      "url": "https://developers.cloudflare.com/workflows/reference/limits/",
+      "title": "Cloudflare Workflows: Limits",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Wall-clock duration per step is unlimited; CPU time per step is 30 seconds by default on the paid plan, configurable to 5 minutes",
+        "A step result is at most 1 MiB; a Workflow has at most 10,000 steps by default on the paid plan (1,024 on free)",
+        "step.sleep can last up to 365 days",
+        "Workers invoked by Cron Triggers and Durable Object alarm handlers have a 15-minute wall time limit"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows-pricing",
+      "url": "https://developers.cloudflare.com/workflows/reference/pricing/",
+      "title": "Cloudflare Workflows: Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Workflows are billed on CPU time, requests, storage, and steps; a sleeping or waiting Workflow incurs no CPU time",
+        "Billing for steps and storage started on 2026-08-10; the paid plan includes 500,000 steps a month"
+      ]
+    },
+    {
+      "id": "cdkd-source-long-jobs",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: providers used by chapter 16 (read from the npm tarball's dist)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dedicated providers are registered for AWS::StepFunctions::StateMachine, AWS::Scheduler::Schedule, AWS::Lambda::Function, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::DynamoDB::Table, AWS::Logs::LogGroup, AWS::IAM::Role, and AWS::IAM::Policy",
+        "No provider is registered for AWS::Lambda::Version or AWS::Lambda::Alias, so they go through Cloud Control API",
+        "The Step Functions provider applies DefinitionSubstitutions only to a definition fetched from DefinitionS3Location; an inline DefinitionString or Definition is sent as it is",
+        "The Lambda function provider passes DurableConfig to CreateFunction and UpdateFunctionConfiguration, and treats adding or removing DurableConfig as a replacement"
+      ],
+      "note": "Checked in the installed package (dist/program-*.js, provider-classes-*.js, deploy-engine-*.js), not on GitHub."
+    },
+    {
+      "id": "aws-cdk-lib-durable",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: durableConfig and CfnStateMachine (type definitions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "FunctionProps.durableConfig takes { executionTimeout: Duration; retentionPeriod?: Duration } and renders CfnFunction.DurableConfig",
+        "When no role is passed, a function with durableConfig gets the managed policy AWSLambdaBasicDurableExecutionRolePolicy; with a role of your own, nothing is added",
+        "CfnStateMachine accepts definitionString, roleArn, and stateMachineType"
+      ],
+      "note": "Read from aws-lambda/lib/durable-config.d.ts, function.js, and aws-stepfunctions in the installed package."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "workflow",
+      "ja": "workflow",
+      "en": "workflow",
+      "firstUse": "16",
+      "definition": {
+        "ja": "複数の step を、決めた順序と条件で実行する処理。どの step まで終わったかを、step の外にある仕組みが覚えている。",
+        "en": "Work made of several steps run in a defined order under defined conditions, where something outside the steps remembers how far it has got."
+      }
+    },
+    {
+      "id": "state-machine",
+      "ja": "state machine",
+      "en": "state machine",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Step Functions での workflow の定義。state（Task、Choice など）と、そのつながりを JSON で書く。",
+        "en": "A workflow definition in Step Functions: states such as Task and Choice, and how they connect, written as JSON."
+      }
+    },
+    {
+      "id": "amazon-states-language",
+      "ja": "Amazon States Language",
+      "en": "Amazon States Language",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Step Functions の state machine を書く JSON の言語。ASL と略す。",
+        "en": "The JSON language that Step Functions state machines are written in. ASL for short."
+      }
+    },
+    {
+      "id": "state-transition",
+      "ja": "state transition",
+      "en": "state transition",
+      "firstUse": "16",
+      "definition": {
+        "ja": "state machine の実行が、ある state から次へ進むこと。Standard workflow の課金単位で、再試行も 1 回と数える。",
+        "en": "One move of an execution from a state to the next. It is the billing unit of Standard workflows, and a retry counts as one."
+      }
+    },
+    {
+      "id": "checkpoint",
+      "ja": "checkpoint",
+      "en": "checkpoint",
+      "firstUse": "16",
+      "definition": {
+        "ja": "長い処理の途中で「ここまで終わった」を保存すること、またはその記録。やり直すときは、最後の checkpoint から続ける。",
+        "en": "Saving \"done up to here\" partway through long work, or the record itself. A rerun continues from the last checkpoint."
+      }
+    },
+    {
+      "id": "durable-function",
+      "ja": "durable function",
+      "en": "durable function",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Lambda の関数で、step の結果を Lambda が保存し、中断の後に最初から実行し直して済んだ step を飛ばすもの。1 回の呼び出しは 15 分までだが、実行全体は最長 1 年。",
+        "en": "A Lambda function whose step results Lambda stores; after an interruption it runs again from the top and skips the finished steps. One invocation is limited to 15 minutes, the whole execution to one year."
+      }
+    },
+    {
+      "id": "replay",
+      "ja": "replay",
+      "en": "replay",
+      "firstUse": "16",
+      "definition": {
+        "ja": "保存してある step の結果を使いながら、コードを最初から実行し直すこと。同じ入力から同じ順序で step を呼ぶコードでなければ成り立たない。",
+        "en": "Running the code again from the beginning while using the stored results of finished steps. It works only if the code calls the same steps in the same order for the same input."
+      }
+    },
+    {
+      "id": "compensation",
+      "ja": "補償処理",
+      "en": "compensation",
+      "firstUse": "16",
+      "definition": {
+        "ja": "途中まで進んだ処理を取り消すために、済んだ step の効果を打ち消す別の step を実行すること。データベースの rollback と違い、自分で書き、それ自体も失敗しうる。",
+        "en": "Undoing work that got partway by running other steps that cancel the effects of the finished ones. Unlike a database rollback, you write it yourself, and it can fail too."
+      }
+    },
+    {
+      "id": "manifest",
+      "ja": "manifest",
+      "en": "manifest",
+      "firstUse": "16",
+      "definition": {
+        "ja": "出力を構成するファイルの一覧を書いた、小さなファイル。最後に書くことで、「全部そろった」ことの印になる。",
+        "en": "A small file listing the files that make up an output. Written last, it is the sign that everything is there."
+      }
+    },
+    {
+      "id": "conditional-write",
+      "ja": "条件付き書き込み",
+      "en": "conditional write",
+      "firstUse": "16",
+      "definition": {
+        "ja": "「まだ無ければ」「この版のままなら」といった条件を付けた書き込み。条件の検査と書き込みを、保存する側が 1 つの手順として実行する。",
+        "en": "A write with a condition such as \"only if absent\" or \"only if still this version\", where the store checks the condition and writes as a single step."
+      }
+    },
+    {
+      "id": "standard-workflow",
+      "ja": "Standard workflow",
+      "en": "Standard workflow",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Step Functions の workflow の種類の 1 つ。最長 1 年、state の間で状態を保存し、state transition の数で課金される。もう 1 つは最長 5 分の Express。",
+        "en": "One of the two Step Functions workflow types: up to a year, state persisted between states, billed per state transition. The other is Express, up to five minutes."
+      }
+    },
+    {
+      "id": "aws-batch",
+      "ja": "AWS Batch",
+      "en": "AWS Batch",
+      "firstUse": "16",
+      "definition": {
+        "ja": "コンテナの job を queue に積み、必要な計算資源（Fargate や EC2）を用意して実行するサービス。",
+        "en": "A service that queues container jobs and provisions the compute (Fargate or EC2) to run them."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "16.architecture",
+      "sources": ["examples/16-long-jobs/infra/lib/long-jobs-stack.ts", "examples/16-long-jobs/src/workflow.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.split",
+      "sources": [
+        "examples/16-long-jobs/src/job.ts",
+        "examples/16-long-jobs/src/note-source.ts",
+        "examples/16-long-jobs/src/dynamodb-note-source.ts",
+        "examples/16-long-jobs/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.idempotent-step",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/export-store.ts",
+        "examples/16-long-jobs/src/s3-export-store.ts",
+        "examples/16-long-jobs/test/steps.test.ts",
+        "examples/16-long-jobs/test/harness.ts",
+        "examples/16-long-jobs/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.manifest",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/job.ts",
+        "examples/16-long-jobs/test/steps.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.workflow",
+      "sources": ["examples/16-long-jobs/src/workflow.ts", "examples/16-long-jobs/test/workflow.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.checkpoint",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/export-pages-lambda.ts",
+        "examples/16-long-jobs/src/env.ts",
+        "examples/16-long-jobs/test/steps.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.local",
+      "sources": [
+        "examples/16-long-jobs/src/local-workflow.ts",
+        "examples/16-long-jobs/src/local.ts",
+        "examples/16-long-jobs/scripts/run-local.ts",
+        "examples/16-long-jobs/test/workflow.test.ts"
+      ],
+      "tasks": ["export:local", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "16.infra",
+      "sources": [
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
+        "examples/16-long-jobs/infra/bin/app.ts",
+        "examples/16-long-jobs/infra/test/long-jobs-stack.test.ts",
+        "examples/16-long-jobs/src/finish-lambda.ts",
+        "examples/16-long-jobs/src/discard-lambda.ts",
+        "examples/16-long-jobs/cdk.json"
+      ],
+      "tasks": ["export:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.deploy",
+      "sources": [
+        "examples/16-long-jobs/scripts/seed.ts",
+        "examples/16-long-jobs/scripts/start.ts",
+        "examples/16-long-jobs/scripts/status.ts",
+        "examples/16-long-jobs/scripts/logs.ts"
+      ],
+      "tasks": [
+        "export:infra:diff",
+        "export:infra:deploy",
+        "export:seed",
+        "export:start",
+        "export:status",
+        "export:logs",
+        "export:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "16.durable",
+      "sources": [
+        "examples/16-long-jobs/src/durable-export.ts",
+        "examples/16-long-jobs/src/durable-lambda.ts",
+        "examples/16-long-jobs/test/durable.test.ts",
+        "examples/16-long-jobs/scripts/durable-start.ts",
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts"
+      ],
+      "tasks": ["test:unit", "export:durable:start"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.containers",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "16.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.cleanup",
+      "sources": ["examples/16-long-jobs/scripts/empty.ts"],
+      "tasks": ["export:empty", "export:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "sfn.standard.transition",
+      "offerCode": "AmazonStates",
+      "region": "ap-northeast-1",
+      "sku": "BTKF2VQUME7BCFVV",
+      "usageType": "APN1-StateTransition",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "StateTransitions",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000250000",
+          "description": "$0.000025 per state transition"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:11Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.operation",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "38G2CJHVYQC45MTY",
+      "usageType": "APN1-Lambda-Durable-Execution-Operations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DurableOperations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000106000",
+          "description": "$0.0000106 per DurableOperation for Lambda-Durable-Execution-Operations in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.written",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "MVB47QVZRQ9MSHUU",
+      "usageType": "APN1-Lambda-Durable-Execution-Written-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GigaBytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3300000000",
+          "description": "$0.33 per GigaByte for Lambda-Durable-Execution-Written-Bytes in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.retained",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "A7USWCXHVDSE3RNW",
+      "usageType": "APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GigaBytesMonth",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2000000000",
+          "description": "$0.20 per GigaBytesMonth for Lambda-Durable-Execution-TimedStorage-ByteHrs in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "sfn.standard.transition",
+      "quantity": 4000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sfn-pricing",
+      "note": "4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000)."
+    }
+  ],
+  "unknownAllowances": [
+    {
+      "priceId": "lambda.durable.operation",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "lambda.durable.written",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "lambda.durable.retained",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "export-idle",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: デプロイ済みで、ノートが 1 件もない月",
+        "en": "Long jobs: deployed, with no notes at all, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "schedule は 1 日 1 回、月 30 回 workflow を起動する。table は空",
+          "1 回の実行は ExportPages、MorePages、Finish、Exported を 1 回ずつ通る。開始と終了を足して state transition は 6 と数える（料金ページの例の数え方。実測ではない）",
+          "関数の呼び出しは 1 回の実行につき 2 回。それぞれ 0.5 秒、256 MB、arm64 と仮定",
+          "空の Scan は 1 回につき読み取り 1 unit と多めに数える。S3 は LIST 1 回と manifest の PUT 1 回",
+          "ログは関数の呼び出し 1 回につき 1 KB"
+        ],
+        "en": [
+          "The schedule starts the workflow once a day, 30 times a month. The table is empty",
+          "One execution passes ExportPages, MorePages, Finish, and Exported once each. With start and end that is counted as 6 state transitions (the pricing page's way of counting; not measured)",
+          "Two function invocations per execution, each assumed to take 0.5 s with 256 MB on arm64",
+          "An empty Scan is counted as one read unit, generously. S3 sees one LIST and one manifest PUT",
+          "1 KB of logs per function invocation"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "one start a day"
+        },
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 180,
+          "basis": "30 executions x 6 transitions"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 60,
+          "basis": "30 executions x 2 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 7.5,
+          "basis": "60 x 0.5 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 30,
+          "basis": "one empty Scan per run, counted as 1 unit"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 60,
+          "basis": "30 runs x (1 LIST + 1 manifest PUT)"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000057,
+          "basis": "60 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-daily-10k-coarse",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: 10,000 件を毎日 export。1 回の呼び出しで全ページ（この章の既定）",
+        "en": "Long jobs: 10,000 notes exported daily, every page in one invocation (this chapter's default)"
+      },
+      "assumptions": {
+        "ja": [
+          "table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する",
+          "1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定",
+          "Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit",
+          "export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）",
+          "関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない",
+          "state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない",
+          "未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送",
+          "ExportPages は 1 回の呼び出しで 100 ページを書き終える（20 秒）。state transition は 1 回の実行で 6"
+        ],
+        "en": [
+          "10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month",
+          "100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed",
+          "The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB",
+          "Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)",
+          "Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured",
+          "State transitions are estimated the way the pricing page's example counts them (start and end count as one each), not measured",
+          "Not included: retries, redrives, data transfer out of S3 and DynamoDB",
+          "ExportPages writes all 100 pages in one invocation (20 s). 6 state transitions per execution"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "one start a day"
+        },
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 180,
+          "basis": "30 executions x 6 transitions"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 60,
+          "basis": "30 executions x 2 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 157.5,
+          "basis": "30 x (20 s + 1 s) x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 38400,
+          "basis": "30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent)"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 3060,
+          "basis": "30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST)"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.082,
+          "basis": "7 exports of 12 MB kept at any time, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000057,
+          "basis": "60 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-daily-10k-fine",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: 10,000 件を毎日 export。1 ページごとに workflow に戻る",
+        "en": "Long jobs: 10,000 notes exported daily, returning to the workflow after every page"
+      },
+      "assumptions": {
+        "ja": [
+          "table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する",
+          "1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定",
+          "Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit",
+          "export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）",
+          "関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない",
+          "state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない",
+          "未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送",
+          "ExportPages は 1 ページ書くごとに戻る。1 回の実行で ExportPages と MorePages を 100 回ずつ通り、state transition は 204"
+        ],
+        "en": [
+          "10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month",
+          "100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed",
+          "The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB",
+          "Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)",
+          "Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured",
+          "State transitions are estimated the way the pricing page's example counts them (start and end count as one each), not measured",
+          "Not included: retries, redrives, data transfer out of S3 and DynamoDB",
+          "ExportPages returns after every page: 100 passes through ExportPages and MorePages each, 204 state transitions per execution"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "one start a day"
+        },
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 6120,
+          "basis": "30 executions x (100 x 2 + 4) transitions"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 3030,
+          "basis": "30 executions x (100 pages + 1 finish)"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 157.5,
+          "basis": "30 x (100 x 0.2 s + 1 s) x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 38400,
+          "basis": "30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent)"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 3060,
+          "basis": "30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST)"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.082,
+          "basis": "7 exports of 12 MB kept at any time, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.00289,
+          "basis": "3,030 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-daily-10k-durable",
+      "chapter": "16",
+      "title": {
+        "ja": "長い処理: 10,000 件を毎日 export。durable function 版（`-c durable=true`）",
+        "en": "Long jobs: 10,000 notes exported daily with the durable-function variant (`-c durable=true`)"
+      },
+      "assumptions": {
+        "ja": [
+          "table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する",
+          "1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定",
+          "Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit",
+          "export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）",
+          "関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない",
+          "未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送",
+          "1 日 1 回、手で（または別の schedule で）起動するものとする。Step Functions は通らない",
+          "step は 20 ページごとに 1 つで 5 つ、それに finish。実行の開始を足して durable operation は 1 回の実行で 7",
+          "待機がないので、関数の呼び出しは 1 回の実行につき 1 回（21 秒）と仮定",
+          "checkpoint に書かれるのは進捗だけ。1 operation あたり 1 KB、保持は 1 日と仮定"
+        ],
+        "en": [
+          "10,000 notes of 1 KB in the table (10 MB), exported once a day, 30 times a month",
+          "100 notes a page, so 100 parts per export; 120 KB a part and 12 MB an export, assumed",
+          "The Scan is eventually consistent, 0.5 units per 4 KB: 1,280 units for 10 MB",
+          "Exports expire after 7 days, so the bucket holds 7 of them at any time (84 MB)",
+          "Functions on arm64 with 256 MB. 200 ms a page and 1 s for Finish, assumed, not measured",
+          "Not included: retries, redrives, data transfer out of S3 and DynamoDB",
+          "Started once a day by hand or by a schedule of your own; Step Functions is not involved",
+          "One step per 20 pages makes 5 steps, plus finish. With the start of the execution that is 7 durable operations per execution",
+          "No waits, so one function invocation per execution (21 s), assumed",
+          "Only the progress is checkpointed: 1 KB per operation, retained for one day, assumed"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.durable.operation",
+          "quantity": 210,
+          "basis": "30 executions x (1 start + 5 page steps + 1 finish)"
+        },
+        {
+          "priceId": "lambda.durable.written",
+          "quantity": 0.0002,
+          "basis": "210 operations x 1 KB, in GB"
+        },
+        {
+          "priceId": "lambda.durable.retained",
+          "quantity": 0.000007,
+          "basis": "0.0002 GB x 1/30, in GB-month"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 30,
+          "basis": "one invocation per execution"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 157.5,
+          "basis": "30 x 21 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 38400,
+          "basis": "30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent)"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 3060,
+          "basis": "30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST)"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.082,
+          "basis": "7 exports of 12 MB kept at any time, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000029,
+          "basis": "30 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "export-step-fargate-1h",
+      "chapter": "16",
+      "title": {
+        "ja": "比較: 1 時間かかる step を、1 日 1 回 Fargate の task で動かす月",
+        "en": "For comparison: a step that takes an hour, run once a day as a Fargate task for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "この章の stack は作らない構成。料金の比較のためだけに計算",
+          "0.25 vCPU、0.5 GB、arm64 の task を 1 日 1 回、1 時間。月 30 時間",
+          "public subnet で public IPv4 を付けて動かす（12章の構成）。task が動いている間だけ課金される",
+          "未算入: image の保存（ECR）、ログ、データ転送、Step Functions の state transition"
+        ],
+        "en": [
+          "Not something this chapter's stack creates; computed only to compare prices",
+          "A task of 0.25 vCPU and 0.5 GB on arm64, once a day for an hour: 30 hours a month",
+          "Run in a public subnet with a public IPv4 address (chapter 12's layout), billed only while the task runs",
+          "Not included: image storage in ECR, logs, data transfer, Step Functions state transitions"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 7.5,
+          "basis": "30 hours x 0.25 vCPU"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 15,
+          "basis": "30 hours x 0.5 GB"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 30,
+          "basis": "one public IPv4 address for 30 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "16",
+        "command": "vp run test:unit (examples/16-long-jobs)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "step の再実行（同じ step の 2 回目、応答が失われた後に table が変わった場合、呼び出しの途中での失敗、読み取りの失敗）、2 つの worker（止まっていた worker が遅れて書く、同じ export の 2 つの実行が重なる）、checkpoint の大きさを変えても出力が同じこと、manifest と補償処理（欠けた part、途中で止まった破棄、完成した export を消さないこと）、workflow の定義を手元の実行器で動かす（応答の喪失、再試行の打ち切りと再開、最初からのやり直し、破棄）、S3 と DynamoDB へのリクエストの形、durable function 版（SDK の LocalDurableTestRunner）、stack の assertion。条件を 2 か所わざと壊して、どちらもテストが 2 つ落ちることも確かめた",
+          "en": "A step that runs again (the same step twice, the table changing after a lost answer, a failure in the middle of a call, a failed read), two workers (a stalled worker writing late, two runs of the same export overlapping), the same output whatever the checkpoint size, the manifest and the compensation (a missing part, an interrupted discard, never deleting a finished export), the workflow definition run by the local runner (a lost answer, retries running out and a resume, a restart from the beginning, a discard), the requests sent to S3 and DynamoDB, the durable-function variant (the SDK's LocalDurableTestRunner), and stack assertions. Two conditions were also broken on purpose; each made two tests fail"
+        }
+      },
+      {
+        "scope": "16",
+        "command": "vp run export:local",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "既定（250 件）、`--notes 450 --lose 2 --break 4`（応答の喪失と、再試行の打ち切りからの再開）、`--notes 1000 --pages-per-call 20` を実行し、manifest の行数と重複のない件数がノートの件数と一致することを確かめた。相手はメモリ上の store で、Step Functions でも S3 でも DynamoDB でもない",
+          "en": "Ran the default (250 notes), `--notes 450 --lose 2 --break 4` (a lost answer, then retries running out and a resume), and `--notes 1000 --pages-per-call 20`, and checked that the manifest's line count and distinct note count equal the number of notes. The stores were in memory: not Step Functions, S3, or DynamoDB"
+        }
+      },
+      {
+        "scope": "16",
+        "command": "vp run export:infra:synth / typecheck",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "既定の構成と `-c durable=true` の両方で synth した（esbuild の bundle 込み。durable 版は SDK も bundle する）。既定は 9 種類で、どれも cdkd 0.296.28 に専用の実装がある。durable 版は Lambda::Version と Lambda::Alias が増え、この 2 つは Cloud Control API 経由。scripts/ は型検査のみ",
+          "en": "Synthesized the default layout and `-c durable=true`, including the esbuild bundles (the durable variant bundles the SDK too). The default has nine resource types, each with a dedicated provider in cdkd 0.296.28; the durable variant adds Lambda::Version and Lambda::Alias, which go through Cloud Control API. scripts/ is type-checked only"
+        }
+      },
+      {
+        "scope": "16",
+        "command": "vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "bucket、table、関数 3 つ、state machine、schedule を作る。`-c durable=true` では durable function と version、alias が増える。Step Functions、Scheduler からの起動、S3 の条件付き書き込み、DynamoDB の Scan、durable function は、どれも実環境で未確認",
+          "en": "Creates a bucket, a table, three functions, a state machine, and a schedule; with `-c durable=true` also a durable function, a version, and an alias. Step Functions, the start from Scheduler, S3 conditional writes, the DynamoDB Scan, and the durable function are all unconfirmed in AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "16-deploy",
+        "summary": {
+          "ja": "16章の stack を AWS に一度も deploy していない。未確認: cdkd 0.296.28 が inline の DefinitionString（Fn::Join）で state machine を作れること。state machine の role の trust policy の条件が通ること。Scheduler が `<aws.scheduler.scheduled-time>` を置き換えた入力で StartExecution を呼ぶこと。関数の ARN を Resource に直接書いた Task の入出力。Lambda の例外の name が Catch の `ExportCorrupt` に一致すること。S3 が `If-None-Match: *` に 412 を返し、SDK がそれを status 412 の例外として投げること。HeadObject の metadata のキーが小文字で返ること。Task の timeout の後も Lambda が動き続けるかどうか。state transition の実際の数。",
+          "en": "The chapter 16 stack has never been deployed. Unconfirmed: that cdkd 0.296.28 creates the state machine from an inline DefinitionString (an Fn::Join); that the trust policy conditions on the state machine's role are accepted; that Scheduler calls StartExecution with `<aws.scheduler.scheduled-time>` replaced in the input; the input and output of a Task whose Resource is a function ARN; that the name of a Lambda exception matches the `ExportCorrupt` catcher; that S3 answers 412 to `If-None-Match: *` and the SDK throws it as an exception with status 412; that HeadObject returns metadata keys in lower case; whether the Lambda function keeps running after a Task times out; and the real number of state transitions."
+        },
+        "resume": {
+          "ja": "`vp run export:infra:deploy`、`vp run export:seed --notes 250`、`vp run export:start --id check-1 --wait` の順に実行し、`vp run export:status` で manifest と history の件数を見る。同じ ID でもう一度 `export:start` を実行して ExecutionAlreadyExists になることを確かめる。失敗の経路は、実行中に S3 の console で part を 1 つ消すか、ExportPages の関数の timeout を一時的に短くして確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy`。",
+          "en": "Run `vp run export:infra:deploy`, `vp run export:seed --notes 250`, and `vp run export:start --id check-1 --wait`, then look at the manifest and the history count with `vp run export:status`. Run `export:start` again with the same ID and check for ExecutionAlreadyExists. For the failure paths, delete one part in the S3 console during a run, or shorten the ExportPages function's timeout for a while. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy`."
+        }
+      },
+      {
+        "id": "16-durable",
+        "summary": {
+          "ja": "Lambda durable function は一度も deploy していない。未確認: ap-northeast-1 で使えること（根拠は Price List に東京の SKU があることだけ）。cdkd 0.296.28 が DurableConfig つきの関数を作れること、Lambda::Version と Lambda::Alias を Cloud Control API 経由で作れること。実行 role の権限（`function:<名前>:*` への CheckpointDurableExecution と GetDurableExecutionState）で足りること。esbuild で bundle した SDK 2.6.0 が nodejs24.x で動くこと。`DurableExecutionName` による重複起動の抑止。1 回の呼び出しが関数の timeout に当たったときの実際の動き。durable operation の実際の数と料金。",
+          "en": "The Lambda durable function has never been deployed. Unconfirmed: that it is available in ap-northeast-1 (the only evidence is the Tokyo SKUs in the Price List); that cdkd 0.296.28 creates a function with DurableConfig, and Lambda::Version and Lambda::Alias through Cloud Control API; that the execution role's permissions (CheckpointDurableExecution and GetDurableExecutionState on `function:<name>:*`) are enough; that SDK 2.6.0 bundled by esbuild runs on nodejs24.x; that `DurableExecutionName` prevents a duplicate start; what really happens when one invocation hits the function timeout; and the real number of durable operations and their cost."
+        },
+        "resume": {
+          "ja": "`vp run export:infra:deploy -c durable=true` のあと `vp run export:seed`、`vp run export:durable:start --id check-1` を実行し、Lambda の console の Durable executions タブと `vp run export:logs --function durable` で経過を見る。同じ ID でもう一度起動して、新しい実行が増えないことを確かめる。`vp run export:status` で manifest を確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy -c durable=true`。",
+          "en": "Run `vp run export:infra:deploy -c durable=true`, then `vp run export:seed` and `vp run export:durable:start --id check-1`, and follow it in the Durable executions tab of the Lambda console and with `vp run export:logs --function durable`. Start the same ID again and check that no new execution appears. Check the manifest with `vp run export:status`. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy -c durable=true`."
+        }
+      },
+      {
+        "id": "16-containers",
+        "summary": {
+          "ja": "step を ECS task（`ecs:runTask.sync`）や AWS Batch の job にする構成は、本文で説明しただけで、コードもテストもない。必要な IAM、ネットワーク、task の終了コードの扱い、料金の実測は未確認。",
+          "en": "Running a step as an ECS task (`ecs:runTask.sync`) or an AWS Batch job is described in prose only; there is no code and no test. The IAM, the networking, how a task's exit code is handled, and the measured cost are unconfirmed."
+        },
+        "resume": {
+          "ja": "12章の image の扱い（tag は immutable、`fromAsset` を使わない）で export の worker を image にし、state machine の ExportPages を `arn:aws:states:::ecs:runTask.sync` に置き換える。進捗は task の戻り値ではなく S3 に置く必要がある。Docker の daemon が要る。",
+          "en": "Package the export worker as an image the way chapter 12 does (immutable tags, no `fromAsset`) and replace the ExportPages state with `arn:aws:states:::ecs:runTask.sync`. Progress then has to live in S3, since a task returns no value. This needs a Docker daemon."
+        }
+      }
+    ]
+  },
+  "toolchain": [
+    {
+      "name": "AWS Durable Execution SDK for JavaScript (@aws/durable-execution-sdk-js, -testing)",
+      "version": "2.6.0 and 1.3.0",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/16-long-jobs/package.json, pnpm-lock.yaml"
+    }
+  ],
+  "tasks": {
+    "snippet": "      // ---- chapter 16: long-running jobs ----------------------------------\n      // The deployed workflow definition, run in memory with injected interruptions. No AWS.\n      \"export:local\": fresh(\"node scripts/run-local.ts\", { cwd: \"examples/16-long-jobs\" }),\n      ...infra(\"export\", \"examples/16-long-jobs\", \"AihLongJobs\"),\n      // Writes sample notes to the deployed table.\n      \"export:seed\": live(\"node --env-file-if-exists=../../.env scripts/seed.ts\", { cwd: \"examples/16-long-jobs\" }),\n      // Starts one export now. --wait follows it to the end.\n      \"export:start\": live(\"node --env-file-if-exists=../../.env scripts/start.ts\", { cwd: \"examples/16-long-jobs\" }),\n      // Recent executions and finished exports. --redrive <arn> resumes a failed one.\n      \"export:status\": live(\"node --env-file-if-exists=../../.env scripts/status.ts\", { cwd: \"examples/16-long-jobs\" }),\n      // Tails one step's log group.\n      \"export:logs\": live(\"node --env-file-if-exists=../../.env scripts/logs.ts\", { cwd: \"examples/16-long-jobs\" }),\n      // Counts, and with --yes deletes, every object in the exports bucket.\n      \"export:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty.ts\", { cwd: \"examples/16-long-jobs\" }),\n      // Starts the durable-function variant. Needs a deploy with -c durable=true.\n      \"export:durable:start\": live(\"node --env-file-if-exists=../../.env scripts/durable-start.ts\", { cwd: \"examples/16-long-jobs\" }),",
+    "synth": ["export:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/16-long-jobs"]
+  }
+}

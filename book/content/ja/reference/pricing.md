@@ -1191,6 +1191,146 @@ ID: `ec2-public-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、�
 - 毎月の無料枠適用後の小計: **USD 1.54** / 月
 - 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
 
+## 長い処理: デプロイ済みで、ノートが 1 件もない月
+
+ID: `export-idle` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- schedule は 1 日 1 回、月 30 回 workflow を起動する。table は空
+- 1 回の実行は ExportPages、MorePages、Finish、Exported を 1 回ずつ通る。開始と終了を足して state transition は 6 と数える（料金ページの例の数え方。実測ではない）
+- 関数の呼び出しは 1 回の実行につき 2 回。それぞれ 0.5 秒、256 MB、arm64 と仮定
+- 空の Scan は 1 回につき読み取り 1 unit と多めに数える。S3 は LIST 1 回と manifest の PUT 1 回
+- ログは関数の呼び出し 1 回につき 1 KB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
+| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 7.5 | Lambda-GB-Second | 60 x 0.5 s x 0.25 GB, in GB-seconds | 0.000100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 30 | ReadRequestUnits | one empty Scan per run, counted as 1 unit | 0.000004 | - | 0.000004 |
+| `s3.request.tier1` | 60 | Requests | 30 runs x (1 LIST + 1 manifest PUT) | 0.000282 | - | 0.000282 |
+| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
+
+## 長い処理: 10,000 件を毎日 export。1 回の呼び出しで全ページ（この章の既定）
+
+ID: `export-daily-10k-coarse` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
+- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
+- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
+- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
+- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
+- state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない
+- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
+- ExportPages は 1 回の呼び出しで 100 ページを書き終える（20 秒）。state transition は 1 回の実行で 6
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
+| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (20 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
+
+- 定価の小計: **USD 0.03** / 月
+- 毎月の無料枠適用後の小計: **USD 0.02** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
+
+## 長い処理: 10,000 件を毎日 export。1 ページごとに workflow に戻る
+
+ID: `export-daily-10k-fine` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
+- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
+- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
+- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
+- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
+- state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない
+- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
+- ExportPages は 1 ページ書くごとに戻る。1 回の実行で ExportPages と MorePages を 100 回ずつ通り、state transition は 204
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 6,120 | StateTransitions | 30 executions x (100 x 2 + 4) transitions | 0.15 | 4,000 | 0.05 |
+| `lambda.request.arm` | 3,030 | Requests | 30 executions x (100 pages + 1 finish) | 0.000606 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (100 x 0.2 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0.003 | GB | 3,030 x 1 KB, in GB | 0.002196 | 5 | 0 |
+
+- 定価の小計: **USD 0.18** / 月
+- 毎月の無料枠適用後の小計: **USD 0.07** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
+
+## 長い処理: 10,000 件を毎日 export。durable function 版（`-c durable=true`）
+
+ID: `export-daily-10k-durable` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
+- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
+- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
+- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
+- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
+- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
+- 1 日 1 回、手で（または別の schedule で）起動するものとする。Step Functions は通らない
+- step は 20 ページごとに 1 つで 5 つ、それに finish。実行の開始を足して durable operation は 1 回の実行で 7
+- 待機がないので、関数の呼び出しは 1 回の実行につき 1 回（21 秒）と仮定
+- checkpoint に書かれるのは進捗だけ。1 operation あたり 1 KB、保持は 1 日と仮定
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.durable.operation` | 210 | DurableOperations | 30 executions x (1 start + 5 page steps + 1 finish) | 0.002226 | - | 0.002226 |
+| `lambda.durable.written` | 0 | GigaBytes | 210 operations x 1 KB, in GB | 0.000066 | - | 0.000066 |
+| `lambda.durable.retained` | 0 | GigaBytesMonth | 0.0002 GB x 1/30, in GB-month | 0.000001 | - | 0.000001 |
+| `lambda.request.arm` | 30 | Requests | one invocation per execution | 0.000006 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x 21 s x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0 | GB | 30 x 1 KB, in GB | 0.000022 | 5 | 0 |
+
+- 定価の小計: **USD 0.03** / 月
+- 毎月の無料枠適用後の小計: **USD 0.02** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `lambda.durable.operation`, `lambda.durable.written`, `lambda.durable.retained`
+
+## 比較: 1 時間かかる step を、1 日 1 回 Fargate の task で動かす月
+
+ID: `export-step-fargate-1h` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- この章の stack は作らない構成。料金の比較のためだけに計算
+- 0.25 vCPU、0.5 GB、arm64 の task を 1 日 1 回、1 時間。月 30 時間
+- public subnet で public IPv4 を付けて動かす（12章の構成）。task が動いている間だけ課金される
+- 未算入: image の保存（ECR）、ログ、データ転送、Step Functions の state transition
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 7.5 | hours | 30 hours x 0.25 vCPU | 0.30 | - | 0.30 |
+| `fargate.arm.memory.gb-hour` | 15 | hours | 30 hours x 0.5 GB | 0.07 | - | 0.07 |
+| `vpc.public-ipv4.in-use.hour` | 30 | Hrs | one public IPv4 address for 30 hours | 0.15 | - | 0.15 |
+
+- 定価の小計: **USD 0.52** / 月
+- 毎月の無料枠適用後の小計: **USD 0.52** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -1270,6 +1410,10 @@ ID: `ec2-public-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、�
 | `ec2.t4g.cpu-credit` | ap-northeast-1 | APN1-CPUCredits:t4g | vCPU-Hours | 0 - ∞: 0.0400000000 | 2026-10-09 | 2026-10-12 |
 | `ebs.gp3.storage` | ap-northeast-1 | APN1-EBS:VolumeUsage.gp3 | GB-Mo | 0 - ∞: 0.0960000000 | 2026-10-09 | 2026-10-12 |
 | `ebs.snapshot.storage` | ap-northeast-1 | APN1-EBS:SnapshotUsage | GB-Mo | 0 - ∞: 0.0500000000 | 2026-10-09 | 2026-10-12 |
+| `sfn.standard.transition` | ap-northeast-1 | APN1-StateTransition | StateTransitions | 0 - ∞: 0.0000250000 | 2026-09-11 | 2026-10-12 |
+| `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
+| `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
+| `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -1297,6 +1441,7 @@ ID: `ec2-public-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、�
 | `xray.trace.recorded` | 100,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesStored USD 0 tier. |
 | `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
 | `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
+| `sfn.standard.transition` | 4,000 | `sfn-pricing` | 4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000). |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 
@@ -1324,3 +1469,6 @@ ID: `ec2-public-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、�
 - `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.
 - `ec2.t4g-micro.linux.hour`: The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted.
 - `ebs.gp3.storage`: The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted.
+- `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.

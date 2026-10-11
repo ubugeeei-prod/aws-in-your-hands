@@ -35,6 +35,7 @@ The combination of versions this book's code was checked with (recorded 2026-10-
 | Nuxt (nuxt, @nuxt/nitro-server) | 4.6.1 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 | Nitro (nitropack) and h3 | 2.13.4 and 1.15.11 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 | Vize Nuxt module (@vizejs/nuxt) | 0.443.0 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
+| AWS Durable Execution SDK for JavaScript (@aws/durable-execution-sdk-js, -testing) | 2.6.0 and 1.3.0 | pnpm | `examples/16-long-jobs/package.json, pnpm-lock.yaml` |
 
 - Verified platforms: aarch64-darwin (macOS 26, Darwin 25.6.0)
 - Platforms with a Nix expression but no verification: x86_64-darwin, aarch64-linux, x86_64-linux

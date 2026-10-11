@@ -1809,6 +1809,126 @@
         "ja": "T 系の instance が、baseline を超えて CPU を使うために貯めて使う持ち分。standard では使い切ると baseline に絞られ、unlimited では超過分が課金される。",
         "en": "What T-family instances earn and spend to use CPU above their baseline. In standard mode an empty balance means throttling to the baseline; in unlimited mode the excess is billed."
       }
+    },
+    {
+      "id": "workflow",
+      "ja": "workflow",
+      "en": "workflow",
+      "firstUse": "16",
+      "definition": {
+        "ja": "複数の step を、決めた順序と条件で実行する処理。どの step まで終わったかを、step の外にある仕組みが覚えている。",
+        "en": "Work made of several steps run in a defined order under defined conditions, where something outside the steps remembers how far it has got."
+      }
+    },
+    {
+      "id": "state-machine",
+      "ja": "state machine",
+      "en": "state machine",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Step Functions での workflow の定義。state（Task、Choice など）と、そのつながりを JSON で書く。",
+        "en": "A workflow definition in Step Functions: states such as Task and Choice, and how they connect, written as JSON."
+      }
+    },
+    {
+      "id": "amazon-states-language",
+      "ja": "Amazon States Language",
+      "en": "Amazon States Language",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Step Functions の state machine を書く JSON の言語。ASL と略す。",
+        "en": "The JSON language that Step Functions state machines are written in. ASL for short."
+      }
+    },
+    {
+      "id": "state-transition",
+      "ja": "state transition",
+      "en": "state transition",
+      "firstUse": "16",
+      "definition": {
+        "ja": "state machine の実行が、ある state から次へ進むこと。Standard workflow の課金単位で、再試行も 1 回と数える。",
+        "en": "One move of an execution from a state to the next. It is the billing unit of Standard workflows, and a retry counts as one."
+      }
+    },
+    {
+      "id": "checkpoint",
+      "ja": "checkpoint",
+      "en": "checkpoint",
+      "firstUse": "16",
+      "definition": {
+        "ja": "長い処理の途中で「ここまで終わった」を保存すること、またはその記録。やり直すときは、最後の checkpoint から続ける。",
+        "en": "Saving \"done up to here\" partway through long work, or the record itself. A rerun continues from the last checkpoint."
+      }
+    },
+    {
+      "id": "durable-function",
+      "ja": "durable function",
+      "en": "durable function",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Lambda の関数で、step の結果を Lambda が保存し、中断の後に最初から実行し直して済んだ step を飛ばすもの。1 回の呼び出しは 15 分までだが、実行全体は最長 1 年。",
+        "en": "A Lambda function whose step results Lambda stores; after an interruption it runs again from the top and skips the finished steps. One invocation is limited to 15 minutes, the whole execution to one year."
+      }
+    },
+    {
+      "id": "replay",
+      "ja": "replay",
+      "en": "replay",
+      "firstUse": "16",
+      "definition": {
+        "ja": "保存してある step の結果を使いながら、コードを最初から実行し直すこと。同じ入力から同じ順序で step を呼ぶコードでなければ成り立たない。",
+        "en": "Running the code again from the beginning while using the stored results of finished steps. It works only if the code calls the same steps in the same order for the same input."
+      }
+    },
+    {
+      "id": "compensation",
+      "ja": "補償処理",
+      "en": "compensation",
+      "firstUse": "16",
+      "definition": {
+        "ja": "途中まで進んだ処理を取り消すために、済んだ step の効果を打ち消す別の step を実行すること。データベースの rollback と違い、自分で書き、それ自体も失敗しうる。",
+        "en": "Undoing work that got partway by running other steps that cancel the effects of the finished ones. Unlike a database rollback, you write it yourself, and it can fail too."
+      }
+    },
+    {
+      "id": "manifest",
+      "ja": "manifest",
+      "en": "manifest",
+      "firstUse": "16",
+      "definition": {
+        "ja": "出力を構成するファイルの一覧を書いた、小さなファイル。最後に書くことで、「全部そろった」ことの印になる。",
+        "en": "A small file listing the files that make up an output. Written last, it is the sign that everything is there."
+      }
+    },
+    {
+      "id": "conditional-write",
+      "ja": "条件付き書き込み",
+      "en": "conditional write",
+      "firstUse": "16",
+      "definition": {
+        "ja": "「まだ無ければ」「この版のままなら」といった条件を付けた書き込み。条件の検査と書き込みを、保存する側が 1 つの手順として実行する。",
+        "en": "A write with a condition such as \"only if absent\" or \"only if still this version\", where the store checks the condition and writes as a single step."
+      }
+    },
+    {
+      "id": "standard-workflow",
+      "ja": "Standard workflow",
+      "en": "Standard workflow",
+      "firstUse": "16",
+      "definition": {
+        "ja": "Step Functions の workflow の種類の 1 つ。最長 1 年、state の間で状態を保存し、state transition の数で課金される。もう 1 つは最長 5 分の Express。",
+        "en": "One of the two Step Functions workflow types: up to a year, state persisted between states, billed per state transition. The other is Express, up to five minutes."
+      }
+    },
+    {
+      "id": "aws-batch",
+      "ja": "AWS Batch",
+      "en": "AWS Batch",
+      "firstUse": "16",
+      "definition": {
+        "ja": "コンテナの job を queue に積み、必要な計算資源（Fargate や EC2）を用意して実行するサービス。",
+        "en": "A service that queues container jobs and provisions the compute (Fargate or EC2) to run them."
+      }
     }
   ]
 }

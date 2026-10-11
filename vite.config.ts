@@ -82,6 +82,7 @@ const chapterSynthTasks = [
   "ecs:infra:synth",
   "async:infra:synth",
   "ec2:infra:synth",
+  "export:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -483,6 +484,27 @@ export default defineConfig({
         cwd: "examples/23-ec2",
       }),
       // <<< chapter 23
+
+      // >>> chapter 16
+      // ---- chapter 16: long-running jobs ----------------------------------
+      // The deployed workflow definition, run in memory with injected interruptions. No AWS.
+      "export:local": fresh("node scripts/run-local.ts", { cwd: "examples/16-long-jobs" }),
+      ...infra("export", "examples/16-long-jobs", "AihLongJobs"),
+      // Writes sample notes to the deployed table.
+      "export:seed": live("node --env-file-if-exists=../../.env scripts/seed.ts", { cwd: "examples/16-long-jobs" }),
+      // Starts one export now. --wait follows it to the end.
+      "export:start": live("node --env-file-if-exists=../../.env scripts/start.ts", { cwd: "examples/16-long-jobs" }),
+      // Recent executions and finished exports. --redrive <arn> resumes a failed one.
+      "export:status": live("node --env-file-if-exists=../../.env scripts/status.ts", { cwd: "examples/16-long-jobs" }),
+      // Tails one step's log group.
+      "export:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/16-long-jobs" }),
+      // Counts, and with --yes deletes, every object in the exports bucket.
+      "export:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", { cwd: "examples/16-long-jobs" }),
+      // Starts the durable-function variant. Needs a deploy with -c durable=true.
+      "export:durable:start": live("node --env-file-if-exists=../../.env scripts/durable-start.ts", {
+        cwd: "examples/16-long-jobs",
+      }),
+      // <<< chapter 16
 
       // ---- chapter task blocks are inserted above this line ----
 

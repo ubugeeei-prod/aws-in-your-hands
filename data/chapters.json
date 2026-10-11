@@ -812,48 +812,97 @@
         "en": "Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
       },
       "prerequisites": ["08", "12"],
-      "services": ["Step Functions", "Lambda durable functions", "ECS", "AWS Batch", "EventBridge Scheduler"],
+      "services": [
+        "Step Functions",
+        "Lambda durable functions",
+        "Lambda",
+        "S3",
+        "DynamoDB",
+        "ECS",
+        "AWS Batch",
+        "EventBridge Scheduler",
+        "IAM"
+      ],
       "samplePath": "examples/16-long-jobs",
+      "sourceIds": [
+        "lambda-durable-functions",
+        "lambda-durable-concepts",
+        "lambda-durable-idempotency",
+        "lambda-durable-invoking",
+        "lambda-durable-security",
+        "lambda-durable-iac",
+        "lambda-durable-runtimes",
+        "lambda-durable-metering",
+        "lambda-durable-vs-sfn",
+        "lambda-durable-best-practices",
+        "lambda-quotas-durable",
+        "lambda-nodejs-context",
+        "durable-sdk-key-concepts",
+        "durable-sdk-idempotency",
+        "durable-sdk-npm",
+        "sfn-workflow-types",
+        "sfn-error-handling",
+        "sfn-task-state",
+        "sfn-connect-lambda",
+        "sfn-custom-error",
+        "sfn-resultpath",
+        "sfn-redrive",
+        "sfn-quotas",
+        "sfn-best-practices",
+        "sfn-iam-role",
+        "sfn-connect-ecs",
+        "sfn-integration-patterns",
+        "sfn-start-execution",
+        "cfn-sfn-statemachine",
+        "sfn-pricing",
+        "aws-price-list-states",
+        "aws-price-list-lambda-durable",
+        "lambda-pricing-durable",
+        "scheduler-context-attributes",
+        "scheduler-templated-sfn",
+        "s3-conditional-writes-if-none-match",
+        "dynamodb-scan",
+        "s3-head-object-permissions",
+        "dynamodb-export-s3",
+        "sfn-eventbridge",
+        "batch-what-is",
+        "batch-fargate",
+        "cloudflare-workflows",
+        "cloudflare-workflows-rules",
+        "cloudflare-workflows-limits",
+        "cloudflare-workflows-pricing",
+        "cdkd-source-long-jobs",
+        "aws-cdk-lib-durable",
+        "eventbridge-scheduler",
+        "scheduler-templated-targets",
+        "scheduler-execution-role",
+        "scheduler-confused-deputy",
+        "scheduler-retry-policy",
+        "scheduler-schedule-types",
+        "lambda-quotas",
+        "aws-price-list-events",
+        "aws-price-list-lambda",
+        "lambda-pricing",
+        "aws-price-list-s3",
+        "aws-price-list-dynamodb",
+        "aws-price-list-cloudwatch",
+        "aws-price-list-ecs",
+        "aws-price-list-vpc",
+        "fargate-pricing",
+        "ecs-welcome",
+        "ecs-task-lifecycle",
+        "cloudflare-durable-objects-what",
+        "cdkd-npm"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["lambda-durable-functions", "eventbridge-scheduler"],
-      "outline": {
-        "outcome": {
-          "ja": "全ノートの export を、途中で止まっても続きから再開できる処理として作る。",
-          "en": "You build a full-notes export that resumes where it stopped after an interruption."
-        },
-        "architecture": {
-          "ja": "Scheduler → workflow（Step Functions または durable function）→ 各 step の Lambda / ECS task → S3。",
-          "en": "Scheduler → workflow (Step Functions or a durable function) → Lambda or ECS task per step → S3."
-        },
-        "topics": {
-          "ja": [
-            "Lambda の 15 分上限と分割",
-            "Lambda durable functions（進捗を保持して再開）と Durable Objects（ID ごとの状態）の違い",
-            "補償処理",
-            "state transition 課金と待機の費用"
-          ],
-          "en": [
-            "Lambda's 15-minute limit and splitting work",
-            "Lambda durable functions (resumable progress) versus Durable Objects (state per identity)",
-            "Compensation",
-            "State-transition billing and the cost of waiting"
-          ]
-        },
-        "requiredSource": {
-          "ja": ["workflow 定義と step の実装", "worker 中断後に再開しても出力が重複しないテスト"],
-          "en": [
-            "Workflow definition and step implementations",
-            "A test that resuming after a worker interruption produces no duplicate output"
-          ]
-        },
-        "distributed": {
-          "ja": "step は再実行され得る。各 step を冪等にし、checkpoint の粒度を選ぶ。",
-          "en": "Steps can run again; make each one idempotent and choose the checkpoint granularity."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "17",

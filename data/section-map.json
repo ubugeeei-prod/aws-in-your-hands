@@ -2997,6 +2997,162 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "16.architecture",
+      "sources": ["examples/16-long-jobs/infra/lib/long-jobs-stack.ts", "examples/16-long-jobs/src/workflow.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.split",
+      "sources": [
+        "examples/16-long-jobs/src/job.ts",
+        "examples/16-long-jobs/src/note-source.ts",
+        "examples/16-long-jobs/src/dynamodb-note-source.ts",
+        "examples/16-long-jobs/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.idempotent-step",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/export-store.ts",
+        "examples/16-long-jobs/src/s3-export-store.ts",
+        "examples/16-long-jobs/test/steps.test.ts",
+        "examples/16-long-jobs/test/harness.ts",
+        "examples/16-long-jobs/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.manifest",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/job.ts",
+        "examples/16-long-jobs/test/steps.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.workflow",
+      "sources": ["examples/16-long-jobs/src/workflow.ts", "examples/16-long-jobs/test/workflow.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.checkpoint",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/export-pages-lambda.ts",
+        "examples/16-long-jobs/src/env.ts",
+        "examples/16-long-jobs/test/steps.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.local",
+      "sources": [
+        "examples/16-long-jobs/src/local-workflow.ts",
+        "examples/16-long-jobs/src/local.ts",
+        "examples/16-long-jobs/scripts/run-local.ts",
+        "examples/16-long-jobs/test/workflow.test.ts"
+      ],
+      "tasks": ["export:local", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "16.infra",
+      "sources": [
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
+        "examples/16-long-jobs/infra/bin/app.ts",
+        "examples/16-long-jobs/infra/test/long-jobs-stack.test.ts",
+        "examples/16-long-jobs/src/finish-lambda.ts",
+        "examples/16-long-jobs/src/discard-lambda.ts",
+        "examples/16-long-jobs/cdk.json"
+      ],
+      "tasks": ["export:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.deploy",
+      "sources": [
+        "examples/16-long-jobs/scripts/seed.ts",
+        "examples/16-long-jobs/scripts/start.ts",
+        "examples/16-long-jobs/scripts/status.ts",
+        "examples/16-long-jobs/scripts/logs.ts"
+      ],
+      "tasks": [
+        "export:infra:diff",
+        "export:infra:deploy",
+        "export:seed",
+        "export:start",
+        "export:status",
+        "export:logs",
+        "export:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "16.durable",
+      "sources": [
+        "examples/16-long-jobs/src/durable-export.ts",
+        "examples/16-long-jobs/src/durable-lambda.ts",
+        "examples/16-long-jobs/test/durable.test.ts",
+        "examples/16-long-jobs/scripts/durable-start.ts",
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts"
+      ],
+      "tasks": ["test:unit", "export:durable:start"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.containers",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "16.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.cleanup",
+      "sources": ["examples/16-long-jobs/scripts/empty.ts"],
+      "tasks": ["export:empty", "export:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

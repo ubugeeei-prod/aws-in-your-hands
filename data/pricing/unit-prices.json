@@ -1839,6 +1839,90 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-10-09T20:31:34Z",
       "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "sfn.standard.transition",
+      "offerCode": "AmazonStates",
+      "region": "ap-northeast-1",
+      "sku": "BTKF2VQUME7BCFVV",
+      "usageType": "APN1-StateTransition",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "StateTransitions",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000250000",
+          "description": "$0.000025 per state transition"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:11Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.operation",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "38G2CJHVYQC45MTY",
+      "usageType": "APN1-Lambda-Durable-Execution-Operations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DurableOperations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000106000",
+          "description": "$0.0000106 per DurableOperation for Lambda-Durable-Execution-Operations in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.written",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "MVB47QVZRQ9MSHUU",
+      "usageType": "APN1-Lambda-Durable-Execution-Written-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GigaBytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3300000000",
+          "description": "$0.33 per GigaByte for Lambda-Durable-Execution-Written-Bytes in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.retained",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "A7USWCXHVDSE3RNW",
+      "usageType": "APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GigaBytesMonth",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2000000000",
+          "description": "$0.20 per GigaBytesMonth for Lambda-Durable-Execution-TimedStorage-ByteHrs in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

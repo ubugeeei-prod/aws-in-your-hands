@@ -62,7 +62,7 @@ generated: true
 - ID: `aws-price-list-lambda`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 04, 08, 09, 14, 17, 20
+- 参照する章: 04, 08, 09, 14, 16, 17, 20
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AWSLambda
 
@@ -81,7 +81,7 @@ generated: true
 - ID: `aws-price-list-s3`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 03, 07, 08, 09, 20
+- 参照する章: 03, 07, 08, 09, 16, 20
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonS3
 
@@ -90,7 +90,7 @@ generated: true
 - ID: `aws-price-list-cloudwatch`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 04, 08, 12, 14, 17, 19
+- 参照する章: 04, 08, 12, 14, 16, 17, 19
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudWatch
   - The price list has a USD 0 tier for the first 5 GB of log ingestion and 5 GB-month of log storage
@@ -224,7 +224,7 @@ generated: true
 - ID: `lambda-quotas`
 - URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
 - 確認日: 2026-10-11
-- 参照する章: 04, 07, 08, 12
+- 参照する章: 04, 07, 08, 12, 16
 - この出典が支える主張:
   - Function timeout is at most 900 seconds
   - Memory is 128 MB to 10,240 MB
@@ -303,7 +303,7 @@ generated: true
 - ID: `aws-price-list-dynamodb`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 05, 08, 14
+- 参照する章: 05, 08, 14, 16
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonDynamoDB
   - The storage price has a USD 0 tier for the first 25 GB-month
@@ -954,7 +954,7 @@ generated: true
 - ID: `aws-price-list-vpc`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 11, 12, 23
+- 参照する章: 11, 12, 16, 23
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonVPC: interface endpoint hours and data processing, public IPv4 address hours
   - The offer has no SKU for a VPC, subnet, route table, internet gateway, or gateway endpoint
@@ -1899,7 +1899,7 @@ generated: true
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - 確認日: 2026-10-11
-- 参照する章: 02, 03, 04, 05, 06, 07, 08, 09, 10, 12, 14, 17, 19, 20
+- 参照する章: 02, 03, 04, 05, 06, 07, 08, 09, 10, 12, 14, 16, 17, 19, 20
 - この出典が支える主張:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -2899,7 +2899,7 @@ generated: true
 - ID: `lambda-pricing`
 - URL: <https://aws.amazon.com/lambda/pricing/>
 - 確認日: 2026-10-11
-- 参照する章: 04, 08, 09, 14, 17
+- 参照する章: 04, 08, 09, 14, 16, 17
 - この出典が支える主張:
   - Free tier: 1,000,000 requests and 400,000 GB-seconds per month
   - Response streaming: first 6 MB per request free, then per GB
@@ -3706,7 +3706,7 @@ generated: true
 - ID: `cloudflare-durable-objects-what`
 - URL: <https://developers.cloudflare.com/durable-objects/concepts/what-are-durable-objects/>
 - 確認日: 2026-10-12
-- 参照する章: 14
+- 参照する章: 14, 16
 - この出典が支える主張:
   - Each Durable Object has a globally unique name and is single-threaded
   - Each has its own durable, transactional, strongly consistent storage, accessible only within that object
@@ -4243,7 +4243,7 @@ generated: true
 - ID: `ecs-welcome`
 - URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html>
 - 確認日: 2026-10-12
-- 参照する章: 12
+- 参照する章: 12, 16
 - この出典が支える主張:
   - ECS runs containers on capacity that you choose; Fargate is the serverless, pay-as-you-go option where you manage no servers
 
@@ -4317,7 +4317,7 @@ generated: true
 - ID: `ecs-task-lifecycle`
 - URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-lifecycle-explanation.html>
 - 確認日: 2026-10-12
-- 参照する章: 12
+- 参照する章: 12, 16
 - この出典が支える主張:
   - A task passes through PROVISIONING, PENDING, ACTIVATING, RUNNING, DEACTIVATING, STOPPING, DEPROVISIONING, STOPPED
   - ACTIVATING is where ECS pulls images, creates containers, and registers load balancer target groups
@@ -4567,7 +4567,7 @@ generated: true
 - ID: `fargate-pricing`
 - URL: <https://aws.amazon.com/fargate/pricing/>
 - 確認日: 2026-10-12
-- 参照する章: 12
+- 参照する章: 12, 16
 - この出典が支える主張:
   - Fargate is billed for vCPU and memory from the start of the image download until the task terminates, per second with a one-minute minimum
   - 20 GB of ephemeral storage is included for every task
@@ -4589,7 +4589,7 @@ generated: true
 - ID: `aws-price-list-ecs`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-12
-- 参照する章: 12
+- 参照する章: 12, 16
 - この出典が支える主張:
   - Fargate ARM: USD 0.04045 per vCPU-hour and USD 0.00442 per GB-hour
   - Fargate x86: USD 0.05056 per vCPU-hour and USD 0.00553 per GB-hour
@@ -5054,7 +5054,7 @@ generated: true
 - ID: `scheduler-templated-targets`
 - URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-templated.html>
 - 確認日: 2026-10-12
-- 参照する章: 08
+- 参照する章: 08, 16
 - この出典が支える主張:
   - A function ARN as the target means Lambda's Invoke operation
   - The schedule's execution role needs lambda:InvokeFunction for a Lambda target
@@ -5064,7 +5064,7 @@ generated: true
 - ID: `scheduler-execution-role`
 - URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html>
 - 確認日: 2026-10-12
-- 参照する章: 08
+- 参照する章: 08, 16
 - この出典が支える主張:
   - The execution role is an IAM role that EventBridge Scheduler assumes to call the target; its trust policy names scheduler.amazonaws.com
 
@@ -5073,7 +5073,7 @@ generated: true
 - ID: `scheduler-confused-deputy`
 - URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/cross-service-confused-deputy-prevention.html>
 - 確認日: 2026-10-12
-- 参照する章: 08
+- 参照する章: 08, 16
 - この出典が支える主張:
   - AWS recommends aws:SourceArn and aws:SourceAccount conditions in the execution role's trust policy
   - The aws:SourceArn value must be a schedule group ARN, not a schedule or a name prefix
@@ -5083,7 +5083,7 @@ generated: true
 - ID: `scheduler-retry-policy`
 - URL: <https://docs.aws.amazon.com/scheduler/latest/APIReference/API_RetryPolicy.html>
 - 確認日: 2026-10-12
-- 参照する章: 08
+- 参照する章: 08, 16
 - この出典が支える主張:
   - MaximumEventAgeInSeconds is 60 to 86,400; MaximumRetryAttempts is 0 to 185
   - Retries use exponential backoff until either limit is reached
@@ -5094,7 +5094,7 @@ generated: true
 - ID: `scheduler-schedule-types`
 - URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html>
 - 確認日: 2026-10-12
-- 参照する章: 08
+- 参照する章: 08, 16
 - この出典が支える主張:
   - A rate expression is rate(value unit) with minutes, hours, or days
   - A rate-based schedule without a StartDate starts invoking its target immediately
@@ -5122,7 +5122,7 @@ generated: true
 - ID: `aws-price-list-events`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-12
-- 参照する章: 08
+- 参照する章: 08, 16
 - この出典が支える主張:
   - Scheduled invocations in Tokyo (SKU 29C3758CBCYNXH8B): USD 0 for the first 14 million a month, then USD 1.25 per million
 - 注記: Publication date 2026-09-24T16:39:03Z.
@@ -5916,6 +5916,528 @@ generated: true
 - この出典が支える主張:
   - The agent's logs section can collect systemd journal entries on Linux through a journald section
 
+### Lambda durable functions
+
+- ID: `lambda-durable-functions`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - A durable execution can run for up to one year; it uses checkpoints and recovers through replay, re-executing from the beginning while skipping completed work
+  - Waits suspend execution without compute charges
+  - The page's own comparison: durable functions run within Lambda in standard programming languages; Step Functions is a standalone service with a graph-based DSL and native integrations to 220+ services
+  - The SDK is available for JavaScript, TypeScript, Python, and Java
+
+### Lambda durable functions: Basic concepts
+
+- ID: `lambda-durable-concepts`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-basic-concepts.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - On resume Lambda invokes the function again from the beginning and substitutes stored values for completed operations
+  - Code must be deterministic during replay; random numbers and the current time belong inside steps
+  - DurableConfig has ExecutionTimeout (default 86,400 s, 60 s to 31,536,000 s) and RetentionPeriodInDays (default 14, 1 to 90)
+  - The Lambda function timeout (at most 15 minutes) limits each invocation; the execution timeout limits the whole durable execution
+
+### Lambda durable functions: Idempotency
+
+- ID: `lambda-durable-idempotency`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-idempotency.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Steps have at-least-once execution semantics by default; a step that fails or is interrupted before completing might execute multiple times
+  - An execution name acts as an idempotency key: the same name with the same payload returns the existing execution, a different payload returns DurableExecutionAlreadyStartedException
+  - Event source mappings do not support execution-name idempotency at launch
+
+### Invoking durable Lambda functions
+
+- ID: `lambda-durable-invoking`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-invoking.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - A durable function must be invoked with a qualified identifier: a version number, an alias, or $LATEST
+  - An execution is pinned to the function version that started it; $LATEST executions can resume on updated code
+  - Synchronous invocations are limited to 15 minutes; asynchronous invocations support executions up to one year
+  - Durable functions support dead-letter queues but not Lambda destinations
+
+### Security and permissions for Lambda durable functions
+
+- ID: `lambda-durable-security`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-security.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - The execution role needs lambda:CheckpointDurableExecution and lambda:GetDurableExecutionState
+  - Lambda authorizes most durable execution actions against the durable execution ARN, which extends a qualified function ARN; a policy naming the unqualified function ARN does not match
+  - The managed policy AWSLambdaBasicDurableExecutionRolePolicy contains these permissions together with basic logging
+
+### Deploy Lambda durable functions with Infrastructure as Code
+
+- ID: `lambda-durable-iac`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-getting-started-iac.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - CloudFormation: AWS::Lambda::Function takes DurableConfig with ExecutionTimeout and RetentionPeriodInDays
+  - The CDK example sets durableConfig on lambda.Function and invokes through an alias of currentVersion
+  - IaC deployments must enable durable execution, grant checkpoint permissions, and publish a version or alias
+
+### Supported runtimes for durable functions
+
+- ID: `lambda-durable-runtimes`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-supported-runtimes.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Managed runtimes that support durable functions include nodejs22.x and nodejs24.x
+  - The Node.js runtimes include the SDK, and the page recommends bundling it in the deployment package anyway
+  - The JavaScript SDK is the npm package @aws/durable-execution-sdk-js
+
+### Durable execution SDK: how durable operations are metered
+
+- ID: `lambda-durable-metering`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-sdk.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Starting an execution counts as one operation; a step counts as one plus one per retry; a wait counts as one
+  - Data persisted is the input payload and the payload returned by each step attempt
+
+### Durable functions or Step Functions
+
+- ID: `lambda-durable-vs-sfn`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-step-functions.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - AWS's own guidance: durable functions when the logic lives mostly in Lambda and the team prefers code; Step Functions for orchestration across many AWS services, visual workflows, and zero-maintenance infrastructure
+
+### Best practices for Lambda durable functions
+
+- ID: `lambda-durable-best-practices`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-best-practices.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Do not rename steps or change their behavior while executions are in progress: replay matches saved state to step definitions
+  - Unlike standard functions, Lambda does not automatically retry a failed durable execution after an asynchronous invocation; configure a dead-letter queue
+
+### Lambda quotas (function timeout and durable functions)
+
+- ID: `lambda-quotas-durable`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Function timeout: 900 seconds (15 minutes); the function configuration quotas cannot be changed except as noted, and the one noted exception is 5,400 seconds for Lambda Managed Instances
+  - At most 3,000 durable operations per durable execution; cannot be increased
+  - At most 100 MB of durable execution storage written per execution; cannot be increased
+  - Durable function quotas apply per Region, with higher defaults in three named Regions
+- 注記: The page lists no Regions where durable functions are unavailable. Availability in ap-northeast-1 was inferred only from the Price List entries (source aws-price-list-lambda-durable), not confirmed by running anything.
+
+### Using the Lambda context object to retrieve Node.js function information
+
+- ID: `lambda-nodejs-context`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - context.getRemainingTimeInMillis() returns the milliseconds left before the execution times out
+
+### AWS Durable Execution SDK Developer Guide: Key concepts
+
+- ID: `durable-sdk-key-concepts`
+- URL: <https://docs.aws.amazon.com/durable-execution/getting-started/key-concepts/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - For each durable operation the SDK checks for an existing checkpoint, runs the operation if there is none, serializes the result, and persists the checkpoint before continuing
+  - The orchestration code must make the same sequence of durable operation calls on every invocation
+  - After a wait, the SDK terminates the current Lambda invocation and the service invokes the function again later
+
+### AWS Durable Execution SDK Developer Guide: Idempotency and retries
+
+- ID: `durable-sdk-idempotency`
+- URL: <https://docs.aws.amazon.com/durable-execution/patterns/best-practices/idempotency/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - At-least-once per retry is the default: if an attempt is interrupted (the sandbox dies, the network drops, the runtime hits the invocation timeout), the step runs again on replay
+  - At-most-once per retry waits for the START checkpoint and raises StepInterrupted on replay instead of re-executing; neither semantic guarantees exactly one run across the workflow
+
+### @aws/durable-execution-sdk-js 2.6.0 and @aws/durable-execution-sdk-js-testing 1.3.0 (npm tarballs)
+
+- ID: `durable-sdk-npm`
+- URL: <https://www.npmjs.com/package/@aws/durable-execution-sdk-js/v/2.6.0>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - withDurableExecution wraps a handler that receives (event, DurableContext); context.step(name, fn, config) returns the checkpointed result
+  - StepConfig accepts retryStrategy(error, attempt) returning { shouldRetry, delay } and semantics (StepSemantics.AtLeastOncePerRetry by default)
+  - The testing package's LocalDurableTestRunner runs a handler against a checkpoint store in the local process, with skipTime to skip waits and retry delays
+  - Both packages require Node.js 22 or later and depend on @aws-sdk/client-lambda
+- 注記: Read from the installed tarballs (README and dist-types). Version 2.6.0 was published on 2026-10-02.
+
+### Choosing workflow type in Step Functions
+
+- ID: `sfn-workflow-types`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Standard workflows run up to one year and are billed by state transition; Express workflows run up to five minutes and are billed by executions, duration, and memory
+  - Standard workflows follow an exactly-once model: tasks and states are never run more than once unless Retry is specified in the definition
+  - Asynchronous Express workflows are at-least-once
+  - The workflow type cannot be changed after the state machine is created
+  - Standard: starting an execution with the same name as a running one returns an idempotent response; execution history is removed after 90 days
+  - Express workflows do not support the .sync or .waitForTaskToken integration patterns
+
+### Handling errors in Step Functions workflows
+
+- ID: `sfn-error-handling`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Retry fields: ErrorEquals, IntervalSeconds (default 1), MaxAttempts (default 3; 0 means never retried), BackoffRate (default 2.0), MaxDelaySeconds, JitterStrategy (FULL or NONE)
+  - States.ALL matches any known error name but not States.DataLimitExceeded or States.Runtime; States.TaskFailed matches any error except States.Timeout
+  - Catch has ErrorEquals, Next, and ResultPath; catchers apply when there is no Retry or retries are exhausted
+  - Catchers exist for Task, Parallel, and Map states, not for top-level execution failures
+  - Retries are treated as state transitions
+  - Without Retry or Catch, an error fails the entire execution
+
+### Task workflow state
+
+- ID: `sfn-task-state`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/state-task.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - TimeoutSeconds: the maximum time a task can run before it fails with States.Timeout; the default is 99,999,999
+  - The timeout counts from the task's start event; if the worker does not respond in time, Step Functions marks the task as failed
+- 注記: The page says what Step Functions does when the time runs out. It does not say that the Lambda function is stopped.
+
+### Invoke an AWS Lambda function with Step Functions
+
+- ID: `sfn-connect-lambda`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/connect-lambda.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - A function ARN can be given directly in Resource; the task result is then the function's output alone, and .waitForTaskToken is not available
+  - With the optimized integration (arn:aws:states:::lambda:invoke) the function output is nested under Payload
+
+### Handling error conditions in a Step Functions state machine
+
+- ID: `sfn-custom-error`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/tutorial-handling-error-conditions.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - An error thrown by a Node.js Lambda function is matched in Retry and Catch by the error's name (the tutorial sets this.name = 'CustomError' and catches "CustomError")
+  - The tutorial retries Lambda.ServiceException, Lambda.AWSLambdaException, Lambda.SdkClientException, and Lambda.TooManyRequestsException
+
+### Specifying state output using ResultPath in Step Functions
+
+- ID: `sfn-resultpath`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/input-output-resultpath.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - ResultPath in a Catch keeps the state's input and adds the error under the given field
+
+### Restarting state machine executions with redrive in Step Functions
+
+- ID: `sfn-redrive`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/redrive-executions.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - A failed, aborted, or timed-out Standard execution can be redriven for 14 days; it continues from the unsuccessful step with the same input and the same definition
+  - Successful steps are not rerun; a redriven Task state is scheduled and started again with its retry count reset
+  - A redrive re-enters a Fail state and fails again
+  - Redrives count as state transitions; an execution with 24,999 or more history events cannot be redriven
+
+### Step Functions service quotas
+
+- ID: `sfn-quotas`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/service-quotas.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Standard workflows: at most 25,000 events in one execution history; reaching it fails the execution
+  - Input or output of a task, state, or execution is at most 256 KiB as a UTF-8 string
+  - Execution history is kept for 90 days after an execution closes
+
+### Best practices for Step Functions
+
+- ID: `sfn-best-practices`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/sfn-best-practices.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Without TimeoutSeconds on a Task, an execution can be stuck waiting for a response that never comes
+  - To stay under the history quota, use a Distributed Map or start a new execution from a Task state
+
+### Creating an IAM role for your state machine in Step Functions
+
+- ID: `sfn-iam-role`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/procedure-create-iam-role.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - The state machine's role is assumed by states.amazonaws.com
+  - The documented trust policy limits it with ArnLike aws:SourceArn arn:aws:states:<region>:<account>:stateMachine:* and StringEquals aws:SourceAccount
+
+### Run Amazon ECS or Fargate tasks with Step Functions
+
+- ID: `sfn-connect-ecs`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/connect-ecs.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - The optimized integration calls ecs:runTask and supports the Run a Job (.sync) pattern
+  - With .sync, a non-empty Failures field fails the task with AmazonECS.Unknown
+  - Input reaches the container through overrides (ContainerOverride)
+
+### Discover service integration patterns in Step Functions
+
+- ID: `sfn-integration-patterns`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - With .sync Step Functions waits for the job to complete before moving on; AWS Batch submitJob.sync and ECS runTask.sync are examples
+  - If a .sync task is aborted and Step Functions cannot cancel the job, the integrated service may keep charging
+
+### StartExecution
+
+- ID: `sfn-start-execution`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/apireference/API_StartExecution.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - StartExecution is idempotent for STANDARD workflows: the same name and input as a running execution returns the same response
+  - If the execution is closed or the input differs, it returns 400 ExecutionAlreadyExists; a name can be reused 90 days after the execution closes
+  - An execution name is at most 80 characters and must not contain, among others, colons, slashes, brackets, or white space; without a name Step Functions generates a UUID
+
+### AWS::StepFunctions::StateMachine
+
+- ID: `cfn-sfn-statemachine`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-stepfunctions-statemachine.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Properties include DefinitionString, RoleArn, StateMachineType, LoggingConfiguration, and DefinitionSubstitutions
+
+### AWS Step Functions pricing
+
+- ID: `sfn-pricing`
+- URL: <https://aws.amazon.com/step-functions/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Standard workflows are charged per state transition, retries included
+  - The free tier is 4,000 state transitions a month, does not expire, and applies to existing and new customers
+  - The page's example counts four transitions for a workflow of two states: Start, the two states, and End
+- 注記: Prices on the page are filled in by script; the numbers used in the book come from the Price List (source aws-price-list-states).
+
+### AWS Price List: Step Functions, ap-northeast-1
+
+- ID: `aws-price-list-states`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - SKU BTKF2VQUME7BCFVV (APN1-StateTransition): USD 0.000025 per state transition
+  - SKU DCMZZXP5RBUG8FGP (Global-StateTransition): USD 0 for the first 4,000 state transitions
+  - Express workflows: SKU DAVXY63QBMD93BC2, USD 0.000001 per request, plus a tiered GB-second duration charge
+- 注記: Offer publication date 2026-09-11T12:45:11Z.
+
+### AWS Price List: Lambda durable execution, ap-northeast-1
+
+- ID: `aws-price-list-lambda-durable`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - SKU 38G2CJHVYQC45MTY (APN1-Lambda-Durable-Execution-Operations): USD 0.0000106 per durable operation
+  - SKU MVB47QVZRQ9MSHUU (APN1-Lambda-Durable-Execution-Written-Bytes): USD 0.33 per GB written
+  - SKU A7USWCXHVDSE3RNW (APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs): USD 0.20 per GB-month retained
+- 注記: Offer publication date 2026-10-09T22:31:22Z. The presence of APN1 SKUs is the only evidence gathered that durable functions are offered in ap-northeast-1.
+
+### AWS Lambda pricing: Lambda Durable Functions Pricing
+
+- ID: `lambda-pricing-durable`
+- URL: <https://aws.amazon.com/lambda/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Durable functions are charged for durable operations (starting executions, completing steps, creating waits), for data written, and for data retained during and after execution, on top of normal Lambda compute
+  - During a wait an on-demand function incurs no duration charge until execution resumes
+  - Compute charges apply to the invocations that replays cause
+- 注記: The section names no free allowance for durable operations or storage.
+
+### Adding context attributes in EventBridge Scheduler
+
+- ID: `scheduler-context-attributes`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-schedule-context-attributes.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - <aws.scheduler.scheduled-time> in the target's payload is replaced with the time the schedule was due, for example 2022-03-22T18:59:43Z
+  - <aws.scheduler.execution-id> is unique per attempted invocation, and <aws.scheduler.attempt-number> counts attempts
+
+### Using templated targets in EventBridge Scheduler: Step Functions StartExecution
+
+- ID: `scheduler-templated-sfn`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-templated.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Step Functions StartExecution is a templated target: the target ARN is the state machine's, and Input is the execution input
+  - The schedule's execution role needs states:StartExecution
+- 注記: The page's example policy uses Resource "*"; the chapter's role names the one state machine instead.
+
+### How to prevent object overwrites with conditional writes (re-read for chapter 16)
+
+- ID: `s3-conditional-writes-if-none-match`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - PutObject with If-None-Match: * succeeds only if no object has the key; otherwise S3 answers 412 Precondition Failed
+  - When several conditional writes target the same key, the first to finish succeeds and the rest get 412
+  - A 409 Conflict is possible when a delete of the key succeeds before the conditional write completes; a PutObject may be retried after it
+  - If-None-Match needs only the s3:PutObject permission
+
+### Scanning tables in DynamoDB
+
+- ID: `dynamodb-scan`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - One Scan request reads at most 1 MB; the limit and the Limit parameter apply before the filter expression
+  - The absence of LastEvaluatedKey is the only way to know the last page was reached; it is passed back as ExclusiveStartKey
+  - Read capacity is consumed by the items read, whether or not a filter or projection drops them
+
+### HeadObject (permissions, re-read for chapter 16)
+
+- ID: `s3-head-object-permissions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - HEAD needs the s3:GetObject permission
+  - For a missing object S3 answers 404 if the caller has s3:ListBucket on the bucket and 403 if not
+
+### DynamoDB data export to Amazon S3: how it works
+
+- ID: `dynamodb-export-s3`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/S3DataExport.HowItWorks.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Export to S3 exports a table as of any time within its point-in-time recovery window; PITR must be enabled on the table
+- 注記: Read only to point at the alternative; not used or tried in the chapter.
+
+### Automating Step Functions event delivery with EventBridge
+
+- ID: `sfn-eventbridge`
+- URL: <https://docs.aws.amazon.com/step-functions/latest/dg/eventbridge-integration.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Step Functions sends an Execution Status Change event to EventBridge when the status of a Standard workflow execution changes
+
+### What is AWS Batch?
+
+- ID: `batch-what-is`
+- URL: <https://docs.aws.amazon.com/batch/latest/userguide/what-is-batch.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - AWS Batch plans, schedules, and runs containerized batch jobs on ECS, EKS, Fargate, and EC2 (Spot or On-Demand), provisioning compute in response to submitted jobs
+
+### AWS Batch: Fargate compute environments
+
+- ID: `batch-fargate`
+- URL: <https://docs.aws.amazon.com/batch/latest/userguide/fargate.html>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Batch can run jobs on Fargate without managing instances; Fargate is available only for Batch compute environments that use ECS as the orchestrator
+
+### Cloudflare Workflows
+
+- ID: `cloudflare-workflows`
+- URL: <https://developers.cloudflare.com/workflows/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Workflows chain steps with step.do, retry failed steps automatically, and persist state; a WorkflowEntrypoint class defines run(event, step)
+
+### Cloudflare Workflows: Rules of Workflows
+
+- ID: `cloudflare-workflows-rules`
+- URL: <https://developers.cloudflare.com/workflows/build/rules-of-workflows/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - A step might be retried multiple times, so steps should be idempotent
+  - A Workflow may hibernate and lose in-memory state; state must be built from step.do return values, and non-deterministic calls belong inside steps
+
+### Cloudflare Workflows: Limits
+
+- ID: `cloudflare-workflows-limits`
+- URL: <https://developers.cloudflare.com/workflows/reference/limits/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Wall-clock duration per step is unlimited; CPU time per step is 30 seconds by default on the paid plan, configurable to 5 minutes
+  - A step result is at most 1 MiB; a Workflow has at most 10,000 steps by default on the paid plan (1,024 on free)
+  - step.sleep can last up to 365 days
+  - Workers invoked by Cron Triggers and Durable Object alarm handlers have a 15-minute wall time limit
+
+### Cloudflare Workflows: Pricing
+
+- ID: `cloudflare-workflows-pricing`
+- URL: <https://developers.cloudflare.com/workflows/reference/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Workflows are billed on CPU time, requests, storage, and steps; a sleeping or waiting Workflow incurs no CPU time
+  - Billing for steps and storage started on 2026-08-10; the paid plan includes 500,000 steps a month
+
+### cdkd v0.296.28: providers used by chapter 16 (read from the npm tarball's dist)
+
+- ID: `cdkd-source-long-jobs`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - Dedicated providers are registered for AWS::StepFunctions::StateMachine, AWS::Scheduler::Schedule, AWS::Lambda::Function, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::DynamoDB::Table, AWS::Logs::LogGroup, AWS::IAM::Role, and AWS::IAM::Policy
+  - No provider is registered for AWS::Lambda::Version or AWS::Lambda::Alias, so they go through Cloud Control API
+  - The Step Functions provider applies DefinitionSubstitutions only to a definition fetched from DefinitionS3Location; an inline DefinitionString or Definition is sent as it is
+  - The Lambda function provider passes DurableConfig to CreateFunction and UpdateFunctionConfiguration, and treats adding or removing DurableConfig as a replacement
+- 注記: Checked in the installed package (dist/program-*.js, provider-classes-*.js, deploy-engine-*.js), not on GitHub.
+
+### aws-cdk-lib 2.273.0: durableConfig and CfnStateMachine (type definitions)
+
+- ID: `aws-cdk-lib-durable`
+- URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
+- 確認日: 2026-10-12
+- 参照する章: 16
+- この出典が支える主張:
+  - FunctionProps.durableConfig takes { executionTimeout: Duration; retentionPeriod?: Duration } and renders CfnFunction.DurableConfig
+  - When no role is passed, a function with durableConfig gets the managed policy AWSLambdaBasicDurableExecutionRolePolicy; with a role of your own, nothing is added
+  - CfnStateMachine accepts definitionString, roleArn, and stateMachineType
+- 注記: Read from aws-lambda/lib/durable-config.d.ts, function.js, and aws-stepfunctions in the installed package.
+
 ## 未再確認の出典（後続章の調査の出発点）
 
 ### Security best practices in IAM
@@ -5997,15 +6519,6 @@ generated: true
 - 参照する章: 03
 - この出典が支える主張:
   - Static site generation options
-- 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Lambda durable functions
-
-- ID: `lambda-durable-functions`
-- URL: <https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html>
-- 参照する章: 16
-- この出典が支える主張:
-  - Durable functions checkpoint progress and resume
 - 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### What is Amazon DynamoDB?

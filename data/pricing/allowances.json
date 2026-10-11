@@ -159,6 +159,14 @@
       "kind": "always-free",
       "sourceId": "sqs-pricing",
       "note": "1 million requests a month for all customers, counted across all Regions and shared by every queue in the account."
+    },
+    {
+      "priceId": "sfn.standard.transition",
+      "quantity": 4000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sfn-pricing",
+      "note": "4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000)."
     }
   ],
   "unknown": [
@@ -257,6 +265,18 @@
     {
       "priceId": "ebs.gp3.storage",
       "reason": "The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "lambda.durable.operation",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "lambda.durable.written",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "lambda.durable.retained",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
     }
   ]
 }

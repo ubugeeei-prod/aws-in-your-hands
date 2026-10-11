@@ -192,3 +192,15 @@ generated: true
 | status check | status check | 23 | EC2 が 1 分ごとに行う instance の検査。AWS 側の基盤の問題を見る system status check と、instance 自身の問題を見る instance status check がある。 |
 | 単一障害点 | single point of failure | 23 | そこが止まると全体が止まる部品。1 台の instance と、その 1 つの volume がそれにあたる。 |
 | CPU credit | CPU credit | 23 | T 系の instance が、baseline を超えて CPU を使うために貯めて使う持ち分。standard では使い切ると baseline に絞られ、unlimited では超過分が課金される。 |
+| workflow | workflow | 16 | 複数の step を、決めた順序と条件で実行する処理。どの step まで終わったかを、step の外にある仕組みが覚えている。 |
+| state machine | state machine | 16 | Step Functions での workflow の定義。state（Task、Choice など）と、そのつながりを JSON で書く。 |
+| Amazon States Language | Amazon States Language | 16 | Step Functions の state machine を書く JSON の言語。ASL と略す。 |
+| state transition | state transition | 16 | state machine の実行が、ある state から次へ進むこと。Standard workflow の課金単位で、再試行も 1 回と数える。 |
+| checkpoint | checkpoint | 16 | 長い処理の途中で「ここまで終わった」を保存すること、またはその記録。やり直すときは、最後の checkpoint から続ける。 |
+| durable function | durable function | 16 | Lambda の関数で、step の結果を Lambda が保存し、中断の後に最初から実行し直して済んだ step を飛ばすもの。1 回の呼び出しは 15 分までだが、実行全体は最長 1 年。 |
+| replay | replay | 16 | 保存してある step の結果を使いながら、コードを最初から実行し直すこと。同じ入力から同じ順序で step を呼ぶコードでなければ成り立たない。 |
+| 補償処理 | compensation | 16 | 途中まで進んだ処理を取り消すために、済んだ step の効果を打ち消す別の step を実行すること。データベースの rollback と違い、自分で書き、それ自体も失敗しうる。 |
+| manifest | manifest | 16 | 出力を構成するファイルの一覧を書いた、小さなファイル。最後に書くことで、「全部そろった」ことの印になる。 |
+| 条件付き書き込み | conditional write | 16 | 「まだ無ければ」「この版のままなら」といった条件を付けた書き込み。条件の検査と書き込みを、保存する側が 1 つの手順として実行する。 |
+| Standard workflow | Standard workflow | 16 | Step Functions の workflow の種類の 1 つ。最長 1 年、state の間で状態を保存し、state transition の数で課金される。もう 1 つは最長 5 分の Express。 |
+| AWS Batch | AWS Batch | 16 | コンテナの job を queue に積み、必要な計算資源（Fargate や EC2）を用意して実行するサービス。 |

@@ -192,3 +192,15 @@ The term pairs that keep both languages using one word for one concept. API name
 | status check | status check | 23 | A check EC2 runs on an instance every minute. System status checks look at the AWS infrastructure underneath; instance status checks look at the instance itself. |
 | 単一障害点 | single point of failure | 23 | A part whose failure stops the whole. One instance, and its one volume, are exactly that. |
 | CPU credit | CPU credit | 23 | What T-family instances earn and spend to use CPU above their baseline. In standard mode an empty balance means throttling to the baseline; in unlimited mode the excess is billed. |
+| workflow | workflow | 16 | Work made of several steps run in a defined order under defined conditions, where something outside the steps remembers how far it has got. |
+| state machine | state machine | 16 | A workflow definition in Step Functions: states such as Task and Choice, and how they connect, written as JSON. |
+| Amazon States Language | Amazon States Language | 16 | The JSON language that Step Functions state machines are written in. ASL for short. |
+| state transition | state transition | 16 | One move of an execution from a state to the next. It is the billing unit of Standard workflows, and a retry counts as one. |
+| checkpoint | checkpoint | 16 | Saving "done up to here" partway through long work, or the record itself. A rerun continues from the last checkpoint. |
+| durable function | durable function | 16 | A Lambda function whose step results Lambda stores; after an interruption it runs again from the top and skips the finished steps. One invocation is limited to 15 minutes, the whole execution to one year. |
+| replay | replay | 16 | Running the code again from the beginning while using the stored results of finished steps. It works only if the code calls the same steps in the same order for the same input. |
+| 補償処理 | compensation | 16 | Undoing work that got partway by running other steps that cancel the effects of the finished ones. Unlike a database rollback, you write it yourself, and it can fail too. |
+| manifest | manifest | 16 | A small file listing the files that make up an output. Written last, it is the sign that everything is there. |
+| 条件付き書き込み | conditional write | 16 | A write with a condition such as "only if absent" or "only if still this version", where the store checks the condition and writes as a single step. |
+| Standard workflow | Standard workflow | 16 | One of the two Step Functions workflow types: up to a year, state persisted between states, billed per state transition. The other is Express, up to five minutes. |
+| AWS Batch | AWS Batch | 16 | A service that queues container jobs and provisions the compute (Fargate or EC2) to run them. |
