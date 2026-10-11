@@ -302,7 +302,7 @@
     },
     {
       "id": "03.book-site",
-      "sources": ["book-infra/functions/url-rewrite.js", "book-infra/lib/book-site-stack.ts"],
+      "sources": ["book/infra/functions/url-rewrite.js", "book/infra/lib/book-site-stack.ts"],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["test"],
@@ -434,7 +434,7 @@
     },
     {
       "id": "book.architecture",
-      "sources": ["book/vite.config.ts", "book-infra/lib/book-site-stack.ts"],
+      "sources": ["book/vite.config.ts", "book/infra/lib/book-site-stack.ts"],
       "tasks": [],
       "boundary": "none",
       "criteria": [],
@@ -461,8 +461,8 @@
     {
       "id": "book.routing",
       "sources": [
-        "book-infra/functions/url-rewrite.js",
-        "book-infra/test/url-rewrite.test.ts",
+        "book/infra/functions/url-rewrite.js",
+        "book/infra/test/url-rewrite.test.ts",
         "tools/src/checks/links.ts"
       ],
       "tasks": ["test:unit", "links:check"],
@@ -473,10 +473,10 @@
     {
       "id": "book.infra",
       "sources": [
-        "book-infra/lib/book-site-stack.ts",
-        "book-infra/bin/app.ts",
-        "book-infra/cdk.json",
-        "book-infra/test/book-site-stack.test.ts"
+        "book/infra/lib/book-site-stack.ts",
+        "book/infra/bin/app.ts",
+        "book/infra/cdk.json",
+        "book/infra/test/book-site-stack.test.ts"
       ],
       "tasks": ["book:infra:synth", "book:infra:diff", "book:infra:deploy", "book:infra:drift", "test:unit"],
       "boundary": "local+cloud",

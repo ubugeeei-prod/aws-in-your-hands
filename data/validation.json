@@ -378,8 +378,8 @@
         "en": "A custom domain (Route 53, ACM) is not implemented. With no siteUrl, canonical and hreflang links are not emitted."
       },
       "resume": {
-        "ja": "ドメインが決まったら book-infra/ に hosted zone と us-east-1 の証明書を追加し、AIH_BOOK_SITE_URL を設定してビルドする。cdkd が複数リージョンの stack を扱えるかを先に確かめる。",
-        "en": "Once a domain exists, add the hosted zone and a us-east-1 certificate to book-infra/ and build with AIH_BOOK_SITE_URL set. First confirm that cdkd handles the cross-Region stack."
+        "ja": "ドメインが決まったら book/infra/ に hosted zone と us-east-1 の証明書を追加し、AIH_BOOK_SITE_URL を設定してビルドする。cdkd が複数リージョンの stack を扱えるかを先に確かめる。",
+        "en": "Once a domain exists, add the hosted zone and a us-east-1 certificate to book/infra/ and build with AIH_BOOK_SITE_URL set. First confirm that cdkd handles the cross-Region stack."
       }
     },
     {

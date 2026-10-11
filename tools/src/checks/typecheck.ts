@@ -14,7 +14,7 @@ import { join } from "node:path";
 import { repoRoot } from "../data/load.ts";
 
 // The Vue SPA is checked by `vp run typecheck:vue`, which understands .vue files.
-const projects = [".", "book", "book-infra", "tools", "examples/02-toolchain", "examples/04-http-api"];
+const projects = [".", "book", "book/infra", "tools", "examples/02-toolchain", "examples/04-http-api"];
 
 const tsc = join(repoRoot, "node_modules/.bin/tsc");
 const failed: string[] = [];

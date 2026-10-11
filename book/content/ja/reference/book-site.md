@@ -35,7 +35,7 @@ S3 bucket (private)  <--  CloudFront distribution  <--  Reader
 | | 本のサイト | 03章の SPA |
 | --- | --- | --- |
 | stack | `AihBookSite` | `AihSpa` |
-| 定義 | `book-infra/` | `examples/03-spa/infra/` |
+| 定義 | `book/infra/` | `examples/03-spa/infra/` |
 | 配るもの | ページごとの HTML（SSG） | 1 つの `index.html`（SPA） |
 | ビルド | `vp run build:book` | `vp run build:spa` |
 
@@ -106,7 +106,7 @@ Ox Content は、`ja/chapters/03-spa.md` を `ja/chapters/03-spa/index.html` と
 
 非公開の S3 origin は、ディレクトリを `index.html` に読み替えません。その機能は S3 の Web サイトホスティングのもので、それを使うと bucket を OAC で守れないからです。そこで、CloudFront Function が読み替えます。
 
-<<< @/book-infra/functions/url-rewrite.js
+<<< @/book/infra/functions/url-rewrite.js
 
 | 読者が要求する URL | 関数がすること |
 | --- | --- |
@@ -119,7 +119,7 @@ Ox Content は、`ja/chapters/03-spa.md` を `ja/chapters/03-spa/index.html` と
 
 404 は distribution の側で扱います。
 
-<<< @/book-infra/lib/book-site-stack.ts{distribution}
+<<< @/book/infra/lib/book-site-stack.ts{distribution}
 
 この bucket policy は `s3:GetObject` しか許可していないので、S3 は存在しない object に 403 を返します。403 と 404 の両方を、生成した `404.html` と、状態コード 404 に置き換えます。
 
@@ -133,11 +133,11 @@ vp run links:check
 
 <!-- section: book.infra -->
 
-<<< @/book-infra/lib/book-site-stack.ts{bucket}
+<<< @/book/infra/lib/book-site-stack.ts{bucket}
 
-<<< @/book-infra/lib/book-site-stack.ts{rewrite}
+<<< @/book/infra/lib/book-site-stack.ts{rewrite}
 
-<<< @/book-infra/lib/book-site-stack.ts{outputs}
+<<< @/book/infra/lib/book-site-stack.ts{outputs}
 
 cache と応答ヘッダーには、AWS の管理ポリシーを使っています。自分で定義する `CachePolicy` や `ResponseHeadersPolicy` は、固定した版の cdkd では Cloud Control API 経由の扱いになります。使うリソースの種類を減らすほうが、確かめる範囲が狭くて済みます。
 
@@ -224,7 +224,7 @@ nix develop --command vp run book:smoke
 
 ### 独自ドメイン
 
-まだ対応していません。追加するときは、Route 53 の hosted zone と、`us-east-1` の ACM の証明書を、同じ `book-infra/` の中に定義します。そのとき、ビルド時に `AIH_BOOK_SITE_URL` を設定すると、Ox Content が canonical と hreflang のリンクを出力します。実在する URL が無い間は、設定しません。
+まだ対応していません。追加するときは、Route 53 の hosted zone と、`us-east-1` の ACM の証明書を、同じ `book/infra/` の中に定義します。そのとき、ビルド時に `AIH_BOOK_SITE_URL` を設定すると、Ox Content が canonical と hreflang のリンクを出力します。実在する URL が無い間は、設定しません。
 
 ## 料金
 
@@ -258,7 +258,7 @@ vp run book:infra:destroy
 | 節 | 対応するファイル | タスク |
 | --- | --- | --- |
 | 本文とビルド | `book/vite.config.ts`、`book/site.ts`、`book/content/`、`tools/src/book/generate.ts`、`tools/src/checks/content.ts`、`data/` | `dev:book`、`build:book`、`preview:book`、`book:generate`、`book:generate:check`、`content:check` |
-| URL の扱い | `book-infra/functions/url-rewrite.js`、`book-infra/test/url-rewrite.test.ts`、`tools/src/checks/links.ts` | `test:unit`、`links:check` |
-| インフラ | `book-infra/lib/book-site-stack.ts`、`book-infra/bin/app.ts`、`book-infra/cdk.json`、`book-infra/test/book-site-stack.test.ts` | `book:infra:synth`、`book:infra:diff`、`book:infra:deploy`、`book:infra:drift` |
+| URL の扱い | `book/infra/functions/url-rewrite.js`、`book/infra/test/url-rewrite.test.ts`、`tools/src/checks/links.ts` | `test:unit`、`links:check` |
+| インフラ | `book/infra/lib/book-site-stack.ts`、`book/infra/bin/app.ts`、`book/infra/cdk.json`、`book/infra/test/book-site-stack.test.ts` | `book:infra:synth`、`book:infra:diff`、`book:infra:deploy`、`book:infra:drift` |
 | 公開の手順 | `tools/src/site/` | `book:publish:plan`、`book:publish`、`book:smoke`、`book:invalidate` |
 | 片付け | `tools/src/site/unpublish.ts` | `book:unpublish`、`book:infra:destroy` |

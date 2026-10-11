@@ -93,7 +93,7 @@ To resume: When upgrading Ox Content or Vite+, check whether the exception is st
 
 A custom domain (Route 53, ACM) is not implemented. With no siteUrl, canonical and hreflang links are not emitted.
 
-To resume: Once a domain exists, add the hosted zone and a us-east-1 certificate to book-infra/ and build with AIH_BOOK_SITE_URL set. First confirm that cdkd handles the cross-Region stack.
+To resume: Once a domain exists, add the hosted zone and a us-east-1 certificate to book/infra/ and build with AIH_BOOK_SITE_URL set. First confirm that cdkd handles the cross-Region stack.
 
 ### cloudformation-drift
 

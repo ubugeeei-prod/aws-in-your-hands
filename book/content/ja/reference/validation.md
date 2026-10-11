@@ -93,7 +93,7 @@ TypeScript 7.0.2 の並列の型検査と vp check の型検査が、aws-cdk-lib
 
 独自ドメイン（Route 53、ACM）は未実装。siteUrl が無いので、canonical と hreflang のリンクは出力されていない。
 
-再開手順: ドメインが決まったら book-infra/ に hosted zone と us-east-1 の証明書を追加し、AIH_BOOK_SITE_URL を設定してビルドする。cdkd が複数リージョンの stack を扱えるかを先に確かめる。
+再開手順: ドメインが決まったら book/infra/ に hosted zone と us-east-1 の証明書を追加し、AIH_BOOK_SITE_URL を設定してビルドする。cdkd が複数リージョンの stack を扱えるかを先に確かめる。
 
 ### cloudformation-drift
 

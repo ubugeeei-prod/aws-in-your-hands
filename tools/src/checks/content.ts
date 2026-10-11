@@ -175,7 +175,7 @@ for (const section of sectionMap.sections) {
 
 // 6. Distributed code is finished code.
 for (const path of distributed) {
-  if (/^(examples|tools|book-infra)\/.*\.(ts|js|vue)$/.test(path) && !path.startsWith("tools/src/checks/")) {
+  if (/^(examples|tools|book\/infra)\/.*\.(ts|js|vue)$/.test(path) && !path.startsWith("tools/src/checks/")) {
     const source = readFileSync(join(repoRoot, path), "utf8");
     if (/\b(TODO|FIXME|XXX)\b/.test(source)) {
       fail(`${path}: contains an unfinished-work marker`);

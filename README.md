@@ -70,7 +70,7 @@ flake.nix, flake.lock, nix/     pinned development environment
 package.json, pnpm-*.yaml       pinned npm dependencies (pnpm 10 workspace)
 vite.config.ts                  every vp task; lint, format, and test settings
 book/                           the book: Ox Content config and content/{ja,en}
-book-infra/                     the book site's CDK app (S3 + CloudFront), managed with cdkd
+book/infra/                     the book site's CDK app (S3 + CloudFront), managed with cdkd
 examples/NN-name/               one directory per chapter, complete and runnable
 tools/                          task implementations: cdkd wrapper, drift gate, publish, smoke, checks, pricing
 data/                           chapter manifest, source registry, glossary, prices, section-to-source map, validation record

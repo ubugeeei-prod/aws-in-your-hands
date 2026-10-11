@@ -32,7 +32,7 @@ for (const page of pages) {
       continue;
     }
     checked++;
-    // The same mapping as book-infra/functions/url-rewrite.js.
+    // The same mapping as book/infra/functions/url-rewrite.js.
     const key = target.endsWith("/") ? `${target}index.html` : target;
     if (!existsSync(join(root, key))) {
       broken.push(`${relative(root, page)} -> ${target}`);

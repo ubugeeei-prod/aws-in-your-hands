@@ -108,8 +108,8 @@ export default defineConfig({
       "preview:book": fresh("vp preview", { cwd: "book", dependsOn: ["build:book"] }),
       "book:generate": fresh("node tools/src/book/generate.ts"),
       "book:generate:check": fresh("node tools/src/book/generate.ts --check"),
-      ...infra("book", "book-infra", "AihBookSite"),
-      ...site("book", "book-infra", "AihBookSite", "book/dist", "build:book"),
+      ...infra("book", "book/infra", "AihBookSite"),
+      ...site("book", "book/infra", "AihBookSite", "book/dist", "build:book"),
 
       // ---- pricing and source distribution -----------------------------
       "pricing:refresh": live("node tools/src/pricing/refresh.ts"),
@@ -122,7 +122,7 @@ export default defineConfig({
 
       // ---- chapter 02: toolchain ----------------------------------------
       // Once per account and region: creates cdkd's state and asset storage.
-      "infra:bootstrap": live(`${node} tools/src/infra/cdkd.ts bootstrap book-infra -`),
+      "infra:bootstrap": live(`${node} tools/src/infra/cdkd.ts bootstrap book/infra -`),
       ...infra("hello", "examples/02-toolchain", "AihHello"),
       // The same app through the AWS CDK CLI. Local only; shown for comparison.
       "hello:infra:synth:cdk": fresh("cdk synth --quiet", { cwd: "examples/02-toolchain" }),
@@ -145,7 +145,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["{book-infra,tools,examples}/**/*.test.ts"],
+    include: ["{book/infra,tools,examples}/**/*.test.ts"],
   },
   lint: {
     // Off on purpose: the type-aware pass intermittently mis-resolves

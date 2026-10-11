@@ -35,7 +35,7 @@ The book site and the SPA from Chapter 03 are separate things. They are served f
 | | Book site | SPA from Chapter 03 |
 | --- | --- | --- |
 | stack | `AihBookSite` | `AihSpa` |
-| Definition | `book-infra/` | `examples/03-spa/infra/` |
+| Definition | `book/infra/` | `examples/03-spa/infra/` |
 | What it serves | HTML per page (SSG) | A single `index.html` (SPA) |
 | Build | `vp run build:book` | `vp run build:spa` |
 
@@ -106,7 +106,7 @@ Ox Content outputs `ja/chapters/03-spa.md` as `ja/chapters/03-spa/index.html`. L
 
 A private S3 origin does not map a directory to `index.html`. That is a feature of S3 static website hosting, and using it means the bucket cannot be protected with OAC. So a CloudFront Function does the mapping.
 
-<<< @/book-infra/functions/url-rewrite.js
+<<< @/book/infra/functions/url-rewrite.js
 
 | URL the reader requests | What the function does |
 | --- | --- |
@@ -119,7 +119,7 @@ Unlike the SPA in Chapter 03, the site **does not return `index.html` for a URL 
 
 The 404 is handled on the distribution.
 
-<<< @/book-infra/lib/book-site-stack.ts{distribution}
+<<< @/book/infra/lib/book-site-stack.ts{distribution}
 
 This bucket policy allows only `s3:GetObject`, so S3 returns 403 for an object that does not exist. Both 403 and 404 are replaced with the generated `404.html` and status code 404.
 
@@ -133,11 +133,11 @@ vp run links:check
 
 <!-- section: book.infra -->
 
-<<< @/book-infra/lib/book-site-stack.ts{bucket}
+<<< @/book/infra/lib/book-site-stack.ts{bucket}
 
-<<< @/book-infra/lib/book-site-stack.ts{rewrite}
+<<< @/book/infra/lib/book-site-stack.ts{rewrite}
 
-<<< @/book-infra/lib/book-site-stack.ts{outputs}
+<<< @/book/infra/lib/book-site-stack.ts{outputs}
 
 The cache and response headers use AWS managed policies. A `CachePolicy` or `ResponseHeadersPolicy` that you define yourself is handled through the Cloud Control API in the pinned version of cdkd. Using fewer resource types leaves less to verify.
 
@@ -224,7 +224,7 @@ nix develop --command vp run book:smoke
 
 ### Custom domain
 
-Not supported yet. When it is added, the Route 53 hosted zone and the ACM certificate in `us-east-1` will be defined in the same `book-infra/`. At that point, setting `AIH_BOOK_SITE_URL` at build time makes Ox Content output canonical and hreflang links. While there is no real URL, it is left unset.
+Not supported yet. When it is added, the Route 53 hosted zone and the ACM certificate in `us-east-1` will be defined in the same `book/infra/`. At that point, setting `AIH_BOOK_SITE_URL` at build time makes Ox Content output canonical and hreflang links. While there is no real URL, it is left unset.
 
 ## Cost
 
@@ -258,7 +258,7 @@ When you publish from CI instead of a person's terminal, use the same Nix lock a
 | Section | Files | Tasks |
 | --- | --- | --- |
 | Content and build | `book/vite.config.ts`, `book/site.ts`, `book/content/`, `tools/src/book/generate.ts`, `tools/src/checks/content.ts`, `data/` | `dev:book`, `build:book`, `preview:book`, `book:generate`, `book:generate:check`, `content:check` |
-| URL handling | `book-infra/functions/url-rewrite.js`, `book-infra/test/url-rewrite.test.ts`, `tools/src/checks/links.ts` | `test:unit`, `links:check` |
-| Infrastructure | `book-infra/lib/book-site-stack.ts`, `book-infra/bin/app.ts`, `book-infra/cdk.json`, `book-infra/test/book-site-stack.test.ts` | `book:infra:synth`, `book:infra:diff`, `book:infra:deploy`, `book:infra:drift` |
+| URL handling | `book/infra/functions/url-rewrite.js`, `book/infra/test/url-rewrite.test.ts`, `tools/src/checks/links.ts` | `test:unit`, `links:check` |
+| Infrastructure | `book/infra/lib/book-site-stack.ts`, `book/infra/bin/app.ts`, `book/infra/cdk.json`, `book/infra/test/book-site-stack.test.ts` | `book:infra:synth`, `book:infra:diff`, `book:infra:deploy`, `book:infra:drift` |
 | Publishing | `tools/src/site/` | `book:publish:plan`, `book:publish`, `book:smoke`, `book:invalidate` |
 | Cleanup | `tools/src/site/unpublish.ts` | `book:unpublish`, `book:infra:destroy` |

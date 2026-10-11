@@ -1,6 +1,6 @@
 packages:
   - book
-  - book-infra
+  - book/infra
   - tools
   - examples/*
 
