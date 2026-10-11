@@ -91,3 +91,13 @@ generated: true
 | KeyValueStore | KeyValueStore | 10 | CloudFront Functions から読める、キーと値の保存場所。関数からは読むだけで、書き換えは外から API で行う。 |
 | Lambda@Edge | Lambda@Edge | 10 | us-east-1 に作った Lambda 関数の version を CloudFront が各地に複製し、リクエストの途中で呼ぶ仕組み。 |
 | ETag による条件付き更新 | ETag precondition | 10 | 読んだときの版（ETag）を書き込みに添え、その間に他の誰かが書き換えていたら拒否してもらう方法。 |
+| migration | migration | 13 | schema の変更を順番つきのファイルにして、どこまで適用したかを DB 自身に記録するやり方。 |
+| transaction | transaction | 13 | 複数の SQL を「全部反映する」か「何も反映しない」のどちらかにまとめる単位。 |
+| snapshot isolation | snapshot isolation | 13 | transaction が、開始した時点のデータを最後まで読み続ける分離の方式。PostgreSQL の REPEATABLE READ がこれにあたる。 |
+| 楽観的同時実行制御（OCC） | optimistic concurrency control (OCC) | 13 | ロックで待たせず、commit のときに競合を調べて、負けた transaction を失敗させる方式。 |
+| serialization failure | serialization failure | 13 | ほかの transaction と競合したので commit できなかった、という DB からの応答。SQLSTATE は 40001。何も反映されていないので、transaction を最初からやり直す。 |
+| write skew | write skew | 13 | 2 つの transaction が同じデータを読んで判断し、別々の行に書いた結果、どちらか一方だけなら守れた条件が破れること。 |
+| database role | database role | 13 | DB の中の利用者。どの table に何ができるかは、この role への GRANT で決まる。IAM の role とは別のもの。 |
+| 認証 token（Aurora DSQL） | authentication token (Aurora DSQL) | 13 | 接続するときだけパスワードの代わりに渡す、IAM の認証情報で署名した期限つきの文字列。 |
+| DPU | DPU | 13 | Distributed Processing Unit。Aurora DSQL が、SQL の実行にかかった計算、読み取り、書き込みをまとめて測る課金の単位。 |
+| ACU | ACU | 13 | Aurora Capacity Unit。Aurora Serverless v2 の容量の単位で、1 ACU はおよそ 2 GiB のメモリと、それに見合う CPU とネットワーク。 |

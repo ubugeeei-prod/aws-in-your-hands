@@ -799,6 +799,106 @@
         "ja": "読んだときの版（ETag）を書き込みに添え、その間に他の誰かが書き換えていたら拒否してもらう方法。",
         "en": "Sending the version (ETag) you read along with a write, so the write is refused if someone else changed the data in between."
       }
+    },
+    {
+      "id": "migration",
+      "ja": "migration",
+      "en": "migration",
+      "firstUse": "13",
+      "definition": {
+        "ja": "schema の変更を順番つきのファイルにして、どこまで適用したかを DB 自身に記録するやり方。",
+        "en": "A schema change kept as a numbered file, with the database itself recording which ones have been applied."
+      }
+    },
+    {
+      "id": "transaction",
+      "ja": "transaction",
+      "en": "transaction",
+      "firstUse": "13",
+      "definition": {
+        "ja": "複数の SQL を「全部反映する」か「何も反映しない」のどちらかにまとめる単位。",
+        "en": "A group of SQL statements that takes effect entirely or not at all."
+      }
+    },
+    {
+      "id": "snapshot-isolation",
+      "ja": "snapshot isolation",
+      "en": "snapshot isolation",
+      "firstUse": "13",
+      "definition": {
+        "ja": "transaction が、開始した時点のデータを最後まで読み続ける分離の方式。PostgreSQL の REPEATABLE READ がこれにあたる。",
+        "en": "Isolation in which a transaction keeps reading the data as it was when the transaction started. PostgreSQL's REPEATABLE READ is this."
+      }
+    },
+    {
+      "id": "optimistic-concurrency-control",
+      "ja": "楽観的同時実行制御（OCC）",
+      "en": "optimistic concurrency control (OCC)",
+      "firstUse": "13",
+      "definition": {
+        "ja": "ロックで待たせず、commit のときに競合を調べて、負けた transaction を失敗させる方式。",
+        "en": "Checking for conflicts at commit instead of making transactions wait for locks; the transaction that loses fails."
+      }
+    },
+    {
+      "id": "serialization-failure",
+      "ja": "serialization failure",
+      "en": "serialization failure",
+      "firstUse": "13",
+      "definition": {
+        "ja": "ほかの transaction と競合したので commit できなかった、という DB からの応答。SQLSTATE は 40001。何も反映されていないので、transaction を最初からやり直す。",
+        "en": "The database's answer that a transaction could not commit because it conflicted with another. SQLSTATE 40001. Nothing was applied, so the transaction is run again from the start."
+      }
+    },
+    {
+      "id": "write-skew",
+      "ja": "write skew",
+      "en": "write skew",
+      "firstUse": "13",
+      "definition": {
+        "ja": "2 つの transaction が同じデータを読んで判断し、別々の行に書いた結果、どちらか一方だけなら守れた条件が破れること。",
+        "en": "Two transactions decide from the same data and write different rows, breaking a condition that either alone would have kept."
+      }
+    },
+    {
+      "id": "database-role",
+      "ja": "database role",
+      "en": "database role",
+      "firstUse": "13",
+      "definition": {
+        "ja": "DB の中の利用者。どの table に何ができるかは、この role への GRANT で決まる。IAM の role とは別のもの。",
+        "en": "A user inside the database. GRANTs to it decide what it may do to which table. Not the same thing as an IAM role."
+      }
+    },
+    {
+      "id": "dsql-auth-token",
+      "ja": "認証 token（Aurora DSQL）",
+      "en": "authentication token (Aurora DSQL)",
+      "firstUse": "13",
+      "definition": {
+        "ja": "接続するときだけパスワードの代わりに渡す、IAM の認証情報で署名した期限つきの文字列。",
+        "en": "A time-limited string signed with IAM credentials, passed in place of a password when a connection is opened."
+      }
+    },
+    {
+      "id": "dpu",
+      "ja": "DPU",
+      "en": "DPU",
+      "firstUse": "13",
+      "definition": {
+        "ja": "Distributed Processing Unit。Aurora DSQL が、SQL の実行にかかった計算、読み取り、書き込みをまとめて測る課金の単位。",
+        "en": "Distributed Processing Unit: the billing unit in which Aurora DSQL measures the compute, reads, and writes spent running SQL."
+      }
+    },
+    {
+      "id": "acu",
+      "ja": "ACU",
+      "en": "ACU",
+      "firstUse": "13",
+      "definition": {
+        "ja": "Aurora Capacity Unit。Aurora Serverless v2 の容量の単位で、1 ACU はおよそ 2 GiB のメモリと、それに見合う CPU とネットワーク。",
+        "en": "Aurora Capacity Unit: the capacity unit of Aurora Serverless v2. One ACU is about 2 GiB of memory with matching CPU and networking."
+      }
     }
   ]
 }

@@ -1490,6 +1490,160 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "13.architecture",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "13.choices",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "13.compat",
+      "sources": ["examples/13-sql/src/migrate.ts", "examples/13-sql/test/migrate.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.migrations",
+      "sources": [
+        "examples/13-sql/migrations",
+        "examples/13-sql/src/migrate.ts",
+        "examples/13-sql/test/migrate.test.ts"
+      ],
+      "tasks": ["test:unit", "sql:db:migrate:local"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.queries",
+      "sources": [
+        "examples/13-sql/src/contract.ts",
+        "examples/13-sql/src/db.ts",
+        "examples/13-sql/src/notes-repository.ts",
+        "examples/13-sql/src/notes.ts",
+        "examples/13-sql/src/app.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.transactions",
+      "sources": [
+        "examples/13-sql/src/transaction.ts",
+        "examples/13-sql/src/notes-repository.ts",
+        "examples/13-sql/test/transaction.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.conflicts",
+      "sources": [
+        "examples/13-sql/test/support.ts",
+        "examples/13-sql/test/notes-repository.test.ts",
+        "examples/13-sql/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.local",
+      "sources": [
+        "examples/13-sql/src/pglite.ts",
+        "examples/13-sql/src/dev.ts",
+        "examples/13-sql/src/compose.ts",
+        "examples/13-sql/scripts/local-db.ts",
+        "examples/13-sql/scripts/db-tasks.ts",
+        "examples/13-sql/test/fixtures/seed-notes.json",
+        "examples/13-sql/.env.example"
+      ],
+      "tasks": ["dev:sql", "sql:db:migrate:local", "sql:db:seed:local", "sql:db:reset:local"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "13.connect",
+      "sources": [
+        "examples/13-sql/src/dsql.ts",
+        "examples/13-sql/src/lambda.ts",
+        "examples/13-sql/src/env.ts",
+        "examples/13-sql/infra/lib/sql-stack.ts",
+        "examples/13-sql/infra/bin/app.ts",
+        "examples/13-sql/infra/test/sql-stack.test.ts",
+        "examples/13-sql/cdk.json"
+      ],
+      "tasks": ["sql:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.deploy",
+      "sources": [
+        "examples/13-sql/scripts/cloud-db.ts",
+        "examples/13-sql/scripts/db-tasks.ts",
+        "examples/13-sql/src/grant.ts",
+        "examples/13-sql/test/grant.test.ts",
+        "examples/13-sql/scripts/smoke.ts",
+        "examples/13-sql/scripts/logs.ts"
+      ],
+      "tasks": [
+        "sql:infra:diff",
+        "sql:infra:deploy",
+        "sql:db:migrate",
+        "sql:db:grant",
+        "sql:db:seed",
+        "sql:smoke",
+        "sql:logs",
+        "sql:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "13.backup",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "13.d1",
+      "sources": ["examples/13-sql/migrations", "examples/13-sql/src/transaction.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "13.cleanup",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts", "examples/13-sql/scripts/local-db.ts"],
+      "tasks": ["sql:infra:destroy", "sql:db:reset:local"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

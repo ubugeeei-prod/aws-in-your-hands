@@ -1,0 +1,18 @@
+[
+  {
+    "id": "0d4c2a1e-5b7f-4c1a-9e33-000000000001",
+    "title": "Welcome",
+    "body": "This note came from test/fixtures/seed-notes.json.",
+    "version": 1,
+    "createdAt": "2026-10-11T00:00:00.000Z",
+    "updatedAt": "2026-10-11T00:00:00.000Z"
+  },
+  {
+    "id": "0d4c2a1e-5b7f-4c1a-9e33-000000000002",
+    "title": "SQL is back",
+    "body": "Joins, constraints, and transactions. Run `vp run sql:db:reset:local` to start over.",
+    "version": 1,
+    "createdAt": "2026-10-11T00:00:01.000Z",
+    "updatedAt": "2026-10-11T00:00:01.000Z"
+  }
+]

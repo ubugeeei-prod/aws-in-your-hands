@@ -458,6 +458,102 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 0.21** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `cloudfront.kvs.api`
 
+## Aurora DSQL: 1 GB of data and no queries for a month
+
+ID: `sql-dsql-idle` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+
+Assumptions:
+
+- No queries, so no DPUs
+- 1 GB of data
+- No backups
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dsql.dpu` | 0 | DPU | no database activity | 0 | 100,000 | 0 |
+| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
+
+- List subtotal: **USD 0.40** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## Aurora DSQL: a notes API at 1 million requests a month (database only)
+
+ID: `sql-dsql-small` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+
+Assumptions:
+
+- 900,000 reads and 100,000 writes
+- A read is assumed to cost 0.00675 DPU (the figure in the documentation's point-lookup example)
+- A write is assumed to cost 0.18525 DPU (three times the 0.06175 DPU of the documentation's single-row insert example; a create in this chapter writes three rows)
+- Not measured on this chapter's queries
+- 1 GB of data
+- Lambda, API Gateway, logs, and backups are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dsql.dpu` | 24,600 | DPU | 900,000 x 0.00675 DPU + 100,000 x 0.18525 DPU | 0.25 | 100,000 | 0 |
+| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
+
+- List subtotal: **USD 0.65** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## RDS for PostgreSQL: the smallest configuration running for 730 hours
+
+ID: `sql-rds-min` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+
+Assumptions:
+
+- db.t4g.micro, Single-AZ, never stopped, 730 hours
+- 20 GB of gp3 (the minimum for PostgreSQL)
+- Independent of how many queries run
+- Backup storage beyond the free allocation, data transfer, and VPC charges (chapter 11) are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `rds.postgres.t4g-micro.single-az` | 730 | Hrs | one instance for 730 hours | 18.25 | - | 18.25 |
+| `rds.postgres.gp3.storage` | 20 | GB-Mo | 20 GB provisioned for the month | 2.76 | - | 2.76 |
+
+- List subtotal: **USD 21.01** / month
+- Subtotal after monthly free allowance: **USD 21.01** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `rds.postgres.t4g-micro.single-az`, `rds.postgres.gp3.storage`
+
+## Aurora Serverless v2: no auto-pause, 0.5 ACU minimum for 730 hours
+
+ID: `sql-aurora-min` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+
+Assumptions:
+
+- Aurora PostgreSQL, one writer, staying at the 0.5 ACU minimum for 730 hours
+- Aurora Standard (I/O is billed separately; zero I/O here)
+- 1 GB of data
+- Backup storage beyond the free allocation, data transfer, and VPC charges (chapter 11) are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `aurora.postgres.serverless-v2.acu` | 365 | ACU-Hr | 0.5 ACU x 730 hours | 54.75 | - | 54.75 |
+| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
+
+- List subtotal: **USD 54.87** / month
+- Subtotal after monthly free allowance: **USD 54.87** / month
+
+## Aurora Serverless v2: auto-paused for the whole month
+
+ID: `sql-aurora-paused` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+
+Assumptions:
+
+- 0 ACU minimum, assuming no connection and no resume for the whole month
+- In practice Aurora resumes the instance for maintenance at times, and that time is billed
+- 1 GB of data
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `aurora.postgres.serverless-v2.acu` | 0 | ACU-Hr | paused for all 730 hours | 0 | - | 0 |
+| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
+
+- List subtotal: **USD 0.12** / month
+- Subtotal after monthly free allowance: **USD 0.12** / month
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -505,6 +601,12 @@ Assumptions:
 | `cloudfront.kvs.api` | global | KeyValueStore-APIOperations | API Requests | 0 - ∞: 0.0010000000 | 2026-10-03 | 2026-10-11 |
 | `lambdaedge.jp.request` | global | APN1-Lambda-Edge-Request | Request | 0 - ∞: 0.0000006000 | 2026-10-03 | 2026-10-11 |
 | `lambdaedge.jp.duration` | global | APN1-Lambda-Edge-GB-Second | Lambda-GB-Second | 0 - ∞: 0.0000500100 | 2026-10-03 | 2026-10-11 |
+| `dsql.dpu` | ap-northeast-1 | APN1-DSQL-DistributedProcessingUnits | DPU | 0 - ∞: 0.0000100000 | 2026-09-11 | 2026-10-11 |
+| `dsql.storage` | ap-northeast-1 | APN1-DSQL-Storage-ByteHrs | GB-Month | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-11 |
+| `rds.postgres.t4g-micro.single-az` | ap-northeast-1 | APN1-InstanceUsage:db.t4g.micro | Hrs | 0 - ∞: 0.0250000000 | 2026-10-06 | 2026-10-11 |
+| `rds.postgres.gp3.storage` | ap-northeast-1 | APN1-RDS:GP3-Storage | GB-Mo | 0 - ∞: 0.1380000000 | 2026-10-06 | 2026-10-11 |
+| `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
+| `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -522,6 +624,8 @@ Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is rec
 | `logs.storage` | 5 | `aws-price-list-cloudwatch` | GB-month. From the Global-TimedStorage-ByteHrs USD 0 tier. |
 | `cognito.essentials.mau` | 10,000 | `cognito-pricing` | MAUs per account or organization, shared with the Lite plan. Direct sign-in users only. |
 | `cloudfront.kvs.read` | 2,000,000 | `cloudfront-pricing-payg` | Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only. |
+| `dsql.dpu` | 100,000 | `dsql-pricing` | First 100,000 DPUs each month. The pricing page does not say whether it expires. |
+| `dsql.storage` | 1 | `dsql-pricing` | First GB of storage each month. The pricing page does not say whether it expires. |
 
 Allowances that could not be confirmed (treated as unknown, not as zero; nothing is deducted):
 
@@ -536,3 +640,5 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `ses.outbound.message`: The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied.
 - `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.
+- `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
+- `rds.postgres.gp3.storage`: The RDS free tier terms were not checked while writing chapter 13.

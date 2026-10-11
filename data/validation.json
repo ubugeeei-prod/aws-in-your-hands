@@ -731,6 +731,72 @@
         "ja": "us-east-1 に Lambda 関数と version、IAM role を作る",
         "en": "Creates a Lambda function, a version, and an IAM role in us-east-1"
       }
+    },
+    {
+      "scope": "13",
+      "command": "vp run test:unit (examples/13-sql)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "transaction の再試行、PGlite 上の repository（quota、version、owner の分離、制約）、COMMIT の競合の注入、migration の lint と中断からの再開、grant 文の検査、API、インフラの assertion",
+        "en": "Transaction retries, the repository on PGlite (quota, versions, owner isolation, constraints), injected COMMIT conflicts, migration lint and resuming after an interruption, grant statement checks, the API, and infrastructure assertions"
+      }
+    },
+    {
+      "scope": "13",
+      "command": "vp run sql:db:reset:local / sql:db:migrate:local / sql:db:seed:local, vp run dev:sql + curl (NOTES_DB=pglite)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "migration と seed の適用、2 回目の実行で何も変わらないこと、作成、更新、古い version の 409、UUID でない id の 404、削除、開発サーバーの起動中に reset が拒否されることを確認",
+        "en": "Applied the migrations and the seed, saw a second run change nothing, and checked create, update, the 409 for a stale version, the 404 for a non-UUID id, delete, and that reset is refused while the dev server runs"
+      }
+    },
+    {
+      "scope": "13",
+      "command": "vp run sql:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "node-postgres と AWS SDK の署名を含む CommonJS の bundle を esbuild で作成。bundle を Node.js 24 で読み込み、DB に触れない route（GET /health と UUID でない id）が応答することを確認",
+        "en": "Builds a CommonJS bundle with node-postgres and the AWS SDK signer using esbuild. The bundle was loaded in Node.js 24 and answered the routes that do not touch the database (GET /health and a non-UUID id)"
+      }
+    },
+    {
+      "scope": "13",
+      "command": "vp run sql:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Aurora DSQL の cluster を作る。cdkd は AWS::DSQL::Cluster を Cloud Control API 経由で扱う",
+        "en": "Creates an Aurora DSQL cluster. cdkd handles AWS::DSQL::Cluster through Cloud Control API"
+      }
+    },
+    {
+      "scope": "13",
+      "command": "vp run sql:db:migrate / sql:db:grant / sql:db:seed",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "admin として cluster に接続し、schema、database role、seed を作る",
+        "en": "Connects to the cluster as admin and creates the schema, the database role, and the seed"
+      }
+    },
+    {
+      "scope": "13",
+      "command": "vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "デプロイ済みの API と cluster が必要",
+        "en": "Needs the deployed API and cluster"
+      }
     }
   ],
   "open": [
@@ -1040,6 +1106,39 @@
       "resume": {
         "ja": "AIH_AWS_REGION=us-east-1 vp run infra:bootstrap の後に vp run edge:body:infra:deploy を実行する。出力の BodyDigestVersionArn を -c bodyDigestVersionArn=... で vp run edge:infra:deploy に渡し、curl -X POST で /digest を確かめる。失敗したら内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
         "en": "Run AIH_AWS_REGION=us-east-1 vp run infra:bootstrap, then vp run edge:body:infra:deploy. Pass the BodyDigestVersionArn output to vp run edge:infra:deploy with -c bodyDigestVersionArn=..., and check /digest with curl -X POST. If it fails, record how and ask the author for a decision; do not substitute another tool."
+      }
+    },
+    {
+      "id": "dsql-real-cluster",
+      "summary": {
+        "ja": "13章のコードを実際の Aurora DSQL に一度もつないでいない。未確認: 4 つの migration の SQL が受け付けられること（CREATE SCHEMA IF NOT EXISTS、外部キー、CHECK、CREATE INDEX ASYNC IF NOT EXISTS）、CREATE INDEX ASYNC の応答から job_id を読めて sys.jobs を polling できること、AWS IAM GRANT と schema への GRANT で notes_api が読み書きできること、node-postgres の password に渡した関数で token が通ること、競合が node-postgres のエラーの code に 40001 として現れること、凍結から戻った実行環境で切れた接続がどう見えるか。手元の代用は PGlite（PostgreSQL 18.3）で、DSQL（PostgreSQL 16 互換）とは版も違う。",
+        "en": "The chapter 13 code has never been connected to a real Aurora DSQL cluster. Unconfirmed: that the four migrations are accepted (CREATE SCHEMA IF NOT EXISTS, the foreign key, the CHECKs, CREATE INDEX ASYNC IF NOT EXISTS), that job_id can be read from the response to CREATE INDEX ASYNC and sys.jobs polled, that AWS IAM GRANT plus the schema GRANTs let notes_api read and write, that the token passes through the function given to node-postgres as password, that a conflict shows up as code 40001 on node-postgres's error, and how a dropped connection looks in an execution environment that was frozen. The local stand-in is PGlite (PostgreSQL 18.3), a different version from DSQL (PostgreSQL 16 compatible)."
+      },
+      "resume": {
+        "ja": "学習用アカウントで vp run sql:infra:deploy、sql:db:migrate、sql:db:grant、sql:smoke を順に実行する。同じ note を同時に更新する負荷をかけ、sql:logs で \"transaction retry\" の行と 40001 を確認する。15 分以上あけて呼び、接続の張り直しを見る。結果を data/validation.json に記録し、vp run sql:infra:destroy で消す。",
+        "en": "In a practice account run vp run sql:infra:deploy, sql:db:migrate, sql:db:grant, and sql:smoke in that order. Put concurrent updates on one note and look for \"transaction retry\" lines and 40001 with sql:logs. Call again after more than 15 minutes and watch the reconnect. Record the results in data/validation.json and remove everything with vp run sql:infra:destroy."
+      }
+    },
+    {
+      "id": "cdkd-dsql-cluster",
+      "summary": {
+        "ja": "cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Control API 経由で扱う。作成、Ref が cluster の identifier を返すこと、drift の読み戻し、削除が実際に動くかは未確認。13章の stack は Ref から endpoint と ARN を組み立てている。",
+        "en": "cdkd 0.296.28 has no dedicated provider for AWS::DSQL::Cluster and handles it through Cloud Control API. Whether create, Ref returning the cluster identifier, drift read-back, and delete work in practice is unconfirmed. The chapter 13 stack builds the endpoint and the ARN from Ref."
+      },
+      "resume": {
+        "ja": "vp run sql:infra:deploy の後、output の ClusterEndpoint が <26 文字の id>.dsql.ap-northeast-1.on.aws の形であること、関数の環境変数と IAM policy の Resource が同じ cluster を指すことを確認する。vp run sql:infra:drift と sql:infra:destroy の結果も記録する。",
+        "en": "After vp run sql:infra:deploy, check that the ClusterEndpoint output has the form <26-character id>.dsql.ap-northeast-1.on.aws and that the function's environment variable and the IAM policy's Resource point at the same cluster. Record the results of vp run sql:infra:drift and sql:infra:destroy as well."
+      }
+    },
+    {
+      "id": "dsql-dpu-estimate",
+      "summary": {
+        "ja": "13章の料金のシナリオは、1 リクエストあたりの DPU を公式ドキュメントの計算例から借りた仮定で、この章の query を測った値ではない。",
+        "en": "The chapter 13 cost scenario borrows its DPUs per request from the documentation's worked examples. They were not measured on this chapter's queries."
+      },
+      "resume": {
+        "ja": "デプロイした cluster で EXPLAIN ANALYZE VERBOSE を使うか、CloudWatch の ComputeDPU、ReadDPU、WriteDPU を見て、作成、更新、一覧の 1 件あたりの DPU を測る。data/fragments/13.json の scenarios を直して apply し直す。",
+        "en": "On a deployed cluster use EXPLAIN ANALYZE VERBOSE, or the ComputeDPU, ReadDPU, and WriteDPU metrics in CloudWatch, to measure the DPUs of one create, one update, and one list. Correct the scenarios in data/fragments/13.json and apply it again."
       }
     }
   ]

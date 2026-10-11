@@ -826,6 +826,168 @@
           "basis": "one third of 1,000,000 requests reach S3 as GET"
         }
       ]
+    },
+    {
+      "id": "sql-dsql-idle",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora DSQL: 1 GB のデータを置いて、誰も問い合わせない月",
+        "en": "Aurora DSQL: 1 GB of data and no queries for a month"
+      },
+      "assumptions": {
+        "ja": ["問い合わせゼロ。DPU は発生しない", "データは 1 GB", "backup なし"],
+        "en": ["No queries, so no DPUs", "1 GB of data", "No backups"]
+      },
+      "items": [
+        {
+          "priceId": "dsql.dpu",
+          "quantity": 0,
+          "basis": "no database activity"
+        },
+        {
+          "priceId": "dsql.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
+      ]
+    },
+    {
+      "id": "sql-dsql-small",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora DSQL: 月 100 万リクエストのノート API（DB の分だけ）",
+        "en": "Aurora DSQL: a notes API at 1 million requests a month (database only)"
+      },
+      "assumptions": {
+        "ja": [
+          "読み取り 90 万件、書き込み 10 万件",
+          "読み取り 1 件は 0.00675 DPU と仮定（公式ドキュメントの point lookup の計算例の値）",
+          "書き込み 1 件は 0.18525 DPU と仮定（公式ドキュメントの 1 行 insert の計算例 0.06175 DPU の 3 倍。この章の作成は 3 行に書く）",
+          "この章の query で実測した値ではない",
+          "データは 1 GB",
+          "Lambda、API Gateway、ログ、backup は含めない"
+        ],
+        "en": [
+          "900,000 reads and 100,000 writes",
+          "A read is assumed to cost 0.00675 DPU (the figure in the documentation's point-lookup example)",
+          "A write is assumed to cost 0.18525 DPU (three times the 0.06175 DPU of the documentation's single-row insert example; a create in this chapter writes three rows)",
+          "Not measured on this chapter's queries",
+          "1 GB of data",
+          "Lambda, API Gateway, logs, and backups are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dsql.dpu",
+          "quantity": 24600,
+          "basis": "900,000 x 0.00675 DPU + 100,000 x 0.18525 DPU"
+        },
+        {
+          "priceId": "dsql.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
+      ]
+    },
+    {
+      "id": "sql-rds-min",
+      "chapter": "13",
+      "title": {
+        "ja": "RDS for PostgreSQL: 最小構成を 730 時間動かす",
+        "en": "RDS for PostgreSQL: the smallest configuration running for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "db.t4g.micro、Single-AZ、止めずに 730 時間",
+          "gp3 を 20 GB（PostgreSQL での最小）",
+          "問い合わせの量によらない",
+          "backup の超過分、データ転送、VPC の料金（11章）は含めない"
+        ],
+        "en": [
+          "db.t4g.micro, Single-AZ, never stopped, 730 hours",
+          "20 GB of gp3 (the minimum for PostgreSQL)",
+          "Independent of how many queries run",
+          "Backup storage beyond the free allocation, data transfer, and VPC charges (chapter 11) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.t4g-micro.single-az",
+          "quantity": 730,
+          "basis": "one instance for 730 hours"
+        },
+        {
+          "priceId": "rds.postgres.gp3.storage",
+          "quantity": 20,
+          "basis": "20 GB provisioned for the month"
+        }
+      ]
+    },
+    {
+      "id": "sql-aurora-min",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora Serverless v2: auto-pause なし、最小 0.5 ACU で 730 時間",
+        "en": "Aurora Serverless v2: no auto-pause, 0.5 ACU minimum for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "Aurora PostgreSQL、writer 1 台、最小容量 0.5 ACU のまま 730 時間",
+          "Aurora Standard（I/O は別料金。ここでは I/O ゼロ）",
+          "データは 1 GB",
+          "backup の超過分、データ転送、VPC の料金（11章）は含めない"
+        ],
+        "en": [
+          "Aurora PostgreSQL, one writer, staying at the 0.5 ACU minimum for 730 hours",
+          "Aurora Standard (I/O is billed separately; zero I/O here)",
+          "1 GB of data",
+          "Backup storage beyond the free allocation, data transfer, and VPC charges (chapter 11) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 365,
+          "basis": "0.5 ACU x 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
+      ]
+    },
+    {
+      "id": "sql-aurora-paused",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora Serverless v2: auto-pause で 1 か月ずっと止まっていた場合",
+        "en": "Aurora Serverless v2: auto-paused for the whole month"
+      },
+      "assumptions": {
+        "ja": [
+          "最小容量 0 ACU。1 か月のあいだ一度も接続がなく、再開もしなかったと仮定",
+          "実際には保守のために Aurora が instance を再開することがあり、その時間は課金される",
+          "データは 1 GB"
+        ],
+        "en": [
+          "0 ACU minimum, assuming no connection and no resume for the whole month",
+          "In practice Aurora resumes the instance for maintenance at times, and that time is billed",
+          "1 GB of data"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 0,
+          "basis": "paused for all 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
+      ]
     }
   ]
 }

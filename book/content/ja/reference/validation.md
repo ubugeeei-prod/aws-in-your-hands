@@ -79,6 +79,12 @@ generated: true
 | 10 | `vp run edge:infra:diff / deploy / drift / destroy, edge:publish / unpublish` | AWS | 未実行 | - | S3、CloudFront の distribution、Function、KeyValueStore を作る |
 | 10 | `vp run edge:kvs:plan / edge:kvs:sync` | AWS | 未実行 | - | デプロイ済みの KeyValueStore が必要。API 操作は 1,000 回あたり USD 1 |
 | 10 | `vp run edge:body:infra:deploy / destroy` | AWS | 未実行 | - | us-east-1 に Lambda 関数と version、IAM role を作る |
+| 13 | `vp run test:unit (examples/13-sql)` | ローカル | 成功 | 2026-10-11 | transaction の再試行、PGlite 上の repository（quota、version、owner の分離、制約）、COMMIT の競合の注入、migration の lint と中断からの再開、grant 文の検査、API、インフラの assertion |
+| 13 | `vp run sql:db:reset:local / sql:db:migrate:local / sql:db:seed:local, vp run dev:sql + curl (NOTES_DB=pglite)` | ローカル | 成功 | 2026-10-11 | migration と seed の適用、2 回目の実行で何も変わらないこと、作成、更新、古い version の 409、UUID でない id の 404、削除、開発サーバーの起動中に reset が拒否されることを確認 |
+| 13 | `vp run sql:infra:synth` | ローカル | 成功 | 2026-10-11 | node-postgres と AWS SDK の署名を含む CommonJS の bundle を esbuild で作成。bundle を Node.js 24 で読み込み、DB に触れない route（GET /health と UUID でない id）が応答することを確認 |
+| 13 | `vp run sql:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Aurora DSQL の cluster を作る。cdkd は AWS::DSQL::Cluster を Cloud Control API 経由で扱う |
+| 13 | `vp run sql:db:migrate / sql:db:grant / sql:db:seed` | AWS | 未実行 | - | admin として cluster に接続し、schema、database role、seed を作る |
+| 13 | `vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)` | AWS | 未実行 | - | デプロイ済みの API と cluster が必要 |
 
 ## 未解決事項と再開手順
 
@@ -249,3 +255,21 @@ KeyValueStore の更新が edge に届くまでの時間を計測していない
 cdkd 0.296.28 で AWS::CloudFront::KeyValueStore（Cloud Control API 経由、stateful 扱い）と、us-east-1 の stack にある Lambda@Edge 用の関数と AWS::Lambda::Version を実際に作成・更新・削除できるかは未確認。ソースからは、stack 自身のリージョンが使われることと、us-east-1 にも cdkd の asset 置き場が要りそうなことまでしか読み取れていない。Node.js 24 が Lambda@Edge で使えることも個別には確認していない。
 
 再開手順: AIH_AWS_REGION=us-east-1 vp run infra:bootstrap の後に vp run edge:body:infra:deploy を実行する。出力の BodyDigestVersionArn を -c bodyDigestVersionArn=... で vp run edge:infra:deploy に渡し、curl -X POST で /digest を確かめる。失敗したら内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
+
+### dsql-real-cluster
+
+13章のコードを実際の Aurora DSQL に一度もつないでいない。未確認: 4 つの migration の SQL が受け付けられること（CREATE SCHEMA IF NOT EXISTS、外部キー、CHECK、CREATE INDEX ASYNC IF NOT EXISTS）、CREATE INDEX ASYNC の応答から job_id を読めて sys.jobs を polling できること、AWS IAM GRANT と schema への GRANT で notes_api が読み書きできること、node-postgres の password に渡した関数で token が通ること、競合が node-postgres のエラーの code に 40001 として現れること、凍結から戻った実行環境で切れた接続がどう見えるか。手元の代用は PGlite（PostgreSQL 18.3）で、DSQL（PostgreSQL 16 互換）とは版も違う。
+
+再開手順: 学習用アカウントで vp run sql:infra:deploy、sql:db:migrate、sql:db:grant、sql:smoke を順に実行する。同じ note を同時に更新する負荷をかけ、sql:logs で "transaction retry" の行と 40001 を確認する。15 分以上あけて呼び、接続の張り直しを見る。結果を data/validation.json に記録し、vp run sql:infra:destroy で消す。
+
+### cdkd-dsql-cluster
+
+cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Control API 経由で扱う。作成、Ref が cluster の identifier を返すこと、drift の読み戻し、削除が実際に動くかは未確認。13章の stack は Ref から endpoint と ARN を組み立てている。
+
+再開手順: vp run sql:infra:deploy の後、output の ClusterEndpoint が <26 文字の id>.dsql.ap-northeast-1.on.aws の形であること、関数の環境変数と IAM policy の Resource が同じ cluster を指すことを確認する。vp run sql:infra:drift と sql:infra:destroy の結果も記録する。
+
+### dsql-dpu-estimate
+
+13章の料金のシナリオは、1 リクエストあたりの DPU を公式ドキュメントの計算例から借りた仮定で、この章の query を測った値ではない。
+
+再開手順: デプロイした cluster で EXPLAIN ANALYZE VERBOSE を使うか、CloudWatch の ComputeDPU、ReadDPU、WriteDPU を見て、作成、更新、一覧の 1 件あたりの DPU を測る。data/fragments/13.json の scenarios を直して apply し直す。

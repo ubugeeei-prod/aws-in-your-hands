@@ -1113,6 +1113,132 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
       "offerPublicationDate": "2026-10-03T00:04:26Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dsql.dpu",
+      "offerCode": "AuroraDSQL",
+      "region": "ap-northeast-1",
+      "sku": "KKEFZWCUG3W2KAYV",
+      "usageType": "APN1-DSQL-DistributedProcessingUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$0.00001 per DPU in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dsql.storage",
+      "offerCode": "AuroraDSQL",
+      "region": "ap-northeast-1",
+      "sku": "JQ8P9RAR84XYTK3T",
+      "usageType": "APN1-DSQL-Storage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4000000000",
+          "description": "$0.40 per GB-Month in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "rds.postgres.t4g-micro.single-az",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "YXENKSJFV9BXQF4N",
+      "usageType": "APN1-InstanceUsage:db.t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0250000000",
+          "description": "$ 0.025 per RDS db.t4g.micro Single-AZ instance hour (or partial hour) running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "rds.postgres.gp3.storage",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "YM9AR73XYRPUSCN3",
+      "usageType": "APN1-RDS:GP3-Storage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1380000000",
+          "description": "$0.138 per GB-month of provisioned GP3 storage running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "aurora.postgres.serverless-v2.acu",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "NTURMTB2PWMA53X6",
+      "usageType": "APN1-Aurora:ServerlessV2Usage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ACU-Hr",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1500000000",
+          "description": "USD 0.15 per Aurora Capacity Unit hour running Aurora PostgreSQL Serverless v2"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "aurora.postgres.storage",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "E7NHVJRED3R3PUY7",
+      "usageType": "APN1-Aurora:StorageUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1200000000",
+          "description": "USD 0.12 per GB-month of consumed storage for Aurora PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

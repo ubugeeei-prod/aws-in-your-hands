@@ -1,0 +1,1269 @@
+{
+  "chapterId": "13",
+  "manifest": {
+    "id": "13",
+    "slug": "sql",
+    "title": {
+      "ja": "D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2",
+      "en": "SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
+    },
+    "prerequisites": ["04"],
+    "services": ["Aurora DSQL", "RDS for PostgreSQL", "Aurora Serverless v2", "Lambda", "API Gateway HTTP API", "IAM"],
+    "samplePath": "examples/13-sql",
+    "writing": { "ja": "complete", "en": "complete" },
+    "sourceRevision": 1,
+    "translatedRevision": { "en": 1 },
+    "checkedAt": "2026-10-11",
+    "sourceIds": [
+      "dsql-what-is",
+      "dsql-pg-compat",
+      "dsql-sql-features",
+      "dsql-ddl",
+      "dsql-concurrency",
+      "dsql-quotas",
+      "dsql-create-table",
+      "dsql-alter-table",
+      "dsql-create-index",
+      "dsql-async-index",
+      "dsql-foreign-keys",
+      "dsql-sequences",
+      "dsql-primary-keys",
+      "dsql-auth",
+      "dsql-auth-token",
+      "dsql-db-roles",
+      "dsql-node-connectors",
+      "dsql-node-postgres-connector",
+      "dsql-connectivity-tools",
+      "dsql-lambda-sample",
+      "dsql-cluster-lifecycle",
+      "dsql-backup",
+      "dsql-billing",
+      "dsql-pricing",
+      "dsql-privatelink",
+      "dsql-troubleshooting",
+      "dsql-considerations",
+      "dsql-release-notes",
+      "dsql-tls",
+      "cfn-dsql-cluster",
+      "cdkd-register-providers",
+      "aws-cdk-lib-aws-dsql",
+      "aws-price-list-dsql",
+      "aws-price-list-rds",
+      "aurora-auto-pause",
+      "aurora-serverless-v2-how",
+      "aurora-data-api",
+      "aurora-backups",
+      "rds-vpc",
+      "rds-storage",
+      "rds-iam-auth",
+      "rds-proxy",
+      "rds-pitr",
+      "postgres-transaction-iso",
+      "node-postgres-npm",
+      "dsql-signer-npm",
+      "pglite-npm",
+      "cloudflare-d1-local-dev",
+      "cloudflare-d1-migrations",
+      "cloudflare-d1-read-replication",
+      "cloudflare-d1-time-travel",
+      "cloudflare-d1-database-api",
+      "cloudflare-d1-sql-statements",
+      "cloudflare-d1-pricing",
+      "cloudflare-wrangler-d1"
+    ]
+  },
+  "sources": [
+    {
+      "id": "dsql-what-is",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/what-is-aurora-dsql.html",
+      "title": "What is Amazon Aurora DSQL?",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Aurora DSQL is available in Asia Pacific (Tokyo), ap-northeast-1",
+        "Serverless, with no instances to provision; data is replicated synchronously across three Availability Zones",
+        "Currently compatible with PostgreSQL version 16",
+        "ACID transactions with strong consistency and snapshot isolation",
+        "Multi-Region clusters must stay inside one Region set; Tokyo, Osaka, and Seoul are in the Asia Pacific set"
+      ]
+    },
+    {
+      "id": "dsql-pg-compat",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-postgresql-compatibility-migration-guide.html",
+      "title": "Migrating from PostgreSQL to Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The isolation level is fixed at PostgreSQL Repeatable Read",
+        "DDL and DML need separate transactions; a transaction holds one DDL statement; a transaction modifies at most 3,000 rows",
+        "Connections time out after 1 hour",
+        "One built-in database named postgres per cluster; UTF-8, C collation only, UTC",
+        "No temporary tables, no triggers, no PL/pgSQL (SQL functions only); DELETE FROM or DROP/CREATE instead of TRUNCATE; CREATE INDEX ASYNC instead of CREATE INDEX",
+        "Foreign keys are supported",
+        "Conflicts return a serialization error instead of waiting for a lock; AWS recommends idempotent transactions with retry, and random primary keys",
+        "Permissions are schema-level grants: admin manages objects in public, non-admin roles use user-created schemas"
+      ]
+    },
+    {
+      "id": "dsql-sql-features",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-postgresql-compatibility-supported-sql-features.html",
+      "title": "Supported SQL for Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "BEGIN accepts ISOLATION LEVEL REPEATABLE READ and READ WRITE | READ ONLY",
+        "INSERT supports ON CONFLICT; SELECT supports FOR UPDATE and FOR KEY SHARE, joins, CTEs, and window functions",
+        "CREATE SCHEMA, CREATE VIEW, CREATE SEQUENCE, CREATE FUNCTION ... LANGUAGE SQL, and CREATE [UNIQUE] INDEX ASYNC are supported",
+        "The page says the list is not exhaustive"
+      ]
+    },
+    {
+      "id": "dsql-ddl",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-ddl.html",
+      "title": "DDL and distributed transactions in Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A transaction can contain only one DDL statement and cannot mix DDL and DML",
+        "A schema change updates the catalog version; a session holding an older cached catalog can receive SQLSTATE 40001 with OCC code OC001, and a retry typically succeeds"
+      ]
+    },
+    {
+      "id": "dsql-concurrency",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-concurrency-control.html",
+      "title": "Concurrency control in Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Optimistic concurrency control: conflicts are evaluated at commit time, without locks",
+        "A conflict is returned as SQLSTATE 40001; OC000 is a data conflict, OC001 a schema conflict",
+        "Of two transactions that modified the same row, the one that commits first succeeds",
+        "SELECT ... FOR UPDATE is adjudicated at commit as if the transaction wrote the rows",
+        "AWS recommends retrying, with idempotent transactions, and random primary keys to avoid contention on a few keys"
+      ]
+    },
+    {
+      "id": "dsql-quotas",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/CHAP_quotas.html",
+      "title": "Cluster quotas and database limits in Amazon Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "3,000 rows mutated per transaction, 10 MiB of data modified per write transaction, 5 minutes maximum transaction time, 60 minutes maximum connection duration",
+        "10,000 connections per cluster by default, 100 new connections per second with a burst of 1,000",
+        "1 database per cluster, 10 schemas per database, 1,000 tables per database, 24 indexes per table, 2 MiB per row",
+        "20 single-Region clusters per account per Region by default"
+      ]
+    },
+    {
+      "id": "dsql-create-table",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/create-table-syntax-support.html",
+      "title": "Aurora DSQL: CREATE TABLE",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CREATE TABLE supports IF NOT EXISTS, CHECK, DEFAULT, UNIQUE, PRIMARY KEY, REFERENCES / FOREIGN KEY with referential actions, and identity columns",
+        "CASCADE, SET NULL, and SET DEFAULT actions count toward the per-transaction row limit"
+      ]
+    },
+    {
+      "id": "dsql-alter-table",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/alter-table-syntax-support.html",
+      "title": "Aurora DSQL: ALTER TABLE",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "ADD COLUMN takes a column name and a data type; the supported syntax lists no constraint or default on that form",
+        "CHECK and FOREIGN KEY constraints added to an existing table must be NOT VALID and are validated with ALTER TABLE ASYNC ... VALIDATE CONSTRAINT",
+        "The listed actions include DROP NOT NULL but no SET NOT NULL and no change of a column's type"
+      ]
+    },
+    {
+      "id": "dsql-create-index",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/create-index-syntax-support.html",
+      "title": "Aurora DSQL: CREATE INDEX",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Index creation is always asynchronous, so the ASYNC keyword must be specified",
+        "CREATE [UNIQUE] INDEX ASYNC supports IF NOT EXISTS, INCLUDE, and a WHERE predicate"
+      ]
+    },
+    {
+      "id": "dsql-async-index",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-create-index-async.html",
+      "title": "Asynchronous indexes in Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CREATE INDEX ASYNC returns a job_id immediately",
+        "sys.jobs has job_id, status (submitted, processing, failed, completed), and details",
+        "A failed build leaves the index INVALID until it is dropped; completed and failed jobs are removed from sys.jobs after 30 minutes"
+      ],
+      "note": "The page names sys.wait_for_job but shows no complete call, so the sample polls sys.jobs instead."
+    },
+    {
+      "id": "dsql-foreign-keys",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-foreign-key-constraints.html",
+      "title": "Working with foreign key constraints in Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Foreign keys are checked against the transaction snapshot and again at commit; a violation by a concurrent transaction surfaces as a serialization error",
+        "Updating a non-key column of the referenced row does not conflict with an insert that references it",
+        "DML on referenced or referencing tables incurs extra reads"
+      ]
+    },
+    {
+      "id": "dsql-sequences",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/sequences-identity-columns-working-with.html",
+      "title": "Aurora DSQL: Working with sequences and identity columns",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "UUIDs are the recommended default identifier type; sequences and identity columns exist for when integers are needed",
+        "CREATE SEQUENCE requires an explicit CACHE of 1 or at least 65536 (stated on the CREATE SEQUENCE page, which was read too)"
+      ]
+    },
+    {
+      "id": "dsql-primary-keys",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-primary-keys.html",
+      "title": "Primary keys in Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A primary key cannot be changed or added after the table is created",
+        "For tables with many writes, AWS advises against monotonically increasing integer keys and for randomly distributed ones"
+      ]
+    },
+    {
+      "id": "dsql-auth",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/authentication-authorization.html",
+      "title": "Authentication and authorization for Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "dsql:DbConnectAdmin connects as the admin role; dsql:DbConnect connects as a custom database role",
+        "AWS IAM GRANT associates a database role with an IAM identity",
+        "After revoking the IAM permission, existing connections can stay authorized until they end"
+      ]
+    },
+    {
+      "id": "dsql-auth-token",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/SECTION_authentication-token.html",
+      "title": "Generating an authentication token in Amazon Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The token is the password, used only when a connection is established; an open connection stays valid after the token expires",
+        "Tokens expire after 15 minutes by default, one week at most",
+        "Generating a token is a local signing operation that does not contact AWS",
+        "The cluster endpoint has the form <cluster id>.dsql.<region>.on.aws",
+        "The JavaScript signer is DsqlSigner in @aws-sdk/dsql-signer, with getDbConnectAuthToken and getDbConnectAdminAuthToken"
+      ]
+    },
+    {
+      "id": "dsql-db-roles",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/using-database-and-iam-roles.html",
+      "title": "Aurora DSQL: Using database roles and IAM authentication",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CREATE ROLE ... WITH LOGIN, then AWS IAM GRANT <role> TO '<IAM role ARN>', then GRANT USAGE ON SCHEMA and GRANT ... ON ALL TABLES IN SCHEMA",
+        "sys.iam_pg_role_mappings lists the mappings, with arn and pg_role_name columns"
+      ]
+    },
+    {
+      "id": "dsql-node-connectors",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/SECTION_Node-js-connectors.html",
+      "title": "Aurora DSQL Connectors for Node.js",
+      "checkedAt": "2026-10-11",
+      "supports": ["AWS publishes authentication plugins for node-postgres and for Postgres.js"]
+    },
+    {
+      "id": "dsql-node-postgres-connector",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/SECTION_program-with-dsql-connector-for-node-postgres.html",
+      "title": "Aurora DSQL Connector for node-postgres",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The connector wraps node-postgres's Client and Pool and generates a token for each connection",
+        "A user named admin gets an admin token, any other user a regular one"
+      ],
+      "note": "The sample does not use the connector; it passes the same signer to node-postgres directly, as the AWS Lambda sample does."
+    },
+    {
+      "id": "dsql-connectivity-tools",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/aws-sdks.html",
+      "title": "Amazon Aurora DSQL cluster connectivity tools",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "AWS lists driver samples for node-postgres, node-postgres on AWS Lambda, and Postgres.js",
+        "AWS lists an adapter for Drizzle ORM and samples for Prisma, Sequelize, and TypeORM"
+      ]
+    },
+    {
+      "id": "dsql-lambda-sample",
+      "url": "https://github.com/aws-samples/aurora-dsql-samples/blob/main/lambda/README.md",
+      "title": "aws-samples/aurora-dsql-samples: Using AWS Lambda with Amazon Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A Lambda function defined without a VPC connects with node-postgres, passing a function that calls DsqlSigner as the pool's password",
+        "The pool is kept in a module-level variable and shared between invocations",
+        "The sample builds the endpoint as <identifier>.dsql.<region>.on.aws and says an admin database role is not good practice for production"
+      ]
+    },
+    {
+      "id": "dsql-cluster-lifecycle",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/cluster-lifecycle.html",
+      "title": "Aurora DSQL cluster lifecycle",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A cluster without connection activity becomes Idle and then Inactive, where running resources are scaled to zero and data is kept",
+        "Connecting wakes it; the first connection to an Idle or Inactive cluster is slower",
+        "A backup needs an Active cluster"
+      ]
+    },
+    {
+      "id": "dsql-backup",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/backup-aurora-dsql.html",
+      "title": "Backup and restore for Amazon Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Backups go through AWS Backup: full cluster backups, on demand or on a schedule with retention",
+        "A restore always creates a new cluster"
+      ],
+      "note": "The page does not describe point-in-time recovery for Aurora DSQL."
+    },
+    {
+      "id": "dsql-billing",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/billing-metering.html",
+      "title": "How billing works in Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Activity is metered in DPUs (compute, read, and write components) and storage in GB-month",
+        "Worked examples: a point lookup of 0.00675 DPU and a single-row insert of 0.06175 DPU"
+      ],
+      "note": "The examples' DPU figures are used as stand-ins in the chapter's cost scenario. Nothing was measured."
+    },
+    {
+      "id": "dsql-pricing",
+      "url": "https://aws.amazon.com/rds/aurora/dsql/pricing/",
+      "title": "Amazon Aurora DSQL pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Billed for DPUs and for storage in GB-month; an idle cluster incurs no DPU charges",
+        "Each month the first 100,000 DPUs and 1 GB of storage are free",
+        "Backups are billed through AWS Backup"
+      ],
+      "note": "The page shows prices through a script; the numbers in the book come from the Price List. The page does not say whether the free tier ends."
+    },
+    {
+      "id": "dsql-privatelink",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/privatelink-managing-clusters.html",
+      "title": "Managing and connecting to Amazon Aurora DSQL clusters using AWS PrivateLink",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The default cluster host name is a public DNS name; interface VPC endpoints are an option for private connectivity",
+        "Connecting through an endpoint's own DNS name or IP address does not support verify-full"
+      ]
+    },
+    {
+      "id": "dsql-troubleshooting",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/troubleshooting.html",
+      "title": "Troubleshooting issues in Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "After an error during COMMIT the transaction might have committed; AWS says to design transactions to be idempotent",
+        "'Wrong user to action mapping' means the token type does not match the database role",
+        "A connection is rejected when the assumed role's credentials have expired, even if the token has not"
+      ]
+    },
+    {
+      "id": "dsql-considerations",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/considerations.html",
+      "title": "Considerations for working with Amazon Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "GRANT and REVOKE changes reach existing connections within the connection lifetime; a new connection sees them at once",
+        "A connection should be refreshed to see schemas and tables created in another connection"
+      ]
+    },
+    {
+      "id": "dsql-release-notes",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/release-notes.html",
+      "title": "Release notes for Aurora DSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Foreign key constraints were added on August 26, 2026",
+        "Identity columns and sequences were added on February 13, 2026; partial indexes on September 15, 2026"
+      ]
+    },
+    {
+      "id": "dsql-tls",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/configure-root-certificates.html",
+      "title": "Configuring SSL/TLS certificates for Aurora DSQL connections",
+      "checkedAt": "2026-10-11",
+      "supports": ["The server certificate chains to Amazon Root CA 1; AWS recommends verify-full for production"]
+    },
+    {
+      "id": "cfn-dsql-cluster",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dsql-cluster.html",
+      "title": "AWS::DSQL::Cluster",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Properties: DeletionProtectionEnabled, KmsEncryptionKey, MultiRegionProperties, PolicyDocument, Tags; none is required",
+        "Ref returns the cluster identifier"
+      ]
+    },
+    {
+      "id": "cdkd-register-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: src/provisioning/register-providers.ts",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "No dedicated provider is registered for AWS::DSQL::Cluster, so it is handled through Cloud Control API",
+        "Dedicated providers are registered for the other types the chapter 13 stack uses"
+      ],
+      "note": "src/provisioning/cc-protection-properties.ts at the same tag lists AWS::DSQL::Cluster with DeletionProtectionEnabled among Cloud-Control-routed types."
+    },
+    {
+      "id": "aws-cdk-lib-aws-dsql",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-dsql module (type definitions)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "aws-cdk-lib/aws-dsql exports the generated CfnCluster (L1) and no higher-level construct",
+        "CfnCluster has deletionProtectionEnabled and exposes attrIdentifier, attrEndpoint, and attrResourceArn"
+      ]
+    },
+    {
+      "id": "aws-price-list-dsql",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Aurora DSQL, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "USD 0.00001 per DPU and USD 0.40 per GB-month of storage in Tokyo",
+        "Global SKUs priced at zero for the first 100,000 DPUs and the first GB-month"
+      ]
+    },
+    {
+      "id": "aws-price-list-rds",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon RDS and Aurora, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "db.t4g.micro PostgreSQL Single-AZ: USD 0.025 per hour; gp3 storage for PostgreSQL Single-AZ: USD 0.138 per GB-month",
+        "Aurora PostgreSQL Serverless v2: USD 0.15 per ACU-hour; Aurora PostgreSQL storage: USD 0.12 per GB-month"
+      ]
+    },
+    {
+      "id": "aurora-auto-pause",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2-auto-pause.html",
+      "title": "Scaling to Zero ACUs with automatic pause and resume for Aurora serverless",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Auto-pause is a minimum capacity of 0 ACUs; before it existed the lowest minimum was 0.5 ACUs",
+        "An instance pauses after 300 to 86,400 seconds without user connections (default 300)",
+        "A paused instance has no instance charge; storage is still charged",
+        "Resuming takes about 15 seconds, and 30 seconds or longer after more than 24 hours paused",
+        "An open user connection, an associated RDS Proxy, logical replication, or a zero-ETL integration keeps instances from pausing",
+        "Aurora PostgreSQL needs 16.3, 15.7, 14.12, 13.15 or higher"
+      ]
+    },
+    {
+      "id": "aurora-serverless-v2-how",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html",
+      "title": "How Aurora serverless works",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Capacity ranges from 0 to 256 ACUs; one ACU is about 2 GiB of memory with matching CPU and networking"
+      ]
+    },
+    {
+      "id": "aurora-data-api",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.html",
+      "title": "Using the Amazon RDS Data API",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Data API is an HTTP endpoint for an Aurora cluster that lets a Lambda function run SQL without being configured for a VPC",
+        "It uses database credentials stored in AWS Secrets Manager"
+      ],
+      "note": "Region and engine-version availability was not checked."
+    },
+    {
+      "id": "aurora-backups",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Managing.Backups.html",
+      "title": "Overview of backing up and restoring an Aurora DB cluster",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Aurora automated backups are continuous, with a retention period of 1 to 35 days, and cannot be disabled"
+      ]
+    },
+    {
+      "id": "rds-vpc",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html",
+      "title": "Working with a DB instance in a VPC",
+      "checkedAt": "2026-10-11",
+      "supports": ["An RDS DB instance is in a VPC and needs a DB subnet group"]
+    },
+    {
+      "id": "rds-storage",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Storage.html",
+      "title": "Amazon RDS DB instance storage",
+      "checkedAt": "2026-10-11",
+      "supports": ["General Purpose gp3 storage for PostgreSQL starts at 20 GiB"]
+    },
+    {
+      "id": "rds-iam-auth",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html",
+      "title": "IAM database authentication for MariaDB, MySQL, and PostgreSQL",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "RDS offers IAM database authentication with 15-minute tokens as an option next to standard passwords"
+      ]
+    },
+    {
+      "id": "rds-proxy",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html",
+      "title": "Amazon RDS Proxy",
+      "checkedAt": "2026-10-11",
+      "supports": ["RDS Proxy pools and shares database connections for applications that open many of them"]
+    },
+    {
+      "id": "rds-pitr",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIT.html",
+      "title": "Restoring a DB instance to a specified time for Amazon RDS",
+      "checkedAt": "2026-10-11",
+      "supports": ["Point-in-time restore creates a new DB instance within the backup retention period"]
+    },
+    {
+      "id": "postgres-transaction-iso",
+      "url": "https://www.postgresql.org/docs/16/transaction-iso.html",
+      "title": "PostgreSQL 16: Transaction Isolation",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Read Committed is the default isolation level in PostgreSQL",
+        "Repeatable Read is implemented as snapshot isolation and raises 'could not serialize access due to concurrent update'; the application should retry the whole transaction"
+      ]
+    },
+    {
+      "id": "node-postgres-npm",
+      "url": "https://www.npmjs.com/package/pg/v/8.23.1",
+      "title": "pg 8.23.1 and @types/pg 8.23.1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Pool accepts a function returning a promise as password, and maxLifetimeSeconds (read in the pinned type definitions)",
+        "pg 8.23.1 was the latest version on the npm registry"
+      ]
+    },
+    {
+      "id": "dsql-signer-npm",
+      "url": "https://www.npmjs.com/package/@aws-sdk/dsql-signer/v/3.1149.0",
+      "title": "@aws-sdk/dsql-signer 3.1149.0",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "DsqlSigner takes hostname, region, and optional credentials and expiresIn (read in the pinned type definitions)"
+      ]
+    },
+    {
+      "id": "pglite-npm",
+      "url": "https://www.npmjs.com/package/@electric-sql/pglite/v/0.5.8",
+      "title": "@electric-sql/pglite 0.5.8",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "0.5.8 was the latest version on the npm registry and declares no dependencies",
+        "Run locally, it reports PostgreSQL 18.3 and lets a second process open the same data directory (observed, not documented)"
+      ],
+      "note": "Only the registry metadata was read and the package was run; its documentation was not."
+    },
+    {
+      "id": "cloudflare-d1-migrations",
+      "url": "https://developers.cloudflare.com/d1/reference/migrations/",
+      "title": "Cloudflare D1: Migrations",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Migrations are numbered .sql files in a migrations folder, applied in order by Wrangler",
+        "Applied migrations are recorded in the d1_migrations table"
+      ]
+    },
+    {
+      "id": "cloudflare-d1-read-replication",
+      "url": "https://developers.cloudflare.com/d1/best-practices/read-replication/",
+      "title": "Cloudflare D1: Global read replication",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Read replicas are asynchronously replicated and can be arbitrarily out of date; all writes go to the primary",
+        "Read replication is used only through the Sessions API, which provides sequential consistency within a session by passing bookmarks",
+        "withSession('first-primary') routes the first query to the primary"
+      ]
+    },
+    {
+      "id": "cloudflare-d1-time-travel",
+      "url": "https://developers.cloudflare.com/d1/reference/time-travel/",
+      "title": "Cloudflare D1: Time Travel",
+      "checkedAt": "2026-10-11",
+      "supports": ["Time Travel restores a database to any minute within the last 30 days without scheduled backups"]
+    },
+    {
+      "id": "cloudflare-d1-database-api",
+      "url": "https://developers.cloudflare.com/d1/worker-api/d1-database/",
+      "title": "Cloudflare D1: D1 Database (Workers Binding API)",
+      "checkedAt": "2026-10-11",
+      "supports": ["batch() runs its statements as one SQL transaction and rolls the whole sequence back if one fails"]
+    },
+    {
+      "id": "cloudflare-d1-sql-statements",
+      "url": "https://developers.cloudflare.com/d1/sql-api/sql-statements/",
+      "title": "Cloudflare D1: SQL statements",
+      "checkedAt": "2026-10-11",
+      "supports": ["D1 uses SQLite's query engine and is compatible with most of SQLite's SQL"]
+    },
+    {
+      "id": "cloudflare-d1-pricing",
+      "url": "https://developers.cloudflare.com/d1/platform/pricing/",
+      "title": "Cloudflare D1: Pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "D1 bills rows read, rows written, and storage, with no charge for hours or capacity when no queries run"
+      ]
+    },
+    {
+      "id": "cloudflare-wrangler-d1",
+      "url": "https://developers.cloudflare.com/workers/wrangler/commands/d1/",
+      "title": "Cloudflare Wrangler: d1 commands",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`wrangler d1 migrations apply` takes --local or --remote",
+        "If applying a migration results in an error, that migration is rolled back"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "migration",
+      "ja": "migration",
+      "en": "migration",
+      "firstUse": "13",
+      "definition": {
+        "ja": "schema の変更を順番つきのファイルにして、どこまで適用したかを DB 自身に記録するやり方。",
+        "en": "A schema change kept as a numbered file, with the database itself recording which ones have been applied."
+      }
+    },
+    {
+      "id": "transaction",
+      "ja": "transaction",
+      "en": "transaction",
+      "firstUse": "13",
+      "definition": {
+        "ja": "複数の SQL を「全部反映する」か「何も反映しない」のどちらかにまとめる単位。",
+        "en": "A group of SQL statements that takes effect entirely or not at all."
+      }
+    },
+    {
+      "id": "snapshot-isolation",
+      "ja": "snapshot isolation",
+      "en": "snapshot isolation",
+      "firstUse": "13",
+      "definition": {
+        "ja": "transaction が、開始した時点のデータを最後まで読み続ける分離の方式。PostgreSQL の REPEATABLE READ がこれにあたる。",
+        "en": "Isolation in which a transaction keeps reading the data as it was when the transaction started. PostgreSQL's REPEATABLE READ is this."
+      }
+    },
+    {
+      "id": "optimistic-concurrency-control",
+      "ja": "楽観的同時実行制御（OCC）",
+      "en": "optimistic concurrency control (OCC)",
+      "firstUse": "13",
+      "definition": {
+        "ja": "ロックで待たせず、commit のときに競合を調べて、負けた transaction を失敗させる方式。",
+        "en": "Checking for conflicts at commit instead of making transactions wait for locks; the transaction that loses fails."
+      }
+    },
+    {
+      "id": "serialization-failure",
+      "ja": "serialization failure",
+      "en": "serialization failure",
+      "firstUse": "13",
+      "definition": {
+        "ja": "ほかの transaction と競合したので commit できなかった、という DB からの応答。SQLSTATE は 40001。何も反映されていないので、transaction を最初からやり直す。",
+        "en": "The database's answer that a transaction could not commit because it conflicted with another. SQLSTATE 40001. Nothing was applied, so the transaction is run again from the start."
+      }
+    },
+    {
+      "id": "write-skew",
+      "ja": "write skew",
+      "en": "write skew",
+      "firstUse": "13",
+      "definition": {
+        "ja": "2 つの transaction が同じデータを読んで判断し、別々の行に書いた結果、どちらか一方だけなら守れた条件が破れること。",
+        "en": "Two transactions decide from the same data and write different rows, breaking a condition that either alone would have kept."
+      }
+    },
+    {
+      "id": "database-role",
+      "ja": "database role",
+      "en": "database role",
+      "firstUse": "13",
+      "definition": {
+        "ja": "DB の中の利用者。どの table に何ができるかは、この role への GRANT で決まる。IAM の role とは別のもの。",
+        "en": "A user inside the database. GRANTs to it decide what it may do to which table. Not the same thing as an IAM role."
+      }
+    },
+    {
+      "id": "dsql-auth-token",
+      "ja": "認証 token（Aurora DSQL）",
+      "en": "authentication token (Aurora DSQL)",
+      "firstUse": "13",
+      "definition": {
+        "ja": "接続するときだけパスワードの代わりに渡す、IAM の認証情報で署名した期限つきの文字列。",
+        "en": "A time-limited string signed with IAM credentials, passed in place of a password when a connection is opened."
+      }
+    },
+    {
+      "id": "dpu",
+      "ja": "DPU",
+      "en": "DPU",
+      "firstUse": "13",
+      "definition": {
+        "ja": "Distributed Processing Unit。Aurora DSQL が、SQL の実行にかかった計算、読み取り、書き込みをまとめて測る課金の単位。",
+        "en": "Distributed Processing Unit: the billing unit in which Aurora DSQL measures the compute, reads, and writes spent running SQL."
+      }
+    },
+    {
+      "id": "acu",
+      "ja": "ACU",
+      "en": "ACU",
+      "firstUse": "13",
+      "definition": {
+        "ja": "Aurora Capacity Unit。Aurora Serverless v2 の容量の単位で、1 ACU はおよそ 2 GiB のメモリと、それに見合う CPU とネットワーク。",
+        "en": "Aurora Capacity Unit: the capacity unit of Aurora Serverless v2. One ACU is about 2 GiB of memory with matching CPU and networking."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "13.architecture",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "13.choices",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "13.compat",
+      "sources": ["examples/13-sql/src/migrate.ts", "examples/13-sql/test/migrate.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.migrations",
+      "sources": [
+        "examples/13-sql/migrations",
+        "examples/13-sql/src/migrate.ts",
+        "examples/13-sql/test/migrate.test.ts"
+      ],
+      "tasks": ["test:unit", "sql:db:migrate:local"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.queries",
+      "sources": [
+        "examples/13-sql/src/contract.ts",
+        "examples/13-sql/src/db.ts",
+        "examples/13-sql/src/notes-repository.ts",
+        "examples/13-sql/src/notes.ts",
+        "examples/13-sql/src/app.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.transactions",
+      "sources": [
+        "examples/13-sql/src/transaction.ts",
+        "examples/13-sql/src/notes-repository.ts",
+        "examples/13-sql/test/transaction.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.conflicts",
+      "sources": [
+        "examples/13-sql/test/support.ts",
+        "examples/13-sql/test/notes-repository.test.ts",
+        "examples/13-sql/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.local",
+      "sources": [
+        "examples/13-sql/src/pglite.ts",
+        "examples/13-sql/src/dev.ts",
+        "examples/13-sql/src/compose.ts",
+        "examples/13-sql/scripts/local-db.ts",
+        "examples/13-sql/scripts/db-tasks.ts",
+        "examples/13-sql/test/fixtures/seed-notes.json",
+        "examples/13-sql/.env.example"
+      ],
+      "tasks": ["dev:sql", "sql:db:migrate:local", "sql:db:seed:local", "sql:db:reset:local"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "13.connect",
+      "sources": [
+        "examples/13-sql/src/dsql.ts",
+        "examples/13-sql/src/lambda.ts",
+        "examples/13-sql/src/env.ts",
+        "examples/13-sql/infra/lib/sql-stack.ts",
+        "examples/13-sql/infra/bin/app.ts",
+        "examples/13-sql/infra/test/sql-stack.test.ts",
+        "examples/13-sql/cdk.json"
+      ],
+      "tasks": ["sql:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.deploy",
+      "sources": [
+        "examples/13-sql/scripts/cloud-db.ts",
+        "examples/13-sql/scripts/db-tasks.ts",
+        "examples/13-sql/src/grant.ts",
+        "examples/13-sql/test/grant.test.ts",
+        "examples/13-sql/scripts/smoke.ts",
+        "examples/13-sql/scripts/logs.ts"
+      ],
+      "tasks": [
+        "sql:infra:diff",
+        "sql:infra:deploy",
+        "sql:db:migrate",
+        "sql:db:grant",
+        "sql:db:seed",
+        "sql:smoke",
+        "sql:logs",
+        "sql:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "13.backup",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "13.d1",
+      "sources": ["examples/13-sql/migrations", "examples/13-sql/src/transaction.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "13.cleanup",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts", "examples/13-sql/scripts/local-db.ts"],
+      "tasks": ["sql:infra:destroy", "sql:db:reset:local"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "dsql.dpu",
+      "offerCode": "AuroraDSQL",
+      "region": "ap-northeast-1",
+      "sku": "KKEFZWCUG3W2KAYV",
+      "usageType": "APN1-DSQL-DistributedProcessingUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU",
+      "tiers": [
+        { "from": 0, "to": null, "usd": "0.0000100000", "description": "$0.00001 per DPU in Asia Pacific (Tokyo)" }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dsql.storage",
+      "offerCode": "AuroraDSQL",
+      "region": "ap-northeast-1",
+      "sku": "JQ8P9RAR84XYTK3T",
+      "usageType": "APN1-DSQL-Storage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Month",
+      "tiers": [
+        { "from": 0, "to": null, "usd": "0.4000000000", "description": "$0.40 per GB-Month in Asia Pacific (Tokyo)" }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "rds.postgres.t4g-micro.single-az",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "YXENKSJFV9BXQF4N",
+      "usageType": "APN1-InstanceUsage:db.t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0250000000",
+          "description": "$ 0.025 per RDS db.t4g.micro Single-AZ instance hour (or partial hour) running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "rds.postgres.gp3.storage",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "YM9AR73XYRPUSCN3",
+      "usageType": "APN1-RDS:GP3-Storage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1380000000",
+          "description": "$0.138 per GB-month of provisioned GP3 storage running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "aurora.postgres.serverless-v2.acu",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "NTURMTB2PWMA53X6",
+      "usageType": "APN1-Aurora:ServerlessV2Usage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ACU-Hr",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1500000000",
+          "description": "USD 0.15 per Aurora Capacity Unit hour running Aurora PostgreSQL Serverless v2"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "aurora.postgres.storage",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "E7NHVJRED3R3PUY7",
+      "usageType": "APN1-Aurora:StorageUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1200000000",
+          "description": "USD 0.12 per GB-month of consumed storage for Aurora PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "dsql.dpu",
+      "quantity": 100000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "dsql-pricing",
+      "note": "First 100,000 DPUs each month. The pricing page does not say whether it expires."
+    },
+    {
+      "priceId": "dsql.storage",
+      "quantity": 1,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "dsql-pricing",
+      "note": "First GB of storage each month. The pricing page does not say whether it expires."
+    }
+  ],
+  "unknownAllowances": [
+    {
+      "priceId": "rds.postgres.t4g-micro.single-az",
+      "reason": "The RDS free tier terms were not checked while writing chapter 13."
+    },
+    {
+      "priceId": "rds.postgres.gp3.storage",
+      "reason": "The RDS free tier terms were not checked while writing chapter 13."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "sql-dsql-idle",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora DSQL: 1 GB のデータを置いて、誰も問い合わせない月",
+        "en": "Aurora DSQL: 1 GB of data and no queries for a month"
+      },
+      "assumptions": {
+        "ja": ["問い合わせゼロ。DPU は発生しない", "データは 1 GB", "backup なし"],
+        "en": ["No queries, so no DPUs", "1 GB of data", "No backups"]
+      },
+      "items": [
+        { "priceId": "dsql.dpu", "quantity": 0, "basis": "no database activity" },
+        { "priceId": "dsql.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+      ]
+    },
+    {
+      "id": "sql-dsql-small",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora DSQL: 月 100 万リクエストのノート API（DB の分だけ）",
+        "en": "Aurora DSQL: a notes API at 1 million requests a month (database only)"
+      },
+      "assumptions": {
+        "ja": [
+          "読み取り 90 万件、書き込み 10 万件",
+          "読み取り 1 件は 0.00675 DPU と仮定（公式ドキュメントの point lookup の計算例の値）",
+          "書き込み 1 件は 0.18525 DPU と仮定（公式ドキュメントの 1 行 insert の計算例 0.06175 DPU の 3 倍。この章の作成は 3 行に書く）",
+          "この章の query で実測した値ではない",
+          "データは 1 GB",
+          "Lambda、API Gateway、ログ、backup は含めない"
+        ],
+        "en": [
+          "900,000 reads and 100,000 writes",
+          "A read is assumed to cost 0.00675 DPU (the figure in the documentation's point-lookup example)",
+          "A write is assumed to cost 0.18525 DPU (three times the 0.06175 DPU of the documentation's single-row insert example; a create in this chapter writes three rows)",
+          "Not measured on this chapter's queries",
+          "1 GB of data",
+          "Lambda, API Gateway, logs, and backups are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dsql.dpu",
+          "quantity": 24600,
+          "basis": "900,000 x 0.00675 DPU + 100,000 x 0.18525 DPU"
+        },
+        { "priceId": "dsql.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+      ]
+    },
+    {
+      "id": "sql-rds-min",
+      "chapter": "13",
+      "title": {
+        "ja": "RDS for PostgreSQL: 最小構成を 730 時間動かす",
+        "en": "RDS for PostgreSQL: the smallest configuration running for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "db.t4g.micro、Single-AZ、止めずに 730 時間",
+          "gp3 を 20 GB（PostgreSQL での最小）",
+          "問い合わせの量によらない",
+          "backup の超過分、データ転送、VPC の料金（11章）は含めない"
+        ],
+        "en": [
+          "db.t4g.micro, Single-AZ, never stopped, 730 hours",
+          "20 GB of gp3 (the minimum for PostgreSQL)",
+          "Independent of how many queries run",
+          "Backup storage beyond the free allocation, data transfer, and VPC charges (chapter 11) are not included"
+        ]
+      },
+      "items": [
+        { "priceId": "rds.postgres.t4g-micro.single-az", "quantity": 730, "basis": "one instance for 730 hours" },
+        { "priceId": "rds.postgres.gp3.storage", "quantity": 20, "basis": "20 GB provisioned for the month" }
+      ]
+    },
+    {
+      "id": "sql-aurora-min",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora Serverless v2: auto-pause なし、最小 0.5 ACU で 730 時間",
+        "en": "Aurora Serverless v2: no auto-pause, 0.5 ACU minimum for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "Aurora PostgreSQL、writer 1 台、最小容量 0.5 ACU のまま 730 時間",
+          "Aurora Standard（I/O は別料金。ここでは I/O ゼロ）",
+          "データは 1 GB",
+          "backup の超過分、データ転送、VPC の料金（11章）は含めない"
+        ],
+        "en": [
+          "Aurora PostgreSQL, one writer, staying at the 0.5 ACU minimum for 730 hours",
+          "Aurora Standard (I/O is billed separately; zero I/O here)",
+          "1 GB of data",
+          "Backup storage beyond the free allocation, data transfer, and VPC charges (chapter 11) are not included"
+        ]
+      },
+      "items": [
+        { "priceId": "aurora.postgres.serverless-v2.acu", "quantity": 365, "basis": "0.5 ACU x 730 hours" },
+        { "priceId": "aurora.postgres.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+      ]
+    },
+    {
+      "id": "sql-aurora-paused",
+      "chapter": "13",
+      "title": {
+        "ja": "Aurora Serverless v2: auto-pause で 1 か月ずっと止まっていた場合",
+        "en": "Aurora Serverless v2: auto-paused for the whole month"
+      },
+      "assumptions": {
+        "ja": [
+          "最小容量 0 ACU。1 か月のあいだ一度も接続がなく、再開もしなかったと仮定",
+          "実際には保守のために Aurora が instance を再開することがあり、その時間は課金される",
+          "データは 1 GB"
+        ],
+        "en": [
+          "0 ACU minimum, assuming no connection and no resume for the whole month",
+          "In practice Aurora resumes the instance for maintenance at times, and that time is billed",
+          "1 GB of data"
+        ]
+      },
+      "items": [
+        { "priceId": "aurora.postgres.serverless-v2.acu", "quantity": 0, "basis": "paused for all 730 hours" },
+        { "priceId": "aurora.postgres.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "13",
+        "command": "vp run test:unit (examples/13-sql)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "transaction の再試行、PGlite 上の repository（quota、version、owner の分離、制約）、COMMIT の競合の注入、migration の lint と中断からの再開、grant 文の検査、API、インフラの assertion",
+          "en": "Transaction retries, the repository on PGlite (quota, versions, owner isolation, constraints), injected COMMIT conflicts, migration lint and resuming after an interruption, grant statement checks, the API, and infrastructure assertions"
+        }
+      },
+      {
+        "scope": "13",
+        "command": "vp run sql:db:reset:local / sql:db:migrate:local / sql:db:seed:local, vp run dev:sql + curl (NOTES_DB=pglite)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "migration と seed の適用、2 回目の実行で何も変わらないこと、作成、更新、古い version の 409、UUID でない id の 404、削除、開発サーバーの起動中に reset が拒否されることを確認",
+          "en": "Applied the migrations and the seed, saw a second run change nothing, and checked create, update, the 409 for a stale version, the 404 for a non-UUID id, delete, and that reset is refused while the dev server runs"
+        }
+      },
+      {
+        "scope": "13",
+        "command": "vp run sql:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "node-postgres と AWS SDK の署名を含む CommonJS の bundle を esbuild で作成。bundle を Node.js 24 で読み込み、DB に触れない route（GET /health と UUID でない id）が応答することを確認",
+          "en": "Builds a CommonJS bundle with node-postgres and the AWS SDK signer using esbuild. The bundle was loaded in Node.js 24 and answered the routes that do not touch the database (GET /health and a non-UUID id)"
+        }
+      },
+      {
+        "scope": "13",
+        "command": "vp run sql:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Aurora DSQL の cluster を作る。cdkd は AWS::DSQL::Cluster を Cloud Control API 経由で扱う",
+          "en": "Creates an Aurora DSQL cluster. cdkd handles AWS::DSQL::Cluster through Cloud Control API"
+        }
+      },
+      {
+        "scope": "13",
+        "command": "vp run sql:db:migrate / sql:db:grant / sql:db:seed",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "admin として cluster に接続し、schema、database role、seed を作る",
+          "en": "Connects to the cluster as admin and creates the schema, the database role, and the seed"
+        }
+      },
+      {
+        "scope": "13",
+        "command": "vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイ済みの API と cluster が必要",
+          "en": "Needs the deployed API and cluster"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "dsql-real-cluster",
+        "summary": {
+          "ja": "13章のコードを実際の Aurora DSQL に一度もつないでいない。未確認: 4 つの migration の SQL が受け付けられること（CREATE SCHEMA IF NOT EXISTS、外部キー、CHECK、CREATE INDEX ASYNC IF NOT EXISTS）、CREATE INDEX ASYNC の応答から job_id を読めて sys.jobs を polling できること、AWS IAM GRANT と schema への GRANT で notes_api が読み書きできること、node-postgres の password に渡した関数で token が通ること、競合が node-postgres のエラーの code に 40001 として現れること、凍結から戻った実行環境で切れた接続がどう見えるか。手元の代用は PGlite（PostgreSQL 18.3）で、DSQL（PostgreSQL 16 互換）とは版も違う。",
+          "en": "The chapter 13 code has never been connected to a real Aurora DSQL cluster. Unconfirmed: that the four migrations are accepted (CREATE SCHEMA IF NOT EXISTS, the foreign key, the CHECKs, CREATE INDEX ASYNC IF NOT EXISTS), that job_id can be read from the response to CREATE INDEX ASYNC and sys.jobs polled, that AWS IAM GRANT plus the schema GRANTs let notes_api read and write, that the token passes through the function given to node-postgres as password, that a conflict shows up as code 40001 on node-postgres's error, and how a dropped connection looks in an execution environment that was frozen. The local stand-in is PGlite (PostgreSQL 18.3), a different version from DSQL (PostgreSQL 16 compatible)."
+        },
+        "resume": {
+          "ja": "学習用アカウントで vp run sql:infra:deploy、sql:db:migrate、sql:db:grant、sql:smoke を順に実行する。同じ note を同時に更新する負荷をかけ、sql:logs で \"transaction retry\" の行と 40001 を確認する。15 分以上あけて呼び、接続の張り直しを見る。結果を data/validation.json に記録し、vp run sql:infra:destroy で消す。",
+          "en": "In a practice account run vp run sql:infra:deploy, sql:db:migrate, sql:db:grant, and sql:smoke in that order. Put concurrent updates on one note and look for \"transaction retry\" lines and 40001 with sql:logs. Call again after more than 15 minutes and watch the reconnect. Record the results in data/validation.json and remove everything with vp run sql:infra:destroy."
+        }
+      },
+      {
+        "id": "cdkd-dsql-cluster",
+        "summary": {
+          "ja": "cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Control API 経由で扱う。作成、Ref が cluster の identifier を返すこと、drift の読み戻し、削除が実際に動くかは未確認。13章の stack は Ref から endpoint と ARN を組み立てている。",
+          "en": "cdkd 0.296.28 has no dedicated provider for AWS::DSQL::Cluster and handles it through Cloud Control API. Whether create, Ref returning the cluster identifier, drift read-back, and delete work in practice is unconfirmed. The chapter 13 stack builds the endpoint and the ARN from Ref."
+        },
+        "resume": {
+          "ja": "vp run sql:infra:deploy の後、output の ClusterEndpoint が <26 文字の id>.dsql.ap-northeast-1.on.aws の形であること、関数の環境変数と IAM policy の Resource が同じ cluster を指すことを確認する。vp run sql:infra:drift と sql:infra:destroy の結果も記録する。",
+          "en": "After vp run sql:infra:deploy, check that the ClusterEndpoint output has the form <26-character id>.dsql.ap-northeast-1.on.aws and that the function's environment variable and the IAM policy's Resource point at the same cluster. Record the results of vp run sql:infra:drift and sql:infra:destroy as well."
+        }
+      },
+      {
+        "id": "dsql-dpu-estimate",
+        "summary": {
+          "ja": "13章の料金のシナリオは、1 リクエストあたりの DPU を公式ドキュメントの計算例から借りた仮定で、この章の query を測った値ではない。",
+          "en": "The chapter 13 cost scenario borrows its DPUs per request from the documentation's worked examples. They were not measured on this chapter's queries."
+        },
+        "resume": {
+          "ja": "デプロイした cluster で EXPLAIN ANALYZE VERBOSE を使うか、CloudWatch の ComputeDPU、ReadDPU、WriteDPU を見て、作成、更新、一覧の 1 件あたりの DPU を測る。data/fragments/13.json の scenarios を直して apply し直す。",
+          "en": "On a deployed cluster use EXPLAIN ANALYZE VERBOSE, or the ComputeDPU, ReadDPU, and WriteDPU metrics in CloudWatch, to measure the DPUs of one create, one update, and one list. Correct the scenarios in data/fragments/13.json and apply it again."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 13: SQL -----------------------------------------------\n      // The API on PGlite (PostgreSQL inside the Node process). No Docker, no AWS.\n      \"dev:sql\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/13-sql\" }),\n      \"sql:db:migrate:local\": fresh(\"node --env-file-if-exists=.env scripts/local-db.ts migrate\", {\n        cwd: \"examples/13-sql\",\n      }),\n      \"sql:db:seed:local\": fresh(\"node --env-file-if-exists=.env scripts/local-db.ts seed\", {\n        cwd: \"examples/13-sql\",\n      }),\n      \"sql:db:reset:local\": fresh(\"node --env-file-if-exists=.env scripts/local-db.ts reset\", {\n        cwd: \"examples/13-sql\",\n      }),\n      ...infra(\"sql\", \"examples/13-sql\", \"AihSql\"),\n      // These connect to the deployed Aurora DSQL cluster as `admin` and change it.\n      \"sql:db:migrate\": live(\"node --env-file-if-exists=../../.env scripts/cloud-db.ts migrate\", {\n        cwd: \"examples/13-sql\",\n      }),\n      \"sql:db:grant\": live(\"node --env-file-if-exists=../../.env scripts/cloud-db.ts grant\", {\n        cwd: \"examples/13-sql\",\n      }),\n      \"sql:db:seed\": live(\"node --env-file-if-exists=../../.env scripts/cloud-db.ts seed\", {\n        cwd: \"examples/13-sql\",\n      }),\n      \"sql:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/13-sql\" }),\n      \"sql:logs\": live(\"node --env-file-if-exists=../../.env scripts/logs.ts\", { cwd: \"examples/13-sql\" }),",
+    "synth": ["sql:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/13-sql"]
+  }
+}

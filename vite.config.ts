@@ -73,6 +73,7 @@ const chapterSynthTasks = [
   "ai:infra:synth",
   "mail:infra:synth",
   "edge:infra:synth",
+  "sql:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -208,6 +209,34 @@ export default defineConfig({
       }),
       "edge:kvs:sync": live("node --env-file-if-exists=../../.env scripts/kvs-sync.ts", { cwd: "examples/10-edge" }),
       // <<< chapter 10
+
+      // >>> chapter 13
+      // ---- chapter 13: SQL -----------------------------------------------
+      // The API on PGlite (PostgreSQL inside the Node process). No Docker, no AWS.
+      "dev:sql": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/13-sql" }),
+      "sql:db:migrate:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts migrate", {
+        cwd: "examples/13-sql",
+      }),
+      "sql:db:seed:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts seed", {
+        cwd: "examples/13-sql",
+      }),
+      "sql:db:reset:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts reset", {
+        cwd: "examples/13-sql",
+      }),
+      ...infra("sql", "examples/13-sql", "AihSql"),
+      // These connect to the deployed Aurora DSQL cluster as `admin` and change it.
+      "sql:db:migrate": live("node --env-file-if-exists=../../.env scripts/cloud-db.ts migrate", {
+        cwd: "examples/13-sql",
+      }),
+      "sql:db:grant": live("node --env-file-if-exists=../../.env scripts/cloud-db.ts grant", {
+        cwd: "examples/13-sql",
+      }),
+      "sql:db:seed": live("node --env-file-if-exists=../../.env scripts/cloud-db.ts seed", {
+        cwd: "examples/13-sql",
+      }),
+      "sql:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/13-sql" }),
+      "sql:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/13-sql" }),
+      // <<< chapter 13
 
       // ---- chapter task blocks are inserted above this line ----
 

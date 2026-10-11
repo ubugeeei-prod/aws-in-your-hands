@@ -1,0 +1,99 @@
+import { fileURLToPath } from "node:url";
+import { CfnOutput, Duration, Fn, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
+import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import { CfnCluster } from "aws-cdk-lib/aws-dsql";
+import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
+import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import type { Construct } from "constructs";
+
+export type SqlStackProps = StackProps & { allowedOrigin: string };
+
+export class SqlStack extends Stack {
+  constructor(scope: Construct, id: string, props: SqlStackProps) {
+    super(scope, id, props);
+
+    // #region cluster
+    // No instance class, no subnet, no password: a single-Region cluster has
+    // nothing else to choose. CDK has no higher-level construct for it yet.
+    const cluster = new CfnCluster(this, "Notes", {
+      // Exercise data. With protection on, destroying the stack would fail.
+      deletionProtectionEnabled: false,
+    });
+    cluster.applyRemovalPolicy(RemovalPolicy.DESTROY);
+
+    // `Ref` is the cluster identifier. The host name and the ARN are built
+    // from it, in the formats the Aurora DSQL user guide gives.
+    const endpoint = Fn.join("", [cluster.ref, ".dsql.", this.region, ".on.aws"]);
+    const clusterArn = this.formatArn({ service: "dsql", resource: "cluster", resourceName: cluster.ref });
+    // #endregion cluster
+
+    const logGroup = new LogGroup(this, "HandlerLogs", {
+      retention: RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
+    // #region role
+    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    logGroup.grantWrite(role);
+    // May open a connection as a custom database role, on this one cluster.
+    // Not dsql:DbConnectAdmin: the function never becomes `admin`. What it may
+    // do once connected is decided inside the database, by GRANT.
+    role.addToPolicy(new PolicyStatement({ actions: ["dsql:DbConnect"], resources: [clusterArn] }));
+    // #endregion role
+
+    // #region function
+    const handler = new NodejsFunction(this, "Handler", {
+      entry: fileURLToPath(new URL("../../src/lambda.ts", import.meta.url)),
+      handler: "handler",
+      runtime: Runtime.NODEJS_24_X,
+      architecture: Architecture.ARM_64,
+      memorySize: 256,
+      timeout: Duration.seconds(10),
+      // No `vpc`: the cluster endpoint is reached over the internet, with TLS
+      // and an IAM-signed token.
+      role,
+      logGroup,
+      environment: {
+        ALLOWED_ORIGIN: props.allowedOrigin,
+        LOG_LEVEL: "info",
+        STAGE: "dev",
+        NOTES_DB: "dsql",
+        DSQL_ENDPOINT: endpoint,
+        DSQL_USER: "notes_api",
+      },
+      bundling: {
+        // node-postgres is CommonJS and calls require() for Node's own modules.
+        format: OutputFormat.CJS,
+        target: "node24",
+        minify: false,
+        sourceMap: false,
+        // Bundle the AWS SDK too, so the token signer is the version in pnpm-lock.yaml.
+        externalModules: [],
+      },
+    });
+    // #endregion function
+
+    const api = new HttpApi(this, "Api", {
+      description: "Notes API on Aurora DSQL",
+      corsPreflight: {
+        allowOrigins: [props.allowedOrigin],
+        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
+        allowHeaders: ["content-type"],
+        maxAge: Duration.hours(1),
+      },
+    });
+    const integration = new HttpLambdaIntegration("Notes", handler);
+    api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
+    api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], integration });
+    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE], integration });
+
+    new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
+    new CfnOutput(this, "ClusterEndpoint", { value: endpoint });
+    // `vp run sql:db:grant` ties the database role to this IAM role.
+    new CfnOutput(this, "HandlerRoleArn", { value: role.roleArn });
+    new CfnOutput(this, "HandlerLogGroupName", { value: logGroup.logGroupName });
+  }
+}

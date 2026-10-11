@@ -570,71 +570,81 @@
         "en": "SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
       },
       "prerequisites": ["04"],
-      "services": ["Aurora DSQL", "RDS for PostgreSQL", "Aurora Serverless v2"],
+      "services": [
+        "Aurora DSQL",
+        "RDS for PostgreSQL",
+        "Aurora Serverless v2",
+        "Lambda",
+        "API Gateway HTTP API",
+        "IAM"
+      ],
       "samplePath": "examples/13-sql",
-      "writing": {
-        "ja": "planned",
-        "en": "planned"
-      },
       "sourceIds": [
         "dsql-what-is",
         "dsql-pg-compat",
+        "dsql-sql-features",
         "dsql-ddl",
-        "dsql-node-connectors",
         "dsql-concurrency",
+        "dsql-quotas",
+        "dsql-create-table",
+        "dsql-alter-table",
+        "dsql-create-index",
+        "dsql-async-index",
+        "dsql-foreign-keys",
+        "dsql-sequences",
+        "dsql-primary-keys",
+        "dsql-auth",
+        "dsql-auth-token",
+        "dsql-db-roles",
+        "dsql-node-connectors",
+        "dsql-node-postgres-connector",
+        "dsql-connectivity-tools",
+        "dsql-lambda-sample",
+        "dsql-cluster-lifecycle",
+        "dsql-backup",
+        "dsql-billing",
         "dsql-pricing",
+        "dsql-privatelink",
+        "dsql-troubleshooting",
+        "dsql-considerations",
+        "dsql-release-notes",
+        "dsql-tls",
+        "cfn-dsql-cluster",
+        "cdkd-register-providers",
+        "aws-cdk-lib-aws-dsql",
+        "aws-price-list-dsql",
+        "aws-price-list-rds",
         "aurora-auto-pause",
-        "rds-welcome",
+        "aurora-serverless-v2-how",
+        "aurora-data-api",
+        "aurora-backups",
+        "rds-vpc",
+        "rds-storage",
+        "rds-iam-auth",
+        "rds-proxy",
+        "rds-pitr",
+        "postgres-transaction-iso",
+        "node-postgres-npm",
+        "dsql-signer-npm",
+        "pglite-npm",
         "cloudflare-d1-local-dev",
         "cloudflare-d1-migrations",
-        "cloudflare-d1-read-replication"
+        "cloudflare-d1-read-replication",
+        "cloudflare-d1-time-travel",
+        "cloudflare-d1-database-api",
+        "cloudflare-d1-sql-statements",
+        "cloudflare-d1-pricing",
+        "cloudflare-wrangler-d1"
       ],
-      "outline": {
-        "outcome": {
-          "ja": "schema、migration、型付き CRUD、seed/reset、テスト、実環境の migration、backup/restore までを SQL で一通り行える。",
-          "en": "You run the whole SQL loop: schema, migrations, typed CRUD, seed/reset, tests, deployed migrations, and backup/restore."
-        },
-        "architecture": {
-          "ja": "Lambda → Aurora DSQL（IAM 認証、VPC 不要の経路を一次情報で確認）。比較として RDS PostgreSQL / Aurora Serverless v2 は 11章の VPC 内。",
-          "en": "Lambda → Aurora DSQL (IAM auth; verify the VPC-free path in current docs). For comparison, RDS PostgreSQL and Aurora Serverless v2 sit inside the chapter 11 VPC."
-        },
-        "topics": {
-          "ja": [
-            "三つの選択肢を SQL 互換性・認証・接続・transaction・無通信時費用で選ぶ",
-            "DSQL は完全な PostgreSQL ではない: 対応 SQL/DDL と migration tool を固定版で確認",
-            "OCC による commit 時の競合と再試行",
-            "ローカルの PostgreSQL は代用であり DSQL の認証・競合を再現しない",
-            "Aurora auto-pause の条件と残る storage 料金",
-            "D1 の read replica/Sessions との保証範囲の比較"
-          ],
-          "en": [
-            "Choosing among three options by SQL compatibility, auth, connections, transactions, and idle cost",
-            "DSQL is not full PostgreSQL: verify supported SQL/DDL and migration tools at the pinned version",
-            "OCC conflicts at commit and retries",
-            "Local PostgreSQL is a substitute that reproduces neither DSQL auth nor contention",
-            "Aurora auto-pause conditions and the storage charges that remain",
-            "Comparing guarantee scope with D1 read replicas and Sessions"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "migration、seed、reset の vp task（local / cloud を分離、cache: false）",
-            "型付き query 層と contract test",
-            "serialization failure を注入して再試行を確かめる決定的テスト",
-            "D1 側の比較コードを載せる場合は wrangler 設定を含む完全なソース"
-          ],
-          "en": [
-            "vp tasks for migrate, seed, and reset (local and cloud separated, cache: false)",
-            "Typed query layer with contract tests",
-            "Deterministic tests that inject serialization failures and verify retries",
-            "If D1 comparison code is shown, its complete source including wrangler configuration"
-          ]
-        },
-        "distributed": {
-          "ja": "invariant は「transaction は全体が commit されるか全体が再試行される」。再試行は冪等な範囲に閉じる。",
-          "en": "Invariant: a transaction either commits as a whole or is retried as a whole, and retries stay within idempotent scope."
-        }
-      }
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "14",

@@ -458,6 +458,102 @@ ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValu
 - 毎月の無料枠適用後の小計: **USD 0.21** / 月
 - 無料枠を確認できず、何も引いていない単価: `cloudfront.kvs.api`
 
+## Aurora DSQL: 1 GB のデータを置いて、誰も問い合わせない月
+
+ID: `sql-dsql-idle` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- 問い合わせゼロ。DPU は発生しない
+- データは 1 GB
+- backup なし
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dsql.dpu` | 0 | DPU | no database activity | 0 | 100,000 | 0 |
+| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
+
+- 定価の小計: **USD 0.40** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## Aurora DSQL: 月 100 万リクエストのノート API（DB の分だけ）
+
+ID: `sql-dsql-small` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- 読み取り 90 万件、書き込み 10 万件
+- 読み取り 1 件は 0.00675 DPU と仮定（公式ドキュメントの point lookup の計算例の値）
+- 書き込み 1 件は 0.18525 DPU と仮定（公式ドキュメントの 1 行 insert の計算例 0.06175 DPU の 3 倍。この章の作成は 3 行に書く）
+- この章の query で実測した値ではない
+- データは 1 GB
+- Lambda、API Gateway、ログ、backup は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dsql.dpu` | 24,600 | DPU | 900,000 x 0.00675 DPU + 100,000 x 0.18525 DPU | 0.25 | 100,000 | 0 |
+| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
+
+- 定価の小計: **USD 0.65** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## RDS for PostgreSQL: 最小構成を 730 時間動かす
+
+ID: `sql-rds-min` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- db.t4g.micro、Single-AZ、止めずに 730 時間
+- gp3 を 20 GB（PostgreSQL での最小）
+- 問い合わせの量によらない
+- backup の超過分、データ転送、VPC の料金（11章）は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `rds.postgres.t4g-micro.single-az` | 730 | Hrs | one instance for 730 hours | 18.25 | - | 18.25 |
+| `rds.postgres.gp3.storage` | 20 | GB-Mo | 20 GB provisioned for the month | 2.76 | - | 2.76 |
+
+- 定価の小計: **USD 21.01** / 月
+- 毎月の無料枠適用後の小計: **USD 21.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `rds.postgres.t4g-micro.single-az`, `rds.postgres.gp3.storage`
+
+## Aurora Serverless v2: auto-pause なし、最小 0.5 ACU で 730 時間
+
+ID: `sql-aurora-min` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- Aurora PostgreSQL、writer 1 台、最小容量 0.5 ACU のまま 730 時間
+- Aurora Standard（I/O は別料金。ここでは I/O ゼロ）
+- データは 1 GB
+- backup の超過分、データ転送、VPC の料金（11章）は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `aurora.postgres.serverless-v2.acu` | 365 | ACU-Hr | 0.5 ACU x 730 hours | 54.75 | - | 54.75 |
+| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 54.87** / 月
+- 毎月の無料枠適用後の小計: **USD 54.87** / 月
+
+## Aurora Serverless v2: auto-pause で 1 か月ずっと止まっていた場合
+
+ID: `sql-aurora-paused` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- 最小容量 0 ACU。1 か月のあいだ一度も接続がなく、再開もしなかったと仮定
+- 実際には保守のために Aurora が instance を再開することがあり、その時間は課金される
+- データは 1 GB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `aurora.postgres.serverless-v2.acu` | 0 | ACU-Hr | paused for all 730 hours | 0 | - | 0 |
+| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 0.12** / 月
+- 毎月の無料枠適用後の小計: **USD 0.12** / 月
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -505,6 +601,12 @@ ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValu
 | `cloudfront.kvs.api` | global | KeyValueStore-APIOperations | API Requests | 0 - ∞: 0.0010000000 | 2026-10-03 | 2026-10-11 |
 | `lambdaedge.jp.request` | global | APN1-Lambda-Edge-Request | Request | 0 - ∞: 0.0000006000 | 2026-10-03 | 2026-10-11 |
 | `lambdaedge.jp.duration` | global | APN1-Lambda-Edge-GB-Second | Lambda-GB-Second | 0 - ∞: 0.0000500100 | 2026-10-03 | 2026-10-11 |
+| `dsql.dpu` | ap-northeast-1 | APN1-DSQL-DistributedProcessingUnits | DPU | 0 - ∞: 0.0000100000 | 2026-09-11 | 2026-10-11 |
+| `dsql.storage` | ap-northeast-1 | APN1-DSQL-Storage-ByteHrs | GB-Month | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-11 |
+| `rds.postgres.t4g-micro.single-az` | ap-northeast-1 | APN1-InstanceUsage:db.t4g.micro | Hrs | 0 - ∞: 0.0250000000 | 2026-10-06 | 2026-10-11 |
+| `rds.postgres.gp3.storage` | ap-northeast-1 | APN1-RDS:GP3-Storage | GB-Mo | 0 - ∞: 0.1380000000 | 2026-10-06 | 2026-10-11 |
+| `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
+| `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -522,6 +624,8 @@ ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValu
 | `logs.storage` | 5 | `aws-price-list-cloudwatch` | GB-month. From the Global-TimedStorage-ByteHrs USD 0 tier. |
 | `cognito.essentials.mau` | 10,000 | `cognito-pricing` | MAUs per account or organization, shared with the Lite plan. Direct sign-in users only. |
 | `cloudfront.kvs.read` | 2,000,000 | `cloudfront-pricing-payg` | Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only. |
+| `dsql.dpu` | 100,000 | `dsql-pricing` | First 100,000 DPUs each month. The pricing page does not say whether it expires. |
+| `dsql.storage` | 1 | `dsql-pricing` | First GB of storage each month. The pricing page does not say whether it expires. |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 
@@ -536,3 +640,5 @@ ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValu
 - `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `ses.outbound.message`: The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied.
 - `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.
+- `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
+- `rds.postgres.gp3.storage`: The RDS free tier terms were not checked while writing chapter 13.

@@ -91,3 +91,13 @@ The term pairs that keep both languages using one word for one concept. API name
 | KeyValueStore | KeyValueStore | 10 | A store of key-value pairs that CloudFront Functions can read. Functions only read it; changes come from outside through an API. |
 | Lambda@Edge | Lambda@Edge | 10 | A version of a Lambda function created in us-east-1 that CloudFront replicates around the world and invokes partway through a request. |
 | ETag による条件付き更新 | ETag precondition | 10 | Sending the version (ETag) you read along with a write, so the write is refused if someone else changed the data in between. |
+| migration | migration | 13 | A schema change kept as a numbered file, with the database itself recording which ones have been applied. |
+| transaction | transaction | 13 | A group of SQL statements that takes effect entirely or not at all. |
+| snapshot isolation | snapshot isolation | 13 | Isolation in which a transaction keeps reading the data as it was when the transaction started. PostgreSQL's REPEATABLE READ is this. |
+| 楽観的同時実行制御（OCC） | optimistic concurrency control (OCC) | 13 | Checking for conflicts at commit instead of making transactions wait for locks; the transaction that loses fails. |
+| serialization failure | serialization failure | 13 | The database's answer that a transaction could not commit because it conflicted with another. SQLSTATE 40001. Nothing was applied, so the transaction is run again from the start. |
+| write skew | write skew | 13 | Two transactions decide from the same data and write different rows, breaking a condition that either alone would have kept. |
+| database role | database role | 13 | A user inside the database. GRANTs to it decide what it may do to which table. Not the same thing as an IAM role. |
+| 認証 token（Aurora DSQL） | authentication token (Aurora DSQL) | 13 | A time-limited string signed with IAM credentials, passed in place of a password when a connection is opened. |
+| DPU | DPU | 13 | Distributed Processing Unit: the billing unit in which Aurora DSQL measures the compute, reads, and writes spent running SQL. |
+| ACU | ACU | 13 | Aurora Capacity Unit: the capacity unit of Aurora Serverless v2. One ACU is about 2 GiB of memory with matching CPU and networking. |
