@@ -235,6 +235,28 @@ importers:
         specifier: 0.443.0
         version: 0.443.0(vue@3.5.43(typescript@7.0.2))
 
+  examples/11-network:
+    dependencies:
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
   examples/18-live:
     dependencies:
       '@aws-sdk/client-ivs':

@@ -52,6 +52,10 @@ generated: true
 | 18 | `vp run stream:infra:synth` | ローカル | 成功 | 2026-10-11 | esbuild の bundle 込みで template を生成。AWS には問い合わせない |
 | 18 | `vp run build:stream:web / dev:stream:web` | ローカル | 成功 | 2026-10-11 | ビルドに player の worker と wasm が含まれることを確認。開発サーバーで、channel が未設定のときの表示を確認 |
 | 18 | `vp run stream:infra:diff / deploy / drift / destroy, stream:key, stream:config, stream:status, stream:stop` | AWS | 未実行 | - | IVS の channel と stream key を作る。実際の配信と視聴は AWS が無いと確かめられない |
+| 11 | `vp run test:unit (examples/11-network)` | ローカル | 成功 | 2026-10-11 | CIDR の計算、設定の検証、経路のモデル、料金の入力、stack の assertion、import の対応 |
+| 11 | `vp run net:infra:synth` | ローカル | 成功 | 2026-10-11 | 既定の構成と、`-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs` の両方で synth した |
+| 11 | `vp run net:plan` | ローカル | 成功 | 2026-10-11 | 既定、`egress=nat`、`egress=nat-per-az`、`interfaceEndpoints=ecr.api,ecr.dkr,logs`、不正な設定で実行した |
+| 11 | `vp run net:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | VPC を作る。context によっては NAT Gateway と interface endpoint（時間課金）も作る |
 
 ## 未解決事項と再開手順
 
@@ -150,3 +154,21 @@ AWS Budgets の料金、API Gateway HTTP API と S3 の無料枠、どの章が 
 18章: 実際の配信と視聴を一度も通していない。OBS からの配信、player での再生、遅延の実測、GetStream とイベントの実際の形、Cloud Control API 経由の IVS リソースの作成と削除、cdkd の state に stream key の値が入るかどうか、streamKey=off を挟んだ作り直しが未確認。
 
 再開手順: AIH_AWS_ACCOUNT_ID を設定し、vp run stream:infra:deploy、stream:key --show、OBS で配信、stream:config と preview:stream:web で視聴、stream:status --events、stream:stop、stream:status --expect-offline、stream:infra:destroy の順に実行する。state は `cdkd state show AihLive --json` で StreamKey の attributes を確認する。
+
+### 11-deploy
+
+11章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が VPC の一式を作って消せること、AWS::EC2::VPCEndpoint が Cloud Control API 経由で作れること、gateway endpoint と interface endpoint を通る実際の到達性、drift の検査結果が未確認。
+
+再開手順: `vp run net:infra:deploy` を既定の構成で実行し、`vp run net:infra:drift`、`vp run net:infra:destroy` まで通す。続けて `-c egress=nat` と `-c interfaceEndpoints=logs` で deploy し、private subnet に置いたリソースから到達性を確かめ、すぐ destroy する（時間課金）。
+
+### 11-cross-stack
+
+別の CDK アプリの stack から `Fn::ImportValue` で 11章の output を読む経路を、cdkd で実行していない。export が残っている間 destroy が拒否されることも、ドキュメントとソースで読んだだけ。
+
+再開手順: 11章の stack を deploy し、`importNetwork` を使う小さな stack（security group 1 つ）を別のアプリから deploy する。その状態で `vp run net:infra:destroy` が `StackHasActiveImportsError` で止まることを確かめ、利用側を先に消してからもう一度実行する。
+
+### 11-zone-names
+
+既定の AZ 名（ap-northeast-1a と ap-northeast-1c）が、すべてのアカウントで subnet を作れる AZ かどうかは確認していない。
+
+再開手順: `aws ec2 describe-availability-zones --region ap-northeast-1` で自分のアカウントの AZ 名と AZ ID を確かめ、違っていれば `-c availabilityZones=...` で渡す。

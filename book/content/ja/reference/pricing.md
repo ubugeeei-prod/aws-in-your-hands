@@ -244,6 +244,68 @@ ID: `live-left-on-month-standard` / 章: [18 ライブ配信のレシピ: IVS](/
 - 定価の小計: **USD 1460.00** / 月
 - 毎月の無料枠適用後の小計: **USD 1460.00** / 月
 
+## ネットワーク: NAT Gateway を 1 つ足す
+
+ID: `network-nat-single` / 章: [11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
+
+前提:
+
+- `-c egress=nat`。NAT Gateway 1 つを 730 時間置いたまま
+- NAT Gateway が持つ Elastic IP アドレス 1 つ
+- NAT Gateway を通るデータは月 10 GB と仮定（コンテナ image の取得とログの送信くらい）
+- インターネットへのデータ転送と AZ をまたぐデータ転送の料金は未算入
+- VPC、subnet、route table、internet gateway、gateway endpoint には料金がない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
+| `vpc.public-ipv4.in-use.hour` | 730 | Hrs | 1 Elastic IP address x 730 hours | 3.65 | - | 3.65 |
+| `nat.gateway.data` | 10 | GB | 10 GB processed (assumption) | 0.62 | - | 0.62 |
+
+- 定価の小計: **USD 49.53** / 月
+- 毎月の無料枠適用後の小計: **USD 49.53** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`
+
+## ネットワーク: NAT Gateway を AZ ごとに足す
+
+ID: `network-nat-per-az` / 章: [11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
+
+前提:
+
+- `-c egress=nat-per-az`。2 つの AZ に NAT Gateway を 1 つずつ、730 時間置いたまま
+- それぞれが持つ Elastic IP アドレス、合わせて 2 つ
+- NAT Gateway を通るデータは合わせて月 10 GB と仮定
+- インターネットへのデータ転送の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `nat.gateway.hour` | 1,460 | Hrs | 2 NAT gateways x 730 hours | 90.52 | - | 90.52 |
+| `vpc.public-ipv4.in-use.hour` | 1,460 | Hrs | 2 Elastic IP addresses x 730 hours | 7.30 | - | 7.30 |
+| `nat.gateway.data` | 10 | GB | 10 GB processed (assumption) | 0.62 | - | 0.62 |
+
+- 定価の小計: **USD 98.44** / 月
+- 毎月の無料枠適用後の小計: **USD 98.44** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`
+
+## ネットワーク: interface endpoint を 3 つ足す
+
+ID: `network-interface-endpoints` / 章: [11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
+
+前提:
+
+- `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`。3 つの endpoint を 2 つの AZ に、730 時間置いたまま
+- endpoint を通るデータは合わせて月 10 GB と仮定
+- S3 への通信は gateway endpoint を通り、料金がない
+- NAT Gateway は無し
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+| `vpc.endpoint.interface.data` | 10 | GB | 10 GB processed (assumption) | 0.10 | - | 0.10 |
+
+- 定価の小計: **USD 61.42** / 月
+- 毎月の無料枠適用後の小計: **USD 61.42** / 月
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -275,6 +337,11 @@ ID: `live-left-on-month-standard` / 章: [18 ライブ配信のレシピ: IVS](/
 | `ivs.output.sd.ap` | global | AP-Output-SD-Hours | hours | 0 - 10,000: 0.0460000000<br>10,000 - 50,000: 0.0420000000<br>50,000 - 150,000: 0.0390000000<br>150,000 - 500,000: 0.0350000000<br>500,000 - ∞: 0.0310000000 | 2026-09-11 | 2026-10-11 |
 | `ivs.output.hd.ap` | global | AP-Output-HD-Hours | hours | 0 - 10,000: 0.0920000000<br>10,000 - 50,000: 0.0840000000<br>50,000 - 150,000: 0.0780000000<br>150,000 - 500,000: 0.0700000000<br>500,000 - ∞: 0.0620000000 | 2026-09-11 | 2026-10-11 |
 | `ivs.output.fullhd.ap` | global | AP-Output-FullHD-Hours | hours | 0 - 10,000: 0.1840000000<br>10,000 - 50,000: 0.1680000000<br>50,000 - 150,000: 0.1560000000<br>150,000 - 500,000: 0.1400000000<br>500,000 - ∞: 0.1240000000 | 2026-09-11 | 2026-10-11 |
+| `nat.gateway.hour` | ap-northeast-1 | APN1-NatGateway-Hours | Hrs | 0 - ∞: 0.0620000000 | 2026-10-09 | 2026-10-11 |
+| `nat.gateway.data` | ap-northeast-1 | APN1-NatGateway-Bytes | GB | 0 - ∞: 0.0620000000 | 2026-10-09 | 2026-10-11 |
+| `vpc.endpoint.interface.hour` | ap-northeast-1 | APN1-VpcEndpoint-Hours | Hrs | 0 - ∞: 0.0140000000 | 2026-09-17 | 2026-10-11 |
+| `vpc.endpoint.interface.data` | ap-northeast-1 | APN1-VpcEndpoint-Bytes | GB | 0 - 1,048,576: 0.0100000000<br>1,048,576 - 5,242,880: 0.0060000000<br>5,242,880 - ∞: 0.0040000000 | 2026-09-17 | 2026-10-11 |
+| `vpc.public-ipv4.in-use.hour` | ap-northeast-1 | APN1-PublicIPv4:InUseAddress | Hrs | 0 - ∞: 0.0050000000 | 2026-09-17 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -298,3 +365,4 @@ ID: `live-left-on-month-standard` / 章: [18 ライブ配信のレシピ: IVS](/
 - `s3.standard.storage`: No always-free S3 allowance was confirmed; none is applied.
 - `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.
+- `vpc.public-ipv4.in-use.hour`: The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted.

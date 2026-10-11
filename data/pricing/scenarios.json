@@ -411,6 +411,120 @@
           "basis": "730 hours of input"
         }
       ]
+    },
+    {
+      "id": "network-nat-single",
+      "chapter": "11",
+      "title": {
+        "ja": "ネットワーク: NAT Gateway を 1 つ足す",
+        "en": "Network: add one NAT gateway"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c egress=nat`。NAT Gateway 1 つを 730 時間置いたまま",
+          "NAT Gateway が持つ Elastic IP アドレス 1 つ",
+          "NAT Gateway を通るデータは月 10 GB と仮定（コンテナ image の取得とログの送信くらい）",
+          "インターネットへのデータ転送と AZ をまたぐデータ転送の料金は未算入",
+          "VPC、subnet、route table、internet gateway、gateway endpoint には料金がない"
+        ],
+        "en": [
+          "`-c egress=nat`: one NAT gateway left running for 730 hours",
+          "The one Elastic IP address that the NAT gateway holds",
+          "10 GB a month assumed through the NAT gateway (about what pulling container images and shipping logs takes)",
+          "Data transfer out to the internet and across zones is not included",
+          "The VPC, subnets, route tables, internet gateway, and gateway endpoints have no charge"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 730,
+          "basis": "1 NAT gateway x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 Elastic IP address x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.data",
+          "quantity": 10,
+          "basis": "10 GB processed (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "network-nat-per-az",
+      "chapter": "11",
+      "title": {
+        "ja": "ネットワーク: NAT Gateway を AZ ごとに足す",
+        "en": "Network: add a NAT gateway per zone"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c egress=nat-per-az`。2 つの AZ に NAT Gateway を 1 つずつ、730 時間置いたまま",
+          "それぞれが持つ Elastic IP アドレス、合わせて 2 つ",
+          "NAT Gateway を通るデータは合わせて月 10 GB と仮定",
+          "インターネットへのデータ転送の料金は未算入"
+        ],
+        "en": [
+          "`-c egress=nat-per-az`: one NAT gateway in each of two zones, left running for 730 hours",
+          "The two Elastic IP addresses they hold",
+          "10 GB a month assumed through the NAT gateways in total",
+          "Data transfer out to the internet is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 1460,
+          "basis": "2 NAT gateways x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 1460,
+          "basis": "2 Elastic IP addresses x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.data",
+          "quantity": 10,
+          "basis": "10 GB processed (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "network-interface-endpoints",
+      "chapter": "11",
+      "title": {
+        "ja": "ネットワーク: interface endpoint を 3 つ足す",
+        "en": "Network: add three interface endpoints"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c interfaceEndpoints=ecr.api,ecr.dkr,logs`。3 つの endpoint を 2 つの AZ に、730 時間置いたまま",
+          "endpoint を通るデータは合わせて月 10 GB と仮定",
+          "S3 への通信は gateway endpoint を通り、料金がない",
+          "NAT Gateway は無し"
+        ],
+        "en": [
+          "`-c interfaceEndpoints=ecr.api,ecr.dkr,logs`: three endpoints in two zones, left running for 730 hours",
+          "10 GB a month assumed through the endpoints in total",
+          "Traffic to S3 goes through the gateway endpoint at no charge",
+          "No NAT gateway"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.data",
+          "quantity": 10,
+          "basis": "10 GB processed (assumption)"
+        }
+      ]
     }
   ]
 }

@@ -244,6 +244,68 @@ Assumptions:
 - List subtotal: **USD 1460.00** / month
 - Subtotal after monthly free allowance: **USD 1460.00** / month
 
+## Network: add one NAT gateway
+
+ID: `network-nat-single` / chapter: [11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
+
+Assumptions:
+
+- `-c egress=nat`: one NAT gateway left running for 730 hours
+- The one Elastic IP address that the NAT gateway holds
+- 10 GB a month assumed through the NAT gateway (about what pulling container images and shipping logs takes)
+- Data transfer out to the internet and across zones is not included
+- The VPC, subnets, route tables, internet gateway, and gateway endpoints have no charge
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
+| `vpc.public-ipv4.in-use.hour` | 730 | Hrs | 1 Elastic IP address x 730 hours | 3.65 | - | 3.65 |
+| `nat.gateway.data` | 10 | GB | 10 GB processed (assumption) | 0.62 | - | 0.62 |
+
+- List subtotal: **USD 49.53** / month
+- Subtotal after monthly free allowance: **USD 49.53** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`
+
+## Network: add a NAT gateway per zone
+
+ID: `network-nat-per-az` / chapter: [11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
+
+Assumptions:
+
+- `-c egress=nat-per-az`: one NAT gateway in each of two zones, left running for 730 hours
+- The two Elastic IP addresses they hold
+- 10 GB a month assumed through the NAT gateways in total
+- Data transfer out to the internet is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `nat.gateway.hour` | 1,460 | Hrs | 2 NAT gateways x 730 hours | 90.52 | - | 90.52 |
+| `vpc.public-ipv4.in-use.hour` | 1,460 | Hrs | 2 Elastic IP addresses x 730 hours | 7.30 | - | 7.30 |
+| `nat.gateway.data` | 10 | GB | 10 GB processed (assumption) | 0.62 | - | 0.62 |
+
+- List subtotal: **USD 98.44** / month
+- Subtotal after monthly free allowance: **USD 98.44** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`
+
+## Network: add three interface endpoints
+
+ID: `network-interface-endpoints` / chapter: [11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
+
+Assumptions:
+
+- `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`: three endpoints in two zones, left running for 730 hours
+- 10 GB a month assumed through the endpoints in total
+- Traffic to S3 goes through the gateway endpoint at no charge
+- No NAT gateway
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+| `vpc.endpoint.interface.data` | 10 | GB | 10 GB processed (assumption) | 0.10 | - | 0.10 |
+
+- List subtotal: **USD 61.42** / month
+- Subtotal after monthly free allowance: **USD 61.42** / month
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -275,6 +337,11 @@ Assumptions:
 | `ivs.output.sd.ap` | global | AP-Output-SD-Hours | hours | 0 - 10,000: 0.0460000000<br>10,000 - 50,000: 0.0420000000<br>50,000 - 150,000: 0.0390000000<br>150,000 - 500,000: 0.0350000000<br>500,000 - ∞: 0.0310000000 | 2026-09-11 | 2026-10-11 |
 | `ivs.output.hd.ap` | global | AP-Output-HD-Hours | hours | 0 - 10,000: 0.0920000000<br>10,000 - 50,000: 0.0840000000<br>50,000 - 150,000: 0.0780000000<br>150,000 - 500,000: 0.0700000000<br>500,000 - ∞: 0.0620000000 | 2026-09-11 | 2026-10-11 |
 | `ivs.output.fullhd.ap` | global | AP-Output-FullHD-Hours | hours | 0 - 10,000: 0.1840000000<br>10,000 - 50,000: 0.1680000000<br>50,000 - 150,000: 0.1560000000<br>150,000 - 500,000: 0.1400000000<br>500,000 - ∞: 0.1240000000 | 2026-09-11 | 2026-10-11 |
+| `nat.gateway.hour` | ap-northeast-1 | APN1-NatGateway-Hours | Hrs | 0 - ∞: 0.0620000000 | 2026-10-09 | 2026-10-11 |
+| `nat.gateway.data` | ap-northeast-1 | APN1-NatGateway-Bytes | GB | 0 - ∞: 0.0620000000 | 2026-10-09 | 2026-10-11 |
+| `vpc.endpoint.interface.hour` | ap-northeast-1 | APN1-VpcEndpoint-Hours | Hrs | 0 - ∞: 0.0140000000 | 2026-09-17 | 2026-10-11 |
+| `vpc.endpoint.interface.data` | ap-northeast-1 | APN1-VpcEndpoint-Bytes | GB | 0 - 1,048,576: 0.0100000000<br>1,048,576 - 5,242,880: 0.0060000000<br>5,242,880 - ∞: 0.0040000000 | 2026-09-17 | 2026-10-11 |
+| `vpc.public-ipv4.in-use.hour` | ap-northeast-1 | APN1-PublicIPv4:InUseAddress | Hrs | 0 - ∞: 0.0050000000 | 2026-09-17 | 2026-10-11 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -298,3 +365,4 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `s3.standard.storage`: No always-free S3 allowance was confirmed; none is applied.
 - `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.
+- `vpc.public-ipv4.in-use.hour`: The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted.

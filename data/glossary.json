@@ -469,6 +469,116 @@
         "ja": "映像の特定の位置に埋め込む小さなデータ。視聴者ごとの遅延にかかわらず、映像の同じ場面で届く。",
         "en": "A small piece of data embedded at a point in the video. It reaches each viewer at the same moment of the video, whatever that viewer's delay."
       }
+    },
+    {
+      "id": "vpc",
+      "ja": "VPC",
+      "en": "VPC",
+      "firstUse": "11",
+      "definition": {
+        "ja": "Virtual Private Cloud。1 つのリージョンの中に作る、自分専用の IP ネットワーク。アドレスの範囲を自分で決め、subnet に分けて使う。",
+        "en": "Virtual Private Cloud: your own IP network inside one Region. You choose its address range and divide it into subnets."
+      }
+    },
+    {
+      "id": "cidr",
+      "ja": "CIDR",
+      "en": "CIDR",
+      "firstUse": "11",
+      "definition": {
+        "ja": "`10.20.0.0/16` のように、先頭のアドレスと「先頭から何ビットが共通か」でアドレスの範囲を書く記法。/16 は 65,536 個、/20 は 4,096 個。",
+        "en": "A way to write an address range as a first address and the number of leading bits it shares, such as `10.20.0.0/16`. A /16 holds 65,536 addresses, a /20 holds 4,096."
+      }
+    },
+    {
+      "id": "subnet",
+      "ja": "subnet",
+      "en": "subnet",
+      "firstUse": "11",
+      "definition": {
+        "ja": "VPC のアドレス範囲の一部で、1 つの Availability Zone の中に置かれる。public か private かは、関連付けた route table で決まる。",
+        "en": "A slice of a VPC's address range that lives in one Availability Zone. Whether it is public or private follows from the route table associated with it."
+      }
+    },
+    {
+      "id": "availability-zone",
+      "ja": "Availability Zone（AZ）",
+      "en": "Availability Zone (AZ)",
+      "firstUse": "11",
+      "definition": {
+        "ja": "リージョンの中にある、電源とネットワークが独立したデータセンター群。同じリージョンの AZ どうしは同時に壊れにくいように作られているが、リージョン全体の障害からは守ってくれない。",
+        "en": "A group of data centers inside a Region with its own power and networking. Zones in one Region are built not to fail together, but they do not protect against a failure of the whole Region."
+      }
+    },
+    {
+      "id": "route-table",
+      "ja": "route table",
+      "en": "route table",
+      "firstUse": "11",
+      "definition": {
+        "ja": "「この宛先はここへ送る」という規則の表。subnet に関連付ける。インターネットへの経路があるかどうかは、この表だけで決まる。",
+        "en": "A list of rules saying where traffic for each destination goes, associated with subnets. Whether a subnet has a way to the internet is decided here and nowhere else."
+      }
+    },
+    {
+      "id": "internet-gateway",
+      "ja": "internet gateway",
+      "en": "internet gateway",
+      "firstUse": "11",
+      "definition": {
+        "ja": "VPC とインターネットをつなぐ出入口。VPC に 1 つ取り付ける。これ自体に料金はかからない。",
+        "en": "The door between a VPC and the internet, attached to the VPC. It has no charge of its own."
+      }
+    },
+    {
+      "id": "nat-gateway",
+      "ja": "NAT Gateway",
+      "en": "NAT gateway",
+      "firstUse": "11",
+      "definition": {
+        "ja": "private subnet の中から外への接続だけを通す中継点。public subnet に置き、Elastic IP アドレスを 1 つ持つ。存在している時間と、通したデータ量の両方に料金がかかる。",
+        "en": "A relay that lets resources in private subnets open connections outward and nothing inward. It sits in a public subnet with one Elastic IP address, and is billed both for every hour it exists and for every GB it passes."
+      }
+    },
+    {
+      "id": "security-group",
+      "ja": "security group",
+      "en": "security group",
+      "firstUse": "11",
+      "definition": {
+        "ja": "instance などのリソースに付ける、許可だけの通信規則。stateful で、許可した通信の返事は逆向きの規則がなくても通る。",
+        "en": "Allow-only traffic rules attached to resources such as instances. Stateful: replies to allowed traffic pass without a rule in the other direction."
+      }
+    },
+    {
+      "id": "network-acl",
+      "ja": "network ACL",
+      "en": "network ACL",
+      "firstUse": "11",
+      "definition": {
+        "ja": "subnet の境界に付ける通信規則。許可と拒否を番号順に評価する。stateless で、返事の通信も別に許可が要る。",
+        "en": "Traffic rules at a subnet's edge, with allow and deny rules evaluated in numeric order. Stateless: replies need their own allow rule."
+      }
+    },
+    {
+      "id": "gateway-endpoint",
+      "ja": "gateway endpoint",
+      "en": "gateway endpoint",
+      "firstUse": "11",
+      "definition": {
+        "ja": "S3 と DynamoDB へ、インターネットを通らずに届く経路。route table に経路として入る。追加料金はない。",
+        "en": "A path to S3 and DynamoDB that does not cross the internet, installed as a route in route tables. It has no additional charge."
+      }
+    },
+    {
+      "id": "interface-endpoint",
+      "ja": "interface endpoint",
+      "en": "interface endpoint",
+      "firstUse": "11",
+      "definition": {
+        "ja": "AWS のサービスへの入口を、subnet の中に private IP アドレスつきの network interface として置くもの（AWS PrivateLink）。サービスごと、AZ ごとに時間課金される。",
+        "en": "A doorway to an AWS service placed inside a subnet as a network interface with a private IP address (AWS PrivateLink). Billed by the hour per service and per Availability Zone."
+      }
     }
   ]
 }

@@ -919,6 +919,138 @@
       "boundary": "cloud",
       "criteria": ["cost", "drift"],
       "verification": "unverified"
+    },
+    {
+      "id": "11.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "11.architecture",
+      "sources": ["examples/11-network/infra/lib/network-stack.ts", "examples/11-network/infra/bin/app.ts"],
+      "tasks": ["net:infra:synth"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "11.cidr",
+      "sources": [
+        "examples/11-network/src/cidr.ts",
+        "examples/11-network/src/config.ts",
+        "examples/11-network/src/plan.ts",
+        "examples/11-network/test/cidr.test.ts",
+        "examples/11-network/test/plan.test.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.routes",
+      "sources": [
+        "examples/11-network/infra/lib/network-stack.ts",
+        "examples/11-network/infra/test/network-stack.test.ts",
+        "examples/11-network/src/reach.ts"
+      ],
+      "tasks": ["test:unit", "net:infra:synth"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.firewall",
+      "sources": ["examples/11-network/infra/lib/network-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "11.egress",
+      "sources": [
+        "examples/11-network/infra/lib/network-stack.ts",
+        "examples/11-network/infra/test/network-stack.test.ts",
+        "examples/11-network/src/reach.ts",
+        "examples/11-network/test/reach.test.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "11.cost",
+      "sources": [
+        "examples/11-network/src/cost.ts",
+        "examples/11-network/test/pricing.test.ts",
+        "examples/11-network/scripts/plan.ts",
+        "data/pricing"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.lambda",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "11.zones",
+      "sources": ["examples/11-network/src/reach.ts", "examples/11-network/test/reach.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.local",
+      "sources": [
+        "examples/11-network/scripts/plan.ts",
+        "examples/11-network/src/report.ts",
+        "examples/11-network/infra/test/network-stack.test.ts"
+      ],
+      "tasks": ["net:plan", "test:unit", "net:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.share",
+      "sources": [
+        "examples/11-network/src/exports.ts",
+        "examples/11-network/infra/lib/import-network.ts",
+        "examples/11-network/infra/test/import-network.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "11.deploy",
+      "sources": ["examples/11-network/infra/bin/app.ts", "examples/11-network/cdk.json", "tools/src/infra"],
+      "tasks": ["net:infra:diff", "net:infra:deploy", "net:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "11.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["net:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

@@ -1,0 +1,981 @@
+{
+  "chapterId": "11",
+  "manifest": {
+    "id": "11",
+    "slug": "network",
+    "title": {
+      "ja": "本当に必要なネットワーク: VPC、subnet、NAT、endpoint",
+      "en": "The Network You Actually Need: VPC, Subnets, NAT, and Endpoints"
+    },
+    "prerequisites": ["02"],
+    "services": ["VPC", "NAT Gateway", "VPC endpoints"],
+    "samplePath": "examples/11-network",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-11",
+    "sourceIds": [
+      "vpc-pricing",
+      "vpc-what-is",
+      "vpc-subnet-types",
+      "vpc-subnet-sizing",
+      "vpc-cidr-blocks",
+      "vpc-route-table-concepts",
+      "vpc-security-groups",
+      "vpc-network-acls",
+      "vpc-security-comparison",
+      "vpc-internet-gateway",
+      "vpc-nat-gateway-basics",
+      "vpc-gateway-endpoints",
+      "vpc-interface-endpoints",
+      "privatelink-aws-services",
+      "privatelink-pricing",
+      "cfn-ec2-vpcendpoint",
+      "lambda-vpc",
+      "ecr-vpc-endpoints",
+      "ecs-fargate-networking",
+      "ssm-vpc-endpoints",
+      "rds-vpc",
+      "aws-availability-zones",
+      "aws-az-mapping",
+      "fault-isolation-availability-zones",
+      "fault-isolation-regions",
+      "aws-price-list-ec2",
+      "aws-price-list-vpc",
+      "cdkd-source-network",
+      "cdkd-cross-stack-references",
+      "cdkd-introduction",
+      "vpc-default-security-group",
+      "cfn-stack-exports",
+      "cfn-ec2-subnet",
+      "elasticache-vpc"
+    ]
+  },
+  "sources": [
+    {
+      "id": "vpc-pricing",
+      "url": "https://aws.amazon.com/vpc/pricing/",
+      "title": "Amazon VPC pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A NAT gateway is billed per NAT gateway-hour while provisioned and available, plus per GB processed regardless of source or destination; a partial hour is billed as a full hour",
+        "Standard data transfer charges apply on top of NAT gateway data processing",
+        "Every public IPv4 address is billed by the hour, in use or idle, at the same rate; Elastic IP addresses attached to NAT gateways are named as an example",
+        "A Regional NAT gateway is billed per hour for each Availability Zone it is configured in"
+      ],
+      "note": "The page renders its regional price tables with JavaScript. The numbers in the book come from the Price List bulk API, not from this page."
+    },
+    {
+      "id": "vpc-what-is",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html",
+      "title": "What is Amazon VPC?",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "There is no additional charge for using a VPC; some components such as NAT gateways are charged",
+        "Private IPv4 addresses are not charged",
+        "AWS Free Tier customers get 750 hours of public IPv4 address usage with the EC2 service"
+      ]
+    },
+    {
+      "id": "vpc-subnet-types",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html",
+      "title": "Subnets for your VPC",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The subnet type is determined by its routing: a public subnet has a direct route to an internet gateway, a private subnet does not and needs a NAT device for internet access, an isolated subnet has no routes to destinations outside its VPC",
+        "Network ACLs allow or deny traffic at the subnet level"
+      ]
+    },
+    {
+      "id": "vpc-subnet-sizing",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html",
+      "title": "Subnet CIDR blocks",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A subnet's IPv4 CIDR block is between /28 and /16",
+        "The first four addresses and the last address of every subnet are reserved"
+      ]
+    },
+    {
+      "id": "vpc-cidr-blocks",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html",
+      "title": "VPC CIDR blocks",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A VPC's IPv4 CIDR block is between /16 and /28",
+        "Some AWS services use 172.17.0.0/16, so that range is best avoided"
+      ]
+    },
+    {
+      "id": "vpc-route-table-concepts",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/RouteTables.html",
+      "title": "Route table concepts",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The main route table controls routing for every subnet not explicitly associated with another route table",
+        "Every route table has a local route for communication within the VPC",
+        "A route has a destination CIDR and a target such as an internet gateway"
+      ]
+    },
+    {
+      "id": "vpc-security-groups",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html",
+      "title": "Control traffic to your AWS resources using security groups",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Security groups are stateful: responses to allowed traffic are allowed regardless of the rules in the other direction"
+      ]
+    },
+    {
+      "id": "vpc-network-acls",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html",
+      "title": "Control subnet traffic with network access control lists",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Network ACLs are stateless: responses to allowed traffic are not automatically allowed",
+        "Network ACL rules are evaluated when traffic enters and leaves the subnet, not as it is routed within a subnet",
+        "The default network ACL allows all inbound and outbound traffic"
+      ],
+      "note": "The default rules were read on the linked page https://docs.aws.amazon.com/vpc/latest/userguide/default-network-acl.html."
+    },
+    {
+      "id": "vpc-security-comparison",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/infrastructure-security.html",
+      "title": "Infrastructure security in Amazon VPC",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Security groups work at the instance level with allow rules only; network ACLs work at the subnet level with allow and deny rules, evaluated in ascending order",
+        "You can secure your instances using only security groups"
+      ]
+    },
+    {
+      "id": "vpc-internet-gateway",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html",
+      "title": "Enable internet access for a VPC using an internet gateway",
+      "checkedAt": "2026-10-11",
+      "supports": ["There is no charge for an internet gateway itself"]
+    },
+    {
+      "id": "vpc-nat-gateway-basics",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-basics.html",
+      "title": "NAT gateway basics",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A NAT gateway is created in one Availability Zone and is redundant within that zone",
+        "If zones share one NAT gateway and its zone is down, resources in the other zones lose internet access; one NAT gateway per zone avoids this",
+        "A public NAT gateway sits in a public subnet and needs an Elastic IP address"
+      ],
+      "note": "The Elastic IP requirement was read on https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html."
+    },
+    {
+      "id": "vpc-gateway-endpoints",
+      "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html",
+      "title": "Gateway endpoints",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Gateway endpoints exist for Amazon S3 and DynamoDB only, and need no internet gateway or NAT device",
+        "There is no additional charge for using gateway endpoints",
+        "Creating one adds a route to each selected route table: destination the service's prefix list, target the endpoint",
+        "Prefix lists are specific to a Region, so traffic to the service in another Region does not use the endpoint"
+      ]
+    },
+    {
+      "id": "vpc-interface-endpoints",
+      "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/create-interface-endpoint.html",
+      "title": "Access an AWS service using an interface VPC endpoint",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "An interface endpoint creates an endpoint network interface with a private IP address in each chosen subnet, one subnet per Availability Zone",
+        "Interface endpoints are billed for hourly usage and for data processing",
+        "Private DNS needs DNS hostnames and DNS resolution enabled on the VPC",
+        "The endpoint's security group must allow inbound HTTPS from the resources that call it"
+      ]
+    },
+    {
+      "id": "privatelink-aws-services",
+      "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html",
+      "title": "AWS services that integrate with AWS PrivateLink",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Service names com.amazonaws.region.ecr.api, ecr.dkr, logs, secretsmanager, ssm, ssmmessages, and ec2messages"
+      ]
+    },
+    {
+      "id": "privatelink-pricing",
+      "url": "https://aws.amazon.com/privatelink/pricing/",
+      "title": "AWS PrivateLink pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "An interface endpoint is billed for each hour it stays provisioned in each Availability Zone; a partial hour is billed as a full hour",
+        "Data processing is billed per GB regardless of the traffic's source or destination, in tiers over the Region's monthly total"
+      ],
+      "note": "The hourly rate is rendered with JavaScript; the book's number comes from the Price List bulk API."
+    },
+    {
+      "id": "cfn-ec2-vpcendpoint",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-vpcendpoint.html",
+      "title": "AWS::EC2::VPCEndpoint",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Properties VpcEndpointType, ServiceName, VpcId, RouteTableIds, SubnetIds, SecurityGroupIds, and PrivateDnsEnabled"
+      ]
+    },
+    {
+      "id": "lambda-vpc",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
+      "title": "Giving Lambda functions access to resources in an Amazon VPC",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "By default a Lambda function can reach the public internet; attached to a VPC it can reach only what the VPC can",
+        "Connecting a function to a public subnet gives it neither internet access nor a public IP address",
+        "The execution role needs ec2:CreateNetworkInterface, DescribeNetworkInterfaces, DescribeSubnets, DeleteNetworkInterface, AssignPrivateIpAddresses, and UnassignPrivateIpAddresses on all resources, and the function's code is implicitly granted them too",
+        "A new function stays Pending while Lambda creates the Hyperplane ENI, which can take several minutes; functions with the same subnets and security groups share one",
+        "After 14 idle days Lambda reclaims unused Hyperplane ENIs and the function becomes Inactive"
+      ]
+    },
+    {
+      "id": "ecr-vpc-endpoints",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html",
+      "title": "Amazon ECR interface VPC endpoints (AWS PrivateLink)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Fargate tasks on platform version 1.4.0 or later need both ECR endpoints (ecr.api, ecr.dkr) and the S3 gateway endpoint to pull images privately",
+        "Fargate tasks that use the awslogs driver in a VPC without an internet gateway need the com.amazonaws.region.logs interface endpoint"
+      ]
+    },
+    {
+      "id": "ecs-fargate-networking",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html",
+      "title": "Fargate task networking",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A Fargate task pulls its image over a public IP address in a public subnet, a NAT gateway from a private subnet, or ECR interface endpoints"
+      ]
+    },
+    {
+      "id": "ssm-vpc-endpoints",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-create-vpc.html",
+      "title": "Improve the security of EC2 instances by using VPC endpoints for Systems Manager",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Systems Manager without internet access uses the ssm, ssmmessages, and ec2messages interface endpoints, and S3 for agent updates",
+        "ssmmessages is required for Session Manager"
+      ]
+    },
+    {
+      "id": "rds-vpc",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html",
+      "title": "Working with a DB instance in a VPC",
+      "checkedAt": "2026-10-11",
+      "supports": ["A VPC for an RDS DB instance needs at least two subnets in two different Availability Zones"]
+    },
+    {
+      "id": "aws-availability-zones",
+      "url": "https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-availability-zones.html",
+      "title": "AWS Availability Zones",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Each Region has at least three Availability Zones",
+        "An AZ ID such as apne1-az1 is the same physical location in every account; ap-northeast-1 has apne1-az1 to apne1-az4",
+        "AWS may restrict new resources in a constrained Availability Zone"
+      ]
+    },
+    {
+      "id": "aws-az-mapping",
+      "url": "https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html",
+      "title": "AZ IDs for your AWS resources",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "In Asia Pacific (Tokyo), accounts created before November 2025 have Availability Zone names mapped independently per account",
+        "`aws ec2 describe-availability-zones` lists the zone names and IDs of an account"
+      ]
+    },
+    {
+      "id": "fault-isolation-availability-zones",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-fault-isolation-boundaries/availability-zones.html",
+      "title": "AWS Fault Isolation Boundaries: Availability Zones",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "An Availability Zone is one or more discrete data centers with separate power, networking, and connectivity inside one Region",
+        "Zones in a Region are up to about 100 km apart and designed not to fail together"
+      ]
+    },
+    {
+      "id": "fault-isolation-regions",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-fault-isolation-boundaries/regions.html",
+      "title": "AWS Fault Isolation Boundaries: Regions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Regions are isolated from each other, which limits a service failure to one Region",
+        "Resources and data in one Region do not exist in another unless you replicate them"
+      ]
+    },
+    {
+      "id": "aws-price-list-ec2",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: EC2, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with offerCode AmazonEC2: NAT gateway hours and data processing",
+        "The offer also lists a Regional NAT gateway at the same hourly and per-GB rate, and regional data transfer at USD 0.01 per GB"
+      ],
+      "note": "The file is about 445 MB. NAT gateway prices live in the EC2 offer, not the VPC offer."
+    },
+    {
+      "id": "aws-price-list-vpc",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: VPC, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with offerCode AmazonVPC: interface endpoint hours and data processing, public IPv4 address hours",
+        "The offer has no SKU for a VPC, subnet, route table, internet gateway, or gateway endpoint"
+      ]
+    },
+    {
+      "id": "cdkd-source-network",
+      "url": "https://github.com/go-to-k/cdkd/tree/v0.296.28/src/provisioning",
+      "title": "cdkd v0.296.28 source: provider registry and property coverage",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "register-providers.ts registers one EC2 provider for AWS::EC2::VPC, Subnet, InternetGateway, EIP, VPCGatewayAttachment, NatGateway, RouteTable, Route, SubnetRouteTableAssociation, SecurityGroup, SecurityGroupIngress, Instance, NetworkAcl, NetworkAclEntry, and SubnetNetworkAclAssociation",
+        "AWS::EC2::VPCEndpoint is not registered and is not in the unsupported list, so it goes through Cloud Control API",
+        "property-coverage.generated.ts lists the properties the EC2 provider writes; a resource using any other property is routed through Cloud Control API",
+        "The intrinsic resolver handles Fn::GetAZs"
+      ],
+      "note": "Read from the source archive of the v0.296.28 tag. The npm tarball ships bundled JavaScript without the TypeScript sources. No cdkd command was run against AWS."
+    },
+    {
+      "id": "cdkd-cross-stack-references",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cross-stack-references.md",
+      "title": "cdkd v0.296.28: Cross-Stack References",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "cdkd resolves Fn::ImportValue against the outputs other stacks recorded in its state, and falls back to CloudFormation ListExports when no cdkd stack exports the name",
+        "`cdkd destroy` of a stack whose exports are still imported is refused with StackHasActiveImportsError, and there is no flag to force it",
+        "cdkd also resolves Fn::GetStackOutput as a weak reference that does not block the producer's destroy; its documentation calls the intrinsic cdkd-specific",
+        "Outputs are stored in the state file; state version 9 records which output keys are Export names"
+      ],
+      "note": "Read together with docs/stack-outputs.md and src/types/state.ts at the same tag. Not exercised against AWS. CloudFormation's own documentation also lists Fn::GetStackOutput (see cfn-stack-exports); how the two relate was not investigated."
+    },
+    {
+      "id": "vpc-default-security-group",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/default-security-group.html",
+      "title": "Default security groups for your VPCs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Every VPC comes with a default security group, and a resource created without a security group is associated with it",
+        "AWS recommends creating security groups for specific resources instead of using the default one"
+      ]
+    },
+    {
+      "id": "cfn-stack-exports",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html",
+      "title": "Get exported outputs from a deployed CloudFormation stack",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Export names must be unique within a Region for each AWS account",
+        "After another stack imports an output value, the exporting stack cannot be deleted and the exported value cannot be modified until every import is removed",
+        "CloudFormation documents Fn::GetStackOutput for references across accounts or Regions"
+      ]
+    },
+    {
+      "id": "cfn-ec2-subnet",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-subnet.html",
+      "title": "AWS::EC2::Subnet",
+      "checkedAt": "2026-10-11",
+      "supports": ["Updating a subnet's CidrBlock replaces the subnet: a new one is created and the old one deleted"]
+    },
+    {
+      "id": "elasticache-vpc",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/VPCs.html",
+      "title": "Amazon VPCs and ElastiCache security",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "All node-based ElastiCache clusters are launched in a VPC; ElastiCache Serverless caches can also be configured with a public endpoint that needs no VPC configuration"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "vpc",
+      "ja": "VPC",
+      "en": "VPC",
+      "firstUse": "11",
+      "definition": {
+        "ja": "Virtual Private Cloud。1 つのリージョンの中に作る、自分専用の IP ネットワーク。アドレスの範囲を自分で決め、subnet に分けて使う。",
+        "en": "Virtual Private Cloud: your own IP network inside one Region. You choose its address range and divide it into subnets."
+      }
+    },
+    {
+      "id": "cidr",
+      "ja": "CIDR",
+      "en": "CIDR",
+      "firstUse": "11",
+      "definition": {
+        "ja": "`10.20.0.0/16` のように、先頭のアドレスと「先頭から何ビットが共通か」でアドレスの範囲を書く記法。/16 は 65,536 個、/20 は 4,096 個。",
+        "en": "A way to write an address range as a first address and the number of leading bits it shares, such as `10.20.0.0/16`. A /16 holds 65,536 addresses, a /20 holds 4,096."
+      }
+    },
+    {
+      "id": "subnet",
+      "ja": "subnet",
+      "en": "subnet",
+      "firstUse": "11",
+      "definition": {
+        "ja": "VPC のアドレス範囲の一部で、1 つの Availability Zone の中に置かれる。public か private かは、関連付けた route table で決まる。",
+        "en": "A slice of a VPC's address range that lives in one Availability Zone. Whether it is public or private follows from the route table associated with it."
+      }
+    },
+    {
+      "id": "availability-zone",
+      "ja": "Availability Zone（AZ）",
+      "en": "Availability Zone (AZ)",
+      "firstUse": "11",
+      "definition": {
+        "ja": "リージョンの中にある、電源とネットワークが独立したデータセンター群。同じリージョンの AZ どうしは同時に壊れにくいように作られているが、リージョン全体の障害からは守ってくれない。",
+        "en": "A group of data centers inside a Region with its own power and networking. Zones in one Region are built not to fail together, but they do not protect against a failure of the whole Region."
+      }
+    },
+    {
+      "id": "route-table",
+      "ja": "route table",
+      "en": "route table",
+      "firstUse": "11",
+      "definition": {
+        "ja": "「この宛先はここへ送る」という規則の表。subnet に関連付ける。インターネットへの経路があるかどうかは、この表だけで決まる。",
+        "en": "A list of rules saying where traffic for each destination goes, associated with subnets. Whether a subnet has a way to the internet is decided here and nowhere else."
+      }
+    },
+    {
+      "id": "internet-gateway",
+      "ja": "internet gateway",
+      "en": "internet gateway",
+      "firstUse": "11",
+      "definition": {
+        "ja": "VPC とインターネットをつなぐ出入口。VPC に 1 つ取り付ける。これ自体に料金はかからない。",
+        "en": "The door between a VPC and the internet, attached to the VPC. It has no charge of its own."
+      }
+    },
+    {
+      "id": "nat-gateway",
+      "ja": "NAT Gateway",
+      "en": "NAT gateway",
+      "firstUse": "11",
+      "definition": {
+        "ja": "private subnet の中から外への接続だけを通す中継点。public subnet に置き、Elastic IP アドレスを 1 つ持つ。存在している時間と、通したデータ量の両方に料金がかかる。",
+        "en": "A relay that lets resources in private subnets open connections outward and nothing inward. It sits in a public subnet with one Elastic IP address, and is billed both for every hour it exists and for every GB it passes."
+      }
+    },
+    {
+      "id": "security-group",
+      "ja": "security group",
+      "en": "security group",
+      "firstUse": "11",
+      "definition": {
+        "ja": "instance などのリソースに付ける、許可だけの通信規則。stateful で、許可した通信の返事は逆向きの規則がなくても通る。",
+        "en": "Allow-only traffic rules attached to resources such as instances. Stateful: replies to allowed traffic pass without a rule in the other direction."
+      }
+    },
+    {
+      "id": "network-acl",
+      "ja": "network ACL",
+      "en": "network ACL",
+      "firstUse": "11",
+      "definition": {
+        "ja": "subnet の境界に付ける通信規則。許可と拒否を番号順に評価する。stateless で、返事の通信も別に許可が要る。",
+        "en": "Traffic rules at a subnet's edge, with allow and deny rules evaluated in numeric order. Stateless: replies need their own allow rule."
+      }
+    },
+    {
+      "id": "gateway-endpoint",
+      "ja": "gateway endpoint",
+      "en": "gateway endpoint",
+      "firstUse": "11",
+      "definition": {
+        "ja": "S3 と DynamoDB へ、インターネットを通らずに届く経路。route table に経路として入る。追加料金はない。",
+        "en": "A path to S3 and DynamoDB that does not cross the internet, installed as a route in route tables. It has no additional charge."
+      }
+    },
+    {
+      "id": "interface-endpoint",
+      "ja": "interface endpoint",
+      "en": "interface endpoint",
+      "firstUse": "11",
+      "definition": {
+        "ja": "AWS のサービスへの入口を、subnet の中に private IP アドレスつきの network interface として置くもの（AWS PrivateLink）。サービスごと、AZ ごとに時間課金される。",
+        "en": "A doorway to an AWS service placed inside a subnet as a network interface with a private IP address (AWS PrivateLink). Billed by the hour per service and per Availability Zone."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "11.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "11.architecture",
+      "sources": ["examples/11-network/infra/lib/network-stack.ts", "examples/11-network/infra/bin/app.ts"],
+      "tasks": ["net:infra:synth"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "11.cidr",
+      "sources": [
+        "examples/11-network/src/cidr.ts",
+        "examples/11-network/src/config.ts",
+        "examples/11-network/src/plan.ts",
+        "examples/11-network/test/cidr.test.ts",
+        "examples/11-network/test/plan.test.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.routes",
+      "sources": [
+        "examples/11-network/infra/lib/network-stack.ts",
+        "examples/11-network/infra/test/network-stack.test.ts",
+        "examples/11-network/src/reach.ts"
+      ],
+      "tasks": ["test:unit", "net:infra:synth"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.firewall",
+      "sources": ["examples/11-network/infra/lib/network-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "11.egress",
+      "sources": [
+        "examples/11-network/infra/lib/network-stack.ts",
+        "examples/11-network/infra/test/network-stack.test.ts",
+        "examples/11-network/src/reach.ts",
+        "examples/11-network/test/reach.test.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "11.cost",
+      "sources": [
+        "examples/11-network/src/cost.ts",
+        "examples/11-network/test/pricing.test.ts",
+        "examples/11-network/scripts/plan.ts",
+        "data/pricing"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.lambda",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "11.zones",
+      "sources": ["examples/11-network/src/reach.ts", "examples/11-network/test/reach.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.local",
+      "sources": [
+        "examples/11-network/scripts/plan.ts",
+        "examples/11-network/src/report.ts",
+        "examples/11-network/infra/test/network-stack.test.ts"
+      ],
+      "tasks": ["net:plan", "test:unit", "net:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "11.share",
+      "sources": [
+        "examples/11-network/src/exports.ts",
+        "examples/11-network/infra/lib/import-network.ts",
+        "examples/11-network/infra/test/import-network.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "11.deploy",
+      "sources": ["examples/11-network/infra/bin/app.ts", "examples/11-network/cdk.json", "tools/src/infra"],
+      "tasks": ["net:infra:diff", "net:infra:deploy", "net:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "11.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["net:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "nat.gateway.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "CA23TN2NAN47KGCF",
+      "usageType": "APN1-NatGateway-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0620000000",
+          "description": "$0.062 per NAT Gateway Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "nat.gateway.data",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "3Z2F4ZNXEMZB88ED",
+      "usageType": "APN1-NatGateway-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0620000000",
+          "description": "$0.062 per GB Data Processed by NAT Gateways"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "vpc.endpoint.interface.hour",
+      "offerCode": "AmazonVPC",
+      "region": "ap-northeast-1",
+      "sku": "W5KUR855UCRX4QZ8",
+      "usageType": "APN1-VpcEndpoint-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0140000000",
+          "description": "$0.014 per VPC Endpoint Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-17T19:05:28Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "vpc.endpoint.interface.data",
+      "offerCode": "AmazonVPC",
+      "region": "ap-northeast-1",
+      "sku": "6CRQJ7BNA8VQV6B7",
+      "usageType": "APN1-VpcEndpoint-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 1048576,
+          "usd": "0.0100000000",
+          "description": "$0.01 per GB for upto 1 PB monthly data processed by VPC Endpoints"
+        },
+        {
+          "from": 1048576,
+          "to": 5242880,
+          "usd": "0.0060000000",
+          "description": "$0.006 per GB for more than 1 PB and less than 5 PB monthly data processed by VPC Endpoints"
+        },
+        {
+          "from": 5242880,
+          "to": null,
+          "usd": "0.0040000000",
+          "description": "$0.004 per GB for more than 5 PB monthly data processed by VPC Endpoints"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-17T19:05:28Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "vpc.public-ipv4.in-use.hour",
+      "offerCode": "AmazonVPC",
+      "region": "ap-northeast-1",
+      "sku": "ZP85FQT9FHKJRAG5",
+      "usageType": "APN1-PublicIPv4:InUseAddress",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0050000000",
+          "description": "$0.005 per In-use public IPv4 address per hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-17T19:05:28Z",
+      "checkedAt": "2026-10-11"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "vpc.public-ipv4.in-use.hour",
+      "reason": "The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "network-nat-single",
+      "chapter": "11",
+      "title": {
+        "ja": "ネットワーク: NAT Gateway を 1 つ足す",
+        "en": "Network: add one NAT gateway"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c egress=nat`。NAT Gateway 1 つを 730 時間置いたまま",
+          "NAT Gateway が持つ Elastic IP アドレス 1 つ",
+          "NAT Gateway を通るデータは月 10 GB と仮定（コンテナ image の取得とログの送信くらい）",
+          "インターネットへのデータ転送と AZ をまたぐデータ転送の料金は未算入",
+          "VPC、subnet、route table、internet gateway、gateway endpoint には料金がない"
+        ],
+        "en": [
+          "`-c egress=nat`: one NAT gateway left running for 730 hours",
+          "The one Elastic IP address that the NAT gateway holds",
+          "10 GB a month assumed through the NAT gateway (about what pulling container images and shipping logs takes)",
+          "Data transfer out to the internet and across zones is not included",
+          "The VPC, subnets, route tables, internet gateway, and gateway endpoints have no charge"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 730,
+          "basis": "1 NAT gateway x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 Elastic IP address x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.data",
+          "quantity": 10,
+          "basis": "10 GB processed (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "network-nat-per-az",
+      "chapter": "11",
+      "title": {
+        "ja": "ネットワーク: NAT Gateway を AZ ごとに足す",
+        "en": "Network: add a NAT gateway per zone"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c egress=nat-per-az`。2 つの AZ に NAT Gateway を 1 つずつ、730 時間置いたまま",
+          "それぞれが持つ Elastic IP アドレス、合わせて 2 つ",
+          "NAT Gateway を通るデータは合わせて月 10 GB と仮定",
+          "インターネットへのデータ転送の料金は未算入"
+        ],
+        "en": [
+          "`-c egress=nat-per-az`: one NAT gateway in each of two zones, left running for 730 hours",
+          "The two Elastic IP addresses they hold",
+          "10 GB a month assumed through the NAT gateways in total",
+          "Data transfer out to the internet is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 1460,
+          "basis": "2 NAT gateways x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 1460,
+          "basis": "2 Elastic IP addresses x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.data",
+          "quantity": 10,
+          "basis": "10 GB processed (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "network-interface-endpoints",
+      "chapter": "11",
+      "title": {
+        "ja": "ネットワーク: interface endpoint を 3 つ足す",
+        "en": "Network: add three interface endpoints"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c interfaceEndpoints=ecr.api,ecr.dkr,logs`。3 つの endpoint を 2 つの AZ に、730 時間置いたまま",
+          "endpoint を通るデータは合わせて月 10 GB と仮定",
+          "S3 への通信は gateway endpoint を通り、料金がない",
+          "NAT Gateway は無し"
+        ],
+        "en": [
+          "`-c interfaceEndpoints=ecr.api,ecr.dkr,logs`: three endpoints in two zones, left running for 730 hours",
+          "10 GB a month assumed through the endpoints in total",
+          "Traffic to S3 goes through the gateway endpoint at no charge",
+          "No NAT gateway"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.data",
+          "quantity": 10,
+          "basis": "10 GB processed (assumption)"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "11",
+        "command": "vp run test:unit (examples/11-network)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "CIDR の計算、設定の検証、経路のモデル、料金の入力、stack の assertion、import の対応",
+          "en": "CIDR arithmetic, settings validation, the route model, pricing inputs, stack assertions, and import/export matching"
+        }
+      },
+      {
+        "scope": "11",
+        "command": "vp run net:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "既定の構成と、`-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs` の両方で synth した",
+          "en": "Synthesized the default layout and `-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs`"
+        }
+      },
+      {
+        "scope": "11",
+        "command": "vp run net:plan",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "既定、`egress=nat`、`egress=nat-per-az`、`interfaceEndpoints=ecr.api,ecr.dkr,logs`、不正な設定で実行した",
+          "en": "Ran with the defaults, `egress=nat`, `egress=nat-per-az`, `interfaceEndpoints=ecr.api,ecr.dkr,logs`, and invalid settings"
+        }
+      },
+      {
+        "scope": "11",
+        "command": "vp run net:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "VPC を作る。context によっては NAT Gateway と interface endpoint（時間課金）も作る",
+          "en": "Creates a VPC and, depending on context, NAT gateways and interface endpoints, which are billed by the hour"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "11-deploy",
+        "summary": {
+          "ja": "11章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が VPC の一式を作って消せること、AWS::EC2::VPCEndpoint が Cloud Control API 経由で作れること、gateway endpoint と interface endpoint を通る実際の到達性、drift の検査結果が未確認。",
+          "en": "The chapter 11 stack has never been deployed. Unverified: that cdkd 0.296.28 creates and deletes the whole VPC, that AWS::EC2::VPCEndpoint works through Cloud Control API, real reachability through the gateway and interface endpoints, and the drift check."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy` を既定の構成で実行し、`vp run net:infra:drift`、`vp run net:infra:destroy` まで通す。続けて `-c egress=nat` と `-c interfaceEndpoints=logs` で deploy し、private subnet に置いたリソースから到達性を確かめ、すぐ destroy する（時間課金）。",
+          "en": "Run `vp run net:infra:deploy` with the defaults, then `vp run net:infra:drift` and `vp run net:infra:destroy`. Next deploy with `-c egress=nat` and `-c interfaceEndpoints=logs`, check reachability from a resource in a private subnet, and destroy right away (hourly charges)."
+        }
+      },
+      {
+        "id": "11-cross-stack",
+        "summary": {
+          "ja": "別の CDK アプリの stack から `Fn::ImportValue` で 11章の output を読む経路を、cdkd で実行していない。export が残っている間 destroy が拒否されることも、ドキュメントとソースで読んだだけ。",
+          "en": "Reading the chapter 11 outputs with `Fn::ImportValue` from a stack in another CDK app has not been run with cdkd. That destroy is refused while an import remains was only read in the documentation and source."
+        },
+        "resume": {
+          "ja": "11章の stack を deploy し、`importNetwork` を使う小さな stack（security group 1 つ）を別のアプリから deploy する。その状態で `vp run net:infra:destroy` が `StackHasActiveImportsError` で止まることを確かめ、利用側を先に消してからもう一度実行する。",
+          "en": "Deploy the chapter 11 stack, then deploy a small stack (one security group) from another app that uses `importNetwork`. Confirm that `vp run net:infra:destroy` stops with `StackHasActiveImportsError`, destroy the consumer first, and run it again."
+        }
+      },
+      {
+        "id": "11-zone-names",
+        "summary": {
+          "ja": "既定の AZ 名（ap-northeast-1a と ap-northeast-1c）が、すべてのアカウントで subnet を作れる AZ かどうかは確認していない。",
+          "en": "Whether the default zone names (ap-northeast-1a and ap-northeast-1c) accept new subnets in every account was not confirmed."
+        },
+        "resume": {
+          "ja": "`aws ec2 describe-availability-zones --region ap-northeast-1` で自分のアカウントの AZ 名と AZ ID を確かめ、違っていれば `-c availabilityZones=...` で渡す。",
+          "en": "Check your account's zone names and IDs with `aws ec2 describe-availability-zones --region ap-northeast-1` and pass `-c availabilityZones=...` if they differ."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 11: network ------------------------------------------\n      // Prints the subnets, routes, and fixed monthly cost of a layout. Reads only this checkout.\n      \"net:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/11-network\" }),\n      ...infra(\"net\", \"examples/11-network\", \"AihNetwork\"),",
+    "synth": ["net:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/11-network"]
+  }
+}

@@ -434,6 +434,50 @@
         "ja": "IVS の channel と stream key を作る。実際の配信と視聴は AWS が無いと確かめられない",
         "en": "Creates an IVS channel and stream key. Broadcasting and viewing cannot be checked without AWS"
       }
+    },
+    {
+      "scope": "11",
+      "command": "vp run test:unit (examples/11-network)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "CIDR の計算、設定の検証、経路のモデル、料金の入力、stack の assertion、import の対応",
+        "en": "CIDR arithmetic, settings validation, the route model, pricing inputs, stack assertions, and import/export matching"
+      }
+    },
+    {
+      "scope": "11",
+      "command": "vp run net:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "既定の構成と、`-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs` の両方で synth した",
+        "en": "Synthesized the default layout and `-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs`"
+      }
+    },
+    {
+      "scope": "11",
+      "command": "vp run net:plan",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "既定、`egress=nat`、`egress=nat-per-az`、`interfaceEndpoints=ecr.api,ecr.dkr,logs`、不正な設定で実行した",
+        "en": "Ran with the defaults, `egress=nat`, `egress=nat-per-az`, `interfaceEndpoints=ecr.api,ecr.dkr,logs`, and invalid settings"
+      }
+    },
+    {
+      "scope": "11",
+      "command": "vp run net:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "VPC を作る。context によっては NAT Gateway と interface endpoint（時間課金）も作る",
+        "en": "Creates a VPC and, depending on context, NAT gateways and interface endpoints, which are billed by the hour"
+      }
     }
   ],
   "open": [
@@ -611,6 +655,39 @@
       "resume": {
         "ja": "AIH_AWS_ACCOUNT_ID を設定し、vp run stream:infra:deploy、stream:key --show、OBS で配信、stream:config と preview:stream:web で視聴、stream:status --events、stream:stop、stream:status --expect-offline、stream:infra:destroy の順に実行する。state は `cdkd state show AihLive --json` で StreamKey の attributes を確認する。",
         "en": "Set AIH_AWS_ACCOUNT_ID, then run vp run stream:infra:deploy, stream:key --show, broadcast from OBS, watch with stream:config and preview:stream:web, then stream:status --events, stream:stop, stream:status --expect-offline, and stream:infra:destroy. Inspect the StreamKey attributes with `cdkd state show AihLive --json`."
+      }
+    },
+    {
+      "id": "11-deploy",
+      "summary": {
+        "ja": "11章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が VPC の一式を作って消せること、AWS::EC2::VPCEndpoint が Cloud Control API 経由で作れること、gateway endpoint と interface endpoint を通る実際の到達性、drift の検査結果が未確認。",
+        "en": "The chapter 11 stack has never been deployed. Unverified: that cdkd 0.296.28 creates and deletes the whole VPC, that AWS::EC2::VPCEndpoint works through Cloud Control API, real reachability through the gateway and interface endpoints, and the drift check."
+      },
+      "resume": {
+        "ja": "`vp run net:infra:deploy` を既定の構成で実行し、`vp run net:infra:drift`、`vp run net:infra:destroy` まで通す。続けて `-c egress=nat` と `-c interfaceEndpoints=logs` で deploy し、private subnet に置いたリソースから到達性を確かめ、すぐ destroy する（時間課金）。",
+        "en": "Run `vp run net:infra:deploy` with the defaults, then `vp run net:infra:drift` and `vp run net:infra:destroy`. Next deploy with `-c egress=nat` and `-c interfaceEndpoints=logs`, check reachability from a resource in a private subnet, and destroy right away (hourly charges)."
+      }
+    },
+    {
+      "id": "11-cross-stack",
+      "summary": {
+        "ja": "別の CDK アプリの stack から `Fn::ImportValue` で 11章の output を読む経路を、cdkd で実行していない。export が残っている間 destroy が拒否されることも、ドキュメントとソースで読んだだけ。",
+        "en": "Reading the chapter 11 outputs with `Fn::ImportValue` from a stack in another CDK app has not been run with cdkd. That destroy is refused while an import remains was only read in the documentation and source."
+      },
+      "resume": {
+        "ja": "11章の stack を deploy し、`importNetwork` を使う小さな stack（security group 1 つ）を別のアプリから deploy する。その状態で `vp run net:infra:destroy` が `StackHasActiveImportsError` で止まることを確かめ、利用側を先に消してからもう一度実行する。",
+        "en": "Deploy the chapter 11 stack, then deploy a small stack (one security group) from another app that uses `importNetwork`. Confirm that `vp run net:infra:destroy` stops with `StackHasActiveImportsError`, destroy the consumer first, and run it again."
+      }
+    },
+    {
+      "id": "11-zone-names",
+      "summary": {
+        "ja": "既定の AZ 名（ap-northeast-1a と ap-northeast-1c）が、すべてのアカウントで subnet を作れる AZ かどうかは確認していない。",
+        "en": "Whether the default zone names (ap-northeast-1a and ap-northeast-1c) accept new subnets in every account was not confirmed."
+      },
+      "resume": {
+        "ja": "`aws ec2 describe-availability-zones --region ap-northeast-1` で自分のアカウントの AZ 名と AZ ID を確かめ、違っていれば `-c availabilityZones=...` で渡す。",
+        "en": "Check your account's zone names and IDs with `aws ec2 describe-availability-zones --region ap-northeast-1` and pass `-c availabilityZones=...` if they differ."
       }
     }
   ]

@@ -753,6 +753,123 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
       "offerPublicationDate": "2026-09-11T12:44:44Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "nat.gateway.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "CA23TN2NAN47KGCF",
+      "usageType": "APN1-NatGateway-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0620000000",
+          "description": "$0.062 per NAT Gateway Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "nat.gateway.data",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "3Z2F4ZNXEMZB88ED",
+      "usageType": "APN1-NatGateway-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0620000000",
+          "description": "$0.062 per GB Data Processed by NAT Gateways"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "vpc.endpoint.interface.hour",
+      "offerCode": "AmazonVPC",
+      "region": "ap-northeast-1",
+      "sku": "W5KUR855UCRX4QZ8",
+      "usageType": "APN1-VpcEndpoint-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0140000000",
+          "description": "$0.014 per VPC Endpoint Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-17T19:05:28Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "vpc.endpoint.interface.data",
+      "offerCode": "AmazonVPC",
+      "region": "ap-northeast-1",
+      "sku": "6CRQJ7BNA8VQV6B7",
+      "usageType": "APN1-VpcEndpoint-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 1048576,
+          "usd": "0.0100000000",
+          "description": "$0.01 per GB for upto 1 PB monthly data processed by VPC Endpoints"
+        },
+        {
+          "from": 1048576,
+          "to": 5242880,
+          "usd": "0.0060000000",
+          "description": "$0.006 per GB for more than 1 PB and less than 5 PB monthly data processed by VPC Endpoints"
+        },
+        {
+          "from": 5242880,
+          "to": null,
+          "usd": "0.0040000000",
+          "description": "$0.004 per GB for more than 5 PB monthly data processed by VPC Endpoints"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-17T19:05:28Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "vpc.public-ipv4.in-use.hour",
+      "offerCode": "AmazonVPC",
+      "region": "ap-northeast-1",
+      "sku": "ZP85FQT9FHKJRAG5",
+      "usageType": "APN1-PublicIPv4:InUseAddress",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0050000000",
+          "description": "$0.005 per In-use public IPv4 address per hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-17T19:05:28Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

@@ -58,3 +58,14 @@ generated: true
 | ingest | ingest | 18 | 配信ソフトから送られてくる映像を、サービスが受け取ること。 |
 | rendition | rendition | 18 | 同じ映像の、解像度と bitrate が違う版の 1 つ。player は回線に合わせて切り替える。 |
 | timed metadata | timed metadata | 18 | 映像の特定の位置に埋め込む小さなデータ。視聴者ごとの遅延にかかわらず、映像の同じ場面で届く。 |
+| VPC | VPC | 11 | Virtual Private Cloud。1 つのリージョンの中に作る、自分専用の IP ネットワーク。アドレスの範囲を自分で決め、subnet に分けて使う。 |
+| CIDR | CIDR | 11 | `10.20.0.0/16` のように、先頭のアドレスと「先頭から何ビットが共通か」でアドレスの範囲を書く記法。/16 は 65,536 個、/20 は 4,096 個。 |
+| subnet | subnet | 11 | VPC のアドレス範囲の一部で、1 つの Availability Zone の中に置かれる。public か private かは、関連付けた route table で決まる。 |
+| Availability Zone（AZ） | Availability Zone (AZ) | 11 | リージョンの中にある、電源とネットワークが独立したデータセンター群。同じリージョンの AZ どうしは同時に壊れにくいように作られているが、リージョン全体の障害からは守ってくれない。 |
+| route table | route table | 11 | 「この宛先はここへ送る」という規則の表。subnet に関連付ける。インターネットへの経路があるかどうかは、この表だけで決まる。 |
+| internet gateway | internet gateway | 11 | VPC とインターネットをつなぐ出入口。VPC に 1 つ取り付ける。これ自体に料金はかからない。 |
+| NAT Gateway | NAT gateway | 11 | private subnet の中から外への接続だけを通す中継点。public subnet に置き、Elastic IP アドレスを 1 つ持つ。存在している時間と、通したデータ量の両方に料金がかかる。 |
+| security group | security group | 11 | instance などのリソースに付ける、許可だけの通信規則。stateful で、許可した通信の返事は逆向きの規則がなくても通る。 |
+| network ACL | network ACL | 11 | subnet の境界に付ける通信規則。許可と拒否を番号順に評価する。stateless で、返事の通信も別に許可が要る。 |
+| gateway endpoint | gateway endpoint | 11 | S3 と DynamoDB へ、インターネットを通らずに届く経路。route table に経路として入る。追加料金はない。 |
+| interface endpoint | interface endpoint | 11 | AWS のサービスへの入口を、subnet の中に private IP アドレスつきの network interface として置くもの（AWS PrivateLink）。サービスごと、AZ ごとに時間課金される。 |

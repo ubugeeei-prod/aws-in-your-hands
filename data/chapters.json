@@ -464,46 +464,51 @@
       "prerequisites": ["02"],
       "services": ["VPC", "NAT Gateway", "VPC endpoints"],
       "samplePath": "examples/11-network",
+      "sourceIds": [
+        "vpc-pricing",
+        "vpc-what-is",
+        "vpc-subnet-types",
+        "vpc-subnet-sizing",
+        "vpc-cidr-blocks",
+        "vpc-route-table-concepts",
+        "vpc-security-groups",
+        "vpc-network-acls",
+        "vpc-security-comparison",
+        "vpc-internet-gateway",
+        "vpc-nat-gateway-basics",
+        "vpc-gateway-endpoints",
+        "vpc-interface-endpoints",
+        "privatelink-aws-services",
+        "privatelink-pricing",
+        "cfn-ec2-vpcendpoint",
+        "lambda-vpc",
+        "ecr-vpc-endpoints",
+        "ecs-fargate-networking",
+        "ssm-vpc-endpoints",
+        "rds-vpc",
+        "aws-availability-zones",
+        "aws-az-mapping",
+        "fault-isolation-availability-zones",
+        "fault-isolation-regions",
+        "aws-price-list-ec2",
+        "aws-price-list-vpc",
+        "cdkd-source-network",
+        "cdkd-cross-stack-references",
+        "cdkd-introduction",
+        "vpc-default-security-group",
+        "cfn-stack-exports",
+        "cfn-ec2-subnet",
+        "elasticache-vpc"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["vpc-pricing"],
-      "outline": {
-        "outcome": {
-          "ja": "後続章の DB とコンテナが入る最小の VPC を作り、時間課金される部品を説明できる。",
-          "en": "You build the smallest VPC the database and container chapters need and can name every hourly-billed part."
-        },
-        "architecture": {
-          "ja": "2 AZ の public / private subnet。NAT は必要になるまで作らず、endpoint との費用を比べる。",
-          "en": "Public and private subnets in two AZs. No NAT until it is needed; compare its cost with endpoints."
-        },
-        "topics": {
-          "ja": [
-            "route table が到達性を決める",
-            "security group は stateful",
-            "NAT Gateway・public IPv4・interface endpoint の固定費",
-            "Lambda を VPC に入れる条件"
-          ],
-          "en": [
-            "Route tables decide reachability",
-            "Security groups are stateful",
-            "Fixed costs of NAT Gateways, public IPv4, and interface endpoints",
-            "When Lambda belongs in a VPC"
-          ]
-        },
-        "requiredSource": {
-          "ja": ["VPC の CDK と、NAT が存在しないことを確かめる assertion", "構成別の月額を出す価格計算の入力"],
-          "en": [
-            "VPC CDK with an assertion that no NAT exists",
-            "Pricing inputs that compute the monthly cost per layout"
-          ]
-        },
-        "distributed": {
-          "ja": "複数 AZ は region 障害への備えではない。AZ と region を区別する。",
-          "en": "Multiple AZs do not protect against a regional outage; keep AZs and regions distinct."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "12",

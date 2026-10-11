@@ -58,3 +58,14 @@ The term pairs that keep both languages using one word for one concept. API name
 | ingest | ingest | 18 | A service receiving the video that an encoder sends. |
 | rendition | rendition | 18 | One version of the same video at a particular resolution and bitrate. The player switches between them to fit the connection. |
 | timed metadata | timed metadata | 18 | A small piece of data embedded at a point in the video. It reaches each viewer at the same moment of the video, whatever that viewer's delay. |
+| VPC | VPC | 11 | Virtual Private Cloud: your own IP network inside one Region. You choose its address range and divide it into subnets. |
+| CIDR | CIDR | 11 | A way to write an address range as a first address and the number of leading bits it shares, such as `10.20.0.0/16`. A /16 holds 65,536 addresses, a /20 holds 4,096. |
+| subnet | subnet | 11 | A slice of a VPC's address range that lives in one Availability Zone. Whether it is public or private follows from the route table associated with it. |
+| Availability Zone（AZ） | Availability Zone (AZ) | 11 | A group of data centers inside a Region with its own power and networking. Zones in one Region are built not to fail together, but they do not protect against a failure of the whole Region. |
+| route table | route table | 11 | A list of rules saying where traffic for each destination goes, associated with subnets. Whether a subnet has a way to the internet is decided here and nowhere else. |
+| internet gateway | internet gateway | 11 | The door between a VPC and the internet, attached to the VPC. It has no charge of its own. |
+| NAT Gateway | NAT gateway | 11 | A relay that lets resources in private subnets open connections outward and nothing inward. It sits in a public subnet with one Elastic IP address, and is billed both for every hour it exists and for every GB it passes. |
+| security group | security group | 11 | Allow-only traffic rules attached to resources such as instances. Stateful: replies to allowed traffic pass without a rule in the other direction. |
+| network ACL | network ACL | 11 | Traffic rules at a subnet's edge, with allow and deny rules evaluated in numeric order. Stateless: replies need their own allow rule. |
+| gateway endpoint | gateway endpoint | 11 | A path to S3 and DynamoDB that does not cross the internet, installed as a route in route tables. It has no additional charge. |
+| interface endpoint | interface endpoint | 11 | A doorway to an AWS service placed inside a subnet as a network interface with a private IP address (AWS PrivateLink). Billed by the hour per service and per Availability Zone. |

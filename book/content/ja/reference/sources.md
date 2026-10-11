@@ -148,7 +148,7 @@ generated: true
 - ID: `cdkd-introduction`
 - URL: <https://cdkd.dev/introduction/>
 - 確認日: 2026-10-11
-- 参照する章: 02
+- 参照する章: 02, 11
 - この出典が支える主張:
   - cdkd describes itself as for dev/test workflows and recommends the AWS CDK CLI for production
 
@@ -748,6 +748,354 @@ generated: true
   - AWS::IVS::StreamKey Value is on cdkd's list of secret-valued attributes
 - 注記: Read from the bundled dist of the tarball, which keeps the src/ region markers. No cdkd command was run against AWS, so what state.json holds for a stream key is not observed.
 
+### Amazon VPC pricing
+
+- ID: `vpc-pricing`
+- URL: <https://aws.amazon.com/vpc/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 11, 23
+- この出典が支える主張:
+  - A NAT gateway is billed per NAT gateway-hour while provisioned and available, plus per GB processed regardless of source or destination; a partial hour is billed as a full hour
+  - Standard data transfer charges apply on top of NAT gateway data processing
+  - Every public IPv4 address is billed by the hour, in use or idle, at the same rate; Elastic IP addresses attached to NAT gateways are named as an example
+  - A Regional NAT gateway is billed per hour for each Availability Zone it is configured in
+- 注記: The page renders its regional price tables with JavaScript. The numbers in the book come from the Price List bulk API, not from this page.
+
+### What is Amazon VPC?
+
+- ID: `vpc-what-is`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - There is no additional charge for using a VPC; some components such as NAT gateways are charged
+  - Private IPv4 addresses are not charged
+  - AWS Free Tier customers get 750 hours of public IPv4 address usage with the EC2 service
+
+### Subnets for your VPC
+
+- ID: `vpc-subnet-types`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - The subnet type is determined by its routing: a public subnet has a direct route to an internet gateway, a private subnet does not and needs a NAT device for internet access, an isolated subnet has no routes to destinations outside its VPC
+  - Network ACLs allow or deny traffic at the subnet level
+
+### Subnet CIDR blocks
+
+- ID: `vpc-subnet-sizing`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - A subnet's IPv4 CIDR block is between /28 and /16
+  - The first four addresses and the last address of every subnet are reserved
+
+### VPC CIDR blocks
+
+- ID: `vpc-cidr-blocks`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - A VPC's IPv4 CIDR block is between /16 and /28
+  - Some AWS services use 172.17.0.0/16, so that range is best avoided
+
+### Route table concepts
+
+- ID: `vpc-route-table-concepts`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/RouteTables.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - The main route table controls routing for every subnet not explicitly associated with another route table
+  - Every route table has a local route for communication within the VPC
+  - A route has a destination CIDR and a target such as an internet gateway
+
+### Control traffic to your AWS resources using security groups
+
+- ID: `vpc-security-groups`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Security groups are stateful: responses to allowed traffic are allowed regardless of the rules in the other direction
+
+### Control subnet traffic with network access control lists
+
+- ID: `vpc-network-acls`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Network ACLs are stateless: responses to allowed traffic are not automatically allowed
+  - Network ACL rules are evaluated when traffic enters and leaves the subnet, not as it is routed within a subnet
+  - The default network ACL allows all inbound and outbound traffic
+- 注記: The default rules were read on the linked page https://docs.aws.amazon.com/vpc/latest/userguide/default-network-acl.html.
+
+### Infrastructure security in Amazon VPC
+
+- ID: `vpc-security-comparison`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/infrastructure-security.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Security groups work at the instance level with allow rules only; network ACLs work at the subnet level with allow and deny rules, evaluated in ascending order
+  - You can secure your instances using only security groups
+
+### Enable internet access for a VPC using an internet gateway
+
+- ID: `vpc-internet-gateway`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - There is no charge for an internet gateway itself
+
+### NAT gateway basics
+
+- ID: `vpc-nat-gateway-basics`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-basics.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - A NAT gateway is created in one Availability Zone and is redundant within that zone
+  - If zones share one NAT gateway and its zone is down, resources in the other zones lose internet access; one NAT gateway per zone avoids this
+  - A public NAT gateway sits in a public subnet and needs an Elastic IP address
+- 注記: The Elastic IP requirement was read on https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html.
+
+### Gateway endpoints
+
+- ID: `vpc-gateway-endpoints`
+- URL: <https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Gateway endpoints exist for Amazon S3 and DynamoDB only, and need no internet gateway or NAT device
+  - There is no additional charge for using gateway endpoints
+  - Creating one adds a route to each selected route table: destination the service's prefix list, target the endpoint
+  - Prefix lists are specific to a Region, so traffic to the service in another Region does not use the endpoint
+
+### Access an AWS service using an interface VPC endpoint
+
+- ID: `vpc-interface-endpoints`
+- URL: <https://docs.aws.amazon.com/vpc/latest/privatelink/create-interface-endpoint.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - An interface endpoint creates an endpoint network interface with a private IP address in each chosen subnet, one subnet per Availability Zone
+  - Interface endpoints are billed for hourly usage and for data processing
+  - Private DNS needs DNS hostnames and DNS resolution enabled on the VPC
+  - The endpoint's security group must allow inbound HTTPS from the resources that call it
+
+### AWS services that integrate with AWS PrivateLink
+
+- ID: `privatelink-aws-services`
+- URL: <https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Service names com.amazonaws.region.ecr.api, ecr.dkr, logs, secretsmanager, ssm, ssmmessages, and ec2messages
+
+### AWS PrivateLink pricing
+
+- ID: `privatelink-pricing`
+- URL: <https://aws.amazon.com/privatelink/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - An interface endpoint is billed for each hour it stays provisioned in each Availability Zone; a partial hour is billed as a full hour
+  - Data processing is billed per GB regardless of the traffic's source or destination, in tiers over the Region's monthly total
+- 注記: The hourly rate is rendered with JavaScript; the book's number comes from the Price List bulk API.
+
+### AWS::EC2::VPCEndpoint
+
+- ID: `cfn-ec2-vpcendpoint`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-vpcendpoint.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Properties VpcEndpointType, ServiceName, VpcId, RouteTableIds, SubnetIds, SecurityGroupIds, and PrivateDnsEnabled
+
+### Giving Lambda functions access to resources in an Amazon VPC
+
+- ID: `lambda-vpc`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - By default a Lambda function can reach the public internet; attached to a VPC it can reach only what the VPC can
+  - Connecting a function to a public subnet gives it neither internet access nor a public IP address
+  - The execution role needs ec2:CreateNetworkInterface, DescribeNetworkInterfaces, DescribeSubnets, DeleteNetworkInterface, AssignPrivateIpAddresses, and UnassignPrivateIpAddresses on all resources, and the function's code is implicitly granted them too
+  - A new function stays Pending while Lambda creates the Hyperplane ENI, which can take several minutes; functions with the same subnets and security groups share one
+  - After 14 idle days Lambda reclaims unused Hyperplane ENIs and the function becomes Inactive
+
+### Amazon ECR interface VPC endpoints (AWS PrivateLink)
+
+- ID: `ecr-vpc-endpoints`
+- URL: <https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Fargate tasks on platform version 1.4.0 or later need both ECR endpoints (ecr.api, ecr.dkr) and the S3 gateway endpoint to pull images privately
+  - Fargate tasks that use the awslogs driver in a VPC without an internet gateway need the com.amazonaws.region.logs interface endpoint
+
+### Fargate task networking
+
+- ID: `ecs-fargate-networking`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - A Fargate task pulls its image over a public IP address in a public subnet, a NAT gateway from a private subnet, or ECR interface endpoints
+
+### Improve the security of EC2 instances by using VPC endpoints for Systems Manager
+
+- ID: `ssm-vpc-endpoints`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-create-vpc.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Systems Manager without internet access uses the ssm, ssmmessages, and ec2messages interface endpoints, and S3 for agent updates
+  - ssmmessages is required for Session Manager
+
+### Working with a DB instance in a VPC
+
+- ID: `rds-vpc`
+- URL: <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - A VPC for an RDS DB instance needs at least two subnets in two different Availability Zones
+
+### AWS Availability Zones
+
+- ID: `aws-availability-zones`
+- URL: <https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-availability-zones.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Each Region has at least three Availability Zones
+  - An AZ ID such as apne1-az1 is the same physical location in every account; ap-northeast-1 has apne1-az1 to apne1-az4
+  - AWS may restrict new resources in a constrained Availability Zone
+
+### AZ IDs for your AWS resources
+
+- ID: `aws-az-mapping`
+- URL: <https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - In Asia Pacific (Tokyo), accounts created before November 2025 have Availability Zone names mapped independently per account
+  - `aws ec2 describe-availability-zones` lists the zone names and IDs of an account
+
+### AWS Fault Isolation Boundaries: Availability Zones
+
+- ID: `fault-isolation-availability-zones`
+- URL: <https://docs.aws.amazon.com/whitepapers/latest/aws-fault-isolation-boundaries/availability-zones.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - An Availability Zone is one or more discrete data centers with separate power, networking, and connectivity inside one Region
+  - Zones in a Region are up to about 100 km apart and designed not to fail together
+
+### AWS Fault Isolation Boundaries: Regions
+
+- ID: `fault-isolation-regions`
+- URL: <https://docs.aws.amazon.com/whitepapers/latest/aws-fault-isolation-boundaries/regions.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Regions are isolated from each other, which limits a service failure to one Region
+  - Resources and data in one Region do not exist in another unless you replicate them
+
+### AWS Price List bulk API: EC2, ap-northeast-1
+
+- ID: `aws-price-list-ec2`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonEC2: NAT gateway hours and data processing
+  - The offer also lists a Regional NAT gateway at the same hourly and per-GB rate, and regional data transfer at USD 0.01 per GB
+- 注記: The file is about 445 MB. NAT gateway prices live in the EC2 offer, not the VPC offer.
+
+### AWS Price List bulk API: VPC, ap-northeast-1
+
+- ID: `aws-price-list-vpc`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonVPC: interface endpoint hours and data processing, public IPv4 address hours
+  - The offer has no SKU for a VPC, subnet, route table, internet gateway, or gateway endpoint
+
+### cdkd v0.296.28 source: provider registry and property coverage
+
+- ID: `cdkd-source-network`
+- URL: <https://github.com/go-to-k/cdkd/tree/v0.296.28/src/provisioning>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - register-providers.ts registers one EC2 provider for AWS::EC2::VPC, Subnet, InternetGateway, EIP, VPCGatewayAttachment, NatGateway, RouteTable, Route, SubnetRouteTableAssociation, SecurityGroup, SecurityGroupIngress, Instance, NetworkAcl, NetworkAclEntry, and SubnetNetworkAclAssociation
+  - AWS::EC2::VPCEndpoint is not registered and is not in the unsupported list, so it goes through Cloud Control API
+  - property-coverage.generated.ts lists the properties the EC2 provider writes; a resource using any other property is routed through Cloud Control API
+  - The intrinsic resolver handles Fn::GetAZs
+- 注記: Read from the source archive of the v0.296.28 tag. The npm tarball ships bundled JavaScript without the TypeScript sources. No cdkd command was run against AWS.
+
+### cdkd v0.296.28: Cross-Stack References
+
+- ID: `cdkd-cross-stack-references`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cross-stack-references.md>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - cdkd resolves Fn::ImportValue against the outputs other stacks recorded in its state, and falls back to CloudFormation ListExports when no cdkd stack exports the name
+  - `cdkd destroy` of a stack whose exports are still imported is refused with StackHasActiveImportsError, and there is no flag to force it
+  - cdkd also resolves Fn::GetStackOutput as a weak reference that does not block the producer's destroy; its documentation calls the intrinsic cdkd-specific
+  - Outputs are stored in the state file; state version 9 records which output keys are Export names
+- 注記: Read together with docs/stack-outputs.md and src/types/state.ts at the same tag. Not exercised against AWS. CloudFormation's own documentation also lists Fn::GetStackOutput (see cfn-stack-exports); how the two relate was not investigated.
+
+### Default security groups for your VPCs
+
+- ID: `vpc-default-security-group`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/default-security-group.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Every VPC comes with a default security group, and a resource created without a security group is associated with it
+  - AWS recommends creating security groups for specific resources instead of using the default one
+
+### Get exported outputs from a deployed CloudFormation stack
+
+- ID: `cfn-stack-exports`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Export names must be unique within a Region for each AWS account
+  - After another stack imports an output value, the exporting stack cannot be deleted and the exported value cannot be modified until every import is removed
+  - CloudFormation documents Fn::GetStackOutput for references across accounts or Regions
+
+### AWS::EC2::Subnet
+
+- ID: `cfn-ec2-subnet`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-subnet.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - Updating a subnet's CidrBlock replaces the subnet: a new one is created and the old one deleted
+
+### Amazon VPCs and ElastiCache security
+
+- ID: `elasticache-vpc`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/VPCs.html>
+- 確認日: 2026-10-11
+- 参照する章: 11
+- この出典が支える主張:
+  - All node-based ElastiCache clusters are launched in a VPC; ElastiCache Serverless caches can also be configured with a public endpoint that needs no VPC configuration
+
 ## 未再確認の出典（後続章の調査の出発点）
 
 ### Security best practices in IAM
@@ -1000,15 +1348,6 @@ generated: true
 - 参照する章: 10
 - この出典が支える主張:
   - Region, version, and configuration restrictions
-- 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Amazon VPC pricing
-
-- ID: `vpc-pricing`
-- URL: <https://aws.amazon.com/vpc/pricing/>
-- 参照する章: 11, 23
-- この出典が支える主張:
-  - NAT gateway and public IPv4 address charges
 - 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### Elastic Load Balancing pricing

@@ -8,5 +8,6 @@
   "examples/04-http-api",
   "examples/05-dynamodb",
   "examples/06-auth",
-  "examples/18-live"
+  "examples/18-live",
+  "examples/11-network"
 ]

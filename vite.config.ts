@@ -69,6 +69,7 @@ const chapterSynthTasks = [
   "notes:infra:synth",
   "app:infra:synth",
   "stream:infra:synth",
+  "net:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -147,6 +148,13 @@ export default defineConfig({
       "stream:key": live("node --env-file-if-exists=../../.env scripts/key.ts", { cwd: "examples/18-live" }),
       "stream:stop": live("node --env-file-if-exists=../../.env scripts/stop.ts", { cwd: "examples/18-live" }),
       // <<< chapter 18
+
+      // >>> chapter 11
+      // ---- chapter 11: network ------------------------------------------
+      // Prints the subnets, routes, and fixed monthly cost of a layout. Reads only this checkout.
+      "net:plan": fresh("node scripts/plan.ts", { cwd: "examples/11-network" }),
+      ...infra("net", "examples/11-network", "AihNetwork"),
+      // <<< chapter 11
 
       // ---- chapter task blocks are inserted above this line ----
 
