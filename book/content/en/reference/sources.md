@@ -46,17 +46,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - Always-free offers apply on both Free and Paid plans
 - Note: The page does not state the account-creation date from which this model applies.
 
-### Amazon CloudFront pay-as-you-go pricing
-
-- ID: `cloudfront-pricing-payg`
-- URL: <https://aws.amazon.com/cloudfront/pricing/pay-as-you-go/>
-- Checked: 2026-10-11
-- Chapters: 03
-- Claims this source supports:
-  - Always-free each month: 1 TB data transfer out, 10,000,000 HTTP/HTTPS requests, 2,000,000 CloudFront Function invocations, 2,000,000 KeyValueStore reads
-  - First 1,000 invalidation paths per month are free, then USD 0.005 per path
-  - Origin fetches from AWS origins such as S3 are free of data-transfer charges
-
 ### Amazon CloudFront pricing (flat-rate plans)
 
 - ID: `cloudfront-pricing-plans`
@@ -122,26 +111,9 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-cloudfront`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json>
 - Checked: 2026-10-11
-- Chapters: 03
+- Chapters: 03, 10
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudFront
-
-### @go-to-k/cdkd 0.296.28 (npm tarball and tagged source)
-
-- ID: `cdkd-npm`
-- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
-- Checked: 2026-10-11
-- Chapters: 02, 03, 04, 05, 06, 17
-- Claims this source supports:
-  - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
-  - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
-  - `cdkd bootstrap` creates cdkd-state-{account}, cdkd-assets-{account}-{region}, and an ECR repository; it creates no IAM roles and no CDKToolkit stack
-  - Without AWS_REGION cdkd uses us-east-1
-  - A CloudFront distribution is waited for only with --full-wait
-  - State is stored at s3://{bucket}/{prefix}/{stack}/{region}/state.json with an S3 conditional-write lock
-  - AWS::CloudFront::Function is provisioned and read back through Cloud Control API, not a dedicated provider
-  - A non-empty bucket without the CDK auto-delete tag makes destroy fail
-- Note: Read from the published tarball, --help output, and the v0.296.28 source tag. No cdkd command was run against AWS.
 
 ### cdkd: Introduction
 
@@ -246,17 +218,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Claims this source supports:
   - `wrangler dev` uses a local-only D1 by default and persists its data across runs
   - Local and remote data are separate; `--local` targets the local database for `wrangler d1 execute` and `wrangler d1 migrations apply`
-
-### Restrictions on CloudFront Functions
-
-- ID: `cloudfront-functions-restrictions`
-- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-function-restrictions.html>
-- Checked: 2026-10-11
-- Chapters: 03, 10
-- Claims this source supports:
-  - CloudFront Functions cannot read the request body
-  - The runtime restricts network, file system, environment variable, and timer access
-  - Execution time is limited and reported as compute utilization
 
 ### Quotas for HTTP APIs in API Gateway
 
@@ -1706,6 +1667,307 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - ConfigurationSet.addEventDestination with an SNS topic also adds a topic policy for ses.amazonaws.com conditioned on the configuration set's ARN
   - ConfigurationSet.suppressionReasons synthesizes SuppressionOptions.SuppressedReasons
 
+### Restrictions on CloudFront Functions
+
+- ID: `cloudfront-functions-restrictions`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-function-restrictions.html>
+- Checked: 2026-10-11
+- Chapters: 03, 10
+- Claims this source supports:
+  - CloudFront Functions cannot read the request body
+  - The runtime restricts network, file system, environment variable, and timer access
+  - Execution time is limited and reported as compute utilization
+  - Function logs are truncated at 10 KB
+  - KeyValueStore requires JavaScript runtime 2.0
+  - The KeyValueStore API uses SigV4A, which needs version 2 session tokens: use a Regional STS endpoint
+
+### JavaScript runtime 2.0 features for CloudFront Functions
+
+- ID: `cloudfront-functions-runtime-20`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/functions-javascript-runtime-20.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - The runtime is ES 5.1 compliant with selected ES 6 to 12 features; const, let, async, and await are supported in runtime 2.0
+  - No eval or Function constructor, no setTimeout/setImmediate/clearTimeout, no file system, no process, no environment variables, no network calls
+  - Date returns the function's start time for the whole run
+  - console supports only log(), without comma-separated arguments
+  - Built-in modules are buffer, querystring, and crypto
+- Note: The page lists supported features. Syntax it does not list (optional chaining, spread, destructuring, classes, for...of) is treated as unsupported in this book; that inference was not tested on the runtime.
+
+### CloudFront Functions event structure
+
+- ID: `cloudfront-functions-event-structure`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/functions-event-structure.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - A function can return a response with statusCode, headers, and a body given as { encoding, data }
+  - A status of 400 or above returned by a function is not replaced by a custom error page
+
+### Test functions
+
+- ID: `cloudfront-functions-test`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/test-function.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - CloudFront can run a function against an event object before it is live and report the result, logs, and compute utilization
+
+### Amazon CloudFront KeyValueStore
+
+- ID: `cloudfront-kvs`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions.html>
+- Checked: 2026-10-11
+- Chapters: 10, 14
+- Claims this source supports:
+  - Read-only key-value data for CloudFront Functions
+  - Values are strings, byte-encoded strings, or JSON
+  - Intended uses include URL rewrites and redirects, A/B testing and feature flags, and access authorization
+
+### Helper methods for key value stores
+
+- ID: `cloudfront-kvs-helper-methods`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/functions-custom-methods.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - A function starts with `import cf from 'cloudfront'` and `cf.kvs()`
+  - get(key, { format }) rejects when the key does not exist; exists(key) and meta() are the other two methods
+  - Awaiting reads one after another is recommended over promise combinators, which use more memory and are not faster
+  - meta().lastUpdatedDateTime does not include the propagation time to the edge
+
+### Work with key value data
+
+- ID: `cloudfront-kvs-data`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-kvp.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Pairs in an existing store are changed through the CloudFront KeyValueStore API, which is global and uses SigV4A
+  - Write operations take the store's ETag as If-Match and return a new ETag
+  - The ETags of the CloudFront API and the KeyValueStore API are not interchangeable
+  - UpdateKeys is one all-or-nothing operation
+  - Values are not changed during a function invocation; updates are processed between invocations
+
+### Create a key value store
+
+- ID: `cloudfront-kvs-create`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-create.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - A file of pairs can be imported only when the store is first created
+
+### File format for key-value pairs
+
+- ID: `cloudfront-kvs-file-format`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-create-s3-kvp.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Import file limits: 5 MB, 512-character keys, 1024-character values, no duplicate keys
+
+### CloudFront KeyValueStore API: UpdateKeys
+
+- ID: `cloudfront-kvs-api-updatekeys`
+- URL: <https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_kvs_UpdateKeys.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - UpdateKeys requires If-Match and returns the new ETag, ItemCount, and TotalSizeInBytes
+  - Listed errors: AccessDenied 403, Conflict 409, InternalServer 500, ResourceNotFound 404, ServiceQuotaExceeded 402, Validation 400
+- Note: The page does not say which error a stale If-Match produces.
+
+### CloudFront KeyValueStore API: ListKeys
+
+- ID: `cloudfront-kvs-api-listkeys`
+- URL: <https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_kvs_ListKeys.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - ListKeys returns at most 50 pairs per call (default 10) and a NextToken
+
+### CloudFront quotas
+
+- ID: `cloudfront-quotas`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-limits.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - CloudFront Functions: 10 KB maximum function size (not adjustable), 2 MB maximum function memory, 100 functions per account
+  - Key value stores: 512-byte key, 1 KB value, 5 MB per store, 50 keys or 3 MB per update request, one store per function, 100 functions per store, 200 stores per account
+  - Lambda@Edge: 30-second function timeout, 50 MB compressed size, generated response up to 40 KB (viewer events) or 1 MB (origin events), 10,000 requests per second per Region
+
+### Differences between CloudFront Functions and Lambda@Edge
+
+- ID: `cloudfront-edge-functions-choosing`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-choosing.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - CloudFront Functions run on viewer request and viewer response only; Lambda@Edge also on origin request and origin response
+  - CloudFront Functions: submillisecond duration, 2 MB memory, 10 KB code, no network, no file system, no request body
+  - Lambda@Edge: Node.js and Python, up to 30 seconds, network and file system access, request body access, no KeyValueStore
+
+### Restrictions on all edge functions
+
+- ID: `cloudfront-edge-restrictions-all`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-function-restrictions-all.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - One edge function per event type per cache behavior
+  - CloudFront Functions and Lambda@Edge cannot be combined on viewer events; a CloudFront Function on a viewer event with Lambda@Edge on an origin event is allowed
+  - Viewer response functions are not invoked when the origin returns 400 or higher
+
+### Edge function logs
+
+- ID: `cloudfront-edge-function-logs`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-logs.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - CloudFront Functions log only console.log() lines, always to us-east-1, in /aws/cloudfront/function/<FunctionName>
+  - Lambda@Edge logs to /aws/lambda/us-east-1.<FunctionName> in the Region where the function ran
+  - Edge function logs are delivered on a best-effort basis
+
+### Restrictions on Lambda@Edge
+
+- ID: `lambda-edge-restrictions`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-edge-function-restrictions.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - The function must be in us-east-1 and must be referenced by a numbered version, not $LATEST or an alias
+  - Not supported: environment variables (other than reserved ones), VPC access, layers, dead letter queues, X-Ray, provisioned concurrency, container images, arm64, more than 512 MB of ephemeral storage
+  - With include body, the body is base64 encoded and truncated at 40 KB (viewer request) or 1 MB (origin request)
+  - The execution role must be assumable by lambda.amazonaws.com and edgelambda.amazonaws.com
+
+### Set up IAM permissions and roles for Lambda@Edge
+
+- ID: `lambda-edge-permissions`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-edge-permissions.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Associating a function needs lambda:GetFunction, lambda:EnableReplication*, lambda:DisableReplication*, and iam:CreateServiceLinkedRole
+  - The service-linked roles AWSServiceRoleForLambdaReplicator and AWSServiceRoleForCloudFrontLogger are created automatically
+
+### Delete Lambda@Edge functions and replicas
+
+- ID: `lambda-edge-delete-replicas`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-edge-delete-replicas.html>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - A Lambda@Edge function can be deleted only after CloudFront has deleted its replicas, typically within a few hours of removing the last association
+
+### AWS News Blog: Introducing Amazon CloudFront KeyValueStore
+
+- ID: `aws-blog-kvs-launch`
+- URL: <https://aws.amazon.com/blogs/aws/introducing-amazon-cloudfront-keyvaluestore-a-low-latency-datastore-for-cloudfront-functions/>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Updates to a store are described as propagating to all edge locations in a few seconds
+- Note: A launch post, not a specification. The Developer Guide pages read for this chapter give no propagation time and no guarantee.
+
+### Amazon CloudFront pay-as-you-go pricing
+
+- ID: `cloudfront-pricing-payg`
+- URL: <https://aws.amazon.com/cloudfront/pricing/pay-as-you-go/>
+- Checked: 2026-10-11
+- Chapters: 03, 10
+- Claims this source supports:
+  - Always-free each month: 1 TB data transfer out, 10,000,000 HTTP/HTTPS requests, 2,000,000 CloudFront Function invocations, 2,000,000 KeyValueStore reads
+  - First 1,000 invalidation paths per month are free, then USD 0.005 per path
+  - Origin fetches from AWS origins such as S3 are free of data-transfer charges
+  - KeyValueStore reads from functions cost USD 0.03 per million; other KeyValueStore API actions cost USD 1 per 1,000 requests
+  - Lambda@Edge costs USD 0.60 per million requests and USD 0.00005001 per GB-second, metered per millisecond, with no free tier
+
+### @aws-sdk/signature-v4a 3.1138.0 (npm registry metadata and package source)
+
+- ID: `aws-sdk-signature-v4a`
+- URL: <https://registry.npmjs.org/@aws-sdk/signature-v4a>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Importing the package registers a JavaScript SigV4A signer that @aws-sdk/signature-v4-multi-region uses when no CRT signer is loaded
+- Note: Read from the installed package and from @aws-sdk/signature-v4-multi-region 3.996.48. The AWS documentation example imports @aws-sdk/signature-v4-crt instead.
+
+### Cloudflare Workers: Limits
+
+- ID: `cloudflare-workers-limits`
+- URL: <https://developers.cloudflare.com/workers/platform/limits/>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - CPU time per HTTP request: 10 ms on Workers Free, 30 seconds by default and up to 5 minutes on Workers Paid; waiting on fetch or KV does not count
+  - 128 MB of memory per isolate; Worker size up to 64 MiB uncompressed
+  - Subrequests per invocation: 50 on Free, 10,000 by default on Paid
+  - No hard duration limit for HTTP-triggered Workers while the client stays connected
+
+### Cloudflare Workers: Pricing
+
+- ID: `cloudflare-workers-pricing`
+- URL: <https://developers.cloudflare.com/workers/platform/pricing/>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Workers Free: 100,000 requests per day
+  - Workers Standard: 10 million requests and 30 million CPU milliseconds included per month, then USD 0.30 per million requests and USD 0.02 per million CPU milliseconds
+
+### Cloudflare Workers KV: How KV works
+
+- ID: `cloudflare-kv-how-it-works`
+- URL: <https://developers.cloudflare.com/kv/concepts/how-kv-works/>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - KV is eventually consistent: a change may take up to 60 seconds or more to be visible in other locations
+  - Data is stored centrally and cached at locations after access
+
+### Cloudflare Workers KV: Limits
+
+- ID: `cloudflare-kv-limits`
+- URL: <https://developers.cloudflare.com/kv/platform/limits/>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Key size 512 bytes, value size 25 MiB, 1 write per second to the same key
+  - A Worker can write to KV; Free allows 1,000 writes per day
+
+### cdkd v0.296.28: src/provisioning/register-providers.ts
+
+- ID: `cdkd-register-providers`
+- URL: <https://raw.githubusercontent.com/go-to-k/cdkd/v0.296.28/src/provisioning/register-providers.ts>
+- Checked: 2026-10-11
+- Chapters: 10
+- Claims this source supports:
+  - Dedicated providers exist for AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::CloudFront::OriginAccessControl, AWS::CloudFront::Distribution, AWS::IAM::Role, AWS::IAM::Policy, and AWS::Lambda::Function
+  - No provider is registered for AWS::CloudFront::Function, AWS::CloudFront::KeyValueStore, or AWS::Lambda::Version, so they go through Cloud Control API
+
+### @go-to-k/cdkd 0.296.28 (npm tarball and tagged source)
+
+- ID: `cdkd-npm`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- Checked: 2026-10-11
+- Chapters: 02, 03, 04, 05, 06, 10, 17
+- Claims this source supports:
+  - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
+  - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
+  - `cdkd bootstrap` creates cdkd-state-{account}, cdkd-assets-{account}-{region}, and an ECR repository; it creates no IAM roles and no CDKToolkit stack
+  - Without AWS_REGION cdkd uses us-east-1
+  - A CloudFront distribution is waited for only with --full-wait
+  - State is stored at s3://{bucket}/{prefix}/{stack}/{region}/state.json with an S3 conditional-write lock
+  - AWS::CloudFront::Function is provisioned and read back through Cloud Control API, not a dedicated provider
+  - A non-empty bucket without the CDK auto-delete tag makes destroy fail
+  - AWS::CloudFront::KeyValueStore is in the list of stateful types, whose replacement needs --force-stateful-recreation
+  - Asset publishing uses the stack's own region when the stack sets one (stack.region || base region)
+  - `cdkd local start-cloudfront` serves a distribution locally with its viewer-request functions; --kvs-file backs cf.kvs().get() with a JSON file, and Lambda@Edge is skipped with a warning
+- Note: Read from the published tarball, --help output, and the v0.296.28 source tag. No cdkd command was run against AWS.
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### Security best practices in IAM
@@ -1922,24 +2184,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Chapters: 08, 16
 - Claims this source supports:
   - One-time and recurring schedules
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Amazon CloudFront KeyValueStore
-
-- ID: `cloudfront-kvs`
-- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions.html>
-- Chapters: 10, 14
-- Claims this source supports:
-  - Read-only key-value data for CloudFront Functions
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Restrictions on Lambda@Edge
-
-- ID: `lambda-edge-restrictions`
-- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-edge-function-restrictions.html>
-- Chapters: 10
-- Claims this source supports:
-  - Region, version, and configuration restrictions
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### Elastic Load Balancing pricing

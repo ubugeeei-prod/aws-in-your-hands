@@ -1355,6 +1355,141 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "10.architecture",
+      "sources": ["examples/10-edge/infra/lib/edge-stack.ts", "examples/10-edge/infra/bin/app.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "10.limits",
+      "sources": ["examples/10-edge/infra/functions/edge-router.js"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.router",
+      "sources": ["examples/10-edge/infra/functions/edge-router.js", "examples/10-edge/edge-data.json"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "10.tests",
+      "sources": ["examples/10-edge/src/local/load-function.ts", "examples/10-edge/infra/test/edge-router.test.ts"],
+      "tasks": ["test:unit", "typecheck"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "10.local",
+      "sources": ["examples/10-edge/src/local/dev.ts", "examples/10-edge/site", "examples/10-edge/scripts/kvs-file.ts"],
+      "tasks": ["dev:edge", "dev:edge:cdkd"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "10.kvs",
+      "sources": ["examples/10-edge/src/kvs/config.ts", "examples/10-edge/test/kvs.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "10.sync",
+      "sources": [
+        "examples/10-edge/src/kvs/plan.ts",
+        "examples/10-edge/src/kvs/sync.ts",
+        "examples/10-edge/src/kvs/store.ts",
+        "examples/10-edge/scripts/kvs-sync.ts",
+        "examples/10-edge/test/sync.test.ts",
+        "examples/10-edge/test/store.test.ts"
+      ],
+      "tasks": ["edge:kvs:plan", "edge:kvs:sync", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "10.infra",
+      "sources": [
+        "examples/10-edge/infra/lib/edge-stack.ts",
+        "examples/10-edge/infra/test/edge-stack.test.ts",
+        "examples/10-edge/cdk.json"
+      ],
+      "tasks": ["edge:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "10.deploy",
+      "sources": ["tools/src/infra/cdkd.ts", "tools/src/site/publish.ts", "examples/10-edge/scripts/kvs-sync.ts"],
+      "tasks": [
+        "edge:infra:diff",
+        "edge:infra:deploy",
+        "edge:publish",
+        "edge:kvs:plan",
+        "edge:kvs:sync",
+        "edge:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.lambda-edge",
+      "sources": [
+        "examples/10-edge/src/lambda-edge/body-digest.ts",
+        "examples/10-edge/infra/lib/body-digest-stack.ts",
+        "examples/10-edge/infra/test/body-digest-stack.test.ts",
+        "examples/10-edge/test/body-digest.test.ts"
+      ],
+      "tasks": ["edge:body:infra:synth", "edge:body:infra:deploy", "edge:body:infra:destroy", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "10.placement",
+      "sources": ["examples/10-edge/infra/lib/edge-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.workers",
+      "sources": ["examples/10-edge/infra/functions/edge-router.js"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.cost",
+      "sources": ["data/pricing/scenarios.json", "tools/src/pricing/calc.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "10.cleanup",
+      "sources": ["tools/src/site/unpublish.ts", "tools/src/infra/cdkd.ts"],
+      "tasks": ["edge:unpublish", "edge:infra:destroy", "edge:body:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

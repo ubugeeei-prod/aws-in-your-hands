@@ -46,5 +46,5 @@ Assume the cache and the source of truth disagree, and decide which one wins.
 
 ## Primary sources to start from
 
-- [Amazon CloudFront KeyValueStore](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions.html) (not re-read while writing)
+- [Amazon CloudFront KeyValueStore](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions.html) (checked 2026-10-11)
 - [What is Amazon DynamoDB?](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) (not re-read while writing)

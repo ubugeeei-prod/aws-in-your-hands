@@ -749,6 +749,56 @@
         "ja": "受信者に見える From のドメインが、SPF か DKIM のどちらかで確かめられていることを求め、失敗したメールの扱いを DNS で指示する仕組み。",
         "en": "A DNS policy that requires the visible From domain to be confirmed by SPF or DKIM, and says what to do with mail that fails."
       }
+    },
+    {
+      "id": "cloudfront-functions",
+      "ja": "CloudFront Functions",
+      "en": "CloudFront Functions",
+      "firstUse": "10",
+      "definition": {
+        "ja": "CloudFront の edge location で、リクエストやレスポンスのたびに動く小さな JavaScript。ネットワークにもファイルにも触れず、URL やヘッダーの書き換えに使う。",
+        "en": "Small JavaScript that runs at CloudFront edge locations on each request or response. It cannot reach the network or files and is used to rewrite URLs and headers."
+      }
+    },
+    {
+      "id": "viewer-request",
+      "ja": "viewer request",
+      "en": "viewer request",
+      "firstUse": "10",
+      "definition": {
+        "ja": "CloudFront が読者からリクエストを受け取った直後、cache を調べる前のタイミング。",
+        "en": "The moment right after CloudFront receives a request from the reader, before it looks in the cache."
+      }
+    },
+    {
+      "id": "key-value-store",
+      "ja": "KeyValueStore",
+      "en": "KeyValueStore",
+      "firstUse": "10",
+      "definition": {
+        "ja": "CloudFront Functions から読める、キーと値の保存場所。関数からは読むだけで、書き換えは外から API で行う。",
+        "en": "A store of key-value pairs that CloudFront Functions can read. Functions only read it; changes come from outside through an API."
+      }
+    },
+    {
+      "id": "lambda-at-edge",
+      "ja": "Lambda@Edge",
+      "en": "Lambda@Edge",
+      "firstUse": "10",
+      "definition": {
+        "ja": "us-east-1 に作った Lambda 関数の version を CloudFront が各地に複製し、リクエストの途中で呼ぶ仕組み。",
+        "en": "A version of a Lambda function created in us-east-1 that CloudFront replicates around the world and invokes partway through a request."
+      }
+    },
+    {
+      "id": "etag-precondition",
+      "ja": "ETag による条件付き更新",
+      "en": "ETag precondition",
+      "firstUse": "10",
+      "definition": {
+        "ja": "読んだときの版（ETag）を書き込みに添え、その間に他の誰かが書き換えていたら拒否してもらう方法。",
+        "en": "Sending the version (ETag) you read along with a write, so the write is refused if someone else changed the data in between."
+      }
     }
   ]
 }

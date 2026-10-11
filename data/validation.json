@@ -643,6 +643,94 @@
         "ja": "sandbox の確認、identity の確認状況、production access の申請。申請は人が行う手作業",
         "en": "Checking the sandbox and the identity's verification, and requesting production access. The request is a manual step for a person"
       }
+    },
+    {
+      "scope": "10",
+      "command": "vp test run examples/10-edge",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "関数（node:vm で実ファイルを実行）、KeyValueStore の計画と同期、SDK adapter、Lambda@Edge の handler、2 つの stack",
+        "en": "The function (the deployed file run under node:vm), KeyValueStore planning and sync, the SDK adapter, the Lambda@Edge handler, and both stacks"
+      }
+    },
+    {
+      "scope": "10",
+      "command": "vp run edge:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "AihEdge は 6 リソース、AihEdgeBodyDigest は 4 リソース（esbuild の bundle 込み、Docker なし）。-c bodyDigestVersionArn を付けた synth も確認",
+        "en": "AihEdge has 6 resources and AihEdgeBodyDigest 4 (esbuild bundle included, no Docker). Also synthesized with -c bodyDigestVersionArn"
+      }
+    },
+    {
+      "scope": "10",
+      "command": "vp run dev:edge + curl",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "本文の curl（redirect、query string の引き継ぎ、書き換え、404）と、edge-data.json の maintenance / newHome の切り替えを確認",
+        "en": "Ran the curl commands from the chapter (redirects, query string carry-over, rewrites, 404) and flipped maintenance / newHome in edge-data.json"
+      }
+    },
+    {
+      "scope": "10",
+      "command": "vp run dev:edge:cdkd + curl",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "cdkd local start-cloudfront（--kvs-file、--origin）。Docker の daemon が無い状態で起動し、dev:edge と同じ応答を確認。認証情報は使っていない",
+        "en": "cdkd local start-cloudfront (--kvs-file, --origin). Started with no Docker daemon running and returned the same responses as dev:edge. No credentials were used"
+      }
+    },
+    {
+      "scope": "10",
+      "command": "vp run typecheck (examples/10-edge)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "型検査",
+        "en": "Type check"
+      }
+    },
+    {
+      "scope": "10",
+      "command": "vp run edge:infra:diff / deploy / drift / destroy, edge:publish / unpublish",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "S3、CloudFront の distribution、Function、KeyValueStore を作る",
+        "en": "Creates an S3 bucket, a CloudFront distribution, a function, and a key value store"
+      }
+    },
+    {
+      "scope": "10",
+      "command": "vp run edge:kvs:plan / edge:kvs:sync",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "デプロイ済みの KeyValueStore が必要。API 操作は 1,000 回あたり USD 1",
+        "en": "Needs the deployed key value store. API operations cost USD 1 per 1,000"
+      }
+    },
+    {
+      "scope": "10",
+      "command": "vp run edge:body:infra:deploy / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "us-east-1 に Lambda 関数と version、IAM role を作る",
+        "en": "Creates a Lambda function, a version, and an IAM role in us-east-1"
+      }
     }
   ],
   "open": [
@@ -908,6 +996,50 @@
       "resume": {
         "ja": "デプロイ後、同じ notificationId の依頼を並行で送る script を examples/15-email/scripts/ に加え、届いたメールが 1 通であることを受信箱と mail:status で確かめる。",
         "en": "After deploying, add a script under examples/15-email/scripts/ that sends requests with one notificationId in parallel, and confirm in the inbox and with mail:status that one mail arrived."
+      }
+    },
+    {
+      "id": "edge-function-on-real-runtime",
+      "summary": {
+        "ja": "10章の edge-router.js を CloudFront Functions の runtime 2.0 で実行していない。構文、10 KB、2 MB、実行時間（compute utilization）、cf.kvs() を ID なしで呼ぶ形、存在しないキーで get() が reject することは、ドキュメントと Node.js 上のテストでしか確かめていない。",
+        "en": "Chapter 10's edge-router.js has not run on the CloudFront Functions runtime 2.0. Its syntax, the 10 KB and 2 MB limits, execution time (compute utilization), calling cf.kvs() without an ID, and get() rejecting for a missing key are confirmed only by documentation and tests under Node.js."
+      },
+      "resume": {
+        "ja": "vp run edge:infra:deploy の後、aws cloudfront test-function（stage DEVELOPMENT、本文の event）で結果と ComputeUtilization を記録する。続けて edge:publish、edge:kvs:sync を実行し、本文の curl を試す。",
+        "en": "After vp run edge:infra:deploy, run aws cloudfront test-function (stage DEVELOPMENT, with the event from the chapter) and record the result and ComputeUtilization. Then run edge:publish and edge:kvs:sync and try the chapter's curl commands."
+      }
+    },
+    {
+      "id": "kvs-stale-etag-error",
+      "summary": {
+        "ja": "KeyValueStore API が古い If-Match に対して返すエラーの種類を確認していない。API リファレンスは ConflictException（409）を載せているが、どの条件で返るかは書いていない。10章の adapter は ConflictException だけを競合として扱い、それ以外は再試行せずに止まる。",
+        "en": "Which error the KeyValueStore API returns for a stale If-Match is unconfirmed. The API reference lists ConflictException (409) without saying when it is returned. Chapter 10's adapter treats only ConflictException as a conflict and stops without retrying on anything else."
+      },
+      "resume": {
+        "ja": "デプロイ後、aws cloudfront-keyvaluestore put-key を古い ETag の --if-match で実行し、エラー名と状態コードを記録する。ConflictException でなければ examples/10-edge/src/kvs/store.ts の translate と test/store.test.ts を直す。",
+        "en": "After deploying, run aws cloudfront-keyvaluestore put-key with an old ETag as --if-match and record the error name and status code. If it is not ConflictException, fix translate in examples/10-edge/src/kvs/store.ts and test/store.test.ts."
+      }
+    },
+    {
+      "id": "kvs-propagation-time",
+      "summary": {
+        "ja": "KeyValueStore の更新が edge に届くまでの時間を計測していない。Developer Guide に数値はなく、AWS News Blog の「a few seconds」だけが手がかり。",
+        "en": "The time for a KeyValueStore update to reach the edge has not been measured. The Developer Guide gives no figure; the only hint is \"a few seconds\" in the AWS News Blog."
+      },
+      "resume": {
+        "ja": "edge-data.json の maintenance を true にして edge:kvs:sync を実行し、完了時刻から、curl が 503 を返し始めるまでを複数回計る。計った場所と回数を添えて記録する（保証値としては書かない）。",
+        "en": "Set maintenance to true in edge-data.json, run edge:kvs:sync, and time from its completion until curl starts returning 503, several times. Record it with where and how often it was measured, never as a guarantee."
+      }
+    },
+    {
+      "id": "cdkd-kvs-and-lambda-edge",
+      "summary": {
+        "ja": "cdkd 0.296.28 で AWS::CloudFront::KeyValueStore（Cloud Control API 経由、stateful 扱い）と、us-east-1 の stack にある Lambda@Edge 用の関数と AWS::Lambda::Version を実際に作成・更新・削除できるかは未確認。ソースからは、stack 自身のリージョンが使われることと、us-east-1 にも cdkd の asset 置き場が要りそうなことまでしか読み取れていない。Node.js 24 が Lambda@Edge で使えることも個別には確認していない。",
+        "en": "Whether cdkd 0.296.28 can create, update, and delete AWS::CloudFront::KeyValueStore (through Cloud Control API, treated as stateful) and the Lambda@Edge function and AWS::Lambda::Version in a us-east-1 stack is unconfirmed. The source shows only that the stack's own region is used and that cdkd's asset storage is probably needed in us-east-1 too. Node.js 24 on Lambda@Edge was not confirmed separately either."
+      },
+      "resume": {
+        "ja": "AIH_AWS_REGION=us-east-1 vp run infra:bootstrap の後に vp run edge:body:infra:deploy を実行する。出力の BodyDigestVersionArn を -c bodyDigestVersionArn=... で vp run edge:infra:deploy に渡し、curl -X POST で /digest を確かめる。失敗したら内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
+        "en": "Run AIH_AWS_REGION=us-east-1 vp run infra:bootstrap, then vp run edge:body:infra:deploy. Pass the BodyDigestVersionArn output to vp run edge:infra:deploy with -c bodyDigestVersionArn=..., and check /digest with curl -X POST. If it fails, record how and ask the author for a decision; do not substitute another tool."
       }
     }
   ]

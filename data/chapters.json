@@ -408,51 +408,45 @@
       "prerequisites": ["03"],
       "services": ["CloudFront Functions", "CloudFront KeyValueStore", "Lambda@Edge"],
       "samplePath": "examples/10-edge",
+      "sourceIds": [
+        "cloudfront-functions-restrictions",
+        "cloudfront-functions-runtime-20",
+        "cloudfront-functions-event-structure",
+        "cloudfront-functions-test",
+        "cloudfront-kvs",
+        "cloudfront-kvs-helper-methods",
+        "cloudfront-kvs-data",
+        "cloudfront-kvs-create",
+        "cloudfront-kvs-file-format",
+        "cloudfront-kvs-api-updatekeys",
+        "cloudfront-kvs-api-listkeys",
+        "cloudfront-quotas",
+        "cloudfront-edge-functions-choosing",
+        "cloudfront-edge-restrictions-all",
+        "cloudfront-edge-function-logs",
+        "lambda-edge-restrictions",
+        "lambda-edge-permissions",
+        "lambda-edge-delete-replicas",
+        "aws-blog-kvs-launch",
+        "cloudfront-pricing-payg",
+        "aws-price-list-cloudfront",
+        "aws-sdk-signature-v4a",
+        "cloudflare-workers-limits",
+        "cloudflare-workers-pricing",
+        "cloudflare-kv-how-it-works",
+        "cloudflare-kv-limits",
+        "cdkd-npm",
+        "cdkd-register-providers"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["cloudfront-functions-restrictions", "cloudfront-kvs", "lambda-edge-restrictions"],
-      "outline": {
-        "outcome": {
-          "ja": "redirect と feature flag を edge で処理し、どの処理をどの実行環境に置くか説明できる。",
-          "en": "Redirects and a feature flag run at the edge, and you can explain which work belongs in which runtime."
-        },
-        "architecture": {
-          "ja": "viewer request → CloudFront Function（+ KeyValueStore）→ cache → origin。",
-          "en": "Viewer request → CloudFront Function (+ KeyValueStore) → cache → origin."
-        },
-        "topics": {
-          "ja": [
-            "CloudFront Functions の runtime 制約（network なし、実行時間、サイズ）",
-            "KeyValueStore の更新伝播と用途",
-            "Lambda@Edge の region / version / 環境変数の制約",
-            "Workers と同じものではない点の率直な比較"
-          ],
-          "en": [
-            "CloudFront Functions runtime limits (no network, execution time, size)",
-            "KeyValueStore propagation and intended use",
-            "Lambda@Edge region, version, and environment-variable restrictions",
-            "A candid comparison: these are not Workers"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "Function のコードと、Node 上で同じ入力を与える unit test",
-            "KVS の CDK と更新 script",
-            "本のサイトの URL rewrite Function との対応"
-          ],
-          "en": [
-            "Function code with unit tests that feed the same events under Node",
-            "KVS CDK and an update script",
-            "How it relates to the book site's own URL-rewrite function"
-          ]
-        },
-        "distributed": {
-          "ja": "KVS の読みは edge ごとに結果整合。書いた直後に全 edge で読めるとは仮定しない。",
-          "en": "KVS reads are eventually consistent per edge; a write is not immediately visible everywhere."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "11",

@@ -71,6 +71,14 @@ generated: true
 | 15 | `vp run mail:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | SES の identity と configuration set、SNS の topic、DynamoDB の table、Lambda、HTTP API を作る。identity を作ると確認メールが送られる |
 | 15 | `vp run mail:send / mail:status / mail:dns / mail:logs` | AWS | 未実行 | - | デプロイ済みの stack が必要。mail:send は実際にメールを送り、課金される |
 | 15 | `aws sesv2 get-account / get-email-identity / put-account-details / put-account-suppression-attributes` | AWS | 未実行 | - | sandbox の確認、identity の確認状況、production access の申請。申請は人が行う手作業 |
+| 10 | `vp test run examples/10-edge` | ローカル | 成功 | 2026-10-11 | 関数（node:vm で実ファイルを実行）、KeyValueStore の計画と同期、SDK adapter、Lambda@Edge の handler、2 つの stack |
+| 10 | `vp run edge:infra:synth` | ローカル | 成功 | 2026-10-11 | AihEdge は 6 リソース、AihEdgeBodyDigest は 4 リソース（esbuild の bundle 込み、Docker なし）。-c bodyDigestVersionArn を付けた synth も確認 |
+| 10 | `vp run dev:edge + curl` | ローカル | 成功 | 2026-10-11 | 本文の curl（redirect、query string の引き継ぎ、書き換え、404）と、edge-data.json の maintenance / newHome の切り替えを確認 |
+| 10 | `vp run dev:edge:cdkd + curl` | ローカル | 成功 | 2026-10-11 | cdkd local start-cloudfront（--kvs-file、--origin）。Docker の daemon が無い状態で起動し、dev:edge と同じ応答を確認。認証情報は使っていない |
+| 10 | `vp run typecheck (examples/10-edge)` | ローカル | 成功 | 2026-10-11 | 型検査 |
+| 10 | `vp run edge:infra:diff / deploy / drift / destroy, edge:publish / unpublish` | AWS | 未実行 | - | S3、CloudFront の distribution、Function、KeyValueStore を作る |
+| 10 | `vp run edge:kvs:plan / edge:kvs:sync` | AWS | 未実行 | - | デプロイ済みの KeyValueStore が必要。API 操作は 1,000 回あたり USD 1 |
+| 10 | `vp run edge:body:infra:deploy / destroy` | AWS | 未実行 | - | us-east-1 に Lambda 関数と version、IAM role を作る |
 
 ## 未解決事項と再開手順
 
@@ -217,3 +225,27 @@ cdkd 0.296.28 は AWS::SES::EmailIdentity、ConfigurationSet、ConfigurationSetE
 15章の「同じ通知は 1 通」は、条件付きの PutItem が同時の依頼を 1 つだけ通すことに依存する。確かめたのは、送っている条件式と、メモリの実装が同じ規則に従うことだけで、DynamoDB Local でも実際の DynamoDB でも動かしていない。
 
 再開手順: デプロイ後、同じ notificationId の依頼を並行で送る script を examples/15-email/scripts/ に加え、届いたメールが 1 通であることを受信箱と mail:status で確かめる。
+
+### edge-function-on-real-runtime
+
+10章の edge-router.js を CloudFront Functions の runtime 2.0 で実行していない。構文、10 KB、2 MB、実行時間（compute utilization）、cf.kvs() を ID なしで呼ぶ形、存在しないキーで get() が reject することは、ドキュメントと Node.js 上のテストでしか確かめていない。
+
+再開手順: vp run edge:infra:deploy の後、aws cloudfront test-function（stage DEVELOPMENT、本文の event）で結果と ComputeUtilization を記録する。続けて edge:publish、edge:kvs:sync を実行し、本文の curl を試す。
+
+### kvs-stale-etag-error
+
+KeyValueStore API が古い If-Match に対して返すエラーの種類を確認していない。API リファレンスは ConflictException（409）を載せているが、どの条件で返るかは書いていない。10章の adapter は ConflictException だけを競合として扱い、それ以外は再試行せずに止まる。
+
+再開手順: デプロイ後、aws cloudfront-keyvaluestore put-key を古い ETag の --if-match で実行し、エラー名と状態コードを記録する。ConflictException でなければ examples/10-edge/src/kvs/store.ts の translate と test/store.test.ts を直す。
+
+### kvs-propagation-time
+
+KeyValueStore の更新が edge に届くまでの時間を計測していない。Developer Guide に数値はなく、AWS News Blog の「a few seconds」だけが手がかり。
+
+再開手順: edge-data.json の maintenance を true にして edge:kvs:sync を実行し、完了時刻から、curl が 503 を返し始めるまでを複数回計る。計った場所と回数を添えて記録する（保証値としては書かない）。
+
+### cdkd-kvs-and-lambda-edge
+
+cdkd 0.296.28 で AWS::CloudFront::KeyValueStore（Cloud Control API 経由、stateful 扱い）と、us-east-1 の stack にある Lambda@Edge 用の関数と AWS::Lambda::Version を実際に作成・更新・削除できるかは未確認。ソースからは、stack 自身のリージョンが使われることと、us-east-1 にも cdkd の asset 置き場が要りそうなことまでしか読み取れていない。Node.js 24 が Lambda@Edge で使えることも個別には確認していない。
+
+再開手順: AIH_AWS_REGION=us-east-1 vp run infra:bootstrap の後に vp run edge:body:infra:deploy を実行する。出力の BodyDigestVersionArn を -c bodyDigestVersionArn=... で vp run edge:infra:deploy に渡し、curl -X POST で /digest を確かめる。失敗したら内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。

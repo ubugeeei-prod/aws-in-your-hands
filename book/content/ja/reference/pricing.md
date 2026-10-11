@@ -429,6 +429,35 @@ ID: `email-small` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
 - 毎月の無料枠適用後の小計: **USD 1.04** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`, `ses.outbound.message`
 
+## edge の例: 月 100 万リクエスト
+
+ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValueStore、Lambda@Edge](/ja/chapters/10-edge.md)
+
+前提:
+
+- すべて日本の edge から配信、HTTPS、1 リクエスト平均 20 KB
+- 内訳はトップページ 10%、その他のページ 20%、ファイル 70%。関数はそれぞれ KeyValueStore を 3 回、2 回、1 回読む
+- CloudFront Function は全リクエストで実行
+- cache miss と再検証で origin へ 1/3 が届くと仮定
+- edge:kvs:sync を月 20 回（Describe 1、ListKeys 1、UpdateKeys 1）、edge:kvs:plan を月 10 回（Describe 1、ListKeys 1）
+- Lambda@Edge は POST /digest の 1 万回だけ。128 MB、平均 50 ミリ秒と仮定
+- Lambda@Edge のログ（CloudWatch Logs）、標準ログ、WAF、独自ドメインは含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudfront.jp.request.https` | 1,000,000 | Requests | 1,000,000 viewer requests | 1.20 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 19.073 | GB | 1,000,000 requests x 20 KB, in GB | 2.17 | 1,024 | 0 |
+| `cloudfront.function.execution` | 1,000,000 | FunctionExecutions | one execution per viewer request | 0 | 2,000,000 | 0 |
+| `cloudfront.kvs.read` | 1,400,000 | EdgeReads | 100,000 x 3 + 200,000 x 2 + 700,000 x 1 reads | 0 | 2,000,000 | 0 |
+| `cloudfront.kvs.api` | 80 | API Requests | 20 syncs x 3 calls + 10 dry runs x 2 calls | 0.08 | - | 0.08 |
+| `lambdaedge.jp.request` | 10,000 | Request | 10,000 POST /digest requests | 0.01 | - | 0.01 |
+| `lambdaedge.jp.duration` | 62.5 | Lambda-GB-Second | 10,000 x 0.05 s x 0.125 GB | 0.003126 | - | 0.003126 |
+| `s3.request.tier2` | 333,333 | Requests | one third of 1,000,000 requests reach S3 as GET | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 3.59** / 月
+- 毎月の無料枠適用後の小計: **USD 0.21** / 月
+- 無料枠を確認できず、何も引いていない単価: `cloudfront.kvs.api`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -472,6 +501,10 @@ ID: `email-small` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
 | `ses.outbound.message` | ap-northeast-1 | APN1-Recipients | Count | 0 - ∞: 0.0001000000 | 2026-09-11 | 2026-10-11 |
 | `sns.request` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 1,000,000: 0.0000000000<br>1,000,000 - ∞: 0.0000005000 | 2026-09-15 | 2026-10-11 |
 | `sns.delivery.lambda` | ap-northeast-1 | APN1-DeliveryAttempts-LAMBDA | Notifications | 0 - ∞: 0.0000000000 | 2026-09-15 | 2026-10-11 |
+| `cloudfront.kvs.read` | global | KeyValueStore-EdgeReads | EdgeReads | 0 - 2,000,000: 0.0000000000<br>2,000,000 - ∞: 0.0000000300 | 2026-10-03 | 2026-10-11 |
+| `cloudfront.kvs.api` | global | KeyValueStore-APIOperations | API Requests | 0 - ∞: 0.0010000000 | 2026-10-03 | 2026-10-11 |
+| `lambdaedge.jp.request` | global | APN1-Lambda-Edge-Request | Request | 0 - ∞: 0.0000006000 | 2026-10-03 | 2026-10-11 |
+| `lambdaedge.jp.duration` | global | APN1-Lambda-Edge-GB-Second | Lambda-GB-Second | 0 - ∞: 0.0000500100 | 2026-10-03 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -488,6 +521,7 @@ ID: `email-small` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
 | `logs.ingest.standard` | 5 | `aws-price-list-cloudwatch` | GB. From the Global-DataProcessing-Bytes USD 0 tier. |
 | `logs.storage` | 5 | `aws-price-list-cloudwatch` | GB-month. From the Global-TimedStorage-ByteHrs USD 0 tier. |
 | `cognito.essentials.mau` | 10,000 | `cognito-pricing` | MAUs per account or organization, shared with the Lite plan. Direct sign-in users only. |
+| `cloudfront.kvs.read` | 2,000,000 | `cloudfront-pricing-payg` | Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only. |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 
@@ -501,3 +535,4 @@ ID: `email-small` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
 - `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `ses.outbound.message`: The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied.
+- `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.

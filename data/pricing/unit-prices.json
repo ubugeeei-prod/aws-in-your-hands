@@ -1023,6 +1023,96 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-15T15:19:44Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.kvs.read",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "UJQ4XVRAX798D7BU",
+      "usageType": "KeyValueStore-EdgeReads",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "EdgeReads",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 2000000,
+          "usd": "0.0000000000",
+          "description": "$0 for First 2,000,000 CloudFront KeyValueStore EdgeReads"
+        },
+        {
+          "from": 2000000,
+          "to": null,
+          "usd": "0.0000000300",
+          "description": "$0.03 per 1,000,000 CloudFront KeyValueStore EdgeReads"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.kvs.api",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "VGGT5H7FE95Y29Y4",
+      "usageType": "KeyValueStore-APIOperations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "API Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0010000000",
+          "description": "$1 per 1000 CloudFront KeyValueStore API Operations"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambdaedge.jp.request",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "R5NDBF38K3GVAYYG",
+      "usageType": "APN1-Lambda-Edge-Request",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000006000",
+          "description": "$6.0E-7  per Request for Lambda-Edge-Request in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambdaedge.jp.duration",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "8AH7WHHPAA452VWV",
+      "usageType": "APN1-Lambda-Edge-GB-Second",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000500100",
+          "description": "$0.00005001 per Lambda-GB-Second for Lambda-Edge-GB-Second in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

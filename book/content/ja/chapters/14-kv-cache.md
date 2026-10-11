@@ -46,5 +46,5 @@ cache と元データの不一致を前提に、どちらが正かを決める�
 
 ## 調査の出発点にする一次情報
 
-- [Amazon CloudFront KeyValueStore](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions.html) (執筆時に未再確認)
+- [Amazon CloudFront KeyValueStore](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions.html) (確認日 2026-10-11)
 - [What is Amazon DynamoDB?](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html) (執筆時に未再確認)

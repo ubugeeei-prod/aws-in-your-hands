@@ -71,6 +71,14 @@
       "kind": "always-free",
       "sourceId": "cognito-pricing",
       "note": "MAUs per account or organization, shared with the Lite plan. Direct sign-in users only."
+    },
+    {
+      "priceId": "cloudfront.kvs.read",
+      "quantity": 2000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cloudfront-pricing-payg",
+      "note": "Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only."
     }
   ],
   "unknown": [
@@ -113,6 +121,10 @@
     {
       "priceId": "ses.outbound.message",
       "reason": "The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied."
+    },
+    {
+      "priceId": "cloudfront.kvs.api",
+      "reason": "The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied."
     }
   ]
 }

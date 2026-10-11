@@ -71,6 +71,14 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 15 | `vp run mail:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an SES identity and configuration set, an SNS topic, a DynamoDB table, Lambda functions and an HTTP API. Creating the identity sends a verification mail |
 | 15 | `vp run mail:send / mail:status / mail:dns / mail:logs` | AWS | not run | - | Need the deployed stack. mail:send sends a real mail and is billed |
 | 15 | `aws sesv2 get-account / get-email-identity / put-account-details / put-account-suppression-attributes` | AWS | not run | - | Checking the sandbox and the identity's verification, and requesting production access. The request is a manual step for a person |
+| 10 | `vp test run examples/10-edge` | local | passed | 2026-10-11 | The function (the deployed file run under node:vm), KeyValueStore planning and sync, the SDK adapter, the Lambda@Edge handler, and both stacks |
+| 10 | `vp run edge:infra:synth` | local | passed | 2026-10-11 | AihEdge has 6 resources and AihEdgeBodyDigest 4 (esbuild bundle included, no Docker). Also synthesized with -c bodyDigestVersionArn |
+| 10 | `vp run dev:edge + curl` | local | passed | 2026-10-11 | Ran the curl commands from the chapter (redirects, query string carry-over, rewrites, 404) and flipped maintenance / newHome in edge-data.json |
+| 10 | `vp run dev:edge:cdkd + curl` | local | passed | 2026-10-11 | cdkd local start-cloudfront (--kvs-file, --origin). Started with no Docker daemon running and returned the same responses as dev:edge. No credentials were used |
+| 10 | `vp run typecheck (examples/10-edge)` | local | passed | 2026-10-11 | Type check |
+| 10 | `vp run edge:infra:diff / deploy / drift / destroy, edge:publish / unpublish` | AWS | not run | - | Creates an S3 bucket, a CloudFront distribution, a function, and a key value store |
+| 10 | `vp run edge:kvs:plan / edge:kvs:sync` | AWS | not run | - | Needs the deployed key value store. API operations cost USD 1 per 1,000 |
+| 10 | `vp run edge:body:infra:deploy / destroy` | AWS | not run | - | Creates a Lambda function, a version, and an IAM role in us-east-1 |
 
 ## Open items and how to resume
 
@@ -217,3 +225,27 @@ To resume: Run vp run mail:infra:deploy, mail:infra:drift and mail:infra:destroy
 Chapter 15's "one notification, one mail" depends on a conditional PutItem letting exactly one of several simultaneous requests through. Only the expression sent, and the in-memory implementation's adherence to the same rule, were checked; neither DynamoDB Local nor real DynamoDB was used.
 
 To resume: After deploying, add a script under examples/15-email/scripts/ that sends requests with one notificationId in parallel, and confirm in the inbox and with mail:status that one mail arrived.
+
+### edge-function-on-real-runtime
+
+Chapter 10's edge-router.js has not run on the CloudFront Functions runtime 2.0. Its syntax, the 10 KB and 2 MB limits, execution time (compute utilization), calling cf.kvs() without an ID, and get() rejecting for a missing key are confirmed only by documentation and tests under Node.js.
+
+To resume: After vp run edge:infra:deploy, run aws cloudfront test-function (stage DEVELOPMENT, with the event from the chapter) and record the result and ComputeUtilization. Then run edge:publish and edge:kvs:sync and try the chapter's curl commands.
+
+### kvs-stale-etag-error
+
+Which error the KeyValueStore API returns for a stale If-Match is unconfirmed. The API reference lists ConflictException (409) without saying when it is returned. Chapter 10's adapter treats only ConflictException as a conflict and stops without retrying on anything else.
+
+To resume: After deploying, run aws cloudfront-keyvaluestore put-key with an old ETag as --if-match and record the error name and status code. If it is not ConflictException, fix translate in examples/10-edge/src/kvs/store.ts and test/store.test.ts.
+
+### kvs-propagation-time
+
+The time for a KeyValueStore update to reach the edge has not been measured. The Developer Guide gives no figure; the only hint is "a few seconds" in the AWS News Blog.
+
+To resume: Set maintenance to true in edge-data.json, run edge:kvs:sync, and time from its completion until curl starts returning 503, several times. Record it with where and how often it was measured, never as a guarantee.
+
+### cdkd-kvs-and-lambda-edge
+
+Whether cdkd 0.296.28 can create, update, and delete AWS::CloudFront::KeyValueStore (through Cloud Control API, treated as stateful) and the Lambda@Edge function and AWS::Lambda::Version in a us-east-1 stack is unconfirmed. The source shows only that the stack's own region is used and that cdkd's asset storage is probably needed in us-east-1 too. Node.js 24 on Lambda@Edge was not confirmed separately either.
+
+To resume: Run AIH_AWS_REGION=us-east-1 vp run infra:bootstrap, then vp run edge:body:infra:deploy. Pass the BodyDigestVersionArn output to vp run edge:infra:deploy with -c bodyDigestVersionArn=..., and check /digest with curl -X POST. If it fails, record how and ask the author for a decision; do not substitute another tool.

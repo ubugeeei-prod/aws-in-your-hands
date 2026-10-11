@@ -756,6 +756,76 @@
           "basis": "0.01 GB x 7/30, in GB-month"
         }
       ]
+    },
+    {
+      "id": "edge-small",
+      "chapter": "10",
+      "title": {
+        "ja": "edge の例: 月 100 万リクエスト",
+        "en": "Edge example: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "すべて日本の edge から配信、HTTPS、1 リクエスト平均 20 KB",
+          "内訳はトップページ 10%、その他のページ 20%、ファイル 70%。関数はそれぞれ KeyValueStore を 3 回、2 回、1 回読む",
+          "CloudFront Function は全リクエストで実行",
+          "cache miss と再検証で origin へ 1/3 が届くと仮定",
+          "edge:kvs:sync を月 20 回（Describe 1、ListKeys 1、UpdateKeys 1）、edge:kvs:plan を月 10 回（Describe 1、ListKeys 1）",
+          "Lambda@Edge は POST /digest の 1 万回だけ。128 MB、平均 50 ミリ秒と仮定",
+          "Lambda@Edge のログ（CloudWatch Logs）、標準ログ、WAF、独自ドメインは含まない"
+        ],
+        "en": [
+          "Served entirely from Japan edge locations over HTTPS, 20 KB per request on average",
+          "10% home page, 20% other pages, 70% files; the function reads KeyValueStore 3, 2, and 1 times respectively",
+          "The CloudFront Function runs on every request",
+          "One third of requests assumed to reach the origin through cache misses and revalidation",
+          "edge:kvs:sync 20 times a month (1 Describe, 1 ListKeys, 1 UpdateKeys) and edge:kvs:plan 10 times (1 Describe, 1 ListKeys)",
+          "Lambda@Edge runs only for 10,000 POST /digest requests, assumed 128 MB and 50 ms on average",
+          "Lambda@Edge logs in CloudWatch Logs, standard logging, WAF, and a custom domain are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 1000000,
+          "basis": "1,000,000 viewer requests"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 19.073486,
+          "basis": "1,000,000 requests x 20 KB, in GB"
+        },
+        {
+          "priceId": "cloudfront.function.execution",
+          "quantity": 1000000,
+          "basis": "one execution per viewer request"
+        },
+        {
+          "priceId": "cloudfront.kvs.read",
+          "quantity": 1400000,
+          "basis": "100,000 x 3 + 200,000 x 2 + 700,000 x 1 reads"
+        },
+        {
+          "priceId": "cloudfront.kvs.api",
+          "quantity": 80,
+          "basis": "20 syncs x 3 calls + 10 dry runs x 2 calls"
+        },
+        {
+          "priceId": "lambdaedge.jp.request",
+          "quantity": 10000,
+          "basis": "10,000 POST /digest requests"
+        },
+        {
+          "priceId": "lambdaedge.jp.duration",
+          "quantity": 62.5,
+          "basis": "10,000 x 0.05 s x 0.125 GB"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 333333,
+          "basis": "one third of 1,000,000 requests reach S3 as GET"
+        }
+      ]
     }
   ]
 }

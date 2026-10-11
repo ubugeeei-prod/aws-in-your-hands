@@ -86,3 +86,8 @@ The term pairs that keep both languages using one word for one concept. API name
 | SPF | SPF | 15 | A DNS TXT record naming the servers allowed to send for a domain. It is checked against the envelope sender (MAIL FROM) domain. |
 | DKIM | DKIM | 15 | A digital signature on each mail, verified with a public key published in DNS. |
 | DMARC | DMARC | 15 | A DNS policy that requires the visible From domain to be confirmed by SPF or DKIM, and says what to do with mail that fails. |
+| CloudFront Functions | CloudFront Functions | 10 | Small JavaScript that runs at CloudFront edge locations on each request or response. It cannot reach the network or files and is used to rewrite URLs and headers. |
+| viewer request | viewer request | 10 | The moment right after CloudFront receives a request from the reader, before it looks in the cache. |
+| KeyValueStore | KeyValueStore | 10 | A store of key-value pairs that CloudFront Functions can read. Functions only read it; changes come from outside through an API. |
+| Lambda@Edge | Lambda@Edge | 10 | A version of a Lambda function created in us-east-1 that CloudFront replicates around the world and invokes partway through a request. |
+| ETag による条件付き更新 | ETag precondition | 10 | Sending the version (ETag) you read along with a write, so the write is refused if someone else changed the data in between. |

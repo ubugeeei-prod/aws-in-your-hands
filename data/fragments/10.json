@@ -1,0 +1,862 @@
+{
+  "chapterId": "10",
+  "manifest": {
+    "id": "10",
+    "slug": "edge",
+    "title": {
+      "ja": "edge を理解する: CloudFront Functions、KeyValueStore、Lambda@Edge",
+      "en": "Understand the Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
+    },
+    "prerequisites": ["03"],
+    "services": ["CloudFront Functions", "CloudFront KeyValueStore", "Lambda@Edge"],
+    "samplePath": "examples/10-edge",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-11",
+    "sourceIds": [
+      "cloudfront-functions-restrictions",
+      "cloudfront-functions-runtime-20",
+      "cloudfront-functions-event-structure",
+      "cloudfront-functions-test",
+      "cloudfront-kvs",
+      "cloudfront-kvs-helper-methods",
+      "cloudfront-kvs-data",
+      "cloudfront-kvs-create",
+      "cloudfront-kvs-file-format",
+      "cloudfront-kvs-api-updatekeys",
+      "cloudfront-kvs-api-listkeys",
+      "cloudfront-quotas",
+      "cloudfront-edge-functions-choosing",
+      "cloudfront-edge-restrictions-all",
+      "cloudfront-edge-function-logs",
+      "lambda-edge-restrictions",
+      "lambda-edge-permissions",
+      "lambda-edge-delete-replicas",
+      "aws-blog-kvs-launch",
+      "cloudfront-pricing-payg",
+      "aws-price-list-cloudfront",
+      "aws-sdk-signature-v4a",
+      "cloudflare-workers-limits",
+      "cloudflare-workers-pricing",
+      "cloudflare-kv-how-it-works",
+      "cloudflare-kv-limits",
+      "cdkd-npm",
+      "cdkd-register-providers"
+    ]
+  },
+  "sources": [
+    {
+      "id": "cloudfront-functions-restrictions",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-function-restrictions.html",
+      "title": "Restrictions on CloudFront Functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront Functions cannot read the request body",
+        "The runtime restricts network, file system, environment variable, and timer access",
+        "Execution time is limited and reported as compute utilization",
+        "Function logs are truncated at 10 KB",
+        "KeyValueStore requires JavaScript runtime 2.0",
+        "The KeyValueStore API uses SigV4A, which needs version 2 session tokens: use a Regional STS endpoint"
+      ]
+    },
+    {
+      "id": "cloudfront-functions-runtime-20",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/functions-javascript-runtime-20.html",
+      "title": "JavaScript runtime 2.0 features for CloudFront Functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The runtime is ES 5.1 compliant with selected ES 6 to 12 features; const, let, async, and await are supported in runtime 2.0",
+        "No eval or Function constructor, no setTimeout/setImmediate/clearTimeout, no file system, no process, no environment variables, no network calls",
+        "Date returns the function's start time for the whole run",
+        "console supports only log(), without comma-separated arguments",
+        "Built-in modules are buffer, querystring, and crypto"
+      ],
+      "note": "The page lists supported features. Syntax it does not list (optional chaining, spread, destructuring, classes, for...of) is treated as unsupported in this book; that inference was not tested on the runtime."
+    },
+    {
+      "id": "cloudfront-functions-event-structure",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/functions-event-structure.html",
+      "title": "CloudFront Functions event structure",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A function can return a response with statusCode, headers, and a body given as { encoding, data }",
+        "A status of 400 or above returned by a function is not replaced by a custom error page"
+      ]
+    },
+    {
+      "id": "cloudfront-functions-test",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/test-function.html",
+      "title": "Test functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront can run a function against an event object before it is live and report the result, logs, and compute utilization"
+      ]
+    },
+    {
+      "id": "cloudfront-kvs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions.html",
+      "title": "Amazon CloudFront KeyValueStore",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Read-only key-value data for CloudFront Functions",
+        "Values are strings, byte-encoded strings, or JSON",
+        "Intended uses include URL rewrites and redirects, A/B testing and feature flags, and access authorization"
+      ]
+    },
+    {
+      "id": "cloudfront-kvs-helper-methods",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/functions-custom-methods.html",
+      "title": "Helper methods for key value stores",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A function starts with `import cf from 'cloudfront'` and `cf.kvs()`",
+        "get(key, { format }) rejects when the key does not exist; exists(key) and meta() are the other two methods",
+        "Awaiting reads one after another is recommended over promise combinators, which use more memory and are not faster",
+        "meta().lastUpdatedDateTime does not include the propagation time to the edge"
+      ]
+    },
+    {
+      "id": "cloudfront-kvs-data",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-kvp.html",
+      "title": "Work with key value data",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Pairs in an existing store are changed through the CloudFront KeyValueStore API, which is global and uses SigV4A",
+        "Write operations take the store's ETag as If-Match and return a new ETag",
+        "The ETags of the CloudFront API and the KeyValueStore API are not interchangeable",
+        "UpdateKeys is one all-or-nothing operation",
+        "Values are not changed during a function invocation; updates are processed between invocations"
+      ]
+    },
+    {
+      "id": "cloudfront-kvs-create",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-create.html",
+      "title": "Create a key value store",
+      "checkedAt": "2026-10-11",
+      "supports": ["A file of pairs can be imported only when the store is first created"]
+    },
+    {
+      "id": "cloudfront-kvs-file-format",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-create-s3-kvp.html",
+      "title": "File format for key-value pairs",
+      "checkedAt": "2026-10-11",
+      "supports": ["Import file limits: 5 MB, 512-character keys, 1024-character values, no duplicate keys"]
+    },
+    {
+      "id": "cloudfront-kvs-api-updatekeys",
+      "url": "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_kvs_UpdateKeys.html",
+      "title": "CloudFront KeyValueStore API: UpdateKeys",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "UpdateKeys requires If-Match and returns the new ETag, ItemCount, and TotalSizeInBytes",
+        "Listed errors: AccessDenied 403, Conflict 409, InternalServer 500, ResourceNotFound 404, ServiceQuotaExceeded 402, Validation 400"
+      ],
+      "note": "The page does not say which error a stale If-Match produces."
+    },
+    {
+      "id": "cloudfront-kvs-api-listkeys",
+      "url": "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_kvs_ListKeys.html",
+      "title": "CloudFront KeyValueStore API: ListKeys",
+      "checkedAt": "2026-10-11",
+      "supports": ["ListKeys returns at most 50 pairs per call (default 10) and a NextToken"]
+    },
+    {
+      "id": "cloudfront-quotas",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-limits.html",
+      "title": "CloudFront quotas",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront Functions: 10 KB maximum function size (not adjustable), 2 MB maximum function memory, 100 functions per account",
+        "Key value stores: 512-byte key, 1 KB value, 5 MB per store, 50 keys or 3 MB per update request, one store per function, 100 functions per store, 200 stores per account",
+        "Lambda@Edge: 30-second function timeout, 50 MB compressed size, generated response up to 40 KB (viewer events) or 1 MB (origin events), 10,000 requests per second per Region"
+      ]
+    },
+    {
+      "id": "cloudfront-edge-functions-choosing",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-choosing.html",
+      "title": "Differences between CloudFront Functions and Lambda@Edge",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront Functions run on viewer request and viewer response only; Lambda@Edge also on origin request and origin response",
+        "CloudFront Functions: submillisecond duration, 2 MB memory, 10 KB code, no network, no file system, no request body",
+        "Lambda@Edge: Node.js and Python, up to 30 seconds, network and file system access, request body access, no KeyValueStore"
+      ]
+    },
+    {
+      "id": "cloudfront-edge-restrictions-all",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-function-restrictions-all.html",
+      "title": "Restrictions on all edge functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "One edge function per event type per cache behavior",
+        "CloudFront Functions and Lambda@Edge cannot be combined on viewer events; a CloudFront Function on a viewer event with Lambda@Edge on an origin event is allowed",
+        "Viewer response functions are not invoked when the origin returns 400 or higher"
+      ]
+    },
+    {
+      "id": "cloudfront-edge-function-logs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-logs.html",
+      "title": "Edge function logs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront Functions log only console.log() lines, always to us-east-1, in /aws/cloudfront/function/<FunctionName>",
+        "Lambda@Edge logs to /aws/lambda/us-east-1.<FunctionName> in the Region where the function ran",
+        "Edge function logs are delivered on a best-effort basis"
+      ]
+    },
+    {
+      "id": "lambda-edge-restrictions",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-edge-function-restrictions.html",
+      "title": "Restrictions on Lambda@Edge",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The function must be in us-east-1 and must be referenced by a numbered version, not $LATEST or an alias",
+        "Not supported: environment variables (other than reserved ones), VPC access, layers, dead letter queues, X-Ray, provisioned concurrency, container images, arm64, more than 512 MB of ephemeral storage",
+        "With include body, the body is base64 encoded and truncated at 40 KB (viewer request) or 1 MB (origin request)",
+        "The execution role must be assumable by lambda.amazonaws.com and edgelambda.amazonaws.com"
+      ]
+    },
+    {
+      "id": "lambda-edge-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-edge-permissions.html",
+      "title": "Set up IAM permissions and roles for Lambda@Edge",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Associating a function needs lambda:GetFunction, lambda:EnableReplication*, lambda:DisableReplication*, and iam:CreateServiceLinkedRole",
+        "The service-linked roles AWSServiceRoleForLambdaReplicator and AWSServiceRoleForCloudFrontLogger are created automatically"
+      ]
+    },
+    {
+      "id": "lambda-edge-delete-replicas",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-edge-delete-replicas.html",
+      "title": "Delete Lambda@Edge functions and replicas",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A Lambda@Edge function can be deleted only after CloudFront has deleted its replicas, typically within a few hours of removing the last association"
+      ]
+    },
+    {
+      "id": "aws-blog-kvs-launch",
+      "url": "https://aws.amazon.com/blogs/aws/introducing-amazon-cloudfront-keyvaluestore-a-low-latency-datastore-for-cloudfront-functions/",
+      "title": "AWS News Blog: Introducing Amazon CloudFront KeyValueStore",
+      "checkedAt": "2026-10-11",
+      "supports": ["Updates to a store are described as propagating to all edge locations in a few seconds"],
+      "note": "A launch post, not a specification. The Developer Guide pages read for this chapter give no propagation time and no guarantee."
+    },
+    {
+      "id": "cloudfront-pricing-payg",
+      "url": "https://aws.amazon.com/cloudfront/pricing/pay-as-you-go/",
+      "title": "Amazon CloudFront pay-as-you-go pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Always-free each month: 1 TB data transfer out, 10,000,000 HTTP/HTTPS requests, 2,000,000 CloudFront Function invocations, 2,000,000 KeyValueStore reads",
+        "First 1,000 invalidation paths per month are free, then USD 0.005 per path",
+        "Origin fetches from AWS origins such as S3 are free of data-transfer charges",
+        "KeyValueStore reads from functions cost USD 0.03 per million; other KeyValueStore API actions cost USD 1 per 1,000 requests",
+        "Lambda@Edge costs USD 0.60 per million requests and USD 0.00005001 per GB-second, metered per millisecond, with no free tier"
+      ]
+    },
+    {
+      "id": "aws-sdk-signature-v4a",
+      "url": "https://registry.npmjs.org/@aws-sdk/signature-v4a",
+      "title": "@aws-sdk/signature-v4a 3.1138.0 (npm registry metadata and package source)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Importing the package registers a JavaScript SigV4A signer that @aws-sdk/signature-v4-multi-region uses when no CRT signer is loaded"
+      ],
+      "note": "Read from the installed package and from @aws-sdk/signature-v4-multi-region 3.996.48. The AWS documentation example imports @aws-sdk/signature-v4-crt instead."
+    },
+    {
+      "id": "cloudflare-workers-limits",
+      "url": "https://developers.cloudflare.com/workers/platform/limits/",
+      "title": "Cloudflare Workers: Limits",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CPU time per HTTP request: 10 ms on Workers Free, 30 seconds by default and up to 5 minutes on Workers Paid; waiting on fetch or KV does not count",
+        "128 MB of memory per isolate; Worker size up to 64 MiB uncompressed",
+        "Subrequests per invocation: 50 on Free, 10,000 by default on Paid",
+        "No hard duration limit for HTTP-triggered Workers while the client stays connected"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-pricing",
+      "url": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "title": "Cloudflare Workers: Pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Workers Free: 100,000 requests per day",
+        "Workers Standard: 10 million requests and 30 million CPU milliseconds included per month, then USD 0.30 per million requests and USD 0.02 per million CPU milliseconds"
+      ]
+    },
+    {
+      "id": "cloudflare-kv-how-it-works",
+      "url": "https://developers.cloudflare.com/kv/concepts/how-kv-works/",
+      "title": "Cloudflare Workers KV: How KV works",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "KV is eventually consistent: a change may take up to 60 seconds or more to be visible in other locations",
+        "Data is stored centrally and cached at locations after access"
+      ]
+    },
+    {
+      "id": "cloudflare-kv-limits",
+      "url": "https://developers.cloudflare.com/kv/platform/limits/",
+      "title": "Cloudflare Workers KV: Limits",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Key size 512 bytes, value size 25 MiB, 1 write per second to the same key",
+        "A Worker can write to KV; Free allows 1,000 writes per day"
+      ]
+    },
+    {
+      "id": "cdkd-register-providers",
+      "url": "https://raw.githubusercontent.com/go-to-k/cdkd/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: src/provisioning/register-providers.ts",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Dedicated providers exist for AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::CloudFront::OriginAccessControl, AWS::CloudFront::Distribution, AWS::IAM::Role, AWS::IAM::Policy, and AWS::Lambda::Function",
+        "No provider is registered for AWS::CloudFront::Function, AWS::CloudFront::KeyValueStore, or AWS::Lambda::Version, so they go through Cloud Control API"
+      ]
+    },
+    {
+      "id": "cdkd-npm",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (npm tarball and tagged source)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Command list, flags, and exit codes used by tools/src/infra and tools/src/drift",
+        "`drift --json` output shape (StackDriftJson) and exit codes 0/1/2",
+        "`cdkd bootstrap` creates cdkd-state-{account}, cdkd-assets-{account}-{region}, and an ECR repository; it creates no IAM roles and no CDKToolkit stack",
+        "Without AWS_REGION cdkd uses us-east-1",
+        "A CloudFront distribution is waited for only with --full-wait",
+        "State is stored at s3://{bucket}/{prefix}/{stack}/{region}/state.json with an S3 conditional-write lock",
+        "AWS::CloudFront::Function is provisioned and read back through Cloud Control API, not a dedicated provider",
+        "A non-empty bucket without the CDK auto-delete tag makes destroy fail",
+        "AWS::CloudFront::KeyValueStore is in the list of stateful types, whose replacement needs --force-stateful-recreation",
+        "Asset publishing uses the stack's own region when the stack sets one (stack.region || base region)",
+        "`cdkd local start-cloudfront` serves a distribution locally with its viewer-request functions; --kvs-file backs cf.kvs().get() with a JSON file, and Lambda@Edge is skipped with a warning"
+      ],
+      "note": "Read from the published tarball, --help output, and the v0.296.28 source tag. No cdkd command was run against AWS."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "cloudfront-functions",
+      "ja": "CloudFront Functions",
+      "en": "CloudFront Functions",
+      "firstUse": "10",
+      "definition": {
+        "ja": "CloudFront の edge location で、リクエストやレスポンスのたびに動く小さな JavaScript。ネットワークにもファイルにも触れず、URL やヘッダーの書き換えに使う。",
+        "en": "Small JavaScript that runs at CloudFront edge locations on each request or response. It cannot reach the network or files and is used to rewrite URLs and headers."
+      }
+    },
+    {
+      "id": "viewer-request",
+      "ja": "viewer request",
+      "en": "viewer request",
+      "firstUse": "10",
+      "definition": {
+        "ja": "CloudFront が読者からリクエストを受け取った直後、cache を調べる前のタイミング。",
+        "en": "The moment right after CloudFront receives a request from the reader, before it looks in the cache."
+      }
+    },
+    {
+      "id": "key-value-store",
+      "ja": "KeyValueStore",
+      "en": "KeyValueStore",
+      "firstUse": "10",
+      "definition": {
+        "ja": "CloudFront Functions から読める、キーと値の保存場所。関数からは読むだけで、書き換えは外から API で行う。",
+        "en": "A store of key-value pairs that CloudFront Functions can read. Functions only read it; changes come from outside through an API."
+      }
+    },
+    {
+      "id": "lambda-at-edge",
+      "ja": "Lambda@Edge",
+      "en": "Lambda@Edge",
+      "firstUse": "10",
+      "definition": {
+        "ja": "us-east-1 に作った Lambda 関数の version を CloudFront が各地に複製し、リクエストの途中で呼ぶ仕組み。",
+        "en": "A version of a Lambda function created in us-east-1 that CloudFront replicates around the world and invokes partway through a request."
+      }
+    },
+    {
+      "id": "etag-precondition",
+      "ja": "ETag による条件付き更新",
+      "en": "ETag precondition",
+      "firstUse": "10",
+      "definition": {
+        "ja": "読んだときの版（ETag）を書き込みに添え、その間に他の誰かが書き換えていたら拒否してもらう方法。",
+        "en": "Sending the version (ETag) you read along with a write, so the write is refused if someone else changed the data in between."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "10.architecture",
+      "sources": ["examples/10-edge/infra/lib/edge-stack.ts", "examples/10-edge/infra/bin/app.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "10.limits",
+      "sources": ["examples/10-edge/infra/functions/edge-router.js"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.router",
+      "sources": ["examples/10-edge/infra/functions/edge-router.js", "examples/10-edge/edge-data.json"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "10.tests",
+      "sources": ["examples/10-edge/src/local/load-function.ts", "examples/10-edge/infra/test/edge-router.test.ts"],
+      "tasks": ["test:unit", "typecheck"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "10.local",
+      "sources": ["examples/10-edge/src/local/dev.ts", "examples/10-edge/site", "examples/10-edge/scripts/kvs-file.ts"],
+      "tasks": ["dev:edge", "dev:edge:cdkd"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "10.kvs",
+      "sources": ["examples/10-edge/src/kvs/config.ts", "examples/10-edge/test/kvs.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "10.sync",
+      "sources": [
+        "examples/10-edge/src/kvs/plan.ts",
+        "examples/10-edge/src/kvs/sync.ts",
+        "examples/10-edge/src/kvs/store.ts",
+        "examples/10-edge/scripts/kvs-sync.ts",
+        "examples/10-edge/test/sync.test.ts",
+        "examples/10-edge/test/store.test.ts"
+      ],
+      "tasks": ["edge:kvs:plan", "edge:kvs:sync", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "10.infra",
+      "sources": [
+        "examples/10-edge/infra/lib/edge-stack.ts",
+        "examples/10-edge/infra/test/edge-stack.test.ts",
+        "examples/10-edge/cdk.json"
+      ],
+      "tasks": ["edge:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "10.deploy",
+      "sources": ["tools/src/infra/cdkd.ts", "tools/src/site/publish.ts", "examples/10-edge/scripts/kvs-sync.ts"],
+      "tasks": [
+        "edge:infra:diff",
+        "edge:infra:deploy",
+        "edge:publish",
+        "edge:kvs:plan",
+        "edge:kvs:sync",
+        "edge:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.lambda-edge",
+      "sources": [
+        "examples/10-edge/src/lambda-edge/body-digest.ts",
+        "examples/10-edge/infra/lib/body-digest-stack.ts",
+        "examples/10-edge/infra/test/body-digest-stack.test.ts",
+        "examples/10-edge/test/body-digest.test.ts"
+      ],
+      "tasks": ["edge:body:infra:synth", "edge:body:infra:deploy", "edge:body:infra:destroy", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "10.placement",
+      "sources": ["examples/10-edge/infra/lib/edge-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.workers",
+      "sources": ["examples/10-edge/infra/functions/edge-router.js"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "10.cost",
+      "sources": ["data/pricing/scenarios.json", "tools/src/pricing/calc.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "10.cleanup",
+      "sources": ["tools/src/site/unpublish.ts", "tools/src/infra/cdkd.ts"],
+      "tasks": ["edge:unpublish", "edge:infra:destroy", "edge:body:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "cloudfront.kvs.read",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "UJQ4XVRAX798D7BU",
+      "usageType": "KeyValueStore-EdgeReads",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "EdgeReads",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 2000000,
+          "usd": "0.0000000000",
+          "description": "$0 for First 2,000,000 CloudFront KeyValueStore EdgeReads"
+        },
+        {
+          "from": 2000000,
+          "to": null,
+          "usd": "0.0000000300",
+          "description": "$0.03 per 1,000,000 CloudFront KeyValueStore EdgeReads"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.kvs.api",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "VGGT5H7FE95Y29Y4",
+      "usageType": "KeyValueStore-APIOperations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "API Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0010000000",
+          "description": "$1 per 1000 CloudFront KeyValueStore API Operations"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambdaedge.jp.request",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "R5NDBF38K3GVAYYG",
+      "usageType": "APN1-Lambda-Edge-Request",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000006000",
+          "description": "$6.0E-7  per Request for Lambda-Edge-Request in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambdaedge.jp.duration",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "8AH7WHHPAA452VWV",
+      "usageType": "APN1-Lambda-Edge-GB-Second",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000500100",
+          "description": "$0.00005001 per Lambda-GB-Second for Lambda-Edge-GB-Second in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "cloudfront.kvs.read",
+      "quantity": 2000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cloudfront-pricing-payg",
+      "note": "Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only."
+    }
+  ],
+  "unknownAllowances": [
+    {
+      "priceId": "cloudfront.kvs.api",
+      "reason": "The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "edge-small",
+      "chapter": "10",
+      "title": {
+        "ja": "edge の例: 月 100 万リクエスト",
+        "en": "Edge example: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "すべて日本の edge から配信、HTTPS、1 リクエスト平均 20 KB",
+          "内訳はトップページ 10%、その他のページ 20%、ファイル 70%。関数はそれぞれ KeyValueStore を 3 回、2 回、1 回読む",
+          "CloudFront Function は全リクエストで実行",
+          "cache miss と再検証で origin へ 1/3 が届くと仮定",
+          "edge:kvs:sync を月 20 回（Describe 1、ListKeys 1、UpdateKeys 1）、edge:kvs:plan を月 10 回（Describe 1、ListKeys 1）",
+          "Lambda@Edge は POST /digest の 1 万回だけ。128 MB、平均 50 ミリ秒と仮定",
+          "Lambda@Edge のログ（CloudWatch Logs）、標準ログ、WAF、独自ドメインは含まない"
+        ],
+        "en": [
+          "Served entirely from Japan edge locations over HTTPS, 20 KB per request on average",
+          "10% home page, 20% other pages, 70% files; the function reads KeyValueStore 3, 2, and 1 times respectively",
+          "The CloudFront Function runs on every request",
+          "One third of requests assumed to reach the origin through cache misses and revalidation",
+          "edge:kvs:sync 20 times a month (1 Describe, 1 ListKeys, 1 UpdateKeys) and edge:kvs:plan 10 times (1 Describe, 1 ListKeys)",
+          "Lambda@Edge runs only for 10,000 POST /digest requests, assumed 128 MB and 50 ms on average",
+          "Lambda@Edge logs in CloudWatch Logs, standard logging, WAF, and a custom domain are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 1000000,
+          "basis": "1,000,000 viewer requests"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 19.073486,
+          "basis": "1,000,000 requests x 20 KB, in GB"
+        },
+        {
+          "priceId": "cloudfront.function.execution",
+          "quantity": 1000000,
+          "basis": "one execution per viewer request"
+        },
+        {
+          "priceId": "cloudfront.kvs.read",
+          "quantity": 1400000,
+          "basis": "100,000 x 3 + 200,000 x 2 + 700,000 x 1 reads"
+        },
+        {
+          "priceId": "cloudfront.kvs.api",
+          "quantity": 80,
+          "basis": "20 syncs x 3 calls + 10 dry runs x 2 calls"
+        },
+        {
+          "priceId": "lambdaedge.jp.request",
+          "quantity": 10000,
+          "basis": "10,000 POST /digest requests"
+        },
+        {
+          "priceId": "lambdaedge.jp.duration",
+          "quantity": 62.5,
+          "basis": "10,000 x 0.05 s x 0.125 GB"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 333333,
+          "basis": "one third of 1,000,000 requests reach S3 as GET"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "10",
+        "command": "vp test run examples/10-edge",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "関数（node:vm で実ファイルを実行）、KeyValueStore の計画と同期、SDK adapter、Lambda@Edge の handler、2 つの stack",
+          "en": "The function (the deployed file run under node:vm), KeyValueStore planning and sync, the SDK adapter, the Lambda@Edge handler, and both stacks"
+        }
+      },
+      {
+        "scope": "10",
+        "command": "vp run edge:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "AihEdge は 6 リソース、AihEdgeBodyDigest は 4 リソース（esbuild の bundle 込み、Docker なし）。-c bodyDigestVersionArn を付けた synth も確認",
+          "en": "AihEdge has 6 resources and AihEdgeBodyDigest 4 (esbuild bundle included, no Docker). Also synthesized with -c bodyDigestVersionArn"
+        }
+      },
+      {
+        "scope": "10",
+        "command": "vp run dev:edge + curl",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "本文の curl（redirect、query string の引き継ぎ、書き換え、404）と、edge-data.json の maintenance / newHome の切り替えを確認",
+          "en": "Ran the curl commands from the chapter (redirects, query string carry-over, rewrites, 404) and flipped maintenance / newHome in edge-data.json"
+        }
+      },
+      {
+        "scope": "10",
+        "command": "vp run dev:edge:cdkd + curl",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "cdkd local start-cloudfront（--kvs-file、--origin）。Docker の daemon が無い状態で起動し、dev:edge と同じ応答を確認。認証情報は使っていない",
+          "en": "cdkd local start-cloudfront (--kvs-file, --origin). Started with no Docker daemon running and returned the same responses as dev:edge. No credentials were used"
+        }
+      },
+      {
+        "scope": "10",
+        "command": "vp run typecheck (examples/10-edge)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "10",
+        "command": "vp run edge:infra:diff / deploy / drift / destroy, edge:publish / unpublish",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "S3、CloudFront の distribution、Function、KeyValueStore を作る",
+          "en": "Creates an S3 bucket, a CloudFront distribution, a function, and a key value store"
+        }
+      },
+      {
+        "scope": "10",
+        "command": "vp run edge:kvs:plan / edge:kvs:sync",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイ済みの KeyValueStore が必要。API 操作は 1,000 回あたり USD 1",
+          "en": "Needs the deployed key value store. API operations cost USD 1 per 1,000"
+        }
+      },
+      {
+        "scope": "10",
+        "command": "vp run edge:body:infra:deploy / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "us-east-1 に Lambda 関数と version、IAM role を作る",
+          "en": "Creates a Lambda function, a version, and an IAM role in us-east-1"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "edge-function-on-real-runtime",
+        "summary": {
+          "ja": "10章の edge-router.js を CloudFront Functions の runtime 2.0 で実行していない。構文、10 KB、2 MB、実行時間（compute utilization）、cf.kvs() を ID なしで呼ぶ形、存在しないキーで get() が reject することは、ドキュメントと Node.js 上のテストでしか確かめていない。",
+          "en": "Chapter 10's edge-router.js has not run on the CloudFront Functions runtime 2.0. Its syntax, the 10 KB and 2 MB limits, execution time (compute utilization), calling cf.kvs() without an ID, and get() rejecting for a missing key are confirmed only by documentation and tests under Node.js."
+        },
+        "resume": {
+          "ja": "vp run edge:infra:deploy の後、aws cloudfront test-function（stage DEVELOPMENT、本文の event）で結果と ComputeUtilization を記録する。続けて edge:publish、edge:kvs:sync を実行し、本文の curl を試す。",
+          "en": "After vp run edge:infra:deploy, run aws cloudfront test-function (stage DEVELOPMENT, with the event from the chapter) and record the result and ComputeUtilization. Then run edge:publish and edge:kvs:sync and try the chapter's curl commands."
+        }
+      },
+      {
+        "id": "kvs-stale-etag-error",
+        "summary": {
+          "ja": "KeyValueStore API が古い If-Match に対して返すエラーの種類を確認していない。API リファレンスは ConflictException（409）を載せているが、どの条件で返るかは書いていない。10章の adapter は ConflictException だけを競合として扱い、それ以外は再試行せずに止まる。",
+          "en": "Which error the KeyValueStore API returns for a stale If-Match is unconfirmed. The API reference lists ConflictException (409) without saying when it is returned. Chapter 10's adapter treats only ConflictException as a conflict and stops without retrying on anything else."
+        },
+        "resume": {
+          "ja": "デプロイ後、aws cloudfront-keyvaluestore put-key を古い ETag の --if-match で実行し、エラー名と状態コードを記録する。ConflictException でなければ examples/10-edge/src/kvs/store.ts の translate と test/store.test.ts を直す。",
+          "en": "After deploying, run aws cloudfront-keyvaluestore put-key with an old ETag as --if-match and record the error name and status code. If it is not ConflictException, fix translate in examples/10-edge/src/kvs/store.ts and test/store.test.ts."
+        }
+      },
+      {
+        "id": "kvs-propagation-time",
+        "summary": {
+          "ja": "KeyValueStore の更新が edge に届くまでの時間を計測していない。Developer Guide に数値はなく、AWS News Blog の「a few seconds」だけが手がかり。",
+          "en": "The time for a KeyValueStore update to reach the edge has not been measured. The Developer Guide gives no figure; the only hint is \"a few seconds\" in the AWS News Blog."
+        },
+        "resume": {
+          "ja": "edge-data.json の maintenance を true にして edge:kvs:sync を実行し、完了時刻から、curl が 503 を返し始めるまでを複数回計る。計った場所と回数を添えて記録する（保証値としては書かない）。",
+          "en": "Set maintenance to true in edge-data.json, run edge:kvs:sync, and time from its completion until curl starts returning 503, several times. Record it with where and how often it was measured, never as a guarantee."
+        }
+      },
+      {
+        "id": "cdkd-kvs-and-lambda-edge",
+        "summary": {
+          "ja": "cdkd 0.296.28 で AWS::CloudFront::KeyValueStore（Cloud Control API 経由、stateful 扱い）と、us-east-1 の stack にある Lambda@Edge 用の関数と AWS::Lambda::Version を実際に作成・更新・削除できるかは未確認。ソースからは、stack 自身のリージョンが使われることと、us-east-1 にも cdkd の asset 置き場が要りそうなことまでしか読み取れていない。Node.js 24 が Lambda@Edge で使えることも個別には確認していない。",
+          "en": "Whether cdkd 0.296.28 can create, update, and delete AWS::CloudFront::KeyValueStore (through Cloud Control API, treated as stateful) and the Lambda@Edge function and AWS::Lambda::Version in a us-east-1 stack is unconfirmed. The source shows only that the stack's own region is used and that cdkd's asset storage is probably needed in us-east-1 too. Node.js 24 on Lambda@Edge was not confirmed separately either."
+        },
+        "resume": {
+          "ja": "AIH_AWS_REGION=us-east-1 vp run infra:bootstrap の後に vp run edge:body:infra:deploy を実行する。出力の BodyDigestVersionArn を -c bodyDigestVersionArn=... で vp run edge:infra:deploy に渡し、curl -X POST で /digest を確かめる。失敗したら内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
+          "en": "Run AIH_AWS_REGION=us-east-1 vp run infra:bootstrap, then vp run edge:body:infra:deploy. Pass the BodyDigestVersionArn output to vp run edge:infra:deploy with -c bodyDigestVersionArn=..., and check /digest with curl -X POST. If it fails, record how and ask the author for a decision; do not substitute another tool."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 10: edge ----------------------------------------------\n      // The deployed function file in front of site/, under plain Node. No Docker, no AWS.\n      \"dev:edge\": fresh(\"node --watch src/local/dev.ts\", { cwd: \"examples/10-edge\" }),\n      // cdkd's own CloudFront emulator, with the store backed by a local file. No AWS.\n      \"dev:edge:cdkd\": fresh(\n        \"node scripts/kvs-file.ts cdk.out/kvs.local.json && ./node_modules/.bin/cdkd local start-cloudfront AihEdge/Distribution --port 8791 --origin AihEdgeDistributionOrigin162E160A1=site --kvs-file EdgeData=cdk.out/kvs.local.json\",\n        { cwd: \"examples/10-edge\" },\n      ),\n      ...infra(\"edge\", \"examples/10-edge\", \"AihEdge\"),\n      // The Lambda@Edge function. Its stack is in us-east-1, whatever AIH_AWS_REGION says.\n      ...infra(\"edge:body\", \"examples/10-edge\", \"AihEdgeBodyDigest\"),\n      \"edge:publish\": live(`${node} tools/src/site/publish.ts examples/10-edge AihEdge examples/10-edge/site`),\n      \"edge:unpublish\": live(`${node} tools/src/site/unpublish.ts examples/10-edge AihEdge`),\n      // Compares edge-data.json with the key value store. Reads only.\n      \"edge:kvs:plan\": live(\"node --env-file-if-exists=../../.env scripts/kvs-sync.ts --dry-run\", {\n        cwd: \"examples/10-edge\",\n      }),\n      \"edge:kvs:sync\": live(\"node --env-file-if-exists=../../.env scripts/kvs-sync.ts\", { cwd: \"examples/10-edge\" }),",
+    "synth": ["edge:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/10-edge"]
+  }
+}

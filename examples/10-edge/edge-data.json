@@ -1,0 +1,12 @@
+{
+  "flags": {
+    "maintenance": false,
+    "newHome": false
+  },
+  "redirects": [
+    { "from": "/plans", "to": "/pricing/", "status": 301 },
+    { "from": "/plans/", "to": "/pricing/", "status": 301 },
+    { "from": "/pricing", "to": "/pricing/", "status": 301 },
+    { "from": "/sale", "to": "/pricing/?campaign=autumn", "status": 302 }
+  ]
+}

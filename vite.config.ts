@@ -72,6 +72,7 @@ const chapterSynthTasks = [
   "net:infra:synth",
   "ai:infra:synth",
   "mail:infra:synth",
+  "edge:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -186,6 +187,27 @@ export default defineConfig({
       "mail:dns": live("node --env-file-if-exists=../../.env scripts/dns.ts", { cwd: "examples/15-email" }),
       "mail:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/15-email" }),
       // <<< chapter 15
+
+      // >>> chapter 10
+      // ---- chapter 10: edge ----------------------------------------------
+      // The deployed function file in front of site/, under plain Node. No Docker, no AWS.
+      "dev:edge": fresh("node --watch src/local/dev.ts", { cwd: "examples/10-edge" }),
+      // cdkd's own CloudFront emulator, with the store backed by a local file. No AWS.
+      "dev:edge:cdkd": fresh(
+        "node scripts/kvs-file.ts cdk.out/kvs.local.json && ./node_modules/.bin/cdkd local start-cloudfront AihEdge/Distribution --port 8791 --origin AihEdgeDistributionOrigin162E160A1=site --kvs-file EdgeData=cdk.out/kvs.local.json",
+        { cwd: "examples/10-edge" },
+      ),
+      ...infra("edge", "examples/10-edge", "AihEdge"),
+      // The Lambda@Edge function. Its stack is in us-east-1, whatever AIH_AWS_REGION says.
+      ...infra("edge:body", "examples/10-edge", "AihEdgeBodyDigest"),
+      "edge:publish": live(`${node} tools/src/site/publish.ts examples/10-edge AihEdge examples/10-edge/site`),
+      "edge:unpublish": live(`${node} tools/src/site/unpublish.ts examples/10-edge AihEdge`),
+      // Compares edge-data.json with the key value store. Reads only.
+      "edge:kvs:plan": live("node --env-file-if-exists=../../.env scripts/kvs-sync.ts --dry-run", {
+        cwd: "examples/10-edge",
+      }),
+      "edge:kvs:sync": live("node --env-file-if-exists=../../.env scripts/kvs-sync.ts", { cwd: "examples/10-edge" }),
+      // <<< chapter 10
 
       // ---- chapter task blocks are inserted above this line ----
 
