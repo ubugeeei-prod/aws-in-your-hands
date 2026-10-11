@@ -109,6 +109,10 @@
     {
       "priceId": "bedrock.claude-haiku-4-5.output",
       "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "ses.outbound.message",
+      "reason": "The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied."
     }
   ]
 }

@@ -1199,6 +1199,162 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "15.architecture",
+      "sources": ["examples/15-email/infra/lib/email-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "15.message",
+      "sources": [
+        "examples/15-email/src/contract.ts",
+        "examples/15-email/src/message.ts",
+        "examples/15-email/test/message.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "15.adapters",
+      "sources": [
+        "examples/15-email/src/mailer.ts",
+        "examples/15-email/src/ses-mailer.ts",
+        "examples/15-email/src/compose.ts",
+        "examples/15-email/test/ses-mailer.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "15.order",
+      "sources": [
+        "examples/15-email/src/notify.ts",
+        "examples/15-email/src/store.ts",
+        "examples/15-email/src/memory-store.ts",
+        "examples/15-email/src/dynamodb-store.ts",
+        "examples/15-email/test/dynamodb-store.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "15.faults",
+      "sources": ["examples/15-email/test/notify.test.ts", "examples/15-email/test/setup.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "15.local",
+      "sources": [
+        "examples/15-email/src/dev.ts",
+        "examples/15-email/src/app.ts",
+        "examples/15-email/src/env.ts",
+        "examples/15-email/test/app.test.ts",
+        "examples/15-email/test/env.test.ts",
+        "examples/15-email/.env.example"
+      ],
+      "tasks": ["dev:mail", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "15.events",
+      "sources": [
+        "examples/15-email/src/events.ts",
+        "examples/15-email/src/events-lambda.ts",
+        "examples/15-email/src/store.ts",
+        "examples/15-email/test/events.test.ts",
+        "examples/15-email/test/fixtures"
+      ],
+      "tasks": ["test:unit", "dev:mail"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "15.infra",
+      "sources": [
+        "examples/15-email/infra/lib/email-stack.ts",
+        "examples/15-email/infra/bin/app.ts",
+        "examples/15-email/infra/test/email-stack.test.ts",
+        "examples/15-email/cdk.json"
+      ],
+      "tasks": ["mail:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "15.identity",
+      "sources": ["examples/15-email/infra/lib/email-stack.ts", "examples/15-email/infra/bin/app.ts"],
+      "tasks": ["mail:infra:diff", "mail:infra:deploy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "15.dns",
+      "sources": [
+        "examples/15-email/src/dns.ts",
+        "examples/15-email/scripts/dns.ts",
+        "examples/15-email/test/dns.test.ts"
+      ],
+      "tasks": ["mail:dns", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "15.deploy",
+      "sources": [
+        "examples/15-email/scripts/send.ts",
+        "examples/15-email/scripts/status.ts",
+        "examples/15-email/scripts/signed-fetch.ts",
+        "examples/15-email/scripts/logs.ts",
+        "examples/15-email/src/lambda.ts",
+        "tools/src/infra/cdkd.ts"
+      ],
+      "tasks": ["mail:send", "mail:status", "mail:logs", "mail:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "15.production",
+      "sources": ["examples/15-email/infra/lib/email-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "15.cloudflare",
+      "sources": ["examples/15-email/src/ses-mailer.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "15.cleanup",
+      "sources": ["tools/src/infra/cdkd.ts"],
+      "tasks": ["mail:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

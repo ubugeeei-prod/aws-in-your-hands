@@ -954,6 +954,75 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-10-08T23:56:37Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ses.outbound.message",
+      "offerCode": "AmazonSES",
+      "region": "ap-northeast-1",
+      "sku": "824QF4XUVN48GVC9",
+      "usageType": "APN1-Recipients",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Count",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0001000000",
+          "description": "USD0.0001 per Count for Recipients:Send in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSES/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:07Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "sns.request",
+      "offerCode": "AmazonSNS",
+      "region": "ap-northeast-1",
+      "sku": "RFRANPTXHKXT5NFV",
+      "usageType": "APN1-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 1000000,
+          "usd": "0.0000000000",
+          "description": "First 1,000,000 Amazon SNS API Requests per month are free"
+        },
+        {
+          "from": 1000000,
+          "to": null,
+          "usd": "0.0000005000",
+          "description": "$0.50 per 1,000,000 Amazon SNS API Requests per month thereafter"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-15T15:19:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "sns.delivery.lambda",
+      "offerCode": "AmazonSNS",
+      "region": "ap-northeast-1",
+      "sku": "GZNUJ63SPZ7676HZ",
+      "usageType": "APN1-DeliveryAttempts-LAMBDA",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Notifications",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000000000",
+          "description": "There is no charge for Lambda Notifications"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-15T15:19:44Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

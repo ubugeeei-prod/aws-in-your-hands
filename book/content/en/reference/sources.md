@@ -1357,6 +1357,355 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - The default retry strategy makes up to 3 attempts
 - Note: Read from the type definitions and from @smithy/core 3.35.2 (event-streams getUnmarshalledStream.js, DEFAULT_MAX_ATTEMPTS) in the installed packages. No request was sent.
 
+### Request production access (Moving out of the Amazon SES sandbox)
+
+- ID: `ses-production-access`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - New accounts start in the SES sandbox, and the sandbox status is per Region
+  - In the sandbox: mail only to verified addresses and domains or the mailbox simulator, at most 200 messages per 24 hours, at most 1 message per second
+  - In the sandbox, bulk actions and SES API calls for suppression list management are disabled
+  - After leaving the sandbox, From, Source, Sender and Return-Path identities still have to be verified
+  - The console request asks for mail type (Marketing or Transactional), website URL, up to 4 additional contact addresses, preferred contact language (English or Japanese), and an acknowledgement
+  - `aws sesv2 put-account-details --production-access-enabled --mail-type --website-url --additional-contact-email-addresses --contact-language` submits the same request
+  - AWS Support gives an initial response within 24 hours; details cannot be edited while the review is open
+
+### Using the Amazon SES account-level suppression list
+
+- ID: `ses-suppression-list`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/sending-email-suppression-list.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - The account-level suppression list applies to one account in one Region
+  - Accounts that started using SES after 2019-11-25 use it by default for bounces and complaints
+  - A message to a suppressed address (with a matching reason) is accepted by SES but not sent
+  - Such messages count toward the daily sending quota, and not toward the reputation bounce and complaint rates
+  - Only hard bounces are added; addresses stay until removed
+  - Gmail does not provide complaint data to SES
+  - PutSuppressedDestination and CreateImportJob are unavailable in the sandbox
+  - A configuration set can override the account-level suppression settings; with it, addresses are added only for mail sent with that configuration set
+  - List entries are case-sensitive in the management API
+  - `aws sesv2 put-account-suppression-attributes`, `list-suppressed-destinations`, and `delete-suppressed-destination`
+
+### How email sending works in Amazon SES
+
+- ID: `ses-sending-process`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/send-email-concepts-process.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - A successful request returns a message ID; delivery, bounce, and complaint happen afterwards
+  - On rare occasions SES may accept an email for delivery even though the send request returns an error; a retry may then send a second email with a different message ID
+  - SES recommends message tags, not only the message ID, to correlate event notifications with sending logic
+  - Definitions of hard bounce and soft bounce; SES retries soft bounces for a period before reporting them
+
+### SES API v2: SendEmail
+
+- ID: `ses-sendemail-api`
+- URL: <https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_SendEmail.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Request fields used: FromEmailAddress, Destination.ToAddresses, Content.Simple, ConfigurationSetName, EmailTags
+  - The request has no idempotency or client token parameter
+  - The response is a MessageId, and SES can accept a message without sending it
+  - Errors: AccountSuspendedException, BadRequestException, LimitExceededException, MailFromDomainNotVerifiedException, MessageRejected, SendingPausedException (400), NotFoundException (404), TooManyRequestsException (429)
+
+### SES API v2: MessageTag
+
+- ID: `ses-message-tag`
+- URL: <https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_MessageTag.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Tag names and values: ASCII letters, digits, underscore and dash only, at most 256 characters
+
+### Monitor email sending using Amazon SES event publishing
+
+- ID: `ses-event-publishing`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/monitor-using-event-publishing.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Events are published only for mail sent with a configuration set that has an event destination
+  - Meaning of the Send, Delivery, Bounce, Complaint, Reject and DeliveryDelay events
+  - Delivery means delivered to the recipient's mail server
+  - Message tags and auto-tags are included in published events
+
+### Contents of event data that Amazon SES publishes to Amazon SNS
+
+- ID: `ses-event-contents`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/event-publishing-retrieving-sns-contents.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Top-level fields eventType, mail, bounce, complaint, delivery, and the possible eventType values
+  - mail.messageId and mail.tags; bounce.bounceType, bounceSubType, bouncedRecipients[].emailAddress, timestamp, feedbackId
+  - bounceType is Undetermined, Permanent or Transient; Permanent includes the OnAccountSuppressionList subtype
+  - Only hard bounces, and soft bounces SES has stopped retrying, are published
+  - Most ISPs redact the complainer's address, so complainedRecipients lists every recipient of the mail on the complaining domain
+
+### Examples of event data that Amazon SES publishes to Amazon SNS
+
+- ID: `ses-event-examples`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/event-publishing-retrieving-sns-examples.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - The Bounce, Complaint and Delivery example records that examples/15-email/test/fixtures/ follow
+- Note: The fixtures are edited copies of the documented examples. No event was captured from a real account.
+
+### Set up an Amazon SNS event destination for event publishing
+
+- ID: `ses-sns-destination`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/event-publishing-add-event-destination-sns.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - SES supports standard SNS topics only as an event destination, not FIFO
+  - The topic policy must allow sns:Publish to ses.amazonaws.com, conditioned on AWS:SourceAccount and the configuration set's AWS:SourceArn
+
+### Creating and verifying identities in Amazon SES
+
+- ID: `ses-identities`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/creating-identities.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - An identity is a domain or an email address, verified separately in each Region
+  - Verifying a domain covers its addresses and subdomains
+  - An address verified only through its domain is limited to straightforward sending; advanced sending includes using the address with configuration sets
+  - Email address identities are case-sensitive; the verification mail comes from no-reply-aws@amazon.com and its link expires after 24 hours
+  - A domain identity is verified by publishing three Easy DKIM CNAME records, which can take up to 72 hours to be detected
+  - The CNAME value is the token followed by the SigningHostedZone returned by CreateEmailIdentity and GetEmailIdentity
+- Note: What "using the address with configuration sets" excludes for an address that is verified only through its domain is not spelled out. The stack sets the configuration set as the identity's default as well as naming it on each send.
+
+### Easy DKIM in Amazon SES
+
+- ID: `ses-easy-dkim`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/send-email-authentication-dkim-easy.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - With Easy DKIM, SES signs every mail from the identity with a 2048-bit key by default
+  - The SES console can publish the records itself when Route 53 hosts the domain
+
+### Using a custom MAIL FROM domain
+
+- ID: `ses-mail-from`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/mail-from.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - By default the MAIL FROM domain is a subdomain of amazonses.com, and SPF passes for that domain
+  - A custom MAIL FROM domain must be a subdomain of the verified identity's domain, not used for sending or receiving
+  - It needs exactly one MX record `10 feedback-smtp.<region>.amazonses.com` and a TXT record "v=spf1 include:amazonses.com ~all"
+  - Behavior on MX failure is either falling back to the default MAIL FROM domain or rejecting the message
+  - SES looks for the MX record for up to 72 hours
+
+### Complying with DMARC authentication protocol in Amazon SES
+
+- ID: `ses-dmarc`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/send-email-authentication-dmarc.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - SPF checks the MAIL FROM domain, DKIM checks the signing domain, and DMARC requires one of them to align with the From domain
+  - A message passes DMARC if either the SPF or the DKIM alignment check passes
+  - The DMARC policy is a TXT record at _dmarc.<domain>; p=none, quarantine, and reject, rolled out in that order
+  - SPF alignment through SES needs a custom MAIL FROM domain; DKIM alignment needs Easy DKIM on the From domain
+  - `dig TXT _dmarc.<domain>` shows the published policy
+
+### Sending test emails in Amazon SES with the simulator
+
+- ID: `ses-mailbox-simulator`
+- URL: <https://docs.aws.amazon.com/ses/latest/dg/send-an-email-from-console.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - success@, bounce@, complaint@, ooto@ and suppressionlist@simulator.amazonses.com and what each simulates
+  - The simulator works in the sandbox
+  - Simulator mail does not count toward the daily quota or the bounce and complaint rates, and is billed like any other mail
+  - bounce@simulator.amazonses.com is not placed on the suppression list
+
+### SES API v2: GetAccount
+
+- ID: `ses-getaccount-api`
+- URL: <https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_GetAccount.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - ProductionAccessEnabled false means the account is in the sandbox in that Region
+  - SendQuota (Max24HourSend, MaxSendRate, SentLast24Hours), SendingEnabled, EnforcementStatus, SuppressionAttributes.SuppressedReasons
+
+### SES API v2: GetEmailIdentity
+
+- ID: `ses-getemailidentity-api`
+- URL: <https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_GetEmailIdentity.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - VerifiedForSendingStatus, VerificationStatus (PENDING, SUCCESS, FAILED, TEMPORARY_FAILURE, NOT_STARTED)
+  - DkimAttributes (Status, Tokens, SigningHostedZone) and MailFromAttributes (MailFromDomain, MailFromDomainStatus)
+  - Without an event destination or another mechanism, bounce and complaint notifications are sent by email
+
+### AWS Service Reference: actions, resources and condition keys for SES
+
+- ID: `ses-service-reference`
+- URL: <https://servicereference.us-east-1.amazonaws.com/v1/ses/ses.json>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - ses:SendEmail is authorized against the resource types identity, configuration-set and template
+  - ARN formats arn:aws:ses:<region>:<account>:identity/<name> and :configuration-set/<name>
+  - ses:SendEmail supports the condition keys ses:FromAddress, ses:FromDisplayName, ses:Recipients, ses:FeedbackAddress and ses:ApiVersion
+- Note: The JSON does not mark which resource types are required. Whether a sandbox account also needs permission on the recipient's identity was not confirmed from a primary source.
+
+### Amazon SES pricing
+
+- ID: `ses-pricing`
+- URL: <https://aws.amazon.com/ses/pricing/>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Outbound email is USD 0.10 per 1,000 emails, charged per recipient, plus USD 0.12 per GB of attachments
+  - The page describes Free Tier credits for new AWS customers (up to USD 200, a free plan available for 6 months, credits to be used within 12 months) and no monthly count of free messages
+  - Dedicated IPs and Virtual Deliverability Manager are separate charges
+- Note: Read as rendered on 2026-10-11. The Free Tier terms depend on when and how an account was created; the calculation applies no allowance.
+
+### AWS Price List bulk API: SES, ap-northeast-1
+
+- ID: `aws-price-list-ses`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSES/current/ap-northeast-1/index.json>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonSES
+  - Mail to the mailbox simulator has its own SKU at the same USD 0.0001 per recipient
+
+### AWS Price List bulk API: SNS, ap-northeast-1
+
+- ID: `aws-price-list-sns`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonSNS
+  - The first 1,000,000 SNS API requests a month are a USD 0 tier
+  - Deliveries to Lambda are USD 0
+
+### Invoking Lambda functions with Amazon SNS notifications
+
+- ID: `lambda-sns`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - SNS invokes the function asynchronously; only standard topics are supported
+  - Asynchronous invocations process each event at least once, and duplicates can occur
+  - The event shape: Records[].Sns.Message and MessageId
+
+### How Lambda handles errors and retries with asynchronous invocation
+
+- ID: `lambda-async-errors`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-error-handling.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - When the function returns an error, Lambda runs it two more times by default
+  - A function can receive the same event more than once even without an error
+  - An event that fails all attempts is discarded unless a dead-letter queue or an on-failure destination is configured
+
+### Amazon SNS message delivery retries
+
+- ID: `sns-delivery-retries`
+- URL: <https://docs.aws.amazon.com/sns/latest/dg/sns-message-delivery-retries.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - When SNS cannot reach a Lambda endpoint it makes up to 100,015 attempts over 23 days
+  - When the delivery policy is exhausted the message is discarded unless the subscription has a dead-letter queue
+
+### AWS SDKs and Tools: Retry behavior
+
+- ID: `sdk-retry-behavior`
+- URL: <https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - The default is 3 attempts in total; max attempts 1 disables retries
+  - Timeouts, connection failures and HTTP 500, 502, 503, 504 are retried as transient errors; TooManyRequestsException as throttling
+
+### Control access to HTTP APIs with IAM authorization in API Gateway
+
+- ID: `apigw-http-iam-auth`
+- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-access-control-iam.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - With IAM authorization on a route, clients sign requests with SigV4, and API Gateway invokes the route only if the caller has execute-api permission
+  - Resource policies are not supported for HTTP APIs
+
+### Using time to live (TTL) in DynamoDB
+
+- ID: `dynamodb-ttl`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - The TTL attribute is a Number holding Unix epoch seconds
+  - Expired items are deleted typically within a few days of expiring, without consuming write throughput
+  - Until then an expired item can still be read and updated
+
+### Email settings for Amazon Cognito user pools
+
+- ID: `cognito-email-settings`
+- URL: <https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-email.html>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - The default email configuration limits the number of emails per day and is below typical production volume
+  - With the SES configuration, the user pool sends through a verified identity in your account, under your SES limits
+  - The account must be out of the SES sandbox before Cognito can mail users through your SES configuration
+- Note: The daily limit of the default configuration is on the Cognito quotas page, which was not read.
+
+### Cloudflare Email Service
+
+- ID: `cloudflare-email-service`
+- URL: <https://developers.cloudflare.com/email-service/>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - Email Sending is in beta for outbound transactional email
+  - A Worker sends through a send_email binding (env.EMAIL.send); a REST API and SMTP also exist
+  - Email Sending requires the Workers Paid plan
+- Note: Only the overview page was read. Domain onboarding, DNS records, bounce handling, limits and prices were not checked.
+
+### @go-to-k/cdkd 0.296.28: provider routing for the resource types of chapter 15 (npm tarball)
+
+- ID: `cdkd-npm-ses`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - No SDK provider is registered for AWS::SES::EmailIdentity, AWS::SES::ConfigurationSet or AWS::SES::ConfigurationSetEventDestination; types without one are routed to Cloud Control API
+  - AWS::SNS::Topic, AWS::SNS::TopicPolicy, AWS::SNS::Subscription, AWS::DynamoDB::Table, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::Logs::LogGroup, AWS::IAM::Role, AWS::IAM::Policy and the four AWS::ApiGatewayV2 types have registered SDK providers
+- Note: Read from dist/ of the published tarball (the bundled register calls and the provider registry). No cdkd command was run against AWS, so the Cloud Control path for the SES types is unexercised.
+
+### aws-cdk-lib 2.273.0: aws-ses constructs (type definitions and compiled source)
+
+- ID: `aws-cdk-lib-ses`
+- URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
+- Checked: 2026-10-11
+- Chapters: 15
+- Claims this source supports:
+  - EmailIdentity exposes dkimRecords, and accepts configurationSet, mailFromDomain and mailFromBehaviorOnMxFailure
+  - ConfigurationSet.addEventDestination with an SNS topic also adds a topic policy for ses.amazonaws.com conditioned on the configuration set's ARN
+  - ConfigurationSet.suppressionReasons synthesizes SuppressionOptions.SuppressedReasons
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### Security best practices in IAM
@@ -1690,15 +2039,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Chapters: 13
 - Claims this source supports:
   - Service overview
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Request SES production access
-
-- ID: `ses-production-access`
-- URL: <https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html>
-- Chapters: 15
-- Claims this source supports:
-  - Sandbox limits and the production-access request
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### What is Amazon Bedrock?

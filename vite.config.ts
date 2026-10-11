@@ -71,6 +71,7 @@ const chapterSynthTasks = [
   "stream:infra:synth",
   "net:infra:synth",
   "ai:infra:synth",
+  "mail:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -172,6 +173,19 @@ export default defineConfig({
       "ai:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/17-ai" }),
       "ai:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/17-ai" }),
       // <<< chapter 17
+
+      // >>> chapter 15
+      // ---- chapter 15: email ---------------------------------------------
+      // API with an in-memory outbox instead of SES. No Docker, no AWS, nothing is sent.
+      "dev:mail": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/15-email" }),
+      ...infra("mail", "examples/15-email", "AihEmail"),
+      // Sends one real, billed mail through the deployed API, twice with the same ID.
+      "mail:send": live("node --env-file-if-exists=../../.env scripts/send.ts", { cwd: "examples/15-email" }),
+      "mail:status": live("node --env-file-if-exists=../../.env scripts/status.ts", { cwd: "examples/15-email" }),
+      // Prints the DNS records to publish by hand. Changes nothing.
+      "mail:dns": live("node --env-file-if-exists=../../.env scripts/dns.ts", { cwd: "examples/15-email" }),
+      "mail:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/15-email" }),
+      // <<< chapter 15
 
       // ---- chapter task blocks are inserted above this line ----
 

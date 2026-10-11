@@ -65,6 +65,12 @@ generated: true
 | 17 | `vp run ai:hello / ai:test:live` | AWS | 未実行 | - | 実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない |
 | 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Lambda、function URL、IAM role、log group を作る |
 | 17 | `vp run ai:smoke / ai:logs` | AWS | 未実行 | - | デプロイ済みの function URL が必要。課金される |
+| 15 | `vp run test:unit (examples/15-email)` | ローカル | 成功 | 2026-10-11 | ヘッダー injection の拒否、記録を先に取る送信の冪等性（8 か所の障害注入、同時依頼、応答喪失）、SES イベントの検証と重複・順序の入れ替わり、DynamoDB と SES へ送るリクエストの検査、インフラの assertion |
+| 15 | `vp run dev:mail + curl` | ローカル | 成功 | 2026-10-11 | 本文の curl を実行。同じ通知の 2 回目が duplicate になること、改行入りの題名の 400、bounce の fixture を流した後の suppressed を確認 |
+| 15 | `vp run mail:infra:synth` | ローカル | 成功 | 2026-10-11 | 2 つの関数を AWS SDK ごと esbuild で bundle。AWS には問い合わせない |
+| 15 | `vp run mail:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | SES の identity と configuration set、SNS の topic、DynamoDB の table、Lambda、HTTP API を作る。identity を作ると確認メールが送られる |
+| 15 | `vp run mail:send / mail:status / mail:dns / mail:logs` | AWS | 未実行 | - | デプロイ済みの stack が必要。mail:send は実際にメールを送り、課金される |
+| 15 | `aws sesv2 get-account / get-email-identity / put-account-details / put-account-suppression-attributes` | AWS | 未実行 | - | sandbox の確認、identity の確認状況、production access の申請。申請は人が行う手作業 |
 
 ## 未解決事項と再開手順
 
@@ -193,3 +199,21 @@ AWS Budgets の料金、API Gateway HTTP API と S3 の無料枠、どの章が 
 途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。
 
 再開手順: Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。
+
+### ses-send-and-events
+
+15章は SES を一度も呼んでいない。identity の確認、送信 role の policy（ses:FromAddress の条件、identity と configuration set の 2 つの resource）で SendEmail が通ること、sandbox で宛先の identity にも権限が要るかどうか、実際のイベントが fixture と同じ形であること、SNS から関数への配送、configuration set の suppression の動きは未確認。
+
+再開手順: 自分のアドレスで vp run mail:infra:deploy -c fromAddress=... を実行して確認メールのリンクを踏み、vp run mail:send --to 自分のアドレス、続けて --to bounce@simulator.amazonses.com と complaint@simulator.amazonses.com を実行する。mail:status と mail:logs --events で状態とイベントを確かめ、届いたイベントの JSON を test/fixtures と比べる。AccessDenied が出たら、エラーに出た resource の ARN を記録する。
+
+### ses-cdkd-cloud-control
+
+cdkd 0.296.28 は AWS::SES::EmailIdentity、ConfigurationSet、ConfigurationSetEventDestination に専用の実装を持たず、Cloud Control API 経由になる。この経路での作成、更新、drift の検出、削除は一度も動かしていない。DKIM の token を output として読めるかも未確認。
+
+再開手順: vp run mail:infra:deploy、mail:infra:drift、mail:infra:destroy を実行する。ドメインの identity では vp run mail:dns が DkimName1〜3 と DkimValue1〜3 を読めることを確かめる。
+
+### email-dynamodb-claim
+
+15章の「同じ通知は 1 通」は、条件付きの PutItem が同時の依頼を 1 つだけ通すことに依存する。確かめたのは、送っている条件式と、メモリの実装が同じ規則に従うことだけで、DynamoDB Local でも実際の DynamoDB でも動かしていない。
+
+再開手順: デプロイ後、同じ notificationId の依頼を並行で送る script を examples/15-email/scripts/ に加え、届いたメールが 1 通であることを受信箱と mail:status で確かめる。

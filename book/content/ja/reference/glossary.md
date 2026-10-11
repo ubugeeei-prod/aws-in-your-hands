@@ -77,3 +77,12 @@ generated: true
 | function URL | function URL | 17 | Lambda 関数に直接付く HTTPS の endpoint。API Gateway を挟まない。 |
 | server-sent events（SSE） | server-sent events (SSE) | 17 | 1 つの HTTP 応答の中で、サーバーがイベントを順に送り続ける形式。content type は text/event-stream。 |
 | SigV4 署名 | SigV4 signature | 17 | AWS の API が呼び出し元を確かめるためのリクエスト署名。認証情報から計算して header に付ける。 |
+| identity（SES） | identity (SES) | 15 | SES に「自分のものだ」と確認してもらった送信元。ドメインか、メールアドレス 1 つ。リージョンごとに確認する。 |
+| sandbox（SES） | sandbox (SES) | 15 | 新しいアカウントの SES が置かれる制限つきの状態。確認済みの宛先にしか送れない。production access を申請して出る。 |
+| bounce | bounce | 15 | メールが届かずに戻ってくること。宛先が存在しないなどの恒久的なもの（hard）と、一時的なもの（soft）がある。 |
+| complaint | complaint | 15 | 受信者がメールを「迷惑メール」と報告すること。 |
+| suppression list | suppression list | 15 | もう送らないと決めた宛先の一覧。bounce や complaint を出した宛先を入れる。 |
+| configuration set | configuration set | 15 | SES で、送信時に指定する設定のまとまり。イベントの配送先や suppression の設定を持つ。 |
+| SPF | SPF | 15 | 「このドメインの名前で送ってよいサーバー」を DNS の TXT レコードで公開する仕組み。見るのは封筒の差出人（MAIL FROM）のドメイン。 |
+| DKIM | DKIM | 15 | メールに電子署名を付け、検証用の公開鍵を DNS で公開する仕組み。 |
+| DMARC | DMARC | 15 | 受信者に見える From のドメインが、SPF か DKIM のどちらかで確かめられていることを求め、失敗したメールの扱いを DNS で指示する仕組み。 |

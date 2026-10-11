@@ -77,3 +77,12 @@ The term pairs that keep both languages using one word for one concept. API name
 | function URL | function URL | 17 | An HTTPS endpoint attached directly to a Lambda function, with no API Gateway in between. |
 | server-sent events（SSE） | server-sent events (SSE) | 17 | A format in which a server keeps sending events inside one HTTP response. Its content type is text/event-stream. |
 | SigV4 署名 | SigV4 signature | 17 | The request signature AWS APIs use to identify the caller, computed from credentials and sent in headers. |
+| identity（SES） | identity (SES) | 15 | A sender that SES has verified as yours: a domain or a single email address. Verified per Region. |
+| sandbox（SES） | sandbox (SES) | 15 | The restricted state every new account's SES starts in: mail goes only to verified recipients. Left by requesting production access. |
+| bounce | bounce | 15 | Mail that comes back undelivered. Permanent (hard), such as an address that does not exist, or temporary (soft). |
+| complaint | complaint | 15 | A recipient reporting a mail as spam. |
+| suppression list | suppression list | 15 | The list of addresses you will no longer mail, filled with those that bounced or complained. |
+| configuration set | configuration set | 15 | A named group of SES settings chosen at send time, holding event destinations and suppression options. |
+| SPF | SPF | 15 | A DNS TXT record naming the servers allowed to send for a domain. It is checked against the envelope sender (MAIL FROM) domain. |
+| DKIM | DKIM | 15 | A digital signature on each mail, verified with a public key published in DNS. |
+| DMARC | DMARC | 15 | A DNS policy that requires the visible From domain to be confirmed by SPF or DKIM, and says what to do with mail that fails. |

@@ -65,6 +65,12 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 17 | `vp run ai:hello / ai:test:live` | AWS | not run | - | Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here |
 | 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a Lambda function, a function URL, an IAM role, and a log group |
 | 17 | `vp run ai:smoke / ai:logs` | AWS | not run | - | Needs the deployed function URL; billed |
+| 15 | `vp run test:unit (examples/15-email)` | local | passed | 2026-10-11 | Header-injection refusals, record-first idempotent sending (faults injected at eight points, simultaneous requests, lost responses), validation of SES events with duplicates and reordering, inspection of the requests sent to DynamoDB and SES, and infrastructure assertions |
+| 15 | `vp run dev:mail + curl` | local | passed | 2026-10-11 | Ran the curl commands from the chapter: the second request for a notification is a duplicate, a title with a line break is a 400, and after posting the bounce fixture the address is suppressed |
+| 15 | `vp run mail:infra:synth` | local | passed | 2026-10-11 | Bundles both functions, AWS SDK included, with esbuild. Makes no call to AWS |
+| 15 | `vp run mail:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an SES identity and configuration set, an SNS topic, a DynamoDB table, Lambda functions and an HTTP API. Creating the identity sends a verification mail |
+| 15 | `vp run mail:send / mail:status / mail:dns / mail:logs` | AWS | not run | - | Need the deployed stack. mail:send sends a real mail and is billed |
+| 15 | `aws sesv2 get-account / get-email-identity / put-account-details / put-account-suppression-attributes` | AWS | not run | - | Checking the sandbox and the identity's verification, and requesting production access. The request is a manual step for a person |
 
 ## Open items and how to resume
 
@@ -193,3 +199,21 @@ To resume: Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delt
 How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region.
 
 To resume: Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics.
+
+### ses-send-and-events
+
+Chapter 15 never called SES. Unconfirmed: identity verification, SendEmail passing under the sending role's policy (the ses:FromAddress condition and the two resources, identity and configuration set), whether a sandbox account also needs permission on the recipient's identity, real events matching the fixtures, delivery from SNS to the function, and the configuration set's suppression behavior.
+
+To resume: Run vp run mail:infra:deploy -c fromAddress=... with your own address, follow the link in the verification mail, then run vp run mail:send --to your address, and again with --to bounce@simulator.amazonses.com and complaint@simulator.amazonses.com. Check the states and events with mail:status and mail:logs --events, and compare the received event JSON with test/fixtures. If AccessDenied appears, record the resource ARN the error names.
+
+### ses-cdkd-cloud-control
+
+cdkd 0.296.28 has no dedicated provider for AWS::SES::EmailIdentity, ConfigurationSet or ConfigurationSetEventDestination, so they go through Cloud Control API. Create, update, drift detection and delete on that path were never run, and reading the DKIM tokens as outputs is unconfirmed.
+
+To resume: Run vp run mail:infra:deploy, mail:infra:drift and mail:infra:destroy. With a domain identity, confirm that vp run mail:dns can read DkimName1-3 and DkimValue1-3.
+
+### email-dynamodb-claim
+
+Chapter 15's "one notification, one mail" depends on a conditional PutItem letting exactly one of several simultaneous requests through. Only the expression sent, and the in-memory implementation's adherence to the same rule, were checked; neither DynamoDB Local nor real DynamoDB was used.
+
+To resume: After deploying, add a script under examples/15-email/scripts/ that sends requests with one notificationId in parallel, and confirm in the inbox and with mail:status that one mail arrived.

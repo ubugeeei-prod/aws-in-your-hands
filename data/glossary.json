@@ -659,6 +659,96 @@
         "ja": "AWS の API が呼び出し元を確かめるためのリクエスト署名。認証情報から計算して header に付ける。",
         "en": "The request signature AWS APIs use to identify the caller, computed from credentials and sent in headers."
       }
+    },
+    {
+      "id": "ses-identity",
+      "ja": "identity（SES）",
+      "en": "identity (SES)",
+      "firstUse": "15",
+      "definition": {
+        "ja": "SES に「自分のものだ」と確認してもらった送信元。ドメインか、メールアドレス 1 つ。リージョンごとに確認する。",
+        "en": "A sender that SES has verified as yours: a domain or a single email address. Verified per Region."
+      }
+    },
+    {
+      "id": "ses-sandbox",
+      "ja": "sandbox（SES）",
+      "en": "sandbox (SES)",
+      "firstUse": "15",
+      "definition": {
+        "ja": "新しいアカウントの SES が置かれる制限つきの状態。確認済みの宛先にしか送れない。production access を申請して出る。",
+        "en": "The restricted state every new account's SES starts in: mail goes only to verified recipients. Left by requesting production access."
+      }
+    },
+    {
+      "id": "bounce",
+      "ja": "bounce",
+      "en": "bounce",
+      "firstUse": "15",
+      "definition": {
+        "ja": "メールが届かずに戻ってくること。宛先が存在しないなどの恒久的なもの（hard）と、一時的なもの（soft）がある。",
+        "en": "Mail that comes back undelivered. Permanent (hard), such as an address that does not exist, or temporary (soft)."
+      }
+    },
+    {
+      "id": "complaint",
+      "ja": "complaint",
+      "en": "complaint",
+      "firstUse": "15",
+      "definition": {
+        "ja": "受信者がメールを「迷惑メール」と報告すること。",
+        "en": "A recipient reporting a mail as spam."
+      }
+    },
+    {
+      "id": "suppression-list",
+      "ja": "suppression list",
+      "en": "suppression list",
+      "firstUse": "15",
+      "definition": {
+        "ja": "もう送らないと決めた宛先の一覧。bounce や complaint を出した宛先を入れる。",
+        "en": "The list of addresses you will no longer mail, filled with those that bounced or complained."
+      }
+    },
+    {
+      "id": "configuration-set",
+      "ja": "configuration set",
+      "en": "configuration set",
+      "firstUse": "15",
+      "definition": {
+        "ja": "SES で、送信時に指定する設定のまとまり。イベントの配送先や suppression の設定を持つ。",
+        "en": "A named group of SES settings chosen at send time, holding event destinations and suppression options."
+      }
+    },
+    {
+      "id": "spf",
+      "ja": "SPF",
+      "en": "SPF",
+      "firstUse": "15",
+      "definition": {
+        "ja": "「このドメインの名前で送ってよいサーバー」を DNS の TXT レコードで公開する仕組み。見るのは封筒の差出人（MAIL FROM）のドメイン。",
+        "en": "A DNS TXT record naming the servers allowed to send for a domain. It is checked against the envelope sender (MAIL FROM) domain."
+      }
+    },
+    {
+      "id": "dkim",
+      "ja": "DKIM",
+      "en": "DKIM",
+      "firstUse": "15",
+      "definition": {
+        "ja": "メールに電子署名を付け、検証用の公開鍵を DNS で公開する仕組み。",
+        "en": "A digital signature on each mail, verified with a public key published in DNS."
+      }
+    },
+    {
+      "id": "dmarc",
+      "ja": "DMARC",
+      "en": "DMARC",
+      "firstUse": "15",
+      "definition": {
+        "ja": "受信者に見える From のドメインが、SPF か DKIM のどちらかで確かめられていることを求め、失敗したメールの扱いを DNS で指示する仕組み。",
+        "en": "A DNS policy that requires the visible From domain to be confirmed by SPF or DKIM, and says what to do with mail that fails."
+      }
     }
   ]
 }

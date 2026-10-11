@@ -381,6 +381,54 @@ ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の 
 - 毎月の無料枠適用後の小計: **USD 3.03** / 月
 - 無料枠を確認できず、何も引いていない単価: `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
 
+## 通知メール: デプロイ済みで 1 通も送らない月
+
+ID: `email-idle` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
+
+前提:
+
+- 送信ゼロ、イベントゼロ
+- table に 10 MB の記録（送信停止の一覧と、期限前の通知の記録）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.storage` | 0.01 | GB-Mo | 10 MB stored, in GB-month | 0 | - | 0 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 通知メール: 月 1 万通
+
+ID: `email-small` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
+
+前提:
+
+- 通知 1 件につき宛先 1 つ、添付なし。月 10,000 通
+- 同じ通知の重複依頼が 1,000 件（送信はしないが、API と関数は動く）
+- 1 通につき SES のイベントが 1 件（delivery、bounce、complaint のどれか）届く
+- 送信の関数は平均 300 ミリ秒、イベントの関数は平均 50 ミリ秒。どちらも 256 MB、arm64
+- DynamoDB の書き込みは 1 通あたり 3 回（先取り、送信済み、イベント）、重複依頼は 1 回。読み取りは依頼 1 件につき結果整合で 1 回、重複依頼ではさらに強い整合性で 1 回
+- ログは依頼とイベントを合わせて 1 件あたり 0.5 KB
+- インターネットへのデータ転送、専用 IP、Virtual Deliverability Manager は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ses.outbound.message` | 10,000 | Count | 10,000 messages x 1 recipient | 1.00 | - | 1.00 |
+| `apigw.http.request` | 11,000 | Requests | 10,000 requests + 1,000 repeats | 0.01 | - | 0.01 |
+| `lambda.request.arm` | 21,000 | Requests | 11,000 API invocations + 10,000 event invocations | 0.004200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 950 | Lambda-GB-Second | (11,000 x 0.3 s + 10,000 x 0.05 s) x 0.25 GB, in GB-seconds | 0.01 | 400,000 | 0 |
+| `sns.request` | 10,000 | Requests | one publish per SES event | 0 | - | 0 |
+| `sns.delivery.lambda` | 10,000 | Notifications | one delivery to the function per event | 0 | - | 0 |
+| `dynamodb.write.on-demand` | 31,000 | WriteRequestUnits | 10,000 x 3 writes + 1,000 refused claims | 0.02 | - | 0.02 |
+| `dynamodb.read.on-demand` | 6,500 | ReadRequestUnits | 11,000 suppression checks x 0.5 + 1,000 consistent reads of an existing record x 1 | 0.000926 | - | 0.000926 |
+| `dynamodb.storage` | 0.01 | GB-Mo | 10 MB stored, in GB-month | 0 | - | 0 |
+| `logs.ingest.standard` | 0.01 | GB | 21,000 x 0.5 KB, in GB | 0.01 | 5 | 0 |
+| `logs.storage` | 0.002 | GB-Mo | 0.01 GB x 7/30, in GB-month | 0.000076 | 5 | 0 |
+
+- 定価の小計: **USD 1.06** / 月
+- 毎月の無料枠適用後の小計: **USD 1.04** / 月
+- 無料枠を確認できず、何も引いていない単価: `apigw.http.request`, `ses.outbound.message`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -421,6 +469,9 @@ ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の 
 | `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
 | `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
 | `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
+| `ses.outbound.message` | ap-northeast-1 | APN1-Recipients | Count | 0 - ∞: 0.0001000000 | 2026-09-11 | 2026-10-11 |
+| `sns.request` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 1,000,000: 0.0000000000<br>1,000,000 - ∞: 0.0000005000 | 2026-09-15 | 2026-10-11 |
+| `sns.delivery.lambda` | ap-northeast-1 | APN1-DeliveryAttempts-LAMBDA | Notifications | 0 - ∞: 0.0000000000 | 2026-09-15 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -449,3 +500,4 @@ ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の 
 - `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `ses.outbound.message`: The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied.

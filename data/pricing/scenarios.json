@@ -649,6 +649,113 @@
           "basis": "1,000 summaries x 150 output tokens, in 1M tokens"
         }
       ]
+    },
+    {
+      "id": "email-idle",
+      "chapter": "15",
+      "title": {
+        "ja": "通知メール: デプロイ済みで 1 通も送らない月",
+        "en": "Notification mail: deployed, but nothing sent for a month"
+      },
+      "assumptions": {
+        "ja": ["送信ゼロ、イベントゼロ", "table に 10 MB の記録（送信停止の一覧と、期限前の通知の記録）"],
+        "en": [
+          "No mail sent, no events",
+          "10 MB of records in the table (suppressions and unexpired notification records)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.01,
+          "basis": "10 MB stored, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "email-small",
+      "chapter": "15",
+      "title": {
+        "ja": "通知メール: 月 1 万通",
+        "en": "Notification mail: 10,000 messages a month"
+      },
+      "assumptions": {
+        "ja": [
+          "通知 1 件につき宛先 1 つ、添付なし。月 10,000 通",
+          "同じ通知の重複依頼が 1,000 件（送信はしないが、API と関数は動く）",
+          "1 通につき SES のイベントが 1 件（delivery、bounce、complaint のどれか）届く",
+          "送信の関数は平均 300 ミリ秒、イベントの関数は平均 50 ミリ秒。どちらも 256 MB、arm64",
+          "DynamoDB の書き込みは 1 通あたり 3 回（先取り、送信済み、イベント）、重複依頼は 1 回。読み取りは依頼 1 件につき結果整合で 1 回、重複依頼ではさらに強い整合性で 1 回",
+          "ログは依頼とイベントを合わせて 1 件あたり 0.5 KB",
+          "インターネットへのデータ転送、専用 IP、Virtual Deliverability Manager は未算入"
+        ],
+        "en": [
+          "One recipient per notification, no attachments; 10,000 messages a month",
+          "1,000 repeated requests for a notification already handled (nothing is sent, but the API and the function run)",
+          "One SES event per message (a delivery, a bounce or a complaint)",
+          "The sending function averages 300 ms and the event function 50 ms, both at 256 MB on arm64",
+          "Three DynamoDB writes per message (claim, sent, event) and one per repeated request; one eventually consistent read per request, plus one strongly consistent read per repeated request",
+          "0.5 KB of logs per request and per event",
+          "Data transfer out, dedicated IPs and Virtual Deliverability Manager are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ses.outbound.message",
+          "quantity": 10000,
+          "basis": "10,000 messages x 1 recipient"
+        },
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 11000,
+          "basis": "10,000 requests + 1,000 repeats"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 21000,
+          "basis": "11,000 API invocations + 10,000 event invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 950,
+          "basis": "(11,000 x 0.3 s + 10,000 x 0.05 s) x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "sns.request",
+          "quantity": 10000,
+          "basis": "one publish per SES event"
+        },
+        {
+          "priceId": "sns.delivery.lambda",
+          "quantity": 10000,
+          "basis": "one delivery to the function per event"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 31000,
+          "basis": "10,000 x 3 writes + 1,000 refused claims"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 6500,
+          "basis": "11,000 suppression checks x 0.5 + 1,000 consistent reads of an existing record x 1"
+        },
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.01,
+          "basis": "10 MB stored, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.01,
+          "basis": "21,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0023,
+          "basis": "0.01 GB x 7/30, in GB-month"
+        }
+      ]
     }
   ]
 }

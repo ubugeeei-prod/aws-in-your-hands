@@ -701,48 +701,50 @@
         "ja": "メールを送る: SES",
         "en": "Send Email: SES"
       },
-      "prerequisites": ["08"],
-      "services": ["SES"],
+      "prerequisites": ["04"],
+      "services": ["SES", "SNS", "Lambda", "API Gateway HTTP API", "DynamoDB", "CloudWatch Logs", "IAM"],
       "samplePath": "examples/15-email",
+      "sourceIds": [
+        "ses-production-access",
+        "ses-suppression-list",
+        "ses-sending-process",
+        "ses-sendemail-api",
+        "ses-message-tag",
+        "ses-event-publishing",
+        "ses-event-contents",
+        "ses-event-examples",
+        "ses-sns-destination",
+        "ses-identities",
+        "ses-easy-dkim",
+        "ses-mail-from",
+        "ses-dmarc",
+        "ses-mailbox-simulator",
+        "ses-getaccount-api",
+        "ses-getemailidentity-api",
+        "ses-service-reference",
+        "ses-pricing",
+        "aws-price-list-ses",
+        "aws-price-list-sns",
+        "lambda-sns",
+        "lambda-async-errors",
+        "sns-delivery-retries",
+        "sdk-retry-behavior",
+        "apigw-http-iam-auth",
+        "dynamodb-ttl",
+        "cognito-email-settings",
+        "cloudflare-email-service",
+        "cdkd-npm-ses",
+        "aws-cdk-lib-ses"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["ses-production-access"],
-      "outline": {
-        "outcome": {
-          "ja": "ノート共有の通知メールを送り、bounce と complaint を受けて送信を止められる。",
-          "en": "You send a share-notification email and stop sending when a bounce or complaint arrives."
-        },
-        "architecture": {
-          "ja": "queue → Lambda → SES。bounce/complaint は event destination → SQS → suppression 記録。",
-          "en": "Queue → Lambda → SES. Bounces and complaints flow through an event destination → SQS → suppression record."
-        },
-        "topics": {
-          "ja": [
-            "sandbox と production access の申請（手作業の手順）",
-            "SPF/DKIM/DMARC と Route 53",
-            "重複送信を防ぐ冪等性"
-          ],
-          "en": [
-            "The sandbox and the production-access request (a manual procedure)",
-            "SPF/DKIM/DMARC with Route 53",
-            "Idempotency against duplicate sends"
-          ]
-        },
-        "requiredSource": {
-          "ja": ["送信 adapter と fixture", "identity / configuration set の CDK", "同じ通知を二度送らないテスト"],
-          "en": [
-            "Send adapter and fixtures",
-            "CDK for the identity and configuration set",
-            "A test that the same notification is not sent twice"
-          ]
-        },
-        "distributed": {
-          "ja": "送信 API の成功は配達の成功ではない。応答喪失後の再送で重複し得る。",
-          "en": "A successful send call is not delivery, and a retry after a lost response can duplicate the email."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "16",
