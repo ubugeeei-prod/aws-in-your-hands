@@ -1,0 +1,10 @@
+{
+  "note": "No stack with this name in the account and Region.",
+  "detectError": {
+    "name": "ValidationError",
+    "message": "Stack [AihShipApi] does not exist"
+  },
+  "statuses": [],
+  "driftPages": [],
+  "resourcePages": []
+}

@@ -1,0 +1,69 @@
+# Not active here: GitHub only runs workflows in .github/workflows/. Never executed.
+#
+# One stack per pull request (AihShipApiPr<number>), deleted when the pull request closes.
+# Changes AWS, with the same reach as a production deploy: see the chapter before enabling.
+name: preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ship-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false # a cancelled deploy leaves the stack mid-operation
+
+jobs:
+  deploy:
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: preview
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AIH_AWS_ACCOUNT_ID: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      AIH_AWS_REGION: ap-northeast-1
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - run: nix develop --command vp install --frozen-lockfile
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AIH_PREVIEW_ROLE_ARN }} # output PreviewRoleArn of AihShipCi
+          aws-region: ap-northeast-1
+          allowed-account-ids: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      - name: Deploy the preview stack
+        run: nix develop --command vp run ship:cfn:deploy -c "stage=pr-$PR_NUMBER"
+      - name: Call the preview API
+        run: nix develop --command vp run ship:smoke -c "stage=pr-$PR_NUMBER"
+
+  destroy:
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: preview
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AIH_AWS_ACCOUNT_ID: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      AIH_AWS_REGION: ap-northeast-1
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - run: nix develop --command vp install --frozen-lockfile
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AIH_PREVIEW_ROLE_ARN }}
+          aws-region: ap-northeast-1
+          allowed-account-ids: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      - name: Delete the preview stack
+        run: nix develop --command vp run ship:cfn:destroy -c "stage=pr-$PR_NUMBER"

@@ -110,6 +110,17 @@ generated: true
 | 14 | `node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)` | ローカル | 成功 | 2026-10-12 | store の contract 22 件を、nixpkgs の valkey-server 9.1.2 と、AWS が配布する DynamoDB Local 3.3.1（jar を JRE 21 で起動）に対して実行した。Docker の daemon が無かったので、コンテナではなくプロセスとして起動している |
 | 14 | `vp run kv:local:start / kv:local:stop` | ローカル | 未実行 | - | Docker の daemon が無く実行していない。valkey/valkey:9.0.6-alpine と amazon/dynamodb-local:3.3.1 の image は取得も起動もしていない |
 | 14 | `vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs` | AWS | 未実行 | - | DynamoDB の table、Lambda、HTTP API を作る。`-c store=valkey` では、置いてあるだけで課金される ElastiCache Serverless の cache も作る |
+| 20 | `vp run test:unit (examples/20-shipping, tools/src/drift)` | ローカル | 成功 | 2026-10-12 | CloudFormation の drift の polling・分類・gate（clean、drifted、deleted、未検査、nested stack、検出失敗、stack 不在、timeout、古い結果、矛盾、形の違う応答）、SDK の client を差し替えた呼び出し順、OIDC の trust policy と role の権限、stage ごとの stack、CDK CLI の引数、stack の状態ごとの次の一手、preview の洗い出し、workflow の YAML |
+| 20 | `vp run ship:cfn:synth` | ローカル | 成功 | 2026-10-12 | 固定した AWS CDK CLI 2.1145.0 で synth。認証情報なし。AihShipApi と AihShipCi の template が cdk.out に出ること、AihShipApi に AWS::IAM::Policy と AWS::CDK::Metadata が無いことを確認。-c stage=prod、-c stage=pr-12 でも実行 |
+| 20 | `vp run ship:cfn:deploy -c stage=staging / vp run ship:ci:deploy (no AWS call)` | ローカル | 成功 | 2026-10-12 | 知らない stage と、repository を指定しない CI role のデプロイが、AWS を呼ぶ前に止まることを確認 |
+| 20 | `vp run check:all` | ローカル | 成功 | 2026-10-12 | format、lint、型検査、全テスト、全 CDK アプリの synth、本のビルドとリンク検査 |
+| 20 | `vp run ship:cfn:bootstrap` | AWS | 未実行 | - | CDKToolkit stack の作成は未実行。作られるものの記述は、固定した CLI の `cdk bootstrap --show-template` による |
+| 20 | `vp run ship:cfn:diff / ship:cfn:deploy / ship:smoke / ship:cfn:status / ship:cfn:destroy` | AWS | 未実行 | - | CloudFormation 経路でのデプロイと確認は未実行。alias 経由の integration が動くこと、失敗時の rollback の様子も未確認 |
+| 20 | `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` | AWS | 未実行 | - | OIDC provider と 4 つの role の作成は未実行。trust policy を IAM が受け入れること、bootstrap の role を assume できることも未確認 |
+| 20 | `vp run ship:cfn:drift (and the drift lab)` | AWS | 未実行 | - | 実際の stack での drift 検出は未実行。fixture は API リファレンスと SDK の型から書いたもので、実機の応答ではない |
+| 20 | `vp run ship:preview:list` | AWS | 未実行 | - | preview stack の一覧は未実行 |
+| 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | 未実行 | - | 4 つの workflow は GitHub Actions で一度も実行していない。x86_64-linux の runner で Nix の devShell が入ることも未確認 |
+| 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | 未実行 | - | cdkd と CloudFormation の間で stack を移す手順は未実行。記述は固定した版のヘルプによる |
 
 ## 未解決事項と再開手順
 
@@ -394,3 +405,39 @@ ElastiCache Serverless（public endpoint）には一度もつないでいない�
 `vp run kv:local:start` と `kv:local:stop`（Docker のコンテナで Valkey と DynamoDB Local を起動・停止する）を実行していない。contract test そのものは、同じ版の DynamoDB Local と、Valkey 9.1.2 のプロセスに対して通っている。
 
 再開手順: Docker の daemon を起動し、`examples/14-kv-cache/.env.example` を `.env` にコピーして、`vp run kv:local:start`、`vp run kv:local:migrate`、`vp run kv:test:local`、`vp run kv:local:stop` の順に実行する。
+
+### 20-cfn-deploy
+
+CloudFormation 経路（bootstrap、diff、deploy、smoke、status、destroy）を実環境で通していない
+
+再開手順: `vp run ship:cfn:bootstrap` のあと、`vp run ship:cfn:diff`、`ship:cfn:deploy`、`ship:smoke`、`ship:cfn:status`、`ship:cfn:destroy` を順に実行する。`ship:smoke` が alias 経由で 200 を返すこと、`cdk diff --method template` が lookup role だけで通ることを記録する。CDKToolkit stack に作られたリソースを、本文の表と照合する
+
+### 20-oidc-roles
+
+OIDC の role を GitHub Actions から assume していない
+
+再開手順: `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` を実行し、出力の 4 つの ARN と アカウント ID を repository の variables に入れる。workflows/ の 4 ファイルを .github/workflows/ にコピーして、pull request、main への push、手動実行の drift を 1 回ずつ流す。別の branch や別の repository から assume が拒否されること、repository の sub が immutable 形式かどうか、fork の pull request で plan job が走らないことを記録する
+
+### 20-drift-role-permissions
+
+DriftRole の読み取り権限は resource type の schema から導いたもので、実際の検出で足りるかは未確認
+
+再開手順: DriftRole で `vp run ship:cfn:drift -c stage=prod` を実行する。`failed` や `incomplete` になったら report の理由に出た action を examples/20-shipping/infra/lib/ci-stack.ts に足し、テストの一覧も直す。足りていたら、使われなかった action を CloudTrail で確かめて削る
+
+### 20-drift-live
+
+CloudFormation の drift 検出の応答を実機で採取していない。検出範囲（Integration が未検査になるか、inline policy の変更が Role の drift として出るか）も未確認
+
+再開手順: 本文の「わざとずらしてみる」の手順を実行する。各段階の reports/drift/AihShipApi.json と、同じ時点の `aws cloudformation describe-stack-resource-drifts` の出力を採り、tools/src/drift/fixtures/cloudformation/ の fixture と形を比べる。存在しない stack 名で実行し、エラーの name と message が `ValidationError` と `does not exist` であることを確かめる。未検査になった resource type を examples/20-shipping/src/drift-coverage.ts の 2 つの一覧と照合する
+
+### 20-rollback-live
+
+失敗したデプロイの rollback、alias の付け替え、`cdk rollback` を実環境で観察していない
+
+再開手順: わざと失敗する変更（たとえば Lambda の memorySize を上限より大きくする）をデプロイし、`vp run ship:cfn:status` が UPDATE_ROLLBACK_COMPLETE を返すまでの状態の移り変わりを記録する。正常なデプロイを 2 回行い、古い version が残っていること、stack を消したときに version も消えることを確かめる
+
+### 20-tool-migration
+
+cdkd と CloudFormation の間で stack を移す手順（`cdkd export`、`cdkd import --migrate-from-cloudformation`）は未実行
+
+再開手順: 練習用の stack を cdkd でデプロイし、`cdkd export <stack> --dry-run` の計画を読んでから実行する。import できない resource type で止まるかどうか、成功後に cdkd の state が消え、CloudFormation の stack として `cdk diff` が空になることを記録する。逆方向も同じ stack で試す

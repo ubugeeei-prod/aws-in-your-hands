@@ -1,0 +1,8 @@
+{
+  "app": "node infra/bin/app.ts",
+  "output": "cdk.out",
+  "notices": false,
+  "context": {
+    "githubRepository": "your-org/your-repo"
+  }
+}

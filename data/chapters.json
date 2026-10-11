@@ -996,55 +996,71 @@
       "prerequisites": ["02", "04"],
       "services": ["IAM OIDC", "CloudFormation", "AWS CDK"],
       "samplePath": "examples/20-shipping",
+      "sourceIds": [
+        "cfn-drift",
+        "cfn-detect-drift",
+        "cfn-resource-type-support",
+        "cfn-api-drift-status",
+        "cfn-api-resource-drifts",
+        "cfn-api-stack-resource-drift",
+        "cfn-api-detect-stack-drift",
+        "cfn-api-list-stack-resources",
+        "aws-sdk-cloudformation-npm",
+        "cdk-diff",
+        "cdk-drift-command",
+        "cdk-bootstrapping",
+        "cdk-bootstrapping-env",
+        "aws-cdk-cli-npm",
+        "aws-cdk-lib-ship",
+        "cfn-stack-failure-options",
+        "cfn-api-create-stack",
+        "cfn-stack-status-codes",
+        "cfn-continue-rollback",
+        "cfn-change-sets",
+        "cfn-stack-policy",
+        "cfn-termination-protection",
+        "cfn-pricing",
+        "iam-faqs",
+        "cfn-resource-schemas",
+        "aws-service-reference-cloudformation",
+        "aws-service-reference-logs",
+        "iam-oidc-role",
+        "iam-oidc-provider",
+        "github-oidc-reference",
+        "github-oidc-aws",
+        "github-secure-use",
+        "github-events",
+        "github-environments",
+        "github-actions-billing",
+        "configure-aws-credentials-v6",
+        "actions-checkout-release",
+        "install-nix-action-release",
+        "upload-artifact-release",
+        "lambda-versions",
+        "lambda-alias-routing",
+        "codedeploy-deployment-configs",
+        "cloudflare-workers-versions",
+        "cloudflare-workers-gradual",
+        "cloudflare-workers-rollbacks",
+        "cloudflare-workers-github-actions",
+        "cdkd-drift",
+        "cdkd-cli-drift",
+        "cdkd-introduction-tools",
+        "cdkd-npm-migration",
+        "cdkd-npm",
+        "cdkd-introduction",
+        "aws-price-list-s3",
+        "aws-price-list-lambda"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["cfn-drift", "cfn-detect-drift", "cdkd-drift", "cdkd-cli-drift", "cdk-diff"],
-      "outline": {
-        "outcome": {
-          "ja": "CI が OIDC の短命 credentials で同じ vp task を実行し、定期的な drift 検出が未検査も含めて報告する。",
-          "en": "CI runs the same vp tasks with short-lived OIDC credentials, and scheduled drift detection reports uninspected scope too."
-        },
-        "architecture": {
-          "ja": "pull request → check:all → infra:diff。main → deploy（標準の CDK/CloudFormation 経路）。schedule → drift。",
-          "en": "Pull request → check:all → infra:diff. main → deploy (the standard CDK/CloudFormation path). Schedule → drift."
-        },
-        "topics": {
-          "ja": [
-            "02章の drift gate を実環境へ",
-            "CloudFormation drift detection の検査範囲と nested stack",
-            "cdkd と CloudFormation を同じ resource に交互に使わない",
-            "rollback できるものとできないもの（data、schema）",
-            "preview 環境の費用と片付け"
-          ],
-          "en": [
-            "Taking the chapter 02 drift gate to a live account",
-            "CloudFormation drift-detection coverage and nested stacks",
-            "Never alternating cdkd and CloudFormation over the same resources",
-            "What rolls back and what does not (data, schema)",
-            "Preview-environment cost and cleanup"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "OIDC role の CDK と trust policy の assertion",
-            "CI 設定（同じ Nix lock と vp task）",
-            "CloudFormation drift の polling/parser/report と fixture",
-            "drift 注入と解消の実環境ラボ手順"
-          ],
-          "en": [
-            "OIDC role CDK with trust-policy assertions",
-            "CI configuration (same Nix lock and vp tasks)",
-            "CloudFormation drift polling, parser, and report with fixtures",
-            "A live lab procedure for injecting and resolving drift"
-          ]
-        },
-        "distributed": {
-          "ja": "deploy は原子的ではない。途中失敗で一部だけ更新された状態を前提に手順を書く。",
-          "en": "A deployment is not atomic; procedures assume a partially updated state after a mid-flight failure."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "21",

@@ -137,3 +137,15 @@ generated: true
 | stale read | stale read | 14 | 元データが変わったあとに、古い写しを読むこと。cache を使うかぎり起きるので、どれだけ古くてよいかを先に決める。 |
 | cache stampede | cache stampede | 14 | cache が切れた瞬間に、多数のリクエストが同時に miss して、全員が元データへ取りに行くこと。 |
 | single flight | single flight | 14 | 同じ key の読み込みが進行中なら、新しく始めずにその結果を待つこと。効くのは 1 つのプロセスの中だけ。 |
+| CloudFormation | CloudFormation | 20 | template を受け取ってリソースを作り、何を作ったかを stack として自分で記録する AWS のサービス。更新に失敗すると、既定では前の状態に戻す。 |
+| CDK の bootstrap | CDK bootstrap | 20 | AWS CDK CLI でデプロイする前に、アカウントとリージョンごとに一度行う準備。CDKToolkit という stack が、asset 用の bucket、ECR repository、5 つの IAM role を作る。cdkd の bootstrap とは別物。 |
+| change set | change set | 20 | stack の更新を、実行する前に「何が追加・変更・置き換え・削除されるか」の一覧にしたもの。実行するまで何も変わらない。成功を保証するものではない。 |
+| OIDC（OpenID Connect） | OIDC (OpenID Connect) | 20 | あるサービスが発行した署名つきの token で「自分が誰か」を別のサービスに示す標準。この本では、GitHub Actions の job が AWS に入るために使う。 |
+| trust policy | trust policy | 20 | IAM role に付く「誰がこの role を使えるか」の定義。role に何ができるかを決める権限の policy とは別。 |
+| sub（subject）claim | sub (subject) claim | 20 | OIDC の token に入っている「この token は何のために発行されたか」を表す文字列。GitHub Actions では repository と、branch、environment、pull request のいずれかが入る。 |
+| Lambda の version | Lambda version | 20 | 関数のコードと設定の、番号付きの写し。発行したあとは変えられない。発行していない最新の状態は $LATEST と呼ばれる。 |
+| Lambda の alias | Lambda alias | 20 | version を指す名前つきのポインタ。呼び出す側は alias を呼び、指す先を変えることで版を切り替える。2 つの version に重みを付けて振り分けることもできる。 |
+| rollback | rollback | 20 | 変更を、変更の前の状態に戻すこと。CloudFormation が戻すのは template にあるリソースの設定で、その間に書かれたデータは戻らない。 |
+| termination protection | termination protection | 20 | stack の削除を拒否する設定。解除するまで DeleteStack が失敗する。stack の更新でリソースが消えることは防がない。 |
+| preview 環境 | preview environment | 20 | pull request ごとに作る、一時的な環境。この本では PR ごとに 1 つの stack。pull request を閉じたら消す前提で作る。 |
+| nested stack | nested stack | 20 | 別の stack のリソース（AWS::CloudFormation::Stack）として作られる stack。親の stack で drift を検出しても、中は調べられない。 |

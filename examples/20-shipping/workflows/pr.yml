@@ -1,0 +1,47 @@
+# Not active here: GitHub only runs workflows in .github/workflows/. Never executed.
+#
+# Every pull request: the same checks a person runs locally, then what a deploy
+# of this branch would change in production. Changes nothing in AWS.
+name: pull request
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest # x86_64-linux: the Nix expressions exist for it but are unverified
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - run: nix develop --command vp install --frozen-lockfile
+      - run: nix develop --command vp run check:all
+
+  plan:
+    needs: check
+    # The code under review runs with these credentials. Only branches of this repository get them.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # lets the job ask GitHub for an OIDC token; grants nothing in the repository
+    env:
+      AIH_AWS_ACCOUNT_ID: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      AIH_AWS_REGION: ap-northeast-1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - run: nix develop --command vp install --frozen-lockfile
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AIH_PLAN_ROLE_ARN }} # output PlanRoleArn of AihShipCi
+          aws-region: ap-northeast-1
+          allowed-account-ids: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      - name: What would change in production
+        run: nix develop --command vp run ship:cfn:diff -c stage=prod

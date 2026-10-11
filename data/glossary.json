@@ -1259,6 +1259,126 @@
         "ja": "同じ key の読み込みが進行中なら、新しく始めずにその結果を待つこと。効くのは 1 つのプロセスの中だけ。",
         "en": "Waiting for a load of the same key that is already in progress instead of starting another. It works within one process only."
       }
+    },
+    {
+      "id": "cloudformation",
+      "ja": "CloudFormation",
+      "en": "CloudFormation",
+      "firstUse": "20",
+      "definition": {
+        "ja": "template を受け取ってリソースを作り、何を作ったかを stack として自分で記録する AWS のサービス。更新に失敗すると、既定では前の状態に戻す。",
+        "en": "The AWS service that takes a template, creates the resources, and records what it created as a stack. By default it rolls a failed update back."
+      }
+    },
+    {
+      "id": "cdk-bootstrap",
+      "ja": "CDK の bootstrap",
+      "en": "CDK bootstrap",
+      "firstUse": "20",
+      "definition": {
+        "ja": "AWS CDK CLI でデプロイする前に、アカウントとリージョンごとに一度行う準備。CDKToolkit という stack が、asset 用の bucket、ECR repository、5 つの IAM role を作る。cdkd の bootstrap とは別物。",
+        "en": "The one-time preparation per account and Region before deploying with the AWS CDK CLI. A stack named CDKToolkit creates an asset bucket, an ECR repository, and five IAM roles. Not the same as cdkd's bootstrap."
+      }
+    },
+    {
+      "id": "change-set",
+      "ja": "change set",
+      "en": "change set",
+      "firstUse": "20",
+      "definition": {
+        "ja": "stack の更新を、実行する前に「何が追加・変更・置き換え・削除されるか」の一覧にしたもの。実行するまで何も変わらない。成功を保証するものではない。",
+        "en": "A list of what a stack update would add, modify, replace, or delete, made before anything runs. Nothing changes until it is executed, and it does not guarantee success."
+      }
+    },
+    {
+      "id": "oidc",
+      "ja": "OIDC（OpenID Connect）",
+      "en": "OIDC (OpenID Connect)",
+      "firstUse": "20",
+      "definition": {
+        "ja": "あるサービスが発行した署名つきの token で「自分が誰か」を別のサービスに示す標準。この本では、GitHub Actions の job が AWS に入るために使う。",
+        "en": "A standard for proving who you are to one service with a signed token issued by another. In this book, how a GitHub Actions job gets into AWS."
+      }
+    },
+    {
+      "id": "trust-policy",
+      "ja": "trust policy",
+      "en": "trust policy",
+      "firstUse": "20",
+      "definition": {
+        "ja": "IAM role に付く「誰がこの role を使えるか」の定義。role に何ができるかを決める権限の policy とは別。",
+        "en": "The part of an IAM role that says who may use it. Separate from the permission policies that say what the role may do."
+      }
+    },
+    {
+      "id": "subject-claim",
+      "ja": "sub（subject）claim",
+      "en": "sub (subject) claim",
+      "firstUse": "20",
+      "definition": {
+        "ja": "OIDC の token に入っている「この token は何のために発行されたか」を表す文字列。GitHub Actions では repository と、branch、environment、pull request のいずれかが入る。",
+        "en": "The string in an OIDC token that says what the token was issued for. In GitHub Actions it holds the repository and a branch, an environment, or the pull request marker."
+      }
+    },
+    {
+      "id": "lambda-version",
+      "ja": "Lambda の version",
+      "en": "Lambda version",
+      "firstUse": "20",
+      "definition": {
+        "ja": "関数のコードと設定の、番号付きの写し。発行したあとは変えられない。発行していない最新の状態は $LATEST と呼ばれる。",
+        "en": "A numbered copy of a function's code and configuration that cannot change once published. The unpublished latest state is called $LATEST."
+      }
+    },
+    {
+      "id": "lambda-alias",
+      "ja": "Lambda の alias",
+      "en": "Lambda alias",
+      "firstUse": "20",
+      "definition": {
+        "ja": "version を指す名前つきのポインタ。呼び出す側は alias を呼び、指す先を変えることで版を切り替える。2 つの version に重みを付けて振り分けることもできる。",
+        "en": "A named pointer to a version. Callers invoke the alias, and moving it switches versions. It can also split traffic between two versions by weight."
+      }
+    },
+    {
+      "id": "rollback",
+      "ja": "rollback",
+      "en": "rollback",
+      "firstUse": "20",
+      "definition": {
+        "ja": "変更を、変更の前の状態に戻すこと。CloudFormation が戻すのは template にあるリソースの設定で、その間に書かれたデータは戻らない。",
+        "en": "Returning a change to the state before it. CloudFormation puts back the configuration of the resources in the template, not the data written in the meantime."
+      }
+    },
+    {
+      "id": "termination-protection",
+      "ja": "termination protection",
+      "en": "termination protection",
+      "firstUse": "20",
+      "definition": {
+        "ja": "stack の削除を拒否する設定。解除するまで DeleteStack が失敗する。stack の更新でリソースが消えることは防がない。",
+        "en": "A setting that refuses to delete a stack: DeleteStack fails until it is turned off. It does not stop an update from removing resources."
+      }
+    },
+    {
+      "id": "preview-environment",
+      "ja": "preview 環境",
+      "en": "preview environment",
+      "firstUse": "20",
+      "definition": {
+        "ja": "pull request ごとに作る、一時的な環境。この本では PR ごとに 1 つの stack。pull request を閉じたら消す前提で作る。",
+        "en": "A temporary environment created per pull request; in this book, one stack per pull request, made to be deleted when the pull request closes."
+      }
+    },
+    {
+      "id": "nested-stack",
+      "ja": "nested stack",
+      "en": "nested stack",
+      "firstUse": "20",
+      "definition": {
+        "ja": "別の stack のリソース（AWS::CloudFormation::Stack）として作られる stack。親の stack で drift を検出しても、中は調べられない。",
+        "en": "A stack created as a resource (AWS::CloudFormation::Stack) of another stack. Drift detection on the parent does not look inside it."
+      }
     }
   ]
 }

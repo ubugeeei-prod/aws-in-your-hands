@@ -78,6 +78,7 @@ const chapterSynthTasks = [
   "ssr:infra:synth",
   "obs:infra:synth",
   "kv:infra:synth",
+  "ship:cfn:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -353,6 +354,29 @@ export default defineConfig({
       "kv:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/14-kv-cache" }),
       "kv:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/14-kv-cache" }),
       // <<< chapter 14
+
+      // >>> chapter 20
+      // ---- chapter 20: shipping ------------------------------------------
+      // The same kind of CDK app through the AWS CDK CLI. Local: writes examples/20-shipping/cdk.out.
+      "ship:cfn:synth": fresh(`${node} examples/20-shipping/scripts/cdk.ts synth api`),
+      // Once per account and Region: creates the CDKToolkit stack (bucket, ECR repository, five IAM roles).
+      "ship:cfn:bootstrap": live(`${node} examples/20-shipping/scripts/cdk.ts bootstrap api`),
+      // Synthesized template against the deployed template. `-c stage=prod` selects another stack.
+      "ship:cfn:diff": live(`${node} examples/20-shipping/scripts/cdk.ts diff api`),
+      "ship:cfn:deploy": live(`${node} examples/20-shipping/scripts/cdk.ts deploy api`),
+      "ship:cfn:destroy": live(`${node} examples/20-shipping/scripts/cdk.ts destroy api`),
+      // Where the last operation stopped, and what is safe next. Reads only.
+      "ship:cfn:status": live(`${node} examples/20-shipping/scripts/status.ts`),
+      // CloudFormation drift detection through the same gate as cdkd's. Writes reports/drift/<stack>.json.
+      "ship:cfn:drift": live(`${node} examples/20-shipping/scripts/drift.ts`),
+      "ship:smoke": live(`${node} examples/20-shipping/scripts/smoke.ts`),
+      // Lists preview stacks and their age. Deletes nothing.
+      "ship:preview:list": live(`${node} examples/20-shipping/scripts/previews.ts`),
+      // The GitHub OIDC provider and the roles workflows assume. Deployed by a person, once.
+      "ship:ci:diff": live(`${node} examples/20-shipping/scripts/cdk.ts diff ci`),
+      "ship:ci:deploy": live(`${node} examples/20-shipping/scripts/cdk.ts deploy ci`),
+      "ship:ci:destroy": live(`${node} examples/20-shipping/scripts/cdk.ts destroy ci`),
+      // <<< chapter 20
 
       // ---- chapter task blocks are inserted above this line ----
 

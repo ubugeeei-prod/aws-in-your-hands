@@ -1581,6 +1581,56 @@
           "basis": "about 7 days of logs kept, in GB-month"
         }
       ]
+    },
+    {
+      "id": "ship-idle",
+      "chapter": "20",
+      "title": {
+        "ja": "変更を届ける: stack と CI の role を置いて、誰も呼ばない月",
+        "en": "Shipping: the stack and the CI roles in place, nobody calling for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "API へのリクエストゼロ。log は失効して保存量ゼロ",
+          "CloudFormation は AWS:: の resource type に追加料金なし。IAM の role と OIDC provider は IAM の一部で、追加料金なし",
+          "deploy も drift 検出も 0 回",
+          "GitHub Actions の料金は AWS の請求ではないので含めていない"
+        ],
+        "en": [
+          "No requests to the API; logs have expired and nothing is stored",
+          "CloudFormation adds no charge for AWS:: resource types; IAM roles and the OIDC provider are part of IAM, at no additional charge",
+          "No deploys and no drift detection",
+          "GitHub Actions charges are not an AWS bill and are not included"
+        ]
+      },
+      "items": []
+    },
+    {
+      "id": "ship-assets-year",
+      "chapter": "20",
+      "title": {
+        "ja": "変更を届ける: 1 日 1 回のデプロイを 1 年続けて、asset を一度も片付けない",
+        "en": "Shipping: one deploy a day for a year, assets never cleaned up"
+      },
+      "assumptions": {
+        "ja": [
+          "デプロイのたびにコードが変わり、新しい zip が CDK の asset bucket に 1 つ増える",
+          "zip は 1 つ 137 KB（この章の bundle 837 KB を手元で deflate した大きさ。CDK CLI が作る zip の実測ではない）",
+          "365 個すべてが残っている月の保存料金。PUT のリクエスト料金は含めていない"
+        ],
+        "en": [
+          "Every deploy changes the code and adds one new zip to the CDK asset bucket",
+          "Each zip is 137 KB (this chapter's 837 KB bundle deflated locally; not a measurement of the zip the CDK CLI makes)",
+          "Storage for a month in which all 365 remain; PUT request charges are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.047689,
+          "basis": "365 x 137 KB, in GB"
+        }
+      ]
     }
   ]
 }

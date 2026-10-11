@@ -3639,6 +3639,503 @@
       ]
     },
     {
+      "id": "cfn-drift",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html",
+      "title": "Detect unmanaged configuration changes to stacks and resources with drift detection",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CloudFormation drift detection compares live resource properties with the template; not every resource type or property is covered",
+        "Only property values explicitly set in the template or through parameters are compared; default values are not",
+        "Resources that do not support drift detection get NOT_CHECKED; a stack with no supported resources is IN_SYNC",
+        "Detection on a stack does not detect drift in its nested stacks; run it on the nested stack itself",
+        "Detection can run on stacks in CREATE_COMPLETE, UPDATE_COMPLETE, UPDATE_ROLLBACK_COMPLETE, and UPDATE_ROLLBACK_FAILED",
+        "The caller needs read permission for each resource, plus cloudformation:DetectStackDrift, DetectStackResourceDrift, and BatchDescribeTypeConfigurations",
+        "KMSKeyId is never compared; values the service does not return, and Lambda function code, cannot be compared; attachments across stacks may give inaccurate results",
+        "DETECTION_FAILED means detection failed for at least one resource; results are available for the others",
+        "Stack-level tags are also checked for drift"
+      ]
+    },
+    {
+      "id": "cfn-detect-drift",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/detect-drift-stack.html",
+      "title": "Detect drift on an entire CloudFormation stack",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Detection is asynchronous and must be polled to completion",
+        "detect-stack-drift returns a detection ID, describe-stack-drift-detection-status reports progress, describe-stack-resource-drifts returns per-resource results",
+        "Only one drift detection operation can run on a stack at a time; it may take several minutes",
+        "The guide warns to compare the last drift check time with the result timestamps to avoid using stale data"
+      ]
+    },
+    {
+      "id": "cfn-resource-type-support",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-import-supported-resources.html",
+      "title": "Resource type support",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Drift detection column is Yes for AWS::ApiGatewayV2::Api, Route, Stage, AWS::IAM::Role, AWS::IAM::OIDCProvider, AWS::Lambda::Function, Version, Alias, Permission, and AWS::Logs::LogGroup",
+        "Drift detection column is No for AWS::ApiGatewayV2::Integration and AWS::CloudFormation::Stack",
+        "AWS::IAM::Policy is not in the table",
+        "The table is described as not exhaustive"
+      ]
+    },
+    {
+      "id": "cfn-api-drift-status",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStackDriftDetectionStatus.html",
+      "title": "DescribeStackDriftDetectionStatus",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "DetectionStatus is DETECTION_IN_PROGRESS, DETECTION_FAILED, or DETECTION_COMPLETE; StackDriftStatus is DRIFTED, IN_SYNC, UNKNOWN, or NOT_CHECKED",
+        "Response fields used by tools/src/drift/cloudformation-schema.ts"
+      ]
+    },
+    {
+      "id": "cfn-api-resource-drifts",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStackResourceDrifts.html",
+      "title": "DescribeStackResourceDrifts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Returns one result per resource that has been checked; resources not yet checked or not supporting drift detection are not included",
+        "Results are paginated with NextToken"
+      ]
+    },
+    {
+      "id": "cfn-api-stack-resource-drift",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_StackResourceDrift.html",
+      "title": "StackResourceDrift",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "StackResourceDriftStatus is IN_SYNC, MODIFIED, DELETED, NOT_CHECKED, UNKNOWN, or UNSUPPORTED",
+        "Each result carries the Timestamp of when that resource was checked"
+      ]
+    },
+    {
+      "id": "cfn-api-detect-stack-drift",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DetectStackDrift.html",
+      "title": "DetectStackDrift",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Returns a StackDriftDetectionId; can take up to several minutes; does not descend into nested stacks",
+        "The page lists no specific error for a stack that does not exist"
+      ]
+    },
+    {
+      "id": "cfn-api-list-stack-resources",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStackResources.html",
+      "title": "ListStackResources",
+      "checkedAt": "2026-10-12",
+      "supports": ["Returns every resource of the stack as StackResourceSummary, paginated with NextToken"]
+    },
+    {
+      "id": "aws-sdk-cloudformation-npm",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-cloudformation/v/3.1149.0",
+      "title": "@aws-sdk/client-cloudformation 3.1149.0 (type definitions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Enum values of StackStatus, StackDriftStatus, StackDriftDetectionStatus, StackResourceDriftStatus, and DifferenceType",
+        "StackResourceDriftInformationSummary: resources skipped by ContinueUpdateRollback also have NOT_CHECKED",
+        "PropertyDifferences are present only for MODIFIED resources"
+      ]
+    },
+    {
+      "id": "cdk-diff",
+      "url": "https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-diff.html",
+      "title": "cdk diff",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "`cdk diff` compares the synthesized template with the deployed template",
+        "--method auto (the default) creates a change set with the deploy role and falls back to a template diff; --method template compares templates and uses the lookup role"
+      ]
+    },
+    {
+      "id": "cdk-drift-command",
+      "url": "https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-drift.html",
+      "title": "cdk drift",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "`cdk drift` calls CloudFormation drift detection; `cdk diff` compares templates",
+        "--fail returns exit code 1 when drift is detected; no other command-specific option is documented"
+      ]
+    },
+    {
+      "id": "cdk-bootstrapping",
+      "url": "https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html",
+      "title": "AWS CDK bootstrapping",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "`cdk bootstrap` deploys the CDKToolkit stack with an asset bucket, an ECR repository, and IAM roles",
+        "Each environment (account and Region) must be bootstrapped before deploying into it"
+      ]
+    },
+    {
+      "id": "cdk-bootstrapping-env",
+      "url": "https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping-env.html",
+      "title": "Bootstrap your environment for use with the AWS CDK",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Bootstrapping creates five IAM roles: CloudFormationExecutionRole, DeploymentActionRole, FilePublishingRole, ImagePublishingRole, and LookupRole",
+        "Physical names follow cdk-<qualifier>-<description>-<account>-<Region>; the default qualifier is hnb659fds",
+        "The deploy role is assumed by the CDK CLI; the CloudFormation execution role is what CloudFormation uses to create resources"
+      ]
+    },
+    {
+      "id": "aws-cdk-cli-npm",
+      "url": "https://www.npmjs.com/package/aws-cdk/v/2.1145.0",
+      "title": "aws-cdk 2.1145.0 (help output, README, and `cdk bootstrap --show-template`)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Bootstrap template version 32: bucket cdk-<qualifier>-assets-<account>-<region> (versioned, retained on stack deletion, noncurrent versions expire after 30 days), ECR repository cdk-<qualifier>-container-assets-<account>-<region>, five roles, and the SSM parameter /cdk-bootstrap/<qualifier>/version",
+        "The CloudFormation execution role gets AdministratorAccess unless --cloudformation-execution-policies or trusted accounts are given",
+        "The bootstrap roles trust the account's own principals for sts:AssumeRole; the lookup role has ReadOnlyAccess with a deny on kms:Decrypt",
+        "The deploy role's CloudFormation permissions are on Resource *, so it cannot be limited to stacks of one name",
+        "Flags of cdk deploy, diff, destroy, drift, rollback, and bootstrap used in examples/20-shipping/src/cdk-args.ts",
+        "cdk deploy uses a change set by default and rolls back on failure unless --no-rollback or --express is given",
+        "CDK_DISABLE_CLI_TELEMETRY and CDK_DISABLE_VERSION_CHECK environment variables; `notices: false` in cdk.json"
+      ]
+    },
+    {
+      "id": "aws-cdk-lib-ship",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (type definitions used by chapter 20)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "OidcProviderNative creates AWS::IAM::OIDCProvider directly; thumbprints are optional",
+        "StackProps.terminationProtection, AppProps.analyticsReporting, Function.currentVersion with currentVersionOptions.removalPolicy",
+        "StackProps has no stack policy property"
+      ]
+    },
+    {
+      "id": "cfn-stack-failure-options",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stack-failure-options.html",
+      "title": "Choose how to handle failures when provisioning resources",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With rollback disabled, successfully provisioned resources are preserved and failed ones stay in CREATE_FAILED or UPDATE_FAILED",
+        "CloudFormation stops at the first failure in each independent provisioning path",
+        "A stack in that state is remediated by a retry, an update, or a rollback"
+      ]
+    },
+    {
+      "id": "cfn-api-create-stack",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_CreateStack.html",
+      "title": "CreateStack",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "DisableRollback defaults to false and OnFailure to ROLLBACK",
+        "Termination protection is deactivated by default"
+      ]
+    },
+    {
+      "id": "cfn-stack-status-codes",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/view-stack-events.html",
+      "title": "Monitor stack progress",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ROLLBACK_COMPLETE exists only after a failed creation, and only a delete can be performed on it",
+        "UPDATE_ROLLBACK_FAILED: delete the stack or continue the rollback",
+        "During an update with replacement, new resources are created first and old ones deleted in UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+        "DELETE_FAILED: the stack cannot be updated; delete it again"
+      ]
+    },
+    {
+      "id": "cfn-continue-rollback",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-continueupdaterollback.html",
+      "title": "Continue rolling back an update",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A stack in UPDATE_ROLLBACK_FAILED cannot be updated, but can be rolled back to UPDATE_ROLLBACK_COMPLETE",
+        "Resources skipped while forcing a rollback end up inconsistent with the template"
+      ]
+    },
+    {
+      "id": "cfn-change-sets",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html",
+      "title": "Update CloudFormation stacks using change sets",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A change set previews how proposed changes affect running resources, including replacement and deletion, before it is executed",
+        "A change set does not guarantee that the update will succeed"
+      ]
+    },
+    {
+      "id": "cfn-stack-policy",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html",
+      "title": "Prevent updates to stack resources",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A stack policy applies only during stack updates and is a fail-safe, not access control",
+        "Once a stack policy is set, every resource is protected unless explicitly allowed"
+      ]
+    },
+    {
+      "id": "cfn-termination-protection",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html",
+      "title": "Protect CloudFormation stacks from being deleted",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With termination protection, deleting the stack fails and the stack is unchanged; it is disabled by default",
+        "Termination protection applies only to attempts to delete the stack; an update that removes a nested stack still deletes it"
+      ]
+    },
+    {
+      "id": "cfn-pricing",
+      "url": "https://aws.amazon.com/cloudformation/pricing/",
+      "title": "AWS CloudFormation pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "No additional charge for resource providers in the AWS::* namespace; you pay for the resources created"
+      ]
+    },
+    {
+      "id": "iam-faqs",
+      "url": "https://aws.amazon.com/iam/faqs/",
+      "title": "AWS IAM FAQs",
+      "checkedAt": "2026-10-12",
+      "supports": ["IAM is offered at no additional charge"]
+    },
+    {
+      "id": "cfn-resource-schemas",
+      "url": "https://schema.cloudformation.ap-northeast-1.amazonaws.com/CloudformationSchema.zip",
+      "title": "CloudFormation resource provider schemas, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Read handler permissions of AWS::Lambda::Function, Version, Alias, Permission, AWS::ApiGatewayV2::Api, Route, Stage, AWS::IAM::Role, and AWS::Logs::LogGroup, used for the DriftRole policy"
+      ],
+      "note": "That drift detection needs exactly these actions is an inference from the schemas, not a documented statement."
+    },
+    {
+      "id": "aws-service-reference-cloudformation",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudformation/cloudformation.json",
+      "title": "AWS service reference: CloudFormation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "DescribeStackDriftDetectionStatus and BatchDescribeTypeConfigurations have no resource type, so a policy must use Resource *",
+        "DetectStackDrift, DetectStackResourceDrift, DescribeStackResourceDrifts, ListStackResources, and DescribeStacks can be limited to a stack ARN"
+      ]
+    },
+    {
+      "id": "aws-service-reference-logs",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/logs/logs.json",
+      "title": "AWS service reference: CloudWatch Logs",
+      "checkedAt": "2026-10-12",
+      "supports": ["DescribeLogGroups, DescribeIndexPolicies, and DescribeResourcePolicies have no resource type"]
+    },
+    {
+      "id": "iam-oidc-role",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html",
+      "title": "Create a role for OpenID Connect federation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For GitHub's provider, IAM rejects a trust policy whose token.actions.githubusercontent.com:sub condition is missing or only a wildcard",
+        "AWS recommends limiting the condition to specific repositories or branches, and protection rules on GitHub environments used in OIDC policies"
+      ]
+    },
+    {
+      "id": "iam-oidc-provider",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html",
+      "title": "Create an OpenID Connect (OIDC) identity provider in IAM",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS verifies the provider's JWKS endpoint with its own trusted root CAs and falls back to thumbprints only when it cannot"
+      ]
+    },
+    {
+      "id": "github-oidc-reference",
+      "url": "https://docs.github.com/en/actions/reference/security/oidc",
+      "title": "GitHub Actions: OpenID Connect reference",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Subject formats: repo:OWNER/REPO:environment:NAME, repo:OWNER/REPO:pull_request (only if the job references no environment), repo:OWNER/REPO:ref:refs/heads/BRANCH",
+        "Repositories created after July 15, 2026 use immutable subjects of the form repo:OWNER@OWNER-ID/REPO@REPO-ID:...; older ones keep the previous format unless opted in or renamed",
+        "A job needs permissions id-token: write to request the token; that permission grants no write access to anything else"
+      ]
+    },
+    {
+      "id": "github-oidc-aws",
+      "url": "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws",
+      "title": "GitHub Actions: Configuring OpenID Connect in Amazon Web Services",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Provider URL https://token.actions.githubusercontent.com and audience sts.amazonaws.com for the official action",
+        "Custom claims for OIDC are not available in AWS",
+        "OIDC lets workflows reach AWS without storing AWS credentials as long-lived GitHub secrets"
+      ]
+    },
+    {
+      "id": "github-secure-use",
+      "url": "https://docs.github.com/en/actions/reference/security/secure-use",
+      "title": "GitHub Actions: Secure use reference",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Pinning an action to a full-length commit SHA is the only way to use an action as an immutable release"
+      ]
+    },
+    {
+      "id": "github-events",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows",
+      "title": "GitHub Actions: Events that trigger workflows",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Scheduled workflows run on the latest commit of the default branch, can be delayed or dropped under load, and are disabled in public repositories after 60 days without activity",
+        "For pull requests from forks, secrets are not passed and GITHUB_TOKEN is read-only"
+      ]
+    },
+    {
+      "id": "github-environments",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments",
+      "title": "GitHub Actions: Deployments and environments",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Environments support required reviewers and deployment branch restrictions",
+        "On GitHub Free, Pro, and Team, required reviewers are available only for public repositories"
+      ]
+    },
+    {
+      "id": "github-actions-billing",
+      "url": "https://docs.github.com/en/billing/concepts/product-billing/github-actions",
+      "title": "GitHub Actions billing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard GitHub-hosted runners are free in public repositories",
+        "Private repositories get a monthly quota of minutes by plan; GitHub Free includes 2,000"
+      ]
+    },
+    {
+      "id": "configure-aws-credentials-v6",
+      "url": "https://github.com/aws-actions/configure-aws-credentials/tree/e1253824e5c10ff9df46874f81ed3ec929e19cfd",
+      "title": "aws-actions/configure-aws-credentials v6.3.0 (action.yml and README at the tagged commit)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "v6.3.0 was the latest release on the check date; its tag points at commit e1253824e5c10ff9df46874f81ed3ec929e19cfd",
+        "Inputs role-to-assume, aws-region (required), and allowed-account-ids; audience defaults to sts.amazonaws.com; role-duration-seconds defaults to 3600",
+        "Session tagging is not used when authenticating with OIDC"
+      ]
+    },
+    {
+      "id": "actions-checkout-release",
+      "url": "https://api.github.com/repos/actions/checkout/releases/latest",
+      "title": "actions/checkout: latest release",
+      "checkedAt": "2026-10-12",
+      "supports": ["v7.0.1, commit 3d3c42e5aac5ba805825da76410c181273ba90b1; has a persist-credentials input"]
+    },
+    {
+      "id": "install-nix-action-release",
+      "url": "https://api.github.com/repos/cachix/install-nix-action/releases/latest",
+      "title": "cachix/install-nix-action: latest release",
+      "checkedAt": "2026-10-12",
+      "supports": ["v31.11.1, commit 13d8dd58da0234aa297dedd986986ccb8e7f3e24"]
+    },
+    {
+      "id": "upload-artifact-release",
+      "url": "https://api.github.com/repos/actions/upload-artifact/releases/latest",
+      "title": "actions/upload-artifact: latest release",
+      "checkedAt": "2026-10-12",
+      "supports": ["v7.0.2, commit cf430e030ddbb5b0abf93d22962f4752f3646cd9; inputs name, path, if-no-files-found"]
+    },
+    {
+      "id": "lambda-versions",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html",
+      "title": "Manage Lambda function versions",
+      "checkedAt": "2026-10-12",
+      "supports": ["A published version's code and most configuration are immutable; deploying code overwrites $LATEST"]
+    },
+    {
+      "id": "lambda-alias-routing",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuring-alias-routing.html",
+      "title": "Implement Lambda canary deployments using a weighted alias",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An alias can split traffic between at most two published versions with the same execution role; a weighted alias cannot point to $LATEST",
+        "The split is probabilistic, so low traffic can differ widely from the configured percentage"
+      ]
+    },
+    {
+      "id": "codedeploy-deployment-configs",
+      "url": "https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html",
+      "title": "Working with deployment configurations in CodeDeploy",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Predefined canary, linear, and all-at-once configurations exist for Lambda, such as CodeDeployDefault.LambdaCanary10Percent5Minutes"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-versions",
+      "url": "https://developers.cloudflare.com/workers/versions-and-deployments/",
+      "title": "Cloudflare Workers: Versions & deployments",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default `wrangler deploy` creates a version and deploys it to 100% of traffic in one step",
+        "A version captures code, static assets, bindings, and compatibility settings; state in KV, R2, Durable Objects, and D1 is not tracked with versions"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-gradual",
+      "url": "https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/",
+      "title": "Cloudflare Workers: Gradual deployments",
+      "checkedAt": "2026-10-12",
+      "supports": ["A deployment can split traffic between two versions by percentage"]
+    },
+    {
+      "id": "cloudflare-workers-rollbacks",
+      "url": "https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/",
+      "title": "Cloudflare Workers: Rollbacks",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "`wrangler rollback` creates a new deployment with an earlier version; only the 100 most recent versions can be rolled back to",
+        "Resources connected to the Worker are not changed by a rollback, and errors can follow if the structure of data changed between versions"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-github-actions",
+      "url": "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/",
+      "title": "Cloudflare Workers: GitHub Actions",
+      "checkedAt": "2026-10-12",
+      "supports": ["The documented setup stores a Cloudflare API token and the account ID as CI secrets for Wrangler"]
+    },
+    {
+      "id": "cdkd-drift",
+      "url": "https://cdkd.dev/drift/index.html",
+      "title": "cdkd: Drift",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Outcome categories and resolution with --accept and --revert",
+        "cdkd drift compares cdkd's state with AWS; cdkd diff compares the template with the state"
+      ]
+    },
+    {
+      "id": "cdkd-cli-drift",
+      "url": "https://cdkd.dev/cli-drift/index.html",
+      "title": "cdkd: drift CLI reference",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Flags and exit codes of `cdkd drift`",
+        "cdkd's state holds a snapshot of every property AWS reported, so drift catches a change to a property never set in the CDK code",
+        "CloudFormation's drift detection has nothing to inspect for a stack deployed by cdkd"
+      ]
+    },
+    {
+      "id": "cdkd-introduction-tools",
+      "url": "https://cdkd.dev/introduction/",
+      "title": "cdkd: Introduction (re-read for chapter 20)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "cdkd recommends the AWS CDK CLI for production because CloudFormation provides change sets, stack policies, and the rest of its tooling",
+        "One CDK app can be deployed by cdkd to a dev environment and by the AWS CDK CLI to production; a stack can be moved from one tool to the other"
+      ]
+    },
+    {
+      "id": "cdkd-npm-migration",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (help of export and import, provider registry)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "`cdkd export` hands a stack to CloudFormation through an IMPORT change set, deletes cdkd's state on success, and aborts if a resource is not importable",
+        "`cdkd import --migrate-from-cloudformation` writes cdkd state, sets Retain policies on every resource, then deletes the CloudFormation stack",
+        "No dedicated provider is registered for AWS::Lambda::Alias, AWS::Lambda::Version, or AWS::IAM::OIDCProvider; the other types chapter 20 uses have one"
+      ],
+      "note": "Read from the installed package's help output and bundled code. Neither command was run."
+    },
+    {
       "id": "iam-best-practices",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
       "title": "Security best practices in IAM",
@@ -3687,63 +4184,11 @@
       "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
     },
     {
-      "id": "cdk-bootstrapping",
-      "url": "https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html",
-      "title": "AWS CDK bootstrapping",
-      "checkedAt": null,
-      "supports": [
-        "`cdk bootstrap` deploys the CDKToolkit stack with an asset bucket, an ECR repository, and IAM roles"
-      ],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "cdk-diff",
-      "url": "https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-diff.html",
-      "title": "cdk diff",
-      "checkedAt": null,
-      "supports": ["`cdk diff` compares the synthesized template with the deployed template"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "cfn-drift",
-      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html",
-      "title": "Detect unmanaged configuration changes to stacks and resources with drift detection",
-      "checkedAt": null,
-      "supports": [
-        "CloudFormation drift detection compares live resource properties with the template; not every resource type or property is covered"
-      ],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "cfn-detect-drift",
-      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/detect-drift-stack.html",
-      "title": "Detect drift on an entire CloudFormation stack",
-      "checkedAt": null,
-      "supports": ["Detection is asynchronous and must be polled to completion"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
       "id": "cdkd-concepts",
       "url": "https://cdkd.dev/concepts/index.html",
       "title": "cdkd: Concepts",
       "checkedAt": null,
       "supports": ["cdkd provisions through AWS SDK and Cloud Control API calls and keeps its own state in S3"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "cdkd-drift",
-      "url": "https://cdkd.dev/drift/index.html",
-      "title": "cdkd: Drift",
-      "checkedAt": null,
-      "supports": ["Outcome categories and resolution with --accept and --revert"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "cdkd-cli-drift",
-      "url": "https://cdkd.dev/cli-drift/index.html",
-      "title": "cdkd: drift CLI reference",
-      "checkedAt": null,
-      "supports": ["Flags and exit codes of `cdkd drift`"],
       "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
     },
     {

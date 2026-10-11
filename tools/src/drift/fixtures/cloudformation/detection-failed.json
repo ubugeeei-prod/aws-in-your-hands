@@ -1,0 +1,95 @@
+{
+  "note": "Detection could not read one resource. The others have results.",
+  "detect": {
+    "StackDriftDetectionId": "11111111-2222-4333-8444-555555555555"
+  },
+  "statuses": [
+    {
+      "StackId": "arn:aws:cloudformation:ap-northeast-1:111111111111:stack/AihShipApi/00000000-0000-4000-8000-000000000000",
+      "StackDriftDetectionId": "11111111-2222-4333-8444-555555555555",
+      "DetectionStatus": "DETECTION_IN_PROGRESS",
+      "Timestamp": "2026-10-11T12:00:00.000Z"
+    },
+    {
+      "StackId": "arn:aws:cloudformation:ap-northeast-1:111111111111:stack/AihShipApi/00000000-0000-4000-8000-000000000000",
+      "StackDriftDetectionId": "11111111-2222-4333-8444-555555555555",
+      "DetectionStatus": "DETECTION_FAILED",
+      "Timestamp": "2026-10-11T12:00:00.000Z",
+      "StackDriftStatus": "UNKNOWN",
+      "DetectionStatusReason": "Failed to detect drift on resource [HandlerRole]"
+    }
+  ],
+  "driftPages": [
+    {
+      "StackResourceDrifts": [
+        {
+          "StackId": "arn:aws:cloudformation:ap-northeast-1:111111111111:stack/AihShipApi/00000000-0000-4000-8000-000000000000",
+          "LogicalResourceId": "Handler",
+          "PhysicalResourceId": "AihShipApi-Handler-EXAMPLE",
+          "ResourceType": "AWS::Lambda::Function",
+          "StackResourceDriftStatus": "IN_SYNC",
+          "Timestamp": "2026-10-11T12:00:05.000Z"
+        },
+        {
+          "StackId": "arn:aws:cloudformation:ap-northeast-1:111111111111:stack/AihShipApi/00000000-0000-4000-8000-000000000000",
+          "LogicalResourceId": "HandlerRole",
+          "PhysicalResourceId": "AihShipApi-HandlerRole-EXAMPLE",
+          "ResourceType": "AWS::IAM::Role",
+          "StackResourceDriftStatus": "UNKNOWN",
+          "Timestamp": "2026-10-11T12:00:05.000Z",
+          "DriftStatusReason": "User is not authorized to perform: iam:GetRole"
+        },
+        {
+          "StackId": "arn:aws:cloudformation:ap-northeast-1:111111111111:stack/AihShipApi/00000000-0000-4000-8000-000000000000",
+          "LogicalResourceId": "Api",
+          "PhysicalResourceId": "AihShipApi-Api-EXAMPLE",
+          "ResourceType": "AWS::ApiGatewayV2::Api",
+          "StackResourceDriftStatus": "IN_SYNC",
+          "Timestamp": "2026-10-11T12:00:05.000Z"
+        },
+        {
+          "StackId": "arn:aws:cloudformation:ap-northeast-1:111111111111:stack/AihShipApi/00000000-0000-4000-8000-000000000000",
+          "LogicalResourceId": "ApiDefaultStage",
+          "PhysicalResourceId": "AihShipApi-ApiDefaultStage-EXAMPLE",
+          "ResourceType": "AWS::ApiGatewayV2::Stage",
+          "StackResourceDriftStatus": "IN_SYNC",
+          "Timestamp": "2026-10-11T12:00:05.000Z"
+        }
+      ]
+    }
+  ],
+  "resourcePages": [
+    {
+      "StackResourceSummaries": [
+        {
+          "LogicalResourceId": "Handler",
+          "PhysicalResourceId": "AihShipApi-Handler-EXAMPLE",
+          "ResourceType": "AWS::Lambda::Function",
+          "ResourceStatus": "CREATE_COMPLETE",
+          "LastUpdatedTimestamp": "2026-10-10T09:00:00.000Z"
+        },
+        {
+          "LogicalResourceId": "HandlerRole",
+          "PhysicalResourceId": "AihShipApi-HandlerRole-EXAMPLE",
+          "ResourceType": "AWS::IAM::Role",
+          "ResourceStatus": "CREATE_COMPLETE",
+          "LastUpdatedTimestamp": "2026-10-10T09:00:00.000Z"
+        },
+        {
+          "LogicalResourceId": "Api",
+          "PhysicalResourceId": "AihShipApi-Api-EXAMPLE",
+          "ResourceType": "AWS::ApiGatewayV2::Api",
+          "ResourceStatus": "CREATE_COMPLETE",
+          "LastUpdatedTimestamp": "2026-10-10T09:00:00.000Z"
+        },
+        {
+          "LogicalResourceId": "ApiDefaultStage",
+          "PhysicalResourceId": "AihShipApi-ApiDefaultStage-EXAMPLE",
+          "ResourceType": "AWS::ApiGatewayV2::Stage",
+          "ResourceStatus": "CREATE_COMPLETE",
+          "LastUpdatedTimestamp": "2026-10-10T09:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

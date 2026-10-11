@@ -1072,6 +1072,127 @@
         "ja": "DynamoDB の table、Lambda、HTTP API を作る。`-c store=valkey` では、置いてあるだけで課金される ElastiCache Serverless の cache も作る",
         "en": "Creates a DynamoDB table, a Lambda function, and an HTTP API; with `-c store=valkey` also an ElastiCache Serverless cache, which is billed for as long as it exists"
       }
+    },
+    {
+      "scope": "20",
+      "command": "vp run test:unit (examples/20-shipping, tools/src/drift)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "CloudFormation の drift の polling・分類・gate（clean、drifted、deleted、未検査、nested stack、検出失敗、stack 不在、timeout、古い結果、矛盾、形の違う応答）、SDK の client を差し替えた呼び出し順、OIDC の trust policy と role の権限、stage ごとの stack、CDK CLI の引数、stack の状態ごとの次の一手、preview の洗い出し、workflow の YAML",
+        "en": "CloudFormation drift polling, classification, and gate (clean, drifted, deleted, unchecked, nested stack, failed detection, missing stack, timeout, stale result, inconsistency, malformed response), the call order through a substituted SDK client, OIDC trust policies and role permissions, per-stage stacks, CDK CLI arguments, the next step for every stack status, preview listing, and the workflow YAML"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run ship:cfn:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "固定した AWS CDK CLI 2.1145.0 で synth。認証情報なし。AihShipApi と AihShipCi の template が cdk.out に出ること、AihShipApi に AWS::IAM::Policy と AWS::CDK::Metadata が無いことを確認。-c stage=prod、-c stage=pr-12 でも実行",
+        "en": "Synthesized with the pinned AWS CDK CLI 2.1145.0 and no credentials. Checked that cdk.out holds the AihShipApi and AihShipCi templates and that AihShipApi has no AWS::IAM::Policy or AWS::CDK::Metadata. Also run with -c stage=prod and -c stage=pr-12"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run ship:cfn:deploy -c stage=staging / vp run ship:ci:deploy (no AWS call)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "知らない stage と、repository を指定しない CI role のデプロイが、AWS を呼ぶ前に止まることを確認",
+        "en": "Checked that an unknown stage, and a deploy of the CI roles without a repository, stop before any AWS call"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run check:all",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "format、lint、型検査、全テスト、全 CDK アプリの synth、本のビルドとリンク検査",
+        "en": "Format, lint, type check, all tests, synthesis of every CDK app, the book build, and the link check"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run ship:cfn:bootstrap",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "CDKToolkit stack の作成は未実行。作られるものの記述は、固定した CLI の `cdk bootstrap --show-template` による",
+        "en": "Creating the CDKToolkit stack was not run. What it creates is described from `cdk bootstrap --show-template` of the pinned CLI"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run ship:cfn:diff / ship:cfn:deploy / ship:smoke / ship:cfn:status / ship:cfn:destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "CloudFormation 経路でのデプロイと確認は未実行。alias 経由の integration が動くこと、失敗時の rollback の様子も未確認",
+        "en": "The CloudFormation path was not deployed or checked. That the integration works through the alias, and what a rollback looks like, are unconfirmed"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run ship:ci:deploy -c githubRepository=<owner>/<repo>",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "OIDC provider と 4 つの role の作成は未実行。trust policy を IAM が受け入れること、bootstrap の role を assume できることも未確認",
+        "en": "The OIDC provider and four roles were not created. That IAM accepts the trust policies and that the bootstrap roles can be assumed are unconfirmed"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run ship:cfn:drift (and the drift lab)",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "実際の stack での drift 検出は未実行。fixture は API リファレンスと SDK の型から書いたもので、実機の応答ではない",
+        "en": "Drift detection was not run against a real stack. The fixtures were written from the API reference and the SDK types, not captured"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "vp run ship:preview:list",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "preview stack の一覧は未実行",
+        "en": "Listing preview stacks was not run"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "examples/20-shipping/workflows/*.yml on GitHub Actions",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "4 つの workflow は GitHub Actions で一度も実行していない。x86_64-linux の runner で Nix の devShell が入ることも未確認",
+        "en": "None of the four workflows has run on GitHub Actions. That the Nix devShell works on an x86_64-linux runner is also unconfirmed"
+      }
+    },
+    {
+      "scope": "20",
+      "command": "cdkd export / cdkd import --migrate-from-cloudformation",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "cdkd と CloudFormation の間で stack を移す手順は未実行。記述は固定した版のヘルプによる",
+        "en": "Moving a stack between cdkd and CloudFormation was not run. The description comes from the pinned version's help output"
+      }
     }
   ],
   "open": [
@@ -1590,6 +1711,72 @@
       "resume": {
         "ja": "Docker の daemon を起動し、`examples/14-kv-cache/.env.example` を `.env` にコピーして、`vp run kv:local:start`、`vp run kv:local:migrate`、`vp run kv:test:local`、`vp run kv:local:stop` の順に実行する。",
         "en": "Start a Docker daemon, copy `examples/14-kv-cache/.env.example` to `.env`, and run `vp run kv:local:start`, `vp run kv:local:migrate`, `vp run kv:test:local`, and `vp run kv:local:stop` in that order."
+      }
+    },
+    {
+      "id": "20-cfn-deploy",
+      "summary": {
+        "ja": "CloudFormation 経路（bootstrap、diff、deploy、smoke、status、destroy）を実環境で通していない",
+        "en": "The CloudFormation path (bootstrap, diff, deploy, smoke, status, destroy) has not been run in a real account"
+      },
+      "resume": {
+        "ja": "`vp run ship:cfn:bootstrap` のあと、`vp run ship:cfn:diff`、`ship:cfn:deploy`、`ship:smoke`、`ship:cfn:status`、`ship:cfn:destroy` を順に実行する。`ship:smoke` が alias 経由で 200 を返すこと、`cdk diff --method template` が lookup role だけで通ることを記録する。CDKToolkit stack に作られたリソースを、本文の表と照合する",
+        "en": "After `vp run ship:cfn:bootstrap`, run `vp run ship:cfn:diff`, `ship:cfn:deploy`, `ship:smoke`, `ship:cfn:status`, and `ship:cfn:destroy` in order. Record that `ship:smoke` gets a 200 through the alias and that `cdk diff --method template` works with the lookup role alone. Compare what the CDKToolkit stack created with the table in the chapter"
+      }
+    },
+    {
+      "id": "20-oidc-roles",
+      "summary": {
+        "ja": "OIDC の role を GitHub Actions から assume していない",
+        "en": "The OIDC roles have not been assumed from GitHub Actions"
+      },
+      "resume": {
+        "ja": "`vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` を実行し、出力の 4 つの ARN と アカウント ID を repository の variables に入れる。workflows/ の 4 ファイルを .github/workflows/ にコピーして、pull request、main への push、手動実行の drift を 1 回ずつ流す。別の branch や別の repository から assume が拒否されること、repository の sub が immutable 形式かどうか、fork の pull request で plan job が走らないことを記録する",
+        "en": "Run `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` and put the four output ARNs and the account ID into the repository's variables. Copy the four files in workflows/ to .github/workflows/ and run a pull request, a push to main, and a manual drift run once each. Record that assuming from another branch or repository is refused, whether the repository's sub uses the immutable format, and that the plan job does not run for a fork's pull request"
+      }
+    },
+    {
+      "id": "20-drift-role-permissions",
+      "summary": {
+        "ja": "DriftRole の読み取り権限は resource type の schema から導いたもので、実際の検出で足りるかは未確認",
+        "en": "The DriftRole's read permissions were derived from resource type schemas; whether they suffice for a real detection is unconfirmed"
+      },
+      "resume": {
+        "ja": "DriftRole で `vp run ship:cfn:drift -c stage=prod` を実行する。`failed` や `incomplete` になったら report の理由に出た action を examples/20-shipping/infra/lib/ci-stack.ts に足し、テストの一覧も直す。足りていたら、使われなかった action を CloudTrail で確かめて削る",
+        "en": "Run `vp run ship:cfn:drift -c stage=prod` as the DriftRole. If it ends `failed` or `incomplete`, add the action named in the report's reason to examples/20-shipping/infra/lib/ci-stack.ts and update the list in the test. If it suffices, check CloudTrail for actions that were never used and remove them"
+      }
+    },
+    {
+      "id": "20-drift-live",
+      "summary": {
+        "ja": "CloudFormation の drift 検出の応答を実機で採取していない。検出範囲（Integration が未検査になるか、inline policy の変更が Role の drift として出るか）も未確認",
+        "en": "No real CloudFormation drift response has been captured. Coverage (whether the Integration is left unchecked, whether an inline policy change shows as drift on the Role) is unconfirmed"
+      },
+      "resume": {
+        "ja": "本文の「わざとずらしてみる」の手順を実行する。各段階の reports/drift/AihShipApi.json と、同じ時点の `aws cloudformation describe-stack-resource-drifts` の出力を採り、tools/src/drift/fixtures/cloudformation/ の fixture と形を比べる。存在しない stack 名で実行し、エラーの name と message が `ValidationError` と `does not exist` であることを確かめる。未検査になった resource type を examples/20-shipping/src/drift-coverage.ts の 2 つの一覧と照合する",
+        "en": "Run the 'Break it on purpose' procedure in the chapter. At each step keep reports/drift/AihShipApi.json and the output of `aws cloudformation describe-stack-resource-drifts` at the same moment, and compare their shape with the fixtures in tools/src/drift/fixtures/cloudformation/. Run against a stack name that does not exist and confirm the error's name and message are `ValidationError` and `does not exist`. Compare the resource types left unchecked with the two lists in examples/20-shipping/src/drift-coverage.ts"
+      }
+    },
+    {
+      "id": "20-rollback-live",
+      "summary": {
+        "ja": "失敗したデプロイの rollback、alias の付け替え、`cdk rollback` を実環境で観察していない",
+        "en": "A failed deploy's rollback, moving the alias, and `cdk rollback` have not been observed in a real account"
+      },
+      "resume": {
+        "ja": "わざと失敗する変更（たとえば Lambda の memorySize を上限より大きくする）をデプロイし、`vp run ship:cfn:status` が UPDATE_ROLLBACK_COMPLETE を返すまでの状態の移り変わりを記録する。正常なデプロイを 2 回行い、古い version が残っていること、stack を消したときに version も消えることを確かめる",
+        "en": "Deploy a change that fails on purpose (for example a Lambda memorySize above the limit) and record the statuses `vp run ship:cfn:status` reports until UPDATE_ROLLBACK_COMPLETE. Deploy twice successfully and confirm the older version remains, and that versions are gone once the stack is deleted"
+      }
+    },
+    {
+      "id": "20-tool-migration",
+      "summary": {
+        "ja": "cdkd と CloudFormation の間で stack を移す手順（`cdkd export`、`cdkd import --migrate-from-cloudformation`）は未実行",
+        "en": "Moving a stack between cdkd and CloudFormation (`cdkd export`, `cdkd import --migrate-from-cloudformation`) has not been run"
+      },
+      "resume": {
+        "ja": "練習用の stack を cdkd でデプロイし、`cdkd export <stack> --dry-run` の計画を読んでから実行する。import できない resource type で止まるかどうか、成功後に cdkd の state が消え、CloudFormation の stack として `cdk diff` が空になることを記録する。逆方向も同じ stack で試す",
+        "en": "Deploy a practice stack with cdkd, read the plan from `cdkd export <stack> --dry-run`, then run it. Record whether it stops on a resource type that cannot be imported, and that afterwards cdkd's state is gone and `cdk diff` on the CloudFormation stack is empty. Try the reverse direction on the same stack"
       }
     }
   ]

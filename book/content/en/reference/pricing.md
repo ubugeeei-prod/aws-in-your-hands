@@ -852,6 +852,38 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 8.69** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`
 
+## Shipping: the stack and the CI roles in place, nobody calling for a month
+
+ID: `ship-idle` / chapter: [20 Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift](/en/chapters/20-shipping.md)
+
+Assumptions:
+
+- No requests to the API; logs have expired and nothing is stored
+- CloudFormation adds no charge for AWS:: resource types; IAM roles and the OIDC provider are part of IAM, at no additional charge
+- No deploys and no drift detection
+- GitHub Actions charges are not an AWS bill and are not included
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## Shipping: one deploy a day for a year, assets never cleaned up
+
+ID: `ship-assets-year` / chapter: [20 Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift](/en/chapters/20-shipping.md)
+
+Assumptions:
+
+- Every deploy changes the code and adds one new zip to the CDK asset bucket
+- Each zip is 137 KB (this chapter's 837 KB bundle deflated locally; not a measurement of the zip the CDK CLI makes)
+- Storage for a month in which all 365 remain; PUT request charges are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0.048 | GB-Mo | 365 x 137 KB, in GB | 0.001192 | - | 0.001192 |
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |

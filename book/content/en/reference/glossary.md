@@ -137,3 +137,15 @@ The term pairs that keep both languages using one word for one concept. API name
 | stale read | stale read | 14 | Reading an old copy after the source changed. It happens whenever there is a cache, so decide beforehand how old is acceptable. |
 | cache stampede | cache stampede | 14 | Many requests missing at the moment an entry expires, and all of them going to the source of truth at once. |
 | single flight | single flight | 14 | Waiting for a load of the same key that is already in progress instead of starting another. It works within one process only. |
+| CloudFormation | CloudFormation | 20 | The AWS service that takes a template, creates the resources, and records what it created as a stack. By default it rolls a failed update back. |
+| CDK の bootstrap | CDK bootstrap | 20 | The one-time preparation per account and Region before deploying with the AWS CDK CLI. A stack named CDKToolkit creates an asset bucket, an ECR repository, and five IAM roles. Not the same as cdkd's bootstrap. |
+| change set | change set | 20 | A list of what a stack update would add, modify, replace, or delete, made before anything runs. Nothing changes until it is executed, and it does not guarantee success. |
+| OIDC（OpenID Connect） | OIDC (OpenID Connect) | 20 | A standard for proving who you are to one service with a signed token issued by another. In this book, how a GitHub Actions job gets into AWS. |
+| trust policy | trust policy | 20 | The part of an IAM role that says who may use it. Separate from the permission policies that say what the role may do. |
+| sub（subject）claim | sub (subject) claim | 20 | The string in an OIDC token that says what the token was issued for. In GitHub Actions it holds the repository and a branch, an environment, or the pull request marker. |
+| Lambda の version | Lambda version | 20 | A numbered copy of a function's code and configuration that cannot change once published. The unpublished latest state is called $LATEST. |
+| Lambda の alias | Lambda alias | 20 | A named pointer to a version. Callers invoke the alias, and moving it switches versions. It can also split traffic between two versions by weight. |
+| rollback | rollback | 20 | Returning a change to the state before it. CloudFormation puts back the configuration of the resources in the template, not the data written in the meantime. |
+| termination protection | termination protection | 20 | A setting that refuses to delete a stack: DeleteStack fails until it is turned off. It does not stop an update from removing resources. |
+| preview 環境 | preview environment | 20 | A temporary environment created per pull request; in this book, one stack per pull request, made to be deleted when the pull request closes. |
+| nested stack | nested stack | 20 | A stack created as a resource (AWS::CloudFormation::Stack) of another stack. Drift detection on the parent does not look inside it. |

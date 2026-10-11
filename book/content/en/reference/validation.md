@@ -110,6 +110,17 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 14 | `node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)` | local | passed | 2026-10-12 | Ran the 22 store contract tests against valkey-server 9.1.2 from nixpkgs and DynamoDB Local 3.3.1 as distributed by AWS (the jar on a JRE 21). With no Docker daemon available, both ran as plain processes, not containers |
 | 14 | `vp run kv:local:start / kv:local:stop` | local | not run | - | Not run: no Docker daemon. The images valkey/valkey:9.0.6-alpine and amazon/dynamodb-local:3.3.1 were neither pulled nor started |
 | 14 | `vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs` | AWS | not run | - | Creates a DynamoDB table, a Lambda function, and an HTTP API; with `-c store=valkey` also an ElastiCache Serverless cache, which is billed for as long as it exists |
+| 20 | `vp run test:unit (examples/20-shipping, tools/src/drift)` | local | passed | 2026-10-12 | CloudFormation drift polling, classification, and gate (clean, drifted, deleted, unchecked, nested stack, failed detection, missing stack, timeout, stale result, inconsistency, malformed response), the call order through a substituted SDK client, OIDC trust policies and role permissions, per-stage stacks, CDK CLI arguments, the next step for every stack status, preview listing, and the workflow YAML |
+| 20 | `vp run ship:cfn:synth` | local | passed | 2026-10-12 | Synthesized with the pinned AWS CDK CLI 2.1145.0 and no credentials. Checked that cdk.out holds the AihShipApi and AihShipCi templates and that AihShipApi has no AWS::IAM::Policy or AWS::CDK::Metadata. Also run with -c stage=prod and -c stage=pr-12 |
+| 20 | `vp run ship:cfn:deploy -c stage=staging / vp run ship:ci:deploy (no AWS call)` | local | passed | 2026-10-12 | Checked that an unknown stage, and a deploy of the CI roles without a repository, stop before any AWS call |
+| 20 | `vp run check:all` | local | passed | 2026-10-12 | Format, lint, type check, all tests, synthesis of every CDK app, the book build, and the link check |
+| 20 | `vp run ship:cfn:bootstrap` | AWS | not run | - | Creating the CDKToolkit stack was not run. What it creates is described from `cdk bootstrap --show-template` of the pinned CLI |
+| 20 | `vp run ship:cfn:diff / ship:cfn:deploy / ship:smoke / ship:cfn:status / ship:cfn:destroy` | AWS | not run | - | The CloudFormation path was not deployed or checked. That the integration works through the alias, and what a rollback looks like, are unconfirmed |
+| 20 | `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` | AWS | not run | - | The OIDC provider and four roles were not created. That IAM accepts the trust policies and that the bootstrap roles can be assumed are unconfirmed |
+| 20 | `vp run ship:cfn:drift (and the drift lab)` | AWS | not run | - | Drift detection was not run against a real stack. The fixtures were written from the API reference and the SDK types, not captured |
+| 20 | `vp run ship:preview:list` | AWS | not run | - | Listing preview stacks was not run |
+| 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | not run | - | None of the four workflows has run on GitHub Actions. That the Nix devShell works on an x86_64-linux runner is also unconfirmed |
+| 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | not run | - | Moving a stack between cdkd and CloudFormation was not run. The description comes from the pinned version's help output |
 
 ## Open items and how to resume
 
@@ -394,3 +405,39 @@ To resume: Knowing that it is billed, run `vp run kv:infra:deploy -c store=valke
 `vp run kv:local:start` and `kv:local:stop`, which start and stop Valkey and DynamoDB Local in Docker containers, were not run. The contract tests themselves passed against the same DynamoDB Local version and a Valkey 9.1.2 process.
 
 To resume: Start a Docker daemon, copy `examples/14-kv-cache/.env.example` to `.env`, and run `vp run kv:local:start`, `vp run kv:local:migrate`, `vp run kv:test:local`, and `vp run kv:local:stop` in that order.
+
+### 20-cfn-deploy
+
+The CloudFormation path (bootstrap, diff, deploy, smoke, status, destroy) has not been run in a real account
+
+To resume: After `vp run ship:cfn:bootstrap`, run `vp run ship:cfn:diff`, `ship:cfn:deploy`, `ship:smoke`, `ship:cfn:status`, and `ship:cfn:destroy` in order. Record that `ship:smoke` gets a 200 through the alias and that `cdk diff --method template` works with the lookup role alone. Compare what the CDKToolkit stack created with the table in the chapter
+
+### 20-oidc-roles
+
+The OIDC roles have not been assumed from GitHub Actions
+
+To resume: Run `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` and put the four output ARNs and the account ID into the repository's variables. Copy the four files in workflows/ to .github/workflows/ and run a pull request, a push to main, and a manual drift run once each. Record that assuming from another branch or repository is refused, whether the repository's sub uses the immutable format, and that the plan job does not run for a fork's pull request
+
+### 20-drift-role-permissions
+
+The DriftRole's read permissions were derived from resource type schemas; whether they suffice for a real detection is unconfirmed
+
+To resume: Run `vp run ship:cfn:drift -c stage=prod` as the DriftRole. If it ends `failed` or `incomplete`, add the action named in the report's reason to examples/20-shipping/infra/lib/ci-stack.ts and update the list in the test. If it suffices, check CloudTrail for actions that were never used and remove them
+
+### 20-drift-live
+
+No real CloudFormation drift response has been captured. Coverage (whether the Integration is left unchecked, whether an inline policy change shows as drift on the Role) is unconfirmed
+
+To resume: Run the 'Break it on purpose' procedure in the chapter. At each step keep reports/drift/AihShipApi.json and the output of `aws cloudformation describe-stack-resource-drifts` at the same moment, and compare their shape with the fixtures in tools/src/drift/fixtures/cloudformation/. Run against a stack name that does not exist and confirm the error's name and message are `ValidationError` and `does not exist`. Compare the resource types left unchecked with the two lists in examples/20-shipping/src/drift-coverage.ts
+
+### 20-rollback-live
+
+A failed deploy's rollback, moving the alias, and `cdk rollback` have not been observed in a real account
+
+To resume: Deploy a change that fails on purpose (for example a Lambda memorySize above the limit) and record the statuses `vp run ship:cfn:status` reports until UPDATE_ROLLBACK_COMPLETE. Deploy twice successfully and confirm the older version remains, and that versions are gone once the stack is deleted
+
+### 20-tool-migration
+
+Moving a stack between cdkd and CloudFormation (`cdkd export`, `cdkd import --migrate-from-cloudformation`) has not been run
+
+To resume: Deploy a practice stack with cdkd, read the plan from `cdkd export <stack> --dry-run`, then run it. Record whether it stops on a resource type that cannot be imported, and that afterwards cdkd's state is gone and `cdk diff` on the CloudFormation stack is empty. Try the reverse direction on the same stack

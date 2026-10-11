@@ -1,0 +1,19 @@
+{
+  "name": "@aih/example-20-shipping",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aws-sdk/client-cloudformation": "3.1149.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@types/aws-lambda": "8.10.164",
+    "vite-plus": "1.1.0",
+    "yaml": "2.9.1"
+  }
+}

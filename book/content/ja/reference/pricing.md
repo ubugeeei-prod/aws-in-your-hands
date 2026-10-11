@@ -852,6 +852,38 @@ ID: `kv-used-valkey` / 章: [14 key-value と cache を選ぶ: DynamoDB、Elasti
 - 毎月の無料枠適用後の小計: **USD 8.69** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
 
+## 変更を届ける: stack と CI の role を置いて、誰も呼ばない月
+
+ID: `ship-idle` / 章: [20 変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
+
+前提:
+
+- API へのリクエストゼロ。log は失効して保存量ゼロ
+- CloudFormation は AWS:: の resource type に追加料金なし。IAM の role と OIDC provider は IAM の一部で、追加料金なし
+- deploy も drift 検出も 0 回
+- GitHub Actions の料金は AWS の請求ではないので含めていない
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 変更を届ける: 1 日 1 回のデプロイを 1 年続けて、asset を一度も片付けない
+
+ID: `ship-assets-year` / 章: [20 変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
+
+前提:
+
+- デプロイのたびにコードが変わり、新しい zip が CDK の asset bucket に 1 つ増える
+- zip は 1 つ 137 KB（この章の bundle 837 KB を手元で deflate した大きさ。CDK CLI が作る zip の実測ではない）
+- 365 個すべてが残っている月の保存料金。PUT のリクエスト料金は含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0.048 | GB-Mo | 365 x 137 KB, in GB | 0.001192 | - | 0.001192 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |

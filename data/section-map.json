@@ -2298,6 +2298,166 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "20.architecture",
+      "sources": ["examples/20-shipping/workflows", "examples/20-shipping/infra/bin/app.ts"],
+      "tasks": ["ship:cfn:synth"],
+      "boundary": "none",
+      "criteria": ["distributed", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "20.two-paths",
+      "sources": [
+        "examples/20-shipping/src/cdk-args.ts",
+        "examples/20-shipping/scripts/cdk.ts",
+        "examples/20-shipping/cdk.json"
+      ],
+      "tasks": ["ship:cfn:bootstrap", "ship:cfn:synth"],
+      "boundary": "cloud",
+      "criteria": ["drift", "local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "20.stages",
+      "sources": [
+        "examples/20-shipping/infra/lib/config.ts",
+        "examples/20-shipping/infra/lib/ship-api-stack.ts",
+        "examples/20-shipping/infra/test/ship-api-stack.test.ts"
+      ],
+      "tasks": ["ship:cfn:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.cfn-deploy",
+      "sources": [
+        "examples/20-shipping/src/cdk-args.ts",
+        "examples/20-shipping/test/cdk-args.test.ts",
+        "examples/20-shipping/scripts/smoke.ts"
+      ],
+      "tasks": ["ship:cfn:diff", "ship:cfn:deploy", "ship:smoke"],
+      "boundary": "cloud",
+      "criteria": ["test", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "20.oidc",
+      "sources": [
+        "examples/20-shipping/infra/lib/ci-stack.ts",
+        "examples/20-shipping/infra/lib/config.ts",
+        "examples/20-shipping/infra/test/ci-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ship:ci:diff", "ship:ci:deploy"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.roles",
+      "sources": ["examples/20-shipping/infra/lib/ci-stack.ts", "examples/20-shipping/infra/test/ci-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.workflows",
+      "sources": ["examples/20-shipping/workflows", "examples/20-shipping/test/workflows.test.ts"],
+      "tasks": ["test:unit", "check:all"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "20.preview",
+      "sources": [
+        "examples/20-shipping/workflows/preview.yml",
+        "examples/20-shipping/src/previews.ts",
+        "examples/20-shipping/test/previews.test.ts",
+        "examples/20-shipping/scripts/previews.ts"
+      ],
+      "tasks": ["ship:preview:list", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.rollback",
+      "sources": [
+        "examples/20-shipping/infra/lib/ship-api-stack.ts",
+        "examples/20-shipping/infra/test/ship-api-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.partial",
+      "sources": [
+        "examples/20-shipping/src/stack-status.ts",
+        "examples/20-shipping/test/stack-status.test.ts",
+        "examples/20-shipping/scripts/status.ts"
+      ],
+      "tasks": ["ship:cfn:status", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.drift",
+      "sources": [
+        "tools/src/drift/cloudformation.ts",
+        "tools/src/drift/cloudformation-schema.ts",
+        "tools/src/drift/cloudformation.test.ts",
+        "tools/src/drift/fixtures/cloudformation",
+        "examples/20-shipping/src/drift-client.ts",
+        "examples/20-shipping/test/drift-client.test.ts",
+        "examples/20-shipping/scripts/drift.ts"
+      ],
+      "tasks": ["ship:cfn:drift", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["drift", "test", "type"],
+      "verification": "local"
+    },
+    {
+      "id": "20.drift-coverage",
+      "sources": [
+        "examples/20-shipping/src/drift-coverage.ts",
+        "examples/20-shipping/infra/test/ship-api-stack.test.ts",
+        "tools/src/drift/cloudformation.ts"
+      ],
+      "tasks": ["ship:cfn:drift", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["drift", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.drift-lab",
+      "sources": ["examples/20-shipping/scripts/drift.ts", "examples/20-shipping/scripts/status.ts"],
+      "tasks": ["ship:cfn:drift", "ship:cfn:diff", "ship:cfn:deploy"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "20.workers",
+      "sources": ["examples/20-shipping/infra/lib/ship-api-stack.ts", "examples/20-shipping/workflows/deploy.yml"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "20.cleanup",
+      "sources": ["examples/20-shipping/scripts/cdk.ts"],
+      "tasks": ["ship:cfn:destroy", "ship:ci:destroy", "ship:preview:list"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }
