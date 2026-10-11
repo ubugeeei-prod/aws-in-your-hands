@@ -1,0 +1,11 @@
+{
+  "name": "@aih/book",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@ox-content/vite-plugin": "3.2.14",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0"
+  }
+}
