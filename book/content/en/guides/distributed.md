@@ -33,6 +33,7 @@ The book does not infer guarantees from a service's name. Words such as global, 
 | [02](/en/chapters/02-toolchain.md) | The CDK code (and the template built from it), cdkd's state, and the actual resources in AWS | The three agree | Someone changes a setting in the console. `tools/src/drift/report.test.ts` classifies drift, deletion, uncompared resources, and failed detection separately |
 | [03](/en/chapters/03-spa.md) | The S3 bucket. The edge cache and the reader's browser are copies | The files referenced by the `index.html` a reader holds can always be fetched | A publish stops partway. A reader still has an old page open. `tools/src/site/plan.test.ts` checks the upload order and that old assets are kept |
 | [04](/en/chapters/04-http-api.md) | Individual Lambda execution environments (there are several, and each disappears at some point) | This chapter pins "not shared" as the specification | Concurrent requests reach different execution environments. `examples/04-http-api/test/app.test.ts` checks that two instances do not share notes |
+| [06](/en/chapters/06-auth.md) | "Who" is in the token; "has it been disabled" is in Cognito. API Gateway looks at the token only | A request can read and write only the notes owned by its token's `sub` | Another user names the ID, or writes an owner into the request. `examples/06-auth/api/test/app.test.ts` checks that both are refused. That a revoked token passes until it expires is explained in the prose, not by a test |
 | [05](/en/chapters/05-dynamodb.md) | The DynamoDB table | Every successful save moves the version by exactly one, and an update based on an old version is refused | Two writes hold the same version. A response is lost after the write and the caller retries. `examples/05-dynamodb/test/repository-contract.ts` and `test/app.test.ts` check that only one gets through and that a retry does not move the version twice. That a retried create makes a duplicate is recorded as the specification too |
 
 All of these are local tests. The chapter 05 checks have not yet been run against DynamoDB even once. Their advantage is that they reproduce a failure in a fixed order, but what they check is the decisions made by this book's code, not the behavior of AWS services. Actual propagation delay, how execution environments scale out, and IAM propagation can be checked only in a real environment.
@@ -41,7 +42,6 @@ All of these are local tests. The chapter 05 checks have not yet been run agains
 
 | Topic | Chapter | Central question |
 | --- | --- | --- |
-| Token expiry and revocation | [06](/en/chapters/06-auth.md) | After a permission is revoked, how long does it keep working? |
 | Writes that span two stores | [07](/en/chapters/07-uploads.md) | When only one side succeeds, what is left behind? |
 | Duplicate delivery, retries, and idempotency | [08](/en/chapters/08-async.md) | If the same message arrives twice, is there still one result? |
 | Cache and source data out of step | [09](/en/chapters/09-ssr.md), [14](/en/chapters/14-kv-cache.md) | Whose content, and how stale, is acceptable to return? |

@@ -10,8 +10,8 @@ An online book for developers who know TypeScript, HTTP, Git, and web developmen
 
 | | 状態 / State |
 | --- | --- |
-| 00〜05章 / Chapters 00–05 | 日英の本文とサンプルあり。ローカル検証済み。**AWS 上では未検証** / Prose and examples in both languages. Verified locally. **Not verified in AWS** |
-| 06〜24章 / Chapters 06–24 | planned。`data/chapters.json` のアウトラインのみ / Planned. Outline only |
+| 00〜06章 / Chapters 00–06 | 日英の本文とサンプルあり。ローカル検証済み。**AWS 上では未検証** / Prose and examples in both languages. Verified locally. **Not verified in AWS** |
+| 07〜24章 / Chapters 07–24 | planned。`data/chapters.json` のアウトラインのみ / Planned. Outline only |
 | 本のサイト / Book site | ローカルでビルドできる。**未デプロイ、公開 URL なし** / Builds locally. **Not deployed; no public URL** |
 
 実行した検証と未解決事項は [`data/validation.json`](data/validation.json)（本の「検証記録」ページの生成元）にあります。
@@ -49,7 +49,7 @@ Everything runs as `vp run <task>` from the repository root. All tasks are defin
 | テスト / tests | `test:unit` | none |
 | 日英・コード参照・source map の整合 / locale, snippet, and source-map consistency | `content:check`, `book:generate:check`, `links:check` | none |
 | 本 / book | `dev:book`, `build:book`, `preview:book`, `book:generate` | none |
-| サンプル / examples | `dev:spa`, `build:spa`, `dev:api`, `dev:api:cdkd` (Docker), `dev:notes` | none |
+| サンプル / examples | `dev:spa`, `build:spa`, `dev:api`, `dev:api:cdkd` (Docker), `dev:notes`, `dev:app:api`, `dev:app:web` | none |
 | ローカルの DynamoDB / local DynamoDB (Docker) | `db:local:start`, `db:migrate:local`, `db:seed:local`, `db:reset:local`, `db:local:stop`, `test:local:dynamodb` | none |
 | CDK の synth / synth | `infra:synth`, `<name>:infra:synth` | none |
 | 配布用 archive / source archive | `sources:pack` | none |
@@ -61,9 +61,9 @@ Everything runs as `vp run <task>` from the repository root. All tasks are defin
 | 公開・削除 / publish, unpublish | `<name>:publish`, `<name>:unpublish`, `<name>:invalidate`, `api:smoke` | **changes** |
 | drift の解消 / drift remediation | `<name>:infra:drift:revert`, `<name>:infra:drift:accept` | **changes** |
 
-`<name>` は `book`、`hello`（02章）、`spa`（03章）、`api`（04章）、`notes`（05章）です。AWS を読む・変えるタスクはすべて `cache: false` で、実行前に対象のアカウントとリージョンを表示します。AWS を変えるタスクは、`.env` の `AIH_AWS_ACCOUNT_ID` が認証情報のアカウントと一致しない限り実行を拒否します（[`.env.example`](.env.example)）。
+`<name>` は `book`、`hello`（02章）、`spa`（03章）、`api`（04章）、`notes`（05章）、`app`（06章）です。AWS を読む・変えるタスクはすべて `cache: false` で、実行前に対象のアカウントとリージョンを表示します。AWS を変えるタスクは、`.env` の `AIH_AWS_ACCOUNT_ID` が認証情報のアカウントと一致しない限り実行を拒否します（[`.env.example`](.env.example)）。
 
-`<name>` is `book`, `hello` (chapter 02), `spa` (chapter 03), `api` (chapter 04), or `notes` (chapter 05). Every task that reads or changes AWS has `cache: false` and prints the target account and Region first. Tasks that change AWS refuse to run unless `AIH_AWS_ACCOUNT_ID` in `.env` matches the account of the credentials in use ([`.env.example`](.env.example)).
+`<name>` is `book`, `hello` (chapter 02), `spa` (chapter 03), `api` (chapter 04), `notes` (chapter 05), or `app` (chapter 06). Every task that reads or changes AWS has `cache: false` and prints the target account and Region first. Tasks that change AWS refuse to run unless `AIH_AWS_ACCOUNT_ID` in `.env` matches the account of the credentials in use ([`.env.example`](.env.example)).
 
 ## 構成 / Layout
 

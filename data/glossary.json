@@ -339,6 +339,86 @@
         "ja": "on-demand の DynamoDB が読み書きを数える課金の単位。",
         "en": "The billing unit in which on-demand DynamoDB counts reads and writes."
       }
+    },
+    {
+      "id": "authentication",
+      "ja": "認証",
+      "en": "authentication",
+      "firstUse": "06",
+      "definition": {
+        "ja": "呼び出しが誰からのものかを確かめること。",
+        "en": "Establishing who a call comes from."
+      }
+    },
+    {
+      "id": "authorization",
+      "ja": "認可",
+      "en": "authorization",
+      "firstUse": "06",
+      "definition": {
+        "ja": "その人がその操作をしてよいかを決めること。",
+        "en": "Deciding whether that caller may perform that operation."
+      }
+    },
+    {
+      "id": "user-pool",
+      "ja": "user pool",
+      "en": "user pool",
+      "firstUse": "06",
+      "definition": {
+        "ja": "Amazon Cognito が持つ利用者の名簿。パスワードの検証と token の発行を行う。",
+        "en": "Amazon Cognito's directory of users. It verifies passwords and issues tokens."
+      }
+    },
+    {
+      "id": "access-token",
+      "ja": "access token",
+      "en": "access token",
+      "firstUse": "06",
+      "definition": {
+        "ja": "API を呼ぶための token。",
+        "en": "The token used to call an API."
+      }
+    },
+    {
+      "id": "id-token",
+      "ja": "ID token",
+      "en": "ID token",
+      "firstUse": "06",
+      "definition": {
+        "ja": "サインインした事実と利用者の属性を、アプリ自身に伝える token。API には送らない。",
+        "en": "The token that tells the app itself that sign-in happened and who the user is. It is not sent to APIs."
+      }
+    },
+    {
+      "id": "pkce",
+      "ja": "PKCE",
+      "en": "PKCE",
+      "firstUse": "06",
+      "definition": {
+        "ja": "authorization code を横取りされても token と交換できないようにする仕組み。",
+        "en": "A mechanism that keeps an intercepted authorization code from being exchanged for tokens."
+      }
+    },
+    {
+      "id": "public-client",
+      "ja": "public client",
+      "en": "public client",
+      "firstUse": "06",
+      "definition": {
+        "ja": "秘密を保持できないアプリ。ブラウザで動く SPA がそう。",
+        "en": "An app that cannot keep a secret, such as a SPA running in a browser."
+      }
+    },
+    {
+      "id": "jwt-authorizer",
+      "ja": "JWT authorizer",
+      "en": "JWT authorizer",
+      "firstUse": "06",
+      "definition": {
+        "ja": "API Gateway HTTP API が、関数を呼ぶ前に token を検証する機能。",
+        "en": "The API Gateway HTTP API feature that verifies a token before the function is invoked."
+      }
     }
   ]
 }

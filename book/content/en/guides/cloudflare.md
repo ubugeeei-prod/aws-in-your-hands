@@ -16,7 +16,7 @@ Two things to say up front.
 
 | What you know | What you build on AWS | Chapter | Status |
 | --- | --- | --- | --- |
-| Writing HTTP handlers in Workers | Lambda and API Gateway HTTP API | [04](/en/chapters/04-http-api.md) | Text and samples exist. Verified locally, unverified in AWS |
+| Writing HTTP handlers in Workers | Lambda and API Gateway HTTP API | [04](/en/chapters/04-http-api.md), [05](/en/chapters/05-dynamodb.md), [06](/en/chapters/06-auth.md) | Text and samples exist. Verified locally, unverified in AWS |
 | Writing edge logic in Workers | CloudFront Functions, Lambda@Edge | [10](/en/chapters/10-edge.md) | planned |
 | Writing SQL with D1 | Aurora DSQL, RDS PostgreSQL, Aurora Serverless v2 | [13](/en/chapters/13-sql.md) | planned |
 | Calling models with Workers AI | Amazon Bedrock | [17](/en/chapters/17-ai.md) | planned |

@@ -195,55 +195,36 @@
         "en": "Add Login: Cognito and Authorization"
       },
       "prerequisites": ["03", "05"],
-      "services": ["Cognito user pools", "API Gateway HTTP API JWT authorizer"],
+      "services": [
+        "Cognito user pools",
+        "API Gateway HTTP API JWT authorizer",
+        "Lambda",
+        "DynamoDB",
+        "CloudFront",
+        "S3"
+      ],
       "samplePath": "examples/06-auth",
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["cognito-user-pools"],
-      "outline": {
-        "outcome": {
-          "ja": "SPA から authorization code + PKCE でログインし、API は自分のノートだけを返す。",
-          "en": "The SPA signs in with authorization code + PKCE, and the API returns only the caller's own notes."
-        },
-        "architecture": {
-          "ja": "SPA → Cognito managed login → SPA（code）→ token endpoint。API Gateway の JWT authorizer が token を検証し、Lambda が sub でデータを絞る。",
-          "en": "SPA → Cognito managed login → SPA (code) → token endpoint. The API Gateway JWT authorizer validates the token and Lambda scopes data by sub."
-        },
-        "topics": {
-          "ja": [
-            "OIDC/OAuth の用語を最小限で",
-            "Amplify を使わない標準ライブラリでの PKCE",
-            "認証（誰か）と認可（そのノートを触ってよいか）の分離",
-            "token の保存場所と寿命",
-            "Cognito の料金単位（MAU と tier、要一次情報確認）"
-          ],
-          "en": [
-            "The minimum OIDC/OAuth vocabulary",
-            "PKCE with a standard library instead of Amplify",
-            "Separating authentication (who) from authorization (may they touch this note)",
-            "Token storage and lifetime",
-            "Cognito billing units (MAU and tiers; verify against current pricing)"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "user pool / app client の CDK と callback URL の設定",
-            "他人のノート ID を指定しても 404 になる認可テスト",
-            "ローカル用の署名付きテスト token を作る fixture（本物の Cognito を再現しないと明記）"
-          ],
-          "en": [
-            "CDK for the user pool, app client, and callback URLs",
-            "Authorization tests where another user's note ID returns 404",
-            "A fixture that signs local test tokens (explicitly not a Cognito emulation)"
-          ]
-        },
-        "distributed": {
-          "ja": "token は発行後も期限まで有効。失効の伝播は即時ではない点を扱う。",
-          "en": "A token stays valid until it expires; revocation does not propagate instantly."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11",
+      "sourceIds": [
+        "apigw-jwt-authorizer",
+        "cognito-authorize-endpoint",
+        "cognito-access-token",
+        "cognito-token-revocation",
+        "cognito-logout-endpoint",
+        "cognito-pricing",
+        "aws-price-list-cognito",
+        "oauth4webapi-npm",
+        "cdkd-npm",
+        "cognito-user-pools"
+      ]
     },
     {
       "id": "07",

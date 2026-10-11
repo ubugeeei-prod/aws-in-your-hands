@@ -57,8 +57,8 @@
       "status": "passed",
       "ranAt": "2026-10-11",
       "note": {
-        "ja": "format と lint、Vize による Vue の lint と型検査、tsc による型検査、テスト 172 件（1 件は DynamoDB Local が無いため skip）、生成ページの同期、日英とソース対応の整合、5 つの CDK アプリの synth、本のビルド、リンク検査、SPA のビルド",
-        "en": "Format and lint, Vue lint and type check with Vize, tsc type checks, 172 tests (one skipped for lack of DynamoDB Local), generated-page freshness, locale and source-map consistency, synth of five CDK apps, the book build, link check, and the SPA build"
+        "ja": "format と lint、Vize による Vue の lint と型検査、tsc による型検査、テスト 218 件（1 件は DynamoDB Local が無いため skip）、生成ページの同期、日英とソース対応の整合、6 つの CDK アプリの synth、本と 2 つの SPA のビルド、リンク検査",
+        "en": "Format and lint, Vue lint and type check with Vize, tsc type checks, 218 tests (one skipped for lack of DynamoDB Local), generated-page freshness, locale and source-map consistency, synth of six CDK apps, builds of the book and two SPAs, and the link check"
       }
     },
     {
@@ -169,6 +169,39 @@
       "note": {
         "ja": "AWS SDK を含む bundle を esbuild で作成",
         "en": "Builds the bundle, AWS SDK included, with esbuild"
+      }
+    },
+    {
+      "scope": "06",
+      "command": "vp run test:unit (examples/06-auth)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "認証（401）、認可（他人のノートは 404、持ち主は token からのみ）、監査ログ、identity の読み取り、開発用サインイン、PKCE の一時保存、インフラの assertion",
+        "en": "Authentication (401), authorization (another user's note is a 404; the owner comes only from the token), audit log, identity extraction, local sign-in, PKCE pending state, and infrastructure assertions"
+      }
+    },
+    {
+      "scope": "06",
+      "command": "vp run dev:app:api + vp run dev:app:web + ブラウザの自動操作 / browser automation",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "ローカルのサインイン、ノートの作成、別の利用者からの取得が 404、token なしが 401、競合の表示と保存し直し、再読み込み後にサインインを求められることを確認",
+        "en": "Checked local sign-in, creating a note, a 404 for another user, a 401 without a token, the conflict panel and saving again, and being asked to sign in after a reload"
+      }
+    },
+    {
+      "scope": "06",
+      "command": "vp run app:infra:synth / build:app:web / typecheck:app:web / lint:app:web",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "19 種類のリソース。Cognito 用のコードは型検査のみ",
+        "en": "19 resource types. The Cognito code path is type-checked only"
       }
     },
     {
@@ -335,6 +368,17 @@
         "ja": "DynamoDB の table を作る",
         "en": "Creates a DynamoDB table"
       }
+    },
+    {
+      "scope": "06",
+      "command": "vp run app:infra:diff / deploy / drift / destroy, app:user:create, app:publish, app:smoke:web, app:smoke:api, app:unpublish",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "user pool、distribution、table を作る",
+        "en": "Creates a user pool, a distribution, and a table"
+      }
     }
   ],
   "open": [
@@ -391,6 +435,17 @@
       "resume": {
         "ja": "Docker を起動して vp run db:local:start、db:migrate:local、test:local:dynamodb を実行する。続けて notes:infra:deploy と notes:smoke を実行し、実環境で同時更新を試す script を examples/05-dynamodb/scripts/ に加える。",
         "en": "Start Docker and run vp run db:local:start, db:migrate:local, and test:local:dynamodb. Then run notes:infra:deploy and notes:smoke, and add a script under examples/05-dynamodb/scripts/ that races two updates against the real table."
+      }
+    },
+    {
+      "id": "cognito-sign-in",
+      "summary": {
+        "ja": "06章の Cognito でのサインイン（authorization code と PKCE、token の交換）を一度も実行していない。web/src/auth/cognito.ts は型検査のみ。JWT authorizer が ID token を拒否すること、token endpoint をブラウザから呼べること、config.json の Issuer と AuthDomain の形が合うことも未確認。cdkd が AWS::Cognito::UserPoolClient と UserPoolDomain を Cloud Control API 経由で扱えるかも未確認。",
+        "en": "The Cognito sign-in of chapter 06 (authorization code with PKCE, token exchange) has never been run; web/src/auth/cognito.ts is type-checked only. Also unconfirmed: that the JWT authorizer rejects ID tokens, that the token endpoint can be called from a browser, that the Issuer and AuthDomain written to config.json have the expected form, and that cdkd can handle AWS::Cognito::UserPoolClient and UserPoolDomain through Cloud Control API."
+      },
+      "resume": {
+        "ja": "vp run app:infra:deploy、app:user:create、app:publish を実行し、ブラウザでサインインする。access token を AIH_ACCESS_TOKEN に入れて app:smoke:api を実行する。ID token を送って 403 になることを確かめる。",
+        "en": "Run vp run app:infra:deploy, app:user:create, and app:publish, then sign in from a browser. Put the access token in AIH_ACCESS_TOKEN and run app:smoke:api. Send an ID token and confirm the 403."
       }
     },
     {

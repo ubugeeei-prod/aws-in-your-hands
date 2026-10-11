@@ -229,6 +229,73 @@
           "basis": "1 GB stored, in GB-month"
         }
       ]
+    },
+    {
+      "id": "notes-app-small",
+      "chapter": "06",
+      "title": {
+        "ja": "ノートアプリ（サインインあり）: 月 100 万リクエスト、100 MAU",
+        "en": "Notes app with sign-in: 1,000,000 requests and 100 MAUs a month"
+      },
+      "assumptions": {
+        "ja": [
+          "API と table は「ノート API と table: 月 100 万リクエスト」と同じ仮定",
+          "その月にサインインした利用者が 100 人。Essentials プラン",
+          "メールの送信料金、SPA の配信（CloudFront と S3）は未算入"
+        ],
+        "en": [
+          "API and table as assumed in \"Notes API and table: 1,000,000 requests a month\"",
+          "100 users signed in during the month, on the Essentials plan",
+          "Email charges and SPA delivery (CloudFront and S3) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000000,
+          "basis": "one invocation per request"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 15000,
+          "basis": "1,000,000 x 0.06 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.111,
+          "basis": "0.477 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 1950000,
+          "basis": "700,000 lists x 2.5 + 200,000 reads x 1"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 100000,
+          "basis": "80,000 creates and updates + 20,000 deletes"
+        },
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 1,
+          "basis": "1 GB stored, in GB-month"
+        },
+        {
+          "priceId": "cognito.essentials.mau",
+          "quantity": 100,
+          "basis": "100 monthly active users"
+        }
+      ]
     }
   ]
 }

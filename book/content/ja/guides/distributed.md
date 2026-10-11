@@ -33,6 +33,7 @@ revision: 1
 | [02](/ja/chapters/02-toolchain.md) | CDK のコード（とそこから作る template）、cdkd の state、AWS の実物 | 3 つは一致している | 誰かがコンソールで設定を変える。`tools/src/drift/report.test.ts` が、drift、削除、未比較、検出の失敗を別々に判定する |
 | [03](/ja/chapters/03-spa.md) | S3 bucket。edge の cache と読者のブラウザは写し | 読者が持っている `index.html` が指すファイルは、必ず取得できる | 公開の途中で止まる。古いページを開いたままの読者がいる。`tools/src/site/plan.test.ts` が、アップロードの順序と古い asset の保持を確かめる |
 | [04](/ja/chapters/04-http-api.md) | Lambda の個々の実行環境（複数あり、いつか消える） | この章では「共有されない」ことを仕様として固定する | 同時のリクエストが別の実行環境に届く。`examples/04-http-api/test/app.test.ts` が、2 つのインスタンスがノートを共有しないことを確かめる |
+| [06](/ja/chapters/06-auth.md) | 「誰か」は token、「無効にされたか」は Cognito。API Gateway は token だけを見る | リクエストが読み書きできるのは、その token の `sub` を持ち主とするノートだけである | 別の利用者が ID を指定する、持ち主をリクエストに書き込む。`examples/06-auth/api/test/app.test.ts` が拒否を確かめる。失効した token が期限まで通ることは、テストではなく本文で説明している |
 | [05](/ja/chapters/05-dynamodb.md) | DynamoDB の table | 保存に成功するたびに version はちょうど 1 増え、古い version に基づく更新は拒否される | 2 つの書き込みが同じ version を持つ。書き込み後に応答が失われて再試行する。`examples/05-dynamodb/test/repository-contract.ts` と `test/app.test.ts` が、通るのが 1 つだけであること、再試行で version が 2 つ進まないことを確かめる。作成の再試行で重複することも、仕様として記録している |
 
 どれもローカルのテストです。05章の検査は、DynamoDB の上ではまだ一度も実行していません。決まった順序で失敗を再現できるのが利点ですが、確かめているのはこの本のコードの判断であって、AWS のサービスの挙動ではありません。実際の反映の遅れ、実行環境の増え方、IAM の反映は、実環境でしか確かめられません。
@@ -41,7 +42,6 @@ revision: 1
 
 | 話題 | 章 | 中心になる問い |
 | --- | --- | --- |
-| token の期限と失効 | [06](/ja/chapters/06-auth.md) | 権限を取り消したあと、いつまで通ってしまうか |
 | 2 つの保存先にまたがる書き込み | [07](/ja/chapters/07-uploads.md) | 片方だけ成功したとき、何が残るか |
 | 重複配送、再試行、冪等性 | [08](/ja/chapters/08-async.md) | 同じメッセージが 2 回届いても、結果は 1 つか |
 | cache と元データのずれ | [09](/ja/chapters/09-ssr.md)、[14](/ja/chapters/14-kv-cache.md) | 誰の、どれだけ古い内容を返してよいか |

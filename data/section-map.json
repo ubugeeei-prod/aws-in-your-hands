@@ -654,6 +654,143 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "06.architecture",
+      "sources": ["examples/06-auth/infra/lib/notes-app-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "06.terms",
+      "sources": ["examples/06-auth/api/src/identity.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "06.contract",
+      "sources": ["examples/06-auth/api/src/contract.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type"],
+      "verification": "local"
+    },
+    {
+      "id": "06.identity",
+      "sources": [
+        "examples/06-auth/api/src/identity.ts",
+        "examples/06-auth/api/src/lambda.ts",
+        "examples/06-auth/api/src/app.ts",
+        "examples/06-auth/api/test/identity.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "06.authorization",
+      "sources": [
+        "examples/06-auth/api/src/app.ts",
+        "examples/06-auth/api/test/app.test.ts",
+        "examples/05-dynamodb/src/notes.ts",
+        "examples/05-dynamodb/src/dynamodb-repository.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "06.local",
+      "sources": [
+        "examples/06-auth/api/src/dev.ts",
+        "examples/06-auth/api/src/local-auth.ts",
+        "examples/06-auth/api/test/local-auth.test.ts",
+        "examples/06-auth/api/src/compose.ts",
+        "examples/06-auth/web/src/auth/local.ts",
+        "examples/06-auth/web/src/config.ts",
+        "examples/06-auth/web/src/config.test.ts",
+        "examples/06-auth/web/public/config.json",
+        "examples/06-auth/.env.example"
+      ],
+      "tasks": ["dev:app:api", "dev:app:web", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "06.pkce",
+      "sources": [
+        "examples/06-auth/web/src/auth",
+        "examples/06-auth/web/src/App.vue",
+        "examples/06-auth/web/src/main.ts",
+        "examples/06-auth/web/src/router",
+        "examples/06-auth/web/index.html",
+        "examples/06-auth/web/vite.config.ts",
+        "examples/06-auth/web/tsconfig.json",
+        "examples/06-auth/api/src/client.ts"
+      ],
+      "tasks": ["test:unit", "typecheck:app:web", "lint:app:web", "build:app:web"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "06.infra",
+      "sources": [
+        "examples/06-auth/infra/lib/notes-app-stack.ts",
+        "examples/06-auth/infra/bin/app.ts",
+        "examples/06-auth/infra/functions/spa-fallback.js",
+        "examples/06-auth/infra/test/notes-app-stack.test.ts",
+        "examples/06-auth/cdk.json"
+      ],
+      "tasks": ["app:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "06.revocation",
+      "sources": ["examples/06-auth/infra/lib/notes-app-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "06.deploy",
+      "sources": [
+        "examples/06-auth/scripts/write-config.ts",
+        "examples/06-auth/scripts/user.ts",
+        "examples/06-auth/scripts/smoke.ts",
+        "tools/src/site",
+        "tools/src/infra/cdkd.ts"
+      ],
+      "tasks": [
+        "app:infra:diff",
+        "app:infra:deploy",
+        "app:user:create",
+        "app:publish",
+        "app:smoke:web",
+        "app:smoke:api",
+        "app:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "06.cleanup",
+      "sources": ["tools/src/site/unpublish.ts", "examples/06-auth/scripts/user.ts"],
+      "tasks": ["app:unpublish", "app:infra:destroy", "app:user:delete"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

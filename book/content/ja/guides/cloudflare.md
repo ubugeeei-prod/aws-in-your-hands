@@ -16,7 +16,7 @@ Cloudflare の D1、Workers、Workers AI で開発したことがある人のた
 
 | 慣れているもの | AWS で作るもの | 章 | 状態 |
 | --- | --- | --- | --- |
-| Workers で HTTP の handler を書く | Lambda と API Gateway HTTP API | [04](/ja/chapters/04-http-api.md) | 本文とサンプルあり。ローカル検証済み、AWS 未検証 |
+| Workers で HTTP の handler を書く | Lambda と API Gateway HTTP API | [04](/ja/chapters/04-http-api.md)、[05](/ja/chapters/05-dynamodb.md)、[06](/ja/chapters/06-auth.md) | 本文とサンプルあり。ローカル検証済み、AWS 未検証 |
 | Workers で edge の処理を書く | CloudFront Functions、Lambda@Edge | [10](/ja/chapters/10-edge.md) | planned |
 | D1 で SQL を書く | Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2 | [13](/ja/chapters/13-sql.md) | planned |
 | Workers AI でモデルを呼ぶ | Amazon Bedrock | [17](/ja/chapters/17-ai.md) | planned |

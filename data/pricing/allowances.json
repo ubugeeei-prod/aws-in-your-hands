@@ -63,6 +63,14 @@
       "kind": "always-free",
       "sourceId": "aws-price-list-cloudwatch",
       "note": "GB-month. From the Global-TimedStorage-ByteHrs USD 0 tier."
+    },
+    {
+      "priceId": "cognito.essentials.mau",
+      "quantity": 10000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cognito-pricing",
+      "note": "MAUs per account or organization, shared with the Lite plan. Direct sign-in users only."
     }
   ],
   "unknown": [

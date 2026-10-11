@@ -555,6 +555,27 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:44:22Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cognito.essentials.mau",
+      "offerCode": "AmazonCognito",
+      "region": "ap-northeast-1",
+      "sku": "PVNJNQNM2RM23UTB",
+      "usageType": "APN1-CognitoEssentialsMAU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "CognitoUserPoolsMAU",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0150000000",
+          "description": "Cognito Essentials ap-northeast-1 tier 1 pricing"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCognito/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-25T19:31:08Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

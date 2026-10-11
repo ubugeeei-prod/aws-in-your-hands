@@ -131,7 +131,7 @@ generated: true
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - 確認日: 2026-10-11
-- 参照する章: 02, 03, 04, 05
+- 参照する章: 02, 03, 04, 05, 06
 - この出典が支える主張:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -380,6 +380,97 @@ generated: true
 - この出典が支える主張:
   - Tag 3.3.1 exists for amd64 and arm64 and was the image `latest` pointed at
 - 注記: Only the tag listing was read. The image was not pulled or run.
+
+### Control access to HTTP APIs with JWT authorizers in API Gateway
+
+- ID: `apigw-jwt-authorizer`
+- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - The authorizer checks signature (RSA-based algorithms only), iss, aud or client_id, exp, nbf, iat, and route scopes; a failure denies the request
+  - client_id is evaluated only when aud is absent
+  - Public keys are cached for up to two hours
+  - Verified claims reach a Lambda integration at requestContext.authorizer.jwt.claims
+  - There is no standard way to tell access tokens from ID tokens; requiring scopes on routes is recommended
+  - For Cognito the issuer is https://cognito-idp.{region}.amazonaws.com/{userPoolId}
+
+### Cognito: the redirect and authorization endpoint
+
+- ID: `cognito-authorize-endpoint`
+- URL: <https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - /oauth2/authorize accepts response_type, client_id, redirect_uri, state, scope, code_challenge, and code_challenge_method
+  - Only S256 is supported for PKCE
+  - The redirect URI must be pre-registered and HTTPS, except http://localhost
+  - An implicit grant is described as less secure because it exposes tokens
+  - An authorization code is valid for five minutes
+  - An ID token is returned only when the openid scope is requested
+
+### Cognito: understanding the access token
+
+- ID: `cognito-access-token`
+- URL: <https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - Access tokens are signed with RS256 and carry sub, client_id, token_use = access, and scope
+  - sub is the recommended way to identify a user
+  - Access token validity is configurable from 5 minutes to 1 day
+  - Managed login sets a browser cookie valid for one hour; token durations under an hour are discouraged with managed login
+
+### Cognito: ending user sessions with token revocation
+
+- ID: `cognito-token-revocation`
+- URL: <https://docs.aws.amazon.com/cognito/latest/developerguide/token-revocation.html>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - Revoked tokens cannot be used with Cognito API calls, but are still valid to any JWT library that verifies only signature and expiration
+  - Token revocation is enabled by default on new app clients
+
+### Cognito: the managed login sign-out endpoint
+
+- ID: `cognito-logout-endpoint`
+- URL: <https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - GET /logout with client_id and logout_uri signs the user out of managed login and redirects to an allowed sign-out URL
+
+### Amazon Cognito pricing
+
+- ID: `cognito-pricing`
+- URL: <https://aws.amazon.com/cognito/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - Essentials is the default feature plan for new user pools
+  - Lite and Essentials include 10,000 free MAUs per month per account or organization, and that allowance does not expire
+  - A user counts as a MAU when an identity operation occurs for them in the month
+  - SMS and email are charged separately
+- 注記: Whether managed login is available on the Lite plan is not clearly stated on the page.
+
+### AWS Price List bulk API: Cognito, ap-northeast-1
+
+- ID: `aws-price-list-cognito`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCognito/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCognito
+
+### oauth4webapi 3.8.8 and jose 6.2.12 (npm type definitions)
+
+- ID: `oauth4webapi-npm`
+- URL: <https://www.npmjs.com/package/oauth4webapi/v/3.8.8>
+- 確認日: 2026-10-11
+- 参照する章: 06
+- この出典が支える主張:
+  - Function signatures used in examples/06-auth/web/src/auth/cognito.ts and api/src/local-auth.ts
+- 注記: Type-checked only. The Cognito flow in cognito.ts has never been run against a user pool.
 
 ## 未再確認の出典（後続章の調査の出発点）
 

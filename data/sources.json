@@ -359,6 +359,93 @@
       "note": "Only the tag listing was read. The image was not pulled or run."
     },
     {
+      "id": "apigw-jwt-authorizer",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html",
+      "title": "Control access to HTTP APIs with JWT authorizers in API Gateway",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The authorizer checks signature (RSA-based algorithms only), iss, aud or client_id, exp, nbf, iat, and route scopes; a failure denies the request",
+        "client_id is evaluated only when aud is absent",
+        "Public keys are cached for up to two hours",
+        "Verified claims reach a Lambda integration at requestContext.authorizer.jwt.claims",
+        "There is no standard way to tell access tokens from ID tokens; requiring scopes on routes is recommended",
+        "For Cognito the issuer is https://cognito-idp.{region}.amazonaws.com/{userPoolId}"
+      ]
+    },
+    {
+      "id": "cognito-authorize-endpoint",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html",
+      "title": "Cognito: the redirect and authorization endpoint",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "/oauth2/authorize accepts response_type, client_id, redirect_uri, state, scope, code_challenge, and code_challenge_method",
+        "Only S256 is supported for PKCE",
+        "The redirect URI must be pre-registered and HTTPS, except http://localhost",
+        "An implicit grant is described as less secure because it exposes tokens",
+        "An authorization code is valid for five minutes",
+        "An ID token is returned only when the openid scope is requested"
+      ]
+    },
+    {
+      "id": "cognito-access-token",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html",
+      "title": "Cognito: understanding the access token",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Access tokens are signed with RS256 and carry sub, client_id, token_use = access, and scope",
+        "sub is the recommended way to identify a user",
+        "Access token validity is configurable from 5 minutes to 1 day",
+        "Managed login sets a browser cookie valid for one hour; token durations under an hour are discouraged with managed login"
+      ]
+    },
+    {
+      "id": "cognito-token-revocation",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/token-revocation.html",
+      "title": "Cognito: ending user sessions with token revocation",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Revoked tokens cannot be used with Cognito API calls, but are still valid to any JWT library that verifies only signature and expiration",
+        "Token revocation is enabled by default on new app clients"
+      ]
+    },
+    {
+      "id": "cognito-logout-endpoint",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html",
+      "title": "Cognito: the managed login sign-out endpoint",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "GET /logout with client_id and logout_uri signs the user out of managed login and redirects to an allowed sign-out URL"
+      ]
+    },
+    {
+      "id": "cognito-pricing",
+      "url": "https://aws.amazon.com/cognito/pricing/",
+      "title": "Amazon Cognito pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Essentials is the default feature plan for new user pools",
+        "Lite and Essentials include 10,000 free MAUs per month per account or organization, and that allowance does not expire",
+        "A user counts as a MAU when an identity operation occurs for them in the month",
+        "SMS and email are charged separately"
+      ],
+      "note": "Whether managed login is available on the Lite plan is not clearly stated on the page."
+    },
+    {
+      "id": "aws-price-list-cognito",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCognito/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Cognito, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": ["Unit prices in data/pricing/unit-prices.json with offerCode AmazonCognito"]
+    },
+    {
+      "id": "oauth4webapi-npm",
+      "url": "https://www.npmjs.com/package/oauth4webapi/v/3.8.8",
+      "title": "oauth4webapi 3.8.8 and jose 6.2.12 (npm type definitions)",
+      "checkedAt": "2026-10-11",
+      "supports": ["Function signatures used in examples/06-auth/web/src/auth/cognito.ts and api/src/local-auth.ts"],
+      "note": "Type-checked only. The Cognito flow in cognito.ts has never been run against a user pool."
+    },
+    {
       "id": "iam-best-practices",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
       "title": "Security best practices in IAM",

@@ -45,3 +45,11 @@ The term pairs that keep both languages using one word for one concept. API name
 | 結果整合の読み取り | eventually consistent read | 05 | A read that may not reflect a write completed a moment ago. The DynamoDB default. |
 | 強整合の読み取り | strongly consistent read | 05 | A read that reflects every write that succeeded before it. |
 | request unit | request unit | 05 | The billing unit in which on-demand DynamoDB counts reads and writes. |
+| 認証 | authentication | 06 | Establishing who a call comes from. |
+| 認可 | authorization | 06 | Deciding whether that caller may perform that operation. |
+| user pool | user pool | 06 | Amazon Cognito's directory of users. It verifies passwords and issues tokens. |
+| access token | access token | 06 | The token used to call an API. |
+| ID token | ID token | 06 | The token that tells the app itself that sign-in happened and who the user is. It is not sent to APIs. |
+| PKCE | PKCE | 06 | A mechanism that keeps an intercepted authorization code from being exchanged for tokens. |
+| public client | public client | 06 | An app that cannot keep a secret, such as a SPA running in a browser. |
+| JWT authorizer | JWT authorizer | 06 | The API Gateway HTTP API feature that verifies a token before the function is invoked. |

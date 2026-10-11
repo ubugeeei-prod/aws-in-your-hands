@@ -45,3 +45,11 @@ generated: true
 | 結果整合の読み取り | eventually consistent read | 05 | 直前の書き込みが反映されていないことがある読み取り。DynamoDB の既定。 |
 | 強整合の読み取り | strongly consistent read | 05 | 成功した書き込みがすべて反映されている読み取り。 |
 | request unit | request unit | 05 | on-demand の DynamoDB が読み書きを数える課金の単位。 |
+| 認証 | authentication | 06 | 呼び出しが誰からのものかを確かめること。 |
+| 認可 | authorization | 06 | その人がその操作をしてよいかを決めること。 |
+| user pool | user pool | 06 | Amazon Cognito が持つ利用者の名簿。パスワードの検証と token の発行を行う。 |
+| access token | access token | 06 | API を呼ぶための token。 |
+| ID token | ID token | 06 | サインインした事実と利用者の属性を、アプリ自身に伝える token。API には送らない。 |
+| PKCE | PKCE | 06 | authorization code を横取りされても token と交換できないようにする仕組み。 |
+| public client | public client | 06 | 秘密を保持できないアプリ。ブラウザで動く SPA がそう。 |
+| JWT authorizer | JWT authorizer | 06 | API Gateway HTTP API が、関数を呼ぶ前に token を検証する機能。 |
