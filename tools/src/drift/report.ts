@@ -1,11 +1,9 @@
 import { driftOutputSchema, type StackDrift } from "./schema.ts";
 
-// Turns one `cdkd drift --json` run into a report that keeps three things
-// apart: resources that were compared and match, resources that differ, and
-// resources that were never compared. A zero exit code is not accepted as
-// "no drift" on its own.
+// A zero exit code from `cdkd drift` is not "no drift" on its own: matching,
+// differing, and never-compared resources are kept apart.
 
-/** Ordered from worst to best. A report takes the worst status of its stacks. */
+/** Worst first. A report takes the worst status of its stacks. */
 export const STATUSES = [
   "failed",
   "missing-target",
@@ -64,7 +62,7 @@ function reportStack(entry: StackDrift): StackReport {
   let status: Status;
   let detail: string;
   if (total === 0) {
-    // An entry that lists no resource at all is not evidence of anything.
+    // No resources listed is not evidence of anything.
     status = "incomplete";
     detail = "The report lists no resources for this stack, so nothing was compared.";
   } else if (counts.deleted > 0) {
@@ -119,8 +117,7 @@ function reportStacks(requested: string[], run: RunResult): StackReport[] {
   }
 
   if (run.stdout.trim() === "") {
-    // With --json, stdout carries the payload and nothing else. Empty stdout
-    // means the command stopped before comparing anything.
+    // With --json, stdout is the payload. Empty means nothing was compared.
     return /No state found for stack/.test(run.stderr)
       ? everyStack("missing-target", "cdkd has no state for this stack in this account and region.")
       : everyStack("failed", `cdkd printed no report (exit code ${run.exitCode}).`);
@@ -147,8 +144,7 @@ function reportStacks(requested: string[], run: RunResult): StackReport[] {
       : reportStack(entry);
   });
 
-  // The exit code and the payload must tell the same story. When they do not,
-  // the run is treated as failed rather than trusting whichever looks better.
+  // Exit code and payload must agree. If they do not, trust neither.
   const status = worst(stacks.map((stack) => stack.status));
   const differs = status === "deleted" || status === "drifted";
   if (run.exitCode === 1 && !differs && status !== "missing-target") {
@@ -157,11 +153,14 @@ function reportStacks(requested: string[], run: RunResult): StackReport[] {
   if (run.exitCode !== 1 && differs) {
     return everyStack("failed", `The report shows drift but cdkd exited with ${run.exitCode}.`);
   }
+  if (run.exitCode === 2 && status === "clean") {
+    return everyStack("failed", "cdkd exited with 2 (resources not compared) but the report lists none.");
+  }
   return stacks;
 }
 
 // #region gate
-/** Exit codes of the gate. Distinct so that CI can tell "differs" from "unknown". */
+/** Distinct so that CI can tell "differs" from "unknown". */
 export const GATE_EXIT = { clean: 0, differs: 10, unverified: 11, failed: 12 } as const;
 
 export function gateFor(status: Status): DriftReport["gate"] {

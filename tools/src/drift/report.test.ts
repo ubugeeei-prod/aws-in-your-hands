@@ -15,7 +15,7 @@ const check = (name: string, requestedStacks = ["AihBookSite"]) =>
   });
 
 describe("drift report", () => {
-  it("passes only when every resource was compared and matches", () => {
+  it("passes only when everything was compared and matches", () => {
     const report = check("clean");
     expect(report.status).toBe("clean");
     expect(report.gate).toMatchObject({ passed: true, exitCode: GATE_EXIT.clean });
@@ -31,15 +31,14 @@ describe("drift report", () => {
     ]);
   });
 
-  it("reports a resource deleted outside the tool", () => {
+  it("reports a deleted resource", () => {
     const report = check("deleted");
     expect(report.status).toBe("deleted");
     expect(report.gate.exitCode).toBe(GATE_EXIT.differs);
   });
 
-  it("does not call a stack in sync when a resource type cannot be read back", () => {
-    // cdkd exits 0 here. The gate must still fail: three resources match and
-    // one was never looked at.
+  it("unreadable type is not in sync", () => {
+    // cdkd exits 0 here, but one resource was never looked at.
     const report = check("unsupported");
     expect(report.exitCode).toBe(0);
     expect(report.status).toBe("unsupported");
@@ -47,7 +46,7 @@ describe("drift report", () => {
     expect(report.stacks[0]?.uninspected).toHaveLength(1);
   });
 
-  it("keeps a failed read apart from both drift and a match", () => {
+  it("failed read is neither drift nor a match", () => {
     const report = check("incomplete");
     expect(report.status).toBe("incomplete");
     expect(report.gate.exitCode).toBe(GATE_EXIT.unverified);
@@ -55,30 +54,30 @@ describe("drift report", () => {
     expect(report.stacks[0]?.warnings).toHaveLength(1);
   });
 
-  it("treats exit code 1 without a report as a failed run, not as drift", () => {
+  it("exit 1 without a report is a failed run, not drift", () => {
     const report = check("failed");
     expect(report.status).toBe("failed");
     expect(report.gate.exitCode).toBe(GATE_EXIT.failed);
   });
 
-  it("recognizes a stack that cdkd has no state for", () => {
+  it("stack without state is missing-target", () => {
     expect(check("missing-target").status).toBe("missing-target");
   });
 
-  it("notices a requested stack that is absent from the report", () => {
+  it("requested stack absent from the report is missing-target", () => {
     const report = check("clean", ["AihBookSite", "AihSpa"]);
     expect(report.stacks.map((stack) => stack.status)).toEqual(["clean", "missing-target"]);
     expect(report.gate.passed).toBe(false);
   });
 
-  it("does not read an empty report as a clean one", () => {
+  it("empty report is not clean", () => {
     const report = check("empty-report");
     expect(report.exitCode).toBe(0);
     expect(report.status).toBe("missing-target");
     expect(report.gate.passed).toBe(false);
   });
 
-  it("fails when the exit code and the report disagree", () => {
+  it("exit code and report must agree", () => {
     expect(check("exit-code-mismatch").status).toBe("failed");
   });
 
@@ -91,5 +90,17 @@ describe("drift report", () => {
     expect(report.target).toEqual({ accountId: "111111111111", region: "ap-northeast-1" });
     expect(report.executedAt).toBe("2026-10-11T12:00:00.000Z");
     expect(summarize(report)).toContain("compared and matching: 4, drifted: 0, deleted: 0, not compared: 0");
+  });
+
+  it("fails when cdkd says some resources were not compared but lists none", () => {
+    const run = { ...fixture("clean"), exitCode: 2 };
+    const report = buildReport({
+      requestedStacks: ["AihBookSite"],
+      run,
+      target: { accountId: "111111111111", region: "ap-northeast-1" },
+      executedAt: new Date("2026-10-11T12:00:00Z"),
+      toolVersion: "0.296.28",
+    });
+    expect(report.status).toBe("failed");
   });
 });

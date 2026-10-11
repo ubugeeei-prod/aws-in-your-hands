@@ -1,27 +1,20 @@
 import { defineConfig } from "vite-plus";
 
-// Every project task lives in this file and is started with `vp run <task>`
-// from the repository root. `vp run` without a name lists them.
-//
-// Two kinds of task are kept apart:
-// - local tasks read and write only this checkout. A few of them are cached,
-//   with the default file tracking, because their result depends on nothing
-//   else.
-// - `live` tasks read or change AWS (or another network service). They are
-//   never cached: a replayed "success" from an earlier run would say nothing
-//   about the account as it is now.
+// Local tasks touch only this checkout, and a few are cached. `live` tasks read
+// or change AWS and never are: a replayed "success" says nothing about the
+// account as it is now.
 
 // #region kinds
 type Task = { command: string; cwd?: string; dependsOn?: string[]; cache?: boolean };
 
-/** A local task whose output must come from a fresh run, such as a dev server. */
+/** Local, but must run fresh every time, such as a dev server. */
 const fresh = (command: string, rest: Omit<Task, "command" | "cache"> = {}): Task => ({
   command,
   ...rest,
   cache: false,
 });
 
-/** A task that reads or changes something outside this checkout. */
+/** Reads or changes something outside this checkout. */
 const live = (command: string, rest: Omit<Task, "command" | "cache"> = {}): Task => ({
   command,
   ...rest,
@@ -38,15 +31,15 @@ function infra(name: string, appDir: string, stack: string): Record<string, Task
   const cdkd = (action: string) => `${node} tools/src/infra/cdkd.ts ${action} ${appDir} ${stack}`;
   const drift = (mode: string) => `${node} tools/src/drift/cli.ts ${mode} ${appDir} ${stack}`;
   return {
-    // Local: runs the CDK app and writes <appDir>/cdk.out. Changes nothing in AWS.
+    // Local: writes <appDir>/cdk.out. Changes nothing in AWS.
     [`${name}:infra:synth`]: fresh(cdkd("synth")),
-    // Reads cdkd's state in S3 and shows what a deploy would change.
+    // Template against cdkd's state in S3: what a deploy would change.
     [`${name}:infra:diff`]: live(cdkd("diff")),
     [`${name}:infra:deploy`]: live(cdkd("deploy")),
     [`${name}:infra:destroy`]: live(cdkd("destroy")),
-    // Compares the recorded state with the live resources and writes reports/drift/<stack>.json.
+    // State against live resources. Writes reports/drift/<stack>.json.
     [`${name}:infra:drift`]: live(drift("check")),
-    // Remediation is separate from detection and is never run by another task.
+    // Remediation is never run by another task.
     [`${name}:infra:drift:revert:preview`]: live(drift("preview-revert")),
     [`${name}:infra:drift:revert`]: live(drift("revert")),
     [`${name}:infra:drift:accept`]: live(drift("accept")),
@@ -68,18 +61,32 @@ function site(name: string, appDir: string, stack: string, buildDir: string, bui
   };
 }
 
+// Both lists grow as chapters are added; tools/src/fragments/apply.ts edits them.
+const chapterSynthTasks = [
+  "hello:infra:synth",
+  "spa:infra:synth",
+  "api:infra:synth",
+  "notes:infra:synth",
+  "app:infra:synth",
+];
+const chapterCheckTasks = [
+  "lint:vue",
+  "typecheck:vue",
+  "build:spa",
+  "lint:app:web",
+  "typecheck:app:web",
+  "build:app:web",
+];
+
 export default defineConfig({
   run: {
     tasks: {
       // ---- checks that need nothing but this checkout -------------------
       // Format and lint. Type checking is the two tasks below.
       check: { command: "vp check" },
-      // tsc for every non-Vue project; see tools/src/checks/typecheck.ts for
-      // why this is separate from `vp check`.
+      // tools/src/checks/typecheck.ts says why this is not `vp check`.
       typecheck: fresh("node tools/src/checks/typecheck.ts"),
-      // .vue files are checked by Vize. It is given only the Vue app (src/):
-      // the CDK code under infra/ imports aws-cdk-lib and goes through the
-      // single-threaded tsc run above.
+      // Vize gets only the Vue app (src/). The CDK code under infra/ goes through tsc above.
       "typecheck:vue": { command: "./node_modules/.bin/vize check", cwd: "examples/03-spa" },
       // Vize's linter reads the <template> blocks that oxlint does not.
       "lint:vue": { command: "./node_modules/.bin/vize lint src --preset essential", cwd: "examples/03-spa" },
@@ -87,26 +94,19 @@ export default defineConfig({
       "content:check": fresh("node tools/src/checks/content.ts"),
       "links:check": fresh("node tools/src/checks/links.ts book/dist", { dependsOn: ["build:book"] }),
       "infra:synth": fresh("node -e \"console.log('all CDK apps synthesized')\"", {
-        dependsOn: [
-          "book:infra:synth",
-          "hello:infra:synth",
-          "spa:infra:synth",
-          "api:infra:synth",
-          "notes:infra:synth",
-          "app:infra:synth",
-        ],
+        dependsOn: ["book:infra:synth", ...chapterSynthTasks],
       }),
       // Everything above plus both builds. Never touches AWS.
       "check:all": fresh("node -e \"console.log('check:all finished without touching AWS')\"", {
         dependsOn: [
           "check",
-          "typecheck:vue",
+          "typecheck",
           "test:unit",
           "book:generate:check",
           "content:check",
           "infra:synth",
           "links:check",
-          "build:spa",
+          ...chapterCheckTasks,
         ],
       }),
 
@@ -118,6 +118,8 @@ export default defineConfig({
       "book:generate:check": fresh("node tools/src/book/generate.ts --check"),
       ...infra("book", "book/infra", "AihBookSite"),
       ...site("book", "book/infra", "AihBookSite", "book/dist", "build:book"),
+
+      // ---- chapter task blocks are inserted above this line ----
 
       // ---- pricing and source distribution -----------------------------
       "pricing:refresh": live("node tools/src/pricing/refresh.ts"),
@@ -204,8 +206,8 @@ export default defineConfig({
     include: ["{book/infra,tools,examples}/**/*.test.ts"],
   },
   lint: {
-    // Off on purpose: the type-aware pass intermittently mis-resolves
-    // aws-cdk-lib subpath imports. `vp run typecheck` checks types instead.
+    // The type-aware pass intermittently mis-resolves aws-cdk-lib subpath
+    // imports. `vp run typecheck` checks types instead.
     options: { typeAware: false, typeCheck: false },
   },
   fmt: {

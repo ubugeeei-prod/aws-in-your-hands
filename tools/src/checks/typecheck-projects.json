@@ -1,0 +1,11 @@
+[
+  ".",
+  "book",
+  "book/infra",
+  "tools",
+  "examples/02-toolchain",
+  "examples/03-spa/infra",
+  "examples/04-http-api",
+  "examples/05-dynamodb",
+  "examples/06-auth"
+]

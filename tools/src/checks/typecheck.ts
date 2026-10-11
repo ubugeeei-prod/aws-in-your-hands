@@ -1,31 +1,15 @@
 // vp run typecheck
 //
-// Type-checks every TypeScript project in the workspace with `tsc --noEmit`.
-//
-// --singleThreaded is deliberate. With TypeScript 7.0.2's default parallel
-// checking, the same unchanged sources intermittently fail with errors such as
-// "Module 'aws-cdk-lib/assertions' has no exported member 'Match'": an import
-// of one aws-cdk-lib subpath is resolved to another one. `vp check`'s built-in
-// type check showed the same behavior (it failed 2 of 5 identical runs here),
-// which is why this task, not `vp check`, is the type check of record.
-// A check that sometimes fails on correct code teaches people to rerun it.
+// --singleThreaded on purpose: TypeScript 7.0.2's parallel checker intermittently
+// resolves one aws-cdk-lib subpath as another on unchanged sources. `vp check`
+// did too (2 of 5 identical runs). A flaky check teaches people to rerun it.
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { repoRoot } from "../data/load.ts";
 
-// The Vue app in examples/03-spa/src is checked by `vp run typecheck:vue`
-// (Vize), which understands .vue files. Its CDK code is checked here.
-const projects = [
-  ".",
-  "book",
-  "book/infra",
-  "tools",
-  "examples/02-toolchain",
-  "examples/03-spa/infra",
-  "examples/04-http-api",
-  "examples/05-dynamodb",
-  "examples/06-auth",
-];
+// examples/03-spa/src (Vue) goes through `vp run typecheck:vue`. Its CDK code is checked here.
+const projects = JSON.parse(readFileSync(new URL("./typecheck-projects.json", import.meta.url), "utf8")) as string[];
 
 const tsc = join(repoRoot, "node_modules/.bin/tsc");
 const failed: string[] = [];

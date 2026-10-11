@@ -60,18 +60,13 @@ export type UpdateOutcome =
   // Someone else's change is stored. Nothing of the caller's was written.
   | { status: "conflict"; current: Note };
 
-/**
- * Whether a 409 is the echo of the caller's own earlier attempt.
- *
- * A request can succeed on the server while its response is lost on the way
- * back. The caller retries with the version it still believes in, and now gets
- * a conflict caused by its own write. If the stored note is exactly one
- * version ahead and holds exactly what the caller sent, the write it wanted
- * is the write that is stored. (Another writer saving the identical content
- * at that version looks the same, and is equally fine.)
- */
+// After a lost response, the retry conflicts with the caller's own first
+// write. One version ahead with exactly what was sent: that write landed.
 export function isOwnWrite(sent: UpdateNote, current: Note): boolean {
-  return current.version === sent.expectedVersion + 1 && current.title === sent.title && current.body === sent.body;
+  // The server trims the title before storing it.
+  return (
+    current.version === sent.expectedVersion + 1 && current.title === sent.title.trim() && current.body === sent.body
+  );
 }
 // #endregion outcome
 
