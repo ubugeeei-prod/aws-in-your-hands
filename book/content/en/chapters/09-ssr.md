@@ -46,4 +46,4 @@ A CDN cache can serve stale content; state whose staleness is acceptable and for
 
 ## Primary sources to start from
 
-- [Lambda response streaming](https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html) (not re-read while writing)
+- [Response streaming for Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html) (checked 2026-10-11)

@@ -69,3 +69,11 @@ The term pairs that keep both languages using one word for one concept. API name
 | network ACL | network ACL | 11 | Traffic rules at a subnet's edge, with allow and deny rules evaluated in numeric order. Stateless: replies need their own allow rule. |
 | gateway endpoint | gateway endpoint | 11 | A path to S3 and DynamoDB that does not cross the internet, installed as a route in route tables. It has no additional charge. |
 | interface endpoint | interface endpoint | 11 | A doorway to an AWS service placed inside a subnet as a network interface with a private IP address (AWS PrivateLink). Billed by the hour per service and per Availability Zone. |
+| 基盤モデル | foundation model | 17 | A pretrained model that Bedrock offers behind an API, selected by its model ID. |
+| token | token | 17 | The unit in which a model reads and writes text, and the unit it is billed in. It is not a character count, and each model counts differently. |
+| inference profile | inference profile | 17 | An ID for a model together with the Regions a request may be sent to. It is passed in place of a model ID. |
+| cross-Region inference | cross-Region inference | 17 | Inference that, through an inference profile, may be processed in a Region other than the one you called. |
+| response streaming | response streaming | 17 | A Lambda function sending its response piece by piece as it is produced, instead of buffering all of it. |
+| function URL | function URL | 17 | An HTTPS endpoint attached directly to a Lambda function, with no API Gateway in between. |
+| server-sent events（SSE） | server-sent events (SSE) | 17 | A format in which a server keeps sending events inside one HTTP response. Its content type is text/event-stream. |
+| SigV4 署名 | SigV4 signature | 17 | The request signature AWS APIs use to identify the caller, computed from credentials and sent in headers. |

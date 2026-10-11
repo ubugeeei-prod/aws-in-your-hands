@@ -1,8 +1,8 @@
 // vp run typecheck
 //
-// --singleThreaded on purpose: TypeScript 7.0.2's parallel checker intermittently
-// resolves one aws-cdk-lib subpath as another on unchanged sources. `vp check`
-// did too (2 of 5 identical runs). A flaky check teaches people to rerun it.
+// One tsc run per project, so a failure names the project it belongs to.
+// (Type checks used to fail at random here. The cause was pnpm hard-linking
+// identical files to one inode; see packageImportMethod in pnpm-workspace.yaml.)
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -15,7 +15,7 @@ const tsc = join(repoRoot, "node_modules/.bin/tsc");
 const failed: string[] = [];
 
 for (const project of projects) {
-  const result = spawnSync(tsc, ["--noEmit", "--singleThreaded", "-p", join(repoRoot, project)], { stdio: "inherit" });
+  const result = spawnSync(tsc, ["--noEmit", "-p", join(repoRoot, project)], { stdio: "inherit" });
   console.log(`${result.status === 0 ? "ok  " : "FAIL"} ${project}`);
   if (result.status !== 0) {
     failed.push(project);

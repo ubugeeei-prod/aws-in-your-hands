@@ -306,6 +306,81 @@ Assumptions:
 - List subtotal: **USD 61.42** / month
 - Subtotal after monthly free allowance: **USD 61.42** / month
 
+## Summary API: deployed, but never called for a month
+
+ID: `ai-idle` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- No requests
+- Logs expire after a week; nothing is stored
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## Summary API: 1,000 summaries a month (Nova 2 Lite, jp. profile)
+
+ID: `ai-summaries-nova-2-lite` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- 1,000 summaries a month
+- Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)
+- Assumed 150 output tokens each (the limit is 400)
+- Lambda at 256 MB on arm64, assumed 4 seconds each on average (waiting for the model is billed too)
+- Assumed 1 KB of logs each
+- Data transfer is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
+| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
+| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
+
+- List subtotal: **USD 1.30** / month
+- Subtotal after monthly free allowance: **USD 1.29** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
+
+## Summary API: output cost if all 1,000 summaries hit the output limit
+
+ID: `ai-output-ceiling-nova-2-lite` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- All 1,000 summaries write up to the maxTokens of 400
+- Output tokens only; input and Lambda are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
+
+- List subtotal: **USD 1.32** / month
+- Subtotal after monthly free allowance: **USD 1.32** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.nova-2-lite.output`
+
+## Summary API: the same token counts on Claude Haiku 4.5 (inference only)
+
+ID: `ai-summaries-claude-haiku-4-5` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- 1,000 summaries a month
+- Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)
+- Assumed 150 output tokens each (the limit is 400)
+- Tokenizers differ by model, so the same text does not give the same token count; this is for comparing unit prices
+- Inference only; Lambda is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
+| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
+
+- List subtotal: **USD 3.03** / month
+- Subtotal after monthly free allowance: **USD 3.03** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -342,6 +417,10 @@ Assumptions:
 | `vpc.endpoint.interface.hour` | ap-northeast-1 | APN1-VpcEndpoint-Hours | Hrs | 0 - ∞: 0.0140000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.endpoint.interface.data` | ap-northeast-1 | APN1-VpcEndpoint-Bytes | GB | 0 - 1,048,576: 0.0100000000<br>1,048,576 - 5,242,880: 0.0060000000<br>5,242,880 - ∞: 0.0040000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.public-ipv4.in-use.hour` | ap-northeast-1 | APN1-PublicIPv4:InUseAddress | Hrs | 0 - ∞: 0.0050000000 | 2026-09-17 | 2026-10-11 |
+| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -366,3 +445,7 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.
 - `vpc.public-ipv4.in-use.hour`: The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted.
+- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.

@@ -18,7 +18,7 @@ generated: true
 | toolchain | `clean checkout: nix develop → vp install --frozen-lockfile → vp run check:all` | ローカル | 成功 | 2026-10-11 | stage した内容だけを別ディレクトリに書き出して実行。事前生成ファイルや global のツールには依存していない |
 | toolchain | `vp の初回セットアップと shell 設定 / vp first-run setup and shell profiles` | ローカル | 成功 | 2026-10-11 | 仮の HOME で実験。何も指定しないと ~/.zshrc、~/.zshenv、~/.bashrc、~/.profile に追記され、VP_SELF_SETUP_NO_MODIFY_PATH=1 では追記されないことを確認 |
 | all | `vp run check:all` | ローカル | 成功 | 2026-10-11 | format と lint、Vize による Vue の lint と型検査、tsc による型検査、テスト 218 件（1 件は DynamoDB Local が無いため skip）、生成ページの同期、日英とソース対応の整合、6 つの CDK アプリの synth、本と 2 つの SPA のビルド、リンク検査 |
-| all | `vp run typecheck (6 回 / 6 times)` | ローカル | 成功 | 2026-10-11 | 単一スレッドの tsc で 6 回とも成功。既定の並列実行と vp check の型検査は、同じ入力でときどき失敗した |
+| all | `vp run typecheck / tsc x12 (parallel)` | ローカル | 成功 | 2026-10-11 | pnpm がハードリンクで置いた同一内容の index.d.ts（aws-cdk-lib に 3,501 個、同じ inode）を TypeScript 7 が取り違えていたのが、型検査がときどき落ちる原因だった。packageImportMethod: clone-or-copy にしてから、並列の tsc が 12 回中 12 回、aws-cdk-lib を含む vize check が 4 回中 4 回通った |
 | book | `vp run build:book / vp run links:check` | ローカル | 成功 | 2026-10-11 | 日英 34 ページずつと 404、検索インデックスを生成。cache hit のとき出力が復元されること、取り込み元のコードや本文を変えると再実行されることを確認 |
 | book | `vp run book:infra:synth` | ローカル | 成功 | 2026-10-11 | 5 リソース、3 output。AWS への変更なし |
 | 02 | `vp run hello:infra:synth -c stage=prod / vp run hello:infra:synth:cdk` | ローカル | 成功 | 2026-10-11 | context が cdkd に渡り、prod で bucket が Retain になることを template で確認。CDK CLI でも synth できた |
@@ -56,6 +56,15 @@ generated: true
 | 11 | `vp run net:infra:synth` | ローカル | 成功 | 2026-10-11 | 既定の構成と、`-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs` の両方で synth した |
 | 11 | `vp run net:plan` | ローカル | 成功 | 2026-10-11 | 既定、`egress=nat`、`egress=nat-per-az`、`interfaceEndpoints=ecr.api,ecr.dkr,logs`、不正な設定で実行した |
 | 11 | `vp run net:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | VPC を作る。context によっては NAT Gateway と interface endpoint（時間課金）も作る |
+| 17 | `vp run test:unit (examples/17-ai)` | ローカル | 成功 | 2026-10-11 | 51 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、CDK の assertion |
+| 17 | `vp run typecheck (examples/17-ai)` | ローカル | 成功 | 2026-10-11 | scripts/ と infra/ を含む |
+| 17 | `vp run ai:infra:synth` | ローカル | 成功 | 2026-10-11 | esbuild による bundle（Docker なし）を含む。5 リソース |
+| 17 | `vp run dev:ai + curl` | ローカル | 成功 | 2026-10-11 | AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log、AI_FIXTURE=truncated の error イベントを確認 |
+| 17 | `vp run check:all` | ローカル | 成功 | 2026-10-11 | 17章を加えた状態で通過 |
+| 17 | `vp run dev:ai (AI_BACKEND=bedrock)` | AWS | 未実行 | - | 手元のサーバーから実際の Bedrock を呼ぶ。課金される |
+| 17 | `vp run ai:hello / ai:test:live` | AWS | 未実行 | - | 実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない |
+| 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Lambda、function URL、IAM role、log group を作る |
+| 17 | `vp run ai:smoke / ai:logs` | AWS | 未実行 | - | デプロイ済みの function URL が必要。課金される |
 
 ## 未解決事項と再開手順
 
@@ -106,12 +115,6 @@ AWS SDK for JavaScript v3 3.1149.0 が aws login の認証情報（login_session
 検証したのは aarch64-darwin だけ。nix/vp.nix の Linux 用の autoPatchelf と、x86_64-darwin は未実行。
 
 再開手順: 各 platform で nix develop、vp install --frozen-lockfile、vp run check:all を実行し、data/toolchain.json の verifiedPlatforms を更新する。
-
-### typescript7-parallel-check
-
-TypeScript 7.0.2 の並列の型検査と vp check の型検査が、aws-cdk-lib の subpath import をときどき取り違える。回避として単一スレッドの tsc を使っている。上流へは未報告。
-
-再開手順: 最小の再現を作って上流に報告する。修正版が出たら、vite.config.ts の lint.options と tools/src/checks/typecheck.ts を見直す。
 
 ### ox-content-peer-range
 
@@ -172,3 +175,21 @@ AWS Budgets の料金、API Gateway HTTP API と S3 の無料枠、どの章が 
 既定の AZ 名（ap-northeast-1a と ap-northeast-1c）が、すべてのアカウントで subnet を作れる AZ かどうかは確認していない。
 
 再開手順: `aws ec2 describe-availability-zones --region ap-northeast-1` で自分のアカウントの AZ 名と AZ ID を確かめ、違っていれば `-c availabilityZones=...` で渡す。
+
+### 17-live-inference
+
+17章は実際の Bedrock を一度も呼んでいない。モデル ID（jp.amazon.nova-2-lite-v1:0 など）が東京から呼べること、実際の ConverseStream のイベントが src/converse-stream.ts の schema に合うこと、fixture の形が実物と一致することは未確認。
+
+再開手順: examples/17-ai/.env を用意して vp run ai:hello、続けて vp run ai:test:live を実行する（課金される）。イベントの形が違えば schema と fixture を直す。
+
+### 17-deployed-streaming
+
+17章の stack はデプロイしていない。Hono の streamHandle と streamSSE が Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、streamSSE が付ける Transfer-Encoding などの header を Lambda が受け付けること、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。
+
+再開手順: vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。
+
+### 17-bedrock-billing-details
+
+途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。
+
+再開手順: Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。

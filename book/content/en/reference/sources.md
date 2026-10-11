@@ -73,7 +73,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-pricing`
 - URL: <https://aws.amazon.com/lambda/pricing/>
 - Checked: 2026-10-11
-- Chapters: 04
+- Chapters: 04, 17
 - Claims this source supports:
   - Free tier: 1,000,000 requests and 400,000 GB-seconds per month
   - Response streaming: first 6 MB per request free, then per GB
@@ -84,7 +84,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-lambda`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04
+- Chapters: 04, 17
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AWSLambda
 
@@ -112,7 +112,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-cloudwatch`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04
+- Chapters: 04, 17
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudWatch
   - The price list has a USD 0 tier for the first 5 GB of log ingestion and 5 GB-month of log storage
@@ -131,7 +131,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - Checked: 2026-10-11
-- Chapters: 02, 03, 04, 05, 06
+- Chapters: 02, 03, 04, 05, 06, 17
 - Claims this source supports:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -179,7 +179,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - `vp install --frozen-lockfile` runs the pinned package manager with that flag
   - Bundles vite 8.3.3, vitest 5.0.3, oxlint 1.87.0, oxfmt 0.72.0
   - `vp check`'s type check does not cover Vue single-file components
-  - With TypeScript 7.0.2, `vp check`'s type check and plain `tsc` intermittently mis-resolved aws-cdk-lib subpath imports on unchanged sources (observed here: 2 of 5 runs); `tsc --singleThreaded` did not (36 of 36 project checks passed)
 - Note: Verified by experiment with the binary built by nix/vp.nix on aarch64-darwin.
 
 ### vize and @vizejs/vite-plugin 0.443.0 (npm tarballs and local CLI)
@@ -193,7 +192,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - `vize check` type-checks .vue and .ts files using the tsconfig include list
   - `vize lint` lints Vue templates; `--preset essential` selects the essential rules
   - Adding `@vizejs/vite-plugin` to compilerOptions.types lets TypeScript resolve .vue imports without a shim
-- Note: Verified by building and checking examples/03-spa. When `vize check` was also given the CDK code that imports aws-cdk-lib, it showed the same intermittent mis-resolution as TypeScript 7.0.2 (2 of 4 runs); limited to src/ it passed 8 of 8.
 
 ### nixpkgs at the revision in flake.lock
 
@@ -248,17 +246,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Claims this source supports:
   - `wrangler dev` uses a local-only D1 by default and persists its data across runs
   - Local and remote data are separate; `--local` targets the local database for `wrangler d1 execute` and `wrangler d1 migrations apply`
-
-### Cloudflare Workers AI: Bindings
-
-- ID: `cloudflare-workers-ai-bindings`
-- URL: <https://developers.cloudflare.com/workers-ai/configuration/bindings/>
-- Checked: 2026-10-11
-- Chapters: 00, 17
-- Claims this source supports:
-  - The AI binding is declared in the wrangler configuration and called as env.AI.run(model, options)
-  - `stream: true` returns results as a text/event-stream
-- Note: This page says nothing about local development or charges; that claim rests on cloudflare-workers-local-dev.
 
 ### Restrictions on CloudFront Functions
 
@@ -1096,6 +1083,280 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Claims this source supports:
   - All node-based ElastiCache clusters are launched in a VPC; ElastiCache Serverless caches can also be configured with a public endpoint that needs no VPC configuration
 
+### Inference using Converse API
+
+- ID: `bedrock-converse`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Converse needs bedrock:InvokeModel; ConverseStream needs bedrock:InvokeModelWithResponseStream
+  - Order of ConverseStream events: messageStart, content block events, messageStop (with stopReason), metadata (usage and metrics)
+  - contentBlockStart is sent for tool use only; a text delta is {contentBlockDelta: {delta: {text}, contentBlockIndex}}
+  - Shape of a Converse response: output.message.content[].text, stopReason, usage, metrics
+
+### ConverseStream (API reference)
+
+- ID: `bedrock-converse-stream-api`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Request fields modelId, messages, system, inferenceConfig.maxTokens
+  - modelId accepts a base model ID or an inference profile ID
+  - Stream members include internalServerException (500), modelStreamErrorException (424), serviceUnavailableException (503), throttlingException (429), validationException (400)
+  - Errors: AccessDeniedException 403, ModelErrorException 424, ModelNotReadyException 429, ModelTimeoutException 408, ResourceNotFoundException 404, ServiceUnavailableException 503, ThrottlingException 429, ValidationException 400
+  - The AWS CLI does not support ConverseStream
+
+### MessageStopEvent (API reference)
+
+- ID: `bedrock-message-stop-event`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_MessageStopEvent.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - stopReason values: end_turn, tool_use, max_tokens, stop_sequence, guardrail_intervened, content_filtered, malformed_model_output, malformed_tool_use, model_context_window_exceeded
+
+### Request access to models
+
+- ID: `bedrock-model-access`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Access to many foundation models is enabled by default; there is no per-model request step in commercial Regions
+  - The first invocation of a third-party model starts an AWS Marketplace subscription, which needs aws-marketplace:Subscribe, Unsubscribe, and ViewSubscriptions and can take up to 15 minutes
+  - Anthropic models need a one-time use case form per account or organization before the first call
+  - Amazon models are not sold through AWS Marketplace
+  - After a model is enabled, callers no longer need the Marketplace permissions
+
+### Route model inference requests across AWS Regions with cross-Region inference
+
+- ID: `bedrock-cross-region-inference`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - A geographic profile routes within a geography; a global profile routes to any commercial Region
+  - No additional routing cost; the price is that of the Region the profile is called from
+  - CloudTrail logs the request in the source Region with additionalEventData.inferenceRegion
+
+### Supported Regions and models for inference profiles
+
+- ID: `bedrock-inference-profiles-support`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Profile IDs and destination Regions are documented on each model's card
+  - GetInferenceProfile lists the destination Regions of a profile as seen from one source Region
+  - Do not infer the destinations from the geographic prefix of the profile ID alone
+
+### Prerequisites for inference profiles
+
+- ID: `bedrock-inference-profiles-prereq`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - A policy that names an inference profile must also name the foundation model in each Region associated with it
+  - The bedrock:InferenceProfileArn condition key limits a foundation-model statement to calls made through one profile
+  - The example for a global profile names the model in the source Region and with an empty Region
+
+### Model card: Amazon Nova 2 Lite
+
+- ID: `bedrock-model-card-nova-2-lite`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-2-lite.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Model ID amazon.nova-2-lite-v1:0; profiles jp.amazon.nova-2-lite-v1:0 and global.amazon.nova-2-lite-v1:0
+  - From ap-northeast-1 the model is offered through Geo and Global profiles, not In-Region
+  - jp.amazon.nova-2-lite-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3
+  - Supports Converse and response streaming; max output 64K tokens
+
+### Model card: Anthropic Claude Haiku 4.5
+
+- ID: `bedrock-model-card-claude-haiku-4-5`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-4-5.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - On bedrock-runtime the model needs a geo or global inference profile ID; the bare model ID is not supported for on-demand use
+  - jp.anthropic.claude-haiku-4-5-20251001-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3
+  - Billed through AWS Marketplace; EOL no sooner than 2026-10-16
+
+### Troubleshooting Amazon Bedrock API Error Codes
+
+- ID: `bedrock-troubleshooting-errors`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/troubleshooting-api-error-codes.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - ThrottlingException (429) means the account quota was exceeded; retry with exponential backoff and jitter, or request a quota increase
+  - ServiceUnavailable (503) is capacity, not the account quota
+  - A missing Anthropic use case form answers 404
+
+### Quotas for Amazon Bedrock
+
+- ID: `bedrock-quotas`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/quotas.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Model inference is controlled by per-model quotas on token usage
+  - The quotas that apply to an account can be lower than the published defaults; Service Quotas shows the applied values
+
+### Response streaming for Lambda functions
+
+- ID: `lambda-response-streaming`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html>
+- Checked: 2026-10-11
+- Chapters: 09, 17
+- Claims this source supports:
+  - Streaming is available through function URLs, InvokeWithResponseStream, and API Gateway proxy integrations
+  - A streamed response is not interrupted when the client disconnects, and the full function duration is billed
+  - Node.js managed runtimes support response streaming natively
+  - Streamed payloads can be up to 200 MB; the first 6 MB is not rate limited
+  - Function URLs do not support response streaming for a function in a VPC
+
+### Writing response streaming-enabled Lambda functions
+
+- ID: `lambda-response-streaming-write`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/config-rs-write-functions.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides
+
+### Control access to Lambda function URLs
+
+- ID: `lambda-urls-auth`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - AuthType is AWS_IAM or NONE
+  - With AWS_IAM, a caller in the same account needs lambda:InvokeFunctionUrl and lambda:InvokeFunction in an identity policy or in the function's resource-based policy
+  - With NONE, anyone with the URL can invoke the function once the resource-based policy grants public access
+
+### Stream the integration response for your proxy integrations in API Gateway
+
+- ID: `apigw-response-streaming`
+- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/response-transfer-mode.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Response streaming is supported for REST APIs only, with responseTransferMode STREAM on proxy integrations
+  - Streams run up to 15 minutes; idle timeout is 5 minutes for Regional endpoints
+  - The Lambda function may keep running after the connection closes
+
+### Restrict access to an AWS Lambda function URL origin
+
+- ID: `cloudfront-oac-lambda-url`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - CloudFront origin access control signs requests to a function URL whose AuthType is AWS_IAM
+  - For POST and PUT the client must send the SHA-256 of the body in x-amz-content-sha256
+
+### AWS Lambda pricing (response streaming)
+
+- ID: `lambda-pricing-streaming`
+- URL: <https://aws.amazon.com/lambda/pricing/>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - The first 6 MB streamed per request is free
+  - The page lists no separate charge for function URLs
+- Note: Same page as lambda-pricing, re-read for chapter 17.
+
+### AWS Price List: Amazon Bedrock, ap-northeast-1
+
+- ID: `aws-price-list-bedrock`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Nova 2.0 Lite in Tokyo: USD 0.000396 per 1K input tokens, USD 0.003311 per 1K output tokens
+  - Nova 2.0 Lite through the global profile from Tokyo: USD 0.00036 and USD 0.00301 per 1K tokens
+- Note: The offer has a plain row and a `cross-region-global` row. It has no row named for the jp. profile; the chapter applies the plain row to it, following the user guide's statement that the price is that of the calling Region.
+
+### AWS Price List: Amazon Bedrock foundation models (Marketplace), ap-northeast-1
+
+- ID: `aws-price-list-bedrock-fm`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens
+
+### Cloudflare Workers AI: Get started
+
+- ID: `cloudflare-workers-ai-quickstart`
+- URL: <https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Workers AI always accesses your Cloudflare account to run models and incurs usage charges even in local development
+  - A Worker calls a model as env.AI.run("@cf/...", {...})
+
+### Cloudflare Workers AI: Bindings
+
+- ID: `cloudflare-workers-ai-bindings`
+- URL: <https://developers.cloudflare.com/workers-ai/configuration/bindings/>
+- Checked: 2026-10-11
+- Chapters: 00, 17
+- Claims this source supports:
+  - The AI binding is declared in the wrangler configuration and called as env.AI.run(model, options)
+  - `stream: true` returns results as a text/event-stream
+- Note: This page says nothing about local development or charges; that claim rests on cloudflare-workers-ai-quickstart and cloudflare-bindings-per-env.
+
+### Cloudflare Workers: Supported bindings per development mode
+
+- ID: `cloudflare-bindings-per-env`
+- URL: <https://developers.cloudflare.com/workers/development-testing/bindings-per-env/>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - The AI binding has no local simulation; it connects to the remote service during local development
+
+### Cloudflare Workers AI: Pricing
+
+- ID: `cloudflare-workers-ai-pricing`
+- URL: <https://developers.cloudflare.com/workers-ai/platform/pricing/>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - Billing unit is Neurons: 10,000 per day free, then USD 0.011 per 1,000 Neurons on the Workers Paid plan
+  - LLM prices are also listed per million input and output tokens for each model
+
+### hono 4.13.13 (published package)
+
+- ID: `hono-npm`
+- URL: <https://www.npmjs.com/package/hono/v/4.13.13>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - hono/aws-lambda exports streamHandle, which wraps the app in awslambda.streamifyResponse
+  - streamHandle does not cancel the response body when writing to the Lambda response stream fails, so stream.onAbort does not fire there
+  - hono/aws-lambda is marked deprecated in favor of @hono/aws-lambda for v5
+  - streamSSE calls stream.onAbort listeners when the response body is cancelled
+- Note: Read from dist/adapter/aws-lambda/handler.js, dist/helper/streaming/sse.js, and dist/utils/stream.js of the installed package. Not run on Lambda.
+
+### @aws-sdk/client-bedrock-runtime 3.1149.0 (published package)
+
+- ID: `aws-sdk-bedrock-runtime-npm`
+- URL: <https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0>
+- Checked: 2026-10-11
+- Chapters: 17
+- Claims this source supports:
+  - ConverseStreamCommand returns `stream`, an async iterable of ConverseStreamOutput
+  - An exception message in the event stream is thrown by the iterator as an error named after the exception
+  - The default retry strategy makes up to 3 attempts
+- Note: Read from the type definitions and from @smithy/core 3.35.2 (event-streams getUnmarshalledStream.js, DEFAULT_MAX_ATTEMPTS) in the installed packages. No request was sent.
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### Security best practices in IAM
@@ -1233,15 +1494,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - Static site generation options
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
-### Lambda response streaming
-
-- ID: `lambda-response-streaming`
-- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html>
-- Chapters: 09, 17
-- Claims this source supports:
-  - Which invocation paths support streaming responses
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
 ### Lambda durable functions
 
 - ID: `lambda-durable-functions`
@@ -1267,15 +1519,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Chapters: 13
 - Claims this source supports:
   - Read replicas and the Sessions API
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Cloudflare Workers AI: Get started
-
-- ID: `cloudflare-workers-ai-quickstart`
-- URL: <https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/>
-- Chapters: 17
-- Claims this source supports:
-  - A Worker calls a model through the AI binding
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### What is Amazon DynamoDB?
@@ -1462,18 +1705,8 @@ Claims in this book about specifications, prices, and safety rest on the primary
 
 - ID: `bedrock-what-is`
 - URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html>
-- Chapters: 17
 - Claims this source supports:
   - Service overview
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Bedrock Converse API
-
-- ID: `bedrock-converse`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html>
-- Chapters: 17
-- Claims this source supports:
-  - Converse and ConverseStream
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### CloudWatch RUM

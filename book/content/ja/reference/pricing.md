@@ -306,6 +306,81 @@ ID: `network-interface-endpoints` / 章: [11 本当に必要なネットワー�
 - 定価の小計: **USD 61.42** / 月
 - 毎月の無料枠適用後の小計: **USD 61.42** / 月
 
+## 要約 API: デプロイ済みで呼ばれない月
+
+ID: `ai-idle` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- リクエストゼロ
+- log は 1 週間で失効し、保存量ゼロ
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）
+
+ID: `ai-summaries-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 月 1,000 件の要約
+- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
+- 出力は 1 件あたり 150 token と仮定（上限は 400）
+- Lambda は 256 MB、arm64、1 件あたり平均 4 秒と仮定（推論を待つ時間も課金される）
+- 1 件あたり log 1 KB と仮定
+- データ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
+| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
+| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
+
+- 定価の小計: **USD 1.30** / 月
+- 毎月の無料枠適用後の小計: **USD 1.29** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
+
+## 要約 API: 1,000 件すべてが出力の上限に達した場合の出力分
+
+ID: `ai-output-ceiling-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 1,000 件すべてが maxTokens の 400 token まで出力
+- 出力 token の分だけ。入力と Lambda は含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
+
+- 定価の小計: **USD 1.32** / 月
+- 毎月の無料枠適用後の小計: **USD 1.32** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.output`
+
+## 要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）
+
+ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 月 1,000 件の要約
+- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
+- 出力は 1 件あたり 150 token と仮定（上限は 400）
+- token の数え方はモデルごとに違うので、同じ文章でも token 数は同じにならない。単価の比較のための仮定
+- 推論の分だけ。Lambda は含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
+| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
+
+- 定価の小計: **USD 3.03** / 月
+- 毎月の無料枠適用後の小計: **USD 3.03** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -342,6 +417,10 @@ ID: `network-interface-endpoints` / 章: [11 本当に必要なネットワー�
 | `vpc.endpoint.interface.hour` | ap-northeast-1 | APN1-VpcEndpoint-Hours | Hrs | 0 - ∞: 0.0140000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.endpoint.interface.data` | ap-northeast-1 | APN1-VpcEndpoint-Bytes | GB | 0 - 1,048,576: 0.0100000000<br>1,048,576 - 5,242,880: 0.0060000000<br>5,242,880 - ∞: 0.0040000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.public-ipv4.in-use.hour` | ap-northeast-1 | APN1-PublicIPv4:InUseAddress | Hrs | 0 - ∞: 0.0050000000 | 2026-09-17 | 2026-10-11 |
+| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -366,3 +445,7 @@ ID: `network-interface-endpoints` / 章: [11 本当に必要なネットワー�
 - `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.
 - `vpc.public-ipv4.in-use.hour`: The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted.
+- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.

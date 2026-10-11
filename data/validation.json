@@ -63,13 +63,13 @@
     },
     {
       "scope": "all",
-      "command": "vp run typecheck (6 回 / 6 times)",
+      "command": "vp run typecheck / tsc x12 (parallel)",
       "kind": "local",
       "status": "passed",
       "ranAt": "2026-10-11",
       "note": {
-        "ja": "単一スレッドの tsc で 6 回とも成功。既定の並列実行と vp check の型検査は、同じ入力でときどき失敗した",
-        "en": "Passed 6 of 6 times with single-threaded tsc. Default parallel tsc and vp check's type check intermittently failed on the same input"
+        "ja": "pnpm がハードリンクで置いた同一内容の index.d.ts（aws-cdk-lib に 3,501 個、同じ inode）を TypeScript 7 が取り違えていたのが、型検査がときどき落ちる原因だった。packageImportMethod: clone-or-copy にしてから、並列の tsc が 12 回中 12 回、aws-cdk-lib を含む vize check が 4 回中 4 回通った",
+        "en": "Intermittent type-check failures were caused by TypeScript 7 confusing identical index.d.ts files that pnpm had hard-linked to one inode (3,501 of them in aws-cdk-lib). After setting packageImportMethod: clone-or-copy, parallel tsc passed 12 of 12 runs and vize check including aws-cdk-lib passed 4 of 4"
       }
     },
     {
@@ -478,6 +478,105 @@
         "ja": "VPC を作る。context によっては NAT Gateway と interface endpoint（時間課金）も作る",
         "en": "Creates a VPC and, depending on context, NAT gateways and interface endpoints, which are billed by the hour"
       }
+    },
+    {
+      "scope": "17",
+      "command": "vp run test:unit (examples/17-ai)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "51 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、CDK の assertion",
+        "en": "51 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, and the CDK assertions"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run typecheck (examples/17-ai)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "scripts/ と infra/ を含む",
+        "en": "Includes scripts/ and infra/"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "esbuild による bundle（Docker なし）を含む。5 リソース",
+        "en": "Includes the esbuild bundle (no Docker); 5 resources"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run dev:ai + curl",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log、AI_FIXTURE=truncated の error イベントを確認",
+        "en": "Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway, and the error event with AI_FIXTURE=truncated"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run check:all",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "17章を加えた状態で通過",
+        "en": "Passed with chapter 17 added"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run dev:ai (AI_BACKEND=bedrock)",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "手元のサーバーから実際の Bedrock を呼ぶ。課金される",
+        "en": "The local server calling real Bedrock; billed"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:hello / ai:test:live",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない",
+        "en": "Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Lambda、function URL、IAM role、log group を作る",
+        "en": "Creates a Lambda function, a function URL, an IAM role, and a log group"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:smoke / ai:logs",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "デプロイ済みの function URL が必要。課金される",
+        "en": "Needs the deployed function URL; billed"
+      }
     }
   ],
   "open": [
@@ -567,17 +666,6 @@
       "resume": {
         "ja": "各 platform で nix develop、vp install --frozen-lockfile、vp run check:all を実行し、data/toolchain.json の verifiedPlatforms を更新する。",
         "en": "Run nix develop, vp install --frozen-lockfile, and vp run check:all on each platform and update verifiedPlatforms in data/toolchain.json."
-      }
-    },
-    {
-      "id": "typescript7-parallel-check",
-      "summary": {
-        "ja": "TypeScript 7.0.2 の並列の型検査と vp check の型検査が、aws-cdk-lib の subpath import をときどき取り違える。回避として単一スレッドの tsc を使っている。上流へは未報告。",
-        "en": "Parallel type checking in TypeScript 7.0.2, and vp check's type check, intermittently mis-resolve aws-cdk-lib subpath imports. Single-threaded tsc is used as a workaround. Not reported upstream."
-      },
-      "resume": {
-        "ja": "最小の再現を作って上流に報告する。修正版が出たら、vite.config.ts の lint.options と tools/src/checks/typecheck.ts を見直す。",
-        "en": "Build a minimal reproduction and report it upstream. When a fix ships, revisit lint.options in vite.config.ts and tools/src/checks/typecheck.ts."
       }
     },
     {
@@ -688,6 +776,39 @@
       "resume": {
         "ja": "`aws ec2 describe-availability-zones --region ap-northeast-1` で自分のアカウントの AZ 名と AZ ID を確かめ、違っていれば `-c availabilityZones=...` で渡す。",
         "en": "Check your account's zone names and IDs with `aws ec2 describe-availability-zones --region ap-northeast-1` and pass `-c availabilityZones=...` if they differ."
+      }
+    },
+    {
+      "id": "17-live-inference",
+      "summary": {
+        "ja": "17章は実際の Bedrock を一度も呼んでいない。モデル ID（jp.amazon.nova-2-lite-v1:0 など）が東京から呼べること、実際の ConverseStream のイベントが src/converse-stream.ts の schema に合うこと、fixture の形が実物と一致することは未確認。",
+        "en": "Chapter 17 has never called real Bedrock. That the model IDs (such as jp.amazon.nova-2-lite-v1:0) can be called from Tokyo, that real ConverseStream events fit the schema in src/converse-stream.ts, and that the fixtures match the real shapes are all unconfirmed."
+      },
+      "resume": {
+        "ja": "examples/17-ai/.env を用意して vp run ai:hello、続けて vp run ai:test:live を実行する（課金される）。イベントの形が違えば schema と fixture を直す。",
+        "en": "Prepare examples/17-ai/.env, run vp run ai:hello and then vp run ai:test:live (billed). If the event shapes differ, fix the schema and the fixtures."
+      }
+    },
+    {
+      "id": "17-deployed-streaming",
+      "summary": {
+        "ja": "17章の stack はデプロイしていない。Hono の streamHandle と streamSSE が Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、streamSSE が付ける Transfer-Encoding などの header を Lambda が受け付けること、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。",
+        "en": "The chapter 17 stack has not been deployed. Unconfirmed: that Hono's streamHandle and streamSSE deliver the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda accepts the headers streamSSE sets, such as Transfer-Encoding; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url."
+      },
+      "resume": {
+        "ja": "vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。",
+        "en": "Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delta arrived), vp run ai:logs, vp run ai:infra:drift, and vp run ai:infra:destroy, in that order."
+      }
+    },
+    {
+      "id": "17-bedrock-billing-details",
+      "summary": {
+        "ja": "途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。",
+        "en": "How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region."
+      },
+      "resume": {
+        "ja": "Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。",
+        "en": "Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics."
       }
     }
   ]

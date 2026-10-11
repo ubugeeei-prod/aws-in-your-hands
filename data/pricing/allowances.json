@@ -93,6 +93,22 @@
     {
       "priceId": "vpc.public-ipv4.in-use.hour",
       "reason": "The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
     }
   ]
 }

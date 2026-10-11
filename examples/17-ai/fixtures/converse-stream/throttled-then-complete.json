@@ -1,0 +1,121 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html and https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html (read 2026-10-11). Not recorded from a real inference call.",
+  "description": "The first two attempts to open the stream are throttled. The third one succeeds.",
+  "openErrors": [
+    {
+      "name": "ThrottlingException",
+      "message": "Too many requests, please wait before trying again."
+    },
+    {
+      "name": "ThrottlingException",
+      "message": "Too many requests, please wait before trying again."
+    }
+  ],
+  "steps": [
+    {
+      "event": {
+        "messageStart": {
+          "role": "assistant"
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "金曜の"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "リリースに向けて、"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "残りは決済の"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "結合テストと"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "負荷試験の2つです。"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "担当は決まっていて、"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "水曜に進み具合を確認します。"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockStop": {
+          "contentBlockIndex": 0
+        }
+      }
+    },
+    {
+      "event": {
+        "messageStop": {
+          "stopReason": "end_turn"
+        }
+      }
+    },
+    {
+      "event": {
+        "metadata": {
+          "usage": {
+            "inputTokens": 212,
+            "outputTokens": 58,
+            "totalTokens": 270
+          },
+          "metrics": {
+            "latencyMs": 840
+          }
+        }
+      }
+    }
+  ]
+}

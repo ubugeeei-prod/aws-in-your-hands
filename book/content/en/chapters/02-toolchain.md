@@ -1,6 +1,6 @@
 ---
 title: 02 Reproducible TypeScript Development: Nix, vp, CDK, cdkd, and Drift
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 02 Reproducible TypeScript Development: Nix, vp, CDK, cdkd, and Drift
@@ -118,7 +118,7 @@ vp run check:all
 
 It runs format, lint, type checking, tests, synth for every CDK app, and the book build and link check. It doesn't touch AWS. Drift detection isn't in it either.
 
-Type checking is done by `vp run typecheck`, not by `vp check`. `vp check` can type-check too, but with the versions this book pins (TypeScript 7.0.2) it intermittently reported errors on unchanged sources, in which an `aws-cdk-lib` import was mistaken for a different module. That happened in 2 of 5 runs on identical input. It stopped reproducing once `tsc` was told to run single-threaded, so that's what `typecheck` does. A check that sometimes fails on correct code builds the habit of rerunning until it passes. And once you have that habit, you miss the real failures too.
+Type checking is done by `vp run typecheck`, not by `vp check`. The task runs `tsc` once per project and nothing more. There is a small detective story behind it. While this book was being written, type checks on unchanged sources would occasionally fail with an `aws-cdk-lib` import mistaken for a different module: 2 runs out of 5 on identical input. The culprit was pnpm and TypeScript 7 together. pnpm places files with identical content as hard links to one underlying file. `aws-cdk-lib` has 3,501 `index.d.ts` files that contain nothing but `export * from './lib';`, and all of them pointed at the same inode. TypeScript 7 tells files apart by inode, so it could no longer tell which was which. Setting `packageImportMethod: clone-or-copy` in `pnpm-workspace.yaml` makes pnpm copy instead of hard-link, and the failures stopped. A check that fails now and then tends to get rerun until it passes and then forgotten, but there is usually a real cause somewhere.
 
 ## What types protect, and what they don't
 

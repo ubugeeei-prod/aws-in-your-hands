@@ -46,4 +46,4 @@ CDN cache は古い内容を返し得る。誰の、どの期間の stale を許
 
 ## 調査の出発点にする一次情報
 
-- [Lambda response streaming](https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html) (執筆時に未再確認)
+- [Response streaming for Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html) (確認日 2026-10-11)

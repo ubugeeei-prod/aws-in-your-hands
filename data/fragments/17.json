@@ -1,0 +1,934 @@
+{
+  "chapterId": "17",
+  "manifest": {
+    "id": "17",
+    "slug": "ai",
+    "title": {
+      "ja": "Workers AI に親しんだ人の AI 開発: Bedrock",
+      "en": "AI Development for Workers AI Users: Bedrock"
+    },
+    "prerequisites": ["04"],
+    "services": ["Bedrock", "Lambda response streaming", "Lambda function URL", "IAM", "CloudWatch Logs"],
+    "samplePath": "examples/17-ai",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-11",
+    "sourceIds": [
+      "bedrock-converse",
+      "bedrock-converse-stream-api",
+      "bedrock-message-stop-event",
+      "bedrock-model-access",
+      "bedrock-cross-region-inference",
+      "bedrock-inference-profiles-support",
+      "bedrock-inference-profiles-prereq",
+      "bedrock-model-card-nova-2-lite",
+      "bedrock-model-card-claude-haiku-4-5",
+      "bedrock-troubleshooting-errors",
+      "bedrock-quotas",
+      "lambda-response-streaming",
+      "lambda-response-streaming-write",
+      "lambda-urls-auth",
+      "apigw-response-streaming",
+      "cloudfront-oac-lambda-url",
+      "lambda-pricing-streaming",
+      "aws-price-list-bedrock",
+      "aws-price-list-bedrock-fm",
+      "cloudflare-workers-ai-quickstart",
+      "cloudflare-workers-ai-bindings",
+      "cloudflare-bindings-per-env",
+      "cloudflare-workers-ai-pricing",
+      "hono-npm",
+      "aws-sdk-bedrock-runtime-npm",
+      "lambda-pricing",
+      "aws-price-list-lambda",
+      "aws-price-list-cloudwatch",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "bedrock-converse",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html",
+      "title": "Inference using Converse API",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Converse needs bedrock:InvokeModel; ConverseStream needs bedrock:InvokeModelWithResponseStream",
+        "Order of ConverseStream events: messageStart, content block events, messageStop (with stopReason), metadata (usage and metrics)",
+        "contentBlockStart is sent for tool use only; a text delta is {contentBlockDelta: {delta: {text}, contentBlockIndex}}",
+        "Shape of a Converse response: output.message.content[].text, stopReason, usage, metrics"
+      ]
+    },
+    {
+      "id": "bedrock-converse-stream-api",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html",
+      "title": "ConverseStream (API reference)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Request fields modelId, messages, system, inferenceConfig.maxTokens",
+        "modelId accepts a base model ID or an inference profile ID",
+        "Stream members include internalServerException (500), modelStreamErrorException (424), serviceUnavailableException (503), throttlingException (429), validationException (400)",
+        "Errors: AccessDeniedException 403, ModelErrorException 424, ModelNotReadyException 429, ModelTimeoutException 408, ResourceNotFoundException 404, ServiceUnavailableException 503, ThrottlingException 429, ValidationException 400",
+        "The AWS CLI does not support ConverseStream"
+      ]
+    },
+    {
+      "id": "bedrock-message-stop-event",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_MessageStopEvent.html",
+      "title": "MessageStopEvent (API reference)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "stopReason values: end_turn, tool_use, max_tokens, stop_sequence, guardrail_intervened, content_filtered, malformed_model_output, malformed_tool_use, model_context_window_exceeded"
+      ]
+    },
+    {
+      "id": "bedrock-model-access",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html",
+      "title": "Request access to models",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Access to many foundation models is enabled by default; there is no per-model request step in commercial Regions",
+        "The first invocation of a third-party model starts an AWS Marketplace subscription, which needs aws-marketplace:Subscribe, Unsubscribe, and ViewSubscriptions and can take up to 15 minutes",
+        "Anthropic models need a one-time use case form per account or organization before the first call",
+        "Amazon models are not sold through AWS Marketplace",
+        "After a model is enabled, callers no longer need the Marketplace permissions"
+      ]
+    },
+    {
+      "id": "bedrock-cross-region-inference",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html",
+      "title": "Route model inference requests across AWS Regions with cross-Region inference",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A geographic profile routes within a geography; a global profile routes to any commercial Region",
+        "No additional routing cost; the price is that of the Region the profile is called from",
+        "CloudTrail logs the request in the source Region with additionalEventData.inferenceRegion"
+      ]
+    },
+    {
+      "id": "bedrock-inference-profiles-support",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html",
+      "title": "Supported Regions and models for inference profiles",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Profile IDs and destination Regions are documented on each model's card",
+        "GetInferenceProfile lists the destination Regions of a profile as seen from one source Region",
+        "Do not infer the destinations from the geographic prefix of the profile ID alone"
+      ]
+    },
+    {
+      "id": "bedrock-inference-profiles-prereq",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html",
+      "title": "Prerequisites for inference profiles",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A policy that names an inference profile must also name the foundation model in each Region associated with it",
+        "The bedrock:InferenceProfileArn condition key limits a foundation-model statement to calls made through one profile",
+        "The example for a global profile names the model in the source Region and with an empty Region"
+      ]
+    },
+    {
+      "id": "bedrock-model-card-nova-2-lite",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-2-lite.html",
+      "title": "Model card: Amazon Nova 2 Lite",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Model ID amazon.nova-2-lite-v1:0; profiles jp.amazon.nova-2-lite-v1:0 and global.amazon.nova-2-lite-v1:0",
+        "From ap-northeast-1 the model is offered through Geo and Global profiles, not In-Region",
+        "jp.amazon.nova-2-lite-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3",
+        "Supports Converse and response streaming; max output 64K tokens"
+      ]
+    },
+    {
+      "id": "bedrock-model-card-claude-haiku-4-5",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-4-5.html",
+      "title": "Model card: Anthropic Claude Haiku 4.5",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "On bedrock-runtime the model needs a geo or global inference profile ID; the bare model ID is not supported for on-demand use",
+        "jp.anthropic.claude-haiku-4-5-20251001-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3",
+        "Billed through AWS Marketplace; EOL no sooner than 2026-10-16"
+      ]
+    },
+    {
+      "id": "bedrock-troubleshooting-errors",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/troubleshooting-api-error-codes.html",
+      "title": "Troubleshooting Amazon Bedrock API Error Codes",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "ThrottlingException (429) means the account quota was exceeded; retry with exponential backoff and jitter, or request a quota increase",
+        "ServiceUnavailable (503) is capacity, not the account quota",
+        "A missing Anthropic use case form answers 404"
+      ]
+    },
+    {
+      "id": "bedrock-quotas",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/quotas.html",
+      "title": "Quotas for Amazon Bedrock",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Model inference is controlled by per-model quotas on token usage",
+        "The quotas that apply to an account can be lower than the published defaults; Service Quotas shows the applied values"
+      ]
+    },
+    {
+      "id": "lambda-response-streaming",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html",
+      "title": "Response streaming for Lambda functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Streaming is available through function URLs, InvokeWithResponseStream, and API Gateway proxy integrations",
+        "A streamed response is not interrupted when the client disconnects, and the full function duration is billed",
+        "Node.js managed runtimes support response streaming natively",
+        "Streamed payloads can be up to 200 MB; the first 6 MB is not rate limited",
+        "Function URLs do not support response streaming for a function in a VPC"
+      ]
+    },
+    {
+      "id": "lambda-response-streaming-write",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/config-rs-write-functions.html",
+      "title": "Writing response streaming-enabled Lambda functions",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides"
+      ]
+    },
+    {
+      "id": "lambda-urls-auth",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html",
+      "title": "Control access to Lambda function URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "AuthType is AWS_IAM or NONE",
+        "With AWS_IAM, a caller in the same account needs lambda:InvokeFunctionUrl and lambda:InvokeFunction in an identity policy or in the function's resource-based policy",
+        "With NONE, anyone with the URL can invoke the function once the resource-based policy grants public access"
+      ]
+    },
+    {
+      "id": "apigw-response-streaming",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/response-transfer-mode.html",
+      "title": "Stream the integration response for your proxy integrations in API Gateway",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Response streaming is supported for REST APIs only, with responseTransferMode STREAM on proxy integrations",
+        "Streams run up to 15 minutes; idle timeout is 5 minutes for Regional endpoints",
+        "The Lambda function may keep running after the connection closes"
+      ]
+    },
+    {
+      "id": "cloudfront-oac-lambda-url",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html",
+      "title": "Restrict access to an AWS Lambda function URL origin",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "CloudFront origin access control signs requests to a function URL whose AuthType is AWS_IAM",
+        "For POST and PUT the client must send the SHA-256 of the body in x-amz-content-sha256"
+      ]
+    },
+    {
+      "id": "lambda-pricing-streaming",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda pricing (response streaming)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The first 6 MB streamed per request is free",
+        "The page lists no separate charge for function URLs"
+      ],
+      "note": "Same page as lambda-pricing, re-read for chapter 17."
+    },
+    {
+      "id": "aws-price-list-bedrock",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon Bedrock, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Nova 2.0 Lite in Tokyo: USD 0.000396 per 1K input tokens, USD 0.003311 per 1K output tokens",
+        "Nova 2.0 Lite through the global profile from Tokyo: USD 0.00036 and USD 0.00301 per 1K tokens"
+      ],
+      "note": "The offer has a plain row and a `cross-region-global` row. It has no row named for the jp. profile; the chapter applies the plain row to it, following the user guide's statement that the price is that of the calling Region."
+    },
+    {
+      "id": "aws-price-list-bedrock-fm",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon Bedrock foundation models (Marketplace), ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": ["Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens"]
+    },
+    {
+      "id": "cloudflare-workers-ai-quickstart",
+      "url": "https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/",
+      "title": "Cloudflare Workers AI: Get started",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Workers AI always accesses your Cloudflare account to run models and incurs usage charges even in local development",
+        "A Worker calls a model as env.AI.run(\"@cf/...\", {...})"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-ai-bindings",
+      "url": "https://developers.cloudflare.com/workers-ai/configuration/bindings/",
+      "title": "Cloudflare Workers AI: Bindings",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The AI binding is declared in the wrangler configuration and called as env.AI.run(model, options)",
+        "`stream: true` returns results as a text/event-stream"
+      ],
+      "note": "This page says nothing about local development or charges; that claim rests on cloudflare-workers-ai-quickstart and cloudflare-bindings-per-env."
+    },
+    {
+      "id": "cloudflare-bindings-per-env",
+      "url": "https://developers.cloudflare.com/workers/development-testing/bindings-per-env/",
+      "title": "Cloudflare Workers: Supported bindings per development mode",
+      "checkedAt": "2026-10-11",
+      "supports": ["The AI binding has no local simulation; it connects to the remote service during local development"]
+    },
+    {
+      "id": "cloudflare-workers-ai-pricing",
+      "url": "https://developers.cloudflare.com/workers-ai/platform/pricing/",
+      "title": "Cloudflare Workers AI: Pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Billing unit is Neurons: 10,000 per day free, then USD 0.011 per 1,000 Neurons on the Workers Paid plan",
+        "LLM prices are also listed per million input and output tokens for each model"
+      ]
+    },
+    {
+      "id": "hono-npm",
+      "url": "https://www.npmjs.com/package/hono/v/4.13.13",
+      "title": "hono 4.13.13 (published package)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "hono/aws-lambda exports streamHandle, which wraps the app in awslambda.streamifyResponse",
+        "streamHandle does not cancel the response body when writing to the Lambda response stream fails, so stream.onAbort does not fire there",
+        "hono/aws-lambda is marked deprecated in favor of @hono/aws-lambda for v5",
+        "streamSSE calls stream.onAbort listeners when the response body is cancelled"
+      ],
+      "note": "Read from dist/adapter/aws-lambda/handler.js, dist/helper/streaming/sse.js, and dist/utils/stream.js of the installed package. Not run on Lambda."
+    },
+    {
+      "id": "aws-sdk-bedrock-runtime-npm",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0",
+      "title": "@aws-sdk/client-bedrock-runtime 3.1149.0 (published package)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "ConverseStreamCommand returns `stream`, an async iterable of ConverseStreamOutput",
+        "An exception message in the event stream is thrown by the iterator as an error named after the exception",
+        "The default retry strategy makes up to 3 attempts"
+      ],
+      "note": "Read from the type definitions and from @smithy/core 3.35.2 (event-streams getUnmarshalledStream.js, DEFAULT_MAX_ATTEMPTS) in the installed packages. No request was sent."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "foundation-model",
+      "ja": "基盤モデル",
+      "en": "foundation model",
+      "firstUse": "17",
+      "definition": {
+        "ja": "Bedrock が API として提供する学習済みのモデル。モデル ID で指定する。",
+        "en": "A pretrained model that Bedrock offers behind an API, selected by its model ID."
+      }
+    },
+    {
+      "id": "token",
+      "ja": "token",
+      "en": "token",
+      "firstUse": "17",
+      "definition": {
+        "ja": "モデルが文章を読み書きする単位で、課金の単位でもある。文字数とは一致せず、数え方はモデルごとに違う。",
+        "en": "The unit in which a model reads and writes text, and the unit it is billed in. It is not a character count, and each model counts differently."
+      }
+    },
+    {
+      "id": "inference-profile",
+      "ja": "inference profile",
+      "en": "inference profile",
+      "firstUse": "17",
+      "definition": {
+        "ja": "モデルと、リクエストを送ってよいリージョンの組に付いた ID。モデル ID の代わりに指定する。",
+        "en": "An ID for a model together with the Regions a request may be sent to. It is passed in place of a model ID."
+      }
+    },
+    {
+      "id": "cross-region-inference",
+      "ja": "cross-Region inference",
+      "en": "cross-Region inference",
+      "firstUse": "17",
+      "definition": {
+        "ja": "inference profile を通して、呼び出したリージョンとは別のリージョンで推論が処理され得る仕組み。",
+        "en": "Inference that, through an inference profile, may be processed in a Region other than the one you called."
+      }
+    },
+    {
+      "id": "response-streaming",
+      "ja": "response streaming",
+      "en": "response streaming",
+      "firstUse": "17",
+      "definition": {
+        "ja": "Lambda が応答を最後まで溜めずに、できた分から呼び出し元へ送る方式。",
+        "en": "A Lambda function sending its response piece by piece as it is produced, instead of buffering all of it."
+      }
+    },
+    {
+      "id": "function-url",
+      "ja": "function URL",
+      "en": "function URL",
+      "firstUse": "17",
+      "definition": {
+        "ja": "Lambda 関数に直接付く HTTPS の endpoint。API Gateway を挟まない。",
+        "en": "An HTTPS endpoint attached directly to a Lambda function, with no API Gateway in between."
+      }
+    },
+    {
+      "id": "sse",
+      "ja": "server-sent events（SSE）",
+      "en": "server-sent events (SSE)",
+      "firstUse": "17",
+      "definition": {
+        "ja": "1 つの HTTP 応答の中で、サーバーがイベントを順に送り続ける形式。content type は text/event-stream。",
+        "en": "A format in which a server keeps sending events inside one HTTP response. Its content type is text/event-stream."
+      }
+    },
+    {
+      "id": "sigv4",
+      "ja": "SigV4 署名",
+      "en": "SigV4 signature",
+      "firstUse": "17",
+      "definition": {
+        "ja": "AWS の API が呼び出し元を確かめるためのリクエスト署名。認証情報から計算して header に付ける。",
+        "en": "The request signature AWS APIs use to identify the caller, computed from credentials and sent in headers."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "17.architecture",
+      "sources": ["examples/17-ai/infra/lib/ai-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.hello",
+      "sources": ["examples/17-ai/scripts/hello.ts", "examples/17-ai/src/converse-stream.ts"],
+      "tasks": ["ai:hello"],
+      "boundary": "cloud",
+      "criteria": ["type"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.models",
+      "sources": [
+        "examples/17-ai/infra/lib/models.ts",
+        "examples/17-ai/infra/bin/app.ts",
+        "examples/17-ai/infra/test/ai-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.contract",
+      "sources": ["examples/17-ai/src/contract.ts", "examples/17-ai/src/prompt.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.stream",
+      "sources": [
+        "examples/17-ai/src/converse-stream.ts",
+        "examples/17-ai/src/summarize.ts",
+        "examples/17-ai/src/bedrock.ts",
+        "examples/17-ai/test/summarize.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.failures",
+      "sources": [
+        "examples/17-ai/src/failure.ts",
+        "examples/17-ai/src/summarize.ts",
+        "examples/17-ai/test/failure.test.ts",
+        "examples/17-ai/test/summarize.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.app",
+      "sources": [
+        "examples/17-ai/src/app.ts",
+        "examples/17-ai/src/compose.ts",
+        "examples/17-ai/src/env.ts",
+        "examples/17-ai/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.local",
+      "sources": [
+        "examples/17-ai/src/dev.ts",
+        "examples/17-ai/src/fixture-gateway.ts",
+        "examples/17-ai/src/fixtures.ts",
+        "examples/17-ai/fixtures/converse-stream",
+        "examples/17-ai/.env.example"
+      ],
+      "tasks": ["dev:ai"],
+      "boundary": "local",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.tests",
+      "sources": ["examples/17-ai/test", "examples/17-ai/fixtures/converse-stream", "examples/17-ai/scripts/live.ts"],
+      "tasks": ["test:unit", "ai:test:live"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.partial",
+      "sources": ["examples/17-ai/src/client.ts", "examples/17-ai/test/client.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.infra",
+      "sources": [
+        "examples/17-ai/infra/lib/ai-stack.ts",
+        "examples/17-ai/infra/lib/models.ts",
+        "examples/17-ai/src/lambda.ts",
+        "examples/17-ai/infra/test/ai-stack.test.ts",
+        "examples/17-ai/cdk.json"
+      ],
+      "tasks": ["ai:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.deploy",
+      "sources": [
+        "examples/17-ai/scripts/smoke.ts",
+        "examples/17-ai/scripts/sign.ts",
+        "examples/17-ai/scripts/logs.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["ai:infra:diff", "ai:infra:deploy", "ai:smoke", "ai:logs", "ai:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.workers-ai",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["ai:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "bedrock.nova-2-lite.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "6F8ZM9MBQZNJNGFN",
+      "usageType": "APN1-Nova2.0Lite-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0003960000",
+          "description": "$0.000396 per 1K tokens for APN1-Nova2.0Lite-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.nova-2-lite.output",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "9Z5KZBA2AANN9UQS",
+      "usageType": "APN1-Nova2.0Lite-output-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0033110000",
+          "description": "$0.003311 per 1K tokens for APN1-Nova2.0Lite-output-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.claude-haiku-4-5.input",
+      "offerCode": "AmazonBedrockFoundationModels",
+      "region": "ap-northeast-1",
+      "sku": "CUDWXBGUTQHMHKJX",
+      "usageType": "APN1-MP:APN1_InputTokenCount-Units",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1M tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.1000000000",
+          "description": "AWS Marketplace software usage|ap-northeast-1|Million Input Tokens Regional"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:56:37Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.claude-haiku-4-5.output",
+      "offerCode": "AmazonBedrockFoundationModels",
+      "region": "ap-northeast-1",
+      "sku": "TEKBTVMTEVXXBRTZ",
+      "usageType": "APN1-MP:APN1_OutputTokenCount-Units",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1M tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.5000000000",
+          "description": "AWS Marketplace software usage|ap-northeast-1|Million Response Tokens Regional"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:56:37Z",
+      "checkedAt": "2026-10-11"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "bedrock.nova-2-lite.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ai-idle",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: デプロイ済みで呼ばれない月",
+        "en": "Summary API: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": ["リクエストゼロ", "log は 1 週間で失効し、保存量ゼロ"],
+        "en": ["No requests", "Logs expire after a week; nothing is stored"]
+      },
+      "items": []
+    },
+    {
+      "id": "ai-summaries-nova-2-lite",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）",
+        "en": "Summary API: 1,000 summaries a month (Nova 2 Lite, jp. profile)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 件の要約",
+          "入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）",
+          "出力は 1 件あたり 150 token と仮定（上限は 400）",
+          "Lambda は 256 MB、arm64、1 件あたり平均 4 秒と仮定（推論を待つ時間も課金される）",
+          "1 件あたり log 1 KB と仮定",
+          "データ転送は未算入"
+        ],
+        "en": [
+          "1,000 summaries a month",
+          "Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)",
+          "Assumed 150 output tokens each (the limit is 400)",
+          "Lambda at 256 MB on arm64, assumed 4 seconds each on average (waiting for the model is billed too)",
+          "Assumed 1 KB of logs each",
+          "Data transfer is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-2-lite.input",
+          "quantity": 2000,
+          "basis": "1,000 summaries x 2,000 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 150,
+          "basis": "1,000 summaries x 150 output tokens, in 1K tokens"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000,
+          "basis": "one invocation per summary"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 1000,
+          "basis": "1,000 x 4 s x 0.25 GB"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000954,
+          "basis": "1,000 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "ai-output-ceiling-nova-2-lite",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: 1,000 件すべてが出力の上限に達した場合の出力分",
+        "en": "Summary API: output cost if all 1,000 summaries hit the output limit"
+      },
+      "assumptions": {
+        "ja": ["1,000 件すべてが maxTokens の 400 token まで出力", "出力 token の分だけ。入力と Lambda は含まない"],
+        "en": [
+          "All 1,000 summaries write up to the maxTokens of 400",
+          "Output tokens only; input and Lambda are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 400,
+          "basis": "1,000 summaries x 400 output tokens, in 1K tokens"
+        }
+      ]
+    },
+    {
+      "id": "ai-summaries-claude-haiku-4-5",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）",
+        "en": "Summary API: the same token counts on Claude Haiku 4.5 (inference only)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 件の要約",
+          "入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）",
+          "出力は 1 件あたり 150 token と仮定（上限は 400）",
+          "token の数え方はモデルごとに違うので、同じ文章でも token 数は同じにならない。単価の比較のための仮定",
+          "推論の分だけ。Lambda は含まない"
+        ],
+        "en": [
+          "1,000 summaries a month",
+          "Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)",
+          "Assumed 150 output tokens each (the limit is 400)",
+          "Tokenizers differ by model, so the same text does not give the same token count; this is for comparing unit prices",
+          "Inference only; Lambda is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.claude-haiku-4-5.input",
+          "quantity": 2,
+          "basis": "1,000 summaries x 2,000 input tokens, in 1M tokens"
+        },
+        {
+          "priceId": "bedrock.claude-haiku-4-5.output",
+          "quantity": 0.15,
+          "basis": "1,000 summaries x 150 output tokens, in 1M tokens"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "17",
+        "command": "vp run test:unit (examples/17-ai)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "51 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、CDK の assertion",
+          "en": "51 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, and the CDK assertions"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run typecheck (examples/17-ai)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "scripts/ と infra/ を含む",
+          "en": "Includes scripts/ and infra/"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run ai:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "esbuild による bundle（Docker なし）を含む。5 リソース",
+          "en": "Includes the esbuild bundle (no Docker); 5 resources"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run dev:ai + curl",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log、AI_FIXTURE=truncated の error イベントを確認",
+          "en": "Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway, and the error event with AI_FIXTURE=truncated"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run check:all",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "17章を加えた状態で通過",
+          "en": "Passed with chapter 17 added"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run dev:ai (AI_BACKEND=bedrock)",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "手元のサーバーから実際の Bedrock を呼ぶ。課金される",
+          "en": "The local server calling real Bedrock; billed"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run ai:hello / ai:test:live",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない",
+          "en": "Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run ai:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Lambda、function URL、IAM role、log group を作る",
+          "en": "Creates a Lambda function, a function URL, an IAM role, and a log group"
+        }
+      },
+      {
+        "scope": "17",
+        "command": "vp run ai:smoke / ai:logs",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイ済みの function URL が必要。課金される",
+          "en": "Needs the deployed function URL; billed"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "17-live-inference",
+        "summary": {
+          "ja": "17章は実際の Bedrock を一度も呼んでいない。モデル ID（jp.amazon.nova-2-lite-v1:0 など）が東京から呼べること、実際の ConverseStream のイベントが src/converse-stream.ts の schema に合うこと、fixture の形が実物と一致することは未確認。",
+          "en": "Chapter 17 has never called real Bedrock. That the model IDs (such as jp.amazon.nova-2-lite-v1:0) can be called from Tokyo, that real ConverseStream events fit the schema in src/converse-stream.ts, and that the fixtures match the real shapes are all unconfirmed."
+        },
+        "resume": {
+          "ja": "examples/17-ai/.env を用意して vp run ai:hello、続けて vp run ai:test:live を実行する（課金される）。イベントの形が違えば schema と fixture を直す。",
+          "en": "Prepare examples/17-ai/.env, run vp run ai:hello and then vp run ai:test:live (billed). If the event shapes differ, fix the schema and the fixtures."
+        }
+      },
+      {
+        "id": "17-deployed-streaming",
+        "summary": {
+          "ja": "17章の stack はデプロイしていない。Hono の streamHandle と streamSSE が Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、streamSSE が付ける Transfer-Encoding などの header を Lambda が受け付けること、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。",
+          "en": "The chapter 17 stack has not been deployed. Unconfirmed: that Hono's streamHandle and streamSSE deliver the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda accepts the headers streamSSE sets, such as Transfer-Encoding; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url."
+        },
+        "resume": {
+          "ja": "vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。",
+          "en": "Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delta arrived), vp run ai:logs, vp run ai:infra:drift, and vp run ai:infra:destroy, in that order."
+        }
+      },
+      {
+        "id": "17-bedrock-billing-details",
+        "summary": {
+          "ja": "途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。",
+          "en": "How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region."
+        },
+        "resume": {
+          "ja": "Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。",
+          "en": "Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 17: Bedrock ------------------------------------------\n      // The summary API on plain Node. Replays a fixture unless .env says AI_BACKEND=bedrock.\n      \"dev:ai\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/17-ai\" }),\n      ...infra(\"ai\", \"examples/17-ai\", \"AihAi\"),\n      // BILLED: the next three call a real model. None of them is part of check:all.\n      \"ai:hello\": live(\"node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/hello.ts\", { cwd: \"examples/17-ai\" }),\n      \"ai:test:live\": live(\"node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/live.ts\", { cwd: \"examples/17-ai\" }),\n      \"ai:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/17-ai\" }),\n      \"ai:logs\": live(\"node --env-file-if-exists=../../.env scripts/logs.ts\", { cwd: \"examples/17-ai\" }),",
+    "synth": ["ai:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/17-ai"]
+  }
+}

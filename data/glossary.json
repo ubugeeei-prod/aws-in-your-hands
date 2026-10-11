@@ -579,6 +579,86 @@
         "ja": "AWS のサービスへの入口を、subnet の中に private IP アドレスつきの network interface として置くもの（AWS PrivateLink）。サービスごと、AZ ごとに時間課金される。",
         "en": "A doorway to an AWS service placed inside a subnet as a network interface with a private IP address (AWS PrivateLink). Billed by the hour per service and per Availability Zone."
       }
+    },
+    {
+      "id": "foundation-model",
+      "ja": "基盤モデル",
+      "en": "foundation model",
+      "firstUse": "17",
+      "definition": {
+        "ja": "Bedrock が API として提供する学習済みのモデル。モデル ID で指定する。",
+        "en": "A pretrained model that Bedrock offers behind an API, selected by its model ID."
+      }
+    },
+    {
+      "id": "token",
+      "ja": "token",
+      "en": "token",
+      "firstUse": "17",
+      "definition": {
+        "ja": "モデルが文章を読み書きする単位で、課金の単位でもある。文字数とは一致せず、数え方はモデルごとに違う。",
+        "en": "The unit in which a model reads and writes text, and the unit it is billed in. It is not a character count, and each model counts differently."
+      }
+    },
+    {
+      "id": "inference-profile",
+      "ja": "inference profile",
+      "en": "inference profile",
+      "firstUse": "17",
+      "definition": {
+        "ja": "モデルと、リクエストを送ってよいリージョンの組に付いた ID。モデル ID の代わりに指定する。",
+        "en": "An ID for a model together with the Regions a request may be sent to. It is passed in place of a model ID."
+      }
+    },
+    {
+      "id": "cross-region-inference",
+      "ja": "cross-Region inference",
+      "en": "cross-Region inference",
+      "firstUse": "17",
+      "definition": {
+        "ja": "inference profile を通して、呼び出したリージョンとは別のリージョンで推論が処理され得る仕組み。",
+        "en": "Inference that, through an inference profile, may be processed in a Region other than the one you called."
+      }
+    },
+    {
+      "id": "response-streaming",
+      "ja": "response streaming",
+      "en": "response streaming",
+      "firstUse": "17",
+      "definition": {
+        "ja": "Lambda が応答を最後まで溜めずに、できた分から呼び出し元へ送る方式。",
+        "en": "A Lambda function sending its response piece by piece as it is produced, instead of buffering all of it."
+      }
+    },
+    {
+      "id": "function-url",
+      "ja": "function URL",
+      "en": "function URL",
+      "firstUse": "17",
+      "definition": {
+        "ja": "Lambda 関数に直接付く HTTPS の endpoint。API Gateway を挟まない。",
+        "en": "An HTTPS endpoint attached directly to a Lambda function, with no API Gateway in between."
+      }
+    },
+    {
+      "id": "sse",
+      "ja": "server-sent events（SSE）",
+      "en": "server-sent events (SSE)",
+      "firstUse": "17",
+      "definition": {
+        "ja": "1 つの HTTP 応答の中で、サーバーがイベントを順に送り続ける形式。content type は text/event-stream。",
+        "en": "A format in which a server keeps sending events inside one HTTP response. Its content type is text/event-stream."
+      }
+    },
+    {
+      "id": "sigv4",
+      "ja": "SigV4 署名",
+      "en": "SigV4 signature",
+      "firstUse": "17",
+      "definition": {
+        "ja": "AWS の API が呼び出し元を確かめるためのリクエスト署名。認証情報から計算して header に付ける。",
+        "en": "The request signature AWS APIs use to identify the caller, computed from credentials and sent in headers."
+      }
     }
   ]
 }

@@ -27,3 +27,11 @@ peerDependencyRules:
 ignoredBuiltDependencies:
   - esbuild
   - puppeteer
+
+# Place package files as copy-on-write clones (or plain copies), never as hard
+# links. pnpm's store keeps one file per distinct content, so with hard links
+# every file with the same bytes is one inode: aws-cdk-lib alone has 3,501
+# `index.d.ts` files that all read `export * from './lib';`. TypeScript 7
+# identifies a file by its inode, and so mistook one module for another at
+# random ("Module 'aws-cdk-lib/assertions' has no exported member 'Match'").
+packageImportMethod: clone-or-copy

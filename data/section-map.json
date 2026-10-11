@@ -1051,6 +1051,154 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "17.architecture",
+      "sources": ["examples/17-ai/infra/lib/ai-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.hello",
+      "sources": ["examples/17-ai/scripts/hello.ts", "examples/17-ai/src/converse-stream.ts"],
+      "tasks": ["ai:hello"],
+      "boundary": "cloud",
+      "criteria": ["type"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.models",
+      "sources": [
+        "examples/17-ai/infra/lib/models.ts",
+        "examples/17-ai/infra/bin/app.ts",
+        "examples/17-ai/infra/test/ai-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.contract",
+      "sources": ["examples/17-ai/src/contract.ts", "examples/17-ai/src/prompt.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.stream",
+      "sources": [
+        "examples/17-ai/src/converse-stream.ts",
+        "examples/17-ai/src/summarize.ts",
+        "examples/17-ai/src/bedrock.ts",
+        "examples/17-ai/test/summarize.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.failures",
+      "sources": [
+        "examples/17-ai/src/failure.ts",
+        "examples/17-ai/src/summarize.ts",
+        "examples/17-ai/test/failure.test.ts",
+        "examples/17-ai/test/summarize.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.app",
+      "sources": [
+        "examples/17-ai/src/app.ts",
+        "examples/17-ai/src/compose.ts",
+        "examples/17-ai/src/env.ts",
+        "examples/17-ai/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.local",
+      "sources": [
+        "examples/17-ai/src/dev.ts",
+        "examples/17-ai/src/fixture-gateway.ts",
+        "examples/17-ai/src/fixtures.ts",
+        "examples/17-ai/fixtures/converse-stream",
+        "examples/17-ai/.env.example"
+      ],
+      "tasks": ["dev:ai"],
+      "boundary": "local",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.tests",
+      "sources": ["examples/17-ai/test", "examples/17-ai/fixtures/converse-stream", "examples/17-ai/scripts/live.ts"],
+      "tasks": ["test:unit", "ai:test:live"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.partial",
+      "sources": ["examples/17-ai/src/client.ts", "examples/17-ai/test/client.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.infra",
+      "sources": [
+        "examples/17-ai/infra/lib/ai-stack.ts",
+        "examples/17-ai/infra/lib/models.ts",
+        "examples/17-ai/src/lambda.ts",
+        "examples/17-ai/infra/test/ai-stack.test.ts",
+        "examples/17-ai/cdk.json"
+      ],
+      "tasks": ["ai:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.deploy",
+      "sources": [
+        "examples/17-ai/scripts/smoke.ts",
+        "examples/17-ai/scripts/sign.ts",
+        "examples/17-ai/scripts/logs.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["ai:infra:diff", "ai:infra:deploy", "ai:smoke", "ai:logs", "ai:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.workers-ai",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["ai:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

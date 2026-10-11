@@ -18,7 +18,7 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | toolchain | `clean checkout: nix develop → vp install --frozen-lockfile → vp run check:all` | local | passed | 2026-10-11 | Run from a separate directory holding only the staged tree; no pre-generated file or globally installed tool was needed |
 | toolchain | `vp の初回セットアップと shell 設定 / vp first-run setup and shell profiles` | local | passed | 2026-10-11 | Tested with a throwaway HOME: by default lines are appended to ~/.zshrc, ~/.zshenv, ~/.bashrc, and ~/.profile; with VP_SELF_SETUP_NO_MODIFY_PATH=1 nothing is appended |
 | all | `vp run check:all` | local | passed | 2026-10-11 | Format and lint, Vue lint and type check with Vize, tsc type checks, 218 tests (one skipped for lack of DynamoDB Local), generated-page freshness, locale and source-map consistency, synth of six CDK apps, builds of the book and two SPAs, and the link check |
-| all | `vp run typecheck (6 回 / 6 times)` | local | passed | 2026-10-11 | Passed 6 of 6 times with single-threaded tsc. Default parallel tsc and vp check's type check intermittently failed on the same input |
+| all | `vp run typecheck / tsc x12 (parallel)` | local | passed | 2026-10-11 | Intermittent type-check failures were caused by TypeScript 7 confusing identical index.d.ts files that pnpm had hard-linked to one inode (3,501 of them in aws-cdk-lib). After setting packageImportMethod: clone-or-copy, parallel tsc passed 12 of 12 runs and vize check including aws-cdk-lib passed 4 of 4 |
 | book | `vp run build:book / vp run links:check` | local | passed | 2026-10-11 | Generates 34 pages per language plus the 404 page and search index. Confirmed that a cache hit restores the output and that changing an imported source file or a page re-runs the build |
 | book | `vp run book:infra:synth` | local | passed | 2026-10-11 | 5 resources and 3 outputs; no change to AWS |
 | 02 | `vp run hello:infra:synth -c stage=prod / vp run hello:infra:synth:cdk` | local | passed | 2026-10-11 | Context reaches cdkd, and the template shows the bucket retained for prod. The CDK CLI synthesizes the same app |
@@ -56,6 +56,15 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 11 | `vp run net:infra:synth` | local | passed | 2026-10-11 | Synthesized the default layout and `-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs` |
 | 11 | `vp run net:plan` | local | passed | 2026-10-11 | Ran with the defaults, `egress=nat`, `egress=nat-per-az`, `interfaceEndpoints=ecr.api,ecr.dkr,logs`, and invalid settings |
 | 11 | `vp run net:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a VPC and, depending on context, NAT gateways and interface endpoints, which are billed by the hour |
+| 17 | `vp run test:unit (examples/17-ai)` | local | passed | 2026-10-11 | 51 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, and the CDK assertions |
+| 17 | `vp run typecheck (examples/17-ai)` | local | passed | 2026-10-11 | Includes scripts/ and infra/ |
+| 17 | `vp run ai:infra:synth` | local | passed | 2026-10-11 | Includes the esbuild bundle (no Docker); 5 resources |
+| 17 | `vp run dev:ai + curl` | local | passed | 2026-10-11 | Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway, and the error event with AI_FIXTURE=truncated |
+| 17 | `vp run check:all` | local | passed | 2026-10-11 | Passed with chapter 17 added |
+| 17 | `vp run dev:ai (AI_BACKEND=bedrock)` | AWS | not run | - | The local server calling real Bedrock; billed |
+| 17 | `vp run ai:hello / ai:test:live` | AWS | not run | - | Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here |
+| 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a Lambda function, a function URL, an IAM role, and a log group |
+| 17 | `vp run ai:smoke / ai:logs` | AWS | not run | - | Needs the deployed function URL; billed |
 
 ## Open items and how to resume
 
@@ -106,12 +115,6 @@ To resume: Run vp run account:whoami after aws login. If it cannot read them, ad
 Only aarch64-darwin was verified. The Linux autoPatchelf path in nix/vp.nix and x86_64-darwin have not been run.
 
 To resume: Run nix develop, vp install --frozen-lockfile, and vp run check:all on each platform and update verifiedPlatforms in data/toolchain.json.
-
-### typescript7-parallel-check
-
-Parallel type checking in TypeScript 7.0.2, and vp check's type check, intermittently mis-resolve aws-cdk-lib subpath imports. Single-threaded tsc is used as a workaround. Not reported upstream.
-
-To resume: Build a minimal reproduction and report it upstream. When a fix ships, revisit lint.options in vite.config.ts and tools/src/checks/typecheck.ts.
 
 ### ox-content-peer-range
 
@@ -172,3 +175,21 @@ To resume: Deploy the chapter 11 stack, then deploy a small stack (one security 
 Whether the default zone names (ap-northeast-1a and ap-northeast-1c) accept new subnets in every account was not confirmed.
 
 To resume: Check your account's zone names and IDs with `aws ec2 describe-availability-zones --region ap-northeast-1` and pass `-c availabilityZones=...` if they differ.
+
+### 17-live-inference
+
+Chapter 17 has never called real Bedrock. That the model IDs (such as jp.amazon.nova-2-lite-v1:0) can be called from Tokyo, that real ConverseStream events fit the schema in src/converse-stream.ts, and that the fixtures match the real shapes are all unconfirmed.
+
+To resume: Prepare examples/17-ai/.env, run vp run ai:hello and then vp run ai:test:live (billed). If the event shapes differ, fix the schema and the fixtures.
+
+### 17-deployed-streaming
+
+The chapter 17 stack has not been deployed. Unconfirmed: that Hono's streamHandle and streamSSE deliver the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda accepts the headers streamSSE sets, such as Transfer-Encoding; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url.
+
+To resume: Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delta arrived), vp run ai:logs, vp run ai:infra:drift, and vp run ai:infra:destroy, in that order.
+
+### 17-bedrock-billing-details
+
+How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region.
+
+To resume: Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics.

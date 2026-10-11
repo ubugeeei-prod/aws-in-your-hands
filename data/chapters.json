@@ -66,9 +66,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -803,65 +803,48 @@
         "en": "AI Development for Workers AI Users: Bedrock"
       },
       "prerequisites": ["04"],
-      "services": ["Bedrock", "Lambda response streaming"],
+      "services": ["Bedrock", "Lambda response streaming", "Lambda function URL", "IAM", "CloudWatch Logs"],
       "samplePath": "examples/17-ai",
-      "writing": {
-        "ja": "planned",
-        "en": "planned"
-      },
       "sourceIds": [
-        "bedrock-what-is",
         "bedrock-converse",
+        "bedrock-converse-stream-api",
+        "bedrock-message-stop-event",
+        "bedrock-model-access",
+        "bedrock-cross-region-inference",
+        "bedrock-inference-profiles-support",
+        "bedrock-inference-profiles-prereq",
+        "bedrock-model-card-nova-2-lite",
+        "bedrock-model-card-claude-haiku-4-5",
+        "bedrock-troubleshooting-errors",
+        "bedrock-quotas",
         "lambda-response-streaming",
+        "lambda-response-streaming-write",
+        "lambda-urls-auth",
+        "apigw-response-streaming",
+        "cloudfront-oac-lambda-url",
+        "lambda-pricing-streaming",
+        "aws-price-list-bedrock",
+        "aws-price-list-bedrock-fm",
         "cloudflare-workers-ai-quickstart",
-        "cloudflare-workers-ai-bindings"
+        "cloudflare-workers-ai-bindings",
+        "cloudflare-bindings-per-env",
+        "cloudflare-workers-ai-pricing",
+        "hono-npm",
+        "aws-sdk-bedrock-runtime-npm",
+        "lambda-pricing",
+        "aws-price-list-lambda",
+        "aws-price-list-cloudwatch",
+        "cdkd-npm"
       ],
-      "outline": {
-        "outcome": {
-          "ja": "ノートの要約を streaming で返す API を作り、fixture のテストと実推論の確認を分けて持つ。",
-          "en": "You build a streaming note-summary API with fixture tests kept apart from live inference checks."
-        },
-        "architecture": {
-          "ja": "SPA → streaming 対応の経路（Lambda Function URL の response streaming 等を固定版で確認）→ Bedrock Converse stream。",
-          "en": "SPA → a streaming-capable path (for example a Lambda function URL with response streaming, verified at the pinned version) → Bedrock ConverseStream."
-        },
-        "topics": {
-          "ja": [
-            "数行の呼出しから始める",
-            "型付き request と出力の runtime validation",
-            "cancel/timeout/retry、quota と throttling",
-            "model と token 単位の課金",
-            "ローカルの API server が呼ぶ推論は remote で課金される",
-            "streaming を server/proxy/CDN/browser の全経路で確認"
-          ],
-          "en": [
-            "Starting from a few lines",
-            "Typed requests and runtime validation of output",
-            "Cancellation, timeouts, retries, quotas, and throttling",
-            "Per-model, per-token billing",
-            "A local API server still calls remote, billable inference",
-            "Verifying streaming across server, proxy, CDN, and browser"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "要約 handler と stream parser",
-            "決定的な stream fixture と中断テスト",
-            "test:aws:ai など実推論専用の vp task（cache: false）",
-            "IAM policy を model 単位に絞る CDK"
-          ],
-          "en": [
-            "Summary handler and stream parser",
-            "Deterministic stream fixtures and interruption tests",
-            "A live-inference-only vp task such as test:aws:ai (cache: false)",
-            "CDK scoping the IAM policy to specific models"
-          ]
-        },
-        "distributed": {
-          "ja": "stream は途中で切れる。部分出力を保存するか捨てるかを決める。",
-          "en": "A stream can end midway; decide whether partial output is kept or discarded."
-        }
-      }
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "18",

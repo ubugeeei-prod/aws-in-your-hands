@@ -69,3 +69,11 @@ generated: true
 | network ACL | network ACL | 11 | subnet の境界に付ける通信規則。許可と拒否を番号順に評価する。stateless で、返事の通信も別に許可が要る。 |
 | gateway endpoint | gateway endpoint | 11 | S3 と DynamoDB へ、インターネットを通らずに届く経路。route table に経路として入る。追加料金はない。 |
 | interface endpoint | interface endpoint | 11 | AWS のサービスへの入口を、subnet の中に private IP アドレスつきの network interface として置くもの（AWS PrivateLink）。サービスごと、AZ ごとに時間課金される。 |
+| 基盤モデル | foundation model | 17 | Bedrock が API として提供する学習済みのモデル。モデル ID で指定する。 |
+| token | token | 17 | モデルが文章を読み書きする単位で、課金の単位でもある。文字数とは一致せず、数え方はモデルごとに違う。 |
+| inference profile | inference profile | 17 | モデルと、リクエストを送ってよいリージョンの組に付いた ID。モデル ID の代わりに指定する。 |
+| cross-Region inference | cross-Region inference | 17 | inference profile を通して、呼び出したリージョンとは別のリージョンで推論が処理され得る仕組み。 |
+| response streaming | response streaming | 17 | Lambda が応答を最後まで溜めずに、できた分から呼び出し元へ送る方式。 |
+| function URL | function URL | 17 | Lambda 関数に直接付く HTTPS の endpoint。API Gateway を挟まない。 |
+| server-sent events（SSE） | server-sent events (SSE) | 17 | 1 つの HTTP 応答の中で、サーバーがイベントを順に送り続ける形式。content type は text/event-stream。 |
+| SigV4 署名 | SigV4 signature | 17 | AWS の API が呼び出し元を確かめるためのリクエスト署名。認証情報から計算して header に付ける。 |

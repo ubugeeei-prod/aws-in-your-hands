@@ -70,6 +70,7 @@ const chapterSynthTasks = [
   "app:infra:synth",
   "stream:infra:synth",
   "net:infra:synth",
+  "ai:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -155,6 +156,22 @@ export default defineConfig({
       "net:plan": fresh("node scripts/plan.ts", { cwd: "examples/11-network" }),
       ...infra("net", "examples/11-network", "AihNetwork"),
       // <<< chapter 11
+
+      // >>> chapter 17
+      // ---- chapter 17: Bedrock ------------------------------------------
+      // The summary API on plain Node. Replays a fixture unless .env says AI_BACKEND=bedrock.
+      "dev:ai": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/17-ai" }),
+      ...infra("ai", "examples/17-ai", "AihAi"),
+      // BILLED: the next three call a real model. None of them is part of check:all.
+      "ai:hello": live("node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/hello.ts", {
+        cwd: "examples/17-ai",
+      }),
+      "ai:test:live": live("node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/live.ts", {
+        cwd: "examples/17-ai",
+      }),
+      "ai:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/17-ai" }),
+      "ai:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/17-ai" }),
+      // <<< chapter 17
 
       // ---- chapter task blocks are inserted above this line ----
 
@@ -246,8 +263,7 @@ export default defineConfig({
   },
   lint: {
     ignorePatterns: [".claude/**"],
-    // The type-aware pass intermittently mis-resolves aws-cdk-lib subpath
-    // imports. `vp run typecheck` checks types instead.
+    // Types are checked by `vp run typecheck` (tsc per project) and by Vize for .vue files.
     options: { typeAware: false, typeCheck: false },
   },
   fmt: {

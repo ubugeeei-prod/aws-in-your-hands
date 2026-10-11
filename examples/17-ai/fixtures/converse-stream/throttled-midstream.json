@@ -1,0 +1,49 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html and https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html (read 2026-10-11). Not recorded from a real inference call.",
+  "description": "Three deltas arrive, then the stream fails with ThrottlingException.",
+  "steps": [
+    {
+      "event": {
+        "messageStart": {
+          "role": "assistant"
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "金曜の"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "リリースに向けて、"
+          }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": {
+            "text": "残りは決済の"
+          }
+        }
+      }
+    },
+    {
+      "throw": {
+        "name": "ThrottlingException",
+        "message": "Too many tokens, please wait before trying again."
+      }
+    }
+  ]
+}

@@ -525,6 +525,130 @@
           "basis": "10 GB processed (assumption)"
         }
       ]
+    },
+    {
+      "id": "ai-idle",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: デプロイ済みで呼ばれない月",
+        "en": "Summary API: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": ["リクエストゼロ", "log は 1 週間で失効し、保存量ゼロ"],
+        "en": ["No requests", "Logs expire after a week; nothing is stored"]
+      },
+      "items": []
+    },
+    {
+      "id": "ai-summaries-nova-2-lite",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）",
+        "en": "Summary API: 1,000 summaries a month (Nova 2 Lite, jp. profile)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 件の要約",
+          "入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）",
+          "出力は 1 件あたり 150 token と仮定（上限は 400）",
+          "Lambda は 256 MB、arm64、1 件あたり平均 4 秒と仮定（推論を待つ時間も課金される）",
+          "1 件あたり log 1 KB と仮定",
+          "データ転送は未算入"
+        ],
+        "en": [
+          "1,000 summaries a month",
+          "Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)",
+          "Assumed 150 output tokens each (the limit is 400)",
+          "Lambda at 256 MB on arm64, assumed 4 seconds each on average (waiting for the model is billed too)",
+          "Assumed 1 KB of logs each",
+          "Data transfer is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-2-lite.input",
+          "quantity": 2000,
+          "basis": "1,000 summaries x 2,000 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 150,
+          "basis": "1,000 summaries x 150 output tokens, in 1K tokens"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000,
+          "basis": "one invocation per summary"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 1000,
+          "basis": "1,000 x 4 s x 0.25 GB"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000954,
+          "basis": "1,000 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "ai-output-ceiling-nova-2-lite",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: 1,000 件すべてが出力の上限に達した場合の出力分",
+        "en": "Summary API: output cost if all 1,000 summaries hit the output limit"
+      },
+      "assumptions": {
+        "ja": ["1,000 件すべてが maxTokens の 400 token まで出力", "出力 token の分だけ。入力と Lambda は含まない"],
+        "en": [
+          "All 1,000 summaries write up to the maxTokens of 400",
+          "Output tokens only; input and Lambda are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 400,
+          "basis": "1,000 summaries x 400 output tokens, in 1K tokens"
+        }
+      ]
+    },
+    {
+      "id": "ai-summaries-claude-haiku-4-5",
+      "chapter": "17",
+      "title": {
+        "ja": "要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）",
+        "en": "Summary API: the same token counts on Claude Haiku 4.5 (inference only)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 件の要約",
+          "入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）",
+          "出力は 1 件あたり 150 token と仮定（上限は 400）",
+          "token の数え方はモデルごとに違うので、同じ文章でも token 数は同じにならない。単価の比較のための仮定",
+          "推論の分だけ。Lambda は含まない"
+        ],
+        "en": [
+          "1,000 summaries a month",
+          "Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)",
+          "Assumed 150 output tokens each (the limit is 400)",
+          "Tokenizers differ by model, so the same text does not give the same token count; this is for comparing unit prices",
+          "Inference only; Lambda is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.claude-haiku-4-5.input",
+          "quantity": 2,
+          "basis": "1,000 summaries x 2,000 input tokens, in 1M tokens"
+        },
+        {
+          "priceId": "bedrock.claude-haiku-4-5.output",
+          "quantity": 0.15,
+          "basis": "1,000 summaries x 150 output tokens, in 1M tokens"
+        }
+      ]
     }
   ]
 }

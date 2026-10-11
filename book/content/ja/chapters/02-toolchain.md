@@ -1,6 +1,6 @@
 ---
 title: 02 再現できる TypeScript 開発: Nix、vp、CDK、cdkd、drift
-revision: 2
+revision: 3
 ---
 
 # 02 再現できる TypeScript 開発: Nix、vp、CDK、cdkd、drift
@@ -118,7 +118,7 @@ vp run check:all
 
 format、lint、型検査、テスト、すべての CDK アプリの synth、本のビルドとリンク検査を行います。AWS には触りません。drift の検出も入っていません。
 
-型検査は、`vp check` ではなく `vp run typecheck` でやります。`vp check` にも型検査の機能はあるのですが、この本が固定した版（TypeScript 7.0.2）では、変更していないソースに対して、`aws-cdk-lib` の import を別のモジュールと取り違えるエラーがときどき出ました。同じ入力で 5 回実行して 2 回です。`tsc` に単一スレッドでの実行を指定すると再現しなくなったので、`typecheck` はそうしています。正しいコードでときどき落ちる検査は、「もう一度実行すれば通る」という習慣を生みます。そうなると、本当の失敗も見逃してしまうんですよね。
+型検査は、`vp check` ではなく `vp run typecheck` でやります。プロジェクトごとに `tsc` を走らせるだけのタスクです。ここには、ちょっとした事件がありました。書いている途中、変更していないソースに対して、`aws-cdk-lib` の import を別のモジュールと取り違える型エラーが、ときどき出たんです。同じ入力で 5 回実行して 2 回。犯人は pnpm と TypeScript 7 の組み合わせでした。pnpm は、中身が同じファイルを 1 つの実体へのハードリンクとして置きます。`aws-cdk-lib` には `export * from './lib';` とだけ書かれた `index.d.ts` が 3,501 個あって、全部が同じ inode を指していました。TypeScript 7 はファイルを inode で見分けるので、どれがどれだか分からなくなっていたわけです。`pnpm-workspace.yaml` の `packageImportMethod: clone-or-copy` で、ハードリンクをやめて複製にしたら、起きなくなりました。「ときどき落ちる検査」は、もう一度回せば通るからと放っておかれがちですが、原因はたいてい、どこかにちゃんとあります。
 
 ## 型が守るもの、守らないもの
 
