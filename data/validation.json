@@ -1,0 +1,430 @@
+{
+  "environment": {
+    "os": "macOS 26 (Darwin 25.6.0)",
+    "cpu": "arm64 (aarch64-darwin)",
+    "nix": "2.25.3",
+    "recordedAt": "2026-10-11"
+  },
+  "records": [
+    {
+      "scope": "toolchain",
+      "command": "nix develop",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "Node.js 24.21.0、pnpm 10.34.5、AWS CLI 2.35.11、vp 1.1.0 が入り、vp env which node が Nix の Node.js を指すことを確認",
+        "en": "Node.js 24.21.0, pnpm 10.34.5, AWS CLI 2.35.11, and vp 1.1.0 are present, and vp env which node points at the Nix Node.js"
+      }
+    },
+    {
+      "scope": "toolchain",
+      "command": "vp install --frozen-lockfile",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "pnpm-lock.yaml を書き換えずに導入できた",
+        "en": "Installed without rewriting pnpm-lock.yaml"
+      }
+    },
+    {
+      "scope": "toolchain",
+      "command": "clean checkout: nix develop → vp install --frozen-lockfile → vp run check:all",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "stage した内容だけを別ディレクトリに書き出して実行。事前生成ファイルや global のツールには依存していない",
+        "en": "Run from a separate directory holding only the staged tree; no pre-generated file or globally installed tool was needed"
+      }
+    },
+    {
+      "scope": "toolchain",
+      "command": "vp の初回セットアップと shell 設定 / vp first-run setup and shell profiles",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "仮の HOME で実験。何も指定しないと ~/.zshrc、~/.zshenv、~/.bashrc、~/.profile に追記され、VP_SELF_SETUP_NO_MODIFY_PATH=1 では追記されないことを確認",
+        "en": "Tested with a throwaway HOME: by default lines are appended to ~/.zshrc, ~/.zshenv, ~/.bashrc, and ~/.profile; with VP_SELF_SETUP_NO_MODIFY_PATH=1 nothing is appended"
+      }
+    },
+    {
+      "scope": "all",
+      "command": "vp run check:all",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "format と lint、型検査、Vue の型検査、テスト 130 件（20 ファイル）、生成ページの同期、日英とソース対応の整合、4 つの CDK アプリの synth、本のビルド、リンク検査（70 ページ）、SPA のビルド",
+        "en": "Format and lint, type checks, Vue type check, 130 tests in 20 files, generated-page freshness, locale and source-map consistency, synth of four CDK apps, the book build, link check over 70 pages, and the SPA build"
+      }
+    },
+    {
+      "scope": "all",
+      "command": "vp run typecheck (6 回 / 6 times)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "単一スレッドの tsc で 6 回とも成功。既定の並列実行と vp check の型検査は、同じ入力でときどき失敗した",
+        "en": "Passed 6 of 6 times with single-threaded tsc. Default parallel tsc and vp check's type check intermittently failed on the same input"
+      }
+    },
+    {
+      "scope": "book",
+      "command": "vp run build:book / vp run links:check",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "日英 34 ページずつと 404、検索インデックスを生成。cache hit のとき出力が復元されること、取り込み元のコードや本文を変えると再実行されることを確認",
+        "en": "Generates 34 pages per language plus the 404 page and search index. Confirmed that a cache hit restores the output and that changing an imported source file or a page re-runs the build"
+      }
+    },
+    {
+      "scope": "book",
+      "command": "vp run book:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "5 リソース、3 output。AWS への変更なし",
+        "en": "5 resources and 3 outputs; no change to AWS"
+      }
+    },
+    {
+      "scope": "02",
+      "command": "vp run hello:infra:synth -c stage=prod / vp run hello:infra:synth:cdk",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "context が cdkd に渡り、prod で bucket が Retain になることを template で確認。CDK CLI でも synth できた",
+        "en": "Context reaches cdkd, and the template shows the bucket retained for prod. The CDK CLI synthesizes the same app"
+      }
+    },
+    {
+      "scope": "03",
+      "command": "vp run build:spa / vp run typecheck:vue",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "ビルド出力は 152 KB",
+        "en": "Build output is 152 KB"
+      }
+    },
+    {
+      "scope": "04",
+      "command": "vp run dev:api + curl",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "本文の 4 つの curl を実行し、/health、作成、一覧、不正な入力の 400 を確認",
+        "en": "Ran the four curl commands from the chapter: /health, create, list, and the 400 for invalid input"
+      }
+    },
+    {
+      "scope": "04",
+      "command": "vp run api:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "esbuild による bundle（Docker なし）を含む。17 リソース",
+        "en": "Includes the esbuild bundle (no Docker); 17 resources"
+      }
+    },
+    {
+      "scope": "01",
+      "command": "vp run account:whoami",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "認証情報が必要",
+        "en": "Needs credentials"
+      }
+    },
+    {
+      "scope": "01",
+      "command": "vp run account:budget:create / account:budget:delete",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "AWS を変更する",
+        "en": "Changes AWS"
+      }
+    },
+    {
+      "scope": "02",
+      "command": "vp run infra:bootstrap",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "cdkd の保存場所を作る",
+        "en": "Creates cdkd's storage"
+      }
+    },
+    {
+      "scope": "02",
+      "command": "vp run hello:infra:diff / deploy / drift / drift:revert:preview / drift:revert / drift:accept / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "drift の実験を含む",
+        "en": "Includes the drift lab"
+      }
+    },
+    {
+      "scope": "03",
+      "command": "vp run spa:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "CloudFront distribution を作る",
+        "en": "Creates a CloudFront distribution"
+      }
+    },
+    {
+      "scope": "03",
+      "command": "vp run spa:publish:plan / publish / smoke / invalidate / unpublish",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "公開と実 URL の確認",
+        "en": "Publishing and live-URL checks"
+      }
+    },
+    {
+      "scope": "04",
+      "command": "vp run dev:api:cdkd",
+      "kind": "local",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Docker の daemon が必要。実行していない",
+        "en": "Needs a Docker daemon; not run"
+      }
+    },
+    {
+      "scope": "04",
+      "command": "vp run api:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Lambda と API Gateway を作る",
+        "en": "Creates Lambda and API Gateway resources"
+      }
+    },
+    {
+      "scope": "04",
+      "command": "vp run api:smoke / api:logs",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "デプロイ済みの API が必要",
+        "en": "Needs the deployed API"
+      }
+    },
+    {
+      "scope": "book",
+      "command": "vp run book:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "本のサイトは未デプロイ",
+        "en": "The book site is not deployed"
+      }
+    },
+    {
+      "scope": "book",
+      "command": "vp run book:publish:plan / publish / smoke / invalidate / unpublish",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "公開 URL はまだ無い",
+        "en": "There is no public URL yet"
+      }
+    },
+    {
+      "scope": "pricing",
+      "command": "vp run pricing:refresh",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "公開 API を読む。data/pricing/unit-prices.json は同じ API から一度だけ手で抽出した",
+        "en": "Reads a public API. data/pricing/unit-prices.json was extracted from the same API once by hand"
+      }
+    },
+    {
+      "scope": "distribution",
+      "command": "vp run sources:pack",
+      "kind": "local",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "commit が無いので実行できない",
+        "en": "Cannot run without a commit"
+      }
+    }
+  ],
+  "open": [
+    {
+      "id": "aws-validation",
+      "summary": {
+        "ja": "AWS 上での検証を一切行っていない。この依頼ではリソースの作成・変更・削除を実行しないため。",
+        "en": "Nothing has been validated in AWS, because this request did not authorize creating, changing, or deleting resources."
+      },
+      "resume": {
+        "ja": "docs/CONTINUATION.md の「最初に実行する実環境検証」の順で、許可された学習用アカウントで実行する。結果をこのファイルに記録し、data/section-map.json の verification を更新する。",
+        "en": "Follow the order under \"最初に実行する実環境検証\" in docs/CONTINUATION.md in an authorized practice account. Record results here and update `verification` in data/section-map.json."
+      }
+    },
+    {
+      "id": "cdkd-cloudfront-function",
+      "summary": {
+        "ja": "cdkd 0.296.28 は AWS::CloudFront::Function を Cloud Control API 経由で扱う。作成、更新、drift の読み戻しが実際に動くかは未確認。本のサイトと 03章が依存している。",
+        "en": "cdkd 0.296.28 handles AWS::CloudFront::Function through Cloud Control API. Whether create, update, and drift read-back work in practice is unconfirmed. The book site and chapter 03 depend on it."
+      },
+      "resume": {
+        "ja": "vp run spa:infra:deploy と vp run spa:infra:drift を実行する。失敗する場合は、失敗の内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。",
+        "en": "Run vp run spa:infra:deploy and vp run spa:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool."
+      }
+    },
+    {
+      "id": "cdkd-state-outputs",
+      "summary": {
+        "ja": "tools/src/infra/outputs.ts は cdkd state show --json の出力を { state: { outputs } } と仮定している。output のキーの形（素の名前か stack 名付きか）は実出力で未確認で、両方を受け付ける実装にしてある。",
+        "en": "tools/src/infra/outputs.ts assumes cdkd state show --json prints { state: { outputs } }. The key format (bare or stack-qualified) is unconfirmed against real output; the code accepts both."
+      },
+      "resume": {
+        "ja": "デプロイ後に cdkd state show AihHello --json の実出力を保存し、tools/src/infra/outputs.test.ts の fixture を実物に置き換える。",
+        "en": "After a deploy, save the real output of cdkd state show AihHello --json and replace the fixture in tools/src/infra/outputs.test.ts with it."
+      }
+    },
+    {
+      "id": "drift-fixtures",
+      "summary": {
+        "ja": "tools/src/drift/fixtures/ は cdkd の型定義と文書化された終了コードから手で書いたもので、実際の出力ではない。",
+        "en": "The files in tools/src/drift/fixtures/ were written by hand from cdkd's type definition and documented exit codes; they are not captured output."
+      },
+      "resume": {
+        "ja": "02章の drift の実験を実行し、clean、drifted、stack 不在の実出力を fixture として追加する。",
+        "en": "Run the chapter 02 drift lab and add the real output for clean, drifted, and missing-stack runs as fixtures."
+      }
+    },
+    {
+      "id": "sdk-aws-login",
+      "summary": {
+        "ja": "AWS SDK for JavaScript v3 3.1149.0 が aws login の認証情報（login_session）を読めるかは未確認。",
+        "en": "Whether AWS SDK for JavaScript v3 3.1149.0 can read aws login credentials (login_session) is unconfirmed."
+      },
+      "resume": {
+        "ja": "aws login のあと vp run account:whoami を実行する。読めなければ、公式ドキュメントの credential_process の profile を 01章に手順として加える。",
+        "en": "Run vp run account:whoami after aws login. If it cannot read them, add the documented credential_process profile to chapter 01 as a procedure."
+      }
+    },
+    {
+      "id": "platforms",
+      "summary": {
+        "ja": "検証したのは aarch64-darwin だけ。nix/vp.nix の Linux 用の autoPatchelf と、x86_64-darwin は未実行。",
+        "en": "Only aarch64-darwin was verified. The Linux autoPatchelf path in nix/vp.nix and x86_64-darwin have not been run."
+      },
+      "resume": {
+        "ja": "各 platform で nix develop、vp install --frozen-lockfile、vp run check:all を実行し、data/toolchain.json の verifiedPlatforms を更新する。",
+        "en": "Run nix develop, vp install --frozen-lockfile, and vp run check:all on each platform and update verifiedPlatforms in data/toolchain.json."
+      }
+    },
+    {
+      "id": "typescript7-parallel-check",
+      "summary": {
+        "ja": "TypeScript 7.0.2 の並列の型検査と vp check の型検査が、aws-cdk-lib の subpath import をときどき取り違える。回避として単一スレッドの tsc を使っている。上流へは未報告。",
+        "en": "Parallel type checking in TypeScript 7.0.2, and vp check's type check, intermittently mis-resolve aws-cdk-lib subpath imports. Single-threaded tsc is used as a workaround. Not reported upstream."
+      },
+      "resume": {
+        "ja": "最小の再現を作って上流に報告する。修正版が出たら、vite.config.ts の lint.options と tools/src/checks/typecheck.ts を見直す。",
+        "en": "Build a minimal reproduction and report it upstream. When a fix ships, revisit lint.options in vite.config.ts and tools/src/checks/typecheck.ts."
+      }
+    },
+    {
+      "id": "ox-content-peer-range",
+      "summary": {
+        "ja": "@ox-content/vite-plugin 3.2.14 の vite の peer 範囲に vite-plus-core 1.1.0 が含まれない。pnpm-workspace.yaml の peerDependencyRules で許可している。ビルドは通っている。",
+        "en": "The vite peer range of @ox-content/vite-plugin 3.2.14 does not include vite-plus-core 1.1.0. pnpm-workspace.yaml allows it with peerDependencyRules. The build works."
+      },
+      "resume": {
+        "ja": "Ox Content か Vite+ を上げるときに、この許可がまだ必要かを確かめる。",
+        "en": "When upgrading Ox Content or Vite+, check whether the exception is still needed."
+      }
+    },
+    {
+      "id": "custom-domain",
+      "summary": {
+        "ja": "独自ドメイン（Route 53、ACM）は未実装。siteUrl が無いので、canonical と hreflang のリンクは出力されていない。",
+        "en": "A custom domain (Route 53, ACM) is not implemented. With no siteUrl, canonical and hreflang links are not emitted."
+      },
+      "resume": {
+        "ja": "ドメインが決まったら book-infra/ に hosted zone と us-east-1 の証明書を追加し、AIH_BOOK_SITE_URL を設定してビルドする。cdkd が複数リージョンの stack を扱えるかを先に確かめる。",
+        "en": "Once a domain exists, add the hosted zone and a us-east-1 certificate to book-infra/ and build with AIH_BOOK_SITE_URL set. First confirm that cdkd handles the cross-Region stack."
+      }
+    },
+    {
+      "id": "cloudformation-drift",
+      "summary": {
+        "ja": "CloudFormation の drift detection（検出の開始、完了までの polling、結果の parser、gate）は未実装。20章の範囲。現在の gate は cdkd 管理の stack だけを対象にする。",
+        "en": "CloudFormation drift detection (start, polling to completion, result parser, gate) is not implemented; it belongs to chapter 20. The current gate covers cdkd-managed stacks only."
+      },
+      "resume": {
+        "ja": "20章で tools/src/drift/ に CloudFormation 用の検出を追加し、同じ report の形と gate に流す。",
+        "en": "In chapter 20, add CloudFormation detection to tools/src/drift/ and feed it into the same report shape and gate."
+      }
+    },
+    {
+      "id": "unverified-sources",
+      "summary": {
+        "ja": "data/sources.json の checkedAt が null の出典は、調査の出発点として載せただけで、執筆時に読み直していない。01章と 02章は、IAM、CDK bootstrap、CloudFormation drift について、そうした出典に基づく一般的な説明を含む。",
+        "en": "Sources with checkedAt null in data/sources.json are listed as starting points and were not re-read while writing. Chapters 01 and 02 contain general statements about IAM, CDK bootstrapping, and CloudFormation drift that rest on such sources."
+      },
+      "resume": {
+        "ja": "該当する出典を読み直し、checkedAt と supports を更新する。本文と食い違えば日本語を先に直す。",
+        "en": "Re-read those sources and update checkedAt and supports. Where the prose disagrees, correct the Japanese first."
+      }
+    },
+    {
+      "id": "unverified-prices",
+      "summary": {
+        "ja": "AWS Budgets の料金、API Gateway HTTP API と S3 の無料枠、どの章が Free plan で実行できるかは未確認。計算では不明として扱い、何も引いていない。",
+        "en": "AWS Budgets pricing, free allowances for API Gateway HTTP API and S3, and which chapters run on the Free plan are unconfirmed. The calculations treat them as unknown and deduct nothing."
+      },
+      "resume": {
+        "ja": "公式の料金ページを確認し、data/pricing/allowances.json の unknown を解消する。",
+        "en": "Check the official pricing pages and resolve the `unknown` entries in data/pricing/allowances.json."
+      }
+    },
+    {
+      "id": "publication",
+      "summary": {
+        "ja": "リポジトリの公開 URL、配布物の公開先、ライセンスが未定。CI の設定例（docs/examples/）は一度も実行していない。",
+        "en": "The repository's public URL, where archives are published, and the license are undecided. The CI examples in docs/examples/ have never been executed."
+      },
+      "resume": {
+        "ja": "著者が決める。決まったら README と本文に実在する URL だけを書く。",
+        "en": "The author decides. Once decided, write only real URLs into the README and the prose."
+      }
+    }
+  ]
+}

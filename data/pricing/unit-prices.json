@@ -1,0 +1,470 @@
+{
+  "$comment": "Extracted from the AWS Price List bulk API; `vp run pricing:refresh` (tools/src/pricing/refresh.ts) rewrites the tiers. usd is kept as the decimal string AWS publishes.",
+  "prices": [
+    {
+      "id": "lambda.request.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "AA4Q79463N2JQHZA",
+      "usageType": "APN1-Request-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000002000",
+          "description": "AWS Lambda - Total Requests for ARM - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambda.duration.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "ZSE7CMBEBTMPH8ET",
+      "usageType": "APN1-Lambda-GB-Second-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 7500000000.0,
+          "usd": "0.0000133334",
+          "description": "AWS Lambda - Total Compute for ARM - Asia Pacific (Tokyo)-Tier-1"
+        },
+        {
+          "from": 7500000000.0,
+          "to": 18750000000.0,
+          "usd": "0.0000120001",
+          "description": "AWS Lambda - Total Compute for ARM - Asia Pacific (Tokyo)-Tier-2"
+        },
+        {
+          "from": 18750000000.0,
+          "to": null,
+          "usd": "0.0000106667",
+          "description": "AWS Lambda - Total Compute for ARM - Asia Pacific (Tokyo)-Tier-3"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambda.request.x86",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "3BE8DYKG4FYSZGDW",
+      "usageType": "APN1-Request",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000002000",
+          "description": "AWS Lambda - Total Requests - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "lambda.duration.x86",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "FSYUV9NMNDEXRJ5H",
+      "usageType": "APN1-Lambda-GB-Second",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 6000000000.0,
+          "usd": "0.0000166667",
+          "description": "AWS Lambda - Total Compute - Asia Pacific (Tokyo)-Tier-1"
+        },
+        {
+          "from": 6000000000.0,
+          "to": 15000000000.0,
+          "usd": "0.0000150000",
+          "description": "AWS Lambda - Total Compute - Asia Pacific (Tokyo)-Tier-2"
+        },
+        {
+          "from": 15000000000.0,
+          "to": null,
+          "usd": "0.0000133334",
+          "description": "AWS Lambda - Total Compute - Asia Pacific (Tokyo)-Tier-3"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "apigw.http.request",
+      "offerCode": "AmazonApiGateway",
+      "region": "ap-northeast-1",
+      "sku": "5TU3JKA59EGYZ8XY",
+      "usageType": "APN1-ApiGatewayHttpRequest",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 300000000.0,
+          "usd": "0.0000012900",
+          "description": "$1.29/million requests - API Gateway HTTP API (first 300 million)"
+        },
+        {
+          "from": 300000000.0,
+          "to": null,
+          "usd": "0.0000011800",
+          "description": "$1.18/million requests - API Gateway HTTP API (more than 300 million)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonApiGateway/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-02T23:15:01Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "apigw.rest.request",
+      "offerCode": "AmazonApiGateway",
+      "region": "ap-northeast-1",
+      "sku": "MK9X5G6WSHJT7QGM",
+      "usageType": "APN1-ApiGatewayRequest",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 333000000.0,
+          "usd": "0.0000042500",
+          "description": "$4.25/million requests - first 333 million requests/month"
+        },
+        {
+          "from": 333000000.0,
+          "to": 1000000000.0,
+          "usd": "0.0000035300",
+          "description": "$3.53/million requests - next 667 million requests/month"
+        },
+        {
+          "from": 1000000000.0,
+          "to": 20000000000.0,
+          "usd": "0.0000030000",
+          "description": "$3.00/million requests - next 19 billion requests/month"
+        },
+        {
+          "from": 20000000000.0,
+          "to": null,
+          "usd": "0.0000019100",
+          "description": "$1.91/million requests - over 20 billion requests/month"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonApiGateway/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-02T23:15:01Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "s3.standard.storage",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "CCBFTMENTDWZHXHX",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 51200.0,
+          "usd": "0.0250000000",
+          "description": "$0.025 per GB - first 50 TB / month of storage used"
+        },
+        {
+          "from": 51200.0,
+          "to": 512000.0,
+          "usd": "0.0240000000",
+          "description": "$0.024 per GB - next 450 TB / month of storage used"
+        },
+        {
+          "from": 512000.0,
+          "to": null,
+          "usd": "0.0230000000",
+          "description": "$0.023 per GB - storage used / month over 500 TB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "s3.request.tier1",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "XAKHUSC46NWC9PPM",
+      "usageType": "APN1-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000047000",
+          "description": "$0.0047 per 1,000 PUT, COPY, POST, or LIST requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "s3.request.tier2",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "9C7873KU3ZQBD6BJ",
+      "usageType": "APN1-Requests-Tier2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000003700",
+          "description": "$0.0037 per 10,000 GET and all other requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "logs.ingest.standard",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "CWB2GTZJXNX3TA6H",
+      "usageType": "APN1-DataProcessing-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.7600000000",
+          "description": "$0.76 per GB custom log data ingested in Standard log class - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "logs.storage",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "42CVQU4BPES8AWHC",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0330000000",
+          "description": "$0.033 per GB-mo of log storage - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.jp.transfer",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "CME9BRJSS2F5PBYE",
+      "usageType": "JP-DataTransfer-Out-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 10240.0,
+          "usd": "0.1140000000",
+          "description": "$0.114 per GB - first 10 TB / month data transfer out"
+        },
+        {
+          "from": 10240.0,
+          "to": 51200.0,
+          "usd": "0.0890000000",
+          "description": "$0.089 per GB - next 40 TB / month data transfer out"
+        },
+        {
+          "from": 51200.0,
+          "to": 153600.0,
+          "usd": "0.0860000000",
+          "description": "$0.086 per GB - next 100 TB / month data transfer out"
+        },
+        {
+          "from": 153600.0,
+          "to": 512000.0,
+          "usd": "0.0840000000",
+          "description": "$0.084 per GB - next 350 TB / month data transfer out"
+        },
+        {
+          "from": 512000.0,
+          "to": 1048576.0,
+          "usd": "0.0800000000",
+          "description": "$0.080 per GB - next 524 TB / month data transfer out"
+        },
+        {
+          "from": 1048576.0,
+          "to": 5242880.0,
+          "usd": "0.0700000000",
+          "description": "$0.070 per GB - next 4 PB / month data transfer out"
+        },
+        {
+          "from": 5242880.0,
+          "to": null,
+          "usd": "0.0600000000",
+          "description": "$0.060 per GB - data transfer out / month over 5 PB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.jp.request.https",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "EJZT492VM8J2VQTQ",
+      "usageType": "JP-Requests-Tier2-HTTPS",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000012000",
+          "description": "$0.012 per 10,000 HTTPS Requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.jp.request.http",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "4ZKPCBHJ6DH3YZKY",
+      "usageType": "JP-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000009000",
+          "description": "$0.0090 per 10,000 HTTP Requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.jp.request.https-proxy",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "62FMXYC43CP8KPXW",
+      "usageType": "JP-Requests-HTTPS-Proxy",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000012000",
+          "description": "$0.0120 per 10,000 Proxy HTTPS Requests (Japan)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.invalidation",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "U3HVZF9WJEM7TE55",
+      "usageType": "Invalidations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "URL",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 1000.0,
+          "usd": "0.0000000000",
+          "description": "$0.000 per URL - first 1,000 URLs / month."
+        },
+        {
+          "from": 1000.0,
+          "to": null,
+          "usd": "0.0050000000",
+          "description": "$0.005 per URL - over 1,000 URLs / month."
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudfront.function.execution",
+      "offerCode": "AmazonCloudFront",
+      "region": "global",
+      "sku": "QAZUUEJG8GARJCET",
+      "usageType": "Executions-CloudFrontFunctions",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "FunctionExecutions",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 2000000.0,
+          "usd": "0.0000000000",
+          "description": "$0 for First 2,000,000 CloudFront Function Executions"
+        },
+        {
+          "from": 2000000.0,
+          "to": null,
+          "usd": "0.0000001000",
+          "description": "$0.10 per 1,000,000 CloudFront Function Executions"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
+      "offerPublicationDate": "2026-10-03T00:04:26Z",
+      "checkedAt": "2026-10-11"
+    }
+  ]
+}

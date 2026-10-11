@@ -1,0 +1,127 @@
+{
+  "recordedAt": "2026-10-11",
+  "verifiedPlatforms": ["aarch64-darwin (macOS 26, Darwin 25.6.0)"],
+  "unverifiedPlatforms": ["x86_64-darwin", "aarch64-linux", "x86_64-linux"],
+  "tools": [
+    {
+      "name": "Nix",
+      "version": "2.25.3 (host)",
+      "providedBy": "host installation, flakes enabled",
+      "pinnedIn": "not pinned by this repository"
+    },
+    {
+      "name": "nixpkgs",
+      "version": "8edc0c72e3a3 (nixpkgs-unstable, 2026-10-08)",
+      "providedBy": "flake input",
+      "pinnedIn": "flake.lock"
+    },
+    {
+      "name": "Node.js",
+      "version": "24.21.0",
+      "providedBy": "nixpkgs nodejs_24",
+      "pinnedIn": "flake.lock"
+    },
+    {
+      "name": "pnpm",
+      "version": "10.34.5",
+      "providedBy": "nixpkgs pnpm_10",
+      "pinnedIn": "flake.lock, package.json packageManager"
+    },
+    {
+      "name": "AWS CLI",
+      "version": "2.35.11",
+      "providedBy": "nixpkgs awscli2",
+      "pinnedIn": "flake.lock"
+    },
+    {
+      "name": "vp (Vite+ global CLI)",
+      "version": "1.1.0",
+      "providedBy": "nix/vp.nix, fixed-hash npm tarball",
+      "pinnedIn": "nix/vp.nix"
+    },
+    {
+      "name": "vite-plus (project-local)",
+      "version": "1.1.0",
+      "providedBy": "pnpm",
+      "pinnedIn": "package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Vite / Vitest (bundled by vite-plus)",
+      "version": "8.3.3 / 5.0.3",
+      "providedBy": "vite-plus",
+      "pinnedIn": "pnpm-workspace.yaml overrides, pnpm-lock.yaml"
+    },
+    {
+      "name": "TypeScript",
+      "version": "7.0.2",
+      "providedBy": "pnpm",
+      "pinnedIn": "package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "aws-cdk-lib",
+      "version": "2.273.0",
+      "providedBy": "pnpm",
+      "pinnedIn": "each CDK app's package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "constructs",
+      "version": "10.8.1",
+      "providedBy": "pnpm",
+      "pinnedIn": "each CDK app's package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "cdkd (@go-to-k/cdkd)",
+      "version": "0.296.28",
+      "providedBy": "pnpm",
+      "pinnedIn": "each CDK app's package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "AWS CDK CLI (aws-cdk)",
+      "version": "2.1145.0",
+      "providedBy": "pnpm",
+      "pinnedIn": "package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "AWS SDK for JavaScript v3",
+      "version": "3.1149.0",
+      "providedBy": "pnpm",
+      "pinnedIn": "tools/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Ox Content (@ox-content/vite-plugin)",
+      "version": "3.2.14",
+      "providedBy": "pnpm",
+      "pinnedIn": "book/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Vue",
+      "version": "3.5.43",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/03-spa/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "vue-tsc",
+      "version": "3.3.13",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/03-spa/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Hono",
+      "version": "4.13.13",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/04-http-api/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Zod",
+      "version": "4.6.5",
+      "providedBy": "pnpm",
+      "pinnedIn": "package.json files, pnpm-lock.yaml"
+    },
+    {
+      "name": "esbuild",
+      "version": "0.28.2",
+      "providedBy": "pnpm",
+      "pinnedIn": "package.json, pnpm-lock.yaml"
+    }
+  ]
+}

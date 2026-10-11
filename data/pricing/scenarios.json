@@ -1,0 +1,147 @@
+{
+  "monthHours": 730,
+  "currency": "USD",
+  "scenarios": [
+    {
+      "id": "book-site-idle",
+      "chapter": "03",
+      "title": {
+        "ja": "本のサイト: 公開済みで誰も読まない月",
+        "en": "Book site: published, but nobody reads it for a month"
+      },
+      "assumptions": {
+        "ja": ["配信ゼロ、publish ゼロ", "bucket に 50 MB の build 出力"],
+        "en": ["No traffic and no publishes", "50 MB of build output in the bucket"]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.05,
+          "basis": "50 MB stored for the month, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "book-site-small",
+      "chapter": "03",
+      "title": {
+        "ja": "本のサイト: 月 2 万ページビュー",
+        "en": "Book site: 20,000 page views a month"
+      },
+      "assumptions": {
+        "ja": [
+          "1 ページビューあたり HTML 1 + 初回のみ assets 7。平均 6 リクエスト、合計 150 KB と仮定",
+          "すべて日本の edge から配信、HTTPS",
+          "cache miss と再検証で origin へ 1/3 が届くと仮定",
+          "publish は月 10 回、各 200 object を PUT",
+          "CloudFront Function はページと assets の全リクエストで実行",
+          "標準ログ・WAF・独自ドメインなし"
+        ],
+        "en": [
+          "Each page view is 1 HTML request plus, on a first visit, 7 assets: assumed 6 requests and 150 KB on average",
+          "Served entirely from Japan edge locations over HTTPS",
+          "One third of requests assumed to reach the origin through cache misses and revalidation",
+          "10 publishes a month, 200 object PUTs each",
+          "The CloudFront Function runs on every page and asset request",
+          "No standard logging, WAF, or custom domain"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 120000,
+          "basis": "20,000 page views x 6 requests"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 2.861,
+          "basis": "20,000 page views x 150 KB, in GB"
+        },
+        {
+          "priceId": "cloudfront.function.execution",
+          "quantity": 120000,
+          "basis": "one execution per viewer request"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 40000,
+          "basis": "one third of 120,000 requests reach S3 as GET"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 2000,
+          "basis": "10 publishes x 200 PUTs"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.05,
+          "basis": "50 MB, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "http-api-idle",
+      "chapter": "04",
+      "title": {
+        "ja": "HTTP API: デプロイ済みで呼ばれない月",
+        "en": "HTTP API: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": ["リクエストゼロ", "log は 1 週間で失効し、保存量ゼロ"],
+        "en": ["No requests", "Logs expire after a week; nothing is stored"]
+      },
+      "items": []
+    },
+    {
+      "id": "http-api-small",
+      "chapter": "04",
+      "title": {
+        "ja": "HTTP API: 月 100 万リクエスト",
+        "en": "HTTP API: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "すべて Lambda に届く（API Gateway が拒否するリクエストはゼロと仮定）",
+          "平均実行時間 50 ms、256 MB、arm64",
+          "1 リクエストあたり log 0.5 KB（アプリの 1 行 + Lambda の START/END/REPORT 行）",
+          "log の保持は 7 日。月平均の保存量を取込み量の 7/30 と仮定",
+          "応答のデータ転送料金は含めていない（未算入）"
+        ],
+        "en": [
+          "Every request reaches Lambda (none assumed rejected by API Gateway)",
+          "50 ms average duration, 256 MB, arm64",
+          "0.5 KB of logs per request (one application line plus Lambda's START/END/REPORT lines)",
+          "7-day log retention; average stored volume assumed to be 7/30 of the monthly ingest",
+          "Data transfer out for responses is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000000,
+          "basis": "one invocation per request"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 12500,
+          "basis": "1,000,000 x 0.05 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.111,
+          "basis": "0.477 GB x 7/30, in GB-month"
+        }
+      ]
+    }
+  ]
+}

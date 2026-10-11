@@ -1,0 +1,274 @@
+{
+  "terms": [
+    {
+      "id": "account",
+      "ja": "アカウント",
+      "en": "account",
+      "firstUse": "01",
+      "definition": {
+        "ja": "AWS のリソースと請求の入れ物。12 桁の ID を持つ。",
+        "en": "The container for AWS resources and their bill, identified by a 12-digit ID."
+      }
+    },
+    {
+      "id": "root-user",
+      "ja": "root ユーザー",
+      "en": "root user",
+      "firstUse": "01",
+      "definition": {
+        "ja": "アカウント作成時のメールアドレスでサインインする、制限できない利用者。日常作業には使わない。",
+        "en": "The identity that signs in with the account's email address and cannot be restricted. Not for everyday work."
+      }
+    },
+    {
+      "id": "temporary-credentials",
+      "ja": "一時認証情報",
+      "en": "temporary credentials",
+      "firstUse": "01",
+      "definition": {
+        "ja": "期限付きで発行される access key、secret key、session token の組。",
+        "en": "An access key, secret key, and session token issued with an expiry."
+      }
+    },
+    {
+      "id": "region",
+      "ja": "リージョン",
+      "en": "Region",
+      "firstUse": "01",
+      "definition": {
+        "ja": "AWS がサービスを提供する地理的な単位。東京は ap-northeast-1。",
+        "en": "A geographic unit in which AWS offers services. Tokyo is ap-northeast-1."
+      }
+    },
+    {
+      "id": "budget",
+      "ja": "予算（AWS Budgets）",
+      "en": "budget (AWS Budgets)",
+      "firstUse": "01",
+      "definition": {
+        "ja": "支出がしきい値を超えた、または超えそうなときに通知する仕組み。支出を止める上限ではない。",
+        "en": "A mechanism that notifies when spending passes, or is forecast to pass, a threshold. It is not a spending cap."
+      }
+    },
+    {
+      "id": "devshell",
+      "ja": "devShell",
+      "en": "devShell",
+      "firstUse": "02",
+      "definition": {
+        "ja": "Nix の flake が定義する、固定した版のツールが入った shell 環境。",
+        "en": "A shell environment, defined by a Nix flake, that contains tools at pinned versions."
+      }
+    },
+    {
+      "id": "task",
+      "ja": "タスク",
+      "en": "task",
+      "firstUse": "02",
+      "definition": {
+        "ja": "この本では vite.config.ts の run.tasks に定義し、vp run <名前> で実行するもの。",
+        "en": "In this book, something defined under run.tasks in vite.config.ts and executed with vp run <name>."
+      }
+    },
+    {
+      "id": "construct",
+      "ja": "construct",
+      "en": "construct",
+      "firstUse": "02",
+      "definition": {
+        "ja": "CDK で 1 つ以上の AWS リソースを表す TypeScript の class。",
+        "en": "A TypeScript class in CDK that represents one or more AWS resources."
+      }
+    },
+    {
+      "id": "stack",
+      "ja": "stack",
+      "en": "stack",
+      "firstUse": "02",
+      "definition": {
+        "ja": "まとめて作成・更新・削除するリソースの単位。",
+        "en": "A unit of resources that are created, updated, and deleted together."
+      }
+    },
+    {
+      "id": "synth",
+      "ja": "synth（合成）",
+      "en": "synth (synthesis)",
+      "firstUse": "02",
+      "definition": {
+        "ja": "CDK のコードを実行して CloudFormation template などの cloud assembly を出力すること。AWS は変更しない。",
+        "en": "Running CDK code to produce a cloud assembly, including CloudFormation templates. It changes nothing in AWS."
+      }
+    },
+    {
+      "id": "diff",
+      "ja": "diff",
+      "en": "diff",
+      "firstUse": "02",
+      "definition": {
+        "ja": "これから行う変更の予告。ソースから作った template と、管理ツールが記録している状態との比較。",
+        "en": "A preview of an intended change: the template built from source compared with what the deployment tool has recorded."
+      }
+    },
+    {
+      "id": "drift",
+      "ja": "drift",
+      "en": "drift",
+      "firstUse": "02",
+      "definition": {
+        "ja": "管理ツールの記録と、実際の AWS の設定がずれていること。",
+        "en": "A difference between what the deployment tool has recorded and the actual AWS configuration."
+      }
+    },
+    {
+      "id": "state",
+      "ja": "state",
+      "en": "state",
+      "firstUse": "02",
+      "definition": {
+        "ja": "管理ツールが「何を作ったか」を記録したもの。cdkd では S3 上の JSON。",
+        "en": "The deployment tool's record of what it created. For cdkd, JSON in S3."
+      }
+    },
+    {
+      "id": "origin",
+      "ja": "origin",
+      "en": "origin",
+      "firstUse": "03",
+      "definition": {
+        "ja": "CDN が元のコンテンツを取りに行く先。この本では S3 bucket や API。",
+        "en": "Where a CDN fetches the original content from. In this book, an S3 bucket or an API."
+      }
+    },
+    {
+      "id": "oac",
+      "ja": "origin access control (OAC)",
+      "en": "origin access control (OAC)",
+      "firstUse": "03",
+      "definition": {
+        "ja": "CloudFront が origin へのリクエストに署名し、bucket がその distribution だけを許可する仕組み。",
+        "en": "A mechanism in which CloudFront signs its origin requests and the bucket admits only that distribution."
+      }
+    },
+    {
+      "id": "distribution",
+      "ja": "distribution",
+      "en": "distribution",
+      "firstUse": "03",
+      "definition": {
+        "ja": "CloudFront の配信設定 1 つ分。ドメイン名を 1 つ持つ。",
+        "en": "One CloudFront delivery configuration, with its own domain name."
+      }
+    },
+    {
+      "id": "edge-location",
+      "ja": "edge location",
+      "en": "edge location",
+      "firstUse": "03",
+      "definition": {
+        "ja": "利用者に近い場所で cache を返す CloudFront の拠点。",
+        "en": "A CloudFront site that serves cached responses close to the reader."
+      }
+    },
+    {
+      "id": "invalidation",
+      "ja": "invalidation",
+      "en": "invalidation",
+      "firstUse": "03",
+      "definition": {
+        "ja": "edge の cache を期限前に捨てさせる操作。",
+        "en": "An operation that makes edge caches discard objects before they expire."
+      }
+    },
+    {
+      "id": "spa-fallback",
+      "ja": "SPA fallback",
+      "en": "SPA fallback",
+      "firstUse": "03",
+      "definition": {
+        "ja": "ファイルに対応しない URL に index.html を返し、client 側の router に処理させること。",
+        "en": "Answering URLs that match no file with index.html so that the client-side router handles them."
+      }
+    },
+    {
+      "id": "execution-environment",
+      "ja": "実行環境",
+      "en": "execution environment",
+      "firstUse": "04",
+      "definition": {
+        "ja": "Lambda が関数を動かす隔離された環境。1 つが同時に処理するリクエストは 1 件で、再利用も破棄もされる。",
+        "en": "The isolated environment in which Lambda runs a function. Each handles one request at a time and may be reused or discarded."
+      }
+    },
+    {
+      "id": "cold-start",
+      "ja": "cold start",
+      "en": "cold start",
+      "firstUse": "04",
+      "definition": {
+        "ja": "新しい実行環境の作成と初期化を伴う呼出し。",
+        "en": "An invocation that includes creating and initializing a new execution environment."
+      }
+    },
+    {
+      "id": "execution-role",
+      "ja": "実行 role",
+      "en": "execution role",
+      "firstUse": "04",
+      "definition": {
+        "ja": "関数が AWS 上で動くときに引き受ける IAM role。開発者自身の権限とは別物。",
+        "en": "The IAM role a function assumes when it runs in AWS. It is separate from the developer's own permissions."
+      }
+    },
+    {
+      "id": "http-api",
+      "ja": "HTTP API",
+      "en": "HTTP API",
+      "firstUse": "04",
+      "definition": {
+        "ja": "API Gateway の API の種類の 1 つ。REST API、WebSocket API とは機能と料金が異なる。",
+        "en": "One kind of API Gateway API. Its features and prices differ from REST APIs and WebSocket APIs."
+      }
+    },
+    {
+      "id": "integration",
+      "ja": "integration",
+      "en": "integration",
+      "firstUse": "04",
+      "definition": {
+        "ja": "API Gateway が route に届いたリクエストを渡す先。この本では Lambda 関数。",
+        "en": "Where API Gateway sends a request that matched a route. In this book, a Lambda function."
+      }
+    },
+    {
+      "id": "runtime-validation",
+      "ja": "runtime validation",
+      "en": "runtime validation",
+      "firstUse": "02",
+      "definition": {
+        "ja": "実行時に届いたデータを schema と照合すること。型注釈はこれを行わない。",
+        "en": "Checking data against a schema when it arrives at run time. A type annotation does not do this."
+      }
+    },
+    {
+      "id": "invariant",
+      "ja": "invariant",
+      "en": "invariant",
+      "firstUse": "04",
+      "definition": {
+        "ja": "どの時点でも成り立っていなければならない性質。テストと障害注入の対象。",
+        "en": "A property that must hold at all times; the thing tests and failure injection target."
+      }
+    },
+    {
+      "id": "idempotency",
+      "ja": "冪等性",
+      "en": "idempotency",
+      "firstUse": "08",
+      "definition": {
+        "ja": "同じ操作を複数回実行しても結果が 1 回と同じになる性質。",
+        "en": "The property that performing the same operation several times has the same result as performing it once."
+      }
+    }
+  ]
+}

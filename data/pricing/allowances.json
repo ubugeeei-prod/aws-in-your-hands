@@ -1,0 +1,78 @@
+{
+  "allowances": [
+    {
+      "priceId": "lambda.request.arm",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "lambda-pricing",
+      "note": "Shared across architectures. The pricing page does not say whether it expires."
+    },
+    {
+      "priceId": "lambda.duration.arm",
+      "quantity": 400000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "lambda-pricing",
+      "note": "GB-seconds. Shared across architectures."
+    },
+    {
+      "priceId": "cloudfront.jp.transfer",
+      "quantity": 1024,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cloudfront-pricing-payg",
+      "note": "1 TB of data transfer out, all edge regions combined, pay-as-you-go only."
+    },
+    {
+      "priceId": "cloudfront.jp.request.https",
+      "quantity": 10000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cloudfront-pricing-payg",
+      "note": "HTTP and HTTPS requests combined, all edge regions combined."
+    },
+    {
+      "priceId": "cloudfront.function.execution",
+      "quantity": 2000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cloudfront-pricing-payg",
+      "note": "Already a USD 0 tier in the price list; listed so the worksheet shows it."
+    },
+    {
+      "priceId": "cloudfront.invalidation",
+      "quantity": 1000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cloudfront-pricing-payg",
+      "note": "Already a USD 0 tier in the price list."
+    },
+    {
+      "priceId": "logs.ingest.standard",
+      "quantity": 5,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch",
+      "note": "GB. From the Global-DataProcessing-Bytes USD 0 tier."
+    },
+    {
+      "priceId": "logs.storage",
+      "quantity": 5,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-cloudwatch",
+      "note": "GB-month. From the Global-TimedStorage-ByteHrs USD 0 tier."
+    }
+  ],
+  "unknown": [
+    {
+      "priceId": "apigw.http.request",
+      "reason": "A free allowance for HTTP API requests was not confirmed from a primary source for accounts on the current Free Tier model, so none is applied."
+    },
+    {
+      "priceId": "s3.standard.storage",
+      "reason": "No always-free S3 allowance was confirmed; none is applied."
+    }
+  ]
+}

@@ -1,0 +1,503 @@
+{
+  "$comment": "verification is the strongest level at which the section's code was actually run: unverified, local, or aws. A section whose boundary includes cloud and whose verification is local has parts that were not exercised against AWS; data/validation.json lists them.",
+  "sections": [
+    {
+      "id": "00.build",
+      "sources": ["data/chapters.json"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "00.paths",
+      "sources": ["data/chapters.json"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "00.conventions",
+      "sources": ["docs/EDITORIAL.md", "data/validation.json", "vite.config.ts"],
+      "tasks": ["check:all"],
+      "boundary": "none",
+      "criteria": ["type", "test", "local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "00.stack",
+      "sources": ["data/toolchain.json", "flake.nix", "package.json"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "01.account",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "01.root",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "01.identity",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "01.login",
+      "sources": [
+        "tools/src/aws/target.ts",
+        "tools/src/aws/target.test.ts",
+        "tools/src/aws/preflight.ts",
+        "tools/src/aws/whoami.ts",
+        ".env.example"
+      ],
+      "tasks": ["account:whoami", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "01.region",
+      "sources": ["tools/src/aws/target.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "01.budget",
+      "sources": [
+        "examples/01-account/budget.json",
+        "examples/01-account/notifications.example.json",
+        "tools/src/aws/budget.ts"
+      ],
+      "tasks": ["account:budget:create"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "01.cleanup",
+      "sources": ["tools/src/aws/budget.ts"],
+      "tasks": ["account:budget:delete"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "02.nix",
+      "sources": ["flake.nix", "flake.lock", "nix/vp.nix", "nix/vp-home.json"],
+      "tasks": [],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "02.install",
+      "sources": ["package.json", "pnpm-workspace.yaml", "pnpm-lock.yaml"],
+      "tasks": [],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "02.vp",
+      "sources": ["vite.config.ts", "tools/src/checks/typecheck.ts", "tsconfig.base.json"],
+      "tasks": ["check:all", "check", "test:unit", "typecheck"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "02.types",
+      "sources": ["examples/02-toolchain/lib/config.ts", "examples/02-toolchain/test/config.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "02.cdk",
+      "sources": [
+        "examples/02-toolchain/lib/hello-stack.ts",
+        "examples/02-toolchain/bin/app.ts",
+        "examples/02-toolchain/test/hello-stack.test.ts"
+      ],
+      "tasks": ["hello:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "02.synth",
+      "sources": ["examples/02-toolchain/cdk.json", "examples/02-toolchain/test/hello-stack.test.ts"],
+      "tasks": ["hello:infra:synth", "hello:infra:synth:cdk", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "02.cdkd",
+      "sources": [
+        "tools/src/infra/cdkd-args.ts",
+        "tools/src/infra/cdkd-args.test.ts",
+        "tools/src/infra/cdkd.ts",
+        "tools/src/infra/run-cdkd.ts"
+      ],
+      "tasks": ["infra:bootstrap", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "02.deploy",
+      "sources": ["tools/src/infra/cdkd.ts"],
+      "tasks": ["hello:infra:diff", "hello:infra:deploy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "02.diff-drift",
+      "sources": ["tools/src/infra/cdkd-args.ts"],
+      "tasks": ["hello:infra:diff", "hello:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "02.drift-gate",
+      "sources": [
+        "tools/src/drift/schema.ts",
+        "tools/src/drift/report.ts",
+        "tools/src/drift/report.test.ts",
+        "tools/src/drift/cli.ts",
+        "tools/src/drift/fixtures",
+        "docs/examples/drift-schedule.yml"
+      ],
+      "tasks": [
+        "hello:infra:drift",
+        "hello:infra:drift:revert:preview",
+        "hello:infra:drift:revert",
+        "hello:infra:drift:accept",
+        "test:unit"
+      ],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "02.cleanup",
+      "sources": ["tools/src/infra/cdkd.ts"],
+      "tasks": ["hello:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "03.architecture",
+      "sources": ["examples/03-spa/infra/lib/spa-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "03.app",
+      "sources": [
+        "examples/03-spa/src",
+        "examples/03-spa/index.html",
+        "examples/03-spa/vite.config.ts",
+        "examples/03-spa/tsconfig.json"
+      ],
+      "tasks": ["dev:spa", "check", "typecheck:vue", "test:unit", "build:spa", "preview:spa", "typecheck"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "03.bucket",
+      "sources": ["examples/03-spa/infra/lib/spa-stack.ts", "examples/03-spa/infra/test/spa-stack.test.ts"],
+      "tasks": ["spa:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "03.fallback",
+      "sources": ["examples/03-spa/infra/functions/spa-fallback.js", "examples/03-spa/infra/test/spa-fallback.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "03.distribution",
+      "sources": [
+        "examples/03-spa/infra/lib/spa-stack.ts",
+        "examples/03-spa/infra/bin/app.ts",
+        "examples/03-spa/infra/test/spa-stack.test.ts",
+        "examples/03-spa/cdk.json"
+      ],
+      "tasks": ["spa:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "03.deploy",
+      "sources": ["tools/src/infra/cdkd.ts", "tools/src/infra/cdkd-args.ts"],
+      "tasks": ["spa:infra:diff", "spa:infra:deploy", "spa:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "03.publish",
+      "sources": [
+        "tools/src/site/plan.ts",
+        "tools/src/site/plan.test.ts",
+        "tools/src/site/publish.ts",
+        "tools/src/site/bucket.ts",
+        "tools/src/site/revision.ts",
+        "tools/src/site/invalidate.ts",
+        "tools/src/infra/outputs.ts",
+        "tools/src/infra/outputs.test.ts"
+      ],
+      "tasks": ["spa:publish:plan", "spa:publish", "spa:invalidate", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "03.smoke",
+      "sources": ["tools/src/site/smoke-spec.ts", "tools/src/site/smoke-spec.test.ts", "tools/src/site/smoke.ts"],
+      "tasks": ["spa:smoke", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "03.cleanup",
+      "sources": ["tools/src/site/unpublish.ts"],
+      "tasks": ["spa:unpublish", "spa:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "03.book-site",
+      "sources": ["book-infra/functions/url-rewrite.js", "book-infra/lib/book-site-stack.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "04.architecture",
+      "sources": ["examples/04-http-api/infra/lib/http-api-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "04.contract",
+      "sources": ["examples/04-http-api/src/contract.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type"],
+      "verification": "local"
+    },
+    {
+      "id": "04.app",
+      "sources": [
+        "examples/04-http-api/src/app.ts",
+        "examples/04-http-api/src/notes.ts",
+        "examples/04-http-api/src/compose.ts",
+        "examples/04-http-api/src/log.ts",
+        "examples/04-http-api/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "04.env",
+      "sources": [
+        "examples/04-http-api/src/env.ts",
+        "examples/04-http-api/test/env.test.ts",
+        "examples/04-http-api/.env.example"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "04.local",
+      "sources": [
+        "examples/04-http-api/src/dev.ts",
+        "examples/04-http-api/.env.example",
+        "examples/04-http-api/cdk.json"
+      ],
+      "tasks": ["dev:api", "dev:api:cdkd"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "04.tests",
+      "sources": [
+        "examples/04-http-api/test/app.test.ts",
+        "examples/04-http-api/test/client.test.ts",
+        "examples/04-http-api/src/client.ts",
+        "examples/04-http-api/infra/test/http-api-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "04.state",
+      "sources": [
+        "examples/04-http-api/src/lambda.ts",
+        "examples/04-http-api/src/notes.ts",
+        "examples/04-http-api/scripts/smoke.ts",
+        "examples/04-http-api/test/app.test.ts"
+      ],
+      "tasks": ["api:smoke", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "04.infra",
+      "sources": [
+        "examples/04-http-api/infra/lib/http-api-stack.ts",
+        "examples/04-http-api/infra/bin/app.ts",
+        "examples/04-http-api/infra/test/http-api-stack.test.ts"
+      ],
+      "tasks": ["api:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "04.deploy",
+      "sources": ["tools/src/infra/cdkd.ts", "examples/04-http-api/scripts/smoke.ts"],
+      "tasks": ["api:infra:diff", "api:infra:deploy", "api:smoke", "api:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "04.observe",
+      "sources": ["examples/04-http-api/src/log.ts", "examples/04-http-api/scripts/logs.ts"],
+      "tasks": ["api:logs"],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "04.workers",
+      "sources": ["examples/04-http-api/src/app.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "04.cleanup",
+      "sources": ["tools/src/infra/cdkd.ts"],
+      "tasks": ["api:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "book.architecture",
+      "sources": ["book/vite.config.ts", "book-infra/lib/book-site-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "book.build",
+      "sources": [
+        "book/vite.config.ts",
+        "book/site.ts",
+        "book/index.html",
+        "book/content",
+        "tools/src/book/generate.ts",
+        "tools/src/checks/content.ts",
+        "tools/src/checks/markdown.ts",
+        "tools/src/checks/markdown.test.ts",
+        "data"
+      ],
+      "tasks": ["dev:book", "build:book", "preview:book", "book:generate", "book:generate:check", "content:check"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "book.routing",
+      "sources": [
+        "book-infra/functions/url-rewrite.js",
+        "book-infra/test/url-rewrite.test.ts",
+        "tools/src/checks/links.ts"
+      ],
+      "tasks": ["test:unit", "links:check"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "book.infra",
+      "sources": [
+        "book-infra/lib/book-site-stack.ts",
+        "book-infra/bin/app.ts",
+        "book-infra/cdk.json",
+        "book-infra/test/book-site-stack.test.ts"
+      ],
+      "tasks": ["book:infra:synth", "book:infra:diff", "book:infra:deploy", "book:infra:drift", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "book.publish",
+      "sources": ["tools/src/site", "tools/src/infra/outputs.ts", "docs/examples/book-publish.yml"],
+      "tasks": ["book:publish:plan", "book:publish", "book:smoke", "book:invalidate"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "book.cleanup",
+      "sources": ["tools/src/site/unpublish.ts"],
+      "tasks": ["book:unpublish", "book:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ]
+}

@@ -1,0 +1,1292 @@
+{
+  "bookRevision": "2026-10-11.1",
+  "paths": {
+    "shortest": ["00", "01", "02", "03", "04", "05", "06", "07", "08", "19"],
+    "sql": ["00", "01", "02", "04", "13", "22"],
+    "ssr": ["00", "01", "02", "03", "04", "09", "10"],
+    "containers": ["00", "01", "02", "11", "12", "16"],
+    "cloudflare-d1": ["00", "01", "02", "04", "13", "22"],
+    "cloudflare-workers": ["00", "01", "02", "04", "10"],
+    "cloudflare-workers-ai": ["00", "01", "02", "04", "17"]
+  },
+  "chapters": [
+    {
+      "id": "00",
+      "slug": "welcome",
+      "title": {
+        "ja": "ようこそ: 何を作り、どう読むか",
+        "en": "Welcome: What You Will Build and How to Read"
+      },
+      "prerequisites": [],
+      "services": [],
+      "samplePath": null,
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11",
+      "sourceIds": ["cloudflare-workers-local-dev", "cloudflare-d1-local-dev", "cloudflare-workers-ai-bindings"]
+    },
+    {
+      "id": "01",
+      "slug": "account",
+      "title": {
+        "ja": "アカウント、一時認証情報、リージョン、予算、片付け",
+        "en": "Accounts, Temporary Credentials, Regions, Budgets, and Cleanup"
+      },
+      "prerequisites": ["00"],
+      "services": ["IAM", "AWS Sign-In", "AWS Budgets", "AWS Billing"],
+      "samplePath": "examples/01-account",
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11",
+      "sourceIds": ["aws-cli-login", "aws-budgets-managing-costs", "aws-free-tier", "iam-best-practices"]
+    },
+    {
+      "id": "02",
+      "slug": "toolchain",
+      "title": {
+        "ja": "再現できる TypeScript 開発: Nix、vp、CDK、cdkd、drift",
+        "en": "Reproducible TypeScript Development: Nix, vp, CDK, cdkd, and Drift"
+      },
+      "prerequisites": ["01"],
+      "services": ["AWS CDK", "CloudFormation", "S3"],
+      "samplePath": "examples/02-toolchain",
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11",
+      "sourceIds": [
+        "nix-develop",
+        "nix-flake",
+        "viteplus-run",
+        "viteplus-check",
+        "viteplus-env",
+        "cdk-bootstrapping",
+        "cdk-diff",
+        "cfn-drift",
+        "cdkd-introduction",
+        "cdkd-concepts",
+        "cdkd-drift",
+        "cdkd-npm",
+        "viteplus-npm",
+        "nixpkgs-pin"
+      ]
+    },
+    {
+      "id": "03",
+      "slug": "spa",
+      "title": {
+        "ja": "SPA を公開する: private S3 origin と CloudFront",
+        "en": "Publish a SPA: A Private S3 Origin and CloudFront"
+      },
+      "prerequisites": ["02"],
+      "services": ["S3", "CloudFront"],
+      "samplePath": "examples/03-spa",
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11",
+      "sourceIds": [
+        "cloudfront-oac-s3",
+        "cloudfront-pricing-payg",
+        "cloudfront-pricing-plans",
+        "aws-price-list-cloudfront",
+        "aws-price-list-s3",
+        "ox-content-site-generation",
+        "cdkd-npm",
+        "ox-content-npm",
+        "s3-getobject",
+        "cloudfront-functions-restrictions"
+      ]
+    },
+    {
+      "id": "04",
+      "slug": "http-api",
+      "title": {
+        "ja": "HTTP API を足す: Lambda と API Gateway HTTP API",
+        "en": "Add an HTTP API: Lambda and API Gateway HTTP API"
+      },
+      "prerequisites": ["02"],
+      "services": ["Lambda", "API Gateway HTTP API", "CloudWatch Logs", "IAM"],
+      "samplePath": "examples/04-http-api",
+      "writing": {
+        "ja": "complete",
+        "en": "complete"
+      },
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11",
+      "sourceIds": [
+        "apigw-http-vs-rest",
+        "lambda-pricing",
+        "aws-price-list-lambda",
+        "aws-price-list-apigw",
+        "aws-price-list-cloudwatch",
+        "cdkd-local",
+        "cloudflare-workers-local-dev",
+        "cdkd-npm",
+        "viteplus-npm",
+        "apigw-http-quotas",
+        "lambda-quotas"
+      ]
+    },
+    {
+      "id": "05",
+      "slug": "dynamodb",
+      "title": {
+        "ja": "ノートを保存する: DynamoDB",
+        "en": "Persist Notes: DynamoDB"
+      },
+      "prerequisites": ["04"],
+      "services": ["DynamoDB"],
+      "samplePath": "examples/05-dynamodb",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["dynamodb-intro", "dynamodb-global-tables", "dynamodb-global-tables-concepts"],
+      "outline": {
+        "outcome": {
+          "ja": "04章の API がノートを DynamoDB に保存し、同時更新で黙って上書きしないことをテストで示せる。",
+          "en": "The chapter 04 API stores notes in DynamoDB, and a test shows that concurrent updates never silently overwrite each other."
+        },
+        "architecture": {
+          "ja": "ブラウザ → API Gateway HTTP API → Lambda（ap-northeast-1）→ DynamoDB テーブル（on-demand）。",
+          "en": "Browser → API Gateway HTTP API → Lambda (ap-northeast-1) → DynamoDB table (on-demand)."
+        },
+        "topics": {
+          "ja": [
+            "アクセスパターンから partition key / sort key を決める",
+            "version 属性と ConditionExpression による楽観ロック",
+            "eventually / strongly consistent read の違いと費用",
+            "on-demand と provisioned の選び方",
+            "Global Tables の consistency mode（発展、要一次情報確認）",
+            "SQL が合うデータなら 13章へ進む判断基準"
+          ],
+          "en": [
+            "Deriving partition and sort keys from access patterns",
+            "Optimistic locking with a version attribute and ConditionExpression",
+            "Eventually versus strongly consistent reads and their cost",
+            "Choosing on-demand or provisioned capacity",
+            "Global Tables consistency modes (extension; verify against current docs)",
+            "When the data is relational enough to take the chapter 13 branch"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "NoteRepository の DynamoDB adapter と in-memory adapter（同じ contract test を通す）",
+            "CDK のテーブル定義と removalPolicy の assertion",
+            "競合更新・応答喪失後の再試行を再現する決定的テスト",
+            "DynamoDB Local を使う local integration（Docker daemon が必要なことを明記）"
+          ],
+          "en": [
+            "DynamoDB and in-memory NoteRepository adapters passing one contract test suite",
+            "CDK table definition with removalPolicy assertions",
+            "Deterministic tests for conflicting updates and retry after a lost response",
+            "Local integration against DynamoDB Local (stating the Docker daemon requirement)"
+          ]
+        },
+        "distributed": {
+          "ja": "状態の持ち主はテーブル。invariant は「version は保存のたびに 1 だけ増え、古い version からの更新は拒否される」。",
+          "en": "The table owns the state. Invariant: the version increases by exactly one per save, and updates from a stale version are rejected."
+        }
+      }
+    },
+    {
+      "id": "06",
+      "slug": "auth",
+      "title": {
+        "ja": "ログインを足す: Cognito と認可",
+        "en": "Add Login: Cognito and Authorization"
+      },
+      "prerequisites": ["03", "05"],
+      "services": ["Cognito user pools", "API Gateway HTTP API JWT authorizer"],
+      "samplePath": "examples/06-auth",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["cognito-user-pools"],
+      "outline": {
+        "outcome": {
+          "ja": "SPA から authorization code + PKCE でログインし、API は自分のノートだけを返す。",
+          "en": "The SPA signs in with authorization code + PKCE, and the API returns only the caller's own notes."
+        },
+        "architecture": {
+          "ja": "SPA → Cognito managed login → SPA（code）→ token endpoint。API Gateway の JWT authorizer が token を検証し、Lambda が sub でデータを絞る。",
+          "en": "SPA → Cognito managed login → SPA (code) → token endpoint. The API Gateway JWT authorizer validates the token and Lambda scopes data by sub."
+        },
+        "topics": {
+          "ja": [
+            "OIDC/OAuth の用語を最小限で",
+            "Amplify を使わない標準ライブラリでの PKCE",
+            "認証（誰か）と認可（そのノートを触ってよいか）の分離",
+            "token の保存場所と寿命",
+            "Cognito の料金単位（MAU と tier、要一次情報確認）"
+          ],
+          "en": [
+            "The minimum OIDC/OAuth vocabulary",
+            "PKCE with a standard library instead of Amplify",
+            "Separating authentication (who) from authorization (may they touch this note)",
+            "Token storage and lifetime",
+            "Cognito billing units (MAU and tiers; verify against current pricing)"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "user pool / app client の CDK と callback URL の設定",
+            "他人のノート ID を指定しても 404 になる認可テスト",
+            "ローカル用の署名付きテスト token を作る fixture（本物の Cognito を再現しないと明記）"
+          ],
+          "en": [
+            "CDK for the user pool, app client, and callback URLs",
+            "Authorization tests where another user's note ID returns 404",
+            "A fixture that signs local test tokens (explicitly not a Cognito emulation)"
+          ]
+        },
+        "distributed": {
+          "ja": "token は発行後も期限まで有効。失効の伝播は即時ではない点を扱う。",
+          "en": "A token stays valid until it expires; revocation does not propagate instantly."
+        }
+      }
+    },
+    {
+      "id": "07",
+      "slug": "uploads",
+      "title": {
+        "ja": "画像をアップロードする: presigned URL と S3",
+        "en": "Upload Images: Presigned URLs and S3"
+      },
+      "prerequisites": ["06"],
+      "services": ["S3"],
+      "samplePath": "examples/07-uploads",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": [],
+      "outline": {
+        "outcome": {
+          "ja": "ブラウザが presigned URL で画像を S3 に直接送り、ノートに添付できる。",
+          "en": "The browser sends an image straight to S3 with a presigned URL and attaches it to a note."
+        },
+        "architecture": {
+          "ja": "SPA → API（presign）→ SPA → S3 PUT。閲覧は CloudFront + OAC 経由。",
+          "en": "SPA → API (presign) → SPA → S3 PUT. Reads go through CloudFront + OAC."
+        },
+        "topics": {
+          "ja": [
+            "presigned URL が委譲する権限と期限",
+            "content-type / サイズの検証をどこで行えるか",
+            "object key の設計とユーザー分離",
+            "未完了 upload と孤立 object の lifecycle rule",
+            "CORS"
+          ],
+          "en": [
+            "What a presigned URL delegates and for how long",
+            "Where content type and size can actually be enforced",
+            "Object key design and per-user separation",
+            "Lifecycle rules for incomplete uploads and orphaned objects",
+            "CORS"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "presign handler と入力 schema",
+            "bucket の CDK（Block Public Access、lifecycle）と assertion",
+            "upload 成功後にノート更新が失敗した場合の孤立 object を再現するテスト"
+          ],
+          "en": [
+            "Presign handler and input schema",
+            "Bucket CDK (Block Public Access, lifecycle) with assertions",
+            "A test reproducing an orphaned object when the note update fails after upload"
+          ]
+        },
+        "distributed": {
+          "ja": "S3 への書込みと DynamoDB の更新は一つの transaction ではない。孤立を許容して掃除する設計を示す。",
+          "en": "The S3 write and the DynamoDB update are not one transaction; the design tolerates orphans and cleans them up."
+        }
+      }
+    },
+    {
+      "id": "08",
+      "slug": "async",
+      "title": {
+        "ja": "リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler",
+        "en": "Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler"
+      },
+      "prerequisites": ["07"],
+      "services": ["SQS", "Lambda", "EventBridge Scheduler"],
+      "samplePath": "examples/08-async",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["sqs-welcome", "eventbridge-scheduler"],
+      "outline": {
+        "outcome": {
+          "ja": "画像のサムネイル生成を queue に逃がし、同じメッセージが二度届いても結果が一つになる。",
+          "en": "Thumbnail generation moves to a queue, and a message delivered twice still produces one result."
+        },
+        "architecture": {
+          "ja": "S3 event → SQS → Lambda worker → S3 / DynamoDB。失敗は DLQ へ。Scheduler が定期掃除を起動。",
+          "en": "S3 event → SQS → Lambda worker → S3 / DynamoDB. Failures go to a DLQ. Scheduler triggers periodic cleanup."
+        },
+        "topics": {
+          "ja": [
+            "at-least-once 配送と visibility timeout",
+            "partial batch response",
+            "idempotency key と conditional write",
+            "DLQ の監視と redrive",
+            "backpressure と同時実行数の上限"
+          ],
+          "en": [
+            "At-least-once delivery and the visibility timeout",
+            "Partial batch responses",
+            "Idempotency keys with conditional writes",
+            "Monitoring and redriving a DLQ",
+            "Backpressure and concurrency limits"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "worker と idempotency store",
+            "重複配送・順序入替え・途中中断を注入する決定的テスト",
+            "queue / DLQ / event source mapping の CDK と assertion"
+          ],
+          "en": [
+            "Worker and idempotency store",
+            "Deterministic tests injecting duplicates, reordering, and mid-flight interruption",
+            "CDK for queue, DLQ, and event source mapping with assertions"
+          ]
+        },
+        "distributed": {
+          "ja": "invariant は「1 つの画像に対しサムネイル記録は高々 1 つ」。SQS を使うこと自体は exactly-once を与えない。",
+          "en": "Invariant: at most one thumbnail record per image. Using SQS does not by itself provide exactly-once processing."
+        }
+      }
+    },
+    {
+      "id": "09",
+      "slug": "ssr",
+      "title": {
+        "ja": "SSR と BFF: Nuxt をリージョンの Lambda で動かす",
+        "en": "SSR and a BFF: Nuxt on Regional Lambda"
+      },
+      "prerequisites": ["03", "04"],
+      "services": ["Lambda", "CloudFront", "S3"],
+      "samplePath": "examples/09-ssr",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["lambda-response-streaming"],
+      "outline": {
+        "outcome": {
+          "ja": "Nuxt アプリが東京リージョンの Lambda で HTML を返し、静的 asset は S3 から配信される。",
+          "en": "A Nuxt app renders HTML on Lambda in the Tokyo region while static assets come from S3."
+        },
+        "architecture": {
+          "ja": "CloudFront → (/_nuxt/* は S3) / (その他は Lambda の SSR)。これは edge rendering ではなく regional SSR。",
+          "en": "CloudFront → (/_nuxt/* from S3) / (everything else to SSR on Lambda). This is regional SSR, not edge rendering."
+        },
+        "topics": {
+          "ja": [
+            "Nitro の AWS Lambda preset（固定版で確認）",
+            "cookie と個人別ページを共有 cache に載せない cache key 設計",
+            "response streaming の経路全体での確認",
+            "BFF として API を呼ぶときの認証の受け渡し"
+          ],
+          "en": [
+            "Nitro's AWS Lambda preset (verified at the pinned version)",
+            "Cache-key design that keeps cookies and personalized pages out of the shared cache",
+            "Verifying response streaming across the whole path",
+            "Passing authentication through a BFF"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "Nuxt アプリと CDK",
+            "Cache-Control / cache policy を検証する assertion とローカル test",
+            "ログイン済みページが cache されないことの smoke test 手順"
+          ],
+          "en": [
+            "Nuxt app and CDK",
+            "Assertions and local tests for Cache-Control and cache policies",
+            "Smoke-test procedure showing signed-in pages are not cached"
+          ]
+        },
+        "distributed": {
+          "ja": "CDN cache は古い内容を返し得る。誰の、どの期間の stale を許すかを明示する。",
+          "en": "A CDN cache can serve stale content; state whose staleness is acceptable and for how long."
+        }
+      }
+    },
+    {
+      "id": "10",
+      "slug": "edge",
+      "title": {
+        "ja": "edge を理解する: CloudFront Functions、KeyValueStore、Lambda@Edge",
+        "en": "Understand the Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
+      },
+      "prerequisites": ["03"],
+      "services": ["CloudFront Functions", "CloudFront KeyValueStore", "Lambda@Edge"],
+      "samplePath": "examples/10-edge",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["cloudfront-functions-restrictions", "cloudfront-kvs", "lambda-edge-restrictions"],
+      "outline": {
+        "outcome": {
+          "ja": "redirect と feature flag を edge で処理し、どの処理をどの実行環境に置くか説明できる。",
+          "en": "Redirects and a feature flag run at the edge, and you can explain which work belongs in which runtime."
+        },
+        "architecture": {
+          "ja": "viewer request → CloudFront Function（+ KeyValueStore）→ cache → origin。",
+          "en": "Viewer request → CloudFront Function (+ KeyValueStore) → cache → origin."
+        },
+        "topics": {
+          "ja": [
+            "CloudFront Functions の runtime 制約（network なし、実行時間、サイズ）",
+            "KeyValueStore の更新伝播と用途",
+            "Lambda@Edge の region / version / 環境変数の制約",
+            "Workers と同じものではない点の率直な比較"
+          ],
+          "en": [
+            "CloudFront Functions runtime limits (no network, execution time, size)",
+            "KeyValueStore propagation and intended use",
+            "Lambda@Edge region, version, and environment-variable restrictions",
+            "A candid comparison: these are not Workers"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "Function のコードと、Node 上で同じ入力を与える unit test",
+            "KVS の CDK と更新 script",
+            "本のサイトの URL rewrite Function との対応"
+          ],
+          "en": [
+            "Function code with unit tests that feed the same events under Node",
+            "KVS CDK and an update script",
+            "How it relates to the book site's own URL-rewrite function"
+          ]
+        },
+        "distributed": {
+          "ja": "KVS の読みは edge ごとに結果整合。書いた直後に全 edge で読めるとは仮定しない。",
+          "en": "KVS reads are eventually consistent per edge; a write is not immediately visible everywhere."
+        }
+      }
+    },
+    {
+      "id": "11",
+      "slug": "network",
+      "title": {
+        "ja": "本当に必要なネットワーク: VPC、subnet、NAT、endpoint",
+        "en": "The Network You Actually Need: VPC, Subnets, NAT, and Endpoints"
+      },
+      "prerequisites": ["02"],
+      "services": ["VPC", "NAT Gateway", "VPC endpoints"],
+      "samplePath": "examples/11-network",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["vpc-pricing"],
+      "outline": {
+        "outcome": {
+          "ja": "後続章の DB とコンテナが入る最小の VPC を作り、時間課金される部品を説明できる。",
+          "en": "You build the smallest VPC the database and container chapters need and can name every hourly-billed part."
+        },
+        "architecture": {
+          "ja": "2 AZ の public / private subnet。NAT は必要になるまで作らず、endpoint との費用を比べる。",
+          "en": "Public and private subnets in two AZs. No NAT until it is needed; compare its cost with endpoints."
+        },
+        "topics": {
+          "ja": [
+            "route table が到達性を決める",
+            "security group は stateful",
+            "NAT Gateway・public IPv4・interface endpoint の固定費",
+            "Lambda を VPC に入れる条件"
+          ],
+          "en": [
+            "Route tables decide reachability",
+            "Security groups are stateful",
+            "Fixed costs of NAT Gateways, public IPv4, and interface endpoints",
+            "When Lambda belongs in a VPC"
+          ]
+        },
+        "requiredSource": {
+          "ja": ["VPC の CDK と、NAT が存在しないことを確かめる assertion", "構成別の月額を出す価格計算の入力"],
+          "en": [
+            "VPC CDK with an assertion that no NAT exists",
+            "Pricing inputs that compute the monthly cost per layout"
+          ]
+        },
+        "distributed": {
+          "ja": "複数 AZ は region 障害への備えではない。AZ と region を区別する。",
+          "en": "Multiple AZs do not protect against a regional outage; keep AZs and regions distinct."
+        }
+      }
+    },
+    {
+      "id": "12",
+      "slug": "containers",
+      "title": {
+        "ja": "コンテナを動かす: ECR、ECS/Fargate、ALB",
+        "en": "Run Containers: ECR, ECS/Fargate, and ALB"
+      },
+      "prerequisites": ["11"],
+      "services": ["ECR", "ECS", "Fargate", "ALB"],
+      "samplePath": "examples/12-containers",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["ecs-welcome", "elb-pricing", "docker-overview"],
+      "outline": {
+        "outcome": {
+          "ja": "ノート API をコンテナとして ECS/Fargate で動かし、無停止で更新できる。",
+          "en": "The notes API runs as a container on ECS/Fargate and updates without downtime."
+        },
+        "architecture": {
+          "ja": "ALB → ECS service（private subnet、2 task）。image は ECR。",
+          "en": "ALB → ECS service (private subnets, two tasks). Images live in ECR."
+        },
+        "topics": {
+          "ja": [
+            "Docker CLI と host 側 daemon の区別",
+            "health check と rolling update、circuit breaker",
+            "task role と execution role",
+            "常時稼働の費用（Fargate、ALB、public IPv4）",
+            "auto scaling の指標"
+          ],
+          "en": [
+            "The Docker client versus the host daemon",
+            "Health checks, rolling updates, and the circuit breaker",
+            "Task role versus execution role",
+            "Always-on costs (Fargate, ALB, public IPv4)",
+            "Scaling metrics"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "Dockerfile とアプリ",
+            "ECS/ALB の CDK と assertion",
+            "SIGTERM で進行中リクエストを完了させる graceful shutdown のテスト"
+          ],
+          "en": [
+            "Dockerfile and app",
+            "ECS/ALB CDK with assertions",
+            "A graceful-shutdown test that finishes in-flight requests on SIGTERM"
+          ]
+        },
+        "distributed": {
+          "ja": "更新中は新旧 version が同時に動く。両方が同じデータ形式を読めることを invariant にする。",
+          "en": "Old and new versions run together during a deployment; both must read the same data format."
+        }
+      }
+    },
+    {
+      "id": "13",
+      "slug": "sql",
+      "title": {
+        "ja": "D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2",
+        "en": "SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
+      },
+      "prerequisites": ["04"],
+      "services": ["Aurora DSQL", "RDS for PostgreSQL", "Aurora Serverless v2"],
+      "samplePath": "examples/13-sql",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": [
+        "dsql-what-is",
+        "dsql-pg-compat",
+        "dsql-ddl",
+        "dsql-node-connectors",
+        "dsql-concurrency",
+        "dsql-pricing",
+        "aurora-auto-pause",
+        "rds-welcome",
+        "cloudflare-d1-local-dev",
+        "cloudflare-d1-migrations",
+        "cloudflare-d1-read-replication"
+      ],
+      "outline": {
+        "outcome": {
+          "ja": "schema、migration、型付き CRUD、seed/reset、テスト、実環境の migration、backup/restore までを SQL で一通り行える。",
+          "en": "You run the whole SQL loop: schema, migrations, typed CRUD, seed/reset, tests, deployed migrations, and backup/restore."
+        },
+        "architecture": {
+          "ja": "Lambda → Aurora DSQL（IAM 認証、VPC 不要の経路を一次情報で確認）。比較として RDS PostgreSQL / Aurora Serverless v2 は 11章の VPC 内。",
+          "en": "Lambda → Aurora DSQL (IAM auth; verify the VPC-free path in current docs). For comparison, RDS PostgreSQL and Aurora Serverless v2 sit inside the chapter 11 VPC."
+        },
+        "topics": {
+          "ja": [
+            "三つの選択肢を SQL 互換性・認証・接続・transaction・無通信時費用で選ぶ",
+            "DSQL は完全な PostgreSQL ではない: 対応 SQL/DDL と migration tool を固定版で確認",
+            "OCC による commit 時の競合と再試行",
+            "ローカルの PostgreSQL は代用であり DSQL の認証・競合を再現しない",
+            "Aurora auto-pause の条件と残る storage 料金",
+            "D1 の read replica/Sessions との保証範囲の比較"
+          ],
+          "en": [
+            "Choosing among three options by SQL compatibility, auth, connections, transactions, and idle cost",
+            "DSQL is not full PostgreSQL: verify supported SQL/DDL and migration tools at the pinned version",
+            "OCC conflicts at commit and retries",
+            "Local PostgreSQL is a substitute that reproduces neither DSQL auth nor contention",
+            "Aurora auto-pause conditions and the storage charges that remain",
+            "Comparing guarantee scope with D1 read replicas and Sessions"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "migration、seed、reset の vp task（local / cloud を分離、cache: false）",
+            "型付き query 層と contract test",
+            "serialization failure を注入して再試行を確かめる決定的テスト",
+            "D1 側の比較コードを載せる場合は wrangler 設定を含む完全なソース"
+          ],
+          "en": [
+            "vp tasks for migrate, seed, and reset (local and cloud separated, cache: false)",
+            "Typed query layer with contract tests",
+            "Deterministic tests that inject serialization failures and verify retries",
+            "If D1 comparison code is shown, its complete source including wrangler configuration"
+          ]
+        },
+        "distributed": {
+          "ja": "invariant は「transaction は全体が commit されるか全体が再試行される」。再試行は冪等な範囲に閉じる。",
+          "en": "Invariant: a transaction either commits as a whole or is retried as a whole, and retries stay within idempotent scope."
+        }
+      }
+    },
+    {
+      "id": "14",
+      "slug": "kv-cache",
+      "title": {
+        "ja": "key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定",
+        "en": "Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration"
+      },
+      "prerequisites": ["05", "10", "11"],
+      "services": ["DynamoDB", "ElastiCache", "CloudFront KeyValueStore"],
+      "samplePath": "examples/14-kv-cache",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["cloudfront-kvs", "dynamodb-intro"],
+      "outline": {
+        "outcome": {
+          "ja": "rate limit と一覧の cache を題材に、三つの「KV」を目的・一貫性・寿命・料金で選び分ける。",
+          "en": "Using a rate limiter and a list cache, you pick among three \"KV\" options by purpose, consistency, lifetime, and price."
+        },
+        "architecture": {
+          "ja": "同じ interface の裏に DynamoDB（TTL）と Valkey を置き、edge 設定は KVS に分ける。",
+          "en": "DynamoDB (TTL) and Valkey behind one interface, with edge configuration kept in KVS."
+        },
+        "topics": {
+          "ja": [
+            "cache は消えてよいデータだけに使う",
+            "TTL の削除は即時ではない",
+            "Valkey は VPC と常時稼働費用を伴う（serverless の最小課金を確認）",
+            "cache stampede"
+          ],
+          "en": [
+            "Cache only data you can afford to lose",
+            "TTL deletion is not immediate",
+            "Valkey brings a VPC and standing cost (check the serverless minimum)",
+            "Cache stampedes"
+          ]
+        },
+        "requiredSource": {
+          "ja": ["rate limiter の実装と、時計を注入した境界テスト", "各 store の CDK", "stale read を再現するテスト"],
+          "en": [
+            "Rate limiter with boundary tests using an injected clock",
+            "CDK for each store",
+            "A test reproducing a stale read"
+          ]
+        },
+        "distributed": {
+          "ja": "cache と元データの不一致を前提に、どちらが正かを決める。",
+          "en": "Assume the cache and the source of truth disagree, and decide which one wins."
+        }
+      }
+    },
+    {
+      "id": "15",
+      "slug": "email",
+      "title": {
+        "ja": "メールを送る: SES",
+        "en": "Send Email: SES"
+      },
+      "prerequisites": ["08"],
+      "services": ["SES"],
+      "samplePath": "examples/15-email",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["ses-production-access"],
+      "outline": {
+        "outcome": {
+          "ja": "ノート共有の通知メールを送り、bounce と complaint を受けて送信を止められる。",
+          "en": "You send a share-notification email and stop sending when a bounce or complaint arrives."
+        },
+        "architecture": {
+          "ja": "queue → Lambda → SES。bounce/complaint は event destination → SQS → suppression 記録。",
+          "en": "Queue → Lambda → SES. Bounces and complaints flow through an event destination → SQS → suppression record."
+        },
+        "topics": {
+          "ja": [
+            "sandbox と production access の申請（手作業の手順）",
+            "SPF/DKIM/DMARC と Route 53",
+            "重複送信を防ぐ冪等性"
+          ],
+          "en": [
+            "The sandbox and the production-access request (a manual procedure)",
+            "SPF/DKIM/DMARC with Route 53",
+            "Idempotency against duplicate sends"
+          ]
+        },
+        "requiredSource": {
+          "ja": ["送信 adapter と fixture", "identity / configuration set の CDK", "同じ通知を二度送らないテスト"],
+          "en": [
+            "Send adapter and fixtures",
+            "CDK for the identity and configuration set",
+            "A test that the same notification is not sent twice"
+          ]
+        },
+        "distributed": {
+          "ja": "送信 API の成功は配達の成功ではない。応答喪失後の再送で重複し得る。",
+          "en": "A successful send call is not delivery, and a retry after a lost response can duplicate the email."
+        }
+      }
+    },
+    {
+      "id": "16",
+      "slug": "long-jobs",
+      "title": {
+        "ja": "長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch",
+        "en": "Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
+      },
+      "prerequisites": ["08", "12"],
+      "services": ["Step Functions", "Lambda durable functions", "ECS", "AWS Batch", "EventBridge Scheduler"],
+      "samplePath": "examples/16-long-jobs",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["lambda-durable-functions", "eventbridge-scheduler"],
+      "outline": {
+        "outcome": {
+          "ja": "全ノートの export を、途中で止まっても続きから再開できる処理として作る。",
+          "en": "You build a full-notes export that resumes where it stopped after an interruption."
+        },
+        "architecture": {
+          "ja": "Scheduler → workflow（Step Functions または durable function）→ 各 step の Lambda / ECS task → S3。",
+          "en": "Scheduler → workflow (Step Functions or a durable function) → Lambda or ECS task per step → S3."
+        },
+        "topics": {
+          "ja": [
+            "Lambda の 15 分上限と分割",
+            "Lambda durable functions（進捗を保持して再開）と Durable Objects（ID ごとの状態）の違い",
+            "補償処理",
+            "state transition 課金と待機の費用"
+          ],
+          "en": [
+            "Lambda's 15-minute limit and splitting work",
+            "Lambda durable functions (resumable progress) versus Durable Objects (state per identity)",
+            "Compensation",
+            "State-transition billing and the cost of waiting"
+          ]
+        },
+        "requiredSource": {
+          "ja": ["workflow 定義と step の実装", "worker 中断後に再開しても出力が重複しないテスト"],
+          "en": [
+            "Workflow definition and step implementations",
+            "A test that resuming after a worker interruption produces no duplicate output"
+          ]
+        },
+        "distributed": {
+          "ja": "step は再実行され得る。各 step を冪等にし、checkpoint の粒度を選ぶ。",
+          "en": "Steps can run again; make each one idempotent and choose the checkpoint granularity."
+        }
+      }
+    },
+    {
+      "id": "17",
+      "slug": "ai",
+      "title": {
+        "ja": "Workers AI に親しんだ人の AI 開発: Bedrock",
+        "en": "AI Development for Workers AI Users: Bedrock"
+      },
+      "prerequisites": ["04"],
+      "services": ["Bedrock", "Lambda response streaming"],
+      "samplePath": "examples/17-ai",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": [
+        "bedrock-what-is",
+        "bedrock-converse",
+        "lambda-response-streaming",
+        "cloudflare-workers-ai-quickstart",
+        "cloudflare-workers-ai-bindings"
+      ],
+      "outline": {
+        "outcome": {
+          "ja": "ノートの要約を streaming で返す API を作り、fixture のテストと実推論の確認を分けて持つ。",
+          "en": "You build a streaming note-summary API with fixture tests kept apart from live inference checks."
+        },
+        "architecture": {
+          "ja": "SPA → streaming 対応の経路（Lambda Function URL の response streaming 等を固定版で確認）→ Bedrock Converse stream。",
+          "en": "SPA → a streaming-capable path (for example a Lambda function URL with response streaming, verified at the pinned version) → Bedrock ConverseStream."
+        },
+        "topics": {
+          "ja": [
+            "数行の呼出しから始める",
+            "型付き request と出力の runtime validation",
+            "cancel/timeout/retry、quota と throttling",
+            "model と token 単位の課金",
+            "ローカルの API server が呼ぶ推論は remote で課金される",
+            "streaming を server/proxy/CDN/browser の全経路で確認"
+          ],
+          "en": [
+            "Starting from a few lines",
+            "Typed requests and runtime validation of output",
+            "Cancellation, timeouts, retries, quotas, and throttling",
+            "Per-model, per-token billing",
+            "A local API server still calls remote, billable inference",
+            "Verifying streaming across server, proxy, CDN, and browser"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "要約 handler と stream parser",
+            "決定的な stream fixture と中断テスト",
+            "test:aws:ai など実推論専用の vp task（cache: false）",
+            "IAM policy を model 単位に絞る CDK"
+          ],
+          "en": [
+            "Summary handler and stream parser",
+            "Deterministic stream fixtures and interruption tests",
+            "A live-inference-only vp task such as test:aws:ai (cache: false)",
+            "CDK scoping the IAM policy to specific models"
+          ]
+        },
+        "distributed": {
+          "ja": "stream は途中で切れる。部分出力を保存するか捨てるかを決める。",
+          "en": "A stream can end midway; decide whether partial output is kept or discarded."
+        }
+      }
+    },
+    {
+      "id": "18",
+      "slug": "live",
+      "title": {
+        "ja": "ライブ配信のレシピ: IVS",
+        "en": "A Live-Streaming Recipe: IVS"
+      },
+      "prerequisites": ["04"],
+      "services": ["IVS"],
+      "samplePath": "examples/18-live",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["ivs-what-is"],
+      "outline": {
+        "outcome": {
+          "ja": "配信ソフトから IVS channel へ送り、Web の player で視聴する。",
+          "en": "You broadcast to an IVS channel from streaming software and watch it in a web player."
+        },
+        "architecture": {
+          "ja": "encoder → IVS channel → player。stream key は secret として扱う。",
+          "en": "Encoder → IVS channel → player. The stream key is handled as a secret."
+        },
+        "topics": {
+          "ja": [
+            "low-latency と real-time の違い",
+            "入力時間と視聴時間の課金",
+            "配信を止め忘れた場合の費用",
+            "MediaLive 等が必要になる条件"
+          ],
+          "en": [
+            "Low-latency versus real-time streaming",
+            "Billing by input and viewing hours",
+            "The cost of forgetting to stop a stream",
+            "When MediaLive and friends become necessary"
+          ]
+        },
+        "requiredSource": {
+          "ja": ["channel の CDK", "player ページ", "stream 状態を確認する script"],
+          "en": ["Channel CDK", "Player page", "A script that checks stream state"]
+        },
+        "distributed": {
+          "ja": "視聴者ごとに遅延が違う。chat など別経路との同期を仮定しない。",
+          "en": "Latency differs per viewer; do not assume sync with side channels such as chat."
+        }
+      }
+    },
+    {
+      "id": "19",
+      "slug": "observability",
+      "title": {
+        "ja": "本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics",
+        "en": "See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics"
+      },
+      "prerequisites": ["04"],
+      "services": ["CloudWatch", "X-Ray", "CloudWatch RUM", "CloudWatch Synthetics"],
+      "samplePath": "examples/19-observability",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["cloudwatch-rum", "xray-sdk-timeline"],
+      "outline": {
+        "outcome": {
+          "ja": "1 つのリクエストを browser から Lambda、queue の worker まで同じ ID で追える。",
+          "en": "You follow one request from the browser through Lambda to the queue worker by a single ID."
+        },
+        "architecture": {
+          "ja": "構造化ログ → CloudWatch Logs。trace は OpenTelemetry → X-Ray。alarm → 通知。",
+          "en": "Structured logs → CloudWatch Logs. Traces via OpenTelemetry → X-Ray. Alarms → notification."
+        },
+        "topics": {
+          "ja": [
+            "04章のログ形式を土台にする",
+            "新規計装は OpenTelemetry。X-Ray SDK/daemon の寿命と X-Ray service は別",
+            "log の取込みと保存の費用",
+            "症状に対する alarm"
+          ],
+          "en": [
+            "Building on the chapter 04 log format",
+            "OpenTelemetry for new instrumentation; the X-Ray SDK/daemon lifecycle is not the X-Ray service",
+            "Log ingestion and storage cost",
+            "Alarming on symptoms"
+          ]
+        },
+        "requiredSource": {
+          "ja": ["計装の設定", "alarm の CDK と assertion", "log 量から費用を出す計算入力"],
+          "en": ["Instrumentation setup", "Alarm CDK with assertions", "Pricing inputs deriving cost from log volume"]
+        },
+        "distributed": {
+          "ja": "trace は sampling される。欠けた span を障害と誤読しない。",
+          "en": "Traces are sampled; a missing span is not necessarily a failure."
+        }
+      }
+    },
+    {
+      "id": "20",
+      "slug": "shipping",
+      "title": {
+        "ja": "変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift",
+        "en": "Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift"
+      },
+      "prerequisites": ["02", "04"],
+      "services": ["IAM OIDC", "CloudFormation", "AWS CDK"],
+      "samplePath": "examples/20-shipping",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["cfn-drift", "cfn-detect-drift", "cdkd-drift", "cdkd-cli-drift", "cdk-diff"],
+      "outline": {
+        "outcome": {
+          "ja": "CI が OIDC の短命 credentials で同じ vp task を実行し、定期的な drift 検出が未検査も含めて報告する。",
+          "en": "CI runs the same vp tasks with short-lived OIDC credentials, and scheduled drift detection reports uninspected scope too."
+        },
+        "architecture": {
+          "ja": "pull request → check:all → infra:diff。main → deploy（標準の CDK/CloudFormation 経路）。schedule → drift。",
+          "en": "Pull request → check:all → infra:diff. main → deploy (the standard CDK/CloudFormation path). Schedule → drift."
+        },
+        "topics": {
+          "ja": [
+            "02章の drift gate を実環境へ",
+            "CloudFormation drift detection の検査範囲と nested stack",
+            "cdkd と CloudFormation を同じ resource に交互に使わない",
+            "rollback できるものとできないもの（data、schema）",
+            "preview 環境の費用と片付け"
+          ],
+          "en": [
+            "Taking the chapter 02 drift gate to a live account",
+            "CloudFormation drift-detection coverage and nested stacks",
+            "Never alternating cdkd and CloudFormation over the same resources",
+            "What rolls back and what does not (data, schema)",
+            "Preview-environment cost and cleanup"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "OIDC role の CDK と trust policy の assertion",
+            "CI 設定（同じ Nix lock と vp task）",
+            "CloudFormation drift の polling/parser/report と fixture",
+            "drift 注入と解消の実環境ラボ手順"
+          ],
+          "en": [
+            "OIDC role CDK with trust-policy assertions",
+            "CI configuration (same Nix lock and vp tasks)",
+            "CloudFormation drift polling, parser, and report with fixtures",
+            "A live lab procedure for injecting and resolving drift"
+          ]
+        },
+        "distributed": {
+          "ja": "deploy は原子的ではない。途中失敗で一部だけ更新された状態を前提に手順を書く。",
+          "en": "A deployment is not atomic; procedures assume a partially updated state after a mid-flight failure."
+        }
+      }
+    },
+    {
+      "id": "21",
+      "slug": "security",
+      "title": {
+        "ja": "守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations",
+        "en": "Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
+      },
+      "prerequisites": ["06", "20"],
+      "services": [
+        "WAF",
+        "Inspector",
+        "GuardDuty",
+        "Secrets Manager",
+        "KMS",
+        "CloudTrail",
+        "AWS Config",
+        "Organizations"
+      ],
+      "samplePath": "examples/21-security",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["inspector-what-is", "guardduty-what-is", "iam-best-practices"],
+      "outline": {
+        "outcome": {
+          "ja": "個人利用で入れるものと、組織になったら必要なものを分けて設定できる。",
+          "en": "You configure what an individual needs and know what an organization adds."
+        },
+        "architecture": {
+          "ja": "CloudFront + WAF。secret は Secrets Manager。監査は CloudTrail。脆弱性は Inspector、脅威は GuardDuty。",
+          "en": "CloudFront + WAF. Secrets in Secrets Manager. Audit through CloudTrail. Vulnerabilities via Inspector, threats via GuardDuty."
+        },
+        "topics": {
+          "ja": [
+            "Inspector（脆弱性検査）と GuardDuty（脅威検出）は別物",
+            "WAF を付けられる入口と付けられない入口",
+            "secret ごと・key ごとの月額",
+            "SCP は権限を与えず上限を決める"
+          ],
+          "en": [
+            "Inspector (vulnerability scanning) and GuardDuty (threat detection) are different things",
+            "Which entry points can and cannot carry WAF",
+            "Per-secret and per-key monthly charges",
+            "SCPs set limits; they grant nothing"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "WAF rule の CDK",
+            "secret を読む adapter と rotation の手順",
+            "IAM policy の wildcard を検出する assertion"
+          ],
+          "en": [
+            "WAF rule CDK",
+            "Secret-reading adapter and a rotation procedure",
+            "Assertions that detect wildcard IAM policies"
+          ]
+        },
+        "distributed": {
+          "ja": "IAM の変更は結果整合。直後の拒否/許可を前提にしない。",
+          "en": "IAM changes are eventually consistent; do not rely on an immediate allow or deny."
+        }
+      }
+    },
+    {
+      "id": "22",
+      "slug": "recovery",
+      "title": {
+        "ja": "データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup",
+        "en": "Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup"
+      },
+      "prerequisites": ["05", "07"],
+      "services": ["DynamoDB PITR", "S3 Versioning", "S3 Replication", "AWS Backup"],
+      "samplePath": "examples/22-recovery",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": [],
+      "outline": {
+        "outcome": {
+          "ja": "誤って消したノートと画像を実際に復元し、かかった時間と失ったデータを記録する。",
+          "en": "You actually restore accidentally deleted notes and images and record the time taken and data lost."
+        },
+        "architecture": {
+          "ja": "DynamoDB PITR → 新しいテーブルへ復元 → 切替。S3 は versioning から復元。",
+          "en": "DynamoDB PITR → restore into a new table → cut over. S3 restores from versions."
+        },
+        "topics": {
+          "ja": [
+            "replication は backup ではない: 削除も複製される",
+            "RPO/RTO を実測する",
+            "復元は新しい resource を作る: IaC と drift への影響",
+            "backup の保存費用"
+          ],
+          "en": [
+            "Replication is not backup: deletions replicate too",
+            "Measuring RPO and RTO",
+            "Restores create new resources: the effect on IaC and drift",
+            "Backup storage cost"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "backup/restore の vp task（cache: false）",
+            "復元後に 05章・08章の invariant が成り立つかの検査 script",
+            "drill の記録 template"
+          ],
+          "en": [
+            "Backup and restore vp tasks (cache: false)",
+            "A script checking the chapter 05 and 08 invariants after restore",
+            "A drill record template"
+          ]
+        },
+        "distributed": {
+          "ja": "DB と object store は別時点に戻る。復元後の不整合を検出して直す。",
+          "en": "The database and the object store restore to different points in time; detect and repair the mismatch."
+        }
+      }
+    },
+    {
+      "id": "23",
+      "slug": "ec2",
+      "title": {
+        "ja": "制御したいときの EC2: SSM、EBS、プロセス運用",
+        "en": "EC2 When You Want Control: SSM, EBS, and Process Management"
+      },
+      "prerequisites": ["11"],
+      "services": ["EC2", "Systems Manager", "EBS"],
+      "samplePath": "examples/23-ec2",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["vpc-pricing"],
+      "outline": {
+        "outcome": {
+          "ja": "SSH の port を開けずに EC2 へ入り、プロセスを service として動かし、patch を当てる。",
+          "en": "You reach an EC2 instance without opening SSH, run a process as a service, and patch it."
+        },
+        "architecture": {
+          "ja": "private subnet の instance + instance role + SSM Session Manager。data は別の EBS volume。",
+          "en": "An instance in a private subnet with an instance role and SSM Session Manager; data on a separate EBS volume."
+        },
+        "topics": {
+          "ja": [
+            "instance role と一時認証情報",
+            "停止中も続く EBS と public IPv4 の課金",
+            "systemd と graceful shutdown",
+            "長生きする machine の責任範囲"
+          ],
+          "en": [
+            "Instance roles and temporary credentials",
+            "EBS and public IPv4 charges that continue while stopped",
+            "systemd and graceful shutdown",
+            "What you own on a long-lived machine"
+          ]
+        },
+        "requiredSource": {
+          "ja": ["instance の CDK と user data", "systemd unit", "volume の snapshot/restore 手順"],
+          "en": ["Instance CDK and user data", "systemd unit", "Volume snapshot and restore procedure"]
+        },
+        "distributed": {
+          "ja": "1 台は単一障害点。それを受け入れる条件を明示する。",
+          "en": "One machine is a single point of failure; state when that is acceptable."
+        }
+      }
+    },
+    {
+      "id": "24",
+      "slug": "celld",
+      "title": {
+        "ja": "発展ラボ: celld を AWS でセルフホストする",
+        "en": "Advanced Lab: Self-Hosting celld on AWS"
+      },
+      "prerequisites": ["22", "23"],
+      "services": ["EC2", "EBS", "S3", "VPC"],
+      "samplePath": "examples/24-celld",
+      "writing": {
+        "ja": "planned",
+        "en": "planned"
+      },
+      "sourceIds": ["celld-source", "celld-limitations", "celld-security", "celld-guarantees", "celld-docs"],
+      "outline": {
+        "outcome": {
+          "ja": "celld を 1 台の EC2 で動かし、次に小さな fleet で drain・更新・復旧を試す。",
+          "en": "You run celld on one EC2 instance, then try draining, upgrading, and recovery on a small fleet."
+        },
+        "architecture": {
+          "ja": "private subnet の node 群（peer 通信は private + TLS）+ 保持する EBS と S3 bucket。CDK はインフラまで、celld の配置は別手順。",
+          "en": "Nodes in private subnets (private peer traffic over TLS) with retained EBS volumes and an S3 bucket. CDK stops at infrastructure; deploying celld is a separate procedure."
+        },
+        "topics": {
+          "ja": [
+            "celld は AWS の managed service ではなく、版を固定して自分で運用する OSS（調査時点で beta）",
+            "公式の limitations/security/guarantees/upgrade notes を再確認",
+            "S3 があっても全 node の disk を同時に捨てられるとは限らない",
+            "drain と更新の順序",
+            "未確認の cdkd 統合は作らない"
+          ],
+          "en": [
+            "celld is self-operated, version-pinned OSS (beta when researched), not an AWS managed service",
+            "Rechecking the official limitations, security, guarantees, and upgrade notes",
+            "S3 does not mean every node disk can be discarded at once",
+            "Drain and upgrade ordering",
+            "No invented cdkd integration"
+          ]
+        },
+        "requiredSource": {
+          "ja": [
+            "fleet の CDK と保持設定の assertion",
+            "配置・drain・更新・backup/restore の script と vp task",
+            "node 喪失後に object ownership の invariant を確かめる検査"
+          ],
+          "en": [
+            "Fleet CDK with retention assertions",
+            "Scripts and vp tasks for deploy, drain, upgrade, and backup/restore",
+            "A check of the object-ownership invariant after losing a node"
+          ]
+        },
+        "distributed": {
+          "ja": "保証は celld が文書化した protocol と failure model に依存する。任意の障害での無損失は主張しない。",
+          "en": "Guarantees depend on celld's documented protocol and failure model; no claim of losslessness under arbitrary failures."
+        }
+      }
+    }
+  ]
+}
