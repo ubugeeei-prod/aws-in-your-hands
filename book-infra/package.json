@@ -1,0 +1,14 @@
+{
+  "name": "@aih/book-infra",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "@go-to-k/cdkd": "0.296.28",
+    "vite-plus": "1.1.0"
+  }
+}
