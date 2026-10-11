@@ -1,6 +1,6 @@
 # 1 章を書き切るための手順 / How to write one chapter to completion
 
-`planned` の章を `complete` にする担当者（人でも agent でも）のための、作業の決まりです。編集方針は [`EDITORIAL.md`](EDITORIAL.md)、共通の規約は [`../CONTRIBUTING.md`](../CONTRIBUTING.md) にあります。先にその 2 つと、基準の章 `book/content/ja/chapters/04-http-api.md`、基準のコード `examples/04-http-api/` を読んでください。
+章を書く、または書き直す担当者（人でも agent でも）のための、作業の決まりです。編集方針は [`EDITORIAL.md`](EDITORIAL.md)、共通の規約は [`../CONTRIBUTING.md`](../CONTRIBUTING.md) にあります。先にその 2 つと、基準の章 `book/content/ja/chapters/04-http-api.md`、基準のコード `examples/04-http-api/` を読んでください。
 
 ## 絶対に守ること
 
@@ -31,7 +31,7 @@
 
 ### 2. 本文: `book/content/ja/chapters/NN-slug.md` と `book/content/en/chapters/NN-slug.md`
 
-いまある 2 つのファイルは、アウトラインから自動生成された planned のページです。丸ごと書き換えます（frontmatter の `generated: true` を消す）。
+新しい章では、この 2 つのファイルはアウトラインから自動生成された planned のページになっています。丸ごと書き換えます（frontmatter の `generated: true` を消す）。いまある 00〜24章はすべて書き上がっているので、書き直すときは既存の本文を土台にします。
 
 - 日本語を先に書き、同じ調子で英語にする
 - frontmatter: 日本語は `title: "NN <data/chapters.json の title.ja>"` と `revision: 1`。英語は `title: "NN <title.en>"` と `sourceRevision: 1`

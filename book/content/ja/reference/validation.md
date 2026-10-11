@@ -173,6 +173,12 @@ generated: true
 
 ## 未解決事項と再開手順
 
+### bundles-on-lambda
+
+AWS SDK を含む ESM の Lambda bundle（05・06・07・08・15・16・17・19・21・22章）は、先頭で `require` を用意する banner を足してある。`vp run bundles:check` が素の Node.js で読み込めることは確かめたが、Lambda の runtime（Node.js 24）で初期化が通ることは確かめていない。banner を足す前は、手元の Node.js で `Dynamic require of "node:https" is not supported` で落ちていた。
+
+再開手順: `vp run notes:infra:deploy` のあと `vp run notes:smoke`（または関数を 1 回呼ぶ）を実行し、CloudWatch Logs に初期化のエラー（`Runtime.ImportModuleError` など）が無いことを見る。通れば、同じ形のほかの章も同じ理由で通るはずだが、章ごとに 1 回は呼んで確かめる。
+
 ### aws-validation
 
 AWS 上での検証を一切行っていない。この依頼ではリソースの作成・変更・削除を実行しないため。

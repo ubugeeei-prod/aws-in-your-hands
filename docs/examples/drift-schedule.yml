@@ -1,5 +1,8 @@
 # Example only. Not executed; see README.md in this directory.
 #
+# cdkd drift, for the stacks cdkd manages. For CloudFormation drift on chapter 20's
+# stacks, see examples/20-shipping/workflows/drift.yml.
+#
 # Detects drift once a day and fails the run unless every resource was
 # compared and matches. Detection only: it never reverts or accepts anything.
 name: drift
@@ -24,11 +27,13 @@ jobs:
       AIH_AWS_ACCOUNT_ID: ${{ vars.AIH_AWS_ACCOUNT_ID }}
       AIH_AWS_REGION: ap-northeast-1
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          role-to-assume: ${{ vars.AIH_DRIFT_ROLE_ARN }} # a read-only role; not defined in this repository yet
+          # A read-only role for cdkd drift checks. Not defined in this repository.
+          # Not chapter 20's AIH_DRIFT_ROLE_ARN: that role covers CloudFormation drift on AihShipApi* only.
+          role-to-assume: ${{ vars.AIH_CDKD_DRIFT_ROLE_ARN }}
           aws-region: ap-northeast-1
       - run: nix develop --command vp install --frozen-lockfile
       - name: Detect drift
@@ -36,7 +41,7 @@ jobs:
         run: nix develop --command vp run ${{ matrix.name }}:infra:drift
       - name: Keep the report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: drift-${{ matrix.name }}
           path: reports/drift/

@@ -1,6 +1,6 @@
 ---
 title: About This Book
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # AWS in Your Hands
@@ -21,12 +21,15 @@ By the end, you should be able to explain these things about what you built:
 
 ## How much is written so far?
 
-This book is still being written. Chapters 00 through 06 are complete, and chapter 07 onward is outline only. An outline chapter says planned at the top of its page.
+All 25 chapters, 00 through 24, have their text and their samples.
 
-- [00 Welcome](/en/chapters/00-welcome.md) through [06 Login](/en/chapters/06-auth.md): text and samples exist. They are verified locally and not yet verified in AWS
-- [07 Uploads](/en/chapters/07-uploads.md) through [24 celld](/en/chapters/24-celld.md): planned. Outline only
+Written is not the same as run and checked, though. To be honest, the checking stops at the local machine.
 
-Which commands were run, when, and what passed is all in the [Validation Record](/en/reference/validation.md).
+- [00 Welcome](/en/chapters/00-welcome.md) through [24 celld](/en/chapters/24-celld.md): every chapter passes the local checks (`vp run check:all`). That covers formatting and lint, type checks, tests, CDK synth, loading the Lambda bundles, and building the book and checking its links
+- Against AWS, no chapter has been deployed or run, not even once. The post-deployment steps in the text are prepared, but nobody has gone through them yet
+- This book's own site is not published either. There is no public URL
+
+What was checked locally differs from chapter to chapter. Some chapters have tests only. For others, the server was started and exercised with `curl` or a browser. The breakdown is in "Verification notes for this chapter" at the end of each chapter. Which commands were run, when, what passed, and what is still open is all in the [Validation Record](/en/reference/validation.md).
 
 ## Where do you start?
 

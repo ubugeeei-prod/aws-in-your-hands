@@ -173,6 +173,12 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 
 ## Open items and how to resume
 
+### bundles-on-lambda
+
+The ESM Lambda bundles that include the AWS SDK (chapters 05, 06, 07, 08, 15, 16, 17, 19, 21, and 22) carry a banner that defines `require`. `vp run bundles:check` confirms they load in plain Node.js; that they initialize on the Lambda runtime (Node.js 24) has not been checked. Before the banner they failed locally with `Dynamic require of "node:https" is not supported`.
+
+To resume: Run `vp run notes:infra:deploy`, then `vp run notes:smoke` (or invoke the function once), and check CloudWatch Logs for an initialization error such as `Runtime.ImportModuleError`. If it passes, the other chapters with the same shape should pass for the same reason, but invoke each one once to be sure.
+
 ### aws-validation
 
 Nothing has been validated in AWS, because this request did not authorize creating, changing, or deleting resources.
