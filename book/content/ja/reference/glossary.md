@@ -214,3 +214,7 @@ generated: true
 | management event | management event | 21 | リソースを作る・変える・消す、設定を読む、といった API 呼び出しの記録。CloudTrail が既定で 90 日ぶん持っている。S3 の object の読み書きのような data event は含まない。 |
 | SCP（service control policy） | SCP (service control policy) | 21 | AWS Organizations で、メンバーアカウントの IAM user と role に許せる権限の上限を決める policy。権限は与えない。management account には効かない。 |
 | management account | management account | 21 | organization を作ったアカウント。請求をまとめ、SCP を付ける側。SCP の制限を受けないので、ふだんの作業には使わない。 |
+| PITR（point-in-time recovery） | PITR (point-in-time recovery) | 22 | 過去のある時点の状態に戻す機能。DynamoDB では、連続して取られた backup から、指定した秒の内容を持つ新しい table を作る。元の table は書き換えない。 |
+| RPO（recovery point objective） | RPO (recovery point objective) | 22 | 事故のとき、どれだけ前までのデータを失ってよいか、という目標。時間で表す。実際に失った長さは、復元した時点から事故までの間隔。 |
+| RTO（recovery time objective） | RTO (recovery time objective) | 22 | 事故から、サービスが元どおり使えるようになるまでにかけてよい時間、という目標。復元の API が返るまでではなく、利用者が正しいデータを読めるまでを測る。 |
+| delete marker | delete marker | 22 | versioning を有効にした S3 bucket で、version を指定せずに object を消したときに置かれる目印。中身は消えず、目印がいちばん新しい version になる。目印を消すと、object は戻る。 |

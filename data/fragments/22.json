@@ -1,0 +1,775 @@
+{
+  "chapterId": "22",
+  "manifest": {
+    "id": "22",
+    "slug": "recovery",
+    "title": {
+      "ja": "データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup",
+      "en": "Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup"
+    },
+    "prerequisites": ["05", "07"],
+    "services": ["DynamoDB PITR", "S3 Versioning", "S3 Replication", "AWS Backup"],
+    "samplePath": "examples/22-recovery",
+    "writing": { "ja": "complete", "en": "complete" },
+    "sourceRevision": 1,
+    "translatedRevision": { "en": 1 },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "dynamodb-pitr",
+      "dynamodb-pitr-enable",
+      "dynamodb-pitr-restore",
+      "dynamodb-api-restore-table-to-point-in-time",
+      "dynamodb-table-basics",
+      "dynamodb-global-tables-how",
+      "s3-versioning",
+      "s3-delete-markers",
+      "s3-managing-delete-markers",
+      "s3-restoring-previous-versions",
+      "s3-api-list-object-versions",
+      "s3-lifecycle-rules",
+      "s3-replication-what",
+      "s3-delete-marker-replication",
+      "s3-event-types-versioned",
+      "s3-empty-bucket",
+      "backup-advanced-dynamodb",
+      "backup-restore-dynamodb",
+      "aws-price-list-dynamodb-backup",
+      "aws-price-list-backup",
+      "s3-pricing-replication",
+      "cdkd-recovery",
+      "cloudflare-d1-time-travel",
+      "cloudflare-r2-s3-api"
+    ]
+  },
+  "sources": [
+    {
+      "id": "dynamodb-pitr",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html",
+      "title": "Point-in-time backups for DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Point-in-time recovery gives continuous backups with up to 35 days of recovery points at per-second granularity",
+        "RecoveryPeriodInDays can be set between 1 and 35 (default 35), and shortening it does not change the price",
+        "Disabling and re-enabling point-in-time recovery resets the start of the restorable window",
+        "A table can be restored into a different Region"
+      ]
+    },
+    {
+      "id": "dynamodb-pitr-enable",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery_Howitworks.html",
+      "title": "Enable point-in-time recovery in DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "PITR is charged on the size of the table, including local secondary indexes, until it is turned off; the recovery period does not affect the price",
+        "A restore is possible to any point between EarliestRestorableDateTime and LatestRestorableDateTime, and LatestRestorableDateTime is typically five minutes before the current time",
+        "The point-in-time recovery process always restores to a new table",
+        "ContinuousBackupsStatus is always ENABLED; whether a table can be restored is PointInTimeRecoveryStatus, which is DISABLED by default",
+        "Deleting a table that has PITR enabled creates a system backup that is kept for 35 days at no additional cost"
+      ]
+    },
+    {
+      "id": "dynamodb-pitr-restore",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.Tutorial.html",
+      "title": "Restoring a DynamoDB table to a point in time",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The source table stays available for reads and writes while the restore runs",
+        "Restore duration depends on the amount of data and the number of secondary indexes, and no fixed completion time is guaranteed",
+        "A restore recreates the data, secondary indexes, provisioned capacity, and encryption settings; auto scaling policies, IAM policies, CloudWatch metrics and alarms, tags, stream settings, TTL settings, and point-in-time recovery settings must be set up again by hand",
+        "While a restore is in progress the table shows as being created with restore in progress, and becomes ACTIVE when it is finished"
+      ]
+    },
+    {
+      "id": "dynamodb-api-restore-table-to-point-in-time",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_RestoreTableToPointInTime.html",
+      "title": "RestoreTableToPointInTime",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The request takes SourceTableName, TargetTableName, and either RestoreDateTime or UseLatestRestorableTime",
+        "Up to 50 restores can run concurrently in an account",
+        "The settings that are restored come from the current settings of the source table at the time of the restore"
+      ]
+    },
+    {
+      "id": "dynamodb-table-basics",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.Basics.html",
+      "title": "Basic operations on DynamoDB tables",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Deletion protection keeps a table from being deleted by anyone while it is enabled",
+        "Deletion protection is off by default for every table, including global replicas and tables restored from backups"
+      ]
+    },
+    {
+      "id": "dynamodb-global-tables-how",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html",
+      "title": "How DynamoDB global tables work",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "In the default consistency mode, item changes are replicated asynchronously to all other replicas, typically within a second or less",
+        "Conflicting writes are resolved by last writer wins",
+        "A TTL delete in one replica is replicated to all other replicas"
+      ],
+      "note": "The page states delete replication explicitly only for TTL deletes; that a user's DeleteItem replicates is read from 'item changes ... are replicated'."
+    },
+    {
+      "id": "s3-versioning",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html",
+      "title": "Retaining multiple versions of objects with S3 Versioning",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Each version of an object is the entire object, and normal rates apply for every version stored: three versions are charged as three objects",
+        "Versioning is disabled by default and must be enabled per bucket"
+      ]
+    },
+    {
+      "id": "s3-delete-markers",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html",
+      "title": "Working with delete markers",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A DELETE without a version ID in a versioning-enabled bucket does not delete the object: a delete marker becomes the current version",
+        "A GET without a version ID on a key whose current version is a delete marker returns 404",
+        "Delete markers are listed only by ListObjectVersions; ListObjectsV2 does not return keys whose current version is a delete marker",
+        "A delete marker is billed for the size of its key name"
+      ]
+    },
+    {
+      "id": "s3-managing-delete-markers",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ManagingDelMarkers.html",
+      "title": "Managing delete markers",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "To undelete an object, delete its delete marker with a DeleteObject request that names the marker's version ID",
+        "A DeleteObject without a version ID on a key whose current version is a delete marker removes nothing and adds another delete marker",
+        "An expired object delete marker is one with no versions left under it, and a lifecycle rule can remove it"
+      ]
+    },
+    {
+      "id": "s3-restoring-previous-versions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/RestoringPreviousVersions.html",
+      "title": "Restoring previous versions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A previous version is restored either by copying it into the same bucket, which makes the copy the current version and preserves all versions, or by permanently deleting the current version"
+      ]
+    },
+    {
+      "id": "s3-api-list-object-versions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html",
+      "title": "ListObjectVersions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The response lists versions and delete markers as separate elements, each with Key, VersionId, IsLatest, and LastModified",
+        "A truncated response continues with NextKeyMarker and NextVersionIdMarker"
+      ]
+    },
+    {
+      "id": "s3-lifecycle-rules",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html",
+      "title": "Lifecycle configuration elements",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "NoncurrentVersionExpiration permanently deletes noncurrent versions a number of days after they became noncurrent; they cannot be recovered",
+        "In a versioning-enabled bucket the Expiration action applies only to the current version and adds a delete marker instead of removing the object",
+        "ExpiredObjectDeleteMarker removes delete markers that have no versions left"
+      ]
+    },
+    {
+      "id": "s3-replication-what",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-what-is-isnot-replicated.html",
+      "title": "What does Amazon S3 replicate?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default only objects created after the replication configuration was added are replicated",
+        "With the latest configuration version (a rule with a Filter), delete markers are not replicated by default",
+        "A DELETE that names a version ID is not replicated to the destination",
+        "Actions performed by a lifecycle configuration are not replicated"
+      ]
+    },
+    {
+      "id": "s3-delete-marker-replication",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/delete-marker-replication.html",
+      "title": "Replicating delete markers between buckets",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default a delete in the source bucket adds a delete marker in the source only",
+        "With delete marker replication enabled, markers are copied and S3 behaves as if the object was deleted in both buckets"
+      ]
+    },
+    {
+      "id": "s3-event-types-versioned",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html",
+      "title": "Event notification types and destinations",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "s3:ObjectRemoved:Delete is sent when an object is deleted or a versioned object is permanently deleted; s3:ObjectRemoved:DeleteMarkerCreated is sent when a delete marker is created for a versioned object",
+        "There is a separate s3:LifecycleExpiration:DeleteMarkerCreated event for versioned buckets"
+      ],
+      "note": "Chapter 08 cites the same page for the event types of an unversioned bucket; this entry records the ones a versioned bucket adds."
+    },
+    {
+      "id": "s3-empty-bucket",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html",
+      "title": "Emptying a general purpose bucket",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Emptying a bucket with versioning enabled or suspended means deleting all versions of all objects, delete markers included"
+      ]
+    },
+    {
+      "id": "backup-advanced-dynamodb",
+      "url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/advanced-ddb-backup.html",
+      "title": "Advanced DynamoDB backup",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS Backup takes periodic snapshot-based backups of DynamoDB tables; they do not replace or duplicate point-in-time recovery, and using both incurs charges for both",
+        "A custom role needs AWSBackupServiceRolePolicyForBackup to back up and AWSBackupServiceRolePolicyForRestores to restore",
+        "Charges for these backups appear under Backup in the bill"
+      ]
+    },
+    {
+      "id": "backup-restore-dynamodb",
+      "url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-dynamodb.html",
+      "title": "Restore a Amazon DynamoDB table",
+      "checkedAt": "2026-10-12",
+      "supports": ["Restoring a DynamoDB recovery point from AWS Backup asks for a new table name"]
+    },
+    {
+      "id": "aws-price-list-dynamodb-backup",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon DynamoDB, ap-northeast-1 (backup and restore SKUs)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "APN1-TimedPITRStorage-ByteHrs: USD 0.228 per GB-month of PITR backup storage",
+        "APN1-RestoreDataSize-Bytes: USD 0.171 per GB of data restored",
+        "APN1-TimedBackupStorage-ByteHrs: USD 0.114 per GB-month of on-demand backup storage"
+      ],
+      "note": "Offer publication date 2026-09-11T12:44:22Z."
+    },
+    {
+      "id": "aws-price-list-backup",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Backup, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "APN1-WarmStorage-ByteHrs-DynamoDB: USD 0.114 per GB-month of warm backup storage for DynamoDB",
+        "APN1-Restore-WarmBytes-DynamoDB: USD 0.171 per GB restored from warm storage for DynamoDB"
+      ],
+      "note": "Offer publication date 2026-09-28T17:01:20Z."
+    },
+    {
+      "id": "s3-pricing-replication",
+      "url": "https://aws.amazon.com/s3/pricing/",
+      "title": "Amazon S3 pricing (Replication)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For replication you pay for storage in the destination storage class and for replication PUT requests",
+        "Inter-region data transfer is charged for Cross-Region Replication; the page lists no data transfer charge for Same-Region Replication"
+      ],
+      "note": "Read through a fetch tool that returned excerpts, not the full page text."
+    },
+    {
+      "id": "cdkd-recovery",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: help output and bundled dist (import, orphan, DynamoDB provider)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "`cdkd import --resource <logicalId>=<physicalId>` adopts an already-deployed resource into cdkd state; with at least one --resource only the listed resources are imported, and --dry-run shows the plan without writing state",
+        "`cdkd orphan <construct path>` removes a resource from cdkd state without deleting the AWS resource",
+        "The DynamoDB table provider applies PointInTimeRecoverySpecification through UpdateContinuousBackups and reads it back with DescribeContinuousBackups, and reads DeletionProtectionEnabled from DescribeTable",
+        "Deleting a table with deletion protection needs `--remove-protection`; without it the provider does not turn protection off",
+        "Dedicated providers are registered for AWS::DynamoDB::Table, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, and AWS::Logs::LogGroup; none is registered for the AWS::Backup types"
+      ],
+      "note": "Read from the installed package: `cdkd import --help`, `cdkd orphan --help`, `cdkd --help`, and the bundled dist/provider-classes and dist/program files. Nothing was run against AWS."
+    },
+    {
+      "id": "cloudflare-d1-time-travel",
+      "url": "https://developers.cloudflare.com/d1/reference/time-travel/",
+      "title": "Cloudflare D1: Time Travel and backups",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Time Travel is always on and restores a database to any minute within the last 30 days (7 days on the Workers Free plan)",
+        "Database history and restoring incur no additional cost",
+        "A restore is destructive and overwrites the database in place; in-flight queries are cancelled; the restore returns a bookmark that undoes it",
+        "Time Travel cannot yet clone or fork a database into a new copy"
+      ]
+    },
+    {
+      "id": "cloudflare-r2-s3-api",
+      "url": "https://developers.cloudflare.com/r2/api/s3/api/",
+      "title": "Cloudflare R2: S3 API compatibility",
+      "checkedAt": "2026-10-12",
+      "supports": ["The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented"]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "pitr",
+      "ja": "PITR（point-in-time recovery）",
+      "en": "PITR (point-in-time recovery)",
+      "firstUse": "22",
+      "definition": {
+        "ja": "過去のある時点の状態に戻す機能。DynamoDB では、連続して取られた backup から、指定した秒の内容を持つ新しい table を作る。元の table は書き換えない。",
+        "en": "Restoring to the state at some past moment. In DynamoDB, a new table holding the contents as of a chosen second is built from continuous backups; the source table is not rewritten."
+      }
+    },
+    {
+      "id": "rpo",
+      "ja": "RPO（recovery point objective）",
+      "en": "RPO (recovery point objective)",
+      "firstUse": "22",
+      "definition": {
+        "ja": "事故のとき、どれだけ前までのデータを失ってよいか、という目標。時間で表す。実際に失った長さは、復元した時点から事故までの間隔。",
+        "en": "The target for how far back you may lose data in an incident, expressed as time. What was actually lost is the gap between the restore point and the incident."
+      }
+    },
+    {
+      "id": "rto",
+      "ja": "RTO（recovery time objective）",
+      "en": "RTO (recovery time objective)",
+      "firstUse": "22",
+      "definition": {
+        "ja": "事故から、サービスが元どおり使えるようになるまでにかけてよい時間、という目標。復元の API が返るまでではなく、利用者が正しいデータを読めるまでを測る。",
+        "en": "The target for how long it may take from an incident until the service is usable again. Measured to the moment users read correct data, not to the moment a restore API returns."
+      }
+    },
+    {
+      "id": "delete-marker",
+      "ja": "delete marker",
+      "en": "delete marker",
+      "firstUse": "22",
+      "definition": {
+        "ja": "versioning を有効にした S3 bucket で、version を指定せずに object を消したときに置かれる目印。中身は消えず、目印がいちばん新しい version になる。目印を消すと、object は戻る。",
+        "en": "The marker S3 places when an object in a versioning-enabled bucket is deleted without naming a version. The bytes stay, and the marker becomes the newest version. Deleting the marker brings the object back."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "22.overview",
+      "sources": ["examples/22-recovery"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.not-backup",
+      "sources": ["examples/22-recovery/infra/lib/recovery-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.pitr",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/src/pitr.ts",
+        "examples/22-recovery/src/memory-table.ts",
+        "examples/22-recovery/test/pitr-drill.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:status", "recovery:restore:table"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "22.versioning",
+      "sources": [
+        "examples/22-recovery/src/versioned-bucket.ts",
+        "examples/22-recovery/src/object-restore.ts",
+        "examples/22-recovery/src/s3-versioned-bucket.ts",
+        "examples/22-recovery/test/object-restore.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:restore:objects"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.skew",
+      "sources": [
+        "examples/22-recovery/src/invariants.ts",
+        "examples/22-recovery/src/items.ts",
+        "examples/22-recovery/src/audit.ts",
+        "examples/22-recovery/test/skew.test.ts",
+        "examples/22-recovery/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:demo", "recovery:verify"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.repair",
+      "sources": [
+        "examples/22-recovery/src/repair.ts",
+        "examples/22-recovery/test/skew.test.ts",
+        "examples/22-recovery/test/world.ts"
+      ],
+      "tasks": ["test:unit", "recovery:repair"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.versions",
+      "sources": [
+        "examples/22-recovery/src/table-diff.ts",
+        "examples/22-recovery/src/dynamodb-table.ts",
+        "examples/22-recovery/test/table-diff.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:diff"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.local",
+      "sources": [
+        "examples/22-recovery/scripts/demo.ts",
+        "examples/22-recovery/src/local.ts",
+        "examples/22-recovery/src/memory-table.ts",
+        "examples/22-recovery/src/versioned-bucket.ts"
+      ],
+      "tasks": ["recovery:demo", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "22.infra",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/infra/bin/app.ts",
+        "examples/22-recovery/infra/test/recovery-stack.test.ts",
+        "examples/22-recovery/src/audit-lambda.ts",
+        "examples/22-recovery/cdk.json"
+      ],
+      "tasks": ["recovery:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "22.drill",
+      "sources": [
+        "examples/22-recovery/scripts/recovery.ts",
+        "examples/22-recovery/scripts/context.ts",
+        "examples/22-recovery/scripts/drill.ts",
+        "examples/22-recovery/src/drill.ts",
+        "examples/22-recovery/drill/TEMPLATE.md",
+        "examples/22-recovery/drill/record.template.json"
+      ],
+      "tasks": [
+        "recovery:infra:deploy",
+        "recovery:drill",
+        "recovery:seed",
+        "recovery:status",
+        "recovery:accident",
+        "recovery:restore:table",
+        "recovery:restore:objects",
+        "recovery:diff",
+        "recovery:verify",
+        "recovery:repair",
+        "recovery:protect"
+      ],
+      "boundary": "cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cutover",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/infra/bin/app.ts",
+        "examples/22-recovery/infra/test/recovery-stack.test.ts"
+      ],
+      "tasks": ["recovery:infra:diff", "recovery:infra:deploy", "recovery:audit", "recovery:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "22.cleanup",
+      "sources": ["examples/22-recovery/scripts/recovery.ts"],
+      "tasks": ["recovery:drop-table", "recovery:empty", "recovery:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "dynamodb.restore",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "T6RK6THJVQUFJ4M5",
+      "usageType": "APN1-RestoreDataSize-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [{ "from": 0, "to": null, "usd": "0.1710000000", "description": "$0.171 per GB of data restored" }],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "backup.dynamodb.warm",
+      "offerCode": "AWSBackup",
+      "region": "ap-northeast-1",
+      "sku": "C3P55YRKVN5AZQMC",
+      "usageType": "APN1-WarmStorage-ByteHrs-DynamoDB",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1140000000",
+          "description": "$0.114 per GB-month for warm backup storage for DynamoDB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T17:01:20Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "dynamodb.restore",
+      "reason": "No free allowance for restores was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "backup.dynamodb.warm",
+      "reason": "No free allowance for AWS Backup storage was looked for or confirmed; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "recovery-keep",
+      "chapter": "22",
+      "title": {
+        "ja": "復旧: 戻せる状態を 1 か月保つための上乗せ（table 1 GB、画像 10 GB）",
+        "en": "Recovery: what staying restorable adds for a month (1 GB table, 10 GB of images)"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の stack。table は 1 GB で、point-in-time recovery が有効",
+          "画像は 10 GB。月に 1 GB ぶんが上書きか削除をされ、その古い version が 30 日残る（1 GB を 1 か月ぶんとして計算）",
+          "table と現行の画像そのものの保存料、リクエスト、Lambda は含めない。上乗せ分だけ"
+        ],
+        "en": [
+          "The default stack: a 1 GB table with point-in-time recovery enabled",
+          "10 GB of images, of which 1 GB a month is overwritten or deleted, each old version kept 30 days (computed as 1 GB for one month)",
+          "Storage of the table and of the current images, requests, and Lambda are left out: this is only what is added"
+        ]
+      },
+      "items": [
+        { "priceId": "dynamodb.pitr.storage", "quantity": 1, "basis": "1 GB table under PITR, in GB-month" },
+        { "priceId": "s3.standard.storage", "quantity": 1, "basis": "1 GB of noncurrent versions, in GB-month" }
+      ]
+    },
+    {
+      "id": "recovery-drill",
+      "chapter": "22",
+      "title": {
+        "ja": "復旧: 1 GB の table を 1 回復元して検査する drill",
+        "en": "Recovery: one drill that restores and checks a 1 GB table"
+      },
+      "assumptions": {
+        "ja": [
+          "RestoreTableToPointInTime を 1 回。復元されるデータは 1 GB",
+          "検査（table 全体の Scan、強い整合性）を 4 回。1 GB を 4 KB の item で数えて、1 回 262,144 read request unit",
+          "復元した table を 1 か月置いたままにした場合の保存料（1 GB）を含む",
+          "S3 の一覧と復元のリクエスト、Lambda、ログは含めない"
+        ],
+        "en": [
+          "One RestoreTableToPointInTime, restoring 1 GB of data",
+          "Four checks (a strongly consistent Scan of the whole table), 262,144 read request units each, counting 1 GB as 4 KB items",
+          "Includes storage for the restored table (1 GB) if it is left in place for a month",
+          "S3 listing and restore requests, Lambda, and logs are left out"
+        ]
+      },
+      "items": [
+        { "priceId": "dynamodb.restore", "quantity": 1, "basis": "1 GB restored" },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 1048576,
+          "basis": "4 full scans x 262,144 read request units"
+        },
+        { "priceId": "dynamodb.storage", "quantity": 1, "basis": "the restored table, 1 GB for a month" }
+      ]
+    },
+    {
+      "id": "recovery-backup-optin",
+      "chapter": "22",
+      "title": {
+        "ja": "復旧: `-c backup=on` で増える分（AWS Backup、1 GB の table）",
+        "en": "Recovery: what `-c backup=on` adds (AWS Backup, 1 GB table)"
+      },
+      "assumptions": {
+        "ja": [
+          "毎日 1 回の snapshot を 7 日保持。常に 7 つが warm storage にある",
+          "snapshot 1 つが table 全体（1 GB）として課金されると仮定。差分で取られるかどうかは確認していない",
+          "復元はしていない"
+        ],
+        "en": [
+          "One snapshot a day, kept 7 days: seven are in warm storage at any time",
+          "Each snapshot is assumed to be billed as the whole table (1 GB); whether they are incremental was not confirmed",
+          "No restore"
+        ]
+      },
+      "items": [{ "priceId": "backup.dynamodb.warm", "quantity": 7, "basis": "7 snapshots x 1 GB, in GB-month" }]
+    },
+    {
+      "id": "recovery-replica-optin",
+      "chapter": "22",
+      "title": {
+        "ja": "復旧: `-c replica=on` で増える分（S3 Replication、画像 10 GB）",
+        "en": "Recovery: what `-c replica=on` adds (S3 Replication, 10 GB of images)"
+      },
+      "assumptions": {
+        "ja": [
+          "複製先に、複製を有効にした後に置かれた画像 10 GB と、古い version 1 GB がある",
+          "月に 10,000 個の object が複製される。複製の PUT を、通常の PUT と同じ単価（Tier 1）として計算",
+          "同じリージョン内の複製。データ転送料は含めない"
+        ],
+        "en": [
+          "The destination holds 10 GB of images placed after replication was enabled, and 1 GB of old versions",
+          "10,000 objects are replicated in the month; a replication PUT is computed at the ordinary PUT price (Tier 1)",
+          "Replication within one Region; no data transfer is included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 11,
+          "basis": "the second copy: 10 GB current + 1 GB noncurrent, in GB-month"
+        },
+        { "priceId": "s3.request.tier1", "quantity": 10000, "basis": "10,000 replication PUT requests" }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "22",
+        "command": "vp run test:unit (examples/22-recovery)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "table と bucket を別の時点に戻したときの検出と修復（同じ時点、table だけ、アップロードより前、上書きの後、version が残っていない場合）、修復の dry run・二重実行・途中での中断、08章の残った検査記録、object の復元計画と再実行、version 番号の巻き戻りと fence、PITR の計画、drill の記録、item の分類、05章の repository contract、DynamoDB と S3 へのリクエストの形、stack の assertion",
+          "en": "Detection and repair with the table and the bucket restored to different points (same point, table only, before an upload, after an overwrite, no version left); repair as a dry run, run twice, and interrupted; chapter 08's leftover inspection records; the object restore plan and its re-run; version numbers rolled back and the fence; the PITR plan; the drill record; item classification; chapter 05's repository contract; the requests sent to DynamoDB and S3; and stack assertions"
+        }
+      },
+      {
+        "scope": "22",
+        "command": "vp run recovery:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "メモリ上の table と bucket で、事故、table の復元、検査（4 件）、bucket の復元、再検査（0 件）、fence までを実行した。本文に載せた出力はこの実行のもの",
+          "en": "Ran, on the in-memory table and bucket, the accident, the table restore, the check (4 findings), the bucket restore, the second check (0), and the fence. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "22",
+        "command": "vp run recovery:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "既定の構成で synth した（esbuild の bundle 込み）。`-c table`、`-c protect=on`、`-c backup=on`、`-c replica=on` は、テストの中と、`node infra/bin/app.ts` に context を渡す形で synth した",
+          "en": "Synthesized the default layout, including the esbuild bundle. `-c table`, `-c protect=on`, `-c backup=on`, and `-c replica=on` were synthesized inside the tests and by passing context to `node infra/bin/app.ts`"
+        }
+      },
+      {
+        "scope": "22",
+        "command": "vp run recovery:drill new / mark / set / summary",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "記録ファイルの作成、時刻と件数の記入、上書きの拒否、集計を手元で実行した。書いた値は動作確認用で、drill の実測ではない。ファイルは消した",
+          "en": "Created a record file, stamped moments and counts, saw an overwrite refused, and printed the summary. The values were for checking the tool, not measurements of a drill, and the file was deleted"
+        }
+      },
+      {
+        "scope": "22",
+        "command": "vp run recovery:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "PITR を有効にした DynamoDB の table、versioning を有効にした S3 bucket、Lambda 関数を作る。`-c backup=on` で AWS Backup の vault と plan、`-c replica=on` で 2 つ目の bucket と複製の設定が加わる",
+          "en": "Creates a DynamoDB table with PITR, an S3 bucket with versioning, and a Lambda function; `-c backup=on` adds an AWS Backup vault and plan, `-c replica=on` a second bucket and a replication configuration"
+        }
+      },
+      {
+        "scope": "22",
+        "command": "vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "drill の手順。AWS に対しては 1 つも実行していない。RPO と RTO の実測値はない",
+          "en": "The steps of the drill. None was run against AWS, and there are no measured RPO or RTO values"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "22-drill",
+        "summary": {
+          "ja": "22章の復旧 drill を AWS で一度も実行していない。未確認: PITR の復元にかかる時間、`LatestRestorableDateTime` の実際の遅れ、復元した table に引き継がれる設定と引き継がれない設定（削除保護と PITR を含む）、S3 で delete marker を消した後と version を上書きコピーした後の ETag・`LastModified`・通知、`ListObjectVersions` の時刻が同じ version の並び、RPO と RTO の実測値。",
+          "en": "The chapter 22 recovery drill has never been run on AWS. Unconfirmed: how long a PITR restore takes, the real lag of `LatestRestorableDateTime`, which settings a restored table does and does not inherit (deletion protection and PITR included), the ETag, `LastModified`, and notifications after removing a delete marker or copying a version on top in S3, the order of versions that share a timestamp in `ListObjectVersions`, and any measured RPO or RTO."
+        },
+        "resume": {
+          "ja": "`vp run recovery:infra:deploy` のあと、本文「drill を実行する」の順に `recovery:drill new`、`recovery:seed --apply`、`recovery:accident --apply`、`recovery:restore:table --apply`、`recovery:restore:objects --at <時刻> --apply`、`recovery:verify --table <復元した table> --frozen`、`recovery:repair` を実行し、`recovery:drill summary` の値を `examples/22-recovery/drill/TEMPLATE.md` の写しに記録する。最後に「片付け」の 3 つのタスク。",
+          "en": "After `vp run recovery:infra:deploy`, follow the chapter's drill section: `recovery:drill new`, `recovery:seed --apply`, `recovery:accident --apply`, `recovery:restore:table --apply`, `recovery:restore:objects --at <time> --apply`, `recovery:verify --table <restored table> --frozen`, `recovery:repair`, then record what `recovery:drill summary` prints in a copy of `examples/22-recovery/drill/TEMPLATE.md`. Finish with the three cleanup tasks."
+        }
+      },
+      {
+        "id": "22-cutover",
+        "summary": {
+          "ja": "復元した table への切り替えを実機で確かめていない。未確認: `-c table=<名前>` での deploy が関数の環境変数と IAM policy だけを変えること、cdkd の drift 検査が復元した table を報告しないこと、`cdkd orphan` と `cdkd import --resource` で stack の table を入れ替えられること、`-c protect=on` の stack を cdkd で destroy したときの動き、`-c backup=on`（Cloud Control API 経由）と `-c replica=on` の作成と削除。",
+          "en": "The cutover to a restored table was not tried on AWS. Unconfirmed: that deploying with `-c table=<name>` changes only the function's environment and IAM policy, that cdkd's drift check does not report the restored table, that `cdkd orphan` and `cdkd import --resource` can swap the stack's table, what destroying a `-c protect=on` stack with cdkd does, and creating and deleting `-c backup=on` (through Cloud Control API) and `-c replica=on`."
+        },
+        "resume": {
+          "ja": "drill の続きで `vp run recovery:infra:diff -c table=<復元した table>` の差分を読み、deploy して `vp run recovery:audit` と `vp run recovery:infra:drift` を実行する。import を試すなら、`examples/22-recovery` で `cdkd orphan AihRecovery/Notes --dry-run` と `cdkd import AihRecovery --resource <logical ID>=<復元した table> --dry-run` の出力を先に読む。",
+          "en": "Continuing the drill, read the diff from `vp run recovery:infra:diff -c table=<restored table>`, deploy, then run `vp run recovery:audit` and `vp run recovery:infra:drift`. To try the import, first read the output of `cdkd orphan AihRecovery/Notes --dry-run` and `cdkd import AihRecovery --resource <logical ID>=<restored table> --dry-run` in `examples/22-recovery`."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 22: backup and recovery ---------------------------------\n      // The whole drill in memory: an accident, two stores restored to different points, check, repair. No AWS.\n      \"recovery:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/22-recovery\" }),\n      // The drill record under reports/drills/: new, mark, set, summary. Local files only.\n      \"recovery:drill\": fresh(\"node scripts/drill.ts\", { cwd: \"examples/22-recovery\" }),\n      // `-c backup=on` and `-c replica=on` add resources that are billed for as long as they exist.\n      ...infra(\"recovery\", \"examples/22-recovery\", \"AihRecovery\"),\n      // These four only read.\n      \"recovery:status\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts status\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:verify\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts verify\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:audit\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts audit\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:diff\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts diff\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      // Everything below prints its plan and changes nothing unless --apply is given.\n      \"recovery:seed\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts seed\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:accident\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts accident\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:restore:table\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts restore-table\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:restore:objects\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts restore-objects\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:protect\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts protect\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:repair\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts repair\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:drop-table\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts drop-table\", {\n        cwd: \"examples/22-recovery\",\n      }),\n      \"recovery:empty\": live(\"node --env-file-if-exists=../../.env scripts/recovery.ts empty\", {\n        cwd: \"examples/22-recovery\",\n      }),",
+    "synth": ["recovery:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/22-recovery"]
+  }
+}

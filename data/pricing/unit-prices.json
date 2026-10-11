@@ -2133,6 +2133,48 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:45:34Z",
       "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "dynamodb.restore",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "T6RK6THJVQUFJ4M5",
+      "usageType": "APN1-RestoreDataSize-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1710000000",
+          "description": "$0.171 per GB of data restored"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "backup.dynamodb.warm",
+      "offerCode": "AWSBackup",
+      "region": "ap-northeast-1",
+      "sku": "C3P55YRKVN5AZQMC",
+      "usageType": "APN1-WarmStorage-ByteHrs-DynamoDB",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1140000000",
+          "description": "$0.114 per GB-month for warm backup storage for DynamoDB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T17:01:20Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

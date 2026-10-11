@@ -1441,6 +1441,83 @@ ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、Gua
 - 毎月の無料枠適用後の小計: **USD 2.34** / 月
 - 無料枠を確認できず、何も引いていない単価: `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
 
+## 復旧: 戻せる状態を 1 か月保つための上乗せ（table 1 GB、画像 10 GB）
+
+ID: `recovery-keep` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- 既定の stack。table は 1 GB で、point-in-time recovery が有効
+- 画像は 10 GB。月に 1 GB ぶんが上書きか削除をされ、その古い version が 30 日残る（1 GB を 1 か月ぶんとして計算）
+- table と現行の画像そのものの保存料、リクエスト、Lambda は含めない。上乗せ分だけ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.pitr.storage` | 1 | GB-Mo | 1 GB table under PITR, in GB-month | 0.23 | - | 0.23 |
+| `s3.standard.storage` | 1 | GB-Mo | 1 GB of noncurrent versions, in GB-month | 0.03 | - | 0.03 |
+
+- 定価の小計: **USD 0.25** / 月
+- 毎月の無料枠適用後の小計: **USD 0.25** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+
+## 復旧: 1 GB の table を 1 回復元して検査する drill
+
+ID: `recovery-drill` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- RestoreTableToPointInTime を 1 回。復元されるデータは 1 GB
+- 検査（table 全体の Scan、強い整合性）を 4 回。1 GB を 4 KB の item で数えて、1 回 262,144 read request unit
+- 復元した table を 1 か月置いたままにした場合の保存料（1 GB）を含む
+- S3 の一覧と復元のリクエスト、Lambda、ログは含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.restore` | 1 | GB | 1 GB restored | 0.17 | - | 0.17 |
+| `dynamodb.read.on-demand` | 1,048,576 | ReadRequestUnits | 4 full scans x 262,144 read request units | 0.15 | - | 0.15 |
+| `dynamodb.storage` | 1 | GB-Mo | the restored table, 1 GB for a month | 0 | - | 0 |
+
+- 定価の小計: **USD 0.32** / 月
+- 毎月の無料枠適用後の小計: **USD 0.32** / 月
+- 無料枠を確認できず、何も引いていない単価: `dynamodb.restore`
+
+## 復旧: `-c backup=on` で増える分（AWS Backup、1 GB の table）
+
+ID: `recovery-backup-optin` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- 毎日 1 回の snapshot を 7 日保持。常に 7 つが warm storage にある
+- snapshot 1 つが table 全体（1 GB）として課金されると仮定。差分で取られるかどうかは確認していない
+- 復元はしていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `backup.dynamodb.warm` | 7 | GB-month | 7 snapshots x 1 GB, in GB-month | 0.80 | - | 0.80 |
+
+- 定価の小計: **USD 0.80** / 月
+- 毎月の無料枠適用後の小計: **USD 0.80** / 月
+- 無料枠を確認できず、何も引いていない単価: `backup.dynamodb.warm`
+
+## 復旧: `-c replica=on` で増える分（S3 Replication、画像 10 GB）
+
+ID: `recovery-replica-optin` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- 複製先に、複製を有効にした後に置かれた画像 10 GB と、古い version 1 GB がある
+- 月に 10,000 個の object が複製される。複製の PUT を、通常の PUT と同じ単価（Tier 1）として計算
+- 同じリージョン内の複製。データ転送料は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 11 | GB-Mo | the second copy: 10 GB current + 1 GB noncurrent, in GB-month | 0.28 | - | 0.28 |
+| `s3.request.tier1` | 10,000 | Requests | 10,000 replication PUT requests | 0.05 | - | 0.05 |
+
+- 定価の小計: **USD 0.32** / 月
+- 毎月の無料枠適用後の小計: **USD 0.32** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -1534,6 +1611,8 @@ ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、Gua
 | `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
 | `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
 | `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
+| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
+| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -1602,3 +1681,5 @@ ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、Gua
 - `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
 - `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
 - `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.
+- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
+- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.

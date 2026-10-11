@@ -84,6 +84,7 @@ const chapterSynthTasks = [
   "ec2:infra:synth",
   "export:infra:synth",
   "sec:infra:synth",
+  "recovery:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -532,6 +533,54 @@ export default defineConfig({
       // Recent IAM changes from CloudTrail event history in us-east-1. Reads only.
       "sec:trail:iam": live("node --env-file-if-exists=../../.env scripts/trail.ts", { cwd: "examples/21-security" }),
       // <<< chapter 21
+
+      // >>> chapter 22
+      // ---- chapter 22: backup and recovery ---------------------------------
+      // The whole drill in memory: an accident, two stores restored to different points, check, repair. No AWS.
+      "recovery:demo": fresh("node scripts/demo.ts", { cwd: "examples/22-recovery" }),
+      // The drill record under reports/drills/: new, mark, set, summary. Local files only.
+      "recovery:drill": fresh("node scripts/drill.ts", { cwd: "examples/22-recovery" }),
+      // `-c backup=on` and `-c replica=on` add resources that are billed for as long as they exist.
+      ...infra("recovery", "examples/22-recovery", "AihRecovery"),
+      // These four only read.
+      "recovery:status": live("node --env-file-if-exists=../../.env scripts/recovery.ts status", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:verify": live("node --env-file-if-exists=../../.env scripts/recovery.ts verify", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:audit": live("node --env-file-if-exists=../../.env scripts/recovery.ts audit", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:diff": live("node --env-file-if-exists=../../.env scripts/recovery.ts diff", {
+        cwd: "examples/22-recovery",
+      }),
+      // Everything below prints its plan and changes nothing unless --apply is given.
+      "recovery:seed": live("node --env-file-if-exists=../../.env scripts/recovery.ts seed", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:accident": live("node --env-file-if-exists=../../.env scripts/recovery.ts accident", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:restore:table": live("node --env-file-if-exists=../../.env scripts/recovery.ts restore-table", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:restore:objects": live("node --env-file-if-exists=../../.env scripts/recovery.ts restore-objects", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:protect": live("node --env-file-if-exists=../../.env scripts/recovery.ts protect", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:repair": live("node --env-file-if-exists=../../.env scripts/recovery.ts repair", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:drop-table": live("node --env-file-if-exists=../../.env scripts/recovery.ts drop-table", {
+        cwd: "examples/22-recovery",
+      }),
+      "recovery:empty": live("node --env-file-if-exists=../../.env scripts/recovery.ts empty", {
+        cwd: "examples/22-recovery",
+      }),
+      // <<< chapter 22
 
       // ---- chapter task blocks are inserted above this line ----
 

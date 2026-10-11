@@ -3329,6 +3329,176 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "22.overview",
+      "sources": ["examples/22-recovery"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.not-backup",
+      "sources": ["examples/22-recovery/infra/lib/recovery-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.pitr",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/src/pitr.ts",
+        "examples/22-recovery/src/memory-table.ts",
+        "examples/22-recovery/test/pitr-drill.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:status", "recovery:restore:table"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "22.versioning",
+      "sources": [
+        "examples/22-recovery/src/versioned-bucket.ts",
+        "examples/22-recovery/src/object-restore.ts",
+        "examples/22-recovery/src/s3-versioned-bucket.ts",
+        "examples/22-recovery/test/object-restore.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:restore:objects"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.skew",
+      "sources": [
+        "examples/22-recovery/src/invariants.ts",
+        "examples/22-recovery/src/items.ts",
+        "examples/22-recovery/src/audit.ts",
+        "examples/22-recovery/test/skew.test.ts",
+        "examples/22-recovery/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:demo", "recovery:verify"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.repair",
+      "sources": [
+        "examples/22-recovery/src/repair.ts",
+        "examples/22-recovery/test/skew.test.ts",
+        "examples/22-recovery/test/world.ts"
+      ],
+      "tasks": ["test:unit", "recovery:repair"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.versions",
+      "sources": [
+        "examples/22-recovery/src/table-diff.ts",
+        "examples/22-recovery/src/dynamodb-table.ts",
+        "examples/22-recovery/test/table-diff.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:diff"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.local",
+      "sources": [
+        "examples/22-recovery/scripts/demo.ts",
+        "examples/22-recovery/src/local.ts",
+        "examples/22-recovery/src/memory-table.ts",
+        "examples/22-recovery/src/versioned-bucket.ts"
+      ],
+      "tasks": ["recovery:demo", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "22.infra",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/infra/bin/app.ts",
+        "examples/22-recovery/infra/test/recovery-stack.test.ts",
+        "examples/22-recovery/src/audit-lambda.ts",
+        "examples/22-recovery/cdk.json"
+      ],
+      "tasks": ["recovery:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "22.drill",
+      "sources": [
+        "examples/22-recovery/scripts/recovery.ts",
+        "examples/22-recovery/scripts/context.ts",
+        "examples/22-recovery/scripts/drill.ts",
+        "examples/22-recovery/src/drill.ts",
+        "examples/22-recovery/drill/TEMPLATE.md",
+        "examples/22-recovery/drill/record.template.json"
+      ],
+      "tasks": [
+        "recovery:infra:deploy",
+        "recovery:drill",
+        "recovery:seed",
+        "recovery:status",
+        "recovery:accident",
+        "recovery:restore:table",
+        "recovery:restore:objects",
+        "recovery:diff",
+        "recovery:verify",
+        "recovery:repair",
+        "recovery:protect"
+      ],
+      "boundary": "cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cutover",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/infra/bin/app.ts",
+        "examples/22-recovery/infra/test/recovery-stack.test.ts"
+      ],
+      "tasks": ["recovery:infra:diff", "recovery:infra:deploy", "recovery:audit", "recovery:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "22.cleanup",
+      "sources": ["examples/22-recovery/scripts/recovery.ts"],
+      "tasks": ["recovery:drop-table", "recovery:empty", "recovery:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

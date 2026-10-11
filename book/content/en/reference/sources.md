@@ -2434,15 +2434,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - Read replication is used only through the Sessions API, which provides sequential consistency within a session by passing bookmarks
   - withSession('first-primary') routes the first query to the primary
 
-### Cloudflare D1: Time Travel
-
-- ID: `cloudflare-d1-time-travel`
-- URL: <https://developers.cloudflare.com/d1/reference/time-travel/>
-- Checked: 2026-10-11
-- Chapters: 13
-- Claims this source supports:
-  - Time Travel restores a database to any minute within the last 30 days without scheduled backups
-
 ### Cloudflare D1: D1 Database (Workers Binding API)
 
 - ID: `cloudflare-d1-database-api`
@@ -7068,6 +7059,270 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Chapters: 21
 - Claims this source supports:
   - Rate limiting rules are available on the Free plan, with features that depend on the plan
+
+### Point-in-time backups for DynamoDB
+
+- ID: `dynamodb-pitr`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - Point-in-time recovery gives continuous backups with up to 35 days of recovery points at per-second granularity
+  - RecoveryPeriodInDays can be set between 1 and 35 (default 35), and shortening it does not change the price
+  - Disabling and re-enabling point-in-time recovery resets the start of the restorable window
+  - A table can be restored into a different Region
+
+### Enable point-in-time recovery in DynamoDB
+
+- ID: `dynamodb-pitr-enable`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery_Howitworks.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - PITR is charged on the size of the table, including local secondary indexes, until it is turned off; the recovery period does not affect the price
+  - A restore is possible to any point between EarliestRestorableDateTime and LatestRestorableDateTime, and LatestRestorableDateTime is typically five minutes before the current time
+  - The point-in-time recovery process always restores to a new table
+  - ContinuousBackupsStatus is always ENABLED; whether a table can be restored is PointInTimeRecoveryStatus, which is DISABLED by default
+  - Deleting a table that has PITR enabled creates a system backup that is kept for 35 days at no additional cost
+
+### Restoring a DynamoDB table to a point in time
+
+- ID: `dynamodb-pitr-restore`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.Tutorial.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - The source table stays available for reads and writes while the restore runs
+  - Restore duration depends on the amount of data and the number of secondary indexes, and no fixed completion time is guaranteed
+  - A restore recreates the data, secondary indexes, provisioned capacity, and encryption settings; auto scaling policies, IAM policies, CloudWatch metrics and alarms, tags, stream settings, TTL settings, and point-in-time recovery settings must be set up again by hand
+  - While a restore is in progress the table shows as being created with restore in progress, and becomes ACTIVE when it is finished
+
+### RestoreTableToPointInTime
+
+- ID: `dynamodb-api-restore-table-to-point-in-time`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_RestoreTableToPointInTime.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - The request takes SourceTableName, TargetTableName, and either RestoreDateTime or UseLatestRestorableTime
+  - Up to 50 restores can run concurrently in an account
+  - The settings that are restored come from the current settings of the source table at the time of the restore
+
+### Basic operations on DynamoDB tables
+
+- ID: `dynamodb-table-basics`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.Basics.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - Deletion protection keeps a table from being deleted by anyone while it is enabled
+  - Deletion protection is off by default for every table, including global replicas and tables restored from backups
+
+### How DynamoDB global tables work
+
+- ID: `dynamodb-global-tables-how`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - In the default consistency mode, item changes are replicated asynchronously to all other replicas, typically within a second or less
+  - Conflicting writes are resolved by last writer wins
+  - A TTL delete in one replica is replicated to all other replicas
+- Note: The page states delete replication explicitly only for TTL deletes; that a user's DeleteItem replicates is read from 'item changes ... are replicated'.
+
+### Retaining multiple versions of objects with S3 Versioning
+
+- ID: `s3-versioning`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - Each version of an object is the entire object, and normal rates apply for every version stored: three versions are charged as three objects
+  - Versioning is disabled by default and must be enabled per bucket
+
+### Working with delete markers
+
+- ID: `s3-delete-markers`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - A DELETE without a version ID in a versioning-enabled bucket does not delete the object: a delete marker becomes the current version
+  - A GET without a version ID on a key whose current version is a delete marker returns 404
+  - Delete markers are listed only by ListObjectVersions; ListObjectsV2 does not return keys whose current version is a delete marker
+  - A delete marker is billed for the size of its key name
+
+### Managing delete markers
+
+- ID: `s3-managing-delete-markers`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/ManagingDelMarkers.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - To undelete an object, delete its delete marker with a DeleteObject request that names the marker's version ID
+  - A DeleteObject without a version ID on a key whose current version is a delete marker removes nothing and adds another delete marker
+  - An expired object delete marker is one with no versions left under it, and a lifecycle rule can remove it
+
+### Restoring previous versions
+
+- ID: `s3-restoring-previous-versions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/RestoringPreviousVersions.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - A previous version is restored either by copying it into the same bucket, which makes the copy the current version and preserves all versions, or by permanently deleting the current version
+
+### ListObjectVersions
+
+- ID: `s3-api-list-object-versions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - The response lists versions and delete markers as separate elements, each with Key, VersionId, IsLatest, and LastModified
+  - A truncated response continues with NextKeyMarker and NextVersionIdMarker
+
+### Lifecycle configuration elements
+
+- ID: `s3-lifecycle-rules`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - NoncurrentVersionExpiration permanently deletes noncurrent versions a number of days after they became noncurrent; they cannot be recovered
+  - In a versioning-enabled bucket the Expiration action applies only to the current version and adds a delete marker instead of removing the object
+  - ExpiredObjectDeleteMarker removes delete markers that have no versions left
+
+### What does Amazon S3 replicate?
+
+- ID: `s3-replication-what`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-what-is-isnot-replicated.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - By default only objects created after the replication configuration was added are replicated
+  - With the latest configuration version (a rule with a Filter), delete markers are not replicated by default
+  - A DELETE that names a version ID is not replicated to the destination
+  - Actions performed by a lifecycle configuration are not replicated
+
+### Replicating delete markers between buckets
+
+- ID: `s3-delete-marker-replication`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/delete-marker-replication.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - By default a delete in the source bucket adds a delete marker in the source only
+  - With delete marker replication enabled, markers are copied and S3 behaves as if the object was deleted in both buckets
+
+### Event notification types and destinations
+
+- ID: `s3-event-types-versioned`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - s3:ObjectRemoved:Delete is sent when an object is deleted or a versioned object is permanently deleted; s3:ObjectRemoved:DeleteMarkerCreated is sent when a delete marker is created for a versioned object
+  - There is a separate s3:LifecycleExpiration:DeleteMarkerCreated event for versioned buckets
+- Note: Chapter 08 cites the same page for the event types of an unversioned bucket; this entry records the ones a versioned bucket adds.
+
+### Emptying a general purpose bucket
+
+- ID: `s3-empty-bucket`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - Emptying a bucket with versioning enabled or suspended means deleting all versions of all objects, delete markers included
+
+### Advanced DynamoDB backup
+
+- ID: `backup-advanced-dynamodb`
+- URL: <https://docs.aws.amazon.com/aws-backup/latest/devguide/advanced-ddb-backup.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - AWS Backup takes periodic snapshot-based backups of DynamoDB tables; they do not replace or duplicate point-in-time recovery, and using both incurs charges for both
+  - A custom role needs AWSBackupServiceRolePolicyForBackup to back up and AWSBackupServiceRolePolicyForRestores to restore
+  - Charges for these backups appear under Backup in the bill
+
+### Restore a Amazon DynamoDB table
+
+- ID: `backup-restore-dynamodb`
+- URL: <https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-dynamodb.html>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - Restoring a DynamoDB recovery point from AWS Backup asks for a new table name
+
+### AWS Price List: Amazon DynamoDB, ap-northeast-1 (backup and restore SKUs)
+
+- ID: `aws-price-list-dynamodb-backup`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - APN1-TimedPITRStorage-ByteHrs: USD 0.228 per GB-month of PITR backup storage
+  - APN1-RestoreDataSize-Bytes: USD 0.171 per GB of data restored
+  - APN1-TimedBackupStorage-ByteHrs: USD 0.114 per GB-month of on-demand backup storage
+- Note: Offer publication date 2026-09-11T12:44:22Z.
+
+### AWS Price List: AWS Backup, ap-northeast-1
+
+- ID: `aws-price-list-backup`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - APN1-WarmStorage-ByteHrs-DynamoDB: USD 0.114 per GB-month of warm backup storage for DynamoDB
+  - APN1-Restore-WarmBytes-DynamoDB: USD 0.171 per GB restored from warm storage for DynamoDB
+- Note: Offer publication date 2026-09-28T17:01:20Z.
+
+### Amazon S3 pricing (Replication)
+
+- ID: `s3-pricing-replication`
+- URL: <https://aws.amazon.com/s3/pricing/>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - For replication you pay for storage in the destination storage class and for replication PUT requests
+  - Inter-region data transfer is charged for Cross-Region Replication; the page lists no data transfer charge for Same-Region Replication
+- Note: Read through a fetch tool that returned excerpts, not the full page text.
+
+### @go-to-k/cdkd 0.296.28: help output and bundled dist (import, orphan, DynamoDB provider)
+
+- ID: `cdkd-recovery`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - `cdkd import --resource <logicalId>=<physicalId>` adopts an already-deployed resource into cdkd state; with at least one --resource only the listed resources are imported, and --dry-run shows the plan without writing state
+  - `cdkd orphan <construct path>` removes a resource from cdkd state without deleting the AWS resource
+  - The DynamoDB table provider applies PointInTimeRecoverySpecification through UpdateContinuousBackups and reads it back with DescribeContinuousBackups, and reads DeletionProtectionEnabled from DescribeTable
+  - Deleting a table with deletion protection needs `--remove-protection`; without it the provider does not turn protection off
+  - Dedicated providers are registered for AWS::DynamoDB::Table, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, and AWS::Logs::LogGroup; none is registered for the AWS::Backup types
+- Note: Read from the installed package: `cdkd import --help`, `cdkd orphan --help`, `cdkd --help`, and the bundled dist/provider-classes and dist/program files. Nothing was run against AWS.
+
+### Cloudflare D1: Time Travel and backups
+
+- ID: `cloudflare-d1-time-travel`
+- URL: <https://developers.cloudflare.com/d1/reference/time-travel/>
+- Checked: 2026-10-12
+- Chapters: 13, 22
+- Claims this source supports:
+  - Time Travel is always on and restores a database to any minute within the last 30 days (7 days on the Workers Free plan)
+  - Database history and restoring incur no additional cost
+  - A restore is destructive and overwrites the database in place; in-flight queries are cancelled; the restore returns a bookmark that undoes it
+  - Time Travel cannot yet clone or fork a database into a new copy
+
+### Cloudflare R2: S3 API compatibility
+
+- ID: `cloudflare-r2-s3-api`
+- URL: <https://developers.cloudflare.com/r2/api/s3/api/>
+- Checked: 2026-10-12
+- Chapters: 22
+- Claims this source supports:
+  - The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented
 
 ## Sources not re-read yet (starting points for later chapters)
 

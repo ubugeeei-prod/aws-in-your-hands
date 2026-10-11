@@ -2029,6 +2029,46 @@
         "ja": "organization を作ったアカウント。請求をまとめ、SCP を付ける側。SCP の制限を受けないので、ふだんの作業には使わない。",
         "en": "The account that created the organization. It pays the consolidated bill and attaches SCPs. SCPs do not restrict it, so it is not used for everyday work."
       }
+    },
+    {
+      "id": "pitr",
+      "ja": "PITR（point-in-time recovery）",
+      "en": "PITR (point-in-time recovery)",
+      "firstUse": "22",
+      "definition": {
+        "ja": "過去のある時点の状態に戻す機能。DynamoDB では、連続して取られた backup から、指定した秒の内容を持つ新しい table を作る。元の table は書き換えない。",
+        "en": "Restoring to the state at some past moment. In DynamoDB, a new table holding the contents as of a chosen second is built from continuous backups; the source table is not rewritten."
+      }
+    },
+    {
+      "id": "rpo",
+      "ja": "RPO（recovery point objective）",
+      "en": "RPO (recovery point objective)",
+      "firstUse": "22",
+      "definition": {
+        "ja": "事故のとき、どれだけ前までのデータを失ってよいか、という目標。時間で表す。実際に失った長さは、復元した時点から事故までの間隔。",
+        "en": "The target for how far back you may lose data in an incident, expressed as time. What was actually lost is the gap between the restore point and the incident."
+      }
+    },
+    {
+      "id": "rto",
+      "ja": "RTO（recovery time objective）",
+      "en": "RTO (recovery time objective)",
+      "firstUse": "22",
+      "definition": {
+        "ja": "事故から、サービスが元どおり使えるようになるまでにかけてよい時間、という目標。復元の API が返るまでではなく、利用者が正しいデータを読めるまでを測る。",
+        "en": "The target for how long it may take from an incident until the service is usable again. Measured to the moment users read correct data, not to the moment a restore API returns."
+      }
+    },
+    {
+      "id": "delete-marker",
+      "ja": "delete marker",
+      "en": "delete marker",
+      "firstUse": "22",
+      "definition": {
+        "ja": "versioning を有効にした S3 bucket で、version を指定せずに object を消したときに置かれる目印。中身は消えず、目印がいちばん新しい version になる。目印を消すと、object は戻る。",
+        "en": "The marker S3 places when an object in a versioning-enabled bucket is deleted without naming a version. The bytes stay, and the marker becomes the newest version. Deleting the marker brings the object back."
+      }
     }
   ]
 }

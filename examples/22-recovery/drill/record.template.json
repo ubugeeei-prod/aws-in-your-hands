@@ -1,0 +1,29 @@
+{
+  "name": "REPLACE-WITH-A-NAME",
+  "region": "ap-northeast-1",
+  "tableName": null,
+  "restoredTableName": null,
+  "bucketName": null,
+  "timeline": {
+    "lastGoodWriteAt": null,
+    "accidentAt": null,
+    "detectedAt": null,
+    "tableRestorePoint": null,
+    "objectRestorePoint": null,
+    "restoreRequestedAt": null,
+    "tableActiveAt": null,
+    "objectsRestoredAt": null,
+    "verifiedAt": null,
+    "cutoverAt": null,
+    "serviceConfirmedAt": null
+  },
+  "counts": {
+    "notesReturning": null,
+    "notesLost": null,
+    "notesRolledBack": null,
+    "findingsBroken": null,
+    "findingsLeftover": null,
+    "repaired": null
+  },
+  "notes": ""
+}

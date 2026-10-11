@@ -321,6 +321,14 @@
     {
       "priceId": "config.item.continuous",
       "reason": "No free allowance for configuration items was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "dynamodb.restore",
+      "reason": "No free allowance for restores was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "backup.dynamodb.warm",
+      "reason": "No free allowance for AWS Backup storage was looked for or confirmed; none is applied."
     }
   ]
 }

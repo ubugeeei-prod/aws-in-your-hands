@@ -1441,6 +1441,83 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 2.34** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
 
+## Recovery: what staying restorable adds for a month (1 GB table, 10 GB of images)
+
+ID: `recovery-keep` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+
+Assumptions:
+
+- The default stack: a 1 GB table with point-in-time recovery enabled
+- 10 GB of images, of which 1 GB a month is overwritten or deleted, each old version kept 30 days (computed as 1 GB for one month)
+- Storage of the table and of the current images, requests, and Lambda are left out: this is only what is added
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.pitr.storage` | 1 | GB-Mo | 1 GB table under PITR, in GB-month | 0.23 | - | 0.23 |
+| `s3.standard.storage` | 1 | GB-Mo | 1 GB of noncurrent versions, in GB-month | 0.03 | - | 0.03 |
+
+- List subtotal: **USD 0.25** / month
+- Subtotal after monthly free allowance: **USD 0.25** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`
+
+## Recovery: one drill that restores and checks a 1 GB table
+
+ID: `recovery-drill` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+
+Assumptions:
+
+- One RestoreTableToPointInTime, restoring 1 GB of data
+- Four checks (a strongly consistent Scan of the whole table), 262,144 read request units each, counting 1 GB as 4 KB items
+- Includes storage for the restored table (1 GB) if it is left in place for a month
+- S3 listing and restore requests, Lambda, and logs are left out
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.restore` | 1 | GB | 1 GB restored | 0.17 | - | 0.17 |
+| `dynamodb.read.on-demand` | 1,048,576 | ReadRequestUnits | 4 full scans x 262,144 read request units | 0.15 | - | 0.15 |
+| `dynamodb.storage` | 1 | GB-Mo | the restored table, 1 GB for a month | 0 | - | 0 |
+
+- List subtotal: **USD 0.32** / month
+- Subtotal after monthly free allowance: **USD 0.32** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `dynamodb.restore`
+
+## Recovery: what `-c backup=on` adds (AWS Backup, 1 GB table)
+
+ID: `recovery-backup-optin` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+
+Assumptions:
+
+- One snapshot a day, kept 7 days: seven are in warm storage at any time
+- Each snapshot is assumed to be billed as the whole table (1 GB); whether they are incremental was not confirmed
+- No restore
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `backup.dynamodb.warm` | 7 | GB-month | 7 snapshots x 1 GB, in GB-month | 0.80 | - | 0.80 |
+
+- List subtotal: **USD 0.80** / month
+- Subtotal after monthly free allowance: **USD 0.80** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `backup.dynamodb.warm`
+
+## Recovery: what `-c replica=on` adds (S3 Replication, 10 GB of images)
+
+ID: `recovery-replica-optin` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+
+Assumptions:
+
+- The destination holds 10 GB of images placed after replication was enabled, and 1 GB of old versions
+- 10,000 objects are replicated in the month; a replication PUT is computed at the ordinary PUT price (Tier 1)
+- Replication within one Region; no data transfer is included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 11 | GB-Mo | the second copy: 10 GB current + 1 GB noncurrent, in GB-month | 0.28 | - | 0.28 |
+| `s3.request.tier1` | 10,000 | Requests | 10,000 replication PUT requests | 0.05 | - | 0.05 |
+
+- List subtotal: **USD 0.32** / month
+- Subtotal after monthly free allowance: **USD 0.32** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -1534,6 +1611,8 @@ Assumptions:
 | `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
 | `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
 | `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
+| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
+| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -1602,3 +1681,5 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
 - `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
 - `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.
+- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
+- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.

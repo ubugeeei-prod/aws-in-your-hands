@@ -155,6 +155,12 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | not run | - | Not run. Creating the web ACL in us-east-1, associating it with the distribution, how long the rate-based rule takes to start blocking, and what the counted rule group records |
 | 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | not run | - | Not run. Encrypting the secret with a customer managed key, the function reading it under the kms:ViaService condition, and the state of the key after destroy |
 | 21 | `vp run sec:posture / sec:trail:iam` | AWS | not run | - | Not run. The actual responses of the read APIs of six services, and the output when a permission is missing |
+| 22 | `vp run test:unit (examples/22-recovery)` | local | passed | 2026-10-12 | Detection and repair with the table and the bucket restored to different points (same point, table only, before an upload, after an overwrite, no version left); repair as a dry run, run twice, and interrupted; chapter 08's leftover inspection records; the object restore plan and its re-run; version numbers rolled back and the fence; the PITR plan; the drill record; item classification; chapter 05's repository contract; the requests sent to DynamoDB and S3; and stack assertions |
+| 22 | `vp run recovery:demo` | local | passed | 2026-10-12 | Ran, on the in-memory table and bucket, the accident, the table restore, the check (4 findings), the bucket restore, the second check (0), and the fence. The output quoted in the chapter is from this run |
+| 22 | `vp run recovery:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout, including the esbuild bundle. `-c table`, `-c protect=on`, `-c backup=on`, and `-c replica=on` were synthesized inside the tests and by passing context to `node infra/bin/app.ts` |
+| 22 | `vp run recovery:drill new / mark / set / summary` | local | passed | 2026-10-12 | Created a record file, stamped moments and counts, saw an overwrite refused, and printed the summary. The values were for checking the tool, not measurements of a drill, and the file was deleted |
+| 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table with PITR, an S3 bucket with versioning, and a Lambda function; `-c backup=on` adds an AWS Backup vault and plan, `-c replica=on` a second bucket and a replication configuration |
+| 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | not run | - | The steps of the drill. None was run against AWS, and there are no measured RPO or RTO values |
 
 ## Open items and how to resume
 
@@ -625,3 +631,15 @@ To resume: Record over several deploys whether `vp run sec:smoke` right after a 
 `sec:posture` and `sec:trail:iam` have not been run against a real account, and GuardDuty, Inspector, Config, a trail, and Organizations have not been enabled
 
 To resume: Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU
+
+### 22-drill
+
+The chapter 22 recovery drill has never been run on AWS. Unconfirmed: how long a PITR restore takes, the real lag of `LatestRestorableDateTime`, which settings a restored table does and does not inherit (deletion protection and PITR included), the ETag, `LastModified`, and notifications after removing a delete marker or copying a version on top in S3, the order of versions that share a timestamp in `ListObjectVersions`, and any measured RPO or RTO.
+
+To resume: After `vp run recovery:infra:deploy`, follow the chapter's drill section: `recovery:drill new`, `recovery:seed --apply`, `recovery:accident --apply`, `recovery:restore:table --apply`, `recovery:restore:objects --at <time> --apply`, `recovery:verify --table <restored table> --frozen`, `recovery:repair`, then record what `recovery:drill summary` prints in a copy of `examples/22-recovery/drill/TEMPLATE.md`. Finish with the three cleanup tasks.
+
+### 22-cutover
+
+The cutover to a restored table was not tried on AWS. Unconfirmed: that deploying with `-c table=<name>` changes only the function's environment and IAM policy, that cdkd's drift check does not report the restored table, that `cdkd orphan` and `cdkd import --resource` can swap the stack's table, what destroying a `-c protect=on` stack with cdkd does, and creating and deleting `-c backup=on` (through Cloud Control API) and `-c replica=on`.
+
+To resume: Continuing the drill, read the diff from `vp run recovery:infra:diff -c table=<restored table>`, deploy, then run `vp run recovery:audit` and `vp run recovery:infra:drift`. To try the import, first read the output of `cdkd orphan AihRecovery/Notes --dry-run` and `cdkd import AihRecovery --resource <logical ID>=<restored table> --dry-run` in `examples/22-recovery`.

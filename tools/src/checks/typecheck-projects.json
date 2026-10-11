@@ -23,5 +23,6 @@
   "examples/08-async",
   "examples/23-ec2",
   "examples/16-long-jobs",
-  "examples/21-security"
+  "examples/21-security",
+  "examples/22-recovery"
 ]

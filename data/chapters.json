@@ -1261,51 +1261,41 @@
       "prerequisites": ["05", "07"],
       "services": ["DynamoDB PITR", "S3 Versioning", "S3 Replication", "AWS Backup"],
       "samplePath": "examples/22-recovery",
+      "sourceIds": [
+        "dynamodb-pitr",
+        "dynamodb-pitr-enable",
+        "dynamodb-pitr-restore",
+        "dynamodb-api-restore-table-to-point-in-time",
+        "dynamodb-table-basics",
+        "dynamodb-global-tables-how",
+        "s3-versioning",
+        "s3-delete-markers",
+        "s3-managing-delete-markers",
+        "s3-restoring-previous-versions",
+        "s3-api-list-object-versions",
+        "s3-lifecycle-rules",
+        "s3-replication-what",
+        "s3-delete-marker-replication",
+        "s3-event-types-versioned",
+        "s3-empty-bucket",
+        "backup-advanced-dynamodb",
+        "backup-restore-dynamodb",
+        "aws-price-list-dynamodb-backup",
+        "aws-price-list-backup",
+        "s3-pricing-replication",
+        "cdkd-recovery",
+        "cloudflare-d1-time-travel",
+        "cloudflare-r2-s3-api"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": [],
-      "outline": {
-        "outcome": {
-          "ja": "誤って消したノートと画像を実際に復元し、かかった時間と失ったデータを記録する。",
-          "en": "You actually restore accidentally deleted notes and images and record the time taken and data lost."
-        },
-        "architecture": {
-          "ja": "DynamoDB PITR → 新しいテーブルへ復元 → 切替。S3 は versioning から復元。",
-          "en": "DynamoDB PITR → restore into a new table → cut over. S3 restores from versions."
-        },
-        "topics": {
-          "ja": [
-            "replication は backup ではない: 削除も複製される",
-            "RPO/RTO を実測する",
-            "復元は新しい resource を作る: IaC と drift への影響",
-            "backup の保存費用"
-          ],
-          "en": [
-            "Replication is not backup: deletions replicate too",
-            "Measuring RPO and RTO",
-            "Restores create new resources: the effect on IaC and drift",
-            "Backup storage cost"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "backup/restore の vp task（cache: false）",
-            "復元後に 05章・08章の invariant が成り立つかの検査 script",
-            "drill の記録 template"
-          ],
-          "en": [
-            "Backup and restore vp tasks (cache: false)",
-            "A script checking the chapter 05 and 08 invariants after restore",
-            "A drill record template"
-          ]
-        },
-        "distributed": {
-          "ja": "DB と object store は別時点に戻る。復元後の不整合を検出して直す。",
-          "en": "The database and the object store restore to different points in time; detect and repair the mismatch."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "23",

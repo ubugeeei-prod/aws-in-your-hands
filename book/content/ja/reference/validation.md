@@ -155,6 +155,12 @@ generated: true
 | 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | 未実行 | - | 未実行。us-east-1 への web ACL の作成、distribution への関連付け、rate-based rule が実際に block を始めるまでの時間、count にした rule group の記録 |
 | 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | 未実行 | - | 未実行。customer managed key での secret の暗号化、kms:ViaService の条件つきで関数が読めること、destroy 後の鍵の状態 |
 | 21 | `vp run sec:posture / sec:trail:iam` | AWS | 未実行 | - | 未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示 |
+| 22 | `vp run test:unit (examples/22-recovery)` | ローカル | 成功 | 2026-10-12 | table と bucket を別の時点に戻したときの検出と修復（同じ時点、table だけ、アップロードより前、上書きの後、version が残っていない場合）、修復の dry run・二重実行・途中での中断、08章の残った検査記録、object の復元計画と再実行、version 番号の巻き戻りと fence、PITR の計画、drill の記録、item の分類、05章の repository contract、DynamoDB と S3 へのリクエストの形、stack の assertion |
+| 22 | `vp run recovery:demo` | ローカル | 成功 | 2026-10-12 | メモリ上の table と bucket で、事故、table の復元、検査（4 件）、bucket の復元、再検査（0 件）、fence までを実行した。本文に載せた出力はこの実行のもの |
+| 22 | `vp run recovery:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成で synth した（esbuild の bundle 込み）。`-c table`、`-c protect=on`、`-c backup=on`、`-c replica=on` は、テストの中と、`node infra/bin/app.ts` に context を渡す形で synth した |
+| 22 | `vp run recovery:drill new / mark / set / summary` | ローカル | 成功 | 2026-10-12 | 記録ファイルの作成、時刻と件数の記入、上書きの拒否、集計を手元で実行した。書いた値は動作確認用で、drill の実測ではない。ファイルは消した |
+| 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | PITR を有効にした DynamoDB の table、versioning を有効にした S3 bucket、Lambda 関数を作る。`-c backup=on` で AWS Backup の vault と plan、`-c replica=on` で 2 つ目の bucket と複製の設定が加わる |
+| 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | 未実行 | - | drill の手順。AWS に対しては 1 つも実行していない。RPO と RTO の実測値はない |
 
 ## 未解決事項と再開手順
 
@@ -625,3 +631,15 @@ IAM の変更が伝わるまでの遅れを、実際には観測していない
 `sec:posture` と `sec:trail:iam` を実アカウントで動かしていない。GuardDuty、Inspector、Config、trail、Organizations も有効にしていない
 
 再開手順: `vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す
+
+### 22-drill
+
+22章の復旧 drill を AWS で一度も実行していない。未確認: PITR の復元にかかる時間、`LatestRestorableDateTime` の実際の遅れ、復元した table に引き継がれる設定と引き継がれない設定（削除保護と PITR を含む）、S3 で delete marker を消した後と version を上書きコピーした後の ETag・`LastModified`・通知、`ListObjectVersions` の時刻が同じ version の並び、RPO と RTO の実測値。
+
+再開手順: `vp run recovery:infra:deploy` のあと、本文「drill を実行する」の順に `recovery:drill new`、`recovery:seed --apply`、`recovery:accident --apply`、`recovery:restore:table --apply`、`recovery:restore:objects --at <時刻> --apply`、`recovery:verify --table <復元した table> --frozen`、`recovery:repair` を実行し、`recovery:drill summary` の値を `examples/22-recovery/drill/TEMPLATE.md` の写しに記録する。最後に「片付け」の 3 つのタスク。
+
+### 22-cutover
+
+復元した table への切り替えを実機で確かめていない。未確認: `-c table=<名前>` での deploy が関数の環境変数と IAM policy だけを変えること、cdkd の drift 検査が復元した table を報告しないこと、`cdkd orphan` と `cdkd import --resource` で stack の table を入れ替えられること、`-c protect=on` の stack を cdkd で destroy したときの動き、`-c backup=on`（Cloud Control API 経由）と `-c replica=on` の作成と削除。
+
+再開手順: drill の続きで `vp run recovery:infra:diff -c table=<復元した table>` の差分を読み、deploy して `vp run recovery:audit` と `vp run recovery:infra:drift` を実行する。import を試すなら、`examples/22-recovery` で `cdkd orphan AihRecovery/Notes --dry-run` と `cdkd import AihRecovery --resource <logical ID>=<復元した table> --dry-run` の出力を先に読む。

@@ -1567,6 +1567,72 @@
         "ja": "未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示",
         "en": "Not run. The actual responses of the read APIs of six services, and the output when a permission is missing"
       }
+    },
+    {
+      "scope": "22",
+      "command": "vp run test:unit (examples/22-recovery)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "table と bucket を別の時点に戻したときの検出と修復（同じ時点、table だけ、アップロードより前、上書きの後、version が残っていない場合）、修復の dry run・二重実行・途中での中断、08章の残った検査記録、object の復元計画と再実行、version 番号の巻き戻りと fence、PITR の計画、drill の記録、item の分類、05章の repository contract、DynamoDB と S3 へのリクエストの形、stack の assertion",
+        "en": "Detection and repair with the table and the bucket restored to different points (same point, table only, before an upload, after an overwrite, no version left); repair as a dry run, run twice, and interrupted; chapter 08's leftover inspection records; the object restore plan and its re-run; version numbers rolled back and the fence; the PITR plan; the drill record; item classification; chapter 05's repository contract; the requests sent to DynamoDB and S3; and stack assertions"
+      }
+    },
+    {
+      "scope": "22",
+      "command": "vp run recovery:demo",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "メモリ上の table と bucket で、事故、table の復元、検査（4 件）、bucket の復元、再検査（0 件）、fence までを実行した。本文に載せた出力はこの実行のもの",
+        "en": "Ran, on the in-memory table and bucket, the accident, the table restore, the check (4 findings), the bucket restore, the second check (0), and the fence. The output quoted in the chapter is from this run"
+      }
+    },
+    {
+      "scope": "22",
+      "command": "vp run recovery:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "既定の構成で synth した（esbuild の bundle 込み）。`-c table`、`-c protect=on`、`-c backup=on`、`-c replica=on` は、テストの中と、`node infra/bin/app.ts` に context を渡す形で synth した",
+        "en": "Synthesized the default layout, including the esbuild bundle. `-c table`, `-c protect=on`, `-c backup=on`, and `-c replica=on` were synthesized inside the tests and by passing context to `node infra/bin/app.ts`"
+      }
+    },
+    {
+      "scope": "22",
+      "command": "vp run recovery:drill new / mark / set / summary",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "記録ファイルの作成、時刻と件数の記入、上書きの拒否、集計を手元で実行した。書いた値は動作確認用で、drill の実測ではない。ファイルは消した",
+        "en": "Created a record file, stamped moments and counts, saw an overwrite refused, and printed the summary. The values were for checking the tool, not measurements of a drill, and the file was deleted"
+      }
+    },
+    {
+      "scope": "22",
+      "command": "vp run recovery:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "PITR を有効にした DynamoDB の table、versioning を有効にした S3 bucket、Lambda 関数を作る。`-c backup=on` で AWS Backup の vault と plan、`-c replica=on` で 2 つ目の bucket と複製の設定が加わる",
+        "en": "Creates a DynamoDB table with PITR, an S3 bucket with versioning, and a Lambda function; `-c backup=on` adds an AWS Backup vault and plan, `-c replica=on` a second bucket and a replication configuration"
+      }
+    },
+    {
+      "scope": "22",
+      "command": "vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "drill の手順。AWS に対しては 1 つも実行していない。RPO と RTO の実測値はない",
+        "en": "The steps of the drill. None was run against AWS, and there are no measured RPO or RTO values"
+      }
     }
   ],
   "open": [
@@ -2426,6 +2492,28 @@
       "resume": {
         "ja": "`vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す",
         "en": "Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU"
+      }
+    },
+    {
+      "id": "22-drill",
+      "summary": {
+        "ja": "22章の復旧 drill を AWS で一度も実行していない。未確認: PITR の復元にかかる時間、`LatestRestorableDateTime` の実際の遅れ、復元した table に引き継がれる設定と引き継がれない設定（削除保護と PITR を含む）、S3 で delete marker を消した後と version を上書きコピーした後の ETag・`LastModified`・通知、`ListObjectVersions` の時刻が同じ version の並び、RPO と RTO の実測値。",
+        "en": "The chapter 22 recovery drill has never been run on AWS. Unconfirmed: how long a PITR restore takes, the real lag of `LatestRestorableDateTime`, which settings a restored table does and does not inherit (deletion protection and PITR included), the ETag, `LastModified`, and notifications after removing a delete marker or copying a version on top in S3, the order of versions that share a timestamp in `ListObjectVersions`, and any measured RPO or RTO."
+      },
+      "resume": {
+        "ja": "`vp run recovery:infra:deploy` のあと、本文「drill を実行する」の順に `recovery:drill new`、`recovery:seed --apply`、`recovery:accident --apply`、`recovery:restore:table --apply`、`recovery:restore:objects --at <時刻> --apply`、`recovery:verify --table <復元した table> --frozen`、`recovery:repair` を実行し、`recovery:drill summary` の値を `examples/22-recovery/drill/TEMPLATE.md` の写しに記録する。最後に「片付け」の 3 つのタスク。",
+        "en": "After `vp run recovery:infra:deploy`, follow the chapter's drill section: `recovery:drill new`, `recovery:seed --apply`, `recovery:accident --apply`, `recovery:restore:table --apply`, `recovery:restore:objects --at <time> --apply`, `recovery:verify --table <restored table> --frozen`, `recovery:repair`, then record what `recovery:drill summary` prints in a copy of `examples/22-recovery/drill/TEMPLATE.md`. Finish with the three cleanup tasks."
+      }
+    },
+    {
+      "id": "22-cutover",
+      "summary": {
+        "ja": "復元した table への切り替えを実機で確かめていない。未確認: `-c table=<名前>` での deploy が関数の環境変数と IAM policy だけを変えること、cdkd の drift 検査が復元した table を報告しないこと、`cdkd orphan` と `cdkd import --resource` で stack の table を入れ替えられること、`-c protect=on` の stack を cdkd で destroy したときの動き、`-c backup=on`（Cloud Control API 経由）と `-c replica=on` の作成と削除。",
+        "en": "The cutover to a restored table was not tried on AWS. Unconfirmed: that deploying with `-c table=<name>` changes only the function's environment and IAM policy, that cdkd's drift check does not report the restored table, that `cdkd orphan` and `cdkd import --resource` can swap the stack's table, what destroying a `-c protect=on` stack with cdkd does, and creating and deleting `-c backup=on` (through Cloud Control API) and `-c replica=on`."
+      },
+      "resume": {
+        "ja": "drill の続きで `vp run recovery:infra:diff -c table=<復元した table>` の差分を読み、deploy して `vp run recovery:audit` と `vp run recovery:infra:drift` を実行する。import を試すなら、`examples/22-recovery` で `cdkd orphan AihRecovery/Notes --dry-run` と `cdkd import AihRecovery --resource <logical ID>=<復元した table> --dry-run` の出力を先に読む。",
+        "en": "Continuing the drill, read the diff from `vp run recovery:infra:diff -c table=<restored table>`, deploy, then run `vp run recovery:audit` and `vp run recovery:infra:drift`. To try the import, first read the output of `cdkd orphan AihRecovery/Notes --dry-run` and `cdkd import AihRecovery --resource <logical ID>=<restored table> --dry-run` in `examples/22-recovery`."
       }
     }
   ]
