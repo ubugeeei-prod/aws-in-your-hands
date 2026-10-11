@@ -1,0 +1,15 @@
+{
+  "name": "@aih/example-02-toolchain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@go-to-k/cdkd": "0.296.28",
+    "vite-plus": "1.1.0"
+  }
+}
