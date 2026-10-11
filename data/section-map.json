@@ -2656,6 +2656,136 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "08.architecture",
+      "sources": ["examples/08-async/infra/lib/async-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.inspect",
+      "sources": [
+        "examples/08-async/src/inspect.ts",
+        "examples/08-async/src/inspection.ts",
+        "examples/08-async/test/inspect.test.ts",
+        "examples/08-async/test/fixtures.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "08.delivery",
+      "sources": [
+        "examples/08-async/src/events.ts",
+        "examples/08-async/src/worker.ts",
+        "examples/08-async/src/local-queue.ts",
+        "examples/08-async/test/events.test.ts",
+        "examples/08-async/test/queue.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.idempotency",
+      "sources": [
+        "examples/08-async/src/worker.ts",
+        "examples/08-async/src/sequencer.ts",
+        "examples/08-async/src/object-reader.ts",
+        "examples/08-async/src/s3-object-reader.ts",
+        "examples/08-async/src/dynamodb-inspection-repository.ts",
+        "examples/08-async/test/worker.test.ts",
+        "examples/08-async/test/adapters.test.ts",
+        "examples/08-async/test/harness.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.housekeeping",
+      "sources": [
+        "examples/08-async/src/housekeeping.ts",
+        "examples/08-async/src/housekeeping-lambda.ts",
+        "examples/08-async/test/housekeeping.test.ts",
+        "examples/08-async/scripts/housekeeping.ts"
+      ],
+      "tasks": ["test:unit", "async:housekeeping"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.local",
+      "sources": [
+        "examples/08-async/src/dev.ts",
+        "examples/08-async/src/local.ts",
+        "examples/08-async/src/local-bucket.ts",
+        "examples/08-async/src/local-queue.ts",
+        "examples/08-async/.env.example"
+      ],
+      "tasks": ["dev:async", "dev:uploads:web", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "08.infra",
+      "sources": [
+        "examples/08-async/infra/lib/async-stack.ts",
+        "examples/08-async/infra/bin/app.ts",
+        "examples/08-async/infra/test/async-stack.test.ts",
+        "examples/08-async/src/worker-lambda.ts",
+        "examples/08-async/src/env.ts",
+        "examples/08-async/cdk.json"
+      ],
+      "tasks": ["async:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "08.deploy",
+      "sources": [
+        "examples/08-async/scripts/smoke.ts",
+        "examples/08-async/scripts/user.ts",
+        "examples/08-async/scripts/write-config.ts"
+      ],
+      "tasks": [
+        "async:infra:diff",
+        "async:infra:deploy",
+        "async:smoke",
+        "async:user:create",
+        "async:publish",
+        "async:smoke:web",
+        "async:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "08.operate",
+      "sources": ["examples/08-async/scripts/queue.ts", "examples/08-async/scripts/logs.ts"],
+      "tasks": ["async:queue", "async:logs"],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "08.cleanup",
+      "sources": ["examples/08-async/scripts/empty-uploads.ts"],
+      "tasks": ["async:empty", "async:unpublish", "async:infra:destroy", "async:user:delete"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

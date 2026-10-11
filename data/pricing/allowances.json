@@ -151,6 +151,14 @@
       "kind": "always-free",
       "sourceId": "aws-price-list-xray",
       "note": "Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces."
+    },
+    {
+      "priceId": "sqs.request.standard",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sqs-pricing",
+      "note": "1 million requests a month for all customers, counted across all Regions and shared by every queue in the account."
     }
   ],
   "unknown": [

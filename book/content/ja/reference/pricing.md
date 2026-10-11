@@ -1023,6 +1023,87 @@ ID: `containers-private-endpoints` / 章: [12 コンテナを動かす: ECR、EC
 - 毎月の無料枠適用後の小計: **USD 104.37** / 月
 - 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
 
+## 非同期の検査と掃除: デプロイ済みで、画像が 1 枚もない月
+
+ID: `async-idle` / 章: [08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+
+前提:
+
+- 07章のアプリの料金に上乗せされる分だけを数える。アップロードはゼロ、bucket は空
+- schedule は 1 時間に 1 回、月 730 回、掃除の関数を起動する。1 回は 0.5 秒、256 MB、arm64 と仮定する
+- 掃除は 1 回につき bucket の一覧を 2 回読む。空なので 1 ページずつ
+- ログは 1 回の起動につき 1 KB（関数の 1 行と、Lambda が書く START、END、REPORT の行）
+- 未算入: Lambda が空の queue を long polling するときの SQS のリクエスト。頻度が公式ドキュメントに書かれていないため、数量を出せない。0 という意味ではない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
+| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB, in GB-seconds | 0.001217 | 400,000 | 0 |
+| `s3.request.tier1` | 1,460 | Requests | 730 runs x 2 LIST requests | 0.01 | - | 0.01 |
+| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
+| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
+
+- 定価の小計: **USD 0.01** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
+
+## 非同期の検査: 月 10,000 枚のアップロードと 1,000 回の削除
+
+ID: `async-pipeline-small` / 章: [08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+
+前提:
+
+- 07章の例（月 10,000 枚のアップロード）に上乗せされる、イベントごとの分だけを数える。掃除の分は別の例
+- S3 のイベントは 11,000 件（作成 10,000、削除 1,000）。重複と再試行はゼロとする
+- SQS のリクエストは 1 メッセージにつき 3 回（S3 の SendMessage、Lambda の ReceiveMessage と DeleteMessage）と数える。空振りの ReceiveMessage は未算入（頻度が不明）
+- worker は 1 メッセージにつき 1 回起動するものとする（batch にまとまれば、これより少ない）。平均 200 ミリ秒、256 MB、arm64
+- worker の S3 へのリクエストは、作成イベントごとに GetObject が 1 回。tag を外すリクエストは請求されないものとする（07章と同じ）
+- DynamoDB は、作成イベントごとに書き込み 1 unit と強い整合性の読み取り 1 unit、削除イベントごとに書き込み 1 unit
+- ログは 1 イベントにつき 0.8 KB
+- 未算入: S3 から同じリージョンの Lambda へのデータ転送（料金を確認していない）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `sqs.request.standard` | 33,000 | Requests | 11,000 messages x 3 requests | 0.01 | 1,000,000 | 0 |
+| `lambda.request.arm` | 11,000 | Requests | one invocation per message | 0.002200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 550 | Lambda-GB-Second | 11,000 x 0.2 s x 0.25 GB, in GB-seconds | 0.01 | 400,000 | 0 |
+| `s3.request.tier2` | 10,000 | Requests | one GetObject per create event | 0.003700 | - | 0.003700 |
+| `dynamodb.write.on-demand` | 11,000 | WriteRequestUnits | one conditional write per event | 0.01 | - | 0.01 |
+| `dynamodb.read.on-demand` | 10,000 | ReadRequestUnits | one attachment lookup per create event | 0.001425 | - | 0.001425 |
+| `logs.ingest.standard` | 0.008 | GB | 11,000 x 0.8 KB, in GB | 0.01 | 5 | 0 |
+| `logs.storage` | 0.002 | GB-Mo | 0.0084 GB x 7/30, in GB-month | 0.000066 | 5 | 0 |
+
+- 定価の小計: **USD 0.04** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier2`
+
+## 定期的な掃除: 10,000 枚が置いてある bucket を 1 時間ごとに突き合わせる
+
+ID: `async-housekeeping-10k` / 章: [08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+
+前提:
+
+- bucket には月を通して 10,000 枚の画像があり、すべて添付の記録がある
+- 掃除は月 730 回。1 回につき、bucket の一覧を 2 回読み（1,000 件ずつ 10 ページ）、画像 1 枚につき DynamoDB を 4 回読む（07章の掃除が記録とノート、この章の処理が記録と検査の結果）。すべて強い整合性の読み取りで、1 回 1 unit
+- 1 回の実行は 200 秒と仮定する（40,000 回の読み取りを 1 回 5 ミリ秒で順に実行）。256 MB、arm64。計測した値ではない
+- tag を外すリクエストは請求されないものとする。削除はゼロとする
+- ログは 1 回の起動につき 1 KB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
+| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 36,500 | Lambda-GB-Second | 730 x 200 s x 0.25 GB, in GB-seconds | 0.49 | 400,000 | 0 |
+| `s3.request.tier1` | 14,600 | Requests | 730 runs x 2 passes x 10 LIST pages | 0.07 | - | 0.07 |
+| `dynamodb.read.on-demand` | 29,200,000 | ReadRequestUnits | 730 runs x 10,000 images x 4 reads | 4.16 | - | 4.16 |
+| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
+| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
+
+- 定価の小計: **USD 4.72** / 月
+- 毎月の無料枠適用後の小計: **USD 4.23** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -1095,6 +1176,8 @@ ID: `containers-private-endpoints` / 章: [12 コンテナを動かす: ECR、EC
 | `alb.hour` | ap-northeast-1 | APN1-LoadBalancerUsage | Hrs | 0 - ∞: 0.0243000000 | 2026-09-11 | 2026-10-12 |
 | `alb.lcu.hour` | ap-northeast-1 | APN1-LCUUsage | LCU-Hrs | 0 - ∞: 0.0080000000 | 2026-09-11 | 2026-10-12 |
 | `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
+| `sqs.request.standard` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 100,000,000,000: 0.0000004000<br>100,000,000,000 - 200,000,000,000: 0.0000003500<br>200,000,000,000 - ∞: 0.0000003200 | 2026-09-11 | 2026-10-12 |
+| `scheduler.invocation` | ap-northeast-1 | APN1-ScheduledInvocation | Invocations | 0 - 14,000,000: 0.0000000000<br>14,000,000 - ∞: 0.0000012500 | 2026-09-24 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -1121,6 +1204,7 @@ ID: `containers-private-endpoints` / 章: [12 コンテナを動かす: ECR、EC
 | `cloudwatch.synthetics.run` | 100 | `aws-price-list-cloudwatch-observability` | Runs. From the Global-CW:Canary-runs USD 0 tier. |
 | `xray.trace.recorded` | 100,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesStored USD 0 tier. |
 | `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
+| `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 

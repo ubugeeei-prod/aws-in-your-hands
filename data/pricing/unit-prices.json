@@ -1674,6 +1674,66 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:44:25Z",
       "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "sqs.request.standard",
+      "offerCode": "AWSQueueService",
+      "region": "ap-northeast-1",
+      "sku": "5Q2SBURHPCGERHBD",
+      "usageType": "APN1-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 100000000000,
+          "usd": "0.0000004000",
+          "description": "$0.40 per million Amazon SQS standard requests in Tier1 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 100000000000,
+          "to": 200000000000,
+          "usd": "0.0000003500",
+          "description": "$0.35 per million Amazon SQS standard requests in Tier2 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 200000000000,
+          "to": null,
+          "usd": "0.0000003200",
+          "description": "$0.32 per million Amazon SQS standard requests in Tier3 in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:07Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "scheduler.invocation",
+      "offerCode": "AWSEvents",
+      "region": "ap-northeast-1",
+      "sku": "29C3758CBCYNXH8B",
+      "usageType": "APN1-ScheduledInvocation",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Invocations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 14000000,
+          "usd": "0.0000000000",
+          "description": "$0 for the first 14 million scheduled invocations"
+        },
+        {
+          "from": 14000000,
+          "to": null,
+          "usd": "0.0000012500",
+          "description": "$1.25 per million scheduled invocations in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-24T16:39:03Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

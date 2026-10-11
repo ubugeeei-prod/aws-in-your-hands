@@ -62,7 +62,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-lambda`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04, 09, 14, 17, 20
+- Chapters: 04, 08, 09, 14, 17, 20
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AWSLambda
 
@@ -81,7 +81,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-s3`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 03, 07, 09, 20
+- Chapters: 03, 07, 08, 09, 20
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonS3
 
@@ -90,7 +90,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-cloudwatch`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04, 12, 14, 17, 19
+- Chapters: 04, 08, 12, 14, 17, 19
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudWatch
   - The price list has a USD 0 tier for the first 5 GB of log ingestion and 5 GB-month of log storage
@@ -224,7 +224,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-quotas`
 - URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
 - Checked: 2026-10-11
-- Chapters: 04, 07, 12
+- Chapters: 04, 07, 08, 12
 - Claims this source supports:
   - Function timeout is at most 900 seconds
   - Memory is 128 MB to 10,240 MB
@@ -258,7 +258,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `dynamodb-condition-expressions`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html>
 - Checked: 2026-10-11
-- Chapters: 05, 14
+- Chapters: 05, 08, 14
 - Claims this source supports:
   - PutItem overwrites an item with the same primary key unless a condition prevents it
   - attribute_not_exists on a key attribute is true only when no item with that full key exists
@@ -303,7 +303,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-dynamodb`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 05, 14
+- Chapters: 05, 08, 14
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonDynamoDB
   - The storage price has a USD 0 tier for the first 25 GB-month
@@ -1530,7 +1530,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-async-errors`
 - URL: <https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-error-handling.html>
 - Checked: 2026-10-11
-- Chapters: 15
+- Chapters: 08, 15
 - Claims this source supports:
   - When the function returns an error, Lambda runs it two more times by default
   - A function can receive the same event more than once even without an error
@@ -1899,7 +1899,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - Checked: 2026-10-11
-- Chapters: 02, 03, 04, 05, 06, 07, 09, 10, 12, 14, 17, 19, 20
+- Chapters: 02, 03, 04, 05, 06, 07, 08, 09, 10, 12, 14, 17, 19, 20
 - Claims this source supports:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -2567,7 +2567,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `s3-lifecycle-expiration`
 - URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html>
 - Checked: 2026-10-11
-- Chapters: 07
+- Chapters: 07, 08
 - Claims this source supports:
   - In a nonversioned bucket, S3 queues an expired object for removal and removes it asynchronously
   - Tag-based filters are evaluated daily, and the object's current tags are re-evaluated when the action executes; if the tag is gone, the expiration does not proceed
@@ -2589,7 +2589,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `s3-object-tagging`
 - URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-tagging.html>
 - Checked: 2026-10-11
-- Chapters: 07
+- Chapters: 07, 08
 - Claims this source supports:
   - Tags can be set in a POST Object request
   - Lifecycle rules can filter on object tags
@@ -2629,7 +2629,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `s3-consistency`
 - URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html>
 - Checked: 2026-10-11
-- Chapters: 07
+- Chapters: 07, 08
 - Claims this source supports:
   - S3 provides strong read-after-write consistency for PUT and DELETE of objects, and reads of object tags and metadata such as HEAD are strongly consistent
 - Note: The sentence names PUT and DELETE. It does not name POST Object.
@@ -2899,7 +2899,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-pricing`
 - URL: <https://aws.amazon.com/lambda/pricing/>
 - Checked: 2026-10-11
-- Chapters: 04, 09, 14, 17
+- Chapters: 04, 08, 09, 14, 17
 - Claims this source supports:
   - Free tier: 1,000,000 requests and 400,000 GB-seconds per month
   - Response streaming: first 6 MB per request free, then per GB
@@ -4739,6 +4739,499 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - wrangler dev and vite dev run the Worker and the container locally, and need a Docker-compatible CLI and engine such as Docker Desktop or Colima
 - Note: https://developers.cloudflare.com/containers/local-dev/ redirects here.
 
+### What is Amazon SQS?
+
+- ID: `sqs-welcome`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Standard queues deliver at least once
+  - Standard queues support at-least-once message delivery, and FIFO queues support exactly-once message processing
+
+### Amazon SQS standard queues
+
+- ID: `sqs-standard-queues`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Standard queues ensure at-least-once delivery; more than one copy of a message might be delivered, and messages may occasionally arrive out of order
+  - Ordering is best effort
+  - SQS stores a message redundantly in multiple Availability Zones before acknowledging SendMessage
+  - Standard queues suit applications that can handle messages arriving more than once or out of order
+
+### Amazon SQS at-least-once delivery
+
+- ID: `sqs-at-least-once`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues-at-least-once-delivery.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - If a server holding a copy of a message is unavailable when the message is received or deleted, that copy is not deleted and may be delivered again
+  - Applications should be idempotent: not adversely affected by processing the same message more than once
+
+### Amazon SQS visibility timeout
+
+- ID: `sqs-visibility-timeout`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A received message stays in the queue and is hidden from other consumers for the visibility timeout
+  - If the message is not deleted before the timeout expires, it becomes visible again and can be received by the same or another consumer
+  - The default visibility timeout is 30 seconds; the maximum is 12 hours from the first receive
+  - For standard queues there is no absolute guarantee that a message is not delivered more than once during the visibility timeout
+  - Standard queues allow approximately 120,000 in-flight messages
+
+### Using dead-letter queues in Amazon SQS
+
+- ID: `sqs-dead-letter-queues`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - maxReceiveCount is the number of times a consumer can receive a message from a source queue before it is moved to the dead-letter queue
+  - The dead-letter queue must be in the same account and Region as the source queue
+  - For standard queues, a message's expiration is based on its original enqueue timestamp, which does not change when it moves to the dead-letter queue, so the dead-letter queue's retention period should be longer than the source queue's
+  - With maxReceiveCount above 3, a message received 3 or more times without being deleted is moved to the back of the queue
+
+### Learn how to configure a dead-letter queue redrive in Amazon SQS
+
+- ID: `sqs-dlq-redrive`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - By default a redrive moves messages from the dead-letter queue back to their source queue
+  - Redriven messages are considered new messages: they get a new messageID and enqueueTime, and the retention period is reset
+  - Messages cannot be filtered or modified while they are redriven
+  - A redrive task can run for at most 36 hours
+  - Starting a redrive needs sqs:StartMessageMoveTask, sqs:ReceiveMessage, sqs:DeleteMessage, and sqs:GetQueueAttributes on the dead-letter queue and sqs:SendMessage on the destination
+
+### StartMessageMoveTask
+
+- ID: `sqs-start-message-move-task`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_StartMessageMoveTask.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - SourceArn must be a dead-letter queue whose source is another SQS queue
+  - Without DestinationArn, messages go back to their original source queues
+  - MaxNumberOfMessagesPerSecond is at most 500
+  - Only one active message movement task is supported per queue
+
+### Amazon SQS message quotas
+
+- ID: `sqs-message-quotas`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A message is retained for 4 days by default; the minimum is 60 seconds and the maximum is 14 days
+  - The maximum message size is 1 MiB
+  - A batch request holds at most 10 messages
+
+### Creating alarms for dead-letter queues using Amazon CloudWatch
+
+- ID: `sqs-dlq-alarms`
+- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/dead-letter-queues-alarms-cloudwatch.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A dead-letter queue is monitored with an alarm on the ApproximateNumberOfMessagesVisible metric
+
+### Amazon SQS pricing
+
+- ID: `sqs-pricing`
+- URL: <https://aws.amazon.com/sqs/pricing/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - All customers can make 1 million SQS requests for free each month, counted across all Regions
+  - Every SQS action counts as a request
+  - A request can carry 1 to 10 messages, and each 64 KB chunk of payload is billed as one request
+- Note: The unit prices on the page are filled in by script and were read from the Price List instead.
+
+### AWS Price List bulk API: Amazon SQS, ap-northeast-1
+
+- ID: `aws-price-list-sqs`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Standard queue requests in Tokyo: USD 0.40 per million up to 100 billion a month (SKU 5Q2SBURHPCGERHBD)
+  - A separate global SKU (MNCJEPJRCSC9RFY2) prices the first 1,000,000 requests a month at 0
+- Note: Publication date 2026-09-11T12:46:07Z.
+
+### Using Lambda with Amazon SQS
+
+- ID: `lambda-sqs`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Lambda polls the queue and invokes the function synchronously with a batch of messages
+  - When the function processes a batch successfully, Lambda deletes its messages from the queue
+  - By default, an error anywhere in a batch makes all its messages visible again after the visibility timeout
+  - Event source mappings process each event at least once, and duplicate processing can occur; AWS strongly recommends idempotent function code
+  - The function and the queue must be in the same Region
+
+### Creating and configuring an Amazon SQS event source mapping
+
+- ID: `lambda-sqs-configure`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Set the queue's visibility timeout to at least six times the function timeout
+  - The function timeout must not exceed the queue's visibility timeout; Lambda validates this when the mapping is created or updated
+  - AWS recommends a maxReceiveCount of at least 5 on the source queue's redrive policy
+  - Batch size is up to 10,000 for a standard queue; above 10 a batch window of at least 1 second is required
+  - A batch is also limited by the 6 MB synchronous invocation payload
+
+### Configuring scaling behavior for SQS event source mappings
+
+- ID: `lambda-sqs-scaling`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-scaling.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - For standard queues Lambda long-polls the queue, starts with five concurrent invocations, and adds up to 300 more per minute up to 1,250
+  - Maximum concurrency limits the concurrent function instances one SQS event source can invoke; it is between 2 and 1,000 and costs nothing
+  - Maximum concurrency and reserved concurrency are independent; reserved concurrency lower than the total maximum concurrency can lead to throttled messages
+  - With maximum concurrency set, Lambda's optimization down to 2 concurrent invokes at low traffic is not available
+- Note: The page gives no number for how often an idle queue is polled.
+
+### Handling errors for an SQS event source in Lambda
+
+- ID: `lambda-sqs-errors`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-errorhandling.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - With ReportBatchItemFailures in FunctionResponseTypes, the function returns the failed message IDs as batchItemFailures[].itemIdentifier and only those become visible again
+  - An empty or null batchItemFailures list means the whole batch succeeded
+  - If the function throws, the entire batch is a failure
+  - An invalid response, an empty or null itemIdentifier, or a message ID that is not in the batch makes the whole batch a failure
+  - With ReportBatchItemFailures activated, Lambda does not scale down polling when invocations fail
+  - A throttled invocation is retried until the message's timestamp exceeds the queue's visibility timeout, and then dropped by Lambda
+
+### Lambda parameters for Amazon SQS event source mappings
+
+- ID: `lambda-sqs-parameters`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-parameters.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - BatchSize defaults to 10 and MaximumBatchingWindowInSeconds to 0
+  - ScalingConfig holds the maximum concurrency; FunctionResponseTypes holds ReportBatchItemFailures
+
+### AWSLambdaSQSQueueExecutionRole
+
+- ID: `lambda-sqs-managed-policy`
+- URL: <https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSLambdaSQSQueueExecutionRole.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - The permissions Lambda needs on the queue are sqs:ReceiveMessage, sqs:DeleteMessage, and sqs:GetQueueAttributes
+  - The managed policy grants them, and the log permissions, on Resource "*"
+
+### Amazon S3 Event Notifications
+
+- ID: `s3-event-notifications`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - S3 event notifications are designed to be delivered at least once
+  - They are typically delivered in seconds but can sometimes take a minute or longer
+  - SQS FIFO queues are not supported as a destination
+
+### Event notification types and destinations
+
+- ID: `s3-notification-types`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Notifications are not guaranteed to arrive in the order the events occurred, and S3's retries can on rare occasions produce duplicates
+  - S3 sends one event entry per notification message
+  - s3:ObjectCreated:* covers Put, Post, Copy, and CompleteMultipartUpload
+  - s3:ObjectRemoved events are not sent for deletes made by a lifecycle configuration; those are s3:LifecycleExpiration events
+  - s3:TestEvent is published when a notification is enabled
+  - Messages can be up to 64 KB; the destination queue must be in the bucket's Region
+
+### Event message structure
+
+- ID: `s3-notification-structure`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - The object key in an event is URL encoded; a space becomes +
+  - The sequencer is a hexadecimal string; for one key, the greater value is the later event
+  - Sequencers can differ in length: left-pad the shorter with zeros, then compare lexicographically
+  - A sequencer cannot order events on different keys
+  - The test message has no Records array: {"Service":"Amazon S3","Event":"s3:TestEvent",...}
+  - eventName omits the s3: prefix
+- Note: The page says the sequencer is "only used with PUT and DELETE requests" and that create events "(PUT requests)" and delete events contain one. It does not say whether an ObjectCreated:Post or a LifecycleExpiration:Delete event carries a sequencer.
+
+### Granting permissions to publish event notification messages to a destination
+
+- ID: `s3-notification-permissions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/grant-destinations-permissions-to-s3.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - The queue's policy allows the s3.amazonaws.com service principal SQS:SendMessage, with conditions on aws:SourceArn (the bucket) and aws:SourceAccount
+  - A queue encrypted with a customer managed KMS key needs a key policy statement for the S3 service principal
+- Note: The page does not mention queues encrypted with SQS-managed keys (SSE-SQS).
+
+### Using Amazon SQS, Amazon SNS, and Lambda (enabling notifications)
+
+- ID: `s3-notification-config`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-enable-disable-notification-intro.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - After the notification configuration changes, it usually takes about five minutes to take effect
+  - When a notification is first enabled, an s3:TestEvent occurs
+
+### AWS::S3::Bucket NotificationConfiguration
+
+- ID: `cfn-s3-notification-configuration`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-notificationconfiguration.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Creating the destination and its permissions in the same template as the bucket can produce a circular dependency, because the bucket cannot be created until it has permission to publish and the permission refers to the bucket
+  - QueueConfigurations take one Event, a Queue ARN, and an optional S3Key filter
+
+### How to retrieve or copy objects based on metadata with conditional reads
+
+- ID: `s3-conditional-reads`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-reads.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - GetObject with If-Match returns the object only if its ETag matches the one provided
+  - An object's ETag represents a specific version of the object
+
+### GetObject
+
+- ID: `s3-getobject-if-match`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - When If-Match does not match, GetObject returns 412 Precondition Failed
+
+### Manage event ordering and duplicate events with Amazon S3 Event Notifications (AWS Storage Blog)
+
+- ID: `s3-blog-event-ordering`
+- URL: <https://aws.amazon.com/blogs/storage/manage-event-ordering-and-duplicate-events-with-amazon-s3-event-notifications/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Duplicate notifications for one object event have the same key, versionId, operation, and sequencer
+  - The post's design stores the newest sequencer per key in DynamoDB and does not update it for an older one
+- Note: An AWS blog post that the S3 user guide links to. Used for the statement about duplicates sharing a sequencer.
+
+### What is Amazon EventBridge Scheduler?
+
+- ID: `eventbridge-scheduler`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html>
+- Checked: 2026-10-12
+- Chapters: 08, 16
+- Claims this source supports:
+  - One-time and recurring schedules
+  - EventBridge Scheduler provides at-least-once event delivery to targets: at least one delivery succeeds with a response from the target
+  - Templated targets exist for SQS, SNS, Lambda, and EventBridge; a retry limit and a maximum retention time for failed triggers can be set
+
+### Using templated targets in EventBridge Scheduler
+
+- ID: `scheduler-templated-targets`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-templated.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A function ARN as the target means Lambda's Invoke operation
+  - The schedule's execution role needs lambda:InvokeFunction for a Lambda target
+
+### Setting up Amazon EventBridge Scheduler
+
+- ID: `scheduler-execution-role`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - The execution role is an IAM role that EventBridge Scheduler assumes to call the target; its trust policy names scheduler.amazonaws.com
+
+### Confused deputy prevention in EventBridge Scheduler
+
+- ID: `scheduler-confused-deputy`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/cross-service-confused-deputy-prevention.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - AWS recommends aws:SourceArn and aws:SourceAccount conditions in the execution role's trust policy
+  - The aws:SourceArn value must be a schedule group ARN, not a schedule or a name prefix
+
+### RetryPolicy (EventBridge Scheduler API)
+
+- ID: `scheduler-retry-policy`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/APIReference/API_RetryPolicy.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - MaximumEventAgeInSeconds is 60 to 86,400; MaximumRetryAttempts is 0 to 185
+  - Retries use exponential backoff until either limit is reached
+- Note: The page states no default for either value.
+
+### Schedule types in EventBridge Scheduler
+
+- ID: `scheduler-schedule-types`
+- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A rate expression is rate(value unit) with minutes, hours, or days
+  - A rate-based schedule without a StartDate starts invoking its target immediately
+
+### Invoke a Lambda function on a schedule
+
+- ID: `lambda-eventbridge-scheduler`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/with-eventbridge-scheduler.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - EventBridge Scheduler invokes a Lambda function asynchronously
+
+### Amazon EventBridge pricing
+
+- ID: `eventbridge-pricing`
+- URL: <https://aws.amazon.com/eventbridge/pricing/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - EventBridge Scheduler: 14,000,000 invocations a month are free
+
+### AWS Price List bulk API: Amazon EventBridge, ap-northeast-1
+
+- ID: `aws-price-list-events`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Scheduled invocations in Tokyo (SKU 29C3758CBCYNXH8B): USD 0 for the first 14 million a month, then USD 1.25 per million
+- Note: Publication date 2026-09-24T16:39:03Z.
+
+### Supported data types and naming rules in Amazon DynamoDB
+
+- ID: `dynamodb-data-types`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - DynamoDB collates and compares strings using the bytes of the underlying UTF-8 encoding
+
+### cdkd v0.296.28: register-providers.ts and property-coverage.generated.ts
+
+- ID: `cdkd-source-async`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Dedicated providers are registered for AWS::SQS::Queue, AWS::SQS::QueuePolicy, AWS::Lambda::EventSourceMapping, AWS::Lambda::EventInvokeConfig, and AWS::Scheduler::Schedule
+  - property-coverage.generated.ts lists BucketName and NotificationConfiguration among the AWS::S3::Bucket properties the provider handles, and RedrivePolicy, VisibilityTimeout, MessageRetentionPeriod, and SqsManagedSseEnabled for AWS::SQS::Queue
+  - For AWS::Lambda::EventSourceMapping it lists BatchSize, FunctionResponseTypes, and ScalingConfig; for AWS::Scheduler::Schedule it lists Name, ScheduleExpression, FlexibleTimeWindow, and Target
+  - The dependency graph honours DependsOn except for a fixed list of VPC resource pairs
+- Note: Both files were read from the v0.296.28 tag; the DependsOn handling was read in the bundled JavaScript of the npm tarball. No cdkd command was run against AWS.
+
+### aws-cdk-lib 2.273.0: aws-s3 notifications and the synthesized AihAsync template
+
+- ID: `aws-cdk-lib-s3-notifications`
+- URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - `Bucket.addEventNotification` is implemented with a Custom::S3BucketNotifications resource (aws-s3/lib/notifications-resource)
+  - Setting `notificationConfiguration` on the CfnBucket synthesizes a plain NotificationConfiguration property and no custom resource
+  - `Function.configureAsyncInvoke` synthesizes AWS::Lambda::EventInvokeConfig; `EventSourceMapping` with maxConcurrency and reportBatchItemFailures synthesizes ScalingConfig.MaximumConcurrency and FunctionResponseTypes
+- Note: Read from the installed package and from cdk.out/AihAsync.template.json produced by `vp run async:infra:synth`.
+
+### WebP Container Specification
+
+- ID: `webp-container-spec`
+- URL: <https://developers.google.com/speed/webp/docs/riff_container>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A WebP file is a RIFF container whose first chunk is 'VP8 ' (lossy), 'VP8L' (lossless), or 'VP8X' (extended)
+- Note: The byte offsets used in src/inspect.ts were checked against files written by cwebp, not derived from this page alone.
+
+### Graphics Interchange Format, Version 89a
+
+- ID: `gif89a-spec`
+- URL: <https://www.w3.org/Graphics/GIF/spec-gif89a.txt>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A GIF data stream starts with a 3-byte signature and a 3-byte version, followed by the logical screen width and height as unsigned 16-bit values
+
+### Cloudflare Queues: Delivery guarantees
+
+- ID: `cloudflare-queues-delivery`
+- URL: <https://developers.cloudflare.com/queues/reference/delivery-guarantees/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - Queues provides at-least-once delivery by default; a message may on rare occasions be delivered more than once
+  - Cloudflare suggests a unique ID used as a primary key or an idempotency key to de-duplicate
+
+### Cloudflare Queues: Batching, Retries and Delays
+
+- ID: `cloudflare-queues-batching`
+- URL: <https://developers.cloudflare.com/queues/configuration/batching-retries/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A consumer receives batches; max_batch_size defaults to 10 and max_batch_timeout to 5 seconds
+  - ack() and retry() on a single message acknowledge or redeliver just that message
+  - max_retries defaults to 3; after that a message is deleted, or written to the dead-letter queue if one is configured
+
+### Cloudflare Queues: Dead Letter Queues
+
+- ID: `cloudflare-queues-dlq`
+- URL: <https://developers.cloudflare.com/queues/configuration/dead-letter-queues/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A dead-letter queue is set in the consumer configuration and is a queue like any other
+  - Without one, messages that reach the retry limit are deleted permanently
+
+### Cloudflare R2: Event notifications
+
+- ID: `cloudflare-r2-event-notifications`
+- URL: <https://developers.cloudflare.com/r2/buckets/event-notifications/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - R2 sends object-create and object-delete notifications to a Cloudflare Queue, with optional prefix and suffix rules
+  - The example message has account, bucket, object key, size and eTag, action, and eventTime
+- Note: No field corresponding to S3's sequencer appears in the message format on this page.
+
+### Cloudflare Workers: Cron Triggers
+
+- ID: `cloudflare-cron-triggers`
+- URL: <https://developers.cloudflare.com/workers/configuration/cron-triggers/>
+- Checked: 2026-10-12
+- Chapters: 08
+- Claims this source supports:
+  - A Worker can be run on a schedule with a cron expression through its scheduled() handler
+- Note: The page was not found to state a delivery guarantee for scheduled runs.
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### Security best practices in IAM
@@ -4864,24 +5357,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Chapters: 06
 - Claims this source supports:
   - User pools as an OIDC identity provider
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### What is Amazon SQS?
-
-- ID: `sqs-welcome`
-- URL: <https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html>
-- Chapters: 08
-- Claims this source supports:
-  - Standard queues deliver at least once
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### What is Amazon EventBridge Scheduler?
-
-- ID: `eventbridge-scheduler`
-- URL: <https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html>
-- Chapters: 08, 16
-- Claims this source supports:
-  - One-time and recurring schedules
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### What is Amazon RDS?

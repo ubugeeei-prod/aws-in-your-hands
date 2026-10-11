@@ -284,55 +284,76 @@
         "en": "Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler"
       },
       "prerequisites": ["07"],
-      "services": ["SQS", "Lambda", "EventBridge Scheduler"],
+      "services": ["SQS", "Lambda", "EventBridge Scheduler", "S3 Event Notifications", "DynamoDB"],
       "samplePath": "examples/08-async",
+      "sourceIds": [
+        "sqs-welcome",
+        "sqs-standard-queues",
+        "sqs-at-least-once",
+        "sqs-visibility-timeout",
+        "sqs-dead-letter-queues",
+        "sqs-dlq-redrive",
+        "sqs-start-message-move-task",
+        "sqs-message-quotas",
+        "sqs-dlq-alarms",
+        "sqs-pricing",
+        "aws-price-list-sqs",
+        "lambda-sqs",
+        "lambda-sqs-configure",
+        "lambda-sqs-scaling",
+        "lambda-sqs-errors",
+        "lambda-sqs-parameters",
+        "lambda-sqs-managed-policy",
+        "s3-event-notifications",
+        "s3-notification-types",
+        "s3-notification-structure",
+        "s3-notification-permissions",
+        "s3-notification-config",
+        "cfn-s3-notification-configuration",
+        "s3-conditional-reads",
+        "s3-getobject-if-match",
+        "s3-blog-event-ordering",
+        "eventbridge-scheduler",
+        "scheduler-templated-targets",
+        "scheduler-execution-role",
+        "scheduler-confused-deputy",
+        "scheduler-retry-policy",
+        "scheduler-schedule-types",
+        "lambda-eventbridge-scheduler",
+        "eventbridge-pricing",
+        "aws-price-list-events",
+        "dynamodb-data-types",
+        "cdkd-source-async",
+        "aws-cdk-lib-s3-notifications",
+        "webp-container-spec",
+        "gif89a-spec",
+        "cloudflare-queues-delivery",
+        "cloudflare-queues-batching",
+        "cloudflare-queues-dlq",
+        "cloudflare-r2-event-notifications",
+        "cloudflare-cron-triggers",
+        "lambda-async-errors",
+        "lambda-quotas",
+        "dynamodb-condition-expressions",
+        "s3-consistency",
+        "s3-lifecycle-expiration",
+        "s3-object-tagging",
+        "lambda-pricing",
+        "aws-price-list-lambda",
+        "aws-price-list-dynamodb",
+        "aws-price-list-s3",
+        "aws-price-list-cloudwatch",
+        "cdkd-npm"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["sqs-welcome", "eventbridge-scheduler"],
-      "outline": {
-        "outcome": {
-          "ja": "画像のサムネイル生成を queue に逃がし、同じメッセージが二度届いても結果が一つになる。",
-          "en": "Thumbnail generation moves to a queue, and a message delivered twice still produces one result."
-        },
-        "architecture": {
-          "ja": "S3 event → SQS → Lambda worker → S3 / DynamoDB。失敗は DLQ へ。Scheduler が定期掃除を起動。",
-          "en": "S3 event → SQS → Lambda worker → S3 / DynamoDB. Failures go to a DLQ. Scheduler triggers periodic cleanup."
-        },
-        "topics": {
-          "ja": [
-            "at-least-once 配送と visibility timeout",
-            "partial batch response",
-            "idempotency key と conditional write",
-            "DLQ の監視と redrive",
-            "backpressure と同時実行数の上限"
-          ],
-          "en": [
-            "At-least-once delivery and the visibility timeout",
-            "Partial batch responses",
-            "Idempotency keys with conditional writes",
-            "Monitoring and redriving a DLQ",
-            "Backpressure and concurrency limits"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "worker と idempotency store",
-            "重複配送・順序入替え・途中中断を注入する決定的テスト",
-            "queue / DLQ / event source mapping の CDK と assertion"
-          ],
-          "en": [
-            "Worker and idempotency store",
-            "Deterministic tests injecting duplicates, reordering, and mid-flight interruption",
-            "CDK for queue, DLQ, and event source mapping with assertions"
-          ]
-        },
-        "distributed": {
-          "ja": "invariant は「1 つの画像に対しサムネイル記録は高々 1 つ」。SQS を使うこと自体は exactly-once を与えない。",
-          "en": "Invariant: at most one thumbnail record per image. Using SQS does not by itself provide exactly-once processing."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "09",

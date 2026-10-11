@@ -46,4 +46,4 @@ Steps can run again; make each one idempotent and choose the checkpoint granular
 ## Primary sources to start from
 
 - [Lambda durable functions](https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html) (not re-read while writing)
-- [What is Amazon EventBridge Scheduler?](https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html) (not re-read while writing)
+- [What is Amazon EventBridge Scheduler?](https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html) (checked 2026-10-12)

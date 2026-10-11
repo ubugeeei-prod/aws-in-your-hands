@@ -46,4 +46,4 @@ step は再実行され得る。各 step を冪等にし、checkpoint の粒度�
 ## 調査の出発点にする一次情報
 
 - [Lambda durable functions](https://docs.aws.amazon.com/lambda/latest/dg/durable-functions.html) (執筆時に未再確認)
-- [What is Amazon EventBridge Scheduler?](https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html) (執筆時に未再確認)
+- [What is Amazon EventBridge Scheduler?](https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html) (確認日 2026-10-12)

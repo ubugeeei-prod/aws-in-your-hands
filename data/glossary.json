@@ -1569,6 +1569,116 @@
         "ja": "「平均 CPU 使用率を 60% に保つ」のように指標と目標値だけを決め、task の数の増減を任せる auto scaling の方式。",
         "en": "An auto scaling policy where you name a metric and a target value, such as 60 percent average CPU, and leave the number of tasks to the service."
       }
+    },
+    {
+      "id": "queue",
+      "ja": "queue",
+      "en": "queue",
+      "firstUse": "08",
+      "definition": {
+        "ja": "処理してほしいことをメッセージとして預かり、あとで取り出させる置き場所。送る側と処理する側が、同時に動いている必要がなくなる。",
+        "en": "A place that holds messages describing work to be done until something takes them out. The sender and the worker no longer have to be running at the same moment."
+      }
+    },
+    {
+      "id": "at-least-once",
+      "ja": "at-least-once 配送",
+      "en": "at-least-once delivery",
+      "firstUse": "08",
+      "definition": {
+        "ja": "メッセージが少なくとも 1 回は届く、という保証。2 回以上届くことがある。「ちょうど 1 回」ではない。",
+        "en": "A guarantee that a message arrives at least one time. It may arrive more than once. It is not \"exactly once\"."
+      }
+    },
+    {
+      "id": "visibility-timeout",
+      "ja": "visibility timeout",
+      "en": "visibility timeout",
+      "firstUse": "08",
+      "definition": {
+        "ja": "SQS で、受け取られたメッセージが他の受け手から隠される時間。この間に削除されなければ、メッセージはまた受け取れるようになる。",
+        "en": "In SQS, how long a received message is hidden from other receivers. If it is not deleted within that time, it can be received again."
+      }
+    },
+    {
+      "id": "dead-letter-queue",
+      "ja": "dead-letter queue（DLQ）",
+      "en": "dead-letter queue (DLQ)",
+      "firstUse": "08",
+      "definition": {
+        "ja": "決めた回数だけ受け取られても処理が終わらなかったメッセージを、よけておく別の queue。人が調べるための場所。",
+        "en": "A second queue where messages are set aside after being received a set number of times without being finished. A place for a person to look."
+      }
+    },
+    {
+      "id": "redrive",
+      "ja": "redrive",
+      "en": "redrive",
+      "firstUse": "08",
+      "definition": {
+        "ja": "dead-letter queue のメッセージを、元の queue に戻してもう一度処理させること。",
+        "en": "Moving messages from a dead-letter queue back to the queue they came from, to be handled again."
+      }
+    },
+    {
+      "id": "event-source-mapping",
+      "ja": "event source mapping",
+      "en": "event source mapping",
+      "firstUse": "08",
+      "definition": {
+        "ja": "Lambda が queue や stream を自分で読みにいき、まとめて関数に渡す設定。batch の大きさや同時実行の上限はここで決める。",
+        "en": "The Lambda setting under which Lambda itself reads a queue or stream and hands batches to a function. Batch size and the concurrency limit are set here."
+      }
+    },
+    {
+      "id": "partial-batch-response",
+      "ja": "partial batch response",
+      "en": "partial batch response",
+      "firstUse": "08",
+      "definition": {
+        "ja": "batch のうち失敗したメッセージの ID だけを関数が返す仕組み。成功したメッセージまでやり直されるのを防ぐ。",
+        "en": "A function's reply that names only the messages of a batch that failed, so that the ones that succeeded are not retried."
+      }
+    },
+    {
+      "id": "idempotency-key",
+      "ja": "冪等性の鍵",
+      "en": "idempotency key",
+      "firstUse": "08",
+      "definition": {
+        "ja": "「同じ仕事かどうか」を見分けるための値。配送のたびに変わる値（メッセージ ID）ではなく、仕事の中身から決まる値を使う。",
+        "en": "The value that tells whether two requests are the same piece of work. It comes from the work itself, not from a value that changes with each delivery, such as a message ID."
+      }
+    },
+    {
+      "id": "sequencer",
+      "ja": "sequencer",
+      "en": "sequencer",
+      "firstUse": "08",
+      "definition": {
+        "ja": "S3 が作成と削除のイベントに付ける 16 進の文字列。同じ key のイベントどうしなら、大きいほうが後に起きた。",
+        "en": "A hexadecimal string S3 puts on create and delete events. Between two events for the same key, the greater one happened later."
+      }
+    },
+    {
+      "id": "backpressure",
+      "ja": "backpressure",
+      "en": "backpressure",
+      "firstUse": "08",
+      "definition": {
+        "ja": "処理する側が追いつかないとき、その遅れを上流に伝えて流量を抑えること。queue はそれを「待ち行列が伸びる」という形で引き受ける。",
+        "en": "Slowing the flow when the worker cannot keep up, by letting the delay be felt upstream. A queue takes it on in the form of a growing backlog."
+      }
+    },
+    {
+      "id": "reconciliation",
+      "ja": "突き合わせ",
+      "en": "reconciliation",
+      "firstUse": "08",
+      "definition": {
+        "ja": "イベントを待たずに、2 つの置き場所の現在の中身を見比べて、ずれを直す処理。イベントが遅れたり失われたりしても効く。",
+        "en": "Comparing what two stores hold right now and fixing the differences, without waiting for an event. It works even when an event is late or lost."
+      }
     }
   ]
 }

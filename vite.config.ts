@@ -80,6 +80,7 @@ const chapterSynthTasks = [
   "kv:infra:synth",
   "ship:cfn:synth",
   "ecs:infra:synth",
+  "async:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -407,6 +408,39 @@ export default defineConfig({
       "ecs:watch": live("node --env-file-if-exists=../../.env scripts/watch.ts", { cwd: "examples/12-containers" }),
       "ecs:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/12-containers" }),
       // <<< chapter 12
+
+      // >>> chapter 08
+      // ---- chapter 08: work off the request ------------------------------
+      // Chapter 07's API with an in-memory queue and the worker, in one process. No Docker, no AWS.
+      "dev:async": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/08-async" }),
+      ...infra("async", "examples/08-async", "AihAsync"),
+      // Uploads with your credentials and waits for the worker's record.
+      "async:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/08-async" }),
+      // Depth of both queues and a look at the dead-letter queue. Moves messages back only with --redrive.
+      "async:queue": live("node --env-file-if-exists=../../.env scripts/queue.ts", { cwd: "examples/08-async" }),
+      "async:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/08-async" }),
+      // Lists what the scheduled function would do. Does it only with --delete.
+      "async:housekeeping": live("node --env-file-if-exists=../../.env scripts/housekeeping.ts", {
+        cwd: "examples/08-async",
+      }),
+      // Chapter 07's SPA, pointed at this chapter's stack.
+      "async:publish": live(
+        "node --env-file-if-exists=../../.env scripts/write-config.ts && node --env-file-if-exists=../../.env ../../tools/src/site/publish.ts . AihAsync ../07-uploads/web/dist",
+        { cwd: "examples/08-async", dependsOn: ["build:uploads:web"] },
+      ),
+      "async:smoke:web": live(`${node} tools/src/site/smoke.ts spa examples/08-async AihAsync`),
+      // Counts the uploaded images. Deletes them all only with --yes.
+      "async:empty": live("node --env-file-if-exists=../../.env scripts/empty-uploads.ts", {
+        cwd: "examples/08-async",
+      }),
+      "async:unpublish": live(`${node} tools/src/site/unpublish.ts examples/08-async AihAsync`),
+      "async:user:create": live("node --env-file-if-exists=../../.env scripts/user.ts create", {
+        cwd: "examples/08-async",
+      }),
+      "async:user:delete": live("node --env-file-if-exists=../../.env scripts/user.ts delete", {
+        cwd: "examples/08-async",
+      }),
+      // <<< chapter 08
 
       // ---- chapter task blocks are inserted above this line ----
 

@@ -1023,6 +1023,87 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 104.37** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
 
+## Asynchronous inspection and housekeeping: deployed, with no images, for a month
+
+ID: `async-idle` / chapter: [08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
+
+Assumptions:
+
+- Counts only what is added on top of the app of chapter 07. No uploads; the bucket is empty
+- The schedule starts the housekeeping function once an hour, 730 times a month. One run is assumed to take 0.5 s at 256 MB on arm64
+- Each run lists the bucket twice. It is empty, so one page each
+- 1 KB of logs per run (the function's line and Lambda's START, END, and REPORT lines)
+- Not included: the SQS requests Lambda makes while long-polling the empty queue. The documentation gives no rate, so there is no quantity to enter. This is not a statement that they cost 0
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
+| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB, in GB-seconds | 0.001217 | 400,000 | 0 |
+| `s3.request.tier1` | 1,460 | Requests | 730 runs x 2 LIST requests | 0.01 | - | 0.01 |
+| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
+| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
+
+- List subtotal: **USD 0.01** / month
+- Subtotal after monthly free allowance: **USD 0.01** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.request.tier1`
+
+## Asynchronous inspection: 10,000 uploads and 1,000 deletes a month
+
+ID: `async-pipeline-small` / chapter: [08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
+
+Assumptions:
+
+- Counts only the per-event part added to chapter 07's example of 10,000 uploads a month. Housekeeping is a separate example
+- 11,000 S3 events (10,000 creates, 1,000 deletes). No duplicates and no retries
+- Three SQS requests per message: S3's SendMessage, and Lambda's ReceiveMessage and DeleteMessage. Empty receives are not included (their rate is unknown)
+- The worker is taken to run once per message (fewer invocations if messages arrive in batches). 200 ms on average at 256 MB on arm64
+- The worker makes one GetObject per create event. The request that removes a tag is taken as not billed, as in chapter 07
+- DynamoDB: one write unit and one strongly consistent read unit per create event, one write unit per delete event
+- 0.8 KB of logs per event
+- Not included: data transfer from S3 to Lambda in the same Region (its price was not checked)
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `sqs.request.standard` | 33,000 | Requests | 11,000 messages x 3 requests | 0.01 | 1,000,000 | 0 |
+| `lambda.request.arm` | 11,000 | Requests | one invocation per message | 0.002200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 550 | Lambda-GB-Second | 11,000 x 0.2 s x 0.25 GB, in GB-seconds | 0.01 | 400,000 | 0 |
+| `s3.request.tier2` | 10,000 | Requests | one GetObject per create event | 0.003700 | - | 0.003700 |
+| `dynamodb.write.on-demand` | 11,000 | WriteRequestUnits | one conditional write per event | 0.01 | - | 0.01 |
+| `dynamodb.read.on-demand` | 10,000 | ReadRequestUnits | one attachment lookup per create event | 0.001425 | - | 0.001425 |
+| `logs.ingest.standard` | 0.008 | GB | 11,000 x 0.8 KB, in GB | 0.01 | 5 | 0 |
+| `logs.storage` | 0.002 | GB-Mo | 0.0084 GB x 7/30, in GB-month | 0.000066 | 5 | 0 |
+
+- List subtotal: **USD 0.04** / month
+- Subtotal after monthly free allowance: **USD 0.01** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.request.tier2`
+
+## Scheduled housekeeping: reconciling a bucket of 10,000 images every hour
+
+ID: `async-housekeeping-10k` / chapter: [08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
+
+Assumptions:
+
+- The bucket holds 10,000 images all month, each with an attachment record
+- 730 runs a month. Each lists the bucket twice (10 pages of 1,000) and reads DynamoDB four times per image: chapter 07's sweep reads the record and the note, and this chapter's pass reads the record and the inspection. All strongly consistent, one unit each
+- One run is assumed to take 200 s (40,000 reads in sequence at 5 ms each) at 256 MB on arm64. This was not measured
+- The request that removes a tag is taken as not billed. Nothing is deleted
+- 1 KB of logs per run
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
+| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 36,500 | Lambda-GB-Second | 730 x 200 s x 0.25 GB, in GB-seconds | 0.49 | 400,000 | 0 |
+| `s3.request.tier1` | 14,600 | Requests | 730 runs x 2 passes x 10 LIST pages | 0.07 | - | 0.07 |
+| `dynamodb.read.on-demand` | 29,200,000 | ReadRequestUnits | 730 runs x 10,000 images x 4 reads | 4.16 | - | 4.16 |
+| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
+| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
+
+- List subtotal: **USD 4.72** / month
+- Subtotal after monthly free allowance: **USD 4.23** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.request.tier1`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -1095,6 +1176,8 @@ Assumptions:
 | `alb.hour` | ap-northeast-1 | APN1-LoadBalancerUsage | Hrs | 0 - ∞: 0.0243000000 | 2026-09-11 | 2026-10-12 |
 | `alb.lcu.hour` | ap-northeast-1 | APN1-LCUUsage | LCU-Hrs | 0 - ∞: 0.0080000000 | 2026-09-11 | 2026-10-12 |
 | `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
+| `sqs.request.standard` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 100,000,000,000: 0.0000004000<br>100,000,000,000 - 200,000,000,000: 0.0000003500<br>200,000,000,000 - ∞: 0.0000003200 | 2026-09-11 | 2026-10-12 |
+| `scheduler.invocation` | ap-northeast-1 | APN1-ScheduledInvocation | Invocations | 0 - 14,000,000: 0.0000000000<br>14,000,000 - ∞: 0.0000012500 | 2026-09-24 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -1121,6 +1204,7 @@ Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is rec
 | `cloudwatch.synthetics.run` | 100 | `aws-price-list-cloudwatch-observability` | Runs. From the Global-CW:Canary-runs USD 0 tier. |
 | `xray.trace.recorded` | 100,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesStored USD 0 tier. |
 | `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
+| `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
 
 Allowances that could not be confirmed (treated as unknown, not as zero; nothing is deducted):
 

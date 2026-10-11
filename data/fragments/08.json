@@ -1,0 +1,1096 @@
+{
+  "chapterId": "08",
+  "manifest": {
+    "id": "08",
+    "slug": "async",
+    "title": {
+      "ja": "リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler",
+      "en": "Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler"
+    },
+    "prerequisites": ["07"],
+    "services": ["SQS", "Lambda", "EventBridge Scheduler", "S3 Event Notifications", "DynamoDB"],
+    "samplePath": "examples/08-async",
+    "writing": { "ja": "complete", "en": "complete" },
+    "sourceRevision": 1,
+    "translatedRevision": { "en": 1 },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "sqs-welcome",
+      "sqs-standard-queues",
+      "sqs-at-least-once",
+      "sqs-visibility-timeout",
+      "sqs-dead-letter-queues",
+      "sqs-dlq-redrive",
+      "sqs-start-message-move-task",
+      "sqs-message-quotas",
+      "sqs-dlq-alarms",
+      "sqs-pricing",
+      "aws-price-list-sqs",
+      "lambda-sqs",
+      "lambda-sqs-configure",
+      "lambda-sqs-scaling",
+      "lambda-sqs-errors",
+      "lambda-sqs-parameters",
+      "lambda-sqs-managed-policy",
+      "s3-event-notifications",
+      "s3-notification-types",
+      "s3-notification-structure",
+      "s3-notification-permissions",
+      "s3-notification-config",
+      "cfn-s3-notification-configuration",
+      "s3-conditional-reads",
+      "s3-getobject-if-match",
+      "s3-blog-event-ordering",
+      "eventbridge-scheduler",
+      "scheduler-templated-targets",
+      "scheduler-execution-role",
+      "scheduler-confused-deputy",
+      "scheduler-retry-policy",
+      "scheduler-schedule-types",
+      "lambda-eventbridge-scheduler",
+      "eventbridge-pricing",
+      "aws-price-list-events",
+      "dynamodb-data-types",
+      "cdkd-source-async",
+      "aws-cdk-lib-s3-notifications",
+      "webp-container-spec",
+      "gif89a-spec",
+      "cloudflare-queues-delivery",
+      "cloudflare-queues-batching",
+      "cloudflare-queues-dlq",
+      "cloudflare-r2-event-notifications",
+      "cloudflare-cron-triggers",
+      "lambda-async-errors",
+      "lambda-quotas",
+      "dynamodb-condition-expressions",
+      "s3-consistency",
+      "s3-lifecycle-expiration",
+      "s3-object-tagging",
+      "lambda-pricing",
+      "aws-price-list-lambda",
+      "aws-price-list-dynamodb",
+      "aws-price-list-s3",
+      "aws-price-list-cloudwatch",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "sqs-welcome",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html",
+      "title": "What is Amazon SQS?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard queues deliver at least once",
+        "Standard queues support at-least-once message delivery, and FIFO queues support exactly-once message processing"
+      ]
+    },
+    {
+      "id": "sqs-standard-queues",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html",
+      "title": "Amazon SQS standard queues",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard queues ensure at-least-once delivery; more than one copy of a message might be delivered, and messages may occasionally arrive out of order",
+        "Ordering is best effort",
+        "SQS stores a message redundantly in multiple Availability Zones before acknowledging SendMessage",
+        "Standard queues suit applications that can handle messages arriving more than once or out of order"
+      ]
+    },
+    {
+      "id": "sqs-at-least-once",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues-at-least-once-delivery.html",
+      "title": "Amazon SQS at-least-once delivery",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "If a server holding a copy of a message is unavailable when the message is received or deleted, that copy is not deleted and may be delivered again",
+        "Applications should be idempotent: not adversely affected by processing the same message more than once"
+      ]
+    },
+    {
+      "id": "sqs-visibility-timeout",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html",
+      "title": "Amazon SQS visibility timeout",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A received message stays in the queue and is hidden from other consumers for the visibility timeout",
+        "If the message is not deleted before the timeout expires, it becomes visible again and can be received by the same or another consumer",
+        "The default visibility timeout is 30 seconds; the maximum is 12 hours from the first receive",
+        "For standard queues there is no absolute guarantee that a message is not delivered more than once during the visibility timeout",
+        "Standard queues allow approximately 120,000 in-flight messages"
+      ]
+    },
+    {
+      "id": "sqs-dead-letter-queues",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html",
+      "title": "Using dead-letter queues in Amazon SQS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "maxReceiveCount is the number of times a consumer can receive a message from a source queue before it is moved to the dead-letter queue",
+        "The dead-letter queue must be in the same account and Region as the source queue",
+        "For standard queues, a message's expiration is based on its original enqueue timestamp, which does not change when it moves to the dead-letter queue, so the dead-letter queue's retention period should be longer than the source queue's",
+        "With maxReceiveCount above 3, a message received 3 or more times without being deleted is moved to the back of the queue"
+      ]
+    },
+    {
+      "id": "sqs-dlq-redrive",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html",
+      "title": "Learn how to configure a dead-letter queue redrive in Amazon SQS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default a redrive moves messages from the dead-letter queue back to their source queue",
+        "Redriven messages are considered new messages: they get a new messageID and enqueueTime, and the retention period is reset",
+        "Messages cannot be filtered or modified while they are redriven",
+        "A redrive task can run for at most 36 hours",
+        "Starting a redrive needs sqs:StartMessageMoveTask, sqs:ReceiveMessage, sqs:DeleteMessage, and sqs:GetQueueAttributes on the dead-letter queue and sqs:SendMessage on the destination"
+      ]
+    },
+    {
+      "id": "sqs-start-message-move-task",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_StartMessageMoveTask.html",
+      "title": "StartMessageMoveTask",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SourceArn must be a dead-letter queue whose source is another SQS queue",
+        "Without DestinationArn, messages go back to their original source queues",
+        "MaxNumberOfMessagesPerSecond is at most 500",
+        "Only one active message movement task is supported per queue"
+      ]
+    },
+    {
+      "id": "sqs-message-quotas",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html",
+      "title": "Amazon SQS message quotas",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A message is retained for 4 days by default; the minimum is 60 seconds and the maximum is 14 days",
+        "The maximum message size is 1 MiB",
+        "A batch request holds at most 10 messages"
+      ]
+    },
+    {
+      "id": "sqs-dlq-alarms",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/dead-letter-queues-alarms-cloudwatch.html",
+      "title": "Creating alarms for dead-letter queues using Amazon CloudWatch",
+      "checkedAt": "2026-10-12",
+      "supports": ["A dead-letter queue is monitored with an alarm on the ApproximateNumberOfMessagesVisible metric"]
+    },
+    {
+      "id": "sqs-pricing",
+      "url": "https://aws.amazon.com/sqs/pricing/",
+      "title": "Amazon SQS pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "All customers can make 1 million SQS requests for free each month, counted across all Regions",
+        "Every SQS action counts as a request",
+        "A request can carry 1 to 10 messages, and each 64 KB chunk of payload is billed as one request"
+      ],
+      "note": "The unit prices on the page are filled in by script and were read from the Price List instead."
+    },
+    {
+      "id": "aws-price-list-sqs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Amazon SQS, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Standard queue requests in Tokyo: USD 0.40 per million up to 100 billion a month (SKU 5Q2SBURHPCGERHBD)",
+        "A separate global SKU (MNCJEPJRCSC9RFY2) prices the first 1,000,000 requests a month at 0"
+      ],
+      "note": "Publication date 2026-09-11T12:46:07Z."
+    },
+    {
+      "id": "lambda-sqs",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "title": "Using Lambda with Amazon SQS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Lambda polls the queue and invokes the function synchronously with a batch of messages",
+        "When the function processes a batch successfully, Lambda deletes its messages from the queue",
+        "By default, an error anywhere in a batch makes all its messages visible again after the visibility timeout",
+        "Event source mappings process each event at least once, and duplicate processing can occur; AWS strongly recommends idempotent function code",
+        "The function and the queue must be in the same Region"
+      ]
+    },
+    {
+      "id": "lambda-sqs-configure",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html",
+      "title": "Creating and configuring an Amazon SQS event source mapping",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Set the queue's visibility timeout to at least six times the function timeout",
+        "The function timeout must not exceed the queue's visibility timeout; Lambda validates this when the mapping is created or updated",
+        "AWS recommends a maxReceiveCount of at least 5 on the source queue's redrive policy",
+        "Batch size is up to 10,000 for a standard queue; above 10 a batch window of at least 1 second is required",
+        "A batch is also limited by the 6 MB synchronous invocation payload"
+      ]
+    },
+    {
+      "id": "lambda-sqs-scaling",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-scaling.html",
+      "title": "Configuring scaling behavior for SQS event source mappings",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For standard queues Lambda long-polls the queue, starts with five concurrent invocations, and adds up to 300 more per minute up to 1,250",
+        "Maximum concurrency limits the concurrent function instances one SQS event source can invoke; it is between 2 and 1,000 and costs nothing",
+        "Maximum concurrency and reserved concurrency are independent; reserved concurrency lower than the total maximum concurrency can lead to throttled messages",
+        "With maximum concurrency set, Lambda's optimization down to 2 concurrent invokes at low traffic is not available"
+      ],
+      "note": "The page gives no number for how often an idle queue is polled."
+    },
+    {
+      "id": "lambda-sqs-errors",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-errorhandling.html",
+      "title": "Handling errors for an SQS event source in Lambda",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With ReportBatchItemFailures in FunctionResponseTypes, the function returns the failed message IDs as batchItemFailures[].itemIdentifier and only those become visible again",
+        "An empty or null batchItemFailures list means the whole batch succeeded",
+        "If the function throws, the entire batch is a failure",
+        "An invalid response, an empty or null itemIdentifier, or a message ID that is not in the batch makes the whole batch a failure",
+        "With ReportBatchItemFailures activated, Lambda does not scale down polling when invocations fail",
+        "A throttled invocation is retried until the message's timestamp exceeds the queue's visibility timeout, and then dropped by Lambda"
+      ]
+    },
+    {
+      "id": "lambda-sqs-parameters",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-parameters.html",
+      "title": "Lambda parameters for Amazon SQS event source mappings",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "BatchSize defaults to 10 and MaximumBatchingWindowInSeconds to 0",
+        "ScalingConfig holds the maximum concurrency; FunctionResponseTypes holds ReportBatchItemFailures"
+      ]
+    },
+    {
+      "id": "lambda-sqs-managed-policy",
+      "url": "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSLambdaSQSQueueExecutionRole.html",
+      "title": "AWSLambdaSQSQueueExecutionRole",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The permissions Lambda needs on the queue are sqs:ReceiveMessage, sqs:DeleteMessage, and sqs:GetQueueAttributes",
+        "The managed policy grants them, and the log permissions, on Resource \"*\""
+      ]
+    },
+    {
+      "id": "s3-event-notifications",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/EventNotifications.html",
+      "title": "Amazon S3 Event Notifications",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "S3 event notifications are designed to be delivered at least once",
+        "They are typically delivered in seconds but can sometimes take a minute or longer",
+        "SQS FIFO queues are not supported as a destination"
+      ]
+    },
+    {
+      "id": "s3-notification-types",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html",
+      "title": "Event notification types and destinations",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Notifications are not guaranteed to arrive in the order the events occurred, and S3's retries can on rare occasions produce duplicates",
+        "S3 sends one event entry per notification message",
+        "s3:ObjectCreated:* covers Put, Post, Copy, and CompleteMultipartUpload",
+        "s3:ObjectRemoved events are not sent for deletes made by a lifecycle configuration; those are s3:LifecycleExpiration events",
+        "s3:TestEvent is published when a notification is enabled",
+        "Messages can be up to 64 KB; the destination queue must be in the bucket's Region"
+      ]
+    },
+    {
+      "id": "s3-notification-structure",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html",
+      "title": "Event message structure",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The object key in an event is URL encoded; a space becomes +",
+        "The sequencer is a hexadecimal string; for one key, the greater value is the later event",
+        "Sequencers can differ in length: left-pad the shorter with zeros, then compare lexicographically",
+        "A sequencer cannot order events on different keys",
+        "The test message has no Records array: {\"Service\":\"Amazon S3\",\"Event\":\"s3:TestEvent\",...}",
+        "eventName omits the s3: prefix"
+      ],
+      "note": "The page says the sequencer is \"only used with PUT and DELETE requests\" and that create events \"(PUT requests)\" and delete events contain one. It does not say whether an ObjectCreated:Post or a LifecycleExpiration:Delete event carries a sequencer."
+    },
+    {
+      "id": "s3-notification-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/grant-destinations-permissions-to-s3.html",
+      "title": "Granting permissions to publish event notification messages to a destination",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The queue's policy allows the s3.amazonaws.com service principal SQS:SendMessage, with conditions on aws:SourceArn (the bucket) and aws:SourceAccount",
+        "A queue encrypted with a customer managed KMS key needs a key policy statement for the S3 service principal"
+      ],
+      "note": "The page does not mention queues encrypted with SQS-managed keys (SSE-SQS)."
+    },
+    {
+      "id": "s3-notification-config",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-enable-disable-notification-intro.html",
+      "title": "Using Amazon SQS, Amazon SNS, and Lambda (enabling notifications)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "After the notification configuration changes, it usually takes about five minutes to take effect",
+        "When a notification is first enabled, an s3:TestEvent occurs"
+      ]
+    },
+    {
+      "id": "cfn-s3-notification-configuration",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-notificationconfiguration.html",
+      "title": "AWS::S3::Bucket NotificationConfiguration",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Creating the destination and its permissions in the same template as the bucket can produce a circular dependency, because the bucket cannot be created until it has permission to publish and the permission refers to the bucket",
+        "QueueConfigurations take one Event, a Queue ARN, and an optional S3Key filter"
+      ]
+    },
+    {
+      "id": "s3-conditional-reads",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-reads.html",
+      "title": "How to retrieve or copy objects based on metadata with conditional reads",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GetObject with If-Match returns the object only if its ETag matches the one provided",
+        "An object's ETag represents a specific version of the object"
+      ]
+    },
+    {
+      "id": "s3-getobject-if-match",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html",
+      "title": "GetObject",
+      "checkedAt": "2026-10-12",
+      "supports": ["When If-Match does not match, GetObject returns 412 Precondition Failed"]
+    },
+    {
+      "id": "s3-blog-event-ordering",
+      "url": "https://aws.amazon.com/blogs/storage/manage-event-ordering-and-duplicate-events-with-amazon-s3-event-notifications/",
+      "title": "Manage event ordering and duplicate events with Amazon S3 Event Notifications (AWS Storage Blog)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Duplicate notifications for one object event have the same key, versionId, operation, and sequencer",
+        "The post's design stores the newest sequencer per key in DynamoDB and does not update it for an older one"
+      ],
+      "note": "An AWS blog post that the S3 user guide links to. Used for the statement about duplicates sharing a sequencer."
+    },
+    {
+      "id": "eventbridge-scheduler",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html",
+      "title": "What is Amazon EventBridge Scheduler?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "One-time and recurring schedules",
+        "EventBridge Scheduler provides at-least-once event delivery to targets: at least one delivery succeeds with a response from the target",
+        "Templated targets exist for SQS, SNS, Lambda, and EventBridge; a retry limit and a maximum retention time for failed triggers can be set"
+      ]
+    },
+    {
+      "id": "scheduler-templated-targets",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-templated.html",
+      "title": "Using templated targets in EventBridge Scheduler",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A function ARN as the target means Lambda's Invoke operation",
+        "The schedule's execution role needs lambda:InvokeFunction for a Lambda target"
+      ]
+    },
+    {
+      "id": "scheduler-execution-role",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html",
+      "title": "Setting up Amazon EventBridge Scheduler",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The execution role is an IAM role that EventBridge Scheduler assumes to call the target; its trust policy names scheduler.amazonaws.com"
+      ]
+    },
+    {
+      "id": "scheduler-confused-deputy",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/cross-service-confused-deputy-prevention.html",
+      "title": "Confused deputy prevention in EventBridge Scheduler",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS recommends aws:SourceArn and aws:SourceAccount conditions in the execution role's trust policy",
+        "The aws:SourceArn value must be a schedule group ARN, not a schedule or a name prefix"
+      ]
+    },
+    {
+      "id": "scheduler-retry-policy",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/APIReference/API_RetryPolicy.html",
+      "title": "RetryPolicy (EventBridge Scheduler API)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "MaximumEventAgeInSeconds is 60 to 86,400; MaximumRetryAttempts is 0 to 185",
+        "Retries use exponential backoff until either limit is reached"
+      ],
+      "note": "The page states no default for either value."
+    },
+    {
+      "id": "scheduler-schedule-types",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html",
+      "title": "Schedule types in EventBridge Scheduler",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A rate expression is rate(value unit) with minutes, hours, or days",
+        "A rate-based schedule without a StartDate starts invoking its target immediately"
+      ]
+    },
+    {
+      "id": "lambda-eventbridge-scheduler",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-eventbridge-scheduler.html",
+      "title": "Invoke a Lambda function on a schedule",
+      "checkedAt": "2026-10-12",
+      "supports": ["EventBridge Scheduler invokes a Lambda function asynchronously"]
+    },
+    {
+      "id": "eventbridge-pricing",
+      "url": "https://aws.amazon.com/eventbridge/pricing/",
+      "title": "Amazon EventBridge pricing",
+      "checkedAt": "2026-10-12",
+      "supports": ["EventBridge Scheduler: 14,000,000 invocations a month are free"]
+    },
+    {
+      "id": "aws-price-list-events",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Amazon EventBridge, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Scheduled invocations in Tokyo (SKU 29C3758CBCYNXH8B): USD 0 for the first 14 million a month, then USD 1.25 per million"
+      ],
+      "note": "Publication date 2026-09-24T16:39:03Z."
+    },
+    {
+      "id": "dynamodb-data-types",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html",
+      "title": "Supported data types and naming rules in Amazon DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": ["DynamoDB collates and compares strings using the bytes of the underlying UTF-8 encoding"]
+    },
+    {
+      "id": "cdkd-source-async",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts and property-coverage.generated.ts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dedicated providers are registered for AWS::SQS::Queue, AWS::SQS::QueuePolicy, AWS::Lambda::EventSourceMapping, AWS::Lambda::EventInvokeConfig, and AWS::Scheduler::Schedule",
+        "property-coverage.generated.ts lists BucketName and NotificationConfiguration among the AWS::S3::Bucket properties the provider handles, and RedrivePolicy, VisibilityTimeout, MessageRetentionPeriod, and SqsManagedSseEnabled for AWS::SQS::Queue",
+        "For AWS::Lambda::EventSourceMapping it lists BatchSize, FunctionResponseTypes, and ScalingConfig; for AWS::Scheduler::Schedule it lists Name, ScheduleExpression, FlexibleTimeWindow, and Target",
+        "The dependency graph honours DependsOn except for a fixed list of VPC resource pairs"
+      ],
+      "note": "Both files were read from the v0.296.28 tag; the DependsOn handling was read in the bundled JavaScript of the npm tarball. No cdkd command was run against AWS."
+    },
+    {
+      "id": "aws-cdk-lib-s3-notifications",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-s3 notifications and the synthesized AihAsync template",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "`Bucket.addEventNotification` is implemented with a Custom::S3BucketNotifications resource (aws-s3/lib/notifications-resource)",
+        "Setting `notificationConfiguration` on the CfnBucket synthesizes a plain NotificationConfiguration property and no custom resource",
+        "`Function.configureAsyncInvoke` synthesizes AWS::Lambda::EventInvokeConfig; `EventSourceMapping` with maxConcurrency and reportBatchItemFailures synthesizes ScalingConfig.MaximumConcurrency and FunctionResponseTypes"
+      ],
+      "note": "Read from the installed package and from cdk.out/AihAsync.template.json produced by `vp run async:infra:synth`."
+    },
+    {
+      "id": "webp-container-spec",
+      "url": "https://developers.google.com/speed/webp/docs/riff_container",
+      "title": "WebP Container Specification",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A WebP file is a RIFF container whose first chunk is 'VP8 ' (lossy), 'VP8L' (lossless), or 'VP8X' (extended)"
+      ],
+      "note": "The byte offsets used in src/inspect.ts were checked against files written by cwebp, not derived from this page alone."
+    },
+    {
+      "id": "gif89a-spec",
+      "url": "https://www.w3.org/Graphics/GIF/spec-gif89a.txt",
+      "title": "Graphics Interchange Format, Version 89a",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A GIF data stream starts with a 3-byte signature and a 3-byte version, followed by the logical screen width and height as unsigned 16-bit values"
+      ]
+    },
+    {
+      "id": "cloudflare-queues-delivery",
+      "url": "https://developers.cloudflare.com/queues/reference/delivery-guarantees/",
+      "title": "Cloudflare Queues: Delivery guarantees",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Queues provides at-least-once delivery by default; a message may on rare occasions be delivered more than once",
+        "Cloudflare suggests a unique ID used as a primary key or an idempotency key to de-duplicate"
+      ]
+    },
+    {
+      "id": "cloudflare-queues-batching",
+      "url": "https://developers.cloudflare.com/queues/configuration/batching-retries/",
+      "title": "Cloudflare Queues: Batching, Retries and Delays",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A consumer receives batches; max_batch_size defaults to 10 and max_batch_timeout to 5 seconds",
+        "ack() and retry() on a single message acknowledge or redeliver just that message",
+        "max_retries defaults to 3; after that a message is deleted, or written to the dead-letter queue if one is configured"
+      ]
+    },
+    {
+      "id": "cloudflare-queues-dlq",
+      "url": "https://developers.cloudflare.com/queues/configuration/dead-letter-queues/",
+      "title": "Cloudflare Queues: Dead Letter Queues",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A dead-letter queue is set in the consumer configuration and is a queue like any other",
+        "Without one, messages that reach the retry limit are deleted permanently"
+      ]
+    },
+    {
+      "id": "cloudflare-r2-event-notifications",
+      "url": "https://developers.cloudflare.com/r2/buckets/event-notifications/",
+      "title": "Cloudflare R2: Event notifications",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "R2 sends object-create and object-delete notifications to a Cloudflare Queue, with optional prefix and suffix rules",
+        "The example message has account, bucket, object key, size and eTag, action, and eventTime"
+      ],
+      "note": "No field corresponding to S3's sequencer appears in the message format on this page."
+    },
+    {
+      "id": "cloudflare-cron-triggers",
+      "url": "https://developers.cloudflare.com/workers/configuration/cron-triggers/",
+      "title": "Cloudflare Workers: Cron Triggers",
+      "checkedAt": "2026-10-12",
+      "supports": ["A Worker can be run on a schedule with a cron expression through its scheduled() handler"],
+      "note": "The page was not found to state a delivery guarantee for scheduled runs."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "queue",
+      "ja": "queue",
+      "en": "queue",
+      "firstUse": "08",
+      "definition": {
+        "ja": "処理してほしいことをメッセージとして預かり、あとで取り出させる置き場所。送る側と処理する側が、同時に動いている必要がなくなる。",
+        "en": "A place that holds messages describing work to be done until something takes them out. The sender and the worker no longer have to be running at the same moment."
+      }
+    },
+    {
+      "id": "at-least-once",
+      "ja": "at-least-once 配送",
+      "en": "at-least-once delivery",
+      "firstUse": "08",
+      "definition": {
+        "ja": "メッセージが少なくとも 1 回は届く、という保証。2 回以上届くことがある。「ちょうど 1 回」ではない。",
+        "en": "A guarantee that a message arrives at least one time. It may arrive more than once. It is not \"exactly once\"."
+      }
+    },
+    {
+      "id": "visibility-timeout",
+      "ja": "visibility timeout",
+      "en": "visibility timeout",
+      "firstUse": "08",
+      "definition": {
+        "ja": "SQS で、受け取られたメッセージが他の受け手から隠される時間。この間に削除されなければ、メッセージはまた受け取れるようになる。",
+        "en": "In SQS, how long a received message is hidden from other receivers. If it is not deleted within that time, it can be received again."
+      }
+    },
+    {
+      "id": "dead-letter-queue",
+      "ja": "dead-letter queue（DLQ）",
+      "en": "dead-letter queue (DLQ)",
+      "firstUse": "08",
+      "definition": {
+        "ja": "決めた回数だけ受け取られても処理が終わらなかったメッセージを、よけておく別の queue。人が調べるための場所。",
+        "en": "A second queue where messages are set aside after being received a set number of times without being finished. A place for a person to look."
+      }
+    },
+    {
+      "id": "redrive",
+      "ja": "redrive",
+      "en": "redrive",
+      "firstUse": "08",
+      "definition": {
+        "ja": "dead-letter queue のメッセージを、元の queue に戻してもう一度処理させること。",
+        "en": "Moving messages from a dead-letter queue back to the queue they came from, to be handled again."
+      }
+    },
+    {
+      "id": "event-source-mapping",
+      "ja": "event source mapping",
+      "en": "event source mapping",
+      "firstUse": "08",
+      "definition": {
+        "ja": "Lambda が queue や stream を自分で読みにいき、まとめて関数に渡す設定。batch の大きさや同時実行の上限はここで決める。",
+        "en": "The Lambda setting under which Lambda itself reads a queue or stream and hands batches to a function. Batch size and the concurrency limit are set here."
+      }
+    },
+    {
+      "id": "partial-batch-response",
+      "ja": "partial batch response",
+      "en": "partial batch response",
+      "firstUse": "08",
+      "definition": {
+        "ja": "batch のうち失敗したメッセージの ID だけを関数が返す仕組み。成功したメッセージまでやり直されるのを防ぐ。",
+        "en": "A function's reply that names only the messages of a batch that failed, so that the ones that succeeded are not retried."
+      }
+    },
+    {
+      "id": "idempotency-key",
+      "ja": "冪等性の鍵",
+      "en": "idempotency key",
+      "firstUse": "08",
+      "definition": {
+        "ja": "「同じ仕事かどうか」を見分けるための値。配送のたびに変わる値（メッセージ ID）ではなく、仕事の中身から決まる値を使う。",
+        "en": "The value that tells whether two requests are the same piece of work. It comes from the work itself, not from a value that changes with each delivery, such as a message ID."
+      }
+    },
+    {
+      "id": "sequencer",
+      "ja": "sequencer",
+      "en": "sequencer",
+      "firstUse": "08",
+      "definition": {
+        "ja": "S3 が作成と削除のイベントに付ける 16 進の文字列。同じ key のイベントどうしなら、大きいほうが後に起きた。",
+        "en": "A hexadecimal string S3 puts on create and delete events. Between two events for the same key, the greater one happened later."
+      }
+    },
+    {
+      "id": "backpressure",
+      "ja": "backpressure",
+      "en": "backpressure",
+      "firstUse": "08",
+      "definition": {
+        "ja": "処理する側が追いつかないとき、その遅れを上流に伝えて流量を抑えること。queue はそれを「待ち行列が伸びる」という形で引き受ける。",
+        "en": "Slowing the flow when the worker cannot keep up, by letting the delay be felt upstream. A queue takes it on in the form of a growing backlog."
+      }
+    },
+    {
+      "id": "reconciliation",
+      "ja": "突き合わせ",
+      "en": "reconciliation",
+      "firstUse": "08",
+      "definition": {
+        "ja": "イベントを待たずに、2 つの置き場所の現在の中身を見比べて、ずれを直す処理。イベントが遅れたり失われたりしても効く。",
+        "en": "Comparing what two stores hold right now and fixing the differences, without waiting for an event. It works even when an event is late or lost."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "08.architecture",
+      "sources": ["examples/08-async/infra/lib/async-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.inspect",
+      "sources": [
+        "examples/08-async/src/inspect.ts",
+        "examples/08-async/src/inspection.ts",
+        "examples/08-async/test/inspect.test.ts",
+        "examples/08-async/test/fixtures.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "08.delivery",
+      "sources": [
+        "examples/08-async/src/events.ts",
+        "examples/08-async/src/worker.ts",
+        "examples/08-async/src/local-queue.ts",
+        "examples/08-async/test/events.test.ts",
+        "examples/08-async/test/queue.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.idempotency",
+      "sources": [
+        "examples/08-async/src/worker.ts",
+        "examples/08-async/src/sequencer.ts",
+        "examples/08-async/src/object-reader.ts",
+        "examples/08-async/src/s3-object-reader.ts",
+        "examples/08-async/src/dynamodb-inspection-repository.ts",
+        "examples/08-async/test/worker.test.ts",
+        "examples/08-async/test/adapters.test.ts",
+        "examples/08-async/test/harness.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.housekeeping",
+      "sources": [
+        "examples/08-async/src/housekeeping.ts",
+        "examples/08-async/src/housekeeping-lambda.ts",
+        "examples/08-async/test/housekeeping.test.ts",
+        "examples/08-async/scripts/housekeeping.ts"
+      ],
+      "tasks": ["test:unit", "async:housekeeping"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "08.local",
+      "sources": [
+        "examples/08-async/src/dev.ts",
+        "examples/08-async/src/local.ts",
+        "examples/08-async/src/local-bucket.ts",
+        "examples/08-async/src/local-queue.ts",
+        "examples/08-async/.env.example"
+      ],
+      "tasks": ["dev:async", "dev:uploads:web", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "08.infra",
+      "sources": [
+        "examples/08-async/infra/lib/async-stack.ts",
+        "examples/08-async/infra/bin/app.ts",
+        "examples/08-async/infra/test/async-stack.test.ts",
+        "examples/08-async/src/worker-lambda.ts",
+        "examples/08-async/src/env.ts",
+        "examples/08-async/cdk.json"
+      ],
+      "tasks": ["async:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "08.deploy",
+      "sources": [
+        "examples/08-async/scripts/smoke.ts",
+        "examples/08-async/scripts/user.ts",
+        "examples/08-async/scripts/write-config.ts"
+      ],
+      "tasks": [
+        "async:infra:diff",
+        "async:infra:deploy",
+        "async:smoke",
+        "async:user:create",
+        "async:publish",
+        "async:smoke:web",
+        "async:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "08.operate",
+      "sources": ["examples/08-async/scripts/queue.ts", "examples/08-async/scripts/logs.ts"],
+      "tasks": ["async:queue", "async:logs"],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "08.cleanup",
+      "sources": ["examples/08-async/scripts/empty-uploads.ts"],
+      "tasks": ["async:empty", "async:unpublish", "async:infra:destroy", "async:user:delete"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "sqs.request.standard",
+      "offerCode": "AWSQueueService",
+      "region": "ap-northeast-1",
+      "sku": "5Q2SBURHPCGERHBD",
+      "usageType": "APN1-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 100000000000,
+          "usd": "0.0000004000",
+          "description": "$0.40 per million Amazon SQS standard requests in Tier1 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 100000000000,
+          "to": 200000000000,
+          "usd": "0.0000003500",
+          "description": "$0.35 per million Amazon SQS standard requests in Tier2 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 200000000000,
+          "to": null,
+          "usd": "0.0000003200",
+          "description": "$0.32 per million Amazon SQS standard requests in Tier3 in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:07Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "scheduler.invocation",
+      "offerCode": "AWSEvents",
+      "region": "ap-northeast-1",
+      "sku": "29C3758CBCYNXH8B",
+      "usageType": "APN1-ScheduledInvocation",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Invocations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 14000000,
+          "usd": "0.0000000000",
+          "description": "$0 for the first 14 million scheduled invocations"
+        },
+        {
+          "from": 14000000,
+          "to": null,
+          "usd": "0.0000012500",
+          "description": "$1.25 per million scheduled invocations in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-24T16:39:03Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "sqs.request.standard",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sqs-pricing",
+      "note": "1 million requests a month for all customers, counted across all Regions and shared by every queue in the account."
+    }
+  ],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "async-idle",
+      "chapter": "08",
+      "title": {
+        "ja": "非同期の検査と掃除: デプロイ済みで、画像が 1 枚もない月",
+        "en": "Asynchronous inspection and housekeeping: deployed, with no images, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "07章のアプリの料金に上乗せされる分だけを数える。アップロードはゼロ、bucket は空",
+          "schedule は 1 時間に 1 回、月 730 回、掃除の関数を起動する。1 回は 0.5 秒、256 MB、arm64 と仮定する",
+          "掃除は 1 回につき bucket の一覧を 2 回読む。空なので 1 ページずつ",
+          "ログは 1 回の起動につき 1 KB（関数の 1 行と、Lambda が書く START、END、REPORT の行）",
+          "未算入: Lambda が空の queue を long polling するときの SQS のリクエスト。頻度が公式ドキュメントに書かれていないため、数量を出せない。0 という意味ではない"
+        ],
+        "en": [
+          "Counts only what is added on top of the app of chapter 07. No uploads; the bucket is empty",
+          "The schedule starts the housekeeping function once an hour, 730 times a month. One run is assumed to take 0.5 s at 256 MB on arm64",
+          "Each run lists the bucket twice. It is empty, so one page each",
+          "1 KB of logs per run (the function's line and Lambda's START, END, and REPORT lines)",
+          "Not included: the SQS requests Lambda makes while long-polling the empty queue. The documentation gives no rate, so there is no quantity to enter. This is not a statement that they cost 0"
+        ]
+      },
+      "items": [
+        { "priceId": "scheduler.invocation", "quantity": 730, "basis": "one invocation an hour" },
+        { "priceId": "lambda.request.arm", "quantity": 730, "basis": "one housekeeping run an hour" },
+        { "priceId": "lambda.duration.arm", "quantity": 91.25, "basis": "730 x 0.5 s x 0.25 GB, in GB-seconds" },
+        { "priceId": "s3.request.tier1", "quantity": 1460, "basis": "730 runs x 2 LIST requests" },
+        { "priceId": "logs.ingest.standard", "quantity": 0.0007, "basis": "730 x 1 KB, in GB" },
+        { "priceId": "logs.storage", "quantity": 0.0002, "basis": "0.0007 GB x 7/30, in GB-month" }
+      ]
+    },
+    {
+      "id": "async-pipeline-small",
+      "chapter": "08",
+      "title": {
+        "ja": "非同期の検査: 月 10,000 枚のアップロードと 1,000 回の削除",
+        "en": "Asynchronous inspection: 10,000 uploads and 1,000 deletes a month"
+      },
+      "assumptions": {
+        "ja": [
+          "07章の例（月 10,000 枚のアップロード）に上乗せされる、イベントごとの分だけを数える。掃除の分は別の例",
+          "S3 のイベントは 11,000 件（作成 10,000、削除 1,000）。重複と再試行はゼロとする",
+          "SQS のリクエストは 1 メッセージにつき 3 回（S3 の SendMessage、Lambda の ReceiveMessage と DeleteMessage）と数える。空振りの ReceiveMessage は未算入（頻度が不明）",
+          "worker は 1 メッセージにつき 1 回起動するものとする（batch にまとまれば、これより少ない）。平均 200 ミリ秒、256 MB、arm64",
+          "worker の S3 へのリクエストは、作成イベントごとに GetObject が 1 回。tag を外すリクエストは請求されないものとする（07章と同じ）",
+          "DynamoDB は、作成イベントごとに書き込み 1 unit と強い整合性の読み取り 1 unit、削除イベントごとに書き込み 1 unit",
+          "ログは 1 イベントにつき 0.8 KB",
+          "未算入: S3 から同じリージョンの Lambda へのデータ転送（料金を確認していない）"
+        ],
+        "en": [
+          "Counts only the per-event part added to chapter 07's example of 10,000 uploads a month. Housekeeping is a separate example",
+          "11,000 S3 events (10,000 creates, 1,000 deletes). No duplicates and no retries",
+          "Three SQS requests per message: S3's SendMessage, and Lambda's ReceiveMessage and DeleteMessage. Empty receives are not included (their rate is unknown)",
+          "The worker is taken to run once per message (fewer invocations if messages arrive in batches). 200 ms on average at 256 MB on arm64",
+          "The worker makes one GetObject per create event. The request that removes a tag is taken as not billed, as in chapter 07",
+          "DynamoDB: one write unit and one strongly consistent read unit per create event, one write unit per delete event",
+          "0.8 KB of logs per event",
+          "Not included: data transfer from S3 to Lambda in the same Region (its price was not checked)"
+        ]
+      },
+      "items": [
+        { "priceId": "sqs.request.standard", "quantity": 33000, "basis": "11,000 messages x 3 requests" },
+        { "priceId": "lambda.request.arm", "quantity": 11000, "basis": "one invocation per message" },
+        { "priceId": "lambda.duration.arm", "quantity": 550, "basis": "11,000 x 0.2 s x 0.25 GB, in GB-seconds" },
+        { "priceId": "s3.request.tier2", "quantity": 10000, "basis": "one GetObject per create event" },
+        { "priceId": "dynamodb.write.on-demand", "quantity": 11000, "basis": "one conditional write per event" },
+        { "priceId": "dynamodb.read.on-demand", "quantity": 10000, "basis": "one attachment lookup per create event" },
+        { "priceId": "logs.ingest.standard", "quantity": 0.0084, "basis": "11,000 x 0.8 KB, in GB" },
+        { "priceId": "logs.storage", "quantity": 0.002, "basis": "0.0084 GB x 7/30, in GB-month" }
+      ]
+    },
+    {
+      "id": "async-housekeeping-10k",
+      "chapter": "08",
+      "title": {
+        "ja": "定期的な掃除: 10,000 枚が置いてある bucket を 1 時間ごとに突き合わせる",
+        "en": "Scheduled housekeeping: reconciling a bucket of 10,000 images every hour"
+      },
+      "assumptions": {
+        "ja": [
+          "bucket には月を通して 10,000 枚の画像があり、すべて添付の記録がある",
+          "掃除は月 730 回。1 回につき、bucket の一覧を 2 回読み（1,000 件ずつ 10 ページ）、画像 1 枚につき DynamoDB を 4 回読む（07章の掃除が記録とノート、この章の処理が記録と検査の結果）。すべて強い整合性の読み取りで、1 回 1 unit",
+          "1 回の実行は 200 秒と仮定する（40,000 回の読み取りを 1 回 5 ミリ秒で順に実行）。256 MB、arm64。計測した値ではない",
+          "tag を外すリクエストは請求されないものとする。削除はゼロとする",
+          "ログは 1 回の起動につき 1 KB"
+        ],
+        "en": [
+          "The bucket holds 10,000 images all month, each with an attachment record",
+          "730 runs a month. Each lists the bucket twice (10 pages of 1,000) and reads DynamoDB four times per image: chapter 07's sweep reads the record and the note, and this chapter's pass reads the record and the inspection. All strongly consistent, one unit each",
+          "One run is assumed to take 200 s (40,000 reads in sequence at 5 ms each) at 256 MB on arm64. This was not measured",
+          "The request that removes a tag is taken as not billed. Nothing is deleted",
+          "1 KB of logs per run"
+        ]
+      },
+      "items": [
+        { "priceId": "scheduler.invocation", "quantity": 730, "basis": "one invocation an hour" },
+        { "priceId": "lambda.request.arm", "quantity": 730, "basis": "one housekeeping run an hour" },
+        { "priceId": "lambda.duration.arm", "quantity": 36500, "basis": "730 x 200 s x 0.25 GB, in GB-seconds" },
+        { "priceId": "s3.request.tier1", "quantity": 14600, "basis": "730 runs x 2 passes x 10 LIST pages" },
+        { "priceId": "dynamodb.read.on-demand", "quantity": 29200000, "basis": "730 runs x 10,000 images x 4 reads" },
+        { "priceId": "logs.ingest.standard", "quantity": 0.0007, "basis": "730 x 1 KB, in GB" },
+        { "priceId": "logs.storage", "quantity": 0.0002, "basis": "0.0007 GB x 7/30, in GB-month" }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "08",
+        "command": "vp run test:unit (examples/08-async)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "重複配送（同じメッセージ、別の ID の同じイベント、2 つの worker の同時実行）、順序の入れ替わり（古い作成、遅れた削除）、途中での中断（記録の前、記録の後）、batch の一部の失敗、DLQ への移動と戻し、S3 の test event、07章の穴（form の再送）の修復、掃除の再実行・同時実行・中断、画像の種類と大きさの判定（sips と cwebp が書いた実ファイル）、DynamoDB と S3 へのリクエストの形、インフラの assertion。条件を 2 か所わざと壊して、テストが落ちることも確かめた",
+          "en": "Duplicate delivery (the same message, the same event under another ID, two workers at once), reordering (an older create, a late delete), interruption (before and after the record), a partly failed batch, moving to the DLQ and back, the S3 test event, the repair of chapter 07's gap (a form sent twice), housekeeping run again, run concurrently, and interrupted, image type and size detection (real files written by sips and cwebp), the shape of requests to DynamoDB and S3, and infrastructure assertions. Two conditions were also broken on purpose to confirm that tests fail"
+        }
+      },
+      {
+        "scope": "08",
+        "command": "vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "サインイン、ノートの作成、form でのアップロード、worker の記録（ok、1x1）、完了、同じ form で HTML を再送して記録が rejected に変わること、掃除の dry run、削除で記録が消えることを /local/queue で確認。相手はメモリ上の queue と bucket で、SQS でも S3 でもない",
+          "en": "Checked through /local/queue: sign-in, creating a note, a form upload, the worker's record (ok, 1x1), finishing, the record turning to rejected after the same form sent HTML, a housekeeping dry run, and the record disappearing on delete. The queue and the bucket were the in-memory stand-ins, not SQS or S3"
+        }
+      },
+      {
+        "scope": "08",
+        "command": "vp run async:infra:synth / typecheck",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "07章の 19 種類に 5 種類（SQS::Queue、SQS::QueuePolicy、Lambda::EventSourceMapping、Lambda::EventInvokeConfig、Scheduler::Schedule）を足した 24 種類。Custom:: のリソースはない。scripts/ は型検査のみ",
+          "en": "Chapter 07's 19 resource types plus five (SQS::Queue, SQS::QueuePolicy, Lambda::EventSourceMapping, Lambda::EventInvokeConfig, Scheduler::Schedule): 24 in all, and no Custom:: resource. scripts/ is type-checked only"
+        }
+      },
+      {
+        "scope": "08",
+        "command": "vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "queue を 2 つ、関数を 2 つ、schedule を 1 つ、そして 07章の一式（bucket 2 つ、user pool、distribution、table）を作る。S3 の通知、SQS、event source mapping、Scheduler、DynamoDB の条件付き書き込みは、どれも実環境で未確認",
+          "en": "Creates two queues, two functions, one schedule, and everything of chapter 07 (two buckets, a user pool, a distribution, a table). S3 notifications, SQS, the event source mapping, Scheduler, and the conditional writes to DynamoDB are all unconfirmed in AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "async-s3-event-shape",
+        "summary": {
+          "ja": "08章: form（POST Object）による作成のイベント（ObjectCreated:Post）と、lifecycle rule による削除のイベント（LifecycleExpiration:Delete）に sequencer が入るかを確認していない。公式ドキュメントは「PUT と DELETE のリクエストでだけ使われる」と書いている。worker は、sequencer のない作成イベントを失敗にして DLQ へ送り、sequencer のない削除イベントは何もせずに受け取る。",
+          "en": "Chapter 08: whether a create event from a form (ObjectCreated:Post) and a delete event from a lifecycle rule (LifecycleExpiration:Delete) carry a sequencer is unconfirmed. The documentation says it is \"only used with PUT and DELETE requests\". The worker fails a create event without one, which sends it to the DLQ, and accepts a delete event without one while doing nothing."
+        },
+        "resume": {
+          "ja": "vp run async:infra:deploy の後、AIH_ACCESS_TOKEN を入れて vp run async:smoke を実行する。form の経路で記録ができなければ vp run async:queue で DLQ を見る。POST のイベントに sequencer がなければ、eventTime と eTag を使う順序づけに替えるか、S3 の通知を EventBridge 経由に替える。",
+          "en": "After vp run async:infra:deploy, run vp run async:smoke with AIH_ACCESS_TOKEN set. If no record appears for the form upload, look at the DLQ with vp run async:queue. If POST events have no sequencer, order by eventTime and eTag instead, or route S3 notifications through EventBridge."
+        }
+      },
+      {
+        "id": "async-notification-deploy",
+        "summary": {
+          "ja": "08章: bucket の名前を固定して queue policy との循環を避ける書き方が、cdkd で実際に通るかを確認していない。S3 が通知の設定時に queue へ送れるかを検証すること、SQS 管理の鍵で暗号化した queue（SSE-SQS）に S3 が送れること、event source mapping の作成時に role の権限が検証されること、If-Match に引用符つきの ETag を渡して 412 が返ることも未確認。",
+          "en": "Chapter 08: that fixing the bucket's name to avoid a cycle with the queue policy actually deploys with cdkd is unconfirmed. So are: S3 validating that it can send to the queue when the notification is configured, S3 sending to a queue encrypted with SQS-managed keys (SSE-SQS), Lambda validating the role's permissions when the event source mapping is created, and GetObject answering 412 for an If-Match with a quoted ETag."
+        },
+        "resume": {
+          "ja": "vp run async:infra:deploy を実行する。bucket の作成が「Unable to validate the following destination configurations」で失敗したら、queue policy が先に作られているかを確かめる。その後 vp run async:smoke を実行する。",
+          "en": "Run vp run async:infra:deploy. If creating the bucket fails with \"Unable to validate the following destination configurations\", check that the queue policy was created first. Then run vp run async:smoke."
+        }
+      },
+      {
+        "id": "async-idle-polling-cost",
+        "summary": {
+          "ja": "08章: Lambda が空の queue を long polling する頻度が公式ドキュメントに書かれておらず、使われていない月の SQS のリクエスト数を見積もれない。",
+          "en": "Chapter 08: the documentation does not say how often Lambda long-polls an empty queue, so the number of SQS requests in an idle month cannot be estimated."
+        },
+        "resume": {
+          "ja": "デプロイして 1 日置き、CloudWatch の SQS のメトリクス NumberOfEmptyReceives を読んで、観測値として書く。",
+          "en": "Deploy, wait a day, read the SQS metric NumberOfEmptyReceives in CloudWatch, and report it as an observation."
+        }
+      },
+      {
+        "id": "async-housekeeping-scale",
+        "summary": {
+          "ja": "08章: 掃除は 1 回の実行で bucket のすべての object を見て、1 枚ごとに DynamoDB を 4 回、順に読む。実行時間は計測していない。枚数が増えると、関数の timeout（15 分）と読み取りの料金の両方に当たる。",
+          "en": "Chapter 08: one housekeeping run looks at every object in the bucket and reads DynamoDB four times per image, in sequence. Its duration has not been measured. As the count grows it runs into both the function's timeout (15 minutes) and the cost of reads."
+        },
+        "resume": {
+          "ja": "vp run async:logs --function housekeeping で REPORT 行の実行時間を読む。枚数に対して長すぎるなら、実行の間隔を広げるか、新しい object だけを見るか、S3 Inventory を入力にする。",
+          "en": "Read the duration in the REPORT line with vp run async:logs --function housekeeping. If it is too long for the number of images, run less often, look only at recent objects, or use S3 Inventory as the input."
+        }
+      },
+      {
+        "id": "async-inspection-orphans",
+        "summary": {
+          "ja": "08章: 検査の記録が、object のないまま残る経路が 2 つある。作成イベントを処理している worker が記録を書く直前に、別の worker が同じ key の削除イベントを処理し終えた場合。lifecycle rule による削除のイベントに sequencer がなかった場合。どちらも利用者には見えないが、記録は残る。",
+          "en": "Chapter 08: there are two ways an inspection record can be left without its object. A worker handling a create event is about to write when another worker finishes the delete event for the same key. Or a lifecycle delete event arrives without a sequencer. Neither is visible to users, but the record stays."
+        },
+        "resume": {
+          "ja": "削除のときに記録を消すかわりに、sequencer つきの墓石（tombstone）を条件付きで書き、DynamoDB の TTL で消す。",
+          "en": "Instead of deleting the record on a delete event, write a tombstone carrying the sequencer under the same condition, and let DynamoDB's TTL remove it."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 08: work off the request ------------------------------\n      // Chapter 07's API with an in-memory queue and the worker, in one process. No Docker, no AWS.\n      \"dev:async\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/08-async\" }),\n      ...infra(\"async\", \"examples/08-async\", \"AihAsync\"),\n      // Uploads with your credentials and waits for the worker's record.\n      \"async:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/08-async\" }),\n      // Depth of both queues and a look at the dead-letter queue. Moves messages back only with --redrive.\n      \"async:queue\": live(\"node --env-file-if-exists=../../.env scripts/queue.ts\", { cwd: \"examples/08-async\" }),\n      \"async:logs\": live(\"node --env-file-if-exists=../../.env scripts/logs.ts\", { cwd: \"examples/08-async\" }),\n      // Lists what the scheduled function would do. Does it only with --delete.\n      \"async:housekeeping\": live(\"node --env-file-if-exists=../../.env scripts/housekeeping.ts\", {\n        cwd: \"examples/08-async\",\n      }),\n      // Chapter 07's SPA, pointed at this chapter's stack.\n      \"async:publish\": live(\n        \"node --env-file-if-exists=../../.env scripts/write-config.ts && node --env-file-if-exists=../../.env ../../tools/src/site/publish.ts . AihAsync ../07-uploads/web/dist\",\n        { cwd: \"examples/08-async\", dependsOn: [\"build:uploads:web\"] },\n      ),\n      \"async:smoke:web\": live(`${node} tools/src/site/smoke.ts spa examples/08-async AihAsync`),\n      // Counts the uploaded images. Deletes them all only with --yes.\n      \"async:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty-uploads.ts\", {\n        cwd: \"examples/08-async\",\n      }),\n      \"async:unpublish\": live(`${node} tools/src/site/unpublish.ts examples/08-async AihAsync`),\n      \"async:user:create\": live(\"node --env-file-if-exists=../../.env scripts/user.ts create\", {\n        cwd: \"examples/08-async\",\n      }),\n      \"async:user:delete\": live(\"node --env-file-if-exists=../../.env scripts/user.ts delete\", {\n        cwd: \"examples/08-async\",\n      }),",
+    "synth": ["async:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/08-async"]
+  }
+}

@@ -168,3 +168,14 @@ generated: true
 | graceful shutdown | graceful shutdown | 12 | 止まれと言われたプロセスが、新しい仕事を受けるのをやめ、進行中の仕事を終えてから終了すること。 |
 | SIGTERM | SIGTERM | 12 | プロセスに「終了してほしい」と伝える signal。受け取った側は後片付けができる。一定時間で終わらなければ、拒否できない SIGKILL が送られる。 |
 | target tracking | target tracking | 12 | 「平均 CPU 使用率を 60% に保つ」のように指標と目標値だけを決め、task の数の増減を任せる auto scaling の方式。 |
+| queue | queue | 08 | 処理してほしいことをメッセージとして預かり、あとで取り出させる置き場所。送る側と処理する側が、同時に動いている必要がなくなる。 |
+| at-least-once 配送 | at-least-once delivery | 08 | メッセージが少なくとも 1 回は届く、という保証。2 回以上届くことがある。「ちょうど 1 回」ではない。 |
+| visibility timeout | visibility timeout | 08 | SQS で、受け取られたメッセージが他の受け手から隠される時間。この間に削除されなければ、メッセージはまた受け取れるようになる。 |
+| dead-letter queue（DLQ） | dead-letter queue (DLQ) | 08 | 決めた回数だけ受け取られても処理が終わらなかったメッセージを、よけておく別の queue。人が調べるための場所。 |
+| redrive | redrive | 08 | dead-letter queue のメッセージを、元の queue に戻してもう一度処理させること。 |
+| event source mapping | event source mapping | 08 | Lambda が queue や stream を自分で読みにいき、まとめて関数に渡す設定。batch の大きさや同時実行の上限はここで決める。 |
+| partial batch response | partial batch response | 08 | batch のうち失敗したメッセージの ID だけを関数が返す仕組み。成功したメッセージまでやり直されるのを防ぐ。 |
+| 冪等性の鍵 | idempotency key | 08 | 「同じ仕事かどうか」を見分けるための値。配送のたびに変わる値（メッセージ ID）ではなく、仕事の中身から決まる値を使う。 |
+| sequencer | sequencer | 08 | S3 が作成と削除のイベントに付ける 16 進の文字列。同じ key のイベントどうしなら、大きいほうが後に起きた。 |
+| backpressure | backpressure | 08 | 処理する側が追いつかないとき、その遅れを上流に伝えて流量を抑えること。queue はそれを「待ち行列が伸びる」という形で引き受ける。 |
+| 突き合わせ | reconciliation | 08 | イベントを待たずに、2 つの置き場所の現在の中身を見比べて、ずれを直す処理。イベントが遅れたり失われたりしても効く。 |

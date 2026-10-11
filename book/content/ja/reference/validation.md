@@ -130,6 +130,10 @@ generated: true
 | 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | ローカル | 未実行 | - | Docker の daemon が動いていなかったため、image を一度も build していない |
 | 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | ECR の repository を作る。image tag を渡すと ALB と Fargate の task 2 つ（時間課金）も作る |
 | 12 | `vp run ecs:watch / ecs:logs` | AWS | 未実行 | - | deploy した service を読むだけのタスク |
+| 08 | `vp run test:unit (examples/08-async)` | ローカル | 成功 | 2026-10-12 | 重複配送（同じメッセージ、別の ID の同じイベント、2 つの worker の同時実行）、順序の入れ替わり（古い作成、遅れた削除）、途中での中断（記録の前、記録の後）、batch の一部の失敗、DLQ への移動と戻し、S3 の test event、07章の穴（form の再送）の修復、掃除の再実行・同時実行・中断、画像の種類と大きさの判定（sips と cwebp が書いた実ファイル）、DynamoDB と S3 へのリクエストの形、インフラの assertion。条件を 2 か所わざと壊して、テストが落ちることも確かめた |
+| 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | ローカル | 成功 | 2026-10-12 | サインイン、ノートの作成、form でのアップロード、worker の記録（ok、1x1）、完了、同じ form で HTML を再送して記録が rejected に変わること、掃除の dry run、削除で記録が消えることを /local/queue で確認。相手はメモリ上の queue と bucket で、SQS でも S3 でもない |
+| 08 | `vp run async:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 07章の 19 種類に 5 種類（SQS::Queue、SQS::QueuePolicy、Lambda::EventSourceMapping、Lambda::EventInvokeConfig、Scheduler::Schedule）を足した 24 種類。Custom:: のリソースはない。scripts/ は型検査のみ |
+| 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | 未実行 | - | queue を 2 つ、関数を 2 つ、schedule を 1 つ、そして 07章の一式（bucket 2 つ、user pool、distribution、table）を作る。S3 の通知、SQS、event source mapping、Scheduler、DynamoDB の条件付き書き込みは、どれも実環境で未確認 |
 
 ## 未解決事項と再開手順
 
@@ -480,3 +484,33 @@ rolling update を実環境で観察していない。更新中にエラーが�
 リクエストが無いときに ALB の LCU がいくらになるか（health check が LCU に数えられるか）を一次情報で確認できていない。料金の表では LCU を未算入としている。
 
 再開手順: deploy して 1 日置き、Cost Explorer か請求書で `APN1-LCUUsage` の数量を確かめる。
+
+### async-s3-event-shape
+
+08章: form（POST Object）による作成のイベント（ObjectCreated:Post）と、lifecycle rule による削除のイベント（LifecycleExpiration:Delete）に sequencer が入るかを確認していない。公式ドキュメントは「PUT と DELETE のリクエストでだけ使われる」と書いている。worker は、sequencer のない作成イベントを失敗にして DLQ へ送り、sequencer のない削除イベントは何もせずに受け取る。
+
+再開手順: vp run async:infra:deploy の後、AIH_ACCESS_TOKEN を入れて vp run async:smoke を実行する。form の経路で記録ができなければ vp run async:queue で DLQ を見る。POST のイベントに sequencer がなければ、eventTime と eTag を使う順序づけに替えるか、S3 の通知を EventBridge 経由に替える。
+
+### async-notification-deploy
+
+08章: bucket の名前を固定して queue policy との循環を避ける書き方が、cdkd で実際に通るかを確認していない。S3 が通知の設定時に queue へ送れるかを検証すること、SQS 管理の鍵で暗号化した queue（SSE-SQS）に S3 が送れること、event source mapping の作成時に role の権限が検証されること、If-Match に引用符つきの ETag を渡して 412 が返ることも未確認。
+
+再開手順: vp run async:infra:deploy を実行する。bucket の作成が「Unable to validate the following destination configurations」で失敗したら、queue policy が先に作られているかを確かめる。その後 vp run async:smoke を実行する。
+
+### async-idle-polling-cost
+
+08章: Lambda が空の queue を long polling する頻度が公式ドキュメントに書かれておらず、使われていない月の SQS のリクエスト数を見積もれない。
+
+再開手順: デプロイして 1 日置き、CloudWatch の SQS のメトリクス NumberOfEmptyReceives を読んで、観測値として書く。
+
+### async-housekeeping-scale
+
+08章: 掃除は 1 回の実行で bucket のすべての object を見て、1 枚ごとに DynamoDB を 4 回、順に読む。実行時間は計測していない。枚数が増えると、関数の timeout（15 分）と読み取りの料金の両方に当たる。
+
+再開手順: vp run async:logs --function housekeeping で REPORT 行の実行時間を読む。枚数に対して長すぎるなら、実行の間隔を広げるか、新しい object だけを見るか、S3 Inventory を入力にする。
+
+### async-inspection-orphans
+
+08章: 検査の記録が、object のないまま残る経路が 2 つある。作成イベントを処理している worker が記録を書く直前に、別の worker が同じ key の削除イベントを処理し終えた場合。lifecycle rule による削除のイベントに sequencer がなかった場合。どちらも利用者には見えないが、記録は残る。
+
+再開手順: 削除のときに記録を消すかわりに、sequencer つきの墓石（tombstone）を条件付きで書き、DynamoDB の TTL で消す。

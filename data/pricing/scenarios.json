@@ -1933,6 +1933,195 @@
           "basis": "1 GB processed (assumption)"
         }
       ]
+    },
+    {
+      "id": "async-idle",
+      "chapter": "08",
+      "title": {
+        "ja": "非同期の検査と掃除: デプロイ済みで、画像が 1 枚もない月",
+        "en": "Asynchronous inspection and housekeeping: deployed, with no images, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "07章のアプリの料金に上乗せされる分だけを数える。アップロードはゼロ、bucket は空",
+          "schedule は 1 時間に 1 回、月 730 回、掃除の関数を起動する。1 回は 0.5 秒、256 MB、arm64 と仮定する",
+          "掃除は 1 回につき bucket の一覧を 2 回読む。空なので 1 ページずつ",
+          "ログは 1 回の起動につき 1 KB（関数の 1 行と、Lambda が書く START、END、REPORT の行）",
+          "未算入: Lambda が空の queue を long polling するときの SQS のリクエスト。頻度が公式ドキュメントに書かれていないため、数量を出せない。0 という意味ではない"
+        ],
+        "en": [
+          "Counts only what is added on top of the app of chapter 07. No uploads; the bucket is empty",
+          "The schedule starts the housekeeping function once an hour, 730 times a month. One run is assumed to take 0.5 s at 256 MB on arm64",
+          "Each run lists the bucket twice. It is empty, so one page each",
+          "1 KB of logs per run (the function's line and Lambda's START, END, and REPORT lines)",
+          "Not included: the SQS requests Lambda makes while long-polling the empty queue. The documentation gives no rate, so there is no quantity to enter. This is not a statement that they cost 0"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 730,
+          "basis": "one invocation an hour"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 730,
+          "basis": "one housekeeping run an hour"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 91.25,
+          "basis": "730 x 0.5 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 1460,
+          "basis": "730 runs x 2 LIST requests"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0007,
+          "basis": "730 x 1 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0002,
+          "basis": "0.0007 GB x 7/30, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "async-pipeline-small",
+      "chapter": "08",
+      "title": {
+        "ja": "非同期の検査: 月 10,000 枚のアップロードと 1,000 回の削除",
+        "en": "Asynchronous inspection: 10,000 uploads and 1,000 deletes a month"
+      },
+      "assumptions": {
+        "ja": [
+          "07章の例（月 10,000 枚のアップロード）に上乗せされる、イベントごとの分だけを数える。掃除の分は別の例",
+          "S3 のイベントは 11,000 件（作成 10,000、削除 1,000）。重複と再試行はゼロとする",
+          "SQS のリクエストは 1 メッセージにつき 3 回（S3 の SendMessage、Lambda の ReceiveMessage と DeleteMessage）と数える。空振りの ReceiveMessage は未算入（頻度が不明）",
+          "worker は 1 メッセージにつき 1 回起動するものとする（batch にまとまれば、これより少ない）。平均 200 ミリ秒、256 MB、arm64",
+          "worker の S3 へのリクエストは、作成イベントごとに GetObject が 1 回。tag を外すリクエストは請求されないものとする（07章と同じ）",
+          "DynamoDB は、作成イベントごとに書き込み 1 unit と強い整合性の読み取り 1 unit、削除イベントごとに書き込み 1 unit",
+          "ログは 1 イベントにつき 0.8 KB",
+          "未算入: S3 から同じリージョンの Lambda へのデータ転送（料金を確認していない）"
+        ],
+        "en": [
+          "Counts only the per-event part added to chapter 07's example of 10,000 uploads a month. Housekeeping is a separate example",
+          "11,000 S3 events (10,000 creates, 1,000 deletes). No duplicates and no retries",
+          "Three SQS requests per message: S3's SendMessage, and Lambda's ReceiveMessage and DeleteMessage. Empty receives are not included (their rate is unknown)",
+          "The worker is taken to run once per message (fewer invocations if messages arrive in batches). 200 ms on average at 256 MB on arm64",
+          "The worker makes one GetObject per create event. The request that removes a tag is taken as not billed, as in chapter 07",
+          "DynamoDB: one write unit and one strongly consistent read unit per create event, one write unit per delete event",
+          "0.8 KB of logs per event",
+          "Not included: data transfer from S3 to Lambda in the same Region (its price was not checked)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "sqs.request.standard",
+          "quantity": 33000,
+          "basis": "11,000 messages x 3 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 11000,
+          "basis": "one invocation per message"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 550,
+          "basis": "11,000 x 0.2 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 10000,
+          "basis": "one GetObject per create event"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 11000,
+          "basis": "one conditional write per event"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 10000,
+          "basis": "one attachment lookup per create event"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0084,
+          "basis": "11,000 x 0.8 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.002,
+          "basis": "0.0084 GB x 7/30, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "async-housekeeping-10k",
+      "chapter": "08",
+      "title": {
+        "ja": "定期的な掃除: 10,000 枚が置いてある bucket を 1 時間ごとに突き合わせる",
+        "en": "Scheduled housekeeping: reconciling a bucket of 10,000 images every hour"
+      },
+      "assumptions": {
+        "ja": [
+          "bucket には月を通して 10,000 枚の画像があり、すべて添付の記録がある",
+          "掃除は月 730 回。1 回につき、bucket の一覧を 2 回読み（1,000 件ずつ 10 ページ）、画像 1 枚につき DynamoDB を 4 回読む（07章の掃除が記録とノート、この章の処理が記録と検査の結果）。すべて強い整合性の読み取りで、1 回 1 unit",
+          "1 回の実行は 200 秒と仮定する（40,000 回の読み取りを 1 回 5 ミリ秒で順に実行）。256 MB、arm64。計測した値ではない",
+          "tag を外すリクエストは請求されないものとする。削除はゼロとする",
+          "ログは 1 回の起動につき 1 KB"
+        ],
+        "en": [
+          "The bucket holds 10,000 images all month, each with an attachment record",
+          "730 runs a month. Each lists the bucket twice (10 pages of 1,000) and reads DynamoDB four times per image: chapter 07's sweep reads the record and the note, and this chapter's pass reads the record and the inspection. All strongly consistent, one unit each",
+          "One run is assumed to take 200 s (40,000 reads in sequence at 5 ms each) at 256 MB on arm64. This was not measured",
+          "The request that removes a tag is taken as not billed. Nothing is deleted",
+          "1 KB of logs per run"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 730,
+          "basis": "one invocation an hour"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 730,
+          "basis": "one housekeeping run an hour"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 36500,
+          "basis": "730 x 200 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 14600,
+          "basis": "730 runs x 2 passes x 10 LIST pages"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 29200000,
+          "basis": "730 runs x 10,000 images x 4 reads"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0007,
+          "basis": "730 x 1 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0002,
+          "basis": "0.0007 GB x 7/30, in GB-month"
+        }
+      ]
     }
   ]
 }

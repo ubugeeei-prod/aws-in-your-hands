@@ -168,3 +168,14 @@ The term pairs that keep both languages using one word for one concept. API name
 | graceful shutdown | graceful shutdown | 12 | A process that has been told to stop refuses new work, finishes the work in progress, and only then exits. |
 | SIGTERM | SIGTERM | 12 | The signal that asks a process to terminate. The process may clean up first. If it does not finish in time, SIGKILL follows, which cannot be handled. |
 | target tracking | target tracking | 12 | An auto scaling policy where you name a metric and a target value, such as 60 percent average CPU, and leave the number of tasks to the service. |
+| queue | queue | 08 | A place that holds messages describing work to be done until something takes them out. The sender and the worker no longer have to be running at the same moment. |
+| at-least-once 配送 | at-least-once delivery | 08 | A guarantee that a message arrives at least one time. It may arrive more than once. It is not "exactly once". |
+| visibility timeout | visibility timeout | 08 | In SQS, how long a received message is hidden from other receivers. If it is not deleted within that time, it can be received again. |
+| dead-letter queue（DLQ） | dead-letter queue (DLQ) | 08 | A second queue where messages are set aside after being received a set number of times without being finished. A place for a person to look. |
+| redrive | redrive | 08 | Moving messages from a dead-letter queue back to the queue they came from, to be handled again. |
+| event source mapping | event source mapping | 08 | The Lambda setting under which Lambda itself reads a queue or stream and hands batches to a function. Batch size and the concurrency limit are set here. |
+| partial batch response | partial batch response | 08 | A function's reply that names only the messages of a batch that failed, so that the ones that succeeded are not retried. |
+| 冪等性の鍵 | idempotency key | 08 | The value that tells whether two requests are the same piece of work. It comes from the work itself, not from a value that changes with each delivery, such as a message ID. |
+| sequencer | sequencer | 08 | A hexadecimal string S3 puts on create and delete events. Between two events for the same key, the greater one happened later. |
+| backpressure | backpressure | 08 | Slowing the flow when the worker cannot keep up, by letting the delay be felt upstream. A queue takes it on in the form of a growing backlog. |
+| 突き合わせ | reconciliation | 08 | Comparing what two stores hold right now and fixing the differences, without waiting for an event. It works even when an event is late or lost. |

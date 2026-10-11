@@ -19,5 +19,6 @@
   "examples/19-observability",
   "examples/14-kv-cache",
   "examples/20-shipping",
-  "examples/12-containers"
+  "examples/12-containers",
+  "examples/08-async"
 ]

@@ -1292,6 +1292,50 @@
         "ja": "deploy した service を読むだけのタスク",
         "en": "Tasks that only read the deployed service"
       }
+    },
+    {
+      "scope": "08",
+      "command": "vp run test:unit (examples/08-async)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "重複配送（同じメッセージ、別の ID の同じイベント、2 つの worker の同時実行）、順序の入れ替わり（古い作成、遅れた削除）、途中での中断（記録の前、記録の後）、batch の一部の失敗、DLQ への移動と戻し、S3 の test event、07章の穴（form の再送）の修復、掃除の再実行・同時実行・中断、画像の種類と大きさの判定（sips と cwebp が書いた実ファイル）、DynamoDB と S3 へのリクエストの形、インフラの assertion。条件を 2 か所わざと壊して、テストが落ちることも確かめた",
+        "en": "Duplicate delivery (the same message, the same event under another ID, two workers at once), reordering (an older create, a late delete), interruption (before and after the record), a partly failed batch, moving to the DLQ and back, the S3 test event, the repair of chapter 07's gap (a form sent twice), housekeeping run again, run concurrently, and interrupted, image type and size detection (real files written by sips and cwebp), the shape of requests to DynamoDB and S3, and infrastructure assertions. Two conditions were also broken on purpose to confirm that tests fail"
+      }
+    },
+    {
+      "scope": "08",
+      "command": "vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "サインイン、ノートの作成、form でのアップロード、worker の記録（ok、1x1）、完了、同じ form で HTML を再送して記録が rejected に変わること、掃除の dry run、削除で記録が消えることを /local/queue で確認。相手はメモリ上の queue と bucket で、SQS でも S3 でもない",
+        "en": "Checked through /local/queue: sign-in, creating a note, a form upload, the worker's record (ok, 1x1), finishing, the record turning to rejected after the same form sent HTML, a housekeeping dry run, and the record disappearing on delete. The queue and the bucket were the in-memory stand-ins, not SQS or S3"
+      }
+    },
+    {
+      "scope": "08",
+      "command": "vp run async:infra:synth / typecheck",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "07章の 19 種類に 5 種類（SQS::Queue、SQS::QueuePolicy、Lambda::EventSourceMapping、Lambda::EventInvokeConfig、Scheduler::Schedule）を足した 24 種類。Custom:: のリソースはない。scripts/ は型検査のみ",
+        "en": "Chapter 07's 19 resource types plus five (SQS::Queue, SQS::QueuePolicy, Lambda::EventSourceMapping, Lambda::EventInvokeConfig, Scheduler::Schedule): 24 in all, and no Custom:: resource. scripts/ is type-checked only"
+      }
+    },
+    {
+      "scope": "08",
+      "command": "vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "queue を 2 つ、関数を 2 つ、schedule を 1 つ、そして 07章の一式（bucket 2 つ、user pool、distribution、table）を作る。S3 の通知、SQS、event source mapping、Scheduler、DynamoDB の条件付き書き込みは、どれも実環境で未確認",
+        "en": "Creates two queues, two functions, one schedule, and everything of chapter 07 (two buckets, a user pool, a distribution, a table). S3 notifications, SQS, the event source mapping, Scheduler, and the conditional writes to DynamoDB are all unconfirmed in AWS"
+      }
     }
   ],
   "open": [
@@ -1931,6 +1975,61 @@
       "resume": {
         "ja": "deploy して 1 日置き、Cost Explorer か請求書で `APN1-LCUUsage` の数量を確かめる。",
         "en": "Deploy, wait a day, and read the quantity of `APN1-LCUUsage` in Cost Explorer or the bill."
+      }
+    },
+    {
+      "id": "async-s3-event-shape",
+      "summary": {
+        "ja": "08章: form（POST Object）による作成のイベント（ObjectCreated:Post）と、lifecycle rule による削除のイベント（LifecycleExpiration:Delete）に sequencer が入るかを確認していない。公式ドキュメントは「PUT と DELETE のリクエストでだけ使われる」と書いている。worker は、sequencer のない作成イベントを失敗にして DLQ へ送り、sequencer のない削除イベントは何もせずに受け取る。",
+        "en": "Chapter 08: whether a create event from a form (ObjectCreated:Post) and a delete event from a lifecycle rule (LifecycleExpiration:Delete) carry a sequencer is unconfirmed. The documentation says it is \"only used with PUT and DELETE requests\". The worker fails a create event without one, which sends it to the DLQ, and accepts a delete event without one while doing nothing."
+      },
+      "resume": {
+        "ja": "vp run async:infra:deploy の後、AIH_ACCESS_TOKEN を入れて vp run async:smoke を実行する。form の経路で記録ができなければ vp run async:queue で DLQ を見る。POST のイベントに sequencer がなければ、eventTime と eTag を使う順序づけに替えるか、S3 の通知を EventBridge 経由に替える。",
+        "en": "After vp run async:infra:deploy, run vp run async:smoke with AIH_ACCESS_TOKEN set. If no record appears for the form upload, look at the DLQ with vp run async:queue. If POST events have no sequencer, order by eventTime and eTag instead, or route S3 notifications through EventBridge."
+      }
+    },
+    {
+      "id": "async-notification-deploy",
+      "summary": {
+        "ja": "08章: bucket の名前を固定して queue policy との循環を避ける書き方が、cdkd で実際に通るかを確認していない。S3 が通知の設定時に queue へ送れるかを検証すること、SQS 管理の鍵で暗号化した queue（SSE-SQS）に S3 が送れること、event source mapping の作成時に role の権限が検証されること、If-Match に引用符つきの ETag を渡して 412 が返ることも未確認。",
+        "en": "Chapter 08: that fixing the bucket's name to avoid a cycle with the queue policy actually deploys with cdkd is unconfirmed. So are: S3 validating that it can send to the queue when the notification is configured, S3 sending to a queue encrypted with SQS-managed keys (SSE-SQS), Lambda validating the role's permissions when the event source mapping is created, and GetObject answering 412 for an If-Match with a quoted ETag."
+      },
+      "resume": {
+        "ja": "vp run async:infra:deploy を実行する。bucket の作成が「Unable to validate the following destination configurations」で失敗したら、queue policy が先に作られているかを確かめる。その後 vp run async:smoke を実行する。",
+        "en": "Run vp run async:infra:deploy. If creating the bucket fails with \"Unable to validate the following destination configurations\", check that the queue policy was created first. Then run vp run async:smoke."
+      }
+    },
+    {
+      "id": "async-idle-polling-cost",
+      "summary": {
+        "ja": "08章: Lambda が空の queue を long polling する頻度が公式ドキュメントに書かれておらず、使われていない月の SQS のリクエスト数を見積もれない。",
+        "en": "Chapter 08: the documentation does not say how often Lambda long-polls an empty queue, so the number of SQS requests in an idle month cannot be estimated."
+      },
+      "resume": {
+        "ja": "デプロイして 1 日置き、CloudWatch の SQS のメトリクス NumberOfEmptyReceives を読んで、観測値として書く。",
+        "en": "Deploy, wait a day, read the SQS metric NumberOfEmptyReceives in CloudWatch, and report it as an observation."
+      }
+    },
+    {
+      "id": "async-housekeeping-scale",
+      "summary": {
+        "ja": "08章: 掃除は 1 回の実行で bucket のすべての object を見て、1 枚ごとに DynamoDB を 4 回、順に読む。実行時間は計測していない。枚数が増えると、関数の timeout（15 分）と読み取りの料金の両方に当たる。",
+        "en": "Chapter 08: one housekeeping run looks at every object in the bucket and reads DynamoDB four times per image, in sequence. Its duration has not been measured. As the count grows it runs into both the function's timeout (15 minutes) and the cost of reads."
+      },
+      "resume": {
+        "ja": "vp run async:logs --function housekeeping で REPORT 行の実行時間を読む。枚数に対して長すぎるなら、実行の間隔を広げるか、新しい object だけを見るか、S3 Inventory を入力にする。",
+        "en": "Read the duration in the REPORT line with vp run async:logs --function housekeeping. If it is too long for the number of images, run less often, look only at recent objects, or use S3 Inventory as the input."
+      }
+    },
+    {
+      "id": "async-inspection-orphans",
+      "summary": {
+        "ja": "08章: 検査の記録が、object のないまま残る経路が 2 つある。作成イベントを処理している worker が記録を書く直前に、別の worker が同じ key の削除イベントを処理し終えた場合。lifecycle rule による削除のイベントに sequencer がなかった場合。どちらも利用者には見えないが、記録は残る。",
+        "en": "Chapter 08: there are two ways an inspection record can be left without its object. A worker handling a create event is about to write when another worker finishes the delete event for the same key. Or a lifecycle delete event arrives without a sequencer. Neither is visible to users, but the record stays."
+      },
+      "resume": {
+        "ja": "削除のときに記録を消すかわりに、sequencer つきの墓石（tombstone）を条件付きで書き、DynamoDB の TTL で消す。",
+        "en": "Instead of deleting the record on a delete event, write a tombstone carrying the sequencer under the same condition, and let DynamoDB's TTL remove it."
       }
     }
   ]

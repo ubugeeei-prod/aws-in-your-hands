@@ -130,6 +130,10 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | local | not run | - | No Docker daemon was running, so the image has never been built |
 | 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an ECR repository and, given an image tag, a load balancer and two Fargate tasks, which are billed by the hour |
 | 12 | `vp run ecs:watch / ecs:logs` | AWS | not run | - | Tasks that only read the deployed service |
+| 08 | `vp run test:unit (examples/08-async)` | local | passed | 2026-10-12 | Duplicate delivery (the same message, the same event under another ID, two workers at once), reordering (an older create, a late delete), interruption (before and after the record), a partly failed batch, moving to the DLQ and back, the S3 test event, the repair of chapter 07's gap (a form sent twice), housekeeping run again, run concurrently, and interrupted, image type and size detection (real files written by sips and cwebp), the shape of requests to DynamoDB and S3, and infrastructure assertions. Two conditions were also broken on purpose to confirm that tests fail |
+| 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | local | passed | 2026-10-12 | Checked through /local/queue: sign-in, creating a note, a form upload, the worker's record (ok, 1x1), finishing, the record turning to rejected after the same form sent HTML, a housekeeping dry run, and the record disappearing on delete. The queue and the bucket were the in-memory stand-ins, not SQS or S3 |
+| 08 | `vp run async:infra:synth / typecheck` | local | passed | 2026-10-12 | Chapter 07's 19 resource types plus five (SQS::Queue, SQS::QueuePolicy, Lambda::EventSourceMapping, Lambda::EventInvokeConfig, Scheduler::Schedule): 24 in all, and no Custom:: resource. scripts/ is type-checked only |
+| 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | not run | - | Creates two queues, two functions, one schedule, and everything of chapter 07 (two buckets, a user pool, a distribution, a table). S3 notifications, SQS, the event source mapping, Scheduler, and the conditional writes to DynamoDB are all unconfirmed in AWS |
 
 ## Open items and how to resume
 
@@ -480,3 +484,33 @@ To resume: Deploy chapter 11 with `-c egress=nat`, deploy chapter 12 with `-c im
 What a load balancer's LCU usage is with no requests (whether health checks count) was not confirmed from a primary source. The cost tables leave LCUs out of the idle figures.
 
 To resume: Deploy, wait a day, and read the quantity of `APN1-LCUUsage` in Cost Explorer or the bill.
+
+### async-s3-event-shape
+
+Chapter 08: whether a create event from a form (ObjectCreated:Post) and a delete event from a lifecycle rule (LifecycleExpiration:Delete) carry a sequencer is unconfirmed. The documentation says it is "only used with PUT and DELETE requests". The worker fails a create event without one, which sends it to the DLQ, and accepts a delete event without one while doing nothing.
+
+To resume: After vp run async:infra:deploy, run vp run async:smoke with AIH_ACCESS_TOKEN set. If no record appears for the form upload, look at the DLQ with vp run async:queue. If POST events have no sequencer, order by eventTime and eTag instead, or route S3 notifications through EventBridge.
+
+### async-notification-deploy
+
+Chapter 08: that fixing the bucket's name to avoid a cycle with the queue policy actually deploys with cdkd is unconfirmed. So are: S3 validating that it can send to the queue when the notification is configured, S3 sending to a queue encrypted with SQS-managed keys (SSE-SQS), Lambda validating the role's permissions when the event source mapping is created, and GetObject answering 412 for an If-Match with a quoted ETag.
+
+To resume: Run vp run async:infra:deploy. If creating the bucket fails with "Unable to validate the following destination configurations", check that the queue policy was created first. Then run vp run async:smoke.
+
+### async-idle-polling-cost
+
+Chapter 08: the documentation does not say how often Lambda long-polls an empty queue, so the number of SQS requests in an idle month cannot be estimated.
+
+To resume: Deploy, wait a day, read the SQS metric NumberOfEmptyReceives in CloudWatch, and report it as an observation.
+
+### async-housekeeping-scale
+
+Chapter 08: one housekeeping run looks at every object in the bucket and reads DynamoDB four times per image, in sequence. Its duration has not been measured. As the count grows it runs into both the function's timeout (15 minutes) and the cost of reads.
+
+To resume: Read the duration in the REPORT line with vp run async:logs --function housekeeping. If it is too long for the number of images, run less often, look only at recent objects, or use S3 Inventory as the input.
+
+### async-inspection-orphans
+
+Chapter 08: there are two ways an inspection record can be left without its object. A worker handling a create event is about to write when another worker finishes the delete event for the same key. Or a lifecycle delete event arrives without a sequencer. Neither is visible to users, but the record stays.
+
+To resume: Instead of deleting the record on a delete event, write a tombstone carrying the sequencer under the same condition, and let DynamoDB's TTL remove it.

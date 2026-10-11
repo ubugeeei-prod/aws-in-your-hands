@@ -1,0 +1,26 @@
+{
+  "name": "@aih/example-08-async",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-05-dynamodb": "workspace:*",
+    "@aih/example-06-auth": "workspace:*",
+    "@aih/example-07-uploads": "workspace:*",
+    "@aws-sdk/client-dynamodb": "3.1149.0",
+    "@aws-sdk/client-s3": "3.1149.0",
+    "@aws-sdk/lib-dynamodb": "3.1149.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "hono": "4.13.13",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@aws-sdk/client-sqs": "3.1149.0",
+    "@go-to-k/cdkd": "0.296.28",
+    "@hono/node-server": "2.1.4",
+    "@types/aws-lambda": "8.10.164",
+    "vite-plus": "1.1.0"
+  }
+}
