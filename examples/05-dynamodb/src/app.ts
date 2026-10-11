@@ -7,7 +7,7 @@ import type { z } from "zod";
 import { createNoteSchema, type ErrorBody, listQuerySchema, type Note, updateNoteSchema } from "./contract.ts";
 import type { Env } from "./env.ts";
 import type { Logger } from "./log.ts";
-import type { NoteService } from "./notes.ts";
+import { type NoteService, SHARED_OWNER } from "./notes.ts";
 import { InvalidCursorError } from "./repository.ts";
 
 export type AppDeps = {
@@ -96,7 +96,7 @@ export function createApp(deps: AppDeps) {
                 400,
               );
         }),
-        async (c) => c.json(await deps.notes.list(c.req.valid("query"))),
+        async (c) => c.json(await deps.notes.list(SHARED_OWNER, c.req.valid("query"))),
       )
       // #endregion list
       .post(
@@ -113,10 +113,10 @@ export function createApp(deps: AppDeps) {
                 400,
               );
         }),
-        async (c) => c.json(await deps.notes.create(c.req.valid("json")), 201),
+        async (c) => c.json(await deps.notes.create(SHARED_OWNER, c.req.valid("json")), 201),
       )
       .get("/notes/:id", async (c) => {
-        const note = await deps.notes.get(c.req.param("id"));
+        const note = await deps.notes.get(SHARED_OWNER, c.req.param("id"));
         return note === undefined
           ? c.json(failure("not_found", "No such note.", c.get("requestId")), 404)
           : c.json(note, 200);
@@ -137,7 +137,7 @@ export function createApp(deps: AppDeps) {
               );
         }),
         async (c) => {
-          const result = await deps.notes.update(c.req.param("id"), c.req.valid("json"));
+          const result = await deps.notes.update(SHARED_OWNER, c.req.param("id"), c.req.valid("json"));
           switch (result.status) {
             case "updated":
               return c.json(result.note, 200);
@@ -157,7 +157,7 @@ export function createApp(deps: AppDeps) {
       )
       // #endregion update
       .delete("/notes/:id", async (c) =>
-        (await deps.notes.remove(c.req.param("id")))
+        (await deps.notes.remove(SHARED_OWNER, c.req.param("id")))
           ? c.body(null, 204)
           : c.json(failure("not_found", "No such note.", c.get("requestId")), 404),
       )

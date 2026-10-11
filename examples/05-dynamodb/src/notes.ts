@@ -14,14 +14,15 @@ export type NoteServiceDeps = {
 // caller reads and writes the same notes.
 export const SHARED_OWNER = "anonymous";
 
+/** Every operation names the owner whose notes it touches. Nothing here can reach across owners. */
 export function createNoteService(deps: NoteServiceDeps) {
   return {
-    list: (options: { limit: number; cursor?: string | undefined }): Promise<Page> =>
-      deps.repository.list(SHARED_OWNER, options),
+    list: (owner: string, options: { limit: number; cursor?: string | undefined }): Promise<Page> =>
+      deps.repository.list(owner, options),
 
-    get: (id: string): Promise<Note | undefined> => deps.repository.get(SHARED_OWNER, id),
+    get: (owner: string, id: string): Promise<Note | undefined> => deps.repository.get(owner, id),
 
-    async create(input: CreateNote): Promise<Note> {
+    async create(owner: string, input: CreateNote): Promise<Note> {
       // An ID collision needs the same millisecond and the same random suffix.
       // If it ever happens the conditional write refuses it, and a fresh ID is tried.
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -35,22 +36,22 @@ export function createNoteService(deps: NoteServiceDeps) {
           createdAt: timestamp,
           updatedAt: timestamp,
         };
-        if ((await deps.repository.create(SHARED_OWNER, note)) === "created") {
+        if ((await deps.repository.create(owner, note)) === "created") {
           return note;
         }
       }
       throw new Error("Could not allocate a note ID after 3 attempts");
     },
 
-    update: (id: string, input: UpdateNote): Promise<UpdateResult> =>
-      deps.repository.update(SHARED_OWNER, id, {
+    update: (owner: string, id: string, input: UpdateNote): Promise<UpdateResult> =>
+      deps.repository.update(owner, id, {
         title: input.title,
         body: input.body,
         expectedVersion: input.expectedVersion,
         updatedAt: deps.now().toISOString(),
       }),
 
-    remove: (id: string): Promise<boolean> => deps.repository.delete(SHARED_OWNER, id),
+    remove: (owner: string, id: string): Promise<boolean> => deps.repository.delete(owner, id),
   };
 }
 
