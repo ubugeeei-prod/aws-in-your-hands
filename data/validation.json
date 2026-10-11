@@ -1336,6 +1336,94 @@
         "ja": "queue を 2 つ、関数を 2 つ、schedule を 1 つ、そして 07章の一式（bucket 2 つ、user pool、distribution、table）を作る。S3 の通知、SQS、event source mapping、Scheduler、DynamoDB の条件付き書き込みは、どれも実環境で未確認",
         "en": "Creates two queues, two functions, one schedule, and everything of chapter 07 (two buckets, a user pool, a distribution, a table). S3 notifications, SQS, the event source mapping, Scheduler, and the conditional writes to DynamoDB are all unconfirmed in AWS"
       }
+    },
+    {
+      "scope": "23",
+      "command": "vp run test:unit (examples/23-ec2)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "file に書く repository を電源断の各段階で壊すテスト、SIGTERM のときの挙動（本物の socket）、user data と unit の生成と injection の拒否、data volume の script を bash で実行するテスト、Run Command の引数、SSM への経路のモデル、料金の入力、stack の assertion",
+        "en": "The file-backed repository under power loss at each step, behavior on SIGTERM over a real socket, generation of user data and the unit with injection refused, the data volume script run by bash, Run Command arguments, the model of the path to SSM, pricing inputs, and stack assertions"
+      }
+    },
+    {
+      "scope": "23",
+      "command": "vp run ec2:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "既定の構成と、`-c placement=public`、`-c dataOnDestroy=snapshot`、`-c dataSnapshotId=snap-0123456789abcdef0`、`-c amiId=ami-0123456789abcdef0` で synth した",
+        "en": "Synthesized the default layout and `-c placement=public`, `-c dataOnDestroy=snapshot`, `-c dataSnapshotId=snap-0123456789abcdef0`, and `-c amiId=ami-0123456789abcdef0`"
+      }
+    },
+    {
+      "scope": "23",
+      "command": "vp run ec2:plan / ec2:render / ec2:app:build",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "ec2:plan は既定、`placement=public`、endpoint の足りない設定、不正な設定で実行。ec2:render は deploy/ が生成結果と一致することを確認。ec2:app:build は 1 つの ESM の file を作る",
+        "en": "ec2:plan ran with the defaults, `placement=public`, a network without the endpoints, and invalid settings. ec2:render confirmed deploy/ matches the generators. ec2:app:build produces a single ESM file"
+      }
+    },
+    {
+      "scope": "23",
+      "command": "vp run dev:ec2 + curl, SIGTERM",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "ビルドした dist/server.mjs と src/server.ts の両方を Node.js 24 で起動。作成、一覧、再起動後も残ること、SIGTERM で exit code 0 で終わること、壊した notes.json では起動を拒否することを確認",
+        "en": "Started both the built dist/server.mjs and src/server.ts on Node.js 24. Checked create, list, that notes survive a restart, that SIGTERM ends with exit code 0, and that a damaged notes.json is refused at startup"
+      }
+    },
+    {
+      "scope": "23",
+      "command": "vp run ec2:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "EC2 の instance（時間課金）、EBS volume、S3 bucket を作る。11章の stack が先に要る",
+        "en": "Creates an EC2 instance (billed by the hour), an EBS volume, and an S3 bucket. Needs the chapter 11 stack first"
+      }
+    },
+    {
+      "scope": "23",
+      "command": "vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Systems Manager を通して instance に入る、release を配る、動作を確かめる。ec2:session と ec2:forward は Session Manager plugin が要る（devShell には入っていない）",
+        "en": "Reaches the instance through Systems Manager, ships a release, and checks it. ec2:session and ec2:forward need the Session Manager plugin, which the devShell does not include"
+      }
+    },
+    {
+      "scope": "23",
+      "command": "vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "instance の上で dnf を実行する、data volume を unmount、mount する、release の object を消す",
+        "en": "Runs dnf on the instance, unmounts and mounts the data volume, and deletes release objects"
+      }
+    },
+    {
+      "scope": "23",
+      "command": "aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "本文の手順は実行していない。flag は devShell の AWS CLI 2.35.11 の help で確かめた",
+        "en": "The procedure in the text was not run. The flags were checked against the help of AWS CLI 2.35.11 in the devShell"
+      }
     }
   ],
   "open": [
@@ -2030,6 +2118,72 @@
       "resume": {
         "ja": "削除のときに記録を消すかわりに、sequencer つきの墓石（tombstone）を条件付きで書き、DynamoDB の TTL で消す。",
         "en": "Instead of deleting the record on a delete event, write a tombstone carrying the sequencer under the same condition, and let DynamoDB's TTL remove it."
+      }
+    },
+    {
+      "id": "23-deploy",
+      "summary": {
+        "ja": "23章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が instance、instance profile、security group を専用の実装で、volume と volume attachment を Cloud Control API 経由で作れること、SSM 型の parameter から AMI の ID が解決されること、`Fn::ImportValue` で 11章の output を読めることが未確認。",
+        "en": "The chapter 23 stack has never been deployed. Unverified: that cdkd 0.296.28 creates the instance, instance profile, and security group with its own providers and the volume and attachment through Cloud Control API, that the AMI ID resolves from the SSM-typed parameter, and that the chapter 11 outputs are read through `Fn::ImportValue`."
+      },
+      "resume": {
+        "ja": "`vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages` の後に `vp run ec2:infra:deploy`、`vp run ec2:status`、`vp run ec2:infra:drift` を通す。終わったら「片付け」の順に消す（時間課金）。",
+        "en": "After `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`, run `vp run ec2:infra:deploy`, `vp run ec2:status`, and `vp run ec2:infra:drift`. Then delete everything in the order of the cleanup section (hourly charges)."
+      }
+    },
+    {
+      "id": "23-first-boot",
+      "summary": {
+        "ja": "user data を本物の Amazon Linux 2023 で走らせていない。未確認: private subnet から S3 の gateway endpoint だけで dnf の repository に届くこと（repository が S3 にあることは、ドキュメントの出力例の host 名から読み取っただけ）、`nodejs24` と `xfsprogs` が入ること、`/dev/sdf` の link ができること、attach を待つ loop が足りること、unit の directive（`AssertPathIsMountPoint` など）が AL2023 の systemd で通ること、root volume の大きさ（料金は 8 GiB と仮定）。",
+        "en": "The user data has not run on a real Amazon Linux 2023. Unverified: that dnf reaches the repositories from a private subnet through the S3 gateway endpoint alone (that they are in S3 was inferred from host names in sample output in the documentation), that `nodejs24` and `xfsprogs` install, that the `/dev/sdf` link appears, that the wait loop outlasts the attachment, that the unit's directives (such as `AssertPathIsMountPoint`) are accepted by the systemd on AL2023, and the size of the root volume (pricing assumes 8 GiB)."
+      },
+      "resume": {
+        "ja": "deploy 後に `vp run ec2:status` で cloud-init の結果、service の状態、mount を見る。失敗していたら `vp run ec2:session` で入り、`/var/log/cloud-init-output.log` を読む。root volume は `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>` で確かめ、8 GiB でなければ `src/cost.ts` の `ASSUMED_ROOT_GIB` と本文の金額を直す。",
+        "en": "After deploying, run `vp run ec2:status` to see the cloud-init result, the service state, and the mount. If it failed, connect with `vp run ec2:session` and read `/var/log/cloud-init-output.log`. Check the root volume with `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>`; if it is not 8 GiB, fix `ASSUMED_ROOT_GIB` in `src/cost.ts` and the amounts in the text."
+      }
+    },
+    {
+      "id": "23-ssm-endpoints",
+      "summary": {
+        "ja": "interface endpoint が 3 つとも要るのかを確かめていない。Systems Manager のドキュメントは、SSM Agent 3.3.40.0 以降は ssmmessages を優先すると書いているが、ec2messages の endpoint を省けるとは書いていない。AMI に入っている agent の版も見ていない。",
+        "en": "Whether all three interface endpoints are needed was not checked. The Systems Manager documentation says SSM Agent 3.3.40.0 and later prefers ssmmessages, but does not say the ec2messages endpoint can be omitted. The agent version in the AMI was not looked at either."
+      },
+      "resume": {
+        "ja": "11章の stack を `-c interfaceEndpoints=ssm,ssmmessages` で deploy し直し、instance を再起動して `vp run ec2:status` が Online を返すか、`vp run ec2:smoke` が通るかを見る。通れば月 USD 20.44 減らせる。",
+        "en": "Redeploy the chapter 11 stack with `-c interfaceEndpoints=ssm,ssmmessages`, reboot the instance, and see whether `vp run ec2:status` reports Online and `vp run ec2:smoke` passes. If so, the monthly cost drops by USD 20.44."
+      }
+    },
+    {
+      "id": "23-release",
+      "summary": {
+        "ja": "release の経路（S3 への upload、Run Command、instance 上の `notes-release`、restart、`/health` の確認）と、restart のときに処理中のリクエストが完了することを、実機で通していない。Session Manager と port forwarding も未実行（plugin が devShell に無い）。",
+        "en": "The release path (upload to S3, Run Command, `notes-release` on the instance, restart, and the `/health` check) and that a restart lets a request in flight finish have not been run on a real instance. Session Manager and port forwarding were not run either (the plugin is not in the devShell)."
+      },
+      "resume": {
+        "ja": "`vp run ec2:app:release`、`vp run ec2:smoke`、`vp run ec2:logs` を通す。もう一度 release して、前の版を `vp run ec2:app:rollback <version>` で戻す。Session Manager plugin を入れて `vp run ec2:forward` を実行し、手元から `curl http://localhost:8787/health` を呼ぶ。",
+        "en": "Run `vp run ec2:app:release`, `vp run ec2:smoke`, and `vp run ec2:logs`. Release again, then go back with `vp run ec2:app:rollback <version>`. Install the Session Manager plugin, run `vp run ec2:forward`, and call `curl http://localhost:8787/health` from your machine."
+      }
+    },
+    {
+      "id": "23-replace-and-restore",
+      "summary": {
+        "ja": "instance を作り直したときに data volume が残って付け直されること、snapshot からの restore、destroy のときの volume attachment の扱いを実行していない。cdkd のソースでは、`UserData` の変更は instance に反映されず、`ImageId` の変更は置き換えになる。置き換えのときに attachment がどう動くか（古い instance から外れて新しい instance に付くのか、途中で失敗するのか）は読み切れていない。",
+        "en": "Not run: that the data volume survives and is reattached when the instance is replaced, restoring from a snapshot, and what happens to the volume attachment on destroy. In the cdkd source, a change to `UserData` is not applied to the instance and a change to `ImageId` replaces it. How the attachment behaves during a replacement (detached from the old instance and attached to the new, or failing midway) could not be determined from the source."
+      },
+      "resume": {
+        "ja": "ノートを 1 件作り、`vp run ec2:data:unmount` の後に `-c amiId=<1 つ前の AMI>` で deploy して置き換えを起こす。新しい instance で `vp run ec2:status` と `vp run ec2:app:release`、`vp run ec2:smoke` を実行し、ノートが残っているかを見る。続けて「snapshot と restore」の手順を通す。",
+        "en": "Create one note, run `vp run ec2:data:unmount`, then deploy with `-c amiId=<the previous AMI>` to force a replacement. On the new instance run `vp run ec2:status`, `vp run ec2:app:release`, and `vp run ec2:smoke`, and see whether the note is still there. Then go through the snapshot and restore procedure."
+      }
+    },
+    {
+      "id": "23-patch",
+      "summary": {
+        "ja": "`ec2:patch:check` と `ec2:patch:apply` を実機で実行していない。Patch Manager（`AWS-RunPatchBaseline`）は手順を書いただけで、タスクも無い。",
+        "en": "`ec2:patch:check` and `ec2:patch:apply` have not been run on a real instance. Patch Manager (`AWS-RunPatchBaseline`) is described only; there is no task for it."
+      },
+      "resume": {
+        "ja": "数週間前の AMI を `-c amiId=...` で指定して deploy し、`vp run ec2:patch:check` で新しい release が出ることを確かめ、`vp run ec2:patch:apply <releasever>` を実行する。kernel が更新されたら `aws ec2 reboot-instances` で再起動し、`vp run ec2:smoke` を通す。",
+        "en": "Deploy with an AMI a few weeks old through `-c amiId=...`, confirm that `vp run ec2:patch:check` lists a newer release, and run `vp run ec2:patch:apply <releasever>`. If the kernel was updated, reboot with `aws ec2 reboot-instances` and run `vp run ec2:smoke`."
       }
     }
   ]

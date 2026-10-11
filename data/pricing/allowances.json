@@ -249,6 +249,14 @@
     {
       "priceId": "ecr.storage",
       "reason": "The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted."
+    },
+    {
+      "priceId": "ec2.t4g-micro.linux.hour",
+      "reason": "The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "ebs.gp3.storage",
+      "reason": "The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted."
     }
   ]
 }

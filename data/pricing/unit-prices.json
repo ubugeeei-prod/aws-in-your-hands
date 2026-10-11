@@ -1734,6 +1734,111 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-24T16:39:03Z",
       "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g-micro.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "VQYSJNTK8DNEGB5Z",
+      "usageType": "APN1-BoxUsage:t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0108000000",
+          "description": "$0.0108 per On Demand Linux t4g.micro Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g-small.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "74TFX697KNZ72UYS",
+      "usageType": "APN1-BoxUsage:t4g.small",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0216000000",
+          "description": "$0.0216 per On Demand Linux t4g.small Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g.cpu-credit",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "225544MWSED9SX58",
+      "usageType": "APN1-CPUCredits:t4g",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "vCPU-Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0400000000",
+          "description": "$0.04 per vCPU-Hour of T4G CPU Credits"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ebs.gp3.storage",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "C8Y3GJZBQTH8T5JV",
+      "usageType": "APN1-EBS:VolumeUsage.gp3",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0960000000",
+          "description": "$0.096 per GB-month of General Purpose (gp3) provisioned storage - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ebs.snapshot.storage",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "4NHX4ZW7X52XZACJ",
+      "usageType": "APN1-EBS:SnapshotUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0500000000",
+          "description": "$0.05 per GB-Month of snapshot data stored - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

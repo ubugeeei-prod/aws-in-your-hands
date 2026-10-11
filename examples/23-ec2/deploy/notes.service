@@ -1,0 +1,28 @@
+[Unit]
+Description=Notes API (AWS in Your Hands, chapter 23)
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/var/lib/notes
+AssertPathIsMountPoint=/var/lib/notes
+ConditionPathExists=/opt/notes/current/server.mjs
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=notes
+Group=notes
+EnvironmentFile=/etc/notes/notes.env
+ExecStart=/usr/bin/node-24 /opt/notes/current/server.mjs
+Restart=on-failure
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=30
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/notes
+
+[Install]
+WantedBy=multi-user.target

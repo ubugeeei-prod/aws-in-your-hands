@@ -1104,6 +1104,93 @@ ID: `async-housekeeping-10k` / 章: [08 リクエストの外で処理する: SQ
 - 毎月の無料枠適用後の小計: **USD 4.23** / 月
 - 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
 
+## EC2: private subnet で 1 か月動かしたまま
+
+ID: `ec2-private-running` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+
+前提:
+
+- 既定の構成。t4g.micro を 730 時間動かしたまま
+- 11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- 定価の小計: **USD 70.74** / 月
+- 毎月の無料枠適用後の小計: **USD 70.74** / 月
+- 無料枠を確認できず、何も引いていない単価: `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
+
+## EC2: private subnet で 1 か月止めたまま
+
+ID: `ec2-private-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+
+前提:
+
+- instance を停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- 定価の小計: **USD 62.86** / 月
+- 毎月の無料枠適用後の小計: **USD 62.86** / 月
+- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
+
+## EC2: public subnet で 1 か月動かしたまま
+
+ID: `ec2-public-running` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+
+前提:
+
+- `-c placement=public`。t4g.micro を 730 時間動かしたまま、自動で割り当てられた public IPv4 アドレス 1 つ
+- interface endpoint なし
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.public-ipv4.in-use.hour` | 730 | Hrs | 1 public IPv4 address x 730 hours | 3.65 | - | 3.65 |
+
+- 定価の小計: **USD 13.07** / 月
+- 毎月の無料枠適用後の小計: **USD 13.07** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
+
+## EC2: public subnet で 1 か月止めたまま
+
+ID: `ec2-public-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+
+前提:
+
+- `-c placement=public` の instance を停止したまま 730 時間。自動で割り当てられた public IPv4 アドレスは停止時に解放される。Elastic IP アドレスは使っていない
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+
+- 定価の小計: **USD 1.54** / 月
+- 毎月の無料枠適用後の小計: **USD 1.54** / 月
+- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -1178,6 +1265,11 @@ ID: `async-housekeeping-10k` / 章: [08 リクエストの外で処理する: SQ
 | `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
 | `sqs.request.standard` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 100,000,000,000: 0.0000004000<br>100,000,000,000 - 200,000,000,000: 0.0000003500<br>200,000,000,000 - ∞: 0.0000003200 | 2026-09-11 | 2026-10-12 |
 | `scheduler.invocation` | ap-northeast-1 | APN1-ScheduledInvocation | Invocations | 0 - 14,000,000: 0.0000000000<br>14,000,000 - ∞: 0.0000012500 | 2026-09-24 | 2026-10-12 |
+| `ec2.t4g-micro.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.micro | Hrs | 0 - ∞: 0.0108000000 | 2026-10-09 | 2026-10-12 |
+| `ec2.t4g-small.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.small | Hrs | 0 - ∞: 0.0216000000 | 2026-10-09 | 2026-10-12 |
+| `ec2.t4g.cpu-credit` | ap-northeast-1 | APN1-CPUCredits:t4g | vCPU-Hours | 0 - ∞: 0.0400000000 | 2026-10-09 | 2026-10-12 |
+| `ebs.gp3.storage` | ap-northeast-1 | APN1-EBS:VolumeUsage.gp3 | GB-Mo | 0 - ∞: 0.0960000000 | 2026-10-09 | 2026-10-12 |
+| `ebs.snapshot.storage` | ap-northeast-1 | APN1-EBS:SnapshotUsage | GB-Mo | 0 - ∞: 0.0500000000 | 2026-10-09 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -1230,3 +1322,5 @@ ID: `async-housekeeping-10k` / 章: [08 リクエストの外で処理する: SQ
 - `alb.hour`: The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `alb.lcu.hour`: The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted.
 - `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.
+- `ec2.t4g-micro.linux.hour`: The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted.
+- `ebs.gp3.storage`: The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted.

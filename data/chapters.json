@@ -1238,43 +1238,91 @@
       "prerequisites": ["11"],
       "services": ["EC2", "Systems Manager", "EBS"],
       "samplePath": "examples/23-ec2",
+      "sourceIds": [
+        "ssm-endpoints-for-ec2",
+        "ssm-message-endpoints",
+        "ssm-agent-preinstalled",
+        "ssm-agent-technical-reference",
+        "ssm-session-manager",
+        "ssm-session-prerequisites",
+        "ssm-session-start",
+        "ssm-session-plugin",
+        "ssm-instance-permissions",
+        "ssm-managed-instance-core-policy",
+        "ssm-run-command-walkthrough",
+        "ssm-api-get-command-invocation",
+        "ssm-pricing-ec2",
+        "ssm-patch-manager",
+        "ssm-patch-prerequisites",
+        "ssm-patch-amazon-linux",
+        "ec2-imds",
+        "ec2-imds-options",
+        "al2023-imdsv2",
+        "ec2-iam-roles",
+        "ec2-user-data",
+        "ec2-instance-lifecycle",
+        "ec2-stop-start",
+        "ec2-instance-addressing",
+        "ec2-auto-recovery",
+        "ec2-simplified-recovery",
+        "ec2-status-checks",
+        "ec2-burstable-unlimited",
+        "ec2-preserve-volumes",
+        "al2023-on-ec2",
+        "al2023-deterministic-upgrades",
+        "al2023-updating",
+        "al2023-instance-replacement",
+        "al2023-nodejs",
+        "al2023-awscli",
+        "al2023-journald",
+        "al2023-gp3-xfs",
+        "al2023-repositories",
+        "ebs-volumes",
+        "ebs-nvme-device-names",
+        "ebs-make-available",
+        "ebs-snapshots",
+        "ebs-create-snapshot",
+        "ebs-restore-volume",
+        "ebs-initialize",
+        "cfn-ec2-instance",
+        "cfn-ec2-volume",
+        "cfn-ec2-volumeattachment",
+        "cfn-iam-instanceprofile",
+        "cfn-ssm-parameter-types",
+        "cfn-deletion-policy",
+        "aws-price-list-ec2-compute",
+        "cdkd-source-ec2",
+        "cdkd-cli-destroy",
+        "aws-cdk-lib-ec2-machine-image",
+        "systemd-service-man",
+        "systemd-unit-man",
+        "systemd-exec-man",
+        "systemd-kill-man",
+        "node-http-server-close",
+        "vpc-security-groups-unfiltered",
+        "lambda-limits-timeout",
+        "fargate-ephemeral-storage",
+        "fargate-what-is",
+        "ecs-services-replace",
+        "lambda-ephemeral-storage",
+        "ec2-auto-scaling-health",
+        "cloudwatch-agent-journald",
+        "vpc-pricing",
+        "aws-price-list-vpc",
+        "privatelink-pricing",
+        "vpc-interface-endpoints",
+        "cdkd-introduction",
+        "cdkd-cross-stack-references"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["vpc-pricing"],
-      "outline": {
-        "outcome": {
-          "ja": "SSH の port を開けずに EC2 へ入り、プロセスを service として動かし、patch を当てる。",
-          "en": "You reach an EC2 instance without opening SSH, run a process as a service, and patch it."
-        },
-        "architecture": {
-          "ja": "private subnet の instance + instance role + SSM Session Manager。data は別の EBS volume。",
-          "en": "An instance in a private subnet with an instance role and SSM Session Manager; data on a separate EBS volume."
-        },
-        "topics": {
-          "ja": [
-            "instance role と一時認証情報",
-            "停止中も続く EBS と public IPv4 の課金",
-            "systemd と graceful shutdown",
-            "長生きする machine の責任範囲"
-          ],
-          "en": [
-            "Instance roles and temporary credentials",
-            "EBS and public IPv4 charges that continue while stopped",
-            "systemd and graceful shutdown",
-            "What you own on a long-lived machine"
-          ]
-        },
-        "requiredSource": {
-          "ja": ["instance の CDK と user data", "systemd unit", "volume の snapshot/restore 手順"],
-          "en": ["Instance CDK and user data", "systemd unit", "Volume snapshot and restore procedure"]
-        },
-        "distributed": {
-          "ja": "1 台は単一障害点。それを受け入れる条件を明示する。",
-          "en": "One machine is a single point of failure; state when that is acceptable."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "24",

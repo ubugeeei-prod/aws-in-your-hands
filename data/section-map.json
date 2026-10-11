@@ -2786,6 +2786,217 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "23.why",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.cost",
+      "sources": [
+        "examples/23-ec2/src/cost.ts",
+        "examples/23-ec2/src/report.ts",
+        "examples/23-ec2/scripts/plan.ts",
+        "examples/23-ec2/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["ec2:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.architecture",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/bin/app.ts",
+        "examples/23-ec2/src/config.ts"
+      ],
+      "tasks": ["ec2:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type"],
+      "verification": "local"
+    },
+    {
+      "id": "23.access",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/src/access.ts",
+        "examples/23-ec2/test/access.test.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts",
+        "examples/11-network/infra/lib/import-network.ts"
+      ],
+      "tasks": ["ec2:plan", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "23.role",
+      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "tasks": ["test:unit", "ec2:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.ami",
+      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "tasks": ["test:unit", "ec2:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "23.user-data",
+      "sources": [
+        "examples/23-ec2/src/machine.ts",
+        "examples/23-ec2/src/user-data.ts",
+        "examples/23-ec2/src/rendered.ts",
+        "examples/23-ec2/scripts/render.ts",
+        "examples/23-ec2/deploy/user-data.sh",
+        "examples/23-ec2/test/machine.test.ts"
+      ],
+      "tasks": ["ec2:render", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.service",
+      "sources": [
+        "examples/23-ec2/src/unit.ts",
+        "examples/23-ec2/deploy/notes.service",
+        "examples/23-ec2/deploy/notes.env",
+        "examples/23-ec2/test/machine.test.ts"
+      ],
+      "tasks": ["ec2:render", "test:unit", "ec2:logs"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.shutdown",
+      "sources": [
+        "examples/23-ec2/src/shutdown.ts",
+        "examples/23-ec2/src/server.ts",
+        "examples/23-ec2/test/shutdown.test.ts"
+      ],
+      "tasks": ["test:unit", "dev:ec2"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.data",
+      "sources": [
+        "examples/23-ec2/src/file-notes.ts",
+        "examples/23-ec2/src/node-files.ts",
+        "examples/23-ec2/src/user-data.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh",
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/test/file-notes.test.ts",
+        "examples/23-ec2/test/data-volume.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.local",
+      "sources": [
+        "examples/23-ec2/src/server.ts",
+        "examples/23-ec2/src/env.ts",
+        "examples/23-ec2/.env.example",
+        "examples/23-ec2/scripts/plan.ts",
+        "examples/23-ec2/scripts/build.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
+      "tasks": ["dev:ec2", "test:unit", "ec2:plan", "ec2:app:build", "ec2:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.deploy",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/src/release.ts",
+        "examples/23-ec2/deploy/notes-release.sh",
+        "examples/23-ec2/test/remote.test.ts",
+        "tools/src/infra"
+      ],
+      "tasks": [
+        "net:infra:deploy",
+        "ec2:infra:diff",
+        "ec2:infra:deploy",
+        "ec2:status",
+        "ec2:session",
+        "ec2:forward",
+        "ec2:app:release",
+        "ec2:app:rollback",
+        "ec2:smoke",
+        "ec2:logs",
+        "ec2:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.backup",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh",
+        "examples/23-ec2/test/data-volume.test.ts"
+      ],
+      "tasks": ["ec2:data:unmount", "ec2:data:mount", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.patch",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/test/remote.test.ts"
+      ],
+      "tasks": ["ec2:patch:check", "ec2:patch:apply"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.spof",
+      "sources": ["examples/23-ec2/test/access.test.ts", "examples/23-ec2/test/file-notes.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.compare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "23.cleanup",
+      "sources": ["examples/23-ec2/scripts/remote.ts", "tools/src/infra"],
+      "tasks": ["ec2:data:unmount", "ec2:releases:empty", "ec2:infra:destroy", "net:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

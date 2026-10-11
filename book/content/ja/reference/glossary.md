@@ -179,3 +179,16 @@ generated: true
 | sequencer | sequencer | 08 | S3 が作成と削除のイベントに付ける 16 進の文字列。同じ key のイベントどうしなら、大きいほうが後に起きた。 |
 | backpressure | backpressure | 08 | 処理する側が追いつかないとき、その遅れを上流に伝えて流量を抑えること。queue はそれを「待ち行列が伸びる」という形で引き受ける。 |
 | 突き合わせ | reconciliation | 08 | イベントを待たずに、2 つの置き場所の現在の中身を見比べて、ずれを直す処理。イベントが遅れたり失われたりしても効く。 |
+| instance（EC2） | instance (EC2) | 23 | EC2 で借りる仮想マシン 1 台。OS から上は自分で面倒を見る。動いている時間に対して課金され、止めても volume の料金は続く。 |
+| AMI | AMI | 23 | Amazon Machine Image。instance の最初の disk の中身になる雛形。OS と、最初から入っているソフトウェアが決まる。 |
+| instance profile | instance profile | 23 | IAM role を EC2 の instance に渡すための入れ物。1 つの profile に入る role は 1 つ。 |
+| IMDS | IMDS | 23 | Instance Metadata Service。instance の中からだけ届くアドレス（169.254.169.254）で、instance 自身の情報と、role の一時認証情報を返す。IMDSv2 は先に token を取ってから問い合わせる方式。 |
+| user data | user data | 23 | instance の起動時に渡すデータ。shell script を渡すと、最初の起動のときに一度だけ、root で実行される。 |
+| EBS volume | EBS volume | 23 | instance に取り付けるネットワーク越しの disk。1 つの Availability Zone に属し、同じ AZ の instance にしか付けられない。instance とは別に生き残れる。 |
+| snapshot（EBS） | snapshot (EBS) | 23 | ある時点の volume の写し。差分で保存され、リージョン内のどの AZ にも volume として復元できる。 |
+| Session Manager | Session Manager | 23 | Systems Manager の機能。instance の中の SSM Agent が外向きに張った接続を通して shell を開く。inbound の port も SSH の鍵も使わない。 |
+| Run Command | Run Command | 23 | Systems Manager の機能。instance にコマンドを送って実行させ、結果を受け取る。対話はしない。 |
+| unit（systemd） | unit (systemd) | 23 | systemd に「何を、誰として、どう起動して、落ちたらどうするか」を伝える設定ファイル。service を定義するものは `.service` で終わる。 |
+| status check | status check | 23 | EC2 が 1 分ごとに行う instance の検査。AWS 側の基盤の問題を見る system status check と、instance 自身の問題を見る instance status check がある。 |
+| 単一障害点 | single point of failure | 23 | そこが止まると全体が止まる部品。1 台の instance と、その 1 つの volume がそれにあたる。 |
+| CPU credit | CPU credit | 23 | T 系の instance が、baseline を超えて CPU を使うために貯めて使う持ち分。standard では使い切ると baseline に絞られ、unlimited では超過分が課金される。 |

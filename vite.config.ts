@@ -81,6 +81,7 @@ const chapterSynthTasks = [
   "ship:cfn:synth",
   "ecs:infra:synth",
   "async:infra:synth",
+  "ec2:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -99,6 +100,7 @@ const chapterCheckTasks = [
   "typecheck:ssr",
   "ssr:check:output",
   "ecs:bundle:check",
+  "ec2:app:build",
 ];
 
 export default defineConfig({
@@ -441,6 +443,46 @@ export default defineConfig({
         cwd: "examples/08-async",
       }),
       // <<< chapter 08
+
+      // >>> chapter 23
+      // ---- chapter 23: EC2 ----------------------------------------------
+      // The chapter 04 API as a long-running process that keeps notes in a file. No AWS.
+      "dev:ec2": fresh("node --watch --env-file-if-exists=.env src/server.ts", { cwd: "examples/23-ec2" }),
+      // Where the instance would live, whether it could reach Systems Manager, and the idle cost. Reads only this checkout.
+      "ec2:plan": fresh("node scripts/plan.ts", { cwd: "examples/23-ec2" }),
+      // Fails when deploy/ differs from what the generators produce. `--write` rewrites it.
+      "ec2:render": fresh("node scripts/render.ts", { cwd: "examples/23-ec2" }),
+      "ec2:app:build": fresh("node scripts/build.ts", { cwd: "examples/23-ec2" }),
+      ...infra("ec2", "examples/23-ec2", "AihEc2"),
+      // Everything below goes through Systems Manager to the deployed instance.
+      "ec2:status": live("node --env-file-if-exists=../../.env scripts/remote.ts status", { cwd: "examples/23-ec2" }),
+      "ec2:session": live("node --env-file-if-exists=../../.env scripts/remote.ts session", { cwd: "examples/23-ec2" }),
+      "ec2:forward": live("node --env-file-if-exists=../../.env scripts/remote.ts forward", { cwd: "examples/23-ec2" }),
+      "ec2:app:release": live("node --env-file-if-exists=../../.env scripts/remote.ts release", {
+        cwd: "examples/23-ec2",
+        dependsOn: ["ec2:app:build"],
+      }),
+      "ec2:app:rollback": live("node --env-file-if-exists=../../.env scripts/remote.ts rollback", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:smoke": live("node --env-file-if-exists=../../.env scripts/remote.ts smoke", { cwd: "examples/23-ec2" }),
+      "ec2:logs": live("node --env-file-if-exists=../../.env scripts/remote.ts logs", { cwd: "examples/23-ec2" }),
+      "ec2:data:unmount": live("node --env-file-if-exists=../../.env scripts/remote.ts unmount", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:data:mount": live("node --env-file-if-exists=../../.env scripts/remote.ts mount", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:patch:check": live("node --env-file-if-exists=../../.env scripts/remote.ts patch-check", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:patch:apply": live("node --env-file-if-exists=../../.env scripts/remote.ts patch-apply", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:releases:empty": live("node --env-file-if-exists=../../.env scripts/remote.ts releases-empty", {
+        cwd: "examples/23-ec2",
+      }),
+      // <<< chapter 23
 
       // ---- chapter task blocks are inserted above this line ----
 

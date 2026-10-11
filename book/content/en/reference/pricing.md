@@ -1104,6 +1104,93 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 4.23** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `s3.request.tier1`
 
+## EC2: a month running in a private subnet
+
+ID: `ec2-private-running` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+
+Assumptions:
+
+- The default layout: one t4g.micro running for 730 hours
+- Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack
+- The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge
+- CPU credits are in standard mode, so nothing is billed for use above the baseline
+- Session Manager and Run Command have no additional charge on EC2 instances
+- Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- List subtotal: **USD 70.74** / month
+- Subtotal after monthly free allowance: **USD 70.74** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
+
+## EC2: a month stopped in a private subnet
+
+ID: `ec2-private-stopped` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+
+Assumptions:
+
+- The instance stopped for 730 hours. The volumes and the interface endpoints in the chapter 11 stack remain
+- The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge
+- CPU credits are in standard mode, so nothing is billed for use above the baseline
+- Session Manager and Run Command have no additional charge on EC2 instances
+- Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- List subtotal: **USD 62.86** / month
+- Subtotal after monthly free allowance: **USD 62.86** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ebs.gp3.storage`
+
+## EC2: a month running in a public subnet
+
+ID: `ec2-public-running` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+
+Assumptions:
+
+- `-c placement=public`: one t4g.micro running for 730 hours with one auto-assigned public IPv4 address
+- No interface endpoints
+- The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge
+- CPU credits are in standard mode, so nothing is billed for use above the baseline
+- Session Manager and Run Command have no additional charge on EC2 instances
+- Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.public-ipv4.in-use.hour` | 730 | Hrs | 1 public IPv4 address x 730 hours | 3.65 | - | 3.65 |
+
+- List subtotal: **USD 13.07** / month
+- Subtotal after monthly free allowance: **USD 13.07** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
+
+## EC2: a month stopped in a public subnet
+
+ID: `ec2-public-stopped` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+
+Assumptions:
+
+- The `-c placement=public` instance stopped for 730 hours. Its auto-assigned public IPv4 address is released on stop. No Elastic IP address is used
+- The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge
+- CPU credits are in standard mode, so nothing is billed for use above the baseline
+- Session Manager and Run Command have no additional charge on EC2 instances
+- Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+
+- List subtotal: **USD 1.54** / month
+- Subtotal after monthly free allowance: **USD 1.54** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ebs.gp3.storage`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -1178,6 +1265,11 @@ Assumptions:
 | `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
 | `sqs.request.standard` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 100,000,000,000: 0.0000004000<br>100,000,000,000 - 200,000,000,000: 0.0000003500<br>200,000,000,000 - ∞: 0.0000003200 | 2026-09-11 | 2026-10-12 |
 | `scheduler.invocation` | ap-northeast-1 | APN1-ScheduledInvocation | Invocations | 0 - 14,000,000: 0.0000000000<br>14,000,000 - ∞: 0.0000012500 | 2026-09-24 | 2026-10-12 |
+| `ec2.t4g-micro.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.micro | Hrs | 0 - ∞: 0.0108000000 | 2026-10-09 | 2026-10-12 |
+| `ec2.t4g-small.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.small | Hrs | 0 - ∞: 0.0216000000 | 2026-10-09 | 2026-10-12 |
+| `ec2.t4g.cpu-credit` | ap-northeast-1 | APN1-CPUCredits:t4g | vCPU-Hours | 0 - ∞: 0.0400000000 | 2026-10-09 | 2026-10-12 |
+| `ebs.gp3.storage` | ap-northeast-1 | APN1-EBS:VolumeUsage.gp3 | GB-Mo | 0 - ∞: 0.0960000000 | 2026-10-09 | 2026-10-12 |
+| `ebs.snapshot.storage` | ap-northeast-1 | APN1-EBS:SnapshotUsage | GB-Mo | 0 - ∞: 0.0500000000 | 2026-10-09 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -1230,3 +1322,5 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `alb.hour`: The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `alb.lcu.hour`: The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted.
 - `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.
+- `ec2.t4g-micro.linux.hour`: The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted.
+- `ebs.gp3.storage`: The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted.

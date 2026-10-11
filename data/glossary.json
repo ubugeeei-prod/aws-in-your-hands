@@ -1679,6 +1679,136 @@
         "ja": "イベントを待たずに、2 つの置き場所の現在の中身を見比べて、ずれを直す処理。イベントが遅れたり失われたりしても効く。",
         "en": "Comparing what two stores hold right now and fixing the differences, without waiting for an event. It works even when an event is late or lost."
       }
+    },
+    {
+      "id": "ec2-instance",
+      "ja": "instance（EC2）",
+      "en": "instance (EC2)",
+      "firstUse": "23",
+      "definition": {
+        "ja": "EC2 で借りる仮想マシン 1 台。OS から上は自分で面倒を見る。動いている時間に対して課金され、止めても volume の料金は続く。",
+        "en": "One virtual machine rented from EC2. Everything from the operating system up is yours to look after. Billed while running; its volumes are billed even when it is stopped."
+      }
+    },
+    {
+      "id": "ami",
+      "ja": "AMI",
+      "en": "AMI",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Amazon Machine Image。instance の最初の disk の中身になる雛形。OS と、最初から入っているソフトウェアが決まる。",
+        "en": "Amazon Machine Image: the template for an instance's first disk. It decides the operating system and what is installed from the start."
+      }
+    },
+    {
+      "id": "instance-profile",
+      "ja": "instance profile",
+      "en": "instance profile",
+      "firstUse": "23",
+      "definition": {
+        "ja": "IAM role を EC2 の instance に渡すための入れ物。1 つの profile に入る role は 1 つ。",
+        "en": "The container that hands an IAM role to an EC2 instance. One profile holds one role."
+      }
+    },
+    {
+      "id": "imds",
+      "ja": "IMDS",
+      "en": "IMDS",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Instance Metadata Service。instance の中からだけ届くアドレス（169.254.169.254）で、instance 自身の情報と、role の一時認証情報を返す。IMDSv2 は先に token を取ってから問い合わせる方式。",
+        "en": "Instance Metadata Service: an address reachable only from inside the instance (169.254.169.254) that returns facts about the instance and temporary credentials for its role. IMDSv2 requires fetching a token first."
+      }
+    },
+    {
+      "id": "user-data",
+      "ja": "user data",
+      "en": "user data",
+      "firstUse": "23",
+      "definition": {
+        "ja": "instance の起動時に渡すデータ。shell script を渡すと、最初の起動のときに一度だけ、root で実行される。",
+        "en": "Data handed to an instance at launch. A shell script given this way runs once, as root, on the first boot."
+      }
+    },
+    {
+      "id": "ebs-volume",
+      "ja": "EBS volume",
+      "en": "EBS volume",
+      "firstUse": "23",
+      "definition": {
+        "ja": "instance に取り付けるネットワーク越しの disk。1 つの Availability Zone に属し、同じ AZ の instance にしか付けられない。instance とは別に生き残れる。",
+        "en": "A network-attached disk for an instance. It belongs to one Availability Zone and attaches only to instances in that zone. It can outlive the instance."
+      }
+    },
+    {
+      "id": "ebs-snapshot",
+      "ja": "snapshot（EBS）",
+      "en": "snapshot (EBS)",
+      "firstUse": "23",
+      "definition": {
+        "ja": "ある時点の volume の写し。差分で保存され、リージョン内のどの AZ にも volume として復元できる。",
+        "en": "A point-in-time copy of a volume. Stored incrementally, and restorable as a volume in any zone of the Region."
+      }
+    },
+    {
+      "id": "session-manager",
+      "ja": "Session Manager",
+      "en": "Session Manager",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Systems Manager の機能。instance の中の SSM Agent が外向きに張った接続を通して shell を開く。inbound の port も SSH の鍵も使わない。",
+        "en": "A Systems Manager feature that opens a shell over a connection the SSM Agent on the instance made outward. No inbound port and no SSH key."
+      }
+    },
+    {
+      "id": "run-command",
+      "ja": "Run Command",
+      "en": "Run Command",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Systems Manager の機能。instance にコマンドを送って実行させ、結果を受け取る。対話はしない。",
+        "en": "A Systems Manager feature that sends commands to an instance, runs them, and returns the result. Not interactive."
+      }
+    },
+    {
+      "id": "systemd-unit",
+      "ja": "unit（systemd）",
+      "en": "unit (systemd)",
+      "firstUse": "23",
+      "definition": {
+        "ja": "systemd に「何を、誰として、どう起動して、落ちたらどうするか」を伝える設定ファイル。service を定義するものは `.service` で終わる。",
+        "en": "A file that tells systemd what to run, as whom, how to start it, and what to do when it dies. Those that define a service end in `.service`."
+      }
+    },
+    {
+      "id": "status-check",
+      "ja": "status check",
+      "en": "status check",
+      "firstUse": "23",
+      "definition": {
+        "ja": "EC2 が 1 分ごとに行う instance の検査。AWS 側の基盤の問題を見る system status check と、instance 自身の問題を見る instance status check がある。",
+        "en": "A check EC2 runs on an instance every minute. System status checks look at the AWS infrastructure underneath; instance status checks look at the instance itself."
+      }
+    },
+    {
+      "id": "single-point-of-failure",
+      "ja": "単一障害点",
+      "en": "single point of failure",
+      "firstUse": "23",
+      "definition": {
+        "ja": "そこが止まると全体が止まる部品。1 台の instance と、その 1 つの volume がそれにあたる。",
+        "en": "A part whose failure stops the whole. One instance, and its one volume, are exactly that."
+      }
+    },
+    {
+      "id": "cpu-credit",
+      "ja": "CPU credit",
+      "en": "CPU credit",
+      "firstUse": "23",
+      "definition": {
+        "ja": "T 系の instance が、baseline を超えて CPU を使うために貯めて使う持ち分。standard では使い切ると baseline に絞られ、unlimited では超過分が課金される。",
+        "en": "What T-family instances earn and spend to use CPU above their baseline. In standard mode an empty balance means throttling to the baseline; in unlimited mode the excess is billed."
+      }
     }
   ]
 }

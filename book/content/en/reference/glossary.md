@@ -179,3 +179,16 @@ The term pairs that keep both languages using one word for one concept. API name
 | sequencer | sequencer | 08 | A hexadecimal string S3 puts on create and delete events. Between two events for the same key, the greater one happened later. |
 | backpressure | backpressure | 08 | Slowing the flow when the worker cannot keep up, by letting the delay be felt upstream. A queue takes it on in the form of a growing backlog. |
 | 突き合わせ | reconciliation | 08 | Comparing what two stores hold right now and fixing the differences, without waiting for an event. It works even when an event is late or lost. |
+| instance（EC2） | instance (EC2) | 23 | One virtual machine rented from EC2. Everything from the operating system up is yours to look after. Billed while running; its volumes are billed even when it is stopped. |
+| AMI | AMI | 23 | Amazon Machine Image: the template for an instance's first disk. It decides the operating system and what is installed from the start. |
+| instance profile | instance profile | 23 | The container that hands an IAM role to an EC2 instance. One profile holds one role. |
+| IMDS | IMDS | 23 | Instance Metadata Service: an address reachable only from inside the instance (169.254.169.254) that returns facts about the instance and temporary credentials for its role. IMDSv2 requires fetching a token first. |
+| user data | user data | 23 | Data handed to an instance at launch. A shell script given this way runs once, as root, on the first boot. |
+| EBS volume | EBS volume | 23 | A network-attached disk for an instance. It belongs to one Availability Zone and attaches only to instances in that zone. It can outlive the instance. |
+| snapshot（EBS） | snapshot (EBS) | 23 | A point-in-time copy of a volume. Stored incrementally, and restorable as a volume in any zone of the Region. |
+| Session Manager | Session Manager | 23 | A Systems Manager feature that opens a shell over a connection the SSM Agent on the instance made outward. No inbound port and no SSH key. |
+| Run Command | Run Command | 23 | A Systems Manager feature that sends commands to an instance, runs them, and returns the result. Not interactive. |
+| unit（systemd） | unit (systemd) | 23 | A file that tells systemd what to run, as whom, how to start it, and what to do when it dies. Those that define a service end in `.service`. |
+| status check | status check | 23 | A check EC2 runs on an instance every minute. System status checks look at the AWS infrastructure underneath; instance status checks look at the instance itself. |
+| 単一障害点 | single point of failure | 23 | A part whose failure stops the whole. One instance, and its one volume, are exactly that. |
+| CPU credit | CPU credit | 23 | What T-family instances earn and spend to use CPU above their baseline. In standard mode an empty balance means throttling to the baseline; in unlimited mode the excess is billed. |

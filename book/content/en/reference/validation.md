@@ -134,6 +134,14 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | local | passed | 2026-10-12 | Checked through /local/queue: sign-in, creating a note, a form upload, the worker's record (ok, 1x1), finishing, the record turning to rejected after the same form sent HTML, a housekeeping dry run, and the record disappearing on delete. The queue and the bucket were the in-memory stand-ins, not SQS or S3 |
 | 08 | `vp run async:infra:synth / typecheck` | local | passed | 2026-10-12 | Chapter 07's 19 resource types plus five (SQS::Queue, SQS::QueuePolicy, Lambda::EventSourceMapping, Lambda::EventInvokeConfig, Scheduler::Schedule): 24 in all, and no Custom:: resource. scripts/ is type-checked only |
 | 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | not run | - | Creates two queues, two functions, one schedule, and everything of chapter 07 (two buckets, a user pool, a distribution, a table). S3 notifications, SQS, the event source mapping, Scheduler, and the conditional writes to DynamoDB are all unconfirmed in AWS |
+| 23 | `vp run test:unit (examples/23-ec2)` | local | passed | 2026-10-12 | The file-backed repository under power loss at each step, behavior on SIGTERM over a real socket, generation of user data and the unit with injection refused, the data volume script run by bash, Run Command arguments, the model of the path to SSM, pricing inputs, and stack assertions |
+| 23 | `vp run ec2:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout and `-c placement=public`, `-c dataOnDestroy=snapshot`, `-c dataSnapshotId=snap-0123456789abcdef0`, and `-c amiId=ami-0123456789abcdef0` |
+| 23 | `vp run ec2:plan / ec2:render / ec2:app:build` | local | passed | 2026-10-12 | ec2:plan ran with the defaults, `placement=public`, a network without the endpoints, and invalid settings. ec2:render confirmed deploy/ matches the generators. ec2:app:build produces a single ESM file |
+| 23 | `vp run dev:ec2 + curl, SIGTERM` | local | passed | 2026-10-12 | Started both the built dist/server.mjs and src/server.ts on Node.js 24. Checked create, list, that notes survive a restart, that SIGTERM ends with exit code 0, and that a damaged notes.json is refused at startup |
+| 23 | `vp run ec2:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an EC2 instance (billed by the hour), an EBS volume, and an S3 bucket. Needs the chapter 11 stack first |
+| 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | not run | - | Reaches the instance through Systems Manager, ships a release, and checks it. ec2:session and ec2:forward need the Session Manager plugin, which the devShell does not include |
+| 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | not run | - | Runs dnf on the instance, unmounts and mounts the data volume, and deletes release objects |
+| 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | not run | - | The procedure in the text was not run. The flags were checked against the help of AWS CLI 2.35.11 in the devShell |
 
 ## Open items and how to resume
 
@@ -514,3 +522,39 @@ To resume: Read the duration in the REPORT line with vp run async:logs --functio
 Chapter 08: there are two ways an inspection record can be left without its object. A worker handling a create event is about to write when another worker finishes the delete event for the same key. Or a lifecycle delete event arrives without a sequencer. Neither is visible to users, but the record stays.
 
 To resume: Instead of deleting the record on a delete event, write a tombstone carrying the sequencer under the same condition, and let DynamoDB's TTL remove it.
+
+### 23-deploy
+
+The chapter 23 stack has never been deployed. Unverified: that cdkd 0.296.28 creates the instance, instance profile, and security group with its own providers and the volume and attachment through Cloud Control API, that the AMI ID resolves from the SSM-typed parameter, and that the chapter 11 outputs are read through `Fn::ImportValue`.
+
+To resume: After `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`, run `vp run ec2:infra:deploy`, `vp run ec2:status`, and `vp run ec2:infra:drift`. Then delete everything in the order of the cleanup section (hourly charges).
+
+### 23-first-boot
+
+The user data has not run on a real Amazon Linux 2023. Unverified: that dnf reaches the repositories from a private subnet through the S3 gateway endpoint alone (that they are in S3 was inferred from host names in sample output in the documentation), that `nodejs24` and `xfsprogs` install, that the `/dev/sdf` link appears, that the wait loop outlasts the attachment, that the unit's directives (such as `AssertPathIsMountPoint`) are accepted by the systemd on AL2023, and the size of the root volume (pricing assumes 8 GiB).
+
+To resume: After deploying, run `vp run ec2:status` to see the cloud-init result, the service state, and the mount. If it failed, connect with `vp run ec2:session` and read `/var/log/cloud-init-output.log`. Check the root volume with `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>`; if it is not 8 GiB, fix `ASSUMED_ROOT_GIB` in `src/cost.ts` and the amounts in the text.
+
+### 23-ssm-endpoints
+
+Whether all three interface endpoints are needed was not checked. The Systems Manager documentation says SSM Agent 3.3.40.0 and later prefers ssmmessages, but does not say the ec2messages endpoint can be omitted. The agent version in the AMI was not looked at either.
+
+To resume: Redeploy the chapter 11 stack with `-c interfaceEndpoints=ssm,ssmmessages`, reboot the instance, and see whether `vp run ec2:status` reports Online and `vp run ec2:smoke` passes. If so, the monthly cost drops by USD 20.44.
+
+### 23-release
+
+The release path (upload to S3, Run Command, `notes-release` on the instance, restart, and the `/health` check) and that a restart lets a request in flight finish have not been run on a real instance. Session Manager and port forwarding were not run either (the plugin is not in the devShell).
+
+To resume: Run `vp run ec2:app:release`, `vp run ec2:smoke`, and `vp run ec2:logs`. Release again, then go back with `vp run ec2:app:rollback <version>`. Install the Session Manager plugin, run `vp run ec2:forward`, and call `curl http://localhost:8787/health` from your machine.
+
+### 23-replace-and-restore
+
+Not run: that the data volume survives and is reattached when the instance is replaced, restoring from a snapshot, and what happens to the volume attachment on destroy. In the cdkd source, a change to `UserData` is not applied to the instance and a change to `ImageId` replaces it. How the attachment behaves during a replacement (detached from the old instance and attached to the new, or failing midway) could not be determined from the source.
+
+To resume: Create one note, run `vp run ec2:data:unmount`, then deploy with `-c amiId=<the previous AMI>` to force a replacement. On the new instance run `vp run ec2:status`, `vp run ec2:app:release`, and `vp run ec2:smoke`, and see whether the note is still there. Then go through the snapshot and restore procedure.
+
+### 23-patch
+
+`ec2:patch:check` and `ec2:patch:apply` have not been run on a real instance. Patch Manager (`AWS-RunPatchBaseline`) is described only; there is no task for it.
+
+To resume: Deploy with an AMI a few weeks old through `-c amiId=...`, confirm that `vp run ec2:patch:check` lists a newer release, and run `vp run ec2:patch:apply <releasever>`. If the kernel was updated, reboot with `aws ec2 reboot-instances` and run `vp run ec2:smoke`.

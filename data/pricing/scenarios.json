@@ -2122,6 +2122,159 @@
           "basis": "0.0007 GB x 7/30, in GB-month"
         }
       ]
+    },
+    {
+      "id": "ec2-private-running",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: private subnet で 1 か月動かしたまま",
+        "en": "EC2: a month running in a private subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の構成。t4g.micro を 730 時間動かしたまま",
+          "11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "The default layout: one t4g.micro running for 730 hours",
+          "Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-micro.linux.hour",
+          "quantity": 730,
+          "basis": "1 t4g.micro x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "ec2-private-stopped",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: private subnet で 1 か月止めたまま",
+        "en": "EC2: a month stopped in a private subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "instance を停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "The instance stopped for 730 hours. The volumes and the interface endpoints in the chapter 11 stack remain",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "ec2-public-running",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: public subnet で 1 か月動かしたまま",
+        "en": "EC2: a month running in a public subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c placement=public`。t4g.micro を 730 時間動かしたまま、自動で割り当てられた public IPv4 アドレス 1 つ",
+          "interface endpoint なし",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "`-c placement=public`: one t4g.micro running for 730 hours with one auto-assigned public IPv4 address",
+          "No interface endpoints",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-micro.linux.hour",
+          "quantity": 730,
+          "basis": "1 t4g.micro x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 public IPv4 address x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "ec2-public-stopped",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: public subnet で 1 か月止めたまま",
+        "en": "EC2: a month stopped in a public subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c placement=public` の instance を停止したまま 730 時間。自動で割り当てられた public IPv4 アドレスは停止時に解放される。Elastic IP アドレスは使っていない",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "The `-c placement=public` instance stopped for 730 hours. Its auto-assigned public IPv4 address is released on stop. No Elastic IP address is used",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        }
+      ]
     }
   ]
 }

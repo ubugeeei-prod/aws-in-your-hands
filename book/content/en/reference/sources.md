@@ -109,7 +109,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-introduction`
 - URL: <https://cdkd.dev/introduction/>
 - Checked: 2026-10-11
-- Chapters: 02, 11, 12, 20
+- Chapters: 02, 11, 12, 20, 23
 - Claims this source supports:
   - cdkd describes itself as for dev/test workflows and recommends the AWS CDK CLI for production
 
@@ -819,7 +819,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `vpc-interface-endpoints`
 - URL: <https://docs.aws.amazon.com/vpc/latest/privatelink/create-interface-endpoint.html>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 23
 - Claims this source supports:
   - An interface endpoint creates an endpoint network interface with a private IP address in each chosen subnet, one subnet per Availability Zone
   - Interface endpoints are billed for hourly usage and for data processing
@@ -840,7 +840,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `privatelink-pricing`
 - URL: <https://aws.amazon.com/privatelink/pricing/>
 - Checked: 2026-10-11
-- Chapters: 11, 12
+- Chapters: 11, 12, 23
 - Claims this source supports:
   - An interface endpoint is billed for each hour it stays provisioned in each Availability Zone; a partial hour is billed as a full hour
   - Data processing is billed per GB regardless of the traffic's source or destination, in tiers over the Region's monthly total
@@ -954,7 +954,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-vpc`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 11, 12
+- Chapters: 11, 12, 23
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonVPC: interface endpoint hours and data processing, public IPv4 address hours
   - The offer has no SKU for a VPC, subnet, route table, internet gateway, or gateway endpoint
@@ -977,7 +977,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-cross-stack-references`
 - URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cross-stack-references.md>
 - Checked: 2026-10-11
-- Chapters: 11, 12
+- Chapters: 11, 12, 23
 - Claims this source supports:
   - cdkd resolves Fn::ImportValue against the outputs other stacks recorded in its state, and falls back to CloudFormation ListExports when no cdkd stack exports the name
   - `cdkd destroy` of a stack whose exports are still imported is refused with StackHasActiveImportsError, and there is no flag to force it
@@ -5231,6 +5231,690 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Claims this source supports:
   - A Worker can be run on a schedule with a cron expression through its scheduled() handler
 - Note: The page was not found to state a delivery guarantee for scheduled runs.
+
+### Improve the security of EC2 instances by using VPC endpoints for Systems Manager
+
+- ID: `ssm-endpoints-for-ec2`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-create-vpc.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - The page lists the interface endpoints ssm, ec2messages, and ssmmessages, plus S3 for SSM Agent updates
+  - ssmmessages is required for SSM Agent to communicate with Systems Manager, for Run Command, and for Session Manager
+  - Beginning with SSM Agent 3.3.40.0, Systems Manager uses the ssmmessages endpoint whenever available instead of ec2messages
+  - Without endpoints, the instance needs outbound HTTPS (443) to the ssm, ssmmessages, and ec2messages endpoints
+  - SSM Agent initiates all connections, so no inbound traffic has to be allowed
+  - The security group of an endpoint must allow inbound 443 from the instance's subnet
+  - A logs endpoint is needed to send Session Manager, Run Command, or agent logs to CloudWatch Logs without internet access
+
+### Reference: ec2messages, ssmmessages, and other API operations
+
+- ID: `ssm-message-endpoints`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-setting-up-messageAPIs.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - With SSM Agent 3.3.40.0 or later and ssmmessages permissions, the agent connects to ssmmessages even when both are allowed
+  - In Regions launched before 2024, ec2messages permissions can be removed from policies; Regions launched in 2024 and later support only ssmmessages
+- Note: The page speaks of IAM permissions. It does not say in so many words that the ec2messages VPC endpoint can be left out, so this chapter keeps all three endpoints.
+
+### Find AMIs with the SSM Agent preinstalled
+
+- ID: `ssm-agent-preinstalled`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/ami-preinstalled-agent.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - SSM Agent is preinstalled on Amazon Linux 2023 AMIs provided by AWS
+  - The preinstalled version might not be the latest
+
+### SSM Agent technical reference
+
+- ID: `ssm-agent-technical-reference`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent-technical-details.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - SSM Agent creates the local ssm-user account and adds it to /etc/sudoers.d; it is the default OS user of a session
+  - The agent must reach AWS managed S3 buckets such as aws-ssm-<region> and patch-baseline-snapshot-<region>
+
+### AWS Systems Manager Session Manager
+
+- ID: `ssm-session-manager`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Session Manager needs no open inbound ports, no bastion hosts, and no SSH keys
+  - Access is controlled with IAM policies; port forwarding redirects a port on the managed node to a local port
+  - Session activity can be logged through CloudTrail, S3, and CloudWatch Logs
+
+### Step 1: Complete Session Manager prerequisites
+
+- ID: `ssm-session-prerequisites`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-prerequisites.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Port forwarding needs SSM Agent 3.0.222.0 or later on the managed node
+  - Sessions run as ssm-user, an account with root or administrator permissions that the agent creates
+
+### Start a session
+
+- ID: `ssm-session-start`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - aws ssm start-session --target <instance id> starts a session and needs the Session Manager plugin on the local machine
+  - AWS-StartPortForwardingSession takes portNumber and localPortNumber parameters
+
+### Install the Session Manager plugin for the AWS CLI
+
+- ID: `ssm-session-plugin`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - The Session Manager plugin must be installed separately on the local machine to start sessions with the AWS CLI
+  - The page asks for plugin version 1.2.764.0 or later
+
+### Configure instance permissions required for Systems Manager
+
+- ID: `ssm-instance-permissions`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-permissions.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - An instance profile with AmazonSSMManagedInstanceCore is one of the two documented ways to let Systems Manager manage an instance
+  - The other is Default Host Management Configuration at the account level, which this chapter does not use
+
+### AmazonSSMManagedInstanceCore (AWS managed policy reference)
+
+- ID: `ssm-managed-instance-core-policy`
+- URL: <https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonSSMManagedInstanceCore.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - The policy (version v2) allows ssm, ssmmessages, and ec2messages actions on Resource "*"
+  - Among them are ssm:GetParameter and ssm:GetParameters on every resource
+
+### Walkthrough: Use the AWS CLI with Run Command
+
+- ID: `ssm-run-command-walkthrough`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/walkthrough-cli.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - AWS-RunShellScript runs commands on a managed node as if logged on locally
+  - Commands in the pre-configured AWS-* documents run with administrative permissions; a user allowed to run them has administrator access to the node
+  - send-command returns a command ID; get-command-invocation returns the result per instance
+
+### GetCommandInvocation (Systems Manager API reference)
+
+- ID: `ssm-api-get-command-invocation`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_GetCommandInvocation.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Status is one of Pending, InProgress, Delayed, Success, Cancelled, TimedOut, Failed, Cancelling
+  - ResponseCode is the script's exit code; StandardOutputContent holds the first 24,000 characters of stdout
+
+### AWS Systems Manager pricing
+
+- ID: `ssm-pricing-ec2`
+- URL: <https://aws.amazon.com/systems-manager/pricing/>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Session Manager, Run Command, and Patch Manager have no additional charge for use on Amazon EC2 instances
+  - From September 30, 2026, sessions and Run Command invocations on hybrid and multicloud nodes are billed
+
+### AWS Systems Manager Patch Manager
+
+- ID: `ssm-patch-manager`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Patch Manager can scan managed nodes for missing patches or scan and install them, and reports compliance
+
+### Patch Manager prerequisites
+
+- ID: `ssm-patch-prerequisites`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-prerequisites.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Without internet access, nodes must still reach their configured patch repositories and the AWS managed S3 buckets
+
+### How patch baseline rules work on Linux-based systems
+
+- ID: `ssm-patch-amazon-linux`
+- URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-linux-rules.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - On AL2023 EC2 instances, Patch Manager uses the latest repository versions, independent of the version the system is locked to
+
+### Use the Instance Metadata Service to access instance metadata
+
+- ID: `ec2-imds`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - IMDS answers at 169.254.169.254; IMDSv2 is session-oriented: a PUT request returns a token that later requests must present
+  - PUT requests carrying an X-Forwarded-For header are rejected
+  - The response to the PUT has a hop limit of 1 by default
+
+### Configure the Instance Metadata Service options
+
+- ID: `ec2-imds-options`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - The hop limit can be 1 to 64; a hop limit of 1 can cause issues in a container environment
+  - Options not given at launch come from account-level defaults, then from the AMI
+
+### IMDSv2 (Amazon Linux 2023 User Guide)
+
+- ID: `al2023-imdsv2`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/imdsv2.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Instances launched from the AL2023 AMI require IMDSv2 and get a hop limit of 2 by default
+
+### IAM roles for Amazon EC2
+
+- ID: `ec2-iam-roles`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Applications on an instance retrieve temporary credentials for the instance's role from instance metadata
+  - An instance profile can contain only one IAM role
+
+### Run commands when you launch an EC2 instance with user data input
+
+- ID: `ec2-user-data`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - User data scripts run only during the boot cycle of the first launch, by default
+  - They run as root, not interactively; output goes to /var/log/cloud-init-output.log
+  - User data is limited to 16 KB before base64 encoding
+
+### Amazon EC2 instance state changes
+
+- ID: `ec2-instance-lifecycle`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A stopped instance is not billed for instance usage, but its EBS volumes are still charged
+  - A running instance is billed per second with a one-minute minimum, even when idle
+  - EBS volumes and Elastic IP addresses incur charges regardless of the instance's state
+
+### Stop and start Amazon EC2 instances
+
+- ID: `ec2-stop-start`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Stop_Start.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A started instance typically moves to a new host and gets a new public IPv4 address
+  - Data on instance store volumes is erased when an instance stops
+
+### Amazon EC2 instance IP addressing
+
+- ID: `ec2-instance-addressing`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - An auto-assigned public IPv4 address is released when the instance is stopped, hibernated, or terminated, and a new one is assigned on start
+  - A persistent public address needs an Elastic IP address
+
+### Automatic instance recovery
+
+- ID: `ec2-auto-recovery`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Simplified automatic recovery is enabled by default on supported instances and acts when a system status check fails
+  - A recovered instance keeps its instance ID, IP addresses, attached EBS volumes, and Availability Zone, and loses what was in memory
+  - Automatic recovery does not operate when only the instance status check fails
+
+### Configure simplified automatic recovery on an Amazon EC2 instance
+
+- ID: `ec2-simplified-recovery`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-configuration-recovery.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Simplified automatic recovery needs available capacity and does not operate during service events in the AWS Health Dashboard
+  - It is not supported for instances with instance store volumes, metal sizes, or Dedicated Hosts
+
+### Status checks for Amazon EC2 instances
+
+- ID: `ec2-status-checks`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-instance-status-check.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - System status checks detect problems with the AWS systems under the instance; instance status checks detect problems you must fix yourself
+  - Status checks run every minute
+
+### Unlimited mode concepts for burstable performance instances
+
+- ID: `ec2-burstable-unlimited`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - T4g, T3a, T3, and T8i instances launch in unlimited mode by default
+  - In unlimited mode, CPU use above the baseline averaged over 24 hours is billed at a flat rate per vCPU-hour
+
+### Preserve data when an instance is terminated
+
+- ID: `ec2-preserve-volumes`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/preserving-volumes-on-termination.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - By default the root volume is deleted on termination, and a data volume attached after launch is preserved
+  - The default at launch comes from the DeleteOnTermination attribute in the AMI
+
+### AL2023 on Amazon EC2
+
+- ID: `al2023-on-ec2`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/ec2.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - The latest AL2023 AMI is published under /aws/service/ami-amazon-linux-latest/, for example al2023-ami-kernel-default-arm64
+  - From August 17, 2026 the default kernel of al2023-ami-kernel-default AMIs is 6.18; version-specific AMIs such as kernel-6.1 remain
+
+### Deterministic upgrades through versioned repositories on AL2023
+
+- ID: `al2023-deterministic-upgrades`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - An AL2023 instance is locked to the repository version its AMI was built from and does not receive newer updates on its own
+  - dnf check-release-update lists newer releases; dnf upgrade --releasever=<version> moves to one
+  - The AMI behind the SSM parameter is always the latest version
+
+### Updating AL2023
+
+- ID: `al2023-updating`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/updating.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Running dnf with --releasever=latest is called out as not best practice; a specific release version should be named
+
+### Deterministic updates via instance replacement
+
+- ID: `al2023-instance-replacement`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/security-instance-replacement.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Replacing instances with ones launched from a newer AMI is presented as a predictable way to roll out OS updates
+
+### Node.js in AL2023
+
+- ID: `al2023-nodejs`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/nodejs.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - AL2023 provides Node.js 20, 22, and 24 as namespaced packages (nodejs24) with versioned executables (node-24)
+  - The plain `node` name is an alternatives link that can point at a different version
+
+### AWS CLI v2 (Amazon Linux 2023 User Guide)
+
+- ID: `al2023-awscli`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/awscli2.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - AL2023 ships with AWS CLI version 2
+
+### systemd journal replaces rsyslog
+
+- ID: `al2023-journald`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/journald.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - AL2023 does not install rsyslog by default; logs are in the systemd journal and read with journalctl
+
+### gp3 as default Amazon EBS volume type
+
+- ID: `al2023-gp3-xfs`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/continuing-al2-filesystem.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - AL2023 AMIs use gp3 volumes by default, and XFS on the root file system
+
+### Manage package and operating system updates in AL2023
+
+- ID: `al2023-repositories`
+- URL: <https://docs.aws.amazon.com/linux/al2023/ug/managing-repos-os-updates.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Sample dnf output shows the repositories at https://al2023-repos-<region>-de612dc2.s3.dualstack.<region>.amazonaws.com/
+- Note: This is the only evidence found that the repositories are S3 buckets in the instance's Region. No page read states that an S3 gateway endpoint is enough to reach them.
+
+### Amazon EBS volumes
+
+- ID: `ebs-volumes`
+- URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - An EBS volume persists independently of the life of an instance
+  - The volume and the instance must be in the same Availability Zone
+
+### Map Amazon EBS volumes to NVMe device names
+
+- ID: `ebs-nvme-device-names`
+- URL: <https://docs.aws.amazon.com/ebs/latest/userguide/identify-nvme-ebs-device.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - NVMe device names can change between boots; stable identifiers are recommended
+  - Amazon Linux AMIs later than 2017.09.01 ship a udev rule that links the block device mapping name to the NVMe device
+
+### Make an Amazon EBS volume available for use
+
+- ID: `ebs-make-available`
+- URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-using-volumes.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A new volume has no file system; mkfs on a volume that has data destroys it
+  - fstab entries should use the UUID, with the nofail option so the instance boots without the volume
+
+### Amazon EBS snapshots
+
+- ID: `ebs-snapshots`
+- URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-snapshots.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Snapshots are incremental, stored in Amazon S3, and replicated across the Availability Zones of the Region
+  - A volume can be restored from a snapshot in any Availability Zone of that Region
+
+### Create Amazon EBS snapshots
+
+- ID: `ebs-create-snapshot`
+- URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-creating-snapshot.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Snapshot creation is asynchronous; the snapshot stays pending until its data has been transferred
+  - For a consistent snapshot, pause writes or unmount the volume first; writes can resume once the snapshot is pending
+  - Snapshots of encrypted volumes are encrypted
+
+### Replace an Amazon EBS volume using a snapshot
+
+- ID: `ebs-restore-volume`
+- URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-restoring-volume.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A volume created from a snapshot must be in the same Availability Zone as the instance it will attach to
+  - aws ec2 create-volume takes --snapshot-id and --availability-zone
+
+### Initialize Amazon EBS volumes
+
+- ID: `ebs-initialize`
+- URL: <https://docs.aws.amazon.com/ebs/latest/userguide/initalize-volume.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Blocks of a volume created from a snapshot are downloaded from S3 on first access, which adds latency until the volume is initialized
+
+### AWS::EC2::Instance
+
+- ID: `cfn-ec2-instance`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-instance.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - ImageId: update requires replacement
+  - UserData: update requires some interruptions; with an EBS root volume CloudFormation restarts the instance
+  - CreditSpecification accepts standard and unlimited
+
+### AWS::EC2::Volume
+
+- ID: `cfn-ec2-volume`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-volume.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A deletion policy can retain the volume, delete it, or create a snapshot before deleting it
+  - AvailabilityZone and SnapshotId cannot be updated
+
+### AWS::EC2::VolumeAttachment
+
+- ID: `cfn-ec2-volumeattachment`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-volumeattachment.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - The volume must be unmounted inside the instance before the attachment is deleted, or it can be stuck in the busy state
+  - Every property requires replacement on update
+
+### AWS::IAM::InstanceProfile
+
+- ID: `cfn-iam-instanceprofile`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-iam-instanceprofile.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Only one role can be assigned to an EC2 instance at a time, and all applications on the instance share it
+
+### Specify existing resources at runtime with CloudFormation-supplied parameter types
+
+- ID: `cfn-ssm-parameter-types`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-supplied-parameter-types.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A parameter of type AWS::SSM::Parameter::Value<AWS::EC2::Image::Id> makes CloudFormation fetch the value from Parameter Store when the stack is created or updated
+
+### DeletionPolicy attribute
+
+- ID: `cfn-deletion-policy`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Snapshot is supported for resources such as AWS::EC2::Volume; Retain is supported for any resource
+
+### AWS Price List bulk API: EC2, ap-northeast-1 (instances and EBS)
+
+- ID: `aws-price-list-ec2-compute`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Unit prices in data/pricing/unit-prices.json with ids ec2.t4g-micro.linux.hour, ec2.t4g-small.linux.hour, ec2.t4g.cpu-credit, ebs.gp3.storage, ebs.snapshot.storage
+  - t4g.micro is 2 vCPU and 1 GiB; t4g.small is 2 vCPU and 2 GiB
+- Note: Publication date 2026-10-09T20:31:34Z. The file is about 446 MB. Instance SKUs were filtered to Linux, shared tenancy, no preinstalled software, capacity status Used.
+
+### cdkd v0.296.28 source: EC2 instance, volume, and parameter handling
+
+- ID: `cdkd-source-ec2`
+- URL: <https://github.com/go-to-k/cdkd/tree/v0.296.28/src>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - register-providers.ts registers AWS::EC2::Instance and AWS::EC2::SecurityGroup with the EC2 provider and AWS::IAM::InstanceProfile with its own provider
+  - AWS::EC2::Volume, AWS::EC2::VolumeAttachment, and AWS::EC2::LaunchTemplate are not registered, so they go through Cloud Control API
+  - property-coverage.generated.ts: the EC2 provider writes ImageId, InstanceType, SubnetId, SecurityGroupIds, NetworkInterfaces, IamInstanceProfile, MetadataOptions, CreditSpecification, UserData, BlockDeviceMappings, and Tags; Volumes and LaunchTemplate would route the instance through Cloud Control
+  - replacement-rules.ts replaces an instance when ImageId, SubnetId, AvailabilityZone, KeyName, EbsOptimized, or NetworkInterfaces changes; UserData is not in the list and updateInstance does not apply it
+  - intrinsic-resolver/params-conditions.ts resolves a referenced AWS::SSM::Parameter::Value<...> parameter with GetParameter at deploy time
+  - ec2-volume-delete.ts deletes a volume with EC2 DeleteVolume instead of Cloud Control; stateful-types.ts lists AWS::EC2::Volume, so replacing one needs --force-stateful-recreation
+- Note: Read from the source archive of the v0.296.28 tag. Nothing was run against AWS.
+
+### cdkd v0.296.28: destroy
+
+- ID: `cdkd-cli-destroy`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-destroy.md>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A non-empty S3 bucket fails the destroy unless the bucket opted in to being emptied
+
+### aws-cdk-lib 2.273.0: aws-ec2 machine image and instance types
+
+- ID: `aws-cdk-lib-ec2-machine-image`
+- URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - MachineImage.latestAmazonLinux2023() adds a template parameter of type AWS::SSM::Parameter::Value<AWS::EC2::Image::Id> and looks nothing up during synthesis
+  - Its documentation comment says the image updates on every deployment, that instances are replaced when a new image appears, and not to store stateful information on the instance
+  - latestAmazonLinux2023() always sets kernel to CDK_LATEST, which is 6.1 in this version, so it synthesizes al2023-ami-kernel-6.1-<arch> whatever kernel option is passed
+  - AmazonLinux2023ImageSsmParameter with kernel DEFAULT gives al2023-ami-kernel-default-<arch>; unless cachedInContext is false it looks the AMI up during synthesis and fails without an account (StackAccountRegionNotSpecified)
+- Note: Read from the type definitions and the compiled JavaScript in the npm package, and confirmed by synthesizing.
+
+### systemd v252: systemd.service(5)
+
+- ID: `systemd-service-man`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.service.xml>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Restart=on-failure restarts on a non-zero exit code, a signal, a timeout, or a watchdog, not on a clean exit
+  - TimeoutStopSec= is how long to wait for a stop before the service is terminated with SIGKILL
+- Note: The systemd version on Amazon Linux 2023 was not checked on an instance.
+
+### systemd v252: systemd.unit(5)
+
+- ID: `systemd-unit-man`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - RequiresMountsFor= adds Requires= and After= on the mount units for a path
+  - AssertPathIsMountPoint= fails the start when the path is not a mount point; ConditionPathExists= skips it quietly
+  - StartLimitIntervalSec= and StartLimitBurst= limit how often a unit may be started
+
+### systemd v252: systemd.exec(5)
+
+- ID: `systemd-exec-man`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.exec.xml>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - ProtectSystem=strict mounts the file system hierarchy read-only for the service; ReadWritePaths= makes exceptions
+  - NoNewPrivileges=, ProtectHome=, PrivateTmp=, User=, and EnvironmentFile= behave as the unit in this chapter assumes
+
+### systemd v252: systemd.kill(5)
+
+- ID: `systemd-kill-man`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.kill.xml>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - KillSignal= is the first signal sent on stop (SIGTERM by default), followed by SIGKILL after the timeout
+
+### Node.js v24: HTTP, server.close()
+
+- ID: `node-http-server-close`
+- URL: <https://nodejs.org/docs/latest-v24.x/api/http.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - server.close() stops the server from accepting new connections and closes connections that are not sending a request or waiting for a response
+  - server.closeAllConnections() closes every connection, including active ones
+
+### Control traffic to your AWS resources using security groups
+
+- ID: `vpc-security-groups-unfiltered`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Security groups do not filter traffic to Amazon DNS, DHCP, EC2 instance metadata, or the Amazon Time Sync Service
+
+### Lambda quotas
+
+- ID: `lambda-limits-timeout`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A function invocation can run for up to 900 seconds (15 minutes); memory is up to 10,240 MB
+
+### Fargate task ephemeral storage for Amazon ECS
+
+- ID: `fargate-ephemeral-storage`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-storage.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - A Fargate task on platform version 1.4.0 or later gets 20 GiB of ephemeral storage by default, up to 200 GiB
+
+### AWS Fargate for Amazon ECS
+
+- ID: `fargate-what-is`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Fargate runs containers without servers or clusters of EC2 instances to manage
+  - Each Fargate task has its own isolation boundary and does not share a kernel with another task; kernel and runtime updates arrive as platform version revisions
+
+### Amazon ECS services
+
+- ID: `ecs-services-replace`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - When a task of a service fails or stops, the service scheduler launches another to replace it
+
+### Configure ephemeral storage for Lambda functions
+
+- ID: `lambda-ephemeral-storage`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-ephemeral-storage.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - Lambda gives each execution environment temporary storage in /tmp, configurable from 512 MB to 10,240 MB
+
+### Health checks for instances in an Auto Scaling group
+
+- ID: `ec2-auto-scaling-health`
+- URL: <https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-health-checks.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - An Auto Scaling group replaces an instance it finds unhealthy with a new one launched from its launch template
+
+### Manually create or edit the CloudWatch agent configuration file
+
+- ID: `cloudwatch-agent-journald`
+- URL: <https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html>
+- Checked: 2026-10-12
+- Chapters: 23
+- Claims this source supports:
+  - The agent's logs section can collect systemd journal entries on Linux through a journald section
 
 ## Sources not re-read yet (starting points for later chapters)
 

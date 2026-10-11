@@ -134,6 +134,14 @@ generated: true
 | 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | ローカル | 成功 | 2026-10-12 | サインイン、ノートの作成、form でのアップロード、worker の記録（ok、1x1）、完了、同じ form で HTML を再送して記録が rejected に変わること、掃除の dry run、削除で記録が消えることを /local/queue で確認。相手はメモリ上の queue と bucket で、SQS でも S3 でもない |
 | 08 | `vp run async:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 07章の 19 種類に 5 種類（SQS::Queue、SQS::QueuePolicy、Lambda::EventSourceMapping、Lambda::EventInvokeConfig、Scheduler::Schedule）を足した 24 種類。Custom:: のリソースはない。scripts/ は型検査のみ |
 | 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | 未実行 | - | queue を 2 つ、関数を 2 つ、schedule を 1 つ、そして 07章の一式（bucket 2 つ、user pool、distribution、table）を作る。S3 の通知、SQS、event source mapping、Scheduler、DynamoDB の条件付き書き込みは、どれも実環境で未確認 |
+| 23 | `vp run test:unit (examples/23-ec2)` | ローカル | 成功 | 2026-10-12 | file に書く repository を電源断の各段階で壊すテスト、SIGTERM のときの挙動（本物の socket）、user data と unit の生成と injection の拒否、data volume の script を bash で実行するテスト、Run Command の引数、SSM への経路のモデル、料金の入力、stack の assertion |
+| 23 | `vp run ec2:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成と、`-c placement=public`、`-c dataOnDestroy=snapshot`、`-c dataSnapshotId=snap-0123456789abcdef0`、`-c amiId=ami-0123456789abcdef0` で synth した |
+| 23 | `vp run ec2:plan / ec2:render / ec2:app:build` | ローカル | 成功 | 2026-10-12 | ec2:plan は既定、`placement=public`、endpoint の足りない設定、不正な設定で実行。ec2:render は deploy/ が生成結果と一致することを確認。ec2:app:build は 1 つの ESM の file を作る |
+| 23 | `vp run dev:ec2 + curl, SIGTERM` | ローカル | 成功 | 2026-10-12 | ビルドした dist/server.mjs と src/server.ts の両方を Node.js 24 で起動。作成、一覧、再起動後も残ること、SIGTERM で exit code 0 で終わること、壊した notes.json では起動を拒否することを確認 |
+| 23 | `vp run ec2:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | EC2 の instance（時間課金）、EBS volume、S3 bucket を作る。11章の stack が先に要る |
+| 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | 未実行 | - | Systems Manager を通して instance に入る、release を配る、動作を確かめる。ec2:session と ec2:forward は Session Manager plugin が要る（devShell には入っていない） |
+| 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | 未実行 | - | instance の上で dnf を実行する、data volume を unmount、mount する、release の object を消す |
+| 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | 未実行 | - | 本文の手順は実行していない。flag は devShell の AWS CLI 2.35.11 の help で確かめた |
 
 ## 未解決事項と再開手順
 
@@ -514,3 +522,39 @@ rolling update を実環境で観察していない。更新中にエラーが�
 08章: 検査の記録が、object のないまま残る経路が 2 つある。作成イベントを処理している worker が記録を書く直前に、別の worker が同じ key の削除イベントを処理し終えた場合。lifecycle rule による削除のイベントに sequencer がなかった場合。どちらも利用者には見えないが、記録は残る。
 
 再開手順: 削除のときに記録を消すかわりに、sequencer つきの墓石（tombstone）を条件付きで書き、DynamoDB の TTL で消す。
+
+### 23-deploy
+
+23章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が instance、instance profile、security group を専用の実装で、volume と volume attachment を Cloud Control API 経由で作れること、SSM 型の parameter から AMI の ID が解決されること、`Fn::ImportValue` で 11章の output を読めることが未確認。
+
+再開手順: `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages` の後に `vp run ec2:infra:deploy`、`vp run ec2:status`、`vp run ec2:infra:drift` を通す。終わったら「片付け」の順に消す（時間課金）。
+
+### 23-first-boot
+
+user data を本物の Amazon Linux 2023 で走らせていない。未確認: private subnet から S3 の gateway endpoint だけで dnf の repository に届くこと（repository が S3 にあることは、ドキュメントの出力例の host 名から読み取っただけ）、`nodejs24` と `xfsprogs` が入ること、`/dev/sdf` の link ができること、attach を待つ loop が足りること、unit の directive（`AssertPathIsMountPoint` など）が AL2023 の systemd で通ること、root volume の大きさ（料金は 8 GiB と仮定）。
+
+再開手順: deploy 後に `vp run ec2:status` で cloud-init の結果、service の状態、mount を見る。失敗していたら `vp run ec2:session` で入り、`/var/log/cloud-init-output.log` を読む。root volume は `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>` で確かめ、8 GiB でなければ `src/cost.ts` の `ASSUMED_ROOT_GIB` と本文の金額を直す。
+
+### 23-ssm-endpoints
+
+interface endpoint が 3 つとも要るのかを確かめていない。Systems Manager のドキュメントは、SSM Agent 3.3.40.0 以降は ssmmessages を優先すると書いているが、ec2messages の endpoint を省けるとは書いていない。AMI に入っている agent の版も見ていない。
+
+再開手順: 11章の stack を `-c interfaceEndpoints=ssm,ssmmessages` で deploy し直し、instance を再起動して `vp run ec2:status` が Online を返すか、`vp run ec2:smoke` が通るかを見る。通れば月 USD 20.44 減らせる。
+
+### 23-release
+
+release の経路（S3 への upload、Run Command、instance 上の `notes-release`、restart、`/health` の確認）と、restart のときに処理中のリクエストが完了することを、実機で通していない。Session Manager と port forwarding も未実行（plugin が devShell に無い）。
+
+再開手順: `vp run ec2:app:release`、`vp run ec2:smoke`、`vp run ec2:logs` を通す。もう一度 release して、前の版を `vp run ec2:app:rollback <version>` で戻す。Session Manager plugin を入れて `vp run ec2:forward` を実行し、手元から `curl http://localhost:8787/health` を呼ぶ。
+
+### 23-replace-and-restore
+
+instance を作り直したときに data volume が残って付け直されること、snapshot からの restore、destroy のときの volume attachment の扱いを実行していない。cdkd のソースでは、`UserData` の変更は instance に反映されず、`ImageId` の変更は置き換えになる。置き換えのときに attachment がどう動くか（古い instance から外れて新しい instance に付くのか、途中で失敗するのか）は読み切れていない。
+
+再開手順: ノートを 1 件作り、`vp run ec2:data:unmount` の後に `-c amiId=<1 つ前の AMI>` で deploy して置き換えを起こす。新しい instance で `vp run ec2:status` と `vp run ec2:app:release`、`vp run ec2:smoke` を実行し、ノートが残っているかを見る。続けて「snapshot と restore」の手順を通す。
+
+### 23-patch
+
+`ec2:patch:check` と `ec2:patch:apply` を実機で実行していない。Patch Manager（`AWS-RunPatchBaseline`）は手順を書いただけで、タスクも無い。
+
+再開手順: 数週間前の AMI を `-c amiId=...` で指定して deploy し、`vp run ec2:patch:check` で新しい release が出ることを確かめ、`vp run ec2:patch:apply <releasever>` を実行する。kernel が更新されたら `aws ec2 reboot-instances` で再起動し、`vp run ec2:smoke` を通す。

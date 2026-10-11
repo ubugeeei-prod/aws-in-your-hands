@@ -1,0 +1,1564 @@
+{
+  "chapterId": "23",
+  "manifest": {
+    "id": "23",
+    "slug": "ec2",
+    "title": {
+      "ja": "制御したいときの EC2: SSM、EBS、プロセス運用",
+      "en": "EC2 When You Want Control: SSM, EBS, and Process Management"
+    },
+    "prerequisites": ["11"],
+    "services": ["EC2", "Systems Manager", "EBS"],
+    "samplePath": "examples/23-ec2",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "ssm-endpoints-for-ec2",
+      "ssm-message-endpoints",
+      "ssm-agent-preinstalled",
+      "ssm-agent-technical-reference",
+      "ssm-session-manager",
+      "ssm-session-prerequisites",
+      "ssm-session-start",
+      "ssm-session-plugin",
+      "ssm-instance-permissions",
+      "ssm-managed-instance-core-policy",
+      "ssm-run-command-walkthrough",
+      "ssm-api-get-command-invocation",
+      "ssm-pricing-ec2",
+      "ssm-patch-manager",
+      "ssm-patch-prerequisites",
+      "ssm-patch-amazon-linux",
+      "ec2-imds",
+      "ec2-imds-options",
+      "al2023-imdsv2",
+      "ec2-iam-roles",
+      "ec2-user-data",
+      "ec2-instance-lifecycle",
+      "ec2-stop-start",
+      "ec2-instance-addressing",
+      "ec2-auto-recovery",
+      "ec2-simplified-recovery",
+      "ec2-status-checks",
+      "ec2-burstable-unlimited",
+      "ec2-preserve-volumes",
+      "al2023-on-ec2",
+      "al2023-deterministic-upgrades",
+      "al2023-updating",
+      "al2023-instance-replacement",
+      "al2023-nodejs",
+      "al2023-awscli",
+      "al2023-journald",
+      "al2023-gp3-xfs",
+      "al2023-repositories",
+      "ebs-volumes",
+      "ebs-nvme-device-names",
+      "ebs-make-available",
+      "ebs-snapshots",
+      "ebs-create-snapshot",
+      "ebs-restore-volume",
+      "ebs-initialize",
+      "cfn-ec2-instance",
+      "cfn-ec2-volume",
+      "cfn-ec2-volumeattachment",
+      "cfn-iam-instanceprofile",
+      "cfn-ssm-parameter-types",
+      "cfn-deletion-policy",
+      "aws-price-list-ec2-compute",
+      "cdkd-source-ec2",
+      "cdkd-cli-destroy",
+      "aws-cdk-lib-ec2-machine-image",
+      "systemd-service-man",
+      "systemd-unit-man",
+      "systemd-exec-man",
+      "systemd-kill-man",
+      "node-http-server-close",
+      "vpc-security-groups-unfiltered",
+      "lambda-limits-timeout",
+      "fargate-ephemeral-storage",
+      "fargate-what-is",
+      "ecs-services-replace",
+      "lambda-ephemeral-storage",
+      "ec2-auto-scaling-health",
+      "cloudwatch-agent-journald",
+      "vpc-pricing",
+      "aws-price-list-vpc",
+      "privatelink-pricing",
+      "vpc-interface-endpoints",
+      "cdkd-introduction",
+      "cdkd-cross-stack-references"
+    ]
+  },
+  "sources": [
+    {
+      "id": "ssm-endpoints-for-ec2",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-create-vpc.html",
+      "title": "Improve the security of EC2 instances by using VPC endpoints for Systems Manager",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The page lists the interface endpoints ssm, ec2messages, and ssmmessages, plus S3 for SSM Agent updates",
+        "ssmmessages is required for SSM Agent to communicate with Systems Manager, for Run Command, and for Session Manager",
+        "Beginning with SSM Agent 3.3.40.0, Systems Manager uses the ssmmessages endpoint whenever available instead of ec2messages",
+        "Without endpoints, the instance needs outbound HTTPS (443) to the ssm, ssmmessages, and ec2messages endpoints",
+        "SSM Agent initiates all connections, so no inbound traffic has to be allowed",
+        "The security group of an endpoint must allow inbound 443 from the instance's subnet",
+        "A logs endpoint is needed to send Session Manager, Run Command, or agent logs to CloudWatch Logs without internet access"
+      ]
+    },
+    {
+      "id": "ssm-message-endpoints",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-setting-up-messageAPIs.html",
+      "title": "Reference: ec2messages, ssmmessages, and other API operations",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With SSM Agent 3.3.40.0 or later and ssmmessages permissions, the agent connects to ssmmessages even when both are allowed",
+        "In Regions launched before 2024, ec2messages permissions can be removed from policies; Regions launched in 2024 and later support only ssmmessages"
+      ],
+      "note": "The page speaks of IAM permissions. It does not say in so many words that the ec2messages VPC endpoint can be left out, so this chapter keeps all three endpoints."
+    },
+    {
+      "id": "ssm-agent-preinstalled",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/ami-preinstalled-agent.html",
+      "title": "Find AMIs with the SSM Agent preinstalled",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SSM Agent is preinstalled on Amazon Linux 2023 AMIs provided by AWS",
+        "The preinstalled version might not be the latest"
+      ]
+    },
+    {
+      "id": "ssm-agent-technical-reference",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent-technical-details.html",
+      "title": "SSM Agent technical reference",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "SSM Agent creates the local ssm-user account and adds it to /etc/sudoers.d; it is the default OS user of a session",
+        "The agent must reach AWS managed S3 buckets such as aws-ssm-<region> and patch-baseline-snapshot-<region>"
+      ]
+    },
+    {
+      "id": "ssm-session-manager",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html",
+      "title": "AWS Systems Manager Session Manager",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Session Manager needs no open inbound ports, no bastion hosts, and no SSH keys",
+        "Access is controlled with IAM policies; port forwarding redirects a port on the managed node to a local port",
+        "Session activity can be logged through CloudTrail, S3, and CloudWatch Logs"
+      ]
+    },
+    {
+      "id": "ssm-session-prerequisites",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-prerequisites.html",
+      "title": "Step 1: Complete Session Manager prerequisites",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Port forwarding needs SSM Agent 3.0.222.0 or later on the managed node",
+        "Sessions run as ssm-user, an account with root or administrator permissions that the agent creates"
+      ]
+    },
+    {
+      "id": "ssm-session-start",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html",
+      "title": "Start a session",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "aws ssm start-session --target <instance id> starts a session and needs the Session Manager plugin on the local machine",
+        "AWS-StartPortForwardingSession takes portNumber and localPortNumber parameters"
+      ]
+    },
+    {
+      "id": "ssm-session-plugin",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html",
+      "title": "Install the Session Manager plugin for the AWS CLI",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The Session Manager plugin must be installed separately on the local machine to start sessions with the AWS CLI",
+        "The page asks for plugin version 1.2.764.0 or later"
+      ]
+    },
+    {
+      "id": "ssm-instance-permissions",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-permissions.html",
+      "title": "Configure instance permissions required for Systems Manager",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An instance profile with AmazonSSMManagedInstanceCore is one of the two documented ways to let Systems Manager manage an instance",
+        "The other is Default Host Management Configuration at the account level, which this chapter does not use"
+      ]
+    },
+    {
+      "id": "ssm-managed-instance-core-policy",
+      "url": "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonSSMManagedInstanceCore.html",
+      "title": "AmazonSSMManagedInstanceCore (AWS managed policy reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The policy (version v2) allows ssm, ssmmessages, and ec2messages actions on Resource \"*\"",
+        "Among them are ssm:GetParameter and ssm:GetParameters on every resource"
+      ]
+    },
+    {
+      "id": "ssm-run-command-walkthrough",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/walkthrough-cli.html",
+      "title": "Walkthrough: Use the AWS CLI with Run Command",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS-RunShellScript runs commands on a managed node as if logged on locally",
+        "Commands in the pre-configured AWS-* documents run with administrative permissions; a user allowed to run them has administrator access to the node",
+        "send-command returns a command ID; get-command-invocation returns the result per instance"
+      ]
+    },
+    {
+      "id": "ssm-api-get-command-invocation",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_GetCommandInvocation.html",
+      "title": "GetCommandInvocation (Systems Manager API reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Status is one of Pending, InProgress, Delayed, Success, Cancelled, TimedOut, Failed, Cancelling",
+        "ResponseCode is the script's exit code; StandardOutputContent holds the first 24,000 characters of stdout"
+      ]
+    },
+    {
+      "id": "ssm-pricing-ec2",
+      "url": "https://aws.amazon.com/systems-manager/pricing/",
+      "title": "AWS Systems Manager pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Session Manager, Run Command, and Patch Manager have no additional charge for use on Amazon EC2 instances",
+        "From September 30, 2026, sessions and Run Command invocations on hybrid and multicloud nodes are billed"
+      ]
+    },
+    {
+      "id": "ssm-patch-manager",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager.html",
+      "title": "AWS Systems Manager Patch Manager",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Patch Manager can scan managed nodes for missing patches or scan and install them, and reports compliance"
+      ]
+    },
+    {
+      "id": "ssm-patch-prerequisites",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-prerequisites.html",
+      "title": "Patch Manager prerequisites",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Without internet access, nodes must still reach their configured patch repositories and the AWS managed S3 buckets"
+      ]
+    },
+    {
+      "id": "ssm-patch-amazon-linux",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/patch-manager-linux-rules.html",
+      "title": "How patch baseline rules work on Linux-based systems",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "On AL2023 EC2 instances, Patch Manager uses the latest repository versions, independent of the version the system is locked to"
+      ]
+    },
+    {
+      "id": "ec2-imds",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html",
+      "title": "Use the Instance Metadata Service to access instance metadata",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IMDS answers at 169.254.169.254; IMDSv2 is session-oriented: a PUT request returns a token that later requests must present",
+        "PUT requests carrying an X-Forwarded-For header are rejected",
+        "The response to the PUT has a hop limit of 1 by default"
+      ]
+    },
+    {
+      "id": "ec2-imds-options",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html",
+      "title": "Configure the Instance Metadata Service options",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The hop limit can be 1 to 64; a hop limit of 1 can cause issues in a container environment",
+        "Options not given at launch come from account-level defaults, then from the AMI"
+      ]
+    },
+    {
+      "id": "al2023-imdsv2",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/imdsv2.html",
+      "title": "IMDSv2 (Amazon Linux 2023 User Guide)",
+      "checkedAt": "2026-10-12",
+      "supports": ["Instances launched from the AL2023 AMI require IMDSv2 and get a hop limit of 2 by default"]
+    },
+    {
+      "id": "ec2-iam-roles",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html",
+      "title": "IAM roles for Amazon EC2",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Applications on an instance retrieve temporary credentials for the instance's role from instance metadata",
+        "An instance profile can contain only one IAM role"
+      ]
+    },
+    {
+      "id": "ec2-user-data",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html",
+      "title": "Run commands when you launch an EC2 instance with user data input",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "User data scripts run only during the boot cycle of the first launch, by default",
+        "They run as root, not interactively; output goes to /var/log/cloud-init-output.log",
+        "User data is limited to 16 KB before base64 encoding"
+      ]
+    },
+    {
+      "id": "ec2-instance-lifecycle",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html",
+      "title": "Amazon EC2 instance state changes",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A stopped instance is not billed for instance usage, but its EBS volumes are still charged",
+        "A running instance is billed per second with a one-minute minimum, even when idle",
+        "EBS volumes and Elastic IP addresses incur charges regardless of the instance's state"
+      ]
+    },
+    {
+      "id": "ec2-stop-start",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Stop_Start.html",
+      "title": "Stop and start Amazon EC2 instances",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A started instance typically moves to a new host and gets a new public IPv4 address",
+        "Data on instance store volumes is erased when an instance stops"
+      ]
+    },
+    {
+      "id": "ec2-instance-addressing",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html",
+      "title": "Amazon EC2 instance IP addressing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An auto-assigned public IPv4 address is released when the instance is stopped, hibernated, or terminated, and a new one is assigned on start",
+        "A persistent public address needs an Elastic IP address"
+      ]
+    },
+    {
+      "id": "ec2-auto-recovery",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html",
+      "title": "Automatic instance recovery",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Simplified automatic recovery is enabled by default on supported instances and acts when a system status check fails",
+        "A recovered instance keeps its instance ID, IP addresses, attached EBS volumes, and Availability Zone, and loses what was in memory",
+        "Automatic recovery does not operate when only the instance status check fails"
+      ]
+    },
+    {
+      "id": "ec2-simplified-recovery",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-configuration-recovery.html",
+      "title": "Configure simplified automatic recovery on an Amazon EC2 instance",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Simplified automatic recovery needs available capacity and does not operate during service events in the AWS Health Dashboard",
+        "It is not supported for instances with instance store volumes, metal sizes, or Dedicated Hosts"
+      ]
+    },
+    {
+      "id": "ec2-status-checks",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-instance-status-check.html",
+      "title": "Status checks for Amazon EC2 instances",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "System status checks detect problems with the AWS systems under the instance; instance status checks detect problems you must fix yourself",
+        "Status checks run every minute"
+      ]
+    },
+    {
+      "id": "ec2-burstable-unlimited",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html",
+      "title": "Unlimited mode concepts for burstable performance instances",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "T4g, T3a, T3, and T8i instances launch in unlimited mode by default",
+        "In unlimited mode, CPU use above the baseline averaged over 24 hours is billed at a flat rate per vCPU-hour"
+      ]
+    },
+    {
+      "id": "ec2-preserve-volumes",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/preserving-volumes-on-termination.html",
+      "title": "Preserve data when an instance is terminated",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default the root volume is deleted on termination, and a data volume attached after launch is preserved",
+        "The default at launch comes from the DeleteOnTermination attribute in the AMI"
+      ]
+    },
+    {
+      "id": "al2023-on-ec2",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/ec2.html",
+      "title": "AL2023 on Amazon EC2",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The latest AL2023 AMI is published under /aws/service/ami-amazon-linux-latest/, for example al2023-ami-kernel-default-arm64",
+        "From August 17, 2026 the default kernel of al2023-ami-kernel-default AMIs is 6.18; version-specific AMIs such as kernel-6.1 remain"
+      ]
+    },
+    {
+      "id": "al2023-deterministic-upgrades",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades.html",
+      "title": "Deterministic upgrades through versioned repositories on AL2023",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An AL2023 instance is locked to the repository version its AMI was built from and does not receive newer updates on its own",
+        "dnf check-release-update lists newer releases; dnf upgrade --releasever=<version> moves to one",
+        "The AMI behind the SSM parameter is always the latest version"
+      ]
+    },
+    {
+      "id": "al2023-updating",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/updating.html",
+      "title": "Updating AL2023",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Running dnf with --releasever=latest is called out as not best practice; a specific release version should be named"
+      ]
+    },
+    {
+      "id": "al2023-instance-replacement",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/security-instance-replacement.html",
+      "title": "Deterministic updates via instance replacement",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Replacing instances with ones launched from a newer AMI is presented as a predictable way to roll out OS updates"
+      ]
+    },
+    {
+      "id": "al2023-nodejs",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/nodejs.html",
+      "title": "Node.js in AL2023",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AL2023 provides Node.js 20, 22, and 24 as namespaced packages (nodejs24) with versioned executables (node-24)",
+        "The plain `node` name is an alternatives link that can point at a different version"
+      ]
+    },
+    {
+      "id": "al2023-awscli",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/awscli2.html",
+      "title": "AWS CLI v2 (Amazon Linux 2023 User Guide)",
+      "checkedAt": "2026-10-12",
+      "supports": ["AL2023 ships with AWS CLI version 2"]
+    },
+    {
+      "id": "al2023-journald",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/journald.html",
+      "title": "systemd journal replaces rsyslog",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AL2023 does not install rsyslog by default; logs are in the systemd journal and read with journalctl"
+      ]
+    },
+    {
+      "id": "al2023-gp3-xfs",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/continuing-al2-filesystem.html",
+      "title": "gp3 as default Amazon EBS volume type",
+      "checkedAt": "2026-10-12",
+      "supports": ["AL2023 AMIs use gp3 volumes by default, and XFS on the root file system"]
+    },
+    {
+      "id": "al2023-repositories",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/managing-repos-os-updates.html",
+      "title": "Manage package and operating system updates in AL2023",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Sample dnf output shows the repositories at https://al2023-repos-<region>-de612dc2.s3.dualstack.<region>.amazonaws.com/"
+      ],
+      "note": "This is the only evidence found that the repositories are S3 buckets in the instance's Region. No page read states that an S3 gateway endpoint is enough to reach them."
+    },
+    {
+      "id": "ebs-volumes",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes.html",
+      "title": "Amazon EBS volumes",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An EBS volume persists independently of the life of an instance",
+        "The volume and the instance must be in the same Availability Zone"
+      ]
+    },
+    {
+      "id": "ebs-nvme-device-names",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/identify-nvme-ebs-device.html",
+      "title": "Map Amazon EBS volumes to NVMe device names",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "NVMe device names can change between boots; stable identifiers are recommended",
+        "Amazon Linux AMIs later than 2017.09.01 ship a udev rule that links the block device mapping name to the NVMe device"
+      ]
+    },
+    {
+      "id": "ebs-make-available",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-using-volumes.html",
+      "title": "Make an Amazon EBS volume available for use",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A new volume has no file system; mkfs on a volume that has data destroys it",
+        "fstab entries should use the UUID, with the nofail option so the instance boots without the volume"
+      ]
+    },
+    {
+      "id": "ebs-snapshots",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-snapshots.html",
+      "title": "Amazon EBS snapshots",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Snapshots are incremental, stored in Amazon S3, and replicated across the Availability Zones of the Region",
+        "A volume can be restored from a snapshot in any Availability Zone of that Region"
+      ]
+    },
+    {
+      "id": "ebs-create-snapshot",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-creating-snapshot.html",
+      "title": "Create Amazon EBS snapshots",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Snapshot creation is asynchronous; the snapshot stays pending until its data has been transferred",
+        "For a consistent snapshot, pause writes or unmount the volume first; writes can resume once the snapshot is pending",
+        "Snapshots of encrypted volumes are encrypted"
+      ]
+    },
+    {
+      "id": "ebs-restore-volume",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-restoring-volume.html",
+      "title": "Replace an Amazon EBS volume using a snapshot",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A volume created from a snapshot must be in the same Availability Zone as the instance it will attach to",
+        "aws ec2 create-volume takes --snapshot-id and --availability-zone"
+      ]
+    },
+    {
+      "id": "ebs-initialize",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/initalize-volume.html",
+      "title": "Initialize Amazon EBS volumes",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Blocks of a volume created from a snapshot are downloaded from S3 on first access, which adds latency until the volume is initialized"
+      ]
+    },
+    {
+      "id": "cfn-ec2-instance",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-instance.html",
+      "title": "AWS::EC2::Instance",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ImageId: update requires replacement",
+        "UserData: update requires some interruptions; with an EBS root volume CloudFormation restarts the instance",
+        "CreditSpecification accepts standard and unlimited"
+      ]
+    },
+    {
+      "id": "cfn-ec2-volume",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-volume.html",
+      "title": "AWS::EC2::Volume",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A deletion policy can retain the volume, delete it, or create a snapshot before deleting it",
+        "AvailabilityZone and SnapshotId cannot be updated"
+      ]
+    },
+    {
+      "id": "cfn-ec2-volumeattachment",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-volumeattachment.html",
+      "title": "AWS::EC2::VolumeAttachment",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The volume must be unmounted inside the instance before the attachment is deleted, or it can be stuck in the busy state",
+        "Every property requires replacement on update"
+      ]
+    },
+    {
+      "id": "cfn-iam-instanceprofile",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-iam-instanceprofile.html",
+      "title": "AWS::IAM::InstanceProfile",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Only one role can be assigned to an EC2 instance at a time, and all applications on the instance share it"
+      ]
+    },
+    {
+      "id": "cfn-ssm-parameter-types",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-supplied-parameter-types.html",
+      "title": "Specify existing resources at runtime with CloudFormation-supplied parameter types",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A parameter of type AWS::SSM::Parameter::Value<AWS::EC2::Image::Id> makes CloudFormation fetch the value from Parameter Store when the stack is created or updated"
+      ]
+    },
+    {
+      "id": "cfn-deletion-policy",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html",
+      "title": "DeletionPolicy attribute",
+      "checkedAt": "2026-10-12",
+      "supports": ["Snapshot is supported for resources such as AWS::EC2::Volume; Retain is supported for any resource"]
+    },
+    {
+      "id": "aws-price-list-ec2-compute",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: EC2, ap-northeast-1 (instances and EBS)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with ids ec2.t4g-micro.linux.hour, ec2.t4g-small.linux.hour, ec2.t4g.cpu-credit, ebs.gp3.storage, ebs.snapshot.storage",
+        "t4g.micro is 2 vCPU and 1 GiB; t4g.small is 2 vCPU and 2 GiB"
+      ],
+      "note": "Publication date 2026-10-09T20:31:34Z. The file is about 446 MB. Instance SKUs were filtered to Linux, shared tenancy, no preinstalled software, capacity status Used."
+    },
+    {
+      "id": "cdkd-source-ec2",
+      "url": "https://github.com/go-to-k/cdkd/tree/v0.296.28/src",
+      "title": "cdkd v0.296.28 source: EC2 instance, volume, and parameter handling",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "register-providers.ts registers AWS::EC2::Instance and AWS::EC2::SecurityGroup with the EC2 provider and AWS::IAM::InstanceProfile with its own provider",
+        "AWS::EC2::Volume, AWS::EC2::VolumeAttachment, and AWS::EC2::LaunchTemplate are not registered, so they go through Cloud Control API",
+        "property-coverage.generated.ts: the EC2 provider writes ImageId, InstanceType, SubnetId, SecurityGroupIds, NetworkInterfaces, IamInstanceProfile, MetadataOptions, CreditSpecification, UserData, BlockDeviceMappings, and Tags; Volumes and LaunchTemplate would route the instance through Cloud Control",
+        "replacement-rules.ts replaces an instance when ImageId, SubnetId, AvailabilityZone, KeyName, EbsOptimized, or NetworkInterfaces changes; UserData is not in the list and updateInstance does not apply it",
+        "intrinsic-resolver/params-conditions.ts resolves a referenced AWS::SSM::Parameter::Value<...> parameter with GetParameter at deploy time",
+        "ec2-volume-delete.ts deletes a volume with EC2 DeleteVolume instead of Cloud Control; stateful-types.ts lists AWS::EC2::Volume, so replacing one needs --force-stateful-recreation"
+      ],
+      "note": "Read from the source archive of the v0.296.28 tag. Nothing was run against AWS."
+    },
+    {
+      "id": "cdkd-cli-destroy",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-destroy.md",
+      "title": "cdkd v0.296.28: destroy",
+      "checkedAt": "2026-10-12",
+      "supports": ["A non-empty S3 bucket fails the destroy unless the bucket opted in to being emptied"]
+    },
+    {
+      "id": "aws-cdk-lib-ec2-machine-image",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-ec2 machine image and instance types",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "MachineImage.latestAmazonLinux2023() adds a template parameter of type AWS::SSM::Parameter::Value<AWS::EC2::Image::Id> and looks nothing up during synthesis",
+        "Its documentation comment says the image updates on every deployment, that instances are replaced when a new image appears, and not to store stateful information on the instance",
+        "latestAmazonLinux2023() always sets kernel to CDK_LATEST, which is 6.1 in this version, so it synthesizes al2023-ami-kernel-6.1-<arch> whatever kernel option is passed",
+        "AmazonLinux2023ImageSsmParameter with kernel DEFAULT gives al2023-ami-kernel-default-<arch>; unless cachedInContext is false it looks the AMI up during synthesis and fails without an account (StackAccountRegionNotSpecified)"
+      ],
+      "note": "Read from the type definitions and the compiled JavaScript in the npm package, and confirmed by synthesizing."
+    },
+    {
+      "id": "systemd-service-man",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.service.xml",
+      "title": "systemd v252: systemd.service(5)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Restart=on-failure restarts on a non-zero exit code, a signal, a timeout, or a watchdog, not on a clean exit",
+        "TimeoutStopSec= is how long to wait for a stop before the service is terminated with SIGKILL"
+      ],
+      "note": "The systemd version on Amazon Linux 2023 was not checked on an instance."
+    },
+    {
+      "id": "systemd-unit-man",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml",
+      "title": "systemd v252: systemd.unit(5)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "RequiresMountsFor= adds Requires= and After= on the mount units for a path",
+        "AssertPathIsMountPoint= fails the start when the path is not a mount point; ConditionPathExists= skips it quietly",
+        "StartLimitIntervalSec= and StartLimitBurst= limit how often a unit may be started"
+      ]
+    },
+    {
+      "id": "systemd-exec-man",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.exec.xml",
+      "title": "systemd v252: systemd.exec(5)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ProtectSystem=strict mounts the file system hierarchy read-only for the service; ReadWritePaths= makes exceptions",
+        "NoNewPrivileges=, ProtectHome=, PrivateTmp=, User=, and EnvironmentFile= behave as the unit in this chapter assumes"
+      ]
+    },
+    {
+      "id": "systemd-kill-man",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.kill.xml",
+      "title": "systemd v252: systemd.kill(5)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "KillSignal= is the first signal sent on stop (SIGTERM by default), followed by SIGKILL after the timeout"
+      ]
+    },
+    {
+      "id": "node-http-server-close",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/http.html",
+      "title": "Node.js v24: HTTP, server.close()",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "server.close() stops the server from accepting new connections and closes connections that are not sending a request or waiting for a response",
+        "server.closeAllConnections() closes every connection, including active ones"
+      ]
+    },
+    {
+      "id": "vpc-security-groups-unfiltered",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html",
+      "title": "Control traffic to your AWS resources using security groups",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Security groups do not filter traffic to Amazon DNS, DHCP, EC2 instance metadata, or the Amazon Time Sync Service"
+      ]
+    },
+    {
+      "id": "lambda-limits-timeout",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas",
+      "checkedAt": "2026-10-12",
+      "supports": ["A function invocation can run for up to 900 seconds (15 minutes); memory is up to 10,240 MB"]
+    },
+    {
+      "id": "fargate-ephemeral-storage",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-storage.html",
+      "title": "Fargate task ephemeral storage for Amazon ECS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A Fargate task on platform version 1.4.0 or later gets 20 GiB of ephemeral storage by default, up to 200 GiB"
+      ]
+    },
+    {
+      "id": "fargate-what-is",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html",
+      "title": "AWS Fargate for Amazon ECS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Fargate runs containers without servers or clusters of EC2 instances to manage",
+        "Each Fargate task has its own isolation boundary and does not share a kernel with another task; kernel and runtime updates arrive as platform version revisions"
+      ]
+    },
+    {
+      "id": "ecs-services-replace",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html",
+      "title": "Amazon ECS services",
+      "checkedAt": "2026-10-12",
+      "supports": ["When a task of a service fails or stops, the service scheduler launches another to replace it"]
+    },
+    {
+      "id": "lambda-ephemeral-storage",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-ephemeral-storage.html",
+      "title": "Configure ephemeral storage for Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Lambda gives each execution environment temporary storage in /tmp, configurable from 512 MB to 10,240 MB"
+      ]
+    },
+    {
+      "id": "ec2-auto-scaling-health",
+      "url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-health-checks.html",
+      "title": "Health checks for instances in an Auto Scaling group",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An Auto Scaling group replaces an instance it finds unhealthy with a new one launched from its launch template"
+      ]
+    },
+    {
+      "id": "cloudwatch-agent-journald",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html",
+      "title": "Manually create or edit the CloudWatch agent configuration file",
+      "checkedAt": "2026-10-12",
+      "supports": ["The agent's logs section can collect systemd journal entries on Linux through a journald section"]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "ec2-instance",
+      "ja": "instance（EC2）",
+      "en": "instance (EC2)",
+      "firstUse": "23",
+      "definition": {
+        "ja": "EC2 で借りる仮想マシン 1 台。OS から上は自分で面倒を見る。動いている時間に対して課金され、止めても volume の料金は続く。",
+        "en": "One virtual machine rented from EC2. Everything from the operating system up is yours to look after. Billed while running; its volumes are billed even when it is stopped."
+      }
+    },
+    {
+      "id": "ami",
+      "ja": "AMI",
+      "en": "AMI",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Amazon Machine Image。instance の最初の disk の中身になる雛形。OS と、最初から入っているソフトウェアが決まる。",
+        "en": "Amazon Machine Image: the template for an instance's first disk. It decides the operating system and what is installed from the start."
+      }
+    },
+    {
+      "id": "instance-profile",
+      "ja": "instance profile",
+      "en": "instance profile",
+      "firstUse": "23",
+      "definition": {
+        "ja": "IAM role を EC2 の instance に渡すための入れ物。1 つの profile に入る role は 1 つ。",
+        "en": "The container that hands an IAM role to an EC2 instance. One profile holds one role."
+      }
+    },
+    {
+      "id": "imds",
+      "ja": "IMDS",
+      "en": "IMDS",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Instance Metadata Service。instance の中からだけ届くアドレス（169.254.169.254）で、instance 自身の情報と、role の一時認証情報を返す。IMDSv2 は先に token を取ってから問い合わせる方式。",
+        "en": "Instance Metadata Service: an address reachable only from inside the instance (169.254.169.254) that returns facts about the instance and temporary credentials for its role. IMDSv2 requires fetching a token first."
+      }
+    },
+    {
+      "id": "user-data",
+      "ja": "user data",
+      "en": "user data",
+      "firstUse": "23",
+      "definition": {
+        "ja": "instance の起動時に渡すデータ。shell script を渡すと、最初の起動のときに一度だけ、root で実行される。",
+        "en": "Data handed to an instance at launch. A shell script given this way runs once, as root, on the first boot."
+      }
+    },
+    {
+      "id": "ebs-volume",
+      "ja": "EBS volume",
+      "en": "EBS volume",
+      "firstUse": "23",
+      "definition": {
+        "ja": "instance に取り付けるネットワーク越しの disk。1 つの Availability Zone に属し、同じ AZ の instance にしか付けられない。instance とは別に生き残れる。",
+        "en": "A network-attached disk for an instance. It belongs to one Availability Zone and attaches only to instances in that zone. It can outlive the instance."
+      }
+    },
+    {
+      "id": "ebs-snapshot",
+      "ja": "snapshot（EBS）",
+      "en": "snapshot (EBS)",
+      "firstUse": "23",
+      "definition": {
+        "ja": "ある時点の volume の写し。差分で保存され、リージョン内のどの AZ にも volume として復元できる。",
+        "en": "A point-in-time copy of a volume. Stored incrementally, and restorable as a volume in any zone of the Region."
+      }
+    },
+    {
+      "id": "session-manager",
+      "ja": "Session Manager",
+      "en": "Session Manager",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Systems Manager の機能。instance の中の SSM Agent が外向きに張った接続を通して shell を開く。inbound の port も SSH の鍵も使わない。",
+        "en": "A Systems Manager feature that opens a shell over a connection the SSM Agent on the instance made outward. No inbound port and no SSH key."
+      }
+    },
+    {
+      "id": "run-command",
+      "ja": "Run Command",
+      "en": "Run Command",
+      "firstUse": "23",
+      "definition": {
+        "ja": "Systems Manager の機能。instance にコマンドを送って実行させ、結果を受け取る。対話はしない。",
+        "en": "A Systems Manager feature that sends commands to an instance, runs them, and returns the result. Not interactive."
+      }
+    },
+    {
+      "id": "systemd-unit",
+      "ja": "unit（systemd）",
+      "en": "unit (systemd)",
+      "firstUse": "23",
+      "definition": {
+        "ja": "systemd に「何を、誰として、どう起動して、落ちたらどうするか」を伝える設定ファイル。service を定義するものは `.service` で終わる。",
+        "en": "A file that tells systemd what to run, as whom, how to start it, and what to do when it dies. Those that define a service end in `.service`."
+      }
+    },
+    {
+      "id": "graceful-shutdown",
+      "ja": "graceful shutdown",
+      "en": "graceful shutdown",
+      "firstUse": "23",
+      "definition": {
+        "ja": "止めろと言われたプロセスが、新しいリクエストを断り、処理中のリクエストを終えてから終了すること。",
+        "en": "A process told to stop refuses new requests, finishes the ones in flight, and only then exits."
+      }
+    },
+    {
+      "id": "status-check",
+      "ja": "status check",
+      "en": "status check",
+      "firstUse": "23",
+      "definition": {
+        "ja": "EC2 が 1 分ごとに行う instance の検査。AWS 側の基盤の問題を見る system status check と、instance 自身の問題を見る instance status check がある。",
+        "en": "A check EC2 runs on an instance every minute. System status checks look at the AWS infrastructure underneath; instance status checks look at the instance itself."
+      }
+    },
+    {
+      "id": "single-point-of-failure",
+      "ja": "単一障害点",
+      "en": "single point of failure",
+      "firstUse": "23",
+      "definition": {
+        "ja": "そこが止まると全体が止まる部品。1 台の instance と、その 1 つの volume がそれにあたる。",
+        "en": "A part whose failure stops the whole. One instance, and its one volume, are exactly that."
+      }
+    },
+    {
+      "id": "cpu-credit",
+      "ja": "CPU credit",
+      "en": "CPU credit",
+      "firstUse": "23",
+      "definition": {
+        "ja": "T 系の instance が、baseline を超えて CPU を使うために貯めて使う持ち分。standard では使い切ると baseline に絞られ、unlimited では超過分が課金される。",
+        "en": "What T-family instances earn and spend to use CPU above their baseline. In standard mode an empty balance means throttling to the baseline; in unlimited mode the excess is billed."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "23.why",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.cost",
+      "sources": [
+        "examples/23-ec2/src/cost.ts",
+        "examples/23-ec2/src/report.ts",
+        "examples/23-ec2/scripts/plan.ts",
+        "examples/23-ec2/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["ec2:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.architecture",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/bin/app.ts",
+        "examples/23-ec2/src/config.ts"
+      ],
+      "tasks": ["ec2:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type"],
+      "verification": "local"
+    },
+    {
+      "id": "23.access",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/src/access.ts",
+        "examples/23-ec2/test/access.test.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts",
+        "examples/11-network/infra/lib/import-network.ts"
+      ],
+      "tasks": ["ec2:plan", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "23.role",
+      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "tasks": ["test:unit", "ec2:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.ami",
+      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "tasks": ["test:unit", "ec2:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "23.user-data",
+      "sources": [
+        "examples/23-ec2/src/machine.ts",
+        "examples/23-ec2/src/user-data.ts",
+        "examples/23-ec2/src/rendered.ts",
+        "examples/23-ec2/scripts/render.ts",
+        "examples/23-ec2/deploy/user-data.sh",
+        "examples/23-ec2/test/machine.test.ts"
+      ],
+      "tasks": ["ec2:render", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.service",
+      "sources": [
+        "examples/23-ec2/src/unit.ts",
+        "examples/23-ec2/deploy/notes.service",
+        "examples/23-ec2/deploy/notes.env",
+        "examples/23-ec2/test/machine.test.ts"
+      ],
+      "tasks": ["ec2:render", "test:unit", "ec2:logs"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.shutdown",
+      "sources": [
+        "examples/23-ec2/src/shutdown.ts",
+        "examples/23-ec2/src/server.ts",
+        "examples/23-ec2/test/shutdown.test.ts"
+      ],
+      "tasks": ["test:unit", "dev:ec2"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.data",
+      "sources": [
+        "examples/23-ec2/src/file-notes.ts",
+        "examples/23-ec2/src/node-files.ts",
+        "examples/23-ec2/src/user-data.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh",
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/test/file-notes.test.ts",
+        "examples/23-ec2/test/data-volume.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.local",
+      "sources": [
+        "examples/23-ec2/src/server.ts",
+        "examples/23-ec2/src/env.ts",
+        "examples/23-ec2/.env.example",
+        "examples/23-ec2/scripts/plan.ts",
+        "examples/23-ec2/scripts/build.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
+      "tasks": ["dev:ec2", "test:unit", "ec2:plan", "ec2:app:build", "ec2:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.deploy",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/src/release.ts",
+        "examples/23-ec2/deploy/notes-release.sh",
+        "examples/23-ec2/test/remote.test.ts",
+        "tools/src/infra"
+      ],
+      "tasks": [
+        "net:infra:deploy",
+        "ec2:infra:diff",
+        "ec2:infra:deploy",
+        "ec2:status",
+        "ec2:session",
+        "ec2:forward",
+        "ec2:app:release",
+        "ec2:app:rollback",
+        "ec2:smoke",
+        "ec2:logs",
+        "ec2:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.backup",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh",
+        "examples/23-ec2/test/data-volume.test.ts"
+      ],
+      "tasks": ["ec2:data:unmount", "ec2:data:mount", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.patch",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/test/remote.test.ts"
+      ],
+      "tasks": ["ec2:patch:check", "ec2:patch:apply"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.spof",
+      "sources": ["examples/23-ec2/test/access.test.ts", "examples/23-ec2/test/file-notes.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.compare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "23.cleanup",
+      "sources": ["examples/23-ec2/scripts/remote.ts", "tools/src/infra"],
+      "tasks": ["ec2:data:unmount", "ec2:releases:empty", "ec2:infra:destroy", "net:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "ec2.t4g-micro.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "VQYSJNTK8DNEGB5Z",
+      "usageType": "APN1-BoxUsage:t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0108000000",
+          "description": "$0.0108 per On Demand Linux t4g.micro Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g-small.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "74TFX697KNZ72UYS",
+      "usageType": "APN1-BoxUsage:t4g.small",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0216000000",
+          "description": "$0.0216 per On Demand Linux t4g.small Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g.cpu-credit",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "225544MWSED9SX58",
+      "usageType": "APN1-CPUCredits:t4g",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "vCPU-Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0400000000",
+          "description": "$0.04 per vCPU-Hour of T4G CPU Credits"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ebs.gp3.storage",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "C8Y3GJZBQTH8T5JV",
+      "usageType": "APN1-EBS:VolumeUsage.gp3",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0960000000",
+          "description": "$0.096 per GB-month of General Purpose (gp3) provisioned storage - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ebs.snapshot.storage",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "4NHX4ZW7X52XZACJ",
+      "usageType": "APN1-EBS:SnapshotUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0500000000",
+          "description": "$0.05 per GB-Month of snapshot data stored - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "ec2.t4g-micro.linux.hour",
+      "reason": "The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "ebs.gp3.storage",
+      "reason": "The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ec2-private-running",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: private subnet で 1 か月動かしたまま",
+        "en": "EC2: a month running in a private subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の構成。t4g.micro を 730 時間動かしたまま",
+          "11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "The default layout: one t4g.micro running for 730 hours",
+          "Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-micro.linux.hour",
+          "quantity": 730,
+          "basis": "1 t4g.micro x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "ec2-private-stopped",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: private subnet で 1 か月止めたまま",
+        "en": "EC2: a month stopped in a private subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "instance を停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "The instance stopped for 730 hours. The volumes and the interface endpoints in the chapter 11 stack remain",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "ec2-public-running",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: public subnet で 1 か月動かしたまま",
+        "en": "EC2: a month running in a public subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c placement=public`。t4g.micro を 730 時間動かしたまま、自動で割り当てられた public IPv4 アドレス 1 つ",
+          "interface endpoint なし",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "`-c placement=public`: one t4g.micro running for 730 hours with one auto-assigned public IPv4 address",
+          "No interface endpoints",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-micro.linux.hour",
+          "quantity": 730,
+          "basis": "1 t4g.micro x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 public IPv4 address x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "ec2-public-stopped",
+      "chapter": "23",
+      "title": {
+        "ja": "EC2: public subnet で 1 か月止めたまま",
+        "en": "EC2: a month stopped in a public subnet"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c placement=public` の instance を停止したまま 730 時間。自動で割り当てられた public IPv4 アドレスは停止時に解放される。Elastic IP アドレスは使っていない",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入"
+        ],
+        "en": [
+          "The `-c placement=public` instance stopped for 730 hours. Its auto-assigned public IPv4 address is released on stop. No Elastic IP address is used",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). The data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "Data transfer, snapshots, and the S3 bucket for releases (a few files under 1 MB) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "8 GiB root (assumed) + 8 GiB data, 730 of 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "23",
+        "command": "vp run test:unit (examples/23-ec2)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "file に書く repository を電源断の各段階で壊すテスト、SIGTERM のときの挙動（本物の socket）、user data と unit の生成と injection の拒否、data volume の script を bash で実行するテスト、Run Command の引数、SSM への経路のモデル、料金の入力、stack の assertion",
+          "en": "The file-backed repository under power loss at each step, behavior on SIGTERM over a real socket, generation of user data and the unit with injection refused, the data volume script run by bash, Run Command arguments, the model of the path to SSM, pricing inputs, and stack assertions"
+        }
+      },
+      {
+        "scope": "23",
+        "command": "vp run ec2:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "既定の構成と、`-c placement=public`、`-c dataOnDestroy=snapshot`、`-c dataSnapshotId=snap-0123456789abcdef0`、`-c amiId=ami-0123456789abcdef0` で synth した",
+          "en": "Synthesized the default layout and `-c placement=public`, `-c dataOnDestroy=snapshot`, `-c dataSnapshotId=snap-0123456789abcdef0`, and `-c amiId=ami-0123456789abcdef0`"
+        }
+      },
+      {
+        "scope": "23",
+        "command": "vp run ec2:plan / ec2:render / ec2:app:build",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "ec2:plan は既定、`placement=public`、endpoint の足りない設定、不正な設定で実行。ec2:render は deploy/ が生成結果と一致することを確認。ec2:app:build は 1 つの ESM の file を作る",
+          "en": "ec2:plan ran with the defaults, `placement=public`, a network without the endpoints, and invalid settings. ec2:render confirmed deploy/ matches the generators. ec2:app:build produces a single ESM file"
+        }
+      },
+      {
+        "scope": "23",
+        "command": "vp run dev:ec2 + curl, SIGTERM",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "ビルドした dist/server.mjs と src/server.ts の両方を Node.js 24 で起動。作成、一覧、再起動後も残ること、SIGTERM で exit code 0 で終わること、壊した notes.json では起動を拒否することを確認",
+          "en": "Started both the built dist/server.mjs and src/server.ts on Node.js 24. Checked create, list, that notes survive a restart, that SIGTERM ends with exit code 0, and that a damaged notes.json is refused at startup"
+        }
+      },
+      {
+        "scope": "23",
+        "command": "vp run ec2:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "EC2 の instance（時間課金）、EBS volume、S3 bucket を作る。11章の stack が先に要る",
+          "en": "Creates an EC2 instance (billed by the hour), an EBS volume, and an S3 bucket. Needs the chapter 11 stack first"
+        }
+      },
+      {
+        "scope": "23",
+        "command": "vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Systems Manager を通して instance に入る、release を配る、動作を確かめる。ec2:session と ec2:forward は Session Manager plugin が要る（devShell には入っていない）",
+          "en": "Reaches the instance through Systems Manager, ships a release, and checks it. ec2:session and ec2:forward need the Session Manager plugin, which the devShell does not include"
+        }
+      },
+      {
+        "scope": "23",
+        "command": "vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "instance の上で dnf を実行する、data volume を unmount、mount する、release の object を消す",
+          "en": "Runs dnf on the instance, unmounts and mounts the data volume, and deletes release objects"
+        }
+      },
+      {
+        "scope": "23",
+        "command": "aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "本文の手順は実行していない。flag は devShell の AWS CLI 2.35.11 の help で確かめた",
+          "en": "The procedure in the text was not run. The flags were checked against the help of AWS CLI 2.35.11 in the devShell"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "23-deploy",
+        "summary": {
+          "ja": "23章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が instance、instance profile、security group を専用の実装で、volume と volume attachment を Cloud Control API 経由で作れること、SSM 型の parameter から AMI の ID が解決されること、`Fn::ImportValue` で 11章の output を読めることが未確認。",
+          "en": "The chapter 23 stack has never been deployed. Unverified: that cdkd 0.296.28 creates the instance, instance profile, and security group with its own providers and the volume and attachment through Cloud Control API, that the AMI ID resolves from the SSM-typed parameter, and that the chapter 11 outputs are read through `Fn::ImportValue`."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages` の後に `vp run ec2:infra:deploy`、`vp run ec2:status`、`vp run ec2:infra:drift` を通す。終わったら「片付け」の順に消す（時間課金）。",
+          "en": "After `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`, run `vp run ec2:infra:deploy`, `vp run ec2:status`, and `vp run ec2:infra:drift`. Then delete everything in the order of the cleanup section (hourly charges)."
+        }
+      },
+      {
+        "id": "23-first-boot",
+        "summary": {
+          "ja": "user data を本物の Amazon Linux 2023 で走らせていない。未確認: private subnet から S3 の gateway endpoint だけで dnf の repository に届くこと（repository が S3 にあることは、ドキュメントの出力例の host 名から読み取っただけ）、`nodejs24` と `xfsprogs` が入ること、`/dev/sdf` の link ができること、attach を待つ loop が足りること、unit の directive（`AssertPathIsMountPoint` など）が AL2023 の systemd で通ること、root volume の大きさ（料金は 8 GiB と仮定）。",
+          "en": "The user data has not run on a real Amazon Linux 2023. Unverified: that dnf reaches the repositories from a private subnet through the S3 gateway endpoint alone (that they are in S3 was inferred from host names in sample output in the documentation), that `nodejs24` and `xfsprogs` install, that the `/dev/sdf` link appears, that the wait loop outlasts the attachment, that the unit's directives (such as `AssertPathIsMountPoint`) are accepted by the systemd on AL2023, and the size of the root volume (pricing assumes 8 GiB)."
+        },
+        "resume": {
+          "ja": "deploy 後に `vp run ec2:status` で cloud-init の結果、service の状態、mount を見る。失敗していたら `vp run ec2:session` で入り、`/var/log/cloud-init-output.log` を読む。root volume は `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>` で確かめ、8 GiB でなければ `src/cost.ts` の `ASSUMED_ROOT_GIB` と本文の金額を直す。",
+          "en": "After deploying, run `vp run ec2:status` to see the cloud-init result, the service state, and the mount. If it failed, connect with `vp run ec2:session` and read `/var/log/cloud-init-output.log`. Check the root volume with `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>`; if it is not 8 GiB, fix `ASSUMED_ROOT_GIB` in `src/cost.ts` and the amounts in the text."
+        }
+      },
+      {
+        "id": "23-ssm-endpoints",
+        "summary": {
+          "ja": "interface endpoint が 3 つとも要るのかを確かめていない。Systems Manager のドキュメントは、SSM Agent 3.3.40.0 以降は ssmmessages を優先すると書いているが、ec2messages の endpoint を省けるとは書いていない。AMI に入っている agent の版も見ていない。",
+          "en": "Whether all three interface endpoints are needed was not checked. The Systems Manager documentation says SSM Agent 3.3.40.0 and later prefers ssmmessages, but does not say the ec2messages endpoint can be omitted. The agent version in the AMI was not looked at either."
+        },
+        "resume": {
+          "ja": "11章の stack を `-c interfaceEndpoints=ssm,ssmmessages` で deploy し直し、instance を再起動して `vp run ec2:status` が Online を返すか、`vp run ec2:smoke` が通るかを見る。通れば月 USD 20.44 減らせる。",
+          "en": "Redeploy the chapter 11 stack with `-c interfaceEndpoints=ssm,ssmmessages`, reboot the instance, and see whether `vp run ec2:status` reports Online and `vp run ec2:smoke` passes. If so, the monthly cost drops by USD 20.44."
+        }
+      },
+      {
+        "id": "23-release",
+        "summary": {
+          "ja": "release の経路（S3 への upload、Run Command、instance 上の `notes-release`、restart、`/health` の確認）と、restart のときに処理中のリクエストが完了することを、実機で通していない。Session Manager と port forwarding も未実行（plugin が devShell に無い）。",
+          "en": "The release path (upload to S3, Run Command, `notes-release` on the instance, restart, and the `/health` check) and that a restart lets a request in flight finish have not been run on a real instance. Session Manager and port forwarding were not run either (the plugin is not in the devShell)."
+        },
+        "resume": {
+          "ja": "`vp run ec2:app:release`、`vp run ec2:smoke`、`vp run ec2:logs` を通す。もう一度 release して、前の版を `vp run ec2:app:rollback <version>` で戻す。Session Manager plugin を入れて `vp run ec2:forward` を実行し、手元から `curl http://localhost:8787/health` を呼ぶ。",
+          "en": "Run `vp run ec2:app:release`, `vp run ec2:smoke`, and `vp run ec2:logs`. Release again, then go back with `vp run ec2:app:rollback <version>`. Install the Session Manager plugin, run `vp run ec2:forward`, and call `curl http://localhost:8787/health` from your machine."
+        }
+      },
+      {
+        "id": "23-replace-and-restore",
+        "summary": {
+          "ja": "instance を作り直したときに data volume が残って付け直されること、snapshot からの restore、destroy のときの volume attachment の扱いを実行していない。cdkd のソースでは、`UserData` の変更は instance に反映されず、`ImageId` の変更は置き換えになる。置き換えのときに attachment がどう動くか（古い instance から外れて新しい instance に付くのか、途中で失敗するのか）は読み切れていない。",
+          "en": "Not run: that the data volume survives and is reattached when the instance is replaced, restoring from a snapshot, and what happens to the volume attachment on destroy. In the cdkd source, a change to `UserData` is not applied to the instance and a change to `ImageId` replaces it. How the attachment behaves during a replacement (detached from the old instance and attached to the new, or failing midway) could not be determined from the source."
+        },
+        "resume": {
+          "ja": "ノートを 1 件作り、`vp run ec2:data:unmount` の後に `-c amiId=<1 つ前の AMI>` で deploy して置き換えを起こす。新しい instance で `vp run ec2:status` と `vp run ec2:app:release`、`vp run ec2:smoke` を実行し、ノートが残っているかを見る。続けて「snapshot と restore」の手順を通す。",
+          "en": "Create one note, run `vp run ec2:data:unmount`, then deploy with `-c amiId=<the previous AMI>` to force a replacement. On the new instance run `vp run ec2:status`, `vp run ec2:app:release`, and `vp run ec2:smoke`, and see whether the note is still there. Then go through the snapshot and restore procedure."
+        }
+      },
+      {
+        "id": "23-patch",
+        "summary": {
+          "ja": "`ec2:patch:check` と `ec2:patch:apply` を実機で実行していない。Patch Manager（`AWS-RunPatchBaseline`）は手順を書いただけで、タスクも無い。",
+          "en": "`ec2:patch:check` and `ec2:patch:apply` have not been run on a real instance. Patch Manager (`AWS-RunPatchBaseline`) is described only; there is no task for it."
+        },
+        "resume": {
+          "ja": "数週間前の AMI を `-c amiId=...` で指定して deploy し、`vp run ec2:patch:check` で新しい release が出ることを確かめ、`vp run ec2:patch:apply <releasever>` を実行する。kernel が更新されたら `aws ec2 reboot-instances` で再起動し、`vp run ec2:smoke` を通す。",
+          "en": "Deploy with an AMI a few weeks old through `-c amiId=...`, confirm that `vp run ec2:patch:check` lists a newer release, and run `vp run ec2:patch:apply <releasever>`. If the kernel was updated, reboot with `aws ec2 reboot-instances` and run `vp run ec2:smoke`."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 23: EC2 ----------------------------------------------\n      // The chapter 04 API as a long-running process that keeps notes in a file. No AWS.\n      \"dev:ec2\": fresh(\"node --watch --env-file-if-exists=.env src/server.ts\", { cwd: \"examples/23-ec2\" }),\n      // Where the instance would live, whether it could reach Systems Manager, and the idle cost. Reads only this checkout.\n      \"ec2:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/23-ec2\" }),\n      // Fails when deploy/ differs from what the generators produce. `--write` rewrites it.\n      \"ec2:render\": fresh(\"node scripts/render.ts\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:app:build\": fresh(\"node scripts/build.ts\", { cwd: \"examples/23-ec2\" }),\n      ...infra(\"ec2\", \"examples/23-ec2\", \"AihEc2\"),\n      // Everything below goes through Systems Manager to the deployed instance.\n      \"ec2:status\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts status\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:session\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts session\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:forward\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts forward\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:app:release\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts release\", { cwd: \"examples/23-ec2\", dependsOn: [\"ec2:app:build\"] }),\n      \"ec2:app:rollback\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts rollback\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:smoke\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts smoke\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:logs\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts logs\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:data:unmount\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts unmount\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:data:mount\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts mount\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:patch:check\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts patch-check\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:patch:apply\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts patch-apply\", { cwd: \"examples/23-ec2\" }),\n      \"ec2:releases:empty\": live(\"node --env-file-if-exists=../../.env scripts/remote.ts releases-empty\", { cwd: \"examples/23-ec2\" }),",
+    "synth": ["ec2:infra:synth"],
+    "checkAll": ["ec2:app:build"],
+    "typecheck": ["examples/23-ec2"]
+  }
+}
