@@ -37,7 +37,7 @@ generated: true
 | integration | integration | 04 | API Gateway が route に届いたリクエストを渡す先。この本では Lambda 関数。 |
 | runtime validation | runtime validation | 02 | 実行時に届いたデータを schema と照合すること。型注釈はこれを行わない。 |
 | invariant | invariant | 04 | どの時点でも成り立っていなければならない性質。テストと障害注入の対象。 |
-| 冪等性 | idempotency | 08 | 同じ操作を複数回実行しても結果が 1 回と同じになる性質。 |
+| 冪等性 | idempotency | 05 | 同じ操作を複数回実行しても結果が 1 回と同じになる性質。 |
 | partition key | partition key | 05 | item の置き場所を決める key。同じ値の item はまとめて保存される。 |
 | sort key | sort key | 05 | 同じ partition key の中で item を並べ、区別する key。 |
 | 条件式（condition expression） | condition expression | 05 | 書き込みと一緒に送る条件。成り立たなければ、その書き込みは行われない。 |

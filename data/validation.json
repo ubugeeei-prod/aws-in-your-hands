@@ -910,7 +910,7 @@
     },
     {
       "scope": "09",
-      "command": "vp run dev:ssr + HTTP requests",
+      "command": "nuxt dev on port 3909 (the command behind dev:ssr, started directly) + HTTP requests",
       "kind": "local",
       "status": "passed",
       "ranAt": "2026-10-11",

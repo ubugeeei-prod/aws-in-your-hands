@@ -37,9 +37,8 @@ describe("UploadsStack: the uploads bucket", () => {
     );
     // One policy: the TLS-only deny that `enforceSSL` adds. No Allow at all.
     expect(policies).toHaveLength(1);
-    const effects = (policies[0]?.["Properties"].PolicyDocument.Statement as Statement[]).map(
-      (statement) => statement.Effect,
-    );
+    const statements = (policies[0]?.["Properties"].PolicyDocument.Statement ?? []) as Statement[];
+    const effects = statements.map((statement) => statement.Effect);
     expect(effects).toEqual(["Deny"]);
   });
 

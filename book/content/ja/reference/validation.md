@@ -95,7 +95,7 @@ generated: true
 | 09 | `vp run ssr:check:output (runs build:ssr first)` | ローカル | 成功 | 2026-10-11 | Nuxt 4.6.1 と nitropack 2.13.4 の buffered な Lambda handler を function URL の形の event で呼び、ヘッダー、サインイン、共有 cache 越しの再現を確認。/feed は 1 回、HTML は 1 回で書かれた。Lambda では実行していない |
 | 09 | `vp run ssr:check:output:stream (runs build:ssr:stream first)` | ローカル | 成功 | 2026-10-11 | awslambda を記録用の偽物に差し替えて streaming の handler を呼んだ。/feed は 3 回（約 300 ms おき）、HTML は 1 回で書かれた。Lambda の runtime、function URL、CloudFront は通していない |
 | 09 | `vp run ssr:infra:synth` | ローカル | 成功 | 2026-10-11 | cdkd で synth。template に function URL（AWS_IAM）、OAC、2 つの Lambda::Permission、cache policy、response headers policy があることを確認 |
-| 09 | `vp run dev:ssr + HTTP requests` | ローカル | 成功 | 2026-10-11 | AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない |
+| 09 | `nuxt dev on port 3909 (the command behind dev:ssr, started directly) + HTTP requests` | ローカル | 成功 | 2026-10-11 | AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない |
 | 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | 未実行 | - | distribution、Lambda の関数と function URL、bucket を作る |
 | 19 | `vp run test:unit (examples/19-observability)` | ローカル | 成功 | 2026-10-12 | 実際に書かれるログの形と大きさ、ログの query と metric filter の条件を本物のログ行で評価、traceparent と X-Ray の trace ID の変換、span とログの相互参照、属性の許可リスト、sampling されない要求と欠けた span の再現、アラームの条件、料金計算の入力、インフラの assertion |
 | 19 | `vp run dev:obs + curl` | ローカル | 成功 | 2026-10-12 | 本文の curl を実行。ログの行に traceId が付くこと、span がコンソールに出ること、traceparent を付けた要求が同じ trace ID を引き継ぐこと、TRACE_SAMPLE_RATIO=0 で span が出ずログは残ることを確認 |

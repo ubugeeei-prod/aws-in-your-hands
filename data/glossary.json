@@ -264,7 +264,7 @@
       "id": "idempotency",
       "ja": "冪等性",
       "en": "idempotency",
-      "firstUse": "08",
+      "firstUse": "05",
       "definition": {
         "ja": "同じ操作を複数回実行しても結果が 1 回と同じになる性質。",
         "en": "The property that performing the same operation several times has the same result as performing it once."

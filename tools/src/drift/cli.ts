@@ -9,9 +9,17 @@ import { buildReport, summarize } from "./report.ts";
 const MODES = ["check", "preview-revert", "revert", "accept"] as const;
 type Mode = (typeof MODES)[number];
 
-const [mode, appDirArg, stack] = process.argv.slice(2);
+const [mode, appDirArg, stack, ...extra] = process.argv.slice(2);
 if (!(MODES as readonly string[]).includes(mode ?? "") || appDirArg === undefined || stack === undefined) {
   console.error(`usage: cli.ts <${MODES.join("|")}> <appDir> <stack>`);
+  process.exit(64);
+}
+if (extra.length > 0) {
+  // Better to stop than to let `-c store=valkey` look as if it selected something.
+  console.error(`unexpected arguments: ${extra.join(" ")}`);
+  console.error(
+    "cdkd drift compares the recorded state with AWS. It does not synthesize, so context (-c) has no effect.",
+  );
   process.exit(64);
 }
 const appDir = resolve(appDirArg);

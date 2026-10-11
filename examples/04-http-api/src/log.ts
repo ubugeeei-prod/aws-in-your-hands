@@ -7,7 +7,7 @@ export type LogEntry = { level: Level; message: string } & Record<string, unknow
 export type Logger = (entry: LogEntry) => void;
 
 // #region logger
-/** One JSON object per line: greppable locally, queryable in CloudWatch Logs. */
+/** One JSON object per call. Locally that is the whole line; Lambda's default log format puts a timestamp and request id in front. */
 export function createLogger(minimum: Env["LOG_LEVEL"], write: (line: string) => void = console.log): Logger {
   return (entry) => {
     if (LEVELS.indexOf(entry.level) >= LEVELS.indexOf(minimum)) {

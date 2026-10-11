@@ -37,7 +37,7 @@ The term pairs that keep both languages using one word for one concept. API name
 | integration | integration | 04 | Where API Gateway sends a request that matched a route. In this book, a Lambda function. |
 | runtime validation | runtime validation | 02 | Checking data against a schema when it arrives at run time. A type annotation does not do this. |
 | invariant | invariant | 04 | A property that must hold at all times; the thing tests and failure injection target. |
-| 冪等性 | idempotency | 08 | The property that performing the same operation several times has the same result as performing it once. |
+| 冪等性 | idempotency | 05 | The property that performing the same operation several times has the same result as performing it once. |
 | partition key | partition key | 05 | The key that decides where an item is stored. Items with the same value are stored together. |
 | sort key | sort key | 05 | The key that orders and distinguishes items within one partition key value. |
 | 条件式（condition expression） | condition expression | 05 | A condition sent with a write. If it does not hold, the write does not happen. |

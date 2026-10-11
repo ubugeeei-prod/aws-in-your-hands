@@ -664,7 +664,9 @@ export default defineConfig({
       "infra:bootstrap": live(`${node} tools/src/infra/cdkd.ts bootstrap book/infra -`),
       ...infra("hello", "examples/02-toolchain", "AihHello"),
       // The same app through the AWS CDK CLI. Local only; shown for comparison.
-      "hello:infra:synth:cdk": fresh("cdk synth --quiet", { cwd: "examples/02-toolchain" }),
+      "hello:infra:synth:cdk": fresh("CDK_DISABLE_CLI_TELEMETRY=1 CDK_DISABLE_VERSION_CHECK=1 cdk synth --quiet", {
+        cwd: "examples/02-toolchain",
+      }),
 
       // ---- chapter 03: SPA ----------------------------------------------
       "dev:spa": fresh("vp dev", { cwd: "examples/03-spa" }),
