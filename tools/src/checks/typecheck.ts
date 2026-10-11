@@ -24,6 +24,7 @@ const projects = [
   "examples/03-spa/infra",
   "examples/04-http-api",
   "examples/05-dynamodb",
+  "examples/06-auth",
 ];
 
 const tsc = join(repoRoot, "node_modules/.bin/tsc");

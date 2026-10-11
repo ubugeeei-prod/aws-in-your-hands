@@ -87,7 +87,14 @@ export default defineConfig({
       "content:check": fresh("node tools/src/checks/content.ts"),
       "links:check": fresh("node tools/src/checks/links.ts book/dist", { dependsOn: ["build:book"] }),
       "infra:synth": fresh("node -e \"console.log('all CDK apps synthesized')\"", {
-        dependsOn: ["book:infra:synth", "hello:infra:synth", "spa:infra:synth", "api:infra:synth", "notes:infra:synth"],
+        dependsOn: [
+          "book:infra:synth",
+          "hello:infra:synth",
+          "spa:infra:synth",
+          "api:infra:synth",
+          "notes:infra:synth",
+          "app:infra:synth",
+        ],
       }),
       // Everything above plus both builds. Never touches AWS.
       "check:all": fresh("node -e \"console.log('check:all finished without touching AWS')\"", {
@@ -168,6 +175,29 @@ export default defineConfig({
       }),
       ...infra("notes", "examples/05-dynamodb", "AihNotes"),
       "notes:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/05-dynamodb" }),
+
+      // ---- chapter 06: sign-in and authorization ------------------------
+      // API with local development sign-in, and the SPA that uses it. No Docker, no AWS.
+      "dev:app:api": fresh("node --watch --env-file-if-exists=.env api/src/dev.ts", { cwd: "examples/06-auth" }),
+      "dev:app:web": fresh("vp dev", { cwd: "examples/06-auth/web" }),
+      "build:app:web": { command: "vp build", cwd: "examples/06-auth/web" },
+      "typecheck:app:web": { command: "../node_modules/.bin/vize check", cwd: "examples/06-auth/web" },
+      "lint:app:web": { command: "../node_modules/.bin/vize lint src --preset essential", cwd: "examples/06-auth/web" },
+      ...infra("app", "examples/06-auth", "AihNotesApp"),
+      // Writes the deployed endpoints into the built SPA, then publishes it.
+      "app:publish": live(
+        "node --env-file-if-exists=../../.env scripts/write-config.ts && node --env-file-if-exists=../../.env ../../tools/src/site/publish.ts . AihNotesApp web/dist",
+        { cwd: "examples/06-auth", dependsOn: ["build:app:web"] },
+      ),
+      "app:smoke:web": live(`${node} tools/src/site/smoke.ts spa examples/06-auth AihNotesApp`),
+      "app:smoke:api": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/06-auth" }),
+      "app:unpublish": live(`${node} tools/src/site/unpublish.ts examples/06-auth AihNotesApp`),
+      "app:user:create": live("node --env-file-if-exists=../../.env scripts/user.ts create", {
+        cwd: "examples/06-auth",
+      }),
+      "app:user:delete": live("node --env-file-if-exists=../../.env scripts/user.ts delete", {
+        cwd: "examples/06-auth",
+      }),
     },
   },
   test: {

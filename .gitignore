@@ -9,3 +9,4 @@ cdk.out/
 reports/
 artifacts/
 .DS_Store
+.playwright-mcp/
