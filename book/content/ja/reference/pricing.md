@@ -746,6 +746,112 @@ ID: `obs-rum-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTeleme
 - 毎月の無料枠適用後の小計: **USD 2.00** / 月
 - 無料枠を確認できず、何も引いていない単価: `cloudwatch.rum.event`
 
+## KV と cache: 既定の stack（DynamoDB）を置いたまま、呼ばれない月
+
+ID: `kv-idle-dynamodb` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+
+前提:
+
+- リクエストゼロ
+- table に残るのは期限切れを待つ item だけ。1 MB と多めに仮定
+- ElastiCache は作っていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.storage` | 0.001 | GB-Mo | 1 MB stored, in GB-month | 0 | - | 0 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## KV と cache: ElastiCache Serverless（Valkey）を置いたまま、呼ばれない月
+
+ID: `kv-idle-valkey-serverless` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+
+前提:
+
+- `-c store=valkey`。cache を 730 時間置いたまま。リクエストゼロ
+- 保存量は 100 MB 未満。Valkey の最小課金 100 MB（0.1 GB として計算）がかかる
+- snapshot なし。データ転送なし
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `elasticache.serverless.valkey.storage` | 73 | GB-Hours | 0.1 GB minimum x 730 hours, in GB-hours | 7.37 | - | 7.37 |
+
+- 定価の小計: **USD 7.37** / 月
+- 毎月の無料枠適用後の小計: **USD 7.37** / 月
+
+## 比較: node ベースの Valkey（cache.t4g.micro 1 台）を置いたままの月
+
+ID: `kv-idle-valkey-node` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+
+前提:
+
+- この章の stack は作らない構成。料金の比較のためだけに計算
+- replica なしの 1 node を 730 時間。VPC が要る（VPC 自体は無料）
+- backup、データ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `elasticache.node.valkey.t4g-micro` | 730 | Hrs | 1 node x 730 hours | 14.60 | - | 14.60 |
+
+- 定価の小計: **USD 14.60** / 月
+- 毎月の無料枠適用後の小計: **USD 14.60** / 月
+
+## KV と cache: DynamoDB 版で月 100 万リクエスト
+
+ID: `kv-used-dynamodb` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+
+前提:
+
+- `GET /items` を月 100 万回。すべて rate limit を通る（拒否された分も書き込み 1 単位を消費する）
+- rate limit: リクエストごとに UpdateItem 1 回（1 KB 未満、書き込み 1 単位）。固定窓
+- cache の読み取り: リクエストごとに結果整合の GetItem 1 回（4 KB 未満、読み取り 0.5 単位）
+- cache の詰め直し: TTL 30 秒が切れるたびに必ず 1 回起きると仮定して月 87,600 回。1 回あたり lock の取得・値の書き込み・lock の解放で書き込み 3 単位、取り直しの読み取り 0.5 単位
+- Lambda は arm64、256 MB、平均 30 ミリ秒と仮定。ログは 1 リクエスト 0.5 KB
+- table の保存量は 1 MB。インターネットへのデータ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `apigw.http.request` | 1,000,000 | Requests | 1,000,000 requests | 1.29 | - | 1.29 |
+| `lambda.request.arm` | 1,000,000 | Requests | 1,000,000 invocations | 0.20 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 7,500 | Lambda-GB-Second | 1,000,000 x 0.03 s x 0.25 GB | 0.10 | 400,000 | 0 |
+| `dynamodb.write.on-demand` | 1,262,800 | WriteRequestUnits | 1,000,000 counter updates + 87,600 refills x 3 writes | 0.90 | - | 0.90 |
+| `dynamodb.read.on-demand` | 543,800 | ReadRequestUnits | (1,000,000 + 87,600) eventually consistent reads x 0.5 | 0.08 | - | 0.08 |
+| `dynamodb.storage` | 0.001 | GB-Mo | 1 MB stored, in GB-month | 0 | - | 0 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.36 | 5 | 0 |
+| `logs.storage` | 0.111 | GB-Mo | about 7 days of logs kept, in GB-month | 0.003663 | 5 | 0 |
+
+- 定価の小計: **USD 2.94** / 月
+- 毎月の無料枠適用後の小計: **USD 2.27** / 月
+- 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
+
+## KV と cache: ElastiCache Serverless（Valkey）版で月 100 万リクエスト
+
+ID: `kv-used-valkey` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+
+前提:
+
+- `GET /items` を月 100 万回
+- 保存量は 100 MB 未満。最小課金 100 MB（0.1 GB として計算）を 730 時間
+- 1 リクエストあたり 10 ECPU と多めに仮定。script（EVAL）が実際に何 ECPU を消費するかは計測していない
+- Lambda は arm64、256 MB、平均 30 ミリ秒と仮定。ログは 1 リクエスト 0.5 KB
+- public endpoint へのデータ転送（アプリ側で 1 GB あたり USD 0.01）と、インターネットへのデータ転送は未算入
+- DynamoDB の table は stack に残るが、この構成では読み書きしない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `apigw.http.request` | 1,000,000 | Requests | 1,000,000 requests | 1.29 | - | 1.29 |
+| `lambda.request.arm` | 1,000,000 | Requests | 1,000,000 invocations | 0.20 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 7,500 | Lambda-GB-Second | 1,000,000 x 0.03 s x 0.25 GB | 0.10 | 400,000 | 0 |
+| `elasticache.serverless.valkey.storage` | 73 | GB-Hours | 0.1 GB minimum x 730 hours, in GB-hours | 7.37 | - | 7.37 |
+| `elasticache.serverless.valkey.ecpu` | 10,000,000 | ElastiCacheProcessingUnit | 1,000,000 requests x 10 ECPUs (assumption) | 0.03 | - | 0.03 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.36 | 5 | 0 |
+| `logs.storage` | 0.111 | GB-Mo | about 7 days of logs kept, in GB-month | 0.003663 | 5 | 0 |
+
+- 定価の小計: **USD 9.36** / 月
+- 毎月の無料枠適用後の小計: **USD 8.69** / 月
+- 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -808,6 +914,9 @@ ID: `obs-rum-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTeleme
 | `xray.trace.retrieved` | ap-northeast-1 | APN1-XRay-TracesAccessed | traces | 0 - ∞: 0.0000005000 | 2026-09-11 | 2026-10-12 |
 | `cloudwatch.rum.event` | ap-northeast-1 | APN1-CW:RUM-events | Events | 0 - ∞: 0.0000100000 | 2026-10-07 | 2026-10-12 |
 | `cloudwatch.synthetics.run` | ap-northeast-1 | APN1-CW:Canary-runs | Runs | 0 - ∞: 0.0019000000 | 2026-10-07 | 2026-10-12 |
+| `elasticache.serverless.valkey.storage` | ap-northeast-1 | APN1-CachedData:Valkey | GB-Hours | 0 - ∞: 0.1010000000 | 2026-09-14 | 2026-10-12 |
+| `elasticache.serverless.valkey.ecpu` | ap-northeast-1 | APN1-ElastiCacheProcessingUnits:Valkey | ElastiCacheProcessingUnit | 0 - ∞: 0.0000000027 | 2026-09-14 | 2026-10-12 |
+| `elasticache.node.valkey.t4g-micro` | ap-northeast-1 | APN1-NodeUsage:cache.t4g.micro | Hrs | 0 - ∞: 0.0200000000 | 2026-09-14 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 

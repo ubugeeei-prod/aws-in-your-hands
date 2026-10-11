@@ -104,6 +104,12 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table, a Lambda function, an HTTP API, an SNS topic, two alarms, a dashboard and a metric filter. cdkd handles the dashboard and the metric filter through Cloud Control API |
 | 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | not run | - | Need the deployed stack. obs:smoke creates and deletes one note. obs:query is billed by the amount of log data scanned |
 | 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | not run | - | The configuration with the AWS Lambda Layer for OpenTelemetry. The Node.js 24 runtime is not in the layer's list of supported runtimes |
+| 14 | `vp run test:unit (examples/14-kv-cache)` | local | passed | 2026-10-12 | Rate limiter boundaries and concurrency, the store contracts (memory), the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, TTL jitter, the IAM auth token signature, the app, and stack assertions |
+| 14 | `vp run kv:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout and `-c store=valkey`, including the esbuild bundle |
+| 14 | `vp run dev:kv` | local | passed | 2026-10-12 | Started with KV_STORE set to memory, valkey, and dynamodb and ran the curl commands from the chapter; valkey and dynamodb against the local servers of the next row |
+| 14 | `node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)` | local | passed | 2026-10-12 | Ran the 22 store contract tests against valkey-server 9.1.2 from nixpkgs and DynamoDB Local 3.3.1 as distributed by AWS (the jar on a JRE 21). With no Docker daemon available, both ran as plain processes, not containers |
+| 14 | `vp run kv:local:start / kv:local:stop` | local | not run | - | Not run: no Docker daemon. The images valkey/valkey:9.0.6-alpine and amazon/dynamodb-local:3.3.1 were neither pulled nor started |
+| 14 | `vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs` | AWS | not run | - | Creates a DynamoDB table, a Lambda function, and an HTTP API; with `-c store=valkey` also an ElastiCache Serverless cache, which is billed for as long as it exists |
 
 ## Open items and how to resume
 
@@ -370,3 +376,21 @@ To resume: Run vp run obs:infra:deploy and vp run obs:infra:drift. If they fail,
 Not confirmed: the price of a dashboard beyond the third, the size of the system log lines Lambda writes in the JSON format, and whether spans sent through the layer are billed as X-Ray traces.
 
 To resume: Open the pricing page in a browser that runs JavaScript and read the dashboard price. After deploying, measure the total bytes of @message per request with Logs Insights and correct the assumption in data/fragments/19.json. A few days later, look at the usage types in Cost Explorer.
+
+### 14-deploy
+
+The chapter 14 stack has never been deployed. Unconfirmed: that the conditional `ADD` loses no concurrent increment on the real service, how long TTL really takes to delete an item, how the memory variant behaves once Lambda runs several execution environments, and creation and deletion through cdkd 0.296.28.
+
+To resume: Run `vp run kv:infra:deploy`, then `vp run kv:smoke` and check that the sixth request is refused with 429. Run `vp run kv:infra:drift`, and finally `vp run kv:infra:destroy`.
+
+### 14-elasticache
+
+Nothing has ever connected to an ElastiCache Serverless cache with a public endpoint. Unconfirmed: that CloudFormation and Cloud Control API accept `ConnectionType: public` with `UserGroupId: default.iam-user-group`; that 1,000 is a valid ECPU maximum in `CacheUsageLimits`; that ElastiCache accepts the hand-signed SigV4 token; that iovalkey's `Cluster` can read the topology through a public endpoint; the TLS 1.3 connection; how many ECPUs a script (EVAL) uses; and how long the cache takes to create and delete.
+
+To resume: Knowing that it is billed, run `vp run kv:infra:deploy -c store=valkey`. Check with `vp run kv:smoke` that the store is reported as `elasticache` and the sixth request is refused. On failure, search `vp run kv:logs` for `valkey connection error`, `cache store failed`, and `rate limiter failed`, and compare with the Troubleshooting table of 'Connect to a cache with a public endpoint'. Run `vp run kv:infra:destroy -c store=valkey` as soon as you are done.
+
+### 14-docker
+
+`vp run kv:local:start` and `kv:local:stop`, which start and stop Valkey and DynamoDB Local in Docker containers, were not run. The contract tests themselves passed against the same DynamoDB Local version and a Valkey 9.1.2 process.
+
+To resume: Start a Docker daemon, copy `examples/14-kv-cache/.env.example` to `.env`, and run `vp run kv:local:start`, `vp run kv:local:migrate`, `vp run kv:test:local`, and `vp run kv:local:stop` in that order.

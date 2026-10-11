@@ -1,0 +1,25 @@
+{
+  "name": "@aih/example-14-kv-cache",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-crypto/sha256-js": "5.2.0",
+    "@aws-sdk/client-dynamodb": "3.1149.0",
+    "@aws-sdk/credential-provider-node": "3.972.85",
+    "@aws-sdk/lib-dynamodb": "3.1149.0",
+    "@smithy/signature-v4": "5.7.4",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "hono": "4.13.13",
+    "iovalkey": "0.4.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "@hono/node-server": "2.1.4",
+    "@types/aws-lambda": "8.10.164",
+    "vite-plus": "1.1.0"
+  }
+}

@@ -1149,6 +1149,116 @@
         "ja": "決まった間隔で外から API やページを呼び、応答を確かめるスクリプト。利用者がいない時間にも動く。",
         "en": "A script that calls an API or page from outside on a schedule and checks the response. It runs even when no user is around."
       }
+    },
+    {
+      "id": "ttl",
+      "ja": "TTL",
+      "en": "TTL",
+      "firstUse": "14",
+      "definition": {
+        "ja": "time to live。データに付ける有効期限。期限が来たデータをいつ実際に消すかは store によって違い、DynamoDB では数日後になることがある。",
+        "en": "Time to live: an expiry attached to a piece of data. When expired data is actually removed depends on the store; in DynamoDB it can be days later."
+      }
+    },
+    {
+      "id": "rate-limit",
+      "ja": "rate limit",
+      "en": "rate limit",
+      "firstUse": "14",
+      "definition": {
+        "ja": "ある利用者が一定時間に呼べる回数の上限。数える場所が全員に共有されていて、数えて比べる操作が 1 ステップでないと守れない。",
+        "en": "A cap on how many calls one caller may make in a period. It holds only if the counter is shared by everyone and counting and comparing are a single step."
+      }
+    },
+    {
+      "id": "fixed-window",
+      "ja": "固定窓",
+      "en": "fixed window",
+      "firstUse": "14",
+      "definition": {
+        "ja": "時間を決まった長さの区間に切り、区間ごとに回数を数える rate limit の方式。区間の境目をまたぐと、短い時間に上限の 2 倍まで通る。",
+        "en": "A rate limit that cuts time into equal periods and counts per period. Around a boundary it lets up to twice the limit through in a short time."
+      }
+    },
+    {
+      "id": "sliding-window",
+      "ja": "滑る窓",
+      "en": "sliding window",
+      "firstUse": "14",
+      "definition": {
+        "ja": "直前の区間の回数を、いまの時刻から見てまだ窓に入っている割合だけ数に入れる rate limit の方式。境目での 2 倍を防ぐ。",
+        "en": "A rate limit that also counts the previous period, in proportion to how much of it the window still covers. It prevents the doubling at a boundary."
+      }
+    },
+    {
+      "id": "atomic-counter",
+      "ja": "原子的な加算",
+      "en": "atomic counter",
+      "firstUse": "14",
+      "definition": {
+        "ja": "読んでから書くのではなく、「1 足す」を store の中の 1 ステップとして行う更新。同時に来た加算が失われない。",
+        "en": "An update that adds one as a single step inside the store instead of reading and then writing, so concurrent increments are not lost."
+      }
+    },
+    {
+      "id": "valkey",
+      "ja": "Valkey",
+      "en": "Valkey",
+      "firstUse": "14",
+      "definition": {
+        "ja": "メモリ上の key-value サーバー。Redis がライセンスを変える直前のオープンソース版から分かれたプロジェクトで、ElastiCache のエンジンの 1 つ。",
+        "en": "An in-memory key-value server, forked from open source Redis right before its license changed, and one of the engines ElastiCache runs."
+      }
+    },
+    {
+      "id": "ecpu",
+      "ja": "ECPU",
+      "en": "ECPU",
+      "firstUse": "14",
+      "definition": {
+        "ja": "ElastiCache Processing Unit。ElastiCache Serverless のリクエストの課金単位。単純な読み書きは、転送した 1 KB あたり 1 ECPU。",
+        "en": "ElastiCache Processing Unit: the billing unit for requests to ElastiCache Serverless. A simple read or write uses 1 ECPU per KB transferred."
+      }
+    },
+    {
+      "id": "read-through-cache",
+      "ja": "read-through cache",
+      "en": "read-through cache",
+      "firstUse": "14",
+      "definition": {
+        "ja": "まず cache を読み、無ければ元データを読んで cache に入れる読み方。正しいのは常に元データで、cache はその写し。",
+        "en": "Reading the cache first and, on a miss, reading the source of truth and storing a copy. The source is always right; the cache is a copy."
+      }
+    },
+    {
+      "id": "stale-read",
+      "ja": "stale read",
+      "en": "stale read",
+      "firstUse": "14",
+      "definition": {
+        "ja": "元データが変わったあとに、古い写しを読むこと。cache を使うかぎり起きるので、どれだけ古くてよいかを先に決める。",
+        "en": "Reading an old copy after the source changed. It happens whenever there is a cache, so decide beforehand how old is acceptable."
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "ja": "cache stampede",
+      "en": "cache stampede",
+      "firstUse": "14",
+      "definition": {
+        "ja": "cache が切れた瞬間に、多数のリクエストが同時に miss して、全員が元データへ取りに行くこと。",
+        "en": "Many requests missing at the moment an entry expires, and all of them going to the source of truth at once."
+      }
+    },
+    {
+      "id": "single-flight",
+      "ja": "single flight",
+      "en": "single flight",
+      "firstUse": "14",
+      "definition": {
+        "ja": "同じ key の読み込みが進行中なら、新しく始めずにその結果を待つこと。効くのは 1 つのプロセスの中だけ。",
+        "en": "Waiting for a load of the same key that is already in progress instead of starting another. It works within one process only."
+      }
     }
   ]
 }

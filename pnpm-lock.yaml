@@ -453,6 +453,55 @@ importers:
         specifier: 1.1.0
         version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
 
+  examples/14-kv-cache:
+    dependencies:
+      '@aws-crypto/sha256-js':
+        specifier: 5.2.0
+        version: 5.2.0
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.85
+        version: 3.972.85
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      '@smithy/signature-v4':
+        specifier: 5.7.4
+        version: 5.7.4
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      hono:
+        specifier: 4.13.13
+        version: 4.13.13
+      iovalkey:
+        specifier: 0.4.0
+        version: 0.4.0
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@hono/node-server':
+        specifier: 2.1.4
+        version: 2.1.4(hono@4.13.13)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
   examples/15-email:
     dependencies:
       '@aws-sdk/client-dynamodb':
@@ -1772,6 +1821,9 @@ packages:
 
   '@ioredis/commands@1.10.0':
     resolution: {integrity: sha512-UmeW7z4LfctwoQ5wkhVzgq8tXkreED2xZGpX+Bg+zA+WJFZCT6c062AfCK/Dfk81xZnnwdhJCUMkitihRaoC2Q==}
+
+  '@iovalkey/commands@0.1.0':
+    resolution: {integrity: sha512-/B9W4qKSSITDii5nkBCHyPkIkAi+ealUtr1oqBJsLxjSRLka4pxun2VvMNSmcwgAMxgXtQfl0qRv7TE+udPJzg==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -5465,6 +5517,10 @@ packages:
     resolution: {integrity: sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A==}
     engines: {node: '>=12.22.0'}
 
+  iovalkey@0.4.0:
+    resolution: {integrity: sha512-OSUKxJ+s44CLdUTaicX4+pVrBN/zHKIYwr2oKhRDuczr19FwcSCXEZHzcMUYWZNh1mNSCV9bNJHW/T6cHVm9Aw==}
+    engines: {node: '>=18.12.0'}
+
   iron-webcrypto@1.2.1:
     resolution: {integrity: sha512-feOM6FaSr6rEABp/eDfVseKyTMDt+KGpeB35SkVn9Tyn0CqvVsY3EwI0v5i8nMHyJnzCIQf7nsy3p41TPkJZhg==}
 
@@ -5754,6 +5810,12 @@ packages:
 
   lodash-es@4.18.1:
     resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
+
+  lodash.defaults@4.2.0:
+    resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
+
+  lodash.isarguments@3.1.0:
+    resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
 
   lodash.truncate@4.4.2:
     resolution: {integrity: sha512-jttmRe7bRse52OsWIMDLaXxWqRAmtIUccAQ3garviCqJjafXOfNMO0yMfNpdD6zbGaTU0P5Nz7e7gAT6cKmJRw==}
@@ -9510,6 +9572,8 @@ snapshots:
 
   '@ioredis/commands@1.10.0': {}
 
+  '@iovalkey/commands@0.1.0': {}
+
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -13096,6 +13160,20 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  iovalkey@0.4.0:
+    dependencies:
+      '@iovalkey/commands': 0.1.0
+      cluster-key-slot: 1.1.1
+      debug: 4.4.3
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+
   iron-webcrypto@1.2.1: {}
 
   iron-webcrypto@2.0.0:
@@ -13314,6 +13392,10 @@ snapshots:
       quansync: 0.2.11
 
   lodash-es@4.18.1: {}
+
+  lodash.defaults@4.2.0: {}
+
+  lodash.isarguments@3.1.0: {}
 
   lodash.truncate@4.4.2: {}
 

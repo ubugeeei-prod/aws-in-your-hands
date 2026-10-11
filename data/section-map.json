@@ -2121,6 +2121,183 @@
       "boundary": "cloud",
       "criteria": [],
       "verification": "unverified"
+    },
+    {
+      "id": "14.three",
+      "sources": ["examples/14-kv-cache/src/stores.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "14.interface",
+      "sources": ["examples/14-kv-cache/src/stores.ts", "examples/14-kv-cache/test/store-contracts.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "14.rate-limit",
+      "sources": ["examples/14-kv-cache/src/rate-limit.ts", "examples/14-kv-cache/test/rate-limit.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.atomic",
+      "sources": [
+        "examples/14-kv-cache/src/dynamodb-store.ts",
+        "examples/14-kv-cache/test/dynamodb-store.test.ts",
+        "examples/14-kv-cache/test/rate-limit.test.ts"
+      ],
+      "tasks": ["test:unit", "kv:test:local"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.ttl",
+      "sources": ["examples/14-kv-cache/src/dynamodb-store.ts", "examples/14-kv-cache/test/dynamodb-store.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.valkey",
+      "sources": [
+        "examples/14-kv-cache/src/valkey-store.ts",
+        "examples/14-kv-cache/test/valkey-store.test.ts",
+        "examples/14-kv-cache/test/local-stores.test.ts"
+      ],
+      "tasks": ["test:unit", "kv:test:local"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.elasticache",
+      "sources": [
+        "examples/14-kv-cache/src/elasticache-token.ts",
+        "examples/14-kv-cache/src/valkey-client.ts",
+        "examples/14-kv-cache/test/elasticache-token.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.cache",
+      "sources": [
+        "examples/14-kv-cache/src/read-through.ts",
+        "examples/14-kv-cache/src/catalog.ts",
+        "examples/14-kv-cache/test/read-through.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.stampede",
+      "sources": ["examples/14-kv-cache/src/read-through.ts", "examples/14-kv-cache/test/read-through.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.memory",
+      "sources": [
+        "examples/14-kv-cache/src/memory-store.ts",
+        "examples/14-kv-cache/src/lambda.ts",
+        "examples/14-kv-cache/test/memory-store.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.edge",
+      "sources": ["examples/10-edge"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.local",
+      "sources": [
+        "examples/14-kv-cache/src/app.ts",
+        "examples/14-kv-cache/src/compose.ts",
+        "examples/14-kv-cache/src/env.ts",
+        "examples/14-kv-cache/src/dev.ts",
+        "examples/14-kv-cache/scripts/local-stores.ts",
+        "examples/14-kv-cache/scripts/test-local.ts",
+        "examples/14-kv-cache/.env.example"
+      ],
+      "tasks": ["dev:kv", "kv:local:start", "kv:local:migrate", "kv:test:local", "kv:local:stop", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "14.infra",
+      "sources": [
+        "examples/14-kv-cache/infra/lib/kv-cache-stack.ts",
+        "examples/14-kv-cache/infra/bin/app.ts",
+        "examples/14-kv-cache/infra/test/kv-cache-stack.test.ts",
+        "examples/14-kv-cache/cdk.json"
+      ],
+      "tasks": ["kv:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "14.deploy",
+      "sources": ["examples/14-kv-cache/scripts/smoke.ts", "examples/14-kv-cache/scripts/logs.ts"],
+      "tasks": ["kv:infra:diff", "kv:infra:deploy", "kv:smoke", "kv:logs", "kv:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.choose",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "14.cleanup",
+      "sources": ["examples/14-kv-cache/infra/lib/kv-cache-stack.ts"],
+      "tasks": ["kv:infra:destroy", "kv:local:stop"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

@@ -16,5 +16,6 @@
   "examples/13-sql",
   "examples/07-uploads",
   "examples/09-ssr",
-  "examples/19-observability"
+  "examples/19-observability",
+  "examples/14-kv-cache"
 ]

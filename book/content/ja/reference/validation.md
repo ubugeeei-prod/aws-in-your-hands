@@ -104,6 +104,12 @@ generated: true
 | 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | DynamoDB の table、Lambda、HTTP API、SNS の topic、アラーム 2 つ、ダッシュボード、metric filter を作る。ダッシュボードと metric filter は cdkd が Cloud Control API 経由で扱う |
 | 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | 未実行 | - | デプロイ済みの stack が必要。obs:smoke はノートを 1 件作って消す。obs:query は走査したログの量に課金される |
 | 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | 未実行 | - | AWS Lambda Layer for OpenTelemetry を付けた構成。Node.js 24 の runtime はこの layer の対応一覧に無い |
+| 14 | `vp run test:unit (examples/14-kv-cache)` | ローカル | 成功 | 2026-10-12 | rate limiter の境界と同時実行、store の contract（メモリ）、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、stampede、TTL の揺らぎ、IAM 認証 token の署名、アプリ、stack の assertion |
+| 14 | `vp run kv:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成と `-c store=valkey` の両方で synth した（esbuild の bundle 込み） |
+| 14 | `vp run dev:kv` | ローカル | 成功 | 2026-10-12 | KV_STORE を memory、valkey、dynamodb にして起動し、本文の curl を実行した。valkey と dynamodb は下の行の手元のサーバーに対して |
+| 14 | `node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)` | ローカル | 成功 | 2026-10-12 | store の contract 22 件を、nixpkgs の valkey-server 9.1.2 と、AWS が配布する DynamoDB Local 3.3.1（jar を JRE 21 で起動）に対して実行した。Docker の daemon が無かったので、コンテナではなくプロセスとして起動している |
+| 14 | `vp run kv:local:start / kv:local:stop` | ローカル | 未実行 | - | Docker の daemon が無く実行していない。valkey/valkey:9.0.6-alpine と amazon/dynamodb-local:3.3.1 の image は取得も起動もしていない |
+| 14 | `vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs` | AWS | 未実行 | - | DynamoDB の table、Lambda、HTTP API を作る。`-c store=valkey` では、置いてあるだけで課金される ElastiCache Serverless の cache も作る |
 
 ## 未解決事項と再開手順
 
@@ -370,3 +376,21 @@ cdkd 0.296.28 は AWS::CloudWatch::Dashboard と AWS::Logs::MetricFilter を Clo
 ダッシュボードの単価（4 つ目から）、Lambda が JSON 形式で書くシステムログの大きさ、layer 経由で送った span が X-Ray の trace として課金されるのかを確認できていない。
 
 再開手順: 料金ページを JavaScript が動くブラウザで開いてダッシュボードの単価を読む。デプロイ後、Logs Insights で 1 リクエストあたりの @message の合計バイト数を測り、data/fragments/19.json の仮定を直す。数日後に Cost Explorer の usage type を見る。
+
+### 14-deploy
+
+14章の stack を AWS に一度も deploy していない。DynamoDB の条件付き `ADD` が実物で同時の増分を失わないこと、TTL で item が消えるまでの実際の時間、Lambda の実行環境が増えたときの memory 版の振る舞い、cdkd 0.296.28 での作成と削除が未確認。
+
+再開手順: `vp run kv:infra:deploy` のあと `vp run kv:smoke` を実行し、6 回目が 429 になることを確かめる。`vp run kv:infra:drift` を実行し、最後に `vp run kv:infra:destroy`。
+
+### 14-elasticache
+
+ElastiCache Serverless（public endpoint）には一度もつないでいない。未確認: CloudFormation と Cloud Control API が `ConnectionType: public` と `UserGroupId: default.iam-user-group` を受け付けること、`CacheUsageLimits` の ECPU の上限 1,000 が有効な値であること、自作の SigV4 token を ElastiCache が受け付けること、iovalkey の `Cluster` が public endpoint で cluster の構成を読めること、TLS 1.3 での接続、script（EVAL）の ECPU 消費、cache の作成と削除にかかる時間。
+
+再開手順: 料金がかかることを承知のうえで `vp run kv:infra:deploy -c store=valkey` を実行する。`vp run kv:smoke` で store が `elasticache` と表示され、6 回目が 429 になることを確かめる。失敗したら `vp run kv:logs` で `valkey connection error`、`cache store failed`、`rate limiter failed` を探し、公式の「Connect to a cache with a public endpoint」の Troubleshooting と照らす。終わったらすぐ `vp run kv:infra:destroy -c store=valkey`。
+
+### 14-docker
+
+`vp run kv:local:start` と `kv:local:stop`（Docker のコンテナで Valkey と DynamoDB Local を起動・停止する）を実行していない。contract test そのものは、同じ版の DynamoDB Local と、Valkey 9.1.2 のプロセスに対して通っている。
+
+再開手順: Docker の daemon を起動し、`examples/14-kv-cache/.env.example` を `.env` にコピーして、`vp run kv:local:start`、`vp run kv:local:migrate`、`vp run kv:test:local`、`vp run kv:local:stop` の順に実行する。

@@ -1,0 +1,1036 @@
+{
+  "chapterId": "14",
+  "manifest": {
+    "id": "14",
+    "slug": "kv-cache",
+    "title": {
+      "ja": "key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定",
+      "en": "Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration"
+    },
+    "prerequisites": ["05", "10", "11"],
+    "services": ["DynamoDB", "ElastiCache", "CloudFront KeyValueStore", "Lambda", "API Gateway HTTP API", "IAM"],
+    "samplePath": "examples/14-kv-cache",
+    "writing": { "ja": "complete", "en": "complete" },
+    "sourceRevision": 1,
+    "translatedRevision": { "en": 1 },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "dynamodb-ttl",
+      "dynamodb-ttl-expired-items",
+      "dynamodb-working-with-items",
+      "dynamodb-update-expressions",
+      "dynamodb-constraints",
+      "dynamodb-condition-expressions",
+      "dynamodb-read-consistency",
+      "dynamodb-on-demand",
+      "aws-price-list-dynamodb",
+      "dynamodb-local-download",
+      "dynamodb-local-image",
+      "elasticache-what-is",
+      "elasticache-deployment-options",
+      "elasticache-vpc",
+      "elasticache-public-endpoint-create",
+      "elasticache-public-endpoint-connect",
+      "elasticache-iam-auth",
+      "elasticache-rbac",
+      "elasticache-in-transit-encryption",
+      "elasticache-supported-commands",
+      "elasticache-serverless-scaling",
+      "elasticache-engine-versions",
+      "elasticache-pricing",
+      "aws-price-list-elasticache",
+      "cfn-elasticache-serverlesscache",
+      "cdkd-register-providers-kv",
+      "valkey-readme",
+      "valkey-eval-intro",
+      "valkey-command-set",
+      "valkey-command-expire",
+      "valkey-command-incr",
+      "valkey-container-image",
+      "iovalkey-npm",
+      "valkey-glide-npm",
+      "lambda-execution-environment",
+      "lambda-concurrency",
+      "lambda-vpc",
+      "lambda-runtime-env-vars",
+      "lambda-pricing",
+      "aws-price-list-lambda",
+      "aws-price-list-apigw",
+      "aws-price-list-cloudwatch",
+      "cloudfront-kvs",
+      "cloudfront-kvs-data",
+      "cloudfront-kvs-helper-methods",
+      "cloudfront-quotas",
+      "cloudfront-pricing-payg",
+      "aws-blog-kvs-launch",
+      "cloudflare-kv-how-it-works",
+      "cloudflare-kv-limits",
+      "cloudflare-kv-pricing",
+      "cloudflare-durable-objects-what",
+      "cloudflare-workers-rate-limit-binding",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "dynamodb-ttl-expired-items",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ttl-expired-items.html",
+      "title": "Working with expired items and time to live (TTL)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Expired items that are not filtered keep showing in read and write operations until the background process deletes them",
+        "Expired items still count towards storage and read costs until they are deleted",
+        "A filter expression on the TTL attribute removes expired items from Scan and Query results"
+      ],
+      "note": "The parent page (source dynamodb-ttl) was re-read the same day: deletion is 'within a few days', 'typically within a few days after their expiration'."
+    },
+    {
+      "id": "dynamodb-working-with-items",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html",
+      "title": "Working with items and attributes in DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "UpdateItem can implement an atomic counter: a numeric attribute incremented without interfering with other write requests; all write requests are applied in the order received",
+        "Atomic counter updates are not idempotent, so a retried UpdateItem can overcount; the page recommends a conditional update where miscounting cannot be tolerated",
+        "A conditional write whose condition evaluates to false still consumes write capacity (a minimum of 1 unit)"
+      ]
+    },
+    {
+      "id": "dynamodb-update-expressions",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.UpdateExpressions.html",
+      "title": "Using update expressions in DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ADD mathematically adds a number to an existing Number attribute, and sets the attribute to that number when it does not exist",
+        "ADD supports only number and set data types",
+        "An update expression can combine SET and ADD clauses"
+      ]
+    },
+    {
+      "id": "dynamodb-local-download",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html",
+      "title": "Deploying DynamoDB locally on your computer",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "DynamoDB Local is available as a downloadable archive with a published SHA-256 checksum, and as a Docker image",
+        "The downloadable version needs a Java Runtime Environment 17.x or newer"
+      ],
+      "note": "The archive linked from this page was downloaded, its checksum compared, and run as version 3.3.1 for the store contract tests."
+    },
+    {
+      "id": "elasticache-what-is",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.html",
+      "title": "What is Amazon ElastiCache?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ElastiCache runs in two formats: serverless caches and node-based clusters, with the Valkey, Memcached, and Redis OSS engines",
+        "ElastiCache Serverless supports two connection types, VPC and Public; a public endpoint is reached over the internet without a VPC and requires IAM authentication and TLS 1.3 for every connection",
+        "The connection type is chosen when the cache is created",
+        "ElastiCache Serverless is compatible with Valkey 7.2 and later, Memcached 1.6.22 and later, and Redis OSS 7.1; public endpoints need Valkey 9.0 or later"
+      ]
+    },
+    {
+      "id": "elasticache-deployment-options",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.deployment.html",
+      "title": "Choosing between deployment options",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Serverless operates engines in cluster mode enabled only; clients must support cluster mode",
+        "Serverless: clients connect to a single endpoint; encryption in transit and at rest are always enabled",
+        "Serverless: data is replicated asynchronously across multiple Availability Zones; durability (the Multi-AZ transactional log) is not supported",
+        "Node-based clusters: public endpoints are not supported; pricing is per node-hour, while serverless is billed for data stored in GB-hours and requests in ECPUs",
+        "Serverless configuration is limited to basic settings such as subnets, backups, and maximum cache usage limits"
+      ]
+    },
+    {
+      "id": "elasticache-public-endpoint-create",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/serverless-public-endpoints-chapter.html",
+      "title": "Create a Valkey serverless cache with a public endpoint",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Public endpoints are available on ElastiCache Serverless for Valkey 9.0 or later",
+        "ElastiCache provides a system-managed IAM user (default.iam-user) and user group (default.iam-user-group); a custom group must contain only users that authenticate with IAM",
+        "The CLI example creates the cache with --engine valkey --major-engine-version 9 --connection-type public --user-group-id default.iam-user-group",
+        "The ability to create public caches can be restricted with the elasticache:ConnectionType condition key"
+      ]
+    },
+    {
+      "id": "elasticache-public-endpoint-connect",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/connecting-public-endpoint.html",
+      "title": "Connect to a cache with a public endpoint",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "All public endpoint connections require IAM authentication and TLS 1.3",
+        "The caller needs elasticache:Connect on both the serverless cache ARN and the ElastiCache user ARN",
+        "Three ways to produce the token: the GLIDE client, the Developer Toolkit for ElastiCache (Python), or manual SigV4 signing",
+        "Tokens are valid for 15 minutes; with the toolkit or manual signing a new token is generated for each new connection; expiry does not affect established connections; a token signed with temporary credentials expires with them if sooner",
+        "Connections expire after 12 hours; revoking elasticache:Connect does not disconnect active sessions",
+        "Troubleshooting: WRONGPASS (expired token, wrong user, missing permission, cache name not lowercase), NOAUTH when a client sends a command before authenticating, TLS handshake failure without TLS 1.3"
+      ]
+    },
+    {
+      "id": "elasticache-iam-auth",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/auth-iam.html",
+      "title": "Authenticating with IAM",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IAM authentication passes a short-lived token instead of a password in AUTH or HELLO; it needs Valkey 7.2 or above (or Redis OSS 7.0 or above) and in-transit encryption",
+        "The token is a SigV4 pre-signed GET request to http://<cache name>/ with query parameters Action=connect, User=<user id>, and ResourceType=ServerlessCache for serverless caches, signed for service elasticache with a 900-second expiry, with the http:// prefix removed",
+        "For IAM-enabled users the user name and user ID must be identical",
+        "Cache names are lowercased at creation, and the signing code must use the lowercase name",
+        "An IAM-authenticated connection is disconnected after 12 hours unless re-authenticated",
+        "GLIDE 2.2 and later generate, cache, and refresh the token themselves"
+      ],
+      "note": "The reference implementation on the page is Java. The sample's TypeScript signer follows it and was never presented to ElastiCache."
+    },
+    {
+      "id": "elasticache-rbac",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Clusters.RBAC.html",
+      "title": "Role-Based Access Control (RBAC)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ElastiCache users carry an access string and belong to user groups, which are attached to caches",
+        "ElastiCache configures a default user with full access; the page tells you to replace it with one that is disabled or has a strong password",
+        "The nopass option is not recommended"
+      ]
+    },
+    {
+      "id": "elasticache-in-transit-encryption",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption.html",
+      "title": "ElastiCache in-transit encryption (TLS)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "All serverless caches have in-transit encryption enabled; node-based clusters can turn it on or off",
+        "Caches with a public endpoint require TLS 1.3"
+      ]
+    },
+    {
+      "id": "elasticache-supported-commands",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/SupportedCommands.html",
+      "title": "Supported and restricted Valkey, Memcached, and Redis OSS commands",
+      "checkedAt": "2026-10-12",
+      "supports": ["EVAL and EVALSHA are listed among the commands supported by serverless caches"]
+    },
+    {
+      "id": "elasticache-serverless-scaling",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Scaling-serverless.html",
+      "title": "Scaling ElastiCache Serverless clusters",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A maximum can be set on cache data storage and on ECPUs per second to control cost",
+        "At the storage maximum ElastiCache evicts keys that have a TTL, and writes fail with an out-of-memory error when nothing can be evicted; above the ECPU maximum requests are throttled",
+        "A minimum usage limit is billed even when actual usage is lower"
+      ],
+      "note": "Neither this page nor the API reference pages for DataStorage and ECPUPerSecond state the smallest accepted maximum. The stack's ECPU maximum of 1,000 is the value the page uses in its CLI example for a minimum."
+    },
+    {
+      "id": "elasticache-engine-versions",
+      "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/engine-versions.html",
+      "title": "Engine versions and upgrading in ElastiCache",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "All features available with Redis OSS 7.2 are available in Valkey 7.2 and above",
+        "Some existing ElastiCache for Redis OSS engines can be upgraded to a Valkey engine",
+        "ElastiCache versions 9.0 and 9.1 for Valkey exist"
+      ]
+    },
+    {
+      "id": "elasticache-pricing",
+      "url": "https://aws.amazon.com/elasticache/pricing/",
+      "title": "Amazon ElastiCache pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Serverless is billed for data stored (GB-hours, from an hourly average) and for ECPUs; a read or write uses 1 ECPU per KB transferred, and commands needing more vCPU time use proportionally more",
+        "Minimum metered data storage is 100 MB per cache for ElastiCache Serverless for Valkey and 1 GB for Memcached and Redis OSS",
+        "Billing starts when a serverless cache becomes available and continues until it is deleted",
+        "Accounts created before 2025-07-15 get 750 hours of cache.t3.micro for 12 months, which excludes ElastiCache Serverless; newer accounts get credits instead",
+        "Serverless with a public endpoint: no data transfer charge on the cache side, and USD 0.01 per GB in or out of the application within the same Region",
+        "Valkey is priced 33% lower than the other engines on Serverless and 20% lower on nodes"
+      ],
+      "note": "The price tables on the page are rendered by script and were not read; unit prices come from the Price List."
+    },
+    {
+      "id": "aws-price-list-elasticache",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: ElastiCache, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with offerCode AmazonElastiCache",
+        "Serverless Valkey in Tokyo: USD 0.101 per GB-hour stored and USD 0.0027 per million ECPUs",
+        "A cache.t4g.micro node running Valkey in Tokyo: USD 0.02 per node-hour"
+      ]
+    },
+    {
+      "id": "cfn-elasticache-serverlesscache",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-elasticache-serverlesscache.html",
+      "title": "AWS::ElastiCache::ServerlessCache",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Properties include CacheUsageLimits, ConnectionType (vpc | public, default vpc, replacement on change), Engine (valkey | redis | memcached), MajorEngineVersion (an integer such as 9), ServerlessCacheName (required, at most 40 characters), UserGroupId, SubnetIds, SecurityGroupIds, FinalSnapshotName, and SnapshotRetentionLimit",
+        "Fn::GetAtt returns ARN, Endpoint.Address, and Endpoint.Port",
+        "CacheUsageLimits holds DataStorage (Maximum, Minimum, Unit = GB) and ECPUPerSecond (Maximum, Minimum)"
+      ],
+      "note": "aws-cdk-lib 2.273.0 exposes the same properties on CfnServerlessCache, including connectionType."
+    },
+    {
+      "id": "cdkd-register-providers-kv",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: src/provisioning/register-providers.ts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dedicated providers are registered for AWS::DynamoDB::Table, AWS::Logs::LogGroup, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::IAM::Role, AWS::IAM::Policy, and the AWS::ApiGatewayV2 types the chapter 14 stack uses",
+        "For ElastiCache only AWS::ElastiCache::SubnetGroup and AWS::ElastiCache::CacheCluster have a dedicated provider; AWS::ElastiCache::ServerlessCache has none and is handled through Cloud Control API"
+      ],
+      "note": "src/provisioning/stateful-types.ts at the same tag lists AWS::ElastiCache::ServerlessCache as a stateful type. Both were also confirmed in the bundled dist of the npm tarball."
+    },
+    {
+      "id": "valkey-readme",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/README.md",
+      "title": "valkey-io/valkey README",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Valkey was forked from the open source Redis project right before the transition to its new source-available licenses",
+        "Valkey is a data structure server that primarily serves key/value workloads"
+      ]
+    },
+    {
+      "id": "valkey-eval-intro",
+      "url": "https://valkey.io/topics/eval-intro/",
+      "title": "Valkey: Scripting with Lua",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Valkey guarantees a script's atomic execution; all server activities are blocked while it runs",
+        "Every key a script accesses must be passed explicitly as a key argument, in standalone and clustered deployments alike"
+      ]
+    },
+    {
+      "id": "valkey-command-set",
+      "url": "https://valkey.io/commands/set/",
+      "title": "Valkey command: SET",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "PXAT sets the Unix time in milliseconds at which the key expires; NX sets the key only if it does not exist",
+        "SET key value NX with an expiry is described as a simple way to implement a lock"
+      ]
+    },
+    {
+      "id": "valkey-command-expire",
+      "url": "https://valkey.io/commands/expire/",
+      "title": "Valkey command: EXPIRE",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The expire error is from 0 to 1 milliseconds",
+        "Expired keys are reclaimed on access and by a background cycle; a key found to be timed out on access is deleted at that moment"
+      ]
+    },
+    {
+      "id": "valkey-command-incr",
+      "url": "https://valkey.io/commands/incr/",
+      "title": "Valkey command: INCR",
+      "checkedAt": "2026-10-12",
+      "supports": ["INCR is an atomic increment; the page describes the counter and rate limiter patterns built on it"]
+    },
+    {
+      "id": "valkey-container-image",
+      "url": "https://hub.docker.com/r/valkey/valkey/tags",
+      "title": "valkey/valkey container image tags (Docker Hub)",
+      "checkedAt": "2026-10-12",
+      "supports": ["Tag 9.0.6-alpine exists (last updated 2026-09-21)"],
+      "note": "Read through the Docker Hub tags API. The image was not pulled or run; the contract tests ran against valkey-server 9.1.2 from nixpkgs instead."
+    },
+    {
+      "id": "iovalkey-npm",
+      "url": "https://www.npmjs.com/package/iovalkey/v/0.4.0",
+      "title": "iovalkey 0.4.0 (npm registry metadata and tarball)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "0.4.0 was the latest version, published 2026-07-27, MIT, with no native or platform-specific dependencies",
+        "Exports Redis (also as Valkey) and Cluster; RedisOptions.username and password are plain strings",
+        "On connect, AUTH is sent before any other command when a password is set (built/redis/event_handler.js)",
+        "The README recommends dnsLookup: (address, callback) => callback(null, address) with redisOptions.tls for ElastiCache clusters with TLS",
+        "valkey:// and valkeys:// URLs are accepted"
+      ]
+    },
+    {
+      "id": "valkey-glide-npm",
+      "url": "https://www.npmjs.com/package/@valkey/valkey-glide/v/2.5.3",
+      "title": "@valkey/valkey-glide 2.5.3 (npm registry metadata)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "2.5.3 was the latest version, published 2026-09-24, Apache-2.0",
+        "Its native code ships as optional dependencies per platform: darwin-x64, darwin-arm64, linux-x64-gnu, linux-x64-musl, linux-arm64-gnu, linux-arm64-musl"
+      ],
+      "note": "Only the registry metadata was read. The package was not installed, and its IAM configuration for Node.js was not checked against its types."
+    },
+    {
+      "id": "lambda-execution-environment",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html",
+      "title": "Understanding the Lambda execution environment lifecycle",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "After an invocation Lambda freezes the execution environment and keeps it for some time in anticipation of another invocation",
+        "Lambda terminates execution environments every few hours for runtime updates and maintenance, even for functions invoked continuously",
+        "Objects declared outside the handler stay initialized when the environment is reused"
+      ]
+    },
+    {
+      "id": "lambda-concurrency",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-concurrency.html",
+      "title": "Understanding Lambda function scaling",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Concurrency is the number of in-flight requests a function handles at the same time; for each concurrent request Lambda provisions a separate instance of the execution environment"
+      ]
+    },
+    {
+      "id": "cloudflare-kv-pricing",
+      "url": "https://developers.cloudflare.com/kv/platform/pricing/",
+      "title": "Cloudflare Workers KV: Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Workers KV is included in the Free and Paid Workers plans",
+        "Free: 100,000 reads, 1,000 writes, 1,000 deletes, 1,000 list requests per day, and 1 GB stored",
+        "Paid: 10 million reads and 1 million writes a month included, then USD 0.50 per million reads and USD 5.00 per million writes; 1 GB stored included, then USD 0.50 per GB-month"
+      ],
+      "note": "The pages 'How KV works' (source cloudflare-kv-how-it-works) and 'Limits' (cloudflare-kv-limits) were re-read the same day; the statements recorded there still stand, and How KV works also says KV is not ideal where atomic operations are needed and points to Durable Objects."
+    },
+    {
+      "id": "cloudflare-durable-objects-what",
+      "url": "https://developers.cloudflare.com/durable-objects/concepts/what-are-durable-objects/",
+      "title": "Cloudflare: What are Durable Objects?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Each Durable Object has a globally unique name and is single-threaded",
+        "Each has its own durable, transactional, strongly consistent storage, accessible only within that object",
+        "In-memory state is reset when the object hibernates after being idle"
+      ]
+    },
+    {
+      "id": "cloudflare-workers-rate-limit-binding",
+      "url": "https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/",
+      "title": "Cloudflare Workers: Rate Limiting binding",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A rate limit is defined by a limit and a period of 10 or 60 seconds",
+        "Limits are local to the Cloudflare location the Worker runs in",
+        "The API is described as permissive, eventually consistent, and not intended as an accurate accounting system"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "ttl",
+      "ja": "TTL",
+      "en": "TTL",
+      "firstUse": "14",
+      "definition": {
+        "ja": "time to live。データに付ける有効期限。期限が来たデータをいつ実際に消すかは store によって違い、DynamoDB では数日後になることがある。",
+        "en": "Time to live: an expiry attached to a piece of data. When expired data is actually removed depends on the store; in DynamoDB it can be days later."
+      }
+    },
+    {
+      "id": "rate-limit",
+      "ja": "rate limit",
+      "en": "rate limit",
+      "firstUse": "14",
+      "definition": {
+        "ja": "ある利用者が一定時間に呼べる回数の上限。数える場所が全員に共有されていて、数えて比べる操作が 1 ステップでないと守れない。",
+        "en": "A cap on how many calls one caller may make in a period. It holds only if the counter is shared by everyone and counting and comparing are a single step."
+      }
+    },
+    {
+      "id": "fixed-window",
+      "ja": "固定窓",
+      "en": "fixed window",
+      "firstUse": "14",
+      "definition": {
+        "ja": "時間を決まった長さの区間に切り、区間ごとに回数を数える rate limit の方式。区間の境目をまたぐと、短い時間に上限の 2 倍まで通る。",
+        "en": "A rate limit that cuts time into equal periods and counts per period. Around a boundary it lets up to twice the limit through in a short time."
+      }
+    },
+    {
+      "id": "sliding-window",
+      "ja": "滑る窓",
+      "en": "sliding window",
+      "firstUse": "14",
+      "definition": {
+        "ja": "直前の区間の回数を、いまの時刻から見てまだ窓に入っている割合だけ数に入れる rate limit の方式。境目での 2 倍を防ぐ。",
+        "en": "A rate limit that also counts the previous period, in proportion to how much of it the window still covers. It prevents the doubling at a boundary."
+      }
+    },
+    {
+      "id": "atomic-counter",
+      "ja": "原子的な加算",
+      "en": "atomic counter",
+      "firstUse": "14",
+      "definition": {
+        "ja": "読んでから書くのではなく、「1 足す」を store の中の 1 ステップとして行う更新。同時に来た加算が失われない。",
+        "en": "An update that adds one as a single step inside the store instead of reading and then writing, so concurrent increments are not lost."
+      }
+    },
+    {
+      "id": "valkey",
+      "ja": "Valkey",
+      "en": "Valkey",
+      "firstUse": "14",
+      "definition": {
+        "ja": "メモリ上の key-value サーバー。Redis がライセンスを変える直前のオープンソース版から分かれたプロジェクトで、ElastiCache のエンジンの 1 つ。",
+        "en": "An in-memory key-value server, forked from open source Redis right before its license changed, and one of the engines ElastiCache runs."
+      }
+    },
+    {
+      "id": "ecpu",
+      "ja": "ECPU",
+      "en": "ECPU",
+      "firstUse": "14",
+      "definition": {
+        "ja": "ElastiCache Processing Unit。ElastiCache Serverless のリクエストの課金単位。単純な読み書きは、転送した 1 KB あたり 1 ECPU。",
+        "en": "ElastiCache Processing Unit: the billing unit for requests to ElastiCache Serverless. A simple read or write uses 1 ECPU per KB transferred."
+      }
+    },
+    {
+      "id": "read-through-cache",
+      "ja": "read-through cache",
+      "en": "read-through cache",
+      "firstUse": "14",
+      "definition": {
+        "ja": "まず cache を読み、無ければ元データを読んで cache に入れる読み方。正しいのは常に元データで、cache はその写し。",
+        "en": "Reading the cache first and, on a miss, reading the source of truth and storing a copy. The source is always right; the cache is a copy."
+      }
+    },
+    {
+      "id": "stale-read",
+      "ja": "stale read",
+      "en": "stale read",
+      "firstUse": "14",
+      "definition": {
+        "ja": "元データが変わったあとに、古い写しを読むこと。cache を使うかぎり起きるので、どれだけ古くてよいかを先に決める。",
+        "en": "Reading an old copy after the source changed. It happens whenever there is a cache, so decide beforehand how old is acceptable."
+      }
+    },
+    {
+      "id": "cache-stampede",
+      "ja": "cache stampede",
+      "en": "cache stampede",
+      "firstUse": "14",
+      "definition": {
+        "ja": "cache が切れた瞬間に、多数のリクエストが同時に miss して、全員が元データへ取りに行くこと。",
+        "en": "Many requests missing at the moment an entry expires, and all of them going to the source of truth at once."
+      }
+    },
+    {
+      "id": "single-flight",
+      "ja": "single flight",
+      "en": "single flight",
+      "firstUse": "14",
+      "definition": {
+        "ja": "同じ key の読み込みが進行中なら、新しく始めずにその結果を待つこと。効くのは 1 つのプロセスの中だけ。",
+        "en": "Waiting for a load of the same key that is already in progress instead of starting another. It works within one process only."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "14.three",
+      "sources": ["examples/14-kv-cache/src/stores.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "14.interface",
+      "sources": ["examples/14-kv-cache/src/stores.ts", "examples/14-kv-cache/test/store-contracts.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "14.rate-limit",
+      "sources": ["examples/14-kv-cache/src/rate-limit.ts", "examples/14-kv-cache/test/rate-limit.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.atomic",
+      "sources": [
+        "examples/14-kv-cache/src/dynamodb-store.ts",
+        "examples/14-kv-cache/test/dynamodb-store.test.ts",
+        "examples/14-kv-cache/test/rate-limit.test.ts"
+      ],
+      "tasks": ["test:unit", "kv:test:local"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.ttl",
+      "sources": ["examples/14-kv-cache/src/dynamodb-store.ts", "examples/14-kv-cache/test/dynamodb-store.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.valkey",
+      "sources": [
+        "examples/14-kv-cache/src/valkey-store.ts",
+        "examples/14-kv-cache/test/valkey-store.test.ts",
+        "examples/14-kv-cache/test/local-stores.test.ts"
+      ],
+      "tasks": ["test:unit", "kv:test:local"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.elasticache",
+      "sources": [
+        "examples/14-kv-cache/src/elasticache-token.ts",
+        "examples/14-kv-cache/src/valkey-client.ts",
+        "examples/14-kv-cache/test/elasticache-token.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.cache",
+      "sources": [
+        "examples/14-kv-cache/src/read-through.ts",
+        "examples/14-kv-cache/src/catalog.ts",
+        "examples/14-kv-cache/test/read-through.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.stampede",
+      "sources": ["examples/14-kv-cache/src/read-through.ts", "examples/14-kv-cache/test/read-through.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.memory",
+      "sources": [
+        "examples/14-kv-cache/src/memory-store.ts",
+        "examples/14-kv-cache/src/lambda.ts",
+        "examples/14-kv-cache/test/memory-store.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "14.edge",
+      "sources": ["examples/10-edge"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.local",
+      "sources": [
+        "examples/14-kv-cache/src/app.ts",
+        "examples/14-kv-cache/src/compose.ts",
+        "examples/14-kv-cache/src/env.ts",
+        "examples/14-kv-cache/src/dev.ts",
+        "examples/14-kv-cache/scripts/local-stores.ts",
+        "examples/14-kv-cache/scripts/test-local.ts",
+        "examples/14-kv-cache/.env.example"
+      ],
+      "tasks": ["dev:kv", "kv:local:start", "kv:local:migrate", "kv:test:local", "kv:local:stop", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "14.infra",
+      "sources": [
+        "examples/14-kv-cache/infra/lib/kv-cache-stack.ts",
+        "examples/14-kv-cache/infra/bin/app.ts",
+        "examples/14-kv-cache/infra/test/kv-cache-stack.test.ts",
+        "examples/14-kv-cache/cdk.json"
+      ],
+      "tasks": ["kv:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "14.deploy",
+      "sources": ["examples/14-kv-cache/scripts/smoke.ts", "examples/14-kv-cache/scripts/logs.ts"],
+      "tasks": ["kv:infra:diff", "kv:infra:deploy", "kv:smoke", "kv:logs", "kv:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.choose",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "14.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "14.cleanup",
+      "sources": ["examples/14-kv-cache/infra/lib/kv-cache-stack.ts"],
+      "tasks": ["kv:infra:destroy", "kv:local:stop"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "elasticache.serverless.valkey.storage",
+      "offerCode": "AmazonElastiCache",
+      "region": "ap-northeast-1",
+      "sku": "RT6S4AG9UBCXSSFU",
+      "usageType": "APN1-CachedData:Valkey",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Hours",
+      "tiers": [
+        { "from": 0, "to": null, "usd": "0.1010000000", "description": "$0.101 per GB-hour for Valkey data storage" }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-14T06:37:14Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "elasticache.serverless.valkey.ecpu",
+      "offerCode": "AmazonElastiCache",
+      "region": "ap-northeast-1",
+      "sku": "MY8ZWMDW8MAPP6JV",
+      "usageType": "APN1-ElastiCacheProcessingUnits:Valkey",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ElastiCacheProcessingUnit",
+      "tiers": [{ "from": 0, "to": null, "usd": "0.0000000027", "description": "$0.0027 per million Valkey ECPUs" }],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-14T06:37:14Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "elasticache.node.valkey.t4g-micro",
+      "offerCode": "AmazonElastiCache",
+      "region": "ap-northeast-1",
+      "sku": "4PMS6ZBWYF4R96MA",
+      "usageType": "APN1-NodeUsage:cache.t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0200000000",
+          "description": "$0.02 per T4G Micro Cache node-hour (or partial hour) running Valkey"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-14T06:37:14Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "kv-idle-dynamodb",
+      "chapter": "14",
+      "title": {
+        "ja": "KV と cache: 既定の stack（DynamoDB）を置いたまま、呼ばれない月",
+        "en": "KV and cache: the default stack (DynamoDB), deployed but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ",
+          "table に残るのは期限切れを待つ item だけ。1 MB と多めに仮定",
+          "ElastiCache は作っていない"
+        ],
+        "en": [
+          "No requests",
+          "The table holds only items waiting to expire; 1 MB assumed, generously",
+          "No ElastiCache cache exists"
+        ]
+      },
+      "items": [{ "priceId": "dynamodb.storage", "quantity": 0.001, "basis": "1 MB stored, in GB-month" }]
+    },
+    {
+      "id": "kv-idle-valkey-serverless",
+      "chapter": "14",
+      "title": {
+        "ja": "KV と cache: ElastiCache Serverless（Valkey）を置いたまま、呼ばれない月",
+        "en": "KV and cache: ElastiCache Serverless (Valkey), deployed but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c store=valkey`。cache を 730 時間置いたまま。リクエストゼロ",
+          "保存量は 100 MB 未満。Valkey の最小課金 100 MB（0.1 GB として計算）がかかる",
+          "snapshot なし。データ転送なし"
+        ],
+        "en": [
+          "`-c store=valkey`: the cache left in place for 730 hours with no requests",
+          "Less than 100 MB stored, so the Valkey minimum of 100 MB (computed as 0.1 GB) is metered",
+          "No snapshots, no data transfer"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "elasticache.serverless.valkey.storage",
+          "quantity": 73,
+          "basis": "0.1 GB minimum x 730 hours, in GB-hours"
+        }
+      ]
+    },
+    {
+      "id": "kv-idle-valkey-node",
+      "chapter": "14",
+      "title": {
+        "ja": "比較: node ベースの Valkey（cache.t4g.micro 1 台）を置いたままの月",
+        "en": "For comparison: one node-based Valkey node (cache.t4g.micro) left running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "この章の stack は作らない構成。料金の比較のためだけに計算",
+          "replica なしの 1 node を 730 時間。VPC が要る（VPC 自体は無料）",
+          "backup、データ転送は未算入"
+        ],
+        "en": [
+          "Not something this chapter's stack creates; computed only to compare prices",
+          "One node without a replica for 730 hours. It needs a VPC, which itself is free",
+          "Backups and data transfer are not included"
+        ]
+      },
+      "items": [{ "priceId": "elasticache.node.valkey.t4g-micro", "quantity": 730, "basis": "1 node x 730 hours" }]
+    },
+    {
+      "id": "kv-used-dynamodb",
+      "chapter": "14",
+      "title": {
+        "ja": "KV と cache: DynamoDB 版で月 100 万リクエスト",
+        "en": "KV and cache: one million requests a month on DynamoDB"
+      },
+      "assumptions": {
+        "ja": [
+          "`GET /items` を月 100 万回。すべて rate limit を通る（拒否された分も書き込み 1 単位を消費する）",
+          "rate limit: リクエストごとに UpdateItem 1 回（1 KB 未満、書き込み 1 単位）。固定窓",
+          "cache の読み取り: リクエストごとに結果整合の GetItem 1 回（4 KB 未満、読み取り 0.5 単位）",
+          "cache の詰め直し: TTL 30 秒が切れるたびに必ず 1 回起きると仮定して月 87,600 回。1 回あたり lock の取得・値の書き込み・lock の解放で書き込み 3 単位、取り直しの読み取り 0.5 単位",
+          "Lambda は arm64、256 MB、平均 30 ミリ秒と仮定。ログは 1 リクエスト 0.5 KB",
+          "table の保存量は 1 MB。インターネットへのデータ転送は未算入"
+        ],
+        "en": [
+          "One million `GET /items` a month, all within the rate limit (a refused request consumes one write unit too)",
+          "Rate limit: one UpdateItem per request (under 1 KB, one write unit), fixed window",
+          "Cache read: one eventually consistent GetItem per request (under 4 KB, half a read unit)",
+          "Cache refill: assumed to happen every time the 30-second TTL runs out, 87,600 times a month; each takes three write units (take the lock, write the value, release the lock) and half a read unit for the re-check",
+          "Lambda on arm64 with 256 MB and an assumed average of 30 ms; 0.5 KB of logs per request",
+          "1 MB stored in the table. Data transfer out to the internet is not included"
+        ]
+      },
+      "items": [
+        { "priceId": "apigw.http.request", "quantity": 1000000, "basis": "1,000,000 requests" },
+        { "priceId": "lambda.request.arm", "quantity": 1000000, "basis": "1,000,000 invocations" },
+        { "priceId": "lambda.duration.arm", "quantity": 7500, "basis": "1,000,000 x 0.03 s x 0.25 GB" },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 1262800,
+          "basis": "1,000,000 counter updates + 87,600 refills x 3 writes"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 543800,
+          "basis": "(1,000,000 + 87,600) eventually consistent reads x 0.5"
+        },
+        { "priceId": "dynamodb.storage", "quantity": 0.001, "basis": "1 MB stored, in GB-month" },
+        { "priceId": "logs.ingest.standard", "quantity": 0.476837, "basis": "1,000,000 x 0.5 KB, in GB" },
+        { "priceId": "logs.storage", "quantity": 0.111, "basis": "about 7 days of logs kept, in GB-month" }
+      ]
+    },
+    {
+      "id": "kv-used-valkey",
+      "chapter": "14",
+      "title": {
+        "ja": "KV と cache: ElastiCache Serverless（Valkey）版で月 100 万リクエスト",
+        "en": "KV and cache: one million requests a month on ElastiCache Serverless (Valkey)"
+      },
+      "assumptions": {
+        "ja": [
+          "`GET /items` を月 100 万回",
+          "保存量は 100 MB 未満。最小課金 100 MB（0.1 GB として計算）を 730 時間",
+          "1 リクエストあたり 10 ECPU と多めに仮定。script（EVAL）が実際に何 ECPU を消費するかは計測していない",
+          "Lambda は arm64、256 MB、平均 30 ミリ秒と仮定。ログは 1 リクエスト 0.5 KB",
+          "public endpoint へのデータ転送（アプリ側で 1 GB あたり USD 0.01）と、インターネットへのデータ転送は未算入",
+          "DynamoDB の table は stack に残るが、この構成では読み書きしない"
+        ],
+        "en": [
+          "One million `GET /items` a month",
+          "Less than 100 MB stored: the 100 MB minimum (computed as 0.1 GB) for 730 hours",
+          "10 ECPUs per request assumed, on the generous side; how many ECPUs a script (EVAL) really uses was not measured",
+          "Lambda on arm64 with 256 MB and an assumed average of 30 ms; 0.5 KB of logs per request",
+          "Data transfer to the public endpoint (USD 0.01 per GB on the application side) and out to the internet is not included",
+          "The DynamoDB table stays in the stack but is not read or written in this setup"
+        ]
+      },
+      "items": [
+        { "priceId": "apigw.http.request", "quantity": 1000000, "basis": "1,000,000 requests" },
+        { "priceId": "lambda.request.arm", "quantity": 1000000, "basis": "1,000,000 invocations" },
+        { "priceId": "lambda.duration.arm", "quantity": 7500, "basis": "1,000,000 x 0.03 s x 0.25 GB" },
+        {
+          "priceId": "elasticache.serverless.valkey.storage",
+          "quantity": 73,
+          "basis": "0.1 GB minimum x 730 hours, in GB-hours"
+        },
+        {
+          "priceId": "elasticache.serverless.valkey.ecpu",
+          "quantity": 10000000,
+          "basis": "1,000,000 requests x 10 ECPUs (assumption)"
+        },
+        { "priceId": "logs.ingest.standard", "quantity": 0.476837, "basis": "1,000,000 x 0.5 KB, in GB" },
+        { "priceId": "logs.storage", "quantity": 0.111, "basis": "about 7 days of logs kept, in GB-month" }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "14",
+        "command": "vp run test:unit (examples/14-kv-cache)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "rate limiter の境界と同時実行、store の contract（メモリ）、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、stampede、TTL の揺らぎ、IAM 認証 token の署名、アプリ、stack の assertion",
+          "en": "Rate limiter boundaries and concurrency, the store contracts (memory), the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, TTL jitter, the IAM auth token signature, the app, and stack assertions"
+        }
+      },
+      {
+        "scope": "14",
+        "command": "vp run kv:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "既定の構成と `-c store=valkey` の両方で synth した（esbuild の bundle 込み）",
+          "en": "Synthesized the default layout and `-c store=valkey`, including the esbuild bundle"
+        }
+      },
+      {
+        "scope": "14",
+        "command": "vp run dev:kv",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "KV_STORE を memory、valkey、dynamodb にして起動し、本文の curl を実行した。valkey と dynamodb は下の行の手元のサーバーに対して",
+          "en": "Started with KV_STORE set to memory, valkey, and dynamodb and ran the curl commands from the chapter; valkey and dynamodb against the local servers of the next row"
+        }
+      },
+      {
+        "scope": "14",
+        "command": "node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "store の contract 22 件を、nixpkgs の valkey-server 9.1.2 と、AWS が配布する DynamoDB Local 3.3.1（jar を JRE 21 で起動）に対して実行した。Docker の daemon が無かったので、コンテナではなくプロセスとして起動している",
+          "en": "Ran the 22 store contract tests against valkey-server 9.1.2 from nixpkgs and DynamoDB Local 3.3.1 as distributed by AWS (the jar on a JRE 21). With no Docker daemon available, both ran as plain processes, not containers"
+        }
+      },
+      {
+        "scope": "14",
+        "command": "vp run kv:local:start / kv:local:stop",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Docker の daemon が無く実行していない。valkey/valkey:9.0.6-alpine と amazon/dynamodb-local:3.3.1 の image は取得も起動もしていない",
+          "en": "Not run: no Docker daemon. The images valkey/valkey:9.0.6-alpine and amazon/dynamodb-local:3.3.1 were neither pulled nor started"
+        }
+      },
+      {
+        "scope": "14",
+        "command": "vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "DynamoDB の table、Lambda、HTTP API を作る。`-c store=valkey` では、置いてあるだけで課金される ElastiCache Serverless の cache も作る",
+          "en": "Creates a DynamoDB table, a Lambda function, and an HTTP API; with `-c store=valkey` also an ElastiCache Serverless cache, which is billed for as long as it exists"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "14-deploy",
+        "summary": {
+          "ja": "14章の stack を AWS に一度も deploy していない。DynamoDB の条件付き `ADD` が実物で同時の増分を失わないこと、TTL で item が消えるまでの実際の時間、Lambda の実行環境が増えたときの memory 版の振る舞い、cdkd 0.296.28 での作成と削除が未確認。",
+          "en": "The chapter 14 stack has never been deployed. Unconfirmed: that the conditional `ADD` loses no concurrent increment on the real service, how long TTL really takes to delete an item, how the memory variant behaves once Lambda runs several execution environments, and creation and deletion through cdkd 0.296.28."
+        },
+        "resume": {
+          "ja": "`vp run kv:infra:deploy` のあと `vp run kv:smoke` を実行し、6 回目が 429 になることを確かめる。`vp run kv:infra:drift` を実行し、最後に `vp run kv:infra:destroy`。",
+          "en": "Run `vp run kv:infra:deploy`, then `vp run kv:smoke` and check that the sixth request is refused with 429. Run `vp run kv:infra:drift`, and finally `vp run kv:infra:destroy`."
+        }
+      },
+      {
+        "id": "14-elasticache",
+        "summary": {
+          "ja": "ElastiCache Serverless（public endpoint）には一度もつないでいない。未確認: CloudFormation と Cloud Control API が `ConnectionType: public` と `UserGroupId: default.iam-user-group` を受け付けること、`CacheUsageLimits` の ECPU の上限 1,000 が有効な値であること、自作の SigV4 token を ElastiCache が受け付けること、iovalkey の `Cluster` が public endpoint で cluster の構成を読めること、TLS 1.3 での接続、script（EVAL）の ECPU 消費、cache の作成と削除にかかる時間。",
+          "en": "Nothing has ever connected to an ElastiCache Serverless cache with a public endpoint. Unconfirmed: that CloudFormation and Cloud Control API accept `ConnectionType: public` with `UserGroupId: default.iam-user-group`; that 1,000 is a valid ECPU maximum in `CacheUsageLimits`; that ElastiCache accepts the hand-signed SigV4 token; that iovalkey's `Cluster` can read the topology through a public endpoint; the TLS 1.3 connection; how many ECPUs a script (EVAL) uses; and how long the cache takes to create and delete."
+        },
+        "resume": {
+          "ja": "料金がかかることを承知のうえで `vp run kv:infra:deploy -c store=valkey` を実行する。`vp run kv:smoke` で store が `elasticache` と表示され、6 回目が 429 になることを確かめる。失敗したら `vp run kv:logs` で `valkey connection error`、`cache store failed`、`rate limiter failed` を探し、公式の「Connect to a cache with a public endpoint」の Troubleshooting と照らす。終わったらすぐ `vp run kv:infra:destroy -c store=valkey`。",
+          "en": "Knowing that it is billed, run `vp run kv:infra:deploy -c store=valkey`. Check with `vp run kv:smoke` that the store is reported as `elasticache` and the sixth request is refused. On failure, search `vp run kv:logs` for `valkey connection error`, `cache store failed`, and `rate limiter failed`, and compare with the Troubleshooting table of 'Connect to a cache with a public endpoint'. Run `vp run kv:infra:destroy -c store=valkey` as soon as you are done."
+        }
+      },
+      {
+        "id": "14-docker",
+        "summary": {
+          "ja": "`vp run kv:local:start` と `kv:local:stop`（Docker のコンテナで Valkey と DynamoDB Local を起動・停止する）を実行していない。contract test そのものは、同じ版の DynamoDB Local と、Valkey 9.1.2 のプロセスに対して通っている。",
+          "en": "`vp run kv:local:start` and `kv:local:stop`, which start and stop Valkey and DynamoDB Local in Docker containers, were not run. The contract tests themselves passed against the same DynamoDB Local version and a Valkey 9.1.2 process."
+        },
+        "resume": {
+          "ja": "Docker の daemon を起動し、`examples/14-kv-cache/.env.example` を `.env` にコピーして、`vp run kv:local:start`、`vp run kv:local:migrate`、`vp run kv:test:local`、`vp run kv:local:stop` の順に実行する。",
+          "en": "Start a Docker daemon, copy `examples/14-kv-cache/.env.example` to `.env`, and run `vp run kv:local:start`, `vp run kv:local:migrate`, `vp run kv:test:local`, and `vp run kv:local:stop` in that order."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 14: key-value stores and caches ------------------------\n      // The items API with counters and cache in memory, Valkey, or DynamoDB, as examples/14-kv-cache/.env says.\n      \"dev:kv\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/14-kv-cache\" }),\n      // Valkey and DynamoDB Local in containers. Needs a running Docker daemon.\n      \"kv:local:start\": fresh(\"node --env-file-if-exists=.env scripts/local-stores.ts start\", {\n        cwd: \"examples/14-kv-cache\",\n      }),\n      \"kv:local:stop\": fresh(\"node --env-file-if-exists=.env scripts/local-stores.ts stop\", {\n        cwd: \"examples/14-kv-cache\",\n      }),\n      \"kv:local:migrate\": fresh(\"node --env-file-if-exists=.env scripts/local-stores.ts migrate\", {\n        cwd: \"examples/14-kv-cache\",\n      }),\n      // The store contracts against those two. A store that is not running fails the task instead of being skipped.\n      \"kv:test:local\": fresh(\"node --env-file-if-exists=.env scripts/test-local.ts\", {\n        cwd: \"examples/14-kv-cache\",\n      }),\n      // `-c store=valkey` adds an ElastiCache Serverless cache, billed for as long as it exists.\n      ...infra(\"kv\", \"examples/14-kv-cache\", \"AihKvCache\"),\n      \"kv:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/14-kv-cache\" }),\n      \"kv:logs\": live(\"node --env-file-if-exists=../../.env scripts/logs.ts\", { cwd: \"examples/14-kv-cache\" }),",
+    "synth": ["kv:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/14-kv-cache"]
+  }
+}

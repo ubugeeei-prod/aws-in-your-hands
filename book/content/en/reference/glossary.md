@@ -126,3 +126,14 @@ The term pairs that keep both languages using one word for one concept. API name
 | trace context（traceparent） | trace context (traceparent) | 19 | The W3C specification for passing the trace ID, the caller's span ID and the sampling decision to the next process. In HTTP it is the traceparent header. |
 | RUM（real user monitoring） | RUM (real user monitoring) | 19 | Measuring page load times and errors in real users' browsers and collecting them. |
 | canary（Synthetics） | canary (Synthetics) | 19 | A script that calls an API or page from outside on a schedule and checks the response. It runs even when no user is around. |
+| TTL | TTL | 14 | Time to live: an expiry attached to a piece of data. When expired data is actually removed depends on the store; in DynamoDB it can be days later. |
+| rate limit | rate limit | 14 | A cap on how many calls one caller may make in a period. It holds only if the counter is shared by everyone and counting and comparing are a single step. |
+| 固定窓 | fixed window | 14 | A rate limit that cuts time into equal periods and counts per period. Around a boundary it lets up to twice the limit through in a short time. |
+| 滑る窓 | sliding window | 14 | A rate limit that also counts the previous period, in proportion to how much of it the window still covers. It prevents the doubling at a boundary. |
+| 原子的な加算 | atomic counter | 14 | An update that adds one as a single step inside the store instead of reading and then writing, so concurrent increments are not lost. |
+| Valkey | Valkey | 14 | An in-memory key-value server, forked from open source Redis right before its license changed, and one of the engines ElastiCache runs. |
+| ECPU | ECPU | 14 | ElastiCache Processing Unit: the billing unit for requests to ElastiCache Serverless. A simple read or write uses 1 ECPU per KB transferred. |
+| read-through cache | read-through cache | 14 | Reading the cache first and, on a miss, reading the source of truth and storing a copy. The source is always right; the cache is a copy. |
+| stale read | stale read | 14 | Reading an old copy after the source changed. It happens whenever there is a cache, so decide beforehand how old is acceptable. |
+| cache stampede | cache stampede | 14 | Many requests missing at the moment an entry expires, and all of them going to the source of truth at once. |
+| single flight | single flight | 14 | Waiting for a load of the same key that is already in progress instead of starting another. It works within one process only. |

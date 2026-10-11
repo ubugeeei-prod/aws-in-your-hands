@@ -1006,6 +1006,72 @@
         "ja": "AWS Lambda Layer for OpenTelemetry を付けた構成。Node.js 24 の runtime はこの layer の対応一覧に無い",
         "en": "The configuration with the AWS Lambda Layer for OpenTelemetry. The Node.js 24 runtime is not in the layer's list of supported runtimes"
       }
+    },
+    {
+      "scope": "14",
+      "command": "vp run test:unit (examples/14-kv-cache)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "rate limiter の境界と同時実行、store の contract（メモリ）、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、stampede、TTL の揺らぎ、IAM 認証 token の署名、アプリ、stack の assertion",
+        "en": "Rate limiter boundaries and concurrency, the store contracts (memory), the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, TTL jitter, the IAM auth token signature, the app, and stack assertions"
+      }
+    },
+    {
+      "scope": "14",
+      "command": "vp run kv:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "既定の構成と `-c store=valkey` の両方で synth した（esbuild の bundle 込み）",
+        "en": "Synthesized the default layout and `-c store=valkey`, including the esbuild bundle"
+      }
+    },
+    {
+      "scope": "14",
+      "command": "vp run dev:kv",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "KV_STORE を memory、valkey、dynamodb にして起動し、本文の curl を実行した。valkey と dynamodb は下の行の手元のサーバーに対して",
+        "en": "Started with KV_STORE set to memory, valkey, and dynamodb and ran the curl commands from the chapter; valkey and dynamodb against the local servers of the next row"
+      }
+    },
+    {
+      "scope": "14",
+      "command": "node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "store の contract 22 件を、nixpkgs の valkey-server 9.1.2 と、AWS が配布する DynamoDB Local 3.3.1（jar を JRE 21 で起動）に対して実行した。Docker の daemon が無かったので、コンテナではなくプロセスとして起動している",
+        "en": "Ran the 22 store contract tests against valkey-server 9.1.2 from nixpkgs and DynamoDB Local 3.3.1 as distributed by AWS (the jar on a JRE 21). With no Docker daemon available, both ran as plain processes, not containers"
+      }
+    },
+    {
+      "scope": "14",
+      "command": "vp run kv:local:start / kv:local:stop",
+      "kind": "local",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Docker の daemon が無く実行していない。valkey/valkey:9.0.6-alpine と amazon/dynamodb-local:3.3.1 の image は取得も起動もしていない",
+        "en": "Not run: no Docker daemon. The images valkey/valkey:9.0.6-alpine and amazon/dynamodb-local:3.3.1 were neither pulled nor started"
+      }
+    },
+    {
+      "scope": "14",
+      "command": "vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "DynamoDB の table、Lambda、HTTP API を作る。`-c store=valkey` では、置いてあるだけで課金される ElastiCache Serverless の cache も作る",
+        "en": "Creates a DynamoDB table, a Lambda function, and an HTTP API; with `-c store=valkey` also an ElastiCache Serverless cache, which is billed for as long as it exists"
+      }
     }
   ],
   "open": [
@@ -1491,6 +1557,39 @@
       "resume": {
         "ja": "料金ページを JavaScript が動くブラウザで開いてダッシュボードの単価を読む。デプロイ後、Logs Insights で 1 リクエストあたりの @message の合計バイト数を測り、data/fragments/19.json の仮定を直す。数日後に Cost Explorer の usage type を見る。",
         "en": "Open the pricing page in a browser that runs JavaScript and read the dashboard price. After deploying, measure the total bytes of @message per request with Logs Insights and correct the assumption in data/fragments/19.json. A few days later, look at the usage types in Cost Explorer."
+      }
+    },
+    {
+      "id": "14-deploy",
+      "summary": {
+        "ja": "14章の stack を AWS に一度も deploy していない。DynamoDB の条件付き `ADD` が実物で同時の増分を失わないこと、TTL で item が消えるまでの実際の時間、Lambda の実行環境が増えたときの memory 版の振る舞い、cdkd 0.296.28 での作成と削除が未確認。",
+        "en": "The chapter 14 stack has never been deployed. Unconfirmed: that the conditional `ADD` loses no concurrent increment on the real service, how long TTL really takes to delete an item, how the memory variant behaves once Lambda runs several execution environments, and creation and deletion through cdkd 0.296.28."
+      },
+      "resume": {
+        "ja": "`vp run kv:infra:deploy` のあと `vp run kv:smoke` を実行し、6 回目が 429 になることを確かめる。`vp run kv:infra:drift` を実行し、最後に `vp run kv:infra:destroy`。",
+        "en": "Run `vp run kv:infra:deploy`, then `vp run kv:smoke` and check that the sixth request is refused with 429. Run `vp run kv:infra:drift`, and finally `vp run kv:infra:destroy`."
+      }
+    },
+    {
+      "id": "14-elasticache",
+      "summary": {
+        "ja": "ElastiCache Serverless（public endpoint）には一度もつないでいない。未確認: CloudFormation と Cloud Control API が `ConnectionType: public` と `UserGroupId: default.iam-user-group` を受け付けること、`CacheUsageLimits` の ECPU の上限 1,000 が有効な値であること、自作の SigV4 token を ElastiCache が受け付けること、iovalkey の `Cluster` が public endpoint で cluster の構成を読めること、TLS 1.3 での接続、script（EVAL）の ECPU 消費、cache の作成と削除にかかる時間。",
+        "en": "Nothing has ever connected to an ElastiCache Serverless cache with a public endpoint. Unconfirmed: that CloudFormation and Cloud Control API accept `ConnectionType: public` with `UserGroupId: default.iam-user-group`; that 1,000 is a valid ECPU maximum in `CacheUsageLimits`; that ElastiCache accepts the hand-signed SigV4 token; that iovalkey's `Cluster` can read the topology through a public endpoint; the TLS 1.3 connection; how many ECPUs a script (EVAL) uses; and how long the cache takes to create and delete."
+      },
+      "resume": {
+        "ja": "料金がかかることを承知のうえで `vp run kv:infra:deploy -c store=valkey` を実行する。`vp run kv:smoke` で store が `elasticache` と表示され、6 回目が 429 になることを確かめる。失敗したら `vp run kv:logs` で `valkey connection error`、`cache store failed`、`rate limiter failed` を探し、公式の「Connect to a cache with a public endpoint」の Troubleshooting と照らす。終わったらすぐ `vp run kv:infra:destroy -c store=valkey`。",
+        "en": "Knowing that it is billed, run `vp run kv:infra:deploy -c store=valkey`. Check with `vp run kv:smoke` that the store is reported as `elasticache` and the sixth request is refused. On failure, search `vp run kv:logs` for `valkey connection error`, `cache store failed`, and `rate limiter failed`, and compare with the Troubleshooting table of 'Connect to a cache with a public endpoint'. Run `vp run kv:infra:destroy -c store=valkey` as soon as you are done."
+      }
+    },
+    {
+      "id": "14-docker",
+      "summary": {
+        "ja": "`vp run kv:local:start` と `kv:local:stop`（Docker のコンテナで Valkey と DynamoDB Local を起動・停止する）を実行していない。contract test そのものは、同じ版の DynamoDB Local と、Valkey 9.1.2 のプロセスに対して通っている。",
+        "en": "`vp run kv:local:start` and `kv:local:stop`, which start and stop Valkey and DynamoDB Local in Docker containers, were not run. The contract tests themselves passed against the same DynamoDB Local version and a Valkey 9.1.2 process."
+      },
+      "resume": {
+        "ja": "Docker の daemon を起動し、`examples/14-kv-cache/.env.example` を `.env` にコピーして、`vp run kv:local:start`、`vp run kv:local:migrate`、`vp run kv:test:local`、`vp run kv:local:stop` の順に実行する。",
+        "en": "Start a Docker daemon, copy `examples/14-kv-cache/.env.example` to `.env`, and run `vp run kv:local:start`, `vp run kv:local:migrate`, `vp run kv:test:local`, and `vp run kv:local:stop` in that order."
       }
     }
   ]

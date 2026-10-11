@@ -62,7 +62,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-lambda`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04, 09, 17
+- Chapters: 04, 09, 14, 17
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AWSLambda
 
@@ -71,7 +71,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-apigw`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonApiGateway/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04
+- Chapters: 04, 14
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonApiGateway
   - HTTP API requests are priced lower than REST API requests in ap-northeast-1
@@ -90,7 +90,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-cloudwatch`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04, 17, 19
+- Chapters: 04, 14, 17, 19
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudWatch
   - The price list has a USD 0 tier for the first 5 GB of log ingestion and 5 GB-month of log storage
@@ -246,7 +246,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `dynamodb-read-consistency`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html>
 - Checked: 2026-10-11
-- Chapters: 05
+- Chapters: 05, 14
 - Claims this source supports:
   - A write that returned HTTP 200 has been durably persisted
   - Eventually consistent reads are the default, may not reflect a recently completed write, and cost half of strongly consistent reads
@@ -258,7 +258,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `dynamodb-condition-expressions`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html>
 - Checked: 2026-10-11
-- Chapters: 05
+- Chapters: 05, 14
 - Claims this source supports:
   - PutItem overwrites an item with the same primary key unless a condition prevents it
   - attribute_not_exists on a key attribute is true only when no item with that full key exists
@@ -280,7 +280,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `dynamodb-on-demand`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html>
 - Checked: 2026-10-11
-- Chapters: 05
+- Chapters: 05, 14
 - Claims this source supports:
   - On-demand tables are billed per read and write request, with no throughput charge at zero traffic
   - One read request unit is one strongly consistent read, or two eventually consistent reads, of an item up to 4 KB; one write request unit is one write of an item up to 1 KB
@@ -292,7 +292,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `dynamodb-constraints`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Constraints.html>
 - Checked: 2026-10-11
-- Chapters: 05
+- Chapters: 05, 14
 - Claims this source supports:
   - Maximum item size is 400 KB
   - A transaction can contain at most 100 unique items and 4 MB
@@ -303,7 +303,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-dynamodb`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 05
+- Chapters: 05, 14
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonDynamoDB
   - The storage price has a USD 0 tier for the first 25 GB-month
@@ -313,7 +313,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `dynamodb-local-image`
 - URL: <https://hub.docker.com/r/amazon/dynamodb-local/tags>
 - Checked: 2026-10-11
-- Chapters: 05
+- Chapters: 05, 14
 - Claims this source supports:
   - Tag 3.3.1 exists for amd64 and arm64 and was the image `latest` pointed at
 - Note: Only the tag listing was read. The image was not pulled or run.
@@ -860,7 +860,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-vpc`
 - URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 14
 - Claims this source supports:
   - By default a Lambda function can reach the public internet; attached to a VPC it can reach only what the VPC can
   - Connecting a function to a public subnet gives it neither internet access nor a public IP address
@@ -1020,7 +1020,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `elasticache-vpc`
 - URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/VPCs.html>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 14
 - Claims this source supports:
   - All node-based ElastiCache clusters are launched in a VPC; ElastiCache Serverless caches can also be configured with a public endpoint that needs no VPC configuration
 
@@ -1571,7 +1571,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `dynamodb-ttl`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html>
 - Checked: 2026-10-11
-- Chapters: 15
+- Chapters: 14, 15
 - Claims this source supports:
   - The TTL attribute is a Number holding Unix epoch seconds
   - Expired items are deleted typically within a few days of expiring, without consuming write throughput
@@ -1686,7 +1686,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cloudfront-kvs-helper-methods`
 - URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/functions-custom-methods.html>
 - Checked: 2026-10-11
-- Chapters: 10
+- Chapters: 10, 14
 - Claims this source supports:
   - A function starts with `import cf from 'cloudfront'` and `cf.kvs()`
   - get(key, { format }) rejects when the key does not exist; exists(key) and meta() are the other two methods
@@ -1698,7 +1698,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cloudfront-kvs-data`
 - URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-kvp.html>
 - Checked: 2026-10-11
-- Chapters: 10
+- Chapters: 10, 14
 - Claims this source supports:
   - Pairs in an existing store are changed through the CloudFront KeyValueStore API, which is global and uses SigV4A
   - Write operations take the store's ETag as If-Match and return a new ETag
@@ -1749,7 +1749,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cloudfront-quotas`
 - URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-limits.html>
 - Checked: 2026-10-11
-- Chapters: 10
+- Chapters: 10, 14
 - Claims this source supports:
   - CloudFront Functions: 10 KB maximum function size (not adjustable), 2 MB maximum function memory, 100 functions per account
   - Key value stores: 512-byte key, 1 KB value, 5 MB per store, 50 keys or 3 MB per update request, one store per function, 100 functions per store, 200 stores per account
@@ -1824,7 +1824,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-blog-kvs-launch`
 - URL: <https://aws.amazon.com/blogs/aws/introducing-amazon-cloudfront-keyvaluestore-a-low-latency-datastore-for-cloudfront-functions/>
 - Checked: 2026-10-11
-- Chapters: 10
+- Chapters: 10, 14
 - Claims this source supports:
   - Updates to a store are described as propagating to all edge locations in a few seconds
 - Note: A launch post, not a specification. The Developer Guide pages read for this chapter give no propagation time and no guarantee.
@@ -1834,7 +1834,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cloudfront-pricing-payg`
 - URL: <https://aws.amazon.com/cloudfront/pricing/pay-as-you-go/>
 - Checked: 2026-10-11
-- Chapters: 03, 09, 10
+- Chapters: 03, 09, 10, 14
 - Claims this source supports:
   - Always-free each month: 1 TB data transfer out, 10,000,000 HTTP/HTTPS requests, 2,000,000 CloudFront Function invocations, 2,000,000 KeyValueStore reads
   - First 1,000 invalidation paths per month are free, then USD 0.005 per path
@@ -1879,7 +1879,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cloudflare-kv-how-it-works`
 - URL: <https://developers.cloudflare.com/kv/concepts/how-kv-works/>
 - Checked: 2026-10-11
-- Chapters: 10
+- Chapters: 10, 14
 - Claims this source supports:
   - KV is eventually consistent: a change may take up to 60 seconds or more to be visible in other locations
   - Data is stored centrally and cached at locations after access
@@ -1889,7 +1889,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cloudflare-kv-limits`
 - URL: <https://developers.cloudflare.com/kv/platform/limits/>
 - Checked: 2026-10-11
-- Chapters: 10
+- Chapters: 10, 14
 - Claims this source supports:
   - Key size 512 bytes, value size 25 MiB, 1 write per second to the same key
   - A Worker can write to KV; Free allows 1,000 writes per day
@@ -1899,7 +1899,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - Checked: 2026-10-11
-- Chapters: 02, 03, 04, 05, 06, 07, 09, 10, 17, 19
+- Chapters: 02, 03, 04, 05, 06, 07, 09, 10, 14, 17, 19
 - Claims this source supports:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -2672,7 +2672,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-runtime-env-vars`
 - URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html>
 - Checked: 2026-10-11
-- Chapters: 07
+- Chapters: 07, 14
 - Claims this source supports:
   - Lambda sets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN to the access keys obtained from the function's execution role
 - Note: The page does not say how long these credentials stay valid.
@@ -2899,7 +2899,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-pricing`
 - URL: <https://aws.amazon.com/lambda/pricing/>
 - Checked: 2026-10-11
-- Chapters: 04, 09, 17
+- Chapters: 04, 09, 14, 17
 - Claims this source supports:
   - Free tier: 1,000,000 requests and 400,000 GB-seconds per month
   - Response streaming: first 6 MB per request free, then per GB
@@ -3373,6 +3373,356 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - The default head sampling rate is 1 (every request); head_sampling_rate lowers it
   - Traces are kept for seven days and can be exported to an OpenTelemetry endpoint
 
+### Working with expired items and time to live (TTL)
+
+- ID: `dynamodb-ttl-expired-items`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ttl-expired-items.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Expired items that are not filtered keep showing in read and write operations until the background process deletes them
+  - Expired items still count towards storage and read costs until they are deleted
+  - A filter expression on the TTL attribute removes expired items from Scan and Query results
+- Note: The parent page (source dynamodb-ttl) was re-read the same day: deletion is 'within a few days', 'typically within a few days after their expiration'.
+
+### Working with items and attributes in DynamoDB
+
+- ID: `dynamodb-working-with-items`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - UpdateItem can implement an atomic counter: a numeric attribute incremented without interfering with other write requests; all write requests are applied in the order received
+  - Atomic counter updates are not idempotent, so a retried UpdateItem can overcount; the page recommends a conditional update where miscounting cannot be tolerated
+  - A conditional write whose condition evaluates to false still consumes write capacity (a minimum of 1 unit)
+
+### Using update expressions in DynamoDB
+
+- ID: `dynamodb-update-expressions`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.UpdateExpressions.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - ADD mathematically adds a number to an existing Number attribute, and sets the attribute to that number when it does not exist
+  - ADD supports only number and set data types
+  - An update expression can combine SET and ADD clauses
+
+### Deploying DynamoDB locally on your computer
+
+- ID: `dynamodb-local-download`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - DynamoDB Local is available as a downloadable archive with a published SHA-256 checksum, and as a Docker image
+  - The downloadable version needs a Java Runtime Environment 17.x or newer
+- Note: The archive linked from this page was downloaded, its checksum compared, and run as version 3.3.1 for the store contract tests.
+
+### What is Amazon ElastiCache?
+
+- ID: `elasticache-what-is`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - ElastiCache runs in two formats: serverless caches and node-based clusters, with the Valkey, Memcached, and Redis OSS engines
+  - ElastiCache Serverless supports two connection types, VPC and Public; a public endpoint is reached over the internet without a VPC and requires IAM authentication and TLS 1.3 for every connection
+  - The connection type is chosen when the cache is created
+  - ElastiCache Serverless is compatible with Valkey 7.2 and later, Memcached 1.6.22 and later, and Redis OSS 7.1; public endpoints need Valkey 9.0 or later
+
+### Choosing between deployment options
+
+- ID: `elasticache-deployment-options`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.deployment.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Serverless operates engines in cluster mode enabled only; clients must support cluster mode
+  - Serverless: clients connect to a single endpoint; encryption in transit and at rest are always enabled
+  - Serverless: data is replicated asynchronously across multiple Availability Zones; durability (the Multi-AZ transactional log) is not supported
+  - Node-based clusters: public endpoints are not supported; pricing is per node-hour, while serverless is billed for data stored in GB-hours and requests in ECPUs
+  - Serverless configuration is limited to basic settings such as subnets, backups, and maximum cache usage limits
+
+### Create a Valkey serverless cache with a public endpoint
+
+- ID: `elasticache-public-endpoint-create`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/serverless-public-endpoints-chapter.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Public endpoints are available on ElastiCache Serverless for Valkey 9.0 or later
+  - ElastiCache provides a system-managed IAM user (default.iam-user) and user group (default.iam-user-group); a custom group must contain only users that authenticate with IAM
+  - The CLI example creates the cache with --engine valkey --major-engine-version 9 --connection-type public --user-group-id default.iam-user-group
+  - The ability to create public caches can be restricted with the elasticache:ConnectionType condition key
+
+### Connect to a cache with a public endpoint
+
+- ID: `elasticache-public-endpoint-connect`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/connecting-public-endpoint.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - All public endpoint connections require IAM authentication and TLS 1.3
+  - The caller needs elasticache:Connect on both the serverless cache ARN and the ElastiCache user ARN
+  - Three ways to produce the token: the GLIDE client, the Developer Toolkit for ElastiCache (Python), or manual SigV4 signing
+  - Tokens are valid for 15 minutes; with the toolkit or manual signing a new token is generated for each new connection; expiry does not affect established connections; a token signed with temporary credentials expires with them if sooner
+  - Connections expire after 12 hours; revoking elasticache:Connect does not disconnect active sessions
+  - Troubleshooting: WRONGPASS (expired token, wrong user, missing permission, cache name not lowercase), NOAUTH when a client sends a command before authenticating, TLS handshake failure without TLS 1.3
+
+### Authenticating with IAM
+
+- ID: `elasticache-iam-auth`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/auth-iam.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - IAM authentication passes a short-lived token instead of a password in AUTH or HELLO; it needs Valkey 7.2 or above (or Redis OSS 7.0 or above) and in-transit encryption
+  - The token is a SigV4 pre-signed GET request to http://<cache name>/ with query parameters Action=connect, User=<user id>, and ResourceType=ServerlessCache for serverless caches, signed for service elasticache with a 900-second expiry, with the http:// prefix removed
+  - For IAM-enabled users the user name and user ID must be identical
+  - Cache names are lowercased at creation, and the signing code must use the lowercase name
+  - An IAM-authenticated connection is disconnected after 12 hours unless re-authenticated
+  - GLIDE 2.2 and later generate, cache, and refresh the token themselves
+- Note: The reference implementation on the page is Java. The sample's TypeScript signer follows it and was never presented to ElastiCache.
+
+### Role-Based Access Control (RBAC)
+
+- ID: `elasticache-rbac`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Clusters.RBAC.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - ElastiCache users carry an access string and belong to user groups, which are attached to caches
+  - ElastiCache configures a default user with full access; the page tells you to replace it with one that is disabled or has a strong password
+  - The nopass option is not recommended
+
+### ElastiCache in-transit encryption (TLS)
+
+- ID: `elasticache-in-transit-encryption`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - All serverless caches have in-transit encryption enabled; node-based clusters can turn it on or off
+  - Caches with a public endpoint require TLS 1.3
+
+### Supported and restricted Valkey, Memcached, and Redis OSS commands
+
+- ID: `elasticache-supported-commands`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/SupportedCommands.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - EVAL and EVALSHA are listed among the commands supported by serverless caches
+
+### Scaling ElastiCache Serverless clusters
+
+- ID: `elasticache-serverless-scaling`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Scaling-serverless.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - A maximum can be set on cache data storage and on ECPUs per second to control cost
+  - At the storage maximum ElastiCache evicts keys that have a TTL, and writes fail with an out-of-memory error when nothing can be evicted; above the ECPU maximum requests are throttled
+  - A minimum usage limit is billed even when actual usage is lower
+- Note: Neither this page nor the API reference pages for DataStorage and ECPUPerSecond state the smallest accepted maximum. The stack's ECPU maximum of 1,000 is the value the page uses in its CLI example for a minimum.
+
+### Engine versions and upgrading in ElastiCache
+
+- ID: `elasticache-engine-versions`
+- URL: <https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/engine-versions.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - All features available with Redis OSS 7.2 are available in Valkey 7.2 and above
+  - Some existing ElastiCache for Redis OSS engines can be upgraded to a Valkey engine
+  - ElastiCache versions 9.0 and 9.1 for Valkey exist
+
+### Amazon ElastiCache pricing
+
+- ID: `elasticache-pricing`
+- URL: <https://aws.amazon.com/elasticache/pricing/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Serverless is billed for data stored (GB-hours, from an hourly average) and for ECPUs; a read or write uses 1 ECPU per KB transferred, and commands needing more vCPU time use proportionally more
+  - Minimum metered data storage is 100 MB per cache for ElastiCache Serverless for Valkey and 1 GB for Memcached and Redis OSS
+  - Billing starts when a serverless cache becomes available and continues until it is deleted
+  - Accounts created before 2025-07-15 get 750 hours of cache.t3.micro for 12 months, which excludes ElastiCache Serverless; newer accounts get credits instead
+  - Serverless with a public endpoint: no data transfer charge on the cache side, and USD 0.01 per GB in or out of the application within the same Region
+  - Valkey is priced 33% lower than the other engines on Serverless and 20% lower on nodes
+- Note: The price tables on the page are rendered by script and were not read; unit prices come from the Price List.
+
+### AWS Price List bulk API: ElastiCache, ap-northeast-1
+
+- ID: `aws-price-list-elasticache`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonElastiCache
+  - Serverless Valkey in Tokyo: USD 0.101 per GB-hour stored and USD 0.0027 per million ECPUs
+  - A cache.t4g.micro node running Valkey in Tokyo: USD 0.02 per node-hour
+
+### AWS::ElastiCache::ServerlessCache
+
+- ID: `cfn-elasticache-serverlesscache`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-elasticache-serverlesscache.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Properties include CacheUsageLimits, ConnectionType (vpc | public, default vpc, replacement on change), Engine (valkey | redis | memcached), MajorEngineVersion (an integer such as 9), ServerlessCacheName (required, at most 40 characters), UserGroupId, SubnetIds, SecurityGroupIds, FinalSnapshotName, and SnapshotRetentionLimit
+  - Fn::GetAtt returns ARN, Endpoint.Address, and Endpoint.Port
+  - CacheUsageLimits holds DataStorage (Maximum, Minimum, Unit = GB) and ECPUPerSecond (Maximum, Minimum)
+- Note: aws-cdk-lib 2.273.0 exposes the same properties on CfnServerlessCache, including connectionType.
+
+### cdkd v0.296.28: src/provisioning/register-providers.ts
+
+- ID: `cdkd-register-providers-kv`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Dedicated providers are registered for AWS::DynamoDB::Table, AWS::Logs::LogGroup, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::IAM::Role, AWS::IAM::Policy, and the AWS::ApiGatewayV2 types the chapter 14 stack uses
+  - For ElastiCache only AWS::ElastiCache::SubnetGroup and AWS::ElastiCache::CacheCluster have a dedicated provider; AWS::ElastiCache::ServerlessCache has none and is handled through Cloud Control API
+- Note: src/provisioning/stateful-types.ts at the same tag lists AWS::ElastiCache::ServerlessCache as a stateful type. Both were also confirmed in the bundled dist of the npm tarball.
+
+### valkey-io/valkey README
+
+- ID: `valkey-readme`
+- URL: <https://github.com/valkey-io/valkey/blob/unstable/README.md>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Valkey was forked from the open source Redis project right before the transition to its new source-available licenses
+  - Valkey is a data structure server that primarily serves key/value workloads
+
+### Valkey: Scripting with Lua
+
+- ID: `valkey-eval-intro`
+- URL: <https://valkey.io/topics/eval-intro/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Valkey guarantees a script's atomic execution; all server activities are blocked while it runs
+  - Every key a script accesses must be passed explicitly as a key argument, in standalone and clustered deployments alike
+
+### Valkey command: SET
+
+- ID: `valkey-command-set`
+- URL: <https://valkey.io/commands/set/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - PXAT sets the Unix time in milliseconds at which the key expires; NX sets the key only if it does not exist
+  - SET key value NX with an expiry is described as a simple way to implement a lock
+
+### Valkey command: EXPIRE
+
+- ID: `valkey-command-expire`
+- URL: <https://valkey.io/commands/expire/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - The expire error is from 0 to 1 milliseconds
+  - Expired keys are reclaimed on access and by a background cycle; a key found to be timed out on access is deleted at that moment
+
+### Valkey command: INCR
+
+- ID: `valkey-command-incr`
+- URL: <https://valkey.io/commands/incr/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - INCR is an atomic increment; the page describes the counter and rate limiter patterns built on it
+
+### valkey/valkey container image tags (Docker Hub)
+
+- ID: `valkey-container-image`
+- URL: <https://hub.docker.com/r/valkey/valkey/tags>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Tag 9.0.6-alpine exists (last updated 2026-09-21)
+- Note: Read through the Docker Hub tags API. The image was not pulled or run; the contract tests ran against valkey-server 9.1.2 from nixpkgs instead.
+
+### iovalkey 0.4.0 (npm registry metadata and tarball)
+
+- ID: `iovalkey-npm`
+- URL: <https://www.npmjs.com/package/iovalkey/v/0.4.0>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - 0.4.0 was the latest version, published 2026-07-27, MIT, with no native or platform-specific dependencies
+  - Exports Redis (also as Valkey) and Cluster; RedisOptions.username and password are plain strings
+  - On connect, AUTH is sent before any other command when a password is set (built/redis/event_handler.js)
+  - The README recommends dnsLookup: (address, callback) => callback(null, address) with redisOptions.tls for ElastiCache clusters with TLS
+  - valkey:// and valkeys:// URLs are accepted
+
+### @valkey/valkey-glide 2.5.3 (npm registry metadata)
+
+- ID: `valkey-glide-npm`
+- URL: <https://www.npmjs.com/package/@valkey/valkey-glide/v/2.5.3>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - 2.5.3 was the latest version, published 2026-09-24, Apache-2.0
+  - Its native code ships as optional dependencies per platform: darwin-x64, darwin-arm64, linux-x64-gnu, linux-x64-musl, linux-arm64-gnu, linux-arm64-musl
+- Note: Only the registry metadata was read. The package was not installed, and its IAM configuration for Node.js was not checked against its types.
+
+### Understanding the Lambda execution environment lifecycle
+
+- ID: `lambda-execution-environment`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - After an invocation Lambda freezes the execution environment and keeps it for some time in anticipation of another invocation
+  - Lambda terminates execution environments every few hours for runtime updates and maintenance, even for functions invoked continuously
+  - Objects declared outside the handler stay initialized when the environment is reused
+
+### Understanding Lambda function scaling
+
+- ID: `lambda-concurrency`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/lambda-concurrency.html>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Concurrency is the number of in-flight requests a function handles at the same time; for each concurrent request Lambda provisions a separate instance of the execution environment
+
+### Cloudflare Workers KV: Pricing
+
+- ID: `cloudflare-kv-pricing`
+- URL: <https://developers.cloudflare.com/kv/platform/pricing/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Workers KV is included in the Free and Paid Workers plans
+  - Free: 100,000 reads, 1,000 writes, 1,000 deletes, 1,000 list requests per day, and 1 GB stored
+  - Paid: 10 million reads and 1 million writes a month included, then USD 0.50 per million reads and USD 5.00 per million writes; 1 GB stored included, then USD 0.50 per GB-month
+- Note: The pages 'How KV works' (source cloudflare-kv-how-it-works) and 'Limits' (cloudflare-kv-limits) were re-read the same day; the statements recorded there still stand, and How KV works also says KV is not ideal where atomic operations are needed and points to Durable Objects.
+
+### Cloudflare: What are Durable Objects?
+
+- ID: `cloudflare-durable-objects-what`
+- URL: <https://developers.cloudflare.com/durable-objects/concepts/what-are-durable-objects/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - Each Durable Object has a globally unique name and is single-threaded
+  - Each has its own durable, transactional, strongly consistent storage, accessible only within that object
+  - In-memory state is reset when the object hibernates after being idle
+
+### Cloudflare Workers: Rate Limiting binding
+
+- ID: `cloudflare-workers-rate-limit-binding`
+- URL: <https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/>
+- Checked: 2026-10-12
+- Chapters: 14
+- Claims this source supports:
+  - A rate limit is defined by a limit and a period of 10 or 60 seconds
+  - Limits are local to the Cloudflare location the Worker runs in
+  - The API is described as permissive, eventually consistent, and not intended as an accurate accounting system
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### Security best practices in IAM
@@ -3523,7 +3873,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 
 - ID: `dynamodb-intro`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html>
-- Chapters: 14
 - Claims this source supports:
   - Data model and capacity modes
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.

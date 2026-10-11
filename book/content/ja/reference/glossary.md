@@ -126,3 +126,14 @@ generated: true
 | trace context（traceparent） | trace context (traceparent) | 19 | trace ID、呼び出し元の span ID、sampling の決定を次の処理へ渡すための W3C の仕様。HTTP では traceparent ヘッダー。 |
 | RUM（real user monitoring） | RUM (real user monitoring) | 19 | 実際の利用者のブラウザで、ページの表示時間やエラーを計測して集めること。 |
 | canary（Synthetics） | canary (Synthetics) | 19 | 決まった間隔で外から API やページを呼び、応答を確かめるスクリプト。利用者がいない時間にも動く。 |
+| TTL | TTL | 14 | time to live。データに付ける有効期限。期限が来たデータをいつ実際に消すかは store によって違い、DynamoDB では数日後になることがある。 |
+| rate limit | rate limit | 14 | ある利用者が一定時間に呼べる回数の上限。数える場所が全員に共有されていて、数えて比べる操作が 1 ステップでないと守れない。 |
+| 固定窓 | fixed window | 14 | 時間を決まった長さの区間に切り、区間ごとに回数を数える rate limit の方式。区間の境目をまたぐと、短い時間に上限の 2 倍まで通る。 |
+| 滑る窓 | sliding window | 14 | 直前の区間の回数を、いまの時刻から見てまだ窓に入っている割合だけ数に入れる rate limit の方式。境目での 2 倍を防ぐ。 |
+| 原子的な加算 | atomic counter | 14 | 読んでから書くのではなく、「1 足す」を store の中の 1 ステップとして行う更新。同時に来た加算が失われない。 |
+| Valkey | Valkey | 14 | メモリ上の key-value サーバー。Redis がライセンスを変える直前のオープンソース版から分かれたプロジェクトで、ElastiCache のエンジンの 1 つ。 |
+| ECPU | ECPU | 14 | ElastiCache Processing Unit。ElastiCache Serverless のリクエストの課金単位。単純な読み書きは、転送した 1 KB あたり 1 ECPU。 |
+| read-through cache | read-through cache | 14 | まず cache を読み、無ければ元データを読んで cache に入れる読み方。正しいのは常に元データで、cache はその写し。 |
+| stale read | stale read | 14 | 元データが変わったあとに、古い写しを読むこと。cache を使うかぎり起きるので、どれだけ古くてよいかを先に決める。 |
+| cache stampede | cache stampede | 14 | cache が切れた瞬間に、多数のリクエストが同時に miss して、全員が元データへ取りに行くこと。 |
+| single flight | single flight | 14 | 同じ key の読み込みが進行中なら、新しく始めずにその結果を待つこと。効くのは 1 つのプロセスの中だけ。 |

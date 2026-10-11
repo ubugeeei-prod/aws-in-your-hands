@@ -746,6 +746,112 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 2.00** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `cloudwatch.rum.event`
 
+## KV and cache: the default stack (DynamoDB), deployed but never called for a month
+
+ID: `kv-idle-dynamodb` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+
+Assumptions:
+
+- No requests
+- The table holds only items waiting to expire; 1 MB assumed, generously
+- No ElastiCache cache exists
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.storage` | 0.001 | GB-Mo | 1 MB stored, in GB-month | 0 | - | 0 |
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## KV and cache: ElastiCache Serverless (Valkey), deployed but never called for a month
+
+ID: `kv-idle-valkey-serverless` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+
+Assumptions:
+
+- `-c store=valkey`: the cache left in place for 730 hours with no requests
+- Less than 100 MB stored, so the Valkey minimum of 100 MB (computed as 0.1 GB) is metered
+- No snapshots, no data transfer
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `elasticache.serverless.valkey.storage` | 73 | GB-Hours | 0.1 GB minimum x 730 hours, in GB-hours | 7.37 | - | 7.37 |
+
+- List subtotal: **USD 7.37** / month
+- Subtotal after monthly free allowance: **USD 7.37** / month
+
+## For comparison: one node-based Valkey node (cache.t4g.micro) left running for a month
+
+ID: `kv-idle-valkey-node` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+
+Assumptions:
+
+- Not something this chapter's stack creates; computed only to compare prices
+- One node without a replica for 730 hours. It needs a VPC, which itself is free
+- Backups and data transfer are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `elasticache.node.valkey.t4g-micro` | 730 | Hrs | 1 node x 730 hours | 14.60 | - | 14.60 |
+
+- List subtotal: **USD 14.60** / month
+- Subtotal after monthly free allowance: **USD 14.60** / month
+
+## KV and cache: one million requests a month on DynamoDB
+
+ID: `kv-used-dynamodb` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+
+Assumptions:
+
+- One million `GET /items` a month, all within the rate limit (a refused request consumes one write unit too)
+- Rate limit: one UpdateItem per request (under 1 KB, one write unit), fixed window
+- Cache read: one eventually consistent GetItem per request (under 4 KB, half a read unit)
+- Cache refill: assumed to happen every time the 30-second TTL runs out, 87,600 times a month; each takes three write units (take the lock, write the value, release the lock) and half a read unit for the re-check
+- Lambda on arm64 with 256 MB and an assumed average of 30 ms; 0.5 KB of logs per request
+- 1 MB stored in the table. Data transfer out to the internet is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `apigw.http.request` | 1,000,000 | Requests | 1,000,000 requests | 1.29 | - | 1.29 |
+| `lambda.request.arm` | 1,000,000 | Requests | 1,000,000 invocations | 0.20 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 7,500 | Lambda-GB-Second | 1,000,000 x 0.03 s x 0.25 GB | 0.10 | 400,000 | 0 |
+| `dynamodb.write.on-demand` | 1,262,800 | WriteRequestUnits | 1,000,000 counter updates + 87,600 refills x 3 writes | 0.90 | - | 0.90 |
+| `dynamodb.read.on-demand` | 543,800 | ReadRequestUnits | (1,000,000 + 87,600) eventually consistent reads x 0.5 | 0.08 | - | 0.08 |
+| `dynamodb.storage` | 0.001 | GB-Mo | 1 MB stored, in GB-month | 0 | - | 0 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.36 | 5 | 0 |
+| `logs.storage` | 0.111 | GB-Mo | about 7 days of logs kept, in GB-month | 0.003663 | 5 | 0 |
+
+- List subtotal: **USD 2.94** / month
+- Subtotal after monthly free allowance: **USD 2.27** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`
+
+## KV and cache: one million requests a month on ElastiCache Serverless (Valkey)
+
+ID: `kv-used-valkey` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+
+Assumptions:
+
+- One million `GET /items` a month
+- Less than 100 MB stored: the 100 MB minimum (computed as 0.1 GB) for 730 hours
+- 10 ECPUs per request assumed, on the generous side; how many ECPUs a script (EVAL) really uses was not measured
+- Lambda on arm64 with 256 MB and an assumed average of 30 ms; 0.5 KB of logs per request
+- Data transfer to the public endpoint (USD 0.01 per GB on the application side) and out to the internet is not included
+- The DynamoDB table stays in the stack but is not read or written in this setup
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `apigw.http.request` | 1,000,000 | Requests | 1,000,000 requests | 1.29 | - | 1.29 |
+| `lambda.request.arm` | 1,000,000 | Requests | 1,000,000 invocations | 0.20 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 7,500 | Lambda-GB-Second | 1,000,000 x 0.03 s x 0.25 GB | 0.10 | 400,000 | 0 |
+| `elasticache.serverless.valkey.storage` | 73 | GB-Hours | 0.1 GB minimum x 730 hours, in GB-hours | 7.37 | - | 7.37 |
+| `elasticache.serverless.valkey.ecpu` | 10,000,000 | ElastiCacheProcessingUnit | 1,000,000 requests x 10 ECPUs (assumption) | 0.03 | - | 0.03 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.36 | 5 | 0 |
+| `logs.storage` | 0.111 | GB-Mo | about 7 days of logs kept, in GB-month | 0.003663 | 5 | 0 |
+
+- List subtotal: **USD 9.36** / month
+- Subtotal after monthly free allowance: **USD 8.69** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -808,6 +914,9 @@ Assumptions:
 | `xray.trace.retrieved` | ap-northeast-1 | APN1-XRay-TracesAccessed | traces | 0 - ∞: 0.0000005000 | 2026-09-11 | 2026-10-12 |
 | `cloudwatch.rum.event` | ap-northeast-1 | APN1-CW:RUM-events | Events | 0 - ∞: 0.0000100000 | 2026-10-07 | 2026-10-12 |
 | `cloudwatch.synthetics.run` | ap-northeast-1 | APN1-CW:Canary-runs | Runs | 0 - ∞: 0.0019000000 | 2026-10-07 | 2026-10-12 |
+| `elasticache.serverless.valkey.storage` | ap-northeast-1 | APN1-CachedData:Valkey | GB-Hours | 0 - ∞: 0.1010000000 | 2026-09-14 | 2026-10-12 |
+| `elasticache.serverless.valkey.ecpu` | ap-northeast-1 | APN1-ElastiCacheProcessingUnits:Valkey | ElastiCacheProcessingUnit | 0 - ∞: 0.0000000027 | 2026-09-14 | 2026-10-12 |
+| `elasticache.node.valkey.t4g-micro` | ap-northeast-1 | APN1-NodeUsage:cache.t4g.micro | Hrs | 0 - ∞: 0.0200000000 | 2026-09-14 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 

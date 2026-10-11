@@ -1464,6 +1464,69 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-10-07T11:55:40Z",
       "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "elasticache.serverless.valkey.storage",
+      "offerCode": "AmazonElastiCache",
+      "region": "ap-northeast-1",
+      "sku": "RT6S4AG9UBCXSSFU",
+      "usageType": "APN1-CachedData:Valkey",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1010000000",
+          "description": "$0.101 per GB-hour for Valkey data storage"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-14T06:37:14Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "elasticache.serverless.valkey.ecpu",
+      "offerCode": "AmazonElastiCache",
+      "region": "ap-northeast-1",
+      "sku": "MY8ZWMDW8MAPP6JV",
+      "usageType": "APN1-ElastiCacheProcessingUnits:Valkey",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ElastiCacheProcessingUnit",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000000027",
+          "description": "$0.0027 per million Valkey ECPUs"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-14T06:37:14Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "elasticache.node.valkey.t4g-micro",
+      "offerCode": "AmazonElastiCache",
+      "region": "ap-northeast-1",
+      "sku": "4PMS6ZBWYF4R96MA",
+      "usageType": "APN1-NodeUsage:cache.t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0200000000",
+          "description": "$0.02 per T4G Micro Cache node-hour (or partial hour) running Valkey"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-14T06:37:14Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

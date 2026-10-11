@@ -77,6 +77,7 @@ const chapterSynthTasks = [
   "uploads:infra:synth",
   "ssr:infra:synth",
   "obs:infra:synth",
+  "kv:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -328,6 +329,30 @@ export default defineConfig({
         cwd: "examples/19-observability",
       }),
       // <<< chapter 19
+
+      // >>> chapter 14
+      // ---- chapter 14: key-value stores and caches ------------------------
+      // The items API with counters and cache in memory, Valkey, or DynamoDB, as examples/14-kv-cache/.env says.
+      "dev:kv": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/14-kv-cache" }),
+      // Valkey and DynamoDB Local in containers. Needs a running Docker daemon.
+      "kv:local:start": fresh("node --env-file-if-exists=.env scripts/local-stores.ts start", {
+        cwd: "examples/14-kv-cache",
+      }),
+      "kv:local:stop": fresh("node --env-file-if-exists=.env scripts/local-stores.ts stop", {
+        cwd: "examples/14-kv-cache",
+      }),
+      "kv:local:migrate": fresh("node --env-file-if-exists=.env scripts/local-stores.ts migrate", {
+        cwd: "examples/14-kv-cache",
+      }),
+      // The store contracts against those two. A store that is not running fails the task instead of being skipped.
+      "kv:test:local": fresh("node --env-file-if-exists=.env scripts/test-local.ts", {
+        cwd: "examples/14-kv-cache",
+      }),
+      // `-c store=valkey` adds an ElastiCache Serverless cache, billed for as long as it exists.
+      ...infra("kv", "examples/14-kv-cache", "AihKvCache"),
+      "kv:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/14-kv-cache" }),
+      "kv:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/14-kv-cache" }),
+      // <<< chapter 14
 
       // ---- chapter task blocks are inserted above this line ----
 

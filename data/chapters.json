@@ -639,49 +639,73 @@
         "en": "Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration"
       },
       "prerequisites": ["05", "10", "11"],
-      "services": ["DynamoDB", "ElastiCache", "CloudFront KeyValueStore"],
+      "services": ["DynamoDB", "ElastiCache", "CloudFront KeyValueStore", "Lambda", "API Gateway HTTP API", "IAM"],
       "samplePath": "examples/14-kv-cache",
+      "sourceIds": [
+        "dynamodb-ttl",
+        "dynamodb-ttl-expired-items",
+        "dynamodb-working-with-items",
+        "dynamodb-update-expressions",
+        "dynamodb-constraints",
+        "dynamodb-condition-expressions",
+        "dynamodb-read-consistency",
+        "dynamodb-on-demand",
+        "aws-price-list-dynamodb",
+        "dynamodb-local-download",
+        "dynamodb-local-image",
+        "elasticache-what-is",
+        "elasticache-deployment-options",
+        "elasticache-vpc",
+        "elasticache-public-endpoint-create",
+        "elasticache-public-endpoint-connect",
+        "elasticache-iam-auth",
+        "elasticache-rbac",
+        "elasticache-in-transit-encryption",
+        "elasticache-supported-commands",
+        "elasticache-serverless-scaling",
+        "elasticache-engine-versions",
+        "elasticache-pricing",
+        "aws-price-list-elasticache",
+        "cfn-elasticache-serverlesscache",
+        "cdkd-register-providers-kv",
+        "valkey-readme",
+        "valkey-eval-intro",
+        "valkey-command-set",
+        "valkey-command-expire",
+        "valkey-command-incr",
+        "valkey-container-image",
+        "iovalkey-npm",
+        "valkey-glide-npm",
+        "lambda-execution-environment",
+        "lambda-concurrency",
+        "lambda-vpc",
+        "lambda-runtime-env-vars",
+        "lambda-pricing",
+        "aws-price-list-lambda",
+        "aws-price-list-apigw",
+        "aws-price-list-cloudwatch",
+        "cloudfront-kvs",
+        "cloudfront-kvs-data",
+        "cloudfront-kvs-helper-methods",
+        "cloudfront-quotas",
+        "cloudfront-pricing-payg",
+        "aws-blog-kvs-launch",
+        "cloudflare-kv-how-it-works",
+        "cloudflare-kv-limits",
+        "cloudflare-kv-pricing",
+        "cloudflare-durable-objects-what",
+        "cloudflare-workers-rate-limit-binding",
+        "cdkd-npm"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["cloudfront-kvs", "dynamodb-intro"],
-      "outline": {
-        "outcome": {
-          "ja": "rate limit と一覧の cache を題材に、三つの「KV」を目的・一貫性・寿命・料金で選び分ける。",
-          "en": "Using a rate limiter and a list cache, you pick among three \"KV\" options by purpose, consistency, lifetime, and price."
-        },
-        "architecture": {
-          "ja": "同じ interface の裏に DynamoDB（TTL）と Valkey を置き、edge 設定は KVS に分ける。",
-          "en": "DynamoDB (TTL) and Valkey behind one interface, with edge configuration kept in KVS."
-        },
-        "topics": {
-          "ja": [
-            "cache は消えてよいデータだけに使う",
-            "TTL の削除は即時ではない",
-            "Valkey は VPC と常時稼働費用を伴う（serverless の最小課金を確認）",
-            "cache stampede"
-          ],
-          "en": [
-            "Cache only data you can afford to lose",
-            "TTL deletion is not immediate",
-            "Valkey brings a VPC and standing cost (check the serverless minimum)",
-            "Cache stampedes"
-          ]
-        },
-        "requiredSource": {
-          "ja": ["rate limiter の実装と、時計を注入した境界テスト", "各 store の CDK", "stale read を再現するテスト"],
-          "en": [
-            "Rate limiter with boundary tests using an injected clock",
-            "CDK for each store",
-            "A test reproducing a stale read"
-          ]
-        },
-        "distributed": {
-          "ja": "cache と元データの不一致を前提に、どちらが正かを決める。",
-          "en": "Assume the cache and the source of truth disagree, and decide which one wins."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "15",
