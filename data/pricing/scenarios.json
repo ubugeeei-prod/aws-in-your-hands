@@ -2941,6 +2941,179 @@
           "basis": "10,000 replication PUT requests"
         }
       ]
+    },
+    {
+      "id": "celld-one-node-running",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: node 1 台を 1 か月動かしたまま",
+        "en": "celld: one node running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=1`。t4g.small を 730 時間動かしたまま",
+          "11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま",
+          "S3 の request は、celld の文書にある間隔からの見積もり（node ごとに、lease の更新が約 3.3 秒に 1 回、fleet sample の読み取りが 5 秒に 1 回、deployment pointer の読み取りが 30 秒に 1 回）。実測ではなく、cell が動いたときの request は含まない",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入"
+        ],
+        "en": [
+          "`-c nodes=1`: one t4g.small running for 730 hours",
+          "Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack",
+          "S3 requests are estimated from the intervals in celld's documentation (per node: a lease renewal about every 3.3 s, a fleet sample read every 5 s, a deployment pointer read every 30 s). Not measured, and requests caused by active cells are not included",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "S3 storage, data transfer, snapshots, and the backup bucket are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-small.linux.hour",
+          "quantity": 730,
+          "basis": "1 t4g.small x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "1 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 788400,
+          "basis": "1 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval)"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 613200,
+          "basis": "1 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "celld-three-nodes-running",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: node 3 台を 1 か月動かしたまま",
+        "en": "celld: three nodes running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=3`。t4g.small 3 台を 730 時間動かしたまま",
+          "11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま",
+          "S3 の request は、celld の文書にある間隔からの見積もり（node ごとに、lease の更新が約 3.3 秒に 1 回、fleet sample の読み取りが 5 秒に 1 回、deployment pointer の読み取りが 30 秒に 1 回）。実測ではなく、cell が動いたときの request は含まない",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入"
+        ],
+        "en": [
+          "`-c nodes=3`: three t4g.small running for 730 hours",
+          "Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack",
+          "S3 requests are estimated from the intervals in celld's documentation (per node: a lease renewal about every 3.3 s, a fleet sample read every 5 s, a deployment pointer read every 30 s). Not measured, and requests caused by active cells are not included",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "S3 storage, data transfer, snapshots, and the backup bucket are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-small.linux.hour",
+          "quantity": 2190,
+          "basis": "3 t4g.small x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 48,
+          "basis": "3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 2365200,
+          "basis": "3 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval)"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 1839600,
+          "basis": "3 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "celld-three-nodes-stopped",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: node 3 台を 1 か月止めたまま",
+        "en": "celld: three nodes stopped for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=3` の instance を 3 台とも停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入"
+        ],
+        "en": [
+          "The three instances of `-c nodes=3` stopped for 730 hours. The volumes and the interface endpoints in the chapter 11 stack remain",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "S3 storage, data transfer, snapshots, and the backup bucket are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 48,
+          "basis": "3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "celld-retained-after-destroy",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: stack を消した後に残る data volume（3 台分）",
+        "en": "celld: the data volumes left after destroying the stack (three nodes)"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の `stateOnDestroy=retain` のまま、`-c nodes=3` の stack を destroy し、11章の interface endpoint も消した後の 730 時間",
+          "残るのは 8 GiB の data volume 3 つ。root volume は instance と一緒に消える",
+          "残った 2 つの bucket の保存容量は未算入"
+        ],
+        "en": [
+          "730 hours after destroying a `-c nodes=3` stack with the default `stateOnDestroy=retain`, and after removing the chapter 11 interface endpoints",
+          "What remains: three 8 GiB data volumes. Root volumes go with their instances",
+          "Storage in the two retained buckets is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 24,
+          "basis": "3 retained data volume(s) x 8 GiB, 730 of 730 hours"
+        }
+      ]
     }
   ]
 }

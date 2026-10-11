@@ -218,3 +218,13 @@ The term pairs that keep both languages using one word for one concept. API name
 | RPO（recovery point objective） | RPO (recovery point objective) | 22 | The target for how far back you may lose data in an incident, expressed as time. What was actually lost is the gap between the restore point and the incident. |
 | RTO（recovery time objective） | RTO (recovery time objective) | 22 | The target for how long it may take from an incident until the service is usable again. Measured to the moment users read correct data, not to the moment a restore API returns. |
 | delete marker | delete marker | 22 | The marker S3 places when an object in a versioning-enabled bucket is deleted without naming a version. The bytes stay, and the marker becomes the newest version. Deleting the marker brings the object back. |
+| cell（celld） | cell (celld) | 24 | A Durable Object in celld: a small server with a name and a private SQLite database. |
+| node（celld） | node (celld) | 24 | One celld process on one machine. Any node can serve any cell. |
+| fleet | fleet | 24 | The celld nodes that share one bucket. There is no join step; they find each other through leases in the bucket. |
+| ownership record | ownership record | 24 | One small object per cell in the bucket, naming the current owner (a node session) and a fencing epoch. It changes only through conditional writes. |
+| fencing epoch | fencing epoch | 24 | A number that grows every time ownership changes, used to keep a former owner's writes away from the current owner's state. |
+| lease（node） | lease (node) | 24 | A record with an expiry that says a node is alive. A node that cannot renew it in time stops itself. |
+| follower | follower | 24 | Another node that receives each write from the owner and stores it on its own disk. One or two of them in celld. |
+| drain | drain | 24 | Handing a node's work to others before it stops. In celld, SIGTERM is the signal for it. |
+| supervisor | supervisor | 24 | Whatever starts a process and starts it again when it exits. In this chapter, systemd. |
+| セルフホスト | self-hosting | 24 | Running software on your own machines instead of using a managed service, and taking on its upgrades and failures yourself. |

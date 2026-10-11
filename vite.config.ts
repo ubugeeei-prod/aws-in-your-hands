@@ -85,6 +85,7 @@ const chapterSynthTasks = [
   "export:infra:synth",
   "sec:infra:synth",
   "recovery:infra:synth",
+  "celld:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -105,6 +106,7 @@ const chapterCheckTasks = [
   "ecs:bundle:check",
   "ec2:app:build",
   "sec:iam:lint",
+  "celld:render",
 ];
 
 export default defineConfig({
@@ -581,6 +583,67 @@ export default defineConfig({
         cwd: "examples/22-recovery",
       }),
       // <<< chapter 22
+
+      // >>> chapter 24
+      // ---- chapter 24: celld ----------------------------------------------
+      // The fleet a deploy would create, what celld documents about its size, and the idle cost. Reads only this checkout.
+      "celld:plan": fresh("node scripts/plan.ts", { cwd: "examples/24-celld" }),
+      // Fails when deploy/ differs from what the generators produce. `--write` rewrites it.
+      "celld:render": fresh("node scripts/render.ts", { cwd: "examples/24-celld" }),
+      // Downloads the pinned release from github.com and checks its SHA-256. No AWS. Runs nothing it downloads.
+      "celld:fetch": live("node scripts/fetch.ts", { cwd: "examples/24-celld" }),
+      ...infra("celld", "examples/24-celld", "AihCelld"),
+      // Everything below goes through Systems Manager to the deployed nodes.
+      "celld:status": live("node --env-file-if-exists=../../.env scripts/fleet.ts status", {
+        cwd: "examples/24-celld",
+      }),
+      "celld:logs": live("node --env-file-if-exists=../../.env scripts/fleet.ts logs", { cwd: "examples/24-celld" }),
+      "celld:diagnose": live("node --env-file-if-exists=../../.env scripts/fleet.ts diagnose", {
+        cwd: "examples/24-celld",
+      }),
+      "celld:cells": live("node --env-file-if-exists=../../.env scripts/fleet.ts cells", { cwd: "examples/24-celld" }),
+      "celld:smoke": live("node --env-file-if-exists=../../.env scripts/fleet.ts smoke", { cwd: "examples/24-celld" }),
+      "celld:artifacts": live("node --env-file-if-exists=../../.env scripts/fleet.ts artifacts", {
+        cwd: "examples/24-celld",
+      }),
+      "celld:install": live("node --env-file-if-exists=../../.env scripts/fleet.ts install", {
+        cwd: "examples/24-celld",
+      }),
+      "celld:start": live("node --env-file-if-exists=../../.env scripts/fleet.ts start", { cwd: "examples/24-celld" }),
+      // Runs the local celld binary against the fleet bucket with your credentials.
+      "celld:app-deploy": live("node --env-file-if-exists=../../.env scripts/fleet.ts app-deploy", {
+        cwd: "examples/24-celld",
+      }),
+      // SIGTERM to one node: it hands its cells off, then stops.
+      "celld:drain": live("node --env-file-if-exists=../../.env scripts/fleet.ts drain", { cwd: "examples/24-celld" }),
+      "celld:stop-all": live("node --env-file-if-exists=../../.env scripts/fleet.ts stop-all", {
+        cwd: "examples/24-celld",
+      }),
+      // One node at a time, or a stopped fleet, depending on what the upgrade notes say for the version pair.
+      "celld:rollout": live("node --env-file-if-exists=../../.env scripts/fleet.ts rollout", {
+        cwd: "examples/24-celld",
+      }),
+      // Stops an instance without an OS shutdown. The instance and its volumes stay.
+      "celld:kill": live("node --env-file-if-exists=../../.env scripts/fleet.ts kill", { cwd: "examples/24-celld" }),
+      "celld:revive": live("node --env-file-if-exists=../../.env scripts/fleet.ts revive", {
+        cwd: "examples/24-celld",
+      }),
+      "celld:loss-check": live("node --env-file-if-exists=../../.env scripts/fleet.ts loss-check", {
+        cwd: "examples/24-celld",
+      }),
+      // Only a stopped fleet: snapshots of every data volume plus a copy of the fleet prefix.
+      "celld:backup": live("node --env-file-if-exists=../../.env scripts/fleet.ts backup", {
+        cwd: "examples/24-celld",
+      }),
+      // Lists what it would overwrite. `--yes` overwrites the fleet bucket.
+      "celld:restore": live("node --env-file-if-exists=../../.env scripts/fleet.ts restore", {
+        cwd: "examples/24-celld",
+      }),
+      // Lists what it would delete. `--yes` deletes every object.
+      "celld:bucket-empty": live("node --env-file-if-exists=../../.env scripts/fleet.ts bucket-empty", {
+        cwd: "examples/24-celld",
+      }),
+      // <<< chapter 24
 
       // ---- chapter task blocks are inserted above this line ----
 

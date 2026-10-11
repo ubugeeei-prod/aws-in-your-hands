@@ -81,7 +81,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-s3`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 03, 07, 08, 09, 16, 20
+- Chapters: 03, 07, 08, 09, 16, 20, 24
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonS3
 
@@ -109,7 +109,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-introduction`
 - URL: <https://cdkd.dev/introduction/>
 - Checked: 2026-10-11
-- Chapters: 02, 11, 12, 20, 23
+- Chapters: 02, 11, 12, 20, 23, 24
 - Claims this source supports:
   - cdkd describes itself as for dev/test workflows and recommends the AWS CDK CLI for production
 
@@ -819,7 +819,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `vpc-interface-endpoints`
 - URL: <https://docs.aws.amazon.com/vpc/latest/privatelink/create-interface-endpoint.html>
 - Checked: 2026-10-11
-- Chapters: 11, 23
+- Chapters: 11, 23, 24
 - Claims this source supports:
   - An interface endpoint creates an endpoint network interface with a private IP address in each chosen subnet, one subnet per Availability Zone
   - Interface endpoints are billed for hourly usage and for data processing
@@ -954,7 +954,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-vpc`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 11, 12, 16, 23
+- Chapters: 11, 12, 16, 23, 24
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonVPC: interface endpoint hours and data processing, public IPv4 address hours
   - The offer has no SKU for a VPC, subnet, route table, internet gateway, or gateway endpoint
@@ -2539,7 +2539,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `s3-conditional-writes`
 - URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html>
 - Checked: 2026-10-11
-- Chapters: 07
+- Chapters: 07, 24
 - Claims this source supports:
   - If-None-Match prevents overwriting an existing key
   - If-None-Match can be used with PutObject, CompleteMultipartUpload, and CopyObject; POST Object is not in the list
@@ -2570,7 +2570,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `s3-lifecycle-abort-mpu`
 - URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpu-abort-incomplete-mpu-lifecycle-config.html>
 - Checked: 2026-10-11
-- Chapters: 07
+- Chapters: 07, 24
 - Claims this source supports:
   - AWS recommends a lifecycle rule with AbortIncompleteMultipartUpload to minimize storage costs
   - The rule aborts multipart uploads not completed within the given number of days and deletes their parts; it deletes no objects
@@ -2620,7 +2620,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `s3-consistency`
 - URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html>
 - Checked: 2026-10-11
-- Chapters: 07, 08
+- Chapters: 07, 08, 24
 - Claims this source supports:
   - S3 provides strong read-after-write consistency for PUT and DELETE of objects, and reads of object tags and metadata such as HEAD are strongly consistent
 - Note: The sentence names PUT and DELETE. It does not name POST Object.
@@ -5228,7 +5228,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ssm-endpoints-for-ec2`
 - URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-create-vpc.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - The page lists the interface endpoints ssm, ec2messages, and ssmmessages, plus S3 for SSM Agent updates
   - ssmmessages is required for SSM Agent to communicate with Systems Manager, for Run Command, and for Session Manager
@@ -5305,7 +5305,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ssm-session-plugin`
 - URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - The Session Manager plugin must be installed separately on the local machine to start sessions with the AWS CLI
   - The page asks for plugin version 1.2.764.0 or later
@@ -5325,7 +5325,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ssm-managed-instance-core-policy`
 - URL: <https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonSSMManagedInstanceCore.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - The policy (version v2) allows ssm, ssmmessages, and ec2messages actions on Resource "*"
   - Among them are ssm:GetParameter and ssm:GetParameters on every resource
@@ -5335,7 +5335,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ssm-run-command-walkthrough`
 - URL: <https://docs.aws.amazon.com/systems-manager/latest/userguide/walkthrough-cli.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - AWS-RunShellScript runs commands on a managed node as if logged on locally
   - Commands in the pre-configured AWS-* documents run with administrative permissions; a user allowed to run them has administrator access to the node
@@ -5346,7 +5346,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ssm-api-get-command-invocation`
 - URL: <https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_GetCommandInvocation.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - Status is one of Pending, InProgress, Delayed, Success, Cancelled, TimedOut, Failed, Cancelling
   - ResponseCode is the script's exit code; StandardOutputContent holds the first 24,000 characters of stdout
@@ -5356,7 +5356,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ssm-pricing-ec2`
 - URL: <https://aws.amazon.com/systems-manager/pricing/>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - Session Manager, Run Command, and Patch Manager have no additional charge for use on Amazon EC2 instances
   - From September 30, 2026, sessions and Run Command invocations on hybrid and multicloud nodes are billed
@@ -5393,7 +5393,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ec2-imds`
 - URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - IMDS answers at 169.254.169.254; IMDSv2 is session-oriented: a PUT request returns a token that later requests must present
   - PUT requests carrying an X-Forwarded-For header are rejected
@@ -5433,7 +5433,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ec2-user-data`
 - URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - User data scripts run only during the boot cycle of the first launch, by default
   - They run as root, not interactively; output goes to /var/log/cloud-init-output.log
@@ -5455,7 +5455,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ec2-stop-start`
 - URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Stop_Start.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - A started instance typically moves to a new host and gets a new public IPv4 address
   - Data on instance store volumes is erased when an instance stops
@@ -5506,7 +5506,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ec2-burstable-unlimited`
 - URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/burstable-performance-instances-unlimited-mode-concepts.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - T4g, T3a, T3, and T8i instances launch in unlimited mode by default
   - In unlimited mode, CPU use above the baseline averaged over 24 hours is billed at a flat rate per vCPU-hour
@@ -5575,7 +5575,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `al2023-awscli`
 - URL: <https://docs.aws.amazon.com/linux/al2023/ug/awscli2.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - AL2023 ships with AWS CLI version 2
 
@@ -5602,7 +5602,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `al2023-repositories`
 - URL: <https://docs.aws.amazon.com/linux/al2023/ug/managing-repos-os-updates.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - Sample dnf output shows the repositories at https://al2023-repos-<region>-de612dc2.s3.dualstack.<region>.amazonaws.com/
 - Note: This is the only evidence found that the repositories are S3 buckets in the instance's Region. No page read states that an S3 gateway endpoint is enough to reach them.
@@ -5642,7 +5642,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ebs-snapshots`
 - URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-snapshots.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - Snapshots are incremental, stored in Amazon S3, and replicated across the Availability Zones of the Region
   - A volume can be restored from a snapshot in any Availability Zone of that Region
@@ -5652,7 +5652,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ebs-create-snapshot`
 - URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-creating-snapshot.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - Snapshot creation is asynchronous; the snapshot stays pending until its data has been transferred
   - For a consistent snapshot, pause writes or unmount the volume first; writes can resume once the snapshot is pending
@@ -5663,7 +5663,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ebs-restore-volume`
 - URL: <https://docs.aws.amazon.com/ebs/latest/userguide/ebs-restoring-volume.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - A volume created from a snapshot must be in the same Availability Zone as the instance it will attach to
   - aws ec2 create-volume takes --snapshot-id and --availability-zone
@@ -5722,7 +5722,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cfn-ssm-parameter-types`
 - URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-supplied-parameter-types.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - A parameter of type AWS::SSM::Parameter::Value<AWS::EC2::Image::Id> makes CloudFormation fetch the value from Parameter Store when the stack is created or updated
 
@@ -5731,7 +5731,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cfn-deletion-policy`
 - URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - Snapshot is supported for resources such as AWS::EC2::Volume; Retain is supported for any resource
 
@@ -5740,7 +5740,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-ec2-compute`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with ids ec2.t4g-micro.linux.hour, ec2.t4g-small.linux.hour, ec2.t4g.cpu-credit, ebs.gp3.storage, ebs.snapshot.storage
   - t4g.micro is 2 vCPU and 1 GiB; t4g.small is 2 vCPU and 2 GiB
@@ -5751,7 +5751,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-source-ec2`
 - URL: <https://github.com/go-to-k/cdkd/tree/v0.296.28/src>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - register-providers.ts registers AWS::EC2::Instance and AWS::EC2::SecurityGroup with the EC2 provider and AWS::IAM::InstanceProfile with its own provider
   - AWS::EC2::Volume, AWS::EC2::VolumeAttachment, and AWS::EC2::LaunchTemplate are not registered, so they go through Cloud Control API
@@ -5766,7 +5766,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-cli-destroy`
 - URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-destroy.md>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - A non-empty S3 bucket fails the destroy unless the bucket opted in to being emptied
 
@@ -5775,7 +5775,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-cdk-lib-ec2-machine-image`
 - URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - MachineImage.latestAmazonLinux2023() adds a template parameter of type AWS::SSM::Parameter::Value<AWS::EC2::Image::Id> and looks nothing up during synthesis
   - Its documentation comment says the image updates on every deployment, that instances are replaced when a new image appears, and not to store stateful information on the instance
@@ -5799,7 +5799,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `systemd-unit-man`
 - URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - RequiresMountsFor= adds Requires= and After= on the mount units for a path
   - AssertPathIsMountPoint= fails the start when the path is not a mount point; ConditionPathExists= skips it quietly
@@ -5820,7 +5820,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `systemd-kill-man`
 - URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.kill.xml>
 - Checked: 2026-10-12
-- Chapters: 23
+- Chapters: 23, 24
 - Claims this source supports:
   - KillSignal= is the first signal sent on stop (SIGTERM by default), followed by SIGKILL after the timeout
 
@@ -7324,6 +7324,277 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Claims this source supports:
   - The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented
 
+### celld source
+
+- ID: `celld-source`
+- URL: <https://github.com/denoland/celld>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - The repository describes celld as self-hosted, distributed Durable Objects, under Apache-2.0, owned by denoland
+  - On 2026-10-12 the default branch pointed at commit 90b43017241f81189453d326d05948f388b34652, the same commit as the v0.6.2 tag
+  - Pull requests are disabled; patches go by email
+- Note: Read through the GitHub API (repository, tags, releases, tree) and the raw files of the default branch.
+
+### celld limitations
+
+- ID: `celld-limitations`
+- URL: <https://github.com/denoland/celld/blob/main/docs/limitations.md>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - celld v0.6.2 is a beta release
+  - A fleet runs one application; there is no account service, multi-tenant scheduler, or managed ingress
+  - celld does not terminate TLS; peer traffic is plaintext HTTP, and the fleet HMAC does not encrypt
+  - The installer supplies binaries for Linux x86-64, Linux ARM64, and Apple Silicon
+
+### celld security
+
+- ID: `celld-security`
+- URL: <https://github.com/denoland/celld/blob/main/docs/security.md>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - v0.6.2 is a beta release, not safe for hostile multi-tenant use; only the latest release receives security fixes
+  - celld opens two HTTP listeners and terminates TLS on neither; --internal-listen serves the peer protocol and the operator API
+  - Most operator routes on the internal listener have no request authentication, including POST /shutdown and /state
+  - The public listener reserves only /.well-known/celld/health: 200 with {"ok":true} when healthy, 503 otherwise
+  - The fleet bucket is the root of authority; a holder of the bucket credentials controls the fleet
+  - The operator API is an alpha interface; a release can change its paths or response formats
+
+### celld guarantees
+
+- ID: `celld-guarantees`
+- URL: <https://celld.dev/docs/guarantees/>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - The page exists and carries the same guarantees text as docs/guarantees.md in the repository
+- Note: Read through a summarizing fetch; the claims this chapter relies on are taken from the repository file at the v0.6.2 tag (celld-guarantees-v062).
+
+### celld documentation
+
+- ID: `celld-docs`
+- URL: <https://celld.dev/docs/>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - The documentation site lists pages for limitations, security, guarantees, testing, telemetry, Cloudflare compatibility, and one page per service
+- Note: Read through a summarizing fetch; the claims this chapter relies on are taken from the repository files at the v0.6.2 tag.
+
+### celld v0.6.2: README
+
+- ID: `celld-readme-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/README.md>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - celld runs a Cloudflare Workers application on your own machines and stores long-term state in an S3-compatible, Google Cloud Storage, or Azure Blob Storage bucket
+  - A node is one celld process; nodes that share one bucket are a fleet; a conditional bucket write gives a node the ownership of a cell
+  - celld uses the standard AWS credential chain; a node is started with --bucket, --listen, --internal-listen, and --advertise
+  - The container example sets CELLD_WATCH to a directory on a persistent volume
+  - One node proves each write through the bucket; with a second node the write finishes once that node holds it on disk
+  - Put every advertised address on a trusted private network or an encrypted overlay; celld rejects a literal public IP unless --unsafe-public-advertise is given
+  - Treat access to the bucket and its credentials as fleet administrator access
+  - The installer downloads the binary from GitHub releases; provenance is verifiable with gh attestation verify
+
+### celld v0.6.2: documentation (operate, shut down, upgrade notes, environment variables)
+
+- ID: `celld-docs-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/README.md>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - CELLD_DURABILITY defaults to fleet; a one-node fleet waits for the bucket on every write; a fleet that loses all but one node falls back to the bucket and stays correct
+  - celld shuts down gracefully on SIGTERM or SIGINT: health reports 503, accepted requests finish, and the node hands its cells off to a peer; POST /shutdown on the internal listener starts the same handoff
+  - CELLD_SHUTDOWN_TOTAL_MS defaults to 40000; the orchestrator stop grace (systemd TimeoutStopSec) must be above it or SIGKILL can interrupt the handoff
+  - To roll out a new version: stop each node with SIGTERM, wait for its replacement to report healthy, then move to the next node
+  - During a rolling update, wait for restoring=0 on every node (celld diagnose) before restarting the next
+  - A new process does not report healthy until the fleet settles; CELLD_READY_FLEET_GATE_MS defaults to 120000
+  - Upgrade notes: v0.1.0 to v0.2.0 stop all; v0.2.1 to v0.3.0 rolling; v0.3.0 to v0.4.0 stop all; v0.4.0 to v0.4.1 rolling; v0.5.1 to v0.6.0 stop all with fleet durability; v0.6.0 to v0.6.1 rolling; v0.6.1 to v0.6.2 rolling
+  - The node lease lives CELLD_TTL_MS (default 10000) and renews at one third of that; the fleet sample is read every CELLD_REBALANCE_INTERVAL_MS (default 5000); deploy/current.json is read every CELLD_DEPLOY_POLL_S (default 30)
+  - CELLD_BUCKET, AWS_REGION, CELLD_ADDR, CELLD_INTERNAL_ADDR, CELLD_ADVERTISE, and CELLD_WATCH are the environment forms of the node settings; CELLD_NODE is an explicit node-session ID
+  - A bucket value can add a key prefix (s3://BUCKET/PREFIX)
+  - celld deploy needs esbuild on PATH for Worker code; CELLD_ESBUILD overrides the path; a running node adopts a new deployment without a restart
+  - celld diagnose reads the node leases and probes each live peer without taking a lease; celld cell list prints one Class:ID scope per line
+  - One 8 GB node holds 1,000 resident cells
+  - celld does not scale itself; an external system starts and stops the nodes
+
+### celld v0.6.2: what celld guarantees
+
+- ID: `celld-guarantees-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/guarantees.md>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - Two promises: exactly one node serves a cell at a time, and an acknowledged write is never lost; both require a bucket with working conditional writes and ranged reads, and a supervisor that restarts the process
+  - The qualified stores are Amazon S3, Cloudflare R2, Tigris, Google Cloud Storage, and Azure Blob Storage; the release tests run against R2, and the S3 path uses the same client and headers
+  - The supervisor must restart without an attempt limit and wait at least one lease lifetime between attempts
+  - Each cell has one ownership record in the bucket, naming the owner's session and a fencing epoch, acquired by conditional create or compare-and-swap
+  - In fleet mode the owner sends each write to one or two followers and every follower must fsync it; a fleet needs two running nodes for a fleet proof; a fleet of three or more holds three copies of an acknowledged write
+  - In fleet mode celld can acknowledge a write before its bucket upload completes; a follower disk can hold acknowledged writes that the bucket does not yet hold
+  - Recovery limits: a follower's HTTP error can block recovery and startup; a deleted final batch is undetectable if nothing later records its range; a mixed-version tail can stall recovery
+  - A node whose lease expires fences itself, logs a line starting with SELF-FENCE:, and exits with code 3; only a restart returns it
+  - celld reserves the key prefixes probe/, cells/, nodes/, node-cells/, fleet/, deploy/, deploy-blobs/, log/, wake/, and telemetry/
+  - The v0.4.1 upgrade procedure: stop every node and wait for every lease to expire, back up the bucket and node data keeping node names, peer addresses, and data directories; to roll back, restore the full stopped-fleet backup, which loses writes made after it
+  - Each node runs the storage test (four conditional writes and a ranged read) before it serves, and cannot disable it
+
+### celld v0.6.2: testing
+
+- ID: `celld-testing-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/testing.md>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - The coordination protocol is specified in TLA+ and exercised by deterministic simulation; the model grants a linearizable object store
+  - Live-fleet fault scenarios include SIGKILL mid-write-stream, freezing an owner, cutting a node off from the bucket, and stopping a host; a verification pass fetches each cell through different nodes
+  - A cell can be briefly unavailable while ownership moves
+  - A fleet at its resident limit has no space for a lost node's cells
+
+### celld releases (GitHub API)
+
+- ID: `celld-releases`
+- URL: <https://api.github.com/repos/denoland/celld/releases>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - v0.6.2 was published 2026-10-07 and is the latest of 11 releases; none is marked prerelease
+  - Each release carries celld-aarch64-unknown-linux-gnu.gz, celld-x86_64-unknown-linux-gnu.gz, and celld-aarch64-apple-darwin.gz with a sha256 digest
+  - v0.6.2 release notes: upgrading from v0.6.1 can use a rolling update
+- Note: The six archives of v0.6.2 and v0.6.1 were downloaded on 2026-10-12 and their SHA-256 matched the published digests. None was unpacked or run.
+
+### celld installer script
+
+- ID: `celld-install-script`
+- URL: <https://celld.dev/install.sh>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - The installer downloads celld-<target>.gz from the GitHub release named by CELLD_VERSION, decompresses it, and switches one symlink
+  - It relies on gzip's CRC for corruption and on the release attestation for provenance; it carries no checksum of its own
+- Note: Read as text, not run.
+
+### celld v0.6.2: source (cli, fleet diagnostics, bucket client)
+
+- ID: `celld-source-v062`
+- URL: <https://github.com/denoland/celld/tree/v0.6.2/crates/celld>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - main/cli.rs: with no arguments and CELLD_BUCKET set, celld runs a node from the environment; the help text lists the flags and variables
+  - main/cli.rs: celld diagnose accepts --json, --read-only, and --peer
+  - fleet.rs: a diagnose row is {verdict, check, detail}; a live peer is 'peer <node> at <addr>' with restoring=<n> in the detail; an expired lease is a skip row
+  - main.rs: without CELLD_WATCH the data directory is a celld-<pid> directory under the system temporary directory; without CELLD_NODE the node-session ID is random
+  - bucket.rs: large writes go through multipart upload
+  - protocol.rs documents the deployment objects only; the ownership record format is not a documented interface
+- Note: Read as text at the tag. Nothing was compiled or run.
+
+### celld v0.6.2: counter example
+
+- ID: `celld-example-counter`
+- URL: <https://github.com/denoland/celld/tree/v0.6.2/examples/counter>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - One Durable Object class, Counter; the Worker picks the instance from the ?name= query parameter
+  - Every request reads n, adds 1, stores it, and answers JSON {n, url}
+
+### StopInstances (Amazon EC2 API reference)
+
+- ID: `ec2-api-stop-instances`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_StopInstances.html>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - By default a stop includes a graceful OS shutdown; SkipOsShutdown bypasses it and might result in data loss or skipped shutdown scripts
+  - Force first attempts a graceful shutdown
+  - A stopped instance retains its root volume and data volumes, and volume usage is still charged
+
+### Data protection in Amazon EC2
+
+- ID: `ec2-data-protection-transit`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/data-protection.html>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - Some instance types automatically encrypt in-transit traffic between instances in the same VPC; the list includes M7g, C7g, and R7g and does not include T4g
+  - All traffic between Availability Zones is encrypted at the physical layer
+  - It is the customer's responsibility to use an encryption protocol such as TLS for sensitive data in transit
+
+### Use instance metadata to manage your EC2 instance
+
+- ID: `ec2-instance-metadata-categories`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - local-ipv4 is the private IPv4 address of the instance (the device with device number 0)
+
+### Access instance metadata for an EC2 instance
+
+- ID: `ec2-imds-retrieval`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - IMDSv2: a PUT to /latest/api/token with X-aws-ec2-metadata-token-ttl-seconds returns a token; requests then send X-aws-ec2-metadata-token
+  - User data is limited to 16 KB before base64 encoding
+  - With curl -f, an IMDS error becomes a non-zero exit
+
+### Uploading and copying objects using multipart upload in Amazon S3
+
+- ID: `s3-mpu-permissions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - Creating, uploading parts of, and completing a multipart upload need s3:PutObject; stopping one needs s3:AbortMultipartUpload
+  - Parts of an upload that was never completed or stopped are billed; a lifecycle rule with AbortIncompleteMultipartUpload removes them
+
+### aws s3 sync (AWS CLI reference)
+
+- ID: `aws-cli-s3-sync`
+- URL: <https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - sync recursively copies new and updated files from the source to the destination
+  - --delete removes files that exist in the destination but not in the source; --dryrun displays the operations without running them
+
+### systemd v252: systemd.service(5), Restart= and RestartSec=
+
+- ID: `systemd-service-restart-always`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.service.xml>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - Restart=always restarts the service whether it exited cleanly, was terminated by a signal, or hit a timeout
+  - RestartSec= is the time to sleep before restarting; it defaults to 100ms
+- Note: The systemd version on Amazon Linux 2023 was not checked on an instance.
+
+### systemd v252: systemd.unit(5), StartLimitIntervalSec=
+
+- ID: `systemd-unit-start-limit-off`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - StartLimitIntervalSec= may be set to 0 to disable any kind of rate limiting
+  - A unit configured for Restart= that reaches the start limit is not restarted any more
+- Note: The systemd version on Amazon Linux 2023 was not checked on an instance.
+
+### @go-to-k/cdkd 0.296.28 (npm package, dist)
+
+- ID: `cdkd-package-0-296-28`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- Checked: 2026-10-12
+- Chapters: 24
+- Claims this source supports:
+  - AWS::EC2::SecurityGroupIngress is registered with the EC2 provider; its handled properties include GroupId, IpProtocol, FromPort, ToPort, Description, and SourceSecurityGroupId
+  - AWS::EC2::SecurityGroupEgress is not registered
+  - The S3 bucket provider handles LifecycleConfiguration, OwnershipControls, PublicAccessBlockConfiguration, and BucketEncryption
+- Note: Read from the installed package's dist directory. Nothing was run against AWS.
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### nix develop
@@ -7447,49 +7718,4 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html>
 - Claims this source supports:
   - Service overview
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### celld source
-
-- ID: `celld-source`
-- URL: <https://github.com/denoland/celld>
-- Chapters: 24
-- Claims this source supports:
-  - Project source
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### celld limitations
-
-- ID: `celld-limitations`
-- URL: <https://github.com/denoland/celld/blob/main/docs/limitations.md>
-- Chapters: 24
-- Claims this source supports:
-  - Maturity (beta) and known limits
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### celld security
-
-- ID: `celld-security`
-- URL: <https://github.com/denoland/celld/blob/main/docs/security.md>
-- Chapters: 24
-- Claims this source supports:
-  - Trust model
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### celld guarantees
-
-- ID: `celld-guarantees`
-- URL: <https://celld.dev/docs/guarantees/>
-- Chapters: 24
-- Claims this source supports:
-  - Durability guarantees and their assumptions
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### celld documentation
-
-- ID: `celld-docs`
-- URL: <https://celld.dev/docs/>
-- Chapters: 24
-- Claims this source supports:
-  - Compatibility and upgrade notes
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.

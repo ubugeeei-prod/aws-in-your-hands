@@ -1518,6 +1518,97 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 0.32** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`
 
+## celld: one node running for a month
+
+ID: `celld-one-node-running` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+
+Assumptions:
+
+- `-c nodes=1`: one t4g.small running for 730 hours
+- Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack
+- S3 requests are estimated from the intervals in celld's documentation (per node: a lease renewal about every 3.3 s, a fleet sample read every 5 s, a deployment pointer read every 30 s). Not measured, and requests caused by active cells are not included
+- The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge
+- CPU credits are in standard mode, so nothing is billed for use above the baseline
+- Session Manager and Run Command have no additional charge on EC2 instances
+- S3 storage, data transfer, snapshots, and the backup bucket are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-small.linux.hour` | 730 | Hrs | 1 t4g.small x 730 hours | 15.77 | - | 15.77 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 1 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours | 1.54 | - | 1.54 |
+| `s3.request.tier1` | 788,400 | Requests | 1 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval) | 3.71 | - | 3.71 |
+| `s3.request.tier2` | 613,200 | Requests | 1 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated | 0.23 | - | 0.23 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- List subtotal: **USD 82.56** / month
+- Subtotal after monthly free allowance: **USD 82.56** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.request.tier1`, `s3.request.tier2`, `ebs.gp3.storage`
+
+## celld: three nodes running for a month
+
+ID: `celld-three-nodes-running` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+
+Assumptions:
+
+- `-c nodes=3`: three t4g.small running for 730 hours
+- Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack
+- S3 requests are estimated from the intervals in celld's documentation (per node: a lease renewal about every 3.3 s, a fleet sample read every 5 s, a deployment pointer read every 30 s). Not measured, and requests caused by active cells are not included
+- The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge
+- CPU credits are in standard mode, so nothing is billed for use above the baseline
+- Session Manager and Run Command have no additional charge on EC2 instances
+- S3 storage, data transfer, snapshots, and the backup bucket are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-small.linux.hour` | 2,190 | Hrs | 3 t4g.small x 730 hours | 47.30 | - | 47.30 |
+| `ebs.gp3.storage` | 48 | GB-Mo | 3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours | 4.61 | - | 4.61 |
+| `s3.request.tier1` | 2,365,200 | Requests | 3 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval) | 11.12 | - | 11.12 |
+| `s3.request.tier2` | 1,839,600 | Requests | 3 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated | 0.68 | - | 0.68 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- List subtotal: **USD 125.03** / month
+- Subtotal after monthly free allowance: **USD 125.03** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.request.tier1`, `s3.request.tier2`, `ebs.gp3.storage`
+
+## celld: three nodes stopped for a month
+
+ID: `celld-three-nodes-stopped` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+
+Assumptions:
+
+- The three instances of `-c nodes=3` stopped for 730 hours. The volumes and the interface endpoints in the chapter 11 stack remain
+- The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge
+- CPU credits are in standard mode, so nothing is billed for use above the baseline
+- Session Manager and Run Command have no additional charge on EC2 instances
+- S3 storage, data transfer, snapshots, and the backup bucket are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 48 | GB-Mo | 3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours | 4.61 | - | 4.61 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- List subtotal: **USD 65.93** / month
+- Subtotal after monthly free allowance: **USD 65.93** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ebs.gp3.storage`
+
+## celld: the data volumes left after destroying the stack (three nodes)
+
+ID: `celld-retained-after-destroy` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+
+Assumptions:
+
+- 730 hours after destroying a `-c nodes=3` stack with the default `stateOnDestroy=retain`, and after removing the chapter 11 interface endpoints
+- What remains: three 8 GiB data volumes. Root volumes go with their instances
+- Storage in the two retained buckets is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 24 | GB-Mo | 3 retained data volume(s) x 8 GiB, 730 of 730 hours | 2.30 | - | 2.30 |
+
+- List subtotal: **USD 2.30** / month
+- Subtotal after monthly free allowance: **USD 2.30** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ebs.gp3.storage`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |

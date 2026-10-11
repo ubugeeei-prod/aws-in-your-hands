@@ -1,0 +1,22 @@
+{
+  "name": "@aih/example-24-celld",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@aih/example-11-network": "workspace:*",
+    "@aih/example-23-ec2": "workspace:*",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "esbuild": "0.28.2",
+    "vite-plus": "1.1.0"
+  }
+}

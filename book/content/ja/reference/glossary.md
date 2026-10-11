@@ -218,3 +218,13 @@ generated: true
 | RPO（recovery point objective） | RPO (recovery point objective) | 22 | 事故のとき、どれだけ前までのデータを失ってよいか、という目標。時間で表す。実際に失った長さは、復元した時点から事故までの間隔。 |
 | RTO（recovery time objective） | RTO (recovery time objective) | 22 | 事故から、サービスが元どおり使えるようになるまでにかけてよい時間、という目標。復元の API が返るまでではなく、利用者が正しいデータを読めるまでを測る。 |
 | delete marker | delete marker | 22 | versioning を有効にした S3 bucket で、version を指定せずに object を消したときに置かれる目印。中身は消えず、目印がいちばん新しい version になる。目印を消すと、object は戻る。 |
+| cell（celld） | cell (celld) | 24 | celld での Durable Object。名前と、自分専用の SQLite データベースを持つ小さなサーバー。 |
+| node（celld） | node (celld) | 24 | 1 台のマシンで動く celld のプロセス 1 つ。どの node もどの cell でも担当できる。 |
+| fleet | fleet | 24 | 同じ bucket を共有する celld の node の集まり。参加の手続きはなく、bucket の中の lease でお互いを見つける。 |
+| ownership record | ownership record | 24 | cell ごとに bucket に 1 つある小さなオブジェクト。いまの持ち主（node の session）と fencing epoch が書いてある。条件付きの書き込みでしか更新されない。 |
+| fencing epoch | fencing epoch | 24 | 持ち主が替わるたびに増える番号。古い持ち主の書き込みを、新しい持ち主の状態から切り離すために使う。 |
+| lease（node） | lease (node) | 24 | node が生きていることを示す、期限つきの記録。期限までに更新できなかった node は、自分から止まる。 |
+| follower | follower | 24 | 持ち主の node から書き込みを受け取り、自分の disk に保存する別の node。celld では 1 台か 2 台。 |
+| drain | drain | 24 | node を止める前に、担当している仕事をほかへ引き渡すこと。celld では SIGTERM がその合図。 |
+| supervisor | supervisor | 24 | プロセスを起動し、落ちたら起動し直す仕組み。この章では systemd。 |
+| セルフホスト | self-hosting | 24 | managed service を使わず、ソフトウェアを自分のマシンで動かして、更新や障害対応も自分で受け持つこと。 |

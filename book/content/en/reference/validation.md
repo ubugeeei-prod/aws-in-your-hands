@@ -161,6 +161,15 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 22 | `vp run recovery:drill new / mark / set / summary` | local | passed | 2026-10-12 | Created a record file, stamped moments and counts, saw an overwrite refused, and printed the summary. The values were for checking the tool, not measurements of a drill, and the file was deleted |
 | 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table with PITR, an S3 bucket with versioning, and a Lambda function; `-c backup=on` adds an AWS Backup vault and plan, `-c replica=on` a second bucket and a replication configuration |
 | 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | not run | - | The steps of the drill. None was run against AWS, and there are no measured RPO or RTO values |
+| 24 | `vp run test:unit (examples/24-celld)` | local | passed | 2026-10-12 | Failures injected at each step of the update ordering (no waiting), the ledger judged against a toy fleet, the probe script run by bash and curl, the install script's arguments and its checksum refusal, generation of the unit and user data, reading diagnose output, backup and restore plans, pricing inputs, and stack assertions |
+| 24 | `vp run celld:infra:synth` | local | passed | 2026-10-12 | Synthesized the default (no node) and `-c nodes=1`, `-c nodes=3`, `-c nodes=2 -c stateOnDestroy=delete`, and `-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0` |
+| 24 | `vp run celld:plan / vp run celld:render` | local | passed | 2026-10-12 | The plan and fixed cost per fleet size, and that deploy/ matches what the generators produce |
+| 24 | `vp run celld:fetch` | local | passed | 2026-10-12 | Downloaded the Linux arm64 archives of v0.6.2 and v0.6.1 from the GitHub releases and confirmed their size and SHA-256 against the pinned values. Nothing was unpacked or run (`--host` was not used) |
+| 24 | `celld の実行（celld dev、celld deploy、node の起動）` | local | not run | - | The downloaded binary was never run. Everything said about celld's behavior comes from reading the v0.6.2 documentation and source |
+| 24 | `vp run celld:infra:deploy と node への配置（artifacts、install、start、app-deploy）` | AWS | not run | - | Deploying the stack, uploading the archive to S3, installing and starting on the nodes, and deploying the application were not run |
+| 24 | `vp run celld:rollout / celld:drain / celld:stop-all` | AWS | not run | - | Draining and the rolling update from v0.6.1 to v0.6.2 were not run on real nodes. The ordering was checked against a local stand-in only |
+| 24 | `vp run celld:loss-check` | AWS | not run | - | The check that loses a node and judges the invariant has never been pointed at a real celld fleet |
+| 24 | `vp run celld:backup / celld:restore` | AWS | not run | - | Backup and restore of a stopped fleet were not run. Whether a fleet restored from the bucket copy and the snapshots starts correctly is unconfirmed |
 
 ## Open items and how to resume
 
@@ -643,3 +652,21 @@ To resume: After `vp run recovery:infra:deploy`, follow the chapter's drill sect
 The cutover to a restored table was not tried on AWS. Unconfirmed: that deploying with `-c table=<name>` changes only the function's environment and IAM policy, that cdkd's drift check does not report the restored table, that `cdkd orphan` and `cdkd import --resource` can swap the stack's table, what destroying a `-c protect=on` stack with cdkd does, and creating and deleting `-c backup=on` (through Cloud Control API) and `-c replica=on`.
 
 To resume: Continuing the drill, read the diff from `vp run recovery:infra:diff -c table=<restored table>`, deploy, then run `vp run recovery:audit` and `vp run recovery:infra:drift`. To try the import, first read the output of `cdkd orphan AihRecovery/Notes --dry-run` and `cdkd import AihRecovery --resource <logical ID>=<restored table> --dry-run` in `examples/22-recovery`.
+
+### 24-deploy
+
+The chapter 24 stack has never been deployed and celld has never been started on EC2. Unverified: that cdkd 0.296.28 can create this template, that nodes in a private subnet reach the fleet bucket through the S3 gateway endpoint alone, that celld obtains credentials from the instance role with IMDSv2 required, that this chapter's list of IAM actions is enough, that celld runs under the systemd sandboxing (ProtectSystem=strict), and that a t4g.small is enough.
+
+To resume: Run, in order: `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`, `vp run celld:fetch --host`, `vp run celld:infra:deploy -c nodes=1`, `vp run celld:artifacts`, `vp run celld:install`, `vp run celld:app-deploy`, `vp run celld:start`, `vp run celld:status`, `vp run celld:smoke`, `vp run celld:diagnose`. If celld does not start, read `vp run celld:logs`. Then delete everything in the order of the cleanup section (hourly charges).
+
+### 24-fleet-operations
+
+Draining, a rolling update, losing a node, and backup and restore have never been run on a real fleet of two or three nodes. Unverified: that `celld diagnose --json` prints what this chapter's parser expects, that the health gate really closes and opens, that the remaining nodes take over cells after a stop with `--skip-os-shutdown`, and that a fleet restored from `aws s3 sync` and EBS snapshots starts.
+
+To resume: After `vp run celld:infra:deploy -c nodes=3`, run `vp run celld:install v0.6.1`, `vp run celld:app-deploy`, `vp run celld:start`, `vp run celld:rollout v0.6.2`, `vp run celld:loss-check b`, `vp run celld:revive b`, `vp run celld:stop-all`, `vp run celld:backup`, and `vp run celld:restore <id>` (dry run), and record each output in the verification notes.
+
+### 24-recheck-celld
+
+celld is beta, with a release roughly every week around the time of writing. The upgrade notes, defaults, CLI flags, and diagnose output format this chapter copied are those of v0.6.2.
+
+To resume: Before using a newer release, reread that tag's `docs/README.md` (Upgrade notes, Shut down and roll out a node, Environment variables), `docs/guarantees.md`, `docs/security.md`, and `docs/limitations.md`, then update the version, digests, upgrade notes, and defaults in `examples/24-celld/src/celld.ts` and run the tests.

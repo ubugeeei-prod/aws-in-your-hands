@@ -2069,6 +2069,106 @@
         "ja": "versioning を有効にした S3 bucket で、version を指定せずに object を消したときに置かれる目印。中身は消えず、目印がいちばん新しい version になる。目印を消すと、object は戻る。",
         "en": "The marker S3 places when an object in a versioning-enabled bucket is deleted without naming a version. The bytes stay, and the marker becomes the newest version. Deleting the marker brings the object back."
       }
+    },
+    {
+      "id": "celld-cell",
+      "ja": "cell（celld）",
+      "en": "cell (celld)",
+      "firstUse": "24",
+      "definition": {
+        "ja": "celld での Durable Object。名前と、自分専用の SQLite データベースを持つ小さなサーバー。",
+        "en": "A Durable Object in celld: a small server with a name and a private SQLite database."
+      }
+    },
+    {
+      "id": "celld-node",
+      "ja": "node（celld）",
+      "en": "node (celld)",
+      "firstUse": "24",
+      "definition": {
+        "ja": "1 台のマシンで動く celld のプロセス 1 つ。どの node もどの cell でも担当できる。",
+        "en": "One celld process on one machine. Any node can serve any cell."
+      }
+    },
+    {
+      "id": "celld-fleet",
+      "ja": "fleet",
+      "en": "fleet",
+      "firstUse": "24",
+      "definition": {
+        "ja": "同じ bucket を共有する celld の node の集まり。参加の手続きはなく、bucket の中の lease でお互いを見つける。",
+        "en": "The celld nodes that share one bucket. There is no join step; they find each other through leases in the bucket."
+      }
+    },
+    {
+      "id": "ownership-record",
+      "ja": "ownership record",
+      "en": "ownership record",
+      "firstUse": "24",
+      "definition": {
+        "ja": "cell ごとに bucket に 1 つある小さなオブジェクト。いまの持ち主（node の session）と fencing epoch が書いてある。条件付きの書き込みでしか更新されない。",
+        "en": "One small object per cell in the bucket, naming the current owner (a node session) and a fencing epoch. It changes only through conditional writes."
+      }
+    },
+    {
+      "id": "fencing-epoch",
+      "ja": "fencing epoch",
+      "en": "fencing epoch",
+      "firstUse": "24",
+      "definition": {
+        "ja": "持ち主が替わるたびに増える番号。古い持ち主の書き込みを、新しい持ち主の状態から切り離すために使う。",
+        "en": "A number that grows every time ownership changes, used to keep a former owner's writes away from the current owner's state."
+      }
+    },
+    {
+      "id": "node-lease",
+      "ja": "lease（node）",
+      "en": "lease (node)",
+      "firstUse": "24",
+      "definition": {
+        "ja": "node が生きていることを示す、期限つきの記録。期限までに更新できなかった node は、自分から止まる。",
+        "en": "A record with an expiry that says a node is alive. A node that cannot renew it in time stops itself."
+      }
+    },
+    {
+      "id": "follower",
+      "ja": "follower",
+      "en": "follower",
+      "firstUse": "24",
+      "definition": {
+        "ja": "持ち主の node から書き込みを受け取り、自分の disk に保存する別の node。celld では 1 台か 2 台。",
+        "en": "Another node that receives each write from the owner and stores it on its own disk. One or two of them in celld."
+      }
+    },
+    {
+      "id": "drain",
+      "ja": "drain",
+      "en": "drain",
+      "firstUse": "24",
+      "definition": {
+        "ja": "node を止める前に、担当している仕事をほかへ引き渡すこと。celld では SIGTERM がその合図。",
+        "en": "Handing a node's work to others before it stops. In celld, SIGTERM is the signal for it."
+      }
+    },
+    {
+      "id": "supervisor",
+      "ja": "supervisor",
+      "en": "supervisor",
+      "firstUse": "24",
+      "definition": {
+        "ja": "プロセスを起動し、落ちたら起動し直す仕組み。この章では systemd。",
+        "en": "Whatever starts a process and starts it again when it exits. In this chapter, systemd."
+      }
+    },
+    {
+      "id": "self-hosting",
+      "ja": "セルフホスト",
+      "en": "self-hosting",
+      "firstUse": "24",
+      "definition": {
+        "ja": "managed service を使わず、ソフトウェアを自分のマシンで動かして、更新や障害対応も自分で受け持つこと。",
+        "en": "Running software on your own machines instead of using a managed service, and taking on its upgrades and failures yourself."
+      }
     }
   ]
 }

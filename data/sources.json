@@ -7160,6 +7160,273 @@
       "supports": ["The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented"]
     },
     {
+      "id": "celld-source",
+      "url": "https://github.com/denoland/celld",
+      "title": "celld source",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The repository describes celld as self-hosted, distributed Durable Objects, under Apache-2.0, owned by denoland",
+        "On 2026-10-12 the default branch pointed at commit 90b43017241f81189453d326d05948f388b34652, the same commit as the v0.6.2 tag",
+        "Pull requests are disabled; patches go by email"
+      ],
+      "note": "Read through the GitHub API (repository, tags, releases, tree) and the raw files of the default branch."
+    },
+    {
+      "id": "celld-limitations",
+      "url": "https://github.com/denoland/celld/blob/main/docs/limitations.md",
+      "title": "celld limitations",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "celld v0.6.2 is a beta release",
+        "A fleet runs one application; there is no account service, multi-tenant scheduler, or managed ingress",
+        "celld does not terminate TLS; peer traffic is plaintext HTTP, and the fleet HMAC does not encrypt",
+        "The installer supplies binaries for Linux x86-64, Linux ARM64, and Apple Silicon"
+      ]
+    },
+    {
+      "id": "celld-security",
+      "url": "https://github.com/denoland/celld/blob/main/docs/security.md",
+      "title": "celld security",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "v0.6.2 is a beta release, not safe for hostile multi-tenant use; only the latest release receives security fixes",
+        "celld opens two HTTP listeners and terminates TLS on neither; --internal-listen serves the peer protocol and the operator API",
+        "Most operator routes on the internal listener have no request authentication, including POST /shutdown and /state",
+        "The public listener reserves only /.well-known/celld/health: 200 with {\"ok\":true} when healthy, 503 otherwise",
+        "The fleet bucket is the root of authority; a holder of the bucket credentials controls the fleet",
+        "The operator API is an alpha interface; a release can change its paths or response formats"
+      ]
+    },
+    {
+      "id": "celld-guarantees",
+      "url": "https://celld.dev/docs/guarantees/",
+      "title": "celld guarantees",
+      "checkedAt": "2026-10-12",
+      "supports": ["The page exists and carries the same guarantees text as docs/guarantees.md in the repository"],
+      "note": "Read through a summarizing fetch; the claims this chapter relies on are taken from the repository file at the v0.6.2 tag (celld-guarantees-v062)."
+    },
+    {
+      "id": "celld-docs",
+      "url": "https://celld.dev/docs/",
+      "title": "celld documentation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The documentation site lists pages for limitations, security, guarantees, testing, telemetry, Cloudflare compatibility, and one page per service"
+      ],
+      "note": "Read through a summarizing fetch; the claims this chapter relies on are taken from the repository files at the v0.6.2 tag."
+    },
+    {
+      "id": "celld-readme-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/README.md",
+      "title": "celld v0.6.2: README",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "celld runs a Cloudflare Workers application on your own machines and stores long-term state in an S3-compatible, Google Cloud Storage, or Azure Blob Storage bucket",
+        "A node is one celld process; nodes that share one bucket are a fleet; a conditional bucket write gives a node the ownership of a cell",
+        "celld uses the standard AWS credential chain; a node is started with --bucket, --listen, --internal-listen, and --advertise",
+        "The container example sets CELLD_WATCH to a directory on a persistent volume",
+        "One node proves each write through the bucket; with a second node the write finishes once that node holds it on disk",
+        "Put every advertised address on a trusted private network or an encrypted overlay; celld rejects a literal public IP unless --unsafe-public-advertise is given",
+        "Treat access to the bucket and its credentials as fleet administrator access",
+        "The installer downloads the binary from GitHub releases; provenance is verifiable with gh attestation verify"
+      ]
+    },
+    {
+      "id": "celld-docs-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/docs/README.md",
+      "title": "celld v0.6.2: documentation (operate, shut down, upgrade notes, environment variables)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CELLD_DURABILITY defaults to fleet; a one-node fleet waits for the bucket on every write; a fleet that loses all but one node falls back to the bucket and stays correct",
+        "celld shuts down gracefully on SIGTERM or SIGINT: health reports 503, accepted requests finish, and the node hands its cells off to a peer; POST /shutdown on the internal listener starts the same handoff",
+        "CELLD_SHUTDOWN_TOTAL_MS defaults to 40000; the orchestrator stop grace (systemd TimeoutStopSec) must be above it or SIGKILL can interrupt the handoff",
+        "To roll out a new version: stop each node with SIGTERM, wait for its replacement to report healthy, then move to the next node",
+        "During a rolling update, wait for restoring=0 on every node (celld diagnose) before restarting the next",
+        "A new process does not report healthy until the fleet settles; CELLD_READY_FLEET_GATE_MS defaults to 120000",
+        "Upgrade notes: v0.1.0 to v0.2.0 stop all; v0.2.1 to v0.3.0 rolling; v0.3.0 to v0.4.0 stop all; v0.4.0 to v0.4.1 rolling; v0.5.1 to v0.6.0 stop all with fleet durability; v0.6.0 to v0.6.1 rolling; v0.6.1 to v0.6.2 rolling",
+        "The node lease lives CELLD_TTL_MS (default 10000) and renews at one third of that; the fleet sample is read every CELLD_REBALANCE_INTERVAL_MS (default 5000); deploy/current.json is read every CELLD_DEPLOY_POLL_S (default 30)",
+        "CELLD_BUCKET, AWS_REGION, CELLD_ADDR, CELLD_INTERNAL_ADDR, CELLD_ADVERTISE, and CELLD_WATCH are the environment forms of the node settings; CELLD_NODE is an explicit node-session ID",
+        "A bucket value can add a key prefix (s3://BUCKET/PREFIX)",
+        "celld deploy needs esbuild on PATH for Worker code; CELLD_ESBUILD overrides the path; a running node adopts a new deployment without a restart",
+        "celld diagnose reads the node leases and probes each live peer without taking a lease; celld cell list prints one Class:ID scope per line",
+        "One 8 GB node holds 1,000 resident cells",
+        "celld does not scale itself; an external system starts and stops the nodes"
+      ]
+    },
+    {
+      "id": "celld-guarantees-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/docs/guarantees.md",
+      "title": "celld v0.6.2: what celld guarantees",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Two promises: exactly one node serves a cell at a time, and an acknowledged write is never lost; both require a bucket with working conditional writes and ranged reads, and a supervisor that restarts the process",
+        "The qualified stores are Amazon S3, Cloudflare R2, Tigris, Google Cloud Storage, and Azure Blob Storage; the release tests run against R2, and the S3 path uses the same client and headers",
+        "The supervisor must restart without an attempt limit and wait at least one lease lifetime between attempts",
+        "Each cell has one ownership record in the bucket, naming the owner's session and a fencing epoch, acquired by conditional create or compare-and-swap",
+        "In fleet mode the owner sends each write to one or two followers and every follower must fsync it; a fleet needs two running nodes for a fleet proof; a fleet of three or more holds three copies of an acknowledged write",
+        "In fleet mode celld can acknowledge a write before its bucket upload completes; a follower disk can hold acknowledged writes that the bucket does not yet hold",
+        "Recovery limits: a follower's HTTP error can block recovery and startup; a deleted final batch is undetectable if nothing later records its range; a mixed-version tail can stall recovery",
+        "A node whose lease expires fences itself, logs a line starting with SELF-FENCE:, and exits with code 3; only a restart returns it",
+        "celld reserves the key prefixes probe/, cells/, nodes/, node-cells/, fleet/, deploy/, deploy-blobs/, log/, wake/, and telemetry/",
+        "The v0.4.1 upgrade procedure: stop every node and wait for every lease to expire, back up the bucket and node data keeping node names, peer addresses, and data directories; to roll back, restore the full stopped-fleet backup, which loses writes made after it",
+        "Each node runs the storage test (four conditional writes and a ranged read) before it serves, and cannot disable it"
+      ]
+    },
+    {
+      "id": "celld-testing-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/docs/testing.md",
+      "title": "celld v0.6.2: testing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The coordination protocol is specified in TLA+ and exercised by deterministic simulation; the model grants a linearizable object store",
+        "Live-fleet fault scenarios include SIGKILL mid-write-stream, freezing an owner, cutting a node off from the bucket, and stopping a host; a verification pass fetches each cell through different nodes",
+        "A cell can be briefly unavailable while ownership moves",
+        "A fleet at its resident limit has no space for a lost node's cells"
+      ]
+    },
+    {
+      "id": "celld-releases",
+      "url": "https://api.github.com/repos/denoland/celld/releases",
+      "title": "celld releases (GitHub API)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "v0.6.2 was published 2026-10-07 and is the latest of 11 releases; none is marked prerelease",
+        "Each release carries celld-aarch64-unknown-linux-gnu.gz, celld-x86_64-unknown-linux-gnu.gz, and celld-aarch64-apple-darwin.gz with a sha256 digest",
+        "v0.6.2 release notes: upgrading from v0.6.1 can use a rolling update"
+      ],
+      "note": "The six archives of v0.6.2 and v0.6.1 were downloaded on 2026-10-12 and their SHA-256 matched the published digests. None was unpacked or run."
+    },
+    {
+      "id": "celld-install-script",
+      "url": "https://celld.dev/install.sh",
+      "title": "celld installer script",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The installer downloads celld-<target>.gz from the GitHub release named by CELLD_VERSION, decompresses it, and switches one symlink",
+        "It relies on gzip's CRC for corruption and on the release attestation for provenance; it carries no checksum of its own"
+      ],
+      "note": "Read as text, not run."
+    },
+    {
+      "id": "celld-source-v062",
+      "url": "https://github.com/denoland/celld/tree/v0.6.2/crates/celld",
+      "title": "celld v0.6.2: source (cli, fleet diagnostics, bucket client)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "main/cli.rs: with no arguments and CELLD_BUCKET set, celld runs a node from the environment; the help text lists the flags and variables",
+        "main/cli.rs: celld diagnose accepts --json, --read-only, and --peer",
+        "fleet.rs: a diagnose row is {verdict, check, detail}; a live peer is 'peer <node> at <addr>' with restoring=<n> in the detail; an expired lease is a skip row",
+        "main.rs: without CELLD_WATCH the data directory is a celld-<pid> directory under the system temporary directory; without CELLD_NODE the node-session ID is random",
+        "bucket.rs: large writes go through multipart upload",
+        "protocol.rs documents the deployment objects only; the ownership record format is not a documented interface"
+      ],
+      "note": "Read as text at the tag. Nothing was compiled or run."
+    },
+    {
+      "id": "celld-example-counter",
+      "url": "https://github.com/denoland/celld/tree/v0.6.2/examples/counter",
+      "title": "celld v0.6.2: counter example",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "One Durable Object class, Counter; the Worker picks the instance from the ?name= query parameter",
+        "Every request reads n, adds 1, stores it, and answers JSON {n, url}"
+      ]
+    },
+    {
+      "id": "ec2-api-stop-instances",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_StopInstances.html",
+      "title": "StopInstances (Amazon EC2 API reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default a stop includes a graceful OS shutdown; SkipOsShutdown bypasses it and might result in data loss or skipped shutdown scripts",
+        "Force first attempts a graceful shutdown",
+        "A stopped instance retains its root volume and data volumes, and volume usage is still charged"
+      ]
+    },
+    {
+      "id": "ec2-data-protection-transit",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/data-protection.html",
+      "title": "Data protection in Amazon EC2",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Some instance types automatically encrypt in-transit traffic between instances in the same VPC; the list includes M7g, C7g, and R7g and does not include T4g",
+        "All traffic between Availability Zones is encrypted at the physical layer",
+        "It is the customer's responsibility to use an encryption protocol such as TLS for sensitive data in transit"
+      ]
+    },
+    {
+      "id": "ec2-instance-metadata-categories",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html",
+      "title": "Use instance metadata to manage your EC2 instance",
+      "checkedAt": "2026-10-12",
+      "supports": ["local-ipv4 is the private IPv4 address of the instance (the device with device number 0)"]
+    },
+    {
+      "id": "ec2-imds-retrieval",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html",
+      "title": "Access instance metadata for an EC2 instance",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IMDSv2: a PUT to /latest/api/token with X-aws-ec2-metadata-token-ttl-seconds returns a token; requests then send X-aws-ec2-metadata-token",
+        "User data is limited to 16 KB before base64 encoding",
+        "With curl -f, an IMDS error becomes a non-zero exit"
+      ]
+    },
+    {
+      "id": "s3-mpu-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html",
+      "title": "Uploading and copying objects using multipart upload in Amazon S3",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Creating, uploading parts of, and completing a multipart upload need s3:PutObject; stopping one needs s3:AbortMultipartUpload",
+        "Parts of an upload that was never completed or stopped are billed; a lifecycle rule with AbortIncompleteMultipartUpload removes them"
+      ]
+    },
+    {
+      "id": "aws-cli-s3-sync",
+      "url": "https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html",
+      "title": "aws s3 sync (AWS CLI reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "sync recursively copies new and updated files from the source to the destination",
+        "--delete removes files that exist in the destination but not in the source; --dryrun displays the operations without running them"
+      ]
+    },
+    {
+      "id": "systemd-service-restart-always",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.service.xml",
+      "title": "systemd v252: systemd.service(5), Restart= and RestartSec=",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Restart=always restarts the service whether it exited cleanly, was terminated by a signal, or hit a timeout",
+        "RestartSec= is the time to sleep before restarting; it defaults to 100ms"
+      ],
+      "note": "The systemd version on Amazon Linux 2023 was not checked on an instance."
+    },
+    {
+      "id": "systemd-unit-start-limit-off",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml",
+      "title": "systemd v252: systemd.unit(5), StartLimitIntervalSec=",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "StartLimitIntervalSec= may be set to 0 to disable any kind of rate limiting",
+        "A unit configured for Restart= that reaches the start limit is not restarted any more"
+      ],
+      "note": "The systemd version on Amazon Linux 2023 was not checked on an instance."
+    },
+    {
+      "id": "cdkd-package-0-296-28",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (npm package, dist)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS::EC2::SecurityGroupIngress is registered with the EC2 provider; its handled properties include GroupId, IpProtocol, FromPort, ToPort, Description, and SourceSecurityGroupId",
+        "AWS::EC2::SecurityGroupEgress is not registered",
+        "The S3 bucket provider handles LifecycleConfiguration, OwnershipControls, PublicAccessBlockConfiguration, and BucketEncryption"
+      ],
+      "note": "Read from the installed package's dist directory. Nothing was run against AWS."
+    },
+    {
       "id": "nix-develop",
       "url": "https://nix.dev/manual/nix/2.34/command-ref/new-cli/nix3-develop",
       "title": "nix develop",
@@ -7269,46 +7536,6 @@
       "title": "What is Amazon Bedrock?",
       "checkedAt": null,
       "supports": ["Service overview"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "celld-source",
-      "url": "https://github.com/denoland/celld",
-      "title": "celld source",
-      "checkedAt": null,
-      "supports": ["Project source"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "celld-limitations",
-      "url": "https://github.com/denoland/celld/blob/main/docs/limitations.md",
-      "title": "celld limitations",
-      "checkedAt": null,
-      "supports": ["Maturity (beta) and known limits"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "celld-security",
-      "url": "https://github.com/denoland/celld/blob/main/docs/security.md",
-      "title": "celld security",
-      "checkedAt": null,
-      "supports": ["Trust model"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "celld-guarantees",
-      "url": "https://celld.dev/docs/guarantees/",
-      "title": "celld guarantees",
-      "checkedAt": null,
-      "supports": ["Durability guarantees and their assumptions"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "celld-docs",
-      "url": "https://celld.dev/docs/",
-      "title": "celld documentation",
-      "checkedAt": null,
-      "supports": ["Compatibility and upgrade notes"],
       "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
     }
   ]

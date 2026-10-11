@@ -1518,6 +1518,97 @@ ID: `recovery-replica-optin` / 章: [22 データとサービスを復旧する:
 - 毎月の無料枠適用後の小計: **USD 0.32** / 月
 - 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
 
+## celld: node 1 台を 1 か月動かしたまま
+
+ID: `celld-one-node-running` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+
+前提:
+
+- `-c nodes=1`。t4g.small を 730 時間動かしたまま
+- 11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま
+- S3 の request は、celld の文書にある間隔からの見積もり（node ごとに、lease の更新が約 3.3 秒に 1 回、fleet sample の読み取りが 5 秒に 1 回、deployment pointer の読み取りが 30 秒に 1 回）。実測ではなく、cell が動いたときの request は含まない
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-small.linux.hour` | 730 | Hrs | 1 t4g.small x 730 hours | 15.77 | - | 15.77 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 1 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours | 1.54 | - | 1.54 |
+| `s3.request.tier1` | 788,400 | Requests | 1 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval) | 3.71 | - | 3.71 |
+| `s3.request.tier2` | 613,200 | Requests | 1 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated | 0.23 | - | 0.23 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- 定価の小計: **USD 82.56** / 月
+- 毎月の無料枠適用後の小計: **USD 82.56** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`, `s3.request.tier2`, `ebs.gp3.storage`
+
+## celld: node 3 台を 1 か月動かしたまま
+
+ID: `celld-three-nodes-running` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+
+前提:
+
+- `-c nodes=3`。t4g.small 3 台を 730 時間動かしたまま
+- 11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま
+- S3 の request は、celld の文書にある間隔からの見積もり（node ごとに、lease の更新が約 3.3 秒に 1 回、fleet sample の読み取りが 5 秒に 1 回、deployment pointer の読み取りが 30 秒に 1 回）。実測ではなく、cell が動いたときの request は含まない
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-small.linux.hour` | 2,190 | Hrs | 3 t4g.small x 730 hours | 47.30 | - | 47.30 |
+| `ebs.gp3.storage` | 48 | GB-Mo | 3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours | 4.61 | - | 4.61 |
+| `s3.request.tier1` | 2,365,200 | Requests | 3 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval) | 11.12 | - | 11.12 |
+| `s3.request.tier2` | 1,839,600 | Requests | 3 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated | 0.68 | - | 0.68 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- 定価の小計: **USD 125.03** / 月
+- 毎月の無料枠適用後の小計: **USD 125.03** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`, `s3.request.tier2`, `ebs.gp3.storage`
+
+## celld: node 3 台を 1 か月止めたまま
+
+ID: `celld-three-nodes-stopped` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+
+前提:
+
+- `-c nodes=3` の instance を 3 台とも停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 48 | GB-Mo | 3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours | 4.61 | - | 4.61 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- 定価の小計: **USD 65.93** / 月
+- 毎月の無料枠適用後の小計: **USD 65.93** / 月
+- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
+
+## celld: stack を消した後に残る data volume（3 台分）
+
+ID: `celld-retained-after-destroy` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+
+前提:
+
+- 既定の `stateOnDestroy=retain` のまま、`-c nodes=3` の stack を destroy し、11章の interface endpoint も消した後の 730 時間
+- 残るのは 8 GiB の data volume 3 つ。root volume は instance と一緒に消える
+- 残った 2 つの bucket の保存容量は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 24 | GB-Mo | 3 retained data volume(s) x 8 GiB, 730 of 730 hours | 2.30 | - | 2.30 |
+
+- 定価の小計: **USD 2.30** / 月
+- 毎月の無料枠適用後の小計: **USD 2.30** / 月
+- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |

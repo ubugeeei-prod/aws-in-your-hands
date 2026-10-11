@@ -3499,6 +3499,169 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "24.what",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.pin",
+      "sources": ["examples/24-celld/src/celld.ts", "examples/24-celld/scripts/fetch.ts"],
+      "tasks": ["celld:fetch", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.architecture",
+      "sources": [
+        "examples/24-celld/infra/lib/celld-stack.ts",
+        "examples/24-celld/infra/bin/app.ts",
+        "examples/24-celld/src/config.ts",
+        "examples/24-celld/src/report.ts",
+        "examples/24-celld/scripts/plan.ts"
+      ],
+      "tasks": ["celld:plan", "celld:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "24.network",
+      "sources": ["examples/24-celld/infra/lib/celld-stack.ts", "examples/24-celld/infra/test/celld-stack.test.ts"],
+      "tasks": ["celld:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.state",
+      "sources": ["examples/24-celld/infra/lib/celld-stack.ts", "examples/24-celld/infra/test/celld-stack.test.ts"],
+      "tasks": ["celld:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.node",
+      "sources": [
+        "examples/24-celld/src/machine.ts",
+        "examples/24-celld/deploy",
+        "examples/24-celld/scripts/render.ts",
+        "examples/24-celld/test/machine.test.ts"
+      ],
+      "tasks": ["celld:render", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.cost",
+      "sources": ["examples/24-celld/src/cost.ts", "examples/24-celld/test/pricing.test.ts", "data/pricing"],
+      "tasks": ["celld:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.local",
+      "sources": ["examples/24-celld/test", "examples/24-celld/infra/test"],
+      "tasks": ["test:unit", "celld:plan", "celld:render", "celld:infra:synth", "celld:fetch"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.one-node",
+      "sources": [
+        "examples/24-celld/scripts/fleet.ts",
+        "examples/24-celld/src/remote.ts",
+        "examples/24-celld/test/remote.test.ts"
+      ],
+      "tasks": [
+        "celld:infra:deploy",
+        "celld:artifacts",
+        "celld:install",
+        "celld:start",
+        "celld:app-deploy",
+        "celld:status",
+        "celld:smoke",
+        "celld:diagnose"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "24.rollout",
+      "sources": [
+        "examples/24-celld/src/rollout.ts",
+        "examples/24-celld/src/health.ts",
+        "examples/24-celld/test/rollout.test.ts",
+        "examples/24-celld/test/health.test.ts"
+      ],
+      "tasks": ["celld:drain", "celld:rollout", "celld:stop-all", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.loss",
+      "sources": [
+        "examples/24-celld/src/probe.ts",
+        "examples/24-celld/src/ledger.ts",
+        "examples/24-celld/test/toy-fleet.ts",
+        "examples/24-celld/test/ledger.test.ts",
+        "examples/24-celld/test/probe.test.ts"
+      ],
+      "tasks": ["celld:loss-check", "celld:kill", "celld:revive", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.backup",
+      "sources": ["examples/24-celld/src/backup.ts", "examples/24-celld/test/remote.test.ts"],
+      "tasks": ["celld:backup", "celld:restore", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.failures",
+      "sources": ["examples/24-celld/scripts/fleet.ts"],
+      "tasks": ["celld:status", "celld:logs", "celld:diagnose"],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "24.production",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "24.cleanup",
+      "sources": ["examples/24-celld/scripts/fleet.ts"],
+      "tasks": ["celld:infra:destroy", "celld:bucket-empty"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "24.distributed",
+      "sources": ["examples/24-celld/src/ledger.ts", "examples/24-celld/test/ledger.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
     }
   ]
 }

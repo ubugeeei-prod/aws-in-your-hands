@@ -161,6 +161,15 @@ generated: true
 | 22 | `vp run recovery:drill new / mark / set / summary` | ローカル | 成功 | 2026-10-12 | 記録ファイルの作成、時刻と件数の記入、上書きの拒否、集計を手元で実行した。書いた値は動作確認用で、drill の実測ではない。ファイルは消した |
 | 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | PITR を有効にした DynamoDB の table、versioning を有効にした S3 bucket、Lambda 関数を作る。`-c backup=on` で AWS Backup の vault と plan、`-c replica=on` で 2 つ目の bucket と複製の設定が加わる |
 | 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | 未実行 | - | drill の手順。AWS に対しては 1 つも実行していない。RPO と RTO の実測値はない |
+| 24 | `vp run test:unit (examples/24-celld)` | ローカル | 成功 | 2026-10-12 | 更新の順序を決める関数に、各段階で失敗を差し込むテスト（待ち時間なし）、作り物の fleet に対する ledger の判定、probe の script を bash と curl で実行するテスト、install script の引数と checksum の拒否、unit と user data の生成、diagnose の出力の読み取り、backup と restore の計画、料金の入力、stack の assertion |
+| 24 | `vp run celld:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定（node なし）と、`-c nodes=1`、`-c nodes=3`、`-c nodes=2 -c stateOnDestroy=delete`、`-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0` で synth した |
+| 24 | `vp run celld:plan / vp run celld:render` | ローカル | 成功 | 2026-10-12 | node 数ごとの計画と固定費の表示、deploy/ が生成結果と一致することの確認 |
+| 24 | `vp run celld:fetch` | ローカル | 成功 | 2026-10-12 | GitHub の release から v0.6.2 と v0.6.1 の Linux arm64 の archive を取得し、大きさと SHA-256 が固定した値と一致することを確かめた。展開も実行もしていない（`--host` は付けていない） |
+| 24 | `celld の実行（celld dev、celld deploy、node の起動）` | ローカル | 未実行 | - | 取得した binary は一度も実行していない。celld の挙動についての記述はすべて、v0.6.2 の文書とソースを読んだもの |
+| 24 | `vp run celld:infra:deploy と node への配置（artifacts、install、start、app-deploy）` | AWS | 未実行 | - | stack の deploy、S3 への archive の配置、node での install と起動、application の deploy は未実行 |
+| 24 | `vp run celld:rollout / celld:drain / celld:stop-all` | AWS | 未実行 | - | drain と、v0.6.1 から v0.6.2 への rolling update は実機で未実行。順序の制御は手元の stand-in に対してだけ確かめた |
+| 24 | `vp run celld:loss-check` | AWS | 未実行 | - | node を失わせて invariant を確かめる検査は、celld の実物には一度も当てていない |
+| 24 | `vp run celld:backup / celld:restore` | AWS | 未実行 | - | 停止した fleet の backup と restore は未実行。bucket の copy と snapshot から戻した fleet が正しく起動するかは未確認 |
 
 ## 未解決事項と再開手順
 
@@ -643,3 +652,21 @@ IAM の変更が伝わるまでの遅れを、実際には観測していない
 復元した table への切り替えを実機で確かめていない。未確認: `-c table=<名前>` での deploy が関数の環境変数と IAM policy だけを変えること、cdkd の drift 検査が復元した table を報告しないこと、`cdkd orphan` と `cdkd import --resource` で stack の table を入れ替えられること、`-c protect=on` の stack を cdkd で destroy したときの動き、`-c backup=on`（Cloud Control API 経由）と `-c replica=on` の作成と削除。
 
 再開手順: drill の続きで `vp run recovery:infra:diff -c table=<復元した table>` の差分を読み、deploy して `vp run recovery:audit` と `vp run recovery:infra:drift` を実行する。import を試すなら、`examples/22-recovery` で `cdkd orphan AihRecovery/Notes --dry-run` と `cdkd import AihRecovery --resource <logical ID>=<復元した table> --dry-run` の出力を先に読む。
+
+### 24-deploy
+
+24章の stack を AWS に一度も deploy しておらず、celld を EC2 で一度も起動していない。未確認: cdkd 0.296.28 がこの template を作れること、private subnet の node が S3 の gateway endpoint だけで fleet bucket に届くこと、celld が instance role（IMDSv2 必須）から credentials を得られること、この章の IAM の action の一覧で足りること、systemd の sandbox（ProtectSystem=strict）の下で celld が動くこと、t4g.small で足りること。
+
+再開手順: `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`、`vp run celld:fetch --host`、`vp run celld:infra:deploy -c nodes=1`、`vp run celld:artifacts`、`vp run celld:install`、`vp run celld:app-deploy`、`vp run celld:start`、`vp run celld:status`、`vp run celld:smoke`、`vp run celld:diagnose` の順に通す。celld が起動しなければ `vp run celld:logs` を読む。終わったら「片付け」の順に消す（時間課金）。
+
+### 24-fleet-operations
+
+fleet（2〜3 台）での drain、rolling update、node の喪失、backup と restore を実機で一度も通していない。未確認: `celld diagnose --json` の出力がこの章の parser の想定どおりであること、health の gate が実際に閉じて開くこと、`--skip-os-shutdown` での停止の後に残った node が cell を引き継ぐこと、`aws s3 sync` と EBS snapshot から戻した fleet が起動すること。
+
+再開手順: `vp run celld:infra:deploy -c nodes=3` の後、`vp run celld:install v0.6.1`、`vp run celld:app-deploy`、`vp run celld:start`、`vp run celld:rollout v0.6.2`、`vp run celld:loss-check b`、`vp run celld:revive b`、`vp run celld:stop-all`、`vp run celld:backup`、`vp run celld:restore <id>`（dry-run）を通し、それぞれの出力を検証メモに記録する。
+
+### 24-recheck-celld
+
+celld は beta で、調査から執筆までの間にも 1 週間に 1 回ほどの間隔で release が出ている。この章が写した upgrade notes、既定値、CLI の flag、diagnose の出力形式は v0.6.2 のもの。
+
+再開手順: 新しい release を使う前に、その tag の `docs/README.md`（Upgrade notes、Shut down and roll out a node、Environment variables）、`docs/guarantees.md`、`docs/security.md`、`docs/limitations.md` を読み直し、`examples/24-celld/src/celld.ts` の版、digest、upgrade notes、既定値を更新してテストを通す。

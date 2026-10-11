@@ -1,0 +1,936 @@
+{
+  "chapterId": "24",
+  "manifest": {
+    "id": "24",
+    "slug": "celld",
+    "title": {
+      "ja": "発展ラボ: celld を AWS でセルフホストする",
+      "en": "Advanced Lab: Self-Hosting celld on AWS"
+    },
+    "prerequisites": ["22", "23"],
+    "services": ["EC2", "EBS", "S3", "VPC"],
+    "samplePath": "examples/24-celld",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "celld-source",
+      "celld-limitations",
+      "celld-security",
+      "celld-guarantees",
+      "celld-docs",
+      "celld-readme-v062",
+      "celld-docs-v062",
+      "celld-guarantees-v062",
+      "celld-testing-v062",
+      "celld-releases",
+      "celld-install-script",
+      "celld-source-v062",
+      "celld-example-counter",
+      "ec2-api-stop-instances",
+      "ec2-data-protection-transit",
+      "ec2-instance-metadata-categories",
+      "ec2-imds-retrieval",
+      "s3-mpu-permissions",
+      "aws-cli-s3-sync",
+      "systemd-service-restart-always",
+      "systemd-unit-start-limit-off",
+      "cdkd-package-0-296-28",
+      "ssm-endpoints-for-ec2",
+      "ssm-run-command-walkthrough",
+      "ssm-api-get-command-invocation",
+      "ssm-pricing-ec2",
+      "ssm-managed-instance-core-policy",
+      "ssm-session-plugin",
+      "ec2-imds",
+      "ec2-user-data",
+      "ec2-stop-start",
+      "ec2-burstable-unlimited",
+      "al2023-awscli",
+      "al2023-repositories",
+      "ebs-create-snapshot",
+      "ebs-restore-volume",
+      "ebs-snapshots",
+      "cfn-deletion-policy",
+      "cfn-ssm-parameter-types",
+      "cdkd-source-ec2",
+      "cdkd-cli-destroy",
+      "cdkd-introduction",
+      "aws-cdk-lib-ec2-machine-image",
+      "systemd-unit-man",
+      "systemd-kill-man",
+      "s3-conditional-writes",
+      "s3-consistency",
+      "s3-lifecycle-abort-mpu",
+      "aws-price-list-ec2-compute",
+      "aws-price-list-s3",
+      "aws-price-list-vpc",
+      "vpc-interface-endpoints"
+    ]
+  },
+  "sources": [
+    {
+      "id": "celld-source",
+      "url": "https://github.com/denoland/celld",
+      "title": "celld source",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The repository describes celld as self-hosted, distributed Durable Objects, under Apache-2.0, owned by denoland",
+        "On 2026-10-12 the default branch pointed at commit 90b43017241f81189453d326d05948f388b34652, the same commit as the v0.6.2 tag",
+        "Pull requests are disabled; patches go by email"
+      ],
+      "note": "Read through the GitHub API (repository, tags, releases, tree) and the raw files of the default branch."
+    },
+    {
+      "id": "celld-limitations",
+      "url": "https://github.com/denoland/celld/blob/main/docs/limitations.md",
+      "title": "celld limitations",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "celld v0.6.2 is a beta release",
+        "A fleet runs one application; there is no account service, multi-tenant scheduler, or managed ingress",
+        "celld does not terminate TLS; peer traffic is plaintext HTTP, and the fleet HMAC does not encrypt",
+        "The installer supplies binaries for Linux x86-64, Linux ARM64, and Apple Silicon"
+      ]
+    },
+    {
+      "id": "celld-security",
+      "url": "https://github.com/denoland/celld/blob/main/docs/security.md",
+      "title": "celld security",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "v0.6.2 is a beta release, not safe for hostile multi-tenant use; only the latest release receives security fixes",
+        "celld opens two HTTP listeners and terminates TLS on neither; --internal-listen serves the peer protocol and the operator API",
+        "Most operator routes on the internal listener have no request authentication, including POST /shutdown and /state",
+        "The public listener reserves only /.well-known/celld/health: 200 with {\"ok\":true} when healthy, 503 otherwise",
+        "The fleet bucket is the root of authority; a holder of the bucket credentials controls the fleet",
+        "The operator API is an alpha interface; a release can change its paths or response formats"
+      ]
+    },
+    {
+      "id": "celld-guarantees",
+      "url": "https://celld.dev/docs/guarantees/",
+      "title": "celld guarantees",
+      "checkedAt": "2026-10-12",
+      "supports": ["The page exists and carries the same guarantees text as docs/guarantees.md in the repository"],
+      "note": "Read through a summarizing fetch; the claims this chapter relies on are taken from the repository file at the v0.6.2 tag (celld-guarantees-v062)."
+    },
+    {
+      "id": "celld-docs",
+      "url": "https://celld.dev/docs/",
+      "title": "celld documentation",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The documentation site lists pages for limitations, security, guarantees, testing, telemetry, Cloudflare compatibility, and one page per service"
+      ],
+      "note": "Read through a summarizing fetch; the claims this chapter relies on are taken from the repository files at the v0.6.2 tag."
+    },
+    {
+      "id": "celld-readme-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/README.md",
+      "title": "celld v0.6.2: README",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "celld runs a Cloudflare Workers application on your own machines and stores long-term state in an S3-compatible, Google Cloud Storage, or Azure Blob Storage bucket",
+        "A node is one celld process; nodes that share one bucket are a fleet; a conditional bucket write gives a node the ownership of a cell",
+        "celld uses the standard AWS credential chain; a node is started with --bucket, --listen, --internal-listen, and --advertise",
+        "The container example sets CELLD_WATCH to a directory on a persistent volume",
+        "One node proves each write through the bucket; with a second node the write finishes once that node holds it on disk",
+        "Put every advertised address on a trusted private network or an encrypted overlay; celld rejects a literal public IP unless --unsafe-public-advertise is given",
+        "Treat access to the bucket and its credentials as fleet administrator access",
+        "The installer downloads the binary from GitHub releases; provenance is verifiable with gh attestation verify"
+      ]
+    },
+    {
+      "id": "celld-docs-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/docs/README.md",
+      "title": "celld v0.6.2: documentation (operate, shut down, upgrade notes, environment variables)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CELLD_DURABILITY defaults to fleet; a one-node fleet waits for the bucket on every write; a fleet that loses all but one node falls back to the bucket and stays correct",
+        "celld shuts down gracefully on SIGTERM or SIGINT: health reports 503, accepted requests finish, and the node hands its cells off to a peer; POST /shutdown on the internal listener starts the same handoff",
+        "CELLD_SHUTDOWN_TOTAL_MS defaults to 40000; the orchestrator stop grace (systemd TimeoutStopSec) must be above it or SIGKILL can interrupt the handoff",
+        "To roll out a new version: stop each node with SIGTERM, wait for its replacement to report healthy, then move to the next node",
+        "During a rolling update, wait for restoring=0 on every node (celld diagnose) before restarting the next",
+        "A new process does not report healthy until the fleet settles; CELLD_READY_FLEET_GATE_MS defaults to 120000",
+        "Upgrade notes: v0.1.0 to v0.2.0 stop all; v0.2.1 to v0.3.0 rolling; v0.3.0 to v0.4.0 stop all; v0.4.0 to v0.4.1 rolling; v0.5.1 to v0.6.0 stop all with fleet durability; v0.6.0 to v0.6.1 rolling; v0.6.1 to v0.6.2 rolling",
+        "The node lease lives CELLD_TTL_MS (default 10000) and renews at one third of that; the fleet sample is read every CELLD_REBALANCE_INTERVAL_MS (default 5000); deploy/current.json is read every CELLD_DEPLOY_POLL_S (default 30)",
+        "CELLD_BUCKET, AWS_REGION, CELLD_ADDR, CELLD_INTERNAL_ADDR, CELLD_ADVERTISE, and CELLD_WATCH are the environment forms of the node settings; CELLD_NODE is an explicit node-session ID",
+        "A bucket value can add a key prefix (s3://BUCKET/PREFIX)",
+        "celld deploy needs esbuild on PATH for Worker code; CELLD_ESBUILD overrides the path; a running node adopts a new deployment without a restart",
+        "celld diagnose reads the node leases and probes each live peer without taking a lease; celld cell list prints one Class:ID scope per line",
+        "One 8 GB node holds 1,000 resident cells",
+        "celld does not scale itself; an external system starts and stops the nodes"
+      ]
+    },
+    {
+      "id": "celld-guarantees-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/docs/guarantees.md",
+      "title": "celld v0.6.2: what celld guarantees",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Two promises: exactly one node serves a cell at a time, and an acknowledged write is never lost; both require a bucket with working conditional writes and ranged reads, and a supervisor that restarts the process",
+        "The qualified stores are Amazon S3, Cloudflare R2, Tigris, Google Cloud Storage, and Azure Blob Storage; the release tests run against R2, and the S3 path uses the same client and headers",
+        "The supervisor must restart without an attempt limit and wait at least one lease lifetime between attempts",
+        "Each cell has one ownership record in the bucket, naming the owner's session and a fencing epoch, acquired by conditional create or compare-and-swap",
+        "In fleet mode the owner sends each write to one or two followers and every follower must fsync it; a fleet needs two running nodes for a fleet proof; a fleet of three or more holds three copies of an acknowledged write",
+        "In fleet mode celld can acknowledge a write before its bucket upload completes; a follower disk can hold acknowledged writes that the bucket does not yet hold",
+        "Recovery limits: a follower's HTTP error can block recovery and startup; a deleted final batch is undetectable if nothing later records its range; a mixed-version tail can stall recovery",
+        "A node whose lease expires fences itself, logs a line starting with SELF-FENCE:, and exits with code 3; only a restart returns it",
+        "celld reserves the key prefixes probe/, cells/, nodes/, node-cells/, fleet/, deploy/, deploy-blobs/, log/, wake/, and telemetry/",
+        "The v0.4.1 upgrade procedure: stop every node and wait for every lease to expire, back up the bucket and node data keeping node names, peer addresses, and data directories; to roll back, restore the full stopped-fleet backup, which loses writes made after it",
+        "Each node runs the storage test (four conditional writes and a ranged read) before it serves, and cannot disable it"
+      ]
+    },
+    {
+      "id": "celld-testing-v062",
+      "url": "https://github.com/denoland/celld/blob/v0.6.2/docs/testing.md",
+      "title": "celld v0.6.2: testing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The coordination protocol is specified in TLA+ and exercised by deterministic simulation; the model grants a linearizable object store",
+        "Live-fleet fault scenarios include SIGKILL mid-write-stream, freezing an owner, cutting a node off from the bucket, and stopping a host; a verification pass fetches each cell through different nodes",
+        "A cell can be briefly unavailable while ownership moves",
+        "A fleet at its resident limit has no space for a lost node's cells"
+      ]
+    },
+    {
+      "id": "celld-releases",
+      "url": "https://api.github.com/repos/denoland/celld/releases",
+      "title": "celld releases (GitHub API)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "v0.6.2 was published 2026-10-07 and is the latest of 11 releases; none is marked prerelease",
+        "Each release carries celld-aarch64-unknown-linux-gnu.gz, celld-x86_64-unknown-linux-gnu.gz, and celld-aarch64-apple-darwin.gz with a sha256 digest",
+        "v0.6.2 release notes: upgrading from v0.6.1 can use a rolling update"
+      ],
+      "note": "The six archives of v0.6.2 and v0.6.1 were downloaded on 2026-10-12 and their SHA-256 matched the published digests. None was unpacked or run."
+    },
+    {
+      "id": "celld-install-script",
+      "url": "https://celld.dev/install.sh",
+      "title": "celld installer script",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The installer downloads celld-<target>.gz from the GitHub release named by CELLD_VERSION, decompresses it, and switches one symlink",
+        "It relies on gzip's CRC for corruption and on the release attestation for provenance; it carries no checksum of its own"
+      ],
+      "note": "Read as text, not run."
+    },
+    {
+      "id": "celld-source-v062",
+      "url": "https://github.com/denoland/celld/tree/v0.6.2/crates/celld",
+      "title": "celld v0.6.2: source (cli, fleet diagnostics, bucket client)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "main/cli.rs: with no arguments and CELLD_BUCKET set, celld runs a node from the environment; the help text lists the flags and variables",
+        "main/cli.rs: celld diagnose accepts --json, --read-only, and --peer",
+        "fleet.rs: a diagnose row is {verdict, check, detail}; a live peer is 'peer <node> at <addr>' with restoring=<n> in the detail; an expired lease is a skip row",
+        "main.rs: without CELLD_WATCH the data directory is a celld-<pid> directory under the system temporary directory; without CELLD_NODE the node-session ID is random",
+        "bucket.rs: large writes go through multipart upload",
+        "protocol.rs documents the deployment objects only; the ownership record format is not a documented interface"
+      ],
+      "note": "Read as text at the tag. Nothing was compiled or run."
+    },
+    {
+      "id": "celld-example-counter",
+      "url": "https://github.com/denoland/celld/tree/v0.6.2/examples/counter",
+      "title": "celld v0.6.2: counter example",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "One Durable Object class, Counter; the Worker picks the instance from the ?name= query parameter",
+        "Every request reads n, adds 1, stores it, and answers JSON {n, url}"
+      ]
+    },
+    {
+      "id": "ec2-api-stop-instances",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_StopInstances.html",
+      "title": "StopInstances (Amazon EC2 API reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default a stop includes a graceful OS shutdown; SkipOsShutdown bypasses it and might result in data loss or skipped shutdown scripts",
+        "Force first attempts a graceful shutdown",
+        "A stopped instance retains its root volume and data volumes, and volume usage is still charged"
+      ]
+    },
+    {
+      "id": "ec2-data-protection-transit",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/data-protection.html",
+      "title": "Data protection in Amazon EC2",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Some instance types automatically encrypt in-transit traffic between instances in the same VPC; the list includes M7g, C7g, and R7g and does not include T4g",
+        "All traffic between Availability Zones is encrypted at the physical layer",
+        "It is the customer's responsibility to use an encryption protocol such as TLS for sensitive data in transit"
+      ]
+    },
+    {
+      "id": "ec2-instance-metadata-categories",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html",
+      "title": "Use instance metadata to manage your EC2 instance",
+      "checkedAt": "2026-10-12",
+      "supports": ["local-ipv4 is the private IPv4 address of the instance (the device with device number 0)"]
+    },
+    {
+      "id": "ec2-imds-retrieval",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html",
+      "title": "Access instance metadata for an EC2 instance",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IMDSv2: a PUT to /latest/api/token with X-aws-ec2-metadata-token-ttl-seconds returns a token; requests then send X-aws-ec2-metadata-token",
+        "User data is limited to 16 KB before base64 encoding",
+        "With curl -f, an IMDS error becomes a non-zero exit"
+      ]
+    },
+    {
+      "id": "s3-mpu-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html",
+      "title": "Uploading and copying objects using multipart upload in Amazon S3",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Creating, uploading parts of, and completing a multipart upload need s3:PutObject; stopping one needs s3:AbortMultipartUpload",
+        "Parts of an upload that was never completed or stopped are billed; a lifecycle rule with AbortIncompleteMultipartUpload removes them"
+      ]
+    },
+    {
+      "id": "aws-cli-s3-sync",
+      "url": "https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html",
+      "title": "aws s3 sync (AWS CLI reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "sync recursively copies new and updated files from the source to the destination",
+        "--delete removes files that exist in the destination but not in the source; --dryrun displays the operations without running them"
+      ]
+    },
+    {
+      "id": "systemd-service-restart-always",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.service.xml",
+      "title": "systemd v252: systemd.service(5), Restart= and RestartSec=",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Restart=always restarts the service whether it exited cleanly, was terminated by a signal, or hit a timeout",
+        "RestartSec= is the time to sleep before restarting; it defaults to 100ms"
+      ],
+      "note": "The systemd version on Amazon Linux 2023 was not checked on an instance."
+    },
+    {
+      "id": "systemd-unit-start-limit-off",
+      "url": "https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml",
+      "title": "systemd v252: systemd.unit(5), StartLimitIntervalSec=",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "StartLimitIntervalSec= may be set to 0 to disable any kind of rate limiting",
+        "A unit configured for Restart= that reaches the start limit is not restarted any more"
+      ],
+      "note": "The systemd version on Amazon Linux 2023 was not checked on an instance."
+    },
+    {
+      "id": "cdkd-package-0-296-28",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (npm package, dist)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS::EC2::SecurityGroupIngress is registered with the EC2 provider; its handled properties include GroupId, IpProtocol, FromPort, ToPort, Description, and SourceSecurityGroupId",
+        "AWS::EC2::SecurityGroupEgress is not registered",
+        "The S3 bucket provider handles LifecycleConfiguration, OwnershipControls, PublicAccessBlockConfiguration, and BucketEncryption"
+      ],
+      "note": "Read from the installed package's dist directory. Nothing was run against AWS."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "celld-cell",
+      "ja": "cell（celld）",
+      "en": "cell (celld)",
+      "firstUse": "24",
+      "definition": {
+        "ja": "celld での Durable Object。名前と、自分専用の SQLite データベースを持つ小さなサーバー。",
+        "en": "A Durable Object in celld: a small server with a name and a private SQLite database."
+      }
+    },
+    {
+      "id": "celld-node",
+      "ja": "node（celld）",
+      "en": "node (celld)",
+      "firstUse": "24",
+      "definition": {
+        "ja": "1 台のマシンで動く celld のプロセス 1 つ。どの node もどの cell でも担当できる。",
+        "en": "One celld process on one machine. Any node can serve any cell."
+      }
+    },
+    {
+      "id": "celld-fleet",
+      "ja": "fleet",
+      "en": "fleet",
+      "firstUse": "24",
+      "definition": {
+        "ja": "同じ bucket を共有する celld の node の集まり。参加の手続きはなく、bucket の中の lease でお互いを見つける。",
+        "en": "The celld nodes that share one bucket. There is no join step; they find each other through leases in the bucket."
+      }
+    },
+    {
+      "id": "ownership-record",
+      "ja": "ownership record",
+      "en": "ownership record",
+      "firstUse": "24",
+      "definition": {
+        "ja": "cell ごとに bucket に 1 つある小さなオブジェクト。いまの持ち主（node の session）と fencing epoch が書いてある。条件付きの書き込みでしか更新されない。",
+        "en": "One small object per cell in the bucket, naming the current owner (a node session) and a fencing epoch. It changes only through conditional writes."
+      }
+    },
+    {
+      "id": "fencing-epoch",
+      "ja": "fencing epoch",
+      "en": "fencing epoch",
+      "firstUse": "24",
+      "definition": {
+        "ja": "持ち主が替わるたびに増える番号。古い持ち主の書き込みを、新しい持ち主の状態から切り離すために使う。",
+        "en": "A number that grows every time ownership changes, used to keep a former owner's writes away from the current owner's state."
+      }
+    },
+    {
+      "id": "node-lease",
+      "ja": "lease（node）",
+      "en": "lease (node)",
+      "firstUse": "24",
+      "definition": {
+        "ja": "node が生きていることを示す、期限つきの記録。期限までに更新できなかった node は、自分から止まる。",
+        "en": "A record with an expiry that says a node is alive. A node that cannot renew it in time stops itself."
+      }
+    },
+    {
+      "id": "follower",
+      "ja": "follower",
+      "en": "follower",
+      "firstUse": "24",
+      "definition": {
+        "ja": "持ち主の node から書き込みを受け取り、自分の disk に保存する別の node。celld では 1 台か 2 台。",
+        "en": "Another node that receives each write from the owner and stores it on its own disk. One or two of them in celld."
+      }
+    },
+    {
+      "id": "drain",
+      "ja": "drain",
+      "en": "drain",
+      "firstUse": "24",
+      "definition": {
+        "ja": "node を止める前に、担当している仕事をほかへ引き渡すこと。celld では SIGTERM がその合図。",
+        "en": "Handing a node's work to others before it stops. In celld, SIGTERM is the signal for it."
+      }
+    },
+    {
+      "id": "supervisor",
+      "ja": "supervisor",
+      "en": "supervisor",
+      "firstUse": "24",
+      "definition": {
+        "ja": "プロセスを起動し、落ちたら起動し直す仕組み。この章では systemd。",
+        "en": "Whatever starts a process and starts it again when it exits. In this chapter, systemd."
+      }
+    },
+    {
+      "id": "self-hosting",
+      "ja": "セルフホスト",
+      "en": "self-hosting",
+      "firstUse": "24",
+      "definition": {
+        "ja": "managed service を使わず、ソフトウェアを自分のマシンで動かして、更新や障害対応も自分で受け持つこと。",
+        "en": "Running software on your own machines instead of using a managed service, and taking on its upgrades and failures yourself."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "24.what",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.pin",
+      "sources": ["examples/24-celld/src/celld.ts", "examples/24-celld/scripts/fetch.ts"],
+      "tasks": ["celld:fetch", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.architecture",
+      "sources": [
+        "examples/24-celld/infra/lib/celld-stack.ts",
+        "examples/24-celld/infra/bin/app.ts",
+        "examples/24-celld/src/config.ts",
+        "examples/24-celld/src/report.ts",
+        "examples/24-celld/scripts/plan.ts"
+      ],
+      "tasks": ["celld:plan", "celld:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "24.network",
+      "sources": ["examples/24-celld/infra/lib/celld-stack.ts", "examples/24-celld/infra/test/celld-stack.test.ts"],
+      "tasks": ["celld:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.state",
+      "sources": ["examples/24-celld/infra/lib/celld-stack.ts", "examples/24-celld/infra/test/celld-stack.test.ts"],
+      "tasks": ["celld:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.node",
+      "sources": [
+        "examples/24-celld/src/machine.ts",
+        "examples/24-celld/deploy",
+        "examples/24-celld/scripts/render.ts",
+        "examples/24-celld/test/machine.test.ts"
+      ],
+      "tasks": ["celld:render", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.cost",
+      "sources": ["examples/24-celld/src/cost.ts", "examples/24-celld/test/pricing.test.ts", "data/pricing"],
+      "tasks": ["celld:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.local",
+      "sources": ["examples/24-celld/test", "examples/24-celld/infra/test"],
+      "tasks": ["test:unit", "celld:plan", "celld:render", "celld:infra:synth", "celld:fetch"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "24.one-node",
+      "sources": [
+        "examples/24-celld/scripts/fleet.ts",
+        "examples/24-celld/src/remote.ts",
+        "examples/24-celld/test/remote.test.ts"
+      ],
+      "tasks": [
+        "celld:infra:deploy",
+        "celld:artifacts",
+        "celld:install",
+        "celld:start",
+        "celld:app-deploy",
+        "celld:status",
+        "celld:smoke",
+        "celld:diagnose"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "24.rollout",
+      "sources": [
+        "examples/24-celld/src/rollout.ts",
+        "examples/24-celld/src/health.ts",
+        "examples/24-celld/test/rollout.test.ts",
+        "examples/24-celld/test/health.test.ts"
+      ],
+      "tasks": ["celld:drain", "celld:rollout", "celld:stop-all", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.loss",
+      "sources": [
+        "examples/24-celld/src/probe.ts",
+        "examples/24-celld/src/ledger.ts",
+        "examples/24-celld/test/toy-fleet.ts",
+        "examples/24-celld/test/ledger.test.ts",
+        "examples/24-celld/test/probe.test.ts"
+      ],
+      "tasks": ["celld:loss-check", "celld:kill", "celld:revive", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.backup",
+      "sources": ["examples/24-celld/src/backup.ts", "examples/24-celld/test/remote.test.ts"],
+      "tasks": ["celld:backup", "celld:restore", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "24.failures",
+      "sources": ["examples/24-celld/scripts/fleet.ts"],
+      "tasks": ["celld:status", "celld:logs", "celld:diagnose"],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "24.production",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "24.cleanup",
+      "sources": ["examples/24-celld/scripts/fleet.ts"],
+      "tasks": ["celld:infra:destroy", "celld:bucket-empty"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "24.distributed",
+      "sources": ["examples/24-celld/src/ledger.ts", "examples/24-celld/test/ledger.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    }
+  ],
+  "unitPrices": [],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "celld-one-node-running",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: node 1 台を 1 か月動かしたまま",
+        "en": "celld: one node running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=1`。t4g.small を 730 時間動かしたまま",
+          "11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま",
+          "S3 の request は、celld の文書にある間隔からの見積もり（node ごとに、lease の更新が約 3.3 秒に 1 回、fleet sample の読み取りが 5 秒に 1 回、deployment pointer の読み取りが 30 秒に 1 回）。実測ではなく、cell が動いたときの request は含まない",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入"
+        ],
+        "en": [
+          "`-c nodes=1`: one t4g.small running for 730 hours",
+          "Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack",
+          "S3 requests are estimated from the intervals in celld's documentation (per node: a lease renewal about every 3.3 s, a fleet sample read every 5 s, a deployment pointer read every 30 s). Not measured, and requests caused by active cells are not included",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "S3 storage, data transfer, snapshots, and the backup bucket are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-small.linux.hour",
+          "quantity": 730,
+          "basis": "1 t4g.small x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "1 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 788400,
+          "basis": "1 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval)"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 613200,
+          "basis": "1 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "celld-three-nodes-running",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: node 3 台を 1 か月動かしたまま",
+        "en": "celld: three nodes running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=3`。t4g.small 3 台を 730 時間動かしたまま",
+          "11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま",
+          "S3 の request は、celld の文書にある間隔からの見積もり（node ごとに、lease の更新が約 3.3 秒に 1 回、fleet sample の読み取りが 5 秒に 1 回、deployment pointer の読み取りが 30 秒に 1 回）。実測ではなく、cell が動いたときの request は含まない",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入"
+        ],
+        "en": [
+          "`-c nodes=3`: three t4g.small running for 730 hours",
+          "Three interface endpoints (ssm, ssmmessages, ec2messages) in two zones, left in the chapter 11 stack",
+          "S3 requests are estimated from the intervals in celld's documentation (per node: a lease renewal about every 3.3 s, a fleet sample read every 5 s, a deployment pointer read every 30 s). Not measured, and requests caused by active cells are not included",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "S3 storage, data transfer, snapshots, and the backup bucket are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-small.linux.hour",
+          "quantity": 2190,
+          "basis": "3 t4g.small x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 48,
+          "basis": "3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 2365200,
+          "basis": "3 node(s) x one lease renewal about every 3.3 s (estimated from the documented interval)"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 1839600,
+          "basis": "3 node(s) x (fleet sample every 5 s + deployment pointer every 30 s), estimated"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "celld-three-nodes-stopped",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: node 3 台を 1 か月止めたまま",
+        "en": "celld: three nodes stopped for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=3` の instance を 3 台とも停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている",
+          "root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は node ごとに 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲",
+          "CPU credit は standard。baseline を超える分の課金は起きない設定",
+          "Session Manager と Run Command は、EC2 の instance に対しては追加料金なし",
+          "S3 の保存容量、データ転送、snapshot、backup 用 bucket の料金は未算入"
+        ],
+        "en": [
+          "The three instances of `-c nodes=3` stopped for 730 hours. The volumes and the interface endpoints in the chapter 11 stack remain",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each node's data volume is 8 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "CPU credits are in standard mode, so nothing is billed for use above the baseline",
+          "Session Manager and Run Command have no additional charge on EC2 instances",
+          "S3 storage, data transfer, snapshots, and the backup bucket are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 48,
+          "basis": "3 x (8 GiB root, assumed + 8 GiB data), 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "celld-retained-after-destroy",
+      "chapter": "24",
+      "title": {
+        "ja": "celld: stack を消した後に残る data volume（3 台分）",
+        "en": "celld: the data volumes left after destroying the stack (three nodes)"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の `stateOnDestroy=retain` のまま、`-c nodes=3` の stack を destroy し、11章の interface endpoint も消した後の 730 時間",
+          "残るのは 8 GiB の data volume 3 つ。root volume は instance と一緒に消える",
+          "残った 2 つの bucket の保存容量は未算入"
+        ],
+        "en": [
+          "730 hours after destroying a `-c nodes=3` stack with the default `stateOnDestroy=retain`, and after removing the chapter 11 interface endpoints",
+          "What remains: three 8 GiB data volumes. Root volumes go with their instances",
+          "Storage in the two retained buckets is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 24,
+          "basis": "3 retained data volume(s) x 8 GiB, 730 of 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "24",
+        "command": "vp run test:unit (examples/24-celld)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "更新の順序を決める関数に、各段階で失敗を差し込むテスト（待ち時間なし）、作り物の fleet に対する ledger の判定、probe の script を bash と curl で実行するテスト、install script の引数と checksum の拒否、unit と user data の生成、diagnose の出力の読み取り、backup と restore の計画、料金の入力、stack の assertion",
+          "en": "Failures injected at each step of the update ordering (no waiting), the ledger judged against a toy fleet, the probe script run by bash and curl, the install script's arguments and its checksum refusal, generation of the unit and user data, reading diagnose output, backup and restore plans, pricing inputs, and stack assertions"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "vp run celld:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "既定（node なし）と、`-c nodes=1`、`-c nodes=3`、`-c nodes=2 -c stateOnDestroy=delete`、`-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0` で synth した",
+          "en": "Synthesized the default (no node) and `-c nodes=1`, `-c nodes=3`, `-c nodes=2 -c stateOnDestroy=delete`, and `-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0`"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "vp run celld:plan / vp run celld:render",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "node 数ごとの計画と固定費の表示、deploy/ が生成結果と一致することの確認",
+          "en": "The plan and fixed cost per fleet size, and that deploy/ matches what the generators produce"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "vp run celld:fetch",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "GitHub の release から v0.6.2 と v0.6.1 の Linux arm64 の archive を取得し、大きさと SHA-256 が固定した値と一致することを確かめた。展開も実行もしていない（`--host` は付けていない）",
+          "en": "Downloaded the Linux arm64 archives of v0.6.2 and v0.6.1 from the GitHub releases and confirmed their size and SHA-256 against the pinned values. Nothing was unpacked or run (`--host` was not used)"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "celld の実行（celld dev、celld deploy、node の起動）",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "取得した binary は一度も実行していない。celld の挙動についての記述はすべて、v0.6.2 の文書とソースを読んだもの",
+          "en": "The downloaded binary was never run. Everything said about celld's behavior comes from reading the v0.6.2 documentation and source"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "vp run celld:infra:deploy と node への配置（artifacts、install、start、app-deploy）",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "stack の deploy、S3 への archive の配置、node での install と起動、application の deploy は未実行",
+          "en": "Deploying the stack, uploading the archive to S3, installing and starting on the nodes, and deploying the application were not run"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "vp run celld:rollout / celld:drain / celld:stop-all",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "drain と、v0.6.1 から v0.6.2 への rolling update は実機で未実行。順序の制御は手元の stand-in に対してだけ確かめた",
+          "en": "Draining and the rolling update from v0.6.1 to v0.6.2 were not run on real nodes. The ordering was checked against a local stand-in only"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "vp run celld:loss-check",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "node を失わせて invariant を確かめる検査は、celld の実物には一度も当てていない",
+          "en": "The check that loses a node and judges the invariant has never been pointed at a real celld fleet"
+        }
+      },
+      {
+        "scope": "24",
+        "command": "vp run celld:backup / celld:restore",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "停止した fleet の backup と restore は未実行。bucket の copy と snapshot から戻した fleet が正しく起動するかは未確認",
+          "en": "Backup and restore of a stopped fleet were not run. Whether a fleet restored from the bucket copy and the snapshots starts correctly is unconfirmed"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "24-deploy",
+        "summary": {
+          "ja": "24章の stack を AWS に一度も deploy しておらず、celld を EC2 で一度も起動していない。未確認: cdkd 0.296.28 がこの template を作れること、private subnet の node が S3 の gateway endpoint だけで fleet bucket に届くこと、celld が instance role（IMDSv2 必須）から credentials を得られること、この章の IAM の action の一覧で足りること、systemd の sandbox（ProtectSystem=strict）の下で celld が動くこと、t4g.small で足りること。",
+          "en": "The chapter 24 stack has never been deployed and celld has never been started on EC2. Unverified: that cdkd 0.296.28 can create this template, that nodes in a private subnet reach the fleet bucket through the S3 gateway endpoint alone, that celld obtains credentials from the instance role with IMDSv2 required, that this chapter's list of IAM actions is enough, that celld runs under the systemd sandboxing (ProtectSystem=strict), and that a t4g.small is enough."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`、`vp run celld:fetch --host`、`vp run celld:infra:deploy -c nodes=1`、`vp run celld:artifacts`、`vp run celld:install`、`vp run celld:app-deploy`、`vp run celld:start`、`vp run celld:status`、`vp run celld:smoke`、`vp run celld:diagnose` の順に通す。celld が起動しなければ `vp run celld:logs` を読む。終わったら「片付け」の順に消す（時間課金）。",
+          "en": "Run, in order: `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`, `vp run celld:fetch --host`, `vp run celld:infra:deploy -c nodes=1`, `vp run celld:artifacts`, `vp run celld:install`, `vp run celld:app-deploy`, `vp run celld:start`, `vp run celld:status`, `vp run celld:smoke`, `vp run celld:diagnose`. If celld does not start, read `vp run celld:logs`. Then delete everything in the order of the cleanup section (hourly charges)."
+        }
+      },
+      {
+        "id": "24-fleet-operations",
+        "summary": {
+          "ja": "fleet（2〜3 台）での drain、rolling update、node の喪失、backup と restore を実機で一度も通していない。未確認: `celld diagnose --json` の出力がこの章の parser の想定どおりであること、health の gate が実際に閉じて開くこと、`--skip-os-shutdown` での停止の後に残った node が cell を引き継ぐこと、`aws s3 sync` と EBS snapshot から戻した fleet が起動すること。",
+          "en": "Draining, a rolling update, losing a node, and backup and restore have never been run on a real fleet of two or three nodes. Unverified: that `celld diagnose --json` prints what this chapter's parser expects, that the health gate really closes and opens, that the remaining nodes take over cells after a stop with `--skip-os-shutdown`, and that a fleet restored from `aws s3 sync` and EBS snapshots starts."
+        },
+        "resume": {
+          "ja": "`vp run celld:infra:deploy -c nodes=3` の後、`vp run celld:install v0.6.1`、`vp run celld:app-deploy`、`vp run celld:start`、`vp run celld:rollout v0.6.2`、`vp run celld:loss-check b`、`vp run celld:revive b`、`vp run celld:stop-all`、`vp run celld:backup`、`vp run celld:restore <id>`（dry-run）を通し、それぞれの出力を検証メモに記録する。",
+          "en": "After `vp run celld:infra:deploy -c nodes=3`, run `vp run celld:install v0.6.1`, `vp run celld:app-deploy`, `vp run celld:start`, `vp run celld:rollout v0.6.2`, `vp run celld:loss-check b`, `vp run celld:revive b`, `vp run celld:stop-all`, `vp run celld:backup`, and `vp run celld:restore <id>` (dry run), and record each output in the verification notes."
+        }
+      },
+      {
+        "id": "24-recheck-celld",
+        "summary": {
+          "ja": "celld は beta で、調査から執筆までの間にも 1 週間に 1 回ほどの間隔で release が出ている。この章が写した upgrade notes、既定値、CLI の flag、diagnose の出力形式は v0.6.2 のもの。",
+          "en": "celld is beta, with a release roughly every week around the time of writing. The upgrade notes, defaults, CLI flags, and diagnose output format this chapter copied are those of v0.6.2."
+        },
+        "resume": {
+          "ja": "新しい release を使う前に、その tag の `docs/README.md`（Upgrade notes、Shut down and roll out a node、Environment variables）、`docs/guarantees.md`、`docs/security.md`、`docs/limitations.md` を読み直し、`examples/24-celld/src/celld.ts` の版、digest、upgrade notes、既定値を更新してテストを通す。",
+          "en": "Before using a newer release, reread that tag's `docs/README.md` (Upgrade notes, Shut down and roll out a node, Environment variables), `docs/guarantees.md`, `docs/security.md`, and `docs/limitations.md`, then update the version, digests, upgrade notes, and defaults in `examples/24-celld/src/celld.ts` and run the tests."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 24: celld ----------------------------------------------\n      // The fleet a deploy would create, what celld documents about its size, and the idle cost. Reads only this checkout.\n      \"celld:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/24-celld\" }),\n      // Fails when deploy/ differs from what the generators produce. `--write` rewrites it.\n      \"celld:render\": fresh(\"node scripts/render.ts\", { cwd: \"examples/24-celld\" }),\n      // Downloads the pinned release from github.com and checks its SHA-256. No AWS. Runs nothing it downloads.\n      \"celld:fetch\": live(\"node scripts/fetch.ts\", { cwd: \"examples/24-celld\" }),\n      ...infra(\"celld\", \"examples/24-celld\", \"AihCelld\"),\n      // Everything below goes through Systems Manager to the deployed nodes.\n      \"celld:status\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts status\", { cwd: \"examples/24-celld\" }),\n      \"celld:logs\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts logs\", { cwd: \"examples/24-celld\" }),\n      \"celld:diagnose\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts diagnose\", { cwd: \"examples/24-celld\" }),\n      \"celld:cells\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts cells\", { cwd: \"examples/24-celld\" }),\n      \"celld:smoke\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts smoke\", { cwd: \"examples/24-celld\" }),\n      \"celld:artifacts\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts artifacts\", { cwd: \"examples/24-celld\" }),\n      \"celld:install\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts install\", { cwd: \"examples/24-celld\" }),\n      \"celld:start\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts start\", { cwd: \"examples/24-celld\" }),\n      // Runs the local celld binary against the fleet bucket with your credentials.\n      \"celld:app-deploy\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts app-deploy\", { cwd: \"examples/24-celld\" }),\n      // SIGTERM to one node: it hands its cells off, then stops.\n      \"celld:drain\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts drain\", { cwd: \"examples/24-celld\" }),\n      \"celld:stop-all\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts stop-all\", { cwd: \"examples/24-celld\" }),\n      // One node at a time, or a stopped fleet, depending on what the upgrade notes say for the version pair.\n      \"celld:rollout\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts rollout\", { cwd: \"examples/24-celld\" }),\n      // Stops an instance without an OS shutdown. The instance and its volumes stay.\n      \"celld:kill\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts kill\", { cwd: \"examples/24-celld\" }),\n      \"celld:revive\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts revive\", { cwd: \"examples/24-celld\" }),\n      \"celld:loss-check\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts loss-check\", { cwd: \"examples/24-celld\" }),\n      // Only a stopped fleet: snapshots of every data volume plus a copy of the fleet prefix.\n      \"celld:backup\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts backup\", { cwd: \"examples/24-celld\" }),\n      // Lists what it would overwrite. `--yes` overwrites the fleet bucket.\n      \"celld:restore\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts restore\", { cwd: \"examples/24-celld\" }),\n      // Lists what it would delete. `--yes` deletes every object.\n      \"celld:bucket-empty\": live(\"node --env-file-if-exists=../../.env scripts/fleet.ts bucket-empty\", { cwd: \"examples/24-celld\" }),",
+    "synth": ["celld:infra:synth"],
+    "checkAll": ["celld:render"],
+    "typecheck": ["examples/24-celld"]
+  }
+}
