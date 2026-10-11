@@ -20,7 +20,15 @@ export type LongJobsStackProps = StackProps & {
 const SCHEDULE_NAME = "aih-long-jobs-export";
 const DURABLE_FUNCTION_NAME = "aih-long-jobs-durable-export";
 const source = (file: string): string => fileURLToPath(new URL(`../../src/${file}`, import.meta.url));
-const bundling = { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false, externalModules: [] };
+// The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+const bundling = {
+  format: OutputFormat.ESM,
+  target: "node24",
+  minify: false,
+  sourceMap: false,
+  externalModules: [],
+  banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+};
 
 export class LongJobsStack extends Stack {
   constructor(scope: Construct, id: string, props: LongJobsStackProps) {

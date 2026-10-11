@@ -127,6 +127,8 @@ export default defineConfig({
       "infra:synth": fresh("node -e \"console.log('all CDK apps synthesized')\"", {
         dependsOn: ["book:infra:synth", ...chapterSynthTasks],
       }),
+      // Loads each synthesized Lambda bundle in plain Node. A bundle that cannot load passes every unit test.
+      "bundles:check": fresh("node tools/src/checks/bundles.ts", { dependsOn: ["infra:synth"] }),
       // Everything above plus both builds. Never touches AWS.
       "check:all": fresh("node -e \"console.log('check:all finished without touching AWS')\"", {
         dependsOn: [
@@ -136,6 +138,7 @@ export default defineConfig({
           "book:generate:check",
           "content:check",
           "infra:synth",
+          "bundles:check",
           "links:check",
           ...chapterCheckTasks,
         ],

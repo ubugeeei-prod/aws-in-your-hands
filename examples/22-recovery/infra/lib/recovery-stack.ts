@@ -97,7 +97,15 @@ export class RecoveryStack extends Stack {
       role,
       logGroup,
       environment: { TABLE_NAME: active.tableName, UPLOADS_BUCKET: uploads.bucketName },
-      bundling: { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false, externalModules: [] },
+      // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+      bundling: {
+        format: OutputFormat.ESM,
+        target: "node24",
+        minify: false,
+        sourceMap: false,
+        externalModules: [],
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+      },
     });
 
     // #region backup

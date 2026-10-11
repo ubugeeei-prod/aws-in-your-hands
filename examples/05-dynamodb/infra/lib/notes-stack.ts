@@ -77,6 +77,8 @@ export class NotesStack extends Stack {
         // Bundle the AWS SDK too, so the function runs the version in
         // pnpm-lock.yaml and not whatever ships with the Lambda runtime.
         externalModules: [],
+        // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
     // #endregion function

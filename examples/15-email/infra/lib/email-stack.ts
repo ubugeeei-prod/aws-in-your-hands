@@ -130,7 +130,15 @@ export class EmailStack extends Stack {
       architecture: Architecture.ARM_64,
       memorySize: 256,
       timeout: Duration.seconds(10),
-      bundling: { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false, externalModules: [] },
+      // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+      bundling: {
+        format: OutputFormat.ESM,
+        target: "node24",
+        minify: false,
+        sourceMap: false,
+        externalModules: [],
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+      },
     };
 
     const apiHandler = new NodejsFunction(this, "ApiHandler", {

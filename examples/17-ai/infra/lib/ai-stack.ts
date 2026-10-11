@@ -68,7 +68,16 @@ export class AiStack extends Stack {
         LOG_LEVEL: "info",
         STAGE: "dev",
       },
-      bundling: { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false },
+      bundling: {
+        format: OutputFormat.ESM,
+        target: "node24",
+        minify: false,
+        sourceMap: false,
+        // Bundle the AWS SDK too, so the function runs the version in pnpm-lock.yaml.
+        externalModules: [],
+        // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+      },
     });
     // #endregion function
 

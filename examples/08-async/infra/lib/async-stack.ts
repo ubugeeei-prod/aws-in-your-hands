@@ -16,7 +16,15 @@ import type { Construct } from "constructs";
 const WORKER_TIMEOUT_SECONDS = 30;
 const SCHEDULE_NAME = "aih-async-housekeeping";
 const source = (file: string): string => fileURLToPath(new URL(`../../src/${file}`, import.meta.url));
-const bundling = { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false, externalModules: [] };
+// The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+const bundling = {
+  format: OutputFormat.ESM,
+  target: "node24",
+  minify: false,
+  sourceMap: false,
+  externalModules: [],
+  banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+};
 
 // Chapter 07's stack, unchanged, with a queue, a dead-letter queue, two
 // functions, and a schedule added. The regions below mark what is new.

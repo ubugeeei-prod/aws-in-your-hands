@@ -196,7 +196,15 @@ export class UploadsStack extends Stack {
         UPLOADS_STORE: "s3",
         UPLOADS_BUCKET: uploads.bucketName,
       },
-      bundling: { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false, externalModules: [] },
+      // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+      bundling: {
+        format: OutputFormat.ESM,
+        target: "node24",
+        minify: false,
+        sourceMap: false,
+        externalModules: [],
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+      },
     });
 
     const issuer = `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`;

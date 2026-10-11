@@ -146,7 +146,15 @@ export class NotesAppStack extends Stack {
         TABLE_NAME: table.tableName,
         USER_POOL_CLIENT_ID: client.userPoolClientId,
       },
-      bundling: { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false, externalModules: [] },
+      // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+      bundling: {
+        format: OutputFormat.ESM,
+        target: "node24",
+        minify: false,
+        sourceMap: false,
+        externalModules: [],
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+      },
     });
 
     // #region authorizer

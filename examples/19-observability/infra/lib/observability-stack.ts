@@ -80,6 +80,8 @@ export class ObservabilityStack extends Stack {
         minify: false,
         sourceMap: false,
         externalModules: [],
+        // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
     // #endregion function
