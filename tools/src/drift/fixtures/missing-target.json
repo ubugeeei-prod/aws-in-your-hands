@@ -1,0 +1,5 @@
+{
+  "exitCode": 1,
+  "stderr": "No state found for stack 'AihBookSite'. Run 'cdkd state list' to see available stacks.\n",
+  "stdout": ""
+}

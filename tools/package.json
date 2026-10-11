@@ -1,0 +1,19 @@
+{
+  "name": "@aih/tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudfront": "3.1149.0",
+    "@aws-sdk/client-s3": "3.1149.0",
+    "@aws-sdk/client-sts": "3.1149.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@go-to-k/cdkd": "0.296.28",
+    "vite-plus": "1.1.0"
+  }
+}

@@ -1,0 +1,80 @@
+// vp run <name>:infra:drift and the drift remediation tasks end up here.
+//   node tools/src/drift/cli.ts check          <appDir> <stack>
+//   node tools/src/drift/cli.ts preview-revert <appDir> <stack>
+//   node tools/src/drift/cli.ts revert         <appDir> <stack>
+//   node tools/src/drift/cli.ts accept         <appDir> <stack>
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { preflight } from "../aws/preflight.ts";
+import { runCdkd } from "../infra/run-cdkd.ts";
+import { buildReport, summarize } from "./report.ts";
+
+const MODES = ["check", "preview-revert", "revert", "accept"] as const;
+type Mode = (typeof MODES)[number];
+
+const [mode, appDirArg, stack] = process.argv.slice(2);
+if (!(MODES as readonly string[]).includes(mode ?? "") || appDirArg === undefined || stack === undefined) {
+  console.error(`usage: cli.ts <${MODES.join("|")}> <appDir> <stack>`);
+  process.exit(64);
+}
+const appDir = resolve(appDirArg);
+
+function cdkdVersion(): string {
+  const manifest = resolve(appDir, "node_modules/@go-to-k/cdkd/package.json");
+  return (JSON.parse(readFileSync(manifest, "utf8")) as { version: string }).version;
+}
+
+async function check(): Promise<number> {
+  const { target, identity } = await preflight({ access: "observe", action: "cdkd drift", stack });
+  const executedAt = new Date();
+  const run = await runCdkd({
+    appDir,
+    args: ["drift", stack as string, "--json"],
+    region: target.region,
+    capture: true,
+  });
+  const report = buildReport({
+    requestedStacks: [stack as string],
+    run,
+    target: { accountId: identity.accountId, region: target.region },
+    executedAt,
+    toolVersion: cdkdVersion(),
+  });
+
+  const path = resolve("reports/drift", `${stack}.json`);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(summarize(report));
+  console.log(`report: ${path}`);
+  return report.gate.exitCode;
+}
+
+async function remediate(kind: Exclude<Mode, "check">): Promise<number> {
+  // --accept rewrites cdkd's state to match AWS. It does not edit the CDK
+  // source, so the next deploy would put the old value back unless the source
+  // is changed as well. --revert writes the recorded values back to AWS.
+  const flags = { "preview-revert": ["--revert", "--dry-run"], revert: ["--revert"], accept: ["--accept"] }[kind];
+  const { target } = await preflight({
+    access: kind === "preview-revert" ? "observe" : "mutate",
+    action: `cdkd drift ${flags.join(" ")}`,
+    stack,
+  });
+  const result = await runCdkd({
+    appDir,
+    args: ["drift", stack as string, ...flags],
+    region: target.region,
+    capture: false,
+  });
+  if (kind !== "preview-revert") {
+    console.error("\nRun the drift check again. This command's exit code does not show that the stack is now in sync.");
+  }
+  return result.exitCode;
+}
+
+try {
+  process.exit(mode === "check" ? await check() : await remediate(mode as Exclude<Mode, "check">));
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  // Same code as a failed detection: nothing was established.
+  process.exit(12);
+}

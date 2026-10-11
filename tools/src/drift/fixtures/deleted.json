@@ -1,0 +1,5 @@
+{
+  "exitCode": 1,
+  "stderr": "",
+  "stdout": "[\n  {\n    \"stack\": \"AihBookSite\",\n    \"region\": \"ap-northeast-1\",\n    \"drifted\": [],\n    \"clean\": [\n      {\n        \"logicalId\": \"ContentBucket\",\n        \"type\": \"AWS::S3::Bucket\",\n        \"referencesUnresolved\": false\n      },\n      {\n        \"logicalId\": \"ContentPolicy\",\n        \"type\": \"AWS::S3::BucketPolicy\",\n        \"referencesUnresolved\": false\n      },\n      {\n        \"logicalId\": \"Distribution\",\n        \"type\": \"AWS::CloudFront::Distribution\",\n        \"referencesUnresolved\": false\n      }\n    ],\n    \"deleted\": [\n      {\n        \"logicalId\": \"UrlRewrite\",\n        \"type\": \"AWS::CloudFront::Function\"\n      }\n    ],\n    \"notSupported\": [],\n    \"skipped\": [],\n    \"notCompared\": []\n  }\n]"
+}

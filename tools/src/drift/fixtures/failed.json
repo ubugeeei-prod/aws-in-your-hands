@@ -1,0 +1,5 @@
+{
+  "exitCode": 1,
+  "stderr": "Error: Could not load credentials from any providers\n",
+  "stdout": ""
+}
