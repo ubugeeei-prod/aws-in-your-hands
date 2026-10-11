@@ -117,7 +117,8 @@
         "cdkd-npm",
         "ox-content-npm",
         "s3-getobject",
-        "cloudfront-functions-restrictions"
+        "cloudfront-functions-restrictions",
+        "vize-npm"
       ]
     },
     {

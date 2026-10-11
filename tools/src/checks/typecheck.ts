@@ -13,8 +13,17 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { repoRoot } from "../data/load.ts";
 
-// The Vue SPA is checked by `vp run typecheck:vue`, which understands .vue files.
-const projects = [".", "book", "book/infra", "tools", "examples/02-toolchain", "examples/04-http-api"];
+// The Vue app in examples/03-spa/src is checked by `vp run typecheck:vue`
+// (Vize), which understands .vue files. Its CDK code is checked here.
+const projects = [
+  ".",
+  "book",
+  "book/infra",
+  "tools",
+  "examples/02-toolchain",
+  "examples/03-spa/infra",
+  "examples/04-http-api",
+];
 
 const tsc = join(repoRoot, "node_modules/.bin/tsc");
 const failed: string[] = [];

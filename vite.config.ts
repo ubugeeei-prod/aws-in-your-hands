@@ -77,11 +77,12 @@ export default defineConfig({
       // tsc for every non-Vue project; see tools/src/checks/typecheck.ts for
       // why this is separate from `vp check`.
       typecheck: fresh("node tools/src/checks/typecheck.ts"),
-      // .vue files need vue-tsc. The path is explicit because vue-tsc 3.3.13
-      // cannot load TypeScript 7: the SPA package pins TypeScript 6 for it,
-      // and a bare `vue-tsc` would resolve to the copy hoisted next to the
-      // workspace root's TypeScript 7.
-      "typecheck:vue": { command: "./node_modules/.bin/vue-tsc --noEmit -p tsconfig.json", cwd: "examples/03-spa" },
+      // .vue files are checked by Vize. It is given only the Vue app (src/):
+      // the CDK code under infra/ imports aws-cdk-lib and goes through the
+      // single-threaded tsc run above.
+      "typecheck:vue": { command: "./node_modules/.bin/vize check", cwd: "examples/03-spa" },
+      // Vize's linter reads the <template> blocks that oxlint does not.
+      "lint:vue": { command: "./node_modules/.bin/vize lint src --preset essential", cwd: "examples/03-spa" },
       "test:unit": { command: "vp test run" },
       "content:check": fresh("node tools/src/checks/content.ts"),
       "links:check": fresh("node tools/src/checks/links.ts book/dist", { dependsOn: ["build:book"] }),

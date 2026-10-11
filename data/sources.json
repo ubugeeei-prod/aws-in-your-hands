@@ -164,6 +164,19 @@
       "note": "Verified by experiment with the binary built by nix/vp.nix on aarch64-darwin."
     },
     {
+      "id": "vize-npm",
+      "url": "https://www.npmjs.com/package/vize/v/0.443.0",
+      "title": "vize and @vizejs/vite-plugin 0.443.0 (npm tarballs and local CLI)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "`@vizejs/vite-plugin` default export is a Vite plugin that compiles Vue single-file components",
+        "`vize check` type-checks .vue and .ts files using the tsconfig include list",
+        "`vize lint` lints Vue templates; `--preset essential` selects the essential rules",
+        "Adding `@vizejs/vite-plugin` to compilerOptions.types lets TypeScript resolve .vue imports without a shim"
+      ],
+      "note": "Verified by building and checking examples/03-spa. When `vize check` was also given the CDK code that imports aws-cdk-lib, it showed the same intermittent mis-resolution as TypeScript 7.0.2 (2 of 4 runs); limited to src/ it passed 8 of 8."
+    },
+    {
       "id": "nixpkgs-pin",
       "url": "https://github.com/NixOS/nixpkgs/tree/8edc0c72e3a38faf5434e40d1f19431125fe4b30",
       "title": "nixpkgs at the revision in flake.lock",

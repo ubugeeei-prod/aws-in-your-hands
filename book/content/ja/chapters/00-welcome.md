@@ -94,7 +94,7 @@ Cloudflare の D1、Workers、Workers AI に慣れている人のための経路
 | インフラの定義 | TypeScript と AWS CDK v2 |
 | インフラの作成と更新 | cdkd |
 | アプリから AWS を呼ぶ | AWS SDK for JavaScript v3 |
-| フロントエンドの例 | Vue と Vite |
+| フロントエンドの例 | Vue と Vite。`.vue` のコンパイル、型検査、lint は Vize |
 | この本のサイト | Ox Content、S3、CloudFront |
 
 リージョンは東京（`ap-northeast-1`）、料金は USD、1 か月は 730 時間として計算します。

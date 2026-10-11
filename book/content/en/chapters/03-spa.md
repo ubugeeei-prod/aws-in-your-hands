@@ -7,7 +7,7 @@ sourceRevision: 1
 
 ## What you will have at the end
 
-- A notes app (a SPA) built with Vue and Vite that you can run and test on your machine
+- A notes app (a SPA) built with Vue, Vite, and Vize that you can run and test on your machine
 - That SPA stored in an S3 bucket that cannot be read directly from the internet, and published over HTTPS through CloudFront
 - Client-side URLs such as `/notes/abc` that work when opened directly, while files that do not exist return 404
 - A way to confirm, by requesting the URLs, that what you published reached readers
@@ -86,12 +86,15 @@ The point to notice is that **the only thing that knows about the path `/notes/a
 
 ```bash
 vp run check
+vp run lint:vue
 vp run typecheck
 vp run typecheck:vue
 vp run test:unit
 ```
 
-`check` formats and lints, and `typecheck` type-checks `.ts` files. `tsc` cannot check the inside of Vue single-file components (`.vue`), so `vue-tsc` is a separate task. `vp run check:all` runs all of them.
+`check` formats and lints, and `typecheck` type-checks `.ts` files. Vue single-file components (`.vue`) are handled by Vize. Vize is a Vue toolchain written in Rust, and it has three jobs in this SPA: the Vite plugin that compiles `.vue` files at build time, a type check that reaches inside `<template>` (`typecheck:vue`), and a linter for `<template>` (`lint:vue`). `vp run check:all` runs all of them.
+
+`lint:vue` reports one warning, about the `:href` on the link to a note: a dynamic URL could hold a value that starts with `javascript:`. Here the value always starts with `/notes/`, so it is left as it is.
 
 The tests pass the clock and the ID generator in from outside, so that the result does not change from run to run. The storage is also a stand-in built on a `Map`. They check the following.
 
@@ -344,7 +347,7 @@ If the book's site used SPA fallback, every broken link would be shown as the to
 
 | Section | Files | Tasks |
 | --- | --- | --- |
-| Run it locally | `examples/03-spa/src/`, `examples/03-spa/index.html`, `examples/03-spa/vite.config.ts` | `dev:spa`, `typecheck:vue`, `test:unit`, `build:spa`, `preview:spa` |
+| Run it locally | `examples/03-spa/src/`, `examples/03-spa/index.html`, `examples/03-spa/vite.config.ts` | `dev:spa`, `lint:vue`, `typecheck:vue`, `test:unit`, `build:spa`, `preview:spa` |
 | Keep the bucket private, Define the distribution | `examples/03-spa/infra/lib/spa-stack.ts`, `examples/03-spa/infra/bin/app.ts`, `examples/03-spa/infra/test/spa-stack.test.ts`, `examples/03-spa/cdk.json` | `spa:infra:synth`, `test:unit` |
 | Return index.html for client-side URLs | `examples/03-spa/infra/functions/spa-fallback.js`, `examples/03-spa/infra/test/spa-fallback.test.ts` | `test:unit` |
 | Deploy | `tools/src/infra/` | `spa:infra:diff`, `spa:infra:deploy`, `spa:infra:drift` |

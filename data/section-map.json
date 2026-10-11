@@ -225,14 +225,18 @@
         "examples/03-spa/vite.config.ts",
         "examples/03-spa/tsconfig.json"
       ],
-      "tasks": ["dev:spa", "check", "typecheck:vue", "test:unit", "build:spa", "preview:spa", "typecheck"],
+      "tasks": ["dev:spa", "check", "typecheck:vue", "test:unit", "build:spa", "preview:spa", "typecheck", "lint:vue"],
       "boundary": "local",
       "criteria": ["type", "test", "local-dx"],
       "verification": "local"
     },
     {
       "id": "03.bucket",
-      "sources": ["examples/03-spa/infra/lib/spa-stack.ts", "examples/03-spa/infra/test/spa-stack.test.ts"],
+      "sources": [
+        "examples/03-spa/infra/lib/spa-stack.ts",
+        "examples/03-spa/infra/test/spa-stack.test.ts",
+        "examples/03-spa/infra/tsconfig.json"
+      ],
       "tasks": ["spa:infra:synth", "test:unit"],
       "boundary": "local",
       "criteria": ["test"],
@@ -252,7 +256,8 @@
         "examples/03-spa/infra/lib/spa-stack.ts",
         "examples/03-spa/infra/bin/app.ts",
         "examples/03-spa/infra/test/spa-stack.test.ts",
-        "examples/03-spa/cdk.json"
+        "examples/03-spa/cdk.json",
+        "examples/03-spa/infra/tsconfig.json"
       ],
       "tasks": ["spa:infra:synth", "test:unit"],
       "boundary": "local",

@@ -27,10 +27,10 @@ generated: true
 | AWS SDK for JavaScript v3 | 3.1149.0 | pnpm | `tools/package.json, pnpm-lock.yaml` |
 | Ox Content (@ox-content/vite-plugin) | 3.2.14 | pnpm | `book/package.json, pnpm-lock.yaml` |
 | Vue | 3.5.43 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
-| vue-tsc | 3.3.13 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
 | Hono | 4.13.13 | pnpm | `examples/04-http-api/package.json, pnpm-lock.yaml` |
 | Zod | 4.6.5 | pnpm | `package.json files, pnpm-lock.yaml` |
 | esbuild | 0.28.2 | pnpm | `package.json, pnpm-lock.yaml` |
+| Vize (vize, @vizejs/vite-plugin) | 0.443.0 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
 
 - 検証済みの OS/CPU: aarch64-darwin (macOS 26, Darwin 25.6.0)
 - Nix 式はあるが未検証の OS/CPU: x86_64-darwin, aarch64-linux, x86_64-linux

@@ -11,10 +11,9 @@
   },
   "devDependencies": {
     "@go-to-k/cdkd": "0.296.28",
-    "@vitejs/plugin-vue": "6.0.10",
-    "typescript": "6.0.3",
+    "@vizejs/vite-plugin": "0.443.0",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
     "vite-plus": "1.1.0",
-    "vue-tsc": "3.3.13"
+    "vize": "0.443.0"
   }
 }

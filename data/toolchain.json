@@ -100,12 +100,6 @@
       "pinnedIn": "examples/03-spa/package.json, pnpm-lock.yaml"
     },
     {
-      "name": "vue-tsc",
-      "version": "3.3.13",
-      "providedBy": "pnpm",
-      "pinnedIn": "examples/03-spa/package.json, pnpm-lock.yaml"
-    },
-    {
       "name": "Hono",
       "version": "4.13.13",
       "providedBy": "pnpm",
@@ -122,6 +116,12 @@
       "version": "0.28.2",
       "providedBy": "pnpm",
       "pinnedIn": "package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "Vize (vize, @vizejs/vite-plugin)",
+      "version": "0.443.0",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/03-spa/package.json, pnpm-lock.yaml"
     }
   ]
 }

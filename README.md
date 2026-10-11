@@ -44,7 +44,8 @@ Everything runs as `vp run <task>` from the repository root. All tasks are defin
 | --- | --- | --- |
 | 全ローカル検査 / all local checks | `check:all` | 触らない / none |
 | format・lint / format, lint | `check` | none |
-| 型検査 / type checks | `typecheck`, `typecheck:vue` | none |
+| 型検査 / type checks | `typecheck`, `typecheck:vue` (Vize) | none |
+| Vue の lint / Vue lint | `lint:vue` (Vize) | none |
 | テスト / tests | `test:unit` | none |
 | 日英・コード参照・source map の整合 / locale, snippet, and source-map consistency | `content:check`, `book:generate:check`, `links:check` | none |
 | 本 / book | `dev:book`, `build:book`, `preview:book`, `book:generate` | none |

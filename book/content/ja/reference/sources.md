@@ -182,6 +182,19 @@ generated: true
   - With TypeScript 7.0.2, `vp check`'s type check and plain `tsc` intermittently mis-resolved aws-cdk-lib subpath imports on unchanged sources (observed here: 2 of 5 runs); `tsc --singleThreaded` did not (36 of 36 project checks passed)
 - 注記: Verified by experiment with the binary built by nix/vp.nix on aarch64-darwin.
 
+### vize and @vizejs/vite-plugin 0.443.0 (npm tarballs and local CLI)
+
+- ID: `vize-npm`
+- URL: <https://www.npmjs.com/package/vize/v/0.443.0>
+- 確認日: 2026-10-11
+- 参照する章: 03
+- この出典が支える主張:
+  - `@vizejs/vite-plugin` default export is a Vite plugin that compiles Vue single-file components
+  - `vize check` type-checks .vue and .ts files using the tsconfig include list
+  - `vize lint` lints Vue templates; `--preset essential` selects the essential rules
+  - Adding `@vizejs/vite-plugin` to compilerOptions.types lets TypeScript resolve .vue imports without a shim
+- 注記: Verified by building and checking examples/03-spa. When `vize check` was also given the CDK code that imports aws-cdk-lib, it showed the same intermittent mis-resolution as TypeScript 7.0.2 (2 of 4 runs); limited to src/ it passed 8 of 8.
+
 ### nixpkgs at the revision in flake.lock
 
 - ID: `nixpkgs-pin`

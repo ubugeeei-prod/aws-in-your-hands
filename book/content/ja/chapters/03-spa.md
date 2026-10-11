@@ -7,7 +7,7 @@ revision: 1
 
 ## この章の成果
 
-- Vue と Vite で作ったノートアプリ（SPA）を、手元で動かし、テストできる
+- Vue、Vite、Vize で作ったノートアプリ（SPA）を、手元で動かし、テストできる
 - その SPA を、インターネットから直接は読めない S3 bucket に置き、CloudFront 経由で HTTPS で公開できる
 - `/notes/abc` のような client 側の URL を直接開いても動く。一方で、存在しないファイルは 404 になる
 - 公開した内容が実際に読者へ届いたことを、URL を叩いて確かめられる
@@ -86,12 +86,15 @@ router は 30 行ほどの関数です。URL の path を 3 つの画面のど�
 
 ```bash
 vp run check
+vp run lint:vue
 vp run typecheck
 vp run typecheck:vue
 vp run test:unit
 ```
 
-`check` は format と lint、`typecheck` は `.ts` ファイルの型検査です。Vue の単一ファイルコンポーネント（`.vue`）の中は `tsc` では検査できないので、`vue-tsc` を別のタスクにしています。`vp run check:all` はこれらをすべて実行します。
+`check` は format と lint、`typecheck` は `.ts` ファイルの型検査です。Vue の単一ファイルコンポーネント（`.vue`）は、Vize が受け持ちます。Vize は Rust で書かれた Vue の toolchain で、この SPA では 3 つの役割を担います。ビルド時に `.vue` をコンパイルする Vite plugin、`<template>` の中まで見る型検査（`typecheck:vue`）、`<template>` の lint（`lint:vue`）です。`vp run check:all` はこれらをすべて実行します。
+
+`lint:vue` は、ノートへのリンクの `:href` について警告を 1 件出します。動的な URL は `javascript:` で始まる値が入り得る、という指摘です。ここでは値が必ず `/notes/` で始まるので、そのままにしています。
 
 テストは、時刻と ID の生成を外から渡して、結果が実行のたびに変わらないようにしています。storage も `Map` で作った代用品です。確かめているのは次のことです。
 
@@ -344,7 +347,7 @@ distribution の削除には時間がかかります。削除の前に、すべ�
 
 | 節 | 対応するファイル | タスク |
 | --- | --- | --- |
-| 手元で動かす | `examples/03-spa/src/`、`examples/03-spa/index.html`、`examples/03-spa/vite.config.ts` | `dev:spa`、`typecheck:vue`、`test:unit`、`build:spa`、`preview:spa` |
+| 手元で動かす | `examples/03-spa/src/`、`examples/03-spa/index.html`、`examples/03-spa/vite.config.ts` | `dev:spa`、`lint:vue`、`typecheck:vue`、`test:unit`、`build:spa`、`preview:spa` |
 | bucket を非公開にする、distribution を定義する | `examples/03-spa/infra/lib/spa-stack.ts`、`examples/03-spa/infra/bin/app.ts`、`examples/03-spa/infra/test/spa-stack.test.ts`、`examples/03-spa/cdk.json` | `spa:infra:synth`、`test:unit` |
 | client 側の URL に index.html を返す | `examples/03-spa/infra/functions/spa-fallback.js`、`examples/03-spa/infra/test/spa-fallback.test.ts` | `test:unit` |
 | デプロイする | `tools/src/infra/` | `spa:infra:diff`、`spa:infra:deploy`、`spa:infra:drift` |

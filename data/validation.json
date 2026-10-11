@@ -112,8 +112,8 @@
       "status": "passed",
       "ranAt": "2026-10-11",
       "note": {
-        "ja": "ビルド出力は 152 KB",
-        "en": "Build output is 152 KB"
+        "ja": "Vize の Vite plugin でビルド。出力は 152 KB。vize check は 8 回とも成功し、わざと入れた型エラーを検出した",
+        "en": "Built with the Vize Vite plugin; output is 152 KB. vize check passed 8 of 8 runs and caught a deliberately introduced type error"
       }
     },
     {

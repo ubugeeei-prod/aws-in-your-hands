@@ -94,7 +94,7 @@ Passing locally is not evidence that something works in AWS. IAM permissions, CD
 | Defining infrastructure | TypeScript and AWS CDK v2 |
 | Creating and updating infrastructure | cdkd |
 | Calling AWS from the app | AWS SDK for JavaScript v3 |
-| Frontend examples | Vue and Vite |
+| Frontend examples | Vue and Vite, with Vize compiling, type-checking, and linting `.vue` files |
 | This book's site | Ox Content, S3, CloudFront |
 
 Calculations use the Tokyo Region (`ap-northeast-1`), prices in USD, and a month of 730 hours.
