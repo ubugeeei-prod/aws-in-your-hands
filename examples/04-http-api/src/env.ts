@@ -6,7 +6,8 @@ import { z } from "zod";
 // start-up, so that a missing or misspelled setting fails the first
 // invocation with a clear message instead of misbehaving on some later one.
 const envSchema = z.object({
-  ALLOWED_ORIGIN: z.url(),
+  // `z.url()` alone accepts "localhost:5173" (a URL whose scheme is "localhost").
+  ALLOWED_ORIGIN: z.url({ protocol: /^https?$/ }),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   STAGE: z.string().min(1).default("local"),
 });

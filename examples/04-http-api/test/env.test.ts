@@ -17,4 +17,8 @@ describe("environment", () => {
   it("rejects a log level that the logger does not know", () => {
     expect(() => parseEnv({ ALLOWED_ORIGIN: "https://a.example", LOG_LEVEL: "verbose" })).toThrow(/LOG_LEVEL/);
   });
+
+  it("rejects an origin without an http or https scheme", () => {
+    expect(() => parseEnv({ ALLOWED_ORIGIN: "localhost:5173" })).toThrow(/ALLOWED_ORIGIN/);
+  });
 });
