@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// The JSON that `cdkd drift --json` writes to stdout, following
 // StackDriftJson in src/cli/commands/drift.ts of @go-to-k/cdkd 0.296.28.
 // The published docs omit `skipped`; the source always emits it.
 

@@ -1,13 +1,7 @@
 // vp run db:local:start | db:migrate:local | db:seed:local | db:reset:local | db:local:stop
 //   node scripts/local-db.ts <start|migrate|seed|reset|stop>
-//
-// DynamoDB Local is AWS's emulator, run here as a container. `start` and
-// `stop` need a running Docker daemon, which the Nix shell does not provide:
-// it supplies neither Docker nor a VM for it. The other commands talk to
-// whatever answers at DYNAMODB_ENDPOINT.
-//
-// Nothing here can reach a real AWS table: every command refuses to run unless
-// the endpoint is a localhost URL.
+// `start` and `stop` need a Docker daemon, which the Nix shell does not provide.
+// Every command refuses to run unless the endpoint is a localhost URL.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import {
@@ -55,8 +49,7 @@ function docker(...args: string[]): number {
   return result.status ?? 1;
 }
 
-// The local counterpart of the table in infra/lib/notes-stack.ts. The two
-// definitions are kept in step by hand; the contract tests run against this one.
+// Kept in step by hand with the table in infra/lib/notes-stack.ts.
 async function migrate(): Promise<void> {
   try {
     await client.send(

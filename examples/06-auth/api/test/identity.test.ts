@@ -5,27 +5,26 @@ const event = (claims: unknown) => ({ requestContext: { authorizer: { jwt: { cla
 const accessClaims = { sub: "user-1", token_use: "access", client_id: "client-a", scope: "openid", username: "alice" };
 
 describe("identity from API Gateway", () => {
-  it("takes the subject from an access token issued to this app's client", () => {
+  it("accepts this client's access token", () => {
     expect(identityFromApiGateway(event(accessClaims), "client-a")).toEqual({ sub: "user-1" });
   });
 
-  it("refuses an ID token even though API Gateway found its signature valid", () => {
-    // An ID token is proof of sign-in meant for the app's own screen. It is
-    // signed by the same user pool, so signature and issuer checks pass.
+  it("refuses an ID token", () => {
+    // Signed by the same user pool, so signature and issuer checks pass.
     const idClaims = { sub: "user-1", token_use: "id", aud: "client-a", email: "alice@example.com" };
     expect(identityFromApiGateway(event(idClaims), "client-a")).toBeUndefined();
   });
 
-  it("refuses a token issued to a different app client of the same user pool", () => {
+  it("refuses another client's token", () => {
     expect(identityFromApiGateway(event({ ...accessClaims, client_id: "client-b" }), "client-a")).toBeUndefined();
   });
 
-  it("treats an event without authorizer context as nobody, not as anybody", () => {
+  it("treats a missing authorizer context as nobody", () => {
     expect(identityFromApiGateway({ requestContext: {} }, "client-a")).toBeUndefined();
     expect(identityFromApiGateway(undefined, "client-a")).toBeUndefined();
   });
 
-  it("refuses claims without a subject", () => {
+  it("refuses an empty sub", () => {
     expect(identityFromApiGateway(event({ ...accessClaims, sub: "" }), "client-a")).toBeUndefined();
   });
 });

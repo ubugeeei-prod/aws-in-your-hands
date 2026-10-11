@@ -6,9 +6,8 @@ import { composeApp } from "./compose.ts";
 import { createLocalAuthenticator, signLocalToken } from "./local-auth.ts";
 
 // #region dev
-// The local entry point. It differs from lambda.ts in exactly one way: who
-// vouches for the caller. Here it is a development token signed with
-// LOCAL_AUTH_SECRET; in AWS it is API Gateway.
+// Same app as lambda.ts. Only who vouches for the caller differs: here, a
+// token signed with LOCAL_AUTH_SECRET.
 const secret = z
   .string()
   .min(32, "LOCAL_AUTH_SECRET must be set (see .env.example)")
@@ -18,9 +17,8 @@ const port = Number(process.env["PORT"] ?? 8787);
 
 const api = composeApp(process.env, createLocalAuthenticator(secret));
 
-// Stands in for the sign-in page: POST /local/token {"user":"alice"} returns a
-// token for that user, no questions asked. It lives in this file only, so it
-// cannot be reached in a deployment.
+// Stands in for the sign-in page: any user name gets a token, no password.
+// It lives in this file only, so a deployment cannot reach it.
 const server = new Hono();
 server.use("/local/*", cors({ origin, allowMethods: ["POST"], allowHeaders: ["content-type"] }));
 server.post("/local/token", async (c) => {

@@ -5,10 +5,8 @@ import type { Note } from "../src/contract.ts";
 import { DynamoDbNoteRepository } from "../src/dynamodb-repository.ts";
 import { encodeCursor } from "../src/repository.ts";
 
-// These tests look at the requests the repository sends, with a stand-in for
-// the SDK client. They pin down the parts that carry the guarantees (the
-// conditions, the key shape, the consistency choice). Whether DynamoDB then
-// honours those requests is what the DynamoDB Local and AWS runs are for.
+// Pins the requests that carry the guarantees. Whether DynamoDB honours them
+// is what the DynamoDB Local and AWS runs are for.
 type Command = PutCommand | GetCommand | QueryCommand | UpdateCommand | DeleteCommand;
 
 function setup(respond: (command: Command) => unknown = () => ({})) {
@@ -19,7 +17,7 @@ function setup(respond: (command: Command) => unknown = () => ({})) {
       return respond(command);
     },
   };
-  // The stand-in implements only `send`, which is all the repository uses.
+  // Only `send` is implemented, which is all the repository uses.
   const repository = new DynamoDbNoteRepository(client as never, "notes-table");
   return { repository, sent };
 }
@@ -55,13 +53,13 @@ describe("DynamoDbNoteRepository requests", () => {
     expect(await repository.create("u1", stored)).toBe("already_exists");
   });
 
-  it("reads one note with a strongly consistent GetItem on the full key", async () => {
+  it("reads one note with a strongly consistent GetItem", async () => {
     const { repository, sent } = setup(() => ({ Item: item }));
     expect(await repository.get("u1", "abc")).toEqual(stored);
     expect(sent[0]?.input).toMatchObject({ Key: { pk: "OWNER#u1", sk: "NOTE#abc" }, ConsistentRead: true });
   });
 
-  it("updates only if the stored version is the expected one, and writes the next version", async () => {
+  it("updates only at the expected version", async () => {
     const { repository, sent } = setup(() => ({ Attributes: { ...item, version: 4, title: "new" } }));
     const result = await repository.update("u1", "abc", {
       title: "new",
@@ -76,7 +74,7 @@ describe("DynamoDbNoteRepository requests", () => {
     });
   });
 
-  it("turns a failed condition into a conflict that carries the stored note", async () => {
+  it("turns a failed condition into a conflict with the stored note", async () => {
     const { repository } = setup((command) => {
       if (command instanceof UpdateCommand) {
         throw conditionFailed();
@@ -131,7 +129,7 @@ describe("DynamoDbNoteRepository requests", () => {
     expect((await repository.list("u1", { limit: 10 })).nextCursor).toBeNull();
   });
 
-  it("refuses a stored item that is not a note instead of returning it as one", async () => {
+  it("refuses a stored item that is not a note", async () => {
     const { repository } = setup(() => ({ Item: { ...item, version: "three" } }));
     await expect(repository.get("u1", "abc")).rejects.toThrow();
   });

@@ -1,12 +1,9 @@
 import { execFileSync } from "node:child_process";
 
-/** The object that records which source revision the bucket currently serves. */
+/** Records which source revision the bucket serves. */
 export const REVISION_KEY = "aih-revision.json";
 
-/**
- * The commit a build came from. A build of uncommitted changes is marked as
- * such, so that a smoke test never mistakes it for the commit it sits on.
- */
+/** Uncommitted changes are marked dirty, so a smoke test never mistakes them for the commit. */
 export function sourceRevision(cwd: string): string {
   const git = (...args: string[]): string => execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
   try {

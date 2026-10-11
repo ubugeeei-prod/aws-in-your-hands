@@ -38,8 +38,8 @@ const rejection = async (promise: Promise<unknown>) => {
   return error;
 };
 
-describe("authentication: the API must know who is asking", () => {
-  it("answers 401 to every notes route without a token", async () => {
+describe("authentication", () => {
+  it("answers 401 without a token, on every route", async () => {
     const { app } = await setup();
     for (const [method, path] of [
       ["GET", "/notes"],
@@ -66,31 +66,30 @@ describe("authentication: the API must know who is asking", () => {
     expect(await anonymous.health()).toEqual({ status: "ok", stage: "test" });
   });
 
-  it("tells a signed-in caller who it is", async () => {
+  it("returns the caller's sub from /me", async () => {
     const { alice } = await setup();
     expect(await alice.me()).toEqual({ sub: "alice" });
   });
 });
 
-describe("authorization: a signed-in user reaches only their own notes", () => {
-  it("does not show one user's notes in another user's list", async () => {
+describe("authorization: own notes only", () => {
+  it("lists only the caller's notes", async () => {
     const { alice, bob } = await setup();
     await alice.create({ title: "alice's", body: "" });
     expect((await bob.list()).notes).toEqual([]);
     expect((await alice.list()).notes).toHaveLength(1);
   });
 
-  it("answers 404, not 403, when one user asks for another user's note", async () => {
+  it("answers 404, not 403, for another user's note", async () => {
     const { alice, bob } = await setup();
     const note = await alice.create({ title: "private", body: "secret" });
     const error = await rejection(bob.get(note.id));
-    // The same answer as for an ID that does not exist: Bob learns nothing
-    // about whether the note is there.
+    // Same answer as a missing ID, so Bob learns nothing.
     expect(error).toMatchObject({ status: 404, code: "not_found" });
     expect(await rejection(bob.get("no-such-note"))).toMatchObject({ status: 404, code: "not_found" });
   });
 
-  it("does not let one user change or delete another user's note, even with its ID and version", async () => {
+  it("cannot update or delete another user's note", async () => {
     const { alice, bob } = await setup();
     const note = await alice.create({ title: "private", body: "original" });
 
@@ -101,9 +100,9 @@ describe("authorization: a signed-in user reaches only their own notes", () => {
     expect(await alice.get(note.id)).toMatchObject({ title: "private", body: "original", version: 1 });
   });
 
-  it("takes the owner from the token and ignores any owner named in the request", async () => {
+  it("takes the owner from the token only", async () => {
     const { app, tokens, alice, bob } = await setup();
-    // Bob tries to plant a note in Alice's space by naming her in every place a request can.
+    // Bob names Alice everywhere a request can.
     const response = await app.request("/notes?owner=alice&sub=alice", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${tokens.bob}`, "x-owner": "alice" },
@@ -114,7 +113,7 @@ describe("authorization: a signed-in user reaches only their own notes", () => {
     expect((await bob.list()).notes.map((note) => note.title)).toEqual(["planted"]);
   });
 
-  it("keeps optimistic locking per user: two tabs of the same user still conflict", async () => {
+  it("still conflicts between two tabs of one user", async () => {
     const { alice } = await setup();
     const note = await alice.create({ title: "draft", body: "" });
     await alice.update(note.id, { title: "tab A", body: "", expectedVersion: 1 });
@@ -125,14 +124,14 @@ describe("authorization: a signed-in user reaches only their own notes", () => {
 });
 
 describe("audit trail", () => {
-  it("logs who made a request, and never the token", async () => {
+  it("logs the sub, never the token", async () => {
     const { logs, tokens, alice } = await setup();
     await alice.list();
     expect(logs).toContainEqual(expect.objectContaining({ path: "/notes", status: 200, sub: "alice" }));
     expect(JSON.stringify(logs)).not.toContain(tokens.alice);
   });
 
-  it("logs a rejected request without a subject", async () => {
+  it("logs no sub for a rejected request", async () => {
     const { logs, anonymous } = await setup();
     await rejection(anonymous.list());
     expect(logs).toContainEqual(expect.objectContaining({ path: "/notes", status: 401 }));

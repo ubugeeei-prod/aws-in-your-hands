@@ -144,8 +144,7 @@ export function createApp(deps: AppDeps) {
             case "not_found":
               return c.json(failure("not_found", "No such note.", c.get("requestId")), 404);
             case "conflict":
-              // 409: the request was understood and is well-formed, but it was
-              // based on a version of the note that is no longer the stored one.
+              // 409: well-formed, but based on a version that is no longer stored.
               return c.json(
                 failure("conflict", "The note was changed since you loaded it.", c.get("requestId"), {
                   current: result.current,

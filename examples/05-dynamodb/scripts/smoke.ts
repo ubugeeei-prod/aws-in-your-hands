@@ -1,9 +1,6 @@
 // vp run notes:smoke
 //   node scripts/smoke.ts [--url https://xxxx.execute-api.ap-northeast-1.amazonaws.com]
-//
-// Exercises the deployed API and table through the typed client: create,
-// update, a deliberately stale update that must be refused, read back, delete.
-// It writes one note and removes it again.
+// Writes one real note through the deployed API, then removes it.
 import { parseArgs } from "node:util";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";

@@ -1,10 +1,7 @@
 // vp run app:user:create <email>   |   vp run app:user:delete <email>
 //   node scripts/user.ts <create|delete> <email>
 //
-// The user pool does not allow self-registration, so users are added here.
-// `create` makes Cognito email a temporary password to the address; the user
-// chooses their own password at first sign-in. This script never sees or
-// prints a password.
+// Cognito emails the temporary password. This script never sees or prints one.
 import { spawnSync } from "node:child_process";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";

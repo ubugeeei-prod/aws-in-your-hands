@@ -2,19 +2,19 @@ import { describe, expect, it } from "vite-plus/test";
 import { parseHelloConfig } from "../lib/config.ts";
 
 describe("hello config", () => {
-  it("fills defaults when no context is given", () => {
+  it("fills defaults", () => {
     expect(parseHelloConfig({})).toEqual({ stage: "dev", noncurrentVersionDays: 7 });
   });
 
-  it("accepts the string that `-c noncurrentVersionDays=30` produces", () => {
+  it("accepts the string from `-c noncurrentVersionDays=30`", () => {
     expect(parseHelloConfig({ noncurrentVersionDays: "30" }).noncurrentVersionDays).toBe(30);
   });
 
-  it("rejects a stage the stack does not know, naming the field", () => {
+  it("rejects an unknown stage, naming the field", () => {
     expect(() => parseHelloConfig({ stage: "production" })).toThrow(/stage/);
   });
 
-  it("rejects a retention that S3 lifecycle rules cannot express", () => {
+  it("rejects a retention of 0 days", () => {
     expect(() => parseHelloConfig({ noncurrentVersionDays: 0 })).toThrow(/noncurrentVersionDays/);
   });
 });

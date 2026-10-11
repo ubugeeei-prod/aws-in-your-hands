@@ -1,9 +1,4 @@
-// vp run book:publish / spa:publish
-//   node tools/src/site/publish.ts <appDir> <stack> <buildDir> [--dry-run] [--force] [--asset-retention-days N]
-//
-// Copies an already built site into the bucket that cdkd created. It never
-// creates or reconfigures the bucket or the distribution: that is the infra
-// task's job, and keeping the two apart keeps cdkd the only resource manager.
+// Only copies files. The bucket and the distribution stay cdkd's to manage.
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -56,10 +51,7 @@ try {
     process.exit(0);
   }
 
-  // The order is what keeps a half-finished publish harmless. If this process
-  // dies after phase 1, the bucket holds extra files that nothing links to.
-  // If it dies during phase 2, every page that was already replaced finds its
-  // assets, and the pages not yet replaced still find the old ones.
+  // Assets go first, so a publish that stops halfway never leaves a page pointing at a missing file.
   await upload(s3, bucket, directory, plan.uploadAssets);
   await upload(s3, bucket, directory, plan.uploadPages);
   await remove(s3, bucket, plan.deletePages);

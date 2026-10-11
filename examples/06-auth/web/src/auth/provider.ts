@@ -1,5 +1,5 @@
 // #region provider
-/** What the SPA holds after sign-in. Kept in memory only; a reload signs the user in again. */
+/** Kept in memory only. After a reload, the user signs in again. */
 export type Session = { accessToken: string; expiresAt: number };
 
 export interface AuthProvider {

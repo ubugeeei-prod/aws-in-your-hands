@@ -17,17 +17,12 @@ export class NotesStack extends Stack {
 
     // #region table
     const table = new Table(this, "Notes", {
-      // Generic key names: what goes into them is decided by the access
-      // patterns in src/dynamodb-repository.ts, and can grow without
-      // recreating the table.
+      // Generic names: what goes into them is decided in src/dynamodb-repository.ts.
       partitionKey: { name: "pk", type: AttributeType.STRING },
       sortKey: { name: "sk", type: AttributeType.STRING },
-      // On-demand: billed per request, nothing to size in advance, and no
-      // charge for throughput while nobody uses the table.
+      // On-demand: billed per request, nothing to size in advance.
       billingMode: BillingMode.PAY_PER_REQUEST,
-      // Exercise data. The table and every note in it are deleted with the
-      // stack. Real data wants RETAIN, deletion protection, and point-in-time
-      // recovery, which chapter 22 covers.
+      // Exercise data: every note is deleted with the stack. Real data wants RETAIN.
       removalPolicy: RemovalPolicy.DESTROY,
     });
     // #endregion table
@@ -40,9 +35,8 @@ export class NotesStack extends Stack {
     // #region role
     const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
     logGroup.grantWrite(role);
-    // The five operations the repository performs, on this one table.
-    // `table.grantReadWriteData(role)` would be shorter, and would also allow
-    // Scan and the batch operations, which no code path here uses.
+    // Only what the repository calls. `table.grantReadWriteData(role)` would
+    // also allow Scan and the batch operations.
     role.addToPolicy(
       new PolicyStatement({
         actions: [
@@ -72,8 +66,7 @@ export class NotesStack extends Stack {
         LOG_LEVEL: "info",
         STAGE: "dev",
         NOTES_STORE: "dynamodb",
-        // The table's name is generated at deploy time. The function learns it
-        // here; nothing in the code hard-codes it.
+        // Generated at deploy time, so nothing in the code hard-codes it.
         TABLE_NAME: table.tableName,
       },
       bundling: {
@@ -81,9 +74,8 @@ export class NotesStack extends Stack {
         target: "node24",
         minify: false,
         sourceMap: false,
-        // By default the AWS SDK is left out of the bundle and the copy that
-        // ships with the Lambda runtime is used, whatever version that is.
-        // Bundling it means the function runs the SDK version in pnpm-lock.yaml.
+        // Bundle the AWS SDK too, so the function runs the version in
+        // pnpm-lock.yaml and not whatever ships with the Lambda runtime.
         externalModules: [],
       },
     });

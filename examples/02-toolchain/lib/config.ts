@@ -1,12 +1,10 @@
 import { z } from "zod";
 
 // #region schema
-// CDK context arrives as untyped JSON from cdk.json or `-c key=value`. This
-// schema is the one place where it becomes a typed value; nothing downstream
-// reads raw context.
+// Context arrives untyped, from cdk.json or `-c key=value`. Nothing downstream reads it raw.
 export const helloConfigSchema = z.object({
   stage: z.enum(["dev", "prod"]).default("dev"),
-  // How long S3 keeps a replaced or deleted object version before removing it.
+  // Days S3 keeps a replaced or deleted object version.
   noncurrentVersionDays: z.coerce.number().int().min(1).max(365).default(7),
 });
 

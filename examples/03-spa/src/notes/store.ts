@@ -10,7 +10,7 @@ export interface NoteStore {
 }
 // #endregion interface
 
-/** The part of the Web Storage API this store uses; a Map-backed fake satisfies it in tests. */
+/** Narrow enough that a Map-backed fake satisfies it in tests. */
 export type KeyValueStorage = Pick<Storage, "getItem" | "setItem">;
 
 export type StoreDeps = {
@@ -22,9 +22,7 @@ export type StoreDeps = {
 const STORAGE_KEY = "aih.notes.v1";
 
 // #region read
-// localStorage is outside the type system: another tab, an older version of
-// this app, or the user's dev tools may have written anything there. Notes
-// that do not match the schema are dropped instead of being trusted.
+// localStorage is outside the type system. Whatever does not match the schema is dropped.
 function read(storage: KeyValueStorage): Note[] {
   const raw = storage.getItem(STORAGE_KEY);
   if (raw === null) {

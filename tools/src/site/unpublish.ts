@@ -1,9 +1,4 @@
-// vp run book:unpublish / spa:unpublish
-//   node tools/src/site/unpublish.ts <appDir> <stack> --yes
-//
-// Deletes every object in the content bucket so that the stack can be
-// destroyed. cdkd 0.296.28 refuses to delete a non-empty bucket unless the
-// bucket carries the CDK auto-delete tag, which these stacks do not use.
+// cdkd 0.296.28 will not delete a non-empty bucket, so this empties it first.
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { S3Client } from "@aws-sdk/client-s3";

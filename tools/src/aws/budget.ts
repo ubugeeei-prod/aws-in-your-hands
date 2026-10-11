@@ -1,5 +1,4 @@
 // vp run account:budget:create / account:budget:delete
-//   node tools/src/aws/budget.ts <create|delete> <directory with budget.json and notifications.json>
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -22,7 +21,7 @@ try {
   const budget = budgetSchema.parse(JSON.parse(readFileSync(budgetPath, "utf8")));
   const { identity } = await preflight({ access: "mutate", action: `${action} budget ${budget.BudgetName}` });
 
-  // The Budgets API is global and is served from us-east-1.
+  // Budgets is account-wide; its API endpoint is in us-east-1.
   const base = ["budgets", `${action}-budget`, "--region", "us-east-1", "--account-id", identity.accountId];
   let args: string[];
   if (action === "create") {

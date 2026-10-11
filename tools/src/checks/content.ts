@@ -1,7 +1,7 @@
 // vp run content:check
 //
-// Checks that the two languages, the manifest, the section-to-source map, and
-// the example code still describe the same book. It reads only this checkout.
+// Do both languages, the manifest, the section map, and the examples still
+// describe the same book? Reads only this checkout.
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";

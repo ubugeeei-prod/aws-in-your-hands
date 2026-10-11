@@ -1,8 +1,7 @@
 // vp run sources:pack
 //
-// Writes artifacts/aws-in-your-hands-<revision>.tar.gz from the committed
-// tree, with a SHA-256 next to it. It packs HEAD, not the working directory,
-// so the archive is exactly what the revision name says it is.
+// Packs HEAD, not the working directory, so the archive in artifacts/ is
+// exactly what its revision name says.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";

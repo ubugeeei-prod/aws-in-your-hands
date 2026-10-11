@@ -11,7 +11,7 @@ describe("routes", () => {
     expect(parseRoute(path)).toEqual(route);
   });
 
-  it("reports an unknown path instead of showing the list", () => {
+  it("reports an unknown path as not-found", () => {
     expect(parseRoute("/settings")).toEqual({ name: "not-found", path: "/settings" });
     expect(parseRoute("/notes/a/b")).toEqual({ name: "not-found", path: "/notes/a/b" });
   });

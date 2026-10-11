@@ -13,18 +13,18 @@ describe("cdkd invocation", () => {
     });
   });
 
-  it("deploy waits until CloudFront has finished propagating", () => {
+  it("deploy waits for CloudFront to propagate", () => {
     const invocation = buildInvocation("deploy", "AihBookSite", "ap-northeast-1", []);
     expect(invocation.access).toBe("mutate");
     expect(invocation.args).toEqual(["deploy", "AihBookSite", "--full-wait"]);
   });
 
-  it("does not add a force flag to destroy on its own", () => {
+  it("destroy gets no force flag", () => {
     const { args } = buildInvocation("destroy", "AihBookSite", "ap-northeast-1", []);
     expect(args).toEqual(["destroy", "AihBookSite"]);
   });
 
-  it("passes the region to bootstrap explicitly", () => {
+  it("bootstrap gets the region", () => {
     expect(buildInvocation("bootstrap", "", "ap-northeast-1", []).args).toEqual([
       "bootstrap",
       "--region",

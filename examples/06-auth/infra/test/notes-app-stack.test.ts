@@ -10,19 +10,19 @@ const routes = Object.values(template.findResources("AWS::ApiGatewayV2::Route"))
 );
 
 describe("NotesAppStack: who can call the API", () => {
-  it("puts the JWT authorizer in front of every route except the health check", () => {
+  it("protects every route except /health", () => {
     const open = routes.filter((route) => route.AuthorizationType !== "JWT").map((route) => route.RouteKey);
     expect(open).toEqual(["GET /health"]);
     expect(routes).toHaveLength(7);
   });
 
-  it("requires a scope on every protected route, which an ID token does not carry", () => {
+  it("requires a scope on every protected route", () => {
     for (const route of routes.filter((candidate) => candidate.AuthorizationType === "JWT")) {
       expect(route.AuthorizationScopes, route.RouteKey).toEqual(["openid"]);
     }
   });
 
-  it("accepts tokens from this user pool, issued to this app client, and from nowhere else", () => {
+  it("accepts only this user pool and this client", () => {
     template.hasResourceProperties("AWS::ApiGatewayV2::Authorizer", {
       AuthorizerType: "JWT",
       IdentitySource: ["$request.header.Authorization"],
@@ -38,7 +38,7 @@ describe("NotesAppStack: who can call the API", () => {
     });
   });
 
-  it("allows browser calls from the deployed SPA and the local dev server only", () => {
+  it("allows two CORS origins, never *", () => {
     const api = Object.values(template.findResources("AWS::ApiGatewayV2::Api"))[0]?.["Properties"] as {
       CorsConfiguration: { AllowOrigins: unknown[]; AllowHeaders: string[] };
     };
@@ -50,13 +50,13 @@ describe("NotesAppStack: who can call the API", () => {
 });
 
 describe("NotesAppStack: how users sign in", () => {
-  it("does not let strangers register", () => {
+  it("has no self sign-up", () => {
     template.hasResourceProperties("AWS::Cognito::UserPool", {
       AdminCreateUserConfig: { AllowAdminCreateUserOnly: true },
     });
   });
 
-  it("registers the SPA as a public client: no secret, authorization code only, no implicit grant", () => {
+  it("is a public client: no secret, authorization code only", () => {
     template.hasResourceProperties("AWS::Cognito::UserPoolClient", {
       GenerateSecret: false,
       AllowedOAuthFlows: ["code"],
@@ -65,14 +65,14 @@ describe("NotesAppStack: how users sign in", () => {
     });
   });
 
-  it("offers no direct password API, so the only way in is the redirect to managed login", () => {
+  it("offers no direct password flow", () => {
     const client = Object.values(template.findResources("AWS::Cognito::UserPoolClient"))[0]?.["Properties"] as {
       ExplicitAuthFlows?: string[];
     };
     expect((client.ExplicitAuthFlows ?? []).filter((flow) => flow !== "ALLOW_REFRESH_TOKEN_AUTH")).toEqual([]);
   });
 
-  it("redirects back only to the SPA's own callback paths", () => {
+  it("has exactly two callback URLs", () => {
     const client = Object.values(template.findResources("AWS::Cognito::UserPoolClient"))[0]?.["Properties"] as {
       CallbackURLs: unknown[];
     };
@@ -81,7 +81,7 @@ describe("NotesAppStack: how users sign in", () => {
     expect(JSON.stringify(client.CallbackURLs)).toContain("/callback");
   });
 
-  it("keeps access tokens short-lived", () => {
+  it("limits access tokens to one hour", () => {
     template.hasResourceProperties("AWS::Cognito::UserPoolClient", {
       AccessTokenValidity: 60,
       TokenValidityUnits: Match.objectLike({ AccessToken: "minutes" }),
@@ -91,7 +91,7 @@ describe("NotesAppStack: how users sign in", () => {
 });
 
 describe("NotesAppStack: resources", () => {
-  it("tells the function which app client its callers must have used", () => {
+  it("passes the client ID to the function", () => {
     template.hasResourceProperties("AWS::Lambda::Function", {
       Environment: {
         Variables: Match.objectLike({ USER_POOL_CLIENT_ID: { Ref: Match.stringLikeRegexp("^UsersSpa") } }),
@@ -99,7 +99,7 @@ describe("NotesAppStack: resources", () => {
     });
   });
 
-  it("uses only resource types that were looked up in the pinned cdkd", () => {
+  it("uses only resource types looked up in the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
     expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
       "AWS::ApiGatewayV2::Api",
@@ -108,9 +108,10 @@ describe("NotesAppStack: resources", () => {
       "AWS::ApiGatewayV2::Route",
       "AWS::ApiGatewayV2::Stage",
       "AWS::CloudFront::Distribution",
+      // No dedicated cdkd provider (Cloud Control API): CloudFront::Function,
+      // Cognito::UserPoolClient, Cognito::UserPoolDomain.
       "AWS::CloudFront::Function",
       "AWS::CloudFront::OriginAccessControl",
-      // Not a dedicated cdkd provider: these two go through Cloud Control API.
       "AWS::Cognito::UserPool",
       "AWS::Cognito::UserPoolClient",
       "AWS::Cognito::UserPoolDomain",

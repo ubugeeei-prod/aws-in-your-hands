@@ -19,11 +19,8 @@ const change = (expectedVersion: number, title = "changed") => ({
   updatedAt: "2026-10-11T01:00:00.000Z",
 });
 
-/**
- * The rules every NoteRepository must follow, written once and run against
- * each implementation. `fresh` returns an empty repository and an owner name
- * no other test uses.
- */
+// Written once, run against each implementation. `fresh` returns an empty
+// repository and an owner no other test uses.
 export function describeRepositoryContract(
   name: string,
   fresh: () => Promise<{ repository: NoteRepository; owner: string }>,
@@ -50,7 +47,7 @@ export function describeRepositoryContract(
       expect(await repository.get(owner, "a1")).toMatchObject({ version: 2, createdAt: "2026-10-11T00:00:00.000Z" });
     });
 
-    it("refuses an update based on a stale version and leaves the note as it was", async () => {
+    it("refuses a stale update and leaves the note as it was", async () => {
       const { repository, owner } = await fresh();
       await repository.create(owner, note("a1"));
       await repository.update(owner, "a1", change(1, "first writer"));
@@ -76,7 +73,7 @@ export function describeRepositoryContract(
       expect(await repository.update(owner, "nope", change(1))).toEqual({ status: "not_found" });
     });
 
-    it("lists newest first and pages through every note exactly once", async () => {
+    it("pages newest first, every note exactly once", async () => {
       const { repository, owner } = await fresh();
       for (const id of ["a1", "a2", "a3", "a4", "a5"]) {
         await repository.create(owner, note(id));
@@ -94,7 +91,7 @@ export function describeRepositoryContract(
       expect(seen).toEqual(["a5", "a4", "a3", "a2", "a1"]);
     });
 
-    it("keeps one owner's notes out of another owner's list and reads", async () => {
+    it("keeps owners apart", async () => {
       const { repository, owner } = await fresh();
       await repository.create(owner, note("a1"));
       expect(await repository.get(`${owner}-other`, "a1")).toBeUndefined();

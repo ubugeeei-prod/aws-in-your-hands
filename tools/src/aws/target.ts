@@ -1,11 +1,10 @@
-// Which AWS account and region a task is about to touch, decided before any
-// AWS call so that a wrong profile is caught before a deploy, not after.
+// Decided before any AWS call, so a wrong profile is caught before a deploy.
 
 export const DEFAULT_REGION = "ap-northeast-1";
 
 export type Target = {
   region: string;
-  /** From AIH_AWS_ACCOUNT_ID. Required for anything that changes AWS. */
+  /** From AIH_AWS_ACCOUNT_ID. Required to change AWS. */
   expectedAccountId: string | undefined;
 };
 

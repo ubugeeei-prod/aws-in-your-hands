@@ -1,8 +1,5 @@
 // #region route
-// The whole client-side router: a URL path becomes one of three views. The
-// server knows none of these paths. It has index.html and hashed assets, and
-// the CloudFront Function in infra/functions/ decides which of the two a
-// request gets.
+// The server knows none of these paths. It only has index.html and hashed assets.
 export type Route =
   | { name: "list" }
   | { name: "note"; id: string }

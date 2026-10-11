@@ -7,7 +7,7 @@ const synth = (): Template =>
   Template.fromStack(new SpaStack(new App(), "AihSpa", { env: { region: "ap-northeast-1" } }));
 
 describe("SpaStack", () => {
-  it("blocks every form of public access to the bucket and does not enable website hosting", () => {
+  it("keeps the bucket private, with no website hosting", () => {
     synth().hasResourceProperties("AWS::S3::Bucket", {
       PublicAccessBlockConfiguration: {
         BlockPublicAcls: true,
@@ -19,7 +19,7 @@ describe("SpaStack", () => {
     });
   });
 
-  it("grants read and list to this distribution only, and nothing to anyone else", () => {
+  it("grants read and list to this distribution only", () => {
     const policies = synth().findResources("AWS::S3::BucketPolicy");
     const statements = Object.values(policies).flatMap(
       (policy) => policy["Properties"].PolicyDocument.Statement as Record<string, unknown>[],
@@ -40,21 +40,20 @@ describe("SpaStack", () => {
     }
   });
 
-  it("serves HTTPS only and runs the fallback on viewer requests", () => {
+  it("serves HTTPS only, with the fallback attached", () => {
     synth().hasResourceProperties("AWS::CloudFront::Distribution", {
       DistributionConfig: {
         DefaultCacheBehavior: {
           ViewerProtocolPolicy: "redirect-to-https",
           FunctionAssociations: [Match.objectLike({ EventType: "viewer-request" })],
         },
-        // The fallback is the function's job. An error-page rewrite to
-        // index.html would also turn missing assets into HTML.
+        // An error-page rewrite would also turn missing assets into HTML.
         CustomErrorResponses: Match.absent(),
       },
     });
   });
 
-  it("uses only resource types that were checked against the pinned cdkd", () => {
+  it("uses only resource types checked against cdkd", () => {
     const resources = synth().toJSON()["Resources"] as Record<string, { Type: string }>;
     expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
       "AWS::CloudFront::Distribution",

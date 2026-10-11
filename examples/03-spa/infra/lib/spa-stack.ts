@@ -11,14 +11,12 @@ export class SpaStack extends Stack {
 
     // #region bucket
     const content = new s3.Bucket(this, "Content", {
-      // No public access of any kind, and no static website hosting. The
-      // bucket is storage; CloudFront is the web server.
+      // Storage only. CloudFront is the web server.
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
-      // Exercise data: the bucket goes away with the stack. A bucket that
-      // holds anything you cannot rebuild should use RemovalPolicy.RETAIN.
+      // Rebuildable, so it goes with the stack. Use RETAIN for anything you cannot rebuild.
       removalPolicy: RemovalPolicy.DESTROY,
     });
     // #endregion bucket
@@ -41,9 +39,7 @@ export class SpaStack extends Stack {
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       priceClass: cloudfront.PriceClass.PRICE_CLASS_200,
       defaultBehavior: {
-        // READ lets CloudFront fetch objects. LIST additionally lets S3 answer
-        // "404 Not Found" for a missing key; with READ alone it answers
-        // "403 Forbidden" so as not to reveal which keys exist.
+        // LIST lets S3 answer 404 for a missing key. With READ alone it answers 403.
         origin: origins.S3BucketOrigin.withOriginAccessControl(content, {
           originAccessLevels: [cloudfront.AccessLevel.READ, cloudfront.AccessLevel.LIST],
         }),

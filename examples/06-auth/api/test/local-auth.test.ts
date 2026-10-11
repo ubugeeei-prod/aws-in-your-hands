@@ -20,7 +20,7 @@ describe("local development sign-in", () => {
     expect(await authenticate(bearer(await signLocalToken(secret, "local-alice", -10)))).toBeUndefined();
   });
 
-  it("rejects an unsigned token that only claims to be alice", async () => {
+  it("rejects an unsigned token", async () => {
     const header = Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url");
     const payload = Buffer.from(
       JSON.stringify({ sub: "local-alice", iss: "http://localhost/aih-local", aud: "aih-notes-local" }),
@@ -28,7 +28,7 @@ describe("local development sign-in", () => {
     expect(await authenticate(bearer(`${header}.${payload}.`))).toBeUndefined();
   });
 
-  it("rejects a validly signed token meant for a different audience", async () => {
+  it("rejects another audience", async () => {
     const other = await new SignJWT({})
       .setProtectedHeader({ alg: "HS256" })
       .setSubject("local-alice")
@@ -44,7 +44,7 @@ describe("local development sign-in", () => {
     expect(await authenticate({ authorization: "local-alice" })).toBeUndefined();
   });
 
-  it("refuses to work with a short secret", () => {
+  it("refuses a short secret", () => {
     expect(() => createLocalAuthenticator("short")).toThrow(/32 characters/);
   });
 });

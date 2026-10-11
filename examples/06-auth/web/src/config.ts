@@ -1,11 +1,8 @@
 import { z } from "zod";
 
 // #region config
-// The SPA is built once and learns where it is running from /config.json at
-// start-up. The file in public/ describes local development; publishing
-// replaces it with one written from the deployed stack's outputs. Nothing in
-// it is secret: the client ID and the sign-in domain are visible to anyone
-// who loads the page, as they must be for a public client.
+// Read from /config.json at start-up, so one build fits any deployment.
+// Nothing in it is secret: a public client's settings are visible to anyone.
 const configSchema = z.object({
   apiUrl: z.url({ protocol: /^https?$/ }),
   auth: z.discriminatedUnion("mode", [

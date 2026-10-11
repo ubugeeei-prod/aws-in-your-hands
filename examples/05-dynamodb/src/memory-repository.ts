@@ -1,12 +1,7 @@
 import type { Note } from "./contract.ts";
 import { decodeCursor, encodeCursor, type NoteRepository } from "./repository.ts";
 
-/**
- * The same contract as the DynamoDB repository, kept in a Map. Used for local
- * development and tests. It runs in one process with no concurrency, so it
- * says nothing about how DynamoDB behaves under simultaneous writers; the
- * shared contract tests only establish that both agree on the rules.
- */
+// One process, no concurrency: this says nothing about DynamoDB under simultaneous writers.
 export class InMemoryNoteRepository implements NoteRepository {
   readonly #notes = new Map<string, Note>();
 

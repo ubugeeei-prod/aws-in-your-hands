@@ -18,11 +18,8 @@ export class ApiError extends Error {
   }
 }
 
-// `hc<App>` gives the caller the routes, parameters, and response types of the
-// server at compile time. That is a statement about the code in this
-// repository, not about the server that actually answers: it may be an older
-// deployment, a proxy's error page, or a captive portal. So every response is
-// also validated at runtime before it is returned as a typed value.
+// hc<App> types the call. It cannot know which server actually answers, so
+// every response is checked against the schema before it is returned.
 async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
   const requestId = response.headers.get("x-request-id") ?? undefined;
   const json: unknown = await response.json().catch(() => undefined);

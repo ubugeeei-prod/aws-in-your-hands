@@ -29,7 +29,7 @@ describe("markdown structure", () => {
     expect(page.frontmatter).toEqual({ title: "Example", revision: "3" });
   });
 
-  it("finds section markers, snippet imports, diagrams, and internal links", () => {
+  it("finds sections, imports, diagrams, and links", () => {
     expect(page.sections).toEqual(["03.bucket"]);
     expect(page.imports).toEqual([
       { path: "examples/03-spa/infra/lib/spa-stack.ts", region: "bucket" },
@@ -39,12 +39,12 @@ describe("markdown structure", () => {
     expect(page.links).toEqual(["/ja/chapters/02-toolchain.md"]);
   });
 
-  it("ignores markers that are only shown inside a code block", () => {
+  it("ignores markers inside a code block", () => {
     expect(page.sections).not.toContain("99.inside-a-code-block");
     expect(page.codeBlocks).toBe(2);
   });
 
-  it("requires the region marker itself, not a mention of its name", () => {
+  it("needs the region marker, not a mention of its name", () => {
     expect(hasRegion("// #region bucket\nconst a = 1;\n// #endregion bucket", "bucket")).toBe(true);
     expect(hasRegion("const bucket = 1; // region bucket", "bucket")).toBe(false);
   });

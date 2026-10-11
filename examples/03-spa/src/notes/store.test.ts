@@ -30,7 +30,7 @@ describe("local note store", () => {
     expect(store.list().map((note) => note.title)).toEqual(["second", "first"]);
   });
 
-  it("updates a note in place when given its id", () => {
+  it("updates a note in place", () => {
     const { store } = setup();
     const created = store.save({ title: "draft", body: "" });
     store.save({ title: "final", body: "done" }, created.id);
@@ -38,19 +38,19 @@ describe("local note store", () => {
     expect(store.get(created.id)).toMatchObject({ title: "final", body: "done" });
   });
 
-  it("refuses to save a note without a title", () => {
+  it("refuses a note without a title", () => {
     const { store } = setup();
     expect(() => store.save({ title: "   ", body: "x" })).toThrow();
     expect(store.list()).toEqual([]);
   });
 
-  it("drops stored entries that are not notes instead of trusting them", () => {
+  it("drops stored entries that are not notes", () => {
     const valid = { id: "a", title: "kept", body: "", updatedAt: "2026-10-11T00:00:00.000Z" };
     const { store } = setup({ "aih.notes.v1": JSON.stringify([valid, { id: 1, title: null }, "junk"]) });
     expect(store.list()).toEqual([valid]);
   });
 
-  it("starts empty when storage holds something that is not JSON", () => {
+  it("starts empty when storage is not JSON", () => {
     const { store } = setup({ "aih.notes.v1": "{not json" });
     expect(store.list()).toEqual([]);
   });

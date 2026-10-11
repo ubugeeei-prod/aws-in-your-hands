@@ -1,5 +1,3 @@
-// vp run book:smoke / spa:smoke
-//   node tools/src/site/smoke.ts <book|spa> <appDir> <stack> [--url https://...] [--expect-revision REV] [--timeout-seconds N]
 import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
@@ -86,8 +84,7 @@ try {
   const deadline = Date.now() + Number(values["timeout-seconds"]) * 1000;
   console.log(`site: ${base.toString()}\nexpecting revision: ${expectedRevision}`);
 
-  // CloudFront applies a change edge by edge. Retrying until a deadline is how
-  // "the deploy command returned" is kept apart from "readers receive it".
+  // CloudFront applies a change edge by edge, so retry until the deadline.
   for (let attempt = 1; ; attempt++) {
     const results = await runAll(base, expectedRevision);
     const failures = results.filter((result) => result.problem !== null);

@@ -11,8 +11,8 @@ export const unitPriceSchema = z.object({
   plan: z.literal("on-demand"),
   currency: z.literal("USD"),
   unit: z.string(),
-  // `usd` stays the decimal string AWS publishes, so the file can be compared
-  // with the source byte for byte. `to: null` is the open-ended last tier.
+  // `usd` stays the string AWS publishes, comparable byte for byte.
+  // `to: null` is the open-ended last tier.
   tiers: z
     .array(z.object({ from: z.number(), to: z.number().nullable(), usd: decimal, description: z.string() }))
     .min(1),
@@ -35,8 +35,7 @@ export const allowancesSchema = z.object({
       note: z.string(),
     }),
   ),
-  // Allowances that could not be confirmed. They are recorded as unknown and
-  // applied as nothing, never as a guessed number.
+  // Could not be confirmed: applied as nothing, never as a guessed number.
   unknown: z.array(z.object({ priceId: z.string(), reason: z.string() })),
 });
 export type Allowances = z.infer<typeof allowancesSchema>;

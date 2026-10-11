@@ -14,14 +14,14 @@ import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
 
-/** The SPA dev server. Registered as a callback URL so that a local SPA can sign in against the deployed user pool. */
+/** Registered so that a local SPA can sign in against the deployed user pool. */
 const LOCAL_SPA = "http://localhost:5173";
 
 export class NotesAppStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    // ---- SPA hosting: the same private bucket and distribution as chapter 03.
+    // SPA hosting, as in chapter 03.
     const content = new s3.Bucket(this, "Content", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
@@ -58,10 +58,8 @@ export class NotesAppStack extends Stack {
 
     // #region user-pool
     const userPool = new UserPool(this, "Users", {
-      // Sign in with an email address. Nobody can register themselves: users
-      // are created by `vp run app:user:create`. An exercise deployment with
-      // open sign-up is an open door for strangers and for sign-up emails
-      // sent in your name.
+      // Open sign-up would let strangers in and send sign-up emails in your
+      // name. Users are created by `vp run app:user:create`.
       selfSignUpEnabled: false,
       signInAliases: { email: true },
       signInCaseSensitive: false,
@@ -72,12 +70,11 @@ export class NotesAppStack extends Stack {
         requireUppercase: false,
         requireSymbols: false,
       },
-      // Exercise data: the pool and every user in it are deleted with the stack.
+      // Exercise data: deleted with the stack, users included.
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    // The sign-in pages are served by Cognito at this domain, not by the SPA.
-    // The password is typed into Cognito's page and never passes through this app's code.
+    // Cognito serves the sign-in page here. The password never passes through this app's code.
     const domain = userPool.addDomain("Domain", {
       cognitoDomain: { domainPrefix: `aih-notes-${this.account}` },
     });
@@ -85,8 +82,7 @@ export class NotesAppStack extends Stack {
 
     // #region client
     const client = userPool.addClient("Spa", {
-      // A browser app cannot keep a secret: everything it ships is readable.
-      // It is a "public client", and PKCE takes the place of the secret.
+      // A browser app cannot keep a secret. PKCE takes its place.
       generateSecret: false,
       oAuth: {
         flows: { authorizationCodeGrant: true, implicitCodeGrant: false },
@@ -99,15 +95,14 @@ export class NotesAppStack extends Stack {
       accessTokenValidity: Duration.hours(1),
       idTokenValidity: Duration.hours(1),
       refreshTokenValidity: Duration.days(1),
-      // Lets a user's tokens be revoked, and makes Cognito's own endpoints
-      // stop honoring them. API Gateway does not ask Cognito, so a revoked
-      // access token still passes the JWT authorizer until it expires.
+      // API Gateway does not ask Cognito, so a revoked access token still
+      // passes the JWT authorizer until it expires.
       enableTokenRevocation: true,
       preventUserExistenceErrors: true,
     });
     // #endregion client
 
-    // ---- Data: the table of chapter 05.
+    // The table of chapter 05.
     const table = new Table(this, "Notes", {
       partitionKey: { name: "pk", type: AttributeType.STRING },
       sortKey: { name: "sk", type: AttributeType.STRING },
@@ -156,9 +151,8 @@ export class NotesAppStack extends Stack {
 
     // #region authorizer
     const issuer = `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`;
-    // API Gateway checks every request to a protected route before the
-    // function is invoked: signature (against the user pool's public keys),
-    // issuer, expiry, and that the token was issued to this app client.
+    // Checked before the function is invoked: signature, issuer, expiry, and
+    // this app client as the audience.
     const authorizer = new HttpJwtAuthorizer("CognitoJwt", issuer, {
       jwtAudience: [client.userPoolClientId],
       identitySource: ["$request.header.Authorization"],
@@ -167,7 +161,7 @@ export class NotesAppStack extends Stack {
     const api = new HttpApi(this, "Api", {
       description: "Notes API (signed-in users only)",
       corsPreflight: {
-        // Two fixed origins, never "*": the deployed SPA, and the SPA dev server.
+        // Two fixed origins, never "*".
         allowOrigins: [spaOrigin, LOCAL_SPA],
         allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
         allowHeaders: ["content-type", "authorization"],
@@ -175,8 +169,7 @@ export class NotesAppStack extends Stack {
       },
     });
     const integration = new HttpLambdaIntegration("Notes", handler);
-    // An ID token carries no scope claim, so requiring a scope keeps ID tokens
-    // out at the gateway. The function checks token_use as well.
+    // An ID token has no scope claim, so requiring one keeps ID tokens out here.
     const signedIn = { integration, authorizer, authorizationScopes: ["openid"] };
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/me", methods: [HttpMethod.GET], ...signedIn });

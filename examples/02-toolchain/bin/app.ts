@@ -11,8 +11,8 @@ const config = parseHelloConfig({
 });
 
 new HelloStack(app, "AihHello", {
-  // Fixed region, unresolved account: synth needs no credentials and makes no
-  // AWS call. The account is whichever one the credentials at deploy time belong to.
+  // Region only, no account: synth needs no credentials and calls nothing.
+  // The account comes from the credentials used at deploy time.
   env: { region: "ap-northeast-1" },
   config,
 });

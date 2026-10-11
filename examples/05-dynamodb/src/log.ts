@@ -7,8 +7,7 @@ export type LogEntry = { level: Level; message: string } & Record<string, unknow
 export type Logger = (entry: LogEntry) => void;
 
 // #region logger
-// One JSON object per line. CloudWatch Logs Insights can filter and aggregate
-// on the fields, and the same line is readable in a local terminal.
+// One JSON object per line, so CloudWatch Logs Insights can filter on the fields.
 export function createLogger(minimum: Env["LOG_LEVEL"], write: (line: string) => void = console.log): Logger {
   return (entry) => {
     if (LEVELS.indexOf(entry.level) >= LEVELS.indexOf(minimum)) {

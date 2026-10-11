@@ -27,7 +27,7 @@ const scenario = (items: Scenario["items"]): Scenario => ({
 const none: Allowances = { allowances: [], unknown: [] };
 
 describe("pricing calculator", () => {
-  it("multiplies a per-request price without floating-point drift", () => {
+  it("multiplies without floating-point drift", () => {
     const result = calculate(
       scenario([{ priceId: "req", quantity: 3_000_000, basis: "" }]),
       [price("req", [[0, null, "0.0000002000"]])],
@@ -45,7 +45,7 @@ describe("pricing calculator", () => {
     expect(result.listUsd).toBe(1.75);
   });
 
-  it("reports the list price and the price after the free allowance separately", () => {
+  it("keeps list price and after-allowance price apart", () => {
     const allowances: Allowances = {
       allowances: [
         { priceId: "req", quantity: 1_000_000, period: "month", kind: "always-free", sourceId: "s", note: "" },
@@ -61,13 +61,13 @@ describe("pricing calculator", () => {
     expect(result.afterAllowanceUsd).toBe(0.5);
   });
 
-  it("refuses a price it does not have instead of counting it as zero", () => {
+  it("unknown price throws, never counts as zero", () => {
     expect(() => calculate(scenario([{ priceId: "nat.hour", quantity: 730, basis: "" }]), [], none)).toThrow(
       /unknown price/,
     );
   });
 
-  it("flags an allowance that could not be confirmed and deducts nothing for it", () => {
+  it("unconfirmed allowance is flagged and deducts nothing", () => {
     const allowances: Allowances = { allowances: [], unknown: [{ priceId: "req", reason: "not confirmed" }] };
     const result = calculate(
       scenario([{ priceId: "req", quantity: 10, basis: "" }]),

@@ -29,7 +29,6 @@ const failure = (
 export function createApp(deps: AppDeps) {
   const app = new Hono<{ Variables: Variables }>();
 
-  // Every response carries the ID that its log lines carry.
   app.use(async (c, next) => {
     const requestId = deps.newRequestId();
     const startedAt = deps.now();
@@ -54,10 +53,10 @@ export function createApp(deps: AppDeps) {
   app.onError((error, c) => {
     const requestId = c.get("requestId");
     if (error instanceof HTTPException && error.status === 400) {
-      // Raised by the JSON validator when the body cannot be parsed at all.
+      // The JSON validator throws this when the body does not parse.
       return c.json(failure("invalid_request", "The request body is not valid JSON.", requestId), 400);
     }
-    // The cause goes to the log. The caller gets an ID to quote, not a stack trace.
+    // The stack trace goes to the log, never to the caller.
     deps.log({
       level: "error",
       message: "unhandled error",
@@ -79,8 +78,7 @@ export function createApp(deps: AppDeps) {
         onError: (c) =>
           c.json(failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")), 413),
       }),
-      // The validator is both the runtime check and the source of the request
-      // type that `hc<App>` exposes to callers.
+      // Runtime check, and the request type that hc<App> shows to callers.
       validator("json", (value, c) => {
         const input = createNoteSchema.safeParse(value);
         if (!input.success) {

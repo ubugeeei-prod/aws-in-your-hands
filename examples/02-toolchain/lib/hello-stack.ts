@@ -16,8 +16,7 @@ export class HelloStack extends Stack {
       enforceSSL: true,
       versioned: true,
       lifecycleRules: [{ noncurrentVersionExpiration: Duration.days(props.config.noncurrentVersionDays) }],
-      // A stage that holds data people care about keeps its bucket when the
-      // stack is deleted. The practice stage is meant to be thrown away.
+      // prod keeps its data when the stack goes. The practice stage is disposable.
       removalPolicy: props.config.stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     });
 

@@ -1,9 +1,8 @@
 // Part of `vp run app:publish`.
 //   node scripts/write-config.ts
 //
-// Writes web/dist/config.json from the deployed stack's outputs, replacing the
-// local-development config that the build copied from web/public/. The SPA is
-// therefore built once, and the same build can be pointed at any deployment.
+// Replaces the local config.json in web/dist with one written from the
+// stack's outputs, so one build can be pointed at any deployment.
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { preflight } from "@aih/tools/aws/preflight.ts";

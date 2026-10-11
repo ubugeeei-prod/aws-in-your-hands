@@ -1,16 +1,18 @@
-# Chapter 01: account setup artifacts
+# Chapter 01: account setup
 
-This chapter is mostly console work that cannot be scripted (creating the
-account, enabling MFA). The files here are the parts that can be reproduced
-from a terminal.
+Most of this chapter is console work you can't script (creating the account,
+enabling MFA). What's here is the part you can run from a terminal.
 
-| File | Used by |
-| --- | --- |
-| `budget.json` | `vp run account:budget:create` — a USD 10 monthly cost budget. `IncludeCredit` is `false`, so spending covered by credits still counts toward the alert. |
-| `notifications.example.json` | Copy to `notifications.json` (ignored by git), replace the address, then run the task. |
+- `budget.json`: a USD 10 monthly cost budget. `IncludeCredit` is `false`, so
+  spending covered by credits still counts toward the alert.
+- `notifications.example.json`: copy it to `notifications.json` (ignored by
+  git) and put in your own address.
 
-Tasks (all defined in the repository root `vite.config.ts`, all `cache: false`):
+The tasks live in the root `vite.config.ts`, all with `cache: false`.
 
-- `vp run account:whoami` — prints the account, region, and caller the current credentials resolve to. Reads AWS; changes nothing.
-- `vp run account:budget:create` — creates the budget. Changes AWS. What AWS Budgets itself costs was not verified for this book; check the official pricing page.
-- `vp run account:budget:delete` — deletes it.
+- `vp run account:whoami` prints the account, region, and caller your current
+  credentials resolve to. It reads AWS and changes nothing.
+- `vp run account:budget:create` creates the budget. It changes AWS. What AWS
+  Budgets itself costs was not verified for this book, so check the official
+  pricing page.
+- `vp run account:budget:delete` deletes it.

@@ -6,9 +6,7 @@ import { BookSiteStack } from "../lib/book-site-stack.ts";
 const synth = (): Template =>
   Template.fromStack(new BookSiteStack(new App(), "AihBookSite", { env: { region: "ap-northeast-1" } }));
 
-// Resource types whose provisioning and drift read-back were checked in the
-// source of @go-to-k/cdkd 0.296.28. A new type must be checked there before it
-// is added here; see book/content/ja/reference/book-site.md.
+// Checked in the source of @go-to-k/cdkd 0.296.28. Check a new type there before adding it.
 const typesCheckedAgainstCdkd = [
   "AWS::S3::Bucket",
   "AWS::S3::BucketPolicy",
@@ -47,7 +45,7 @@ describe("BookSiteStack", () => {
     });
   });
 
-  it("signs origin requests and serves viewers over HTTPS only", () => {
+  it("signs origin requests, HTTPS only", () => {
     const template = synth();
     template.hasResourceProperties("AWS::CloudFront::OriginAccessControl", {
       OriginAccessControlConfig: {
@@ -67,7 +65,7 @@ describe("BookSiteStack", () => {
     });
   });
 
-  it("answers a missing page with the 404 page and a 404 status, never with a 200", () => {
+  it("answers a missing page with a real 404", () => {
     const template = synth();
     template.hasResourceProperties("AWS::CloudFront::Distribution", {
       DistributionConfig: {
@@ -78,17 +76,17 @@ describe("BookSiteStack", () => {
     });
   });
 
-  it("deletes the bucket with the stack, because its content is rebuilt from source", () => {
+  it("deletes the bucket with the stack", () => {
     synth().hasResource("AWS::S3::Bucket", { DeletionPolicy: "Delete", UpdateReplacePolicy: "Delete" });
   });
 
-  it("uses only resource types that were checked against the pinned cdkd", () => {
+  it("uses only resource types checked against cdkd", () => {
     const resources = synth().toJSON()["Resources"] as Record<string, { Type: string }>;
     const types = [...new Set(Object.values(resources).map((resource) => resource.Type))];
     expect(types.toSorted()).toEqual(typesCheckedAgainstCdkd.toSorted());
   });
 
-  it("exposes the outputs that the publish and smoke tasks read", () => {
+  it("exposes the outputs the site tasks read", () => {
     const outputs = Object.keys(synth().toJSON()["Outputs"] as Record<string, unknown>);
     expect(outputs.toSorted()).toEqual(["ContentBucketName", "DistributionDomainName", "DistributionId"]);
   });

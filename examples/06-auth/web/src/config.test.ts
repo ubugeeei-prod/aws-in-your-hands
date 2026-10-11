@@ -2,17 +2,17 @@ import { describe, expect, it } from "vite-plus/test";
 import { parseConfig } from "./config.ts";
 
 describe("runtime config", () => {
-  it("accepts the local development config shipped in public/", () => {
+  it("accepts the local config", () => {
     expect(parseConfig({ apiUrl: "http://localhost:8787", auth: { mode: "local" } }).auth.mode).toBe("local");
   });
 
-  it("requires every Cognito setting when the mode is cognito", () => {
+  it("requires every Cognito setting", () => {
     expect(() =>
       parseConfig({ apiUrl: "https://api.example.com", auth: { mode: "cognito", clientId: "abc" } }),
     ).toThrow();
   });
 
-  it("refuses a sign-in domain that is not HTTPS", () => {
+  it("refuses a non-HTTPS sign-in domain", () => {
     expect(() =>
       parseConfig({
         apiUrl: "https://api.example.com",

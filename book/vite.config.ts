@@ -2,11 +2,9 @@ import { defaultTheme, defineTheme, oxContent } from "@ox-content/vite-plugin";
 import { defineConfig } from "vite-plus";
 import { sidebar } from "./site.ts";
 
-// The site is served from the root of its own CloudFront distribution.
 const base = "/";
 
-// Set when a real public URL exists. Without it Ox Content omits canonical and
-// hreflang links instead of pointing them at a made-up host.
+// Unset until a real URL exists, so canonical and hreflang links never point at a made-up host.
 const siteUrl = process.env.AIH_BOOK_SITE_URL;
 
 export default defineConfig({
@@ -16,13 +14,12 @@ export default defineConfig({
       srcDir: "content",
       outDir: "dist",
       base,
-      // API docs generated from JSDoc; this book has prose only.
+      // API docs from JSDoc. This book is prose only.
       docs: false,
       highlight: true,
       containers: true,
       codeGroups: true,
-      // `<<< @/examples/...` resolves from the repository root, so every snippet
-      // in the prose is read from the same file the example actually runs.
+      // `<<< @/...` resolves from the repository root.
       codeImports: { rootDir: ".." },
       i18n: {
         enabled: true,
@@ -32,7 +29,7 @@ export default defineConfig({
           { code: "en", name: "English" },
         ],
         hideDefaultLocale: false,
-        // No message dictionaries: each locale is a file tree under content/.
+        // No message dictionaries. Each locale is a file tree under content/.
         check: false,
       },
       ssg: {

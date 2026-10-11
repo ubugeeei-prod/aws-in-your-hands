@@ -1,14 +1,8 @@
 import { jwtVerify, SignJWT } from "jose";
 import type { Identity } from "./identity.ts";
 
-// Local sign-in for development. It exists so that the API and the SPA can be
-// run and tested by more than one "user" without a user pool.
-//
-// This is not an emulation of Cognito. The tokens are signed with a shared
-// secret (HS256); Cognito signs with RSA keys, and API Gateway's JWT
-// authorizer accepts only RSA-based algorithms, so a token made here cannot
-// pass the deployed authorizer. Managed login, refresh tokens, expiry policy,
-// and revocation are not represented at all.
+// Local sign-in for development, not an emulation of Cognito. Tokens are HS256
+// with a shared secret, and the deployed JWT authorizer accepts RSA-based algorithms only.
 
 const ISSUER = "http://localhost/aih-local";
 const AUDIENCE = "aih-notes-local";
@@ -46,7 +40,7 @@ export function createLocalAuthenticator(secret: string) {
       });
       return typeof payload.sub === "string" && payload.sub !== "" ? { sub: payload.sub } : undefined;
     } catch {
-      // Expired, wrong signature, wrong audience, not a JWT: all of them mean "nobody".
+      // Expired, forged, wrong audience, not a JWT: all mean "nobody".
       return undefined;
     }
   };

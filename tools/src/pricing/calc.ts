@@ -1,8 +1,7 @@
 import type { Allowances, Scenario, UnitPrice } from "./schema.ts";
 
-// All money is computed in integer nano-dollars (1e-9 USD). Unit prices such
-// as 0.0000002 USD per request are exact in that unit, and sums of them do
-// not pick up binary floating-point error.
+// Integer nano-dollars (1e-9 USD): 0.0000002 USD per request is exact, and
+// sums pick up no floating-point error.
 const NANO = 1_000_000_000n;
 
 function toNano(usd: string): bigint {
@@ -10,8 +9,7 @@ function toNano(usd: string): bigint {
   if (fraction.length > 10) {
     throw new Error(`Price ${usd} has more precision than this calculator keeps`);
   }
-  // Ten fractional digits are kept (AWS publishes up to ten) by working in
-  // tenths of a nano-dollar and rounding once at the end of each line.
+  // AWS publishes up to ten fractional digits, hence tenths of a nano-dollar.
   return BigInt(whole) * NANO * 10n + BigInt(fraction.padEnd(10, "0"));
 }
 
@@ -22,7 +20,7 @@ function tieredTenthNano(price: UnitPrice, quantity: number): bigint {
     const upper = tier.to ?? Number.POSITIVE_INFINITY;
     const inTier = Math.max(0, Math.min(quantity, upper) - tier.from);
     if (inTier > 0) {
-      // Quantities are given to at most six decimal places (for example GB).
+      // Quantities have at most six decimal places (GB, for example).
       total += (toNano(tier.usd) * BigInt(Math.round(inTier * 1_000_000))) / 1_000_000n;
     }
   }

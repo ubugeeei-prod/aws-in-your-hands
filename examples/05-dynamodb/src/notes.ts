@@ -10,11 +10,9 @@ export type NoteServiceDeps = {
 };
 
 // #region service
-// Chapter 06 replaces this constant with the signed-in user. Until then every
-// caller reads and writes the same notes.
+// Chapter 06 replaces this with the signed-in user.
 export const SHARED_OWNER = "anonymous";
 
-/** Every operation names the owner whose notes it touches. Nothing here can reach across owners. */
 export function createNoteService(deps: NoteServiceDeps) {
   return {
     list: (owner: string, options: { limit: number; cursor?: string | undefined }): Promise<Page> =>
@@ -23,8 +21,8 @@ export function createNoteService(deps: NoteServiceDeps) {
     get: (owner: string, id: string): Promise<Note | undefined> => deps.repository.get(owner, id),
 
     async create(owner: string, input: CreateNote): Promise<Note> {
-      // An ID collision needs the same millisecond and the same random suffix.
-      // If it ever happens the conditional write refuses it, and a fresh ID is tried.
+      // A collision needs the same millisecond and suffix. The conditional
+      // write refuses it, and a fresh ID is tried.
       for (let attempt = 0; attempt < 3; attempt++) {
         const now = deps.now();
         const timestamp = now.toISOString();

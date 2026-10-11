@@ -1,14 +1,8 @@
 import { z } from "zod";
 
 // #region pending
-// Between "send the user to the sign-in page" and "the user comes back with a
-// code", the page is unloaded. Two values have to survive that round trip:
-// - state: proves that the redirect coming back is the answer to the request
-//   this browser tab sent, not one an attacker started.
-// - codeVerifier: the PKCE secret. Only its hash went out with the request;
-//   presenting the original proves that whoever redeems the code is whoever
-//   asked for it.
-// sessionStorage is per tab and is cleared when the tab closes.
+// The page is unloaded during sign-in, so these two values wait in
+// sessionStorage: per tab, and cleared when the tab closes.
 const pendingSchema = z.object({ state: z.string().min(1), codeVerifier: z.string().min(43), createdAt: z.number() });
 export type PendingSignIn = z.infer<typeof pendingSchema>;
 
@@ -21,10 +15,7 @@ export function savePending(storage: TabStorage, pending: PendingSignIn): void {
   storage.setItem(KEY, JSON.stringify(pending));
 }
 
-/**
- * Returns the pending sign-in that `returnedState` answers, and forgets it.
- * It can be taken once: replaying the same callback URL finds nothing.
- */
+/** Takes the pending sign-in out, once. Replaying the same callback URL finds nothing. */
 export function takePending(storage: TabStorage, returnedState: string | null, now: number): PendingSignIn | undefined {
   const raw = storage.getItem(KEY);
   storage.removeItem(KEY);

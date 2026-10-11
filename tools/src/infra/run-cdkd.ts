@@ -12,10 +12,7 @@ export function cdkdBinary(appDir: string): string {
   return binary;
 }
 
-/**
- * Runs cdkd in `appDir`. AWS_REGION is always set explicitly: cdkd 0.296.28
- * falls back to us-east-1 when it is missing.
- */
+/** AWS_REGION is always set: cdkd 0.296.28 falls back to us-east-1 without it. */
 export function runCdkd(options: {
   appDir: string;
   args: string[];

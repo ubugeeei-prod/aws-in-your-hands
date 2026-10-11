@@ -7,8 +7,7 @@ import {
 } from "@aih/example-05-dynamodb/src/contract.ts";
 import { z } from "zod";
 
-// The note shapes are chapter 05's, unchanged. What this chapter adds to the
-// contract is who is asking.
+// The note shapes are chapter 05's, unchanged.
 export { createNoteSchema, listQuerySchema, noteListSchema, noteSchema, updateNoteSchema };
 export type { CreateNote, Note, NoteList, UpdateNote } from "@aih/example-05-dynamodb/src/contract.ts";
 
@@ -16,17 +15,15 @@ export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string(
 
 // #region me
 export const meSchema = z.object({
-  /** The user pool's identifier for this user. Stable; not an email address or a name. */
+  /** Stable. Not an email address or a name. */
   sub: z.string().min(1),
 });
 export type Me = z.infer<typeof meSchema>;
 // #endregion me
 
 // #region error
-// `unauthenticated` (401): the API does not know who is asking.
-// There is deliberately no "forbidden" for notes: asking for someone else's
-// note gets the same `not_found` as asking for one that does not exist, so the
-// answer does not reveal which note IDs are in use.
+// No "forbidden" for notes, on purpose: someone else's note answers `not_found`,
+// so the response does not reveal which note IDs are in use.
 export const errorCodes = [
   "invalid_request",
   "unauthenticated",

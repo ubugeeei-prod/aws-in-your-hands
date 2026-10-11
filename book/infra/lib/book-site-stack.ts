@@ -10,16 +10,13 @@ export class BookSiteStack extends Stack {
     super(scope, id, props);
 
     // #region bucket
-    // Holds the Ox Content build output. Nothing reads it directly from the
-    // internet: all four Block Public Access switches are on and the only
-    // reader is the CloudFront distribution below.
+    // Private. The only reader is the distribution below.
     const content = new s3.Bucket(this, "Content", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
-      // Every object can be rebuilt from this repository, so the bucket is
-      // deleted with the stack. `vp run book:unpublish` empties it first.
+      // Rebuildable from this repository, so it goes away with the stack.
       removalPolicy: RemovalPolicy.DESTROY,
     });
     // #endregion bucket
@@ -43,21 +40,17 @@ export class BookSiteStack extends Stack {
       // Price class 200 includes the Japan edge locations.
       priceClass: cloudfront.PriceClass.PRICE_CLASS_200,
       defaultBehavior: {
-        // Origin access control: CloudFront signs each origin request with
-        // SigV4 and the bucket policy admits only this distribution.
         origin: origins.S3BucketOrigin.withOriginAccessControl(content),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
         compress: true,
-        // AWS-managed policies. How long each object is cached is decided per
-        // object by the Cache-Control header that the publish step writes.
+        // Per-object lifetime comes from the Cache-Control header set at publish time.
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
         functionAssociations: [{ function: urlRewrite, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
       },
-      // The bucket policy grants s3:GetObject only, so S3 answers 403 for a
-      // key that does not exist. Both codes become the generated 404 page with
-      // a real 404 status. This is not a SPA fallback: no path gets index.html.
+      // GetObject only, so S3 answers 403 for a missing key. Both codes become a real 404,
+      // not a SPA fallback.
       errorResponses: [403, 404].map((httpStatus) => ({
         httpStatus,
         responseHttpStatus: 404,

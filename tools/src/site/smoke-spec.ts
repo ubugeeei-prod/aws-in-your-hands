@@ -1,5 +1,4 @@
-// What a reader must actually receive from the deployed site. A finished CLI
-// command says the API accepted the change; these checks say it arrived.
+// A finished CLI command says the API accepted the change. These checks say it arrived.
 import { IMMUTABLE, REVALIDATE } from "./plan.ts";
 import { REVISION_KEY } from "./revision.ts";
 
@@ -72,7 +71,7 @@ export function httpsRedirectCheck(host: string): Check {
   };
 }
 
-/** A hashed asset is found from a page rather than hard-coded: its name changes with every build. */
+/** Found from a page, because the name changes with every build. */
 export function assetCheckFrom(pageBody: string): Check | string {
   const match = /(?:href|src)="(\/assets\/[^"]+)"/.exec(pageBody);
   if (match?.[1] === undefined) {
@@ -124,8 +123,7 @@ export function checksFor(profile: Profile): { checks: Check[]; assetSourcePath:
         verify: page(contains('<div id="app"')),
       },
       {
-        // A missing script must not be answered with HTML and a 200: the
-        // browser would try to run the page as JavaScript.
+        // HTML with a 200 here would be run as JavaScript by the browser.
         name: "missing asset is a 404, not the application shell",
         path: "/assets/aih-smoke-missing.js",
         verify: status(404),

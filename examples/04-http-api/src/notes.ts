@@ -8,12 +8,7 @@ export interface NoteRepository {
   delete(id: string): Promise<boolean>;
 }
 
-/**
- * Keeps notes in a Map inside the running process. On a laptop that is one
- * process. On Lambda it is one execution environment, and Lambda starts,
- * reuses, and discards those as it sees fit. Chapter 05 replaces this class
- * with DynamoDB; the interface above stays the same.
- */
+/** Notes in a Map. On Lambda that means one Map per execution environment. */
 export class InMemoryNoteRepository implements NoteRepository {
   readonly #notes = new Map<string, Note>();
 
@@ -47,12 +42,7 @@ export function createNoteService(deps: NoteServiceDeps) {
     list: () => deps.repository.list(),
     get: (id: string) => deps.repository.get(id),
     async create(input: CreateNote): Promise<Note> {
-      const note: Note = {
-        id: deps.newId(),
-        title: input.title,
-        body: input.body,
-        createdAt: deps.now().toISOString(),
-      };
+      const note: Note = { id: deps.newId(), ...input, createdAt: deps.now().toISOString() };
       await deps.repository.put(note);
       return note;
     },

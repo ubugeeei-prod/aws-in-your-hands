@@ -1,8 +1,5 @@
 // vp run <name>:infra:drift and the drift remediation tasks end up here.
-//   node tools/src/drift/cli.ts check          <appDir> <stack>
-//   node tools/src/drift/cli.ts preview-revert <appDir> <stack>
-//   node tools/src/drift/cli.ts revert         <appDir> <stack>
-//   node tools/src/drift/cli.ts accept         <appDir> <stack>
+//   node tools/src/drift/cli.ts <check|preview-revert|revert|accept> <appDir> <stack>
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { preflight } from "../aws/preflight.ts";
@@ -50,9 +47,8 @@ async function check(): Promise<number> {
 }
 
 async function remediate(kind: Exclude<Mode, "check">): Promise<number> {
-  // --accept rewrites cdkd's state to match AWS. It does not edit the CDK
-  // source, so the next deploy would put the old value back unless the source
-  // is changed as well. --revert writes the recorded values back to AWS.
+  // --accept rewrites the state only: the CDK source still has the old value.
+  // --revert writes the recorded values back to AWS.
   const flags = { "preview-revert": ["--revert", "--dry-run"], revert: ["--revert"], accept: ["--accept"] }[kind];
   const { target } = await preflight({
     access: kind === "preview-revert" ? "observe" : "mutate",

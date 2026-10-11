@@ -1,7 +1,6 @@
-# Vite+ global CLI (`vp`), taken from the platform-specific npm tarballs that
-# upstream publishes. nixpkgs has no vite-plus attribute at the pinned revision
-# (and `nixpkgs#vp` is an unrelated image viewer), so the binary is fetched by
-# fixed hash here. Keep `version` equal to the `vite-plus` devDependency in
+# Vite+ CLI (`vp`) from upstream's per-platform npm tarballs, by fixed hash.
+# nixpkgs has no vite-plus at the pinned revision (`nixpkgs#vp` is an unrelated
+# image viewer). Keep `version` equal to the `vite-plus` devDependency in
 # package.json: this binary delegates run/check/test/build to that package.
 {
   lib,
@@ -12,7 +11,7 @@
 }:
 let
   version = "1.1.0";
-  # integrity values copied from the npm registry metadata of each package.
+  # Integrity values from the npm registry metadata.
   sources = {
     aarch64-darwin = {
       name = "darwin-arm64";
@@ -44,7 +43,7 @@ stdenvNoCC.mkDerivation {
     inherit (source) hash;
   };
 
-  # Only the Linux glibc builds need their interpreter patched for the Nix store.
+  # The Linux glibc builds need their interpreter patched for the Nix store.
   nativeBuildInputs = lib.optionals stdenvNoCC.hostPlatform.isLinux [ autoPatchelfHook ];
   buildInputs = lib.optionals stdenvNoCC.hostPlatform.isLinux [ stdenv.cc.cc.lib ];
 

@@ -24,12 +24,11 @@ describe("NotesStack", () => {
   });
 
   it("deletes the practice table with the stack", () => {
-    // If this table ever holds data worth keeping, this assertion is the place
-    // that has to change first.
+    // The first thing to change once the table holds data worth keeping.
     template.hasResource("AWS::DynamoDB::Table", { DeletionPolicy: "Delete", UpdateReplacePolicy: "Delete" });
   });
 
-  it("lets the function perform five item operations on this table and nothing else in DynamoDB", () => {
+  it("grants five item operations on this table and nothing else", () => {
     const statements = Object.values(template.findResources("AWS::IAM::Policy")).flatMap(
       (policy) => policy["Properties"].PolicyDocument.Statement as Statement[],
     );

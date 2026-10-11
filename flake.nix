@@ -29,15 +29,11 @@
             self.packages.${pkgs.stdenv.hostPlatform.system}.vp
           ];
 
-          # vp keeps its settings and downloads under VP_HOME. Pointing it at a
-          # directory inside the checkout keeps this project from reading or
-          # rewriting ~/.vite-plus, and nix/vp-home.json tells vp to use the
-          # Node.js and pnpm that Nix put on PATH instead of downloading its own.
-          #
-          # On its first run with a new VP_HOME, vp 1.1.0 sets itself up there
-          # and, unless told otherwise, appends a line to ~/.zshrc, ~/.zshenv,
-          # ~/.bashrc, and ~/.profile. VP_SELF_SETUP_NO_MODIFY_PATH stops that:
-          # entering this shell must not edit files in your home directory.
+          # VP_HOME inside the checkout: vp leaves ~/.vite-plus alone, and
+          # nix/vp-home.json makes it use the Node.js and pnpm from Nix.
+          # VP_SELF_SETUP_NO_MODIFY_PATH: on first run, vp 1.1.0 would otherwise
+          # append a line to ~/.zshrc, ~/.zshenv, ~/.bashrc, and ~/.profile.
+          # Entering this shell must not edit files in your home directory.
           shellHook = ''
             root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
             export VP_HOME="$root/.vp-home"

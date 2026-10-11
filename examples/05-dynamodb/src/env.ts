@@ -11,15 +11,13 @@ const base = z.object({
   STAGE: z.string().min(1).default("local"),
 });
 
-// Which variables are required depends on where notes are kept. The schema
-// says so, instead of leaving a missing TABLE_NAME to surface as a failed
-// request later.
+// Required variables depend on the store, so a missing TABLE_NAME fails at startup.
 const envSchema = z.discriminatedUnion("NOTES_STORE", [
   base.extend({ NOTES_STORE: z.literal("memory") }),
   base.extend({
     NOTES_STORE: z.literal("dynamodb"),
     TABLE_NAME: z.string().min(3),
-    // Set only for DynamoDB Local. Absent in AWS, where the SDK finds the regional endpoint itself.
+    // DynamoDB Local only. In AWS the SDK finds the regional endpoint itself.
     DYNAMODB_ENDPOINT: httpUrl.optional(),
   }),
 ]);

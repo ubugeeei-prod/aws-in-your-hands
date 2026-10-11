@@ -1,6 +1,4 @@
-// Decides what a publish does, without doing it. Everything here is a pure
-// function of the local build and a listing of the bucket, so the order and
-// the cache headers can be tested without AWS.
+// Pure functions only, so the order and the cache headers are testable without AWS.
 
 export type LocalFile = { key: string; md5: string; size: number };
 export type RemoteObject = { key: string; etag: string; lastModified: Date };
@@ -8,13 +6,13 @@ export type RemoteObject = { key: string; etag: string; lastModified: Date };
 export type Upload = { key: string; contentType: string; cacheControl: string };
 
 export type PublishPlan = {
-  /** Phase 1: files with a content hash in their name. Safe to add at any time. */
+  /** Phase 1: content-hashed files. Safe to add at any time. */
   uploadAssets: Upload[];
-  /** Phase 2: HTML and other mutable files. These start referring to phase 1. */
+  /** Phase 2: pages, which start referring to phase 1. */
   uploadPages: Upload[];
-  /** Phase 3: pages that no longer exist in the build. */
+  /** Phase 3: pages no longer in the build. */
   deletePages: string[];
-  /** Phase 4: hashed files that no build has referenced for the retention period. */
+  /** Phase 4: hashed files past the retention period. */
   deleteAssets: string[];
   unchanged: number;
   retainedAssets: number;
@@ -47,8 +45,7 @@ export function contentTypeFor(key: string): string {
   const extension = key.includes(".") ? key.slice(key.lastIndexOf(".") + 1).toLowerCase() : "";
   const contentType = CONTENT_TYPES[extension];
   if (contentType === undefined) {
-    // S3 would store application/octet-stream and browsers would download the
-    // file instead of rendering it. Fail here rather than publish that.
+    // S3 would store application/octet-stream and browsers would download the file.
     throw new Error(
       `No content type is defined for "${key}". Add its extension to CONTENT_TYPES in tools/src/site/plan.ts.`,
     );
@@ -57,19 +54,11 @@ export function contentTypeFor(key: string): string {
 }
 
 // #region cache
-/**
- * Ox Content and Vite both write content-hashed files under assets/. Their
- * name changes whenever their bytes change, so a cached copy is never stale.
- */
+// Names under assets/ carry a content hash, so a cached copy is never stale.
 export const isHashedAsset = (key: string): boolean => key.startsWith("assets/");
 
-/** One year, and never revalidated: the URL itself changes when the content does. */
 export const IMMUTABLE = "public, max-age=31536000, immutable";
-/**
- * Cacheable, but checked with the origin before each reuse. CloudFront turns
- * that check into a conditional request to S3, so a publish becomes visible
- * without an invalidation.
- */
+// Checked with the origin before each reuse, so a publish shows up without an invalidation.
 export const REVALIDATE = "public, max-age=0, must-revalidate";
 
 export const cacheControlFor = (key: string): string => (isHashedAsset(key) ? IMMUTABLE : REVALIDATE);
@@ -83,9 +72,9 @@ export function planPublish(input: {
   local: LocalFile[];
   remote: RemoteObject[];
   now: Date;
-  /** Hashed assets missing from this build are kept this long for readers who still hold an older page. */
+  /** How long orphaned assets stay, for readers who still hold an older page. */
   assetRetentionDays: number;
-  /** Upload every file even when its bytes are unchanged, to rewrite headers. */
+  /** Upload unchanged files too, to rewrite headers. */
   force: boolean;
 }): PublishPlan {
   if (!input.local.some((file) => file.key === "index.html")) {

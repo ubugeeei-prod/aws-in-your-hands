@@ -13,8 +13,7 @@ const chapterItems = (from: number, to: number): SidebarItem[] =>
       link: chapterLink(chapter.id, chapter.slug),
     }));
 
-// Links are written as default-locale (ja) source paths. Ox Content rewrites
-// each one to the sibling page of the locale being rendered.
+// Links are ja source paths. Ox Content rewrites each to the locale being rendered.
 export const sidebar: SidebarItem[] = [
   {
     text: { ja: "はじめに", en: "Start Here" },

@@ -1,9 +1,8 @@
 // vp run pricing:refresh
 //
-// Re-downloads the AWS Price List bulk offers and rewrites the `tiers` of
-// every price already recorded in data/pricing/unit-prices.json, matching by
-// SKU. It reads a public endpoint and needs no AWS credentials. Review the
-// resulting diff: a changed number changes the worked examples in the book.
+// Rewrites the `tiers` of every recorded price from the AWS Price List bulk
+// offers, by SKU. Public endpoint, no credentials. Review the diff: a changed
+// number changes the worked examples in the book.
 import { readFileSync, writeFileSync } from "node:fs";
 import { z } from "zod";
 import { repoRoot } from "../data/load.ts";

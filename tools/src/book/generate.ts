@@ -1,9 +1,8 @@
 // vp run book:generate          writes the generated pages
 // vp run book:generate:check    fails when a generated page is out of date
 //
-// Pages that are a rendering of data/*.json are generated for both locales
-// from the same record, so the Japanese and English versions cannot disagree
-// about a price, a source, or a validation status.
+// Both locales are rendered from the same data/*.json record, so they cannot
+// disagree about a price, a source, or a validation status.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {

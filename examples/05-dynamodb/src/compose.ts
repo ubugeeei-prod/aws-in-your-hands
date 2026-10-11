@@ -14,10 +14,8 @@ export function createRepository(env: Env): NoteRepository {
   if (env.NOTES_STORE === "memory") {
     return new InMemoryNoteRepository();
   }
-  // Workers hands a D1 database or KV namespace to the code as a binding.
-  // Here the connection is assembled by hand from three separate things: the
-  // table's name (configuration), the SDK client (code), and permission to use
-  // the table (the execution role in AWS, your own credentials on a laptop).
+  // No binding here: the table's name comes from configuration, and permission
+  // from the execution role in AWS or your own credentials on a laptop.
   const client = new DynamoDBClient(
     env.DYNAMODB_ENDPOINT === undefined
       ? {}

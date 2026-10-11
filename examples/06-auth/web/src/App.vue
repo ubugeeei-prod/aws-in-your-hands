@@ -20,9 +20,8 @@ const theirs = ref<Note>();
 const localUser = ref("alice");
 const me = ref("");
 
-// The access token lives in this variable and nowhere else: not in
-// localStorage, not in a cookie. Script injected into the page could still
-// read it while the page is open, but nothing persists for it to find later.
+// Memory only: not localStorage, not a cookie. An injected script could read
+// it while the page is open, but nothing persists for it to find later.
 let session: Session | undefined;
 let auth: AuthProvider | undefined;
 let api: NotesClient | undefined;
@@ -41,7 +40,7 @@ window.addEventListener("popstate", () => {
 
 function fail(error: unknown): void {
   if (error instanceof ApiError && error.code === "unauthenticated") {
-    // The token expired or was rejected. Forget it and ask the user to sign in again.
+    // Expired or rejected: forget the token and ask for sign-in again.
     session = undefined;
     status.value = "signed-out";
     problem.value = "Your session has ended. Sign in again.";
@@ -108,8 +107,8 @@ async function save(): Promise<void> {
     if (outcome.status === "updated") {
       go({ name: "list" });
     } else {
-      // Someone (another tab, another device) saved first. Nothing of ours was
-      // written. Show both and let the user decide; do not pick for them.
+      // Someone saved first, and nothing of ours was written. Show both and
+      // let the user decide.
       theirs.value = outcome.current;
     }
   } catch (error) {
@@ -118,7 +117,7 @@ async function save(): Promise<void> {
 }
 
 function keepMine(): void {
-  // Base the next save on the version that is stored now. The text boxes still hold the user's text.
+  // The next save builds on the stored version. The text boxes keep the user's text.
   editing.value = theirs.value;
   theirs.value = undefined;
 }

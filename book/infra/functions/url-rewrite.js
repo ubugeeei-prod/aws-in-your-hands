@@ -1,13 +1,5 @@
-// CloudFront Functions (JavaScript runtime 2.0), viewer-request.
-//
-// Ox Content writes each page as <path>/index.html. A private S3 origin does
-// not resolve directories, so this function maps the URL a reader types to the
-// object key that exists:
-//   /ja/chapters/03-spa/   -> /ja/chapters/03-spa/index.html   (rewrite)
-//   /ja/chapters/03-spa    -> 301 /ja/chapters/03-spa/         (one URL per page)
-//   /assets/app-1a2b.css   -> unchanged
-// Paths that match no object are left for the distribution's 404 response.
-// CloudFront looks this function up by name; nothing in the file calls it.
+// A private S3 origin does not resolve directories: /dir/ becomes /dir/index.html, /dir redirects to /dir/.
+// CloudFront calls handler by name; nothing in this file does.
 // oxlint-disable-next-line no-unused-vars
 function handler(event) {
   var request = event.request;

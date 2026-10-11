@@ -11,18 +11,14 @@ export type CognitoSettings = {
 };
 
 // #region cognito
-/**
- * OAuth 2.0 authorization code grant with PKCE against a Cognito user pool,
- * written against the standard endpoints with a general-purpose OAuth
- * library. Nothing here is specific to an AWS SDK or to Amplify.
- */
+// Authorization code grant with PKCE against the standard OAuth endpoints.
+// No AWS SDK, no Amplify.
 export function createCognitoProvider(
   settings: CognitoSettings,
   storage: TabStorage,
   navigate: (url: string) => void,
 ): AuthProvider {
-  // The endpoints of a user pool domain are fixed paths, so they are stated
-  // here rather than discovered with an extra request at start-up.
+  // A user pool domain has fixed endpoint paths, so no discovery request is needed.
   const server: oauth.AuthorizationServer = {
     issuer: settings.issuer,
     authorization_endpoint: `${settings.domain}/oauth2/authorize`,
@@ -44,7 +40,7 @@ export function createCognitoProvider(
       url.searchParams.set("redirect_uri", settings.redirectUri);
       url.searchParams.set("scope", "openid");
       url.searchParams.set("state", state);
-      // Only the hash of the verifier leaves the browser at this point.
+      // Only the hash of the verifier leaves the browser here.
       url.searchParams.set("code_challenge", await oauth.calculatePKCECodeChallenge(codeVerifier));
       url.searchParams.set("code_challenge_method", "S256");
       navigate(url.toString());
@@ -71,9 +67,8 @@ export function createCognitoProvider(
         pending.codeVerifier,
       );
       const tokens = await oauth.processAuthorizationCodeResponse(server, client, response, { requireIdToken: true });
-      // The ID token is checked by the library and then dropped. The API is
-      // called with the access token; the refresh token is not kept, so a
-      // session ends when the access token does.
+      // The response also carries an ID token (checked by the library) and a
+      // refresh token. Neither is kept, so the session ends with the access token.
       return { accessToken: tokens.access_token, expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000 };
     },
 

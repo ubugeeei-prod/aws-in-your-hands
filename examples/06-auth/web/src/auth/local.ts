@@ -3,11 +3,7 @@ import type { AuthProvider } from "./provider.ts";
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) });
 
-/**
- * Development sign-in against `vp run dev:app:api`: ask the local API for a
- * token for any user name. There is no password because there is no user
- * directory; this exists to run the app as two different users on one laptop.
- */
+/** Development sign-in: the local API hands out a token for any user name. No password. */
 export function createLocalProvider(apiUrl: string, fetchImpl: typeof fetch = fetch): AuthProvider {
   return {
     mode: "local",

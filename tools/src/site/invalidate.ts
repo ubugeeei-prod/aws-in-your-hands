@@ -1,9 +1,4 @@
-// vp run book:invalidate / spa:invalidate
-//   node tools/src/site/invalidate.ts <appDir> <stack> [path ...]
-//
-// A normal publish needs no invalidation, because pages are revalidated on
-// every request. This is a recovery tool for the cases that rule does not
-// cover: a cached error response, or objects published with a wrong header.
+// Recovery only. A normal publish needs no invalidation.
 import { resolve } from "node:path";
 import {
   CloudFrontClient,

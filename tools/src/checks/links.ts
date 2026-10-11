@@ -1,9 +1,8 @@
 // vp run links:check
 //   node tools/src/checks/links.ts <built site directory>
 //
-// Follows every internal link and asset reference in the built HTML and
-// fails when its target was not generated. It also confirms that each page
-// exists at the object key the CloudFront function will ask S3 for.
+// Every internal link and asset in the built HTML must have been generated,
+// at the object key the CloudFront function will ask S3 for.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 

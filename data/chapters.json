@@ -24,9 +24,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-11",
       "sourceIds": ["cloudflare-workers-local-dev", "cloudflare-d1-local-dev", "cloudflare-workers-ai-bindings"]
@@ -45,9 +45,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-11",
       "sourceIds": ["aws-cli-login", "aws-budgets-managing-costs", "aws-free-tier", "iam-best-practices"]
@@ -66,9 +66,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -102,9 +102,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -135,9 +135,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -168,9 +168,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -208,9 +208,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [

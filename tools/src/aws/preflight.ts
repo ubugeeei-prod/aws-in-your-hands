@@ -11,11 +11,7 @@ export async function fetchIdentity(region: string): Promise<Identity> {
 
 export type Preflight = { target: Target; identity: Identity };
 
-/**
- * Prints what is about to be touched and stops when the credentials in use do
- * not belong to the intended account. Every task that observes or changes AWS
- * starts here.
- */
+/** Every task that touches AWS starts here, so the wrong account stops it early. */
 export async function preflight(options: {
   access: Access;
   action: string;

@@ -1,8 +1,5 @@
 // vp run test:local:dynamodb
-//
-// Runs the repository contract against DynamoDB Local. The test file skips
-// itself when DYNAMODB_ENDPOINT is missing, and a skipped test looks like a
-// pass at a glance, so this wrapper makes the missing endpoint a failure.
+// A skipped test looks like a pass at a glance, so a missing endpoint fails here.
 import { spawnSync } from "node:child_process";
 
 const endpoint = process.env["DYNAMODB_ENDPOINT"];

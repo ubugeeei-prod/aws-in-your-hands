@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { runCdkd } from "./run-cdkd.ts";
 
-// `cdkd state show <stack> --json` prints { state, lock }. Only the outputs
-// map is read here; everything else in the state file is cdkd's business.
+// `cdkd state show <stack> --json` prints { state, lock }. Only outputs are read.
 const stateShowSchema = z.object({
   state: z.object({
     stackName: z.string(),
@@ -21,8 +20,7 @@ export function parseOutputs(stdout: string): Record<string, string> {
 }
 
 export function requireOutput(outputs: Record<string, string>, name: string): string {
-  // Accept both "Name" and "<Stack>.Name" so that a change in how cdkd keys
-  // outputs is reported as a clear error rather than as a missing bucket.
+  // "Name" or "<Stack>.Name": if cdkd changes how it keys outputs, fail clearly.
   const matches = Object.entries(outputs).filter(([key]) => key === name || key.endsWith(`.${name}`));
   const first = matches[0];
   if (first === undefined || matches.length > 1) {

@@ -10,7 +10,7 @@ describe("stack outputs", () => {
     expect(parseOutputs(stdout)).toEqual({ DistributionId: "E123" });
   });
 
-  it("fails loudly on output that is not the documented shape", () => {
+  it("rejects output of an unexpected shape", () => {
     expect(() => parseOutputs("Stack not found")).toThrow(/did not print JSON/);
     expect(() => parseOutputs(JSON.stringify({ outputs: {} }))).toThrow();
   });
@@ -20,7 +20,7 @@ describe("stack outputs", () => {
     expect(requireOutput({ "AihBookSite.DistributionId": "E1" }, "DistributionId")).toBe("E1");
   });
 
-  it("refuses to guess when the output is missing or ambiguous", () => {
+  it("refuses a missing or ambiguous output", () => {
     expect(() => requireOutput({}, "DistributionId")).toThrow(/found 0/);
     expect(() => requireOutput({ "A.DistributionId": "E1", "B.DistributionId": "E2" }, "DistributionId")).toThrow(
       /found 2/,

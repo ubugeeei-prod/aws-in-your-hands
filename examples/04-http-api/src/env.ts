@@ -1,12 +1,8 @@
 import { z } from "zod";
 
 // #region env
-// process.env is `Record<string, string | undefined>`: every value is
-// optional and a string, whatever the code wishes. It is parsed once, at
-// start-up, so that a missing or misspelled setting fails the first
-// invocation with a clear message instead of misbehaving on some later one.
 const envSchema = z.object({
-  // `z.url()` alone accepts "localhost:5173" (a URL whose scheme is "localhost").
+  // z.url() alone would accept "localhost:5173" (scheme "localhost").
   ALLOWED_ORIGIN: z.url({ protocol: /^https?$/ }),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   STAGE: z.string().min(1).default("local"),

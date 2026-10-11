@@ -5,9 +5,7 @@ export const noteSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(120),
   body: z.string().max(10_000),
-  // Starts at 1 and grows by exactly one on every successful update. A caller
-  // sends back the version it last saw; the update is refused if someone else
-  // has saved in between.
+  // Starts at 1, grows by one per successful update. Callers send back the one they last saw.
   version: z.number().int().positive(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -51,8 +49,7 @@ export const errorSchema = z.object({
     message: z.string(),
     requestId: z.string(),
     issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
-    // Sent with `conflict`: the note as it is stored now, so that the caller
-    // can show both versions or check whether its own earlier attempt landed.
+    // Sent with `conflict`: the note as it is stored now.
     current: noteSchema.optional(),
   }),
 });

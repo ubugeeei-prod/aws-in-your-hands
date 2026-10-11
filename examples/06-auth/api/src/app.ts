@@ -46,7 +46,7 @@ export function createApp(deps: AppDeps) {
       method: c.req.method,
       path: c.req.path,
       status: c.res.status,
-      // Who made the request, for the audit trail. The token itself is never logged.
+      // For the audit trail. Never the token itself.
       sub: c.get("identity")?.sub,
       durationMs: deps.now() - startedAt,
     });
@@ -87,8 +87,7 @@ export function createApp(deps: AppDeps) {
   return (
     app
       // #region guard
-      // Authentication: every route registered after this middleware needs to
-      // know who is asking. /health is registered before it and stays open.
+      // /health is registered first and stays open. Every route below needs an identity.
       .get("/health", (c) => c.json({ status: "ok" as const, stage: deps.env.STAGE }))
       .use(async (c, next) => {
         const identity = await deps.authenticate({ event: c.env?.event, authorization: c.req.header("authorization") });
@@ -100,11 +99,8 @@ export function createApp(deps: AppDeps) {
       })
       // #endregion guard
       // #region routes
-      // Authorization: there is no separate "may this user touch this note?"
-      // check to forget. The owner passed to the service is always the
-      // caller's own `sub`, taken from the verified token and from nowhere
-      // else: not from the path, the query, or the body. Notes are stored
-      // under their owner, so another user's note is simply not there to be found.
+      // The owner is always the caller's own `sub`, never the path, query, or
+      // body. Notes live under their owner, so there is no separate check to forget.
       .get("/me", (c) => c.json({ sub: c.get("identity").sub }))
       .get(
         "/notes",

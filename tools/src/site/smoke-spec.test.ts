@@ -43,13 +43,13 @@ describe("smoke checks", () => {
     expect(check.verify(htmlPage('<div id="app">'))).toMatch(/expected status 404/);
   });
 
-  it("accepts a SPA deep link served by the application shell", () => {
+  it("accepts a SPA deep link", () => {
     expect(
       find("spa", "deep link falls back to the application shell").verify(htmlPage('<div id="app"></div>')),
     ).toBeNull();
   });
 
-  it("fails while an older revision is still being served", () => {
+  it("fails while an older revision is served", () => {
     const check = revisionCheck("abc123");
     const observed = (revision: string): Observed => ({ status: 200, headers: {}, body: JSON.stringify({ revision }) });
     expect(check.verify(observed("old000"))).toBe("site serves revision old000");
@@ -62,7 +62,7 @@ describe("smoke checks", () => {
     expect(check.verify({ status: 200, headers: {}, body: "" })).toMatch(/expected a redirect/);
   });
 
-  it("finds a hashed asset from the page that links to it", () => {
+  it("finds a hashed asset from a page", () => {
     const check = assetCheckFrom('<link rel="stylesheet" href="/assets/ox-content-core-0509418ce6.css">');
     expect(check).toMatchObject({ path: "/assets/ox-content-core-0509418ce6.css" });
     expect(assetCheckFrom("<p>no assets</p>")).toBe("the page links to no /assets/ file");

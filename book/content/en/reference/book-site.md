@@ -1,17 +1,17 @@
 ---
 title: Reproduce This Site
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # Reproduce This Site
 
-This book's site is built from the same parts the book describes. Ox Content generates static HTML, the files are placed in a private S3 bucket, and CloudFront serves them. The infrastructure is defined with CDK in TypeScript and created with cdkd.
+The site you are reading is built from the same parts the book describes. Ox Content generates static HTML, the files go into a private S3 bucket, and CloudFront serves them. The infrastructure is defined with CDK in TypeScript and created with cdkd.
 
-This page gives the steps for rebuilding the same site in your own account, and explains the implementation. It assumes you have read [Chapter 02](/en/chapters/02-toolchain.md) and [Chapter 03](/en/chapters/03-spa.md).
+This page walks through rebuilding the same site in your own account, and looks at how it is put together. It assumes you have read [Chapter 02](/en/chapters/02-toolchain.md) and [Chapter 03](/en/chapters/03-spa.md).
 
-**Verification status:** The build, the link check, and the CDK synth and assertions are verified locally. Deploying to AWS, publishing, and the smoke test have not been run. They are unverified. This site does not have a public URL yet.
+To be honest up front: what has been checked locally is the build, the link check, and the CDK synth and assertions. Deploying to AWS, publishing, and the smoke test have not been run yet. This site does not have a public URL yet either.
 
-## Architecture
+## The big picture
 
 <!-- section: book.architecture -->
 
@@ -30,14 +30,10 @@ S3 bucket (private)  <--  CloudFront distribution  <--  Reader
                             403/404 from S3 -> /404.html with status 404
 ```
 
-The book site and the SPA from Chapter 03 are separate things. They are served from separate stacks, separate buckets, and separate URLs.
+The book site and the SPA from Chapter 03 are separate things, with separate stacks, separate buckets, and separate URLs.
 
-| | Book site | SPA from Chapter 03 |
-| --- | --- | --- |
-| stack | `AihBookSite` | `AihSpa` |
-| Definition | `book/infra/` | `examples/03-spa/infra/` |
-| What it serves | HTML per page (SSG) | A single `index.html` (SPA) |
-| Build | `vp run build:book` | `vp run build:spa` |
+- The book site is the stack `AihBookSite`, defined in `book/infra/`. It serves HTML per page (SSG) and is built with `vp run build:book`
+- The SPA from Chapter 03 is the stack `AihSpa`, defined in `examples/03-spa/infra/`. It serves a single `index.html` (SPA) and is built with `vp run build:spa`
 
 ## Content and build
 
@@ -51,11 +47,11 @@ vp run preview:book
 
 `dev:book` is a development server that reloads each time you save. `build:book` writes static files to `book/dist/`. None of them touches AWS.
 
-The configuration is the one file below.
+The configuration is this one file.
 
 <<< @/book/vite.config.ts
 
-The Ox Content features in use are listed below. Each is present in the type definitions of the pinned version (3.2.14) and has been confirmed with an actual build.
+Here are the Ox Content features in use. Each is present in the type definitions of the pinned version (3.2.14) and has been confirmed with an actual build.
 
 | Feature | Configuration |
 | --- | --- |
@@ -67,15 +63,15 @@ The Ox Content features in use are listed below. Each is present in the type def
 | Dark mode, mobile menu | Included in the default theme |
 | Importing code from real files | `codeImports`. Written as `<<< @/path{region}` |
 
-All code in the text is imported from real files with the last feature. The Japanese and English versions point at the same range of the same file.
+All code in the text is imported from real files with the last feature. That way the Japanese and English versions point at the same range of the same file.
 
 The sidebar is built from the chapter list (`data/chapters.json`).
 
 <<< @/book/site.ts
 
-### Generated pages
+### Pages nobody writes by hand
 
-The pricing, sources, glossary, validation record, and toolchain pages, and the outlines of unwritten chapters, are not written by hand. Both the Japanese and English versions are generated from the JSON in `data/`.
+The pricing, sources, glossary, validation record, and toolchain pages, and the outlines of unwritten chapters. None of these is written by hand. Both the Japanese and English versions are generated from the JSON in `data/`.
 
 ```bash
 vp run book:generate
@@ -84,13 +80,13 @@ vp run book:generate:check
 
 `book:generate:check` fails if the generated files are out of date. `build:book` runs it first.
 
-### Checking that the two languages and the code stay in sync
+### Have the two languages and the code drifted apart?
 
 ```bash
 vp run content:check
 ```
 
-It checks the following, entirely on your machine.
+This check runs entirely on your machine. Here is what it looks at.
 
 - Every page exists in both Japanese and English
 - Section markers, code imports, diagrams, the number of headings, and the number of code blocks match between the two languages
@@ -102,20 +98,20 @@ It checks the following, entirely on your machine.
 
 <!-- section: book.routing -->
 
-Ox Content outputs `ja/chapters/03-spa.md` as `ja/chapters/03-spa/index.html`. Links within pages take the form `/ja/chapters/03-spa/index.html`. The URL a reader types, or a link from another site, will more likely be `/ja/chapters/03-spa/`.
+Ox Content outputs `ja/chapters/03-spa.md` as `ja/chapters/03-spa/index.html`. Links within pages take the form `/ja/chapters/03-spa/index.html`. But the URL a reader types, or a link from another site, will more likely be `/ja/chapters/03-spa/`.
 
-A private S3 origin does not map a directory to `index.html`. That is a feature of S3 static website hosting, and using it means the bucket cannot be protected with OAC. So a CloudFront Function does the mapping.
+A private S3 origin does not map a directory to `index.html` for you. That is a feature of S3 static website hosting, and using it means the bucket cannot be protected with OAC. So a CloudFront Function does the mapping.
 
 <<< @/book/infra/functions/url-rewrite.js
 
-| URL the reader requests | What the function does |
-| --- | --- |
-| `/ja/chapters/03-spa/` | Rewrites it to `/ja/chapters/03-spa/index.html` |
-| `/ja/chapters/03-spa` | Redirects to `/ja/chapters/03-spa/` with a 301. One page does not get two URLs |
-| `/assets/...css`, `/search-index.json` | Nothing |
-| A page that does not exist | The object for the rewritten path is not in S3, so the result is a 404 |
+Here is what the function does for each URL a reader requests.
 
-Unlike the SPA in Chapter 03, the site **does not return `index.html` for a URL that does not exist**. In a book, doing so would make every broken link look like the top page.
+- `/ja/chapters/03-spa/` is rewritten to `/ja/chapters/03-spa/index.html`
+- `/ja/chapters/03-spa` is redirected to `/ja/chapters/03-spa/` with a 301, so that one page does not get two URLs
+- `/assets/...css` and `/search-index.json` are left alone
+- For a page that does not exist, the object for the rewritten path is not in S3, so the result is a 404
+
+Unlike the SPA in Chapter 03, the site does **not return `index.html`** for a URL that does not exist. In a book, doing so would make every broken link look like the top page.
 
 The 404 is handled on the distribution.
 
@@ -123,7 +119,7 @@ The 404 is handled on the distribution.
 
 This bucket policy allows only `s3:GetObject`, so S3 returns 403 for an object that does not exist. Both 403 and 404 are replaced with the generated `404.html` and status code 404.
 
-The function's test loads and runs the very file that gets deployed. After the build, a check confirms that the target of every internal link exists.
+The function's test loads and runs the very file that gets deployed. After the build, another check confirms that the target of every internal link exists.
 
 ```bash
 vp run links:check
@@ -139,25 +135,25 @@ vp run links:check
 
 <<< @/book/infra/lib/book-site-stack.ts{outputs}
 
-The cache and response headers use AWS managed policies. A `CachePolicy` or `ResponseHeadersPolicy` that you define yourself is handled through the Cloud Control API in the pinned version of cdkd. Using fewer resource types leaves less to verify.
+The cache and response headers use AWS managed policies. A `CachePolicy` or `ResponseHeadersPolicy` that you define yourself is handled through the Cloud Control API in the pinned version of cdkd. The fewer resource types in use, the less there is to verify.
 
-The site uses five resource types. A test pins this list, and adding a type makes the test fail. This enforces a procedure: before adding a type, confirm that the pinned version of cdkd can create it and read it back.
+The site uses five resource types. A test pins this list, and adding a type makes the test fail. Before adding a type, you confirm that the pinned version of cdkd can create it and read it back. The test is there so that step cannot be skipped.
 
-| Type | Handling in cdkd 0.296.28 (confirmed in the source) |
-| --- | --- |
-| `AWS::S3::Bucket`, `AWS::S3::BucketPolicy` | Dedicated implementation |
-| `AWS::CloudFront::Distribution`, `AWS::CloudFront::OriginAccessControl` | Dedicated implementation |
-| `AWS::CloudFront::Function` | Through the Cloud Control API. **An actual deploy has not been confirmed** |
+How cdkd 0.296.28 handles each type was confirmed in its source.
 
-CDK's `BucketDeployment` (a construct that places files in a bucket at deploy time) is not used. This keeps publishing content separate from updating infrastructure.
+- `AWS::S3::Bucket` and `AWS::S3::BucketPolicy` have a dedicated implementation
+- `AWS::CloudFront::Distribution` and `AWS::CloudFront::OriginAccessControl` also have a dedicated implementation
+- `AWS::CloudFront::Function` goes through the Cloud Control API. An actual deploy of this one has not been confirmed yet
 
-### Notes on cdkd
+CDK's `BucketDeployment` (a construct that places files in a bucket at deploy time) is not used. The point is to keep publishing content separate from updating infrastructure.
+
+### Ground rules for living with cdkd
 
 cdkd's official documentation describes cdkd as intended for development and testing, and recommends the AWS CDK CLI for production (checked 2026-10-11). This book's site is managed with cdkd as the author's choice. Given that, the following rules apply.
 
 - **Do not manage this stack alternately with CloudFormation.** Create, update, diff, drift, and delete all go through the cdkd path
 - **Do not delete the state bucket (`cdkd-state-<account ID>`).** Versioning is enabled, and a state overwritten by mistake can be restored from an earlier S3 version
-- **If a deploy fails, cdkd by default deletes what it created and returns what it updated to the previous configuration** (according to the source of the pinned version; the actual behavior has not been confirmed)
+- **Know what happens when a deploy fails.** By default cdkd deletes what it created and returns what it updated to the previous configuration (according to the source of the pinned version; the actual behavior has not been confirmed)
 
 ## Publishing
 
@@ -170,7 +166,7 @@ vp run book:infra:diff
 vp run book:infra:deploy
 ```
 
-Publish the content.
+Then publish the content.
 
 ```bash
 vp run book:publish:plan
@@ -178,7 +174,7 @@ vp run book:publish
 vp run book:smoke
 ```
 
-The tasks relate to each other as follows.
+There are a lot of tasks, so here they are in a table.
 
 | Task | What it does | AWS |
 | --- | --- | --- |
@@ -198,9 +194,9 @@ Every task that reads or changes AWS has `cache: false`. None is called from eve
 
 `book:infra:deploy` alone does not update the text. `book:publish` alone does not change the configuration of the bucket or the distribution. The publish script neither creates the bucket or distribution nor changes their configuration.
 
-The cache policy, the upload order, and the handling of a failure partway through use the same implementation (`tools/src/site/`) as "Publishing" in Chapter 03. HTML and `search-index.json` are revalidated with the origin every time, and everything under `assets/` is cached for one year. A normal publish needs no invalidation.
+The cache policy, the upload order, and the handling of a failure partway through use the same implementation (`tools/src/site/`) as "Publish" in Chapter 03. HTML and `search-index.json` are revalidated with the origin every time, and everything under `assets/` is cached for one year. A normal publish needs no invalidation.
 
-`book:smoke` checks the following. Publishing counts as complete when this passes, not when the CLI exits successfully.
+Here is what `book:smoke` checks. Publishing counts as complete when this passes, not when the CLI exits successfully.
 
 - `/`, `/ja/`, `/en/`, and a chapter page in each language return 200 with the correct `<html lang>`
 - A URL without the trailing `/` is redirected with a 301
@@ -211,7 +207,7 @@ The cache policy, the upload order, and the handling of a failure partway throug
 
 ### Rolling back a published version
 
-Versioning is not enabled on the bucket. To go back to an earlier version, build the earlier commit and publish it again.
+Versioning is not enabled on the bucket. When you want to go back to an earlier version, build the earlier commit and publish it again.
 
 ```bash
 git switch --detach <commit to restore>
@@ -226,16 +222,16 @@ nix develop --command vp run book:smoke
 
 Not supported yet. When it is added, the Route 53 hosted zone and the ACM certificate in `us-east-1` will be defined in the same `book/infra/`. At that point, setting `AIH_BOOK_SITE_URL` at build time makes Ox Content output canonical and hreflang links. While there is no real URL, it is left unset.
 
-## Cost
+## What it costs
 
-The calculation is the same as in Chapter 03. [Pricing Worksheets](/en/reference/pricing.md) has the following two worked examples.
+The calculation is the same as in Chapter 03. [Pricing Worksheets](/en/reference/pricing.md) has two worked examples.
 
 - A month in which the site is published and nobody reads it: USD 0.00 at list price (storing 50 MB in S3 comes to less than 0.01)
 - A month assuming 20,000 page views: USD 0.50 at list price, or USD 0.03 after subtracting CloudFront's monthly free allowance
 
 Access logs, AWS WAF, and a custom domain are not used.
 
-## Cleanup
+## Clean up
 
 <!-- section: book.cleanup -->
 
@@ -244,16 +240,19 @@ vp run book:unpublish --yes
 vp run book:infra:destroy
 ```
 
-What remains:
+What remains is the state bucket, asset bucket, and ECR repository created by cdkd's bootstrap (Chapter 02). Delete those with the procedure in Chapter 02 once no other stack remains. Nothing else is left. This stack creates no logs.
 
-- The state bucket, asset bucket, and ECR repository created by cdkd's bootstrap (Chapter 02). Delete them with the procedure in Chapter 02 once no other stack remains
-- Nothing else remains. This stack creates no logs
-
-## Publishing from CI
+## If you publish from CI
 
 When you publish from CI instead of a person's terminal, use the same Nix lock and the same `vp run` tasks. An example is in `docs/examples/book-publish.yml`. For AWS authentication, use short-lived credentials obtained through OIDC, not long-term access keys. The definition of that role is to be covered in Chapter 20 (planned) and is not in this repository yet.
 
-## Source map for this page
+::: details Verification notes for this page
+
+**Checked locally.** The build, the link check, and the CDK synth and assertions.
+
+**Not checked yet.** Deploying to AWS, publishing, and the smoke test have not been run. An actual deploy of `AWS::CloudFront::Function`, and what cdkd really does when a deploy fails, are also unconfirmed. This site does not have a public URL yet.
+
+**Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
@@ -261,4 +260,6 @@ When you publish from CI instead of a person's terminal, use the same Nix lock a
 | URL handling | `book/infra/functions/url-rewrite.js`, `book/infra/test/url-rewrite.test.ts`, `tools/src/checks/links.ts` | `test:unit`, `links:check` |
 | Infrastructure | `book/infra/lib/book-site-stack.ts`, `book/infra/bin/app.ts`, `book/infra/cdk.json`, `book/infra/test/book-site-stack.test.ts` | `book:infra:synth`, `book:infra:diff`, `book:infra:deploy`, `book:infra:drift` |
 | Publishing | `tools/src/site/` | `book:publish:plan`, `book:publish`, `book:smoke`, `book:invalidate` |
-| Cleanup | `tools/src/site/unpublish.ts` | `book:unpublish`, `book:infra:destroy` |
+| Clean up | `tools/src/site/unpublish.ts` | `book:unpublish`, `book:infra:destroy` |
+
+:::

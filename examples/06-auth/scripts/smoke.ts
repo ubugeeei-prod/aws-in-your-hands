@@ -1,10 +1,8 @@
 // vp run app:smoke:api
 //   node scripts/smoke.ts [--url https://xxxx.execute-api.ap-northeast-1.amazonaws.com]
 //
-// Checks what can be checked without a human signing in: that the API is up
-// and that it turns away callers it cannot identify. With AIH_ACCESS_TOKEN set
-// to an access token copied from a signed-in browser session, it also runs
-// the signed-in path. The token is read from the environment and never printed.
+// The signed-in path runs only when AIH_ACCESS_TOKEN holds an access token.
+// The token is never printed.
 import { parseArgs } from "node:util";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";

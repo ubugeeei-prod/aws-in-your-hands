@@ -43,8 +43,7 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
         body.data.error.current,
       );
     }
-    // API Gateway answers a missing, expired, or invalid token itself, before
-    // the function runs, with its own body rather than this API's error shape.
+    // API Gateway rejects a bad token itself, with its own body, not this API's error shape.
     throw new ApiError(
       response.status,
       response.status === 401 || response.status === 403 ? "unauthenticated" : "unexpected_response",
@@ -60,10 +59,7 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
 }
 
 // #region client
-/**
- * @param getToken Called before every request. Returning undefined sends the
- *   request without credentials, which the API answers with 401.
- */
+/** `getToken` runs before every request. `undefined` sends no credentials, and the API answers 401. */
 export function createNotesClient(
   baseUrl: string,
   getToken: () => string | undefined,

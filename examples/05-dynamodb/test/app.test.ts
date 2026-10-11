@@ -47,7 +47,7 @@ describe("notes API with versions", () => {
     });
   });
 
-  it("answers 409 with the stored note when the caller's version is stale", async () => {
+  it("answers 409 with the stored note for a stale version", async () => {
     const { json } = setup();
     const created = noteSchema.parse(await (await json("POST", "/notes", { title: "shared" })).json());
     await json("PUT", `/notes/${created.id}`, { title: "from tab A", body: "", expectedVersion: 1 });
@@ -59,7 +59,7 @@ describe("notes API with versions", () => {
     expect(body.error.current).toMatchObject({ version: 2, title: "from tab A" });
   });
 
-  it("requires expectedVersion: an update that does not say what it was based on is refused", async () => {
+  it("requires expectedVersion", async () => {
     const { json } = setup();
     const created = noteSchema.parse(await (await json("POST", "/notes", { title: "x" })).json());
     const response = await json("PUT", `/notes/${created.id}`, { title: "y", body: "" });
@@ -74,7 +74,7 @@ describe("notes API with versions", () => {
     expect((await json("PUT", "/notes/missing", { title: "y", body: "", expectedVersion: 1 })).status).toBe(404);
   });
 
-  it("pages through the list newest first without repeating or dropping a note", async () => {
+  it("pages newest first, every note exactly once", async () => {
     const { app, json } = setup();
     for (const title of ["one", "two", "three", "four", "five"]) {
       await json("POST", "/notes", { title });
@@ -103,7 +103,7 @@ describe("notes API with versions", () => {
 });
 
 describe("typed client and the lost response", () => {
-  it("returns a real conflict as a conflict, with the other writer's note", async () => {
+  it("returns a real conflict with the other writer's note", async () => {
     const { client } = setup();
     const note = await client.create({ title: "shared", body: "" });
     await client.update(note.id, { title: "theirs", body: "", expectedVersion: 1 });
@@ -112,7 +112,7 @@ describe("typed client and the lost response", () => {
     expect(outcome).toMatchObject({ status: "conflict", current: { title: "theirs", version: 2 } });
   });
 
-  it("recognizes its own write when the first response was lost and the retry conflicts", async () => {
+  it("recognizes its own write after a lost response", async () => {
     const { viaApp } = setup();
     // The network delivers the first PUT to the server, then loses the answer.
     let dropNextPutResponse = true;
@@ -137,10 +137,9 @@ describe("typed client and the lost response", () => {
     expect((await client.get(note.id)).version).toBe(2);
   });
 
-  it("does not have that protection for create: a retried POST makes a second note", async () => {
-    // Recorded on purpose. A POST carries nothing that identifies "the same
-    // request", so the server cannot tell a retry from a new note. Chapter 08
-    // adds idempotency keys; until then this is how the API behaves.
+  it("makes a second note when a POST is retried", async () => {
+    // Recorded on purpose: a POST carries nothing that marks it as a retry.
+    // Chapter 08 adds idempotency keys.
     const { viaApp } = setup();
     let dropNextPostResponse = true;
     const flaky: typeof fetch = async (input, init) => {

@@ -6,7 +6,7 @@ import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 import { type App, createApp } from "./app.ts";
 import type { Authenticate } from "./identity.ts";
 
-/** Storage, logging, and the note rules are chapter 05's. Only `authenticate` differs between entry points. */
+/** Only `authenticate` differs between entry points. The rest is chapter 05's. */
 export function composeApp(source: Record<string, string | undefined>, authenticate: Authenticate): App {
   const env = parseEnv(source);
   return createApp({

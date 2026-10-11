@@ -10,10 +10,10 @@ const synth = (context: Record<string, unknown> = {}): Template =>
   );
 
 describe("HelloStack", () => {
-  it("creates one private, versioned bucket and nothing else", () => {
+  it("one private, versioned bucket, nothing else", () => {
     const template = synth();
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    // The SSL-only rule adds a bucket policy next to the bucket.
+    // enforceSSL adds the bucket policy.
     expect(
       Object.values(resources)
         .map((resource) => resource.Type)
@@ -30,18 +30,18 @@ describe("HelloStack", () => {
     });
   });
 
-  it("throws the practice bucket away with the stack", () => {
+  it("practice bucket goes with the stack", () => {
     synth().hasResource("AWS::S3::Bucket", { DeletionPolicy: "Delete" });
   });
 
-  it("keeps the prod bucket when the stack is deleted or the bucket is replaced", () => {
+  it("prod bucket survives delete and replace", () => {
     synth({ stage: "prod" }).hasResource("AWS::S3::Bucket", {
       DeletionPolicy: "Retain",
       UpdateReplacePolicy: "Retain",
     });
   });
 
-  it("carries the configured retention into the lifecycle rule", () => {
+  it("retention reaches the lifecycle rule", () => {
     synth({ noncurrentVersionDays: 30 }).hasResourceProperties("AWS::S3::Bucket", {
       LifecycleConfiguration: { Rules: [{ NoncurrentVersionExpiration: { NoncurrentDays: 30 }, Status: "Enabled" }] },
     });
