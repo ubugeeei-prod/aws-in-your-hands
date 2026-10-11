@@ -1,0 +1,19 @@
+{
+  "name": "aws-in-your-hands",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AWS in Your Hands: a bilingual online book, its own site infrastructure, and every example it explains",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "aws-cdk": "2.1145.0",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0"
+  },
+  "engines": {
+    "node": "^24.11.0"
+  },
+  "packageManager": "pnpm@10.34.5"
+}

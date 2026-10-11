@@ -1,0 +1,11 @@
+node_modules/
+.vp-home/
+dist/
+cdk.out/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+reports/
+artifacts/
+.DS_Store

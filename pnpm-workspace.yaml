@@ -1,0 +1,29 @@
+packages:
+  - book
+  - book-infra
+  - tools
+  - examples/*
+
+# Vite+ ships Vite and Vitest itself. These overrides make every package that
+# asks for `vite` or `vitest` resolve to the copies vite-plus 1.1.0 was built with.
+overrides:
+  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
+  vitest: 5.0.3
+
+# @ox-content/vite-plugin 3.2.14 declares `vite: ^0.2.8 || ^8.0.0`. The override
+# above resolves vite to vite-plus-core 1.1.0 (which bundles Vite 8.3.3), so the
+# declared range does not match the package version even though the API does.
+peerDependencyRules:
+  allowedVersions:
+    vite: 1.1.0
+
+# pnpm 10 runs no dependency install scripts unless they are listed under
+# onlyBuiltDependencies. None is needed here, and these two are declined on
+# purpose so that `vp install` prints no pending-approval warning:
+# - esbuild: its script swaps bin/esbuild for the native binary, which breaks
+#   the Node shim pnpm generated for it. Without the script, the JS launcher
+#   finds the same binary in the @esbuild/<platform> optional dependency.
+# - puppeteer: its script would download a browser this book never launches.
+ignoredBuiltDependencies:
+  - esbuild
+  - puppeteer
