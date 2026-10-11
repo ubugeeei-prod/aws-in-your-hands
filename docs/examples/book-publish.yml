@@ -1,0 +1,35 @@
+# Example only. Not executed; see README.md in this directory.
+#
+# Publishes the book's content to the bucket that `vp run book:infra:deploy`
+# created, then checks what readers actually receive. It does not create or
+# change infrastructure.
+name: publish book
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: book-publish # two publishes at once would interleave their upload phases
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      AIH_AWS_ACCOUNT_ID: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      AIH_AWS_REGION: ap-northeast-1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AIH_PUBLISH_ROLE_ARN }} # not defined in this repository yet
+          aws-region: ap-northeast-1
+      - run: nix develop --command vp install --frozen-lockfile
+      - run: nix develop --command vp run check:all
+      - run: nix develop --command vp run book:publish
+      - run: nix develop --command vp run book:smoke

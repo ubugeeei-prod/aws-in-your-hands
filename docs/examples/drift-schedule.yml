@@ -1,0 +1,43 @@
+# Example only. Not executed; see README.md in this directory.
+#
+# Detects drift once a day and fails the run unless every resource was
+# compared and matches. Detection only: it never reverts or accepts anything.
+name: drift
+
+on:
+  schedule:
+    - cron: "17 21 * * *" # 06:17 Asia/Tokyo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # lets the job request an OIDC token to exchange for AWS credentials
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [book] # add hello, spa, api for stacks you keep deployed
+    env:
+      AIH_AWS_ACCOUNT_ID: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      AIH_AWS_REGION: ap-northeast-1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AIH_DRIFT_ROLE_ARN }} # a read-only role; not defined in this repository yet
+          aws-region: ap-northeast-1
+      - run: nix develop --command vp install --frozen-lockfile
+      - name: Detect drift
+        # Exit codes: 0 clean, 10 drifted or deleted, 11 some resources not compared, 12 detection failed.
+        run: nix develop --command vp run ${{ matrix.name }}:infra:drift
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-${{ matrix.name }}
+          path: reports/drift/
+          if-no-files-found: warn

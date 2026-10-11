@@ -1,0 +1,20 @@
+# Example only. Not executed; see README.md in this directory.
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check-all:
+    runs-on: ubuntu-latest # x86_64-linux: the Nix expressions exist for it but are unverified
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Install dependencies exactly as locked
+        run: nix develop --command vp install --frozen-lockfile
+      - name: Run every check that needs no AWS
+        run: nix develop --command vp run check:all
