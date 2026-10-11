@@ -12,7 +12,7 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000002000",
           "description": "AWS Lambda - Total Requests for ARM - Asia Pacific (Tokyo)"
@@ -33,19 +33,19 @@
       "unit": "Lambda-GB-Second",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 7500000000.0,
+          "from": 0,
+          "to": 7500000000,
           "usd": "0.0000133334",
           "description": "AWS Lambda - Total Compute for ARM - Asia Pacific (Tokyo)-Tier-1"
         },
         {
-          "from": 7500000000.0,
-          "to": 18750000000.0,
+          "from": 7500000000,
+          "to": 18750000000,
           "usd": "0.0000120001",
           "description": "AWS Lambda - Total Compute for ARM - Asia Pacific (Tokyo)-Tier-2"
         },
         {
-          "from": 18750000000.0,
+          "from": 18750000000,
           "to": null,
           "usd": "0.0000106667",
           "description": "AWS Lambda - Total Compute for ARM - Asia Pacific (Tokyo)-Tier-3"
@@ -66,7 +66,7 @@
       "unit": "Request",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000002000",
           "description": "AWS Lambda - Total Requests - Asia Pacific (Tokyo)"
@@ -87,19 +87,19 @@
       "unit": "Lambda-GB-Second",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 6000000000.0,
+          "from": 0,
+          "to": 6000000000,
           "usd": "0.0000166667",
           "description": "AWS Lambda - Total Compute - Asia Pacific (Tokyo)-Tier-1"
         },
         {
-          "from": 6000000000.0,
-          "to": 15000000000.0,
+          "from": 6000000000,
+          "to": 15000000000,
           "usd": "0.0000150000",
           "description": "AWS Lambda - Total Compute - Asia Pacific (Tokyo)-Tier-2"
         },
         {
-          "from": 15000000000.0,
+          "from": 15000000000,
           "to": null,
           "usd": "0.0000133334",
           "description": "AWS Lambda - Total Compute - Asia Pacific (Tokyo)-Tier-3"
@@ -120,13 +120,13 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 300000000.0,
+          "from": 0,
+          "to": 300000000,
           "usd": "0.0000012900",
           "description": "$1.29/million requests - API Gateway HTTP API (first 300 million)"
         },
         {
-          "from": 300000000.0,
+          "from": 300000000,
           "to": null,
           "usd": "0.0000011800",
           "description": "$1.18/million requests - API Gateway HTTP API (more than 300 million)"
@@ -147,25 +147,25 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 333000000.0,
+          "from": 0,
+          "to": 333000000,
           "usd": "0.0000042500",
           "description": "$4.25/million requests - first 333 million requests/month"
         },
         {
-          "from": 333000000.0,
-          "to": 1000000000.0,
+          "from": 333000000,
+          "to": 1000000000,
           "usd": "0.0000035300",
           "description": "$3.53/million requests - next 667 million requests/month"
         },
         {
-          "from": 1000000000.0,
-          "to": 20000000000.0,
+          "from": 1000000000,
+          "to": 20000000000,
           "usd": "0.0000030000",
           "description": "$3.00/million requests - next 19 billion requests/month"
         },
         {
-          "from": 20000000000.0,
+          "from": 20000000000,
           "to": null,
           "usd": "0.0000019100",
           "description": "$1.91/million requests - over 20 billion requests/month"
@@ -186,19 +186,19 @@
       "unit": "GB-Mo",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 51200.0,
+          "from": 0,
+          "to": 51200,
           "usd": "0.0250000000",
           "description": "$0.025 per GB - first 50 TB / month of storage used"
         },
         {
-          "from": 51200.0,
-          "to": 512000.0,
+          "from": 51200,
+          "to": 512000,
           "usd": "0.0240000000",
           "description": "$0.024 per GB - next 450 TB / month of storage used"
         },
         {
-          "from": 512000.0,
+          "from": 512000,
           "to": null,
           "usd": "0.0230000000",
           "description": "$0.023 per GB - storage used / month over 500 TB"
@@ -219,7 +219,7 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000047000",
           "description": "$0.0047 per 1,000 PUT, COPY, POST, or LIST requests"
@@ -240,7 +240,7 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000003700",
           "description": "$0.0037 per 10,000 GET and all other requests"
@@ -261,7 +261,7 @@
       "unit": "GB",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.7600000000",
           "description": "$0.76 per GB custom log data ingested in Standard log class - Asia Pacific (Tokyo)"
@@ -282,7 +282,7 @@
       "unit": "GB-Mo",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0330000000",
           "description": "$0.033 per GB-mo of log storage - Asia Pacific (Tokyo)"
@@ -303,43 +303,43 @@
       "unit": "GB",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 10240.0,
+          "from": 0,
+          "to": 10240,
           "usd": "0.1140000000",
           "description": "$0.114 per GB - first 10 TB / month data transfer out"
         },
         {
-          "from": 10240.0,
-          "to": 51200.0,
+          "from": 10240,
+          "to": 51200,
           "usd": "0.0890000000",
           "description": "$0.089 per GB - next 40 TB / month data transfer out"
         },
         {
-          "from": 51200.0,
-          "to": 153600.0,
+          "from": 51200,
+          "to": 153600,
           "usd": "0.0860000000",
           "description": "$0.086 per GB - next 100 TB / month data transfer out"
         },
         {
-          "from": 153600.0,
-          "to": 512000.0,
+          "from": 153600,
+          "to": 512000,
           "usd": "0.0840000000",
           "description": "$0.084 per GB - next 350 TB / month data transfer out"
         },
         {
-          "from": 512000.0,
-          "to": 1048576.0,
+          "from": 512000,
+          "to": 1048576,
           "usd": "0.0800000000",
           "description": "$0.080 per GB - next 524 TB / month data transfer out"
         },
         {
-          "from": 1048576.0,
-          "to": 5242880.0,
+          "from": 1048576,
+          "to": 5242880,
           "usd": "0.0700000000",
           "description": "$0.070 per GB - next 4 PB / month data transfer out"
         },
         {
-          "from": 5242880.0,
+          "from": 5242880,
           "to": null,
           "usd": "0.0600000000",
           "description": "$0.060 per GB - data transfer out / month over 5 PB"
@@ -360,7 +360,7 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000012000",
           "description": "$0.012 per 10,000 HTTPS Requests"
@@ -381,7 +381,7 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000009000",
           "description": "$0.0090 per 10,000 HTTP Requests"
@@ -402,7 +402,7 @@
       "unit": "Requests",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000012000",
           "description": "$0.0120 per 10,000 Proxy HTTPS Requests (Japan)"
@@ -423,13 +423,13 @@
       "unit": "URL",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 1000.0,
+          "from": 0,
+          "to": 1000,
           "usd": "0.0000000000",
           "description": "$0.000 per URL - first 1,000 URLs / month."
         },
         {
-          "from": 1000.0,
+          "from": 1000,
           "to": null,
           "usd": "0.0050000000",
           "description": "$0.005 per URL - over 1,000 URLs / month."
@@ -450,13 +450,13 @@
       "unit": "FunctionExecutions",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 2000000.0,
+          "from": 0,
+          "to": 2000000,
           "usd": "0.0000000000",
           "description": "$0 for First 2,000,000 CloudFront Function Executions"
         },
         {
-          "from": 2000000.0,
+          "from": 2000000,
           "to": null,
           "usd": "0.0000001000",
           "description": "$0.10 per 1,000,000 CloudFront Function Executions"
@@ -477,7 +477,7 @@
       "unit": "WriteRequestUnits",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000007150",
           "description": "$0.715 per million write request units (Asia Pacific (Tokyo))"
@@ -498,7 +498,7 @@
       "unit": "ReadRequestUnits",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0000001425",
           "description": "$0.1425 per million read request units (Asia Pacific (Tokyo))"
@@ -519,13 +519,13 @@
       "unit": "GB-Mo",
       "tiers": [
         {
-          "from": 0.0,
-          "to": 25.0,
+          "from": 0,
+          "to": 25,
           "usd": "0.0000000000",
           "description": "$0.00 per GB-Month of storage for first 25 free GB-Months"
         },
         {
-          "from": 25.0,
+          "from": 25,
           "to": null,
           "usd": "0.2850000000",
           "description": "$0.285 per GB-Month of storage used beyond first 25 free GB-Months"
@@ -546,7 +546,7 @@
       "unit": "GB-Mo",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.2280000000",
           "description": "$0.228 per GB-Month of storage used for DynamoDB PITR backup"
@@ -567,7 +567,7 @@
       "unit": "CognitoUserPoolsMAU",
       "tiers": [
         {
-          "from": 0.0,
+          "from": 0,
           "to": null,
           "usd": "0.0150000000",
           "description": "Cognito Essentials ap-northeast-1 tier 1 pricing"
@@ -575,6 +575,183 @@
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCognito/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-25T19:31:08Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.input.basic",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "JBGYKZ9K5KWBXM5P",
+      "usageType": "AP-Input-Basic-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2000000000",
+          "description": "$0.20 per hour for basic inputs in Japan, Hong Kong, SEA"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.input.standard",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "94M6H39S45UDCU2A",
+      "usageType": "AP-Input-Standard-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "2.0000000000",
+          "description": "$2.00 per hour for standard inputs in Japan, Hong Kong, SEA"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.output.sd.ap",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "BE56X8G58K4KBP5M",
+      "usageType": "AP-Output-SD-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.0460000000",
+          "description": "$0.0460 per hour for SD Output in Japan, Hong Kong, SEA - First 10,000 hours/month"
+        },
+        {
+          "from": 10000,
+          "to": 50000,
+          "usd": "0.0420000000",
+          "description": "$0.0420 per hour for SD Output in Japan, Hong Kong, SEA - Next 40,000 hours/month"
+        },
+        {
+          "from": 50000,
+          "to": 150000,
+          "usd": "0.0390000000",
+          "description": "$0.0390 per hour for SD Output in Japan, Hong Kong, SEA - Next 100,000 hours/month"
+        },
+        {
+          "from": 150000,
+          "to": 500000,
+          "usd": "0.0350000000",
+          "description": "$0.0350 per hour for SD Output in Japan, Hong Kong, SEA - Next 350,000 hours/month"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.0310000000",
+          "description": "$0.0310 per hour for SD Output in Japan, Hong Kong, SEA - Over 500,000 hours/month"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.output.hd.ap",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "Y7KSUAKVNC8XFRH4",
+      "usageType": "AP-Output-HD-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.0920000000",
+          "description": "$0.0920 per hour for HD Output in Japan, Hong Kong, SEA - First 10,000 hours/month"
+        },
+        {
+          "from": 10000,
+          "to": 50000,
+          "usd": "0.0840000000",
+          "description": "$0.0840 per hour for HD Output in Japan, Hong Kong, SEA - Next 40,000 hours/month"
+        },
+        {
+          "from": 50000,
+          "to": 150000,
+          "usd": "0.0780000000",
+          "description": "$0.0780 per hour for HD Output in Japan, Hong Kong, SEA - Next 100,000 hours/month"
+        },
+        {
+          "from": 150000,
+          "to": 500000,
+          "usd": "0.0700000000",
+          "description": "$0.0700 per hour for HD Output in Japan, Hong Kong, SEA - Next 350,000 hours/month"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.0620000000",
+          "description": "$0.0620 per hour for HD Output in Japan, Hong Kong, SEA - Over 500,000 hours/month"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.output.fullhd.ap",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "JUBZT2VDPQX8PDCF",
+      "usageType": "AP-Output-FullHD-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.1840000000",
+          "description": "$0.1840 per hour for FullHD Output in Japan, Hong Kong, SEA - First 10,000 hours/month"
+        },
+        {
+          "from": 10000,
+          "to": 50000,
+          "usd": "0.1680000000",
+          "description": "$0.1680 per hour for FullHD Output in Japan, Hong Kong, SEA - Next 40,000 hours/month"
+        },
+        {
+          "from": 50000,
+          "to": 150000,
+          "usd": "0.1560000000",
+          "description": "$0.1560 per hour for FullHD Output in Japan, Hong Kong, SEA - Next 100,000 hours/month"
+        },
+        {
+          "from": 150000,
+          "to": 500000,
+          "usd": "0.1400000000",
+          "description": "$0.1400 per hour for FullHD Output in Japan, Hong Kong, SEA - Next 350,000 hours/month"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.1240000000",
+          "description": "$0.1240 per hour for FullHD Output in Japan, Hong Kong, SEA - Over 500,000 hours/month"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
       "checkedAt": "2026-10-11"
     }
   ]

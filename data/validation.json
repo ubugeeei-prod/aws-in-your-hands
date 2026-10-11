@@ -379,6 +379,61 @@
         "ja": "user pool、distribution、table を作る",
         "en": "Creates a user pool, a distribution, and a table"
       }
+    },
+    {
+      "scope": "18",
+      "command": "vp run test:unit (examples/18-live)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "GetStream の解釈、イベントの検証と順序によらない集計、エンコーダー設定の検査、ページの表示の判断、stack の assertion",
+        "en": "GetStream interpretation, event validation and order-independent folding, encoder-setting checks, the page's view decisions, and stack assertions"
+      }
+    },
+    {
+      "scope": "18",
+      "command": "vp run typecheck / typecheck:stream:web / lint:stream:web",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "サンプル全体と player ページの型検査、template の lint",
+        "en": "Type checks for the example and the player page, and the template lint"
+      }
+    },
+    {
+      "scope": "18",
+      "command": "vp run stream:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "esbuild の bundle 込みで template を生成。AWS には問い合わせない",
+        "en": "Synthesizes the template, including the esbuild bundle, without contacting AWS"
+      }
+    },
+    {
+      "scope": "18",
+      "command": "vp run build:stream:web / dev:stream:web",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "ビルドに player の worker と wasm が含まれることを確認。開発サーバーで、channel が未設定のときの表示を確認",
+        "en": "Confirmed the build contains the player's worker and wasm files, and that the dev server shows the not-configured message"
+      }
+    },
+    {
+      "scope": "18",
+      "command": "vp run stream:infra:diff / deploy / drift / destroy, stream:key, stream:config, stream:status, stream:stop",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "IVS の channel と stream key を作る。実際の配信と視聴は AWS が無いと確かめられない",
+        "en": "Creates an IVS channel and stream key. Broadcasting and viewing cannot be checked without AWS"
+      }
     }
   ],
   "open": [
@@ -545,6 +600,17 @@
       "resume": {
         "ja": "著者が決める。決まったら README と本文に実在する URL だけを書く。",
         "en": "The author decides. Once decided, write only real URLs into the README and the prose."
+      }
+    },
+    {
+      "id": "18-live-broadcast",
+      "summary": {
+        "ja": "18章: 実際の配信と視聴を一度も通していない。OBS からの配信、player での再生、遅延の実測、GetStream とイベントの実際の形、Cloud Control API 経由の IVS リソースの作成と削除、cdkd の state に stream key の値が入るかどうか、streamKey=off を挟んだ作り直しが未確認。",
+        "en": "Chapter 18: no real broadcast has been made or watched. Unconfirmed: broadcasting from OBS, playback in the player, measured latency, the real shapes of GetStream and the events, creating and deleting IVS resources through Cloud Control API, whether cdkd's state holds the stream key value, and re-creating the key via streamKey=off."
+      },
+      "resume": {
+        "ja": "AIH_AWS_ACCOUNT_ID を設定し、vp run stream:infra:deploy、stream:key --show、OBS で配信、stream:config と preview:stream:web で視聴、stream:status --events、stream:stop、stream:status --expect-offline、stream:infra:destroy の順に実行する。state は `cdkd state show AihLive --json` で StreamKey の attributes を確認する。",
+        "en": "Set AIH_AWS_ACCOUNT_ID, then run vp run stream:infra:deploy, stream:key --show, broadcast from OBS, watch with stream:config and preview:stream:web, then stream:status --events, stream:stop, stream:status --expect-offline, and stream:infra:destroy. Inspect the StreamKey attributes with `cdkd state show AihLive --json`."
       }
     }
   ]

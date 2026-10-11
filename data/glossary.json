@@ -419,6 +419,56 @@
         "ja": "API Gateway HTTP API が、関数を呼ぶ前に token を検証する機能。",
         "en": "The API Gateway HTTP API feature that verifies a token before the function is invoked."
       }
+    },
+    {
+      "id": "ivs-channel",
+      "ja": "channel",
+      "en": "channel",
+      "firstUse": "18",
+      "definition": {
+        "ja": "IVS の low-latency streaming で、配信を 1 本受けて視聴者へ届ける単位。ingest endpoint と playback URL を持つ。",
+        "en": "The unit in IVS low-latency streaming that takes one broadcast and delivers it to viewers. It has an ingest endpoint and a playback URL."
+      }
+    },
+    {
+      "id": "stream-key",
+      "ja": "stream key",
+      "en": "stream key",
+      "firstUse": "18",
+      "definition": {
+        "ja": "配信ソフトが channel へ送るときに示す秘密の文字列。持っている人は誰でもその channel に配信できる。",
+        "en": "The secret string an encoder presents when it sends to a channel. Anyone who has it can broadcast to that channel."
+      }
+    },
+    {
+      "id": "ingest",
+      "ja": "ingest",
+      "en": "ingest",
+      "firstUse": "18",
+      "definition": {
+        "ja": "配信ソフトから送られてくる映像を、サービスが受け取ること。",
+        "en": "A service receiving the video that an encoder sends."
+      }
+    },
+    {
+      "id": "rendition",
+      "ja": "rendition",
+      "en": "rendition",
+      "firstUse": "18",
+      "definition": {
+        "ja": "同じ映像の、解像度と bitrate が違う版の 1 つ。player は回線に合わせて切り替える。",
+        "en": "One version of the same video at a particular resolution and bitrate. The player switches between them to fit the connection."
+      }
+    },
+    {
+      "id": "timed-metadata",
+      "ja": "timed metadata",
+      "en": "timed metadata",
+      "firstUse": "18",
+      "definition": {
+        "ja": "映像の特定の位置に埋め込む小さなデータ。視聴者ごとの遅延にかかわらず、映像の同じ場面で届く。",
+        "en": "A small piece of data embedded at a point in the video. It reaches each viewer at the same moment of the video, whatever that viewer's delay."
+      }
     }
   ]
 }

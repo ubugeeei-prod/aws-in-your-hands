@@ -160,6 +160,90 @@ ID: `notes-app-small` / 章: [06 ログインを足す: Cognito と認可](/ja/c
 - 毎月の無料枠適用後の小計: **USD 1.64** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
 
+## ライブ配信: 月 4 回 × 2 時間、各回 100 人が半分ずつ視聴
+
+ID: `live-monthly-100` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+
+前提:
+
+- BASIC の channel に 720p で配信。BASIC は rendition が 1 つなので、視聴はすべて HD で課金される
+- 各回 100 人が、2 時間のうち平均 1 時間ずつ視聴（IVS のドキュメントの目安「平均で配信の 50% が届く」）
+- 視聴者はすべて「Japan, Hong Kong, SEA」の単価で配信される
+- EventBridge、Lambda、CloudWatch Logs、player ページの配信は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 8 | hours | 4 streams x 2 hours of input | 1.60 | - | 1.60 |
+| `ivs.output.hd.ap` | 400 | hours | 4 streams x 100 viewers x 1 hour watched | 36.80 | - | 36.80 |
+
+- 定価の小計: **USD 38.40** / 月
+- 毎月の無料枠適用後の小計: **USD 38.40** / 月
+- 無料枠を確認できず、何も引いていない単価: `ivs.input.basic`
+
+## ライブ配信: 同じ配信を、各回 1,000 人が視聴
+
+ID: `live-monthly-1000` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+
+前提:
+
+- 「月 4 回 × 2 時間、各回 100 人」と同じ仮定で、視聴者だけ 10 倍
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 8 | hours | 4 streams x 2 hours of input | 1.60 | - | 1.60 |
+| `ivs.output.hd.ap` | 4,000 | hours | 4 streams x 1,000 viewers x 1 hour watched | 368.00 | - | 368.00 |
+
+- 定価の小計: **USD 369.60** / 月
+- 毎月の無料枠適用後の小計: **USD 369.60** / 月
+- 無料枠を確認できず、何も引いていない単価: `ivs.input.basic`
+
+## 止め忘れ: BASIC の channel に 48 時間送り続けた
+
+ID: `live-left-on-weekend` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+
+前提:
+
+- 視聴者は 0 人。1 本の stream の上限である 48 時間、配信ソフトが送り続けた
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 48 | hours | 48 hours of input | 9.60 | - | 9.60 |
+
+- 定価の小計: **USD 9.60** / 月
+- 毎月の無料枠適用後の小計: **USD 9.60** / 月
+- 無料枠を確認できず、何も引いていない単価: `ivs.input.basic`
+
+## 止め忘れ: BASIC の channel に 1 か月送り続けた
+
+ID: `live-left-on-month-basic` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+
+前提:
+
+- 視聴者は 0 人。配信ソフトが再接続を繰り返し、730 時間ずっと送り続けた
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 730 | hours | 730 hours of input | 146.00 | - | 146.00 |
+
+- 定価の小計: **USD 146.00** / 月
+- 毎月の無料枠適用後の小計: **USD 146.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `ivs.input.basic`
+
+## 止め忘れ: STANDARD の channel に 1 か月送り続けた
+
+ID: `live-left-on-month-standard` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+
+前提:
+
+- 視聴者は 0 人。channel の type が既定の STANDARD だった場合
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.standard` | 730 | hours | 730 hours of input | 1460.00 | - | 1460.00 |
+
+- 定価の小計: **USD 1460.00** / 月
+- 毎月の無料枠適用後の小計: **USD 1460.00** / 月
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -186,6 +270,11 @@ ID: `notes-app-small` / 章: [06 ログインを足す: Cognito と認可](/ja/c
 | `dynamodb.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - 25: 0.0000000000<br>25 - ∞: 0.2850000000 | 2026-09-11 | 2026-10-11 |
 | `dynamodb.pitr.storage` | ap-northeast-1 | APN1-TimedPITRStorage-ByteHrs | GB-Mo | 0 - ∞: 0.2280000000 | 2026-09-11 | 2026-10-11 |
 | `cognito.essentials.mau` | ap-northeast-1 | APN1-CognitoEssentialsMAU | CognitoUserPoolsMAU | 0 - ∞: 0.0150000000 | 2026-09-25 | 2026-10-11 |
+| `ivs.input.basic` | global | AP-Input-Basic-Hours | hours | 0 - ∞: 0.2000000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.input.standard` | global | AP-Input-Standard-Hours | hours | 0 - ∞: 2.0000000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.output.sd.ap` | global | AP-Output-SD-Hours | hours | 0 - 10,000: 0.0460000000<br>10,000 - 50,000: 0.0420000000<br>50,000 - 150,000: 0.0390000000<br>150,000 - 500,000: 0.0350000000<br>500,000 - ∞: 0.0310000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.output.hd.ap` | global | AP-Output-HD-Hours | hours | 0 - 10,000: 0.0920000000<br>10,000 - 50,000: 0.0840000000<br>50,000 - 150,000: 0.0780000000<br>150,000 - 500,000: 0.0700000000<br>500,000 - ∞: 0.0620000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.output.fullhd.ap` | global | AP-Output-FullHD-Hours | hours | 0 - 10,000: 0.1840000000<br>10,000 - 50,000: 0.1680000000<br>50,000 - 150,000: 0.1560000000<br>150,000 - 500,000: 0.1400000000<br>500,000 - ∞: 0.1240000000 | 2026-09-11 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -207,3 +296,5 @@ ID: `notes-app-small` / 章: [06 ログインを足す: Cognito と認可](/ja/c
 
 - `apigw.http.request`: A free allowance for HTTP API requests was not confirmed from a primary source for accounts on the current Free Tier model, so none is applied.
 - `s3.standard.storage`: No always-free S3 allowance was confirmed; none is applied.
+- `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
+- `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.

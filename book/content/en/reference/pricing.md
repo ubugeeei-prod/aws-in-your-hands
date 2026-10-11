@@ -160,6 +160,90 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 1.64** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`
 
+## Live streaming: four 2-hour streams a month, 100 viewers each watching half
+
+ID: `live-monthly-100` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+
+Assumptions:
+
+- A BASIC channel fed 720p. BASIC has one rendition, so every viewing hour is billed as HD
+- Each time, 100 viewers watch an average of 1 of the 2 hours (the IVS documentation's rule of thumb that 50% of a stream is delivered)
+- Every viewer is served at the 'Japan, Hong Kong, SEA' rate
+- EventBridge, Lambda, CloudWatch Logs, and hosting the player page are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 8 | hours | 4 streams x 2 hours of input | 1.60 | - | 1.60 |
+| `ivs.output.hd.ap` | 400 | hours | 4 streams x 100 viewers x 1 hour watched | 36.80 | - | 36.80 |
+
+- List subtotal: **USD 38.40** / month
+- Subtotal after monthly free allowance: **USD 38.40** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ivs.input.basic`
+
+## Live streaming: the same streams with 1,000 viewers each
+
+ID: `live-monthly-1000` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+
+Assumptions:
+
+- As assumed in the 100-viewer scenario, with ten times the viewers
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 8 | hours | 4 streams x 2 hours of input | 1.60 | - | 1.60 |
+| `ivs.output.hd.ap` | 4,000 | hours | 4 streams x 1,000 viewers x 1 hour watched | 368.00 | - | 368.00 |
+
+- List subtotal: **USD 369.60** / month
+- Subtotal after monthly free allowance: **USD 369.60** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ivs.input.basic`
+
+## Left running: 48 hours of input to a BASIC channel
+
+ID: `live-left-on-weekend` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+
+Assumptions:
+
+- No viewers. The encoder kept sending for 48 hours, the longest a single stream lasts
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 48 | hours | 48 hours of input | 9.60 | - | 9.60 |
+
+- List subtotal: **USD 9.60** / month
+- Subtotal after monthly free allowance: **USD 9.60** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ivs.input.basic`
+
+## Left running: a month of input to a BASIC channel
+
+ID: `live-left-on-month-basic` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+
+Assumptions:
+
+- No viewers. The encoder kept reconnecting and sent for all 730 hours
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.basic` | 730 | hours | 730 hours of input | 146.00 | - | 146.00 |
+
+- List subtotal: **USD 146.00** / month
+- Subtotal after monthly free allowance: **USD 146.00** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ivs.input.basic`
+
+## Left running: a month of input to a STANDARD channel
+
+ID: `live-left-on-month-standard` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+
+Assumptions:
+
+- No viewers. The same month had the channel been the default type, STANDARD
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ivs.input.standard` | 730 | hours | 730 hours of input | 1460.00 | - | 1460.00 |
+
+- List subtotal: **USD 1460.00** / month
+- Subtotal after monthly free allowance: **USD 1460.00** / month
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -186,6 +270,11 @@ Assumptions:
 | `dynamodb.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - 25: 0.0000000000<br>25 - ∞: 0.2850000000 | 2026-09-11 | 2026-10-11 |
 | `dynamodb.pitr.storage` | ap-northeast-1 | APN1-TimedPITRStorage-ByteHrs | GB-Mo | 0 - ∞: 0.2280000000 | 2026-09-11 | 2026-10-11 |
 | `cognito.essentials.mau` | ap-northeast-1 | APN1-CognitoEssentialsMAU | CognitoUserPoolsMAU | 0 - ∞: 0.0150000000 | 2026-09-25 | 2026-10-11 |
+| `ivs.input.basic` | global | AP-Input-Basic-Hours | hours | 0 - ∞: 0.2000000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.input.standard` | global | AP-Input-Standard-Hours | hours | 0 - ∞: 2.0000000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.output.sd.ap` | global | AP-Output-SD-Hours | hours | 0 - 10,000: 0.0460000000<br>10,000 - 50,000: 0.0420000000<br>50,000 - 150,000: 0.0390000000<br>150,000 - 500,000: 0.0350000000<br>500,000 - ∞: 0.0310000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.output.hd.ap` | global | AP-Output-HD-Hours | hours | 0 - 10,000: 0.0920000000<br>10,000 - 50,000: 0.0840000000<br>50,000 - 150,000: 0.0780000000<br>150,000 - 500,000: 0.0700000000<br>500,000 - ∞: 0.0620000000 | 2026-09-11 | 2026-10-11 |
+| `ivs.output.fullhd.ap` | global | AP-Output-FullHD-Hours | hours | 0 - 10,000: 0.1840000000<br>10,000 - 50,000: 0.1680000000<br>50,000 - 150,000: 0.1560000000<br>150,000 - 500,000: 0.1400000000<br>500,000 - ∞: 0.1240000000 | 2026-09-11 | 2026-10-11 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -207,3 +296,5 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 
 - `apigw.http.request`: A free allowance for HTTP API requests was not confirmed from a primary source for accounts on the current Free Tier model, so none is applied.
 - `s3.standard.storage`: No always-free S3 allowance was confirmed; none is applied.
+- `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
+- `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.

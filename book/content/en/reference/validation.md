@@ -47,6 +47,11 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 05 | `vp run db:local:start / db:migrate:local / db:seed:local / db:reset:local / test:local:dynamodb` | local | not run | - | No Docker daemon was available. Only confirmed that test:local:dynamodb fails when DYNAMODB_ENDPOINT is missing |
 | 05 | `vp run notes:infra:diff / deploy / drift / destroy, vp run notes:smoke` | AWS | not run | - | Creates a DynamoDB table |
 | 06 | `vp run app:infra:diff / deploy / drift / destroy, app:user:create, app:publish, app:smoke:web, app:smoke:api, app:unpublish` | AWS | not run | - | Creates a user pool, a distribution, and a table |
+| 18 | `vp run test:unit (examples/18-live)` | local | passed | 2026-10-11 | GetStream interpretation, event validation and order-independent folding, encoder-setting checks, the page's view decisions, and stack assertions |
+| 18 | `vp run typecheck / typecheck:stream:web / lint:stream:web` | local | passed | 2026-10-11 | Type checks for the example and the player page, and the template lint |
+| 18 | `vp run stream:infra:synth` | local | passed | 2026-10-11 | Synthesizes the template, including the esbuild bundle, without contacting AWS |
+| 18 | `vp run build:stream:web / dev:stream:web` | local | passed | 2026-10-11 | Confirmed the build contains the player's worker and wasm files, and that the dev server shows the not-configured message |
+| 18 | `vp run stream:infra:diff / deploy / drift / destroy, stream:key, stream:config, stream:status, stream:stop` | AWS | not run | - | Creates an IVS channel and stream key. Broadcasting and viewing cannot be checked without AWS |
 
 ## Open items and how to resume
 
@@ -139,3 +144,9 @@ To resume: Check the official pricing pages and resolve the `unknown` entries in
 The repository's public URL, where archives are published, and the license are undecided. The CI examples in docs/examples/ have never been executed.
 
 To resume: The author decides. Once decided, write only real URLs into the README and the prose.
+
+### 18-live-broadcast
+
+Chapter 18: no real broadcast has been made or watched. Unconfirmed: broadcasting from OBS, playback in the player, measured latency, the real shapes of GetStream and the events, creating and deleting IVS resources through Cloud Control API, whether cdkd's state holds the stream key value, and re-creating the key via streamKey=off.
+
+To resume: Set AIH_AWS_ACCOUNT_ID, then run vp run stream:infra:deploy, stream:key --show, broadcast from OBS, watch with stream:config and preview:stream:web, then stream:status --events, stream:stop, stream:status --expect-offline, and stream:infra:destroy. Inspect the StreamKey attributes with `cdkd state show AihLive --json`.

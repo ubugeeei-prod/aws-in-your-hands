@@ -68,6 +68,7 @@ const chapterSynthTasks = [
   "api:infra:synth",
   "notes:infra:synth",
   "app:infra:synth",
+  "stream:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -76,6 +77,9 @@ const chapterCheckTasks = [
   "lint:app:web",
   "typecheck:app:web",
   "build:app:web",
+  "lint:stream:web",
+  "typecheck:stream:web",
+  "build:stream:web",
 ];
 
 export default defineConfig({
@@ -118,6 +122,31 @@ export default defineConfig({
       "book:generate:check": fresh("node tools/src/book/generate.ts --check"),
       ...infra("book", "book/infra", "AihBookSite"),
       ...site("book", "book/infra", "AihBookSite", "book/dist", "build:book"),
+
+      // >>> chapter 18
+      // ---- chapter 18: live streaming ------------------------------------
+      // The player page. Shows a notice until a channel is configured. No AWS.
+      "dev:stream:web": fresh("vp dev", { cwd: "examples/18-live/web" }),
+      "build:stream:web": { command: "vp build", cwd: "examples/18-live/web" },
+      // Serves web/dist as it is, so the config written by stream:config survives.
+      "preview:stream:web": fresh("vp preview", { cwd: "examples/18-live/web" }),
+      "typecheck:stream:web": { command: "../node_modules/.bin/vize check", cwd: "examples/18-live/web" },
+      "lint:stream:web": {
+        command: "../node_modules/.bin/vize lint src --preset essential",
+        cwd: "examples/18-live/web",
+      },
+      ...infra("stream", "examples/18-live", "AihLive"),
+      // Writes the deployed playback URL into the built page.
+      "stream:config": live("node --env-file-if-exists=../../.env scripts/write-config.ts", {
+        cwd: "examples/18-live",
+        dependsOn: ["build:stream:web"],
+      }),
+      // Read-only: is the channel live, and so accruing input time?
+      "stream:status": live("node --env-file-if-exists=../../.env scripts/status.ts", { cwd: "examples/18-live" }),
+      // Prints the encoder settings. The stream key only with --show.
+      "stream:key": live("node --env-file-if-exists=../../.env scripts/key.ts", { cwd: "examples/18-live" }),
+      "stream:stop": live("node --env-file-if-exists=../../.env scripts/stop.ts", { cwd: "examples/18-live" }),
+      // <<< chapter 18
 
       // ---- chapter task blocks are inserted above this line ----
 

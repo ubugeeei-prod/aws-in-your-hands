@@ -1,0 +1,894 @@
+{
+  "chapterId": "18",
+  "manifest": {
+    "id": "18",
+    "slug": "live",
+    "title": {
+      "ja": "ライブ配信のレシピ: IVS",
+      "en": "A Live-Streaming Recipe: IVS"
+    },
+    "prerequisites": ["04"],
+    "services": ["IVS", "EventBridge", "Lambda"],
+    "samplePath": "examples/18-live",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-11",
+    "sourceIds": [
+      "ivs-what-is",
+      "ivs-realtime-what-is",
+      "ivs-endpoints-quotas",
+      "ivs-streaming-config",
+      "ivs-setup-streaming",
+      "ivs-pricing",
+      "aws-price-list-ivs",
+      "ivs-costs",
+      "cfn-ivs-channel",
+      "cfn-ivs-streamkey",
+      "ivs-api-getstream",
+      "ivs-api-stream",
+      "ivs-api-stopstream",
+      "ivs-api-deletechannel",
+      "ivs-eventbridge",
+      "ivs-player-sdk",
+      "ivs-web-player-guide",
+      "ivs-player-npm",
+      "ivs-timed-metadata",
+      "ivs-record-to-s3",
+      "medialive-what-is",
+      "medialive-related-services",
+      "medialive-pricing",
+      "cloudflare-stream-live",
+      "cdkd-npm-ivs"
+    ]
+  },
+  "sources": [
+    {
+      "id": "ivs-what-is",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/what-is.html",
+      "title": "What is Amazon IVS Low-Latency Streaming?",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "IVS channels can deliver video with latency under 5 seconds; IVS stages under 300 ms",
+        "Ingest protocols are RTMP, RTMPS, and SRT",
+        "The data plane (ingest and viewing) is global; the control plane (API, channels, stream keys) is regional",
+        "Observed latency varies between users with location, network, and the components in the chain"
+      ]
+    },
+    {
+      "id": "ivs-realtime-what-is",
+      "url": "https://docs.aws.amazon.com/ivs/latest/RealTimeUserGuide/what-is.html",
+      "title": "What is Amazon IVS Real-Time Streaming?",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Real-time streaming delivers latency that can be under 300 milliseconds from host to viewer",
+        "Up to 12 hosts on a stage; the resource is a stage, not a channel"
+      ]
+    },
+    {
+      "id": "ivs-endpoints-quotas",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/ivs.html",
+      "title": "Amazon Interactive Video Service endpoints and quotas",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "ap-northeast-1 has endpoints for IVS low-latency streaming, real-time streaming, and chat",
+        "One stream key per channel, not adjustable",
+        "Default quotas per Region: 100 concurrent streams and 15,000 concurrent views",
+        "BASIC ingest bitrate: 1.5 Mbps at 480p or less, 3.5 Mbps above 480p; STANDARD and ADVANCED: 8.5 Mbps; ingest resolution up to 1080p",
+        "PutMetadata: 1 KB payload, 5 transactions per second per channel",
+        "Real-time stages: 12 publishers and 10,000 subscribers per stage by default"
+      ]
+    },
+    {
+      "id": "ivs-streaming-config",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/streaming-config.html",
+      "title": "Amazon IVS Streaming Configuration",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Four channel types; STANDARD is the default; BASIC is transmuxed into a single rendition, STANDARD and ADVANCED are transcoded into several",
+        "Exceeding the allowed input resolution or bitrate probably disconnects the stream immediately",
+        "The RTMPS ingest URL form rtmps://<ingest endpoint>:443/app/<stream key>",
+        "Keyframe interval of 2 seconds is recommended; values above 5 seconds are to be avoided; a 2-second interval gives a stream-start latency of roughly 6 to 7 seconds",
+        "For the lowest latency the IVS player is required; H.264 video and AAC audio; CBR is recommended"
+      ]
+    },
+    {
+      "id": "ivs-setup-streaming",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/getting-started-set-up-streaming.html",
+      "title": "Getting started with IVS: Set Up Streaming Software",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "OBS Studio 30.2 or later has an Amazon IVS service entry that takes the stream key",
+        "A stream lasts 48 hours at most; a reconnect starts a new stream",
+        "IVS disconnects after 30 seconds without data from the encoder",
+        "The FFmpeg example for RTMPS"
+      ]
+    },
+    {
+      "id": "ivs-pricing",
+      "url": "https://aws.amazon.com/ivs/pricing/",
+      "title": "Amazon IVS Pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "All streams sent to IVS incur video input costs, even if they are not viewed; input is rounded up to the minute, output to the second",
+        "Input per hour: Basic 0.20, Standard 2.00, Advanced SD 0.50, Advanced HD 0.85 USD",
+        "Output is billed per hour delivered, by resolution (SD up to 480, HD up to 720, Full HD up to 1080) and by where viewers are served from",
+        "Japan is in the output group 'Japan, Hong Kong, and South East Asia'",
+        "Free tier for new customers, first 12 months: 5 hours of basic input and 100 hours of SD output a month",
+        "Real-time streaming is billed per participant hour"
+      ],
+      "note": "The page describes no charge for a channel that exists but is not live."
+    },
+    {
+      "id": "aws-price-list-ivs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "title": "AWS Price List bulk API: IVS",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with offerCode AmazonIVS",
+        "The offer contains only input-hour, output-hour, and real-time-hour products; none for an idle channel"
+      ],
+      "note": "The offer has no per-Region file; region_index.json lists only aws-other. The usage types prefixed AP- are described in the file as 'Japan, Hong Kong, SEA'."
+    },
+    {
+      "id": "ivs-costs",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/costs.html",
+      "title": "IVS Costs: Low-Latency Streaming",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Auto-record to S3 has no IVS charge; S3 storage, the S3 API calls IVS makes, and serving the recordings are charged",
+        "As a rule of thumb, on average 50% of a stream is delivered to each viewer"
+      ]
+    },
+    {
+      "id": "cfn-ivs-channel",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ivs-channel.html",
+      "title": "AWS::IVS::Channel",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The Channel resource does not create a stream key, unlike the CreateChannel API",
+        "Properties Type, LatencyMode (default LOW), Authorized, InsecureIngest, RecordingConfigurationArn, and their defaults",
+        "Attributes Arn, IngestEndpoint, PlaybackUrl; the playback URL contains the account ID"
+      ]
+    },
+    {
+      "id": "cfn-ivs-streamkey",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ivs-streamkey.html",
+      "title": "AWS::IVS::StreamKey",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Attributes Arn and Value; Value is the stream key itself",
+        "Changing ChannelArn replaces the resource"
+      ]
+    },
+    {
+      "id": "ivs-api-getstream",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_GetStream.html",
+      "title": "IVS API: GetStream",
+      "checkedAt": "2026-10-11",
+      "supports": ["An offline channel is reported as the ChannelNotBroadcasting error (HTTP 404), not as a response"]
+    },
+    {
+      "id": "ivs-api-stream",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_Stream.html",
+      "title": "IVS API: Stream",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Do not rely on the OFFLINE state; the API may not return it",
+        "viewerCount of -1 means the request timed out; health is HEALTHY, STARVING, or UNKNOWN"
+      ]
+    },
+    {
+      "id": "ivs-api-stopstream",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_StopStream.html",
+      "title": "IVS API: StopStream",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "StopStream disconnects the incoming stream; encoders often reconnect, so revoke the stream key to stop it for good"
+      ]
+    },
+    {
+      "id": "ivs-api-deletechannel",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_DeleteChannel.html",
+      "title": "IVS API: DeleteChannel",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Deleting a channel deletes its stream keys",
+        "Deleting a live channel fails with 409 ConflictException; stop the stream and wait for Stream End first"
+      ]
+    },
+    {
+      "id": "ivs-eventbridge",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/eventbridge.html",
+      "title": "Using Amazon EventBridge with IVS Low-Latency Streaming",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Events are best effort: they may be missing, hours late, or out of order (Stream Down before Stream Up)",
+        "Detail types, event names, and the example payloads used as test fixtures",
+        "Each time a channel goes live it gets a new stream_id",
+        "Session Ended may arrive before Stream End"
+      ]
+    },
+    {
+      "id": "ivs-player-sdk",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/player.html",
+      "title": "IVS Player SDK",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The IVS player is required for low latency; latency is under five seconds depending on location and settings",
+        "Browsers on iOS get normal-latency playback only; a service worker brings iOS Safari to about 6 to 8 seconds",
+        "Third-party players can be brought to about 10 seconds"
+      ]
+    },
+    {
+      "id": "ivs-web-player-guide",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/web-getting-started.html",
+      "title": "Getting Started with the IVS Web Player SDK",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The SDK is offered as a script tag and as an npm module; the page names 1.57.0 as the latest",
+        "playsinline is required for inline playback on iOS Safari",
+        "The WebAssembly binary must be served as application/wasm when self-hosted"
+      ]
+    },
+    {
+      "id": "ivs-player-npm",
+      "url": "https://www.npmjs.com/package/amazon-ivs-player/v/1.57.0",
+      "title": "amazon-ivs-player 1.57.0 (npm tarball)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "create() takes wasmWorker and wasmBinary URLs; the files ship under dist/assets",
+        "ErrorType.NOT_AVAILABLE with code 404 means the stream does not exist or is offline, 429 that the viewer limit was reached",
+        "getLiveLatency() returns the latency from the server to the player in seconds; isLiveLowLatency() and TEXT_METADATA_CUE exist",
+        "The package is AWS Content under the AWS Customer Agreement, not an open-source license; peer dependencies are bowser and lodash"
+      ],
+      "note": "Read from dist/index.d.ts and package.json of the installed tarball."
+    },
+    {
+      "id": "ivs-timed-metadata",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/metadata.html",
+      "title": "Embedding Metadata within a Video Stream",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Timed metadata is embedded in the video segments, so every viewer receives it at the same point in the stream",
+        "PutMetadata works only on a live stream; there is no guarantee when the metadata is inserted",
+        "The web player delivers it as TEXT_METADATA_CUE"
+      ]
+    },
+    {
+      "id": "ivs-record-to-s3",
+      "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/record-to-s3.html",
+      "title": "IVS Auto-Record to Amazon S3",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Recordings are written under ivs/v1/<account>/<channel>/<date>/<recording id> as HLS media, thumbnails, and JSON metadata",
+        "Process a recording only after the Recording End event"
+      ]
+    },
+    {
+      "id": "medialive-what-is",
+      "url": "https://docs.aws.amazon.com/medialive/latest/ug/what-is.html",
+      "title": "What Is MediaLive?",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "MediaLive transforms live video from one format and package into others, for broadcast and streaming delivery"
+      ]
+    },
+    {
+      "id": "medialive-related-services",
+      "url": "https://docs.aws.amazon.com/medialive/latest/ug/related-services.html",
+      "title": "MediaLive: Related Services",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "MediaPackage is a just-in-time video packaging and origination service that can package content encoded by MediaLive"
+      ]
+    },
+    {
+      "id": "medialive-pricing",
+      "url": "https://aws.amazon.com/medialive/pricing/",
+      "title": "AWS Elemental MediaLive Pricing",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A running channel is charged whether or not its inputs receive content; push inputs and channels are also charged while idle",
+        "Running time is rounded up to the minute above a 10-minute minimum"
+      ]
+    },
+    {
+      "id": "cloudflare-stream-live",
+      "url": "https://developers.cloudflare.com/stream/stream-live/",
+      "title": "Cloudflare Stream: Stream live video",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Ingest over RTMPS or SRT; playback in the Stream Player or any HLS or DASH player",
+        "Every live stream is recorded automatically",
+        "Priced per 1,000 minutes recorded and per 1,000 minutes delivered, with no separate encoding charge"
+      ],
+      "note": "The page gives no latency figures."
+    },
+    {
+      "id": "cdkd-npm-ivs",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: IVS resource types (npm tarball)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "register-providers.ts registers no provider for any AWS::IVS type, so Channel and StreamKey go through Cloud Control API; AWS::Events::Rule, AWS::Lambda::*, AWS::IAM::*, and AWS::Logs::LogGroup have dedicated providers",
+        "The Cloud Control provider stores the resource model returned by a create as the resource's attributes in state",
+        "AWS::IVS::StreamKey Value is on cdkd's list of secret-valued attributes"
+      ],
+      "note": "Read from the bundled dist of the tarball, which keeps the src/ region markers. No cdkd command was run against AWS, so what state.json holds for a stream key is not observed."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "ivs-channel",
+      "ja": "channel",
+      "en": "channel",
+      "firstUse": "18",
+      "definition": {
+        "ja": "IVS の low-latency streaming で、配信を 1 本受けて視聴者へ届ける単位。ingest endpoint と playback URL を持つ。",
+        "en": "The unit in IVS low-latency streaming that takes one broadcast and delivers it to viewers. It has an ingest endpoint and a playback URL."
+      }
+    },
+    {
+      "id": "stream-key",
+      "ja": "stream key",
+      "en": "stream key",
+      "firstUse": "18",
+      "definition": {
+        "ja": "配信ソフトが channel へ送るときに示す秘密の文字列。持っている人は誰でもその channel に配信できる。",
+        "en": "The secret string an encoder presents when it sends to a channel. Anyone who has it can broadcast to that channel."
+      }
+    },
+    {
+      "id": "ingest",
+      "ja": "ingest",
+      "en": "ingest",
+      "firstUse": "18",
+      "definition": {
+        "ja": "配信ソフトから送られてくる映像を、サービスが受け取ること。",
+        "en": "A service receiving the video that an encoder sends."
+      }
+    },
+    {
+      "id": "rendition",
+      "ja": "rendition",
+      "en": "rendition",
+      "firstUse": "18",
+      "definition": {
+        "ja": "同じ映像の、解像度と bitrate が違う版の 1 つ。player は回線に合わせて切り替える。",
+        "en": "One version of the same video at a particular resolution and bitrate. The player switches between them to fit the connection."
+      }
+    },
+    {
+      "id": "timed-metadata",
+      "ja": "timed metadata",
+      "en": "timed metadata",
+      "firstUse": "18",
+      "definition": {
+        "ja": "映像の特定の位置に埋め込む小さなデータ。視聴者ごとの遅延にかかわらず、映像の同じ場面で届く。",
+        "en": "A small piece of data embedded at a point in the video. It reaches each viewer at the same moment of the video, whatever that viewer's delay."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "18.overview",
+      "sources": ["examples/18-live/infra/lib/live-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "18.products",
+      "sources": ["examples/18-live/src/channel.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.channel",
+      "sources": [
+        "examples/18-live/src/channel.ts",
+        "examples/18-live/infra/lib/live-stack.ts",
+        "examples/18-live/test/channel.test.ts"
+      ],
+      "tasks": ["test:unit", "stream:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.stream-key",
+      "sources": [
+        "examples/18-live/infra/lib/live-stack.ts",
+        "examples/18-live/infra/bin/app.ts",
+        "examples/18-live/infra/test/live-stack.test.ts",
+        "examples/18-live/scripts/key.ts"
+      ],
+      "tasks": ["test:unit", "stream:key"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "18.player",
+      "sources": [
+        "examples/18-live/web/src/player.ts",
+        "examples/18-live/web/src/viewer.ts",
+        "examples/18-live/web/src/config.ts",
+        "examples/18-live/web/src/App.vue",
+        "examples/18-live/web/src/viewer.test.ts"
+      ],
+      "tasks": ["dev:stream:web", "build:stream:web", "typecheck:stream:web", "lint:stream:web", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "18.local",
+      "sources": ["examples/18-live"],
+      "tasks": ["test:unit", "typecheck", "stream:infra:synth", "dev:stream:web"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "18.broadcast",
+      "sources": [
+        "examples/18-live/scripts/key.ts",
+        "examples/18-live/scripts/write-config.ts",
+        "examples/18-live/src/channel.ts"
+      ],
+      "tasks": ["stream:infra:diff", "stream:infra:deploy", "stream:key", "stream:config", "preview:stream:web"],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "18.status",
+      "sources": [
+        "examples/18-live/src/stream.ts",
+        "examples/18-live/src/ivs.ts",
+        "examples/18-live/scripts/status.ts",
+        "examples/18-live/scripts/stop.ts",
+        "examples/18-live/test/stream.test.ts"
+      ],
+      "tasks": ["stream:status", "stream:stop", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.events",
+      "sources": [
+        "examples/18-live/src/events.ts",
+        "examples/18-live/src/handler.ts",
+        "examples/18-live/src/timeline.ts",
+        "examples/18-live/src/logged-events.ts",
+        "examples/18-live/test/events.test.ts",
+        "examples/18-live/test/timeline.test.ts"
+      ],
+      "tasks": ["test:unit", "stream:status"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "18.latency",
+      "sources": ["examples/18-live/web/src/player.ts", "examples/18-live/web/src/App.vue"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "18.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit", "stream:status"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.cleanup",
+      "sources": ["examples/18-live/scripts/stop.ts", "examples/18-live/scripts/status.ts"],
+      "tasks": ["stream:stop", "stream:status", "stream:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost", "drift"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "ivs.input.basic",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "JBGYKZ9K5KWBXM5P",
+      "usageType": "AP-Input-Basic-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2000000000",
+          "description": "$0.20 per hour for basic inputs in Japan, Hong Kong, SEA"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.input.standard",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "94M6H39S45UDCU2A",
+      "usageType": "AP-Input-Standard-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "2.0000000000",
+          "description": "$2.00 per hour for standard inputs in Japan, Hong Kong, SEA"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.output.sd.ap",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "BE56X8G58K4KBP5M",
+      "usageType": "AP-Output-SD-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.0460000000",
+          "description": "$0.0460 per hour for SD Output in Japan, Hong Kong, SEA - First 10,000 hours/month"
+        },
+        {
+          "from": 10000,
+          "to": 50000,
+          "usd": "0.0420000000",
+          "description": "$0.0420 per hour for SD Output in Japan, Hong Kong, SEA - Next 40,000 hours/month"
+        },
+        {
+          "from": 50000,
+          "to": 150000,
+          "usd": "0.0390000000",
+          "description": "$0.0390 per hour for SD Output in Japan, Hong Kong, SEA - Next 100,000 hours/month"
+        },
+        {
+          "from": 150000,
+          "to": 500000,
+          "usd": "0.0350000000",
+          "description": "$0.0350 per hour for SD Output in Japan, Hong Kong, SEA - Next 350,000 hours/month"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.0310000000",
+          "description": "$0.0310 per hour for SD Output in Japan, Hong Kong, SEA - Over 500,000 hours/month"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.output.hd.ap",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "Y7KSUAKVNC8XFRH4",
+      "usageType": "AP-Output-HD-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.0920000000",
+          "description": "$0.0920 per hour for HD Output in Japan, Hong Kong, SEA - First 10,000 hours/month"
+        },
+        {
+          "from": 10000,
+          "to": 50000,
+          "usd": "0.0840000000",
+          "description": "$0.0840 per hour for HD Output in Japan, Hong Kong, SEA - Next 40,000 hours/month"
+        },
+        {
+          "from": 50000,
+          "to": 150000,
+          "usd": "0.0780000000",
+          "description": "$0.0780 per hour for HD Output in Japan, Hong Kong, SEA - Next 100,000 hours/month"
+        },
+        {
+          "from": 150000,
+          "to": 500000,
+          "usd": "0.0700000000",
+          "description": "$0.0700 per hour for HD Output in Japan, Hong Kong, SEA - Next 350,000 hours/month"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.0620000000",
+          "description": "$0.0620 per hour for HD Output in Japan, Hong Kong, SEA - Over 500,000 hours/month"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "ivs.output.fullhd.ap",
+      "offerCode": "AmazonIVS",
+      "region": "global",
+      "sku": "JUBZT2VDPQX8PDCF",
+      "usageType": "AP-Output-FullHD-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.1840000000",
+          "description": "$0.1840 per hour for FullHD Output in Japan, Hong Kong, SEA - First 10,000 hours/month"
+        },
+        {
+          "from": 10000,
+          "to": 50000,
+          "usd": "0.1680000000",
+          "description": "$0.1680 per hour for FullHD Output in Japan, Hong Kong, SEA - Next 40,000 hours/month"
+        },
+        {
+          "from": 50000,
+          "to": 150000,
+          "usd": "0.1560000000",
+          "description": "$0.1560 per hour for FullHD Output in Japan, Hong Kong, SEA - Next 100,000 hours/month"
+        },
+        {
+          "from": 150000,
+          "to": 500000,
+          "usd": "0.1400000000",
+          "description": "$0.1400 per hour for FullHD Output in Japan, Hong Kong, SEA - Next 350,000 hours/month"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.1240000000",
+          "description": "$0.1240 per hour for FullHD Output in Japan, Hong Kong, SEA - Over 500,000 hours/month"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:44Z",
+      "checkedAt": "2026-10-11"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "ivs.input.basic",
+      "reason": "The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted."
+    },
+    {
+      "priceId": "ivs.output.sd.ap",
+      "reason": "The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "live-monthly-100",
+      "chapter": "18",
+      "title": {
+        "ja": "ライブ配信: 月 4 回 × 2 時間、各回 100 人が半分ずつ視聴",
+        "en": "Live streaming: four 2-hour streams a month, 100 viewers each watching half"
+      },
+      "assumptions": {
+        "ja": [
+          "BASIC の channel に 720p で配信。BASIC は rendition が 1 つなので、視聴はすべて HD で課金される",
+          "各回 100 人が、2 時間のうち平均 1 時間ずつ視聴（IVS のドキュメントの目安「平均で配信の 50% が届く」）",
+          "視聴者はすべて「Japan, Hong Kong, SEA」の単価で配信される",
+          "EventBridge、Lambda、CloudWatch Logs、player ページの配信は未算入"
+        ],
+        "en": [
+          "A BASIC channel fed 720p. BASIC has one rendition, so every viewing hour is billed as HD",
+          "Each time, 100 viewers watch an average of 1 of the 2 hours (the IVS documentation's rule of thumb that 50% of a stream is delivered)",
+          "Every viewer is served at the 'Japan, Hong Kong, SEA' rate",
+          "EventBridge, Lambda, CloudWatch Logs, and hosting the player page are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 8,
+          "basis": "4 streams x 2 hours of input"
+        },
+        {
+          "priceId": "ivs.output.hd.ap",
+          "quantity": 400,
+          "basis": "4 streams x 100 viewers x 1 hour watched"
+        }
+      ]
+    },
+    {
+      "id": "live-monthly-1000",
+      "chapter": "18",
+      "title": {
+        "ja": "ライブ配信: 同じ配信を、各回 1,000 人が視聴",
+        "en": "Live streaming: the same streams with 1,000 viewers each"
+      },
+      "assumptions": {
+        "ja": ["「月 4 回 × 2 時間、各回 100 人」と同じ仮定で、視聴者だけ 10 倍"],
+        "en": ["As assumed in the 100-viewer scenario, with ten times the viewers"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 8,
+          "basis": "4 streams x 2 hours of input"
+        },
+        {
+          "priceId": "ivs.output.hd.ap",
+          "quantity": 4000,
+          "basis": "4 streams x 1,000 viewers x 1 hour watched"
+        }
+      ]
+    },
+    {
+      "id": "live-left-on-weekend",
+      "chapter": "18",
+      "title": {
+        "ja": "止め忘れ: BASIC の channel に 48 時間送り続けた",
+        "en": "Left running: 48 hours of input to a BASIC channel"
+      },
+      "assumptions": {
+        "ja": ["視聴者は 0 人。1 本の stream の上限である 48 時間、配信ソフトが送り続けた"],
+        "en": ["No viewers. The encoder kept sending for 48 hours, the longest a single stream lasts"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 48,
+          "basis": "48 hours of input"
+        }
+      ]
+    },
+    {
+      "id": "live-left-on-month-basic",
+      "chapter": "18",
+      "title": {
+        "ja": "止め忘れ: BASIC の channel に 1 か月送り続けた",
+        "en": "Left running: a month of input to a BASIC channel"
+      },
+      "assumptions": {
+        "ja": ["視聴者は 0 人。配信ソフトが再接続を繰り返し、730 時間ずっと送り続けた"],
+        "en": ["No viewers. The encoder kept reconnecting and sent for all 730 hours"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 730,
+          "basis": "730 hours of input"
+        }
+      ]
+    },
+    {
+      "id": "live-left-on-month-standard",
+      "chapter": "18",
+      "title": {
+        "ja": "止め忘れ: STANDARD の channel に 1 か月送り続けた",
+        "en": "Left running: a month of input to a STANDARD channel"
+      },
+      "assumptions": {
+        "ja": ["視聴者は 0 人。channel の type が既定の STANDARD だった場合"],
+        "en": ["No viewers. The same month had the channel been the default type, STANDARD"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.standard",
+          "quantity": 730,
+          "basis": "730 hours of input"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "18",
+        "command": "vp run test:unit (examples/18-live)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "GetStream の解釈、イベントの検証と順序によらない集計、エンコーダー設定の検査、ページの表示の判断、stack の assertion",
+          "en": "GetStream interpretation, event validation and order-independent folding, encoder-setting checks, the page's view decisions, and stack assertions"
+        }
+      },
+      {
+        "scope": "18",
+        "command": "vp run typecheck / typecheck:stream:web / lint:stream:web",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "サンプル全体と player ページの型検査、template の lint",
+          "en": "Type checks for the example and the player page, and the template lint"
+        }
+      },
+      {
+        "scope": "18",
+        "command": "vp run stream:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "esbuild の bundle 込みで template を生成。AWS には問い合わせない",
+          "en": "Synthesizes the template, including the esbuild bundle, without contacting AWS"
+        }
+      },
+      {
+        "scope": "18",
+        "command": "vp run build:stream:web / dev:stream:web",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "ビルドに player の worker と wasm が含まれることを確認。開発サーバーで、channel が未設定のときの表示を確認",
+          "en": "Confirmed the build contains the player's worker and wasm files, and that the dev server shows the not-configured message"
+        }
+      },
+      {
+        "scope": "18",
+        "command": "vp run stream:infra:diff / deploy / drift / destroy, stream:key, stream:config, stream:status, stream:stop",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "IVS の channel と stream key を作る。実際の配信と視聴は AWS が無いと確かめられない",
+          "en": "Creates an IVS channel and stream key. Broadcasting and viewing cannot be checked without AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "18-live-broadcast",
+        "summary": {
+          "ja": "18章: 実際の配信と視聴を一度も通していない。OBS からの配信、player での再生、遅延の実測、GetStream とイベントの実際の形、Cloud Control API 経由の IVS リソースの作成と削除、cdkd の state に stream key の値が入るかどうか、streamKey=off を挟んだ作り直しが未確認。",
+          "en": "Chapter 18: no real broadcast has been made or watched. Unconfirmed: broadcasting from OBS, playback in the player, measured latency, the real shapes of GetStream and the events, creating and deleting IVS resources through Cloud Control API, whether cdkd's state holds the stream key value, and re-creating the key via streamKey=off."
+        },
+        "resume": {
+          "ja": "AIH_AWS_ACCOUNT_ID を設定し、vp run stream:infra:deploy、stream:key --show、OBS で配信、stream:config と preview:stream:web で視聴、stream:status --events、stream:stop、stream:status --expect-offline、stream:infra:destroy の順に実行する。state は `cdkd state show AihLive --json` で StreamKey の attributes を確認する。",
+          "en": "Set AIH_AWS_ACCOUNT_ID, then run vp run stream:infra:deploy, stream:key --show, broadcast from OBS, watch with stream:config and preview:stream:web, then stream:status --events, stream:stop, stream:status --expect-offline, and stream:infra:destroy. Inspect the StreamKey attributes with `cdkd state show AihLive --json`."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 18: live streaming ------------------------------------\n      // The player page. Shows a notice until a channel is configured. No AWS.\n      \"dev:stream:web\": fresh(\"vp dev\", { cwd: \"examples/18-live/web\" }),\n      \"build:stream:web\": { command: \"vp build\", cwd: \"examples/18-live/web\" },\n      // Serves web/dist as it is, so the config written by stream:config survives.\n      \"preview:stream:web\": fresh(\"vp preview\", { cwd: \"examples/18-live/web\" }),\n      \"typecheck:stream:web\": { command: \"../node_modules/.bin/vize check\", cwd: \"examples/18-live/web\" },\n      \"lint:stream:web\": { command: \"../node_modules/.bin/vize lint src --preset essential\", cwd: \"examples/18-live/web\" },\n      ...infra(\"stream\", \"examples/18-live\", \"AihLive\"),\n      // Writes the deployed playback URL into the built page.\n      \"stream:config\": live(\"node --env-file-if-exists=../../.env scripts/write-config.ts\", {\n        cwd: \"examples/18-live\",\n        dependsOn: [\"build:stream:web\"],\n      }),\n      // Read-only: is the channel live, and so accruing input time?\n      \"stream:status\": live(\"node --env-file-if-exists=../../.env scripts/status.ts\", { cwd: \"examples/18-live\" }),\n      // Prints the encoder settings. The stream key only with --show.\n      \"stream:key\": live(\"node --env-file-if-exists=../../.env scripts/key.ts\", { cwd: \"examples/18-live\" }),\n      \"stream:stop\": live(\"node --env-file-if-exists=../../.env scripts/stop.ts\", { cwd: \"examples/18-live\" }),",
+    "synth": ["stream:infra:synth"],
+    "checkAll": ["lint:stream:web", "typecheck:stream:web", "build:stream:web"],
+    "typecheck": ["examples/18-live"]
+  }
+}

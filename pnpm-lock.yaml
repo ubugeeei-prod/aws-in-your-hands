@@ -235,6 +235,49 @@ importers:
         specifier: 0.443.0
         version: 0.443.0(vue@3.5.43(typescript@7.0.2))
 
+  examples/18-live:
+    dependencies:
+      '@aws-sdk/client-ivs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      amazon-ivs-player:
+        specifier: 1.57.0
+        version: 1.57.0(bowser@2.14.1)(lodash@4.18.1)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      vue:
+        specifier: 3.5.43
+        version: 3.5.43(typescript@7.0.2)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      '@vizejs/vite-plugin':
+        specifier: 0.443.0
+        version: 0.443.0(@voidzero-dev/vite-plus-core@1.1.0(@types/node@24.19.2)(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1))(esbuild@0.28.2)(rolldown@1.2.13)(vite-plus@1.1.0(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1))(vue@3.5.43(typescript@7.0.2))
+      vite:
+        specifier: npm:@voidzero-dev/vite-plus-core@1.1.0
+        version: '@voidzero-dev/vite-plus-core@1.1.0(@types/node@24.19.2)(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)'
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+      vize:
+        specifier: 0.443.0
+        version: 0.443.0(vue@3.5.43(typescript@7.0.2))
+
   tools:
     dependencies:
       '@aws-sdk/client-cloudfront':
@@ -471,6 +514,10 @@ packages:
 
   '@aws-sdk/client-iam@3.1149.0':
     resolution: {integrity: sha512-+XmVnfTnzfhyNLJwLg4NZPrRoO2t3igDDkCsXwAfr3cd46Y2N82YF6XHR/cXrlv289e3XV9mC5eXK/cp076DKA==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-ivs@3.1149.0':
+    resolution: {integrity: sha512-qUouqb+w+B5+CMsnpEYwC4vvu6EWFyvvcWH+SsWbWPTx6AtLB6mjQxJ9eCdRtePJC0Z6xUYCBhMh/c4ubu6heg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-kinesis@3.1149.0':
@@ -2970,6 +3017,12 @@ packages:
   alien-signals@3.2.1:
     resolution: {integrity: sha512-I8FjmltrfnDFoZedi5CG8DghVYNhzb/Ijluz7tCSJH0xpd0484Kowhbb1XDYOxfJpU1p5wnM2X54dA+IfGyD1g==}
 
+  amazon-ivs-player@1.57.0:
+    resolution: {integrity: sha512-AZyCA3WvkOjnpPZ4VHfrW+DsjXVAE/jLSMZ9lGDdaFbIs8IPJ3/BwaeoXuO8pKE90DblGdZOhi38FBKDE7QMWQ==}
+    peerDependencies:
+      bowser: ^2.13.1
+      lodash: ^4.17.21
+
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
     engines: {node: '>=8'}
@@ -4213,6 +4266,9 @@ packages:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
     engines: {node: '>= 0.6.0'}
 
+  promise-polyfill@8.3.0:
+    resolution: {integrity: sha512-H5oELycFml5yto/atYqmjyigJoAo3+OXwolYiH7OfQuYlAqhxNvTfiNMbV9hsC6Yp83yE5r2KTVmtrG6R9i6Pg==}
+
   property-information@7.2.0:
     resolution: {integrity: sha512-IAtzIB6sUiWaJYrX9smp3V46pBGbBeLFRGdh25kg1334VcBlD8HzhPeNIWQH9zhGmo2itIe25EHt9dQP7G5hmg==}
 
@@ -4511,6 +4567,11 @@ packages:
 
   typed-query-selector@2.12.3:
     resolution: {integrity: sha512-/dtuMZyutHLlrxWhhC1uib00ELUr2dZ8C9B8YzZYsJmeE3V56OxRblrSM2UaF142pcMtak7ehZ6+poWGeehNIg==}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
 
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
@@ -5301,6 +5362,17 @@ snapshots:
       tslib: 2.8.1
 
   '@aws-sdk/client-iam@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-ivs@3.1149.0':
     dependencies:
       '@aws-sdk/core': 3.978.2
       '@aws-sdk/credential-provider-node': 3.972.85
@@ -7672,6 +7744,14 @@ snapshots:
   alien-signals@3.2.1:
     optional: true
 
+  amazon-ivs-player@1.57.0(bowser@2.14.1)(lodash@4.18.1):
+    dependencies:
+      '@babel/runtime': 7.29.10
+      bowser: 2.14.1
+      lodash: 4.18.1
+      promise-polyfill: 8.3.0
+      typescript: 5.9.3
+
   ansi-regex@5.0.1: {}
 
   ansi-regex@6.4.0: {}
@@ -8955,6 +9035,8 @@ snapshots:
 
   process@0.11.10: {}
 
+  promise-polyfill@8.3.0: {}
+
   property-information@7.2.0: {}
 
   proxy-agent-negotiate@1.1.0: {}
@@ -9314,6 +9396,8 @@ snapshots:
   tslib@2.8.1: {}
 
   typed-query-selector@2.12.3: {}
+
+  typescript@5.9.3: {}
 
   typescript@7.0.2:
     optionalDependencies:

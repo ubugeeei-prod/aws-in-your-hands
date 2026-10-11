@@ -47,6 +47,11 @@ generated: true
 | 05 | `vp run db:local:start / db:migrate:local / db:seed:local / db:reset:local / test:local:dynamodb` | ローカル | 未実行 | - | Docker の daemon が使えなかった。DYNAMODB_ENDPOINT が無いと test:local:dynamodb が失敗することだけ確認した |
 | 05 | `vp run notes:infra:diff / deploy / drift / destroy, vp run notes:smoke` | AWS | 未実行 | - | DynamoDB の table を作る |
 | 06 | `vp run app:infra:diff / deploy / drift / destroy, app:user:create, app:publish, app:smoke:web, app:smoke:api, app:unpublish` | AWS | 未実行 | - | user pool、distribution、table を作る |
+| 18 | `vp run test:unit (examples/18-live)` | ローカル | 成功 | 2026-10-11 | GetStream の解釈、イベントの検証と順序によらない集計、エンコーダー設定の検査、ページの表示の判断、stack の assertion |
+| 18 | `vp run typecheck / typecheck:stream:web / lint:stream:web` | ローカル | 成功 | 2026-10-11 | サンプル全体と player ページの型検査、template の lint |
+| 18 | `vp run stream:infra:synth` | ローカル | 成功 | 2026-10-11 | esbuild の bundle 込みで template を生成。AWS には問い合わせない |
+| 18 | `vp run build:stream:web / dev:stream:web` | ローカル | 成功 | 2026-10-11 | ビルドに player の worker と wasm が含まれることを確認。開発サーバーで、channel が未設定のときの表示を確認 |
+| 18 | `vp run stream:infra:diff / deploy / drift / destroy, stream:key, stream:config, stream:status, stream:stop` | AWS | 未実行 | - | IVS の channel と stream key を作る。実際の配信と視聴は AWS が無いと確かめられない |
 
 ## 未解決事項と再開手順
 
@@ -139,3 +144,9 @@ AWS Budgets の料金、API Gateway HTTP API と S3 の無料枠、どの章が 
 リポジトリの公開 URL、配布物の公開先、ライセンスが未定。CI の設定例（docs/examples/）は一度も実行していない。
 
 再開手順: 著者が決める。決まったら README と本文に実在する URL だけを書く。
+
+### 18-live-broadcast
+
+18章: 実際の配信と視聴を一度も通していない。OBS からの配信、player での再生、遅延の実測、GetStream とイベントの実際の形、Cloud Control API 経由の IVS リソースの作成と削除、cdkd の state に stream key の値が入るかどうか、streamKey=off を挟んだ作り直しが未確認。
+
+再開手順: AIH_AWS_ACCOUNT_ID を設定し、vp run stream:infra:deploy、stream:key --show、OBS で配信、stream:config と preview:stream:web で視聴、stream:status --events、stream:stop、stream:status --expect-offline、stream:infra:destroy の順に実行する。state は `cdkd state show AihLive --json` で StreamKey の attributes を確認する。

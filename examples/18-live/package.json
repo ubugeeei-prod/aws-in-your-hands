@@ -1,0 +1,23 @@
+{
+  "name": "@aih/example-18-live",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-ivs": "3.1149.0",
+    "amazon-ivs-player": "1.57.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "vue": "3.5.43",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "@types/aws-lambda": "8.10.164",
+    "@vizejs/vite-plugin": "0.443.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0",
+    "vize": "0.443.0"
+  }
+}

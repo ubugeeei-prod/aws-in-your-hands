@@ -866,45 +866,44 @@
         "en": "A Live-Streaming Recipe: IVS"
       },
       "prerequisites": ["04"],
-      "services": ["IVS"],
+      "services": ["IVS", "EventBridge", "Lambda"],
       "samplePath": "examples/18-live",
+      "sourceIds": [
+        "ivs-what-is",
+        "ivs-realtime-what-is",
+        "ivs-endpoints-quotas",
+        "ivs-streaming-config",
+        "ivs-setup-streaming",
+        "ivs-pricing",
+        "aws-price-list-ivs",
+        "ivs-costs",
+        "cfn-ivs-channel",
+        "cfn-ivs-streamkey",
+        "ivs-api-getstream",
+        "ivs-api-stream",
+        "ivs-api-stopstream",
+        "ivs-api-deletechannel",
+        "ivs-eventbridge",
+        "ivs-player-sdk",
+        "ivs-web-player-guide",
+        "ivs-player-npm",
+        "ivs-timed-metadata",
+        "ivs-record-to-s3",
+        "medialive-what-is",
+        "medialive-related-services",
+        "medialive-pricing",
+        "cloudflare-stream-live",
+        "cdkd-npm-ivs"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["ivs-what-is"],
-      "outline": {
-        "outcome": {
-          "ja": "配信ソフトから IVS channel へ送り、Web の player で視聴する。",
-          "en": "You broadcast to an IVS channel from streaming software and watch it in a web player."
-        },
-        "architecture": {
-          "ja": "encoder → IVS channel → player。stream key は secret として扱う。",
-          "en": "Encoder → IVS channel → player. The stream key is handled as a secret."
-        },
-        "topics": {
-          "ja": [
-            "low-latency と real-time の違い",
-            "入力時間と視聴時間の課金",
-            "配信を止め忘れた場合の費用",
-            "MediaLive 等が必要になる条件"
-          ],
-          "en": [
-            "Low-latency versus real-time streaming",
-            "Billing by input and viewing hours",
-            "The cost of forgetting to stop a stream",
-            "When MediaLive and friends become necessary"
-          ]
-        },
-        "requiredSource": {
-          "ja": ["channel の CDK", "player ページ", "stream 状態を確認する script"],
-          "en": ["Channel CDK", "Player page", "A script that checks stream state"]
-        },
-        "distributed": {
-          "ja": "視聴者ごとに遅延が違う。chat など別経路との同期を仮定しない。",
-          "en": "Latency differs per viewer; do not assume sync with side channels such as chat."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "19",

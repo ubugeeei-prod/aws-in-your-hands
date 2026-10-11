@@ -81,6 +81,14 @@
     {
       "priceId": "s3.standard.storage",
       "reason": "No always-free S3 allowance was confirmed; none is applied."
+    },
+    {
+      "priceId": "ivs.input.basic",
+      "reason": "The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted."
+    },
+    {
+      "priceId": "ivs.output.sd.ap",
+      "reason": "The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted."
     }
   ]
 }

@@ -472,6 +472,282 @@ generated: true
   - Function signatures used in examples/06-auth/web/src/auth/cognito.ts and api/src/local-auth.ts
 - 注記: Type-checked only. The Cognito flow in cognito.ts has never been run against a user pool.
 
+### What is Amazon IVS Low-Latency Streaming?
+
+- ID: `ivs-what-is`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/what-is.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - IVS channels can deliver video with latency under 5 seconds; IVS stages under 300 ms
+  - Ingest protocols are RTMP, RTMPS, and SRT
+  - The data plane (ingest and viewing) is global; the control plane (API, channels, stream keys) is regional
+  - Observed latency varies between users with location, network, and the components in the chain
+
+### What is Amazon IVS Real-Time Streaming?
+
+- ID: `ivs-realtime-what-is`
+- URL: <https://docs.aws.amazon.com/ivs/latest/RealTimeUserGuide/what-is.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Real-time streaming delivers latency that can be under 300 milliseconds from host to viewer
+  - Up to 12 hosts on a stage; the resource is a stage, not a channel
+
+### Amazon Interactive Video Service endpoints and quotas
+
+- ID: `ivs-endpoints-quotas`
+- URL: <https://docs.aws.amazon.com/general/latest/gr/ivs.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - ap-northeast-1 has endpoints for IVS low-latency streaming, real-time streaming, and chat
+  - One stream key per channel, not adjustable
+  - Default quotas per Region: 100 concurrent streams and 15,000 concurrent views
+  - BASIC ingest bitrate: 1.5 Mbps at 480p or less, 3.5 Mbps above 480p; STANDARD and ADVANCED: 8.5 Mbps; ingest resolution up to 1080p
+  - PutMetadata: 1 KB payload, 5 transactions per second per channel
+  - Real-time stages: 12 publishers and 10,000 subscribers per stage by default
+
+### Amazon IVS Streaming Configuration
+
+- ID: `ivs-streaming-config`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/streaming-config.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Four channel types; STANDARD is the default; BASIC is transmuxed into a single rendition, STANDARD and ADVANCED are transcoded into several
+  - Exceeding the allowed input resolution or bitrate probably disconnects the stream immediately
+  - The RTMPS ingest URL form rtmps://<ingest endpoint>:443/app/<stream key>
+  - Keyframe interval of 2 seconds is recommended; values above 5 seconds are to be avoided; a 2-second interval gives a stream-start latency of roughly 6 to 7 seconds
+  - For the lowest latency the IVS player is required; H.264 video and AAC audio; CBR is recommended
+
+### Getting started with IVS: Set Up Streaming Software
+
+- ID: `ivs-setup-streaming`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/getting-started-set-up-streaming.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - OBS Studio 30.2 or later has an Amazon IVS service entry that takes the stream key
+  - A stream lasts 48 hours at most; a reconnect starts a new stream
+  - IVS disconnects after 30 seconds without data from the encoder
+  - The FFmpeg example for RTMPS
+
+### Amazon IVS Pricing
+
+- ID: `ivs-pricing`
+- URL: <https://aws.amazon.com/ivs/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - All streams sent to IVS incur video input costs, even if they are not viewed; input is rounded up to the minute, output to the second
+  - Input per hour: Basic 0.20, Standard 2.00, Advanced SD 0.50, Advanced HD 0.85 USD
+  - Output is billed per hour delivered, by resolution (SD up to 480, HD up to 720, Full HD up to 1080) and by where viewers are served from
+  - Japan is in the output group 'Japan, Hong Kong, and South East Asia'
+  - Free tier for new customers, first 12 months: 5 hours of basic input and 100 hours of SD output a month
+  - Real-time streaming is billed per participant hour
+- 注記: The page describes no charge for a channel that exists but is not live.
+
+### AWS Price List bulk API: IVS
+
+- ID: `aws-price-list-ivs`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonIVS
+  - The offer contains only input-hour, output-hour, and real-time-hour products; none for an idle channel
+- 注記: The offer has no per-Region file; region_index.json lists only aws-other. The usage types prefixed AP- are described in the file as 'Japan, Hong Kong, SEA'.
+
+### IVS Costs: Low-Latency Streaming
+
+- ID: `ivs-costs`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/costs.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Auto-record to S3 has no IVS charge; S3 storage, the S3 API calls IVS makes, and serving the recordings are charged
+  - As a rule of thumb, on average 50% of a stream is delivered to each viewer
+
+### AWS::IVS::Channel
+
+- ID: `cfn-ivs-channel`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ivs-channel.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - The Channel resource does not create a stream key, unlike the CreateChannel API
+  - Properties Type, LatencyMode (default LOW), Authorized, InsecureIngest, RecordingConfigurationArn, and their defaults
+  - Attributes Arn, IngestEndpoint, PlaybackUrl; the playback URL contains the account ID
+
+### AWS::IVS::StreamKey
+
+- ID: `cfn-ivs-streamkey`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ivs-streamkey.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Attributes Arn and Value; Value is the stream key itself
+  - Changing ChannelArn replaces the resource
+
+### IVS API: GetStream
+
+- ID: `ivs-api-getstream`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_GetStream.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - An offline channel is reported as the ChannelNotBroadcasting error (HTTP 404), not as a response
+
+### IVS API: Stream
+
+- ID: `ivs-api-stream`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_Stream.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Do not rely on the OFFLINE state; the API may not return it
+  - viewerCount of -1 means the request timed out; health is HEALTHY, STARVING, or UNKNOWN
+
+### IVS API: StopStream
+
+- ID: `ivs-api-stopstream`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_StopStream.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - StopStream disconnects the incoming stream; encoders often reconnect, so revoke the stream key to stop it for good
+
+### IVS API: DeleteChannel
+
+- ID: `ivs-api-deletechannel`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_DeleteChannel.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Deleting a channel deletes its stream keys
+  - Deleting a live channel fails with 409 ConflictException; stop the stream and wait for Stream End first
+
+### Using Amazon EventBridge with IVS Low-Latency Streaming
+
+- ID: `ivs-eventbridge`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/eventbridge.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Events are best effort: they may be missing, hours late, or out of order (Stream Down before Stream Up)
+  - Detail types, event names, and the example payloads used as test fixtures
+  - Each time a channel goes live it gets a new stream_id
+  - Session Ended may arrive before Stream End
+
+### IVS Player SDK
+
+- ID: `ivs-player-sdk`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/player.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - The IVS player is required for low latency; latency is under five seconds depending on location and settings
+  - Browsers on iOS get normal-latency playback only; a service worker brings iOS Safari to about 6 to 8 seconds
+  - Third-party players can be brought to about 10 seconds
+
+### Getting Started with the IVS Web Player SDK
+
+- ID: `ivs-web-player-guide`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/web-getting-started.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - The SDK is offered as a script tag and as an npm module; the page names 1.57.0 as the latest
+  - playsinline is required for inline playback on iOS Safari
+  - The WebAssembly binary must be served as application/wasm when self-hosted
+
+### amazon-ivs-player 1.57.0 (npm tarball)
+
+- ID: `ivs-player-npm`
+- URL: <https://www.npmjs.com/package/amazon-ivs-player/v/1.57.0>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - create() takes wasmWorker and wasmBinary URLs; the files ship under dist/assets
+  - ErrorType.NOT_AVAILABLE with code 404 means the stream does not exist or is offline, 429 that the viewer limit was reached
+  - getLiveLatency() returns the latency from the server to the player in seconds; isLiveLowLatency() and TEXT_METADATA_CUE exist
+  - The package is AWS Content under the AWS Customer Agreement, not an open-source license; peer dependencies are bowser and lodash
+- 注記: Read from dist/index.d.ts and package.json of the installed tarball.
+
+### Embedding Metadata within a Video Stream
+
+- ID: `ivs-timed-metadata`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/metadata.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Timed metadata is embedded in the video segments, so every viewer receives it at the same point in the stream
+  - PutMetadata works only on a live stream; there is no guarantee when the metadata is inserted
+  - The web player delivers it as TEXT_METADATA_CUE
+
+### IVS Auto-Record to Amazon S3
+
+- ID: `ivs-record-to-s3`
+- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/record-to-s3.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Recordings are written under ivs/v1/<account>/<channel>/<date>/<recording id> as HLS media, thumbnails, and JSON metadata
+  - Process a recording only after the Recording End event
+
+### What Is MediaLive?
+
+- ID: `medialive-what-is`
+- URL: <https://docs.aws.amazon.com/medialive/latest/ug/what-is.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - MediaLive transforms live video from one format and package into others, for broadcast and streaming delivery
+
+### MediaLive: Related Services
+
+- ID: `medialive-related-services`
+- URL: <https://docs.aws.amazon.com/medialive/latest/ug/related-services.html>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - MediaPackage is a just-in-time video packaging and origination service that can package content encoded by MediaLive
+
+### AWS Elemental MediaLive Pricing
+
+- ID: `medialive-pricing`
+- URL: <https://aws.amazon.com/medialive/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - A running channel is charged whether or not its inputs receive content; push inputs and channels are also charged while idle
+  - Running time is rounded up to the minute above a 10-minute minimum
+
+### Cloudflare Stream: Stream live video
+
+- ID: `cloudflare-stream-live`
+- URL: <https://developers.cloudflare.com/stream/stream-live/>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - Ingest over RTMPS or SRT; playback in the Stream Player or any HLS or DASH player
+  - Every live stream is recorded automatically
+  - Priced per 1,000 minutes recorded and per 1,000 minutes delivered, with no separate encoding charge
+- 注記: The page gives no latency figures.
+
+### @go-to-k/cdkd 0.296.28: IVS resource types (npm tarball)
+
+- ID: `cdkd-npm-ivs`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- 確認日: 2026-10-11
+- 参照する章: 18
+- この出典が支える主張:
+  - register-providers.ts registers no provider for any AWS::IVS type, so Channel and StreamKey go through Cloud Control API; AWS::Events::Rule, AWS::Lambda::*, AWS::IAM::*, and AWS::Logs::LogGroup have dedicated providers
+  - The Cloud Control provider stores the resource model returned by a create as the resource's attributes in state
+  - AWS::IVS::StreamKey Value is on cdkd's list of secret-valued attributes
+- 注記: Read from the bundled dist of the tarball, which keeps the src/ region markers. No cdkd command was run against AWS, so what state.json holds for a stream key is not observed.
+
 ## 未再確認の出典（後続章の調査の出発点）
 
 ### Security best practices in IAM
@@ -859,15 +1135,6 @@ generated: true
 - 参照する章: 17
 - この出典が支える主張:
   - Converse and ConverseStream
-- 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### What is Amazon IVS?
-
-- ID: `ivs-what-is`
-- URL: <https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/what-is.html>
-- 参照する章: 18
-- この出典が支える主張:
-  - Low-latency streaming overview
 - 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### CloudWatch RUM

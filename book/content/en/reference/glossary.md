@@ -53,3 +53,8 @@ The term pairs that keep both languages using one word for one concept. API name
 | PKCE | PKCE | 06 | A mechanism that keeps an intercepted authorization code from being exchanged for tokens. |
 | public client | public client | 06 | An app that cannot keep a secret, such as a SPA running in a browser. |
 | JWT authorizer | JWT authorizer | 06 | The API Gateway HTTP API feature that verifies a token before the function is invoked. |
+| channel | channel | 18 | The unit in IVS low-latency streaming that takes one broadcast and delivers it to viewers. It has an ingest endpoint and a playback URL. |
+| stream key | stream key | 18 | The secret string an encoder presents when it sends to a channel. Anyone who has it can broadcast to that channel. |
+| ingest | ingest | 18 | A service receiving the video that an encoder sends. |
+| rendition | rendition | 18 | One version of the same video at a particular resolution and bitrate. The player switches between them to fit the connection. |
+| timed metadata | timed metadata | 18 | A small piece of data embedded at a point in the video. It reaches each viewer at the same moment of the video, whatever that viewer's delay. |

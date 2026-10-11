@@ -791,6 +791,134 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "18.overview",
+      "sources": ["examples/18-live/infra/lib/live-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "18.products",
+      "sources": ["examples/18-live/src/channel.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.channel",
+      "sources": [
+        "examples/18-live/src/channel.ts",
+        "examples/18-live/infra/lib/live-stack.ts",
+        "examples/18-live/test/channel.test.ts"
+      ],
+      "tasks": ["test:unit", "stream:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.stream-key",
+      "sources": [
+        "examples/18-live/infra/lib/live-stack.ts",
+        "examples/18-live/infra/bin/app.ts",
+        "examples/18-live/infra/test/live-stack.test.ts",
+        "examples/18-live/scripts/key.ts"
+      ],
+      "tasks": ["test:unit", "stream:key"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "18.player",
+      "sources": [
+        "examples/18-live/web/src/player.ts",
+        "examples/18-live/web/src/viewer.ts",
+        "examples/18-live/web/src/config.ts",
+        "examples/18-live/web/src/App.vue",
+        "examples/18-live/web/src/viewer.test.ts"
+      ],
+      "tasks": ["dev:stream:web", "build:stream:web", "typecheck:stream:web", "lint:stream:web", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "18.local",
+      "sources": ["examples/18-live"],
+      "tasks": ["test:unit", "typecheck", "stream:infra:synth", "dev:stream:web"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "18.broadcast",
+      "sources": [
+        "examples/18-live/scripts/key.ts",
+        "examples/18-live/scripts/write-config.ts",
+        "examples/18-live/src/channel.ts"
+      ],
+      "tasks": ["stream:infra:diff", "stream:infra:deploy", "stream:key", "stream:config", "preview:stream:web"],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "18.status",
+      "sources": [
+        "examples/18-live/src/stream.ts",
+        "examples/18-live/src/ivs.ts",
+        "examples/18-live/scripts/status.ts",
+        "examples/18-live/scripts/stop.ts",
+        "examples/18-live/test/stream.test.ts"
+      ],
+      "tasks": ["stream:status", "stream:stop", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.events",
+      "sources": [
+        "examples/18-live/src/events.ts",
+        "examples/18-live/src/handler.ts",
+        "examples/18-live/src/timeline.ts",
+        "examples/18-live/src/logged-events.ts",
+        "examples/18-live/test/events.test.ts",
+        "examples/18-live/test/timeline.test.ts"
+      ],
+      "tasks": ["test:unit", "stream:status"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "18.latency",
+      "sources": ["examples/18-live/web/src/player.ts", "examples/18-live/web/src/App.vue"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "18.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit", "stream:status"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "18.cleanup",
+      "sources": ["examples/18-live/scripts/stop.ts", "examples/18-live/scripts/status.ts"],
+      "tasks": ["stream:stop", "stream:status", "stream:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost", "drift"],
+      "verification": "unverified"
     }
   ]
 }

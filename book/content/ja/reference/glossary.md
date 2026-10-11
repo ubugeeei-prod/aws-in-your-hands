@@ -53,3 +53,8 @@ generated: true
 | PKCE | PKCE | 06 | authorization code を横取りされても token と交換できないようにする仕組み。 |
 | public client | public client | 06 | 秘密を保持できないアプリ。ブラウザで動く SPA がそう。 |
 | JWT authorizer | JWT authorizer | 06 | API Gateway HTTP API が、関数を呼ぶ前に token を検証する機能。 |
+| channel | channel | 18 | IVS の low-latency streaming で、配信を 1 本受けて視聴者へ届ける単位。ingest endpoint と playback URL を持つ。 |
+| stream key | stream key | 18 | 配信ソフトが channel へ送るときに示す秘密の文字列。持っている人は誰でもその channel に配信できる。 |
+| ingest | ingest | 18 | 配信ソフトから送られてくる映像を、サービスが受け取ること。 |
+| rendition | rendition | 18 | 同じ映像の、解像度と bitrate が違う版の 1 つ。player は回線に合わせて切り替える。 |
+| timed metadata | timed metadata | 18 | 映像の特定の位置に埋め込む小さなデータ。視聴者ごとの遅延にかかわらず、映像の同じ場面で届く。 |

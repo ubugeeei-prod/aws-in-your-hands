@@ -296,6 +296,121 @@
           "basis": "100 monthly active users"
         }
       ]
+    },
+    {
+      "id": "live-monthly-100",
+      "chapter": "18",
+      "title": {
+        "ja": "ライブ配信: 月 4 回 × 2 時間、各回 100 人が半分ずつ視聴",
+        "en": "Live streaming: four 2-hour streams a month, 100 viewers each watching half"
+      },
+      "assumptions": {
+        "ja": [
+          "BASIC の channel に 720p で配信。BASIC は rendition が 1 つなので、視聴はすべて HD で課金される",
+          "各回 100 人が、2 時間のうち平均 1 時間ずつ視聴（IVS のドキュメントの目安「平均で配信の 50% が届く」）",
+          "視聴者はすべて「Japan, Hong Kong, SEA」の単価で配信される",
+          "EventBridge、Lambda、CloudWatch Logs、player ページの配信は未算入"
+        ],
+        "en": [
+          "A BASIC channel fed 720p. BASIC has one rendition, so every viewing hour is billed as HD",
+          "Each time, 100 viewers watch an average of 1 of the 2 hours (the IVS documentation's rule of thumb that 50% of a stream is delivered)",
+          "Every viewer is served at the 'Japan, Hong Kong, SEA' rate",
+          "EventBridge, Lambda, CloudWatch Logs, and hosting the player page are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 8,
+          "basis": "4 streams x 2 hours of input"
+        },
+        {
+          "priceId": "ivs.output.hd.ap",
+          "quantity": 400,
+          "basis": "4 streams x 100 viewers x 1 hour watched"
+        }
+      ]
+    },
+    {
+      "id": "live-monthly-1000",
+      "chapter": "18",
+      "title": {
+        "ja": "ライブ配信: 同じ配信を、各回 1,000 人が視聴",
+        "en": "Live streaming: the same streams with 1,000 viewers each"
+      },
+      "assumptions": {
+        "ja": ["「月 4 回 × 2 時間、各回 100 人」と同じ仮定で、視聴者だけ 10 倍"],
+        "en": ["As assumed in the 100-viewer scenario, with ten times the viewers"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 8,
+          "basis": "4 streams x 2 hours of input"
+        },
+        {
+          "priceId": "ivs.output.hd.ap",
+          "quantity": 4000,
+          "basis": "4 streams x 1,000 viewers x 1 hour watched"
+        }
+      ]
+    },
+    {
+      "id": "live-left-on-weekend",
+      "chapter": "18",
+      "title": {
+        "ja": "止め忘れ: BASIC の channel に 48 時間送り続けた",
+        "en": "Left running: 48 hours of input to a BASIC channel"
+      },
+      "assumptions": {
+        "ja": ["視聴者は 0 人。1 本の stream の上限である 48 時間、配信ソフトが送り続けた"],
+        "en": ["No viewers. The encoder kept sending for 48 hours, the longest a single stream lasts"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 48,
+          "basis": "48 hours of input"
+        }
+      ]
+    },
+    {
+      "id": "live-left-on-month-basic",
+      "chapter": "18",
+      "title": {
+        "ja": "止め忘れ: BASIC の channel に 1 か月送り続けた",
+        "en": "Left running: a month of input to a BASIC channel"
+      },
+      "assumptions": {
+        "ja": ["視聴者は 0 人。配信ソフトが再接続を繰り返し、730 時間ずっと送り続けた"],
+        "en": ["No viewers. The encoder kept reconnecting and sent for all 730 hours"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.basic",
+          "quantity": 730,
+          "basis": "730 hours of input"
+        }
+      ]
+    },
+    {
+      "id": "live-left-on-month-standard",
+      "chapter": "18",
+      "title": {
+        "ja": "止め忘れ: STANDARD の channel に 1 か月送り続けた",
+        "en": "Left running: a month of input to a STANDARD channel"
+      },
+      "assumptions": {
+        "ja": ["視聴者は 0 人。channel の type が既定の STANDARD だった場合"],
+        "en": ["No viewers. The same month had the channel been the default type, STANDARD"]
+      },
+      "items": [
+        {
+          "priceId": "ivs.input.standard",
+          "quantity": 730,
+          "basis": "730 hours of input"
+        }
+      ]
     }
   ]
 }
