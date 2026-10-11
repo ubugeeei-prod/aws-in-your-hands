@@ -1239,6 +1239,45 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-10-06T22:40:50Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "datatransfer.out.internet",
+      "offerCode": "AWSDataTransfer",
+      "region": "ap-northeast-1",
+      "sku": "9ESU2G5WSY6FMZR3",
+      "usageType": "APN1-DataTransfer-Out-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10240,
+          "usd": "0.1140000000",
+          "description": "$0.114 per GB - first 10 TB / month data transfer out beyond the global free tier"
+        },
+        {
+          "from": 10240,
+          "to": 51200,
+          "usd": "0.0890000000",
+          "description": "$0.089 per GB - next 40 TB / month data transfer out"
+        },
+        {
+          "from": 51200,
+          "to": 153600,
+          "usd": "0.0860000000",
+          "description": "$0.086 per GB - next 100 TB / month data transfer out"
+        },
+        {
+          "from": 153600,
+          "to": null,
+          "usd": "0.0840000000",
+          "description": "$0.084 per GB - greater than 150 TB / month data transfer out"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-16T13:22:08Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

@@ -13,5 +13,6 @@
   "examples/17-ai",
   "examples/15-email",
   "examples/10-edge",
-  "examples/13-sql"
+  "examples/13-sql",
+  "examples/07-uploads"
 ]

@@ -797,6 +797,61 @@
         "ja": "デプロイ済みの API と cluster が必要",
         "en": "Needs the deployed API and cluster"
       }
+    },
+    {
+      "scope": "07",
+      "command": "vp run test:unit (examples/07-uploads)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "認可（他人のノートは 404、key は token からのみ）、許可証の中身、完了と期限と上限、途中で止めた場合の S3 と DynamoDB の状態、掃除、同じ form の再送、SDK が作る POST policy と presigned GET（偽の認証情報で署名のみ）、DynamoDB へのリクエストの形、インフラの assertion",
+        "en": "Authorization (another user's note is a 404; the key comes only from the token), permit contents, finishing with its deadline and limit, the state of S3 and DynamoDB when stopped partway, the sweep, the replay of a form, the POST policy and presigned GET the SDK produces (signed with made-up credentials only), the shape of DynamoDB requests, and infrastructure assertions"
+      }
+    },
+    {
+      "scope": "07",
+      "command": "vp run dev:uploads:api + vp run dev:uploads:web + ブラウザの自動操作 / browser automation",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "サインイン、ノートの作成、ファイルを選んで画像が表示されること、別の利用者の許可・一覧・完了が 404、大きすぎるファイル・違う種類・違う key の拒否、完了の再実行、削除とノートの削除の後に画像の URL が読めないことを確認。相手はメモリ上の実装で、S3 ではない",
+        "en": "Checked sign-in, creating a note, choosing a file and seeing the image, a 404 for another user's permit, list, and finish, refusal of an oversized file, another type, and another key, finishing twice, and the image URL no longer loading after a delete and after deleting the note. The store was the in-memory implementation, not S3"
+      }
+    },
+    {
+      "scope": "07",
+      "command": "vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "06章と同じ 19 種類のリソース。Cognito 用のコードと scripts/ は型検査のみ",
+        "en": "The same 19 resource types as chapter 06. The Cognito code path and scripts/ are type-checked only"
+      }
+    },
+    {
+      "scope": "07",
+      "command": "S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation",
+      "kind": "local",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "タスクを用意していない。Docker の daemon が要り、執筆環境では動いていなかった",
+        "en": "No task is provided. It needs a Docker daemon, which was not running where this was written"
+      }
+    },
+    {
+      "scope": "07",
+      "command": "vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "bucket を 2 つ、user pool、distribution、table を作る。S3 への presigned POST、lifecycle rule、CORS、DynamoDB への添付の記録は、どれも実環境で未確認",
+        "en": "Creates two buckets, a user pool, a distribution, and a table. The presigned POST to S3, the lifecycle rules, CORS, and attachment records in DynamoDB are all unconfirmed in AWS"
+      }
     }
   ],
   "open": [
@@ -1139,6 +1194,50 @@
       "resume": {
         "ja": "デプロイした cluster で EXPLAIN ANALYZE VERBOSE を使うか、CloudWatch の ComputeDPU、ReadDPU、WriteDPU を見て、作成、更新、一覧の 1 件あたりの DPU を測る。data/fragments/13.json の scenarios を直して apply し直す。",
         "en": "On a deployed cluster use EXPLAIN ANALYZE VERBOSE, or the ComputeDPU, ReadDPU, and WriteDPU metrics in CloudWatch, to measure the DPUs of one create, one update, and one list. Correct the scenarios in data/fragments/13.json and apply it again."
+      }
+    },
+    {
+      "id": "uploads-s3-post-policy",
+      "summary": {
+        "ja": "07章: presigned POST を実物の S3 に送っていない。とくに、form の tagging の欄を S3 が policy の条件 {\"tagging\": ...} で受け付けるかは、POST policy の条件の表に tagging が載っていないため未確認。content-length-range と Content-Type による拒否、bucket の CORS、POST 直後の HeadObject も未確認。",
+        "en": "Chapter 07: the presigned POST has never been sent to real S3. In particular, whether S3 accepts the form's tagging field under the policy condition {\"tagging\": ...} is unconfirmed, because the table of POST policy conditions does not list tagging. Refusal by content-length-range and Content-Type, the bucket's CORS, and HeadObject right after the POST are unconfirmed too."
+      },
+      "resume": {
+        "ja": "vp run uploads:infra:deploy、uploads:user:create、uploads:publish の後、サインインして得た access token を AIH_ACCESS_TOKEN に入れて vp run uploads:smoke:api を実行する。tagging で拒否された場合は、アップロード先を別の接頭辞にして完了時に CopyObject する設計に替える。",
+        "en": "After vp run uploads:infra:deploy, uploads:user:create, and uploads:publish, sign in, put the access token into AIH_ACCESS_TOKEN, and run vp run uploads:smoke:api. If S3 refuses the tagging field, switch to uploading under a separate prefix and copying the object on finish."
+      }
+    },
+    {
+      "id": "uploads-lifecycle",
+      "summary": {
+        "ja": "07章: pending の tag が付いた object を lifecycle rule が消すこと、tag を外した object は消さないこと、cdkd が lifecycle と CORS の設定を作成・読み戻しできることは未確認。",
+        "en": "Chapter 07: that the lifecycle rule deletes objects tagged pending, that it leaves objects whose tag was removed, and that cdkd can create and read back the lifecycle and CORS settings are all unconfirmed."
+      },
+      "resume": {
+        "ja": "デプロイ後、完了を呼ばないアップロードと完了したアップロードを 1 つずつ作り、2 日後に vp run uploads:sweep と vp run uploads:infra:drift で確かめる。",
+        "en": "After deploying, make one upload that is never finished and one that is, then check two days later with vp run uploads:sweep and vp run uploads:infra:drift."
+      }
+    },
+    {
+      "id": "uploads-credential-lifetime",
+      "summary": {
+        "ja": "07章: Lambda の実行 role の一時認証情報の寿命を、一次情報で確認できなかった。presigned URL が期限前に切れる頻度は不明。",
+        "en": "Chapter 07: the lifetime of the temporary credentials of a Lambda execution role could not be confirmed from a primary source. How often a presigned URL expires early is unknown."
+      },
+      "resume": {
+        "ja": "Lambda の公式ドキュメントで数値を探す。見つからなければ、デプロイした関数で認証情報の Expiration を記録して観測値として書く。",
+        "en": "Look for a figure in the official Lambda documentation. Failing that, record the credentials' expiration in a deployed function and report it as an observation."
+      }
+    },
+    {
+      "id": "uploads-form-replay",
+      "summary": {
+        "ja": "07章: 完了した後、許可証の期限内（5 分）に同じ form を再送すると、object が pending に戻り、1 日後に記録だけが残る。invariant の穴として本文とテストに書いたが、閉じていない。",
+        "en": "Chapter 07: replaying the same form within the permit's lifetime (5 minutes) after finishing puts the object back to pending, and a day later only the record is left. Written up as a gap in the prose and in a test, and not closed."
+      },
+      "resume": {
+        "ja": "presigned PUT と If-None-Match に替える（Content-Length の署名で大きさを固定できるかを先に実機で確かめる）か、許可証の期限後に tag をもう一度外す処理を足す。",
+        "en": "Switch to a presigned PUT with If-None-Match (after confirming on real S3 that a signed Content-Length pins the size), or add a step that removes the tag again after the permit expires."
       }
     }
   ]

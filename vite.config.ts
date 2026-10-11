@@ -74,6 +74,7 @@ const chapterSynthTasks = [
   "mail:infra:synth",
   "edge:infra:synth",
   "sql:infra:synth",
+  "uploads:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -85,6 +86,9 @@ const chapterCheckTasks = [
   "lint:stream:web",
   "typecheck:stream:web",
   "build:stream:web",
+  "lint:uploads:web",
+  "typecheck:uploads:web",
+  "build:uploads:web",
 ];
 
 export default defineConfig({
@@ -237,6 +241,41 @@ export default defineConfig({
       "sql:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/13-sql" }),
       "sql:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/13-sql" }),
       // <<< chapter 13
+
+      // >>> chapter 07
+      // ---- chapter 07: image uploads ------------------------------------
+      // API with local sign-in and uploads kept in memory, and the SPA that uses it. No Docker, no AWS.
+      "dev:uploads:api": fresh("node --watch --env-file-if-exists=.env api/src/dev.ts", { cwd: "examples/07-uploads" }),
+      "dev:uploads:web": fresh("vp dev", { cwd: "examples/07-uploads/web" }),
+      "build:uploads:web": { command: "vp build", cwd: "examples/07-uploads/web" },
+      "typecheck:uploads:web": { command: "../node_modules/.bin/vize check", cwd: "examples/07-uploads/web" },
+      "lint:uploads:web": {
+        command: "../node_modules/.bin/vize lint src --preset essential",
+        cwd: "examples/07-uploads/web",
+      },
+      ...infra("uploads", "examples/07-uploads", "AihUploads"),
+      "uploads:publish": live(
+        "node --env-file-if-exists=../../.env scripts/write-config.ts && node --env-file-if-exists=../../.env ../../tools/src/site/publish.ts . AihUploads web/dist",
+        { cwd: "examples/07-uploads", dependsOn: ["build:uploads:web"] },
+      ),
+      "uploads:smoke:web": live(`${node} tools/src/site/smoke.ts spa examples/07-uploads AihUploads`),
+      "uploads:smoke:api": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/07-uploads",
+      }),
+      // Lists objects that no record points at. Deletes them only with --delete.
+      "uploads:sweep": live("node --env-file-if-exists=../../.env scripts/sweep.ts", { cwd: "examples/07-uploads" }),
+      // Counts the uploaded images. Deletes them all only with --yes.
+      "uploads:empty": live("node --env-file-if-exists=../../.env scripts/empty-uploads.ts", {
+        cwd: "examples/07-uploads",
+      }),
+      "uploads:unpublish": live(`${node} tools/src/site/unpublish.ts examples/07-uploads AihUploads`),
+      "uploads:user:create": live("node --env-file-if-exists=../../.env scripts/user.ts create", {
+        cwd: "examples/07-uploads",
+      }),
+      "uploads:user:delete": live("node --env-file-if-exists=../../.env scripts/user.ts delete", {
+        cwd: "examples/07-uploads",
+      }),
+      // <<< chapter 07
 
       // ---- chapter task blocks are inserted above this line ----
 

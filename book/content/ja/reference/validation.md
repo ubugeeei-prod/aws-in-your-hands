@@ -85,6 +85,11 @@ generated: true
 | 13 | `vp run sql:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Aurora DSQL の cluster を作る。cdkd は AWS::DSQL::Cluster を Cloud Control API 経由で扱う |
 | 13 | `vp run sql:db:migrate / sql:db:grant / sql:db:seed` | AWS | 未実行 | - | admin として cluster に接続し、schema、database role、seed を作る |
 | 13 | `vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)` | AWS | 未実行 | - | デプロイ済みの API と cluster が必要 |
+| 07 | `vp run test:unit (examples/07-uploads)` | ローカル | 成功 | 2026-10-11 | 認可（他人のノートは 404、key は token からのみ）、許可証の中身、完了と期限と上限、途中で止めた場合の S3 と DynamoDB の状態、掃除、同じ form の再送、SDK が作る POST policy と presigned GET（偽の認証情報で署名のみ）、DynamoDB へのリクエストの形、インフラの assertion |
+| 07 | `vp run dev:uploads:api + vp run dev:uploads:web + ブラウザの自動操作 / browser automation` | ローカル | 成功 | 2026-10-11 | サインイン、ノートの作成、ファイルを選んで画像が表示されること、別の利用者の許可・一覧・完了が 404、大きすぎるファイル・違う種類・違う key の拒否、完了の再実行、削除とノートの削除の後に画像の URL が読めないことを確認。相手はメモリ上の実装で、S3 ではない |
+| 07 | `vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck` | ローカル | 成功 | 2026-10-11 | 06章と同じ 19 種類のリソース。Cognito 用のコードと scripts/ は型検査のみ |
+| 07 | `S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation` | ローカル | 未実行 | - | タスクを用意していない。Docker の daemon が要り、執筆環境では動いていなかった |
+| 07 | `vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish` | AWS | 未実行 | - | bucket を 2 つ、user pool、distribution、table を作る。S3 への presigned POST、lifecycle rule、CORS、DynamoDB への添付の記録は、どれも実環境で未確認 |
 
 ## 未解決事項と再開手順
 
@@ -273,3 +278,27 @@ cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Cont
 13章の料金のシナリオは、1 リクエストあたりの DPU を公式ドキュメントの計算例から借りた仮定で、この章の query を測った値ではない。
 
 再開手順: デプロイした cluster で EXPLAIN ANALYZE VERBOSE を使うか、CloudWatch の ComputeDPU、ReadDPU、WriteDPU を見て、作成、更新、一覧の 1 件あたりの DPU を測る。data/fragments/13.json の scenarios を直して apply し直す。
+
+### uploads-s3-post-policy
+
+07章: presigned POST を実物の S3 に送っていない。とくに、form の tagging の欄を S3 が policy の条件 {"tagging": ...} で受け付けるかは、POST policy の条件の表に tagging が載っていないため未確認。content-length-range と Content-Type による拒否、bucket の CORS、POST 直後の HeadObject も未確認。
+
+再開手順: vp run uploads:infra:deploy、uploads:user:create、uploads:publish の後、サインインして得た access token を AIH_ACCESS_TOKEN に入れて vp run uploads:smoke:api を実行する。tagging で拒否された場合は、アップロード先を別の接頭辞にして完了時に CopyObject する設計に替える。
+
+### uploads-lifecycle
+
+07章: pending の tag が付いた object を lifecycle rule が消すこと、tag を外した object は消さないこと、cdkd が lifecycle と CORS の設定を作成・読み戻しできることは未確認。
+
+再開手順: デプロイ後、完了を呼ばないアップロードと完了したアップロードを 1 つずつ作り、2 日後に vp run uploads:sweep と vp run uploads:infra:drift で確かめる。
+
+### uploads-credential-lifetime
+
+07章: Lambda の実行 role の一時認証情報の寿命を、一次情報で確認できなかった。presigned URL が期限前に切れる頻度は不明。
+
+再開手順: Lambda の公式ドキュメントで数値を探す。見つからなければ、デプロイした関数で認証情報の Expiration を記録して観測値として書く。
+
+### uploads-form-replay
+
+07章: 完了した後、許可証の期限内（5 分）に同じ form を再送すると、object が pending に戻り、1 日後に記録だけが残る。invariant の穴として本文とテストに書いたが、閉じていない。
+
+再開手順: presigned PUT と If-None-Match に替える（Content-Length の署名で大きさを固定できるかを先に実機で確かめる）か、許可証の期限後に tag をもう一度外す処理を足す。

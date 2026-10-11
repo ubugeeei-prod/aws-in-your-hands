@@ -52,7 +52,7 @@ Assumptions:
 
 - List subtotal: **USD 0.50** / month
 - Subtotal after monthly free allowance: **USD 0.03** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`
+- Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
 
 ## HTTP API: deployed, but never called for a month
 
@@ -456,7 +456,7 @@ Assumptions:
 
 - List subtotal: **USD 3.59** / month
 - Subtotal after monthly free allowance: **USD 0.21** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `cloudfront.kvs.api`
+- Prices whose free allowance could not be confirmed (nothing deducted): `cloudfront.kvs.api`, `s3.request.tier2`
 
 ## Aurora DSQL: 1 GB of data and no queries for a month
 
@@ -554,6 +554,38 @@ Assumptions:
 - List subtotal: **USD 0.12** / month
 - Subtotal after monthly free allowance: **USD 0.12** / month
 
+## Image attachments: 10,000 uploads and 100,000 views a month
+
+ID: `uploads-small` / chapter: [07 Upload Images: Presigned URLs and S3](/en/chapters/07-uploads.md)
+
+Assumptions:
+
+- Counts only what is added on top of the notes app of chapter 06
+- Each image is 1 MB. 10,000 are uploaded in the month and every one is attached. 10 GB are stored at the end of the month
+- Opening a note calls the attachment list once and loads one image, 100,000 times a month. The browser cache is assumed not to help
+- Requests to S3: 10,000 upload POSTs, 10,000 HeadObject calls, and 100,000 image GETs. Removing the tag is not billed. Delete requests are not included
+- The API serves 10,000 permits, 10,000 finishes, and 100,000 lists: 120,000 requests. Lambda averages 60 ms at 256 MB on arm64
+- DynamoDB reads: 2 units for a permit, 3 for a finish, 2 for a list. One write unit per finish
+- Data transfer for uploads (internet to S3) is 0. Unfinished uploads, tag storage, and the LIST requests of a sweep are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 10 | GB-Mo | 10 GB stored, in GB-month | 0.25 | - | 0.25 |
+| `s3.request.tier1` | 10,000 | Requests | 10,000 upload POSTs | 0.05 | - | 0.05 |
+| `s3.request.tier2` | 110,000 | Requests | 10,000 HeadObject + 100,000 GET | 0.04 | - | 0.04 |
+| `datatransfer.out.internet` | 97.656 | GB | 100,000 views x 1 MB, in GB | 11.13 | - | 11.13 |
+| `apigw.http.request` | 120,000 | Requests | 10,000 permits + 10,000 finishes + 100,000 lists | 0.15 | - | 0.15 |
+| `lambda.request.arm` | 120,000 | Requests | one invocation per request | 0.02 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 1,800 | Lambda-GB-Second | 120,000 x 0.06 s x 0.25 GB, in GB-seconds | 0.02 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.057 | GB | 120,000 x 0.5 KB, in GB | 0.04 | 5 | 0 |
+| `logs.storage` | 0.013 | GB-Mo | 0.057 GB x 7/30, in GB-month | 0.000429 | 5 | 0 |
+| `dynamodb.read.on-demand` | 250,000 | ReadRequestUnits | 10,000 x 2 + 10,000 x 3 + 100,000 x 2 | 0.04 | - | 0.04 |
+| `dynamodb.write.on-demand` | 10,000 | WriteRequestUnits | one record per finished upload | 0.01 | - | 0.01 |
+
+- List subtotal: **USD 11.76** / month
+- Subtotal after monthly free allowance: **USD 11.67** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`, `s3.standard.storage`, `datatransfer.out.internet`, `s3.request.tier1`, `s3.request.tier2`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -607,6 +639,7 @@ Assumptions:
 | `rds.postgres.gp3.storage` | ap-northeast-1 | APN1-RDS:GP3-Storage | GB-Mo | 0 - ∞: 0.1380000000 | 2026-10-06 | 2026-10-11 |
 | `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
 | `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
+| `datatransfer.out.internet` | ap-northeast-1 | APN1-DataTransfer-Out-Bytes | GB | 0 - 10,240: 0.1140000000<br>10,240 - 51,200: 0.0890000000<br>51,200 - 153,600: 0.0860000000<br>153,600 - ∞: 0.0840000000 | 2026-09-16 | 2026-10-11 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -642,3 +675,6 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.
 - `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
 - `rds.postgres.gp3.storage`: The RDS free tier terms were not checked while writing chapter 13.
+- `datatransfer.out.internet`: The price list calls the first tier "beyond the global free tier". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied.
+- `s3.request.tier1`: No always-free S3 request allowance was confirmed; none is applied.
+- `s3.request.tier2`: No always-free S3 request allowance was confirmed; none is applied.

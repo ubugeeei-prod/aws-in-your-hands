@@ -234,55 +234,47 @@
         "en": "Upload Images: Presigned URLs and S3"
       },
       "prerequisites": ["06"],
-      "services": ["S3"],
+      "services": [
+        "S3",
+        "Lambda",
+        "API Gateway HTTP API JWT authorizer",
+        "DynamoDB",
+        "Cognito user pools",
+        "CloudFront"
+      ],
       "samplePath": "examples/07-uploads",
+      "sourceIds": [
+        "s3-presigned-url",
+        "s3-presigned-upload",
+        "s3-post-policy",
+        "s3-post-object",
+        "s3-sigv4-query-auth",
+        "s3-conditional-writes",
+        "s3-head-object",
+        "s3-lifecycle-expiration",
+        "s3-lifecycle-abort-mpu",
+        "s3-object-tagging",
+        "s3-cors",
+        "s3-cors-elements",
+        "s3-block-public-access",
+        "s3-consistency",
+        "aws-sdk-s3-presigned-post-npm",
+        "aws-price-list-s3",
+        "lambda-runtime-env-vars",
+        "lambda-quotas",
+        "aws-price-list-data-transfer",
+        "cloudflare-r2-presigned-urls",
+        "cdkd-npm"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": [],
-      "outline": {
-        "outcome": {
-          "ja": "ブラウザが presigned URL で画像を S3 に直接送り、ノートに添付できる。",
-          "en": "The browser sends an image straight to S3 with a presigned URL and attaches it to a note."
-        },
-        "architecture": {
-          "ja": "SPA → API（presign）→ SPA → S3 PUT。閲覧は CloudFront + OAC 経由。",
-          "en": "SPA → API (presign) → SPA → S3 PUT. Reads go through CloudFront + OAC."
-        },
-        "topics": {
-          "ja": [
-            "presigned URL が委譲する権限と期限",
-            "content-type / サイズの検証をどこで行えるか",
-            "object key の設計とユーザー分離",
-            "未完了 upload と孤立 object の lifecycle rule",
-            "CORS"
-          ],
-          "en": [
-            "What a presigned URL delegates and for how long",
-            "Where content type and size can actually be enforced",
-            "Object key design and per-user separation",
-            "Lifecycle rules for incomplete uploads and orphaned objects",
-            "CORS"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "presign handler と入力 schema",
-            "bucket の CDK（Block Public Access、lifecycle）と assertion",
-            "upload 成功後にノート更新が失敗した場合の孤立 object を再現するテスト"
-          ],
-          "en": [
-            "Presign handler and input schema",
-            "Bucket CDK (Block Public Access, lifecycle) with assertions",
-            "A test reproducing an orphaned object when the note update fails after upload"
-          ]
-        },
-        "distributed": {
-          "ja": "S3 への書込みと DynamoDB の更新は一つの transaction ではない。孤立を許容して掃除する設計を示す。",
-          "en": "The S3 write and the DynamoDB update are not one transaction; the design tolerates orphans and cleans them up."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11"
     },
     {
       "id": "08",

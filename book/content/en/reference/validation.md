@@ -85,6 +85,11 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 13 | `vp run sql:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an Aurora DSQL cluster. cdkd handles AWS::DSQL::Cluster through Cloud Control API |
 | 13 | `vp run sql:db:migrate / sql:db:grant / sql:db:seed` | AWS | not run | - | Connects to the cluster as admin and creates the schema, the database role, and the seed |
 | 13 | `vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)` | AWS | not run | - | Needs the deployed API and cluster |
+| 07 | `vp run test:unit (examples/07-uploads)` | local | passed | 2026-10-11 | Authorization (another user's note is a 404; the key comes only from the token), permit contents, finishing with its deadline and limit, the state of S3 and DynamoDB when stopped partway, the sweep, the replay of a form, the POST policy and presigned GET the SDK produces (signed with made-up credentials only), the shape of DynamoDB requests, and infrastructure assertions |
+| 07 | `vp run dev:uploads:api + vp run dev:uploads:web + ブラウザの自動操作 / browser automation` | local | passed | 2026-10-11 | Checked sign-in, creating a note, choosing a file and seeing the image, a 404 for another user's permit, list, and finish, refusal of an oversized file, another type, and another key, finishing twice, and the image URL no longer loading after a delete and after deleting the note. The store was the in-memory implementation, not S3 |
+| 07 | `vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck` | local | passed | 2026-10-11 | The same 19 resource types as chapter 06. The Cognito code path and scripts/ are type-checked only |
+| 07 | `S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation` | local | not run | - | No task is provided. It needs a Docker daemon, which was not running where this was written |
+| 07 | `vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish` | AWS | not run | - | Creates two buckets, a user pool, a distribution, and a table. The presigned POST to S3, the lifecycle rules, CORS, and attachment records in DynamoDB are all unconfirmed in AWS |
 
 ## Open items and how to resume
 
@@ -273,3 +278,27 @@ To resume: After vp run sql:infra:deploy, check that the ClusterEndpoint output 
 The chapter 13 cost scenario borrows its DPUs per request from the documentation's worked examples. They were not measured on this chapter's queries.
 
 To resume: On a deployed cluster use EXPLAIN ANALYZE VERBOSE, or the ComputeDPU, ReadDPU, and WriteDPU metrics in CloudWatch, to measure the DPUs of one create, one update, and one list. Correct the scenarios in data/fragments/13.json and apply it again.
+
+### uploads-s3-post-policy
+
+Chapter 07: the presigned POST has never been sent to real S3. In particular, whether S3 accepts the form's tagging field under the policy condition {"tagging": ...} is unconfirmed, because the table of POST policy conditions does not list tagging. Refusal by content-length-range and Content-Type, the bucket's CORS, and HeadObject right after the POST are unconfirmed too.
+
+To resume: After vp run uploads:infra:deploy, uploads:user:create, and uploads:publish, sign in, put the access token into AIH_ACCESS_TOKEN, and run vp run uploads:smoke:api. If S3 refuses the tagging field, switch to uploading under a separate prefix and copying the object on finish.
+
+### uploads-lifecycle
+
+Chapter 07: that the lifecycle rule deletes objects tagged pending, that it leaves objects whose tag was removed, and that cdkd can create and read back the lifecycle and CORS settings are all unconfirmed.
+
+To resume: After deploying, make one upload that is never finished and one that is, then check two days later with vp run uploads:sweep and vp run uploads:infra:drift.
+
+### uploads-credential-lifetime
+
+Chapter 07: the lifetime of the temporary credentials of a Lambda execution role could not be confirmed from a primary source. How often a presigned URL expires early is unknown.
+
+To resume: Look for a figure in the official Lambda documentation. Failing that, record the credentials' expiration in a deployed function and report it as an observation.
+
+### uploads-form-replay
+
+Chapter 07: replaying the same form within the permit's lifetime (5 minutes) after finishing puts the object back to pending, and a day later only the record is left. Written up as a gap in the prose and in a test, and not closed.
+
+To resume: Switch to a presigned PUT with If-None-Match (after confirming on real S3 that a signed Content-Length pins the size), or add a step that removes the tag again after the permit expires.

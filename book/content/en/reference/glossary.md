@@ -101,3 +101,11 @@ The term pairs that keep both languages using one word for one concept. API name
 | 認証 token（Aurora DSQL） | authentication token (Aurora DSQL) | 13 | A time-limited string signed with IAM credentials, passed in place of a password when a connection is opened. |
 | DPU | DPU | 13 | Distributed Processing Unit: the billing unit in which Aurora DSQL measures the compute, reads, and writes spent running SQL. |
 | ACU | ACU | 13 | Aurora Capacity Unit: the capacity unit of Aurora Serverless v2. One ACU is about 2 GiB of memory with matching CPU and networking. |
+| presigned URL | presigned URL | 07 | A URL that carries a signature and an expiry. Whoever holds it can perform one fixed operation, within the permissions of whoever signed it. |
+| POST policy | POST policy | 07 | A signed document listing the conditions (key, type, size range, expiry) that a browser's form upload to S3 must meet. |
+| object key | object key | 07 | The name that identifies an object within a bucket. It may contain `/`, but there are no folders. |
+| bearer token | bearer token | 07 | A credential that works for whoever holds it. Nothing checks who that is. |
+| lifecycle rule | lifecycle rule | 07 | A bucket setting under which S3 itself deletes (or moves) matching objects a number of days after they were created. |
+| Block Public Access | Block Public Access | 07 | Four S3 settings that reject or ignore ACLs and bucket policies that would make a bucket or object public. |
+| 孤立した object | orphaned object | 07 | An object that is in the bucket while no record points at it. Nobody sees it, and it is still billed for storage. |
+| multipart upload | multipart upload | 07 | S3's way of sending a large object in parts. Parts of an upload that is neither completed nor aborted stay stored. |

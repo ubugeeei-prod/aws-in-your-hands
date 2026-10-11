@@ -52,7 +52,7 @@ ID: `book-site-small` / 章: [03 SPA を公開する: private S3 origin と Clou
 
 - 定価の小計: **USD 0.50** / 月
 - 毎月の無料枠適用後の小計: **USD 0.03** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
 
 ## HTTP API: デプロイ済みで呼ばれない月
 
@@ -456,7 +456,7 @@ ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValu
 
 - 定価の小計: **USD 3.59** / 月
 - 毎月の無料枠適用後の小計: **USD 0.21** / 月
-- 無料枠を確認できず、何も引いていない単価: `cloudfront.kvs.api`
+- 無料枠を確認できず、何も引いていない単価: `cloudfront.kvs.api`, `s3.request.tier2`
 
 ## Aurora DSQL: 1 GB のデータを置いて、誰も問い合わせない月
 
@@ -554,6 +554,38 @@ ID: `sql-aurora-paused` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora D
 - 定価の小計: **USD 0.12** / 月
 - 毎月の無料枠適用後の小計: **USD 0.12** / 月
 
+## 画像の添付: 月 10,000 枚のアップロード、100,000 回の表示
+
+ID: `uploads-small` / 章: [07 画像をアップロードする: presigned URL と S3](/ja/chapters/07-uploads.md)
+
+前提:
+
+- 06章のノートアプリの料金に上乗せされる分だけを数える
+- 画像は 1 枚 1 MB。月に 10,000 枚がアップロードされ、すべて添付まで完了する。月末の保存量は 10 GB
+- ノートを開くたびに添付の一覧を 1 回呼び、画像を 1 枚読み込む。それが月に 100,000 回。ブラウザの cache は効かないものとする
+- S3 へのリクエスト: アップロードの POST が 10,000、HeadObject が 10,000、画像の GET が 100,000。tag を外すリクエストは請求されない。削除のリクエストは未算入
+- API は許可の発行 10,000、完了 10,000、一覧 100,000 の計 120,000 リクエスト。Lambda は平均 60 ミリ秒、256 MB、arm64
+- DynamoDB の読み取りは、許可の発行で 2、完了で 3、一覧で 2 unit。書き込みは完了のたびに 1 unit
+- アップロードのデータ転送（インターネットから S3 へ）は 0。未完了のアップロード、tag の保存料金、掃除のための LIST は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 10 | GB-Mo | 10 GB stored, in GB-month | 0.25 | - | 0.25 |
+| `s3.request.tier1` | 10,000 | Requests | 10,000 upload POSTs | 0.05 | - | 0.05 |
+| `s3.request.tier2` | 110,000 | Requests | 10,000 HeadObject + 100,000 GET | 0.04 | - | 0.04 |
+| `datatransfer.out.internet` | 97.656 | GB | 100,000 views x 1 MB, in GB | 11.13 | - | 11.13 |
+| `apigw.http.request` | 120,000 | Requests | 10,000 permits + 10,000 finishes + 100,000 lists | 0.15 | - | 0.15 |
+| `lambda.request.arm` | 120,000 | Requests | one invocation per request | 0.02 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 1,800 | Lambda-GB-Second | 120,000 x 0.06 s x 0.25 GB, in GB-seconds | 0.02 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.057 | GB | 120,000 x 0.5 KB, in GB | 0.04 | 5 | 0 |
+| `logs.storage` | 0.013 | GB-Mo | 0.057 GB x 7/30, in GB-month | 0.000429 | 5 | 0 |
+| `dynamodb.read.on-demand` | 250,000 | ReadRequestUnits | 10,000 x 2 + 10,000 x 3 + 100,000 x 2 | 0.04 | - | 0.04 |
+| `dynamodb.write.on-demand` | 10,000 | WriteRequestUnits | one record per finished upload | 0.01 | - | 0.01 |
+
+- 定価の小計: **USD 11.76** / 月
+- 毎月の無料枠適用後の小計: **USD 11.67** / 月
+- 無料枠を確認できず、何も引いていない単価: `apigw.http.request`, `s3.standard.storage`, `datatransfer.out.internet`, `s3.request.tier1`, `s3.request.tier2`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -607,6 +639,7 @@ ID: `sql-aurora-paused` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora D
 | `rds.postgres.gp3.storage` | ap-northeast-1 | APN1-RDS:GP3-Storage | GB-Mo | 0 - ∞: 0.1380000000 | 2026-10-06 | 2026-10-11 |
 | `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
 | `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
+| `datatransfer.out.internet` | ap-northeast-1 | APN1-DataTransfer-Out-Bytes | GB | 0 - 10,240: 0.1140000000<br>10,240 - 51,200: 0.0890000000<br>51,200 - 153,600: 0.0860000000<br>153,600 - ∞: 0.0840000000 | 2026-09-16 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -642,3 +675,6 @@ ID: `sql-aurora-paused` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora D
 - `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.
 - `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
 - `rds.postgres.gp3.storage`: The RDS free tier terms were not checked while writing chapter 13.
+- `datatransfer.out.internet`: The price list calls the first tier "beyond the global free tier". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied.
+- `s3.request.tier1`: No always-free S3 request allowance was confirmed; none is applied.
+- `s3.request.tier2`: No always-free S3 request allowance was confirmed; none is applied.

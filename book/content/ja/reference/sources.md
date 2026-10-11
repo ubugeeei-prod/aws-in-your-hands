@@ -92,7 +92,7 @@ generated: true
 - ID: `aws-price-list-s3`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json>
 - 確認日: 2026-10-11
-- 参照する章: 03
+- 参照する章: 03, 07
 - この出典が支える主張:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonS3
 
@@ -235,7 +235,7 @@ generated: true
 - ID: `lambda-quotas`
 - URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
 - 確認日: 2026-10-11
-- 参照する章: 04
+- 参照する章: 04, 07
 - この出典が支える主張:
   - Function timeout is at most 900 seconds
   - Memory is 128 MB to 10,240 MB
@@ -1934,7 +1934,7 @@ generated: true
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - 確認日: 2026-10-11
-- 参照する章: 02, 03, 04, 05, 06, 10, 17
+- 参照する章: 02, 03, 04, 05, 06, 07, 10, 17
 - この出典が支える主張:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -2514,6 +2514,203 @@ generated: true
 - この出典が支える主張:
   - `wrangler d1 migrations apply` takes --local or --remote
   - If applying a migration results in an error, that migration is rolled back
+
+### Download and upload objects with presigned URLs
+
+- ID: `s3-presigned-url`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - A presigned URL uses the credentials of the principal who generated it, and its capabilities are limited by that principal's permissions
+  - Presigned URLs are bearer tokens that grant access to those who possess them, and can be used multiple times until they expire
+  - A presigned URL made with temporary credentials expires when those credentials expire, even if a later expiration was requested
+  - With the AWS CLI or SDKs the expiration can be set as high as 7 days
+  - S3 checks the expiration at the time of the HTTP request
+  - A bucket policy can deny presigned requests by signature age with the s3:signatureAge condition key
+- 注記: The page gives typical credential lifetimes for EC2 instance profiles, ECS tasks, and STS AssumeRole. It gives none for a Lambda execution role.
+
+### Uploading objects with presigned URLs
+
+- ID: `s3-presigned-upload`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - An upload to a key that already exists replaces the existing object
+  - The content type in the upload request must match the one given when the presigned PUT URL was generated
+
+### POST Policy
+
+- ID: `s3-post-policy`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-HTTPPOSTConstructPolicy.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - A POST policy holds an expiration and a list of conditions the request must meet
+  - content-length-range sets the minimum and maximum allowable size of the uploaded content
+  - Conditions support exact matching and starts-with matching on fields such as key and Content-Type
+  - Each form field except x-amz-signature, file, policy, and x-ignore- fields must appear in the list of conditions
+- 注記: On 2026-10-11 the older path /AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html redirected to the API reference index; the page was read at the /developerguide/ path. Its conditions table does not list the tagging field by name.
+
+### POST Object
+
+- ID: `s3-post-object`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/developerguide/RESTObjectPOST.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - The file must be the last field in the form
+  - POST Object has a tagging form field that takes an XML tag set
+  - success_action_status defaults to 204
+  - A request without a policy is anonymous and works only on publicly writable buckets
+- 注記: Read at the /developerguide/ path, as the /API/ path redirected to the index on 2026-10-11.
+
+### Authenticating Requests: Using Query Parameters (AWS Signature Version 4)
+
+- ID: `s3-sigv4-query-auth`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-query-string-auth.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - X-Amz-Expires is between 1 and 604800 seconds
+  - The host header and any x-amz-* headers must be signed, and signing every header you plan to send is recommended
+  - A presigned URL made with STS credentials carries X-Amz-Security-Token
+- 注記: The page does not state a rule for content-length specifically. That a signed Content-Length pins the size of a presigned PUT was not confirmed.
+
+### How to prevent object overwrites with conditional writes
+
+- ID: `s3-conditional-writes`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - If-None-Match prevents overwriting an existing key
+  - If-None-Match can be used with PutObject, CompleteMultipartUpload, and CopyObject; POST Object is not in the list
+
+### HeadObject
+
+- ID: `s3-head-object`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - For a key that does not exist, S3 returns 404 if the caller has s3:ListBucket on the bucket and 403 if it does not
+
+### Expiring objects
+
+- ID: `s3-lifecycle-expiration`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - In a nonversioned bucket, S3 queues an expired object for removal and removes it asynchronously
+  - Tag-based filters are evaluated daily, and the object's current tags are re-evaluated when the action executes; if the tag is gone, the expiration does not proceed
+  - There may be a delay between the expiration date and the removal, and expired objects are not charged for storage
+  - A bucket policy cannot prevent deletions by a lifecycle rule
+
+### Configuring a bucket lifecycle configuration to delete incomplete multipart uploads
+
+- ID: `s3-lifecycle-abort-mpu`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpu-abort-incomplete-mpu-lifecycle-config.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - AWS recommends a lifecycle rule with AbortIncompleteMultipartUpload to minimize storage costs
+  - The rule aborts multipart uploads not completed within the given number of days and deletes their parts; it deletes no objects
+
+### Tagging your objects
+
+- ID: `s3-object-tagging`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-tagging.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - Tags can be set in a POST Object request
+  - Lifecycle rules can filter on object tags
+  - DELETE Object tagging removes the tag set without a request charge, where PUT Object tagging is billed as a Tier 1 request
+
+### Using cross-origin resource sharing (CORS)
+
+- ID: `s3-cors`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/cors.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - S3 uses the first CORS rule whose origin, method, and requested headers match the request
+  - ACLs and policies continue to apply when CORS is enabled
+
+### Elements of a CORS configuration
+
+- ID: `s3-cors-elements`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/ManageCorsUsing.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - AllowedMethods accepts GET, PUT, POST, DELETE, and HEAD
+  - AllowedOrigins lists the origins allowed to make cross-origin requests
+
+### Blocking public access to your Amazon S3 storage
+
+- ID: `s3-block-public-access`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - The four settings BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets
+
+### What is Amazon S3? (Strong consistency)
+
+- ID: `s3-consistency`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - S3 provides strong read-after-write consistency for PUT and DELETE of objects, and reads of object tags and metadata such as HEAD are strongly consistent
+- 注記: The sentence names PUT and DELETE. It does not name POST Object.
+
+### @aws-sdk/s3-presigned-post 3.1149.0 (type definitions and source)
+
+- ID: `aws-sdk-s3-presigned-post-npm`
+- URL: <https://www.npmjs.com/package/@aws-sdk/s3-presigned-post/v/3.1149.0>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - createPresignedPost signs locally and sends no request
+  - Each entry in Fields becomes an exact-match condition, and Conditions accepts content-length-range
+  - The session token of temporary credentials is added as the X-Amz-Security-Token field
+
+### AWS Price List bulk API: Data Transfer, ap-northeast-1
+
+- ID: `aws-price-list-data-transfer`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AWSDataTransfer
+  - Data transfer in from the internet is USD 0.000 per GB in ap-northeast-1
+- 注記: The first tier is described as "beyond the global free tier". The size of that free tier was not confirmed.
+
+### Cloudflare R2: Presigned URLs
+
+- ID: `cloudflare-r2-presigned-urls`
+- URL: <https://developers.cloudflare.com/r2/api/s3/presigned-urls/>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - R2 presigned URLs support GET, HEAD, PUT, and DELETE; POST form uploads are not currently supported
+  - R2 presigned URLs work on the S3 API domain and cannot be used with custom domains
+  - R2's documentation also calls presigned URLs bearer tokens
+
+### Working with Lambda environment variables
+
+- ID: `lambda-runtime-env-vars`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html>
+- 確認日: 2026-10-11
+- 参照する章: 07
+- この出典が支える主張:
+  - Lambda sets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN to the access keys obtained from the function's execution role
+- 注記: The page does not say how long these credentials stay valid.
 
 ## 未再確認の出典（後続章の調査の出発点）
 

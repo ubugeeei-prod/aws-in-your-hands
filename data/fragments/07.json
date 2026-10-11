@@ -1,0 +1,729 @@
+{
+  "chapterId": "07",
+  "manifest": {
+    "id": "07",
+    "slug": "uploads",
+    "title": {
+      "ja": "画像をアップロードする: presigned URL と S3",
+      "en": "Upload Images: Presigned URLs and S3"
+    },
+    "prerequisites": ["06"],
+    "services": ["S3", "Lambda", "API Gateway HTTP API JWT authorizer", "DynamoDB", "Cognito user pools", "CloudFront"],
+    "samplePath": "examples/07-uploads",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-11",
+    "sourceIds": [
+      "s3-presigned-url",
+      "s3-presigned-upload",
+      "s3-post-policy",
+      "s3-post-object",
+      "s3-sigv4-query-auth",
+      "s3-conditional-writes",
+      "s3-head-object",
+      "s3-lifecycle-expiration",
+      "s3-lifecycle-abort-mpu",
+      "s3-object-tagging",
+      "s3-cors",
+      "s3-cors-elements",
+      "s3-block-public-access",
+      "s3-consistency",
+      "aws-sdk-s3-presigned-post-npm",
+      "aws-price-list-s3",
+      "lambda-runtime-env-vars",
+      "lambda-quotas",
+      "aws-price-list-data-transfer",
+      "cloudflare-r2-presigned-urls",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "s3-presigned-url",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html",
+      "title": "Download and upload objects with presigned URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A presigned URL uses the credentials of the principal who generated it, and its capabilities are limited by that principal's permissions",
+        "Presigned URLs are bearer tokens that grant access to those who possess them, and can be used multiple times until they expire",
+        "A presigned URL made with temporary credentials expires when those credentials expire, even if a later expiration was requested",
+        "With the AWS CLI or SDKs the expiration can be set as high as 7 days",
+        "S3 checks the expiration at the time of the HTTP request",
+        "A bucket policy can deny presigned requests by signature age with the s3:signatureAge condition key"
+      ],
+      "note": "The page gives typical credential lifetimes for EC2 instance profiles, ECS tasks, and STS AssumeRole. It gives none for a Lambda execution role."
+    },
+    {
+      "id": "s3-presigned-upload",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html",
+      "title": "Uploading objects with presigned URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "An upload to a key that already exists replaces the existing object",
+        "The content type in the upload request must match the one given when the presigned PUT URL was generated"
+      ]
+    },
+    {
+      "id": "s3-post-policy",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-HTTPPOSTConstructPolicy.html",
+      "title": "POST Policy",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A POST policy holds an expiration and a list of conditions the request must meet",
+        "content-length-range sets the minimum and maximum allowable size of the uploaded content",
+        "Conditions support exact matching and starts-with matching on fields such as key and Content-Type",
+        "Each form field except x-amz-signature, file, policy, and x-ignore- fields must appear in the list of conditions"
+      ],
+      "note": "On 2026-10-11 the older path /AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html redirected to the API reference index; the page was read at the /developerguide/ path. Its conditions table does not list the tagging field by name."
+    },
+    {
+      "id": "s3-post-object",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/developerguide/RESTObjectPOST.html",
+      "title": "POST Object",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "The file must be the last field in the form",
+        "POST Object has a tagging form field that takes an XML tag set",
+        "success_action_status defaults to 204",
+        "A request without a policy is anonymous and works only on publicly writable buckets"
+      ],
+      "note": "Read at the /developerguide/ path, as the /API/ path redirected to the index on 2026-10-11."
+    },
+    {
+      "id": "s3-sigv4-query-auth",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sigv4-query-string-auth.html",
+      "title": "Authenticating Requests: Using Query Parameters (AWS Signature Version 4)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "X-Amz-Expires is between 1 and 604800 seconds",
+        "The host header and any x-amz-* headers must be signed, and signing every header you plan to send is recommended",
+        "A presigned URL made with STS credentials carries X-Amz-Security-Token"
+      ],
+      "note": "The page does not state a rule for content-length specifically. That a signed Content-Length pins the size of a presigned PUT was not confirmed."
+    },
+    {
+      "id": "s3-conditional-writes",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
+      "title": "How to prevent object overwrites with conditional writes",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "If-None-Match prevents overwriting an existing key",
+        "If-None-Match can be used with PutObject, CompleteMultipartUpload, and CopyObject; POST Object is not in the list"
+      ]
+    },
+    {
+      "id": "s3-head-object",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html",
+      "title": "HeadObject",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "For a key that does not exist, S3 returns 404 if the caller has s3:ListBucket on the bucket and 403 if it does not"
+      ]
+    },
+    {
+      "id": "s3-lifecycle-expiration",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html",
+      "title": "Expiring objects",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "In a nonversioned bucket, S3 queues an expired object for removal and removes it asynchronously",
+        "Tag-based filters are evaluated daily, and the object's current tags are re-evaluated when the action executes; if the tag is gone, the expiration does not proceed",
+        "There may be a delay between the expiration date and the removal, and expired objects are not charged for storage",
+        "A bucket policy cannot prevent deletions by a lifecycle rule"
+      ]
+    },
+    {
+      "id": "s3-lifecycle-abort-mpu",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpu-abort-incomplete-mpu-lifecycle-config.html",
+      "title": "Configuring a bucket lifecycle configuration to delete incomplete multipart uploads",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "AWS recommends a lifecycle rule with AbortIncompleteMultipartUpload to minimize storage costs",
+        "The rule aborts multipart uploads not completed within the given number of days and deletes their parts; it deletes no objects"
+      ]
+    },
+    {
+      "id": "s3-object-tagging",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-tagging.html",
+      "title": "Tagging your objects",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Tags can be set in a POST Object request",
+        "Lifecycle rules can filter on object tags",
+        "DELETE Object tagging removes the tag set without a request charge, where PUT Object tagging is billed as a Tier 1 request"
+      ]
+    },
+    {
+      "id": "s3-cors",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/cors.html",
+      "title": "Using cross-origin resource sharing (CORS)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "S3 uses the first CORS rule whose origin, method, and requested headers match the request",
+        "ACLs and policies continue to apply when CORS is enabled"
+      ]
+    },
+    {
+      "id": "s3-cors-elements",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ManageCorsUsing.html",
+      "title": "Elements of a CORS configuration",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "AllowedMethods accepts GET, PUT, POST, DELETE, and HEAD",
+        "AllowedOrigins lists the origins allowed to make cross-origin requests"
+      ]
+    },
+    {
+      "id": "s3-block-public-access",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+      "title": "Blocking public access to your Amazon S3 storage",
+      "checkedAt": "2026-10-11",
+      "supports": ["The four settings BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets"]
+    },
+    {
+      "id": "s3-consistency",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html",
+      "title": "What is Amazon S3? (Strong consistency)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "S3 provides strong read-after-write consistency for PUT and DELETE of objects, and reads of object tags and metadata such as HEAD are strongly consistent"
+      ],
+      "note": "The sentence names PUT and DELETE. It does not name POST Object."
+    },
+    {
+      "id": "aws-sdk-s3-presigned-post-npm",
+      "url": "https://www.npmjs.com/package/@aws-sdk/s3-presigned-post/v/3.1149.0",
+      "title": "@aws-sdk/s3-presigned-post 3.1149.0 (type definitions and source)",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "createPresignedPost signs locally and sends no request",
+        "Each entry in Fields becomes an exact-match condition, and Conditions accepts content-length-range",
+        "The session token of temporary credentials is added as the X-Amz-Security-Token field"
+      ]
+    },
+    {
+      "id": "aws-price-list-data-transfer",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Data Transfer, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with offerCode AWSDataTransfer",
+        "Data transfer in from the internet is USD 0.000 per GB in ap-northeast-1"
+      ],
+      "note": "The first tier is described as \"beyond the global free tier\". The size of that free tier was not confirmed."
+    },
+    {
+      "id": "cloudflare-r2-presigned-urls",
+      "url": "https://developers.cloudflare.com/r2/api/s3/presigned-urls/",
+      "title": "Cloudflare R2: Presigned URLs",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "R2 presigned URLs support GET, HEAD, PUT, and DELETE; POST form uploads are not currently supported",
+        "R2 presigned URLs work on the S3 API domain and cannot be used with custom domains",
+        "R2's documentation also calls presigned URLs bearer tokens"
+      ]
+    },
+    {
+      "id": "lambda-runtime-env-vars",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+      "title": "Working with Lambda environment variables",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Lambda sets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN to the access keys obtained from the function's execution role"
+      ],
+      "note": "The page does not say how long these credentials stay valid."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "presigned-url",
+      "ja": "presigned URL",
+      "en": "presigned URL",
+      "firstUse": "07",
+      "definition": {
+        "ja": "署名を URL に含めた、期限つきの URL。持っている人は、署名した人の権限の範囲で、決められた 1 つの操作を実行できる。",
+        "en": "A URL that carries a signature and an expiry. Whoever holds it can perform one fixed operation, within the permissions of whoever signed it."
+      }
+    },
+    {
+      "id": "post-policy",
+      "ja": "POST policy",
+      "en": "POST policy",
+      "firstUse": "07",
+      "definition": {
+        "ja": "ブラウザからの form による S3 へのアップロードが満たすべき条件（key、種類、大きさの範囲、期限）を書いた、署名つきの文書。",
+        "en": "A signed document listing the conditions (key, type, size range, expiry) that a browser's form upload to S3 must meet."
+      }
+    },
+    {
+      "id": "object-key",
+      "ja": "object key",
+      "en": "object key",
+      "firstUse": "07",
+      "definition": {
+        "ja": "bucket の中で object を一意に指す名前。`/` を含められるが、フォルダーがあるわけではない。",
+        "en": "The name that identifies an object within a bucket. It may contain `/`, but there are no folders."
+      }
+    },
+    {
+      "id": "bearer-token",
+      "ja": "bearer token",
+      "en": "bearer token",
+      "firstUse": "07",
+      "definition": {
+        "ja": "持っているだけで使える認証情報。誰が使っているかは確かめられない。",
+        "en": "A credential that works for whoever holds it. Nothing checks who that is."
+      }
+    },
+    {
+      "id": "lifecycle-rule",
+      "ja": "lifecycle rule",
+      "en": "lifecycle rule",
+      "firstUse": "07",
+      "definition": {
+        "ja": "条件に合う object を、作成から一定の日数の後に S3 自身が削除（または移動）する、bucket の設定。",
+        "en": "A bucket setting under which S3 itself deletes (or moves) matching objects a number of days after they were created."
+      }
+    },
+    {
+      "id": "block-public-access",
+      "ja": "Block Public Access",
+      "en": "Block Public Access",
+      "firstUse": "07",
+      "definition": {
+        "ja": "ACL や bucket policy で bucket や object を公開する設定を、拒否または無効にする S3 の 4 つの設定。",
+        "en": "Four S3 settings that reject or ignore ACLs and bucket policies that would make a bucket or object public."
+      }
+    },
+    {
+      "id": "orphaned-object",
+      "ja": "孤立した object",
+      "en": "orphaned object",
+      "firstUse": "07",
+      "definition": {
+        "ja": "bucket にはあるが、それを指す記録がどこにも無い object。誰にも見えないまま、保存料金だけがかかる。",
+        "en": "An object that is in the bucket while no record points at it. Nobody sees it, and it is still billed for storage."
+      }
+    },
+    {
+      "id": "multipart-upload",
+      "ja": "multipart upload",
+      "en": "multipart upload",
+      "firstUse": "07",
+      "definition": {
+        "ja": "大きな object を複数の part に分けて送る S3 の仕組み。完了も中止もされなかった part は、保存されたまま残る。",
+        "en": "S3's way of sending a large object in parts. Parts of an upload that is neither completed nor aborted stay stored."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "07.architecture",
+      "sources": ["examples/07-uploads/infra/lib/uploads-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "07.permit",
+      "sources": [
+        "examples/07-uploads/api/src/contract.ts",
+        "examples/07-uploads/api/src/object-store.ts",
+        "examples/07-uploads/api/src/s3-object-store.ts",
+        "examples/07-uploads/api/test/s3-object-store.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "07.keys",
+      "sources": [
+        "examples/07-uploads/api/src/keys.ts",
+        "examples/07-uploads/api/src/attachments.ts",
+        "examples/07-uploads/api/src/app.ts",
+        "examples/07-uploads/api/test/keys.test.ts",
+        "examples/07-uploads/api/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "07.finish",
+      "sources": [
+        "examples/07-uploads/api/src/attachments.ts",
+        "examples/07-uploads/api/src/attachment-repository.ts",
+        "examples/07-uploads/api/src/dynamodb-attachment-repository.ts",
+        "examples/07-uploads/api/src/client.ts",
+        "examples/07-uploads/api/test/partial-failure.test.ts",
+        "examples/07-uploads/api/test/dynamodb-attachment-repository.test.ts",
+        "examples/07-uploads/api/test/harness.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "07.orphans",
+      "sources": [
+        "examples/07-uploads/api/src/sweep.ts",
+        "examples/07-uploads/scripts/sweep.ts",
+        "examples/07-uploads/infra/lib/uploads-stack.ts",
+        "examples/07-uploads/api/test/partial-failure.test.ts"
+      ],
+      "tasks": ["test:unit", "uploads:sweep"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "07.view",
+      "sources": [
+        "examples/07-uploads/api/src/s3-object-store.ts",
+        "examples/07-uploads/api/src/attachments.ts",
+        "examples/07-uploads/api/src/lambda.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "07.local",
+      "sources": [
+        "examples/07-uploads/api/src/dev.ts",
+        "examples/07-uploads/api/src/memory-object-store.ts",
+        "examples/07-uploads/api/src/local-store-http.ts",
+        "examples/07-uploads/api/src/compose.ts",
+        "examples/07-uploads/api/src/env.ts",
+        "examples/07-uploads/api/test/env.test.ts",
+        "examples/07-uploads/.env.example",
+        "examples/07-uploads/web"
+      ],
+      "tasks": [
+        "dev:uploads:api",
+        "dev:uploads:web",
+        "test:unit",
+        "typecheck:uploads:web",
+        "lint:uploads:web",
+        "build:uploads:web"
+      ],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "07.infra",
+      "sources": [
+        "examples/07-uploads/infra/lib/uploads-stack.ts",
+        "examples/07-uploads/infra/bin/app.ts",
+        "examples/07-uploads/infra/test/uploads-stack.test.ts",
+        "examples/07-uploads/cdk.json"
+      ],
+      "tasks": ["uploads:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "07.deploy",
+      "sources": [
+        "examples/07-uploads/scripts/write-config.ts",
+        "examples/07-uploads/scripts/user.ts",
+        "examples/07-uploads/scripts/smoke.ts",
+        "tools/src/site",
+        "tools/src/infra/cdkd.ts"
+      ],
+      "tasks": [
+        "uploads:infra:diff",
+        "uploads:infra:deploy",
+        "uploads:user:create",
+        "uploads:publish",
+        "uploads:smoke:web",
+        "uploads:smoke:api",
+        "uploads:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "07.cleanup",
+      "sources": [
+        "examples/07-uploads/scripts/empty-uploads.ts",
+        "examples/07-uploads/scripts/user.ts",
+        "tools/src/site/unpublish.ts"
+      ],
+      "tasks": ["uploads:empty", "uploads:unpublish", "uploads:infra:destroy", "uploads:user:delete"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "datatransfer.out.internet",
+      "offerCode": "AWSDataTransfer",
+      "region": "ap-northeast-1",
+      "sku": "9ESU2G5WSY6FMZR3",
+      "usageType": "APN1-DataTransfer-Out-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10240,
+          "usd": "0.1140000000",
+          "description": "$0.114 per GB - first 10 TB / month data transfer out beyond the global free tier"
+        },
+        {
+          "from": 10240,
+          "to": 51200,
+          "usd": "0.0890000000",
+          "description": "$0.089 per GB - next 40 TB / month data transfer out"
+        },
+        {
+          "from": 51200,
+          "to": 153600,
+          "usd": "0.0860000000",
+          "description": "$0.086 per GB - next 100 TB / month data transfer out"
+        },
+        {
+          "from": 153600,
+          "to": null,
+          "usd": "0.0840000000",
+          "description": "$0.084 per GB - greater than 150 TB / month data transfer out"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-16T13:22:08Z",
+      "checkedAt": "2026-10-11"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "datatransfer.out.internet",
+      "reason": "The price list calls the first tier \"beyond the global free tier\". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied."
+    },
+    {
+      "priceId": "s3.request.tier1",
+      "reason": "No always-free S3 request allowance was confirmed; none is applied."
+    },
+    {
+      "priceId": "s3.request.tier2",
+      "reason": "No always-free S3 request allowance was confirmed; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "uploads-small",
+      "chapter": "07",
+      "title": {
+        "ja": "画像の添付: 月 10,000 枚のアップロード、100,000 回の表示",
+        "en": "Image attachments: 10,000 uploads and 100,000 views a month"
+      },
+      "assumptions": {
+        "ja": [
+          "06章のノートアプリの料金に上乗せされる分だけを数える",
+          "画像は 1 枚 1 MB。月に 10,000 枚がアップロードされ、すべて添付まで完了する。月末の保存量は 10 GB",
+          "ノートを開くたびに添付の一覧を 1 回呼び、画像を 1 枚読み込む。それが月に 100,000 回。ブラウザの cache は効かないものとする",
+          "S3 へのリクエスト: アップロードの POST が 10,000、HeadObject が 10,000、画像の GET が 100,000。tag を外すリクエストは請求されない。削除のリクエストは未算入",
+          "API は許可の発行 10,000、完了 10,000、一覧 100,000 の計 120,000 リクエスト。Lambda は平均 60 ミリ秒、256 MB、arm64",
+          "DynamoDB の読み取りは、許可の発行で 2、完了で 3、一覧で 2 unit。書き込みは完了のたびに 1 unit",
+          "アップロードのデータ転送（インターネットから S3 へ）は 0。未完了のアップロード、tag の保存料金、掃除のための LIST は未算入"
+        ],
+        "en": [
+          "Counts only what is added on top of the notes app of chapter 06",
+          "Each image is 1 MB. 10,000 are uploaded in the month and every one is attached. 10 GB are stored at the end of the month",
+          "Opening a note calls the attachment list once and loads one image, 100,000 times a month. The browser cache is assumed not to help",
+          "Requests to S3: 10,000 upload POSTs, 10,000 HeadObject calls, and 100,000 image GETs. Removing the tag is not billed. Delete requests are not included",
+          "The API serves 10,000 permits, 10,000 finishes, and 100,000 lists: 120,000 requests. Lambda averages 60 ms at 256 MB on arm64",
+          "DynamoDB reads: 2 units for a permit, 3 for a finish, 2 for a list. One write unit per finish",
+          "Data transfer for uploads (internet to S3) is 0. Unfinished uploads, tag storage, and the LIST requests of a sweep are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 10,
+          "basis": "10 GB stored, in GB-month"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 10000,
+          "basis": "10,000 upload POSTs"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 110000,
+          "basis": "10,000 HeadObject + 100,000 GET"
+        },
+        {
+          "priceId": "datatransfer.out.internet",
+          "quantity": 97.65625,
+          "basis": "100,000 views x 1 MB, in GB"
+        },
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 120000,
+          "basis": "10,000 permits + 10,000 finishes + 100,000 lists"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 120000,
+          "basis": "one invocation per request"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 1800,
+          "basis": "120,000 x 0.06 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.057,
+          "basis": "120,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.013,
+          "basis": "0.057 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 250000,
+          "basis": "10,000 x 2 + 10,000 x 3 + 100,000 x 2"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 10000,
+          "basis": "one record per finished upload"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "07",
+        "command": "vp run test:unit (examples/07-uploads)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "認可（他人のノートは 404、key は token からのみ）、許可証の中身、完了と期限と上限、途中で止めた場合の S3 と DynamoDB の状態、掃除、同じ form の再送、SDK が作る POST policy と presigned GET（偽の認証情報で署名のみ）、DynamoDB へのリクエストの形、インフラの assertion",
+          "en": "Authorization (another user's note is a 404; the key comes only from the token), permit contents, finishing with its deadline and limit, the state of S3 and DynamoDB when stopped partway, the sweep, the replay of a form, the POST policy and presigned GET the SDK produces (signed with made-up credentials only), the shape of DynamoDB requests, and infrastructure assertions"
+        }
+      },
+      {
+        "scope": "07",
+        "command": "vp run dev:uploads:api + vp run dev:uploads:web + ブラウザの自動操作 / browser automation",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "サインイン、ノートの作成、ファイルを選んで画像が表示されること、別の利用者の許可・一覧・完了が 404、大きすぎるファイル・違う種類・違う key の拒否、完了の再実行、削除とノートの削除の後に画像の URL が読めないことを確認。相手はメモリ上の実装で、S3 ではない",
+          "en": "Checked sign-in, creating a note, choosing a file and seeing the image, a 404 for another user's permit, list, and finish, refusal of an oversized file, another type, and another key, finishing twice, and the image URL no longer loading after a delete and after deleting the note. The store was the in-memory implementation, not S3"
+        }
+      },
+      {
+        "scope": "07",
+        "command": "vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-11",
+        "note": {
+          "ja": "06章と同じ 19 種類のリソース。Cognito 用のコードと scripts/ は型検査のみ",
+          "en": "The same 19 resource types as chapter 06. The Cognito code path and scripts/ are type-checked only"
+        }
+      },
+      {
+        "scope": "07",
+        "command": "S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "タスクを用意していない。Docker の daemon が要り、執筆環境では動いていなかった",
+          "en": "No task is provided. It needs a Docker daemon, which was not running where this was written"
+        }
+      },
+      {
+        "scope": "07",
+        "command": "vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "bucket を 2 つ、user pool、distribution、table を作る。S3 への presigned POST、lifecycle rule、CORS、DynamoDB への添付の記録は、どれも実環境で未確認",
+          "en": "Creates two buckets, a user pool, a distribution, and a table. The presigned POST to S3, the lifecycle rules, CORS, and attachment records in DynamoDB are all unconfirmed in AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "uploads-s3-post-policy",
+        "summary": {
+          "ja": "07章: presigned POST を実物の S3 に送っていない。とくに、form の tagging の欄を S3 が policy の条件 {\"tagging\": ...} で受け付けるかは、POST policy の条件の表に tagging が載っていないため未確認。content-length-range と Content-Type による拒否、bucket の CORS、POST 直後の HeadObject も未確認。",
+          "en": "Chapter 07: the presigned POST has never been sent to real S3. In particular, whether S3 accepts the form's tagging field under the policy condition {\"tagging\": ...} is unconfirmed, because the table of POST policy conditions does not list tagging. Refusal by content-length-range and Content-Type, the bucket's CORS, and HeadObject right after the POST are unconfirmed too."
+        },
+        "resume": {
+          "ja": "vp run uploads:infra:deploy、uploads:user:create、uploads:publish の後、サインインして得た access token を AIH_ACCESS_TOKEN に入れて vp run uploads:smoke:api を実行する。tagging で拒否された場合は、アップロード先を別の接頭辞にして完了時に CopyObject する設計に替える。",
+          "en": "After vp run uploads:infra:deploy, uploads:user:create, and uploads:publish, sign in, put the access token into AIH_ACCESS_TOKEN, and run vp run uploads:smoke:api. If S3 refuses the tagging field, switch to uploading under a separate prefix and copying the object on finish."
+        }
+      },
+      {
+        "id": "uploads-lifecycle",
+        "summary": {
+          "ja": "07章: pending の tag が付いた object を lifecycle rule が消すこと、tag を外した object は消さないこと、cdkd が lifecycle と CORS の設定を作成・読み戻しできることは未確認。",
+          "en": "Chapter 07: that the lifecycle rule deletes objects tagged pending, that it leaves objects whose tag was removed, and that cdkd can create and read back the lifecycle and CORS settings are all unconfirmed."
+        },
+        "resume": {
+          "ja": "デプロイ後、完了を呼ばないアップロードと完了したアップロードを 1 つずつ作り、2 日後に vp run uploads:sweep と vp run uploads:infra:drift で確かめる。",
+          "en": "After deploying, make one upload that is never finished and one that is, then check two days later with vp run uploads:sweep and vp run uploads:infra:drift."
+        }
+      },
+      {
+        "id": "uploads-credential-lifetime",
+        "summary": {
+          "ja": "07章: Lambda の実行 role の一時認証情報の寿命を、一次情報で確認できなかった。presigned URL が期限前に切れる頻度は不明。",
+          "en": "Chapter 07: the lifetime of the temporary credentials of a Lambda execution role could not be confirmed from a primary source. How often a presigned URL expires early is unknown."
+        },
+        "resume": {
+          "ja": "Lambda の公式ドキュメントで数値を探す。見つからなければ、デプロイした関数で認証情報の Expiration を記録して観測値として書く。",
+          "en": "Look for a figure in the official Lambda documentation. Failing that, record the credentials' expiration in a deployed function and report it as an observation."
+        }
+      },
+      {
+        "id": "uploads-form-replay",
+        "summary": {
+          "ja": "07章: 完了した後、許可証の期限内（5 分）に同じ form を再送すると、object が pending に戻り、1 日後に記録だけが残る。invariant の穴として本文とテストに書いたが、閉じていない。",
+          "en": "Chapter 07: replaying the same form within the permit's lifetime (5 minutes) after finishing puts the object back to pending, and a day later only the record is left. Written up as a gap in the prose and in a test, and not closed."
+        },
+        "resume": {
+          "ja": "presigned PUT と If-None-Match に替える（Content-Length の署名で大きさを固定できるかを先に実機で確かめる）か、許可証の期限後に tag をもう一度外す処理を足す。",
+          "en": "Switch to a presigned PUT with If-None-Match (after confirming on real S3 that a signed Content-Length pins the size), or add a step that removes the tag again after the permit expires."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 07: image uploads ------------------------------------\n      // API with local sign-in and uploads kept in memory, and the SPA that uses it. No Docker, no AWS.\n      \"dev:uploads:api\": fresh(\"node --watch --env-file-if-exists=.env api/src/dev.ts\", { cwd: \"examples/07-uploads\" }),\n      \"dev:uploads:web\": fresh(\"vp dev\", { cwd: \"examples/07-uploads/web\" }),\n      \"build:uploads:web\": { command: \"vp build\", cwd: \"examples/07-uploads/web\" },\n      \"typecheck:uploads:web\": { command: \"../node_modules/.bin/vize check\", cwd: \"examples/07-uploads/web\" },\n      \"lint:uploads:web\": {\n        command: \"../node_modules/.bin/vize lint src --preset essential\",\n        cwd: \"examples/07-uploads/web\",\n      },\n      ...infra(\"uploads\", \"examples/07-uploads\", \"AihUploads\"),\n      \"uploads:publish\": live(\n        \"node --env-file-if-exists=../../.env scripts/write-config.ts && node --env-file-if-exists=../../.env ../../tools/src/site/publish.ts . AihUploads web/dist\",\n        { cwd: \"examples/07-uploads\", dependsOn: [\"build:uploads:web\"] },\n      ),\n      \"uploads:smoke:web\": live(`${node} tools/src/site/smoke.ts spa examples/07-uploads AihUploads`),\n      \"uploads:smoke:api\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", {\n        cwd: \"examples/07-uploads\",\n      }),\n      // Lists objects that no record points at. Deletes them only with --delete.\n      \"uploads:sweep\": live(\"node --env-file-if-exists=../../.env scripts/sweep.ts\", { cwd: \"examples/07-uploads\" }),\n      // Counts the uploaded images. Deletes them all only with --yes.\n      \"uploads:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty-uploads.ts\", {\n        cwd: \"examples/07-uploads\",\n      }),\n      \"uploads:unpublish\": live(`${node} tools/src/site/unpublish.ts examples/07-uploads AihUploads`),\n      \"uploads:user:create\": live(\"node --env-file-if-exists=../../.env scripts/user.ts create\", {\n        cwd: \"examples/07-uploads\",\n      }),\n      \"uploads:user:delete\": live(\"node --env-file-if-exists=../../.env scripts/user.ts delete\", {\n        cwd: \"examples/07-uploads\",\n      }),",
+    "synth": ["uploads:infra:synth"],
+    "checkAll": ["lint:uploads:web", "typecheck:uploads:web", "build:uploads:web"],
+    "typecheck": ["examples/07-uploads"]
+  }
+}

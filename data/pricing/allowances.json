@@ -149,6 +149,18 @@
     {
       "priceId": "rds.postgres.gp3.storage",
       "reason": "The RDS free tier terms were not checked while writing chapter 13."
+    },
+    {
+      "priceId": "datatransfer.out.internet",
+      "reason": "The price list calls the first tier \"beyond the global free tier\". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied."
+    },
+    {
+      "priceId": "s3.request.tier1",
+      "reason": "No always-free S3 request allowance was confirmed; none is applied."
+    },
+    {
+      "priceId": "s3.request.tier2",
+      "reason": "No always-free S3 request allowance was confirmed; none is applied."
     }
   ]
 }

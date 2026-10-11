@@ -101,3 +101,11 @@ generated: true
 | 認証 token（Aurora DSQL） | authentication token (Aurora DSQL) | 13 | 接続するときだけパスワードの代わりに渡す、IAM の認証情報で署名した期限つきの文字列。 |
 | DPU | DPU | 13 | Distributed Processing Unit。Aurora DSQL が、SQL の実行にかかった計算、読み取り、書き込みをまとめて測る課金の単位。 |
 | ACU | ACU | 13 | Aurora Capacity Unit。Aurora Serverless v2 の容量の単位で、1 ACU はおよそ 2 GiB のメモリと、それに見合う CPU とネットワーク。 |
+| presigned URL | presigned URL | 07 | 署名を URL に含めた、期限つきの URL。持っている人は、署名した人の権限の範囲で、決められた 1 つの操作を実行できる。 |
+| POST policy | POST policy | 07 | ブラウザからの form による S3 へのアップロードが満たすべき条件（key、種類、大きさの範囲、期限）を書いた、署名つきの文書。 |
+| object key | object key | 07 | bucket の中で object を一意に指す名前。`/` を含められるが、フォルダーがあるわけではない。 |
+| bearer token | bearer token | 07 | 持っているだけで使える認証情報。誰が使っているかは確かめられない。 |
+| lifecycle rule | lifecycle rule | 07 | 条件に合う object を、作成から一定の日数の後に S3 自身が削除（または移動）する、bucket の設定。 |
+| Block Public Access | Block Public Access | 07 | ACL や bucket policy で bucket や object を公開する設定を、拒否または無効にする S3 の 4 つの設定。 |
+| 孤立した object | orphaned object | 07 | bucket にはあるが、それを指す記録がどこにも無い object。誰にも見えないまま、保存料金だけがかかる。 |
+| multipart upload | multipart upload | 07 | 大きな object を複数の part に分けて送る S3 の仕組み。完了も中止もされなかった part は、保存されたまま残る。 |

@@ -988,6 +988,91 @@
           "basis": "1 GB stored for the month"
         }
       ]
+    },
+    {
+      "id": "uploads-small",
+      "chapter": "07",
+      "title": {
+        "ja": "画像の添付: 月 10,000 枚のアップロード、100,000 回の表示",
+        "en": "Image attachments: 10,000 uploads and 100,000 views a month"
+      },
+      "assumptions": {
+        "ja": [
+          "06章のノートアプリの料金に上乗せされる分だけを数える",
+          "画像は 1 枚 1 MB。月に 10,000 枚がアップロードされ、すべて添付まで完了する。月末の保存量は 10 GB",
+          "ノートを開くたびに添付の一覧を 1 回呼び、画像を 1 枚読み込む。それが月に 100,000 回。ブラウザの cache は効かないものとする",
+          "S3 へのリクエスト: アップロードの POST が 10,000、HeadObject が 10,000、画像の GET が 100,000。tag を外すリクエストは請求されない。削除のリクエストは未算入",
+          "API は許可の発行 10,000、完了 10,000、一覧 100,000 の計 120,000 リクエスト。Lambda は平均 60 ミリ秒、256 MB、arm64",
+          "DynamoDB の読み取りは、許可の発行で 2、完了で 3、一覧で 2 unit。書き込みは完了のたびに 1 unit",
+          "アップロードのデータ転送（インターネットから S3 へ）は 0。未完了のアップロード、tag の保存料金、掃除のための LIST は未算入"
+        ],
+        "en": [
+          "Counts only what is added on top of the notes app of chapter 06",
+          "Each image is 1 MB. 10,000 are uploaded in the month and every one is attached. 10 GB are stored at the end of the month",
+          "Opening a note calls the attachment list once and loads one image, 100,000 times a month. The browser cache is assumed not to help",
+          "Requests to S3: 10,000 upload POSTs, 10,000 HeadObject calls, and 100,000 image GETs. Removing the tag is not billed. Delete requests are not included",
+          "The API serves 10,000 permits, 10,000 finishes, and 100,000 lists: 120,000 requests. Lambda averages 60 ms at 256 MB on arm64",
+          "DynamoDB reads: 2 units for a permit, 3 for a finish, 2 for a list. One write unit per finish",
+          "Data transfer for uploads (internet to S3) is 0. Unfinished uploads, tag storage, and the LIST requests of a sweep are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 10,
+          "basis": "10 GB stored, in GB-month"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 10000,
+          "basis": "10,000 upload POSTs"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 110000,
+          "basis": "10,000 HeadObject + 100,000 GET"
+        },
+        {
+          "priceId": "datatransfer.out.internet",
+          "quantity": 97.65625,
+          "basis": "100,000 views x 1 MB, in GB"
+        },
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 120000,
+          "basis": "10,000 permits + 10,000 finishes + 100,000 lists"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 120000,
+          "basis": "one invocation per request"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 1800,
+          "basis": "120,000 x 0.06 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.057,
+          "basis": "120,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.013,
+          "basis": "0.057 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 250000,
+          "basis": "10,000 x 2 + 10,000 x 3 + 100,000 x 2"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 10000,
+          "basis": "one record per finished upload"
+        }
+      ]
     }
   ]
 }
