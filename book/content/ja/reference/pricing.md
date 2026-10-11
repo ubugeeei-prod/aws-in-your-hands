@@ -90,6 +90,50 @@ ID: `http-api-small` / 章: [04 HTTP API を足す: Lambda と API Gateway HTTP 
 - 毎月の無料枠適用後の小計: **USD 1.29** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
 
+## ノート API と table: デプロイ済みで呼ばれない月
+
+ID: `notes-idle` / 章: [05 ノートを保存する: DynamoDB](/ja/chapters/05-dynamodb.md)
+
+前提:
+
+- リクエストゼロ
+- table に 10 MB のノート。point-in-time recovery は無効
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.storage` | 0.01 | GB-Mo | 10 MB stored, in GB-month | 0 | - | 0 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## ノート API と table: 月 100 万リクエスト
+
+ID: `notes-small` / 章: [05 ノートを保存する: DynamoDB](/ja/chapters/05-dynamodb.md)
+
+前提:
+
+- 内訳: 一覧 70%、1 件の取得 20%、作成と更新 8%、削除 2%
+- 一覧は 1 ページ 20 件、1 件 1 KB で合計 20 KB。結果整合の読み取りなので 4 KB あたり 0.5 read request unit、1 回 2.5 unit
+- 1 件の取得は強整合で 1 unit。書き込みと削除は 1 KB 以下で 1 unit
+- 競合で拒否された更新も write request unit を消費する。この計算では競合ゼロと仮定
+- Lambda は平均 60 ミリ秒、256 MB、arm64。ログは 04章と同じ仮定
+- table の保存量は 1 GB。応答のデータ転送料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `apigw.http.request` | 1,000,000 | Requests | 1,000,000 requests | 1.29 | - | 1.29 |
+| `lambda.request.arm` | 1,000,000 | Requests | one invocation per request | 0.20 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 15,000 | Lambda-GB-Second | 1,000,000 x 0.06 s x 0.25 GB, in GB-seconds | 0.20 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.36 | 5 | 0 |
+| `logs.storage` | 0.111 | GB-Mo | 0.477 GB x 7/30, in GB-month | 0.003663 | 5 | 0 |
+| `dynamodb.read.on-demand` | 1,950,000 | ReadRequestUnits | 700,000 lists x 2.5 + 200,000 reads x 1 | 0.28 | - | 0.28 |
+| `dynamodb.write.on-demand` | 100,000 | WriteRequestUnits | 80,000 creates and updates + 20,000 deletes | 0.07 | - | 0.07 |
+| `dynamodb.storage` | 1 | GB-Mo | 1 GB stored, in GB-month | 0 | - | 0 |
+
+- 定価の小計: **USD 2.41** / 月
+- 毎月の無料枠適用後の小計: **USD 1.64** / 月
+- 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -111,6 +155,10 @@ ID: `http-api-small` / 章: [04 HTTP API を足す: Lambda と API Gateway HTTP 
 | `cloudfront.jp.request.https-proxy` | global | JP-Requests-HTTPS-Proxy | Requests | 0 - ∞: 0.0000012000 | 2026-10-03 | 2026-10-11 |
 | `cloudfront.invalidation` | global | Invalidations | URL | 0 - 1,000: 0.0000000000<br>1,000 - ∞: 0.0050000000 | 2026-10-03 | 2026-10-11 |
 | `cloudfront.function.execution` | global | Executions-CloudFrontFunctions | FunctionExecutions | 0 - 2,000,000: 0.0000000000<br>2,000,000 - ∞: 0.0000001000 | 2026-10-03 | 2026-10-11 |
+| `dynamodb.write.on-demand` | ap-northeast-1 | APN1-WriteRequestUnits | WriteRequestUnits | 0 - ∞: 0.0000007150 | 2026-09-11 | 2026-10-11 |
+| `dynamodb.read.on-demand` | ap-northeast-1 | APN1-ReadRequestUnits | ReadRequestUnits | 0 - ∞: 0.0000001425 | 2026-09-11 | 2026-10-11 |
+| `dynamodb.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - 25: 0.0000000000<br>25 - ∞: 0.2850000000 | 2026-09-11 | 2026-10-11 |
+| `dynamodb.pitr.storage` | ap-northeast-1 | APN1-TimedPITRStorage-ByteHrs | GB-Mo | 0 - ∞: 0.2280000000 | 2026-09-11 | 2026-10-11 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 

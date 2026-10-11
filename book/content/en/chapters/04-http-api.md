@@ -1,6 +1,6 @@
 ---
 title: 04 Add an HTTP API: Lambda and API Gateway HTTP API
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 04 Add an HTTP API: Lambda and API Gateway HTTP API
@@ -251,7 +251,7 @@ The execution role is the IAM role the function assumes when it runs in AWS. **I
 
 If you specify nothing, CDK attaches a managed policy called `AWSLambdaBasicExecutionRole`. It grants permission to write to any log group in the account. Here the role is created by hand and allows writing only to the one log group created above. The test checks that the allowed actions are exactly these two (`logs:CreateLogStream` and `logs:PutLogEvents`) and that the resource is not `*`.
 
-When chapter 05 adds DynamoDB, one permission on the table is added to this role. "What the function can do" is gathered in these few lines.
+When chapter 05 adds DynamoDB, permissions on the table are added to this role. "What the function can do" is gathered in these few lines.
 
 ### Function
 
@@ -295,7 +295,7 @@ To allow the origin of the chapter 03 SPA, pass it as context.
 vp run api:infra:deploy -c allowedOrigin=https://dxxxxxxxxxxxx.cloudfront.net
 ```
 
-Connecting the SPA's screens to this API is not done in this chapter yet. Showing notes kept in memory on the screen would only give a different result on each reload, as the previous section showed. The connection is made in steps: in chapter 05, where there is somewhere to store notes, and in chapter 06, where it becomes possible to tell whose notes they are.
+Connecting the SPA's screens to this API is not done in this chapter yet. Showing notes kept in memory on the screen would only give a different result on each reload, as the previous section showed. Chapter 05 gives the notes somewhere to be stored, and chapter 06, where it becomes possible to tell whose notes they are, connects the screens.
 
 ## Read the logs
 

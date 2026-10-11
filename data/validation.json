@@ -57,8 +57,8 @@
       "status": "passed",
       "ranAt": "2026-10-11",
       "note": {
-        "ja": "format と lint、型検査、Vue の型検査、テスト 130 件（20 ファイル）、生成ページの同期、日英とソース対応の整合、4 つの CDK アプリの synth、本のビルド、リンク検査（70 ページ）、SPA のビルド",
-        "en": "Format and lint, type checks, Vue type check, 130 tests in 20 files, generated-page freshness, locale and source-map consistency, synth of four CDK apps, the book build, link check over 70 pages, and the SPA build"
+        "ja": "format と lint、Vize による Vue の lint と型検査、tsc による型検査、テスト 172 件（1 件は DynamoDB Local が無いため skip）、生成ページの同期、日英とソース対応の整合、5 つの CDK アプリの synth、本のビルド、リンク検査、SPA のビルド",
+        "en": "Format and lint, Vue lint and type check with Vize, tsc type checks, 172 tests (one skipped for lack of DynamoDB Local), generated-page freshness, locale and source-map consistency, synth of five CDK apps, the book build, link check, and the SPA build"
       }
     },
     {
@@ -136,6 +136,39 @@
       "note": {
         "ja": "esbuild による bundle（Docker なし）を含む。17 リソース",
         "en": "Includes the esbuild bundle (no Docker); 17 resources"
+      }
+    },
+    {
+      "scope": "05",
+      "command": "vp run test:unit (examples/05-dynamodb)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "repository の contract（メモリ）、DynamoDB へのリクエストの検査、409、ページ送り、応答喪失後の再試行、インフラの assertion",
+        "en": "Repository contract (in memory), inspection of the requests sent to DynamoDB, 409s, pagination, retry after a lost response, and infrastructure assertions"
+      }
+    },
+    {
+      "scope": "05",
+      "command": "vp run dev:notes + curl (NOTES_STORE=memory)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "作成、更新、古い version での更新の 409、一覧を確認",
+        "en": "Checked create, update, the 409 for an update from a stale version, and list"
+      }
+    },
+    {
+      "scope": "05",
+      "command": "vp run notes:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "AWS SDK を含む bundle を esbuild で作成",
+        "en": "Builds the bundle, AWS SDK included, with esbuild"
       }
     },
     {
@@ -280,6 +313,28 @@
         "ja": "commit が無いので実行できない",
         "en": "Cannot run without a commit"
       }
+    },
+    {
+      "scope": "05",
+      "command": "vp run db:local:start / db:migrate:local / db:seed:local / db:reset:local / test:local:dynamodb",
+      "kind": "local",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Docker の daemon が使えなかった。DYNAMODB_ENDPOINT が無いと test:local:dynamodb が失敗することだけ確認した",
+        "en": "No Docker daemon was available. Only confirmed that test:local:dynamodb fails when DYNAMODB_ENDPOINT is missing"
+      }
+    },
+    {
+      "scope": "05",
+      "command": "vp run notes:infra:diff / deploy / drift / destroy, vp run notes:smoke",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "DynamoDB の table を作る",
+        "en": "Creates a DynamoDB table"
+      }
     }
   ],
   "open": [
@@ -325,6 +380,17 @@
       "resume": {
         "ja": "02章の drift の実験を実行し、clean、drifted、stack 不在の実出力を fixture として追加する。",
         "en": "Run the chapter 02 drift lab and add the real output for clean, drifted, and missing-stack runs as fixtures."
+      }
+    },
+    {
+      "id": "dynamodb-conditional-writes",
+      "summary": {
+        "ja": "05章の中心である「条件付き書き込みが同時の更新を 1 つだけ通す」ことを、DynamoDB Local でも実際の DynamoDB でも確かめていない。確かめたのは、送っている条件式と、メモリの実装が同じ規則に従うことだけ。",
+        "en": "The core claim of chapter 05, that a conditional write lets exactly one of two concurrent updates through, has been checked against neither DynamoDB Local nor real DynamoDB. Only the expressions sent, and the in-memory implementation's adherence to the same rules, were checked."
+      },
+      "resume": {
+        "ja": "Docker を起動して vp run db:local:start、db:migrate:local、test:local:dynamodb を実行する。続けて notes:infra:deploy と notes:smoke を実行し、実環境で同時更新を試す script を examples/05-dynamodb/scripts/ に加える。",
+        "en": "Start Docker and run vp run db:local:start, db:migrate:local, and test:local:dynamodb. Then run notes:infra:deploy and notes:smoke, and add a script under examples/05-dynamodb/scripts/ that races two updates against the real table."
       }
     },
     {

@@ -269,6 +269,76 @@
         "ja": "同じ操作を複数回実行しても結果が 1 回と同じになる性質。",
         "en": "The property that performing the same operation several times has the same result as performing it once."
       }
+    },
+    {
+      "id": "partition-key",
+      "ja": "partition key",
+      "en": "partition key",
+      "firstUse": "05",
+      "definition": {
+        "ja": "item の置き場所を決める key。同じ値の item はまとめて保存される。",
+        "en": "The key that decides where an item is stored. Items with the same value are stored together."
+      }
+    },
+    {
+      "id": "sort-key",
+      "ja": "sort key",
+      "en": "sort key",
+      "firstUse": "05",
+      "definition": {
+        "ja": "同じ partition key の中で item を並べ、区別する key。",
+        "en": "The key that orders and distinguishes items within one partition key value."
+      }
+    },
+    {
+      "id": "condition-expression",
+      "ja": "条件式（condition expression）",
+      "en": "condition expression",
+      "firstUse": "05",
+      "definition": {
+        "ja": "書き込みと一緒に送る条件。成り立たなければ、その書き込みは行われない。",
+        "en": "A condition sent with a write. If it does not hold, the write does not happen."
+      }
+    },
+    {
+      "id": "optimistic-locking",
+      "ja": "楽観ロック",
+      "en": "optimistic locking",
+      "firstUse": "05",
+      "definition": {
+        "ja": "先に鍵をかけず、書き込む瞬間に「見ていた版のままか」を確かめるやり方。",
+        "en": "Checking at write time that the stored version is still the one that was read, instead of locking in advance."
+      }
+    },
+    {
+      "id": "eventually-consistent-read",
+      "ja": "結果整合の読み取り",
+      "en": "eventually consistent read",
+      "firstUse": "05",
+      "definition": {
+        "ja": "直前の書き込みが反映されていないことがある読み取り。DynamoDB の既定。",
+        "en": "A read that may not reflect a write completed a moment ago. The DynamoDB default."
+      }
+    },
+    {
+      "id": "strongly-consistent-read",
+      "ja": "強整合の読み取り",
+      "en": "strongly consistent read",
+      "firstUse": "05",
+      "definition": {
+        "ja": "成功した書き込みがすべて反映されている読み取り。",
+        "en": "A read that reflects every write that succeeded before it."
+      }
+    },
+    {
+      "id": "request-unit",
+      "ja": "request unit",
+      "en": "request unit",
+      "firstUse": "05",
+      "definition": {
+        "ja": "on-demand の DynamoDB が読み書きを数える課金の単位。",
+        "en": "The billing unit in which on-demand DynamoDB counts reads and writes."
+      }
     }
   ]
 }

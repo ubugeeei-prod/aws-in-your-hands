@@ -131,7 +131,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - Checked: 2026-10-11
-- Chapters: 02, 03, 04
+- Chapters: 02, 03, 04, 05
 - Claims this source supports:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -244,7 +244,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cloudflare-d1-local-dev`
 - URL: <https://developers.cloudflare.com/d1/best-practices/local-development/>
 - Checked: 2026-10-11
-- Chapters: 00, 13
+- Chapters: 00, 05, 13
 - Claims this source supports:
   - `wrangler dev` uses a local-only D1 by default and persists its data across runs
   - Local and remote data are separate; `--local` targets the local database for `wrangler d1 execute` and `wrangler d1 migrations apply`
@@ -303,6 +303,83 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Chapters: 03
 - Claims this source supports:
   - For a missing object S3 returns 404 when the caller has s3:ListBucket and 403 when it does not
+
+### DynamoDB read consistency
+
+- ID: `dynamodb-read-consistency`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html>
+- Checked: 2026-10-11
+- Chapters: 05
+- Claims this source supports:
+  - A write that returned HTTP 200 has been durably persisted
+  - Eventually consistent reads are the default, may not reflect a recently completed write, and cost half of strongly consistent reads
+  - ConsistentRead is available on GetItem, Query, and Scan for tables and local secondary indexes, not for global secondary indexes or streams
+  - Global tables have two modes: multi-Region eventual consistency (default, typically replicated within a second) and multi-Region strong consistency (synchronous replication before the write returns)
+
+### DynamoDB condition expression CLI example
+
+- ID: `dynamodb-condition-expressions`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html>
+- Checked: 2026-10-11
+- Chapters: 05
+- Claims this source supports:
+  - PutItem overwrites an item with the same primary key unless a condition prevents it
+  - attribute_not_exists on a key attribute is true only when no item with that full key exists
+  - A write whose condition evaluates to false is rejected with "The conditional request failed"
+
+### Paginating table query results in DynamoDB
+
+- ID: `dynamodb-query-pagination`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html>
+- Checked: 2026-10-11
+- Chapters: 05
+- Claims this source supports:
+  - A Query returns at most 1 MB per call
+  - LastEvaluatedKey becomes the next ExclusiveStartKey; its absence is the only sign that the result set is finished
+  - A non-empty LastEvaluatedKey does not guarantee that more items remain
+
+### DynamoDB on-demand capacity mode
+
+- ID: `dynamodb-on-demand`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html>
+- Checked: 2026-10-11
+- Chapters: 05
+- Claims this source supports:
+  - On-demand tables are billed per read and write request, with no throughput charge at zero traffic
+  - One read request unit is one strongly consistent read, or two eventually consistent reads, of an item up to 4 KB; one write request unit is one write of an item up to 1 KB
+  - New on-demand tables sustain up to 4,000 writes and 12,000 reads per second and can be throttled when traffic more than doubles within 30 minutes
+  - A maximum read or write throughput can be configured per on-demand table
+
+### Constraints in Amazon DynamoDB
+
+- ID: `dynamodb-constraints`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Constraints.html>
+- Checked: 2026-10-11
+- Chapters: 05
+- Claims this source supports:
+  - Maximum item size is 400 KB
+  - A transaction can contain at most 100 unique items and 4 MB
+  - Sort key values are at most 1024 bytes and partition key values 2048 bytes
+
+### AWS Price List bulk API: DynamoDB, ap-northeast-1
+
+- ID: `aws-price-list-dynamodb`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
+- Checked: 2026-10-11
+- Chapters: 05
+- Claims this source supports:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonDynamoDB
+  - The storage price has a USD 0 tier for the first 25 GB-month
+
+### amazon/dynamodb-local container image tags (Docker Hub)
+
+- ID: `dynamodb-local-image`
+- URL: <https://hub.docker.com/r/amazon/dynamodb-local/tags>
+- Checked: 2026-10-11
+- Chapters: 05
+- Claims this source supports:
+  - Tag 3.3.1 exists for amd64 and arm64 and was the image `latest` pointed at
+- Note: Only the tag listing was read. The image was not pulled or run.
 
 ## Sources not re-read yet (starting points for later chapters)
 
@@ -490,7 +567,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 
 - ID: `dynamodb-intro`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html>
-- Chapters: 05, 14
+- Chapters: 14
 - Claims this source supports:
   - Data model and capacity modes
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.

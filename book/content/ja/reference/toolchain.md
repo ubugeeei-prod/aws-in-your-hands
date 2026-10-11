@@ -31,6 +31,7 @@ generated: true
 | Zod | 4.6.5 | pnpm | `package.json files, pnpm-lock.yaml` |
 | esbuild | 0.28.2 | pnpm | `package.json, pnpm-lock.yaml` |
 | Vize (vize, @vizejs/vite-plugin) | 0.443.0 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
+| DynamoDB Local (container image, not run yet) | amazon/dynamodb-local:3.3.1 | Docker, outside the Nix shell | `examples/05-dynamodb/scripts/local-db.ts` |
 
 - 検証済みの OS/CPU: aarch64-darwin (macOS 26, Darwin 25.6.0)
 - Nix 式はあるが未検証の OS/CPU: x86_64-darwin, aarch64-linux, x86_64-linux

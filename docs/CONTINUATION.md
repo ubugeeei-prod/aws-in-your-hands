@@ -2,7 +2,7 @@
 
 このリポジトリを編集できる agent に、そのまま渡せる指示です。`[CHAPTER_ID]` と `[SCENARIO_ID]` を置き換えて使います。どちらの言語で渡しても、作るのは日英両方です。
 
-次に書く章は **05（DynamoDB）** です。04章の `NoteRepository` を DynamoDB の実装に差し替え、SPA を API につなぎます。
+次に書く章は **06（Cognito と認可）** です。05章の API に JWT authorizer を付け、持ち主を固定値からサインインした利用者に替え、SPA を API につなぎます。
 
 ## 章を増やす
 

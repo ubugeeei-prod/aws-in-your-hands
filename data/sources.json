@@ -284,6 +284,81 @@
       "supports": ["For a missing object S3 returns 404 when the caller has s3:ListBucket and 403 when it does not"]
     },
     {
+      "id": "dynamodb-read-consistency",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html",
+      "title": "DynamoDB read consistency",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A write that returned HTTP 200 has been durably persisted",
+        "Eventually consistent reads are the default, may not reflect a recently completed write, and cost half of strongly consistent reads",
+        "ConsistentRead is available on GetItem, Query, and Scan for tables and local secondary indexes, not for global secondary indexes or streams",
+        "Global tables have two modes: multi-Region eventual consistency (default, typically replicated within a second) and multi-Region strong consistency (synchronous replication before the write returns)"
+      ]
+    },
+    {
+      "id": "dynamodb-condition-expressions",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html",
+      "title": "DynamoDB condition expression CLI example",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "PutItem overwrites an item with the same primary key unless a condition prevents it",
+        "attribute_not_exists on a key attribute is true only when no item with that full key exists",
+        "A write whose condition evaluates to false is rejected with \"The conditional request failed\""
+      ]
+    },
+    {
+      "id": "dynamodb-query-pagination",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html",
+      "title": "Paginating table query results in DynamoDB",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "A Query returns at most 1 MB per call",
+        "LastEvaluatedKey becomes the next ExclusiveStartKey; its absence is the only sign that the result set is finished",
+        "A non-empty LastEvaluatedKey does not guarantee that more items remain"
+      ]
+    },
+    {
+      "id": "dynamodb-on-demand",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html",
+      "title": "DynamoDB on-demand capacity mode",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "On-demand tables are billed per read and write request, with no throughput charge at zero traffic",
+        "One read request unit is one strongly consistent read, or two eventually consistent reads, of an item up to 4 KB; one write request unit is one write of an item up to 1 KB",
+        "New on-demand tables sustain up to 4,000 writes and 12,000 reads per second and can be throttled when traffic more than doubles within 30 minutes",
+        "A maximum read or write throughput can be configured per on-demand table"
+      ]
+    },
+    {
+      "id": "dynamodb-constraints",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Constraints.html",
+      "title": "Constraints in Amazon DynamoDB",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Maximum item size is 400 KB",
+        "A transaction can contain at most 100 unique items and 4 MB",
+        "Sort key values are at most 1024 bytes and partition key values 2048 bytes"
+      ]
+    },
+    {
+      "id": "aws-price-list-dynamodb",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: DynamoDB, ap-northeast-1",
+      "checkedAt": "2026-10-11",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with offerCode AmazonDynamoDB",
+        "The storage price has a USD 0 tier for the first 25 GB-month"
+      ]
+    },
+    {
+      "id": "dynamodb-local-image",
+      "url": "https://hub.docker.com/r/amazon/dynamodb-local/tags",
+      "title": "amazon/dynamodb-local container image tags (Docker Hub)",
+      "checkedAt": "2026-10-11",
+      "supports": ["Tag 3.3.1 exists for amd64 and arm64 and was the image `latest` pointed at"],
+      "note": "Only the tag listing was read. The image was not pulled or run."
+    },
+    {
       "id": "iam-best-practices",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
       "title": "Security best practices in IAM",

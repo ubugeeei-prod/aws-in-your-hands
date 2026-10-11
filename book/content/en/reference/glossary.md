@@ -38,3 +38,10 @@ The term pairs that keep both languages using one word for one concept. API name
 | runtime validation | runtime validation | 02 | Checking data against a schema when it arrives at run time. A type annotation does not do this. |
 | invariant | invariant | 04 | A property that must hold at all times; the thing tests and failure injection target. |
 | 冪等性 | idempotency | 08 | The property that performing the same operation several times has the same result as performing it once. |
+| partition key | partition key | 05 | The key that decides where an item is stored. Items with the same value are stored together. |
+| sort key | sort key | 05 | The key that orders and distinguishes items within one partition key value. |
+| 条件式（condition expression） | condition expression | 05 | A condition sent with a write. If it does not hold, the write does not happen. |
+| 楽観ロック | optimistic locking | 05 | Checking at write time that the stored version is still the one that was read, instead of locking in advance. |
+| 結果整合の読み取り | eventually consistent read | 05 | A read that may not reflect a write completed a moment ago. The DynamoDB default. |
+| 強整合の読み取り | strongly consistent read | 05 | A read that reflects every write that succeeded before it. |
+| request unit | request unit | 05 | The billing unit in which on-demand DynamoDB counts reads and writes. |

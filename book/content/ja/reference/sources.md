@@ -131,7 +131,7 @@ generated: true
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - 確認日: 2026-10-11
-- 参照する章: 02, 03, 04
+- 参照する章: 02, 03, 04, 05
 - この出典が支える主張:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -244,7 +244,7 @@ generated: true
 - ID: `cloudflare-d1-local-dev`
 - URL: <https://developers.cloudflare.com/d1/best-practices/local-development/>
 - 確認日: 2026-10-11
-- 参照する章: 00, 13
+- 参照する章: 00, 05, 13
 - この出典が支える主張:
   - `wrangler dev` uses a local-only D1 by default and persists its data across runs
   - Local and remote data are separate; `--local` targets the local database for `wrangler d1 execute` and `wrangler d1 migrations apply`
@@ -303,6 +303,83 @@ generated: true
 - 参照する章: 03
 - この出典が支える主張:
   - For a missing object S3 returns 404 when the caller has s3:ListBucket and 403 when it does not
+
+### DynamoDB read consistency
+
+- ID: `dynamodb-read-consistency`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html>
+- 確認日: 2026-10-11
+- 参照する章: 05
+- この出典が支える主張:
+  - A write that returned HTTP 200 has been durably persisted
+  - Eventually consistent reads are the default, may not reflect a recently completed write, and cost half of strongly consistent reads
+  - ConsistentRead is available on GetItem, Query, and Scan for tables and local secondary indexes, not for global secondary indexes or streams
+  - Global tables have two modes: multi-Region eventual consistency (default, typically replicated within a second) and multi-Region strong consistency (synchronous replication before the write returns)
+
+### DynamoDB condition expression CLI example
+
+- ID: `dynamodb-condition-expressions`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html>
+- 確認日: 2026-10-11
+- 参照する章: 05
+- この出典が支える主張:
+  - PutItem overwrites an item with the same primary key unless a condition prevents it
+  - attribute_not_exists on a key attribute is true only when no item with that full key exists
+  - A write whose condition evaluates to false is rejected with "The conditional request failed"
+
+### Paginating table query results in DynamoDB
+
+- ID: `dynamodb-query-pagination`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html>
+- 確認日: 2026-10-11
+- 参照する章: 05
+- この出典が支える主張:
+  - A Query returns at most 1 MB per call
+  - LastEvaluatedKey becomes the next ExclusiveStartKey; its absence is the only sign that the result set is finished
+  - A non-empty LastEvaluatedKey does not guarantee that more items remain
+
+### DynamoDB on-demand capacity mode
+
+- ID: `dynamodb-on-demand`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html>
+- 確認日: 2026-10-11
+- 参照する章: 05
+- この出典が支える主張:
+  - On-demand tables are billed per read and write request, with no throughput charge at zero traffic
+  - One read request unit is one strongly consistent read, or two eventually consistent reads, of an item up to 4 KB; one write request unit is one write of an item up to 1 KB
+  - New on-demand tables sustain up to 4,000 writes and 12,000 reads per second and can be throttled when traffic more than doubles within 30 minutes
+  - A maximum read or write throughput can be configured per on-demand table
+
+### Constraints in Amazon DynamoDB
+
+- ID: `dynamodb-constraints`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Constraints.html>
+- 確認日: 2026-10-11
+- 参照する章: 05
+- この出典が支える主張:
+  - Maximum item size is 400 KB
+  - A transaction can contain at most 100 unique items and 4 MB
+  - Sort key values are at most 1024 bytes and partition key values 2048 bytes
+
+### AWS Price List bulk API: DynamoDB, ap-northeast-1
+
+- ID: `aws-price-list-dynamodb`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 05
+- この出典が支える主張:
+  - Unit prices in data/pricing/unit-prices.json with offerCode AmazonDynamoDB
+  - The storage price has a USD 0 tier for the first 25 GB-month
+
+### amazon/dynamodb-local container image tags (Docker Hub)
+
+- ID: `dynamodb-local-image`
+- URL: <https://hub.docker.com/r/amazon/dynamodb-local/tags>
+- 確認日: 2026-10-11
+- 参照する章: 05
+- この出典が支える主張:
+  - Tag 3.3.1 exists for amd64 and arm64 and was the image `latest` pointed at
+- 注記: Only the tag listing was read. The image was not pulled or run.
 
 ## 未再確認の出典（後続章の調査の出発点）
 
@@ -490,7 +567,7 @@ generated: true
 
 - ID: `dynamodb-intro`
 - URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html>
-- 参照する章: 05, 14
+- 参照する章: 14
 - この出典が支える主張:
   - Data model and capacity modes
 - 注記: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.

@@ -90,6 +90,50 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 1.29** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`
 
+## Notes API and table: deployed, but never called for a month
+
+ID: `notes-idle` / chapter: [05 Persist Notes: DynamoDB](/en/chapters/05-dynamodb.md)
+
+Assumptions:
+
+- No requests
+- 10 MB of notes in the table; point-in-time recovery off
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.storage` | 0.01 | GB-Mo | 10 MB stored, in GB-month | 0 | - | 0 |
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## Notes API and table: 1,000,000 requests a month
+
+ID: `notes-small` / chapter: [05 Persist Notes: DynamoDB](/en/chapters/05-dynamodb.md)
+
+Assumptions:
+
+- Mix: 70% list, 20% single-note reads, 8% creates and updates, 2% deletes
+- A list page is 20 notes of 1 KB, 20 KB in total. Eventually consistent, so 0.5 read request units per 4 KB: 2.5 units per call
+- A single-note read is strongly consistent: 1 unit. Writes and deletes are under 1 KB: 1 unit each
+- Updates refused by a conflict consume write request units too; this calculation assumes no conflicts
+- Lambda averages 60 ms at 256 MB on arm64. Logs as assumed in chapter 04
+- 1 GB stored in the table. Data transfer out for responses is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `apigw.http.request` | 1,000,000 | Requests | 1,000,000 requests | 1.29 | - | 1.29 |
+| `lambda.request.arm` | 1,000,000 | Requests | one invocation per request | 0.20 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 15,000 | Lambda-GB-Second | 1,000,000 x 0.06 s x 0.25 GB, in GB-seconds | 0.20 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.36 | 5 | 0 |
+| `logs.storage` | 0.111 | GB-Mo | 0.477 GB x 7/30, in GB-month | 0.003663 | 5 | 0 |
+| `dynamodb.read.on-demand` | 1,950,000 | ReadRequestUnits | 700,000 lists x 2.5 + 200,000 reads x 1 | 0.28 | - | 0.28 |
+| `dynamodb.write.on-demand` | 100,000 | WriteRequestUnits | 80,000 creates and updates + 20,000 deletes | 0.07 | - | 0.07 |
+| `dynamodb.storage` | 1 | GB-Mo | 1 GB stored, in GB-month | 0 | - | 0 |
+
+- List subtotal: **USD 2.41** / month
+- Subtotal after monthly free allowance: **USD 1.64** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `apigw.http.request`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -111,6 +155,10 @@ Assumptions:
 | `cloudfront.jp.request.https-proxy` | global | JP-Requests-HTTPS-Proxy | Requests | 0 - ∞: 0.0000012000 | 2026-10-03 | 2026-10-11 |
 | `cloudfront.invalidation` | global | Invalidations | URL | 0 - 1,000: 0.0000000000<br>1,000 - ∞: 0.0050000000 | 2026-10-03 | 2026-10-11 |
 | `cloudfront.function.execution` | global | Executions-CloudFrontFunctions | FunctionExecutions | 0 - 2,000,000: 0.0000000000<br>2,000,000 - ∞: 0.0000001000 | 2026-10-03 | 2026-10-11 |
+| `dynamodb.write.on-demand` | ap-northeast-1 | APN1-WriteRequestUnits | WriteRequestUnits | 0 - ∞: 0.0000007150 | 2026-09-11 | 2026-10-11 |
+| `dynamodb.read.on-demand` | ap-northeast-1 | APN1-ReadRequestUnits | ReadRequestUnits | 0 - ∞: 0.0000001425 | 2026-09-11 | 2026-10-11 |
+| `dynamodb.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - 25: 0.0000000000<br>25 - ∞: 0.2850000000 | 2026-09-11 | 2026-10-11 |
+| `dynamodb.pitr.storage` | ap-northeast-1 | APN1-TimedPITRStorage-ByteHrs | GB-Mo | 0 - ∞: 0.2280000000 | 2026-09-11 | 2026-10-11 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 

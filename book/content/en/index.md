@@ -21,12 +21,12 @@ By the end, you should be able to explain the following about what you built:
 
 ## What is finished so far
 
-This book is still being written. Chapters 00 through 04 are complete, and chapter 05 onward exists only as outlines. An outline chapter is labeled planned at the top of its page.
+This book is still being written. Chapters 00 through 05 are complete, and chapter 06 onward exists only as outlines. An outline chapter is labeled planned at the top of its page.
 
 | Chapters | Status |
 | --- | --- |
-| [00 Welcome](/en/chapters/00-welcome.md) through [04 HTTP API](/en/chapters/04-http-api.md) | Text and samples exist. Verified locally. Unverified in AWS |
-| [05 DynamoDB](/en/chapters/05-dynamodb.md) through [24 celld](/en/chapters/24-celld.md) | planned. Outline only |
+| [00 Welcome](/en/chapters/00-welcome.md) through [05 DynamoDB](/en/chapters/05-dynamodb.md) | Text and samples exist. Verified locally. Unverified in AWS |
+| [06 Login](/en/chapters/06-auth.md) through [24 celld](/en/chapters/24-celld.md) | planned. Outline only |
 
 The [Validation Record](/en/reference/validation.md) lists which commands were run, when, and what passed.
 

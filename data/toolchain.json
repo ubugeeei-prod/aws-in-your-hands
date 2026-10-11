@@ -122,6 +122,12 @@
       "version": "0.443.0",
       "providedBy": "pnpm",
       "pinnedIn": "examples/03-spa/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "DynamoDB Local (container image, not run yet)",
+      "version": "amazon/dynamodb-local:3.3.1",
+      "providedBy": "Docker, outside the Nix shell",
+      "pinnedIn": "examples/05-dynamodb/scripts/local-db.ts"
     }
   ]
 }

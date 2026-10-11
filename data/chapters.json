@@ -135,9 +135,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -162,59 +162,30 @@
         "en": "Persist Notes: DynamoDB"
       },
       "prerequisites": ["04"],
-      "services": ["DynamoDB"],
+      "services": ["DynamoDB", "Lambda", "API Gateway HTTP API", "IAM"],
       "samplePath": "examples/05-dynamodb",
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["dynamodb-intro", "dynamodb-global-tables", "dynamodb-global-tables-concepts"],
-      "outline": {
-        "outcome": {
-          "ja": "04章の API がノートを DynamoDB に保存し、同時更新で黙って上書きしないことをテストで示せる。",
-          "en": "The chapter 04 API stores notes in DynamoDB, and a test shows that concurrent updates never silently overwrite each other."
-        },
-        "architecture": {
-          "ja": "ブラウザ → API Gateway HTTP API → Lambda（ap-northeast-1）→ DynamoDB テーブル（on-demand）。",
-          "en": "Browser → API Gateway HTTP API → Lambda (ap-northeast-1) → DynamoDB table (on-demand)."
-        },
-        "topics": {
-          "ja": [
-            "アクセスパターンから partition key / sort key を決める",
-            "version 属性と ConditionExpression による楽観ロック",
-            "eventually / strongly consistent read の違いと費用",
-            "on-demand と provisioned の選び方",
-            "Global Tables の consistency mode（発展、要一次情報確認）",
-            "SQL が合うデータなら 13章へ進む判断基準"
-          ],
-          "en": [
-            "Deriving partition and sort keys from access patterns",
-            "Optimistic locking with a version attribute and ConditionExpression",
-            "Eventually versus strongly consistent reads and their cost",
-            "Choosing on-demand or provisioned capacity",
-            "Global Tables consistency modes (extension; verify against current docs)",
-            "When the data is relational enough to take the chapter 13 branch"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "NoteRepository の DynamoDB adapter と in-memory adapter（同じ contract test を通す）",
-            "CDK のテーブル定義と removalPolicy の assertion",
-            "競合更新・応答喪失後の再試行を再現する決定的テスト",
-            "DynamoDB Local を使う local integration（Docker daemon が必要なことを明記）"
-          ],
-          "en": [
-            "DynamoDB and in-memory NoteRepository adapters passing one contract test suite",
-            "CDK table definition with removalPolicy assertions",
-            "Deterministic tests for conflicting updates and retry after a lost response",
-            "Local integration against DynamoDB Local (stating the Docker daemon requirement)"
-          ]
-        },
-        "distributed": {
-          "ja": "状態の持ち主はテーブル。invariant は「version は保存のたびに 1 だけ増え、古い version からの更新は拒否される」。",
-          "en": "The table owns the state. Invariant: the version increases by exactly one per save, and updates from a stale version are rejected."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-11",
+      "sourceIds": [
+        "dynamodb-read-consistency",
+        "dynamodb-condition-expressions",
+        "dynamodb-query-pagination",
+        "dynamodb-on-demand",
+        "dynamodb-constraints",
+        "aws-price-list-dynamodb",
+        "dynamodb-local-image",
+        "cloudflare-d1-local-dev",
+        "cdkd-npm",
+        "dynamodb-global-tables",
+        "dynamodb-global-tables-concepts"
+      ]
     },
     {
       "id": "06",

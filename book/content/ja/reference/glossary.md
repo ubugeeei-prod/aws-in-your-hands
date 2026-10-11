@@ -38,3 +38,10 @@ generated: true
 | runtime validation | runtime validation | 02 | 実行時に届いたデータを schema と照合すること。型注釈はこれを行わない。 |
 | invariant | invariant | 04 | どの時点でも成り立っていなければならない性質。テストと障害注入の対象。 |
 | 冪等性 | idempotency | 08 | 同じ操作を複数回実行しても結果が 1 回と同じになる性質。 |
+| partition key | partition key | 05 | item の置き場所を決める key。同じ値の item はまとめて保存される。 |
+| sort key | sort key | 05 | 同じ partition key の中で item を並べ、区別する key。 |
+| 条件式（condition expression） | condition expression | 05 | 書き込みと一緒に送る条件。成り立たなければ、その書き込みは行われない。 |
+| 楽観ロック | optimistic locking | 05 | 先に鍵をかけず、書き込む瞬間に「見ていた版のままか」を確かめるやり方。 |
+| 結果整合の読み取り | eventually consistent read | 05 | 直前の書き込みが反映されていないことがある読み取り。DynamoDB の既定。 |
+| 強整合の読み取り | strongly consistent read | 05 | 成功した書き込みがすべて反映されている読み取り。 |
+| request unit | request unit | 05 | on-demand の DynamoDB が読み書きを数える課金の単位。 |

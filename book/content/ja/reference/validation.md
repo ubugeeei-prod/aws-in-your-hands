@@ -17,7 +17,7 @@ generated: true
 | toolchain | `vp install --frozen-lockfile` | ローカル | 成功 | 2026-10-11 | pnpm-lock.yaml を書き換えずに導入できた |
 | toolchain | `clean checkout: nix develop → vp install --frozen-lockfile → vp run check:all` | ローカル | 成功 | 2026-10-11 | stage した内容だけを別ディレクトリに書き出して実行。事前生成ファイルや global のツールには依存していない |
 | toolchain | `vp の初回セットアップと shell 設定 / vp first-run setup and shell profiles` | ローカル | 成功 | 2026-10-11 | 仮の HOME で実験。何も指定しないと ~/.zshrc、~/.zshenv、~/.bashrc、~/.profile に追記され、VP_SELF_SETUP_NO_MODIFY_PATH=1 では追記されないことを確認 |
-| all | `vp run check:all` | ローカル | 成功 | 2026-10-11 | format と lint、型検査、Vue の型検査、テスト 130 件（20 ファイル）、生成ページの同期、日英とソース対応の整合、4 つの CDK アプリの synth、本のビルド、リンク検査（70 ページ）、SPA のビルド |
+| all | `vp run check:all` | ローカル | 成功 | 2026-10-11 | format と lint、Vize による Vue の lint と型検査、tsc による型検査、テスト 172 件（1 件は DynamoDB Local が無いため skip）、生成ページの同期、日英とソース対応の整合、5 つの CDK アプリの synth、本のビルド、リンク検査、SPA のビルド |
 | all | `vp run typecheck (6 回 / 6 times)` | ローカル | 成功 | 2026-10-11 | 単一スレッドの tsc で 6 回とも成功。既定の並列実行と vp check の型検査は、同じ入力でときどき失敗した |
 | book | `vp run build:book / vp run links:check` | ローカル | 成功 | 2026-10-11 | 日英 34 ページずつと 404、検索インデックスを生成。cache hit のとき出力が復元されること、取り込み元のコードや本文を変えると再実行されることを確認 |
 | book | `vp run book:infra:synth` | ローカル | 成功 | 2026-10-11 | 5 リソース、3 output。AWS への変更なし |
@@ -25,6 +25,9 @@ generated: true
 | 03 | `vp run build:spa / vp run typecheck:vue` | ローカル | 成功 | 2026-10-11 | Vize の Vite plugin でビルド。出力は 152 KB。vize check は 8 回とも成功し、わざと入れた型エラーを検出した |
 | 04 | `vp run dev:api + curl` | ローカル | 成功 | 2026-10-11 | 本文の 4 つの curl を実行し、/health、作成、一覧、不正な入力の 400 を確認 |
 | 04 | `vp run api:infra:synth` | ローカル | 成功 | 2026-10-11 | esbuild による bundle（Docker なし）を含む。17 リソース |
+| 05 | `vp run test:unit (examples/05-dynamodb)` | ローカル | 成功 | 2026-10-11 | repository の contract（メモリ）、DynamoDB へのリクエストの検査、409、ページ送り、応答喪失後の再試行、インフラの assertion |
+| 05 | `vp run dev:notes + curl (NOTES_STORE=memory)` | ローカル | 成功 | 2026-10-11 | 作成、更新、古い version での更新の 409、一覧を確認 |
+| 05 | `vp run notes:infra:synth` | ローカル | 成功 | 2026-10-11 | AWS SDK を含む bundle を esbuild で作成 |
 | 01 | `vp run account:whoami` | AWS | 未実行 | - | 認証情報が必要 |
 | 01 | `vp run account:budget:create / account:budget:delete` | AWS | 未実行 | - | AWS を変更する |
 | 02 | `vp run infra:bootstrap` | AWS | 未実行 | - | cdkd の保存場所を作る |
@@ -38,6 +41,8 @@ generated: true
 | book | `vp run book:publish:plan / publish / smoke / invalidate / unpublish` | AWS | 未実行 | - | 公開 URL はまだ無い |
 | pricing | `vp run pricing:refresh` | AWS | 未実行 | - | 公開 API を読む。data/pricing/unit-prices.json は同じ API から一度だけ手で抽出した |
 | distribution | `vp run sources:pack` | ローカル | 未実行 | - | commit が無いので実行できない |
+| 05 | `vp run db:local:start / db:migrate:local / db:seed:local / db:reset:local / test:local:dynamodb` | ローカル | 未実行 | - | Docker の daemon が使えなかった。DYNAMODB_ENDPOINT が無いと test:local:dynamodb が失敗することだけ確認した |
+| 05 | `vp run notes:infra:diff / deploy / drift / destroy, vp run notes:smoke` | AWS | 未実行 | - | DynamoDB の table を作る |
 
 ## 未解決事項と再開手順
 
@@ -64,6 +69,12 @@ tools/src/infra/outputs.ts は cdkd state show --json の出力を { state: { ou
 tools/src/drift/fixtures/ は cdkd の型定義と文書化された終了コードから手で書いたもので、実際の出力ではない。
 
 再開手順: 02章の drift の実験を実行し、clean、drifted、stack 不在の実出力を fixture として追加する。
+
+### dynamodb-conditional-writes
+
+05章の中心である「条件付き書き込みが同時の更新を 1 つだけ通す」ことを、DynamoDB Local でも実際の DynamoDB でも確かめていない。確かめたのは、送っている条件式と、メモリの実装が同じ規則に従うことだけ。
+
+再開手順: Docker を起動して vp run db:local:start、db:migrate:local、test:local:dynamodb を実行する。続けて notes:infra:deploy と notes:smoke を実行し、実環境で同時更新を試す script を examples/05-dynamodb/scripts/ に加える。
 
 ### sdk-aws-login
 

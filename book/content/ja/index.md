@@ -21,12 +21,12 @@ Cloudflare や Vercel を使っている人に、乗り換えを勧める本で�
 
 ## 現在の完成範囲
 
-この本は執筆中です。完成しているのは 00〜04章で、05章以降はアウトラインだけです。アウトラインの章には、ページの先頭に planned と表示しています。
+この本は執筆中です。完成しているのは 00〜05章で、06章以降はアウトラインだけです。アウトラインの章には、ページの先頭に planned と表示しています。
 
 | 章 | 状態 |
 | --- | --- |
-| [00 ようこそ](/ja/chapters/00-welcome.md)〜[04 HTTP API](/ja/chapters/04-http-api.md) | 本文とサンプルあり。ローカルで検証済み。AWS 上では未検証 |
-| [05 DynamoDB](/ja/chapters/05-dynamodb.md)〜[24 celld](/ja/chapters/24-celld.md) | planned。アウトラインのみ |
+| [00 ようこそ](/ja/chapters/00-welcome.md)〜[05 DynamoDB](/ja/chapters/05-dynamodb.md) | 本文とサンプルあり。ローカルで検証済み。AWS 上では未検証 |
+| [06 ログイン](/ja/chapters/06-auth.md)〜[24 celld](/ja/chapters/24-celld.md) | planned。アウトラインのみ |
 
 どのコマンドをいつ実行して何が通ったかは、[検証記録](/ja/reference/validation.md)にあります。
 

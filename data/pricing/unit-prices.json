@@ -465,6 +465,96 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudFront/current/index.json",
       "offerPublicationDate": "2026-10-03T00:04:26Z",
       "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dynamodb.write.on-demand",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "HBK75W4NW4DYPFAC",
+      "usageType": "APN1-WriteRequestUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "WriteRequestUnits",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000007150",
+          "description": "$0.715 per million write request units (Asia Pacific (Tokyo))"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dynamodb.read.on-demand",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "TX6BW4TWG2FZQMPQ",
+      "usageType": "APN1-ReadRequestUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ReadRequestUnits",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.0000001425",
+          "description": "$0.1425 per million read request units (Asia Pacific (Tokyo))"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dynamodb.storage",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "2HPSAWPXJ2JJJ6XY",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": 25.0,
+          "usd": "0.0000000000",
+          "description": "$0.00 per GB-Month of storage for first 25 free GB-Months"
+        },
+        {
+          "from": 25.0,
+          "to": null,
+          "usd": "0.2850000000",
+          "description": "$0.285 per GB-Month of storage used beyond first 25 free GB-Months"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dynamodb.pitr.storage",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "ZZYBMDK8NF9E89RN",
+      "usageType": "APN1-TimedPITRStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0.0,
+          "to": null,
+          "usd": "0.2280000000",
+          "description": "$0.228 per GB-Month of storage used for DynamoDB PITR backup"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-11"
     }
   ]
 }

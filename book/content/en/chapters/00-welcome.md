@@ -22,7 +22,7 @@ The subject is a small notes app that accepts image attachments. It starts as a 
 08  S3 event -> SQS -> Lambda (thumbnail)
 ```
 
-Chapters 03 and 04 are written. Chapter 05 onward is planned.
+Chapters 03 through 05 are written. Chapter 06 onward is planned.
 
 The features are not stacked into one large sample. Each chapter has its own `examples/<chapter number>-<name>/` directory, which contains only what that chapter needs to explain. Email, AI, live streaming, and celld will be recipes you can work through independently of the notes app.
 

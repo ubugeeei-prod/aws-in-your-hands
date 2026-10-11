@@ -1,6 +1,6 @@
 ---
 title: 04 HTTP API を足す: Lambda と API Gateway HTTP API
-revision: 1
+revision: 2
 ---
 
 # 04 HTTP API を足す: Lambda と API Gateway HTTP API
@@ -251,7 +251,7 @@ log group を明示的に作ります。作らずにおくと、Lambda が最初
 
 CDK は、何も指定しなければ `AWSLambdaBasicExecutionRole` という管理ポリシーを付けます。これは、アカウント内のどの log group にも書ける権限です。ここでは role を自分で作り、上で作った 1 つの log group への書き込みだけを許可します。テストは、許可される操作がこの 2 つ（`logs:CreateLogStream`、`logs:PutLogEvents`）だけであること、対象が `*` でないことを確かめます。
 
-05章で DynamoDB を足すとき、この role に table への権限を 1 つ加えます。「関数が何をできるか」が、この数行に集まります。
+05章で DynamoDB を足すとき、この role に table への権限を加えます。「関数が何をできるか」が、この数行に集まります。
 
 ### 関数
 
@@ -295,7 +295,7 @@ vp run api:smoke
 vp run api:infra:deploy -c allowedOrigin=https://dxxxxxxxxxxxx.cloudfront.net
 ```
 
-SPA の画面をこの API につなぐ変更は、この章ではまだ行いません。メモリに置いたノートを画面に出しても、前の節で見たとおり、再読み込みのたびに結果が変わるだけだからです。保存先ができる 05章と、誰のノートかを区別できる 06章で、順につなぎます。
+SPA の画面をこの API につなぐ変更は、この章ではまだ行いません。メモリに置いたノートを画面に出しても、前の節で見たとおり、再読み込みのたびに結果が変わるだけだからです。05章で保存先を作り、誰のノートかを区別できる 06章で画面をつなぎます。
 
 ## ログを見る
 
