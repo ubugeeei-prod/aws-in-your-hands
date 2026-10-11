@@ -1,0 +1,4 @@
+# The build context is this directory. Only the bundle goes to the daemon:
+# no source, no node_modules, no .env.
+*
+!dist/server.mjs

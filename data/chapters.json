@@ -499,53 +499,77 @@
       "prerequisites": ["11"],
       "services": ["ECR", "ECS", "Fargate", "ALB"],
       "samplePath": "examples/12-containers",
+      "sourceIds": [
+        "ecs-welcome",
+        "elb-pricing",
+        "docker-overview",
+        "dockerfile-reference",
+        "docker-node-best-practices",
+        "docker-hub-node-24",
+        "node-http",
+        "ecs-task-lifecycle",
+        "ecs-api-container-definition",
+        "ecs-connection-draining",
+        "ecs-lb-health-check",
+        "ecs-container-health-checks",
+        "ecs-container-image-practices",
+        "ecs-rolling-update",
+        "ecs-circuit-breaker",
+        "cfn-ecs-service",
+        "alb-health-checks",
+        "alb-target-group-attributes",
+        "alb-attributes",
+        "alb-overview",
+        "ecs-task-role",
+        "ecs-task-execution-role",
+        "ecs-service-auto-scaling",
+        "ecs-target-tracking",
+        "ecs-fargate-image-route",
+        "ecs-fargate-task-sizes",
+        "ecs-arm64",
+        "vpc-security-groups-dns",
+        "ecr-push-image",
+        "ecr-image-tag-mutability",
+        "fargate-pricing",
+        "ecr-pricing",
+        "aws-price-list-ecs",
+        "aws-price-list-elb",
+        "aws-price-list-ecr",
+        "cdkd-source-containers",
+        "cdkd-cli-deploy-wait",
+        "cdkd-docker-assets",
+        "aws-cdk-lib-container-asset",
+        "lambda-limits-containers",
+        "cloudflare-containers",
+        "cloudflare-containers-pricing",
+        "cloudflare-containers-rollouts",
+        "cloudflare-containers-architecture",
+        "cloudflare-containers-faq",
+        "cloudflare-containers-local-dev",
+        "ecr-vpc-endpoints",
+        "ecs-fargate-networking",
+        "vpc-security-groups",
+        "vpc-pricing",
+        "privatelink-pricing",
+        "aws-price-list-vpc",
+        "aws-price-list-ec2",
+        "aws-price-list-cloudwatch",
+        "aws-price-list-data-transfer",
+        "lambda-quotas",
+        "cdkd-register-providers",
+        "cdkd-cross-stack-references",
+        "cdkd-introduction",
+        "cdkd-npm"
+      ],
       "writing": {
-        "ja": "planned",
-        "en": "planned"
+        "ja": "complete",
+        "en": "complete"
       },
-      "sourceIds": ["ecs-welcome", "elb-pricing", "docker-overview"],
-      "outline": {
-        "outcome": {
-          "ja": "ノート API をコンテナとして ECS/Fargate で動かし、無停止で更新できる。",
-          "en": "The notes API runs as a container on ECS/Fargate and updates without downtime."
-        },
-        "architecture": {
-          "ja": "ALB → ECS service（private subnet、2 task）。image は ECR。",
-          "en": "ALB → ECS service (private subnets, two tasks). Images live in ECR."
-        },
-        "topics": {
-          "ja": [
-            "Docker CLI と host 側 daemon の区別",
-            "health check と rolling update、circuit breaker",
-            "task role と execution role",
-            "常時稼働の費用（Fargate、ALB、public IPv4）",
-            "auto scaling の指標"
-          ],
-          "en": [
-            "The Docker client versus the host daemon",
-            "Health checks, rolling updates, and the circuit breaker",
-            "Task role versus execution role",
-            "Always-on costs (Fargate, ALB, public IPv4)",
-            "Scaling metrics"
-          ]
-        },
-        "requiredSource": {
-          "ja": [
-            "Dockerfile とアプリ",
-            "ECS/ALB の CDK と assertion",
-            "SIGTERM で進行中リクエストを完了させる graceful shutdown のテスト"
-          ],
-          "en": [
-            "Dockerfile and app",
-            "ECS/ALB CDK with assertions",
-            "A graceful-shutdown test that finishes in-flight requests on SIGTERM"
-          ]
-        },
-        "distributed": {
-          "ja": "更新中は新旧 version が同時に動く。両方が同じデータ形式を読めることを invariant にする。",
-          "en": "Old and new versions run together during a deployment; both must read the same data format."
-        }
-      }
+      "sourceRevision": 1,
+      "translatedRevision": {
+        "en": 1
+      },
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "13",

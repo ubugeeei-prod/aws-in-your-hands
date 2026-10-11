@@ -149,3 +149,22 @@ The term pairs that keep both languages using one word for one concept. API name
 | termination protection | termination protection | 20 | A setting that refuses to delete a stack: DeleteStack fails until it is turned off. It does not stop an update from removing resources. |
 | preview 環境 | preview environment | 20 | A temporary environment created per pull request; in this book, one stack per pull request, made to be deleted when the pull request closes. |
 | nested stack | nested stack | 20 | A stack created as a resource (AWS::CloudFormation::Stack) of another stack. Drift detection on the parent does not look inside it. |
+| コンテナ image | container image | 12 | An application packed together with every file it needs to run. The same image starts a container with the same contents wherever it runs. |
+| Docker daemon | Docker daemon | 12 | The long-running program (dockerd) that actually builds images and runs containers. The `docker` command is only a client that sends it requests. |
+| image の tag | image tag | 12 | A name given to an image inside a repository, such as `v1` or a commit hash. With immutable tags, a tag can never be moved to a different image. |
+| ECR の repository | ECR repository | 12 | A place for images in Amazon ECR. ECS pulls images from it. |
+| task definition | task definition | 12 | The blueprint that says which image runs, with how much CPU and memory, and with which roles and environment variables. Every change makes a new revision; an existing revision is never edited. |
+| task | task | 12 | One running instance started from a task definition. On Fargate each task has its own network interface and private IP address. |
+| service（ECS） | service (ECS) | 12 | The instruction to keep N tasks of a task definition running, and the machinery that keeps it true: it replaces tasks that die and swaps them when the task definition changes. |
+| Fargate | Fargate | 12 | A way to run containers without owning the servers under them, billed by the CPU and memory size of each task and the time it runs. |
+| Application Load Balancer（ALB） | Application Load Balancer (ALB) | 12 | The entry point that receives HTTP requests and spreads them over the tasks behind it. It is billed for every hour it exists. |
+| target group | target group | 12 | The list of destinations an ALB routes to. Task IP addresses are registered in it, and it holds the health check settings. |
+| health check | health check | 12 | The request an ALB sends to each target at intervals. A target that keeps failing it stops receiving requests. |
+| deregistration delay | deregistration delay | 12 | How long an ALB waits for in-flight requests to finish on a target that is being removed from the target group. 300 seconds by default. |
+| rolling update | rolling update | 12 | Replacing tasks by starting new ones and stopping old ones once the new ones are healthy. Old and new versions run side by side while it lasts. |
+| deployment circuit breaker | deployment circuit breaker | 12 | The mechanism that declares a deployment failed when new tasks keep failing to start or to pass health checks. Optionally it rolls back to the last deployment that completed. |
+| task role | task role | 12 | The IAM role that application code inside the container uses when it calls AWS. The counterpart of a Lambda function's execution role. |
+| task execution role | task execution role | 12 | The IAM role the ECS agent uses, before the application starts, to pull the image and ship logs. Application code cannot use it. |
+| graceful shutdown | graceful shutdown | 12 | A process that has been told to stop refuses new work, finishes the work in progress, and only then exits. |
+| SIGTERM | SIGTERM | 12 | The signal that asks a process to terminate. The process may clean up first. If it does not finish in time, SIGKILL follows, which cannot be handled. |
+| target tracking | target tracking | 12 | An auto scaling policy where you name a metric and a target value, such as 60 percent average CPU, and leave the number of tasks to the service. |

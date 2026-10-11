@@ -1631,6 +1631,308 @@
           "basis": "365 x 137 KB, in GB"
         }
       ]
+    },
+    {
+      "id": "containers-repository-only",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: repository だけ（image tag なしで deploy）",
+        "en": "Containers: the repository alone (deployed without an image tag)"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c imageTag` を付けずに deploy した状態。ALB も task も無い",
+          "image 1 つぶんとして 0.1 GB を保存していると仮定（実際の image の大きさは build していないので未計測）"
+        ],
+        "en": [
+          "Deployed without `-c imageTag`: no load balancer, no tasks",
+          "0.1 GB stored, assumed for one image (the image was never built, so its real size is not measured)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "containers-idle",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: 既定の構成を置いたまま 1 か月",
+        "en": "Containers: the default layout left running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "task 2 つ（0.25 vCPU、0.5 GB、arm64）を public subnet で 730 時間",
+          "ALB 1 つを 730 時間。LCU は未算入（health check だけのときの LCU は確認していない）",
+          "public IPv4 アドレスは ALB の node 2 つと task 2 つで 4 つ。ALB が node を増やせば増える",
+          "repository に 0.1 GB（仮定）",
+          "ログ、データ転送、auto scaling で増えた task は未算入"
+        ],
+        "en": [
+          "Two tasks (0.25 vCPU, 0.5 GB, arm64) in public subnets for 730 hours",
+          "One load balancer for 730 hours. LCUs are not included (what health checks alone consume was not confirmed)",
+          "Four public IPv4 addresses: two load balancer nodes and two tasks. More if the load balancer adds nodes",
+          "0.1 GB in the repository (assumption)",
+          "Logs, data transfer, and tasks added by auto scaling are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 tasks) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "containers-one-day",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: 既定の構成を 1 日",
+        "en": "Containers: the default layout for one day"
+      },
+      "assumptions": {
+        "ja": ["`containers-idle` と同じ構成を 24 時間", "repository の保存料金、ログ、データ転送、LCU は未算入"],
+        "en": [
+          "The layout of `containers-idle` for 24 hours",
+          "Repository storage, logs, data transfer, and LCUs are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 12,
+          "basis": "2 tasks x 0.25 vCPU x 24 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 24,
+          "basis": "2 tasks x 0.5 GB x 24 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 24,
+          "basis": "1 load balancer x 24 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 96,
+          "basis": "(2 load balancer nodes + 2 tasks) x 24 hours"
+        }
+      ]
+    },
+    {
+      "id": "containers-small",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: 月 100 万リクエスト",
+        "en": "Containers: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`containers-idle` の構成のまま、task は 2 つから増えないと仮定",
+          "LCU は新規接続の次元で数える。1 リクエスト 1 接続、月 100 万件は毎秒 0.38 件で 0.0152 LCU、730 時間で 11.1 LCU 時間",
+          "ログは 1 リクエスト 0.2 KB の 1 行（成功した health check は書かない）。保持 7 日、月平均の保存量を取込み量の 7/30 と仮定",
+          "応答は 1 件 0.5 KB と仮定し、インターネットへのデータ転送を 0.477 GB"
+        ],
+        "en": [
+          "The layout of `containers-idle`, assuming the service stays at two tasks",
+          "LCUs counted on the new-connection dimension: one connection per request, 1,000,000 a month is 0.38 a second or 0.0152 LCU, which is 11.1 LCU-hours over 730 hours",
+          "One 0.2 KB log line per request (successful health checks are not logged); 7-day retention, average stored volume assumed to be 7/30 of the monthly ingest",
+          "0.5 KB per response assumed, so 0.477 GB of data transfer out to the internet"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 tasks) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        },
+        {
+          "priceId": "alb.lcu.hour",
+          "quantity": 11.1,
+          "basis": "0.0152 LCU x 730 hours (assumption)"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.191,
+          "basis": "1,000,000 x 0.2 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.045,
+          "basis": "0.191 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "datatransfer.out.internet",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "containers-private-nat",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: task を private subnet に置き、NAT Gateway 1 つで出る",
+        "en": "Containers: tasks in private subnets, out through one NAT gateway"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c taskSubnets=private`、11章を `-c egress=nat` で deploy",
+          "task は public IPv4 アドレスを持たない。ALB の node 2 つと NAT Gateway の Elastic IP アドレスで 3 つ",
+          "NAT Gateway を通るデータ（image の取得とログ）は月 2 GB と仮定",
+          "LCU、ログ、インターネットへのデータ転送は未算入"
+        ],
+        "en": [
+          "`-c taskSubnets=private`, with chapter 11 deployed with `-c egress=nat`",
+          "Tasks hold no public IPv4 address. Three addresses: two load balancer nodes and the NAT gateway's Elastic IP address",
+          "2 GB a month assumed through the NAT gateway (image pulls and logs)",
+          "LCUs, logs, and data transfer out to the internet are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2190,
+          "basis": "(2 load balancer nodes + 1 NAT gateway) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        },
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 730,
+          "basis": "1 NAT gateway x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.data",
+          "quantity": 2,
+          "basis": "2 GB processed (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "containers-private-endpoints",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: task を private subnet に置き、interface endpoint 3 つで AWS に届く",
+        "en": "Containers: tasks in private subnets, reaching AWS through three interface endpoints"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c taskSubnets=private`、11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy",
+          "interface endpoint 3 つ × 2 AZ。image の layer は S3 の gateway endpoint（無料）を通る",
+          "interface endpoint を通るデータは月 1 GB と仮定",
+          "public IPv4 アドレスは ALB の node 2 つだけ",
+          "LCU、ログ、インターネットへのデータ転送は未算入"
+        ],
+        "en": [
+          "`-c taskSubnets=private`, with chapter 11 deployed with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`",
+          "Three interface endpoints in two zones each. Image layers go through the S3 gateway endpoint, which is free",
+          "1 GB a month assumed through the interface endpoints",
+          "Two public IPv4 addresses, for the load balancer nodes only",
+          "LCUs, logs, and data transfer out to the internet are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 1460,
+          "basis": "2 load balancer nodes x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.data",
+          "quantity": 1,
+          "basis": "1 GB processed (assumption)"
+        }
+      ]
     }
   ]
 }

@@ -884,6 +884,145 @@ ID: `ship-assets-year` / 章: [20 変更を届ける: CI/CD、OIDC、環境、pr
 - 毎月の無料枠適用後の小計: **USD 0.00** / 月
 - 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
 
+## コンテナ: repository だけ（image tag なしで deploy）
+
+ID: `containers-repository-only` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `-c imageTag` を付けずに deploy した状態。ALB も task も無い
+- image 1 つぶんとして 0.1 GB を保存していると仮定（実際の image の大きさは build していないので未計測）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+
+- 定価の小計: **USD 0.01** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
+
+## コンテナ: 既定の構成を置いたまま 1 か月
+
+ID: `containers-idle` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- task 2 つ（0.25 vCPU、0.5 GB、arm64）を public subnet で 730 時間
+- ALB 1 つを 730 時間。LCU は未算入（health check だけのときの LCU は確認していない）
+- public IPv4 アドレスは ALB の node 2 つと task 2 つで 4 つ。ALB が node を増やせば増える
+- repository に 0.1 GB（仮定）
+- ログ、データ転送、auto scaling で増えた task は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+
+- 定価の小計: **USD 50.34** / 月
+- 毎月の無料枠適用後の小計: **USD 50.34** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
+## コンテナ: 既定の構成を 1 日
+
+ID: `containers-one-day` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `containers-idle` と同じ構成を 24 時間
+- repository の保存料金、ログ、データ転送、LCU は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 12 | hours | 2 tasks x 0.25 vCPU x 24 hours | 0.49 | - | 0.49 |
+| `fargate.arm.memory.gb-hour` | 24 | hours | 2 tasks x 0.5 GB x 24 hours | 0.11 | - | 0.11 |
+| `alb.hour` | 24 | Hrs | 1 load balancer x 24 hours | 0.58 | - | 0.58 |
+| `vpc.public-ipv4.in-use.hour` | 96 | Hrs | (2 load balancer nodes + 2 tasks) x 24 hours | 0.48 | - | 0.48 |
+
+- 定価の小計: **USD 1.65** / 月
+- 毎月の無料枠適用後の小計: **USD 1.65** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`
+
+## コンテナ: 月 100 万リクエスト
+
+ID: `containers-small` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `containers-idle` の構成のまま、task は 2 つから増えないと仮定
+- LCU は新規接続の次元で数える。1 リクエスト 1 接続、月 100 万件は毎秒 0.38 件で 0.0152 LCU、730 時間で 11.1 LCU 時間
+- ログは 1 リクエスト 0.2 KB の 1 行（成功した health check は書かない）。保持 7 日、月平均の保存量を取込み量の 7/30 と仮定
+- 応答は 1 件 0.5 KB と仮定し、インターネットへのデータ転送を 0.477 GB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `alb.lcu.hour` | 11.1 | LCU-Hrs | 0.0152 LCU x 730 hours (assumption) | 0.09 | - | 0.09 |
+| `logs.ingest.standard` | 0.191 | GB | 1,000,000 x 0.2 KB, in GB | 0.15 | 5 | 0 |
+| `logs.storage` | 0.045 | GB-Mo | 0.191 GB x 7/30, in GB-month | 0.001485 | 5 | 0 |
+| `datatransfer.out.internet` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.05 | - | 0.05 |
+
+- 定価の小計: **USD 50.63** / 月
+- 毎月の無料枠適用後の小計: **USD 50.48** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `datatransfer.out.internet`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `alb.lcu.hour`, `ecr.storage`
+
+## コンテナ: task を private subnet に置き、NAT Gateway 1 つで出る
+
+ID: `containers-private-nat` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `-c taskSubnets=private`、11章を `-c egress=nat` で deploy
+- task は public IPv4 アドレスを持たない。ALB の node 2 つと NAT Gateway の Elastic IP アドレスで 3 つ
+- NAT Gateway を通るデータ（image の取得とログ）は月 2 GB と仮定
+- LCU、ログ、インターネットへのデータ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,190 | Hrs | (2 load balancer nodes + 1 NAT gateway) x 730 hours | 10.95 | - | 10.95 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
+| `nat.gateway.data` | 2 | GB | 2 GB processed (assumption) | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 92.07** / 月
+- 毎月の無料枠適用後の小計: **USD 92.07** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
+## コンテナ: task を private subnet に置き、interface endpoint 3 つで AWS に届く
+
+ID: `containers-private-endpoints` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `-c taskSubnets=private`、11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy
+- interface endpoint 3 つ × 2 AZ。image の layer は S3 の gateway endpoint（無料）を通る
+- interface endpoint を通るデータは月 1 GB と仮定
+- public IPv4 アドレスは ALB の node 2 つだけ
+- LCU、ログ、インターネットへのデータ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 1,460 | Hrs | 2 load balancer nodes x 730 hours | 7.30 | - | 7.30 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+| `vpc.endpoint.interface.data` | 1 | GB | 1 GB processed (assumption) | 0.01 | - | 0.01 |
+
+- 定価の小計: **USD 104.37** / 月
+- 毎月の無料枠適用後の小計: **USD 104.37** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -949,6 +1088,13 @@ ID: `ship-assets-year` / 章: [20 変更を届ける: CI/CD、OIDC、環境、pr
 | `elasticache.serverless.valkey.storage` | ap-northeast-1 | APN1-CachedData:Valkey | GB-Hours | 0 - ∞: 0.1010000000 | 2026-09-14 | 2026-10-12 |
 | `elasticache.serverless.valkey.ecpu` | ap-northeast-1 | APN1-ElastiCacheProcessingUnits:Valkey | ElastiCacheProcessingUnit | 0 - ∞: 0.0000000027 | 2026-09-14 | 2026-10-12 |
 | `elasticache.node.valkey.t4g-micro` | ap-northeast-1 | APN1-NodeUsage:cache.t4g.micro | Hrs | 0 - ∞: 0.0200000000 | 2026-09-14 | 2026-10-12 |
+| `fargate.arm.vcpu.hour` | ap-northeast-1 | APN1-Fargate-ARM-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0404500000 | 2026-09-11 | 2026-10-12 |
+| `fargate.arm.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-ARM-GB-Hours | hours | 0 - ∞: 0.0044200000 | 2026-09-11 | 2026-10-12 |
+| `fargate.x86.vcpu.hour` | ap-northeast-1 | APN1-Fargate-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0505600000 | 2026-09-11 | 2026-10-12 |
+| `fargate.x86.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-GB-Hours | hours | 0 - ∞: 0.0055300000 | 2026-09-11 | 2026-10-12 |
+| `alb.hour` | ap-northeast-1 | APN1-LoadBalancerUsage | Hrs | 0 - ∞: 0.0243000000 | 2026-09-11 | 2026-10-12 |
+| `alb.lcu.hour` | ap-northeast-1 | APN1-LCUUsage | LCU-Hrs | 0 - ∞: 0.0080000000 | 2026-09-11 | 2026-10-12 |
+| `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -995,3 +1141,8 @@ ID: `ship-assets-year` / 章: [20 変更を届ける: CI/CD、OIDC、環境、pr
 - `s3.request.tier1`: No always-free S3 request allowance was confirmed; none is applied.
 - `s3.request.tier2`: No always-free S3 request allowance was confirmed; none is applied.
 - `cloudwatch.rum.event`: The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied.
+- `fargate.arm.vcpu.hour`: The Fargate pricing page lists no free allowance; none is applied.
+- `fargate.arm.memory.gb-hour`: The Fargate pricing page lists no free allowance; none is applied.
+- `alb.hour`: The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
+- `alb.lcu.hour`: The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted.
+- `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.

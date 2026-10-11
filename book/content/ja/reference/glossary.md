@@ -149,3 +149,22 @@ generated: true
 | termination protection | termination protection | 20 | stack の削除を拒否する設定。解除するまで DeleteStack が失敗する。stack の更新でリソースが消えることは防がない。 |
 | preview 環境 | preview environment | 20 | pull request ごとに作る、一時的な環境。この本では PR ごとに 1 つの stack。pull request を閉じたら消す前提で作る。 |
 | nested stack | nested stack | 20 | 別の stack のリソース（AWS::CloudFormation::Stack）として作られる stack。親の stack で drift を検出しても、中は調べられない。 |
+| コンテナ image | container image | 12 | アプリと、それが動くのに要るファイル一式を固めたもの。同じ image からは、どこで起動しても同じ中身のコンテナができる。 |
+| Docker daemon | Docker daemon | 12 | image の build とコンテナの実行を実際に行う常駐プログラム（dockerd）。`docker` コマンドは、これに頼みごとを送る client にすぎない。 |
+| image の tag | image tag | 12 | repository の中で image に付ける名前。`v1` や commit の hash など。tag を immutable にすると、一度付けた tag は別の image を指せなくなる。 |
+| ECR の repository | ECR repository | 12 | Amazon ECR の中の、image の置き場所。ECS はここから image を取ってくる。 |
+| task definition | task definition | 12 | 「どの image を、どれだけの CPU とメモリで、どの role と環境変数で動かすか」を書いた設計書。変更のたびに新しい revision になり、既存の revision は書き換えられない。 |
+| task | task | 12 | task definition から起動された、動いている 1 つの実体。Fargate では task ごとに network interface と private IP アドレスを 1 つ持つ。 |
+| service（ECS） | service (ECS) | 12 | 「この task definition の task を、常に N 個動かしておく」という指示と、それを守り続ける仕組み。task が落ちれば補充し、task definition が変われば入れ替える。 |
+| Fargate | Fargate | 12 | コンテナを動かすサーバーを自分で持たずに、task の CPU とメモリの大きさと時間だけで課金される実行基盤。 |
+| Application Load Balancer（ALB） | Application Load Balancer (ALB) | 12 | HTTP のリクエストを受けて、後ろにいる複数の task へ振り分ける入口。存在している時間で課金される。 |
+| target group | target group | 12 | ALB が振り分ける先の一覧。task の IP アドレスが登録され、health check の設定もここに持つ。 |
+| health check | health check | 12 | ALB が target に定期的に送る確認のリクエスト。失敗が続いた target には、リクエストを送らなくなる。 |
+| deregistration delay | deregistration delay | 12 | target group から外すと決まった target について、進行中のリクエストが終わるのを ALB が待つ時間。既定は 300 秒。 |
+| rolling update | rolling update | 12 | 新しい task を起動し、健全になったら古い task を止める、を繰り返して入れ替える更新方法。途中は新旧の版が同時に動く。 |
+| deployment circuit breaker | deployment circuit breaker | 12 | 新しい task が起動できない、または health check に通らないことが続いたら、更新を失敗と判定する仕組み。設定すれば、最後に成功した状態へ自動で戻す。 |
+| task role | task role | 12 | コンテナの中のアプリが AWS を呼ぶときに使う IAM role。Lambda の実行 role に当たる。 |
+| task execution role | task execution role | 12 | アプリが起動する前に、ECS の agent が image の取得とログの送信に使う IAM role。アプリのコードからは使えない。 |
+| graceful shutdown | graceful shutdown | 12 | 止まれと言われたプロセスが、新しい仕事を受けるのをやめ、進行中の仕事を終えてから終了すること。 |
+| SIGTERM | SIGTERM | 12 | プロセスに「終了してほしい」と伝える signal。受け取った側は後片付けができる。一定時間で終わらなければ、拒否できない SIGKILL が送られる。 |
+| target tracking | target tracking | 12 | 「平均 CPU 使用率を 60% に保つ」のように指標と目標値だけを決め、task の数の増減を任せる auto scaling の方式。 |

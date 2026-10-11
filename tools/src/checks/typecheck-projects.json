@@ -18,5 +18,6 @@
   "examples/09-ssr",
   "examples/19-observability",
   "examples/14-kv-cache",
-  "examples/20-shipping"
+  "examples/20-shipping",
+  "examples/12-containers"
 ]

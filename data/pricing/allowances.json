@@ -221,6 +221,26 @@
     {
       "priceId": "cloudwatch.rum.event",
       "reason": "The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied."
+    },
+    {
+      "priceId": "fargate.arm.vcpu.hour",
+      "reason": "The Fargate pricing page lists no free allowance; none is applied."
+    },
+    {
+      "priceId": "fargate.arm.memory.gb-hour",
+      "reason": "The Fargate pricing page lists no free allowance; none is applied."
+    },
+    {
+      "priceId": "alb.hour",
+      "reason": "The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted."
+    },
+    {
+      "priceId": "alb.lcu.hour",
+      "reason": "The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted."
+    },
+    {
+      "priceId": "ecr.storage",
+      "reason": "The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted."
     }
   ]
 }

@@ -884,6 +884,145 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 0.00** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `s3.standard.storage`
 
+## Containers: the repository alone (deployed without an image tag)
+
+ID: `containers-repository-only` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+
+Assumptions:
+
+- Deployed without `-c imageTag`: no load balancer, no tasks
+- 0.1 GB stored, assumed for one image (the image was never built, so its real size is not measured)
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+
+- List subtotal: **USD 0.01** / month
+- Subtotal after monthly free allowance: **USD 0.01** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `ecr.storage`
+
+## Containers: the default layout left running for a month
+
+ID: `containers-idle` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+
+Assumptions:
+
+- Two tasks (0.25 vCPU, 0.5 GB, arm64) in public subnets for 730 hours
+- One load balancer for 730 hours. LCUs are not included (what health checks alone consume was not confirmed)
+- Four public IPv4 addresses: two load balancer nodes and two tasks. More if the load balancer adds nodes
+- 0.1 GB in the repository (assumption)
+- Logs, data transfer, and tasks added by auto scaling are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+
+- List subtotal: **USD 50.34** / month
+- Subtotal after monthly free allowance: **USD 50.34** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
+## Containers: the default layout for one day
+
+ID: `containers-one-day` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+
+Assumptions:
+
+- The layout of `containers-idle` for 24 hours
+- Repository storage, logs, data transfer, and LCUs are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 12 | hours | 2 tasks x 0.25 vCPU x 24 hours | 0.49 | - | 0.49 |
+| `fargate.arm.memory.gb-hour` | 24 | hours | 2 tasks x 0.5 GB x 24 hours | 0.11 | - | 0.11 |
+| `alb.hour` | 24 | Hrs | 1 load balancer x 24 hours | 0.58 | - | 0.58 |
+| `vpc.public-ipv4.in-use.hour` | 96 | Hrs | (2 load balancer nodes + 2 tasks) x 24 hours | 0.48 | - | 0.48 |
+
+- List subtotal: **USD 1.65** / month
+- Subtotal after monthly free allowance: **USD 1.65** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`
+
+## Containers: 1,000,000 requests a month
+
+ID: `containers-small` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+
+Assumptions:
+
+- The layout of `containers-idle`, assuming the service stays at two tasks
+- LCUs counted on the new-connection dimension: one connection per request, 1,000,000 a month is 0.38 a second or 0.0152 LCU, which is 11.1 LCU-hours over 730 hours
+- One 0.2 KB log line per request (successful health checks are not logged); 7-day retention, average stored volume assumed to be 7/30 of the monthly ingest
+- 0.5 KB per response assumed, so 0.477 GB of data transfer out to the internet
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `alb.lcu.hour` | 11.1 | LCU-Hrs | 0.0152 LCU x 730 hours (assumption) | 0.09 | - | 0.09 |
+| `logs.ingest.standard` | 0.191 | GB | 1,000,000 x 0.2 KB, in GB | 0.15 | 5 | 0 |
+| `logs.storage` | 0.045 | GB-Mo | 0.191 GB x 7/30, in GB-month | 0.001485 | 5 | 0 |
+| `datatransfer.out.internet` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.05 | - | 0.05 |
+
+- List subtotal: **USD 50.63** / month
+- Subtotal after monthly free allowance: **USD 50.48** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `datatransfer.out.internet`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `alb.lcu.hour`, `ecr.storage`
+
+## Containers: tasks in private subnets, out through one NAT gateway
+
+ID: `containers-private-nat` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+
+Assumptions:
+
+- `-c taskSubnets=private`, with chapter 11 deployed with `-c egress=nat`
+- Tasks hold no public IPv4 address. Three addresses: two load balancer nodes and the NAT gateway's Elastic IP address
+- 2 GB a month assumed through the NAT gateway (image pulls and logs)
+- LCUs, logs, and data transfer out to the internet are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,190 | Hrs | (2 load balancer nodes + 1 NAT gateway) x 730 hours | 10.95 | - | 10.95 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
+| `nat.gateway.data` | 2 | GB | 2 GB processed (assumption) | 0.12 | - | 0.12 |
+
+- List subtotal: **USD 92.07** / month
+- Subtotal after monthly free allowance: **USD 92.07** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
+## Containers: tasks in private subnets, reaching AWS through three interface endpoints
+
+ID: `containers-private-endpoints` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+
+Assumptions:
+
+- `-c taskSubnets=private`, with chapter 11 deployed with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`
+- Three interface endpoints in two zones each. Image layers go through the S3 gateway endpoint, which is free
+- 1 GB a month assumed through the interface endpoints
+- Two public IPv4 addresses, for the load balancer nodes only
+- LCUs, logs, and data transfer out to the internet are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 1,460 | Hrs | 2 load balancer nodes x 730 hours | 7.30 | - | 7.30 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+| `vpc.endpoint.interface.data` | 1 | GB | 1 GB processed (assumption) | 0.01 | - | 0.01 |
+
+- List subtotal: **USD 104.37** / month
+- Subtotal after monthly free allowance: **USD 104.37** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -949,6 +1088,13 @@ Assumptions:
 | `elasticache.serverless.valkey.storage` | ap-northeast-1 | APN1-CachedData:Valkey | GB-Hours | 0 - ∞: 0.1010000000 | 2026-09-14 | 2026-10-12 |
 | `elasticache.serverless.valkey.ecpu` | ap-northeast-1 | APN1-ElastiCacheProcessingUnits:Valkey | ElastiCacheProcessingUnit | 0 - ∞: 0.0000000027 | 2026-09-14 | 2026-10-12 |
 | `elasticache.node.valkey.t4g-micro` | ap-northeast-1 | APN1-NodeUsage:cache.t4g.micro | Hrs | 0 - ∞: 0.0200000000 | 2026-09-14 | 2026-10-12 |
+| `fargate.arm.vcpu.hour` | ap-northeast-1 | APN1-Fargate-ARM-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0404500000 | 2026-09-11 | 2026-10-12 |
+| `fargate.arm.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-ARM-GB-Hours | hours | 0 - ∞: 0.0044200000 | 2026-09-11 | 2026-10-12 |
+| `fargate.x86.vcpu.hour` | ap-northeast-1 | APN1-Fargate-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0505600000 | 2026-09-11 | 2026-10-12 |
+| `fargate.x86.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-GB-Hours | hours | 0 - ∞: 0.0055300000 | 2026-09-11 | 2026-10-12 |
+| `alb.hour` | ap-northeast-1 | APN1-LoadBalancerUsage | Hrs | 0 - ∞: 0.0243000000 | 2026-09-11 | 2026-10-12 |
+| `alb.lcu.hour` | ap-northeast-1 | APN1-LCUUsage | LCU-Hrs | 0 - ∞: 0.0080000000 | 2026-09-11 | 2026-10-12 |
+| `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -995,3 +1141,8 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `s3.request.tier1`: No always-free S3 request allowance was confirmed; none is applied.
 - `s3.request.tier2`: No always-free S3 request allowance was confirmed; none is applied.
 - `cloudwatch.rum.event`: The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied.
+- `fargate.arm.vcpu.hour`: The Fargate pricing page lists no free allowance; none is applied.
+- `fargate.arm.memory.gb-hour`: The Fargate pricing page lists no free allowance; none is applied.
+- `alb.hour`: The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
+- `alb.lcu.hour`: The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted.
+- `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.

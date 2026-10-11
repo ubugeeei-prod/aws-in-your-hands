@@ -79,6 +79,7 @@ const chapterSynthTasks = [
   "obs:infra:synth",
   "kv:infra:synth",
   "ship:cfn:synth",
+  "ecs:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -96,6 +97,7 @@ const chapterCheckTasks = [
   "lint:ssr",
   "typecheck:ssr",
   "ssr:check:output",
+  "ecs:bundle:check",
 ];
 
 export default defineConfig({
@@ -377,6 +379,34 @@ export default defineConfig({
       "ship:ci:deploy": live(`${node} examples/20-shipping/scripts/cdk.ts deploy ci`),
       "ship:ci:destroy": live(`${node} examples/20-shipping/scripts/cdk.ts destroy ci`),
       // <<< chapter 20
+
+      // >>> chapter 12
+      // ---- chapter 12: containers ----------------------------------------
+      // The server the container runs, on plain Node. No Docker, no AWS.
+      "dev:ecs": fresh("node --watch --env-file-if-exists=.env src/server.ts", { cwd: "examples/12-containers" }),
+      // One file with the server and its dependencies: the only thing the image copies.
+      "ecs:bundle": fresh("node scripts/bundle.ts", { cwd: "examples/12-containers" }),
+      // Starts that file away from node_modules, calls it, and stops it with SIGTERM. No Docker.
+      "ecs:bundle:check": fresh("node scripts/check-bundle.ts", {
+        cwd: "examples/12-containers",
+        dependsOn: ["ecs:bundle"],
+      }),
+      // The next three need a running Docker daemon, which the Nix shell does not provide.
+      "ecs:image:build": fresh("node scripts/image.ts build", {
+        cwd: "examples/12-containers",
+        dependsOn: ["ecs:bundle"],
+      }),
+      "ecs:image:run": fresh("node scripts/image.ts run", { cwd: "examples/12-containers" }),
+      // Logs Docker in to the stack's repository and pushes the image.
+      "ecs:image:push": live("node --env-file-if-exists=../../.env scripts/image.ts push", {
+        cwd: "examples/12-containers",
+      }),
+      // BILLED BY THE HOUR once deployed with -c imageTag=...: a load balancer and two Fargate tasks.
+      ...infra("ecs", "examples/12-containers", "AihContainers"),
+      // Calls /health once a second and prints which image tag answered. Reads only.
+      "ecs:watch": live("node --env-file-if-exists=../../.env scripts/watch.ts", { cwd: "examples/12-containers" }),
+      "ecs:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/12-containers" }),
+      // <<< chapter 12
 
       // ---- chapter task blocks are inserted above this line ----
 

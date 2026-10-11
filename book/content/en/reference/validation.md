@@ -121,6 +121,15 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 20 | `vp run ship:preview:list` | AWS | not run | - | Listing preview stacks was not run |
 | 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | not run | - | None of the four workflows has run on GitHub Actions. That the Nix devShell works on an x86_64-linux runner is also unconfirmed |
 | 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | not run | - | Moving a stack between cdkd and CloudFormation was not run. The description comes from the pinned version's help output |
+| 12 | `vp run test:unit (examples/12-containers)` | local | passed | 2026-10-12 | The child-process SIGTERM test, graceful shutdown, old and new versions side by side, the timing rules, settings, the docker command lines, pricing, and stack assertions |
+| 12 | `vp run ecs:infra:synth` | local | passed | 2026-10-12 | Synthesized three ways: without an image tag, with `-c imageTag=v1`, and with `-c imageTag=v1 -c taskSubnets=private` |
+| 12 | `vp run ecs:bundle / ecs:bundle:check` | local | passed | 2026-10-12 | Built dist/server.mjs, started it where no node_modules exists, called /health, and saw exit code 0 on SIGTERM |
+| 12 | `vp run dev:ecs` | local | passed | 2026-10-12 | Started it, ran the chapter's curl commands, and saw the draining and stopped log lines on Ctrl-C (SIGINT) |
+| 12 | `vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push` | local | passed | 2026-10-12 | Printed the commands with --dry-run, and saw the task explain itself and exit with 1 when no daemon answers |
+| 12 | `vp run ecs:watch --url http://localhost:8099 --for 3` | local | passed | 2026-10-12 | Pointed at a server started locally, and saw the per-version summary. Not pointed at a deployed service |
+| 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | local | not run | - | No Docker daemon was running, so the image has never been built |
+| 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an ECR repository and, given an image tag, a load balancer and two Fargate tasks, which are billed by the hour |
+| 12 | `vp run ecs:watch / ecs:logs` | AWS | not run | - | Tasks that only read the deployed service |
 
 ## Open items and how to resume
 
@@ -441,3 +450,33 @@ To resume: Deploy a change that fails on purpose (for example a Lambda memorySiz
 Moving a stack between cdkd and CloudFormation (`cdkd export`, `cdkd import --migrate-from-cloudformation`) has not been run
 
 To resume: Deploy a practice stack with cdkd, read the plan from `cdkd export <stack> --dry-run`, then run it. Record whether it stops on a resource type that cannot be imported, and that afterwards cdkd's state is gone and `cdk diff` on the CloudFormation stack is empty. Try the reverse direction on the same stack
+
+### 12-image-build
+
+The chapter 12 Dockerfile has never been built. Unverified: that the .dockerignore exception leaves only dist/server.mjs in the context, that the image starts on the arm64 variant of node:24-bookworm-slim, that it runs with --read-only, and how large the image is.
+
+To resume: Start a Docker daemon, then run `vp run ecs:bundle`, `vp run ecs:image:build v1`, and `vp run ecs:image:run v1`. Call `curl http://localhost:8080/health` from another terminal, press Ctrl-C, and check for the `stopped` log line and exit code 0. Read the size from `docker image ls aih-notes`.
+
+### 12-deploy
+
+The chapter 12 stack has never been deployed. Unverified: that cdkd 0.296.28 creates and deletes the ECR, ECS, and ALB resources, that it reads the chapter 11 VPC through Fn::ImportValue, that the three types routed through Cloud Control API (ScalableTarget, ScalingPolicy, SecurityGroupEgress) work, that tasks in public subnets can pull the image, and that the load balancer's DNS name answers.
+
+To resume: Run `vp run net:infra:deploy`, `vp run ecs:infra:deploy`, `vp run ecs:image:push v1`, and `vp run ecs:infra:deploy -c imageTag=v1` in that order, then `curl` the `ServiceUrl` output. After `vp run ecs:infra:drift`, remove everything with `vp run ecs:infra:destroy` and `vp run net:infra:destroy` (hourly charges).
+
+### 12-rolling-update
+
+A rolling update has not been observed on AWS. Unverified: that no request fails during one, that old and new versions answer alternately, that SIGTERM arrives only after the target has been deregistered, that the circuit breaker rolls back when given a broken image, and what cdkd's --full-wait reports when it does.
+
+To resume: With v1 deployed, run `vp run ecs:watch` in a second terminal, then `vp run ecs:image:push v2` and `vp run ecs:infra:deploy -c imageTag=v2`. Read the summary of `ecs:watch` and the times of the `draining` and `stopped` lines in `vp run ecs:logs`. Then deploy a tag that does not exist and record `rolloutState` from `aws ecs describe-services` and cdkd's exit code.
+
+### 12-private-subnets
+
+The `-c taskSubnets=private` layout has not been run on AWS. Unverified: that tasks pull the image and ship logs through a NAT gateway and through interface endpoints, and that egress on port 443 alone is enough.
+
+To resume: Deploy chapter 11 with `-c egress=nat`, deploy chapter 12 with `-c imageTag=v1 -c taskSubnets=private`, and check `ServiceUrl`. Then redeploy chapter 11 with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`, replace the tasks by deploying a new tag, and check again. Destroy right afterwards.
+
+### 12-alb-idle-lcu
+
+What a load balancer's LCU usage is with no requests (whether health checks count) was not confirmed from a primary source. The cost tables leave LCUs out of the idle figures.
+
+To resume: Deploy, wait a day, and read the quantity of `APN1-LCUUsage` in Cost Explorer or the bill.

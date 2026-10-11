@@ -1379,6 +1379,196 @@
         "ja": "別の stack のリソース（AWS::CloudFormation::Stack）として作られる stack。親の stack で drift を検出しても、中は調べられない。",
         "en": "A stack created as a resource (AWS::CloudFormation::Stack) of another stack. Drift detection on the parent does not look inside it."
       }
+    },
+    {
+      "id": "container-image",
+      "ja": "コンテナ image",
+      "en": "container image",
+      "firstUse": "12",
+      "definition": {
+        "ja": "アプリと、それが動くのに要るファイル一式を固めたもの。同じ image からは、どこで起動しても同じ中身のコンテナができる。",
+        "en": "An application packed together with every file it needs to run. The same image starts a container with the same contents wherever it runs."
+      }
+    },
+    {
+      "id": "docker-daemon",
+      "ja": "Docker daemon",
+      "en": "Docker daemon",
+      "firstUse": "12",
+      "definition": {
+        "ja": "image の build とコンテナの実行を実際に行う常駐プログラム（dockerd）。`docker` コマンドは、これに頼みごとを送る client にすぎない。",
+        "en": "The long-running program (dockerd) that actually builds images and runs containers. The `docker` command is only a client that sends it requests."
+      }
+    },
+    {
+      "id": "image-tag",
+      "ja": "image の tag",
+      "en": "image tag",
+      "firstUse": "12",
+      "definition": {
+        "ja": "repository の中で image に付ける名前。`v1` や commit の hash など。tag を immutable にすると、一度付けた tag は別の image を指せなくなる。",
+        "en": "A name given to an image inside a repository, such as `v1` or a commit hash. With immutable tags, a tag can never be moved to a different image."
+      }
+    },
+    {
+      "id": "ecr-repository",
+      "ja": "ECR の repository",
+      "en": "ECR repository",
+      "firstUse": "12",
+      "definition": {
+        "ja": "Amazon ECR の中の、image の置き場所。ECS はここから image を取ってくる。",
+        "en": "A place for images in Amazon ECR. ECS pulls images from it."
+      }
+    },
+    {
+      "id": "task-definition",
+      "ja": "task definition",
+      "en": "task definition",
+      "firstUse": "12",
+      "definition": {
+        "ja": "「どの image を、どれだけの CPU とメモリで、どの role と環境変数で動かすか」を書いた設計書。変更のたびに新しい revision になり、既存の revision は書き換えられない。",
+        "en": "The blueprint that says which image runs, with how much CPU and memory, and with which roles and environment variables. Every change makes a new revision; an existing revision is never edited."
+      }
+    },
+    {
+      "id": "ecs-task",
+      "ja": "task",
+      "en": "task",
+      "firstUse": "12",
+      "definition": {
+        "ja": "task definition から起動された、動いている 1 つの実体。Fargate では task ごとに network interface と private IP アドレスを 1 つ持つ。",
+        "en": "One running instance started from a task definition. On Fargate each task has its own network interface and private IP address."
+      }
+    },
+    {
+      "id": "ecs-service",
+      "ja": "service（ECS）",
+      "en": "service (ECS)",
+      "firstUse": "12",
+      "definition": {
+        "ja": "「この task definition の task を、常に N 個動かしておく」という指示と、それを守り続ける仕組み。task が落ちれば補充し、task definition が変われば入れ替える。",
+        "en": "The instruction to keep N tasks of a task definition running, and the machinery that keeps it true: it replaces tasks that die and swaps them when the task definition changes."
+      }
+    },
+    {
+      "id": "fargate",
+      "ja": "Fargate",
+      "en": "Fargate",
+      "firstUse": "12",
+      "definition": {
+        "ja": "コンテナを動かすサーバーを自分で持たずに、task の CPU とメモリの大きさと時間だけで課金される実行基盤。",
+        "en": "A way to run containers without owning the servers under them, billed by the CPU and memory size of each task and the time it runs."
+      }
+    },
+    {
+      "id": "application-load-balancer",
+      "ja": "Application Load Balancer（ALB）",
+      "en": "Application Load Balancer (ALB)",
+      "firstUse": "12",
+      "definition": {
+        "ja": "HTTP のリクエストを受けて、後ろにいる複数の task へ振り分ける入口。存在している時間で課金される。",
+        "en": "The entry point that receives HTTP requests and spreads them over the tasks behind it. It is billed for every hour it exists."
+      }
+    },
+    {
+      "id": "target-group",
+      "ja": "target group",
+      "en": "target group",
+      "firstUse": "12",
+      "definition": {
+        "ja": "ALB が振り分ける先の一覧。task の IP アドレスが登録され、health check の設定もここに持つ。",
+        "en": "The list of destinations an ALB routes to. Task IP addresses are registered in it, and it holds the health check settings."
+      }
+    },
+    {
+      "id": "health-check",
+      "ja": "health check",
+      "en": "health check",
+      "firstUse": "12",
+      "definition": {
+        "ja": "ALB が target に定期的に送る確認のリクエスト。失敗が続いた target には、リクエストを送らなくなる。",
+        "en": "The request an ALB sends to each target at intervals. A target that keeps failing it stops receiving requests."
+      }
+    },
+    {
+      "id": "deregistration-delay",
+      "ja": "deregistration delay",
+      "en": "deregistration delay",
+      "firstUse": "12",
+      "definition": {
+        "ja": "target group から外すと決まった target について、進行中のリクエストが終わるのを ALB が待つ時間。既定は 300 秒。",
+        "en": "How long an ALB waits for in-flight requests to finish on a target that is being removed from the target group. 300 seconds by default."
+      }
+    },
+    {
+      "id": "rolling-update",
+      "ja": "rolling update",
+      "en": "rolling update",
+      "firstUse": "12",
+      "definition": {
+        "ja": "新しい task を起動し、健全になったら古い task を止める、を繰り返して入れ替える更新方法。途中は新旧の版が同時に動く。",
+        "en": "Replacing tasks by starting new ones and stopping old ones once the new ones are healthy. Old and new versions run side by side while it lasts."
+      }
+    },
+    {
+      "id": "deployment-circuit-breaker",
+      "ja": "deployment circuit breaker",
+      "en": "deployment circuit breaker",
+      "firstUse": "12",
+      "definition": {
+        "ja": "新しい task が起動できない、または health check に通らないことが続いたら、更新を失敗と判定する仕組み。設定すれば、最後に成功した状態へ自動で戻す。",
+        "en": "The mechanism that declares a deployment failed when new tasks keep failing to start or to pass health checks. Optionally it rolls back to the last deployment that completed."
+      }
+    },
+    {
+      "id": "task-role",
+      "ja": "task role",
+      "en": "task role",
+      "firstUse": "12",
+      "definition": {
+        "ja": "コンテナの中のアプリが AWS を呼ぶときに使う IAM role。Lambda の実行 role に当たる。",
+        "en": "The IAM role that application code inside the container uses when it calls AWS. The counterpart of a Lambda function's execution role."
+      }
+    },
+    {
+      "id": "task-execution-role",
+      "ja": "task execution role",
+      "en": "task execution role",
+      "firstUse": "12",
+      "definition": {
+        "ja": "アプリが起動する前に、ECS の agent が image の取得とログの送信に使う IAM role。アプリのコードからは使えない。",
+        "en": "The IAM role the ECS agent uses, before the application starts, to pull the image and ship logs. Application code cannot use it."
+      }
+    },
+    {
+      "id": "graceful-shutdown",
+      "ja": "graceful shutdown",
+      "en": "graceful shutdown",
+      "firstUse": "12",
+      "definition": {
+        "ja": "止まれと言われたプロセスが、新しい仕事を受けるのをやめ、進行中の仕事を終えてから終了すること。",
+        "en": "A process that has been told to stop refuses new work, finishes the work in progress, and only then exits."
+      }
+    },
+    {
+      "id": "sigterm",
+      "ja": "SIGTERM",
+      "en": "SIGTERM",
+      "firstUse": "12",
+      "definition": {
+        "ja": "プロセスに「終了してほしい」と伝える signal。受け取った側は後片付けができる。一定時間で終わらなければ、拒否できない SIGKILL が送られる。",
+        "en": "The signal that asks a process to terminate. The process may clean up first. If it does not finish in time, SIGKILL follows, which cannot be handled."
+      }
+    },
+    {
+      "id": "target-tracking",
+      "ja": "target tracking",
+      "en": "target tracking",
+      "firstUse": "12",
+      "definition": {
+        "ja": "「平均 CPU 使用率を 60% に保つ」のように指標と目標値だけを決め、task の数の増減を任せる auto scaling の方式。",
+        "en": "An auto scaling policy where you name a metric and a target value, such as 60 percent average CPU, and leave the number of tasks to the service."
+      }
     }
   ]
 }

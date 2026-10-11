@@ -2458,6 +2458,204 @@
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "12.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.architecture",
+      "sources": ["examples/12-containers/infra/lib/containers-stack.ts", "examples/12-containers/src/config.ts"],
+      "tasks": ["ecs:infra:synth"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.docker",
+      "sources": ["examples/12-containers/src/image.ts", "examples/12-containers/scripts/image.ts"],
+      "tasks": ["ecs:image:build"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.server",
+      "sources": [
+        "examples/12-containers/src/compose.ts",
+        "examples/12-containers/src/env.ts",
+        "examples/12-containers/src/server.ts",
+        "examples/12-containers/test/compose.test.ts",
+        "examples/12-containers/.env.example"
+      ],
+      "tasks": ["dev:ecs", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "12.shutdown",
+      "sources": [
+        "examples/12-containers/src/serve.ts",
+        "examples/12-containers/src/server.ts",
+        "examples/12-containers/test/shutdown.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "12.image",
+      "sources": [
+        "examples/12-containers/Dockerfile",
+        "examples/12-containers/.dockerignore",
+        "examples/12-containers/scripts/bundle.ts",
+        "examples/12-containers/scripts/check-bundle.ts",
+        "examples/12-containers/src/image.ts",
+        "examples/12-containers/test/config.test.ts"
+      ],
+      "tasks": ["ecs:bundle", "ecs:bundle:check", "ecs:image:build", "ecs:image:run"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.registry",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/bin/app.ts",
+        "examples/12-containers/src/config.ts",
+        "examples/12-containers/test/config.test.ts"
+      ],
+      "tasks": ["ecs:infra:synth", "ecs:image:push", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "12.network",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts",
+        "examples/11-network/infra/lib/import-network.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.roles",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.service",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/timing.ts",
+        "examples/12-containers/test/timing.test.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ecs:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.rollout",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/timing.ts",
+        "examples/12-containers/scripts/watch.ts",
+        "examples/12-containers/src/watch.ts"
+      ],
+      "tasks": ["ecs:watch"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.versions",
+      "sources": ["examples/12-containers/src/compat.ts", "examples/12-containers/test/versions.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.scaling",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/config.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "12.local",
+      "sources": [
+        "examples/12-containers/test",
+        "examples/12-containers/infra/test/containers-stack.test.ts",
+        "examples/12-containers/scripts/check-bundle.ts"
+      ],
+      "tasks": ["test:unit", "ecs:bundle:check", "ecs:infra:synth", "dev:ecs"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.deploy",
+      "sources": [
+        "examples/12-containers/infra/bin/app.ts",
+        "examples/12-containers/cdk.json",
+        "examples/12-containers/scripts/image.ts",
+        "examples/12-containers/scripts/watch.ts",
+        "examples/12-containers/scripts/logs.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["ecs:infra:diff", "ecs:infra:deploy", "ecs:image:push", "ecs:watch", "ecs:logs", "ecs:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.cost",
+      "sources": ["examples/12-containers/src/cost.ts", "examples/12-containers/test/pricing.test.ts", "data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["ecs:infra:deploy", "ecs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
     }
   ]
 }

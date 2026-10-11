@@ -1193,6 +1193,105 @@
         "ja": "cdkd と CloudFormation の間で stack を移す手順は未実行。記述は固定した版のヘルプによる",
         "en": "Moving a stack between cdkd and CloudFormation was not run. The description comes from the pinned version's help output"
       }
+    },
+    {
+      "scope": "12",
+      "command": "vp run test:unit (examples/12-containers)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "SIGTERM を送る子プロセスのテスト、graceful shutdown、新旧の版の同居、時間の関係、設定、docker コマンドの組み立て、料金、stack の assertion",
+        "en": "The child-process SIGTERM test, graceful shutdown, old and new versions side by side, the timing rules, settings, the docker command lines, pricing, and stack assertions"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run ecs:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "image tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private` の 3 通りで synth した",
+        "en": "Synthesized three ways: without an image tag, with `-c imageTag=v1`, and with `-c imageTag=v1 -c taskSubnets=private`"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run ecs:bundle / ecs:bundle:check",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "dist/server.mjs を作り、node_modules の無い場所で起動して /health を呼び、SIGTERM で終了コード 0 になることを確かめた",
+        "en": "Built dist/server.mjs, started it where no node_modules exists, called /health, and saw exit code 0 on SIGTERM"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run dev:ecs",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "起動して本文の curl を実行し、Ctrl-C（SIGINT）で draining、stopped のログが出て終了することを確かめた",
+        "en": "Started it, ran the chapter's curl commands, and saw the draining and stopped log lines on Ctrl-C (SIGINT)"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "--dry-run でコマンドを表示した。daemon なしで実行すると、理由を表示して終了コード 1 になることも確かめた",
+        "en": "Printed the commands with --dry-run, and saw the task explain itself and exit with 1 when no daemon answers"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run ecs:watch --url http://localhost:8099 --for 3",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "手元で起動したサーバーに向けて実行し、版ごとの集計が出ることを確かめた。deploy した service には向けていない",
+        "en": "Pointed at a server started locally, and saw the per-version summary. Not pointed at a deployed service"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run ecs:image:build / ecs:image:run / ecs:image:push",
+      "kind": "local",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Docker の daemon が動いていなかったため、image を一度も build していない",
+        "en": "No Docker daemon was running, so the image has never been built"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run ecs:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "ECR の repository を作る。image tag を渡すと ALB と Fargate の task 2 つ（時間課金）も作る",
+        "en": "Creates an ECR repository and, given an image tag, a load balancer and two Fargate tasks, which are billed by the hour"
+      }
+    },
+    {
+      "scope": "12",
+      "command": "vp run ecs:watch / ecs:logs",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "deploy した service を読むだけのタスク",
+        "en": "Tasks that only read the deployed service"
+      }
     }
   ],
   "open": [
@@ -1777,6 +1876,61 @@
       "resume": {
         "ja": "練習用の stack を cdkd でデプロイし、`cdkd export <stack> --dry-run` の計画を読んでから実行する。import できない resource type で止まるかどうか、成功後に cdkd の state が消え、CloudFormation の stack として `cdk diff` が空になることを記録する。逆方向も同じ stack で試す",
         "en": "Deploy a practice stack with cdkd, read the plan from `cdkd export <stack> --dry-run`, then run it. Record whether it stops on a resource type that cannot be imported, and that afterwards cdkd's state is gone and `cdk diff` on the CloudFormation stack is empty. Try the reverse direction on the same stack"
+      }
+    },
+    {
+      "id": "12-image-build",
+      "summary": {
+        "ja": "12章の Dockerfile で image を一度も build していない。`.dockerignore` の例外指定で dist/server.mjs だけが context に入ること、node:24-bookworm-slim の arm64 版で起動すること、`--read-only` で動くこと、image の大きさが未確認。",
+        "en": "The chapter 12 Dockerfile has never been built. Unverified: that the .dockerignore exception leaves only dist/server.mjs in the context, that the image starts on the arm64 variant of node:24-bookworm-slim, that it runs with --read-only, and how large the image is."
+      },
+      "resume": {
+        "ja": "Docker の daemon を起動し、`vp run ecs:bundle`、`vp run ecs:image:build v1`、`vp run ecs:image:run v1` を実行する。別のターミナルで `curl http://localhost:8080/health` を呼び、Ctrl-C で `stopped` のログと終了コード 0 を確かめる。`docker image ls aih-notes` で大きさを見る。",
+        "en": "Start a Docker daemon, then run `vp run ecs:bundle`, `vp run ecs:image:build v1`, and `vp run ecs:image:run v1`. Call `curl http://localhost:8080/health` from another terminal, press Ctrl-C, and check for the `stopped` log line and exit code 0. Read the size from `docker image ls aih-notes`."
+      }
+    },
+    {
+      "id": "12-deploy",
+      "summary": {
+        "ja": "12章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が ECR、ECS、ALB を作って消せること、`Fn::ImportValue` で 11章の VPC を読めること、Cloud Control API 経由になる 3 種類（ScalableTarget、ScalingPolicy、SecurityGroupEgress）が通ること、public subnet の task が image を取得できること、ALB の DNS 名で応答することが未確認。",
+        "en": "The chapter 12 stack has never been deployed. Unverified: that cdkd 0.296.28 creates and deletes the ECR, ECS, and ALB resources, that it reads the chapter 11 VPC through Fn::ImportValue, that the three types routed through Cloud Control API (ScalableTarget, ScalingPolicy, SecurityGroupEgress) work, that tasks in public subnets can pull the image, and that the load balancer's DNS name answers."
+      },
+      "resume": {
+        "ja": "`vp run net:infra:deploy`、`vp run ecs:infra:deploy`、`vp run ecs:image:push v1`、`vp run ecs:infra:deploy -c imageTag=v1` の順に実行し、output の `ServiceUrl` に `curl` する。`vp run ecs:infra:drift` を通したら、`vp run ecs:infra:destroy`、`vp run net:infra:destroy` で消す（時間課金）。",
+        "en": "Run `vp run net:infra:deploy`, `vp run ecs:infra:deploy`, `vp run ecs:image:push v1`, and `vp run ecs:infra:deploy -c imageTag=v1` in that order, then `curl` the `ServiceUrl` output. After `vp run ecs:infra:drift`, remove everything with `vp run ecs:infra:destroy` and `vp run net:infra:destroy` (hourly charges)."
+      }
+    },
+    {
+      "id": "12-rolling-update",
+      "summary": {
+        "ja": "rolling update を実環境で観察していない。更新中にエラーが出ないこと、新旧の版が交互に応答すること、target の登録解除が終わってから SIGTERM が届くという順序、壊れた image を渡したときに circuit breaker が元に戻すこと、そのとき cdkd の `--full-wait` が何を報告するかが未確認。",
+        "en": "A rolling update has not been observed on AWS. Unverified: that no request fails during one, that old and new versions answer alternately, that SIGTERM arrives only after the target has been deregistered, that the circuit breaker rolls back when given a broken image, and what cdkd's --full-wait reports when it does."
+      },
+      "resume": {
+        "ja": "v1 を deploy した状態で `vp run ecs:watch` を別のターミナルで動かし、`vp run ecs:image:push v2`、`vp run ecs:infra:deploy -c imageTag=v2` を実行する。`ecs:watch` の集計と、`vp run ecs:logs` の `draining`、`stopped` の行の時刻を見る。続けて、存在しない tag で deploy し、`aws ecs describe-services` の `rolloutState` と cdkd の終了コードを記録する。",
+        "en": "With v1 deployed, run `vp run ecs:watch` in a second terminal, then `vp run ecs:image:push v2` and `vp run ecs:infra:deploy -c imageTag=v2`. Read the summary of `ecs:watch` and the times of the `draining` and `stopped` lines in `vp run ecs:logs`. Then deploy a tag that does not exist and record `rolloutState` from `aws ecs describe-services` and cdkd's exit code."
+      }
+    },
+    {
+      "id": "12-private-subnets",
+      "summary": {
+        "ja": "`-c taskSubnets=private` の構成を実環境で動かしていない。NAT Gateway 経由、interface endpoint 経由のどちらでも image を取得してログを送れること、443 番だけの egress で足りることが未確認。",
+        "en": "The `-c taskSubnets=private` layout has not been run on AWS. Unverified: that tasks pull the image and ship logs through a NAT gateway and through interface endpoints, and that egress on port 443 alone is enough."
+      },
+      "resume": {
+        "ja": "11章を `-c egress=nat` で deploy し、12章を `-c imageTag=v1 -c taskSubnets=private` で deploy して `ServiceUrl` を確かめる。次に 11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy し直し、task を入れ替えて（新しい tag で deploy）同じことを確かめる。終わったらすぐ destroy する。",
+        "en": "Deploy chapter 11 with `-c egress=nat`, deploy chapter 12 with `-c imageTag=v1 -c taskSubnets=private`, and check `ServiceUrl`. Then redeploy chapter 11 with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`, replace the tasks by deploying a new tag, and check again. Destroy right afterwards."
+      }
+    },
+    {
+      "id": "12-alb-idle-lcu",
+      "summary": {
+        "ja": "リクエストが無いときに ALB の LCU がいくらになるか（health check が LCU に数えられるか）を一次情報で確認できていない。料金の表では LCU を未算入としている。",
+        "en": "What a load balancer's LCU usage is with no requests (whether health checks count) was not confirmed from a primary source. The cost tables leave LCUs out of the idle figures."
+      },
+      "resume": {
+        "ja": "deploy して 1 日置き、Cost Explorer か請求書で `APN1-LCUUsage` の数量を確かめる。",
+        "en": "Deploy, wait a day, and read the quantity of `APN1-LCUUsage` in Cost Explorer or the bill."
       }
     }
   ]

@@ -1527,6 +1527,153 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-14T06:37:14Z",
       "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.arm.vcpu.hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "ZNX9M5D8R95VT2QQ",
+      "usageType": "APN1-Fargate-ARM-vCPU-Hours:perCPU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0404500000",
+          "description": "AWS Fargate - ARM - vCPU - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.arm.memory.gb-hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "WXXGZM434J9JXCU5",
+      "usageType": "APN1-Fargate-ARM-GB-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0044200000",
+          "description": "AWS Fargate - ARM - Memory - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.x86.vcpu.hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "KBQ3Q6DY9J327G8N",
+      "usageType": "APN1-Fargate-vCPU-Hours:perCPU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0505600000",
+          "description": "AWS Fargate - vCPU  - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.x86.memory.gb-hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "JQEE6EF5FAF2AESH",
+      "usageType": "APN1-Fargate-GB-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0055300000",
+          "description": "AWS Fargate - Memory  - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "alb.hour",
+      "offerCode": "AWSELB",
+      "region": "ap-northeast-1",
+      "sku": "98ZU8QNDMR4AS8FJ",
+      "usageType": "APN1-LoadBalancerUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0243000000",
+          "description": "$0.0243 per Application LoadBalancer-hour (or partial hour)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:44Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "alb.lcu.hour",
+      "offerCode": "AWSELB",
+      "region": "ap-northeast-1",
+      "sku": "F2UQT6CZGM7BTWS8",
+      "usageType": "APN1-LCUUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "LCU-Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0080000000",
+          "description": "$0.008 per used Application load balancer capacity unit-hour (or partial hour)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:44Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ecr.storage",
+      "offerCode": "AmazonECR",
+      "region": "ap-northeast-1",
+      "sku": "R5SQFH8FHUZV8GYE",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per GB-month of data storage"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
     }
   ]
 }

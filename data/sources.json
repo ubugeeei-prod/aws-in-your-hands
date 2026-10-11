@@ -4136,6 +4136,503 @@
       "note": "Read from the installed package's help output and bundled code. Neither command was run."
     },
     {
+      "id": "ecs-welcome",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html",
+      "title": "What is Amazon ECS?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECS runs containers on capacity that you choose; Fargate is the serverless, pay-as-you-go option where you manage no servers"
+      ]
+    },
+    {
+      "id": "elb-pricing",
+      "url": "https://aws.amazon.com/elasticloadbalancing/pricing/",
+      "title": "Elastic Load Balancing pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An Application Load Balancer is charged for each hour or partial hour it runs, plus Load Balancer Capacity Units (LCU)",
+        "An LCU is the highest of four dimensions: 25 new connections per second, 3,000 active connections per minute, 1 GB per hour for EC2, container, and IP targets, and 1,000 rule evaluations per second",
+        "Standard public IPv4 address charges apply to all addresses a load balancer consumes",
+        "The Free Tier text describes 750 hours a month and 15 LCUs for new AWS customers, and credits for accounts created after 2025-07-15; it names no always-free allowance"
+      ]
+    },
+    {
+      "id": "docker-overview",
+      "url": "https://docs.docker.com/get-started/docker-overview/",
+      "title": "What is Docker?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Docker is client-server: the docker client talks to the Docker daemon (dockerd) over a REST API, on a UNIX socket or a network interface",
+        "The daemon builds, runs, and distributes containers; the client and the daemon can run on different systems"
+      ]
+    },
+    {
+      "id": "dockerfile-reference",
+      "url": "https://docs.docker.com/reference/dockerfile/",
+      "title": "Dockerfile reference",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The shell form runs the command as a subcommand of /bin/sh -c, which does not pass signals, so the executable is not PID 1 and does not receive Unix signals",
+        "The exec form is a JSON array and does not invoke a command shell",
+        "STOPSIGNAL sets the signal sent to the container to exit"
+      ]
+    },
+    {
+      "id": "docker-node-best-practices",
+      "url": "https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md",
+      "title": "docker-node: Docker and Node.js Best Practices",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The node images provide a user named node with uid 1000 for running the container unprivileged",
+        "A Node.js process running as PID 1 does not respond to SIGINT and similar signals by default; an init wrapper such as docker run --init handles that"
+      ],
+      "note": "Read from the main branch on 2026-10-12; the file is not versioned with the image tag."
+    },
+    {
+      "id": "docker-hub-node-24",
+      "url": "https://hub.docker.com/v2/repositories/library/node/tags/24-bookworm-slim",
+      "title": "Docker Hub API: library/node tag 24-bookworm-slim",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The tag node:24-bookworm-slim exists; its linux/amd64 image was 80,826,636 bytes compressed when checked"
+      ],
+      "note": "Only the beginning of the API response was read. The arm64 entry and its size were not read, and the image was not pulled."
+    },
+    {
+      "id": "node-http",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/http.html",
+      "title": "Node.js v24 documentation: HTTP",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "server.close() stops the server from accepting new connections and closes connections that are not sending a request or waiting for a response; since v19.0.0 it closes idle connections before returning",
+        "server.closeIdleConnections() and server.closeAllConnections() exist since v18.2.0",
+        "A server has a 5 second keep-alive timeout by default (server.keepAliveTimeout)"
+      ]
+    },
+    {
+      "id": "ecs-task-lifecycle",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-lifecycle-explanation.html",
+      "title": "Amazon ECS task lifecycle",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A task passes through PROVISIONING, PENDING, ACTIVATING, RUNNING, DEACTIVATING, STOPPING, DEPROVISIONING, STOPPED",
+        "ACTIVATING is where ECS pulls images, creates containers, and registers load balancer target groups",
+        "For a service with Elastic Load Balancing target groups, deregistration happens in DEACTIVATING, the state before STOPPING",
+        "In STOPPING the agent sends the image's STOPSIGNAL (SIGTERM by default), then SIGKILL after the StopTimeout of the task definition"
+      ]
+    },
+    {
+      "id": "ecs-api-container-definition",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html",
+      "title": "Amazon ECS API Reference: ContainerDefinition",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "stopTimeout on Fargate: 30 seconds when not specified, 120 seconds at most, valid values 2 to 120",
+        "healthCheck maps to the HEALTHCHECK of docker run and is set per container definition",
+        "Plaintext environment variables are not recommended for sensitive information",
+        "readonlyRootFilesystem gives the container read-only access to its root file system"
+      ]
+    },
+    {
+      "id": "ecs-connection-draining",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-connection-draining.html",
+      "title": "Optimize load balancer connection draining parameters for Amazon ECS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECS waits for the load balancer to report the target as UNUSED; the time the load balancer takes is the deregistration delay (deregistration_delay.timeout_seconds, 300 by default)",
+        "ECS sends the stop signal first and SIGKILL after the stop timeout; an application that ignores SIGTERM makes ECS wait",
+        "The page's own Node.js example handles SIGTERM with server.close()"
+      ]
+    },
+    {
+      "id": "ecs-lb-health-check",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-healthcheck.html",
+      "title": "Optimize load balancer health check parameters for Amazon ECS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A newly registered target needs one successful health check to be considered healthy, whatever the healthy threshold count is",
+        "The healthy threshold count applies when a target moves from unhealthy back to healthy",
+        "The defaults are an interval of 30 seconds and a healthy threshold of 5"
+      ]
+    },
+    {
+      "id": "ecs-container-health-checks",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/healthcheck.html",
+      "title": "Determine Amazon ECS task health using container health checks",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECS monitors only health checks specified in the task definition; it does not monitor a Docker health check that is embedded in the image and absent from the container definition",
+        "A container health check command runs inside the container, so the image has to contain the command"
+      ]
+    },
+    {
+      "id": "ecs-container-image-practices",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-considerations.html",
+      "title": "Best practices for Amazon ECS container images",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Make the application handle SIGTERM: stop taking new work and finish the work in progress",
+        "Tag images with a unique tag for each build, for example the git commit hash, and use latest only for testing",
+        "Turning on immutable image tags in Amazon ECR is recommended",
+        "Write logs to stdout and stderr"
+      ]
+    },
+    {
+      "id": "ecs-rolling-update",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-ecs.html",
+      "title": "Deploy Amazon ECS services by replacing tasks",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "minimumHealthyPercent is the lower limit of running, healthy tasks during a rolling deployment, as a percent of the desired count, rounded up",
+        "maximumPercent is the upper limit of running tasks during a rolling deployment, rounded down; at 200 with a desired count of four the scheduler can start four new tasks before stopping four old ones",
+        "The circuit breaker is for deployments whose tasks cannot start; CloudWatch alarms are for failing a deployment on application metrics",
+        "By default ECS resolves the image tag in a task definition to a digest, so all tasks of a deployment run the same image"
+      ]
+    },
+    {
+      "id": "ecs-circuit-breaker",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-circuit-breaker.html",
+      "title": "How the Amazon ECS deployment circuit breaker detects failures",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With the rollback option, a failed deployment is rolled back to the most recent deployment in the COMPLETED state",
+        "Stage 1 counts tasks that fail to reach RUNNING; stage 2 counts tasks replaced because of failed Elastic Load Balancing, Cloud Map, or container health checks",
+        "The default threshold type BOUNDED_PERCENT with value 50 multiplies by the desired count and clamps the result to between 3 and 200",
+        "With resetOnHealthyTask true (the default) only consecutive failures count"
+      ]
+    },
+    {
+      "id": "cfn-ecs-service",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ecs-service.html",
+      "title": "AWS::ECS::Service",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "HealthCheckGracePeriodSeconds is how long the service scheduler ignores unhealthy Elastic Load Balancing and container health checks after a task has first started; the default is 0"
+      ]
+    },
+    {
+      "id": "alb-health-checks",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html",
+      "title": "Health checks for Application Load Balancer target groups",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Defaults for ip targets: interval 30 seconds (range 5 to 300), timeout 5 seconds (range 2 to 120), healthy threshold 5 and unhealthy threshold 2 (range 2 to 10), matcher 200, path /",
+        "Each load balancer node checks each target",
+        "If a target group contains only unhealthy targets, the load balancer routes to all of them (fail open)",
+        "A deregistering target is in the draining state"
+      ]
+    },
+    {
+      "id": "alb-target-group-attributes",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html",
+      "title": "Edit target group attributes for your Application Load Balancer",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The load balancer stops sending requests to a deregistering target and waits the deregistration delay, 300 seconds by default, so that in-flight requests can complete",
+        "If a deregistering target has no in-flight requests and no active connections, deregistration completes at once",
+        "If a deregistering target terminates the connection before the delay elapses, the client receives a 500-level error",
+        "Round robin is the default routing algorithm of a target group"
+      ]
+    },
+    {
+      "id": "alb-attributes",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html",
+      "title": "Edit attributes for your Application Load Balancer",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The connection idle timeout is 60 seconds by default, with a valid range of 1 to 4000 seconds",
+        "AWS recommends configuring the application's idle timeout to be larger than the load balancer's; otherwise the load balancer can send a request into a connection the application has closed and return 502 Bad Gateway"
+      ]
+    },
+    {
+      "id": "alb-overview",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html",
+      "title": "Application Load Balancers",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A load balancer needs subnets in at least two Availability Zones",
+        "An Application Load Balancer has one IP address per enabled Availability Zone; the addresses come from EC2's public IPv4 pool and are managed by the service",
+        "routing.http.drop_invalid_header_fields.enabled exists as a load balancer attribute"
+      ]
+    },
+    {
+      "id": "ecs-task-role",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html",
+      "title": "Amazon ECS task IAM role",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The permissions of the task role are vended to the containers of the task, for application code that uses other AWS services",
+        "Pulling images from ECR is not a task role permission; it belongs to the task execution role"
+      ]
+    },
+    {
+      "id": "ecs-task-execution-role",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html",
+      "title": "Amazon ECS task execution IAM role",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The task execution role grants the ECS container and Fargate agents permission to make AWS API calls on your behalf",
+        "It is used to pull an image from an ECR private repository and to send container logs to CloudWatch Logs with the awslogs driver",
+        "A custom policy for pulling from ECR includes ecr:GetAuthorizationToken, ecr:BatchCheckLayerAvailability, ecr:GetDownloadUrlForLayer, and ecr:BatchGetImage"
+      ]
+    },
+    {
+      "id": "ecs-service-auto-scaling",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html",
+      "title": "Automatically scale your Amazon ECS service",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Application Auto Scaling turns off scale-in while an ECS deployment is in progress; scale-out continues",
+        "Scale-in is blocked until the scale-in cooldown has expired; a scale-out during that period happens immediately"
+      ]
+    },
+    {
+      "id": "ecs-target-tracking",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-autoscaling-targettracking.html",
+      "title": "Use a target metric to scale Amazon ECS services",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A target tracking policy keeps a metric at or near a target value and manages its own CloudWatch alarms",
+        "The service scales out proportionally to the metric as fast as it can, and scales in more gradually",
+        "With several target tracking policies, the service scales out if any is ready to and scales in only if all are",
+        "With insufficient data the policy does not scale in"
+      ]
+    },
+    {
+      "id": "ecs-fargate-image-route",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html",
+      "title": "Amazon ECS task networking options for Fargate",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "To pull an image a Fargate task needs a route to the internet: a public IP address on the task ENI in a public subnet, a NAT gateway for a private subnet, or ECR interface endpoints",
+        "Every Fargate task gets an elastic network interface with a primary private IP address"
+      ],
+      "note": "Same page as ecs-fargate-networking, read again on 2026-10-12."
+    },
+    {
+      "id": "ecs-fargate-task-sizes",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html",
+      "title": "Fargate task definition differences",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "256 CPU units (.25 vCPU) can be combined with 512 MiB, 1 GB, or 2 GB of memory",
+        "Fargate runs X86_64 and ARM64 tasks"
+      ]
+    },
+    {
+      "id": "ecs-arm64",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-arm64.html",
+      "title": "Amazon ECS task definitions for 64-bit ARM workloads",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ARM64 tasks on Fargate need platform version 1.4.0 or later",
+        "The only place listed as not supporting 64-bit ARM on Fargate is the use1-az3 Availability Zone of US East (N. Virginia)"
+      ]
+    },
+    {
+      "id": "vpc-security-groups-dns",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html",
+      "title": "Control traffic to your AWS resources using security groups",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Security groups do not filter traffic to and from Amazon DNS, DHCP, EC2 instance metadata, or ECS task metadata endpoints"
+      ],
+      "note": "Same page as vpc-security-groups, read again on 2026-10-12 for the egress rule of the task's security group."
+    },
+    {
+      "id": "ecr-push-image",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html",
+      "title": "Pushing a Docker image to an Amazon ECR private repository",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "aws ecr get-login-password piped into docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com authenticates Docker",
+        "The authorization token is valid for 12 hours",
+        "The image is tagged as <account>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag> and pushed with docker push"
+      ]
+    },
+    {
+      "id": "ecr-image-tag-mutability",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-tag-mutability.html",
+      "title": "Preventing image tags from being overwritten in Amazon ECR",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With immutable tags, pushing an image with a tag that already exists returns ImageTagAlreadyExistsException"
+      ]
+    },
+    {
+      "id": "fargate-pricing",
+      "url": "https://aws.amazon.com/fargate/pricing/",
+      "title": "AWS Fargate pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Fargate is billed for vCPU and memory from the start of the image download until the task terminates, per second with a one-minute minimum",
+        "20 GB of ephemeral storage is included for every task",
+        "Public IPv4 addresses of tasks and CloudWatch Logs usage are charged separately"
+      ],
+      "note": "No Fargate free allowance was found on the page."
+    },
+    {
+      "id": "ecr-pricing",
+      "url": "https://aws.amazon.com/ecr/pricing/",
+      "title": "Amazon ECR pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECR charges for stored data and for data transferred to the internet",
+        "New ECR customers get 500 MB a month of private repository storage for one year"
+      ]
+    },
+    {
+      "id": "aws-price-list-ecs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon ECS, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Fargate ARM: USD 0.04045 per vCPU-hour and USD 0.00442 per GB-hour",
+        "Fargate x86: USD 0.05056 per vCPU-hour and USD 0.00553 per GB-hour"
+      ],
+      "note": "Offer published 2026-09-11T12:44:25Z."
+    },
+    {
+      "id": "aws-price-list-elb",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Elastic Load Balancing, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": ["Application Load Balancer: USD 0.0243 per hour (or partial hour) and USD 0.008 per LCU-hour"],
+      "note": "Offer published 2026-09-11T12:45:44Z."
+    },
+    {
+      "id": "aws-price-list-ecr",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon ECR, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": ["Private repository storage: USD 0.10 per GB-month"],
+      "note": "Offer published 2026-09-11T12:44:25Z."
+    },
+    {
+      "id": "cdkd-source-containers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: providers for ECS, ELBv2, and ECR",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dedicated providers are registered for AWS::ECS::Cluster, TaskDefinition, and Service; AWS::ElasticLoadBalancingV2::LoadBalancer, TargetGroup, and Listener; AWS::ECR::Repository; AWS::EC2::SecurityGroup and SecurityGroupIngress; AWS::IAM::Role and Policy; AWS::Logs::LogGroup",
+        "No provider is registered for AWS::ApplicationAutoScaling::ScalableTarget, AWS::ApplicationAutoScaling::ScalingPolicy, or AWS::EC2::SecurityGroupEgress, and none of them is on the unsupported list, so they go through Cloud Control API",
+        "The ECS provider refuses an in-place update of a task definition; a changed task definition is replaced: a new revision is registered and the previous one is deregistered",
+        "Without --full-wait the ECS provider returns as soon as CreateService or UpdateService is accepted; with it, it waits for services-stable (at least 600 seconds) and then for the primary deployment's rolloutState to be COMPLETED for up to about two minutes",
+        "The ECR provider deletes a repository with force only when EmptyOnDelete is true, the CDK auto-delete tag is present, or a forced replacement was consented to"
+      ],
+      "note": "Read from the v0.296.28 tag archive: register-providers.ts, providers/ecs-provider.ts, providers/ecr-provider.ts, providers/elbv2-provider.ts, providers/ec2-provider.ts, unsupported-types.generated.ts. What the wait does when the circuit breaker rolls a deployment back was not found in the source and is not known."
+    },
+    {
+      "id": "cdkd-cli-deploy-wait",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-deploy.md",
+      "title": "cdkd v0.296.28: docs/cli-deploy.md",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An ECS service that never stabilizes under --full-wait fails the deploy; on create, cdkd deletes the service it just created before failing",
+        "By default cdkd waits for a load balancer to become active, which it puts at 90 to 180 seconds",
+        "The steady-state wait is capped at 600 seconds unless --resource-timeout raises it"
+      ]
+    },
+    {
+      "id": "cdkd-docker-assets",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/assets/docker-asset-publisher.ts",
+      "title": "cdkd v0.296.28: Docker image asset publishing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For a Docker image asset cdkd checks whether the tag already exists in the repository, runs docker build, then docker tag and docker push, logging in to ECR only after a push fails for authentication",
+        "cdkd bootstrap creates a container-asset repository named cdkd-container-assets-{accountId}-{region} with immutable tags, and assets aimed at the default CDK bootstrap repository are redirected to it"
+      ],
+      "note": "Read from src/assets/docker-asset-publisher.ts, src/assets/asset-redirect.ts, and docs/cli-bootstrap.md at the v0.296.28 tag. Not run."
+    },
+    {
+      "id": "aws-cdk-lib-container-asset",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: ContainerImage.fromAsset during synthesis",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Synthesizing a task definition that uses ContainerImage.fromAsset succeeds with no docker command on the PATH: synthesis copies the directory into cdk.out and writes a dockerImages entry to the asset manifest",
+        "The entry's destination is the repository cdk-hnb659fds-container-assets-<account>-<region> with the asset hash as the image tag"
+      ],
+      "note": "Observed by running a synthesis on 2026-10-12 with the pinned version, not read from documentation."
+    },
+    {
+      "id": "lambda-limits-containers",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Code can run for up to 15 minutes in a single invocation",
+        "Functions can be defined as container images, which are stored in Amazon ECR"
+      ],
+      "note": "Same page as lambda-quotas, read again on 2026-10-12."
+    },
+    {
+      "id": "cloudflare-containers",
+      "url": "https://developers.cloudflare.com/containers/",
+      "title": "Cloudflare Containers",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Containers are available on the Workers Paid plan",
+        "Container instances are started on demand and controlled by code in a Worker; a container is reached through a Durable Object",
+        "wrangler deploy builds and pushes the image named in the Wrangler configuration"
+      ]
+    },
+    {
+      "id": "cloudflare-containers-pricing",
+      "url": "https://developers.cloudflare.com/containers/platform/pricing/",
+      "title": "Cloudflare Containers: Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Containers are billed for every 10 ms they are actively running; charges stop after the instance goes to sleep",
+        "Workers Paid includes 25 GiB-hours of memory and 375 vCPU-minutes a month; beyond that USD 0.0000025 per GiB-second and USD 0.000020 per vCPU-second",
+        "Memory and disk are billed on provisioned size, CPU on active usage"
+      ],
+      "note": "https://developers.cloudflare.com/containers/pricing/ redirects here."
+    },
+    {
+      "id": "cloudflare-containers-rollouts",
+      "url": "https://developers.cloudflare.com/containers/configuration/rollouts/",
+      "title": "Cloudflare Containers: Rollouts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default a deploy rolls out in steps of 10 and then 100 percent of instances",
+        "An instance being replaced gets SIGTERM, and SIGKILL after 15 minutes if it has not exited",
+        "During a rollout new Worker code can still reach container instances on the previous image"
+      ],
+      "note": "https://developers.cloudflare.com/containers/platform-details/rollouts/ redirects here."
+    },
+    {
+      "id": "cloudflare-containers-architecture",
+      "url": "https://developers.cloudflare.com/containers/concepts/architecture/",
+      "title": "Cloudflare Containers: Lifecycle of a container",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A container can only be accessed through its Durable Object",
+        "A Durable Object and its container instance are not guaranteed to run in the same location"
+      ],
+      "note": "https://developers.cloudflare.com/containers/platform-details/architecture/ redirects here."
+    },
+    {
+      "id": "cloudflare-containers-faq",
+      "url": "https://developers.cloudflare.com/containers/faq/",
+      "title": "Cloudflare Containers: Frequently Asked Questions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Built-in autoscaling for stateless applications is not available today",
+        "Container cold starts are often in the 1 to 3 second range, depending on the image"
+      ]
+    },
+    {
+      "id": "cloudflare-containers-local-dev",
+      "url": "https://developers.cloudflare.com/containers/guides/local-dev/",
+      "title": "Cloudflare Containers: Local development",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "wrangler dev and vite dev run the Worker and the container locally, and need a Docker-compatible CLI and engine such as Docker Desktop or Colima"
+      ],
+      "note": "https://developers.cloudflare.com/containers/local-dev/ redirects here."
+    },
+    {
       "id": "iam-best-practices",
       "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html",
       "title": "Security best practices in IAM",
@@ -4261,30 +4758,6 @@
       "title": "What is Amazon EventBridge Scheduler?",
       "checkedAt": null,
       "supports": ["One-time and recurring schedules"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "elb-pricing",
-      "url": "https://aws.amazon.com/elasticloadbalancing/pricing/",
-      "title": "Elastic Load Balancing pricing",
-      "checkedAt": null,
-      "supports": ["ALB hourly and LCU charges"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "ecs-welcome",
-      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html",
-      "title": "What is Amazon ECS?",
-      "checkedAt": null,
-      "supports": ["ECS, Fargate, and ECR relationships"],
-      "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
-    },
-    {
-      "id": "docker-overview",
-      "url": "https://docs.docker.com/get-started/docker-overview/",
-      "title": "Docker overview",
-      "checkedAt": null,
-      "supports": ["The Docker client talks to a separate daemon"],
       "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
     },
     {

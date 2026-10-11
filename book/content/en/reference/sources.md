@@ -90,7 +90,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-cloudwatch`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 04, 14, 17, 19
+- Chapters: 04, 12, 14, 17, 19
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonCloudWatch
   - The price list has a USD 0 tier for the first 5 GB of log ingestion and 5 GB-month of log storage
@@ -109,7 +109,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-introduction`
 - URL: <https://cdkd.dev/introduction/>
 - Checked: 2026-10-11
-- Chapters: 02, 11, 20
+- Chapters: 02, 11, 12, 20
 - Claims this source supports:
   - cdkd describes itself as for dev/test workflows and recommends the AWS CDK CLI for production
 
@@ -224,7 +224,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `lambda-quotas`
 - URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
 - Checked: 2026-10-11
-- Chapters: 04, 07
+- Chapters: 04, 07, 12
 - Claims this source supports:
   - Function timeout is at most 900 seconds
   - Memory is 128 MB to 10,240 MB
@@ -690,7 +690,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `vpc-pricing`
 - URL: <https://aws.amazon.com/vpc/pricing/>
 - Checked: 2026-10-11
-- Chapters: 11, 23
+- Chapters: 11, 12, 23
 - Claims this source supports:
   - A NAT gateway is billed per NAT gateway-hour while provisioned and available, plus per GB processed regardless of source or destination; a partial hour is billed as a full hour
   - Standard data transfer charges apply on top of NAT gateway data processing
@@ -755,7 +755,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `vpc-security-groups`
 - URL: <https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 12
 - Claims this source supports:
   - Security groups are stateful: responses to allowed traffic are allowed regardless of the rules in the other direction
 
@@ -840,7 +840,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `privatelink-pricing`
 - URL: <https://aws.amazon.com/privatelink/pricing/>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 12
 - Claims this source supports:
   - An interface endpoint is billed for each hour it stays provisioned in each Availability Zone; a partial hour is billed as a full hour
   - Data processing is billed per GB regardless of the traffic's source or destination, in tiers over the Region's monthly total
@@ -873,7 +873,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ecr-vpc-endpoints`
 - URL: <https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 12
 - Claims this source supports:
   - Fargate tasks on platform version 1.4.0 or later need both ECR endpoints (ecr.api, ecr.dkr) and the S3 gateway endpoint to pull images privately
   - Fargate tasks that use the awslogs driver in a VPC without an internet gateway need the com.amazonaws.region.logs interface endpoint
@@ -883,7 +883,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `ecs-fargate-networking`
 - URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 12
 - Claims this source supports:
   - A Fargate task pulls its image over a public IP address in a public subnet, a NAT gateway from a private subnet, or ECR interface endpoints
 
@@ -943,7 +943,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-ec2`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 12
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonEC2: NAT gateway hours and data processing
   - The offer also lists a Regional NAT gateway at the same hourly and per-GB rate, and regional data transfer at USD 0.01 per GB
@@ -954,7 +954,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-vpc`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 12
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AmazonVPC: interface endpoint hours and data processing, public IPv4 address hours
   - The offer has no SKU for a VPC, subnet, route table, internet gateway, or gateway endpoint
@@ -977,7 +977,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-cross-stack-references`
 - URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cross-stack-references.md>
 - Checked: 2026-10-11
-- Chapters: 11
+- Chapters: 11, 12
 - Claims this source supports:
   - cdkd resolves Fn::ImportValue against the outputs other stacks recorded in its state, and falls back to CloudFormation ListExports when no cdkd stack exports the name
   - `cdkd destroy` of a stack whose exports are still imported is refused with StackHasActiveImportsError, and there is no flag to force it
@@ -1899,7 +1899,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-npm`
 - URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
 - Checked: 2026-10-11
-- Chapters: 02, 03, 04, 05, 06, 07, 09, 10, 14, 17, 19, 20
+- Chapters: 02, 03, 04, 05, 06, 07, 09, 10, 12, 14, 17, 19, 20
 - Claims this source supports:
   - Command list, flags, and exit codes used by tools/src/infra and tools/src/drift
   - `drift --json` output shape (StackDriftJson) and exit codes 0/1/2
@@ -2249,7 +2249,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `cdkd-register-providers`
 - URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts>
 - Checked: 2026-10-11
-- Chapters: 10, 13
+- Chapters: 10, 12, 13
 - Claims this source supports:
   - No dedicated provider is registered for AWS::DSQL::Cluster, so it is handled through Cloud Control API
   - Dedicated providers are registered for the other types the chapter 13 stack uses
@@ -2650,7 +2650,7 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - ID: `aws-price-list-data-transfer`
 - URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json>
 - Checked: 2026-10-11
-- Chapters: 07
+- Chapters: 07, 12
 - Claims this source supports:
   - Unit prices in data/pricing/unit-prices.json with offerCode AWSDataTransfer
   - Data transfer in from the internet is USD 0.000 per GB in ap-northeast-1
@@ -4238,6 +4238,507 @@ Claims in this book about specifications, prices, and safety rest on the primary
   - No dedicated provider is registered for AWS::Lambda::Alias, AWS::Lambda::Version, or AWS::IAM::OIDCProvider; the other types chapter 20 uses have one
 - Note: Read from the installed package's help output and bundled code. Neither command was run.
 
+### What is Amazon ECS?
+
+- ID: `ecs-welcome`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - ECS runs containers on capacity that you choose; Fargate is the serverless, pay-as-you-go option where you manage no servers
+
+### Elastic Load Balancing pricing
+
+- ID: `elb-pricing`
+- URL: <https://aws.amazon.com/elasticloadbalancing/pricing/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - An Application Load Balancer is charged for each hour or partial hour it runs, plus Load Balancer Capacity Units (LCU)
+  - An LCU is the highest of four dimensions: 25 new connections per second, 3,000 active connections per minute, 1 GB per hour for EC2, container, and IP targets, and 1,000 rule evaluations per second
+  - Standard public IPv4 address charges apply to all addresses a load balancer consumes
+  - The Free Tier text describes 750 hours a month and 15 LCUs for new AWS customers, and credits for accounts created after 2025-07-15; it names no always-free allowance
+
+### What is Docker?
+
+- ID: `docker-overview`
+- URL: <https://docs.docker.com/get-started/docker-overview/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Docker is client-server: the docker client talks to the Docker daemon (dockerd) over a REST API, on a UNIX socket or a network interface
+  - The daemon builds, runs, and distributes containers; the client and the daemon can run on different systems
+
+### Dockerfile reference
+
+- ID: `dockerfile-reference`
+- URL: <https://docs.docker.com/reference/dockerfile/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - The shell form runs the command as a subcommand of /bin/sh -c, which does not pass signals, so the executable is not PID 1 and does not receive Unix signals
+  - The exec form is a JSON array and does not invoke a command shell
+  - STOPSIGNAL sets the signal sent to the container to exit
+
+### docker-node: Docker and Node.js Best Practices
+
+- ID: `docker-node-best-practices`
+- URL: <https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - The node images provide a user named node with uid 1000 for running the container unprivileged
+  - A Node.js process running as PID 1 does not respond to SIGINT and similar signals by default; an init wrapper such as docker run --init handles that
+- Note: Read from the main branch on 2026-10-12; the file is not versioned with the image tag.
+
+### Docker Hub API: library/node tag 24-bookworm-slim
+
+- ID: `docker-hub-node-24`
+- URL: <https://hub.docker.com/v2/repositories/library/node/tags/24-bookworm-slim>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - The tag node:24-bookworm-slim exists; its linux/amd64 image was 80,826,636 bytes compressed when checked
+- Note: Only the beginning of the API response was read. The arm64 entry and its size were not read, and the image was not pulled.
+
+### Node.js v24 documentation: HTTP
+
+- ID: `node-http`
+- URL: <https://nodejs.org/docs/latest-v24.x/api/http.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - server.close() stops the server from accepting new connections and closes connections that are not sending a request or waiting for a response; since v19.0.0 it closes idle connections before returning
+  - server.closeIdleConnections() and server.closeAllConnections() exist since v18.2.0
+  - A server has a 5 second keep-alive timeout by default (server.keepAliveTimeout)
+
+### Amazon ECS task lifecycle
+
+- ID: `ecs-task-lifecycle`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-lifecycle-explanation.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - A task passes through PROVISIONING, PENDING, ACTIVATING, RUNNING, DEACTIVATING, STOPPING, DEPROVISIONING, STOPPED
+  - ACTIVATING is where ECS pulls images, creates containers, and registers load balancer target groups
+  - For a service with Elastic Load Balancing target groups, deregistration happens in DEACTIVATING, the state before STOPPING
+  - In STOPPING the agent sends the image's STOPSIGNAL (SIGTERM by default), then SIGKILL after the StopTimeout of the task definition
+
+### Amazon ECS API Reference: ContainerDefinition
+
+- ID: `ecs-api-container-definition`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - stopTimeout on Fargate: 30 seconds when not specified, 120 seconds at most, valid values 2 to 120
+  - healthCheck maps to the HEALTHCHECK of docker run and is set per container definition
+  - Plaintext environment variables are not recommended for sensitive information
+  - readonlyRootFilesystem gives the container read-only access to its root file system
+
+### Optimize load balancer connection draining parameters for Amazon ECS
+
+- ID: `ecs-connection-draining`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-connection-draining.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - ECS waits for the load balancer to report the target as UNUSED; the time the load balancer takes is the deregistration delay (deregistration_delay.timeout_seconds, 300 by default)
+  - ECS sends the stop signal first and SIGKILL after the stop timeout; an application that ignores SIGTERM makes ECS wait
+  - The page's own Node.js example handles SIGTERM with server.close()
+
+### Optimize load balancer health check parameters for Amazon ECS
+
+- ID: `ecs-lb-health-check`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-healthcheck.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - A newly registered target needs one successful health check to be considered healthy, whatever the healthy threshold count is
+  - The healthy threshold count applies when a target moves from unhealthy back to healthy
+  - The defaults are an interval of 30 seconds and a healthy threshold of 5
+
+### Determine Amazon ECS task health using container health checks
+
+- ID: `ecs-container-health-checks`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/healthcheck.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - ECS monitors only health checks specified in the task definition; it does not monitor a Docker health check that is embedded in the image and absent from the container definition
+  - A container health check command runs inside the container, so the image has to contain the command
+
+### Best practices for Amazon ECS container images
+
+- ID: `ecs-container-image-practices`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-considerations.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Make the application handle SIGTERM: stop taking new work and finish the work in progress
+  - Tag images with a unique tag for each build, for example the git commit hash, and use latest only for testing
+  - Turning on immutable image tags in Amazon ECR is recommended
+  - Write logs to stdout and stderr
+
+### Deploy Amazon ECS services by replacing tasks
+
+- ID: `ecs-rolling-update`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-ecs.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - minimumHealthyPercent is the lower limit of running, healthy tasks during a rolling deployment, as a percent of the desired count, rounded up
+  - maximumPercent is the upper limit of running tasks during a rolling deployment, rounded down; at 200 with a desired count of four the scheduler can start four new tasks before stopping four old ones
+  - The circuit breaker is for deployments whose tasks cannot start; CloudWatch alarms are for failing a deployment on application metrics
+  - By default ECS resolves the image tag in a task definition to a digest, so all tasks of a deployment run the same image
+
+### How the Amazon ECS deployment circuit breaker detects failures
+
+- ID: `ecs-circuit-breaker`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-circuit-breaker.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - With the rollback option, a failed deployment is rolled back to the most recent deployment in the COMPLETED state
+  - Stage 1 counts tasks that fail to reach RUNNING; stage 2 counts tasks replaced because of failed Elastic Load Balancing, Cloud Map, or container health checks
+  - The default threshold type BOUNDED_PERCENT with value 50 multiplies by the desired count and clamps the result to between 3 and 200
+  - With resetOnHealthyTask true (the default) only consecutive failures count
+
+### AWS::ECS::Service
+
+- ID: `cfn-ecs-service`
+- URL: <https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ecs-service.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - HealthCheckGracePeriodSeconds is how long the service scheduler ignores unhealthy Elastic Load Balancing and container health checks after a task has first started; the default is 0
+
+### Health checks for Application Load Balancer target groups
+
+- ID: `alb-health-checks`
+- URL: <https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Defaults for ip targets: interval 30 seconds (range 5 to 300), timeout 5 seconds (range 2 to 120), healthy threshold 5 and unhealthy threshold 2 (range 2 to 10), matcher 200, path /
+  - Each load balancer node checks each target
+  - If a target group contains only unhealthy targets, the load balancer routes to all of them (fail open)
+  - A deregistering target is in the draining state
+
+### Edit target group attributes for your Application Load Balancer
+
+- ID: `alb-target-group-attributes`
+- URL: <https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - The load balancer stops sending requests to a deregistering target and waits the deregistration delay, 300 seconds by default, so that in-flight requests can complete
+  - If a deregistering target has no in-flight requests and no active connections, deregistration completes at once
+  - If a deregistering target terminates the connection before the delay elapses, the client receives a 500-level error
+  - Round robin is the default routing algorithm of a target group
+
+### Edit attributes for your Application Load Balancer
+
+- ID: `alb-attributes`
+- URL: <https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - The connection idle timeout is 60 seconds by default, with a valid range of 1 to 4000 seconds
+  - AWS recommends configuring the application's idle timeout to be larger than the load balancer's; otherwise the load balancer can send a request into a connection the application has closed and return 502 Bad Gateway
+
+### Application Load Balancers
+
+- ID: `alb-overview`
+- URL: <https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - A load balancer needs subnets in at least two Availability Zones
+  - An Application Load Balancer has one IP address per enabled Availability Zone; the addresses come from EC2's public IPv4 pool and are managed by the service
+  - routing.http.drop_invalid_header_fields.enabled exists as a load balancer attribute
+
+### Amazon ECS task IAM role
+
+- ID: `ecs-task-role`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - The permissions of the task role are vended to the containers of the task, for application code that uses other AWS services
+  - Pulling images from ECR is not a task role permission; it belongs to the task execution role
+
+### Amazon ECS task execution IAM role
+
+- ID: `ecs-task-execution-role`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - The task execution role grants the ECS container and Fargate agents permission to make AWS API calls on your behalf
+  - It is used to pull an image from an ECR private repository and to send container logs to CloudWatch Logs with the awslogs driver
+  - A custom policy for pulling from ECR includes ecr:GetAuthorizationToken, ecr:BatchCheckLayerAvailability, ecr:GetDownloadUrlForLayer, and ecr:BatchGetImage
+
+### Automatically scale your Amazon ECS service
+
+- ID: `ecs-service-auto-scaling`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Application Auto Scaling turns off scale-in while an ECS deployment is in progress; scale-out continues
+  - Scale-in is blocked until the scale-in cooldown has expired; a scale-out during that period happens immediately
+
+### Use a target metric to scale Amazon ECS services
+
+- ID: `ecs-target-tracking`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-autoscaling-targettracking.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - A target tracking policy keeps a metric at or near a target value and manages its own CloudWatch alarms
+  - The service scales out proportionally to the metric as fast as it can, and scales in more gradually
+  - With several target tracking policies, the service scales out if any is ready to and scales in only if all are
+  - With insufficient data the policy does not scale in
+
+### Amazon ECS task networking options for Fargate
+
+- ID: `ecs-fargate-image-route`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - To pull an image a Fargate task needs a route to the internet: a public IP address on the task ENI in a public subnet, a NAT gateway for a private subnet, or ECR interface endpoints
+  - Every Fargate task gets an elastic network interface with a primary private IP address
+- Note: Same page as ecs-fargate-networking, read again on 2026-10-12.
+
+### Fargate task definition differences
+
+- ID: `ecs-fargate-task-sizes`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - 256 CPU units (.25 vCPU) can be combined with 512 MiB, 1 GB, or 2 GB of memory
+  - Fargate runs X86_64 and ARM64 tasks
+
+### Amazon ECS task definitions for 64-bit ARM workloads
+
+- ID: `ecs-arm64`
+- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-arm64.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - ARM64 tasks on Fargate need platform version 1.4.0 or later
+  - The only place listed as not supporting 64-bit ARM on Fargate is the use1-az3 Availability Zone of US East (N. Virginia)
+
+### Control traffic to your AWS resources using security groups
+
+- ID: `vpc-security-groups-dns`
+- URL: <https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Security groups do not filter traffic to and from Amazon DNS, DHCP, EC2 instance metadata, or ECS task metadata endpoints
+- Note: Same page as vpc-security-groups, read again on 2026-10-12 for the egress rule of the task's security group.
+
+### Pushing a Docker image to an Amazon ECR private repository
+
+- ID: `ecr-push-image`
+- URL: <https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - aws ecr get-login-password piped into docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com authenticates Docker
+  - The authorization token is valid for 12 hours
+  - The image is tagged as <account>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag> and pushed with docker push
+
+### Preventing image tags from being overwritten in Amazon ECR
+
+- ID: `ecr-image-tag-mutability`
+- URL: <https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-tag-mutability.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - With immutable tags, pushing an image with a tag that already exists returns ImageTagAlreadyExistsException
+
+### AWS Fargate pricing
+
+- ID: `fargate-pricing`
+- URL: <https://aws.amazon.com/fargate/pricing/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Fargate is billed for vCPU and memory from the start of the image download until the task terminates, per second with a one-minute minimum
+  - 20 GB of ephemeral storage is included for every task
+  - Public IPv4 addresses of tasks and CloudWatch Logs usage are charged separately
+- Note: No Fargate free allowance was found on the page.
+
+### Amazon ECR pricing
+
+- ID: `ecr-pricing`
+- URL: <https://aws.amazon.com/ecr/pricing/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - ECR charges for stored data and for data transferred to the internet
+  - New ECR customers get 500 MB a month of private repository storage for one year
+
+### AWS Price List: Amazon ECS, ap-northeast-1
+
+- ID: `aws-price-list-ecs`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Fargate ARM: USD 0.04045 per vCPU-hour and USD 0.00442 per GB-hour
+  - Fargate x86: USD 0.05056 per vCPU-hour and USD 0.00553 per GB-hour
+- Note: Offer published 2026-09-11T12:44:25Z.
+
+### AWS Price List: Elastic Load Balancing, ap-northeast-1
+
+- ID: `aws-price-list-elb`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Application Load Balancer: USD 0.0243 per hour (or partial hour) and USD 0.008 per LCU-hour
+- Note: Offer published 2026-09-11T12:45:44Z.
+
+### AWS Price List: Amazon ECR, ap-northeast-1
+
+- ID: `aws-price-list-ecr`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Private repository storage: USD 0.10 per GB-month
+- Note: Offer published 2026-09-11T12:44:25Z.
+
+### cdkd v0.296.28: providers for ECS, ELBv2, and ECR
+
+- ID: `cdkd-source-containers`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Dedicated providers are registered for AWS::ECS::Cluster, TaskDefinition, and Service; AWS::ElasticLoadBalancingV2::LoadBalancer, TargetGroup, and Listener; AWS::ECR::Repository; AWS::EC2::SecurityGroup and SecurityGroupIngress; AWS::IAM::Role and Policy; AWS::Logs::LogGroup
+  - No provider is registered for AWS::ApplicationAutoScaling::ScalableTarget, AWS::ApplicationAutoScaling::ScalingPolicy, or AWS::EC2::SecurityGroupEgress, and none of them is on the unsupported list, so they go through Cloud Control API
+  - The ECS provider refuses an in-place update of a task definition; a changed task definition is replaced: a new revision is registered and the previous one is deregistered
+  - Without --full-wait the ECS provider returns as soon as CreateService or UpdateService is accepted; with it, it waits for services-stable (at least 600 seconds) and then for the primary deployment's rolloutState to be COMPLETED for up to about two minutes
+  - The ECR provider deletes a repository with force only when EmptyOnDelete is true, the CDK auto-delete tag is present, or a forced replacement was consented to
+- Note: Read from the v0.296.28 tag archive: register-providers.ts, providers/ecs-provider.ts, providers/ecr-provider.ts, providers/elbv2-provider.ts, providers/ec2-provider.ts, unsupported-types.generated.ts. What the wait does when the circuit breaker rolls a deployment back was not found in the source and is not known.
+
+### cdkd v0.296.28: docs/cli-deploy.md
+
+- ID: `cdkd-cli-deploy-wait`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-deploy.md>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - An ECS service that never stabilizes under --full-wait fails the deploy; on create, cdkd deletes the service it just created before failing
+  - By default cdkd waits for a load balancer to become active, which it puts at 90 to 180 seconds
+  - The steady-state wait is capped at 600 seconds unless --resource-timeout raises it
+
+### cdkd v0.296.28: Docker image asset publishing
+
+- ID: `cdkd-docker-assets`
+- URL: <https://github.com/go-to-k/cdkd/blob/v0.296.28/src/assets/docker-asset-publisher.ts>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - For a Docker image asset cdkd checks whether the tag already exists in the repository, runs docker build, then docker tag and docker push, logging in to ECR only after a push fails for authentication
+  - cdkd bootstrap creates a container-asset repository named cdkd-container-assets-{accountId}-{region} with immutable tags, and assets aimed at the default CDK bootstrap repository are redirected to it
+- Note: Read from src/assets/docker-asset-publisher.ts, src/assets/asset-redirect.ts, and docs/cli-bootstrap.md at the v0.296.28 tag. Not run.
+
+### aws-cdk-lib 2.273.0: ContainerImage.fromAsset during synthesis
+
+- ID: `aws-cdk-lib-container-asset`
+- URL: <https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Synthesizing a task definition that uses ContainerImage.fromAsset succeeds with no docker command on the PATH: synthesis copies the directory into cdk.out and writes a dockerImages entry to the asset manifest
+  - The entry's destination is the repository cdk-hnb659fds-container-assets-<account>-<region> with the asset hash as the image tag
+- Note: Observed by running a synthesis on 2026-10-12 with the pinned version, not read from documentation.
+
+### Lambda quotas
+
+- ID: `lambda-limits-containers`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Code can run for up to 15 minutes in a single invocation
+  - Functions can be defined as container images, which are stored in Amazon ECR
+- Note: Same page as lambda-quotas, read again on 2026-10-12.
+
+### Cloudflare Containers
+
+- ID: `cloudflare-containers`
+- URL: <https://developers.cloudflare.com/containers/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Containers are available on the Workers Paid plan
+  - Container instances are started on demand and controlled by code in a Worker; a container is reached through a Durable Object
+  - wrangler deploy builds and pushes the image named in the Wrangler configuration
+
+### Cloudflare Containers: Pricing
+
+- ID: `cloudflare-containers-pricing`
+- URL: <https://developers.cloudflare.com/containers/platform/pricing/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Containers are billed for every 10 ms they are actively running; charges stop after the instance goes to sleep
+  - Workers Paid includes 25 GiB-hours of memory and 375 vCPU-minutes a month; beyond that USD 0.0000025 per GiB-second and USD 0.000020 per vCPU-second
+  - Memory and disk are billed on provisioned size, CPU on active usage
+- Note: https://developers.cloudflare.com/containers/pricing/ redirects here.
+
+### Cloudflare Containers: Rollouts
+
+- ID: `cloudflare-containers-rollouts`
+- URL: <https://developers.cloudflare.com/containers/configuration/rollouts/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - By default a deploy rolls out in steps of 10 and then 100 percent of instances
+  - An instance being replaced gets SIGTERM, and SIGKILL after 15 minutes if it has not exited
+  - During a rollout new Worker code can still reach container instances on the previous image
+- Note: https://developers.cloudflare.com/containers/platform-details/rollouts/ redirects here.
+
+### Cloudflare Containers: Lifecycle of a container
+
+- ID: `cloudflare-containers-architecture`
+- URL: <https://developers.cloudflare.com/containers/concepts/architecture/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - A container can only be accessed through its Durable Object
+  - A Durable Object and its container instance are not guaranteed to run in the same location
+- Note: https://developers.cloudflare.com/containers/platform-details/architecture/ redirects here.
+
+### Cloudflare Containers: Frequently Asked Questions
+
+- ID: `cloudflare-containers-faq`
+- URL: <https://developers.cloudflare.com/containers/faq/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - Built-in autoscaling for stateless applications is not available today
+  - Container cold starts are often in the 1 to 3 second range, depending on the image
+
+### Cloudflare Containers: Local development
+
+- ID: `cloudflare-containers-local-dev`
+- URL: <https://developers.cloudflare.com/containers/guides/local-dev/>
+- Checked: 2026-10-12
+- Chapters: 12
+- Claims this source supports:
+  - wrangler dev and vite dev run the Worker and the container locally, and need a Docker-compatible CLI and engine such as Docker Desktop or Colima
+- Note: https://developers.cloudflare.com/containers/local-dev/ redirects here.
+
 ## Sources not re-read yet (starting points for later chapters)
 
 ### Security best practices in IAM
@@ -4381,33 +4882,6 @@ Claims in this book about specifications, prices, and safety rest on the primary
 - Chapters: 08, 16
 - Claims this source supports:
   - One-time and recurring schedules
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Elastic Load Balancing pricing
-
-- ID: `elb-pricing`
-- URL: <https://aws.amazon.com/elasticloadbalancing/pricing/>
-- Chapters: 12
-- Claims this source supports:
-  - ALB hourly and LCU charges
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### What is Amazon ECS?
-
-- ID: `ecs-welcome`
-- URL: <https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html>
-- Chapters: 12
-- Claims this source supports:
-  - ECS, Fargate, and ECR relationships
-- Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
-
-### Docker overview
-
-- ID: `docker-overview`
-- URL: <https://docs.docker.com/get-started/docker-overview/>
-- Chapters: 12
-- Claims this source supports:
-  - The Docker client talks to a separate daemon
 - Note: Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim.
 
 ### What is Amazon RDS?

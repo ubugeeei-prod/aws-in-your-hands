@@ -1,0 +1,1619 @@
+{
+  "chapterId": "12",
+  "manifest": {
+    "id": "12",
+    "slug": "containers",
+    "title": {
+      "ja": "コンテナを動かす: ECR、ECS/Fargate、ALB",
+      "en": "Run Containers: ECR, ECS/Fargate, and ALB"
+    },
+    "prerequisites": ["11"],
+    "services": ["ECR", "ECS", "Fargate", "ALB"],
+    "samplePath": "examples/12-containers",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-12",
+    "sourceIds": [
+      "ecs-welcome",
+      "elb-pricing",
+      "docker-overview",
+      "dockerfile-reference",
+      "docker-node-best-practices",
+      "docker-hub-node-24",
+      "node-http",
+      "ecs-task-lifecycle",
+      "ecs-api-container-definition",
+      "ecs-connection-draining",
+      "ecs-lb-health-check",
+      "ecs-container-health-checks",
+      "ecs-container-image-practices",
+      "ecs-rolling-update",
+      "ecs-circuit-breaker",
+      "cfn-ecs-service",
+      "alb-health-checks",
+      "alb-target-group-attributes",
+      "alb-attributes",
+      "alb-overview",
+      "ecs-task-role",
+      "ecs-task-execution-role",
+      "ecs-service-auto-scaling",
+      "ecs-target-tracking",
+      "ecs-fargate-image-route",
+      "ecs-fargate-task-sizes",
+      "ecs-arm64",
+      "vpc-security-groups-dns",
+      "ecr-push-image",
+      "ecr-image-tag-mutability",
+      "fargate-pricing",
+      "ecr-pricing",
+      "aws-price-list-ecs",
+      "aws-price-list-elb",
+      "aws-price-list-ecr",
+      "cdkd-source-containers",
+      "cdkd-cli-deploy-wait",
+      "cdkd-docker-assets",
+      "aws-cdk-lib-container-asset",
+      "lambda-limits-containers",
+      "cloudflare-containers",
+      "cloudflare-containers-pricing",
+      "cloudflare-containers-rollouts",
+      "cloudflare-containers-architecture",
+      "cloudflare-containers-faq",
+      "cloudflare-containers-local-dev",
+      "ecr-vpc-endpoints",
+      "ecs-fargate-networking",
+      "vpc-security-groups",
+      "vpc-pricing",
+      "privatelink-pricing",
+      "aws-price-list-vpc",
+      "aws-price-list-ec2",
+      "aws-price-list-cloudwatch",
+      "aws-price-list-data-transfer",
+      "lambda-quotas",
+      "cdkd-register-providers",
+      "cdkd-cross-stack-references",
+      "cdkd-introduction",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "ecs-welcome",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html",
+      "title": "What is Amazon ECS?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECS runs containers on capacity that you choose; Fargate is the serverless, pay-as-you-go option where you manage no servers"
+      ]
+    },
+    {
+      "id": "elb-pricing",
+      "url": "https://aws.amazon.com/elasticloadbalancing/pricing/",
+      "title": "Elastic Load Balancing pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An Application Load Balancer is charged for each hour or partial hour it runs, plus Load Balancer Capacity Units (LCU)",
+        "An LCU is the highest of four dimensions: 25 new connections per second, 3,000 active connections per minute, 1 GB per hour for EC2, container, and IP targets, and 1,000 rule evaluations per second",
+        "Standard public IPv4 address charges apply to all addresses a load balancer consumes",
+        "The Free Tier text describes 750 hours a month and 15 LCUs for new AWS customers, and credits for accounts created after 2025-07-15; it names no always-free allowance"
+      ]
+    },
+    {
+      "id": "docker-overview",
+      "url": "https://docs.docker.com/get-started/docker-overview/",
+      "title": "What is Docker?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Docker is client-server: the docker client talks to the Docker daemon (dockerd) over a REST API, on a UNIX socket or a network interface",
+        "The daemon builds, runs, and distributes containers; the client and the daemon can run on different systems"
+      ]
+    },
+    {
+      "id": "dockerfile-reference",
+      "url": "https://docs.docker.com/reference/dockerfile/",
+      "title": "Dockerfile reference",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The shell form runs the command as a subcommand of /bin/sh -c, which does not pass signals, so the executable is not PID 1 and does not receive Unix signals",
+        "The exec form is a JSON array and does not invoke a command shell",
+        "STOPSIGNAL sets the signal sent to the container to exit"
+      ]
+    },
+    {
+      "id": "docker-node-best-practices",
+      "url": "https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md",
+      "title": "docker-node: Docker and Node.js Best Practices",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The node images provide a user named node with uid 1000 for running the container unprivileged",
+        "A Node.js process running as PID 1 does not respond to SIGINT and similar signals by default; an init wrapper such as docker run --init handles that"
+      ],
+      "note": "Read from the main branch on 2026-10-12; the file is not versioned with the image tag."
+    },
+    {
+      "id": "docker-hub-node-24",
+      "url": "https://hub.docker.com/v2/repositories/library/node/tags/24-bookworm-slim",
+      "title": "Docker Hub API: library/node tag 24-bookworm-slim",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The tag node:24-bookworm-slim exists; its linux/amd64 image was 80,826,636 bytes compressed when checked"
+      ],
+      "note": "Only the beginning of the API response was read. The arm64 entry and its size were not read, and the image was not pulled."
+    },
+    {
+      "id": "node-http",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/http.html",
+      "title": "Node.js v24 documentation: HTTP",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "server.close() stops the server from accepting new connections and closes connections that are not sending a request or waiting for a response; since v19.0.0 it closes idle connections before returning",
+        "server.closeIdleConnections() and server.closeAllConnections() exist since v18.2.0",
+        "A server has a 5 second keep-alive timeout by default (server.keepAliveTimeout)"
+      ]
+    },
+    {
+      "id": "ecs-task-lifecycle",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-lifecycle-explanation.html",
+      "title": "Amazon ECS task lifecycle",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A task passes through PROVISIONING, PENDING, ACTIVATING, RUNNING, DEACTIVATING, STOPPING, DEPROVISIONING, STOPPED",
+        "ACTIVATING is where ECS pulls images, creates containers, and registers load balancer target groups",
+        "For a service with Elastic Load Balancing target groups, deregistration happens in DEACTIVATING, the state before STOPPING",
+        "In STOPPING the agent sends the image's STOPSIGNAL (SIGTERM by default), then SIGKILL after the StopTimeout of the task definition"
+      ]
+    },
+    {
+      "id": "ecs-api-container-definition",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html",
+      "title": "Amazon ECS API Reference: ContainerDefinition",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "stopTimeout on Fargate: 30 seconds when not specified, 120 seconds at most, valid values 2 to 120",
+        "healthCheck maps to the HEALTHCHECK of docker run and is set per container definition",
+        "Plaintext environment variables are not recommended for sensitive information",
+        "readonlyRootFilesystem gives the container read-only access to its root file system"
+      ]
+    },
+    {
+      "id": "ecs-connection-draining",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-connection-draining.html",
+      "title": "Optimize load balancer connection draining parameters for Amazon ECS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECS waits for the load balancer to report the target as UNUSED; the time the load balancer takes is the deregistration delay (deregistration_delay.timeout_seconds, 300 by default)",
+        "ECS sends the stop signal first and SIGKILL after the stop timeout; an application that ignores SIGTERM makes ECS wait",
+        "The page's own Node.js example handles SIGTERM with server.close()"
+      ]
+    },
+    {
+      "id": "ecs-lb-health-check",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-healthcheck.html",
+      "title": "Optimize load balancer health check parameters for Amazon ECS",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A newly registered target needs one successful health check to be considered healthy, whatever the healthy threshold count is",
+        "The healthy threshold count applies when a target moves from unhealthy back to healthy",
+        "The defaults are an interval of 30 seconds and a healthy threshold of 5"
+      ]
+    },
+    {
+      "id": "ecs-container-health-checks",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/healthcheck.html",
+      "title": "Determine Amazon ECS task health using container health checks",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECS monitors only health checks specified in the task definition; it does not monitor a Docker health check that is embedded in the image and absent from the container definition",
+        "A container health check command runs inside the container, so the image has to contain the command"
+      ]
+    },
+    {
+      "id": "ecs-container-image-practices",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-considerations.html",
+      "title": "Best practices for Amazon ECS container images",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Make the application handle SIGTERM: stop taking new work and finish the work in progress",
+        "Tag images with a unique tag for each build, for example the git commit hash, and use latest only for testing",
+        "Turning on immutable image tags in Amazon ECR is recommended",
+        "Write logs to stdout and stderr"
+      ]
+    },
+    {
+      "id": "ecs-rolling-update",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-ecs.html",
+      "title": "Deploy Amazon ECS services by replacing tasks",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "minimumHealthyPercent is the lower limit of running, healthy tasks during a rolling deployment, as a percent of the desired count, rounded up",
+        "maximumPercent is the upper limit of running tasks during a rolling deployment, rounded down; at 200 with a desired count of four the scheduler can start four new tasks before stopping four old ones",
+        "The circuit breaker is for deployments whose tasks cannot start; CloudWatch alarms are for failing a deployment on application metrics",
+        "By default ECS resolves the image tag in a task definition to a digest, so all tasks of a deployment run the same image"
+      ]
+    },
+    {
+      "id": "ecs-circuit-breaker",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-circuit-breaker.html",
+      "title": "How the Amazon ECS deployment circuit breaker detects failures",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With the rollback option, a failed deployment is rolled back to the most recent deployment in the COMPLETED state",
+        "Stage 1 counts tasks that fail to reach RUNNING; stage 2 counts tasks replaced because of failed Elastic Load Balancing, Cloud Map, or container health checks",
+        "The default threshold type BOUNDED_PERCENT with value 50 multiplies by the desired count and clamps the result to between 3 and 200",
+        "With resetOnHealthyTask true (the default) only consecutive failures count"
+      ]
+    },
+    {
+      "id": "cfn-ecs-service",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ecs-service.html",
+      "title": "AWS::ECS::Service",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "HealthCheckGracePeriodSeconds is how long the service scheduler ignores unhealthy Elastic Load Balancing and container health checks after a task has first started; the default is 0"
+      ]
+    },
+    {
+      "id": "alb-health-checks",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html",
+      "title": "Health checks for Application Load Balancer target groups",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Defaults for ip targets: interval 30 seconds (range 5 to 300), timeout 5 seconds (range 2 to 120), healthy threshold 5 and unhealthy threshold 2 (range 2 to 10), matcher 200, path /",
+        "Each load balancer node checks each target",
+        "If a target group contains only unhealthy targets, the load balancer routes to all of them (fail open)",
+        "A deregistering target is in the draining state"
+      ]
+    },
+    {
+      "id": "alb-target-group-attributes",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html",
+      "title": "Edit target group attributes for your Application Load Balancer",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The load balancer stops sending requests to a deregistering target and waits the deregistration delay, 300 seconds by default, so that in-flight requests can complete",
+        "If a deregistering target has no in-flight requests and no active connections, deregistration completes at once",
+        "If a deregistering target terminates the connection before the delay elapses, the client receives a 500-level error",
+        "Round robin is the default routing algorithm of a target group"
+      ]
+    },
+    {
+      "id": "alb-attributes",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html",
+      "title": "Edit attributes for your Application Load Balancer",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The connection idle timeout is 60 seconds by default, with a valid range of 1 to 4000 seconds",
+        "AWS recommends configuring the application's idle timeout to be larger than the load balancer's; otherwise the load balancer can send a request into a connection the application has closed and return 502 Bad Gateway"
+      ]
+    },
+    {
+      "id": "alb-overview",
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html",
+      "title": "Application Load Balancers",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A load balancer needs subnets in at least two Availability Zones",
+        "An Application Load Balancer has one IP address per enabled Availability Zone; the addresses come from EC2's public IPv4 pool and are managed by the service",
+        "routing.http.drop_invalid_header_fields.enabled exists as a load balancer attribute"
+      ]
+    },
+    {
+      "id": "ecs-task-role",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html",
+      "title": "Amazon ECS task IAM role",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The permissions of the task role are vended to the containers of the task, for application code that uses other AWS services",
+        "Pulling images from ECR is not a task role permission; it belongs to the task execution role"
+      ]
+    },
+    {
+      "id": "ecs-task-execution-role",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html",
+      "title": "Amazon ECS task execution IAM role",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The task execution role grants the ECS container and Fargate agents permission to make AWS API calls on your behalf",
+        "It is used to pull an image from an ECR private repository and to send container logs to CloudWatch Logs with the awslogs driver",
+        "A custom policy for pulling from ECR includes ecr:GetAuthorizationToken, ecr:BatchCheckLayerAvailability, ecr:GetDownloadUrlForLayer, and ecr:BatchGetImage"
+      ]
+    },
+    {
+      "id": "ecs-service-auto-scaling",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html",
+      "title": "Automatically scale your Amazon ECS service",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Application Auto Scaling turns off scale-in while an ECS deployment is in progress; scale-out continues",
+        "Scale-in is blocked until the scale-in cooldown has expired; a scale-out during that period happens immediately"
+      ]
+    },
+    {
+      "id": "ecs-target-tracking",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-autoscaling-targettracking.html",
+      "title": "Use a target metric to scale Amazon ECS services",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A target tracking policy keeps a metric at or near a target value and manages its own CloudWatch alarms",
+        "The service scales out proportionally to the metric as fast as it can, and scales in more gradually",
+        "With several target tracking policies, the service scales out if any is ready to and scales in only if all are",
+        "With insufficient data the policy does not scale in"
+      ]
+    },
+    {
+      "id": "ecs-fargate-image-route",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-networking.html",
+      "title": "Amazon ECS task networking options for Fargate",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "To pull an image a Fargate task needs a route to the internet: a public IP address on the task ENI in a public subnet, a NAT gateway for a private subnet, or ECR interface endpoints",
+        "Every Fargate task gets an elastic network interface with a primary private IP address"
+      ],
+      "note": "Same page as ecs-fargate-networking, read again on 2026-10-12."
+    },
+    {
+      "id": "ecs-fargate-task-sizes",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html",
+      "title": "Fargate task definition differences",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "256 CPU units (.25 vCPU) can be combined with 512 MiB, 1 GB, or 2 GB of memory",
+        "Fargate runs X86_64 and ARM64 tasks"
+      ]
+    },
+    {
+      "id": "ecs-arm64",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-arm64.html",
+      "title": "Amazon ECS task definitions for 64-bit ARM workloads",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ARM64 tasks on Fargate need platform version 1.4.0 or later",
+        "The only place listed as not supporting 64-bit ARM on Fargate is the use1-az3 Availability Zone of US East (N. Virginia)"
+      ]
+    },
+    {
+      "id": "vpc-security-groups-dns",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html",
+      "title": "Control traffic to your AWS resources using security groups",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Security groups do not filter traffic to and from Amazon DNS, DHCP, EC2 instance metadata, or ECS task metadata endpoints"
+      ],
+      "note": "Same page as vpc-security-groups, read again on 2026-10-12 for the egress rule of the task's security group."
+    },
+    {
+      "id": "ecr-push-image",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html",
+      "title": "Pushing a Docker image to an Amazon ECR private repository",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "aws ecr get-login-password piped into docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com authenticates Docker",
+        "The authorization token is valid for 12 hours",
+        "The image is tagged as <account>.dkr.ecr.<region>.amazonaws.com/<repository>:<tag> and pushed with docker push"
+      ]
+    },
+    {
+      "id": "ecr-image-tag-mutability",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-tag-mutability.html",
+      "title": "Preventing image tags from being overwritten in Amazon ECR",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With immutable tags, pushing an image with a tag that already exists returns ImageTagAlreadyExistsException"
+      ]
+    },
+    {
+      "id": "fargate-pricing",
+      "url": "https://aws.amazon.com/fargate/pricing/",
+      "title": "AWS Fargate pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Fargate is billed for vCPU and memory from the start of the image download until the task terminates, per second with a one-minute minimum",
+        "20 GB of ephemeral storage is included for every task",
+        "Public IPv4 addresses of tasks and CloudWatch Logs usage are charged separately"
+      ],
+      "note": "No Fargate free allowance was found on the page."
+    },
+    {
+      "id": "ecr-pricing",
+      "url": "https://aws.amazon.com/ecr/pricing/",
+      "title": "Amazon ECR pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ECR charges for stored data and for data transferred to the internet",
+        "New ECR customers get 500 MB a month of private repository storage for one year"
+      ]
+    },
+    {
+      "id": "aws-price-list-ecs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon ECS, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Fargate ARM: USD 0.04045 per vCPU-hour and USD 0.00442 per GB-hour",
+        "Fargate x86: USD 0.05056 per vCPU-hour and USD 0.00553 per GB-hour"
+      ],
+      "note": "Offer published 2026-09-11T12:44:25Z."
+    },
+    {
+      "id": "aws-price-list-elb",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Elastic Load Balancing, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": ["Application Load Balancer: USD 0.0243 per hour (or partial hour) and USD 0.008 per LCU-hour"],
+      "note": "Offer published 2026-09-11T12:45:44Z."
+    },
+    {
+      "id": "aws-price-list-ecr",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon ECR, ap-northeast-1",
+      "checkedAt": "2026-10-12",
+      "supports": ["Private repository storage: USD 0.10 per GB-month"],
+      "note": "Offer published 2026-09-11T12:44:25Z."
+    },
+    {
+      "id": "cdkd-source-containers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: providers for ECS, ELBv2, and ECR",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dedicated providers are registered for AWS::ECS::Cluster, TaskDefinition, and Service; AWS::ElasticLoadBalancingV2::LoadBalancer, TargetGroup, and Listener; AWS::ECR::Repository; AWS::EC2::SecurityGroup and SecurityGroupIngress; AWS::IAM::Role and Policy; AWS::Logs::LogGroup",
+        "No provider is registered for AWS::ApplicationAutoScaling::ScalableTarget, AWS::ApplicationAutoScaling::ScalingPolicy, or AWS::EC2::SecurityGroupEgress, and none of them is on the unsupported list, so they go through Cloud Control API",
+        "The ECS provider refuses an in-place update of a task definition; a changed task definition is replaced: a new revision is registered and the previous one is deregistered",
+        "Without --full-wait the ECS provider returns as soon as CreateService or UpdateService is accepted; with it, it waits for services-stable (at least 600 seconds) and then for the primary deployment's rolloutState to be COMPLETED for up to about two minutes",
+        "The ECR provider deletes a repository with force only when EmptyOnDelete is true, the CDK auto-delete tag is present, or a forced replacement was consented to"
+      ],
+      "note": "Read from the v0.296.28 tag archive: register-providers.ts, providers/ecs-provider.ts, providers/ecr-provider.ts, providers/elbv2-provider.ts, providers/ec2-provider.ts, unsupported-types.generated.ts. What the wait does when the circuit breaker rolls a deployment back was not found in the source and is not known."
+    },
+    {
+      "id": "cdkd-cli-deploy-wait",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-deploy.md",
+      "title": "cdkd v0.296.28: docs/cli-deploy.md",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An ECS service that never stabilizes under --full-wait fails the deploy; on create, cdkd deletes the service it just created before failing",
+        "By default cdkd waits for a load balancer to become active, which it puts at 90 to 180 seconds",
+        "The steady-state wait is capped at 600 seconds unless --resource-timeout raises it"
+      ]
+    },
+    {
+      "id": "cdkd-docker-assets",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/assets/docker-asset-publisher.ts",
+      "title": "cdkd v0.296.28: Docker image asset publishing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For a Docker image asset cdkd checks whether the tag already exists in the repository, runs docker build, then docker tag and docker push, logging in to ECR only after a push fails for authentication",
+        "cdkd bootstrap creates a container-asset repository named cdkd-container-assets-{accountId}-{region} with immutable tags, and assets aimed at the default CDK bootstrap repository are redirected to it"
+      ],
+      "note": "Read from src/assets/docker-asset-publisher.ts, src/assets/asset-redirect.ts, and docs/cli-bootstrap.md at the v0.296.28 tag. Not run."
+    },
+    {
+      "id": "aws-cdk-lib-container-asset",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: ContainerImage.fromAsset during synthesis",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Synthesizing a task definition that uses ContainerImage.fromAsset succeeds with no docker command on the PATH: synthesis copies the directory into cdk.out and writes a dockerImages entry to the asset manifest",
+        "The entry's destination is the repository cdk-hnb659fds-container-assets-<account>-<region> with the asset hash as the image tag"
+      ],
+      "note": "Observed by running a synthesis on 2026-10-12 with the pinned version, not read from documentation."
+    },
+    {
+      "id": "lambda-limits-containers",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Code can run for up to 15 minutes in a single invocation",
+        "Functions can be defined as container images, which are stored in Amazon ECR"
+      ],
+      "note": "Same page as lambda-quotas, read again on 2026-10-12."
+    },
+    {
+      "id": "cloudflare-containers",
+      "url": "https://developers.cloudflare.com/containers/",
+      "title": "Cloudflare Containers",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Containers are available on the Workers Paid plan",
+        "Container instances are started on demand and controlled by code in a Worker; a container is reached through a Durable Object",
+        "wrangler deploy builds and pushes the image named in the Wrangler configuration"
+      ]
+    },
+    {
+      "id": "cloudflare-containers-pricing",
+      "url": "https://developers.cloudflare.com/containers/platform/pricing/",
+      "title": "Cloudflare Containers: Pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Containers are billed for every 10 ms they are actively running; charges stop after the instance goes to sleep",
+        "Workers Paid includes 25 GiB-hours of memory and 375 vCPU-minutes a month; beyond that USD 0.0000025 per GiB-second and USD 0.000020 per vCPU-second",
+        "Memory and disk are billed on provisioned size, CPU on active usage"
+      ],
+      "note": "https://developers.cloudflare.com/containers/pricing/ redirects here."
+    },
+    {
+      "id": "cloudflare-containers-rollouts",
+      "url": "https://developers.cloudflare.com/containers/configuration/rollouts/",
+      "title": "Cloudflare Containers: Rollouts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default a deploy rolls out in steps of 10 and then 100 percent of instances",
+        "An instance being replaced gets SIGTERM, and SIGKILL after 15 minutes if it has not exited",
+        "During a rollout new Worker code can still reach container instances on the previous image"
+      ],
+      "note": "https://developers.cloudflare.com/containers/platform-details/rollouts/ redirects here."
+    },
+    {
+      "id": "cloudflare-containers-architecture",
+      "url": "https://developers.cloudflare.com/containers/concepts/architecture/",
+      "title": "Cloudflare Containers: Lifecycle of a container",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A container can only be accessed through its Durable Object",
+        "A Durable Object and its container instance are not guaranteed to run in the same location"
+      ],
+      "note": "https://developers.cloudflare.com/containers/platform-details/architecture/ redirects here."
+    },
+    {
+      "id": "cloudflare-containers-faq",
+      "url": "https://developers.cloudflare.com/containers/faq/",
+      "title": "Cloudflare Containers: Frequently Asked Questions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Built-in autoscaling for stateless applications is not available today",
+        "Container cold starts are often in the 1 to 3 second range, depending on the image"
+      ]
+    },
+    {
+      "id": "cloudflare-containers-local-dev",
+      "url": "https://developers.cloudflare.com/containers/guides/local-dev/",
+      "title": "Cloudflare Containers: Local development",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "wrangler dev and vite dev run the Worker and the container locally, and need a Docker-compatible CLI and engine such as Docker Desktop or Colima"
+      ],
+      "note": "https://developers.cloudflare.com/containers/local-dev/ redirects here."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "container-image",
+      "ja": "コンテナ image",
+      "en": "container image",
+      "firstUse": "12",
+      "definition": {
+        "ja": "アプリと、それが動くのに要るファイル一式を固めたもの。同じ image からは、どこで起動しても同じ中身のコンテナができる。",
+        "en": "An application packed together with every file it needs to run. The same image starts a container with the same contents wherever it runs."
+      }
+    },
+    {
+      "id": "docker-daemon",
+      "ja": "Docker daemon",
+      "en": "Docker daemon",
+      "firstUse": "12",
+      "definition": {
+        "ja": "image の build とコンテナの実行を実際に行う常駐プログラム（dockerd）。`docker` コマンドは、これに頼みごとを送る client にすぎない。",
+        "en": "The long-running program (dockerd) that actually builds images and runs containers. The `docker` command is only a client that sends it requests."
+      }
+    },
+    {
+      "id": "image-tag",
+      "ja": "image の tag",
+      "en": "image tag",
+      "firstUse": "12",
+      "definition": {
+        "ja": "repository の中で image に付ける名前。`v1` や commit の hash など。tag を immutable にすると、一度付けた tag は別の image を指せなくなる。",
+        "en": "A name given to an image inside a repository, such as `v1` or a commit hash. With immutable tags, a tag can never be moved to a different image."
+      }
+    },
+    {
+      "id": "ecr-repository",
+      "ja": "ECR の repository",
+      "en": "ECR repository",
+      "firstUse": "12",
+      "definition": {
+        "ja": "Amazon ECR の中の、image の置き場所。ECS はここから image を取ってくる。",
+        "en": "A place for images in Amazon ECR. ECS pulls images from it."
+      }
+    },
+    {
+      "id": "task-definition",
+      "ja": "task definition",
+      "en": "task definition",
+      "firstUse": "12",
+      "definition": {
+        "ja": "「どの image を、どれだけの CPU とメモリで、どの role と環境変数で動かすか」を書いた設計書。変更のたびに新しい revision になり、既存の revision は書き換えられない。",
+        "en": "The blueprint that says which image runs, with how much CPU and memory, and with which roles and environment variables. Every change makes a new revision; an existing revision is never edited."
+      }
+    },
+    {
+      "id": "ecs-task",
+      "ja": "task",
+      "en": "task",
+      "firstUse": "12",
+      "definition": {
+        "ja": "task definition から起動された、動いている 1 つの実体。Fargate では task ごとに network interface と private IP アドレスを 1 つ持つ。",
+        "en": "One running instance started from a task definition. On Fargate each task has its own network interface and private IP address."
+      }
+    },
+    {
+      "id": "ecs-service",
+      "ja": "service（ECS）",
+      "en": "service (ECS)",
+      "firstUse": "12",
+      "definition": {
+        "ja": "「この task definition の task を、常に N 個動かしておく」という指示と、それを守り続ける仕組み。task が落ちれば補充し、task definition が変われば入れ替える。",
+        "en": "The instruction to keep N tasks of a task definition running, and the machinery that keeps it true: it replaces tasks that die and swaps them when the task definition changes."
+      }
+    },
+    {
+      "id": "fargate",
+      "ja": "Fargate",
+      "en": "Fargate",
+      "firstUse": "12",
+      "definition": {
+        "ja": "コンテナを動かすサーバーを自分で持たずに、task の CPU とメモリの大きさと時間だけで課金される実行基盤。",
+        "en": "A way to run containers without owning the servers under them, billed by the CPU and memory size of each task and the time it runs."
+      }
+    },
+    {
+      "id": "application-load-balancer",
+      "ja": "Application Load Balancer（ALB）",
+      "en": "Application Load Balancer (ALB)",
+      "firstUse": "12",
+      "definition": {
+        "ja": "HTTP のリクエストを受けて、後ろにいる複数の task へ振り分ける入口。存在している時間で課金される。",
+        "en": "The entry point that receives HTTP requests and spreads them over the tasks behind it. It is billed for every hour it exists."
+      }
+    },
+    {
+      "id": "target-group",
+      "ja": "target group",
+      "en": "target group",
+      "firstUse": "12",
+      "definition": {
+        "ja": "ALB が振り分ける先の一覧。task の IP アドレスが登録され、health check の設定もここに持つ。",
+        "en": "The list of destinations an ALB routes to. Task IP addresses are registered in it, and it holds the health check settings."
+      }
+    },
+    {
+      "id": "health-check",
+      "ja": "health check",
+      "en": "health check",
+      "firstUse": "12",
+      "definition": {
+        "ja": "ALB が target に定期的に送る確認のリクエスト。失敗が続いた target には、リクエストを送らなくなる。",
+        "en": "The request an ALB sends to each target at intervals. A target that keeps failing it stops receiving requests."
+      }
+    },
+    {
+      "id": "deregistration-delay",
+      "ja": "deregistration delay",
+      "en": "deregistration delay",
+      "firstUse": "12",
+      "definition": {
+        "ja": "target group から外すと決まった target について、進行中のリクエストが終わるのを ALB が待つ時間。既定は 300 秒。",
+        "en": "How long an ALB waits for in-flight requests to finish on a target that is being removed from the target group. 300 seconds by default."
+      }
+    },
+    {
+      "id": "rolling-update",
+      "ja": "rolling update",
+      "en": "rolling update",
+      "firstUse": "12",
+      "definition": {
+        "ja": "新しい task を起動し、健全になったら古い task を止める、を繰り返して入れ替える更新方法。途中は新旧の版が同時に動く。",
+        "en": "Replacing tasks by starting new ones and stopping old ones once the new ones are healthy. Old and new versions run side by side while it lasts."
+      }
+    },
+    {
+      "id": "deployment-circuit-breaker",
+      "ja": "deployment circuit breaker",
+      "en": "deployment circuit breaker",
+      "firstUse": "12",
+      "definition": {
+        "ja": "新しい task が起動できない、または health check に通らないことが続いたら、更新を失敗と判定する仕組み。設定すれば、最後に成功した状態へ自動で戻す。",
+        "en": "The mechanism that declares a deployment failed when new tasks keep failing to start or to pass health checks. Optionally it rolls back to the last deployment that completed."
+      }
+    },
+    {
+      "id": "task-role",
+      "ja": "task role",
+      "en": "task role",
+      "firstUse": "12",
+      "definition": {
+        "ja": "コンテナの中のアプリが AWS を呼ぶときに使う IAM role。Lambda の実行 role に当たる。",
+        "en": "The IAM role that application code inside the container uses when it calls AWS. The counterpart of a Lambda function's execution role."
+      }
+    },
+    {
+      "id": "task-execution-role",
+      "ja": "task execution role",
+      "en": "task execution role",
+      "firstUse": "12",
+      "definition": {
+        "ja": "アプリが起動する前に、ECS の agent が image の取得とログの送信に使う IAM role。アプリのコードからは使えない。",
+        "en": "The IAM role the ECS agent uses, before the application starts, to pull the image and ship logs. Application code cannot use it."
+      }
+    },
+    {
+      "id": "graceful-shutdown",
+      "ja": "graceful shutdown",
+      "en": "graceful shutdown",
+      "firstUse": "12",
+      "definition": {
+        "ja": "止まれと言われたプロセスが、新しい仕事を受けるのをやめ、進行中の仕事を終えてから終了すること。",
+        "en": "A process that has been told to stop refuses new work, finishes the work in progress, and only then exits."
+      }
+    },
+    {
+      "id": "sigterm",
+      "ja": "SIGTERM",
+      "en": "SIGTERM",
+      "firstUse": "12",
+      "definition": {
+        "ja": "プロセスに「終了してほしい」と伝える signal。受け取った側は後片付けができる。一定時間で終わらなければ、拒否できない SIGKILL が送られる。",
+        "en": "The signal that asks a process to terminate. The process may clean up first. If it does not finish in time, SIGKILL follows, which cannot be handled."
+      }
+    },
+    {
+      "id": "target-tracking",
+      "ja": "target tracking",
+      "en": "target tracking",
+      "firstUse": "12",
+      "definition": {
+        "ja": "「平均 CPU 使用率を 60% に保つ」のように指標と目標値だけを決め、task の数の増減を任せる auto scaling の方式。",
+        "en": "An auto scaling policy where you name a metric and a target value, such as 60 percent average CPU, and leave the number of tasks to the service."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "12.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.architecture",
+      "sources": ["examples/12-containers/infra/lib/containers-stack.ts", "examples/12-containers/src/config.ts"],
+      "tasks": ["ecs:infra:synth"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.docker",
+      "sources": ["examples/12-containers/src/image.ts", "examples/12-containers/scripts/image.ts"],
+      "tasks": ["ecs:image:build"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.server",
+      "sources": [
+        "examples/12-containers/src/compose.ts",
+        "examples/12-containers/src/env.ts",
+        "examples/12-containers/src/server.ts",
+        "examples/12-containers/test/compose.test.ts",
+        "examples/12-containers/.env.example"
+      ],
+      "tasks": ["dev:ecs", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "12.shutdown",
+      "sources": [
+        "examples/12-containers/src/serve.ts",
+        "examples/12-containers/src/server.ts",
+        "examples/12-containers/test/shutdown.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "12.image",
+      "sources": [
+        "examples/12-containers/Dockerfile",
+        "examples/12-containers/.dockerignore",
+        "examples/12-containers/scripts/bundle.ts",
+        "examples/12-containers/scripts/check-bundle.ts",
+        "examples/12-containers/src/image.ts",
+        "examples/12-containers/test/config.test.ts"
+      ],
+      "tasks": ["ecs:bundle", "ecs:bundle:check", "ecs:image:build", "ecs:image:run"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.registry",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/bin/app.ts",
+        "examples/12-containers/src/config.ts",
+        "examples/12-containers/test/config.test.ts"
+      ],
+      "tasks": ["ecs:infra:synth", "ecs:image:push", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "12.network",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts",
+        "examples/11-network/infra/lib/import-network.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.roles",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.service",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/timing.ts",
+        "examples/12-containers/test/timing.test.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ecs:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.rollout",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/timing.ts",
+        "examples/12-containers/scripts/watch.ts",
+        "examples/12-containers/src/watch.ts"
+      ],
+      "tasks": ["ecs:watch"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.versions",
+      "sources": ["examples/12-containers/src/compat.ts", "examples/12-containers/test/versions.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.scaling",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/config.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "12.local",
+      "sources": [
+        "examples/12-containers/test",
+        "examples/12-containers/infra/test/containers-stack.test.ts",
+        "examples/12-containers/scripts/check-bundle.ts"
+      ],
+      "tasks": ["test:unit", "ecs:bundle:check", "ecs:infra:synth", "dev:ecs"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.deploy",
+      "sources": [
+        "examples/12-containers/infra/bin/app.ts",
+        "examples/12-containers/cdk.json",
+        "examples/12-containers/scripts/image.ts",
+        "examples/12-containers/scripts/watch.ts",
+        "examples/12-containers/scripts/logs.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["ecs:infra:diff", "ecs:infra:deploy", "ecs:image:push", "ecs:watch", "ecs:logs", "ecs:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.cost",
+      "sources": ["examples/12-containers/src/cost.ts", "examples/12-containers/test/pricing.test.ts", "data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["ecs:infra:deploy", "ecs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "fargate.arm.vcpu.hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "ZNX9M5D8R95VT2QQ",
+      "usageType": "APN1-Fargate-ARM-vCPU-Hours:perCPU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0404500000",
+          "description": "AWS Fargate - ARM - vCPU - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.arm.memory.gb-hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "WXXGZM434J9JXCU5",
+      "usageType": "APN1-Fargate-ARM-GB-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0044200000",
+          "description": "AWS Fargate - ARM - Memory - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.x86.vcpu.hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "KBQ3Q6DY9J327G8N",
+      "usageType": "APN1-Fargate-vCPU-Hours:perCPU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0505600000",
+          "description": "AWS Fargate - vCPU  - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.x86.memory.gb-hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "JQEE6EF5FAF2AESH",
+      "usageType": "APN1-Fargate-GB-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0055300000",
+          "description": "AWS Fargate - Memory  - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "alb.hour",
+      "offerCode": "AWSELB",
+      "region": "ap-northeast-1",
+      "sku": "98ZU8QNDMR4AS8FJ",
+      "usageType": "APN1-LoadBalancerUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0243000000",
+          "description": "$0.0243 per Application LoadBalancer-hour (or partial hour)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:44Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "alb.lcu.hour",
+      "offerCode": "AWSELB",
+      "region": "ap-northeast-1",
+      "sku": "F2UQT6CZGM7BTWS8",
+      "usageType": "APN1-LCUUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "LCU-Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0080000000",
+          "description": "$0.008 per used Application load balancer capacity unit-hour (or partial hour)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:44Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ecr.storage",
+      "offerCode": "AmazonECR",
+      "region": "ap-northeast-1",
+      "sku": "R5SQFH8FHUZV8GYE",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per GB-month of data storage"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "fargate.arm.vcpu.hour",
+      "reason": "The Fargate pricing page lists no free allowance; none is applied."
+    },
+    {
+      "priceId": "fargate.arm.memory.gb-hour",
+      "reason": "The Fargate pricing page lists no free allowance; none is applied."
+    },
+    {
+      "priceId": "alb.hour",
+      "reason": "The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted."
+    },
+    {
+      "priceId": "alb.lcu.hour",
+      "reason": "The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted."
+    },
+    {
+      "priceId": "ecr.storage",
+      "reason": "The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "containers-repository-only",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: repository だけ（image tag なしで deploy）",
+        "en": "Containers: the repository alone (deployed without an image tag)"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c imageTag` を付けずに deploy した状態。ALB も task も無い",
+          "image 1 つぶんとして 0.1 GB を保存していると仮定（実際の image の大きさは build していないので未計測）"
+        ],
+        "en": [
+          "Deployed without `-c imageTag`: no load balancer, no tasks",
+          "0.1 GB stored, assumed for one image (the image was never built, so its real size is not measured)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "containers-idle",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: 既定の構成を置いたまま 1 か月",
+        "en": "Containers: the default layout left running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "task 2 つ（0.25 vCPU、0.5 GB、arm64）を public subnet で 730 時間",
+          "ALB 1 つを 730 時間。LCU は未算入（health check だけのときの LCU は確認していない）",
+          "public IPv4 アドレスは ALB の node 2 つと task 2 つで 4 つ。ALB が node を増やせば増える",
+          "repository に 0.1 GB（仮定）",
+          "ログ、データ転送、auto scaling で増えた task は未算入"
+        ],
+        "en": [
+          "Two tasks (0.25 vCPU, 0.5 GB, arm64) in public subnets for 730 hours",
+          "One load balancer for 730 hours. LCUs are not included (what health checks alone consume was not confirmed)",
+          "Four public IPv4 addresses: two load balancer nodes and two tasks. More if the load balancer adds nodes",
+          "0.1 GB in the repository (assumption)",
+          "Logs, data transfer, and tasks added by auto scaling are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 tasks) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "containers-one-day",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: 既定の構成を 1 日",
+        "en": "Containers: the default layout for one day"
+      },
+      "assumptions": {
+        "ja": ["`containers-idle` と同じ構成を 24 時間", "repository の保存料金、ログ、データ転送、LCU は未算入"],
+        "en": [
+          "The layout of `containers-idle` for 24 hours",
+          "Repository storage, logs, data transfer, and LCUs are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 12,
+          "basis": "2 tasks x 0.25 vCPU x 24 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 24,
+          "basis": "2 tasks x 0.5 GB x 24 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 24,
+          "basis": "1 load balancer x 24 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 96,
+          "basis": "(2 load balancer nodes + 2 tasks) x 24 hours"
+        }
+      ]
+    },
+    {
+      "id": "containers-small",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: 月 100 万リクエスト",
+        "en": "Containers: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`containers-idle` の構成のまま、task は 2 つから増えないと仮定",
+          "LCU は新規接続の次元で数える。1 リクエスト 1 接続、月 100 万件は毎秒 0.38 件で 0.0152 LCU、730 時間で 11.1 LCU 時間",
+          "ログは 1 リクエスト 0.2 KB の 1 行（成功した health check は書かない）。保持 7 日、月平均の保存量を取込み量の 7/30 と仮定",
+          "応答は 1 件 0.5 KB と仮定し、インターネットへのデータ転送を 0.477 GB"
+        ],
+        "en": [
+          "The layout of `containers-idle`, assuming the service stays at two tasks",
+          "LCUs counted on the new-connection dimension: one connection per request, 1,000,000 a month is 0.38 a second or 0.0152 LCU, which is 11.1 LCU-hours over 730 hours",
+          "One 0.2 KB log line per request (successful health checks are not logged); 7-day retention, average stored volume assumed to be 7/30 of the monthly ingest",
+          "0.5 KB per response assumed, so 0.477 GB of data transfer out to the internet"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 tasks) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        },
+        {
+          "priceId": "alb.lcu.hour",
+          "quantity": 11.1,
+          "basis": "0.0152 LCU x 730 hours (assumption)"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.191,
+          "basis": "1,000,000 x 0.2 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.045,
+          "basis": "0.191 GB x 7/30, in GB-month"
+        },
+        {
+          "priceId": "datatransfer.out.internet",
+          "quantity": 0.477,
+          "basis": "1,000,000 x 0.5 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "containers-private-nat",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: task を private subnet に置き、NAT Gateway 1 つで出る",
+        "en": "Containers: tasks in private subnets, out through one NAT gateway"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c taskSubnets=private`、11章を `-c egress=nat` で deploy",
+          "task は public IPv4 アドレスを持たない。ALB の node 2 つと NAT Gateway の Elastic IP アドレスで 3 つ",
+          "NAT Gateway を通るデータ（image の取得とログ）は月 2 GB と仮定",
+          "LCU、ログ、インターネットへのデータ転送は未算入"
+        ],
+        "en": [
+          "`-c taskSubnets=private`, with chapter 11 deployed with `-c egress=nat`",
+          "Tasks hold no public IPv4 address. Three addresses: two load balancer nodes and the NAT gateway's Elastic IP address",
+          "2 GB a month assumed through the NAT gateway (image pulls and logs)",
+          "LCUs, logs, and data transfer out to the internet are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2190,
+          "basis": "(2 load balancer nodes + 1 NAT gateway) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        },
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 730,
+          "basis": "1 NAT gateway x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.data",
+          "quantity": 2,
+          "basis": "2 GB processed (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "containers-private-endpoints",
+      "chapter": "12",
+      "title": {
+        "ja": "コンテナ: task を private subnet に置き、interface endpoint 3 つで AWS に届く",
+        "en": "Containers: tasks in private subnets, reaching AWS through three interface endpoints"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c taskSubnets=private`、11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy",
+          "interface endpoint 3 つ × 2 AZ。image の layer は S3 の gateway endpoint（無料）を通る",
+          "interface endpoint を通るデータは月 1 GB と仮定",
+          "public IPv4 アドレスは ALB の node 2 つだけ",
+          "LCU、ログ、インターネットへのデータ転送は未算入"
+        ],
+        "en": [
+          "`-c taskSubnets=private`, with chapter 11 deployed with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`",
+          "Three interface endpoints in two zones each. Image layers go through the S3 gateway endpoint, which is free",
+          "1 GB a month assumed through the interface endpoints",
+          "Two public IPv4 addresses, for the load balancer nodes only",
+          "LCUs, logs, and data transfer out to the internet are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 1460,
+          "basis": "2 load balancer nodes x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 4380,
+          "basis": "3 interface endpoints x 2 zones x 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.data",
+          "quantity": 1,
+          "basis": "1 GB processed (assumption)"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "12",
+        "command": "vp run test:unit (examples/12-containers)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "SIGTERM を送る子プロセスのテスト、graceful shutdown、新旧の版の同居、時間の関係、設定、docker コマンドの組み立て、料金、stack の assertion",
+          "en": "The child-process SIGTERM test, graceful shutdown, old and new versions side by side, the timing rules, settings, the docker command lines, pricing, and stack assertions"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run ecs:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "image tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private` の 3 通りで synth した",
+          "en": "Synthesized three ways: without an image tag, with `-c imageTag=v1`, and with `-c imageTag=v1 -c taskSubnets=private`"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run ecs:bundle / ecs:bundle:check",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "dist/server.mjs を作り、node_modules の無い場所で起動して /health を呼び、SIGTERM で終了コード 0 になることを確かめた",
+          "en": "Built dist/server.mjs, started it where no node_modules exists, called /health, and saw exit code 0 on SIGTERM"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run dev:ecs",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "起動して本文の curl を実行し、Ctrl-C（SIGINT）で draining、stopped のログが出て終了することを確かめた",
+          "en": "Started it, ran the chapter's curl commands, and saw the draining and stopped log lines on Ctrl-C (SIGINT)"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "--dry-run でコマンドを表示した。daemon なしで実行すると、理由を表示して終了コード 1 になることも確かめた",
+          "en": "Printed the commands with --dry-run, and saw the task explain itself and exit with 1 when no daemon answers"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run ecs:watch --url http://localhost:8099 --for 3",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-12",
+        "note": {
+          "ja": "手元で起動したサーバーに向けて実行し、版ごとの集計が出ることを確かめた。deploy した service には向けていない",
+          "en": "Pointed at a server started locally, and saw the per-version summary. Not pointed at a deployed service"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run ecs:image:build / ecs:image:run / ecs:image:push",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Docker の daemon が動いていなかったため、image を一度も build していない",
+          "en": "No Docker daemon was running, so the image has never been built"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run ecs:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ECR の repository を作る。image tag を渡すと ALB と Fargate の task 2 つ（時間課金）も作る",
+          "en": "Creates an ECR repository and, given an image tag, a load balancer and two Fargate tasks, which are billed by the hour"
+        }
+      },
+      {
+        "scope": "12",
+        "command": "vp run ecs:watch / ecs:logs",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "deploy した service を読むだけのタスク",
+          "en": "Tasks that only read the deployed service"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "12-image-build",
+        "summary": {
+          "ja": "12章の Dockerfile で image を一度も build していない。`.dockerignore` の例外指定で dist/server.mjs だけが context に入ること、node:24-bookworm-slim の arm64 版で起動すること、`--read-only` で動くこと、image の大きさが未確認。",
+          "en": "The chapter 12 Dockerfile has never been built. Unverified: that the .dockerignore exception leaves only dist/server.mjs in the context, that the image starts on the arm64 variant of node:24-bookworm-slim, that it runs with --read-only, and how large the image is."
+        },
+        "resume": {
+          "ja": "Docker の daemon を起動し、`vp run ecs:bundle`、`vp run ecs:image:build v1`、`vp run ecs:image:run v1` を実行する。別のターミナルで `curl http://localhost:8080/health` を呼び、Ctrl-C で `stopped` のログと終了コード 0 を確かめる。`docker image ls aih-notes` で大きさを見る。",
+          "en": "Start a Docker daemon, then run `vp run ecs:bundle`, `vp run ecs:image:build v1`, and `vp run ecs:image:run v1`. Call `curl http://localhost:8080/health` from another terminal, press Ctrl-C, and check for the `stopped` log line and exit code 0. Read the size from `docker image ls aih-notes`."
+        }
+      },
+      {
+        "id": "12-deploy",
+        "summary": {
+          "ja": "12章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が ECR、ECS、ALB を作って消せること、`Fn::ImportValue` で 11章の VPC を読めること、Cloud Control API 経由になる 3 種類（ScalableTarget、ScalingPolicy、SecurityGroupEgress）が通ること、public subnet の task が image を取得できること、ALB の DNS 名で応答することが未確認。",
+          "en": "The chapter 12 stack has never been deployed. Unverified: that cdkd 0.296.28 creates and deletes the ECR, ECS, and ALB resources, that it reads the chapter 11 VPC through Fn::ImportValue, that the three types routed through Cloud Control API (ScalableTarget, ScalingPolicy, SecurityGroupEgress) work, that tasks in public subnets can pull the image, and that the load balancer's DNS name answers."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy`、`vp run ecs:infra:deploy`、`vp run ecs:image:push v1`、`vp run ecs:infra:deploy -c imageTag=v1` の順に実行し、output の `ServiceUrl` に `curl` する。`vp run ecs:infra:drift` を通したら、`vp run ecs:infra:destroy`、`vp run net:infra:destroy` で消す（時間課金）。",
+          "en": "Run `vp run net:infra:deploy`, `vp run ecs:infra:deploy`, `vp run ecs:image:push v1`, and `vp run ecs:infra:deploy -c imageTag=v1` in that order, then `curl` the `ServiceUrl` output. After `vp run ecs:infra:drift`, remove everything with `vp run ecs:infra:destroy` and `vp run net:infra:destroy` (hourly charges)."
+        }
+      },
+      {
+        "id": "12-rolling-update",
+        "summary": {
+          "ja": "rolling update を実環境で観察していない。更新中にエラーが出ないこと、新旧の版が交互に応答すること、target の登録解除が終わってから SIGTERM が届くという順序、壊れた image を渡したときに circuit breaker が元に戻すこと、そのとき cdkd の `--full-wait` が何を報告するかが未確認。",
+          "en": "A rolling update has not been observed on AWS. Unverified: that no request fails during one, that old and new versions answer alternately, that SIGTERM arrives only after the target has been deregistered, that the circuit breaker rolls back when given a broken image, and what cdkd's --full-wait reports when it does."
+        },
+        "resume": {
+          "ja": "v1 を deploy した状態で `vp run ecs:watch` を別のターミナルで動かし、`vp run ecs:image:push v2`、`vp run ecs:infra:deploy -c imageTag=v2` を実行する。`ecs:watch` の集計と、`vp run ecs:logs` の `draining`、`stopped` の行の時刻を見る。続けて、存在しない tag で deploy し、`aws ecs describe-services` の `rolloutState` と cdkd の終了コードを記録する。",
+          "en": "With v1 deployed, run `vp run ecs:watch` in a second terminal, then `vp run ecs:image:push v2` and `vp run ecs:infra:deploy -c imageTag=v2`. Read the summary of `ecs:watch` and the times of the `draining` and `stopped` lines in `vp run ecs:logs`. Then deploy a tag that does not exist and record `rolloutState` from `aws ecs describe-services` and cdkd's exit code."
+        }
+      },
+      {
+        "id": "12-private-subnets",
+        "summary": {
+          "ja": "`-c taskSubnets=private` の構成を実環境で動かしていない。NAT Gateway 経由、interface endpoint 経由のどちらでも image を取得してログを送れること、443 番だけの egress で足りることが未確認。",
+          "en": "The `-c taskSubnets=private` layout has not been run on AWS. Unverified: that tasks pull the image and ship logs through a NAT gateway and through interface endpoints, and that egress on port 443 alone is enough."
+        },
+        "resume": {
+          "ja": "11章を `-c egress=nat` で deploy し、12章を `-c imageTag=v1 -c taskSubnets=private` で deploy して `ServiceUrl` を確かめる。次に 11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy し直し、task を入れ替えて（新しい tag で deploy）同じことを確かめる。終わったらすぐ destroy する。",
+          "en": "Deploy chapter 11 with `-c egress=nat`, deploy chapter 12 with `-c imageTag=v1 -c taskSubnets=private`, and check `ServiceUrl`. Then redeploy chapter 11 with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`, replace the tasks by deploying a new tag, and check again. Destroy right afterwards."
+        }
+      },
+      {
+        "id": "12-alb-idle-lcu",
+        "summary": {
+          "ja": "リクエストが無いときに ALB の LCU がいくらになるか（health check が LCU に数えられるか）を一次情報で確認できていない。料金の表では LCU を未算入としている。",
+          "en": "What a load balancer's LCU usage is with no requests (whether health checks count) was not confirmed from a primary source. The cost tables leave LCUs out of the idle figures."
+        },
+        "resume": {
+          "ja": "deploy して 1 日置き、Cost Explorer か請求書で `APN1-LCUUsage` の数量を確かめる。",
+          "en": "Deploy, wait a day, and read the quantity of `APN1-LCUUsage` in Cost Explorer or the bill."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 12: containers ----------------------------------------\n      // The server the container runs, on plain Node. No Docker, no AWS.\n      \"dev:ecs\": fresh(\"node --watch --env-file-if-exists=.env src/server.ts\", { cwd: \"examples/12-containers\" }),\n      // One file with the server and its dependencies: the only thing the image copies.\n      \"ecs:bundle\": fresh(\"node scripts/bundle.ts\", { cwd: \"examples/12-containers\" }),\n      // Starts that file away from node_modules, calls it, and stops it with SIGTERM. No Docker.\n      \"ecs:bundle:check\": fresh(\"node scripts/check-bundle.ts\", {\n        cwd: \"examples/12-containers\",\n        dependsOn: [\"ecs:bundle\"],\n      }),\n      // The next three need a running Docker daemon, which the Nix shell does not provide.\n      \"ecs:image:build\": fresh(\"node scripts/image.ts build\", { cwd: \"examples/12-containers\", dependsOn: [\"ecs:bundle\"] }),\n      \"ecs:image:run\": fresh(\"node scripts/image.ts run\", { cwd: \"examples/12-containers\" }),\n      // Logs Docker in to the stack's repository and pushes the image.\n      \"ecs:image:push\": live(\"node --env-file-if-exists=../../.env scripts/image.ts push\", { cwd: \"examples/12-containers\" }),\n      // BILLED BY THE HOUR once deployed with -c imageTag=...: a load balancer and two Fargate tasks.\n      ...infra(\"ecs\", \"examples/12-containers\", \"AihContainers\"),\n      // Calls /health once a second and prints which image tag answered. Reads only.\n      \"ecs:watch\": live(\"node --env-file-if-exists=../../.env scripts/watch.ts\", { cwd: \"examples/12-containers\" }),\n      \"ecs:logs\": live(\"node --env-file-if-exists=../../.env scripts/logs.ts\", { cwd: \"examples/12-containers\" }),",
+    "synth": ["ecs:infra:synth"],
+    "checkAll": ["ecs:bundle:check"],
+    "typecheck": ["examples/12-containers"]
+  }
+}

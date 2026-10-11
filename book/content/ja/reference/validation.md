@@ -121,6 +121,15 @@ generated: true
 | 20 | `vp run ship:preview:list` | AWS | 未実行 | - | preview stack の一覧は未実行 |
 | 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | 未実行 | - | 4 つの workflow は GitHub Actions で一度も実行していない。x86_64-linux の runner で Nix の devShell が入ることも未確認 |
 | 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | 未実行 | - | cdkd と CloudFormation の間で stack を移す手順は未実行。記述は固定した版のヘルプによる |
+| 12 | `vp run test:unit (examples/12-containers)` | ローカル | 成功 | 2026-10-12 | SIGTERM を送る子プロセスのテスト、graceful shutdown、新旧の版の同居、時間の関係、設定、docker コマンドの組み立て、料金、stack の assertion |
+| 12 | `vp run ecs:infra:synth` | ローカル | 成功 | 2026-10-12 | image tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private` の 3 通りで synth した |
+| 12 | `vp run ecs:bundle / ecs:bundle:check` | ローカル | 成功 | 2026-10-12 | dist/server.mjs を作り、node_modules の無い場所で起動して /health を呼び、SIGTERM で終了コード 0 になることを確かめた |
+| 12 | `vp run dev:ecs` | ローカル | 成功 | 2026-10-12 | 起動して本文の curl を実行し、Ctrl-C（SIGINT）で draining、stopped のログが出て終了することを確かめた |
+| 12 | `vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push` | ローカル | 成功 | 2026-10-12 | --dry-run でコマンドを表示した。daemon なしで実行すると、理由を表示して終了コード 1 になることも確かめた |
+| 12 | `vp run ecs:watch --url http://localhost:8099 --for 3` | ローカル | 成功 | 2026-10-12 | 手元で起動したサーバーに向けて実行し、版ごとの集計が出ることを確かめた。deploy した service には向けていない |
+| 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | ローカル | 未実行 | - | Docker の daemon が動いていなかったため、image を一度も build していない |
+| 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | ECR の repository を作る。image tag を渡すと ALB と Fargate の task 2 つ（時間課金）も作る |
+| 12 | `vp run ecs:watch / ecs:logs` | AWS | 未実行 | - | deploy した service を読むだけのタスク |
 
 ## 未解決事項と再開手順
 
@@ -441,3 +450,33 @@ CloudFormation の drift 検出の応答を実機で採取していない。検�
 cdkd と CloudFormation の間で stack を移す手順（`cdkd export`、`cdkd import --migrate-from-cloudformation`）は未実行
 
 再開手順: 練習用の stack を cdkd でデプロイし、`cdkd export <stack> --dry-run` の計画を読んでから実行する。import できない resource type で止まるかどうか、成功後に cdkd の state が消え、CloudFormation の stack として `cdk diff` が空になることを記録する。逆方向も同じ stack で試す
+
+### 12-image-build
+
+12章の Dockerfile で image を一度も build していない。`.dockerignore` の例外指定で dist/server.mjs だけが context に入ること、node:24-bookworm-slim の arm64 版で起動すること、`--read-only` で動くこと、image の大きさが未確認。
+
+再開手順: Docker の daemon を起動し、`vp run ecs:bundle`、`vp run ecs:image:build v1`、`vp run ecs:image:run v1` を実行する。別のターミナルで `curl http://localhost:8080/health` を呼び、Ctrl-C で `stopped` のログと終了コード 0 を確かめる。`docker image ls aih-notes` で大きさを見る。
+
+### 12-deploy
+
+12章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が ECR、ECS、ALB を作って消せること、`Fn::ImportValue` で 11章の VPC を読めること、Cloud Control API 経由になる 3 種類（ScalableTarget、ScalingPolicy、SecurityGroupEgress）が通ること、public subnet の task が image を取得できること、ALB の DNS 名で応答することが未確認。
+
+再開手順: `vp run net:infra:deploy`、`vp run ecs:infra:deploy`、`vp run ecs:image:push v1`、`vp run ecs:infra:deploy -c imageTag=v1` の順に実行し、output の `ServiceUrl` に `curl` する。`vp run ecs:infra:drift` を通したら、`vp run ecs:infra:destroy`、`vp run net:infra:destroy` で消す（時間課金）。
+
+### 12-rolling-update
+
+rolling update を実環境で観察していない。更新中にエラーが出ないこと、新旧の版が交互に応答すること、target の登録解除が終わってから SIGTERM が届くという順序、壊れた image を渡したときに circuit breaker が元に戻すこと、そのとき cdkd の `--full-wait` が何を報告するかが未確認。
+
+再開手順: v1 を deploy した状態で `vp run ecs:watch` を別のターミナルで動かし、`vp run ecs:image:push v2`、`vp run ecs:infra:deploy -c imageTag=v2` を実行する。`ecs:watch` の集計と、`vp run ecs:logs` の `draining`、`stopped` の行の時刻を見る。続けて、存在しない tag で deploy し、`aws ecs describe-services` の `rolloutState` と cdkd の終了コードを記録する。
+
+### 12-private-subnets
+
+`-c taskSubnets=private` の構成を実環境で動かしていない。NAT Gateway 経由、interface endpoint 経由のどちらでも image を取得してログを送れること、443 番だけの egress で足りることが未確認。
+
+再開手順: 11章を `-c egress=nat` で deploy し、12章を `-c imageTag=v1 -c taskSubnets=private` で deploy して `ServiceUrl` を確かめる。次に 11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy し直し、task を入れ替えて（新しい tag で deploy）同じことを確かめる。終わったらすぐ destroy する。
+
+### 12-alb-idle-lcu
+
+リクエストが無いときに ALB の LCU がいくらになるか（health check が LCU に数えられるか）を一次情報で確認できていない。料金の表では LCU を未算入としている。
+
+再開手順: deploy して 1 日置き、Cost Explorer か請求書で `APN1-LCUUsage` の数量を確かめる。
