@@ -23,6 +23,7 @@ const projects = [
   "examples/02-toolchain",
   "examples/03-spa/infra",
   "examples/04-http-api",
+  "examples/05-dynamodb",
 ];
 
 const tsc = join(repoRoot, "node_modules/.bin/tsc");

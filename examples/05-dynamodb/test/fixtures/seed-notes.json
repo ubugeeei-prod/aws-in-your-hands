@@ -1,0 +1,18 @@
+[
+  {
+    "id": "0mgm8u3k00seed1",
+    "title": "Welcome",
+    "body": "This note came from test/fixtures/seed-notes.json.",
+    "version": 1,
+    "createdAt": "2026-10-11T00:00:00.000Z",
+    "updatedAt": "2026-10-11T00:00:00.000Z"
+  },
+  {
+    "id": "0mgm8u3k01seed2",
+    "title": "Edit me in two tabs",
+    "body": "Save in one tab, then save an older copy in the other to see a 409.",
+    "version": 1,
+    "createdAt": "2026-10-11T00:00:01.000Z",
+    "updatedAt": "2026-10-11T00:00:01.000Z"
+  }
+]

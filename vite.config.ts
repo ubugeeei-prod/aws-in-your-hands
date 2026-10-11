@@ -87,7 +87,7 @@ export default defineConfig({
       "content:check": fresh("node tools/src/checks/content.ts"),
       "links:check": fresh("node tools/src/checks/links.ts book/dist", { dependsOn: ["build:book"] }),
       "infra:synth": fresh("node -e \"console.log('all CDK apps synthesized')\"", {
-        dependsOn: ["book:infra:synth", "hello:infra:synth", "spa:infra:synth", "api:infra:synth"],
+        dependsOn: ["book:infra:synth", "hello:infra:synth", "spa:infra:synth", "api:infra:synth", "notes:infra:synth"],
       }),
       // Everything above plus both builds. Never touches AWS.
       "check:all": fresh("node -e \"console.log('check:all finished without touching AWS')\"", {
@@ -143,6 +143,31 @@ export default defineConfig({
       ...infra("api", "examples/04-http-api", "AihHttpApi"),
       "api:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/04-http-api" }),
       "api:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/04-http-api" }),
+
+      // ---- chapter 05: DynamoDB -----------------------------------------
+      // The API with notes kept in memory or in DynamoDB, as examples/05-dynamodb/.env says.
+      "dev:notes": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/05-dynamodb" }),
+      // DynamoDB Local in a container. Needs a running Docker daemon.
+      "db:local:start": fresh("node --env-file-if-exists=.env scripts/local-db.ts start", {
+        cwd: "examples/05-dynamodb",
+      }),
+      "db:local:stop": fresh("node --env-file-if-exists=.env scripts/local-db.ts stop", {
+        cwd: "examples/05-dynamodb",
+      }),
+      "db:migrate:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts migrate", {
+        cwd: "examples/05-dynamodb",
+      }),
+      "db:seed:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts seed", {
+        cwd: "examples/05-dynamodb",
+      }),
+      "db:reset:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts reset", {
+        cwd: "examples/05-dynamodb",
+      }),
+      "test:local:dynamodb": fresh("node --env-file-if-exists=.env scripts/test-local.ts", {
+        cwd: "examples/05-dynamodb",
+      }),
+      ...infra("notes", "examples/05-dynamodb", "AihNotes"),
+      "notes:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/05-dynamodb" }),
     },
   },
   test: {

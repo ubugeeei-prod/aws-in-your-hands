@@ -1,0 +1,60 @@
+import { z } from "zod";
+
+// #region note
+export const noteSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(120),
+  body: z.string().max(10_000),
+  // Starts at 1 and grows by exactly one on every successful update. A caller
+  // sends back the version it last saw; the update is refused if someone else
+  // has saved in between.
+  version: z.number().int().positive(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+export type Note = z.infer<typeof noteSchema>;
+
+export const createNoteSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  body: z.string().max(10_000).default(""),
+});
+export type CreateNote = z.infer<typeof createNoteSchema>;
+
+export const updateNoteSchema = createNoteSchema.extend({
+  expectedVersion: z.number().int().positive(),
+});
+export type UpdateNote = z.infer<typeof updateNoteSchema>;
+// #endregion note
+
+// #region list
+export const listQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.string().min(1).max(512).optional(),
+});
+
+export const noteListSchema = z.object({
+  notes: z.array(noteSchema),
+  // Opaque to the caller. null means there is nothing after this page.
+  nextCursor: z.string().nullable(),
+});
+export type NoteList = z.infer<typeof noteListSchema>;
+// #endregion list
+
+export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string(), store: z.string() });
+
+// #region error
+export const errorCodes = ["invalid_request", "not_found", "conflict", "payload_too_large", "internal"] as const;
+
+export const errorSchema = z.object({
+  error: z.object({
+    code: z.enum(errorCodes),
+    message: z.string(),
+    requestId: z.string(),
+    issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
+    // Sent with `conflict`: the note as it is stored now, so that the caller
+    // can show both versions or check whether its own earlier attempt landed.
+    current: noteSchema.optional(),
+  }),
+});
+export type ErrorBody = z.infer<typeof errorSchema>;
+// #endregion error
