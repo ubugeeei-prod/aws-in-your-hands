@@ -233,8 +233,11 @@ export default defineConfig({
   },
   test: {
     include: ["{book/infra,tools,examples}/**/*.test.ts"],
+    // CDK tests synthesize a stack and bundle with esbuild. 5 seconds is not enough on a busy machine.
+    testTimeout: 30_000,
   },
   lint: {
+    ignorePatterns: [".claude/**"],
     // The type-aware pass intermittently mis-resolves aws-cdk-lib subpath
     // imports. `vp run typecheck` checks types instead.
     options: { typeAware: false, typeCheck: false },
@@ -243,6 +246,8 @@ export default defineConfig({
     printWidth: 120,
     ignorePatterns: [
       // Prose and recorded fixtures are kept byte for byte as written.
+      // Worktrees of in-progress chapters live here.
+      ".claude/**",
       "book/content/**",
       "**/fixtures/**",
       "data/pricing/unit-prices.json",
