@@ -1,4 +1,5 @@
 import manifest from "../data/chapters.json" with { type: "json" };
+import { chapterTitle } from "./theme/title.ts";
 
 type LocalizedText = { ja: string; en: string };
 type SidebarItem = {
@@ -10,11 +11,17 @@ type SidebarItem = {
 
 const chapterLink = (id: string, slug: string): string => `/ja/chapters/${id}-${slug}.md`;
 
+const short = (id: string, title: string): string => chapterTitle(`${id} ${title}`)?.name ?? title;
+
 const chapterItems = (from: number, to: number): SidebarItem[] =>
   manifest.chapters
     .filter((chapter) => Number(chapter.id) >= from && Number(chapter.id) <= to)
     .map((chapter) => ({
-      text: { ja: `${chapter.id} ${chapter.title.ja}`, en: `${chapter.id} ${chapter.title.en}` },
+      // The sidebar carries the chapter's name. What follows the colon is on the page itself.
+      text: {
+        ja: `${chapter.id} ${short(chapter.id, chapter.title.ja)}`,
+        en: `${chapter.id} ${short(chapter.id, chapter.title.en)}`,
+      },
       link: chapterLink(chapter.id, chapter.slug),
     }));
 

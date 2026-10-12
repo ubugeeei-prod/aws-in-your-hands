@@ -23,8 +23,8 @@ export default defineConfig({
       highlight: true,
       containers: true,
       codeGroups: true,
-      // Line numbers on every block, and `// [!code highlight]` style marks where a chapter wants them.
-      codeAnnotations: { notation: "both", defaultLineNumbers: true },
+      // `// [!code highlight]` style marks, for where a chapter wants to point at a line.
+      codeAnnotations: { notation: "both" },
       // Japanese has no spaces to break lines at. BudouX finds the phrase boundaries at build time.
       budoux: { language: "ja" },
       // codeTitles counts fences, so it has to see the figures while they are still fences.

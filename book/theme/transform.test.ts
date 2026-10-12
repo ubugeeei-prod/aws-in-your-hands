@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { chapterTitle, codeOrigins } from "./transform.ts";
+import { chapterTitle } from "./title.ts";
+import { codeOrigins } from "./transform.ts";
 
 describe("a chapter's opening heading", () => {
   it("separates the number, the name, and what the chapter is about", () => {
