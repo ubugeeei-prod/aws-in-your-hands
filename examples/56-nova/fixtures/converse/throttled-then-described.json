@@ -1,0 +1,35 @@
+{
+  "source": "Hand-written from the response syntax in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html (read 2026-10-13). Not recorded from a real inference call. The error name is from the Errors section of the same page.",
+  "description": "The first call is throttled. The second one describes the image.",
+  "steps": [
+    {
+      "throw": {
+        "name": "ThrottlingException",
+        "message": "Too many requests, please wait before trying again."
+      }
+    },
+    {
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "text": "木の机の上に、開いたノートと青いペンが置かれている。"
+              }
+            ]
+          }
+        },
+        "stopReason": "end_turn",
+        "usage": {
+          "inputTokens": 318,
+          "outputTokens": 27,
+          "totalTokens": 345
+        },
+        "metrics": {
+          "latencyMs": 1200
+        }
+      }
+    }
+  ]
+}

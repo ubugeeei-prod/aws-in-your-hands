@@ -1,0 +1,1362 @@
+{
+  "chapterId": "28",
+  "manifest": {
+    "id": "28",
+    "slug": "multi-region",
+    "title": {
+      "ja": "Multi-Region: global tables、S3 replication、Route 53",
+      "en": "Multi-Region: Global Tables, S3 Replication, and Route 53"
+    },
+    "prerequisites": ["05", "07", "22"],
+    "services": [
+      "DynamoDB global tables",
+      "S3 Replication",
+      "Route 53",
+      "Lambda",
+      "API Gateway HTTP API",
+      "ACM"
+    ],
+    "samplePath": "examples/28-multi-region",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "mr-dynamodb-global-tables-how",
+      "mr-dynamodb-global-tables-design",
+      "mr-dynamodb-write-modes",
+      "mr-dynamodb-evacuation",
+      "mr-dynamodb-global-tables-billing",
+      "mr-dynamodb-global-tables-best-practices",
+      "mr-s3-replication",
+      "mr-s3-replication-what",
+      "mr-s3-replication-requirements",
+      "mr-s3-replication-time-control",
+      "mr-s3-delete-marker-replication",
+      "mr-s3-replication-status",
+      "mr-s3-replication-permissions",
+      "mr-s3-replication-metrics",
+      "mr-s3-pricing-replication",
+      "mr-route53-health-determination",
+      "mr-route53-health-values",
+      "mr-route53-failover-types",
+      "mr-route53-failover-problems",
+      "mr-route53-latency-routing",
+      "mr-route53-alias-choice",
+      "mr-route53-best-practices",
+      "mr-route53-pricing",
+      "mr-cfn-route53-recordset",
+      "mr-cfn-route53-healthcheck",
+      "mr-apigw-dns-failover",
+      "mr-apigw-regional-domain",
+      "mr-cognito-regional-data",
+      "mr-secrets-manager-replication",
+      "mr-ssm-parameter-store",
+      "mr-cloud-control-supported",
+      "mr-cdkd-package",
+      "mr-aws-cdk-lib",
+      "mr-price-list-dynamodb-tokyo",
+      "mr-price-list-dynamodb-osaka",
+      "mr-price-list-s3-tokyo",
+      "mr-price-list-s3-osaka",
+      "mr-price-list-data-transfer",
+      "mr-price-list-route53",
+      "mr-cloudflare-workers-how",
+      "mr-cloudflare-d1-read-replication",
+      "mr-cloudflare-d1-data-location",
+      "mr-cloudflare-kv-how",
+      "mr-cloudflare-do-data-location",
+      "mr-cloudflare-r2-data-location",
+      "mr-cloudflare-r2-durability",
+      "mr-vercel-function-regions"
+    ]
+  },
+  "sources": [
+    {
+      "id": "mr-dynamodb-global-tables-how",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html",
+      "title": "How DynamoDB global tables work",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A global table has two or more replicas in different Regions, one per Region, all with the same table name and key schema",
+        "The default consistency mode is multi-Region eventual consistency (MREC), and the mode cannot be changed after creation",
+        "In MREC, item changes are replicated asynchronously, typically within a second or less",
+        "In MREC, simultaneous changes to one item in several Regions are resolved by the latest internal timestamp per item (last writer wins)",
+        "In MREC, a strongly consistent read may return stale data if the item was last updated in another Region, and a conditional write evaluates its condition against the item's version in the Region",
+        "In MRSC, a change is replicated synchronously to at least one other Region before the write returns, and conditional writes evaluate against the latest version",
+        "An MRSC global table spans exactly three Regions: three replicas, or two replicas and a witness that cannot be read or written",
+        "A write to an item being modified in another Region fails with ReplicatedWriteConflictException in MRSC and can be retried",
+        "TTL and local secondary indexes are not supported in MRSC; transactions are not supported in MRSC and are atomic only within one Region in MREC",
+        "MREC has an RPO equal to the replication delay; MRSC supports an RPO of zero",
+        "MREC publishes the ReplicationLatency metric per source and destination Region pair; MRSC does not",
+        "Global tables have a 99.999% availability SLA, single-Region tables 99.99%",
+        "AWS FIS can pause replication to and from a replica to simulate Region isolation",
+        "MRSC is available in Tokyo, Seoul and Osaka among other Regions"
+      ],
+      "note": "This page says an MRSC table can combine any three of the listed Regions; the design guide (mr-dynamodb-global-tables-design) lists Region sets that cannot be mixed. Tokyo, Seoul and Osaka are in one set either way."
+    },
+    {
+      "id": "mr-dynamodb-global-tables-design",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-global-table-design.html",
+      "title": "Using DynamoDB global tables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DynamoDB has no global endpoint: every request goes to a Regional endpoint and reaches the replica in that Region",
+        "MREC write conflicts are not recorded in CloudWatch or CloudTrail",
+        "There is no SLA on ReplicationLatency; a new item usually reaches all replicas within a second",
+        "Each item carries a private last-write timestamp, and an incoming replicated item is applied only if its timestamp is greater",
+        "Items are replicated individually, and the order of writes in a remote Region may differ from the source Region",
+        "The local Region accepts writes while another Region is offline, and pending replication is retried when it returns",
+        "With MRSC, a Region accepts reads and writes only while a second Region (replica or witness) is reachable; otherwise it serves eventually consistent reads only",
+        "MRSC Region sets: Tokyo, Seoul and Osaka form the AP set, and a table cannot span sets",
+        "MRSC was introduced in June 2025"
+      ]
+    },
+    {
+      "id": "mr-dynamodb-write-modes",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-global-table-design.prescriptive-guidance.writemodes.html",
+      "title": "Write modes with DynamoDB global tables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Global tables are always active-active at the table level; treating one as active-passive is done by routing writes outside DynamoDB",
+        "Writing to one Region avoids conflicts in MREC and is what conditional expressions and transactions need",
+        "Writing to any Region suits MRSC tables, and MREC tables whose writes are idempotent assignments"
+      ]
+    },
+    {
+      "id": "mr-dynamodb-evacuation",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-global-table-design.prescriptive-guidance.evacuation.html",
+      "title": "Evacuation processes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Moving the write Region of an MREC table means pausing writes, waiting for replication, then resuming in the new Region",
+        "No metric says with certainty that replication has completed; waiting ten times the recent maximum ReplicationLatency is given as typically sufficient for a healthy Region",
+        "When an MREC Region goes offline, its unreplicated writes are held and propagated after it returns, and a later update in the other Region suppresses them under last writer wins"
+      ]
+    },
+    {
+      "id": "mr-dynamodb-global-tables-billing",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/global-tables-billing.html",
+      "title": "Understanding Amazon DynamoDB billing for global tables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A write to a global table is billed as one replicated write request unit per replica table, in each replica's Region",
+        "Replicated write units are priced the same as single-Region write units",
+        "DynamoDB does not charge cross-Region data transfer for replication between the Regions of a global table",
+        "A witness incurs no replicated write, storage or transfer cost"
+      ]
+    },
+    {
+      "id": "mr-dynamodb-global-tables-best-practices",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/globaltables-bestpractices.html",
+      "title": "Best practices for global tables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudFormation cannot coordinate a global table across stacks: all replicas should be defined in one Region's stack",
+        "Changing a resource's type from AWS::DynamoDB::Table to AWS::DynamoDB::GlobalTable may delete the table",
+        "Deletion protection is enabled per replica",
+        "Point-in-time recovery on one replica may be enough for disaster recovery objectives"
+      ]
+    },
+    {
+      "id": "mr-s3-replication",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html",
+      "title": "Replicating objects within and across Regions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 replication copies objects asynchronously",
+        "Replicas retain metadata such as the original creation time and version ID",
+        "Two-way replication keeps buckets in two Regions in sync during a failover",
+        "Objects that existed before a rule was added are replicated with S3 Batch Replication, on demand"
+      ]
+    },
+    {
+      "id": "mr-s3-replication-what",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-what-is-isnot-replicated.html",
+      "title": "What does Amazon S3 replicate?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default S3 replicates objects created after the replication configuration is added",
+        "With the current configuration format, delete markers are not replicated by default",
+        "A DELETE that names a version ID is not replicated to the destination",
+        "Objects that are themselves replicas created by another rule are not replicated",
+        "Delete markers added by a lifecycle action are not replicated"
+      ]
+    },
+    {
+      "id": "mr-s3-replication-requirements",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-requirements.html",
+      "title": "Requirements and considerations for replication",
+      "checkedAt": "2026-10-13",
+      "supports": ["Both the source and the destination bucket must have versioning enabled"]
+    },
+    {
+      "id": "mr-s3-replication-time-control",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-time-control.html",
+      "title": "Meeting compliance requirements with S3 Replication Time Control",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 RTC replicates most objects in seconds and 99.9 percent of objects within 15 minutes",
+        "S3 RTC rules publish replication metrics and can send events when an object misses the 15-minute threshold"
+      ]
+    },
+    {
+      "id": "mr-s3-delete-marker-replication",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/delete-marker-replication.html",
+      "title": "Replicating delete markers between buckets",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Without delete marker replication, a delete in the source adds a delete marker in the source only",
+        "Delete marker replication is not covered by the 15-minute S3 RTC SLA"
+      ]
+    },
+    {
+      "id": "mr-s3-replication-status",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-status.html",
+      "title": "Getting replication status information",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A source object's replication status is PENDING, COMPLETED or FAILED, and a replica's is REPLICA"
+      ]
+    },
+    {
+      "id": "mr-s3-replication-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/setting-repl-config-perm-overview.html",
+      "title": "Setting up permissions for live replication",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The replication role's actions: s3:GetReplicationConfiguration and s3:ListBucket on the source bucket, s3:GetObjectVersionForReplication, s3:GetObjectVersionAcl and s3:GetObjectVersionTagging on its objects, and s3:ReplicateObject, s3:ReplicateDelete and s3:ReplicateTags on the destination's objects"
+      ]
+    },
+    {
+      "id": "mr-s3-replication-metrics",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/repl-metrics.html",
+      "title": "Using S3 Replication metrics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replication metrics track bytes pending, operations pending, operations failed and replication latency",
+        "Replication metrics are billed at the rate of CloudWatch custom metrics"
+      ]
+    },
+    {
+      "id": "mr-s3-pricing-replication",
+      "url": "https://aws.amazon.com/s3/pricing/",
+      "title": "Amazon S3 pricing (replication)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Cross-Region replication is billed for destination storage, replication PUT requests at the destination Region's rate, and inter-Region data transfer out at the source Region's rate",
+        "S3 RTC adds a Replication Time Control data transfer charge and replication metrics charges"
+      ],
+      "note": "Read as raw HTML; only the paragraph under Replication was used. Rates come from the Price List files."
+    },
+    {
+      "id": "mr-route53-health-determination",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-determining-health-of-endpoints.html",
+      "title": "How Amazon Route 53 determines whether a health check is healthy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Health checkers in several locations each send requests every 10 or 30 seconds and do not coordinate",
+        "A health check is healthy while more than 18% of health checkers report the endpoint healthy; the value may change",
+        "For HTTP and HTTPS, a checker must connect within four seconds and receive a 2xx or 3xx status within two seconds after connecting"
+      ]
+    },
+    {
+      "id": "mr-route53-health-values",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/health-checks-creating-values.html",
+      "title": "Values that you specify when you create or update health checks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The failure threshold is the number of consecutive checks an endpoint must pass or fail to change status",
+        "With a 30-second interval an endpoint receives a request about every two seconds on average",
+        "HTTPS health checks carry an additional charge, and the protocol cannot be changed after creation"
+      ]
+    },
+    {
+      "id": "mr-route53-failover-types",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-types.html",
+      "title": "Active-active and active-passive failover",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Active-passive failover uses the failover routing policy: the primary answers while healthy, the secondary when the primary is unhealthy",
+        "Active-active failover uses any other routing policy, and every healthy record can answer"
+      ]
+    },
+    {
+      "id": "mr-route53-failover-problems",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-problems.html",
+      "title": "How Amazon Route 53 averts failover problems",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When all records are considered unhealthy, Route 53 reverts to considering all of them healthy"
+      ]
+    },
+    {
+      "id": "mr-route53-latency-routing",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-latency.html",
+      "title": "Latency-based routing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Latency records make Route 53 answer with the Region that gives the user the lowest latency, measured between users and AWS data centers"
+      ]
+    },
+    {
+      "id": "mr-route53-alias-choice",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html",
+      "title": "Choosing between alias and non-alias records",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The TTL of an alias record that points to an AWS resource cannot be set; Route 53 uses the default TTL for the resource"
+      ],
+      "note": "The page does not state the TTL used for an API Gateway domain name."
+    },
+    {
+      "id": "mr-route53-best-practices",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/best-practices-dns.html",
+      "title": "Best practices for Amazon Route 53 DNS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Route 53 health checks and ARC routing controls work in the data plane and do not depend on the control plane; failover should rely on them",
+        "The recommended range for TTL values is 60 to 172,800 seconds"
+      ]
+    },
+    {
+      "id": "mr-route53-pricing",
+      "url": "https://aws.amazon.com/route53/pricing/",
+      "title": "Amazon Route 53 pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "HTTPS, string matching, fast interval and latency measurement are optional health check features, each billed per month",
+        "Up to 50 health checks of AWS endpoints in or linked to the account are not charged",
+        "An AWS endpoint is a resource running in AWS in the same account as the health check or billed to it"
+      ]
+    },
+    {
+      "id": "mr-cfn-route53-recordset",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-route53-recordset.html",
+      "title": "AWS::Route53::RecordSet",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Failover is PRIMARY on one record set and SECONDARY on the other, with SetIdentifier and HealthCheckId",
+        "A failover alias record set must set EvaluateTargetHealth to true"
+      ]
+    },
+    {
+      "id": "mr-cfn-route53-healthcheck",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-route53-healthcheck-healthcheckconfig.html",
+      "title": "AWS::Route53::HealthCheck HealthCheckConfig",
+      "checkedAt": "2026-10-13",
+      "supports": ["FailureThreshold defaults to three health checks"]
+    },
+    {
+      "id": "mr-apigw-dns-failover",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/dns-failover.html",
+      "title": "Configure custom health checks for DNS failover for an API Gateway API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With a custom domain name, a failover between Regions needs no change of endpoint in clients",
+        "With Evaluate Target Health alone, an alias record fails only when the API Gateway service is unavailable in the Region; custom health checks are for the API's own failures"
+      ]
+    },
+    {
+      "id": "mr-apigw-regional-domain",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-regional-api-custom-domain-create.html",
+      "title": "Set up a Regional custom domain name in API Gateway",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Regional custom domain name needs an ACM certificate in the same Region as the API"
+      ]
+    },
+    {
+      "id": "mr-cognito-regional-data",
+      "url": "https://docs.aws.amazon.com/cognito/latest/developerguide/security-cognito-regional-data-considerations.html",
+      "title": "Amazon Cognito: Regional data considerations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A user pool is created in one Region and stores user profile data only in that Region"
+      ]
+    },
+    {
+      "id": "mr-secrets-manager-replication",
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/replicate-secrets.html",
+      "title": "Replicate AWS Secrets Manager secrets across Regions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A secret can be replicated to other Regions, and a replica can be promoted to a standalone secret"
+      ]
+    },
+    {
+      "id": "mr-ssm-parameter-store",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html",
+      "title": "AWS Systems Manager Parameter Store",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Parameter limits are stated per account and Region, and the page points to Secrets Manager for cross-Region replication"
+      ],
+      "note": "Read while listing what stays in one Region; the chapter's text relies on the Secrets Manager page instead."
+    },
+    {
+      "id": "mr-cloud-control-supported",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::Route53::HealthCheck, AWS::ApiGatewayV2::DomainName and AWS::ApiGatewayV2::ApiMapping are listed as supported"
+      ]
+    },
+    {
+      "id": "mr-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package, dist)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for AWS::DynamoDB::GlobalTable, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::Logs::LogGroup, the four AWS::ApiGatewayV2 types the HTTP API uses (Api, Integration, Route, Stage), AWS::CertificateManager::Certificate and AWS::Route53::RecordSet",
+        "The GlobalTable provider's list of handled properties includes Replicas and does not include MultiRegionConsistency or GlobalTableWitnesses",
+        "A deploy uses each stack's own Region when the stack declares one, and falls back to AWS_REGION otherwise",
+        "The state bucket is named without a Region, and bootstrap is described as once per account"
+      ],
+      "note": "Read in node_modules/@go-to-k/cdkd/dist of the installed package. Nothing was deployed."
+    },
+    {
+      "id": "mr-aws-cdk-lib",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (installed package, type definitions)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "dynamodb.TableV2 takes replicas, multiRegionConsistency (default EVENTUAL) and witnessRegion, and synthesizes AWS::DynamoDB::GlobalTable",
+        "s3.Bucket replication rules take replicationTimeControl, metrics, deleteMarkerReplication and replicaModifications; the role CDK creates by default is named CDKReplicationRole",
+        "route53.HealthCheck and route53.ARecord (failover, region, setIdentifier, healthCheck) exist as L2 constructs"
+      ]
+    },
+    {
+      "id": "mr-price-list-dynamodb-tokyo",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon DynamoDB, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replicated write request units in Tokyo: USD 0.715 per million (SKU YHU2DWZ6TPZFUA4Y)"
+      ]
+    },
+    {
+      "id": "mr-price-list-dynamodb-osaka",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-3/index.json",
+      "title": "AWS Price List: Amazon DynamoDB, ap-northeast-3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replicated write request units in Osaka: USD 0.715 per million (SKU WTQ27GUM5ZDY4KKH)",
+        "Storage in Osaka: first 25 GB-month at USD 0, then USD 0.285 per GB-month (SKU 5TUUYBYG8YVFAQY4)",
+        "PITR storage in Osaka: USD 0.228 per GB-month (SKU 9KCJ3NHHD49P6CH9)"
+      ]
+    },
+    {
+      "id": "mr-price-list-s3-tokyo",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon S3, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replication Time Control data transfer from Tokyo to Osaka: USD 0.015 per GB (SKU VAF3TKGQH3JPBB3N)"
+      ]
+    },
+    {
+      "id": "mr-price-list-s3-osaka",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-3/index.json",
+      "title": "AWS Price List: Amazon S3, ap-northeast-3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 Standard storage in Osaka: USD 0.025 per GB-month for the first 50 TB (SKU FZJPRKCZ5H2HPU55)",
+        "PUT, COPY, POST and LIST requests in Osaka: USD 0.0047 per 1,000 (SKU 3VFP3QBE5N8CKEHH)"
+      ]
+    },
+    {
+      "id": "mr-price-list-data-transfer",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Data Transfer, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": ["Data transfer from Tokyo to Osaka: USD 0.09 per GB (SKU 4364QHA6R42PYPXS)"]
+    },
+    {
+      "id": "mr-price-list-route53",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRoute53/current/index.json",
+      "title": "AWS Price List: Amazon Route 53",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Health checks of AWS endpoints: first 50 at USD 0, then USD 0.50 per month (SKU URRRFRNVRT3XZBG6)",
+        "Optional health check features for AWS endpoints: USD 1.00 per feature per month (SKU T9BUZ8SXFA6XMDPT)",
+        "Hosted zones: USD 0.50 per month for the first 25 (SKU KVPGEJE88UW8S779)",
+        "Queries to alias records are free of charge"
+      ]
+    },
+    {
+      "id": "mr-cloudflare-workers-how",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "Cloudflare Workers: How Workers works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers run on Cloudflare's global network, and a request is handled by the data center that receives it"
+      ]
+    },
+    {
+      "id": "mr-cloudflare-d1-read-replication",
+      "url": "https://developers.cloudflare.com/d1/best-practices/read-replication/",
+      "title": "Cloudflare D1: Global read replication",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Global read replication is marked Beta",
+        "Without read replication every query goes to one primary database instance in one location",
+        "Read replicas are asynchronously replicated, serve reads only, and may be arbitrarily out of date; all writes are forwarded to the primary",
+        "The Sessions API gives sequential consistency within a session"
+      ]
+    },
+    {
+      "id": "mr-cloudflare-d1-data-location",
+      "url": "https://developers.cloudflare.com/d1/configuration/data-location/",
+      "title": "Cloudflare D1: Data location",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default D1 creates the primary database instance close to where the create request was issued; a location hint or a jurisdiction can be given"
+      ]
+    },
+    {
+      "id": "mr-cloudflare-kv-how",
+      "url": "https://developers.cloudflare.com/kv/concepts/how-kv-works/",
+      "title": "Cloudflare Workers KV: How KV works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "KV stores data in a small number of centralized data centers and caches it at the locations that read it",
+        "KV is eventually consistent: a change may take up to 60 seconds or more to be visible in other locations"
+      ]
+    },
+    {
+      "id": "mr-cloudflare-do-data-location",
+      "url": "https://developers.cloudflare.com/durable-objects/reference/data-location/",
+      "title": "Cloudflare Durable Objects: Data location",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Durable Object is created close to the first request for it and does not currently change location afterwards",
+        "A location hint or a jurisdiction can be given"
+      ]
+    },
+    {
+      "id": "mr-cloudflare-r2-data-location",
+      "url": "https://developers.cloudflare.com/r2/reference/data-location/",
+      "title": "Cloudflare R2: Data location",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A bucket's location is chosen automatically near the create request unless a location hint or a jurisdiction is given"
+      ]
+    },
+    {
+      "id": "mr-cloudflare-r2-durability",
+      "url": "https://developers.cloudflare.com/r2/reference/durability/",
+      "title": "Cloudflare R2: Durability",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "R2 stores an object across several data centers within a geographic region",
+        "R2 has an availability SLA of 99.9%"
+      ]
+    },
+    {
+      "id": "mr-vercel-function-regions",
+      "url": "https://vercel.com/docs/functions/configuring-functions/region",
+      "title": "Vercel: Configuring regions for Vercel Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Functions run in iad1 by default for new projects, and the region can be configured",
+        "Hobby is limited to a single region, Pro to 5 regions, Enterprise to all regions",
+        "functionFailoverRegions, the setting for failover regions, is available on Enterprise plans"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "global-table",
+      "ja": "グローバルテーブル（global table）",
+      "en": "Global table",
+      "firstUse": "28",
+      "definition": {
+        "ja": "DynamoDB のテーブルを複数のリージョンに置き、どのレプリカへの書き込みもほかのレプリカに届ける機能。レプリカはどれも読み書きできる。",
+        "en": "A DynamoDB table kept in several Regions, where a write to any replica is delivered to the others. Every replica accepts reads and writes."
+      }
+    },
+    {
+      "id": "mrec",
+      "ja": "MREC（multi-Region eventual consistency）",
+      "en": "MREC (multi-Region eventual consistency)",
+      "firstUse": "28",
+      "definition": {
+        "ja": "グローバルテーブルの既定の整合性モード。書き込みは受けたリージョンで確定し、ほかのリージョンには後から届く。",
+        "en": "The default consistency mode of a global table: a write is final in the Region that took it and reaches the other Regions afterwards."
+      }
+    },
+    {
+      "id": "mrsc",
+      "ja": "MRSC（multi-Region strong consistency）",
+      "en": "MRSC (multi-Region strong consistency)",
+      "firstUse": "28",
+      "definition": {
+        "ja": "グローバルテーブルの整合性モードの 1 つ。書き込みは、ほかのリージョンの少なくとも 1 つに届いてから成功を返す。3 つのリージョンが要る。",
+        "en": "A consistency mode of a global table in which a write returns only after at least one other Region has it. It needs three Regions."
+      }
+    },
+    {
+      "id": "last-writer-wins",
+      "ja": "last writer wins",
+      "en": "Last writer wins",
+      "firstUse": "28",
+      "definition": {
+        "ja": "同じアイテムへの書き込みが食い違ったとき、時刻の新しいほうを残し、古いほうを捨てる決め方。捨てられた書き込みは、どこにも記録されない。",
+        "en": "Resolving two conflicting writes to one item by keeping the one with the later timestamp and discarding the other. The discarded write is recorded nowhere."
+      }
+    },
+    {
+      "id": "witness",
+      "ja": "ウィットネス（witness）",
+      "en": "Witness",
+      "firstUse": "28",
+      "definition": {
+        "ja": "MRSC のグローバルテーブルで、2 つのレプリカが合意するために使う 3 つ目のリージョン。読み書きはできない。",
+        "en": "The third Region of an MRSC global table, used so that two replicas can agree. It cannot be read or written."
+      }
+    },
+    {
+      "id": "cross-region-replication",
+      "ja": "クロスリージョンレプリケーション（CRR）",
+      "en": "Cross-Region Replication (CRR)",
+      "firstUse": "28",
+      "definition": {
+        "ja": "S3 のバケットに書かれた新しいオブジェクトを、別のリージョンのバケットへ非同期にコピーする設定。",
+        "en": "An S3 configuration that asynchronously copies new objects written to a bucket into a bucket in another Region."
+      }
+    },
+    {
+      "id": "failover-routing",
+      "ja": "フェイルオーバールーティング",
+      "en": "Failover routing",
+      "firstUse": "28",
+      "definition": {
+        "ja": "Route 53 のルーティングポリシーの 1 つ。プライマリのレコードが正常なあいだはそれを返し、異常になるとセカンダリを返す。",
+        "en": "A Route 53 routing policy that answers with the primary record while it is healthy and with the secondary when it is not."
+      }
+    },
+    {
+      "id": "latency-routing",
+      "ja": "レイテンシールーティング",
+      "en": "Latency routing",
+      "firstUse": "28",
+      "definition": {
+        "ja": "Route 53 のルーティングポリシーの 1 つ。問い合わせた利用者から遅延のいちばん小さいリージョンのレコードを返す。",
+        "en": "A Route 53 routing policy that answers with the record of the Region that has the lowest latency for the user who asked."
+      }
+    },
+    {
+      "id": "active-passive",
+      "ja": "active-passive",
+      "en": "Active-passive",
+      "firstUse": "28",
+      "definition": {
+        "ja": "ふだんは 1 つのリージョンだけがリクエストに答え、もう 1 つは切り替えに備えて待つ構成。両方が常に答える構成は active-active。",
+        "en": "A setup in which one Region answers requests and another waits to take over. When both always answer, it is active-active."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "28.overview",
+      "sources": ["examples/28-multi-region"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "28.modes",
+      "sources": ["examples/28-multi-region/infra/bin/app.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "28.single-region",
+      "sources": ["examples/28-multi-region/infra/lib/region-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "28.table",
+      "sources": [
+        "examples/28-multi-region/infra/lib/region-stack.ts",
+        "examples/28-multi-region/src/global-table.ts",
+        "examples/28-multi-region/src/replica-repository.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "28.lost-update",
+      "sources": [
+        "examples/28-multi-region/src/global-table.ts",
+        "examples/28-multi-region/test/global-table.test.ts"
+      ],
+      "tasks": ["test:unit", "mr:demo"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "28.outage",
+      "sources": [
+        "examples/28-multi-region/test/global-table.test.ts",
+        "examples/28-multi-region/test/failover.test.ts",
+        "examples/28-multi-region/src/regional-app.ts"
+      ],
+      "tasks": ["test:unit", "mr:demo"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "28.bucket",
+      "sources": [
+        "examples/28-multi-region/src/bucket-replication.ts",
+        "examples/28-multi-region/test/bucket-replication.test.ts",
+        "examples/28-multi-region/infra/lib/region-stack.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "28.routing",
+      "sources": [
+        "examples/28-multi-region/src/failover.ts",
+        "examples/28-multi-region/src/regional-app.ts",
+        "examples/28-multi-region/src/lambda.ts",
+        "examples/28-multi-region/test/failover.test.ts",
+        "examples/28-multi-region/test/regional-app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "28.objectives",
+      "sources": [
+        "examples/28-multi-region/src/objectives.ts",
+        "examples/28-multi-region/test/failover.test.ts"
+      ],
+      "tasks": ["test:unit", "mr:demo"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "28.local",
+      "sources": [
+        "examples/28-multi-region/scripts/demo.ts",
+        "examples/28-multi-region/src/local.ts"
+      ],
+      "tasks": ["mr:demo", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "28.infra",
+      "sources": [
+        "examples/28-multi-region/infra/lib/region-stack.ts",
+        "examples/28-multi-region/infra/bin/app.ts",
+        "examples/28-multi-region/infra/test/region-stack.test.ts",
+        "examples/28-multi-region/cdk.json"
+      ],
+      "tasks": ["mr:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "28.deploy",
+      "sources": [
+        "examples/28-multi-region/scripts/mr.ts",
+        "examples/28-multi-region/infra/bin/app.ts"
+      ],
+      "tasks": ["mr:standby:infra:deploy", "mr:infra:deploy", "mr:status", "mr:conflict"],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "28.failover-drill",
+      "sources": [
+        "examples/28-multi-region/scripts/mr.ts",
+        "examples/28-multi-region/src/objectives.ts"
+      ],
+      "tasks": ["mr:status"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "28.platforms",
+      "sources": ["examples/28-multi-region"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "28.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "28.cleanup",
+      "sources": ["examples/28-multi-region/scripts/mr.ts"],
+      "tasks": ["mr:empty", "mr:infra:destroy", "mr:standby:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "dynamodb.replicated-write",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "YHU2DWZ6TPZFUA4Y",
+      "usageType": "APN1-ReplWriteRequestUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ReplicatedWriteRequestUnits",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000007150",
+          "description": "$0.715 per million replicated write request units (Asia Pacific (Tokyo))"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "dynamodb.replicated-write.osaka",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-3",
+      "sku": "WTQ27GUM5ZDY4KKH",
+      "usageType": "APN3-ReplWriteRequestUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ReplicatedWriteRequestUnits",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000007150",
+          "description": "$0.715 per million replicated write request units in Asia Pacific (Osaka)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "dynamodb.storage.osaka",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-3",
+      "sku": "5TUUYBYG8YVFAQY4",
+      "usageType": "APN3-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 25,
+          "usd": "0.0000000000",
+          "description": "$0.00 per GB-Month of storage for first 25 free GB-Months"
+        },
+        {
+          "from": 25,
+          "to": null,
+          "usd": "0.2850000000",
+          "description": "$0.285 per GB-Month of storage used beyond first 25 free GB-Months"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "dynamodb.pitr.storage.osaka",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-3",
+      "sku": "9KCJ3NHHD49P6CH9",
+      "usageType": "APN3-TimedPITRStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2280000000",
+          "description": "USD 0.228 per GB-Mo for TimedPITRStorage-ByteHrs in Asia Pacific (Osaka)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3.standard.storage.osaka",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-3",
+      "sku": "FZJPRKCZ5H2HPU55",
+      "usageType": "APN3-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 51200,
+          "usd": "0.0250000000",
+          "description": "$0.025 per GB - first 50 TB / month of storage used"
+        },
+        {
+          "from": 51200,
+          "to": 512000,
+          "usd": "0.0240000000",
+          "description": "$0.024 per GB - next 450 TB / month of storage used"
+        },
+        {
+          "from": 512000,
+          "to": null,
+          "usd": "0.0230000000",
+          "description": "$0.023 per GB - storage used / month over 500 TB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3.request.tier1.osaka",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-3",
+      "sku": "3VFP3QBE5N8CKEHH",
+      "usageType": "APN3-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000047000",
+          "description": "$0.0047 per 1,000 PUT, COPY, POST, or LIST requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3.rtc.tokyo-osaka",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "VAF3TKGQH3JPBB3N",
+      "usageType": "APN1-APN3-S3RTC-Out-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0150000000",
+          "description": "$0.015 per GB - Asia Pacific (Tokyo) Data Transfer for Replication Time Control to Asia Pacific (Osaka)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "datatransfer.tokyo-osaka",
+      "offerCode": "AWSDataTransfer",
+      "region": "ap-northeast-1",
+      "sku": "4364QHA6R42PYPXS",
+      "usageType": "APN1-APN3-AWS-Out-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0900000000",
+          "description": "$0.09 per GB - Asia Pacific (Tokyo) data transfer to Asia Pacific (Osaka)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-16T13:22:08Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "route53.health-check.aws",
+      "offerCode": "AmazonRoute53",
+      "region": "global",
+      "sku": "URRRFRNVRT3XZBG6",
+      "usageType": "Health-Check-AWS",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 50,
+          "usd": "0.0000000000",
+          "description": "First 50 Health Checks of AWS endpoints are free of charge"
+        },
+        {
+          "from": 50,
+          "to": null,
+          "usd": "0.5000000000",
+          "description": "$0.50 per Health Check for additional Health Checks of AWS endpoints"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRoute53/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:04Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "route53.health-check.option.aws",
+      "offerCode": "AmazonRoute53",
+      "region": "global",
+      "sku": "T9BUZ8SXFA6XMDPT",
+      "usageType": "Health-Check-Option-AWS",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.0000000000",
+          "description": "$1.00 per optional feature for Health Checks of AWS endpoints"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRoute53/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:04Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "route53.hosted-zone",
+      "offerCode": "AmazonRoute53",
+      "region": "global",
+      "sku": "KVPGEJE88UW8S779",
+      "usageType": "HostedZone",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "HostedZone",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 25,
+          "usd": "0.5000000000",
+          "description": "$0.50 per Hosted Zone for the first 25 Hosted Zones"
+        },
+        {
+          "from": 25,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per Hosted Zone for additional Hosted Zones"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRoute53/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:04Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "dynamodb.replicated-write.osaka",
+      "reason": "No free allowance for replicated write request units was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "datatransfer.tokyo-osaka",
+      "reason": "No free allowance for inter-Region data transfer was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "s3.rtc.tokyo-osaka",
+      "reason": "No free allowance for Replication Time Control was looked for or confirmed; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "mr-second-region",
+      "chapter": "28",
+      "title": {
+        "ja": "Multi-Region: 2 つ目のリージョンが 1 か月に上乗せするもの（テーブル 1 GB、画像 10 GB）",
+        "en": "Multi-Region: what the second Region adds in a month (1 GB table, 10 GB of images)"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の 2 つのスタック。テーブルは各リージョンで 1 GB、point-in-time recovery は両方のレプリカで有効",
+          "書き込みは月 10 万回で、どれも 1 KB 以下。大阪のレプリカに同じ数の replicated write request unit がかかる。東京側の書き込みは、同じ単価の replicated write request unit に置き換わるので、上乗せには数えない",
+          "画像は 10 GB で、その写しを大阪に置く。月に 1 GB、10,000 個が新しく複製される。複製の PUT は大阪の通常の PUT の単価で計算",
+          "読み取り、Lambda、API Gateway、ログ、東京側の保存料は含めない。大阪の DynamoDB の保存料は、最初の 25 GB が USD 0 の段に入る"
+        ],
+        "en": [
+          "The two default stacks: a 1 GB table in each Region, with point-in-time recovery on both replicas",
+          "100,000 writes a month, each 1 KB or less. The Osaka replica is billed the same number of replicated write request units. Writes on the Tokyo side become replicated write request units at the same unit price, so they are not counted as added",
+          "10 GB of images with a copy in Osaka; 1 GB in 10,000 objects is newly replicated each month. Replication PUTs are computed at Osaka's ordinary PUT price",
+          "Reads, Lambda, API Gateway, logs, and storage on the Tokyo side are left out. DynamoDB storage in Osaka falls inside the first 25 GB, which is priced at USD 0"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.replicated-write.osaka",
+          "quantity": 100000,
+          "basis": "100,000 writes of 1 KB or less, replicated to Osaka"
+        },
+        {
+          "priceId": "dynamodb.storage.osaka",
+          "quantity": 1,
+          "basis": "1 GB replica in Osaka, in GB-month"
+        },
+        {
+          "priceId": "dynamodb.pitr.storage.osaka",
+          "quantity": 1,
+          "basis": "1 GB replica under PITR in Osaka, in GB-month"
+        },
+        {
+          "priceId": "s3.standard.storage.osaka",
+          "quantity": 10,
+          "basis": "10 GB of replicas in Osaka, in GB-month"
+        },
+        {
+          "priceId": "s3.request.tier1.osaka",
+          "quantity": 10000,
+          "basis": "10,000 replication PUT requests into Osaka"
+        },
+        {
+          "priceId": "datatransfer.tokyo-osaka",
+          "quantity": 1,
+          "basis": "1 GB replicated from Tokyo to Osaka"
+        }
+      ]
+    },
+    {
+      "id": "mr-dns",
+      "chapter": "28",
+      "title": {
+        "ja": "Multi-Region: ドメインを付けた構成が 1 か月に上乗せするもの",
+        "en": "Multi-Region: what the domain option adds in a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c domain=...` を付けた 2 つのスタック。ヘルスチェックは HTTPS で 2 つ、間隔は 30 秒",
+          "ヘルスチェックの基本料金は、AWS のエンドポイント向けの最初の 50 個が USD 0 の段に入る。HTTPS は追加機能として 1 つずつ課金される",
+          "ホストゾーンは 1 つ。すでに持っているゾーンを使うなら、この行は上乗せにならない",
+          "エイリアスレコードへのクエリは無料。ACM の証明書と API Gateway のカスタムドメインの料金は調べておらず、含めていない"
+        ],
+        "en": [
+          "The two stacks with `-c domain=...`: two HTTPS health checks at a 30-second interval",
+          "The base charge for a health check of an AWS endpoint falls inside the first 50, priced at USD 0. HTTPS is billed as one optional feature per health check",
+          "One hosted zone. If you already own the zone, this line adds nothing",
+          "Queries to alias records are free. Charges for the ACM certificates and the API Gateway custom domain names were not looked up and are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "route53.health-check.aws",
+          "quantity": 2,
+          "basis": "2 health checks of AWS endpoints, per month"
+        },
+        {
+          "priceId": "route53.health-check.option.aws",
+          "quantity": 2,
+          "basis": "HTTPS on each of the 2 health checks, per month"
+        },
+        {
+          "priceId": "route53.hosted-zone",
+          "quantity": 1,
+          "basis": "1 public hosted zone, per month"
+        }
+      ]
+    },
+    {
+      "id": "mr-rtc",
+      "chapter": "28",
+      "title": {
+        "ja": "Multi-Region: S3 Replication Time Control が 1 か月に上乗せするもの",
+        "en": "Multi-Region: what S3 Replication Time Control adds in a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c rtc=on`。東京から大阪への複製ルールが 1 つ",
+          "月に 1 GB が複製される",
+          "複製のメトリクスは 4 つ（bytes pending、operations pending、operations failed、replication latency）が 1 か月ずっと課金されると仮定。ルール 1 つあたりの実際の本数と、複製するものがない月にも課金されるかは確認していない"
+        ],
+        "en": [
+          "`-c rtc=on`, with one replication rule from Tokyo to Osaka",
+          "1 GB replicated in the month",
+          "Assumes four replication metrics (bytes pending, operations pending, operations failed, replication latency) billed for the whole month. The real number per rule, and whether they are billed in a month with nothing to replicate, was not confirmed"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.rtc.tokyo-osaka",
+          "quantity": 1,
+          "basis": "1 GB replicated under Replication Time Control"
+        },
+        {
+          "priceId": "cloudwatch.metric.custom",
+          "quantity": 4,
+          "basis": "4 replication metrics, per month (assumed count)"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "28",
+        "command": "vp test run examples/28-multi-region",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "85 件。2 つのリージョンをメモリ上に置いたモデルで、MREC の複製の遅れ、2 つのリージョンからの同時の編集で片方が消えること、書き込みを 1 つのリージョンに寄せると 05章の検査が効くこと、カウンターの取りこぼし、東京を切り離したあとの上書きと遅れて届く書き込み、MRSC での 409 と孤立したリージョンの拒否。S3 の複製の規則（ルールより前のオブジェクト、削除マーカー、バージョン指定の削除、双方向、テーブルとの速さの差）。ヘルスチェックの判定、フェイルオーバーとレイテンシーの応答、古い DNS の答えを持つクライアント、RTO の内訳。リージョンごとの API の包み（ヘッダー、ヘルスチェック、書き込みの拒否）。スタックのアサーション。05章のリポジトリのコントラクトテストを、2 つのモードのレプリカに対して",
+          "en": "85 tests. On a model that keeps two Regions in memory: replication lag in MREC, one of two simultaneous edits from two Regions vanishing, chapter 05's check working again when writes go to one Region, a counter losing an increment, an overwrite after Tokyo is cut off and a write that arrives late, the 409 and the refusal of an isolated Region in MRSC. The rules of S3 replication (objects older than the rule, delete markers, deletes that name a version, two-way, the difference in speed from the table). Health check decisions, failover and latency answers, a client holding an old DNS answer, the parts of the RTO. The per-Region wrapper of the API (header, health check, refusing writes). Stack assertions. Chapter 05's repository contract against a replica in both modes"
+        }
+      },
+      {
+        "scope": "28",
+        "command": "tsc --noEmit -p examples/28-multi-region",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査。エラーなし",
+          "en": "Type check. No errors"
+        }
+      },
+      {
+        "scope": "28",
+        "command": "vp run mr:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "2 つのスタック（AihMultiRegionStandby が ap-northeast-3、AihMultiRegion が ap-northeast-1）のテンプレートを書き出した。AWS には問い合わせていない",
+          "en": "Wrote the templates of both stacks (AihMultiRegionStandby in ap-northeast-3, AihMultiRegion in ap-northeast-1). No call to AWS"
+        }
+      },
+      {
+        "scope": "28",
+        "command": "vp run mr:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "メモリ上の 2 つのリージョンで、6 つの場面を実行した。本文に載せた出力はこの実行のもの",
+          "en": "Ran the six scenes on two Regions in memory. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "28",
+        "command": "mutation check (7 changes to examples/28-multi-region)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "コードを 7 か所わざと壊し（last writer wins の比較、全レコード異常時の応答、書き込みの拒否、削除マーカーの複製、version の条件、EvaluateTargetHealth など）、そのたびにテストが落ちることを確かめた",
+          "en": "Broke the code in seven places on purpose (the last-writer-wins comparison, the answer when every record is unhealthy, refusing writes, delete marker replication, the version condition, EvaluateTargetHealth, and others) and confirmed that the tests failed each time"
+        }
+      },
+      {
+        "scope": "28",
+        "command": "vp run mr:standby:infra:deploy / mr:infra:deploy / mr:infra:diff / mr:infra:drift / mr:infra:destroy / mr:standby:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。cdkd が AWS::DynamoDB::GlobalTable とレプリカを作れること、別リージョンのスタックを 1 つのアプリからデプロイできること、名前を固定したバケットへの複製の設定が通ることは、どれも実物で確かめていない",
+          "en": "Not run. That cdkd can create the AWS::DynamoDB::GlobalTable and its replica, deploy a stack in another Region from one app, and apply replication into a bucket with a fixed name was not confirmed on AWS"
+        }
+      },
+      {
+        "scope": "28",
+        "command": "vp run mr:status / mr:conflict / mr:empty",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。実際のグローバルテーブルで 2 つのリージョンから同時に編集したときの結果は、ドキュメントの記述とモデルでしか確かめていない",
+          "en": "Not run. What a real global table does with two simultaneous edits from two Regions was confirmed only against the documentation and the model"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "28-two-regions",
+        "summary": {
+          "ja": "28章の 2 つのスタックを AWS に一度もデプロイしていない。未確認: cdkd 0.296.28 が AWS::DynamoDB::GlobalTable（レプリカごとの PITR を含む）を作れること、ap-northeast-3 のスタックを同じアプリからデプロイできること（東京で bootstrap した状態で足りるか）、名前を固定した別リージョンのバケットへの複製の設定、`-c back=on` の 2 回目のデプロイ、ReplicationLatency の実際の値、2 つのリージョンから同時に編集したときにどちらが残るか。",
+          "en": "The two stacks of chapter 28 have never been deployed. Unconfirmed: that cdkd 0.296.28 can create the AWS::DynamoDB::GlobalTable (per-replica PITR included), that the ap-northeast-3 stack deploys from the same app (and whether a bootstrap done for Tokyo is enough), the replication configuration into a bucket in another Region referred to by a fixed name, the second deploy with `-c back=on`, real ReplicationLatency values, and which of two simultaneous edits from two Regions survives."
+        },
+        "resume": {
+          "ja": "`vp run mr:standby:infra:deploy`、`vp run mr:infra:deploy` の順にデプロイし、`vp run mr:status` で両方のレプリカが ACTIVE であることを見る。`vp run mr:conflict --apply` の出力（2 つの PUT のステータスと、5 秒後に両方のリージョンが持つタイトル）を記録する。CloudWatch で ReplicationLatency を見る。最後に `vp run mr:empty --apply`、`vp run mr:infra:destroy`、`vp run mr:standby:infra:destroy`。",
+          "en": "Deploy with `vp run mr:standby:infra:deploy`, then `vp run mr:infra:deploy`, and check with `vp run mr:status` that both replicas are ACTIVE. Record what `vp run mr:conflict --apply` prints (the status of the two PUTs and the title both Regions hold five seconds later). Look at ReplicationLatency in CloudWatch. Finish with `vp run mr:empty --apply`, `vp run mr:infra:destroy`, and `vp run mr:standby:infra:destroy`."
+        }
+      },
+      {
+        "id": "28-failover",
+        "summary": {
+          "ja": "リージョンの障害もフェイルオーバーも、一度も起こしていない。未確認: Route 53 のヘルスチェックが異常と判定するまでの実際の時間、API Gateway のカスタムドメインを指すエイリアスレコードの TTL、切り替わりにクライアントが気づくまでの時間、cdkd が AWS::Route53::HealthCheck・AWS::ApiGatewayV2::DomainName・ApiMapping を Cloud Control API 経由で作れること、2 つのスタックが同じドメインの ACM の証明書をそれぞれ DNS で検証できること、RTO と RPO の実測値。",
+          "en": "No Region failure and no failover was ever exercised. Unconfirmed: how long a Route 53 health check really takes to turn unhealthy, the TTL of an alias record that points to an API Gateway custom domain name, how long clients take to notice the switch, that cdkd can create AWS::Route53::HealthCheck, AWS::ApiGatewayV2::DomainName and ApiMapping through the Cloud Control API, that two stacks can each validate an ACM certificate for the same domain through DNS, and any measured RTO or RPO."
+        },
+        "resume": {
+          "ja": "ホストゾーンを用意し、`-c domain=<name> -c zoneId=<id> -c zoneName=<zone>` を付けて 2 つのスタックをデプロイする。`dig <name>` で TTL を記録する。東京のスタックを `-c drill=on` でデプロイしてヘルスチェックを落とし、`x-aih-region` が ap-northeast-3 に変わるまでの時間を計って、`examples/28-multi-region/src/objectives.ts` の数字と比べる。AWS FIS のグローバルテーブルのアクションで複製を止める実験は、別に計画する。",
+          "en": "Prepare a hosted zone and deploy both stacks with `-c domain=<name> -c zoneId=<id> -c zoneName=<zone>`. Record the TTL that `dig <name>` shows. Deploy Tokyo's stack with `-c drill=on` so its health check fails, time how long `x-aih-region` takes to become ap-northeast-3, and compare it with the numbers in `examples/28-multi-region/src/objectives.ts`. Pausing replication with the AWS FIS global table actions is a separate experiment to plan."
+        }
+      },
+      {
+        "id": "28-mrsc",
+        "summary": {
+          "ja": "MRSC のグローバルテーブルを、この章のスタックは作らない。固定した版の cdkd の GlobalTable の実装が扱うプロパティの一覧に MultiRegionConsistency と GlobalTableWitnesses がなく、3 つ目のリージョンも要るため。MRSC の動きはドキュメントとモデルだけで確かめた。孤立したリージョンで SDK が投げるエラーの名前は確認していない。",
+          "en": "This chapter's stacks do not create an MRSC global table: the list of properties handled by the pinned cdkd's GlobalTable provider has neither MultiRegionConsistency nor GlobalTableWitnesses, and a third Region is needed. MRSC behaviour was checked against the documentation and the model only. The name of the error the SDK throws in an isolated Region was not confirmed."
+        },
+        "resume": {
+          "ja": "空のテーブルを AWS CDK CLI か AWS CLI で MRSC（東京、大阪、ウィットネスにソウル）として作り、2 つのリージョンから同じ version への更新を同時に送って、ConditionalCheckFailedException と ReplicatedWriteConflictException のどちらが返るかを記録する。",
+          "en": "Create an empty table as MRSC (Tokyo, Osaka, witness in Seoul) with the AWS CDK CLI or the AWS CLI, send updates of the same version from two Regions at once, and record whether ConditionalCheckFailedException or ReplicatedWriteConflictException comes back."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 28: two Regions -----------------------------------------\n      // Local: two Regions as a model in memory. No AWS.\n      \"mr:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/28-multi-region\" }),\n      // The primary stack, in Tokyo. `mr:infra:synth` writes the templates of both stacks.\n      ...infra(\"mr\", \"examples/28-multi-region\", \"AihMultiRegion\"),\n      // The standby stack, in Osaka: deployed first, destroyed last.\n      \"mr:standby:infra:diff\": live(`${node} tools/src/infra/cdkd.ts diff examples/28-multi-region AihMultiRegionStandby`),\n      \"mr:standby:infra:deploy\": live(`${node} tools/src/infra/cdkd.ts deploy examples/28-multi-region AihMultiRegionStandby`),\n      \"mr:standby:infra:destroy\": live(`${node} tools/src/infra/cdkd.ts destroy examples/28-multi-region AihMultiRegionStandby`),\n      // Reads both Regions: replica status, replication rules, the health endpoints.\n      \"mr:status\": live(\"node --env-file-if-exists=../../.env scripts/mr.ts status\", { cwd: \"examples/28-multi-region\" }),\n      // With --apply: edits one note in both Regions at once and reports which edit survived.\n      \"mr:conflict\": live(\"node --env-file-if-exists=../../.env scripts/mr.ts conflict\", { cwd: \"examples/28-multi-region\" }),\n      // Counts the object versions in both buckets; --apply deletes them.\n      \"mr:empty\": live(\"node --env-file-if-exists=../../.env scripts/mr.ts empty\", { cwd: \"examples/28-multi-region\" }),",
+    "synth": ["mr:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/28-multi-region"]
+  }
+}

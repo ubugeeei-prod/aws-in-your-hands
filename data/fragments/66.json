@@ -1,0 +1,1212 @@
+{
+  "chapterId": "66",
+  "manifest": {
+    "id": "66",
+    "slug": "distributed-sql",
+    "title": {
+      "ja": "Distributed SQL: 分散 DB を EC2 でセルフホストする",
+      "en": "Distributed SQL: Self-Hosting a Distributed Database on EC2"
+    },
+    "prerequisites": ["11", "13", "22", "23", "24"],
+    "services": ["EC2", "EBS", "S3", "IAM", "Systems Manager", "YugabyteDB"],
+    "samplePath": "examples/66-distributed-sql",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "distsql-yb-license",
+      "distsql-crdb-license",
+      "distsql-crdb-licensing-faq",
+      "distsql-crdb-production",
+      "distsql-crdb-pg-compat",
+      "distsql-tidb-license",
+      "distsql-tidb-overview",
+      "distsql-tidb-requirements",
+      "distsql-yb-releases",
+      "distsql-yb-release-2025-2",
+      "distsql-yb-quick-start-macos",
+      "distsql-yb-yugabyted",
+      "distsql-yb-start-masters",
+      "distsql-yb-system-config",
+      "distsql-yb-checklist",
+      "distsql-yb-operating-systems",
+      "distsql-yb-tls-certificates",
+      "distsql-yb-tls-server",
+      "distsql-yb-isolation",
+      "distsql-yb-concurrency",
+      "distsql-yb-retries",
+      "distsql-yb-replication",
+      "distsql-yb-transactions",
+      "distsql-yb-sharding",
+      "distsql-yb-master",
+      "distsql-yb-node-driver",
+      "distsql-yb-change-config",
+      "distsql-yb-replace-master",
+      "distsql-yb-replace-tserver",
+      "distsql-yb-upgrade",
+      "distsql-yb-backup",
+      "distsql-yb-snapshots",
+      "distsql-yb-metrics",
+      "distsql-yb-admin",
+      "distsql-price-list-data-transfer",
+      "distsql-cur-data-transfer",
+      "distsql-ec2-time-sync",
+      "distsql-ec2-t4g",
+      "distsql-cloudflare-d1",
+      "distsql-vercel-storage"
+    ]
+  },
+  "sources": [
+    {
+      "id": "distsql-yb-license",
+      "url": "https://raw.githubusercontent.com/yugabyte/yugabyte-db/master/LICENSE.md",
+      "title": "yugabyte-db: LICENSE.md",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The YugabyteDB core database (src/yb, src/postgres, java, python, bin and others) is under the Apache License 2.0",
+        "YugabyteDB Anywhere (managed/, troubleshoot/) is under the Polyform Free Trial License 1.0.0, which permits evaluation for up to 32 consecutive calendar days; production use needs a commercial license"
+      ]
+    },
+    {
+      "id": "distsql-crdb-license",
+      "url": "https://raw.githubusercontent.com/cockroachdb/cockroach/master/LICENSE",
+      "title": "cockroach: LICENSE (CockroachDB Software License)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The software may not be operated without a license key except for Limited Non-Production Use",
+        "Limited Non-Production Use is design, prototyping, testing or development in non-production internal environments during the Introductory Period, or a database that runs solely on a single node",
+        "The software shares telemetry with the licensor unless the use is limited non-production or the license key allows it to be disabled"
+      ]
+    },
+    {
+      "id": "distsql-crdb-licensing-faq",
+      "url": "https://docs.cockroachlabs.com/docs/stable/licensing-faqs",
+      "title": "CockroachDB Licensing FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Enterprise Free is free of charge for businesses with less than $10M in annual revenue, counted across the parent company and all affiliates; government entities do not qualify",
+        "A cluster with no license key has a 7-day grace period, after which the number of concurrent open SQL transactions is limited to 5",
+        "Enterprise Free clusters are throttled after 7 days without sending telemetry",
+        "Single-node clusters for development use are not throttled"
+      ]
+    },
+    {
+      "id": "distsql-crdb-production",
+      "url": "https://docs.cockroachlabs.com/docs/stable/recommended-production-settings",
+      "title": "CockroachDB: Production Checklist",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "At least 3 nodes with the default 3-way replication factor to tolerate the failure of one node",
+        "A minimum of 8 vCPUs is recommended, and no fewer than 4 vCPUs per node is strongly recommended",
+        "The default maximum clock offset is 500 ms; a node shuts itself down when its clock is out of sync with at least half of the other nodes by 80% of it"
+      ]
+    },
+    {
+      "id": "distsql-crdb-pg-compat",
+      "url": "https://docs.cockroachlabs.com/docs/stable/postgresql-compatibility",
+      "title": "CockroachDB: PostgreSQL Compatibility",
+      "checkedAt": "2026-10-13",
+      "supports": ["CockroachDB is compatible with version 3.0 of the PostgreSQL wire protocol"]
+    },
+    {
+      "id": "distsql-tidb-license",
+      "url": "https://raw.githubusercontent.com/pingcap/tidb/master/LICENSE",
+      "title": "tidb: LICENSE",
+      "checkedAt": "2026-10-13",
+      "supports": ["TiDB is under the Apache License, Version 2.0"]
+    },
+    {
+      "id": "distsql-tidb-overview",
+      "url": "https://docs.pingcap.com/tidb/stable/overview/",
+      "title": "TiDB: Overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "TiDB is compatible with the MySQL protocol, common features of MySQL, and the MySQL ecosystem"
+      ]
+    },
+    {
+      "id": "distsql-tidb-requirements",
+      "url": "https://docs.pingcap.com/tidb/stable/hardware-and-software-requirements/",
+      "title": "TiDB: Software and Hardware Recommendations",
+      "checkedAt": "2026-10-13",
+      "supports": ["A production cluster needs at least 2 TiDB, 3 PD and 3 TiKV instances"]
+    },
+    {
+      "id": "distsql-yb-releases",
+      "url": "https://docs.yugabyte.com/stable/releases/",
+      "title": "YugabyteDB releases",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "v2025.2 is a long-term support (LTS) series and v2026.1 a standard-term (STS) series; the next LTS, v2026.2, is planned for the end of 2026"
+      ]
+    },
+    {
+      "id": "distsql-yb-release-2025-2",
+      "url": "https://docs.yugabyte.com/stable/releases/ybdb-releases/v2025.2/",
+      "title": "YugabyteDB v2025.2 release notes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "v2025.2.7.0, build 2025.2.7.0-b107, was released on October 5, 2026",
+        "Archives are published for darwin-arm64, el8-aarch64 and linux-x86_64 at software.yugabyte.com/releases/2025.2.7.0/"
+      ],
+      "note": "The SHA-256 of each archive was read from the `.sha` file next to it on software.yugabyte.com."
+    },
+    {
+      "id": "distsql-yb-quick-start-macos",
+      "url": "https://docs.yugabyte.com/stable/quick-start/macos/",
+      "title": "YugabyteDB Quick start: macOS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The macOS archives are checked against a `.sha` file published next to them",
+        "yugabyted needs Python 3.11; port 7000 collides with AirPlay Receiver on macOS Monterey and later",
+        "The local setup is a single-host setup intended for development and learning"
+      ]
+    },
+    {
+      "id": "distsql-yb-yugabyted",
+      "url": "https://docs.yugabyte.com/stable/reference/configuration/yugabyted/",
+      "title": "yugabyted reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "yugabyted can be used for production deployments; yb-master and yb-tserver can also be administered directly",
+        "`yugabyted backup` and `restore` to S3 need the node started with --backup_daemon=true and YB Controller installed, and are not supported on macOS"
+      ]
+    },
+    {
+      "id": "distsql-yb-start-masters",
+      "url": "https://docs.yugabyte.com/stable/deploy/manual-deployment/start-masters/",
+      "title": "Manual deployment: Start YB-Masters",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "yb-master is started with --master_addresses, --rpc_bind_addresses, --fs_data_dirs and the --placement_cloud, --placement_region, --placement_zone flags, or with --flagfile",
+        "The number of nodes running YB-Masters, and of addresses in --master_addresses, must equal the replication factor",
+        "The masters discover each other and elect a Raft leader; the page tells you to add the start command to cron so the process is restarted if it goes down"
+      ]
+    },
+    {
+      "id": "distsql-yb-system-config",
+      "url": "https://docs.yugabyte.com/stable/deploy/manual-deployment/system-config/",
+      "title": "Manual deployment: System configuration",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "chrony is the preferred NTP implementation; a YB-TServer or YB-Master shuts down when it detects clock skew larger than --max_clock_skew_usec (500 ms by default)",
+        "On cloud providers the provider's link-local time service should be used",
+        "Recommended limits include 1048576 open files and 12000 user processes; transparent hugepages should be enabled; on virtual machines vm.swappiness=0 and vm.max_map_count=262144",
+        "ClockBound is supported on AWS and optional; PTP is currently available only for AWS"
+      ]
+    },
+    {
+      "id": "distsql-yb-checklist",
+      "url": "https://docs.yugabyte.com/stable/deploy/checklist/",
+      "title": "Deployment checklist",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default replication factor is 3; with it a cluster tolerates one node failure, and needs at least as many nodes, YB-Masters and YB-TServers as the RF",
+        "Minimum 2 cores and 2 GB RAM; for production YSQL 16+ cores and 64 GB+ RAM",
+        "x86 and ARM (aarch64) are supported; SSDs are required, XFS recommended, noatime on data drives",
+        "On AWS use the M instance family and gp3 volumes of at least 250 GB; avoid T2 instance types",
+        "Nodes communicate on 7100 (YB-Master RPC) and 9100 (YB-TServer RPC); 5433 serves YSQL clients; 7000 is the YB-Master admin UI"
+      ]
+    },
+    {
+      "id": "distsql-yb-operating-systems",
+      "url": "https://docs.yugabyte.com/stable/reference/configuration/operating-systems/",
+      "title": "Operating system support",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon Linux 2023 is supported in v2024.2.3 and later; AlmaLinux 8 is the default for YugabyteDB Anywhere-deployed nodes"
+      ]
+    },
+    {
+      "id": "distsql-yb-tls-certificates",
+      "url": "https://docs.yugabyte.com/stable/secure/tls-encryption/server-certificates/",
+      "title": "Create server certificates",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each node needs ca.crt, node.<commonName>.crt and node.<commonName>.key, where the common name is the node's address",
+        "The example issues the root and the node certificates with openssl for 3650 days; the page does not describe rotation"
+      ]
+    },
+    {
+      "id": "distsql-yb-tls-server",
+      "url": "https://docs.yugabyte.com/stable/secure/tls-encryption/server-to-server/",
+      "title": "Enable server-to-server encryption",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "use_node_to_node_encryption and use_client_to_server_encryption default to false; allow_insecure_connections defaults to true and, set to false, keeps any service with unencrypted communication from joining",
+        "certs_dir names the directory with the certificates"
+      ]
+    },
+    {
+      "id": "distsql-yb-isolation",
+      "url": "https://docs.yugabyte.com/stable/architecture/transactions/isolation-levels/",
+      "title": "Transaction isolation levels",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "YSQL supports Serializable, Snapshot and Read Committed; Snapshot maps to the SQL Repeatable Read level",
+        "For manually deployed universes yb_enable_read_committed_isolation defaults to false, and Read Committed falls back to the stricter Snapshot isolation"
+      ]
+    },
+    {
+      "id": "distsql-yb-concurrency",
+      "url": "https://docs.yugabyte.com/stable/architecture/transactions/concurrency-control/",
+      "title": "Concurrency control",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With wait queues a transaction waits for the conflicting ones to finish, then proceeds only if they made no conflicting permanent change, and otherwise aborts",
+        "A statement that is the first of its transaction is retried internally with a later snapshot"
+      ]
+    },
+    {
+      "id": "distsql-yb-retries",
+      "url": "https://docs.yugabyte.com/stable/develop/learn/transactions/transactions-retries-ysql/",
+      "title": "Transaction retries in YSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "40001 (serialization failure) and 40P01 (deadlock detected) are to be handled by rolling back and retrying the whole transaction with backoff",
+        "A COMMIT must not be retried blindly, because it is unclear whether the commit happened"
+      ]
+    },
+    {
+      "id": "distsql-yb-replication",
+      "url": "https://docs.yugabyte.com/stable/architecture/docdb-replication/replication/",
+      "title": "Synchronous replication in DocDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A tablet has as many peers as the replication factor; they form a Raft group and elect a leader",
+        "A write is applied after its Raft log entry is replicated to and persisted on a majority of the peers",
+        "Tolerating f fault domains needs a replication factor of at least 2f + 1",
+        "Only the tablet leader processes user-facing reads and writes by default; the stated recovery time after a zone outage is 3 seconds"
+      ]
+    },
+    {
+      "id": "distsql-yb-transactions",
+      "url": "https://docs.yugabyte.com/stable/architecture/transactions/transactions-overview/",
+      "title": "Transactions overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every update is a transaction; timestamps come from hybrid logical clocks that combine physical time and a logical counter, and nodes exchange them on every RPC",
+        "Conflict resolution between concurrent transactions depends on the maximum clock skew in the cluster"
+      ]
+    },
+    {
+      "id": "distsql-yb-sharding",
+      "url": "https://docs.yugabyte.com/stable/architecture/docdb-sharding/sharding/",
+      "title": "Hash and range sharding",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Tables are split into shards called tablets; the primary key of a row decides its tablet",
+        "Hash sharding spreads rows evenly over the 2-byte hash space 0x0000 to 0xFFFF; range sharding keeps rows in primary key order"
+      ]
+    },
+    {
+      "id": "distsql-yb-master",
+      "url": "https://docs.yugabyte.com/stable/architecture/yb-master/",
+      "title": "YB-Master service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "YB-Master keeps the system metadata, the map from tablets to servers, balances load and re-replicates the data of a failed server; it is not in the I/O path",
+        "The masters form a Raft group of their own"
+      ]
+    },
+    {
+      "id": "distsql-yb-node-driver",
+      "url": "https://docs.yugabyte.com/stable/drivers-orms/nodejs/yugabyte-node-driver/",
+      "title": "YugabyteDB node-postgres smart driver",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "@yugabytedb/pg is built on node-postgres and adds cluster-aware and topology-aware connection load balancing (loadBalance, topologyKeys, ybServersRefreshInterval)"
+      ]
+    },
+    {
+      "id": "distsql-yb-change-config",
+      "url": "https://docs.yugabyte.com/stable/manage/change-cluster-config/",
+      "title": "Change cluster configuration",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Moving to new nodes uses change_blacklist ADD, get_load_move_completion, and change_master_config ADD_SERVER / REMOVE_SERVER one master at a time",
+        "A new master is started without master_addresses and joins through ADD_SERVER; tserver_master_addrs must then be updated on every tablet server"
+      ]
+    },
+    {
+      "id": "distsql-yb-replace-master",
+      "url": "https://docs.yugabyte.com/stable/troubleshoot/cluster/replace_master/",
+      "title": "Replace a failed YB-Master",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The replacement is started with an empty --master_addresses; if the failed master is already dead, REMOVE_SERVER comes before ADD_SERVER",
+        "--tserver_master_addrs has to be updated on every YB-TServer to the new set of masters"
+      ]
+    },
+    {
+      "id": "distsql-yb-replace-tserver",
+      "url": "https://docs.yugabyte.com/stable/troubleshoot/cluster/replace_tserver/",
+      "title": "Replace a failed YB-TServer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Start a new YB-TServer in the same placement, blacklist the failed one, wait for get_load_move_completion to reach 100, then remove the blacklist entry",
+        "The master leader marks a server DEAD after it has not responded for one minute"
+      ]
+    },
+    {
+      "id": "distsql-yb-upgrade",
+      "url": "https://docs.yugabyte.com/stable/manage/upgrade-deployment/",
+      "title": "Upgrade YugabyteDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A rolling upgrade restarts the YB-Masters one at a time, then the YB-TServers one at a time, pausing at least 60 seconds between nodes",
+        "It is finalized with `yb-admin promote_auto_flags` and `yb-admin upgrade_ysql`; after finalizing there is no rollback, and the monitoring phase should not exceed two days",
+        "post_install.sh is run after the archive is extracted"
+      ]
+    },
+    {
+      "id": "distsql-yb-backup",
+      "url": "https://docs.yugabyte.com/stable/manage/backup-restore/",
+      "title": "Backup and restore",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The methods are export and import with SQL scripts, distributed snapshots, and point-in-time recovery"
+      ]
+    },
+    {
+      "id": "distsql-yb-snapshots",
+      "url": "https://docs.yugabyte.com/stable/manage/backup-restore/snapshot-ysql/",
+      "title": "Distributed snapshots for YSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Snapshots are per database and use hard links on the cluster's own volumes; they do not protect against file system corruption or hardware failure",
+        "Moving a snapshot off the cluster is manual: the schema with ysql_dump, the metadata with export_snapshot, and the snapshot directories of every tablet copied by hand"
+      ]
+    },
+    {
+      "id": "distsql-yb-metrics",
+      "url": "https://docs.yugabyte.com/stable/launch-and-manage/monitor-and-alert/metrics/",
+      "title": "Metrics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Prometheus metrics are served at :7000/prometheus-metrics (YB-Master), :9000/prometheus-metrics (YB-TServer) and :13000/prometheus-metrics (YSQL)"
+      ]
+    },
+    {
+      "id": "distsql-yb-admin",
+      "url": "https://docs.yugabyte.com/stable/admin/yb-admin/",
+      "title": "yb-admin reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "list_all_masters, list_all_tablet_servers, get_universe_config and change_master_config exist with the syntax used in this chapter",
+        "A cluster with TLS needs --certs_dir_name pointing at the directory with the root certificate"
+      ],
+      "note": "The page was read only as far as the tool returned it; modify_placement_info was confirmed from the usage text of the pinned binary and by running it on the local cluster."
+    },
+    {
+      "id": "distsql-price-list-data-transfer",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWSDataTransfer, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-DataTransfer-Regional-Bytes: $0.01 per GB, regional data transfer in/out/between EC2 AZs (SKU RVH645383RKU285J, published 2026-09-16)"
+      ]
+    },
+    {
+      "id": "distsql-cur-data-transfer",
+      "url": "https://docs.aws.amazon.com/cur/latest/userguide/cur-data-transfers-charges.html",
+      "title": "Understanding data transfer charges",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For a data transfer within a Region a resource is charged for both inbound and outbound traffic, so each transfer shows as two DataTransfer-Regional-Bytes line items"
+      ]
+    },
+    {
+      "id": "distsql-ec2-time-sync",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/set-time.html",
+      "title": "Precision clock and time synchronization on your EC2 instance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Amazon Time Sync Service is available to all EC2 instances, uses satellite-connected and atomic reference clocks in each Region, and smears leap seconds"
+      ]
+    },
+    {
+      "id": "distsql-ec2-t4g",
+      "url": "https://aws.amazon.com/ec2/instance-types/t4/",
+      "title": "Amazon EC2 T4g instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "t4g.medium has 2 vCPUs and 4 GiB of memory, with a baseline of 20% per vCPU; T4g instances start in unlimited mode by default"
+      ]
+    },
+    {
+      "id": "distsql-cloudflare-d1",
+      "url": "https://developers.cloudflare.com/d1/",
+      "title": "Cloudflare D1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "D1 is Cloudflare's managed, serverless database with SQLite's SQL semantics; pricing is based only on query and storage costs"
+      ]
+    },
+    {
+      "id": "distsql-vercel-storage",
+      "url": "https://vercel.com/docs/storage",
+      "title": "Vercel Storage overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel's own storage products are Blob and Global Config; databases are provisioned through the Vercel Marketplace from providers such as Neon, Upstash and Supabase"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "raft",
+      "ja": "Raft",
+      "en": "Raft",
+      "firstUse": "66",
+      "definition": {
+        "ja": "複数の写しのあいだで、書き込みの順序を 1 つに決めるための合意の手順。1 つがリーダーになって書き込みを受け、過半数の写しに記録されたものだけを確定とする。",
+        "en": "A consensus protocol that makes several copies agree on one order of writes. One copy is the leader and takes the writes; a write counts only once a majority of the copies have recorded it."
+      }
+    },
+    {
+      "id": "quorum",
+      "ja": "過半数（quorum）",
+      "en": "Quorum (majority)",
+      "firstUse": "66",
+      "definition": {
+        "ja": "写しの半分より多い数。3 つなら 2 つ。過半数が生きているあいだだけ、リーダーを選べて、書き込みを確定できる。",
+        "en": "More than half of the copies: two of three. Only while a majority is alive can a leader be elected and a write be made final."
+      }
+    },
+    {
+      "id": "tablet",
+      "ja": "tablet",
+      "en": "Tablet",
+      "firstUse": "66",
+      "definition": {
+        "ja": "YugabyteDB がテーブルを分けた 1 かけら。行は主キーでどれか 1 つの tablet に入り、tablet ごとに写しの組（Raft のグループ）がある。",
+        "en": "One piece of a table in YugabyteDB. A row belongs to one tablet by its primary key, and each tablet has its own set of copies (a Raft group)."
+      }
+    },
+    {
+      "id": "replication-factor",
+      "ja": "replication factor",
+      "en": "Replication factor",
+      "firstUse": "66",
+      "definition": {
+        "ja": "1 つの tablet の写しの数。3 なら、ノードを 1 つ失っても過半数が残る。",
+        "en": "The number of copies of each tablet. With three, a majority remains after one node is lost."
+      }
+    },
+    {
+      "id": "clock-skew",
+      "ja": "時刻のずれ（clock skew）",
+      "en": "Clock skew",
+      "firstUse": "66",
+      "definition": {
+        "ja": "ノードどうしの時計の差。YugabyteDB は時刻をトランザクションの順序づけに使うので、差が上限（既定で 500 ミリ秒）を超えたノードは自分で止まる。",
+        "en": "The difference between the clocks of two nodes. YugabyteDB orders transactions with timestamps, so a node whose clock is off by more than the limit (500 ms by default) stops itself."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "66.overview",
+      "sources": ["examples/66-distributed-sql"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.choice",
+      "sources": ["examples/66-distributed-sql/src/yugabyte.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.picture",
+      "sources": ["examples/66-distributed-sql/infra/lib/distsql-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.when-not",
+      "sources": ["examples/66-distributed-sql"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.architecture",
+      "sources": ["examples/66-distributed-sql/src/yugabyte.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.topology",
+      "sources": [
+        "examples/66-distributed-sql/src/topology.ts",
+        "examples/66-distributed-sql/test/topology.test.ts"
+      ],
+      "tasks": ["distsql:render"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "66.client",
+      "sources": [
+        "examples/66-distributed-sql/src/failover.ts",
+        "examples/66-distributed-sql/src/yugabyte-db.ts",
+        "examples/66-distributed-sql/test/failover.test.ts",
+        "examples/66-distributed-sql/test/repository.test.ts"
+      ],
+      "tasks": ["distsql:local:verify"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "66.quorum-model",
+      "sources": [
+        "examples/66-distributed-sql/src/model/quorum.ts",
+        "examples/66-distributed-sql/test/quorum.test.ts"
+      ],
+      "tasks": [],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "66.tls",
+      "sources": [
+        "examples/66-distributed-sql/src/certs.ts",
+        "examples/66-distributed-sql/scripts/certs.ts",
+        "examples/66-distributed-sql/scripts/nodes.ts"
+      ],
+      "tasks": ["distsql:local:certs", "distsql:certs"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "66.stack",
+      "sources": [
+        "examples/66-distributed-sql/infra/lib/distsql-stack.ts",
+        "examples/66-distributed-sql/infra/bin/app.ts",
+        "examples/66-distributed-sql/src/config.ts",
+        "examples/66-distributed-sql/infra/test/distsql-stack.test.ts"
+      ],
+      "tasks": ["distsql:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "66.node-files",
+      "sources": [
+        "examples/66-distributed-sql/src/machine.ts",
+        "examples/66-distributed-sql/deploy",
+        "examples/66-distributed-sql/test/machine.test.ts"
+      ],
+      "tasks": ["distsql:render"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "66.local-fetch",
+      "sources": [
+        "examples/66-distributed-sql/scripts/fetch.ts",
+        "examples/66-distributed-sql/src/yugabyte.ts"
+      ],
+      "tasks": ["distsql:fetch"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "66.local-cluster",
+      "sources": [
+        "examples/66-distributed-sql/scripts/cluster.ts",
+        "examples/66-distributed-sql/scripts/local-nodes.ts"
+      ],
+      "tasks": [
+        "distsql:local:start",
+        "distsql:local:status",
+        "distsql:local:kill",
+        "distsql:local:stop",
+        "distsql:local:destroy"
+      ],
+      "boundary": "local",
+      "criteria": ["local-dx", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "66.local-verify",
+      "sources": ["examples/66-distributed-sql/scripts/verify.ts"],
+      "tasks": ["distsql:local:verify"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "66.local-tests",
+      "sources": ["examples/66-distributed-sql/test"],
+      "tasks": [],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "66.deploy",
+      "sources": [
+        "examples/66-distributed-sql/scripts/nodes.ts",
+        "examples/66-distributed-sql/src/remote.ts"
+      ],
+      "tasks": [
+        "distsql:infra:deploy",
+        "distsql:artifact",
+        "distsql:install",
+        "distsql:certs",
+        "distsql:configure",
+        "distsql:start",
+        "distsql:status",
+        "distsql:health",
+        "distsql:session"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.operate",
+      "sources": [
+        "examples/66-distributed-sql/src/remote.ts",
+        "examples/66-distributed-sql/scripts/nodes.ts"
+      ],
+      "tasks": ["distsql:stop", "distsql:health", "distsql:logs"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.cost",
+      "sources": [
+        "examples/66-distributed-sql/src/cost.ts",
+        "examples/66-distributed-sql/test/pricing.test.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "66.pitfalls",
+      "sources": ["examples/66-distributed-sql"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.production",
+      "sources": ["examples/66-distributed-sql"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "66.cleanup",
+      "sources": ["examples/66-distributed-sql/infra/lib/distsql-stack.ts"],
+      "tasks": ["distsql:infra:destroy", "distsql:local:destroy"],
+      "boundary": "local+cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "datatransfer.regional",
+      "offerCode": "AWSDataTransfer",
+      "region": "ap-northeast-1",
+      "sku": "RVH645383RKU285J",
+      "usageType": "APN1-DataTransfer-Regional-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0100000000",
+          "description": "$0.01 per GB - regional data transfer - in/out/between EC2 AZs or using elastic IPs or ELB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-16T13:22:08Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "datatransfer.regional",
+      "reason": "The price list has a separate Global-DataTransfer-Regional-Bytes line at $0 \"under the monthly global free tier\" for the first GB. Whether and how it applies to a given account was not determined, so none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "distsql-foundation",
+      "chapter": "66",
+      "title": {
+        "ja": "Distributed SQL: 既定のスタック（ノードなし）を 1 か月",
+        "en": "Distributed SQL: the default stack (no nodes) for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=3` を付けずにデプロイ。バケット、ロール、セキュリティグループだけ",
+          "バケットに、ノード用のアーカイブ 0.48 GB を置いたまま"
+        ],
+        "en": [
+          "Deployed without `-c nodes=3`: a bucket, a role, and two security groups",
+          "The 0.48 GB archive for the nodes left in the bucket"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.48,
+          "basis": "the release archive for the nodes"
+        }
+      ]
+    },
+    {
+      "id": "distsql-cluster-idle",
+      "chapter": "66",
+      "title": {
+        "ja": "Distributed SQL: 3 ノードを動かしたまま、クエリなしで 1 か月",
+        "en": "Distributed SQL: three nodes running for a month with no queries"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=3`、t4g.medium を 3 台、730 時間",
+          "ルートボリュームは 8 GiB と仮定（AMI が決める。実際の大きさは確かめていない）。データボリュームは 1 台 20 GiB。どちらも gp3 で、追加料金のかからない IOPS とスループットの範囲",
+          "11章のネットワークを 3 つのゾーンで作り、Systems Manager のインターフェースエンドポイント 3 つ（ssm、ssmmessages、ec2messages）を 3 つのゾーンに置いたまま",
+          "CPU クレジットは standard なので、ベースラインを超えた分の課金はない",
+          "バケットには、ノード用のアーカイブ 0.48 GB だけ"
+        ],
+        "en": [
+          "`-c nodes=3`: three t4g.medium running for 730 hours",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each data volume is 20 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "The chapter 11 network deployed with three zones, with three Systems Manager interface endpoints (ssm, ssmmessages, ec2messages) left in all three",
+          "CPU credits are in standard mode, so nothing is billed above the baseline",
+          "The bucket holds only the 0.48 GB archive for the nodes"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-medium.linux.hour",
+          "quantity": 2190,
+          "basis": "3 t4g.medium x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 84,
+          "basis": "3 x (8 GiB root, assumed + 20 GiB data)"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 6570,
+          "basis": "3 interface endpoints x 3 zones x 730 hours"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.48,
+          "basis": "the release archive for the nodes"
+        }
+      ]
+    },
+    {
+      "id": "distsql-cluster-load",
+      "chapter": "66",
+      "title": {
+        "ja": "Distributed SQL: 3 ノードで、毎秒 10 件の書き込みを 1 か月",
+        "en": "Distributed SQL: three nodes taking 10 writes a second for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c nodes=3`、t4g.medium を 3 台、730 時間",
+          "ルートボリュームは 8 GiB と仮定（AMI が決める。実際の大きさは確かめていない）。データボリュームは 1 台 20 GiB。どちらも gp3 で、追加料金のかからない IOPS とスループットの範囲",
+          "11章のネットワークを 3 つのゾーンで作り、Systems Manager のインターフェースエンドポイント 3 つ（ssm、ssmmessages、ec2messages）を 3 つのゾーンに置いたまま",
+          "CPU クレジットは standard なので、ベースラインを超えた分の課金はない",
+          "バケットには、ノード用のアーカイブ 0.48 GB だけ",
+          "毎秒 10 件の書き込みが 730 時間。1 件が複製で運ぶ量を 2,000 バイトと仮定（測っていない）",
+          "tablet のリーダーは、別のゾーンにいる 2 つのフォロワーへ書き込みを送る。ゾーンをまたぐ転送は送る側と受ける側の両方で計量されるので、1 バイトが 4 回数えられる",
+          "ハートビート、トランザクションの状態の記録、別のゾーンのリーダーへ回される読み取り、クライアントとノードのあいだの転送は入れていない。実際はこれより多い"
+        ],
+        "en": [
+          "`-c nodes=3`: three t4g.medium running for 730 hours",
+          "The root volume is assumed to be 8 GiB (the AMI decides; the real size was not checked). Each data volume is 20 GiB. Both are gp3 within the IOPS and throughput that carry no extra charge",
+          "The chapter 11 network deployed with three zones, with three Systems Manager interface endpoints (ssm, ssmmessages, ec2messages) left in all three",
+          "CPU credits are in standard mode, so nothing is billed above the baseline",
+          "The bucket holds only the 0.48 GB archive for the nodes",
+          "10 writes a second for 730 hours. Each is assumed to carry 2,000 bytes through replication (not measured)",
+          "A tablet leader sends each write to its two followers in the other zones. A transfer between zones is metered at the sending and the receiving end, so each byte is counted four times",
+          "Heartbeats, transaction status records, reads forwarded to a leader in another zone, and traffic between clients and nodes are not included. The real figure is higher"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-medium.linux.hour",
+          "quantity": 2190,
+          "basis": "3 t4g.medium x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 84,
+          "basis": "3 x (8 GiB root, assumed + 20 GiB data)"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 6570,
+          "basis": "3 interface endpoints x 3 zones x 730 hours"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.48,
+          "basis": "the release archive for the nodes"
+        },
+        {
+          "priceId": "datatransfer.regional",
+          "quantity": 210.24,
+          "basis": "10 writes/s x 2000 bytes x 730 hours, to 2 followers, metered out and in"
+        }
+      ]
+    },
+    {
+      "id": "distsql-retained-after-destroy",
+      "chapter": "66",
+      "title": {
+        "ja": "Distributed SQL: スタックを消したあとに残るデータボリューム",
+        "en": "Distributed SQL: the data volumes left after destroying the stack"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の `stateOnDestroy=retain` で作った `-c nodes=3` のスタックを消してから 730 時間",
+          "残るのは 20 GiB のデータボリューム 3 つ。ルートボリュームはインスタンスと一緒に消える",
+          "残したバケットの保管料と、11章のスタックに残したエンドポイントは入れていない"
+        ],
+        "en": [
+          "730 hours after destroying a `-c nodes=3` stack created with the default `stateOnDestroy=retain`",
+          "What remains: three 20 GiB data volumes. Root volumes go with their instances",
+          "Storage in the retained bucket and endpoints left in the chapter 11 stack are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 60,
+          "basis": "3 retained data volumes x 20 GiB"
+        }
+      ]
+    },
+    {
+      "id": "distsql-dsql-same-load",
+      "chapter": "66",
+      "title": {
+        "ja": "Aurora DSQL: 毎秒 10 件の書き込みと 90 件の読み取りを 1 か月",
+        "en": "Aurora DSQL: 10 writes and 90 reads a second for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "毎秒 10 件の書き込みと 90 件の読み取りが 730 時間",
+          "1 件あたりの DPU は 13章の仮定と同じ（読み取り 0.00675、書き込み 0.18525）。この負荷で測った値ではない",
+          "データは 10 GB",
+          "バックアップ、Lambda、ネットワークは入れていない"
+        ],
+        "en": [
+          "10 writes and 90 reads a second for 730 hours",
+          "DPUs per statement are chapter 13's assumptions (0.00675 for a read, 0.18525 for a write). Not measured on this load",
+          "10 GB of data",
+          "Backups, Lambda, and networking are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dsql.dpu",
+          "quantity": 6464880,
+          "basis": "10 writes/s x 0.18525 DPU + 90 reads/s x 0.00675 DPU, for 730 hours"
+        },
+        {
+          "priceId": "dsql.storage",
+          "quantity": 10,
+          "basis": "10 GB stored"
+        }
+      ]
+    },
+    {
+      "id": "distsql-aurora-floor",
+      "chapter": "66",
+      "title": {
+        "ja": "Aurora Serverless v2: 止めずに動かす最小の構成で 1 か月、データ 10 GB",
+        "en": "Aurora Serverless v2: the smallest always-on configuration for a month, 10 GB of data"
+      },
+      "assumptions": {
+        "ja": [
+          "Aurora PostgreSQL、writer 1 つが最小の 0.5 ACU のまま 730 時間",
+          "0.5 ACU でこの章の負荷をさばけるかは確かめていない。足りなければ ACU が増え、その分だけ高くなる",
+          "Aurora Standard。I/O の料金は入れていない（件数を見積もる根拠がない）",
+          "データは 10 GB"
+        ],
+        "en": [
+          "Aurora PostgreSQL, one writer staying at the 0.5 ACU minimum for 730 hours",
+          "Whether 0.5 ACU carries this chapter's load was not checked. If it does not, capacity rises and so does the bill",
+          "Aurora Standard. I/O charges are not included (there is no basis to estimate the count)",
+          "10 GB of data"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 365,
+          "basis": "0.5 ACU x 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 10,
+          "basis": "10 GB stored"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "66",
+        "command": "vp test run examples/66-distributed-sql",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "フラグファイルの生成と検査、接続先の切り替え、過半数のモデル（1 ノードの喪失を全通り、2 ノードの喪失、非同期の複製で失われる書き込み）、PGlite の上で 13章の再試行ループに YugabyteDB のエラーを渡した結果、ノードに置くファイル、証明書の引数、料金、スタックのアサーション。7 ファイル 73 件",
+          "en": "Flag file generation and validation, failover between nodes, the quorum model (every loss of one node, the loss of two, the write that asynchronous replication loses), chapter 13's retry loop given YugabyteDB's errors on PGlite, the files a node gets, certificate arguments, pricing, and the stack assertions. 7 files, 73 tests"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "tsc --noEmit -p examples/66-distributed-sql",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の設定（ノードなし、リソース 10 個）と `-c nodes=3`（19 個）で synth。AWS には問い合わせない",
+          "en": "Synth with the default settings (no nodes, 10 resources) and with `-c nodes=3` (19 resources). Asks AWS nothing"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:render",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "deploy/ のファイルが、生成したものと一致する",
+          "en": "The files in deploy/ match what the generators produce"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:fetch",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "macOS 26.6（arm64）で、yugabyte-2025.2.7.0-b107-darwin-arm64.tar.gz（130,180,590 バイト）を software.yugabyte.com から取得。SHA-256 が、隣に公開されている .sha の値（4a6a23f6…edde49）と一致した。.yugabyte/ に展開",
+          "en": "On macOS 26.6 (arm64): fetched yugabyte-2025.2.7.0-b107-darwin-arm64.tar.gz (130,180,590 bytes) from software.yugabyte.com. Its SHA-256 matched the .sha published next to it (4a6a23f6…edde49). Unpacked into .yugabyte/"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:local:start, then vp run distsql:local:verify (no TLS, 2 runs)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "127.0.0.1 の上で yb-master と yb-tserver を 3 組起動（PostgreSQL 15.12-YB-2025.2.7.0-b0）。13章のマイグレーション 4 つと repository を変えずに実行。上限 3 件に 12 件の作成を 3 ノードから同時に送り、2 回とも作成 3、quota_exceeded 9、note_count と行数が 3 で一致。40001 による再試行は 16 回と 4 回。ノード b を SIGKILL した後も a と c が確認済みの 40 件をすべて返し、続く 20 件の作成は 1.1 秒と 0.9 秒で終わった。b と c を落とすと残る 1 ノードは書き込みを確認せず（20 秒の無応答、接続のタイムアウト）、戻すと確認済みの 40 件がすべて残っていた。確認されなかった 1 件は、1 回目は入っていて、2 回目は入っていなかった。2 回目は ysql_dump の出力を別のデータベースに流し込み、40 件が揃った",
+          "en": "Three pairs of yb-master and yb-tserver on 127.0.0.1 (PostgreSQL 15.12-YB-2025.2.7.0-b0). Chapter 13's four migrations and its repository ran unchanged. Twelve creates at once through three nodes against a quota of 3: in both runs 3 created, 9 quota_exceeded, note_count and the rows agreeing at 3. 16 and 4 retries after 40001. After SIGKILL of node b, a and c returned all 40 acknowledged notes, and the next 20 creates took 1.1 s and 0.9 s. With b and c down, the one node left acknowledged no write (no answer for 20 s; a timeout on connect); with them back, all 40 acknowledged notes were there. The unacknowledged write was there after the first run and not after the second. In the second run a ysql_dump fed into another database held all 40"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:local:certs, vp run distsql:local:start --tls, then vp run distsql:local:verify (TLS, 5 runs, 1 failed)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "openssl（Homebrew の 3.6.1。Nix の shell には入っていない）で CA と 127.0.0.1 の証明書を作り、TLS とパスワード認証を有効にして同じ検証を 5 回実行。TLS なしのクライアントは断られた。40001 による再試行は 12、12、12、26、29 回。b を失った後の 20 件は 1.1 秒から 4.3 秒。2 ノードを失ったときの 1 件は確認されず、戻した後に入っていたのは 5 回のうち 2 回。3 回目の実行は、2 ノードを戻した直後の CREATE DATABASE が『current transaction is expired or aborted』で失敗し、検証が失敗で終わった。バックアップの段に再試行を入れた後の 2 回は通った。ysql_dump の出力は 4 回、別のデータベースに揃って入った。yb-admin は --certs_dir_name を付けると list_all_masters と modify_placement_info に応え、付けないと 60 秒でリーダーを見つけられずに終わった。検証の後、distsql:local:destroy で全プロセスを止めた",
+          "en": "With a CA and a certificate for 127.0.0.1 made by openssl (Homebrew's 3.6.1; the Nix shell has none), and TLS and password authentication on, the same verification ran five times. A client without TLS was refused. 12, 12, 12, 26, and 29 retries after 40001. The 20 creates after losing b took 1.1 s to 4.3 s. The one create with two nodes lost was never acknowledged, and was there afterwards in 2 runs of 5. The third run ended in failure: the CREATE DATABASE right after the two nodes returned failed with \"current transaction is expired or aborted\". The two runs after a retry was added to the backup block passed. A ysql_dump fed into another database held everything in 4 runs. yb-admin answered list_all_masters and modify_placement_info with --certs_dir_name, and without it gave up after 60 s without finding the leader. After the verification, distsql:local:destroy stopped every process"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:fetch --nodes",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ノード用のアーカイブ（el8-aarch64、479,462,171 バイト）は取得していない。SHA-256 は公開されている .sha の値を写しただけ",
+          "en": "The archive for the nodes (el8-aarch64, 479,462,171 bytes) was not downloaded. Its SHA-256 is copied from the published .sha"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:infra:deploy -c nodes=3",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS には何も作っていない",
+          "en": "Nothing was created in AWS"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:artifact / distsql:install / distsql:certs / distsql:configure / distsql:start / distsql:status / distsql:health / distsql:logs / distsql:stop / distsql:session",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ノードに触るタスクは実行していない",
+          "en": "No task that touches the nodes was run"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "66-nothing-on-aws",
+        "summary": {
+          "ja": "66章のスタックをデプロイしていない。EC2 の上では YugabyteDB を一度も起動していない。",
+          "en": "The chapter 66 stack was never deployed. YugabyteDB was never started on EC2."
+        },
+        "resume": {
+          "ja": "11章のネットワークを 3 ゾーンで作り、`vp run distsql:infra:deploy -c nodes=3`、続けて deploy のページの順に `distsql:artifact`、`distsql:install`、`distsql:certs`、`distsql:configure`、`distsql:start`、`distsql:health` を実行する。終わったら `distsql:infra:destroy` とボリュームの削除まで行う。",
+          "en": "Deploy the chapter 11 network with three zones, run `vp run distsql:infra:deploy -c nodes=3`, then, in the order of the deploy page, `distsql:artifact`, `distsql:install`, `distsql:certs`, `distsql:configure`, `distsql:start`, `distsql:health`. Finish with `distsql:infra:destroy` and delete the volumes."
+        }
+      },
+      {
+        "id": "66-linux-archive",
+        "summary": {
+          "ja": "ノード用のアーカイブ（el8-aarch64）を取得も実行もしていない。Amazon Linux 2023（arm64）の t4g.medium で動くこと、post_install.sh が通ること、systemd の設定と user data のスクリプトが実機で通ることは未確認。",
+          "en": "The archive for the nodes (el8-aarch64) was neither downloaded nor run. That it runs on Amazon Linux 2023 (arm64) on a t4g.medium, that post_install.sh succeeds, and that the systemd units and user data scripts work on a real machine are unconfirmed."
+        },
+        "resume": {
+          "ja": "`vp run distsql:fetch --nodes` で取得して SHA-256 を照合し、デプロイしたノードで `vp run distsql:install` と `vp run distsql:status` を実行する。",
+          "en": "Fetch it with `vp run distsql:fetch --nodes` to check the SHA-256, then run `vp run distsql:install` and `vp run distsql:status` on deployed nodes."
+        }
+      },
+      {
+        "id": "66-operations-not-exercised",
+        "summary": {
+          "ja": "ローリングアップグレード、死んだノードの置き換え（新しいアドレスのマスターと tablet server を足して古いものを外す手順）、snapshot を使ったバックアップは、文書の手順を写しただけで、手元でも実行していない。",
+          "en": "The rolling upgrade, the replacement of a dead node (adding a master and a tablet server at a new address and removing the old ones), and snapshot-based backups are copied from the documentation and were not run, locally or anywhere."
+        },
+        "resume": {
+          "ja": "手元のクラスターで 4 つ目のノードを別のポートで起動し、文書の `change_master_config` と `change_blacklist` の手順を実行する。アップグレードは、v2025.2 の 1 つ前のパッチ版を取得して同じ手順で試す。",
+          "en": "On the local cluster, start a fourth node on other ports and run the documented `change_master_config` and `change_blacklist` steps. For the upgrade, fetch the previous v2025.2 patch release and follow the same page."
+        }
+      },
+      {
+        "id": "66-start-tservers-page",
+        "summary": {
+          "ja": "文書の「Start YB-TServers」のページを読めなかった（取得ツールが別のページの内容を返した）。yb-tserver のフラグは、固定した版のバイナリの --helpfull と、手元で起動できた事実で確かめた。",
+          "en": "The documentation's \"Start YB-TServers\" page could not be read (the fetch tool returned another page's content). The yb-tserver flags were confirmed from --helpfull of the pinned binary and from the fact that the local cluster started with them."
+        },
+        "resume": {
+          "ja": "https://docs.yugabyte.com/stable/deploy/manual-deployment/start-tservers/ をブラウザで開き、`src/topology.ts` のフラグと、起動後の配置の設定（`yb-admin modify_placement_info`）の説明を照らし合わせる。",
+          "en": "Open https://docs.yugabyte.com/stable/deploy/manual-deployment/start-tservers/ in a browser and compare it with the flags in `src/topology.ts` and with the placement step after start (`yb-admin modify_placement_info`)."
+        }
+      },
+      {
+        "id": "66-openssl-not-in-nix",
+        "summary": {
+          "ja": "証明書を作る `distsql:local:certs` と `distsql:certs` は PATH の openssl を使う。Nix の devShell には openssl が入っていない（この作業では Homebrew の 3.6.1 が使われた）。",
+          "en": "`distsql:local:certs` and `distsql:certs` use the openssl on PATH. The Nix devShell does not provide one (Homebrew's 3.6.1 was used here)."
+        },
+        "resume": {
+          "ja": "flake の devShell に openssl を足すかどうかを決める。足さない場合は、macOS に付属の /usr/bin/openssl（LibreSSL）で同じ引数が通るかを確かめる。",
+          "en": "Decide whether to add openssl to the flake's devShell. If not, check that the same arguments work with the /usr/bin/openssl (LibreSSL) that macOS ships."
+        }
+      },
+      {
+        "id": "66-deadlock-and-rotation",
+        "summary": {
+          "ja": "デッドロック（SQLSTATE 40P01）を実際のクラスターで起こしていない。13章の再試行ループは 40001 だけを再試行する。証明書の入れ替えの手順は、手動デプロイ向けの文書に見つけられなかった。",
+          "en": "A deadlock (SQLSTATE 40P01) was not produced on the real cluster. Chapter 13's retry loop retries 40001 only. No certificate rotation procedure for manual deployments was found in the documentation."
+        },
+        "resume": {
+          "ja": "2 つのトランザクションに 2 つの行を逆の順で更新させて 40P01 を観測し、再試行の条件に足すかを決める。証明書は、同じ CA で作り直したものを 1 ノードずつ置いて再起動し、接続が保たれるかを手元のクラスターで確かめる。",
+          "en": "Make two transactions update two rows in opposite orders to observe 40P01, and decide whether to add it to the retry predicate. For certificates, reissue under the same CA, replace and restart one node at a time on the local cluster, and see whether connections hold."
+        }
+      },
+      {
+        "id": "66-transfer-not-measured",
+        "summary": {
+          "ja": "ゾーンをまたぐ転送量は、1 件 2,000 バイトという仮定からの計算で、測っていない。t4g.medium 3 台が毎秒 10 件の書き込みと 90 件の読み取りをさばけるかも測っていない。",
+          "en": "The cross-zone transfer is computed from an assumed 2,000 bytes per write, not measured. Whether three t4g.medium carry 10 writes and 90 reads a second was not measured either."
+        },
+        "resume": {
+          "ja": "デプロイしたクラスターに負荷をかけ、各ノードの CloudWatch の NetworkOut と、Cost Explorer の DataTransfer-Regional-Bytes を読む。",
+          "en": "Put load on a deployed cluster and read each node's NetworkOut in CloudWatch and DataTransfer-Regional-Bytes in Cost Explorer."
+        }
+      }
+    ]
+  },
+  "toolchain": [
+    {
+      "name": "YugabyteDB",
+      "version": "2025.2.7.0-b107",
+      "providedBy": "vp run distsql:fetch (software.yugabyte.com), into examples/66-distributed-sql/.yugabyte/",
+      "pinnedIn": "examples/66-distributed-sql/src/yugabyte.ts"
+    }
+  ],
+  "tasks": {
+    "snippet": "      // ---- chapter 66: distributed SQL ---------------------------------------\n      // Downloads the pinned YugabyteDB archive from software.yugabyte.com into .yugabyte/ and checks its SHA-256. No AWS. Starts nothing.\n      \"distsql:fetch\": fresh(\"node scripts/fetch.ts\", { cwd: \"examples/66-distributed-sql\" }),\n      // A certificate authority and a certificate for 127.0.0.1 in .yugabyte/. Needs openssl on PATH.\n      \"distsql:local:certs\": fresh(\"node scripts/certs.ts\", { cwd: \"examples/66-distributed-sql\" }),\n      // Three nodes on 127.0.0.1 (ports 23001-29103), as detached processes. `--tls` on a new cluster.\n      \"distsql:local:start\": fresh(\"node scripts/cluster.ts start\", { cwd: \"examples/66-distributed-sql\" }),\n      \"distsql:local:status\": fresh(\"node scripts/cluster.ts status\", { cwd: \"examples/66-distributed-sql\" }),\n      // SIGKILL to both processes of one node: `vp run distsql:local:kill b`.\n      \"distsql:local:kill\": fresh(\"node scripts/cluster.ts kill\", { cwd: \"examples/66-distributed-sql\" }),\n      \"distsql:local:stop\": fresh(\"node scripts/cluster.ts stop\", { cwd: \"examples/66-distributed-sql\" }),\n      // Stops every node and deletes .yugabyte/run.\n      \"distsql:local:destroy\": fresh(\"node scripts/cluster.ts destroy\", { cwd: \"examples/66-distributed-sql\" }),\n      // Chapter 13's migrations and repository on the local cluster, a real conflict, one node killed, two nodes killed, a dump restored.\n      \"distsql:local:verify\": fresh(\"node scripts/verify.ts\", { cwd: \"examples/66-distributed-sql\" }),\n      // Fails when deploy/ differs from what the generators produce. `--write` rewrites it.\n      \"distsql:render\": fresh(\"node scripts/render.ts\", { cwd: \"examples/66-distributed-sql\" }),\n      // With `-c nodes=3`: three instances and their volumes, billed by the hour.\n      ...infra(\"distsql\", \"examples/66-distributed-sql\", \"AihDistSql\"),\n      // Everything below goes through Systems Manager to the deployed nodes.\n      \"distsql:status\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts status\", { cwd: \"examples/66-distributed-sql\" }),\n      \"distsql:logs\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts logs\", { cwd: \"examples/66-distributed-sql\" }),\n      \"distsql:health\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts health\", { cwd: \"examples/66-distributed-sql\" }),\n      // Uploads the archive that `distsql:fetch --nodes` downloaded.\n      \"distsql:artifact\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts artifact\", { cwd: \"examples/66-distributed-sql\" }),\n      \"distsql:install\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts install\", { cwd: \"examples/66-distributed-sql\" }),\n      // Each node makes its key; the CA in .yugabyte/ca-aws signs the request. Needs openssl on PATH.\n      \"distsql:certs\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts certs\", { cwd: \"examples/66-distributed-sql\" }),\n      \"distsql:configure\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts configure\", { cwd: \"examples/66-distributed-sql\" }),\n      \"distsql:start\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts start\", { cwd: \"examples/66-distributed-sql\" }),\n      // One node: `vp run distsql:stop b`.\n      \"distsql:stop\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts stop\", { cwd: \"examples/66-distributed-sql\" }),\n      // An interactive shell on one node. Needs the Session Manager plugin.\n      \"distsql:session\": live(\"node --env-file-if-exists=../../.env scripts/nodes.ts session\", { cwd: \"examples/66-distributed-sql\" }),",
+    "synth": ["distsql:infra:synth"],
+    "checkAll": ["distsql:render"],
+    "typecheck": ["examples/66-distributed-sql"]
+  }
+}

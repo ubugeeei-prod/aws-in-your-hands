@@ -1,0 +1,25 @@
+{
+  "name": "@aih/example-50-agentcore",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aih/example-05-dynamodb": "workspace:*",
+    "@aih/example-06-auth": "workspace:*",
+    "@aih/example-17-ai": "workspace:*",
+    "@aih/example-36-bedrock": "workspace:*",
+    "@aws-sdk/client-bedrock-agentcore": "3.1149.0",
+    "@aws-sdk/client-dynamodb": "3.1149.0",
+    "@aws-sdk/lib-dynamodb": "3.1149.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "esbuild": "0.28.2",
+    "vite-plus": "1.1.0"
+  }
+}

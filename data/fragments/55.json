@@ -1,0 +1,976 @@
+{
+  "chapterId": "55",
+  "manifest": {
+    "id": "55",
+    "slug": "grafana",
+    "title": {
+      "ja": "Grafana: Amazon Managed Grafana で dashboard と alert を持つ",
+      "en": "Grafana: Dashboards and Alerts with Amazon Managed Grafana"
+    },
+    "prerequisites": ["19", "01"],
+    "services": ["Amazon Managed Grafana", "CloudWatch", "IAM", "IAM Identity Center"],
+    "samplePath": "examples/55-grafana",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "grafana-what-is",
+      "grafana-authentication",
+      "grafana-authentication-sso",
+      "grafana-create-workspace",
+      "grafana-user-access",
+      "grafana-user-roles",
+      "grafana-permissions",
+      "grafana-confused-deputy",
+      "grafana-cloudwatch-manual",
+      "grafana-cloudwatch-metric-search",
+      "grafana-cloudwatch-pricing-note",
+      "grafana-builtin-datasources",
+      "grafana-amp-datasource",
+      "grafana-network-access",
+      "grafana-plugins",
+      "grafana-configure-workspace",
+      "grafana-version-update",
+      "grafana-version-differences",
+      "grafana-provisioned-v2",
+      "grafana-service-accounts",
+      "grafana-api-token",
+      "grafana-api-service-account",
+      "grafana-dashboard-api",
+      "grafana-datasource-api",
+      "grafana-dashboard-json",
+      "grafana-alert-provisioning",
+      "grafana-quotas",
+      "grafana-delete-workspace",
+      "grafana-security-best-practices",
+      "grafana-cfn-workspace",
+      "grafana-cfn-network-access",
+      "grafana-pricing",
+      "aws-price-list-grafana",
+      "aws-price-list-cloudwatch-gmd",
+      "grafana-labs-cloudwatch-schema",
+      "grafana-labs-dashboard-schema",
+      "grafana-labs-cloudwatch-configure",
+      "grafana-labs-alert-provisioning-api",
+      "iam-service-reference-cloudwatch",
+      "grafana-managed-policies",
+      "grafana-xray-datasource",
+      "grafana-athena-datasource",
+      "amp-what-is",
+      "grafana-alert-evaluation",
+      "grafana-alert-state",
+      "cloud-control-supported-resources",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "grafana-what-is",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/what-is-Amazon-Managed-Service-Grafana.html",
+      "title": "What is Amazon Managed Grafana?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A workspace is a logically isolated Grafana server that the service provisions, scales and maintains",
+        "The service is priced per active user in a workspace",
+        "Asia Pacific (Tokyo), ap-northeast-1, is among the supported Regions"
+      ]
+    },
+    {
+      "id": "grafana-authentication",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/authentication-in-AMG.html",
+      "title": "Authenticate users in Amazon Managed Grafana workspaces",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Users sign in to the Grafana console of a workspace by single sign-on through an identity provider, instead of by using IAM",
+        "Each workspace uses SAML 2.0, IAM Identity Center, or both, and can switch later"
+      ]
+    },
+    {
+      "id": "grafana-authentication-sso",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/authentication-in-AMG-SSO.html",
+      "title": "Use AWS IAM Identity Center with your Amazon Managed Grafana workspace",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "To use IAM Identity Center, AWS Organizations must be activated for the account; Amazon Managed Grafana can activate Organizations when the first workspace configured for IAM Identity Center is created",
+        "Amazon Managed Grafana does not support IAM users and roles for assigning permissions within a workspace",
+        "IAM Identity Center has an integrated user directory in which users and groups can be created",
+        "In a standalone account, creating and managing workspaces and users needs AWSGrafanaAccountAdministrator, AWSSSOMasterAccountAdministrator, AWSOrganizationsFullAccess and AWSSSODirectoryAdministrator"
+      ]
+    },
+    {
+      "id": "grafana-create-workspace",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-create-workspace.html",
+      "title": "Create an Amazon Managed Grafana workspace",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Grafana versions 9, 10, 12 and 13 can be chosen for a new workspace",
+        "Choosing IAM Identity Center without having it enabled prompts to enable it by creating the first user",
+        "With SAML, the SAML setup is completed after the workspace is created, once its status is ACTIVE",
+        "At least one user must be assigned as Admin to sign in to the Grafana console and manage the workspace",
+        "By default a workspace is encrypted at rest with AWS-owned keys"
+      ]
+    },
+    {
+      "id": "grafana-user-access",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-manage-users-and-groups-AMG.html",
+      "title": "Manage user and group access to Amazon Managed Grafana workspaces",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With IAM Identity Center, users and groups are assigned to a workspace and made Admin in the Authentication tab of the Amazon Managed Grafana console, or through its APIs",
+        "With SAML, roles come from assertion attributes"
+      ]
+    },
+    {
+      "id": "grafana-user-roles",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/Grafana-user-roles.html",
+      "title": "User roles",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Admin can add, edit and delete data sources; Editor can edit dashboards and alert rules but not data sources; Viewer can only view",
+        "User assignment from inside the Grafana workspace is not supported in Amazon Managed Grafana"
+      ]
+    },
+    {
+      "id": "grafana-permissions",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-manage-permissions.html",
+      "title": "Amazon Managed Grafana permissions and policies for AWS data sources",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With customer-managed permissions the workspace uses an existing IAM role whose trust policy trusts grafana.amazonaws.com",
+        "With service-managed permissions the service creates AmazonGrafanaServiceRole-<id> and attaches a policy per selected data source: AmazonGrafanaCloudWatchAccess for CloudWatch, AWSXrayReadOnlyAccess for X-Ray, AmazonGrafanaAthenaAccess for Athena, and a customer-managed policy for Amazon Managed Service for Prometheus",
+        "The service-created SNS policy allows sns:Publish only to topics whose name starts with grafana"
+      ]
+    },
+    {
+      "id": "grafana-confused-deputy",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/cross-service-confused-deputy-prevention.html",
+      "title": "Cross-service confused deputy prevention",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The workspace role's trust policy can be limited with aws:SourceAccount and aws:SourceArn, where the ARN is arn:aws:grafana:<region>:<account>:/workspaces/<workspaceId>, with wildcards for unknown parts"
+      ]
+    },
+    {
+      "id": "grafana-cloudwatch-manual",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/adding--CloudWatch-manual.html",
+      "title": "Manually add CloudWatch as a data source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS SDK Default authentication method uses the permissions of the role attached to the workspace",
+        "The minimal policy shown for the data source lists cloudwatch:GetMetricData and cloudwatch:ListMetrics among its actions, all on Resource *",
+        "All access to CloudWatch is done server-side by the Grafana backend"
+      ]
+    },
+    {
+      "id": "grafana-cloudwatch-metric-search",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/CloudWatch-using-the-metric-search.html",
+      "title": "Using the metric search option",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With Match Exact on, every dimension of the metric must be specified; with it off, up to 100 matching metrics are returned",
+        "Valid periods are 1, 5, 10, 30 or any multiple of 60 seconds",
+        "A query whose Expression refers to another query cannot be used for an alert rule"
+      ]
+    },
+    {
+      "id": "grafana-cloudwatch-pricing-note",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/cloudwatch-pricing.html",
+      "title": "Pricing (CloudWatch data source)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CloudWatch data source lists metrics with ListMetrics and retrieves samples with GetMetricData, and GetMetricData incurs charges",
+        "Each change of a query in the editor issues a new GetMetricData request"
+      ]
+    },
+    {
+      "id": "grafana-builtin-datasources",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-data-sources-builtin.html",
+      "title": "Connect to built-in data sources",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudWatch, AWS X-Ray, Amazon Athena and Amazon Managed Service for Prometheus are among the data sources supported in every workspace",
+        "From version 9, data sources outside the core set may need their plugin installed"
+      ]
+    },
+    {
+      "id": "grafana-amp-datasource",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/amazon-prometheus-data-source.html",
+      "title": "Connect to an Amazon Managed Service for Prometheus data source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Amazon Managed Service for Prometheus data source is available starting in Amazon Managed Grafana version 12"
+      ]
+    },
+    {
+      "id": "grafana-network-access",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-configure-nac.html",
+      "title": "Configure network access to your Amazon Managed Grafana workspace",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default a workspace is open to all network traffic, while every user must still be authenticated",
+        "Network access control allows traffic by managed prefix lists and by interface VPC endpoints of com.amazonaws.<region>.grafana-workspace",
+        "Private address ranges in a prefix list are ignored; up to 5 prefix lists and 5 VPC endpoints per workspace",
+        "A caller outside the configured lists gets 403 Forbidden"
+      ]
+    },
+    {
+      "id": "grafana-plugins",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/grafana-plugins.html",
+      "title": "Extend your workspace with plugins",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With plugin management enabled, workspace admins can install up to 50 more plugins from the plugin catalog",
+        "Using community plugins is at the customer's discretion under the shared responsibility model",
+        "For severe security issues the service might update an installed plugin automatically"
+      ]
+    },
+    {
+      "id": "grafana-configure-workspace",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-configure-workspace.html",
+      "title": "Configure a Amazon Managed Grafana workspace",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Plugin management is turned on through the workspace configuration ({\"plugins\": {\"pluginAdminEnabled\": true}})",
+        "From Grafana version 12, Grafana alerting is always enabled and classic dashboard alerts are removed"
+      ]
+    },
+    {
+      "id": "grafana-version-update",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-workspace-version-update.html",
+      "title": "Update your workspace version",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A workspace can only be updated to a newer Grafana version; the update is irreversible, can take up to 10 minutes, and leaves the workspace read-only meanwhile",
+        "Updating the Grafana version does not update installed plugins"
+      ]
+    },
+    {
+      "id": "grafana-version-differences",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/version-differences.html",
+      "title": "Differences between Grafana versions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon Managed Grafana supports versions 9, 10, 12 and 13",
+        "Version 13 adds Git Sync, which keeps dashboards and folders in a Git repository in both directions",
+        "In version 13 dynamic dashboards are enabled by default and existing dashboards are migrated to the new schema when opened"
+      ]
+    },
+    {
+      "id": "grafana-provisioned-v2",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-dash-dynamic-provisioned.html",
+      "title": "Provisioned dashboards and the version 2 schema",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dashboards provisioned as code through the API continue to work in version 13; version 1 dashboards are migrated to version 2 automatically when loaded"
+      ]
+    },
+    {
+      "id": "grafana-service-accounts",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-authenticating-grafana-apis.html",
+      "title": "Authenticate with service accounts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Grafana HTTP API call to a workspace needs a service account token",
+        "Each service account is considered a user for billing purposes",
+        "A token can be set to expire at most 30 days ahead; the page recommends a few hours or less",
+        "Expired tokens count toward the quota until they are deleted"
+      ]
+    },
+    {
+      "id": "grafana-api-token",
+      "url": "https://docs.aws.amazon.com/grafana/latest/APIReference/API_CreateWorkspaceServiceAccountToken.html",
+      "title": "CreateWorkspaceServiceAccountToken",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "secondsToLive is required, from 1 to 2592000",
+        "The key is returned once and cannot be retrieved again"
+      ]
+    },
+    {
+      "id": "grafana-api-service-account",
+      "url": "https://docs.aws.amazon.com/grafana/latest/APIReference/API_CreateWorkspaceServiceAccount.html",
+      "title": "CreateWorkspaceServiceAccount",
+      "checkedAt": "2026-10-13",
+      "supports": ["A service account is created with a grafanaRole of ADMIN, EDITOR or VIEWER"]
+    },
+    {
+      "id": "grafana-dashboard-api",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-Grafana-API-Dashboard.html",
+      "title": "Dashboard API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "POST /api/dashboards/db creates or updates a dashboard; overwrite: true replaces an existing dashboard with the same uid",
+        "A uid is at most 40 characters and identifies a dashboard across workspaces",
+        "A success answers 200 with id, uid, url, status and version; 412 explains a version mismatch or a name that exists"
+      ]
+    },
+    {
+      "id": "grafana-datasource-api",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-Grafana-API-Datasource.html",
+      "title": "Data Source API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "GET /api/datasources/name/:name returns a data source with its uid; POST /api/datasources creates one",
+        "From Grafana version 13 the endpoints that take a numeric id are disabled by default"
+      ]
+    },
+    {
+      "id": "grafana-dashboard-json",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-dash-dashboard-json-model.html",
+      "title": "Dashboard JSON model",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A dashboard is one JSON object; uid is a string of 8 to 40 characters",
+        "gridPos places a panel on a grid 24 columns wide, with heights in units of 30 pixels"
+      ]
+    },
+    {
+      "id": "grafana-alert-provisioning",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-alerting-setup-provision.html",
+      "title": "Provisioning Grafana Alerting resources",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Alert rules, contact points and notification policies can be provisioned through the Alerting Provisioning HTTP API (POST /api/v1/provisioning/alert-rules) or Terraform",
+        "Resources provisioned through the API cannot be edited in the Grafana UI unless the X-Disable-Provenance header was sent"
+      ]
+    },
+    {
+      "id": "grafana-quotas",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG_quotas.html",
+      "title": "Amazon Managed Grafana service quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Five workspaces per Region by default, adjustable",
+        "Per workspace: 100 alert rule instances, 2,000 dashboards, 100 service accounts and 100 service account tokens, none adjustable"
+      ]
+    },
+    {
+      "id": "grafana-delete-workspace",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-edit-delete-workspace.html",
+      "title": "Delete a Amazon Managed Grafana workspace",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Deleting a workspace deletes its dashboards, data source configuration, alerts and snapshots",
+        "IAM roles the workspace used are not deleted with it"
+      ]
+    },
+    {
+      "id": "grafana-security-best-practices",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/AMG-Security-Best-Practices.html",
+      "title": "Security best practices",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Keys for the Grafana API should live a few hours or less and be treated as passwords"
+      ]
+    },
+    {
+      "id": "grafana-cfn-workspace",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-grafana-workspace.html",
+      "title": "AWS::Grafana::Workspace",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AccountAccessType, AuthenticationProviders (AWS_SSO, SAML) and PermissionType (CUSTOMER_MANAGED, SERVICE_MANAGED) are required",
+        "GrafanaVersion defaults to the latest version on create and can only go up",
+        "The attributes include Id and Endpoint",
+        "The Amazon Managed Grafana user guide names the workspace as the resource CloudFormation can create"
+      ],
+      "note": "The property page does not say whether Endpoint includes a scheme."
+    },
+    {
+      "id": "grafana-cfn-network-access",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-grafana-workspace-networkaccesscontrol.html",
+      "title": "AWS::Grafana::Workspace NetworkAccessControl",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PrefixListIds and VpceIds are both passed, either may be an empty array, and two empty arrays allow no traffic"
+      ]
+    },
+    {
+      "id": "grafana-pricing",
+      "url": "https://aws.amazon.com/grafana/pricing/",
+      "title": "Amazon Managed Grafana Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An active user is one who signed in to a workspace or made an API request at least once in a monthly billing cycle",
+        "Each workspace needs a minimum of one Editor license, even if no user logs in",
+        "An Editor license covers editors and administrators; a service account is billed as a user at the rate of its role",
+        "A 90-day free trial covers up to five users per account"
+      ]
+    },
+    {
+      "id": "aws-price-list-grafana",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGrafana/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonGrafana, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "USD 9 per Editor per month and USD 5 per Viewer per month in Asia Pacific (Tokyo)",
+        "USD 45 per Enterprise Plugins user per month"
+      ],
+      "note": "Publication date 2026-09-11T12:44:32Z."
+    },
+    {
+      "id": "aws-price-list-cloudwatch-gmd",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonCloudWatch, ap-northeast-1 (GetMetricData)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "USD 0.01 per 1,000 metrics requested using the GetMetricData API in Asia Pacific (Tokyo)"
+      ],
+      "note": "Publication date 2026-10-07T11:55:40Z. Whether the monthly free API requests cover GetMetricData was not read from the pricing page."
+    },
+    {
+      "id": "grafana-labs-cloudwatch-schema",
+      "url": "https://github.com/grafana/grafana/blob/v13.0.9/public/app/plugins/datasource/cloudwatch/dataquery.gen.ts",
+      "title": "grafana/grafana v13.0.9: CloudWatch data query types",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A CloudWatch metrics query has namespace, metricName, dimensions, statistic, period, region, matchExact, id, expression, label, queryMode, metricQueryType (Search = 0) and metricEditorMode (Builder = 0, Code = 1)",
+        "The data source plugin's id is cloudwatch and the time series panel's id is timeseries (their plugin.json at the same tag)"
+      ],
+      "note": "Amazon Managed Grafana does not publish which 13.x release a version 13 workspace runs. The tag was chosen as a 13.0 release."
+    },
+    {
+      "id": "grafana-labs-dashboard-schema",
+      "url": "https://github.com/grafana/grafana/blob/v13.0.9/kinds/dashboard/dashboard_kind.cue",
+      "title": "grafana/grafana v13.0.9: dashboard kind",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Panels have type, id, title, datasource {type, uid}, gridPos {x, y, w, h} and targets; w is at most 24",
+        "schemaVersion defaults to 42 at v13.0.9 and to 41 at v12.0.0"
+      ]
+    },
+    {
+      "id": "grafana-labs-cloudwatch-configure",
+      "url": "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/configure/",
+      "title": "Grafana Labs: Configure the Amazon CloudWatch data source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In provisioning, jsonData.authType: default selects the AWS SDK Default method, with defaultRegion beside it"
+      ]
+    },
+    {
+      "id": "grafana-labs-alert-provisioning-api",
+      "url": "https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/",
+      "title": "Grafana Labs: Alerting provisioning HTTP API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An alert rule is posted as title, ruleGroup, folderUID, condition, for, noDataState, execErrState and a data array of queries and expressions"
+      ]
+    },
+    {
+      "id": "iam-service-reference-cloudwatch",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudwatch/cloudwatch.json",
+      "title": "Service Authorization Reference (machine-readable): CloudWatch",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "GetMetricData and ListMetrics list no metric ARN as a resource type; GetMetricStatistics lists no resource type at all"
+      ],
+      "note": "GetMetricData and ListMetrics list a resource type named dataset with a tag condition key. Its use was not explored; the stack grants both actions on *."
+    },
+    {
+      "id": "grafana-managed-policies",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/security-iam-awsmanpol.html",
+      "title": "AWS managed policies for Amazon Managed Grafana",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AmazonGrafanaCloudWatchAccess allows the CloudWatch metric and alarm read actions, CloudWatch Logs queries, ec2:DescribeTags, ec2:DescribeInstances, ec2:DescribeRegions, tag:GetResources and two oam actions, all on Resource *"
+      ]
+    },
+    {
+      "id": "grafana-xray-datasource",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/x-ray-data-source.html",
+      "title": "Connect to an AWS X-Ray data source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With X-Ray as a data source, traces, analytics and insights can be viewed in dashboards or in Explore",
+        "In workspaces of version 9 or newer the data source might need its plugin installed"
+      ]
+    },
+    {
+      "id": "grafana-athena-datasource",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/Athena-using-the-data-source.html",
+      "title": "Using Athena data source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Athena data source provides a standard SQL query editor, and most Athena queries are best shown as a table"
+      ]
+    },
+    {
+      "id": "amp-what-is",
+      "url": "https://docs.aws.amazon.com/prometheus/latest/userguide/what-is-Amazon-Managed-Service-Prometheus.html",
+      "title": "What is Amazon Managed Service for Prometheus?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon Managed Service for Prometheus is a Prometheus-compatible monitoring service for container metrics that uses the Prometheus data model and PromQL, and works with clusters on Amazon EKS"
+      ]
+    },
+    {
+      "id": "grafana-alert-evaluation",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-alerting-rules-evaluation.html",
+      "title": "Alert rule evaluation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A rule goes to pending when its condition is first breached and fires once the condition has stayed breached for the pending period; if the condition stops being breached during that period, the rule returns to normal"
+      ]
+    },
+    {
+      "id": "grafana-alert-state",
+      "url": "https://docs.aws.amazon.com/grafana/latest/userguide/v13-alerting-explore-state.html",
+      "title": "State and health of alert rules",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An alert rule's health can be OK, Error or NoData, and NoData and Error produce alert instances of their own"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "grafana-workspace",
+      "ja": "ワークスペース（Grafana）",
+      "en": "workspace (Grafana)",
+      "firstUse": "55",
+      "definition": {
+        "ja": "Amazon Managed Grafana が用意する、論理的に分かれた 1 つの Grafana サーバー。ダッシュボード、データソース、利用者の割り当てを持つ。",
+        "en": "One logically isolated Grafana server provided by Amazon Managed Grafana. It holds dashboards, data sources and user assignments."
+      }
+    },
+    {
+      "id": "grafana-data-source",
+      "ja": "データソース（Grafana）",
+      "en": "data source (Grafana)",
+      "firstUse": "55",
+      "definition": {
+        "ja": "Grafana がクエリを送る先の設定。CloudWatch のデータソースは、ワークスペースのロールの権限で CloudWatch の API を呼ぶ。",
+        "en": "The configuration of a place Grafana sends queries to. The CloudWatch data source calls the CloudWatch API with the permissions of the workspace role."
+      }
+    },
+    {
+      "id": "grafana-service-account",
+      "ja": "サービスアカウント（Grafana）",
+      "en": "service account (Grafana)",
+      "firstUse": "55",
+      "definition": {
+        "ja": "人ではなくプログラムが Grafana の HTTP API を呼ぶための利用者。期限つきのトークンを発行して使い、料金の上では利用者 1 人として数えられる。",
+        "en": "A user for programs, not people, to call Grafana's HTTP API. It works through tokens that expire, and is billed as one user."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "55.overview",
+      "sources": ["examples/55-grafana/infra/lib/grafana-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "55.enough",
+      "sources": ["examples/55-grafana/src/signals.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "55.definition",
+      "sources": [
+        "examples/55-grafana/src/signals.ts",
+        "examples/55-grafana/src/cloudwatch.ts",
+        "examples/55-grafana/test/signals.test.ts",
+        "examples/55-grafana/test/harness.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "55.dashboard",
+      "sources": [
+        "examples/55-grafana/src/grafana.ts",
+        "examples/55-grafana/src/schema.ts",
+        "examples/55-grafana/test/grafana.test.ts"
+      ],
+      "tasks": ["test:unit", "grafana:render"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "55.workspace",
+      "sources": [
+        "examples/55-grafana/infra/lib/grafana-stack.ts",
+        "examples/55-grafana/infra/bin/app.ts",
+        "examples/55-grafana/infra/test/grafana-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "grafana:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "55.provision",
+      "sources": [
+        "examples/55-grafana/src/provision.ts",
+        "examples/55-grafana/test/provision.test.ts",
+        "examples/55-grafana/scripts/push.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "55.alerts",
+      "sources": ["examples/55-grafana/src/signals.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "55.local",
+      "sources": ["examples/55-grafana/scripts/render.ts", "examples/55-grafana/test"],
+      "tasks": ["test:unit", "grafana:render", "grafana:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "55.deploy",
+      "sources": ["examples/55-grafana/infra/bin/app.ts", "examples/55-grafana/scripts/push.ts"],
+      "tasks": [
+        "grafana:infra:diff",
+        "grafana:infra:deploy",
+        "grafana:push",
+        "grafana:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "55.cost",
+      "sources": [
+        "examples/55-grafana/src/cost-inputs.ts",
+        "examples/55-grafana/test/cost-inputs.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "55.cleanup",
+      "sources": ["examples/55-grafana/infra/lib/grafana-stack.ts"],
+      "tasks": ["grafana:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "grafana.user.editor",
+      "offerCode": "AmazonGrafana",
+      "region": "ap-northeast-1",
+      "sku": "X8ZJX6D8N5T68Z5N",
+      "usageType": "APN1-Grafana:EditorUser",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Users",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "9.0000000000",
+          "description": "$9 per Editor per month for Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGrafana/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:32Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "grafana.user.viewer",
+      "offerCode": "AmazonGrafana",
+      "region": "ap-northeast-1",
+      "sku": "6GGJY7RFT983XN3W",
+      "usageType": "APN1-Grafana:ViewerUser",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Users",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.0000000000",
+          "description": "$5 per Viewer per month for Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGrafana/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:32Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "cloudwatch.api.getmetricdata",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "6YJR7DASEN49YFY6",
+      "usageType": "APN1-CW:GMD-Metrics",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Metrics",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$0.01 per 1,000 metrics requested using GetMetricData API - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "grafana.user.editor",
+      "reason": "The pricing page describes a 90-day free trial with up to five free users per account, not a monthly allowance. None is applied."
+    },
+    {
+      "priceId": "grafana.user.viewer",
+      "reason": "The pricing page describes a 90-day free trial with up to five free users per account, not a monthly allowance. None is applied."
+    },
+    {
+      "priceId": "cloudwatch.api.getmetricdata",
+      "reason": "Whether any monthly free allowance covers metrics requested through GetMetricData was not confirmed. None is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "grafana-idle",
+      "chapter": "55",
+      "title": {
+        "ja": "Grafana のワークスペース: 作ったまま誰もサインインしない月",
+        "en": "Grafana workspace: created, and nobody signs in for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "ワークスペース 1 つ。料金ページの「ワークスペースごとに最低 1 つの Editor ライセンス」をそのまま数える",
+          "90 日の無料トライアル（アカウントあたり 5 人まで）は引いていない",
+          "誰もダッシュボードを開かないので、GetMetricData の呼び出しは無い",
+          "月の途中で作った、消したときの日割りの有無は確認できていない。1 か月ぶんで数える"
+        ],
+        "en": [
+          "One workspace, counted as the pricing page states: a minimum of one Editor license per workspace",
+          "The 90-day free trial (up to five users per account) is not subtracted",
+          "Nobody opens a dashboard, so GetMetricData is never called",
+          "Whether a workspace created or deleted mid-month is prorated could not be confirmed; a full month is counted"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "grafana.user.editor",
+          "quantity": 1,
+          "basis": "the minimum of one Editor license per workspace"
+        }
+      ]
+    },
+    {
+      "id": "grafana-small",
+      "chapter": "55",
+      "title": {
+        "ja": "Grafana のワークスペース: 管理者 1 人、閲覧者 2 人、コードからの反映つき",
+        "en": "Grafana workspace: one admin, two viewers, and pushes from code"
+      },
+      "assumptions": {
+        "ja": [
+          "その月にサインインした人が、管理者 1 人と閲覧者 2 人",
+          "ダッシュボードを反映するサービスアカウント（Admin）が、その月に 1 回以上 API を呼んだ。料金の上では Editor 1 人ぶん",
+          "ブラウザのタブ 1 つが、ダッシュボードを 1 日 8 時間、月 20 日開いたままにする。1 分ごとの再読み込みのたびに、23 個のメトリクスを GetMetricData で 1 回ずつ要求すると仮定（9,600 回 × 23 個）。Grafana が実際に 1 回の再読み込みで何個ぶん課金される呼び方をするかは未確認",
+          "無料トライアルと、GetMetricData の無料枠の有無は引いていない",
+          "19章のスタックそのものの料金と、IAM Identity Center や外部の IdP の料金は含めていない"
+        ],
+        "en": [
+          "One admin and two viewers signed in that month",
+          "The service account that pushes the dashboard (Admin) called the API at least once that month; it is billed as one Editor",
+          "One browser tab keeps the dashboard open 8 hours a day, 20 days a month. Each reload, once a minute, is assumed to request each of the 23 metrics once through GetMetricData (9,600 reloads times 23). How Grafana actually batches a reload was not confirmed",
+          "Neither the free trial nor any free allowance for GetMetricData is subtracted",
+          "Chapter 19's stack itself, and IAM Identity Center or an external IdP, are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "grafana.user.editor",
+          "quantity": 2,
+          "basis": "1 admin who signed in + 1 service account with the Admin role"
+        },
+        {
+          "priceId": "grafana.user.viewer",
+          "quantity": 2,
+          "basis": "2 viewers who signed in"
+        },
+        {
+          "priceId": "cloudwatch.api.getmetricdata",
+          "quantity": 220800,
+          "basis": "8 h x 20 days x 60 reloads x 23 metrics"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "55",
+        "command": "vp test run examples/55-grafana",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "定義が 19章のテンプレートのダッシュボードと完全に一致すること、ずれたダッシュボードを断ること、生成した Grafana の JSON がこの章のスキーマを通り 19章と同じメトリクスだけを読むこと、スキーマが壊れた入力を断ること、Grafana の HTTP API の呼び出し（偽の fetch）、トークンの送り先、料金計算の入力、スタックの assertion",
+          "en": "The definition equals the dashboard in chapter 19's template, a drifted dashboard is refused, the generated Grafana JSON passes this chapter's schema and reads exactly chapter 19's metrics, the schema refuses broken input, the calls to Grafana's HTTP API (against a fake fetch), where the token may go, the pricing inputs, and the stack assertions"
+        }
+      },
+      {
+        "scope": "55",
+        "command": "tsc --noEmit -p examples/55-grafana",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "55",
+        "command": "vp run grafana:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定（ロールだけ）と、-c authentication=AWS_SSO を付けた場合の synth。AWS には問い合わせない",
+          "en": "Synth of the default (the role only) and with -c authentication=AWS_SSO. No call to AWS"
+        }
+      },
+      {
+        "scope": "55",
+        "command": "vp run grafana:render",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "Grafana のダッシュボード JSON と、--cloudwatch での CloudWatch のボディを出力",
+          "en": "Printed the Grafana dashboard JSON and, with --cloudwatch, the CloudWatch body"
+        }
+      },
+      {
+        "scope": "55",
+        "command": "aws grafana <command> help",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AWS CLI 2.35.11 のヘルプで、scripts/push.ts が使うコマンドと引数の名前を確認。AWS は呼んでいない",
+          "en": "Checked the commands and option names scripts/push.ts uses against the help of AWS CLI 2.35.11. No call to AWS"
+        }
+      },
+      {
+        "scope": "55",
+        "command": "vp run grafana:infra:deploy -c authentication=AWS_SSO",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ワークスペースの作成。月額の課金が始まる",
+          "en": "Creates the workspace. The monthly bill starts"
+        }
+      },
+      {
+        "scope": "55",
+        "command": "vp run grafana:push",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "19章のダッシュボードを読み、トークンを発行し、データソースとダッシュボードを反映し、トークンを消す",
+          "en": "Reads chapter 19's dashboard, mints a token, saves the data source and the dashboard, deletes the token"
+        }
+      },
+      {
+        "scope": "55",
+        "command": "vp run grafana:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ワークスペースとロールの削除",
+          "en": "Deletes the workspace and the role"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "grafana-workspace-never-created",
+        "summary": {
+          "ja": "Amazon Managed Grafana のワークスペースを 1 つも作っていない。cdkd 0.296.28 が AWS::Grafana::Workspace を Cloud Control API 経由で作れるか、Endpoint と Id の属性を出力に読めるか、IAM Identity Center が無効なアカウントで AWS_SSO を指定したときに何が起きるか、SAML を指定して SamlConfiguration を渡さない作成が通るかは未確認。",
+          "en": "No Amazon Managed Grafana workspace was ever created. Not confirmed: that cdkd 0.296.28 can create AWS::Grafana::Workspace through Cloud Control API and read its Endpoint and Id attributes into outputs, what happens when AWS_SSO is given in an account without IAM Identity Center, and that a workspace with SAML and no SamlConfiguration is accepted."
+        },
+        "resume": {
+          "ja": "IAM Identity Center を有効にしたアカウントで vp run grafana:infra:deploy -c authentication=AWS_SSO を実行し、出力の WorkspaceId と WorkspaceEndpoint を確かめる。コンソールの Authentication タブで自分を割り当てて Admin にし、サインインできることを見る。終わったら vp run grafana:infra:destroy。",
+          "en": "In an account with IAM Identity Center enabled, run vp run grafana:infra:deploy -c authentication=AWS_SSO and check the WorkspaceId and WorkspaceEndpoint outputs. Assign yourself in the console's Authentication tab, make yourself Admin, and sign in. Finish with vp run grafana:infra:destroy."
+        }
+      },
+      {
+        "id": "grafana-dashboard-never-loaded",
+        "summary": {
+          "ja": "生成したダッシュボードの JSON を、本物の Grafana に読ませていない。この章のスキーマは Grafana の検証ではない。とくに、schemaVersion 41 の JSON をバージョン 13 のワークスペースが受け取って描画すること、式のクエリ（hide を付けた部品の合計）が線になること、jsonData.authType: default がワークスペースのロールを使うこと、ロールの 2 つのアクションだけでパネルが描けることは未確認。",
+          "en": "The generated dashboard JSON was never loaded by a real Grafana. This chapter's schema is not Grafana's validation. In particular it is not confirmed that a version 13 workspace accepts and draws JSON with schemaVersion 41, that the expression query (a sum over hidden parts) becomes a line, that jsonData.authType: default uses the workspace role, and that the role's two actions are enough to draw the panels."
+        },
+        "resume": {
+          "ja": "19章と 55章のスタックをデプロイし、vp run obs:smoke の後に vp run grafana:push を実行する。ワークスペースで Notes API のダッシュボードを開き、7 つのパネルに CloudWatch のダッシュボードと同じ線が出ることを見比べる。権限のエラーが出たら、足りないアクションを infra/lib/grafana-stack.ts の WORKSPACE_ACTIONS に足してテストを直す。",
+          "en": "Deploy the stacks of chapters 19 and 55, run vp run obs:smoke and then vp run grafana:push. Open the Notes API dashboard in the workspace and compare its seven panels with the CloudWatch dashboard. If a permission error appears, add the missing action to WORKSPACE_ACTIONS in infra/lib/grafana-stack.ts and adjust the test."
+        }
+      },
+      {
+        "id": "grafana-live-body-equality",
+        "summary": {
+          "ja": "aws cloudwatch get-dashboard が返すボディが、CDK が書いたものと JSON として等しいかを確かめていない。scripts/push.ts の一致の検査は、等しいことを前提にしている。WorkspaceEndpoint の出力がスキームを含むかも未確認（コードは両方を受け付ける）。",
+          "en": "Not confirmed: that the body aws cloudwatch get-dashboard returns equals, as JSON, what the CDK wrote. The agreement check in scripts/push.ts assumes it does. Whether the WorkspaceEndpoint output carries a scheme is also unconfirmed (the code accepts both)."
+        },
+        "resume": {
+          "ja": "vp run grafana:push を実行する。一致の検査で止まったら、返ってきたボディと vp run grafana:render --cloudwatch の出力を比べ、CloudWatch が足した項目があれば src/cloudwatch.ts の比較から外す。",
+          "en": "Run vp run grafana:push. If the agreement check stops it, compare the returned body with the output of vp run grafana:render --cloudwatch, and exclude from the comparison in src/cloudwatch.ts whatever CloudWatch added."
+        }
+      },
+      {
+        "id": "grafana-billing-details",
+        "summary": {
+          "ja": "料金のうち、月の途中で作って消したワークスペースの日割り、最低 1 ライセンスが無料トライアルの期間にどう扱われるか、GetMetricData に無料枠があるか、Grafana が 1 回の再読み込みで何個のメトリクスぶんを要求するかは確認できていない。",
+          "en": "Of the bill, these could not be confirmed: proration for a workspace created and deleted mid-month, how the one-license minimum is treated during the free trial, whether GetMetricData has a free allowance, and how many metrics one reload of the dashboard actually requests."
+        },
+        "resume": {
+          "ja": "ワークスペースを 1 か月置いたあと、Cost Explorer を usage type（APN1-Grafana:EditorUser、APN1-CW:GMD-Metrics）で分けて見て、reference/pricing の grafana-idle、grafana-small と比べる。",
+          "en": "After a workspace has existed for a month, look at Cost Explorer by usage type (APN1-Grafana:EditorUser, APN1-CW:GMD-Metrics) and compare with grafana-idle and grafana-small in reference/pricing."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 55: Amazon Managed Grafana ------------------------------\n      // Prints the Grafana dashboard generated from src/signals.ts. Local: reads and sends nothing.\n      \"grafana:render\": fresh(\"node scripts/render.ts\", { cwd: \"examples/55-grafana\" }),\n      // By default a role only. With `-c authentication=AWS_SSO` (or SAML) a workspace, BILLED by the month.\n      ...infra(\"grafana\", \"examples/55-grafana\", \"AihGrafana\"),\n      // CHANGES AWS: mints a 15-minute token, saves the data source and the dashboard, deletes the token.\n      \"grafana:push\": live(\"node --env-file-if-exists=../../.env scripts/push.ts\", { cwd: \"examples/55-grafana\" }),",
+    "synth": ["grafana:infra:synth"],
+    "checkAll": ["grafana:render"],
+    "typecheck": ["examples/55-grafana"]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@aih/example-59-rds",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aih/example-11-network": "workspace:*",
+    "@aih/example-13-sql": "workspace:*",
+    "@aws-sdk/rds-signer": "3.1149.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "pg": "8.23.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@aws-sdk/client-lambda": "3.1149.0",
+    "@aws-sdk/client-secrets-manager": "3.1149.0",
+    "@electric-sql/pglite": "0.5.8",
+    "@go-to-k/cdkd": "0.296.28",
+    "@types/aws-lambda": "8.10.164",
+    "@types/pg": "8.23.1",
+    "vite-plus": "1.1.0"
+  }
+}

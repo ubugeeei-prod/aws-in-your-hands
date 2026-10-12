@@ -1,0 +1,1400 @@
+{
+  "chapterId": "26",
+  "manifest": {
+    "id": "26",
+    "slug": "analytics",
+    "title": {
+      "ja": "Analytics: Firehose、S3、Glue、Athena",
+      "en": "Analytics: Firehose, S3, Glue, and Athena"
+    },
+    "prerequisites": ["07", "19"],
+    "services": [
+      "Amazon Data Firehose",
+      "S3",
+      "AWS Glue Data Catalog",
+      "Athena",
+      "Lambda",
+      "API Gateway HTTP API",
+      "DynamoDB",
+      "CloudWatch Logs"
+    ],
+    "samplePath": "examples/26-analytics",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "firehose-s3-prefixes",
+      "firehose-dynamic-partitioning",
+      "firehose-dynamic-partitioning-enable",
+      "firehose-dynamic-partitioning-buffering",
+      "firehose-record-format-conversion",
+      "firehose-basic-deliver",
+      "firehose-buffering-hints",
+      "firehose-api-buffering-hints",
+      "firehose-s3-object-name",
+      "firehose-retry",
+      "firehose-api-put-record",
+      "firehose-api-processor",
+      "firehose-controlling-access",
+      "firehose-cloudwatch-logs",
+      "logs-subscription-filters",
+      "athena-partition-projection",
+      "athena-partition-projection-types",
+      "athena-partition-projection-setup",
+      "athena-partition-projection-firehose",
+      "athena-workgroup-limits",
+      "athena-hive-json-serde",
+      "athena-openx-json-serde",
+      "athena-parquet-serde",
+      "athena-columnar-storage",
+      "athena-waf-projection-example",
+      "athena-pricing",
+      "athena-functions-env3",
+      "trino-aggregate-functions",
+      "firehose-pricing",
+      "aws-price-list-firehose",
+      "aws-price-list-athena",
+      "aws-price-list-glue",
+      "cdkd-source-analytics",
+      "aws-cdk-lib-firehose-athena-types",
+      "hyparquet-writer-npm",
+      "cloudflare-analytics-engine",
+      "cloudflare-basin-sql",
+      "cloudflare-basin-pipelines",
+      "cloudflare-logpush",
+      "vercel-web-analytics",
+      "vercel-observability-query",
+      "vercel-drains",
+      "cdkd-npm",
+      "cloud-control-supported-resources",
+      "aws-price-list-s3",
+      "apigw-http-logging"
+    ]
+  },
+  "sources": [
+    {
+      "id": "firehose-s3-prefixes",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/s3-prefixes.html",
+      "title": "Understand custom prefixes for Amazon S3 objects",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A custom prefix overrides the default prefix of yyyy/MM/dd/HH; expressions have the form !{namespace:value} with the namespaces firehose, timestamp, partitionKeyFromQuery and partitionKeyFromLambda",
+        "For the timestamp namespace Firehose uses the approximate arrival timestamp of the oldest record contained in the S3 object being written; by default in UTC, and a time zone can be set with CustomTimeZone",
+        "ErrorOutputPrefix can be null only if Prefix contains no expressions; an ErrorOutputPrefix expression must include !{firehose:error-output-type}, and Prefix cannot contain it",
+        "error-output-type evaluates to one of processing-failed, AmazonOpenSearchService-failed, splunk-failed, format-conversion-failed, http-endpoint-failed"
+      ]
+    },
+    {
+      "id": "firehose-dynamic-partitioning",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/dynamic-partitioning.html",
+      "title": "Partition streaming data in Amazon Data Firehose",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Dynamic partitioning groups data by keys within the records and delivers it to the corresponding S3 prefixes"
+      ]
+    },
+    {
+      "id": "firehose-dynamic-partitioning-enable",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/dynamic-partitioning-enable.html",
+      "title": "Enable dynamic partitioning in Amazon Data Firehose",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dynamic partitioning can be enabled only when a new Firehose stream is created, and once enabled it cannot be disabled on that stream"
+      ]
+    },
+    {
+      "id": "firehose-dynamic-partitioning-buffering",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/buffering.html",
+      "title": "Buffer data for dynamic partitioning",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With dynamic partitioning each active partition has its own buffer and is delivered as its own object",
+        "Once the number of active partitions reaches the limit of 500 per stream, the remaining records go to the error prefix (activePartitionExceeded); the quota can be raised up to 2500 on request",
+        "Zero buffering is not available with dynamic partitioning"
+      ],
+      "note": "Quota as read on 2026-10-13."
+    },
+    {
+      "id": "firehose-record-format-conversion",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/record-format-conversion.html",
+      "title": "Convert input data format in Amazon Data Firehose",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Firehose can convert JSON input to Apache Parquet or Apache ORC before storing it in S3; it needs a deserializer, a schema from an AWS Glue table, and a serializer",
+        "Choose the OpenX JSON SerDe unless the input has timestamps it does not support; it accepts yyyy-MM-dd'T'HH:mm:ss[.S]'Z', epoch seconds and epoch milliseconds among others",
+        "The schema in the Glue Data Catalog should match the input structure; attributes not in the schema are not in the converted data",
+        "Several JSON documents in one record are accepted as {\"a\": 1}{\"b\": 1}, not as a JSON array"
+      ]
+    },
+    {
+      "id": "firehose-basic-deliver",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/basic-deliver.html",
+      "title": "Understand data delivery in Amazon Data Firehose",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For S3, Firehose concatenates the incoming records of a buffer into one object, by default without any delimiter",
+        "Firehose uses at-least-once semantics for data delivery and retries can introduce duplicates, for all destination types except Amazon S3, Apache Iceberg Tables and Snowflake"
+      ]
+    },
+    {
+      "id": "firehose-buffering-hints",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/create-configure-backup.html",
+      "title": "Configure backup settings (buffering hints)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For an S3 destination the buffering size is 1 to 128 MB (default 5) and the interval 0 to 900 seconds (default 300); the first condition satisfied triggers delivery",
+        "S3 compression can be GZIP, Snappy, Zip, Hadoop-compatible Snappy, or none",
+        "With a buffer interval under 60 seconds Firehose uses multipart upload, which increases S3 PUT costs"
+      ]
+    },
+    {
+      "id": "firehose-api-buffering-hints",
+      "url": "https://docs.aws.amazon.com/firehose/latest/APIReference/API_BufferingHints.html",
+      "title": "BufferingHints (Amazon Data Firehose API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "IntervalInSeconds: 0 to 900, default 300. SizeInMBs: 1 to 128, default 5. If one is given, the other must be given too"
+      ],
+      "note": "The page says nothing about a larger minimum size when format conversion is on."
+    },
+    {
+      "id": "firehose-s3-object-name",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/s3-object-name.html",
+      "title": "Configure Amazon S3 object name format",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The object key is <evaluated prefix><suffix>, the suffix being <stream name>-<stream version>-<year>-<month>-<day>-<hour>-<minute>-<second>-<uuid><file extension>",
+        "The default file extensions are .parquet for Parquet conversion and .gz for Gzip compression"
+      ]
+    },
+    {
+      "id": "firehose-retry",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/retry.html",
+      "title": "Handle data delivery failures",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When delivery to S3 fails, Firehose keeps retrying for up to 24 hours; its maximum data storage time is 24 hours, after which the data is lost",
+        "Failed records go to the S3 error prefix only when Lambda processing or Parquet conversion fails"
+      ]
+    },
+    {
+      "id": "firehose-api-put-record",
+      "url": "https://docs.aws.amazon.com/firehose/latest/APIReference/API_PutRecord.html",
+      "title": "PutRecord (Amazon Data Firehose API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A record's data blob can be up to 1,000 KiB; by default a stream takes up to 2,000 transactions, 5,000 records, or 5 MB per second",
+        "Firehose buffers records before delivery; a common way to tell them apart at the destination is a delimiter such as a newline in the data",
+        "Re-invoking the Put API operations can result in data duplicates",
+        "Records are stored for 24 hours from the time they are added while Firehose tries to deliver them"
+      ],
+      "note": "Limits as read on 2026-10-13."
+    },
+    {
+      "id": "firehose-api-processor",
+      "url": "https://docs.aws.amazon.com/firehose/latest/APIReference/API_Processor.html",
+      "title": "Processor (Amazon Data Firehose API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Processor types: RecordDeAggregation, Decompression, CloudWatchLogProcessing, Lambda, MetadataExtraction, AppendDelimiterToRecord"
+      ]
+    },
+    {
+      "id": "firehose-controlling-access",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html",
+      "title": "Controlling access with Amazon Data Firehose",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The role Firehose assumes trusts firehose.amazonaws.com",
+        "For an S3 destination the role needs s3:AbortMultipartUpload, s3:GetBucketLocation, s3:GetObject, s3:ListBucket, s3:ListBucketMultipartUploads and s3:PutObject on the bucket and its objects, and logs:PutLogEvents on the error log stream",
+        "For data format conversion the role needs glue:GetTable, glue:GetTableVersion and glue:GetTableVersions on the catalog, the database and the table"
+      ]
+    },
+    {
+      "id": "firehose-cloudwatch-logs",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-cloudwatch-logs.html",
+      "title": "Send CloudWatch Logs to Firehose",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudWatch Logs events reach Firehose through subscription filters, compressed with gzip; Firehose has a decompression feature for them"
+      ]
+    },
+    {
+      "id": "logs-subscription-filters",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html",
+      "title": "Log group-level subscription filters",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Data sent from CloudWatch Logs to Firehose is compressed with gzip level 6, and each record is a JSON envelope with owner, logGroup, logStream, subscriptionFilters, messageType and logEvents",
+        "The role CloudWatch Logs assumes trusts logs.amazonaws.com and needs firehose:PutRecord on the stream"
+      ]
+    },
+    {
+      "id": "athena-partition-projection",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/partition-projection.html",
+      "title": "Use partition projection with Amazon Athena",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "With partition projection Athena calculates partition values and locations from table properties instead of calling GetPartitions on the Glue Data Catalog",
+        "Enabling projection makes Athena ignore partition metadata registered for the table",
+        "A projected partition that does not exist in S3 returns no data and no error; if more than half of the projected partitions are empty, traditional partitions are recommended",
+        "Projection is used only when the table is queried through Athena"
+      ]
+    },
+    {
+      "id": "athena-partition-projection-types",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/partition-projection-supported-types.html",
+      "title": "Supported types for partition projection",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The date type takes projection.<column>.type, .range (which may use NOW), .format (a Java DateTimeFormatter string), .interval and .interval.unit",
+        "Projected date columns are generated in UTC at query execution time"
+      ]
+    },
+    {
+      "id": "athena-partition-projection-setup",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/partition-projection-setting-up.html",
+      "title": "Set up partition projection",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "projection.enabled=true turns projection on; the properties are table properties in AWS Glue",
+        "storage.location.template is optional; if used it must hold a ${column} placeholder for each partition column and end with a slash"
+      ]
+    },
+    {
+      "id": "athena-partition-projection-firehose",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/partition-projection-kinesis-firehose-example.html",
+      "title": "Amazon Data Firehose example (partition projection)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The documented example projects a date-typed partition column over the prefix Firehose writes, with a range ending in NOW and a storage.location.template"
+      ]
+    },
+    {
+      "id": "athena-workgroup-limits",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/workgroups-setting-control-limits-cloudwatch.html",
+      "title": "Configure per-query and per-workgroup data usage controls",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A workgroup has one per-query limit on data scanned; a query that exceeds it is cancelled, and cancelled queries are charged according to Athena pricing",
+        "The per-query limit is between 10 MB and 7 EB",
+        "Workgroup-wide limits are CloudWatch alarms that notify an SNS topic; queries are not cancelled automatically when such a threshold is reached",
+        "Cancelled or failed queries may leave partial results and incomplete multipart uploads in the result location; a lifecycle rule to end multipart uploads is recommended"
+      ]
+    },
+    {
+      "id": "athena-hive-json-serde",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/hive-json-serde.html",
+      "title": "Hive JSON SerDe",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SerDe class is org.apache.hive.hcatalog.data.JsonSerDe; it expects each JSON document on a single line, lines separated by a newline",
+        "Timestamp columns need the timestamp.formats SerDe property to be parsed from strings"
+      ]
+    },
+    {
+      "id": "athena-openx-json-serde",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/openx-json-serde.html",
+      "title": "OpenX JSON SerDe",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With the OpenX JSON SerDe the number of results and their values can be non-deterministic; the page's workaround is to use the Hive JSON SerDe or another file format",
+        "case.insensitive defaults to TRUE: the SerDe converts upper-case columns to lower case"
+      ]
+    },
+    {
+      "id": "athena-parquet-serde",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/parquet-serde.html",
+      "title": "Parquet SerDe",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The serialization library for Parquet is org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+      ]
+    },
+    {
+      "id": "athena-columnar-storage",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/columnar-storage.html",
+      "title": "Use columnar storage formats",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Parquet and ORC compress by column and support predicate pushdown, so Athena fetches only the blocks it needs"
+      ]
+    },
+    {
+      "id": "athena-waf-projection-example",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/create-waf-table-partition-projection.html",
+      "title": "Create a table for AWS WAF S3 logs in Athena using partition projection",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A JSON table is stored as INPUTFORMAT org.apache.hadoop.mapred.TextInputFormat and OUTPUTFORMAT org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
+      ]
+    },
+    {
+      "id": "athena-pricing",
+      "url": "https://aws.amazon.com/athena/pricing/",
+      "title": "Amazon Athena Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SQL queries are billed per TB scanned, rounded up to the nearest megabyte with a 10 MB minimum per query",
+        "S3 bills separately for reads, storage and transfer, including query results; Glue Data Catalog is billed at its own rates"
+      ],
+      "note": "Read through a summary of the page. The exact rule for failed and cancelled queries is taken from the Price List attributes instead."
+    },
+    {
+      "id": "athena-functions-env3",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/functions-env3.html",
+      "title": "Athena engine version 3 functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Functions in Athena engine version 3 are based on Trino; the page links to the Trino documentation for aggregate and other functions"
+      ]
+    },
+    {
+      "id": "trino-aggregate-functions",
+      "url": "https://trino.io/docs/current/functions/aggregate.html",
+      "title": "Aggregate functions (Trino documentation)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "count(*) returns the number of input rows; approx_percentile(x, percentage) returns the approximate percentile; approx_distinct(x) approximates count(DISTINCT x)"
+      ],
+      "note": "Linked from the Athena engine version 3 function reference. Which Trino release Athena runs was not checked."
+    },
+    {
+      "id": "firehose-pricing",
+      "url": "https://aws.amazon.com/firehose/pricing/",
+      "title": "Amazon Data Firehose Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Direct PUT and Kinesis Data Streams ingestion is billed per GB in 5KB increments: a 3KB record is billed as 5KB",
+        "Format conversion is billed per GB on the same 5KB increments; dynamic partitioning is billed per GB processed, per object delivered and, with the JQ parser, per hour of processing",
+        "The page lists no setup fee or upfront commitment; the only hourly charge it mentions is for delivery into a VPC"
+      ],
+      "note": "Read through a summary of the page; the unit prices come from the Price List."
+    },
+    {
+      "id": "aws-price-list-firehose",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesisFirehose/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon Data Firehose, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Direct PUT ingestion (APN1-BilledBytes, PutRecord): USD 0.036 per GB for the first 500 TB a month",
+        "Data format conversion: USD 0.022 per GB",
+        "Dynamic partitioning: USD 0.032 per GB delivered, USD 0.008 per thousand objects, USD 0.112 per JQ processing hour",
+        "CloudWatch Logs decompression: USD 0.00403 per GB decompressed; vended logs ingestion: USD 0.16 per GB"
+      ],
+      "note": "Publication date 2026-09-11T12:44:46Z."
+    },
+    {
+      "id": "aws-price-list-athena",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonAthena/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon Athena, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "USD 5.00 per TB of data scanned",
+        "Charged for total data scanned per query with a minimum of 10 MB for each successful or cancelled query; DDL, failed queries and statements that create or load partitions are free"
+      ],
+      "note": "Publication date 2026-09-11T12:44:08Z."
+    },
+    {
+      "id": "aws-price-list-glue",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Glue, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Data Catalog storage: USD 1 per 100,000 objects a month, the first million objects free",
+        "Data Catalog requests: USD 1 per million requests, the first million a month free"
+      ],
+      "note": "Publication date 2026-10-06T19:23:38Z."
+    },
+    {
+      "id": "cdkd-source-analytics",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts and the Firehose provider",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd 0.296.28 registers its own providers for AWS::KinesisFirehose::DeliveryStream, AWS::Glue::Database, AWS::Glue::Table, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::Logs::LogGroup, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::DynamoDB::Table and AWS::ApiGatewayV2::*",
+        "It registers none for AWS::Athena::WorkGroup or AWS::Logs::LogStream, which go through Cloud Control API",
+        "Its Firehose provider passes Prefix, ErrorOutputPrefix, CompressionFormat, BufferingHints, EncryptionConfiguration, CloudWatchLoggingOptions, ProcessingConfiguration, S3BackupMode, S3BackupConfiguration and DataFormatConversionConfiguration of an extended S3 destination, and not DynamicPartitioningConfiguration, CustomTimeZone or FileExtension"
+      ],
+      "note": "Read in the installed package's dist/ (provider-classes and deploy-engine bundles), which is built from this source."
+    },
+    {
+      "id": "aws-cdk-lib-firehose-athena-types",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-kinesisfirehose, aws-glue and aws-athena type definitions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CfnDeliveryStream.ExtendedS3DestinationConfigurationProperty has prefix, errorOutputPrefix, compressionFormat (default UNCOMPRESSED), bufferingHints, dataFormatConversionConfiguration, dynamicPartitioningConfiguration and customTimeZone",
+        "ParquetSerDe compression is UNCOMPRESSED, SNAPPY or GZIP, default SNAPPY; SchemaConfiguration.versionId LATEST picks up table updates",
+        "CfnWorkGroup has bytesScannedCutoffPerQuery, enforceWorkGroupConfiguration, publishCloudWatchMetricsEnabled, resultConfiguration and recursiveDeleteOption"
+      ]
+    },
+    {
+      "id": "hyparquet-writer-npm",
+      "url": "https://www.npmjs.com/package/hyparquet-writer/v/0.16.11",
+      "title": "hyparquet-writer 0.16.11 and hyparquet 1.31.3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "parquetWriteBuffer writes a Parquet file with the SNAPPY codec by default; parquetMetadata reads total_compressed_size per column chunk from the footer"
+      ],
+      "note": "Used only on the laptop to measure column sizes. It is not what Firehose runs."
+    },
+    {
+      "id": "cloudflare-analytics-engine",
+      "url": "https://developers.cloudflare.com/analytics/analytics-engine/",
+      "title": "Cloudflare Workers Analytics Engine (overview, get started, limits, pricing, SQL API, sampling)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Workers Analytics Engine has an API to write data points from Workers and a SQL API to query them; writeDataPoint() need not be awaited",
+        "A data point holds up to twenty blobs, twenty doubles and one index; at most 250 data points per Worker invocation; data is stored for three months",
+        "Queries operate on a single table; UNION and JOIN are not supported",
+        "Data is sampled at write time when points arrive too quickly into one index, and again at query time for complex queries; counts use sum(_sample_interval)",
+        "Workers Paid includes 10 million data points and 1 million read queries a month; the pricing page says usage is not currently billed"
+      ],
+      "note": "Sub-pages /get-started/, /limits/, /pricing/, /sql-api/, /sql-reference/statements/ and /sampling/ were read through a summarising fetch."
+    },
+    {
+      "id": "cloudflare-basin-sql",
+      "url": "https://developers.cloudflare.com/r2-sql/",
+      "title": "Cloudflare Basin SQL (formerly R2 SQL), with pricing and limitations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Basin SQL, formerly known as R2 SQL, is generally available and queries Apache Iceberg tables stored in Basin Catalog (formerly R2 Data Catalog)",
+        "It reads Parquet only, is read-only, and supports joins and exact aggregates such as COUNT(DISTINCT)",
+        "It is billed by compressed data scanned: 10 GB a month included, then USD 2.50 per TB, with a 10 MB minimum per query",
+        "No user-configurable per-query scan cap is documented"
+      ],
+      "note": "The overview was re-read on 2026-10-13; /platform/pricing/ and /reference/limitations-best-practices/ on 2026-10-12, through a summarising fetch."
+    },
+    {
+      "id": "cloudflare-basin-pipelines",
+      "url": "https://developers.cloudflare.com/pipelines/",
+      "title": "Cloudflare Basin Pipelines (formerly Cloudflare Pipelines), with sinks and pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Basin Pipelines is generally available on the Workers Paid plan; it receives events over HTTP or a Worker binding and writes Iceberg tables to Basin Catalog or Parquet and JSON files to R2",
+        "Ingress is free; sinks include 50 GB a month, then USD 0.03 per GB for JSON and USD 0.06 per GB for Parquet or Iceberg, on uncompressed volume"
+      ],
+      "note": "Read through a summarising fetch, with /sinks/ and /platform/pricing/."
+    },
+    {
+      "id": "cloudflare-logpush",
+      "url": "https://developers.cloudflare.com/logs/logpush/",
+      "title": "Cloudflare Logpush (overview, pricing, datasets, destinations)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Logpush delivers logs in batches to destinations such as R2, Basin Pipelines, Amazon S3 and HTTP endpoints; it offers no storage or search of its own",
+        "It is available with usage-based pricing on Free, Pro and Business plans; Workers Trace Events Logpush requires the Workers Paid plan"
+      ],
+      "note": "Read through a summarising fetch, with /pricing/ and /logpush-job/enable-destinations/."
+    },
+    {
+      "id": "vercel-web-analytics",
+      "url": "https://vercel.com/docs/analytics/limits-and-pricing",
+      "title": "Vercel Web Analytics: pricing, custom events, API",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An event is a tracked page view or a custom event; custom events are on Pro and Enterprise",
+        "Pro is billed USD 0.03 per 1,000 events with a reporting window of 12 months; Hobby includes 50,000 events a month with a 1-month window",
+        "The Web Analytics API returns aggregated data with OData filters; a CSV export holds up to 250 entries of a panel"
+      ],
+      "note": "With /docs/analytics, /docs/analytics/custom-events, /docs/analytics/using-web-analytics and /docs/analytics/web-analytics-api."
+    },
+    {
+      "id": "vercel-observability-query",
+      "url": "https://vercel.com/docs/query",
+      "title": "Vercel Observability Plus and Query",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Query builds metric aggregations from form fields (event type, metric, filter, group by) and exports results as CSV or JSON; full access requires Observability Plus",
+        "Observability Plus is USD 1.20 per million events and keeps data for 30 days",
+        "The pages describe no SQL interface"
+      ],
+      "note": "With /docs/observability/observability-plus and /docs/query/reference."
+    },
+    {
+      "id": "vercel-drains",
+      "url": "https://vercel.com/docs/drains",
+      "title": "Vercel Drains",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Drains forward logs, traces, Speed Insights and Web Analytics events to a custom HTTP endpoint or a native integration; they are on Pro and Enterprise",
+        "S3 bucket destinations are available only for Audit Log Drains",
+        "Drains are billed by the uncompressed JSON volume of the drained records (the table shows USD 0.50)"
+      ],
+      "note": "With /docs/drains/using-drains. The table does not print the unit; the surrounding text speaks of billed gigabytes."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "data-lake-partition",
+      "ja": "パーティション（Athena）",
+      "en": "partition (Athena)",
+      "firstUse": "26",
+      "definition": {
+        "ja": "テーブルのデータを、キーの値ごとに別のフォルダーへ分けたもの。条件にパーティションのキーがあるクエリは、該当するフォルダーだけを読む。",
+        "en": "A table's data split into one folder per value of a key. A query that filters on the key reads only the matching folders."
+      }
+    },
+    {
+      "id": "partition-projection",
+      "ja": "partition projection",
+      "en": "partition projection",
+      "firstUse": "26",
+      "definition": {
+        "ja": "Athena が、パーティションの一覧をカタログに問い合わせるかわりに、テーブルのプロパティに書いた規則から計算する機能。",
+        "en": "An Athena feature that computes a table's partitions from rules in its properties instead of looking them up in the catalog."
+      }
+    },
+    {
+      "id": "columnar-format",
+      "ja": "列指向フォーマット",
+      "en": "columnar format",
+      "firstUse": "26",
+      "definition": {
+        "ja": "Parquet や ORC のように、データを行ごとではなく列ごとにまとめて保存する形式。クエリは必要な列だけを読める。",
+        "en": "A file format such as Parquet or ORC that stores data column by column instead of row by row, so a query can read only the columns it needs."
+      }
+    },
+    {
+      "id": "serde",
+      "ja": "SerDe",
+      "en": "SerDe",
+      "firstUse": "26",
+      "definition": {
+        "ja": "serializer/deserializer の略。ファイルの中身をテーブルの行として読む方法を決める部品で、テーブルの定義に名前を書く。",
+        "en": "Short for serializer/deserializer: the component, named in a table's definition, that decides how a file's bytes are read as rows."
+      }
+    },
+    {
+      "id": "athena-workgroup",
+      "ja": "ワークグループ（Athena）",
+      "en": "workgroup (Athena)",
+      "firstUse": "26",
+      "definition": {
+        "ja": "Athena のクエリをまとめる単位。結果の保存先と、1 回のクエリが読んでよいバイト数の上限を持てる。",
+        "en": "A unit that groups Athena queries. It can hold the result location and a cap on the bytes one query may scan."
+      }
+    },
+    {
+      "id": "firehose-stream",
+      "ja": "Firehose ストリーム",
+      "en": "Firehose stream",
+      "firstUse": "26",
+      "definition": {
+        "ja": "Amazon Data Firehose が受け取ったレコードをためて、まとめて宛先（この章では S3）へ書く入口。",
+        "en": "The entry point of Amazon Data Firehose: it buffers the records it receives and writes them to a destination (S3 in this chapter) in batches."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "26.overview",
+      "sources": ["examples/26-analytics/infra/lib/analytics-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "26.choices",
+      "sources": [
+        "examples/26-analytics/infra/lib/analytics-stack.ts",
+        "examples/26-analytics/infra/test/analytics-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "26.record",
+      "sources": [
+        "examples/26-analytics/src/record.ts",
+        "examples/26-analytics/src/describe.ts",
+        "examples/26-analytics/test/record.test.ts",
+        "examples/26-analytics/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "26.producer",
+      "sources": [
+        "examples/26-analytics/src/app.ts",
+        "examples/26-analytics/src/sink.ts",
+        "examples/26-analytics/src/lambda.ts",
+        "examples/26-analytics/src/compose.ts",
+        "examples/26-analytics/test/app.test.ts",
+        "examples/26-analytics/test/sink.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "26.delivery",
+      "sources": [
+        "examples/26-analytics/src/partition.ts",
+        "examples/26-analytics/src/lake.ts",
+        "examples/26-analytics/infra/lib/analytics-stack.ts",
+        "examples/26-analytics/test/partition.test.ts"
+      ],
+      "tasks": ["test:unit", "analytics:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "26.catalog",
+      "sources": [
+        "examples/26-analytics/src/partition.ts",
+        "examples/26-analytics/src/names.ts",
+        "examples/26-analytics/infra/lib/analytics-stack.ts",
+        "examples/26-analytics/infra/test/analytics-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "analytics:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "26.queries",
+      "sources": [
+        "examples/26-analytics/src/queries.ts",
+        "examples/26-analytics/test/queries.test.ts",
+        "examples/26-analytics/scripts/query.ts"
+      ],
+      "tasks": ["test:unit", "analytics:query:print"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "26.columnar",
+      "sources": [
+        "examples/26-analytics/src/columnar.ts",
+        "examples/26-analytics/src/sample.ts",
+        "examples/26-analytics/test/columnar.test.ts",
+        "examples/26-analytics/scripts/sizes.ts",
+        "examples/26-analytics/infra/lib/analytics-stack.ts"
+      ],
+      "tasks": ["test:unit", "analytics:sizes"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "26.guard",
+      "sources": [
+        "examples/26-analytics/infra/lib/analytics-stack.ts",
+        "examples/26-analytics/infra/test/analytics-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "analytics:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "26.local",
+      "sources": [
+        "examples/26-analytics/src/dev.ts",
+        "examples/26-analytics/src/lake.ts",
+        "examples/26-analytics/src/local-files.ts",
+        "examples/26-analytics/scripts/query.ts",
+        "examples/26-analytics/.env.example"
+      ],
+      "tasks": [
+        "dev:analytics",
+        "analytics:query:local",
+        "analytics:query:print",
+        "analytics:sizes",
+        "test:unit"
+      ],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "26.deploy",
+      "sources": [
+        "examples/26-analytics/infra/bin/app.ts",
+        "examples/26-analytics/scripts/smoke.ts",
+        "examples/26-analytics/scripts/query.ts"
+      ],
+      "tasks": [
+        "analytics:infra:synth",
+        "analytics:infra:diff",
+        "analytics:infra:deploy",
+        "analytics:smoke",
+        "analytics:query",
+        "analytics:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "26.cost",
+      "sources": [
+        "examples/26-analytics/src/cost-inputs.ts",
+        "examples/26-analytics/test/cost-inputs.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "26.compare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "26.cleanup",
+      "sources": ["examples/26-analytics/scripts/empty-lake.ts"],
+      "tasks": ["analytics:empty", "analytics:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "firehose.ingest.direct-put",
+      "offerCode": "AmazonKinesisFirehose",
+      "region": "ap-northeast-1",
+      "sku": "ZMDX6PVHUG332Z8T",
+      "usageType": "APN1-BilledBytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 512000,
+          "usd": "0.0360000000",
+          "description": "Tier 1 $0.036 per GB of data ingested"
+        },
+        {
+          "from": 512000,
+          "to": 2048000,
+          "usd": "0.0310000000",
+          "description": "Tier 2 $0.031 per GB of data ingested"
+        },
+        {
+          "from": 2048000,
+          "to": null,
+          "usd": "0.0250000000",
+          "description": "Tier 3 $0.025 per GB of data ingested"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesisFirehose/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:46Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "firehose.format-conversion",
+      "offerCode": "AmazonKinesisFirehose",
+      "region": "ap-northeast-1",
+      "sku": "FMXKHPQJUF6DGXN3",
+      "usageType": "APN1-DFCBilledBytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0220000000",
+          "description": "$0.022 per GB of data format conversion"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesisFirehose/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:46Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "firehose.dynamic-partitioning.gb",
+      "offerCode": "AmazonKinesisFirehose",
+      "region": "ap-northeast-1",
+      "sku": "5SRHNC3XSSHZ44HH",
+      "usageType": "APN1-DPBytesDelivered",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0320000000",
+          "description": "$0.032 per GB of data processed through dynamic partitioning"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesisFirehose/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:46Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "firehose.dynamic-partitioning.object",
+      "offerCode": "AmazonKinesisFirehose",
+      "region": "ap-northeast-1",
+      "sku": "BU6D3U73BHBQKMA6",
+      "usageType": "APN1-S3DeliveryObjectCount",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Objects",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000080000",
+          "description": "$0.008 per thousand dynamically partitioned objects"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesisFirehose/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:46Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "firehose.dynamic-partitioning.jq-hour",
+      "offerCode": "AmazonKinesisFirehose",
+      "region": "ap-northeast-1",
+      "sku": "UWFWAT4QSW684XUH",
+      "usageType": "APN1-MetadataProcessingDuration",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1120000000",
+          "description": "$0.112 per JQ processing hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesisFirehose/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:46Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "athena.scanned",
+      "offerCode": "AmazonAthena",
+      "region": "ap-northeast-1",
+      "sku": "6R553MKD6KWECHEK",
+      "usageType": "APN1-DataScannedInTB",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Terabytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.0000000000",
+          "description": "5.00 USD per Terabytes for DataScannedInTB in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonAthena/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:08Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "glue.catalog.storage",
+      "offerCode": "AWSGlue",
+      "region": "ap-northeast-1",
+      "sku": "53WFD8U3TG36DTN8",
+      "usageType": "APN1-Catalog-Storage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Obj-Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$1 per 100,000 objects per month for AWS Glue Data Catalog storage"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T19:23:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "glue.catalog.request",
+      "offerCode": "AWSGlue",
+      "region": "ap-northeast-1",
+      "sku": "UX26WGXFXQ9X8YQ7",
+      "usageType": "APN1-Catalog-Request",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000010000",
+          "description": "$1 per 1,000,000 requests for AWS Glue Data Catalog request"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T19:23:38Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "glue.catalog.storage",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-glue",
+      "note": "Objects. From the Global-Catalog-Storage USD 0 tier (0 to 1,000,000)."
+    },
+    {
+      "priceId": "glue.catalog.request",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-glue",
+      "note": "Requests. From the Global-Catalog-Request USD 0 tier (0 to 1,000,000)."
+    }
+  ],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "analytics-idle",
+      "chapter": "26",
+      "title": {
+        "ja": "リクエストの記録: デプロイ済みで呼ばれない月",
+        "en": "Request records: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ。Firehose にレコードが届かず、オブジェクトも書かれない",
+          "クエリを 1 回も実行しない",
+          "Glue Data Catalog のオブジェクトは、データベース 1 つとテーブル 1 つ",
+          "API、Lambda、DynamoDB そのものの料金は 04章と 05章の計算のとおりで、ここには含めていない"
+        ],
+        "en": [
+          "No requests: no record reaches Firehose and no object is written",
+          "No query is run",
+          "The Glue Data Catalog holds one database and one table",
+          "The API, Lambda and DynamoDB themselves are priced in chapters 04 and 05 and are not included here"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "glue.catalog.storage",
+          "quantity": 2,
+          "basis": "1 database + 1 table"
+        }
+      ]
+    },
+    {
+      "id": "analytics-1m-json",
+      "chapter": "26",
+      "title": {
+        "ja": "リクエストの記録: 月 100 万リクエスト、gzip の JSON",
+        "en": "Request records: 1 million requests a month, gzip JSON"
+      },
+      "assumptions": {
+        "ja": [
+          "1 リクエストにつきレコード 1 件。再試行による重複は数えない",
+          "レコードは 242 バイト（サンプル 5,000 件の平均）。Firehose は 5 KB 単位に切り上げて課金する（5 KB を 5,120 バイトとして計算）",
+          "バッファーは 60 秒。毎分 1 つオブジェクトができるとして 730 時間で 43,800 個（上限）",
+          "gzip 後は元の 24.3%（サンプルの実測）。90 日で消えるので、置き続ける量は 3 か月ぶん",
+          "クエリは月 100 回。どれも 3 日ぶんのパーティションを読み、読む量は 10 MB の最低課金に届かない",
+          "Athena がオブジェクトごとに GET を 1 回行うと仮定（実際の回数は未確認）: 100 回 × 3 日 × 1,440 個",
+          "クエリ結果の保存、Glue へのリクエスト、Firehose のエラーログは含めていない"
+        ],
+        "en": [
+          "One record per request; duplicates from retries are not counted",
+          "A record is 242 bytes (the mean of 5,000 sample records). Firehose bills in 5 KB steps (5 KB taken as 5,120 bytes)",
+          "A 60-second buffer: one object a minute at most, 43,800 in 730 hours",
+          "Gzip leaves 24.3% of the bytes (measured on the sample). Objects expire after 90 days, so three months' worth is stored",
+          "100 queries a month, each reading three days of partitions and less than the 10 MB minimum",
+          "Athena is assumed to make one GET per object (the real number was not confirmed): 100 queries x 3 days x 1,440 objects",
+          "Query result storage, Glue requests and Firehose's error log are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "firehose.ingest.direct-put",
+          "quantity": 4.768372,
+          "basis": "1,000,000 records x 5,120 bytes"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 43800,
+          "basis": "one PUT per delivered object, one object a minute"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.16411,
+          "basis": "0.054703 GB a month, kept 90 days"
+        },
+        {
+          "priceId": "athena.scanned",
+          "quantity": 0.000954,
+          "basis": "100 queries x 10 MB minimum"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 432000,
+          "basis": "100 queries x 4,320 objects, one GET each (assumed)"
+        },
+        {
+          "priceId": "glue.catalog.storage",
+          "quantity": 2,
+          "basis": "1 database + 1 table"
+        }
+      ]
+    },
+    {
+      "id": "analytics-1m-parquet",
+      "chapter": "26",
+      "title": {
+        "ja": "リクエストの記録: 月 100 万リクエスト、Parquet",
+        "en": "Request records: 1 million requests a month, Parquet"
+      },
+      "assumptions": {
+        "ja": [
+          "レコードの数と大きさは JSON のシナリオと同じ",
+          "フォーマット変換は、取り込みと同じ 5 KB 単位の量に対して課金される",
+          "バッファーは 300 秒。5 分に 1 つオブジェクトができるとして 730 時間で 8,760 個（上限）",
+          "Parquet のファイルは 1 レコードあたり 84.6 バイト（手元のライブラリで書いたサンプルの実測。Firehose が書くファイルの大きさは未確認）",
+          "クエリは月 100 回。どれも 10 MB の最低課金に届かない",
+          "Athena がオブジェクトごとに GET を 1 回行うと仮定（Parquet では複数回になりうる。未確認）: 100 回 × 3 日 × 288 個"
+        ],
+        "en": [
+          "The same number and size of records as the JSON scenario",
+          "Format conversion is billed on the same 5 KB-stepped volume as ingestion",
+          "A 300-second buffer: one object every five minutes at most, 8,760 in 730 hours",
+          "A Parquet file takes 84.6 bytes per record (measured on a sample written by a library on the laptop; the size of Firehose's own files was not confirmed)",
+          "100 queries a month, each under the 10 MB minimum",
+          "Athena is assumed to make one GET per object (it may make several for Parquet; not confirmed): 100 queries x 3 days x 288 objects"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "firehose.ingest.direct-put",
+          "quantity": 4.768372,
+          "basis": "1,000,000 records x 5,120 bytes"
+        },
+        {
+          "priceId": "firehose.format-conversion",
+          "quantity": 4.768372,
+          "basis": "the same billed volume"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 8760,
+          "basis": "one PUT per delivered object, one object every 5 minutes"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.236256,
+          "basis": "0.078752 GB a month, kept 90 days"
+        },
+        {
+          "priceId": "athena.scanned",
+          "quantity": 0.000954,
+          "basis": "100 queries x 10 MB minimum"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 86400,
+          "basis": "100 queries x 864 objects, one GET each (assumed)"
+        },
+        {
+          "priceId": "glue.catalog.storage",
+          "quantity": 2,
+          "basis": "1 database + 1 table"
+        }
+      ]
+    },
+    {
+      "id": "analytics-dynamic-partitioning-extra",
+      "chapter": "26",
+      "title": {
+        "ja": "dynamic partitioning を足した場合の追加ぶん（この章では使っていない）",
+        "en": "What dynamic partitioning would add (not used in this chapter)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 100 万レコード、242 バイト。届けた量は 0.225 GB",
+          "パーティションのキーは日付だけ。毎分 1 つオブジェクトができるとして 43,800 個",
+          "JQ での解析にかかる時間は見積もれないため、含めていない（1 時間あたり 0.112）"
+        ],
+        "en": [
+          "1 million records of 242 bytes a month: 0.225 GB delivered",
+          "The date is the only partitioning key; one object a minute, 43,800 objects",
+          "JQ processing time could not be estimated and is not included (0.112 per hour)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "firehose.dynamic-partitioning.gb",
+          "quantity": 0.225382,
+          "basis": "1,000,000 records x 242 bytes"
+        },
+        {
+          "priceId": "firehose.dynamic-partitioning.object",
+          "quantity": 43800,
+          "basis": "one object a minute"
+        }
+      ]
+    },
+    {
+      "id": "analytics-flood-json",
+      "chapter": "26",
+      "title": {
+        "ja": "リクエストの記録: スロットリングの上限に 30 日張り付いた場合",
+        "en": "Request records: 30 days at the throttling limit"
+      },
+      "assumptions": {
+        "ja": [
+          "ステージのスロットリングは毎秒 10 件。関数まで届くのは 30 日で最大 2,592 万件で、その数だけレコードができる",
+          "レコードは 242 バイト、5 KB 単位に切り上げ。gzip 後は 24.3%",
+          "毎分 1 つオブジェクトができるとして 43,200 個",
+          "クエリは含めていない。API、Lambda、DynamoDB の料金は 19章の「叩かれたら」のとおり"
+        ],
+        "en": [
+          "The stage throttles at 10 requests a second: at most 25.92 million reach the function in 30 days, and each makes one record",
+          "Records of 242 bytes, billed in 5 KB steps; gzip leaves 24.3%",
+          "One object a minute: 43,200 objects",
+          "No queries. The API, Lambda and DynamoDB are priced in chapter 19's flood scenario"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "firehose.ingest.direct-put",
+          "quantity": 123.596191,
+          "basis": "25,920,000 records x 5,120 bytes"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 43200,
+          "basis": "one PUT per delivered object"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 4.253679,
+          "basis": "1.417893 GB a month, kept 90 days"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "26",
+        "command": "vp test run examples/26-analytics",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "62 件。レコードのスキーマとテーブルの列の一致、記録に本文やパスが入らないこと、記録に失敗してもレスポンスが変わらないこと、本物の SDK で応答を失わせたときの二重書き込みとタイムアウト、日付の境目をまたぐオブジェクト、重複を 1 回と数えるクエリ、生成する SQL、Parquet の列ごとの大きさ、料金計算の入力、スタックのアサーション",
+          "en": "62 tests: the record schema against the table's columns, no note text or path in a record, an unchanged answer when the record cannot be written, a double write and a timeout reproduced with the real SDK and a faked network, an object that straddles midnight, queries that count a duplicate once, the rendered SQL, per-column sizes in Parquet, the pricing inputs, and stack assertions"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "tsc --noEmit -p examples/26-analytics",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "esbuild のバンドル込みで synth。-c format=parquet を付けた場合も",
+          "en": "Synth including the esbuild bundle, also with -c format=parquet"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run dev:analytics + curl + vp run analytics:query:local",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "本文の curl を実行し、dist/lake にオブジェクトができること、手元のモデルで集計が出ることを確認。SQL は実行していない",
+          "en": "Ran the curl commands from the chapter: objects appear under dist/lake and the local model prints the aggregates. No SQL was executed"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:query:print",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "Athena に送る SQL の文字列を出力するだけ。AWS には問い合わせない",
+          "en": "Prints the SQL that would go to Athena. Makes no call to AWS"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:sizes",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "サンプル 5,000 件を gzip の JSON と Parquet で書き、列ごとのバイト数を出力。Parquet は手元の JavaScript のライブラリが書いたもの",
+          "en": "Writes 5,000 sample records as gzip JSON and as Parquet and prints bytes per column. The Parquet file is written by a JavaScript library on the laptop"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。Firehose、Glue、Athena のどのリソースも実際には作っていない",
+          "en": "Not run. None of the Firehose, Glue or Athena resources was created"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:query",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。生成した SQL を Athena が受け付けるかは確かめていない",
+          "en": "Not run. Whether Athena accepts the rendered SQL was not checked"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "26",
+        "command": "vp run analytics:empty / analytics:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "analytics-athena-sql-not-executed",
+        "summary": {
+          "ja": "生成した SQL を Athena で実行していない。関数（substr、count(DISTINCT)、approx_percentile）、文字列の列 dt に対する BETWEEN でパーティションが絞られること、結果の形は、ドキュメントから読み取っただけ。手元のテストは同じクエリの構造を自前の関数で評価したもので、SQL のエンジンではない。",
+          "en": "The rendered SQL was never executed in Athena. The functions (substr, count(DISTINCT), approx_percentile), partition pruning from BETWEEN on the string column dt, and the shape of the results are taken from documentation. The local tests evaluate the same query structure with the chapter's own function, not with a SQL engine."
+        },
+        "resume": {
+          "ja": "vp run analytics:infra:deploy、vp run analytics:smoke の後、バッファーの間隔（60 秒）を待って vp run analytics:query --name actions --from <今日> --to <今日> を実行する。SUCCEEDED になること、行が smoke の内容と合うこと、scanned のバイト数がその日のオブジェクトの合計以下であることを確かめる。",
+          "en": "After vp run analytics:infra:deploy and vp run analytics:smoke, wait for the buffer interval (60 s) and run vp run analytics:query --name actions --from <today> --to <today>. Check that it reaches SUCCEEDED, that the rows match what the smoke test did, and that the bytes scanned are at most the day's objects."
+        }
+      },
+      {
+        "id": "analytics-hive-json-serde-nulls",
+        "summary": {
+          "ja": "Athena の Hive JSON SerDe が、このレコード（JSON の null、整数、ISO 8601 の文字列）を表の列として読めるかを確かめていない。OpenX JSON SerDe を避けたのは、ドキュメントが結果の非決定性を注意しているため。",
+          "en": "Not checked: that Athena's Hive JSON SerDe reads these records (JSON null, integers, ISO 8601 strings) into the table's columns. The OpenX JSON SerDe was avoided because its documentation warns of non-deterministic results."
+        },
+        "resume": {
+          "ja": "デプロイして smoke の後、Athena のコンソールで SELECT * FROM \"aih_analytics\".\"requests\" WHERE dt = '<今日>' LIMIT 10 を実行する。action と note_id が NULL になる行、数値の列を確かめる。読めなければ、infra/lib/analytics-stack.ts の STORAGE.json.serializationLibrary を見直す。",
+          "en": "After deploying and running the smoke test, run SELECT * FROM \"aih_analytics\".\"requests\" WHERE dt = '<today>' LIMIT 10 in the Athena console. Check the rows where action and note_id are NULL, and the numeric columns. If they cannot be read, revisit STORAGE.json.serializationLibrary in infra/lib/analytics-stack.ts."
+        }
+      },
+      {
+        "id": "analytics-parquet-conversion",
+        "summary": {
+          "ja": "Firehose のフォーマット変換（-c format=parquet）を動かしていない。バッファーの最小サイズ（64 MB を指定）、OpenX のデシリアライザーが JSON の null と bigint の列を扱えること、Firehose が書く Parquet の実際の大きさ、Athena が読んだと報告するバイト数は未確認。本文の Parquet の数字は、手元のライブラリで書いたファイルの実測。",
+          "en": "Firehose's format conversion (-c format=parquet) was not run. Unconfirmed: the minimum buffer size (64 MB is given), that the OpenX deserializer handles JSON null and the bigint column, the real size of the Parquet files Firehose writes, and the bytes Athena reports as scanned. The Parquet numbers in the chapter were measured on a file written by a library on the laptop."
+        },
+        "resume": {
+          "ja": "vp run analytics:infra:deploy -c format=parquet でデプロイし、smoke の後 5 分待つ。requests_parquet/ に .parquet のオブジェクトができ、errors/format-conversion-failed/ が空であることを確かめる。同じクエリを json と parquet のスタックで実行し、scanned を比べる。",
+          "en": "Deploy with vp run analytics:infra:deploy -c format=parquet, run the smoke test and wait five minutes. Check that .parquet objects appear under requests_parquet/ and that errors/format-conversion-failed/ is empty. Run the same query against a json and a parquet stack and compare the bytes scanned."
+        }
+      },
+      {
+        "id": "analytics-cdkd-cloud-control",
+        "summary": {
+          "ja": "cdkd 0.296.28 が、AWS::Athena::WorkGroup と AWS::Logs::LogStream を Cloud Control API 経由で作成・更新・削除できるか、Firehose の専用プロバイダーが DataFormatConversionConfiguration と CloudWatchLoggingOptions をそのまま渡して作成に成功するかを確かめていない。",
+          "en": "Not checked: that cdkd 0.296.28 creates, updates and deletes AWS::Athena::WorkGroup and AWS::Logs::LogStream through Cloud Control API, and that its Firehose provider succeeds in creating a stream with DataFormatConversionConfiguration and CloudWatchLoggingOptions passed through."
+        },
+        "resume": {
+          "ja": "vp run analytics:infra:deploy の出力で、リソースごとの経路と結果を確かめる。その後 vp run analytics:infra:drift と vp run analytics:infra:destroy まで実行する。",
+          "en": "Read the route and result per resource in the output of vp run analytics:infra:deploy, then run vp run analytics:infra:drift and vp run analytics:infra:destroy."
+        }
+      },
+      {
+        "id": "analytics-s3-requests-per-query",
+        "summary": {
+          "ja": "Athena のクエリ 1 回が S3 に何回リクエストするかを確かめていない。料金のシナリオは、オブジェクトごとに GET を 1 回と仮定している。LIST と、Parquet のフッターや列ごとの読み取りは数えていない。",
+          "en": "Not checked: how many S3 requests one Athena query makes. The pricing scenarios assume one GET per object, and count neither LIST requests nor the separate reads of a Parquet footer and its columns."
+        },
+        "resume": {
+          "ja": "クエリを数回実行した翌日以降に、Cost Explorer で S3 の Requests-Tier1 と Requests-Tier2 の使用量を、Athena を使わなかった日と比べる。",
+          "en": "A day or more after running a few queries, compare the S3 Requests-Tier1 and Requests-Tier2 usage in Cost Explorer with a day on which Athena was not used."
+        }
+      },
+      {
+        "id": "analytics-put-latency",
+        "summary": {
+          "ja": "PutRecord を待つことで、レスポンスがどれだけ遅くなるかを測っていない。500 ms の上限は、測定にもとづく値ではない。",
+          "en": "Not measured: how much waiting for PutRecord slows a response. The 500 ms bound is not based on a measurement."
+        },
+        "resume": {
+          "ja": "デプロイ後、vp run analytics:smoke を数回実行し、vp run analytics:query --name routes で p95_ms を、19章のスタックの同じルートの値と比べる。",
+          "en": "After deploying, run vp run analytics:smoke a few times and compare p95_ms from vp run analytics:query --name routes with the same routes on chapter 19's stack."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 26: analytics ------------------------------------------\n      // The notes API; each request becomes a record under dist/lake. No Docker, no AWS.\n      \"dev:analytics\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/26-analytics\" }),\n      // Prints the SQL of a query. Runs nothing.\n      \"analytics:query:print\": fresh(\"node scripts/query.ts --print\", { cwd: \"examples/26-analytics\" }),\n      // Evaluates a query over the files under dist/lake with the chapter's own model. No SQL engine.\n      \"analytics:query:local\": fresh(\"node --env-file-if-exists=.env scripts/query.ts --local\", { cwd: \"examples/26-analytics\" }),\n      // Sample records as gzip JSON and as Parquet: bytes per column.\n      \"analytics:sizes\": fresh(\"node scripts/sizes.ts\", { cwd: \"examples/26-analytics\" }),\n      ...infra(\"analytics\", \"examples/26-analytics\", \"AihAnalytics\"),\n      // Creates, edits and deletes one note through the deployed API.\n      \"analytics:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/26-analytics\" }),\n      // BILLED by the bytes Athena scans, 10 MB at least per query.\n      \"analytics:query\": live(\"node --env-file-if-exists=../../.env scripts/query.ts\", { cwd: \"examples/26-analytics\" }),\n      // Counts the objects in the lake bucket; with --yes, deletes them all.\n      \"analytics:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty-lake.ts\", { cwd: \"examples/26-analytics\" }),",
+    "synth": ["analytics:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/26-analytics"]
+  }
+}

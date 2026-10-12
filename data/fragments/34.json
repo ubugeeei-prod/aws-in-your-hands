@@ -1,0 +1,1477 @@
+{
+  "chapterId": "34",
+  "manifest": {
+    "id": "34",
+    "slug": "eks",
+    "title": {
+      "ja": "Kubernetes: EKS、Auto Mode、Pod Identity、ALB",
+      "en": "Kubernetes: EKS, Auto Mode, Pod Identity, and ALB"
+    },
+    "prerequisites": ["11", "12"],
+    "services": ["EKS", "EC2", "Elastic Load Balancing", "IAM"],
+    "samplePath": "examples/34-eks",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "eks-architecture",
+      "eks-auto-mode",
+      "eks-auto-node-pool",
+      "eks-auto-builtin-node-pools",
+      "eks-auto-node-class",
+      "eks-auto-alb",
+      "eks-auto-networking",
+      "eks-auto-subnet-tags",
+      "eks-auto-instances",
+      "eks-auto-cluster-role",
+      "eks-auto-node-role",
+      "eks-auto-create-cli",
+      "eks-auto-enable-existing",
+      "eks-auto-upgrade",
+      "eks-compute-options",
+      "eks-fargate",
+      "eks-pod-identity",
+      "eks-pod-identity-association",
+      "eks-pod-identity-how",
+      "eks-service-accounts",
+      "eks-access-entries",
+      "eks-access-policies",
+      "eks-versions",
+      "eks-disable-extended-support",
+      "eks-update-cluster",
+      "eks-delete-cluster",
+      "eks-lbc",
+      "eks-managed-node-groups",
+      "eks-pod-identity-agent",
+      "eks-irsa-associate",
+      "eks-rollback-cluster",
+      "eks-kubeconfig",
+      "eks-install-kubectl",
+      "eks-auto-troubleshoot",
+      "k8s-kubectl-apply",
+      "k8s-kubectl-diff",
+      "eks-pricing",
+      "ecs-pricing-orchestration",
+      "aws-price-list-eks",
+      "aws-price-list-ec2-t4g-medium",
+      "cfn-eks-cluster",
+      "aws-cdk-lib-eks",
+      "cdkd-source-eks",
+      "k8s-deployment",
+      "k8s-pdb",
+      "k8s-disruptions",
+      "k8s-api-eviction",
+      "k8s-pod-lifecycle",
+      "k8s-lifecycle-hooks",
+      "k8s-topology-spread",
+      "lbc-ingress-annotations",
+      "eks-docker-node-uid",
+      "eks-cloudflare-containers",
+      "eks-cloudflare-containers-architecture",
+      "eks-cloudflare-containers-faq",
+      "vercel-container-runtime",
+      "vercel-functions-runtimes"
+    ]
+  },
+  "sources": [
+    {
+      "id": "eks-architecture",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/eks-architecture.html",
+      "title": "Amazon EKS architecture",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every cluster has its own Kubernetes control plane, not shared with other clusters or accounts",
+        "The control plane has at least two API server instances and three etcd instances across three Availability Zones",
+        "EKS replaces a control plane instance that fails"
+      ]
+    },
+    {
+      "id": "eks-auto-mode",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "title": "Automate cluster infrastructure with EKS Auto Mode",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Auto Mode manages compute autoscaling, pod and service networking, application load balancing, cluster DNS, and block storage as core components instead of add-ons",
+        "Nodes are EC2 managed instances running Bottlerocket variants; SSH and SSM access to them is not allowed",
+        "Nodes have a maximum lifetime of 21 days, which can be reduced",
+        "Upgrades respect Pod Disruption Budgets; intervention might be required if a blocking budget prevents an update",
+        "The EKS Pod Identity Agent does not have to be installed on Auto Mode clusters",
+        "Auto scaling relies on Karpenter",
+        "Since April 22, 2026 new managed instances are hidden by default from EC2 console views and list APIs"
+      ]
+    },
+    {
+      "id": "eks-auto-node-pool",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "title": "Create a Node Pool for EKS Auto Mode",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The built-in system and general-purpose node pools cannot be modified, only enabled or disabled",
+        "A cluster can be created with nodePools and nodeRoleArn both empty; then no default NodeClass exists, and a custom NodeClass, an access entry for its role, and a custom NodePool are needed",
+        "A NodePool is a karpenter.sh/v1 object whose nodeClassRef names group eks.amazonaws.com, kind NodeClass",
+        "Supported requirement labels include kubernetes.io/arch, karpenter.sh/capacity-type, and node.kubernetes.io/instance-type",
+        "By default Auto Mode consolidates underutilized instances, terminates instances after 336 hours, and sets one disruption budget of 10% of nodes",
+        "limits.cpu and limits.memory bound what a node pool may provision"
+      ]
+    },
+    {
+      "id": "eks-auto-builtin-node-pools",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/set-builtin-node-pools.html",
+      "title": "Enable or Disable Built-in NodePools",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "general-purpose uses only the amd64 architecture; system supports amd64 and arm64 and carries a CriticalAddonsOnly taint",
+        "Both built-in pools use on-demand capacity, the C, M, and R families, and generation 5 or newer",
+        "At least one built-in pool must be enabled for EKS to provision the default NodeClass"
+      ]
+    },
+    {
+      "id": "eks-auto-node-class",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "title": "Create a Node Class for Amazon EKS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A NodeClass is an eks.amazonaws.com/v1 object with role, subnetSelectorTerms, securityGroupSelectorTerms, ephemeralStorage, and advancedNetworking",
+        "advancedNetworking.associatePublicIPAddress controls whether instances get a public IP address; unset, it follows the subnet's MapPublicIpOnLaunch",
+        "A custom node class needs an access entry of type EC2 with the AmazonEKSAutoNodePolicy access policy, or its nodes cannot join; the page gives the CloudFormation for it",
+        "subnetSelectorTerms and securityGroupSelectorTerms select by tags or by id; nodes are distributed across the matching subnets",
+        "ephemeralStorage.size accepts 1 to 59000Gi; the specification example shows 80Gi, iops 3000 and throughput 125"
+      ]
+    },
+    {
+      "id": "eks-auto-alb",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-alb.html",
+      "title": "Create an IngressClass to configure an Application Load Balancer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An IngressClass with controller eks.amazonaws.com/alb and an IngressClassParams (eks.amazonaws.com/v1) make Auto Mode create an ALB for an Ingress",
+        "IngressClassParams fields include scheme, subnets.ids, and subnets.matchTags (filters with a key and a list of values); targetType defaults to ip",
+        "IngressClass annotations cannot configure the load balancer; annotations on individual Ingress resources can",
+        "The page lists the Ingress annotations that are not supported; the health check and target group attribute annotations are not on that list",
+        "Deleting the Ingress makes Auto Mode delete the load balancer",
+        "The page does not mention the Gateway API"
+      ],
+      "note": "Whether each health check annotation of the open source controller takes effect under Auto Mode was not confirmed beyond its absence from the unsupported list."
+    },
+    {
+      "id": "eks-auto-networking",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "title": "Learn about VPC Networking and Load Balancing in EKS Auto Mode",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Auto Mode supports nodes and pods in public or private subnets",
+        "Security groups per pod and alternate CNI plugins are not supported",
+        "CoreDNS runs as a system service on each node, not as a Deployment",
+        "The default target mode of load balancers is IP",
+        "The EKS managed policy only lets EKS modify security groups named eks-cluster-sg-*; nodes with other security groups need extra permissions on the cluster role"
+      ]
+    },
+    {
+      "id": "eks-auto-subnet-tags",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/tag-subnets-auto.html",
+      "title": "Tag subnets for EKS Auto Mode",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Subnets used for load balancing by Auto Mode need the tag kubernetes.io/role/elb (public) or kubernetes.io/role/internal-elb (private)"
+      ]
+    },
+    {
+      "id": "eks-auto-instances",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html",
+      "title": "Learn about Amazon EKS Auto Mode Managed instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Auto Mode supports the t4g family among others",
+        "Auto Mode only creates instances with more than 1 CPU whose size is not nano, micro, or small",
+        "EKS generally releases a new AMI each week",
+        "IMDSv2 with a hop limit of 1 is enforced and cannot be changed"
+      ]
+    },
+    {
+      "id": "eks-auto-cluster-role",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html",
+      "title": "Amazon EKS Auto Mode cluster IAM role",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The suggested managed policies are AmazonEKSClusterPolicy, AmazonEKSComputePolicy, AmazonEKSBlockStoragePolicyV2, AmazonEKSLoadBalancingPolicy, and AmazonEKSNetworkingPolicy",
+        "The trust policy allows sts:AssumeRole and sts:TagSession for eks.amazonaws.com"
+      ]
+    },
+    {
+      "id": "eks-auto-node-role",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-create-node-role.html",
+      "title": "Amazon EKS Auto Mode node IAM role",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The node role trusts ec2.amazonaws.com and carries AmazonEKSWorkerNodeMinimalPolicy and AmazonEC2ContainerRegistryPullOnly"
+      ]
+    },
+    {
+      "id": "eks-auto-create-cli",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html",
+      "title": "Create an EKS Auto Mode Cluster with the AWS CLI",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The create-cluster request enables computeConfig, kubernetesNetworkConfig.elasticLoadBalancing, and storageConfig.blockStorage, and sets accessConfig.authenticationMode to API",
+        "The example enables both the public and the private endpoint"
+      ],
+      "note": "The page's request does not set bootstrapSelfManagedAddons. aws-cdk-lib 2.273.0 refuses true with Auto Mode (see aws-cdk-lib-eks); what happens when it is omitted was not confirmed."
+    },
+    {
+      "id": "eks-auto-enable-existing",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-enable-existing.html",
+      "title": "Enable EKS Auto Mode on an existing cluster",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The compute, block storage, and load balancing capabilities must all be enabled or disabled in the same request"
+      ]
+    },
+    {
+      "id": "eks-auto-upgrade",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html",
+      "title": "Update the Kubernetes Version of an EKS Auto Mode cluster",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "After a control plane upgrade Auto Mode replaces nodes as they expire, with nodes of the new version, observing pod disruption budgets",
+        "The VPC CNI, the load balancer controller, CoreDNS, kube-proxy, Karpenter, and the EBS CSI driver no longer need updating by the user"
+      ]
+    },
+    {
+      "id": "eks-compute-options",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/eks-compute.html",
+      "title": "Manage compute resources by using nodes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With managed node groups you must deploy and manage EC2 instances, patch the operating system, and update the node AMI and Kubernetes version yourself; with Auto Mode you do not",
+        "Auto Mode nodes cannot be reached by SSH, cannot run a custom AMI or CNI, and cannot run Windows containers",
+        "Auto Mode charges a separate fee on top of the EC2 instance price"
+      ]
+    },
+    {
+      "id": "eks-fargate",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "title": "Simplify compute management with AWS Fargate",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Pods on Fargate run only in private subnets with NAT gateway access",
+        "DaemonSets, privileged containers, and GPUs are not supported on Fargate",
+        "The comparison table says Fargate cannot run workloads that require Arm processors"
+      ]
+    },
+    {
+      "id": "eks-pod-identity",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "title": "Learn how EKS Pod Identity grants pods access to AWS services",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An association maps an IAM role to a service account in a namespace of a cluster",
+        "The role's trust policy names the service principal pods.eks.amazonaws.com; no OIDC provider is involved",
+        "EKS sets environment variables in the pod's containers so that the AWS SDKs use the Pod Identity credentials",
+        "Up to 5,000 associations per cluster",
+        "Associations are eventually consistent, with delays of several seconds",
+        "Pod Identity is not available for pods on Fargate or on Windows instances",
+        "Containers are not a security boundary; pods on the same node share a kernel"
+      ]
+    },
+    {
+      "id": "eks-pod-identity-association",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-association.html",
+      "title": "Assign an IAM role to a Kubernetes service account",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The trust policy allows sts:AssumeRole and sts:TagSession",
+        "The namespace and the service account of an association may be named before they exist in the cluster"
+      ]
+    },
+    {
+      "id": "eks-pod-identity-how",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html",
+      "title": "Understand how EKS Pod Identity works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The pod gets AWS_CONTAINER_CREDENTIALS_FULL_URI pointing at http://169.254.170.23/v1/credentials and AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE"
+      ]
+    },
+    {
+      "id": "eks-service-accounts",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html",
+      "title": "Grant Kubernetes workloads access to AWS using Kubernetes Service Accounts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS recommends EKS Pod Identity over IRSA whenever possible",
+        "IRSA needs an IAM OIDC provider per cluster (default limit of 100 per account) and the cluster's provider in each role's trust policy",
+        "With IRSA the SDK in the pod calls sts:AssumeRoleWithWebIdentity itself",
+        "IRSA also works outside EKS (EKS Anywhere, OpenShift on AWS, self-managed clusters); Pod Identity is EKS only"
+      ]
+    },
+    {
+      "id": "eks-access-entries",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "title": "Grant IAM users access to Kubernetes with EKS access entries",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An access entry associates Kubernetes permissions with an IAM identity, through an access policy or a Kubernetes group",
+        "Access is managed through the EKS API, and can be restored there without access to the Kubernetes API"
+      ]
+    },
+    {
+      "id": "eks-access-policies",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/access-policy-permissions.html",
+      "title": "Review access policy permissions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AmazonEKSClusterAdminPolicy allows every verb on every resource",
+        "AmazonEKSEditPolicy allows create, delete, patch, and update on deployments, services, service accounts, ingresses, and pod disruption budgets, and only read access to namespaces",
+        "AmazonEKSAutoNodePolicy exists for Auto Mode nodes"
+      ]
+    },
+    {
+      "id": "eks-versions",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "title": "Understand the Kubernetes version lifecycle on EKS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A minor version is in standard support for 14 months after its release on EKS, then in extended support for 12 months",
+        "Extended support is enabled by default; at its end the cluster is auto-upgraded to the oldest version still in extended support",
+        "On 2026-10-13 standard support covered 1.37, 1.36, 1.35, and 1.34; extended support covered 1.33, 1.32, and 1.31",
+        "The release calendar: 1.37 leaves standard support on December 1, 2027; 1.34 on December 2, 2026",
+        "A cluster upgraded in place can be rolled back to the previous minor version within 7 days",
+        "Billing for extended support starts at the beginning of the day (UTC) that standard support ends"
+      ]
+    },
+    {
+      "id": "eks-disable-extended-support",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/disable-extended-support.html",
+      "title": "Prevent increased cluster costs by disabling EKS extended support",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With the upgrade policy STANDARD the cluster is automatically upgraded to the next version at the end of standard support",
+        "Extended support cannot be disabled once the cluster has entered it"
+      ]
+    },
+    {
+      "id": "eks-update-cluster",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "title": "Update existing cluster to new Kubernetes version",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A cluster is updated one minor version at a time",
+        "An update needs up to five available IP addresses in the cluster's subnets",
+        "kubectl must be within one minor version of the control plane",
+        "After the 7-day window a cluster cannot be downgraded"
+      ]
+    },
+    {
+      "id": "eks-delete-cluster",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/delete-cluster.html",
+      "title": "Delete a cluster",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Ingress resources should be deleted before the cluster; otherwise the Application Load Balancer remains after the cluster is deleted",
+        "For Auto Mode the page says that all nodes and all load balancers will be deleted with the cluster",
+        "Deletion protection must be disabled before a cluster can be deleted"
+      ],
+      "note": "The two statements about load balancers stand side by side on the page. This chapter deletes the Ingress first."
+    },
+    {
+      "id": "eks-lbc",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html",
+      "title": "Route internet traffic with AWS Load Balancer Controller",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Outside Auto Mode the controller is installed into the cluster, with Helm for example",
+        "From version 2.14.0 the controller creates an ALB for a Kubernetes Gateway"
+      ]
+    },
+    {
+      "id": "eks-managed-node-groups",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html",
+      "title": "Simplify node lifecycle with managed node groups",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every managed node is part of an EC2 Auto Scaling group that EKS manages, in your account",
+        "Managed node groups are tagged for discovery by the Kubernetes Cluster Autoscaler"
+      ]
+    },
+    {
+      "id": "eks-pod-identity-agent",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-agent-setup.html",
+      "title": "Set up the Amazon EKS Pod Identity Agent",
+      "checkedAt": "2026-10-13",
+      "supports": ["Outside Auto Mode the Pod Identity Agent is installed as an EKS add-on"]
+    },
+    {
+      "id": "eks-irsa-associate",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+      "title": "Assign IAM roles to Kubernetes service accounts",
+      "checkedAt": "2026-10-13",
+      "supports": ["With IRSA the service account is annotated with eks.amazonaws.com/role-arn"]
+    },
+    {
+      "id": "eks-rollback-cluster",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "title": "Roll back a cluster to a previous Kubernetes version",
+      "checkedAt": "2026-10-13",
+      "supports": ["A rollback must be started within 7 days of the upgrade completing"]
+    },
+    {
+      "id": "eks-kubeconfig",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html",
+      "title": "Connect kubectl to an EKS cluster by creating a kubeconfig file",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "aws eks update-kubeconfig --region ... --name ... writes the kubeconfig entry; authentication uses aws eks get-token"
+      ]
+    },
+    {
+      "id": "eks-install-kubectl",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html",
+      "title": "Set up kubectl and eksctl",
+      "checkedAt": "2026-10-13",
+      "supports": ["kubectl must be within one minor version of the cluster's control plane"]
+    },
+    {
+      "id": "eks-auto-troubleshoot",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html",
+      "title": "Troubleshoot EKS Auto Mode",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "kubectl get nodeclaim and kubectl describe nodeclaim show why a node has not joined the cluster"
+      ]
+    },
+    {
+      "id": "k8s-kubectl-apply",
+      "url": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_apply/",
+      "title": "kubectl apply",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "kubectl apply takes a configuration by file name or stdin; the examples include applying JSON passed into stdin"
+      ]
+    },
+    {
+      "id": "k8s-kubectl-diff",
+      "url": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_diff/",
+      "title": "kubectl diff",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "kubectl diff shows the difference between the live configuration and the one that would be applied"
+      ]
+    },
+    {
+      "id": "eks-pricing",
+      "url": "https://aws.amazon.com/eks/pricing/",
+      "title": "Amazon EKS pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "USD 0.10 per cluster per hour in standard support; USD 0.60 per cluster per hour in extended support, which includes the 0.10",
+        "Auto Mode charges are in addition to the EC2 instance price, per second with a one-minute minimum, and independent of the EC2 purchase option",
+        "Worker nodes' EC2 instances, EBS volumes, and public IPv4 addresses are billed on top"
+      ]
+    },
+    {
+      "id": "ecs-pricing-orchestration",
+      "url": "https://aws.amazon.com/ecs/pricing/",
+      "title": "Amazon ECS pricing",
+      "checkedAt": "2026-10-13",
+      "supports": ["There is no additional charge for Amazon ECS orchestration"]
+    },
+    {
+      "id": "aws-price-list-eks",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonEKS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-AmazonEKS-Hours:perCluster is USD 0.10 per hour",
+        "APN1-AmazonEKS-Hours:extendedSupport is USD 0.50 per hour, charged on top of the cluster hour",
+        "APN1-EKS-Auto:t4g.medium-management-hours is USD 0.00518 per hour"
+      ],
+      "note": "Publication date 2026-09-28T19:42:55Z."
+    },
+    {
+      "id": "aws-price-list-ec2-t4g-medium",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonEC2, ap-northeast-1 (t4g.medium)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-BoxUsage:t4g.medium, Linux, shared tenancy, is USD 0.0432 per hour; the type has 2 vCPUs and 4 GiB"
+      ],
+      "note": "Publication date 2026-10-09T20:31:34Z. That Auto Mode's Bottlerocket nodes are billed at the Linux rate is this chapter's assumption."
+    },
+    {
+      "id": "cfn-eks-cluster",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-eks-cluster.html",
+      "title": "AWS::EKS::Cluster",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AccessConfig.AuthenticationMode defaults to CONFIG_MAP when a cluster is created through CloudFormation; allowed values are CONFIG_MAP, API_AND_CONFIG_MAP, and API",
+        "BootstrapClusterCreatorAdminPermissions defaults to true",
+        "UpgradePolicy.SupportType defaults to EXTENDED; STANDARD disables extended support",
+        "BootstrapSelfManagedAddons false means vpc-cni, coredns, and kube-proxy are not installed",
+        "DeletionProtection true prevents deletion until it is disabled",
+        "Without Version the default version is used, which might not be the latest"
+      ],
+      "note": "Read together with the property pages for ComputeConfig, AccessConfig, and UpgradePolicy."
+    },
+    {
+      "id": "aws-cdk-lib-eks",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-eks and aws-eks-v2",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "aws-eks/lib/eks.generated.d.ts declares CfnCluster with computeConfig, kubernetesNetworkConfig.elasticLoadBalancing, storageConfig.blockStorage, accessConfig, upgradePolicy, bootstrapSelfManagedAddons, and deletionProtection; CfnAccessEntry; and CfnPodIdentityAssociation",
+        "aws-eks-v2/lib/cluster.js throws when bootstrapSelfManagedAddons is true with Auto Mode",
+        "aws-eks-v2's Auto Mode roles attach AmazonEKSBlockStoragePolicy and AmazonEKSWorkerNodePolicy, not the V2 and Minimal policies that today's user guide lists"
+      ],
+      "note": "Read from the installed package. The synthesis experiment with eks-v2 is described in the chapter's verification notes."
+    },
+    {
+      "id": "cdkd-source-eks",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "cdkd 0.296.28: how AWS::EKS types are routed",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "No SDK provider is registered for any AWS::EKS type",
+        "AWS::EKS::Cluster, AccessEntry, and PodIdentityAssociation are not on the list of types Cloud Control cannot provision, so they are routed to Cloud Control API",
+        "Cloud Control operations on AWS::EKS::Cluster are given 30 minutes to create and 30 minutes to delete",
+        "cdkd knows DeletionProtection as the protection property of AWS::EKS::Cluster",
+        "AWS::IAM::Role has an SDK provider that handles AssumeRolePolicyDocument and ManagedPolicyArns"
+      ],
+      "note": "Read from the bundled dist of the installed npm package (the bundle keeps the source file names: provisioning/provider-registry.ts, unsupported-types.generated.ts, slow-cc-operation-timeouts.ts, protection-flags.ts, property-coverage.generated.ts). Nothing was deployed."
+    },
+    {
+      "id": "k8s-deployment",
+      "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+      "title": "Kubernetes: Deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "maxUnavailable is calculated from a percentage by rounding down, maxSurge by rounding up; both default to 25%",
+        "maxUnavailable cannot be 0 if maxSurge is 0, and the reverse",
+        "progressDeadlineSeconds defaults to 600; Kubernetes takes no action on a stalled Deployment other than to report a status condition",
+        "minReadySeconds is how long a new pod must be ready before it counts as available"
+      ]
+    },
+    {
+      "id": "k8s-pdb",
+      "url": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+      "title": "Kubernetes: Specifying a Disruption Budget for your Application",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A budget has a selector and exactly one of minAvailable and maxUnavailable, each a number or a percentage",
+        "A minAvailable percentage rounds up; a maxUnavailable percentage rounds up the number of pods that may be disrupted",
+        "A budget does not guarantee the number of pods: a node may still fail"
+      ]
+    },
+    {
+      "id": "k8s-disruptions",
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "title": "Kubernetes: Disruptions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Draining a node is a voluntary disruption and goes through the eviction API, which respects budgets; deleting pods or deployments directly bypasses them",
+        "Pods unavailable because of a rolling upgrade count against the budget, but a Deployment is not limited by budgets when it rolls",
+        "Involuntary disruptions cannot be prevented by a budget, but count against it",
+        "The AlwaysAllow unhealthy pod eviction policy is recommended so that a misbehaving application cannot block a drain"
+      ]
+    },
+    {
+      "id": "k8s-api-eviction",
+      "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/api-eviction/",
+      "title": "Kubernetes: API-initiated Eviction",
+      "checkedAt": "2026-10-13",
+      "supports": ["An eviction the budget does not allow is answered with 429 Too Many Requests"]
+    },
+    {
+      "id": "k8s-pod-lifecycle",
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "title": "Kubernetes: Pod Lifecycle",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The grace period defaults to 30 seconds; a preStop hook runs first and its time counts against the grace period",
+        "The kubelet sends TERM to process 1 of each container, and KILL when the grace period has expired",
+        "At the same time as the kubelet starts the graceful shutdown, the control plane removes the pod from EndpointSlices"
+      ]
+    },
+    {
+      "id": "k8s-lifecycle-hooks",
+      "url": "https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/",
+      "title": "Kubernetes: Container Lifecycle Hooks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Hook handlers are Exec, HTTP, and Sleep; Sleep pauses the container for a given duration and is run by the kubelet"
+      ]
+    },
+    {
+      "id": "k8s-topology-spread",
+      "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "title": "Kubernetes: Pod Topology Spread Constraints",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "maxSkew is how unevenly pods may be distributed; whenUnsatisfiable is DoNotSchedule by default"
+      ]
+    },
+    {
+      "id": "lbc-ingress-annotations",
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/guide/ingress/annotations.md",
+      "title": "AWS Load Balancer Controller: Ingress annotations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "alb.ingress.kubernetes.io/healthcheck-path, healthcheck-interval-seconds, healthcheck-timeout-seconds, healthy-threshold-count, unhealthy-threshold-count, success-codes, and target-group-attributes exist with these names and take string values"
+      ],
+      "note": "This is the documentation of the open source controller, not of Auto Mode's built-in one."
+    },
+    {
+      "id": "eks-docker-node-uid",
+      "url": "https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md",
+      "title": "docker-node: Best Practices (non-root user)",
+      "checkedAt": "2026-10-13",
+      "supports": ["The node images provide the user node with uid 1000"]
+    },
+    {
+      "id": "eks-cloudflare-containers",
+      "url": "https://developers.cloudflare.com/containers/",
+      "title": "Cloudflare Containers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Containers are started on demand and controlled by code in a Worker, through a Durable Object",
+        "The page contrasts this with writing Kubernetes operators; it offers no Kubernetes API",
+        "Available on the Workers Paid plan"
+      ]
+    },
+    {
+      "id": "eks-cloudflare-containers-architecture",
+      "url": "https://developers.cloudflare.com/containers/platform-details/architecture/",
+      "title": "Cloudflare Containers: Lifecycle of a Container",
+      "checkedAt": "2026-10-13",
+      "supports": ["Images should be built for the linux/amd64 architecture"]
+    },
+    {
+      "id": "eks-cloudflare-containers-faq",
+      "url": "https://developers.cloudflare.com/containers/faq/",
+      "title": "Cloudflare Containers: FAQ",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Built-in autoscaling for stateless applications is not available today",
+        "On a host stop the container gets SIGTERM, up to 15 minutes, then SIGKILL"
+      ]
+    },
+    {
+      "id": "vercel-container-runtime",
+      "url": "https://vercel.com/docs/functions/runtimes/container",
+      "title": "Vercel: Container Runtime",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Container Runtime is in beta on all plans: Vercel Functions run an OCI image built from a Dockerfile.vercel",
+        "Functions scale up and down automatically and use Active CPU pricing",
+        "The page offers no Kubernetes API"
+      ]
+    },
+    {
+      "id": "vercel-functions-runtimes",
+      "url": "https://vercel.com/docs/functions/runtimes",
+      "title": "Vercel: Runtimes",
+      "checkedAt": "2026-10-13",
+      "supports": ["Container is listed among the runtimes of Vercel Functions"]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "kubernetes-control-plane",
+      "ja": "コントロールプレーン",
+      "en": "control plane",
+      "firstUse": "34",
+      "definition": {
+        "ja": "Kubernetes の API サーバーと、クラスターの状態を持つ etcd など、クラスターを管理する側の部品。EKS では AWS が動かし、クラスター 1 つごとに時間で課金される。",
+        "en": "The managing side of a Kubernetes cluster: the API server, etcd with the cluster's state, and the controllers. On EKS, AWS runs it and bills it by the hour, per cluster."
+      }
+    },
+    {
+      "id": "kubernetes-pod",
+      "ja": "Pod",
+      "en": "pod",
+      "firstUse": "34",
+      "definition": {
+        "ja": "Kubernetes が動かす最小の単位。1 つ以上のコンテナと、それらが共有するネットワークからなる。ECS のタスクに当たる。",
+        "en": "The smallest thing Kubernetes runs: one or more containers and the network they share. What a task is on ECS."
+      }
+    },
+    {
+      "id": "kubernetes-node",
+      "ja": "ノード",
+      "en": "node",
+      "firstUse": "34",
+      "definition": {
+        "ja": "Pod を載せるマシン。EKS では EC2 のインスタンスで、Pod はノードの CPU とメモリを分け合う。",
+        "en": "A machine that pods run on. On EKS it is an EC2 instance, and the pods on it share its CPU and memory."
+      }
+    },
+    {
+      "id": "eks-auto-mode",
+      "ja": "EKS Auto Mode",
+      "en": "EKS Auto Mode",
+      "firstUse": "34",
+      "definition": {
+        "ja": "ノードの起動と入れ替え、ロードバランサー、Pod のネットワーク、ブロックストレージを EKS が受け持つ動かし方。ノードは利用者のアカウントの EC2 インスタンスだが、ログインも AMI の指定もできない。",
+        "en": "A way to run EKS in which EKS itself starts and replaces nodes and runs load balancing, pod networking, and block storage. The nodes are EC2 instances in your account, but you cannot log in to them or choose their AMI."
+      }
+    },
+    {
+      "id": "node-pool",
+      "ja": "ノードプール",
+      "en": "node pool",
+      "firstUse": "34",
+      "definition": {
+        "ja": "Auto Mode（Karpenter）が起動してよいノードの条件と上限を書いた Kubernetes のオブジェクト。CPU アーキテクチャ、インスタンスタイプ、合計の vCPU などを決める。",
+        "en": "A Kubernetes object that says which nodes Auto Mode (Karpenter) may start and how many: architecture, instance types, total vCPUs."
+      }
+    },
+    {
+      "id": "eks-pod-identity",
+      "ja": "EKS Pod Identity",
+      "en": "EKS Pod Identity",
+      "firstUse": "34",
+      "definition": {
+        "ja": "クラスター、namespace、service account の組に IAM ロールを結び付ける仕組み。結び付けは EKS の API に持ち、ロールの信頼ポリシーは pods.eks.amazonaws.com を許すだけで済む。",
+        "en": "A way to tie an IAM role to a service account in a namespace of a cluster. The association lives in the EKS API, and the role's trust policy only has to name pods.eks.amazonaws.com."
+      }
+    },
+    {
+      "id": "eks-access-entry",
+      "ja": "アクセスエントリー",
+      "en": "access entry",
+      "firstUse": "34",
+      "definition": {
+        "ja": "IAM のロールやユーザーに、Kubernetes の API で何をしてよいかを結び付ける EKS の設定。クラスターの中の ConfigMap ではなく EKS の API で管理する。",
+        "en": "An EKS setting that ties an IAM role or user to what it may do through the Kubernetes API. It is managed through the EKS API, not in a ConfigMap inside the cluster."
+      }
+    },
+    {
+      "id": "pod-disruption-budget",
+      "ja": "PodDisruptionBudget",
+      "en": "PodDisruptionBudget",
+      "firstUse": "34",
+      "definition": {
+        "ja": "ノードの drain のような意図した中断で、同時に欠けてよい Pod の数を決める Kubernetes のオブジェクト。ノードの故障は止められない。",
+        "en": "A Kubernetes object that limits how many pods a voluntary disruption, such as draining a node, may take away at once. It cannot stop a node from failing."
+      }
+    },
+    {
+      "id": "kubernetes-ingress",
+      "ja": "Ingress",
+      "en": "Ingress",
+      "firstUse": "34",
+      "definition": {
+        "ja": "クラスターの外から来た HTTP を、どの Service へ送るかを書いた Kubernetes のオブジェクト。EKS では、これを見たコントローラーが Application Load Balancer を作る。",
+        "en": "A Kubernetes object that says which Service HTTP from outside the cluster goes to. On EKS a controller reads it and creates an Application Load Balancer."
+      }
+    },
+    {
+      "id": "eks-extended-support",
+      "ja": "延長サポート",
+      "en": "extended support",
+      "firstUse": "34",
+      "definition": {
+        "ja": "Kubernetes のマイナーバージョンが EKS の標準サポート（公開から 14 か月）を過ぎたあとの 12 か月。クラスターの時間料金が上がる。",
+        "en": "The 12 months after a Kubernetes minor version leaves EKS standard support (14 months from release). The cluster's hourly price rises for that time."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "34.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "34.architecture",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/src/config.ts",
+        "examples/34-eks/k8s"
+      ],
+      "tasks": ["eks:infra:synth"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "34.control-plane",
+      "sources": ["examples/34-eks/src/cost.ts", "examples/34-eks/test/pricing.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.nodes",
+      "sources": [
+        "examples/34-eks/src/manifests.ts",
+        "examples/34-eks/src/config.ts",
+        "examples/34-eks/k8s/cluster.json",
+        "examples/34-eks/test/manifests.test.ts"
+      ],
+      "tasks": ["test:unit", "eks:render"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.cdk",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/infra/bin/app.ts",
+        "examples/34-eks/infra/test/eks-stack.test.ts"
+      ],
+      "tasks": ["eks:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "34.access",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/src/config.ts",
+        "examples/34-eks/infra/test/eks-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.pod-identity",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/infra/test/eks-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.manifests",
+      "sources": [
+        "examples/34-eks/src/k8s/schema.ts",
+        "examples/34-eks/src/k8s/check.ts",
+        "examples/34-eks/src/manifests.ts",
+        "examples/34-eks/src/rendered.ts",
+        "examples/34-eks/scripts/render.ts",
+        "examples/34-eks/k8s",
+        "examples/34-eks/test/manifests.test.ts"
+      ],
+      "tasks": ["test:unit", "eks:render"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "34.traffic",
+      "sources": [
+        "examples/34-eks/src/manifests.ts",
+        "examples/34-eks/k8s/app.json",
+        "examples/34-eks/k8s/cluster.json"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.shutdown",
+      "sources": [
+        "examples/34-eks/src/timing.ts",
+        "examples/34-eks/test/timing.test.ts",
+        "examples/34-eks/src/manifests.ts",
+        "examples/12-containers/src/timing.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "34.disruption",
+      "sources": [
+        "examples/34-eks/src/rollout.ts",
+        "examples/34-eks/test/rollout.test.ts",
+        "examples/34-eks/src/config.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "34.data",
+      "sources": ["examples/34-eks/infra/lib/eks-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "34.local",
+      "sources": [
+        "examples/34-eks/test",
+        "examples/34-eks/infra/test/eks-stack.test.ts",
+        "examples/34-eks/scripts/render.ts"
+      ],
+      "tasks": ["test:unit", "eks:render", "eks:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.deploy",
+      "sources": [
+        "examples/34-eks/infra/bin/app.ts",
+        "examples/34-eks/cdk.json",
+        "examples/34-eks/scripts/manifests.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["eks:infra:diff", "eks:infra:deploy", "eks:manifests", "eks:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "34.upgrade",
+      "sources": [
+        "examples/34-eks/src/support.ts",
+        "examples/34-eks/test/support.test.ts",
+        "examples/34-eks/src/config.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.cost",
+      "sources": ["examples/34-eks/src/cost.ts", "examples/34-eks/test/pricing.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.others",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "34.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["eks:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "eks.cluster.hour",
+      "offerCode": "AmazonEKS",
+      "region": "ap-northeast-1",
+      "sku": "F7AV3M7DBEX7FCHJ",
+      "usageType": "APN1-AmazonEKS-Hours:perCluster",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "Amazon EKS cluster usage in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T19:42:55Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "eks.cluster.extended-support.hour",
+      "offerCode": "AmazonEKS",
+      "region": "ap-northeast-1",
+      "sku": "JG44SV8KC4NJSEJJ",
+      "usageType": "APN1-AmazonEKS-Hours:extendedSupport",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.5000000000",
+          "description": "Amazon EKS extended support usage in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T19:42:55Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "eks.auto.t4g-medium.hour",
+      "offerCode": "AmazonEKS",
+      "region": "ap-northeast-1",
+      "sku": "9E8CXQ8ZDT2ZNRUA",
+      "usageType": "APN1-EKS-Auto:t4g.medium-management-hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0051800000",
+          "description": "$0.00518 per hour for EKS Auto Mode management of t4g.medium in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T19:42:55Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.t4g-medium.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "DQ2JMSDRJM7SCPDH",
+      "usageType": "APN1-BoxUsage:t4g.medium",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0432000000",
+          "description": "$0.0432 per On Demand Linux t4g.medium Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "eks.cluster.hour",
+      "reason": "The EKS pricing page lists no free allowance for the cluster hour; none is applied."
+    },
+    {
+      "priceId": "eks.cluster.extended-support.hour",
+      "reason": "The EKS pricing page lists no free allowance; none is applied."
+    },
+    {
+      "priceId": "eks.auto.t4g-medium.hour",
+      "reason": "The EKS pricing page lists no free allowance for Auto Mode; none is applied."
+    },
+    {
+      "priceId": "ec2.t4g-medium.linux.hour",
+      "reason": "Free tier offers for EC2 depend on when the account was created and on the instance type; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "eks-control-plane-only",
+      "chapter": "34",
+      "title": {
+        "ja": "EKS: スタックだけをデプロイして 1 か月（マニフェストは未適用）",
+        "en": "EKS: the stack alone for a month, with no manifest applied"
+      },
+      "assumptions": {
+        "ja": [
+          "標準サポートのバージョンのクラスター 1 つを 730 時間",
+          "組み込みのノードプールを無効にしているので、ノードもロードバランサーも無い"
+        ],
+        "en": [
+          "One cluster on a version in standard support for 730 hours",
+          "The built-in node pools are disabled, so there is no node and no load balancer"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "eks.cluster.hour",
+          "quantity": 730,
+          "basis": "1 cluster x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "eks-idle",
+      "chapter": "34",
+      "title": {
+        "ja": "EKS: 既定の構成でアプリを動かしたまま 1 か月",
+        "en": "EKS: the default layout with the app running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "標準サポートのバージョンのクラスター 1 つを 730 時間",
+          "ノードは t4g.medium（arm64、オンデマンド）が AZ ごとに 1 つで 2 つ。Auto Mode の管理料金を含む",
+          "ノードのエフェメラルストレージは 20 GB ずつで gp3 と仮定。ルートボリュームの大きさは確認できず、未算入",
+          "ALB 1 つを 730 時間。LCU は未算入",
+          "パブリック IPv4 アドレスは ALB のノード 2 つと EKS のノード 2 つで 4 つ",
+          "ログ、データ転送、T4g の CPU クレジットの超過分、12章のリポジトリの保存料金、ノードプールが増やしたノードは未算入"
+        ],
+        "en": [
+          "One cluster on a version in standard support for 730 hours",
+          "Two t4g.medium nodes (arm64, on demand), one per zone, with the Auto Mode management fee",
+          "20 GB of ephemeral storage per node, assumed to be gp3. The size of the root volume was not confirmed and is not included",
+          "One load balancer for 730 hours. LCUs are not included",
+          "Four public IPv4 addresses: two load balancer nodes and two cluster nodes",
+          "Logs, data transfer, surplus T4g CPU credits, the storage in chapter 12's repository, and nodes the node pool adds are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "eks.cluster.hour",
+          "quantity": 730,
+          "basis": "1 cluster x 730 hours"
+        },
+        {
+          "priceId": "ec2.t4g-medium.linux.hour",
+          "quantity": 1460,
+          "basis": "2 t4g.medium nodes x 730 hours"
+        },
+        {
+          "priceId": "eks.auto.t4g-medium.hour",
+          "quantity": 1460,
+          "basis": "2 nodes managed by Auto Mode x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 40,
+          "basis": "2 nodes x 20 GB of ephemeral storage (gp3 assumed)"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 nodes) x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "eks-one-day",
+      "chapter": "34",
+      "title": {
+        "ja": "EKS: 既定の構成でアプリを動かして 1 日",
+        "en": "EKS: the default layout with the app running for one day"
+      },
+      "assumptions": {
+        "ja": ["eks-idle と同じ構成を 24 時間"],
+        "en": ["The layout of eks-idle for 24 hours"]
+      },
+      "items": [
+        {
+          "priceId": "eks.cluster.hour",
+          "quantity": 24,
+          "basis": "1 cluster x 24 hours"
+        },
+        {
+          "priceId": "ec2.t4g-medium.linux.hour",
+          "quantity": 48,
+          "basis": "2 t4g.medium nodes x 24 hours"
+        },
+        {
+          "priceId": "eks.auto.t4g-medium.hour",
+          "quantity": 48,
+          "basis": "2 nodes managed by Auto Mode x 24 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 1.3150684931506849,
+          "basis": "2 nodes x 20 GB of ephemeral storage (gp3 assumed)"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 24,
+          "basis": "1 load balancer x 24 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 96,
+          "basis": "(2 load balancer nodes + 2 nodes) x 24 hours"
+        }
+      ]
+    },
+    {
+      "id": "eks-private-nodes",
+      "chapter": "34",
+      "title": {
+        "ja": "EKS: ノードをプライベートサブネットに置き、NAT Gateway 1 つで出る",
+        "en": "EKS: nodes in private subnets, out through one NAT gateway"
+      },
+      "assumptions": {
+        "ja": [
+          "`--node-subnets private`、11章を `-c egress=nat` でデプロイ",
+          "ノードは t4g.medium（arm64、オンデマンド）が AZ ごとに 1 つで 2 つ。Auto Mode の管理料金を含む",
+          "ノードのエフェメラルストレージは 20 GB ずつで gp3 と仮定。ルートボリュームの大きさは確認できず、未算入",
+          "ALB 1 つを 730 時間。LCU は未算入",
+          "ノードはパブリック IPv4 アドレスを持たない。ALB のノード 2 つと NAT Gateway の Elastic IP アドレスで 3 つ",
+          "NAT Gateway を通るデータは月 2 GB と仮定",
+          "ログ、データ転送、T4g の CPU クレジットの超過分、12章のリポジトリの保存料金、ノードプールが増やしたノードは未算入"
+        ],
+        "en": [
+          "`--node-subnets private`, with chapter 11 deployed with `-c egress=nat`",
+          "Two t4g.medium nodes (arm64, on demand), one per zone, with the Auto Mode management fee",
+          "20 GB of ephemeral storage per node, assumed to be gp3. The size of the root volume was not confirmed and is not included",
+          "One load balancer for 730 hours. LCUs are not included",
+          "The nodes hold no public IPv4 address. Three addresses: two load balancer nodes and the NAT gateway's Elastic IP address",
+          "2 GB a month assumed through the NAT gateway",
+          "Logs, data transfer, surplus T4g CPU credits, the storage in chapter 12's repository, and nodes the node pool adds are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "eks.cluster.hour",
+          "quantity": 730,
+          "basis": "1 cluster x 730 hours"
+        },
+        {
+          "priceId": "ec2.t4g-medium.linux.hour",
+          "quantity": 1460,
+          "basis": "2 t4g.medium nodes x 730 hours"
+        },
+        {
+          "priceId": "eks.auto.t4g-medium.hour",
+          "quantity": 1460,
+          "basis": "2 nodes managed by Auto Mode x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 40,
+          "basis": "2 nodes x 20 GB of ephemeral storage (gp3 assumed)"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2190,
+          "basis": "(2 load balancer nodes + 1 NAT gateway) x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 730,
+          "basis": "1 NAT gateway x 730 hours"
+        },
+        {
+          "priceId": "nat.gateway.data",
+          "quantity": 2,
+          "basis": "2 GB processed (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "eks-extended-support",
+      "chapter": "34",
+      "title": {
+        "ja": "EKS: 延長サポートに入ったバージョンのまま 1 か月",
+        "en": "EKS: a month on a version that has entered extended support"
+      },
+      "assumptions": {
+        "ja": [
+          "eks-idle と同じ構成",
+          "upgradePolicy が EXTENDED で、バージョンが標準サポートを過ぎている。時間あたり USD 0.50 が上乗せされる"
+        ],
+        "en": [
+          "The layout of eks-idle",
+          "The upgrade policy is EXTENDED and the version has left standard support: USD 0.50 an hour is added"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "eks.cluster.hour",
+          "quantity": 730,
+          "basis": "1 cluster x 730 hours"
+        },
+        {
+          "priceId": "eks.cluster.extended-support.hour",
+          "quantity": 730,
+          "basis": "1 cluster in extended support x 730 hours"
+        },
+        {
+          "priceId": "ec2.t4g-medium.linux.hour",
+          "quantity": 1460,
+          "basis": "2 t4g.medium nodes x 730 hours"
+        },
+        {
+          "priceId": "eks.auto.t4g-medium.hour",
+          "quantity": 1460,
+          "basis": "2 nodes managed by Auto Mode x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 40,
+          "basis": "2 nodes x 20 GB of ephemeral storage (gp3 assumed)"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 nodes) x 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "34",
+        "command": "vp test run examples/34-eks",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "マニフェストのスキーマと参照の検査、k8s/ のファイルとジェネレーターの一致、ローリングアップデートと PodDisruptionBudget と drain の計算、時間の関係、サポート期間、料金、スタックのアサーション",
+          "en": "The manifest schemas and reference checks, k8s/ against the generators, the arithmetic of rolling updates, disruption budgets and drains, the timing rules, support windows, pricing, and stack assertions"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "tsc --noEmit -p examples/34-eks",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "vp run eks:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "context なしと `-c deployRoleArn=arn:aws:iam::123456789012:role/aih-deploy` の 2 通りで synth した。AWS には問い合わせていない",
+          "en": "Synthesized twice: without context and with `-c deployRoleArn=arn:aws:iam::123456789012:role/aih-deploy`. Nothing was asked of AWS"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "vp run eks:render",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "k8s/cluster.json と k8s/app.json がジェネレーターの出力と一致する",
+          "en": "k8s/cluster.json and k8s/app.json match what the generators produce"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "vp run eks:manifests cluster --node-role ... --security-group ... ; vp run eks:manifests app --image ...",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "値をすべてフラグで渡し、AWS を読まずにマニフェストを出力した",
+          "en": "Printed the manifests with every value given as a flag, reading nothing from AWS"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "vp run eks:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "クラスターを作っていない。cdkd 0.296.28 が Cloud Control API 経由で AWS::EKS::Cluster、AccessEntry、PodIdentityAssociation を作れるかは未確認",
+          "en": "No cluster was created. Whether cdkd 0.296.28 can create AWS::EKS::Cluster, AccessEntry, and PodIdentityAssociation through Cloud Control API is unverified"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "kubectl apply -f - (vp run eks:manifests cluster / app)",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "kubectl は Nix の shell に無く、クラスターも無い。マニフェストは API サーバーに一度も渡していない",
+          "en": "kubectl is not in the Nix shell, and there is no cluster. The manifests were never given to an API server"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "vp run eks:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "34-cluster-deploy",
+        "summary": {
+          "ja": "34章のスタックを一度もデプロイしていない。cdkd 0.296.28 は AWS::EKS の種類に専用の実装を持たず、Cloud Control API を経由する。クラスターの作成と削除、アクセスエントリー、Pod Identity の関連付け、別のアプリのスタックからの Fn::ImportValue が通るかは未確認。",
+          "en": "The chapter 34 stack has never been deployed. cdkd 0.296.28 has no provider of its own for AWS::EKS types and goes through Cloud Control API. Unverified: creating and deleting the cluster, the access entries, the Pod Identity association, and Fn::ImportValue from another app's stack."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy`、`vp run eks:infra:diff`、`vp run eks:infra:deploy` の順に実行し、`aws eks describe-cluster --name aih-eks` で status が ACTIVE になること、computeConfig、accessConfig、upgradePolicy がテンプレートどおりであることを確かめる。終わったら `vp run eks:infra:destroy`。",
+          "en": "Run `vp run net:infra:deploy`, `vp run eks:infra:diff`, and `vp run eks:infra:deploy` in that order, then check with `aws eks describe-cluster --name aih-eks` that the status is ACTIVE and that computeConfig, accessConfig, and upgradePolicy are what the template says. Finish with `vp run eks:infra:destroy`."
+        }
+      },
+      {
+        "id": "34-manifests-on-a-cluster",
+        "summary": {
+          "ja": "k8s/ のマニフェストを API サーバーに渡したことがない。自前の NodeClass（パブリックサブネット、associatePublicIPAddress）でノードが起動してクラスターに参加するか、t4g.medium が選ばれるか、Name タグで ALB のサブネットを選べるか、Ingress の annotation が Auto Mode で効くか、preStop の 15 秒で足りるか、Pod Identity の認証情報が Pod に届くかは未確認。",
+          "en": "The manifests in k8s/ were never given to an API server. Unverified: that nodes of the custom NodeClass (public subnets, associatePublicIPAddress) start and join, that t4g.medium is what gets launched, that the load balancer's subnets can be chosen by the Name tag, that the Ingress annotations take effect under Auto Mode, that 15 seconds of preStop are enough, and that Pod Identity credentials reach the pod."
+        },
+        "resume": {
+          "ja": "クラスターをデプロイし、kubectl を用意して `aws eks update-kubeconfig --name aih-eks --region ap-northeast-1`、`vp run eks:manifests cluster | kubectl apply -f -`、`vp run eks:manifests app --tag v1 | kubectl apply -f -` を実行する。`kubectl get nodes -o wide`、`kubectl -n notes get pods,ingress` を見て、Ingress のホスト名へ `curl -si .../health` を送る。`kubectl -n notes rollout restart deployment/notes-api` の間、12章の `vp run ecs:watch --url http://<host>` でエラーが出ないことを確かめる。",
+          "en": "Deploy the cluster, get kubectl, and run `aws eks update-kubeconfig --name aih-eks --region ap-northeast-1`, `vp run eks:manifests cluster | kubectl apply -f -`, and `vp run eks:manifests app --tag v1 | kubectl apply -f -`. Look at `kubectl get nodes -o wide` and `kubectl -n notes get pods,ingress`, and send `curl -si .../health` to the Ingress host name. During `kubectl -n notes rollout restart deployment/notes-api`, watch with chapter 12's `vp run ecs:watch --url http://<host>` that no request fails."
+        }
+      },
+      {
+        "id": "34-flake-kubectl",
+        "summary": {
+          "ja": "Nix の devShell に kubectl が無い。34章のデプロイの手順は、kubectl を別に用意する前提で書いてある。",
+          "en": "The Nix devShell has no kubectl. The deploy steps of chapter 34 assume it is provided some other way."
+        },
+        "resume": {
+          "ja": "flake.nix の devShell に `pkgs.kubectl` を足すかどうかを著者が決める。足す場合は、クラスターのバージョン（1.37）と 1 マイナーバージョン以内であることを `kubectl version --client` で確かめ、34章の deploy のページの断り書きを直す。",
+          "en": "The author decides whether to add `pkgs.kubectl` to the devShell in flake.nix. If so, check with `kubectl version --client` that it is within one minor version of the cluster (1.37), and update the note on chapter 34's deploy page."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 34: Kubernetes on EKS ---------------------------------\n      // Fails when k8s/ is not what the generators produce; --write rewrites it. No cluster, no AWS.\n      \"eks:render\": fresh(\"node scripts/render.ts\", { cwd: \"examples/34-eks\" }),\n      // BILLED BY THE HOUR once deployed: the EKS control plane, then nodes and a load balancer.\n      ...infra(\"eks\", \"examples/34-eks\", \"AihEks\"),\n      // Prints the manifests with the stacks' outputs filled in, for `kubectl apply -f -`. Reads only.\n      \"eks:manifests\": live(\"node --env-file-if-exists=../../.env scripts/manifests.ts\", { cwd: \"examples/34-eks\" }),",
+    "synth": ["eks:infra:synth"],
+    "checkAll": ["eks:render"],
+    "typecheck": ["examples/34-eks"]
+  }
+}

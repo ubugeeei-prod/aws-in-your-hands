@@ -1,0 +1,151 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html, https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html, https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-client-side.html and https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-use-converse-api.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "The model asks for a tool that was never offered, is told so, and answers.",
+  "calls": [
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStart": {
+              "contentBlockIndex": 0,
+              "start": {
+                "toolUse": {
+                  "toolUseId": "tooluse_fixture_01",
+                  "name": "delete_note"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "{\"id\":\"n1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "release\"}"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "tool_use"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 320,
+                "outputTokens": 17,
+                "totalTokens": 337
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "ノートを消す機能は"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "ありません。"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "読むことだけができます。"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "end_turn"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 371,
+                "outputTokens": 22,
+                "totalTokens": 393
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

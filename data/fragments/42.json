@@ -1,0 +1,1443 @@
+{
+  "chapterId": "42",
+  "manifest": {
+    "id": "42",
+    "slug": "firewall-manager",
+    "title": {
+      "ja": "Firewall Manager: 複数アカウントの WAF、security group、Network Firewall をまとめて管理する",
+      "en": "Firewall Manager: One Policy for WAF, Security Groups, and Network Firewall across Accounts"
+    },
+    "prerequisites": ["01", "11", "21"],
+    "services": [
+      "AWS Firewall Manager",
+      "AWS WAF",
+      "AWS Organizations",
+      "AWS Config",
+      "Security Hub CSPM",
+      "Amazon SNS",
+      "Amazon EventBridge"
+    ],
+    "samplePath": "examples/42-firewall-manager",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "fwm-overview",
+      "fwm-prereq",
+      "fwm-prereq-organizations",
+      "fwm-prereq-admin",
+      "fwm-prereq-config",
+      "fwm-prereq-ram",
+      "fwm-administrators",
+      "fwm-creating-administrators",
+      "fwm-change-administrator",
+      "fwm-disqualified-admin",
+      "fwm-policies",
+      "fwm-create-policy",
+      "fwm-policy-scope",
+      "fwm-policy-deleting",
+      "fwm-waf-policies",
+      "fwm-waf-rule-groups",
+      "fwm-waf-web-acls",
+      "fwm-waf-logging",
+      "fwm-getting-started-waf",
+      "fwm-sg-policies",
+      "fwm-sg-audit",
+      "fwm-sg-common",
+      "fwm-sg-usage",
+      "fwm-shield-policies",
+      "fwm-nacl-policies",
+      "fwm-nfw-policies",
+      "fwm-dns-policies",
+      "fwm-compliance",
+      "fwm-findings",
+      "fwm-findings-waf",
+      "fwm-findings-sg-audit",
+      "fwm-findings-config",
+      "fwm-quotas",
+      "fwm-notifications",
+      "fwm-slr",
+      "fwm-iam",
+      "fwm-api-policy",
+      "fwm-api-sspd",
+      "fwm-api-resource-tag",
+      "fwm-api-delete-policy",
+      "fwm-api-put-notification-channel",
+      "fwm-cfn-policy",
+      "fwm-cfn-iemap",
+      "fwm-cfn-notification-channel",
+      "fwm-cloudcontrol-supported",
+      "fwm-org-integration",
+      "fwm-org-ou-api",
+      "fwm-org-scp",
+      "fwm-securityhub-providers",
+      "fwm-securityhub-event-formats",
+      "fwm-securityhub-event-types",
+      "fwm-securityhub-rule",
+      "fwm-asff-required",
+      "fwm-asff-optional",
+      "fwm-securityhub-api-finding",
+      "fwm-sns-publish",
+      "fwm-waf-rule-action",
+      "fwm-waf-baseline",
+      "fwm-waf-ip-rep",
+      "fwm-pricing-page",
+      "fwm-price-list-fms",
+      "fwm-price-list-config-use1",
+      "fwm-price-list-config",
+      "fwm-price-list-nfw",
+      "fwm-rfc1918",
+      "fwm-cdkd-package",
+      "fwm-cdk-fms-types",
+      "fwm-cloudflare-account-waf",
+      "fwm-cloudflare-account-managed",
+      "fwm-cloudflare-organizations",
+      "fwm-vercel-firewall",
+      "fwm-vercel-waf",
+      "fwm-vercel-ip-blocking"
+    ]
+  },
+  "sources": [
+    {
+      "id": "fwm-overview",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html",
+      "title": "AWS Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Firewall Manager applies protections across the accounts and resources of an organization, including accounts and resources added later",
+        "Charges incurred by Firewall Manager are for the underlying services, such as AWS WAF and AWS Config"
+      ]
+    },
+    {
+      "id": "fwm-prereq",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-prereq.html",
+      "title": "AWS Firewall Manager prerequisites",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The prerequisite steps, in order: AWS Organizations, a default administrator account, AWS Config, the Marketplace subscription for third-party policies, AWS RAM sharing for Network Firewall and DNS Firewall policies, and Regions that are disabled by default"
+      ]
+    },
+    {
+      "id": "fwm-prereq-organizations",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/join-aws-orgs.html",
+      "title": "Joining and configuring AWS Organizations for using Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The account must be a member of an organization in AWS Organizations",
+        "The organization must have all features enabled; consolidated billing alone is not enough"
+      ]
+    },
+    {
+      "id": "fwm-prereq-admin",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/enable-integration.html",
+      "title": "Creating an AWS Firewall Manager default administrator account",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Only the organization's management account can create the default administrator account",
+        "The default administrator has full administrative scope and is set as an AWS Organizations delegated administrator for Firewall Manager"
+      ]
+    },
+    {
+      "id": "fwm-prereq-config",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/enable-config.html",
+      "title": "Enabling AWS Config for using Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Config must be enabled for each member account, including the Firewall Manager administrator account, and for each Region that contains resources to protect",
+        "The recording frequency must be Continuous",
+        "The resource types AWS Config has to record for each policy type, when not recording all resources",
+        "AWS Config can record CloudFront distributions only in US East (N. Virginia)",
+        "A custom IAM role for the recorder that lacks permissions is not visible to Firewall Manager"
+      ]
+    },
+    {
+      "id": "fwm-prereq-ram",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/enable-ram.html",
+      "title": "Enabling resource sharing for Network Firewall and DNS Firewall policies with AWS RAM",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Network Firewall and DNS Firewall policies need sharing with AWS Organizations enabled in AWS RAM"
+      ]
+    },
+    {
+      "id": "fwm-administrators",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-administrators.html",
+      "title": "Using AWS Firewall Manager administrators",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An organization can have several Firewall Manager administrators, each with an administrative scope of accounts or OUs, Regions, and policy types",
+        "The default administrator can manage third-party firewalls and has full scope, and is otherwise a peer of the other administrators"
+      ]
+    },
+    {
+      "id": "fwm-creating-administrators",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-creating-administrators.html",
+      "title": "Creating a Firewall Manager administrator account",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Only the management account can create Firewall Manager administrator accounts",
+        "An OU in a scope includes the accounts of its child OUs, including ones added later"
+      ]
+    },
+    {
+      "id": "fwm-change-administrator",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-change-administrator.html",
+      "title": "Changing the default Firewall Manager administrator account",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When an administrator revokes their account, all Firewall Manager policies created by that account are deleted"
+      ]
+    },
+    {
+      "id": "fwm-disqualified-admin",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/disqualified-admin-account.html",
+      "title": "Disqualifying changes to a Firewall Manager administrator account",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Closing the administrator account deactivates its policies and stops their protections; policy data is kept for 90 days"
+      ]
+    },
+    {
+      "id": "fwm-policies",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/working-with-policies.html",
+      "title": "Using AWS Firewall Manager policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The policy types: AWS WAF (and AWS WAF Classic), Shield Advanced, Amazon VPC security group, Amazon VPC network ACL, Network Firewall, Route 53 Resolver DNS Firewall, and third-party firewall (Palo Alto Networks Cloud NGFW, Fortigate CNF)",
+        "A policy is specific to one policy type, and several policies of one type can exist",
+        "A policy either reports non-compliant accounts and resources or remediates them automatically"
+      ]
+    },
+    {
+      "id": "fwm-create-policy",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/create-policy.html",
+      "title": "Creating an AWS Firewall Manager policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An AWS WAF policy for CloudFront distributions is created with the Region set to Global; other Regions need one policy each",
+        "With automatic remediation, a policy can also remove existing web ACL associations that are not managed by another active Firewall Manager policy, associating its own web ACL first",
+        "A content audit security group policy must be created without automatic remediation",
+        "Resource tags can include or exclude, not both in one policy",
+        "The creation of a policy can take several minutes"
+      ]
+    },
+    {
+      "id": "fwm-policy-scope",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/policy-scope.html",
+      "title": "Using the AWS Firewall Manager policy scope",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Scope by accounts: all, an include list of accounts and OUs, or an exclude list",
+        "Scope by resource tags: all of the tags or any of the tags, included or excluded; a tag matches on the same key and the same value",
+        "A resource that leaves the scope stays associated and protected unless the policy removes protections from resources that leave the scope",
+        "The AWS Config managed rules and web ACLs with no resources are deleted regardless of that option"
+      ]
+    },
+    {
+      "id": "fwm-policy-deleting",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/policy-deleting.html",
+      "title": "Deleting an AWS Firewall Manager policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Deleting a Shield Advanced policy leaves the accounts subscribed to Shield Advanced",
+        "Replica security groups of a common security group policy remain unless the cleanup option is chosen"
+      ]
+    },
+    {
+      "id": "fwm-waf-policies",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-policies.html",
+      "title": "Using AWS WAF policies with Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A policy either creates new web ACLs for all in-scope resources, replacing ones in use, or retrofits the web ACLs already associated",
+        "In a managed web ACL an account can manage its own rules and rule groups in addition to the policy's"
+      ]
+    },
+    {
+      "id": "fwm-waf-rule-groups",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-policies-rule-groups.html",
+      "title": "Rule group management for AWS WAF policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A managed web ACL has three sets: the policy's first rule groups, the account's rules and rule groups, and the policy's last rule groups",
+        "The first and last sets take rule groups only, not individual rules",
+        "The rule groups are named PREFMManaged- and POSTFMManaged- followed by the policy name and a timestamp"
+      ]
+    },
+    {
+      "id": "fwm-waf-web-acls",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/how-fms-manages-web-acls.html",
+      "title": "Web ACL management for AWS WAF policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With optimizeUnassociatedWebACL, a web ACL is created in an account only if a resource will use it; without it, every in-scope account gets one",
+        "A web ACL the policy creates is named FMManagedWebACLV2-<policy name>-<timestamp>",
+        "Retrofitting (webACLSource RETROFIT_EXISTING) requires the web ACL to be owned by the account and associated only with in-scope resources",
+        "A customer-owned web ACL that a customer associates manually is still overridden by the policy's web ACL"
+      ]
+    },
+    {
+      "id": "fwm-waf-logging",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-policies-logging-config.html",
+      "title": "Logging for an AWS WAF policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A logging change made through AWS WAF on a managed web ACL is not detected automatically; re-evaluating the policy's AWS Config rule prompts an update"
+      ]
+    },
+    {
+      "id": "fwm-getting-started-waf",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/getting-started-fms.html",
+      "title": "Setting up AWS Firewall Manager AWS WAF policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Web ACLs that Firewall Manager creates cannot take part in CloudFront flat-rate pricing plans",
+        "After deleting a policy with its resources, the changes might take a few minutes to reach all accounts"
+      ]
+    },
+    {
+      "id": "fwm-sg-policies",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies.html",
+      "title": "Using security group policies in Firewall Manager to manage Amazon VPC security groups",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Best practices: exclude the administrator account, start with automatic remediation disabled, and keep Firewall Manager and other tools from managing the same security groups",
+        "Changes to security groups on EC2 network interfaces are usually detected within several hours, and can take as much as six",
+        "Network interfaces created by Amazon RDS are not supported, and those of Fargate tasks and requester-managed interfaces cannot be updated"
+      ]
+    },
+    {
+      "id": "fwm-sg-audit",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies-audit.html",
+      "title": "Using content audit security group policies with Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A content audit policy applies to customer-created security groups in scope, for the resource types EC2 instance, network interface, and security group",
+        "The audit security group is created in the administrator account and is only a comparison reference",
+        "With custom policy rules, allow means every in-scope rule must be within the allowed range of the audit group's rules; deny means none may be",
+        "With automatic remediation, Firewall Manager updates or removes non-compliant rules",
+        "Peer security groups cannot be referenced in a content audit policy"
+      ]
+    },
+    {
+      "id": "fwm-sg-common",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies-common.html",
+      "title": "Using common security group policies with Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A common security group policy replicates primary security groups from the administrator account into the VPCs in scope and associates them"
+      ]
+    },
+    {
+      "id": "fwm-sg-usage",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies-usage.html",
+      "title": "Using usage audit security group policies with Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A usage audit policy reports unused and redundant security groups and, with remediation, removes or consolidates them"
+      ]
+    },
+    {
+      "id": "fwm-shield-policies",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/shield-policies.html",
+      "title": "Using AWS Shield Advanced policies in Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Shield Advanced policy applies Shield Advanced protection to the chosen resource types"
+      ]
+    },
+    {
+      "id": "fwm-nacl-policies",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/network-acl-policies.html",
+      "title": "Using Amazon VPC network ACL policies with Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A network ACL policy enforces first and last rules in the network ACLs of in-scope subnets; accounts add rules in between"
+      ]
+    },
+    {
+      "id": "fwm-nfw-policies",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/network-firewall-policies.html",
+      "title": "Using AWS Network Firewall policies in Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Network Firewall policy creates and manages firewalls for the VPCs in scope, distributed, centralized, or imported"
+      ]
+    },
+    {
+      "id": "fwm-dns-policies",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/dns-firewall-policies.html",
+      "title": "Using Amazon Route 53 Resolver DNS Firewall policies in Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A DNS Firewall policy associates rule groups with the VPCs in scope, before and after the account's own associations"
+      ]
+    },
+    {
+      "id": "fwm-compliance",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-compliance.html",
+      "title": "Viewing compliance information for an AWS Firewall Manager policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Compliance is shown per account and per resource; a content audit policy has violation details for a security group rule, the referenced audit rule, the reason, and a suggested remediation",
+        "After a change to the policy or to in-scope resources, the compliance status may take several minutes to update",
+        "Firewall Manager detects changes through AWS Config, and rapid repeated changes can lose compliance or remediation state"
+      ]
+    },
+    {
+      "id": "fwm-findings",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-findings.html",
+      "title": "AWS Firewall Manager integration with AWS Security Hub CSPM",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Firewall Manager sends findings for non-compliant resources to Security Hub CSPM automatically when Security Hub is in use",
+        "The product name to filter on is Firewall Manager, case sensitive",
+        "Findings are not resolved for deleted policies, deleted resources, or resources that have left the scope"
+      ]
+    },
+    {
+      "id": "fwm-findings-waf",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-policy-findings.html",
+      "title": "AWS WAF policy Firewall Manager findings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The finding 'Resource is missing Firewall Manager managed web ACL', severity 80, status PASSED or FAILED"
+      ]
+    },
+    {
+      "id": "fwm-findings-sg-audit",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-content-audit-policy-findings.html",
+      "title": "Security group content audit policy Firewall Manager findings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The finding 'Security group is not in compliance with content audit security group', severity 70, status PASSED or FAILED"
+      ]
+    },
+    {
+      "id": "fwm-findings-config",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-config-firewall-manager-findings.html",
+      "title": "AWS Config Firewall Manager findings",
+      "checkedAt": "2026-10-13",
+      "supports": ["The finding 'Account does not have AWS Config enabled in the Region'"]
+    },
+    {
+      "id": "fwm-quotas",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-limits.html",
+      "title": "AWS Firewall Manager quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Default quotas per Region: 50 policies per organization (Global and US East (N. Virginia) count together), 20 OUs in scope per policy, 8 tags that include or exclude resources per policy, 50 rule groups per AWS WAF policy, 1 audit security group per content audit policy",
+        "Fixed quotas: 10 administrators per organization, 5,000 WCUs for the rule groups of an AWS WAF policy"
+      ]
+    },
+    {
+      "id": "fwm-notifications",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/set-fms-alarms.html",
+      "title": "AWS Firewall Manager notifications",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Firewall Manager records no CloudWatch metrics; Amazon SNS notifications are what it offers"
+      ]
+    },
+    {
+      "id": "fwm-slr",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-using-service-linked-roles.html",
+      "title": "Using service-linked roles for Firewall Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The service-linked role AWSServiceRoleForFMS lets Firewall Manager manage web ACLs, security groups, AWS Config rules, and other resources in each account"
+      ]
+    },
+    {
+      "id": "fwm-iam",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/fms-security_iam_service-with-iam.html",
+      "title": "How AWS Firewall Manager works with IAM",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SNS topic policy statement that lets AWSServiceRoleForFMS publish, used with PutNotificationChannel"
+      ]
+    },
+    {
+      "id": "fwm-api-policy",
+      "url": "https://docs.aws.amazon.com/fms/2018-01-01/APIReference/API_Policy.html",
+      "title": "Policy (Firewall Manager API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The fields of a policy: IncludeMap, ExcludeMap, ResourceType, ResourceTypeList, ResourceTags, ExcludeResourceTags, ResourceTagLogicalOperator, RemediationEnabled, DeleteUnusedFMManagedResources",
+        "With an IncludeMap, the ExcludeMap is not evaluated",
+        "The valid resource types for each policy type"
+      ]
+    },
+    {
+      "id": "fwm-api-sspd",
+      "url": "https://docs.aws.amazon.com/fms/2018-01-01/APIReference/API_SecurityServicePolicyData.html",
+      "title": "SecurityServicePolicyData (Firewall Manager API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The policy types as API values and the ManagedServiceData examples for WAFV2 and SECURITY_GROUPS_CONTENT_AUDIT",
+        "ManagedServiceData is at most 30,000 characters"
+      ]
+    },
+    {
+      "id": "fwm-api-resource-tag",
+      "url": "https://docs.aws.amazon.com/fms/2018-01-01/APIReference/API_ResourceTag.html",
+      "title": "ResourceTag (Firewall Manager API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A resource tag without a value is saved with the empty string, and tags match only on the same key and the same value"
+      ]
+    },
+    {
+      "id": "fwm-api-delete-policy",
+      "url": "https://docs.aws.amazon.com/fms/2018-01-01/APIReference/API_DeletePolicy.html",
+      "title": "DeletePolicy (Firewall Manager API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "What DeleteAllPolicyResources removes for AWS WAF and security group policies",
+        "Web ACLs that Firewall Manager generated and that are associated with nothing are removed even when DeleteAllPolicyResources is false"
+      ]
+    },
+    {
+      "id": "fwm-api-put-notification-channel",
+      "url": "https://docs.aws.amazon.com/fms/2018-01-01/APIReference/API_PutNotificationChannel.html",
+      "title": "PutNotificationChannel (Firewall Manager API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": ["The notification channel is an SNS topic and an IAM role"]
+    },
+    {
+      "id": "fwm-cfn-policy",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-fms-policy.html",
+      "title": "AWS::FMS::Policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The properties of the resource, including ResourcesCleanUp and DeleteAllPolicyResources, and that ManagedServiceData is a JSON string"
+      ]
+    },
+    {
+      "id": "fwm-cfn-iemap",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-fms-policy-iemap.html",
+      "title": "AWS::FMS::Policy IEMap",
+      "checkedAt": "2026-10-13",
+      "supports": ["The keys of the map in CloudFormation are ACCOUNT and ORGUNIT"],
+      "note": "The API reference writes the OU key as ORG_UNIT. The stack uses the CloudFormation spelling."
+    },
+    {
+      "id": "fwm-cfn-notification-channel",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-fms-notificationchannel.html",
+      "title": "AWS::FMS::NotificationChannel",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The properties SnsRoleName and SnsTopicArn, and the example that passes the ARN of AWSServiceRoleForFMS"
+      ]
+    },
+    {
+      "id": "fwm-cloudcontrol-supported",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWS::FMS::Policy and AWS::FMS::NotificationChannel are listed"]
+    },
+    {
+      "id": "fwm-org-integration",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/services-that-can-integrate-fms.html",
+      "title": "AWS Firewall Manager and AWS Organizations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Enabling trusted access creates AWSServiceRoleForFMS in the accounts of the organization; standalone accounts cannot be managed by Firewall Manager",
+        "Only the management account can configure a delegated administrator for Firewall Manager"
+      ]
+    },
+    {
+      "id": "fwm-org-ou-api",
+      "url": "https://docs.aws.amazon.com/organizations/latest/APIReference/API_OrganizationalUnit.html",
+      "title": "OrganizationalUnit (Organizations API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": ["The pattern of an OU ID"]
+    },
+    {
+      "id": "fwm-org-scp",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html",
+      "title": "Service control policies (SCPs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SCPs grant no permissions and set the maximum available permissions",
+        "SCPs do not affect the management account or service-linked roles, and they do apply to delegated administrator accounts"
+      ]
+    },
+    {
+      "id": "fwm-securityhub-providers",
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-internal-providers.html",
+      "title": "AWS service integrations with Security Hub CSPM",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Firewall Manager sends findings to Security Hub CSPM, and the integration is active once Security Hub CSPM is enabled"
+      ]
+    },
+    {
+      "id": "fwm-securityhub-event-formats",
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html",
+      "title": "EventBridge event formats for Security Hub CSPM",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The format of a Security Hub Findings - Imported event; each event carries one finding"
+      ]
+    },
+    {
+      "id": "fwm-securityhub-event-types",
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-integration-types.html",
+      "title": "Security Hub CSPM event types in EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every new finding and every update is sent to EventBridge; an administrator account also receives its member accounts' findings, and an aggregation Region those of linked Regions"
+      ]
+    },
+    {
+      "id": "fwm-securityhub-rule",
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-all-findings.html",
+      "title": "Configuring an EventBridge rule for Security Hub CSPM findings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The event pattern for findings, filtered by finding attributes under detail.findings"
+      ]
+    },
+    {
+      "id": "fwm-asff-required",
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/asff-required-attributes.html",
+      "title": "Required top-level ASFF attributes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The attributes every finding has: AwsAccountId, CreatedAt, Description, GeneratorId, Id, ProductArn, Resources, SchemaVersion, Severity, Title, Types, UpdatedAt"
+      ]
+    },
+    {
+      "id": "fwm-asff-optional",
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/asff-top-level-attributes.html",
+      "title": "Optional top-level ASFF attributes",
+      "checkedAt": "2026-10-13",
+      "supports": ["ProductName, Compliance, RecordState, and Workflow are optional attributes"]
+    },
+    {
+      "id": "fwm-securityhub-api-finding",
+      "url": "https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_AwsSecurityFinding.html",
+      "title": "AwsSecurityFinding (Security Hub API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": ["RecordState is ACTIVE or ARCHIVED"]
+    },
+    {
+      "id": "fwm-sns-publish",
+      "url": "https://docs.aws.amazon.com/sns/latest/api/API_Publish.html",
+      "title": "Publish (Amazon SNS API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A subject has no line breaks or control characters and is less than 100 characters long"
+      ]
+    },
+    {
+      "id": "fwm-waf-rule-action",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-action.html",
+      "title": "Using rule actions in AWS WAF",
+      "checkedAt": "2026-10-13",
+      "supports": ["Allow and Block are terminating actions: evaluation of the web ACL stops there"]
+    },
+    {
+      "id": "fwm-waf-baseline",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html",
+      "title": "Baseline rule groups",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWSManagedRulesKnownBadInputsRuleSet uses 200 WCUs"]
+    },
+    {
+      "id": "fwm-waf-ip-rep",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html",
+      "title": "IP reputation rule groups",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWSManagedRulesAmazonIpReputationList uses 25 WCUs"]
+    },
+    {
+      "id": "fwm-pricing-page",
+      "url": "https://aws.amazon.com/firewall-manager/pricing/",
+      "title": "AWS Firewall Manager pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A policy is priced with a monthly fee per Region; web ACLs, rules, and AWS Config rules that Firewall Manager creates are charged at the prices of those services",
+        "For Shield Advanced customers the policy fee is included"
+      ]
+    },
+    {
+      "id": "fwm-price-list-fms",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSFMS/current/index.json",
+      "title": "AWS Price List: AWSFMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "USD 100 per policy per month for an AWS WAF policy (usage type Policy-WAF, WAFv2) and for a security group content audit policy in ap-northeast-1"
+      ]
+    },
+    {
+      "id": "fwm-price-list-config-use1",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/us-east-1/index.json",
+      "title": "AWS Price List: AWSConfig (us-east-1)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "USD 0.003 per configuration item recorded and USD 0.001 per rule evaluation for the first 100,000 in us-east-1"
+      ]
+    },
+    {
+      "id": "fwm-price-list-config",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWSConfig (ap-northeast-1)",
+      "checkedAt": "2026-10-13",
+      "supports": ["USD 0.001 per rule evaluation for the first 100,000 in ap-northeast-1"]
+    },
+    {
+      "id": "fwm-price-list-nfw",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSNetworkFirewall/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWSNetworkFirewall (ap-northeast-1)",
+      "checkedAt": "2026-10-13",
+      "supports": ["USD 0.395 per firewall endpoint hour in ap-northeast-1"]
+    },
+    {
+      "id": "fwm-rfc1918",
+      "url": "https://www.rfc-editor.org/rfc/rfc1918.txt",
+      "title": "RFC 1918: Address Allocation for Private Internets",
+      "checkedAt": "2026-10-13",
+      "supports": ["The private address blocks 10/8, 172.16/12, and 192.168/16"]
+    },
+    {
+      "id": "fwm-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The installed package registers no provider for AWS::FMS::Policy or AWS::FMS::NotificationChannel and falls back to Cloud Control; it registers providers for the other resource types of this chapter's stacks"
+      ],
+      "note": "Read in the installed package's dist/ (register-providers), not on the registry page."
+    },
+    {
+      "id": "fwm-cdk-fms-types",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (aws-fms)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The property names of CfnPolicy and CfnNotificationChannel, including the IEMap keys account and orgunit"
+      ],
+      "note": "Read in the installed package's type definitions."
+    },
+    {
+      "id": "fwm-cloudflare-account-waf",
+      "url": "https://developers.cloudflare.com/waf/account/",
+      "title": "Cloudflare: Account-level WAF configuration",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Account-level WAF configuration applies rulesets to several Enterprise zones of an account and requires an Enterprise plan"
+      ]
+    },
+    {
+      "id": "fwm-cloudflare-account-managed",
+      "url": "https://developers.cloudflare.com/waf/account/managed-rulesets/",
+      "title": "Cloudflare: Account-level managed rulesets",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Account-level rulesets run before zone-level rulesets, and a zone-level exception does not prevent a match at the account level"
+      ]
+    },
+    {
+      "id": "fwm-cloudflare-organizations",
+      "url": "https://developers.cloudflare.com/fundamentals/organizations/",
+      "title": "Cloudflare: Organizations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An Organization is a container for several accounts, available to Enterprise customers"
+      ]
+    },
+    {
+      "id": "fwm-vercel-firewall",
+      "url": "https://vercel.com/docs/vercel-firewall",
+      "title": "Vercel Firewall",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The platform-wide firewall with DDoS mitigation is on all plans, and the WAF's rules are ordered IP blocking, custom rules, managed rulesets"
+      ]
+    },
+    {
+      "id": "fwm-vercel-waf",
+      "url": "https://vercel.com/docs/vercel-firewall/vercel-waf",
+      "title": "Vercel WAF",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Custom rules and managed rulesets are configured for a project; managed rulesets are on the Enterprise plan",
+        "A configuration change takes effect globally within 300 ms"
+      ]
+    },
+    {
+      "id": "fwm-vercel-ip-blocking",
+      "url": "https://vercel.com/docs/vercel-firewall/vercel-waf/ip-blocking",
+      "title": "Vercel WAF IP blocking",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "IP blocking exists at the project level on all plans and at the account level on Enterprise plans"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "firewall-manager-policy",
+      "ja": "Firewall Manager のポリシー",
+      "en": "Firewall Manager policy",
+      "firstUse": "42",
+      "definition": {
+        "ja": "Firewall Manager の管理者アカウントに 1 つ作る設定で、保護の内容（WAF のルールグループや監査用のセキュリティグループなど）と、適用する範囲（アカウント、OU、リソースタイプ、タグ）を持つ。範囲に入るリソースには、あとから作られたものにも適用される。IAM のポリシーとは別のもの。",
+        "en": "A setting created once in the Firewall Manager administrator account: the protection (WAF rule groups, an audit security group, and so on) and the scope it applies to (accounts, OUs, resource types, tags). It applies to resources in scope, including ones created later. Not an IAM policy."
+      }
+    },
+    {
+      "id": "organizational-unit",
+      "ja": "OU（organizational unit）",
+      "en": "OU (organizational unit)",
+      "firstUse": "42",
+      "definition": {
+        "ja": "AWS Organizations で、アカウントをまとめる入れ物。入れ子にできる。Firewall Manager のポリシーや SCP で OU を指定すると、その OU と子の OU にあるアカウントすべてが対象になる。",
+        "en": "A container for accounts in AWS Organizations, which can be nested. Naming an OU in a Firewall Manager policy or an SCP names every account in it and in its child OUs."
+      }
+    },
+    {
+      "id": "delegated-administrator",
+      "ja": "委任された管理者（delegated administrator）",
+      "en": "delegated administrator",
+      "firstUse": "42",
+      "definition": {
+        "ja": "組織の管理アカウントが、あるサービスの管理を任せたメンバーアカウント。Firewall Manager の管理者アカウントは、Organizations の委任された管理者として登録される。",
+        "en": "A member account that the organization's management account has entrusted with administering one service. A Firewall Manager administrator account is registered as an Organizations delegated administrator."
+      }
+    },
+    {
+      "id": "automatic-remediation",
+      "ja": "自動修復（automatic remediation）",
+      "en": "automatic remediation",
+      "firstUse": "42",
+      "definition": {
+        "ja": "Firewall Manager のポリシーの設定。無効なら、ポリシーに合っていないリソースを報告するだけで何も変えない。有効なら、web ACL を関連付ける、ルールを消すといった変更を Firewall Manager がメンバーアカウントで行う。",
+        "en": "A setting of a Firewall Manager policy. Disabled, the policy only reports resources that do not comply. Enabled, Firewall Manager makes the change in the member account: associating a web ACL, removing a rule."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "42.problem",
+      "sources": ["examples/42-firewall-manager"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "42.prerequisites",
+      "sources": [
+        "examples/42-firewall-manager/infra/lib/config.ts",
+        "examples/42-firewall-manager/infra/bin/app.ts"
+      ],
+      "tasks": ["fwm:infra:synth:example"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "42.policy-types",
+      "sources": ["examples/42-firewall-manager/src/policies.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "42.architecture",
+      "sources": [
+        "examples/42-firewall-manager/infra/bin/app.ts",
+        "examples/42-firewall-manager/infra/lib/edge-waf-policy-stack.ts",
+        "examples/42-firewall-manager/infra/lib/firewall-manager-stack.ts"
+      ],
+      "tasks": ["fwm:infra:synth:example"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "42.when-not",
+      "sources": ["examples/42-firewall-manager/scripts/audit-templates.ts"],
+      "tasks": ["fwm:audit:templates"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "42.scope",
+      "sources": [
+        "examples/42-firewall-manager/src/org.ts",
+        "examples/42-firewall-manager/src/scope.ts",
+        "examples/42-firewall-manager/src/policies.ts",
+        "examples/42-firewall-manager/infra/lib/scope-props.ts",
+        "examples/42-firewall-manager/test/scope.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "42.waf-policy",
+      "sources": [
+        "examples/42-firewall-manager/src/policies.ts",
+        "examples/42-firewall-manager/src/managed-service-data.ts",
+        "examples/42-firewall-manager/infra/lib/edge-waf-policy-stack.ts",
+        "examples/42-firewall-manager/test/managed-service-data.test.ts",
+        "examples/42-firewall-manager/infra/test/stacks.test.ts"
+      ],
+      "tasks": ["test:unit", "fwm:infra:synth:example"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "42.sg-audit",
+      "sources": [
+        "examples/42-firewall-manager/src/security-group-audit.ts",
+        "examples/42-firewall-manager/src/cidr.ts",
+        "examples/42-firewall-manager/src/policies.ts",
+        "examples/42-firewall-manager/infra/lib/firewall-manager-stack.ts",
+        "examples/42-firewall-manager/test/security-group-audit.test.ts",
+        "examples/42-firewall-manager/scripts/audit-templates.ts"
+      ],
+      "tasks": ["test:unit", "fwm:audit:templates"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "42.reconcile",
+      "sources": [
+        "examples/42-firewall-manager/src/reconcile.ts",
+        "examples/42-firewall-manager/test/reconcile.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "42.compliance",
+      "sources": [
+        "examples/42-firewall-manager/src/finding.ts",
+        "examples/42-firewall-manager/src/notify.ts",
+        "examples/42-firewall-manager/src/lambda.ts",
+        "examples/42-firewall-manager/infra/lib/firewall-manager-stack.ts",
+        "examples/42-firewall-manager/test/finding.test.ts",
+        "examples/42-firewall-manager/test/fixtures/finding-events.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "42.local",
+      "sources": [
+        "examples/42-firewall-manager/test",
+        "examples/42-firewall-manager/infra/test/stacks.test.ts",
+        "examples/42-firewall-manager/scripts/cost.ts",
+        "examples/42-firewall-manager/scripts/audit-templates.ts"
+      ],
+      "tasks": ["test:unit", "fwm:cost", "fwm:audit:templates", "fwm:infra:synth:example"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "42.deploy",
+      "sources": [
+        "examples/42-firewall-manager/infra/bin/app.ts",
+        "examples/42-firewall-manager/infra/lib/config.ts"
+      ],
+      "tasks": ["fwm:infra:deploy", "fwm:edge:infra:deploy", "fwm:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "42.other-platforms",
+      "sources": ["examples/42-firewall-manager"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "42.cost",
+      "sources": [
+        "examples/42-firewall-manager/src/cost.ts",
+        "examples/42-firewall-manager/test/cost.test.ts",
+        "examples/42-firewall-manager/scripts/cost.ts",
+        "data/pricing"
+      ],
+      "tasks": ["fwm:cost", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "42.limits",
+      "sources": [
+        "examples/42-firewall-manager/src/scope.ts",
+        "examples/42-firewall-manager/src/managed-service-data.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "42.cleanup",
+      "sources": [
+        "examples/42-firewall-manager/infra/lib/edge-waf-policy-stack.ts",
+        "examples/42-firewall-manager/infra/lib/firewall-manager-stack.ts"
+      ],
+      "tasks": ["fwm:edge:infra:destroy", "fwm:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "fms.policy.global.wafv2",
+      "offerCode": "AWSFMS",
+      "region": "global",
+      "sku": "BBVAC8GC5GSFBBS5",
+      "usageType": "Policy-WAF",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "100.0000000000",
+          "description": "$100.0 per Month for :WAFv2"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSFMS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:52Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "fms.policy.apne1.sg-content-audit",
+      "offerCode": "AWSFMS",
+      "region": "ap-northeast-1",
+      "sku": "KM3X4WW2BYCF6U26",
+      "usageType": "APN1-Policy-Security-Group",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "100.0000000000",
+          "description": "$100.0 per Month for Policy-Security-Group:Content-Audit in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSFMS/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:52Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "config.use1.item.continuous",
+      "offerCode": "AWSConfig",
+      "region": "us-east-1",
+      "sku": "J29KD2787RGQNXMX",
+      "usageType": "ConfigurationItemRecorded",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ConfigurationItemRecorded",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0030000000",
+          "description": "$0.003 per Configuration Item recorded in US East (N.Virginia) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/us-east-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "config.use1.rule.evaluation",
+      "offerCode": "AWSConfig",
+      "region": "us-east-1",
+      "sku": "9QFXD53PPEYGFB7P",
+      "usageType": "USE1-ConfigRuleEvaluations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ConfigRuleEvaluations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 100000,
+          "usd": "0.0010000000",
+          "description": "$0.001 for the first 100,000 evaluations in  US East (N.Virginia) region"
+        },
+        {
+          "from": 100000,
+          "to": 500000,
+          "usd": "0.0008000000",
+          "description": "$0.0008 for the next 400,000 evaluations in  US East (N.Virginia) region"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.0005000000",
+          "description": "$0.0005 for 500,001 evaluations and more  US East (N.Virginia) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/us-east-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "config.rule.evaluation",
+      "offerCode": "AWSConfig",
+      "region": "ap-northeast-1",
+      "sku": "YG68P2SM4BB4X88N",
+      "usageType": "APN1-ConfigRuleEvaluations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ConfigRuleEvaluations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 100000,
+          "usd": "0.0010000000",
+          "description": "$0.001 for the first 100,000 evaluations in Asia Pacific (Tokyo) region"
+        },
+        {
+          "from": 100000,
+          "to": 500000,
+          "usd": "0.0008000000",
+          "description": "$0.0008 for the next 400,000 evaluations in Asia Pacific (Tokyo) region"
+        },
+        {
+          "from": 500000,
+          "to": null,
+          "usd": "0.0005000000",
+          "description": "$0.0005 for 500,001 evaluations and more in Asia Pacific (Tokyo) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "networkfirewall.endpoint.hour",
+      "offerCode": "AWSNetworkFirewall",
+      "region": "ap-northeast-1",
+      "sku": "CWTZWA8K9VDUWMK7",
+      "usageType": "APN1-Endpoint-Hour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hourly",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3950000000",
+          "description": "$0.395 per endpoint hour for AWS Network Firewall in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSNetworkFirewall/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:04Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "fms.policy.global.wafv2",
+      "reason": "No free allowance for Firewall Manager policies was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "fms.policy.apne1.sg-content-audit",
+      "reason": "No free allowance for Firewall Manager policies was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "config.use1.item.continuous",
+      "reason": "No free allowance for AWS Config was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "config.use1.rule.evaluation",
+      "reason": "No free allowance for AWS Config was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "config.rule.evaluation",
+      "reason": "No free allowance for AWS Config was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "networkfirewall.endpoint.hour",
+      "reason": "No free allowance for AWS Network Firewall was looked for or confirmed; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "fwm-policies-only",
+      "chapter": "42",
+      "title": {
+        "ja": "Firewall Manager: 2 つのポリシーを 1 か月置いただけ（範囲に入るリソースが無い）",
+        "en": "Firewall Manager: the two policies for a month, with no resource in scope"
+      },
+      "assumptions": {
+        "ja": [
+          "AihFirewallManager と AihFirewallManagerEdge を何も変えずにデプロイした状態。自動修復はどちらも無効",
+          "範囲に入る OU に、CloudFront のディストリビューションもセキュリティグループも無い。web ACL は作られないと仮定（optimizeUnassociatedWebACL が true のため）",
+          "ポリシーの料金は 1 か月ぶん。月の途中で消したときに日割りになるかどうかは確認していない",
+          "CloudFront 用の AWS WAF ポリシーが、Price List のどの usage type（Policy-WAF、USE1-Policy-WAF、Policy）で請求されるかは確認していない。3 つとも USD 100",
+          "前提になる AWS Config の料金、Security Hub CSPM、通知用の Lambda・SNS・EventBridge・CloudWatch Logs は含めていない"
+        ],
+        "en": [
+          "AihFirewallManager and AihFirewallManagerEdge deployed as they are, with automatic remediation off in both",
+          "No CloudFront distribution and no security group in the OUs in scope. No web ACL is assumed to be created, because optimizeUnassociatedWebACL is true",
+          "The policy fee for a whole month. Whether it is prorated when a policy is deleted mid-month was not confirmed",
+          "Which Price List usage type an AWS WAF policy for CloudFront is billed under (Policy-WAF, USE1-Policy-WAF, or Policy) was not confirmed. All three are USD 100",
+          "AWS Config, which is a prerequisite, Security Hub CSPM, and the notifier's Lambda, SNS, EventBridge, and CloudWatch Logs are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fms.policy.global.wafv2",
+          "quantity": 1,
+          "basis": "1 AWS WAF policy for CloudFront (Global)"
+        },
+        {
+          "priceId": "fms.policy.apne1.sg-content-audit",
+          "quantity": 1,
+          "basis": "1 security group content audit policy in ap-northeast-1"
+        }
+      ]
+    },
+    {
+      "id": "fwm-small-org",
+      "chapter": "42",
+      "title": {
+        "ja": "Firewall Manager: アカウント 5 つの組織で、2 つのポリシーを 1 か月",
+        "en": "Firewall Manager: the two policies for a month in an organization of five accounts"
+      },
+      "assumptions": {
+        "ja": [
+          "組織は、管理アカウント、Firewall Manager の管理者アカウント、ワークロードのアカウント 3 つ（dev、staging、prod）。ポリシーの範囲は、ワークロードの 3 つが入る OU",
+          "3 つのアカウントそれぞれに CloudFront のディストリビューションがあり、AWS WAF ポリシーの自動修復を有効にして、アカウントごとに web ACL が 1 つ作られる",
+          "ポリシーのルールグループ 2 つを、web ACL ごとにルール 2 つとして数えた。Firewall Manager がメンバーアカウントの web ACL に置くルールグループの数え方は、請求では確かめていない",
+          "web ACL 1 つあたり月 100 万リクエストを検査",
+          "AWS Config は、ワークロードの 3 つと管理者アカウントの計 4 つで記録する。記録する configuration item は、us-east-1 でアカウントあたり月 20 件、ap-northeast-1 で月 200 件と仮定。計測値ではない",
+          "ポリシーが作る AWS Config のルールの評価は、範囲に入るアカウントごと、ポリシーごとに月 100 回と仮定。計測値ではない",
+          "含めていないもの: Security Hub CSPM、AWS Config の記録を置く S3、通知用の Lambda・SNS・EventBridge・CloudWatch Logs。ポリシーの料金が日割りになるかどうかは確認していない"
+        ],
+        "en": [
+          "The organization: a management account, a Firewall Manager administrator account, and three workload accounts (dev, staging, prod). The policies cover the OU the three are in",
+          "Each of the three has CloudFront distributions, and with automatic remediation on, the AWS WAF policy creates one web ACL per account",
+          "The policy's two rule groups are counted as two rules per web ACL. How the rule groups Firewall Manager places in a member account's web ACL are metered was not confirmed on a bill",
+          "One million requests inspected per web ACL in the month",
+          "AWS Config records in four accounts: the three workloads and the administrator. 20 configuration items a month per account in us-east-1 and 200 in ap-northeast-1, assumed, not measured",
+          "100 evaluations a month of the AWS Config rule each policy creates, per account in scope, assumed, not measured",
+          "Not included: Security Hub CSPM, S3 storage for AWS Config's records, and the notifier's Lambda, SNS, EventBridge, and CloudWatch Logs. Whether the policy fee is prorated was not confirmed"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fms.policy.global.wafv2",
+          "quantity": 1,
+          "basis": "1 AWS WAF policy for CloudFront (Global)"
+        },
+        {
+          "priceId": "fms.policy.apne1.sg-content-audit",
+          "quantity": 1,
+          "basis": "1 security group content audit policy in ap-northeast-1"
+        },
+        {
+          "priceId": "waf.global.webacl",
+          "quantity": 3,
+          "basis": "3 accounts x 1 managed web ACL"
+        },
+        {
+          "priceId": "waf.global.rule",
+          "quantity": 6,
+          "basis": "3 web ACLs x 2 rule groups"
+        },
+        {
+          "priceId": "waf.global.request",
+          "quantity": 3000000,
+          "basis": "3 web ACLs x 1000000 requests inspected"
+        },
+        {
+          "priceId": "config.use1.item.continuous",
+          "quantity": 80,
+          "basis": "4 accounts x 20 items in us-east-1"
+        },
+        {
+          "priceId": "config.item.continuous",
+          "quantity": 800,
+          "basis": "4 accounts x 200 items in ap-northeast-1"
+        },
+        {
+          "priceId": "config.use1.rule.evaluation",
+          "quantity": 300,
+          "basis": "3 accounts x 100 evaluations (AWS WAF policy)"
+        },
+        {
+          "priceId": "config.rule.evaluation",
+          "quantity": 300,
+          "basis": "3 accounts x 100 evaluations (audit policy)"
+        }
+      ]
+    },
+    {
+      "id": "fwm-nfw-endpoint",
+      "chapter": "42",
+      "title": {
+        "ja": "Firewall Manager: Network Firewall のポリシーが作るエンドポイント 1 つを 1 か月（桁をつかむための例）",
+        "en": "Firewall Manager: one endpoint created by a Network Firewall policy for a month (an order-of-magnitude example)"
+      },
+      "assumptions": {
+        "ja": [
+          "この章のスタックは Network Firewall のポリシーを作らない。分散型のポリシーが範囲に入る VPC に置くファイアウォールのエンドポイント 1 つぶんの時間料金だけを示す",
+          "730 時間。処理したデータ量の料金（GB あたり）と、ポリシーそのものの月額は含めていない"
+        ],
+        "en": [
+          "This chapter's stacks create no Network Firewall policy. This is only the hourly price of one of the firewall endpoints a distributed policy places in the VPCs in scope",
+          "730 hours. The per-GB processing charge and the policy's own monthly fee are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "networkfirewall.endpoint.hour",
+          "quantity": 730,
+          "basis": "1 endpoint x 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "42",
+        "command": "vp test run examples/42-firewall-manager",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "7 ファイル 94 件。範囲の判定（include と exclude の map、子の OU、タグの AND と OR、あとから作られたリソース、タグで範囲から外れるリソース、クォータ）、セキュリティグループの監査のルールと CIDR の包含、テンプレートからのルールの読み取り、2 つのポリシーの managed service data、web ACL の関連付けのモデルと種を固定した 2,000 手の検査、finding のイベントと通知、料金の計算、2 つのスタックのアサーションとコンテキスト。モデルの判定を緩めると不変条件のテストが落ちることも確かめた",
+          "en": "94 tests in 7 files: the scope decision (include and exclude maps, child OUs, AND and OR over tags, a resource created later, a resource leaving by tag, quotas), the security group audit rule and CIDR containment, rules read from a template, the managed service data of both policies, the web ACL association model with a seeded walk of 2,000 steps, the finding event and the notice, the cost arithmetic, and assertions on both stacks and the context. Also confirmed that the invariant tests fail when the model's decision is loosened"
+        }
+      },
+      {
+        "scope": "42",
+        "command": "tsc --noEmit -p examples/42-firewall-manager",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "42",
+        "command": "vp run fwm:infra:synth:example",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AWS のドキュメントが例に使うアカウント ID と、形だけ合わせた OU の ID で synth した。スタック 2 つ（AihFirewallManager はリソース 11、AihFirewallManagerEdge は 1）。コンテキストなしの `vp run fwm:infra:synth` が止まることも確かめた。合成された通知用の関数のバンドルを、テストランナーの外の Node.js で読み込んだ",
+          "en": "Synthesized with the example account ID of AWS's documentation and an OU ID that only follows the documented shape. Two stacks (11 resources in AihFirewallManager, 1 in AihFirewallManagerEdge). Also confirmed that `vp run fwm:infra:synth` without context stops, and loaded the synthesized bundle of the notifier function in Node.js outside the test runner"
+        }
+      },
+      {
+        "scope": "42",
+        "command": "vp run fwm:cost",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "data/pricing の単価から、アカウント 5 つの組織の例を計算した。定価で月 USD 226.04。本文に載せた出力はこの実行のもの",
+          "en": "Computed the example organization of five accounts from the unit prices in data/pricing: USD 226.04 a month at list price. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "42",
+        "command": "vp run fwm:audit:templates",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "その時点で cdk.out があった 46 個のテンプレートを読んだ。セキュリティグループ 7 つのうち、準拠 4、準拠していない 0、評価しないルールを含むもの 3。本文に載せた出力はこの実行のもの。ほかの章のファイルは変更していない",
+          "en": "Read the 46 templates that had a cdk.out at the time. Of 7 security groups: 4 compliant, 0 non-compliant, 3 with a rule the model does not evaluate. The output quoted in the chapter is from this run. No file of another chapter was changed"
+        }
+      },
+      {
+        "scope": "42",
+        "command": "vp run fwm:infra:deploy / fwm:edge:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "組織を持っていないので実行していない。Firewall Manager の管理者アカウント、すべての機能を有効にした Organizations、各アカウントの AWS Config が前提",
+          "en": "Not run: the book has no organization. It needs a Firewall Manager administrator account, AWS Organizations with all features, and AWS Config in each account"
+        }
+      },
+      {
+        "scope": "42",
+        "command": "vp run fwm:infra:diff / fwm:infra:drift / fwm:edge:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていないので実行していない。Cloud Control API 経由の AWS::FMS::Policy をドリフト検出がどこまで比べられるかは未確認",
+          "en": "Not run, since nothing was deployed. How far drift detection can compare AWS::FMS::Policy, which goes through Cloud Control API, is unconfirmed"
+        }
+      },
+      {
+        "scope": "42",
+        "command": "vp run fwm:edge:infra:destroy / fwm:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていないので実行していない。ポリシーを消したあとにメンバーアカウントに残るものは未確認",
+          "en": "Not run, since nothing was deployed. What stays in member accounts after the policies are deleted is unconfirmed"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "42-firewall-manager-deploy",
+        "summary": {
+          "ja": "42章の 2 つのスタックを AWS に一度もデプロイしていない（組織が無い）。未確認: cdkd 0.296.28 が Cloud Control API 経由で `AWS::FMS::Policy` と `AWS::FMS::NotificationChannel` を作成・更新・削除できること、`IncludeMap` の `ORGUNIT` と文字列の `ManagedServiceData` が受け付けられること、Firewall Manager の実際の判定がこの章のモデル（範囲、タグ、「許された幅に収まる」、送信元がセキュリティグループのルール）と同じかどうか、`overrideCustomerWebACLAssociation` が false のときの既存の web ACL の扱い、リソースの作成から準拠の報告と web ACL の関連付けまでの時間、Security Hub に届く finding の実際のフィールドとアカウント、SNS の通知チャンネルに届くメッセージの内容、ポリシーの削除後にメンバーアカウントに残るもの、ポリシーの料金の日割りと usage type。",
+          "en": "The two stacks of chapter 42 have never been deployed to AWS (there is no organization). Unconfirmed: that cdkd 0.296.28 can create, update, and delete `AWS::FMS::Policy` and `AWS::FMS::NotificationChannel` through Cloud Control API; that the `ORGUNIT` key of `IncludeMap` and `ManagedServiceData` as a string are accepted; whether Firewall Manager's real decisions match this chapter's models (scope, tags, \"within the allowed range\", rules whose source is a security group); what happens to an existing web ACL when `overrideCustomerWebACLAssociation` is false; the time from a resource's creation to the compliance report and to the web ACL association; the real fields and the account of the findings that reach Security Hub; the content of the messages on the SNS notification channel; what stays in member accounts after a policy is deleted; and proration and the usage type of the policy fee."
+        },
+        "resume": {
+          "ja": "練習用の OU（アカウント 1〜2 個）を用意し、本文「デプロイして確かめる」の順に進める。Organizations のすべての機能、Firewall Manager の管理者アカウントの指定、対象のアカウントと管理者アカウントでの AWS Config（us-east-1 と ap-northeast-1、連続記録）、Security Hub CSPM を済ませたあと、`vp run fwm:infra:deploy -c adminAccountId=<ID> -c orgUnitIds=<ou-id>` と `vp run fwm:edge:infra:deploy`（同じコンテキスト）を実行し、コンソールで準拠の状態と違反の詳細を手元のモデルと比べる。次に `-c wafRemediation=on` と `-c sgRemediation=on` で再デプロイし、関連付けまでの時間、finding のイベントの実物（Notifier のログ）、SNS のメッセージを記録する。最後に 2 つの destroy を実行し、メンバーアカウントに残った web ACL と AWS Config のルールを確かめる。ポリシーは 1 つ月 USD 100。",
+          "en": "Prepare a practice OU with one or two accounts and follow the chapter's deploy page. After all features in Organizations, designating the Firewall Manager administrator account, AWS Config in the accounts in scope and in the administrator account (us-east-1 and ap-northeast-1, continuous recording), and Security Hub CSPM, run `vp run fwm:infra:deploy -c adminAccountId=<ID> -c orgUnitIds=<ou-id>` and `vp run fwm:edge:infra:deploy` with the same context, then compare the compliance status and violation details in the console with the local models. Deploy again with `-c wafRemediation=on` and `-c sgRemediation=on`, and record the time to association, a real finding event (the notifier's log), and the SNS messages. Finish with the two destroy tasks and check which web ACLs and AWS Config rules stay in the member accounts. Each policy is USD 100 a month."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 42: Firewall Manager -----------------------------------\n      // The month the two policies would cost a small organization, from data/pricing. No AWS.\n      \"fwm:cost\": fresh(\"node scripts/cost.ts\", { cwd: \"examples/42-firewall-manager\" }),\n      // This chapter's audit rule over the security groups in every synthesized template. Reads files only.\n      \"fwm:audit:templates\": fresh(\"node examples/42-firewall-manager/scripts/audit-templates.ts\"),\n      // For the Firewall Manager administrator account only. Each policy is USD 100 a month.\n      // Every task below needs `-c adminAccountId=<12 digits> -c orgUnitIds=<ou-...>`: there is no default.\n      ...infra(\"fwm\", \"examples/42-firewall-manager\", \"AihFirewallManager\"),\n      // The AWS WAF policy for CloudFront, in us-east-1 whatever AIH_AWS_REGION says.\n      ...infra(\"fwm:edge\", \"examples/42-firewall-manager\", \"AihFirewallManagerEdge\"),\n      // Synth with the example IDs of AWS's documentation, so that check:all has a template to read.\n      \"fwm:infra:synth:example\": fresh(\n        `${node} tools/src/infra/cdkd.ts synth examples/42-firewall-manager AihFirewallManager -c adminAccountId=111122223333 -c orgUnitIds=ou-ex42-workload1`,\n      ),",
+    "synth": ["fwm:infra:synth:example"],
+    "checkAll": [],
+    "typecheck": ["examples/42-firewall-manager"]
+  }
+}

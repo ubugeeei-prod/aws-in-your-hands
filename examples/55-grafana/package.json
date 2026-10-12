@@ -1,0 +1,17 @@
+{
+  "name": "@aih/example-55-grafana",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-19-observability": "workspace:*",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "vite-plus": "1.1.0"
+  }
+}

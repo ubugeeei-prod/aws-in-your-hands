@@ -1,0 +1,1387 @@
+{
+  "chapterId": "27",
+  "manifest": {
+    "id": "27",
+    "slug": "search",
+    "title": {
+      "ja": "Search: 全文検索、ベクトル検索、RAG",
+      "en": "Search: Full-Text, Vectors, and RAG"
+    },
+    "prerequisites": ["05", "17"],
+    "services": [
+      "S3 Vectors",
+      "Bedrock",
+      "DynamoDB Streams",
+      "DynamoDB",
+      "Lambda",
+      "Lambda function URL",
+      "SQS",
+      "IAM",
+      "CloudWatch Logs"
+    ],
+    "samplePath": "examples/27-search",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "s3-vectors-overview",
+      "s3-vectors-limitations",
+      "s3-vectors-regions",
+      "s3-vectors-metadata-filtering",
+      "s3-vectors-best-practices",
+      "s3-vectors-create-index",
+      "s3-vectors-access-management",
+      "s3-vectors-api-query",
+      "s3-vectors-api-put",
+      "s3-vectors-api-delete",
+      "cfn-s3vectors-index",
+      "cfn-s3vectors-vectorbucket",
+      "s3-pricing-vectors",
+      "aws-price-list-s3-vectors",
+      "opensearch-serverless-scaling",
+      "opensearch-serverless-collection-group-capacity",
+      "opensearch-serverless-overview",
+      "opensearch-serverless-vector",
+      "opensearch-serverless-endpoints",
+      "opensearch-pricing-serverless",
+      "aws-price-list-opensearch",
+      "aws-blog-opensearch-serverless-nextgen",
+      "bedrock-kb-overview",
+      "bedrock-kb-managed",
+      "bedrock-kb-managed-regions",
+      "bedrock-kb-vector-stores",
+      "bedrock-kb-data-sources",
+      "bedrock-kb-custom-data-source",
+      "bedrock-pricing-knowledge-bases",
+      "bedrock-titan-embeddings",
+      "bedrock-titan-embed-params",
+      "bedrock-model-card-titan-embed-v2",
+      "dynamodb-streams",
+      "lambda-dynamodb-streams",
+      "lambda-dynamodb-params",
+      "lambda-dynamodb-batch-failures",
+      "lambda-event-filtering",
+      "dynamodb-pricing-streams",
+      "aws-sdk-s3vectors-npm",
+      "aws-cdk-lib-s3vectors",
+      "cdkd-source-s3vectors",
+      "cloudflare-vectorize-pricing",
+      "cloudflare-vectorize-limits",
+      "cloudflare-vectorize-metadata-filtering",
+      "cloudflare-ai-search",
+      "cloudflare-ai-search-limits-pricing",
+      "vercel-storage",
+      "bedrock-converse-stream-api",
+      "bedrock-cross-region-inference",
+      "bedrock-model-card-nova-2-lite",
+      "lambda-response-streaming",
+      "lambda-urls-auth",
+      "aws-price-list-bedrock",
+      "aws-price-list-lambda",
+      "aws-price-list-cloudwatch",
+      "aws-price-list-dynamodb",
+      "lambda-pricing",
+      "dynamodb-read-consistency",
+      "dynamodb-query-pagination",
+      "dynamodb-scan",
+      "types-aws-lambda-npm",
+      "cdkd-npm"
+    ]
+  },
+  "sources": [
+    {
+      "id": "s3-vectors-overview",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors.html",
+      "title": "Working with S3 Vectors and vector buckets",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 Vectors stores vectors in vector indexes inside vector buckets and answers similarity queries, with no infrastructure to provision",
+        "Writes to S3 Vectors are strongly consistent",
+        "Sub-second latency for infrequent queries and as low as 100 ms for more frequent ones, as described by AWS",
+        "Block Public Access is always on for vector buckets",
+        "The service namespace is s3vectors"
+      ]
+    },
+    {
+      "id": "s3-vectors-limitations",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-limitations.html",
+      "title": "S3 Vectors limitations and restrictions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Up to 2 billion vectors per index, dimensions from 1 to 4,096",
+        "Up to 2 KB of filterable metadata and 40 KB of total metadata per vector",
+        "Up to 500 vectors per PutVectors or DeleteVectors call",
+        "Up to 100 results per page of a QueryVectors response",
+        "Up to 100 filter constraints per query on an ENHANCED index"
+      ]
+    },
+    {
+      "id": "s3-vectors-regions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-regions-quotas.html",
+      "title": "AWS Regions, endpoints, and quotas for S3 Vectors",
+      "checkedAt": "2026-10-13",
+      "supports": ["S3 Vectors is available in ap-northeast-1 (Tokyo)"]
+    },
+    {
+      "id": "s3-vectors-metadata-filtering",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-metadata-filtering.html",
+      "title": "S3 Vectors metadata filtering",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An ENHANCED index applies the metadata filter before the vector search (pre-filtering)",
+        "Vector buckets created on or after September 30, 2026 create ENHANCED indexes",
+        "On a CLASSIC index a filtered query may return fewer than top K results",
+        "The filter operators, including $eq",
+        "All metadata is filterable unless declared non-filterable when the index is created"
+      ]
+    },
+    {
+      "id": "s3-vectors-best-practices",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-best-practices.html",
+      "title": "S3 Vectors best practices",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS recommends one vector index per tenant for multi-tenant workloads, with IAM restricting each tenant to its index",
+        "Exceeding request rates returns 429 TooManyRequestsException",
+        "Hundreds of QueryVectors requests per second per index"
+      ]
+    },
+    {
+      "id": "s3-vectors-create-index",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-create-index.html",
+      "title": "Creating a vector index in a vector bucket",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An index's name, dimension, distance metric and non-filterable metadata keys cannot be changed after creation"
+      ]
+    },
+    {
+      "id": "s3-vectors-access-management",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-vectors-access-management.html",
+      "title": "Identity and Access management in S3 Vectors",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The ARN format of a vector index",
+        "A QueryVectors call with a metadata filter or returnMetadata also needs s3vectors:GetVectors",
+        "The policy actions s3vectors:PutVectors, DeleteVectors, QueryVectors, GetVectors, ListVectors"
+      ]
+    },
+    {
+      "id": "s3-vectors-api-query",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_S3VectorBuckets_QueryVectors.html",
+      "title": "QueryVectors API reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "QueryVectors performs an approximate nearest neighbor search",
+        "The request takes indexArn, queryVector, topK, filter, returnMetadata, returnDistance",
+        "The response gives key, distance and metadata per vector"
+      ]
+    },
+    {
+      "id": "s3-vectors-api-put",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_S3VectorBuckets_PutVectors.html",
+      "title": "PutVectors API reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vectors are stored as float32",
+        "A PutVectors request takes 1 to 500 vectors, each with a key, data and optional metadata"
+      ]
+    },
+    {
+      "id": "s3-vectors-api-delete",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_S3VectorBuckets_DeleteVectors.html",
+      "title": "DeleteVectors API reference",
+      "checkedAt": "2026-10-13",
+      "supports": ["DeleteVectors takes 1 to 500 keys"],
+      "note": "The page does not say what happens when a key does not exist. The chapter records that as unconfirmed."
+    },
+    {
+      "id": "cfn-s3vectors-index",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-s3vectors-index.html",
+      "title": "AWS::S3Vectors::Index",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The properties DataType, Dimension, DistanceMetric, IndexName, VectorBucketName",
+        "Changing DataType, Dimension or DistanceMetric replaces the index"
+      ]
+    },
+    {
+      "id": "cfn-s3vectors-vectorbucket",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-s3vectors-vectorbucket.html",
+      "title": "AWS::S3Vectors::VectorBucket",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A vector bucket name is unique within an account and Region",
+        "Only an empty vector bucket can be deleted"
+      ]
+    },
+    {
+      "id": "s3-pricing-vectors",
+      "url": "https://aws.amazon.com/s3/pricing/",
+      "title": "Amazon S3 pricing (Vectors)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PUT is billed per logical GB with a minimum of 128 KB per PUT",
+        "A query is billed a request fee, data processed based on the size of the whole index, and data returned",
+        "Non-filterable metadata is not counted in data processed",
+        "Each dimension takes 4 bytes of storage"
+      ],
+      "note": "The page's own examples use US East (N. Virginia) prices. The chapter's prices come from the price list for ap-northeast-1."
+    },
+    {
+      "id": "aws-price-list-s3-vectors",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon S3, ap-northeast-1 (Vectors)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 Vectors unit prices in ap-northeast-1: storage, PUT bytes, query requests, data processed, other requests"
+      ]
+    },
+    {
+      "id": "opensearch-serverless-scaling",
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-scaling.html",
+      "title": "Managing capacity limits for Amazon OpenSearch Serverless",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "One OCU is 6 GiB of memory with corresponding vCPU",
+        "Minimum and maximum OCUs are set per collection group, and a minimum of 0 means no OCUs when idle"
+      ]
+    },
+    {
+      "id": "opensearch-serverless-collection-group-capacity",
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/collection-groups-capacity-limits.html",
+      "title": "Collection group capacity limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A NextGen collection group accepts a minimum of 0 OCUs",
+        "A Classic collection group does not support a minimum of 0"
+      ]
+    },
+    {
+      "id": "opensearch-serverless-overview",
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-overview.html",
+      "title": "What is Amazon OpenSearch Serverless?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Collection types: time series, search, vector search",
+        "NextGen collections support the search and vector search types only",
+        "Search and time series collections cannot use k-NN indexes",
+        "The refresh interval of search and time series collections is about 10 seconds"
+      ]
+    },
+    {
+      "id": "opensearch-serverless-vector",
+      "url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-vector-search.html",
+      "title": "Working with vector search collections",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "NextGen vector search scales indexing and search to zero when idle",
+        "NextGen vector collections have a read-after-write latency of 10 seconds"
+      ]
+    },
+    {
+      "id": "opensearch-serverless-endpoints",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/opensearch-service.html",
+      "title": "Amazon OpenSearch Service endpoints and quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "OpenSearch Serverless has endpoints in ap-northeast-1",
+        "Collection groups have separate quotas for Classic and NextGen"
+      ]
+    },
+    {
+      "id": "opensearch-pricing-serverless",
+      "url": "https://aws.amazon.com/opensearch-service/pricing/",
+      "title": "Amazon OpenSearch Service pricing (Serverless)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Classic collection is billed at least 2 OCUs for the first collection in an account, or 1 OCU without standby replicas",
+        "NextGen collections have no minimum OCU and scale to zero after 10 minutes of inactivity",
+        "Storage is billed separately"
+      ],
+      "note": "The per-Region OCU prices on this page are filled in by a script. The chapter's OCU price is from the price list, which has one indexing and one search OCU price for ap-northeast-1 and does not separate the two generations."
+    },
+    {
+      "id": "aws-price-list-opensearch",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonES/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon OpenSearch Service, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "OpenSearch Serverless OCU prices in ap-northeast-1 (APN1-IndexingOCU, APN1-SearchOCU)"
+      ]
+    },
+    {
+      "id": "aws-blog-opensearch-serverless-nextgen",
+      "url": "https://aws.amazon.com/blogs/aws/introducing-the-next-generation-of-amazon-opensearch-serverless-for-building-your-agentic-ai-applications/",
+      "title": "AWS News Blog: Introducing the next generation of Amazon OpenSearch Serverless",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The next generation became generally available on 2026-05-28, in the commercial Regions where OpenSearch Serverless is offered"
+      ],
+      "note": "The post does not list the Regions by name."
+    },
+    {
+      "id": "bedrock-kb-overview",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html",
+      "title": "Amazon Bedrock Knowledge Bases",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Knowledge bases come as managed and as customer-managed",
+        "A customer-managed knowledge base uses a vector store that you set up"
+      ]
+    },
+    {
+      "id": "bedrock-kb-managed",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/kb-build-managed.html",
+      "title": "Build a managed knowledge base",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A managed knowledge base runs ingestion, storage, embedding and retrieval for you",
+        "Its connectors are S3, SharePoint, Confluence, Web Crawler, Google Drive, OneDrive and Custom"
+      ]
+    },
+    {
+      "id": "bedrock-kb-managed-regions",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/kb-managed-regions.html",
+      "title": "Managed knowledge bases: supported Regions",
+      "checkedAt": "2026-10-13",
+      "supports": ["Managed knowledge bases are available in ap-northeast-1"]
+    },
+    {
+      "id": "bedrock-kb-vector-stores",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base-setup.html",
+      "title": "Prerequisites for using a vector store you created for a knowledge base",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A customer-managed knowledge base can use OpenSearch Serverless, S3 Vectors, Aurora, Neptune Analytics and third-party stores",
+        "With S3 Vectors a knowledge base allows up to 1 KB of custom metadata and 35 metadata keys per vector"
+      ]
+    },
+    {
+      "id": "bedrock-kb-data-sources",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-source-connectors.html",
+      "title": "Connect a data source to your knowledge base",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DynamoDB is not among the data source connectors",
+        "A custom data source exists"
+      ]
+    },
+    {
+      "id": "bedrock-kb-custom-data-source",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/custom-data-source-connector.html",
+      "title": "Connect your knowledge base to a custom data source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A custom data source takes documents through the KnowledgeBaseDocuments API operations, with metadata per document, without a sync"
+      ]
+    },
+    {
+      "id": "bedrock-pricing-knowledge-bases",
+      "url": "https://aws.amazon.com/bedrock/pricing/",
+      "title": "Amazon Bedrock pricing (Knowledge Bases)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Managed Knowledge Base: USD 5.00 per GB of raw data per month for index storage, USD 1.00 per 1,000 Retrieve calls, with embedding and reranking by the managed models included"
+      ],
+      "note": "These two prices were not found in the AWS Price List for ap-northeast-1 and the page does not say which Regions they apply to. The chapter quotes them as the page's figures only."
+    },
+    {
+      "id": "bedrock-titan-embeddings",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html",
+      "title": "Amazon Titan Text Embeddings models",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Titan Text Embeddings V2 takes up to 8,192 tokens or 50,000 characters",
+        "Output of 1,024 (default), 512 or 256 dimensions",
+        "Japanese is among the listed languages; the model is optimized for English",
+        "Embedding models are throttled by requests per minute"
+      ]
+    },
+    {
+      "id": "bedrock-titan-embed-params",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-titan-embed-text.html",
+      "title": "Amazon Titan Embeddings: request and response",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The V2 request body: inputText, dimensions, normalize",
+        "The response: embedding, inputTextTokenCount"
+      ]
+    },
+    {
+      "id": "bedrock-model-card-titan-embed-v2",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-titan-text-embeddings-v2.html",
+      "title": "Model card: Amazon Titan Text Embeddings V2",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In ap-northeast-1 the model is offered In-Region only, with no Geo or Global inference profile"
+      ]
+    },
+    {
+      "id": "dynamodb-streams",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html",
+      "title": "Change data capture for DynamoDB Streams",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each stream record appears exactly once in the stream",
+        "Records for one item appear in the order of the modifications; ordering is per item, not per partition",
+        "Stream records are kept for 24 hours"
+      ]
+    },
+    {
+      "id": "lambda-dynamodb-streams",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html",
+      "title": "Using AWS Lambda with Amazon DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An event source mapping processes each event at least once, and duplicates can occur",
+        "Lambda polls the shards of a DynamoDB stream"
+      ]
+    },
+    {
+      "id": "lambda-dynamodb-params",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-ddb-params.html",
+      "title": "Lambda parameters for DynamoDB event source mappings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "MaximumRetryAttempts defaults to -1: retry until the record expires",
+        "BatchSize defaults to 100"
+      ]
+    },
+    {
+      "id": "lambda-dynamodb-batch-failures",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-ddb-batchfailurereporting.html",
+      "title": "Configuring partial batch response with DynamoDB and Lambda",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With ReportBatchItemFailures, Lambda retries from the lowest sequence number reported in batchItemFailures",
+        "The response shape { batchItemFailures: [{ itemIdentifier }] }"
+      ]
+    },
+    {
+      "id": "lambda-event-filtering",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventfiltering.html",
+      "title": "Control which events Lambda sends to your function",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An event source mapping for DynamoDB can filter records by a pattern on the record"
+      ]
+    },
+    {
+      "id": "dynamodb-pricing-streams",
+      "url": "https://aws.amazon.com/dynamodb/pricing/on-demand/",
+      "title": "Amazon DynamoDB pricing for on-demand capacity (Streams)",
+      "checkedAt": "2026-10-13",
+      "supports": ["GetRecords calls made by a Lambda trigger are not charged"]
+    },
+    {
+      "id": "aws-sdk-s3vectors-npm",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-s3vectors/v/3.1149.0",
+      "title": "@aws-sdk/client-s3vectors 3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The commands PutVectorsCommand, DeleteVectorsCommand, QueryVectorsCommand, ListVectorsCommand and their input and output types, read in the installed package"
+      ]
+    },
+    {
+      "id": "aws-cdk-lib-s3vectors",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-s3vectors and aws-dynamodb",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CfnVectorBucket and CfnIndex and their properties, read in the installed package",
+        "Table.grantStreamRead grants dynamodb:ListStreams on every resource, read in the installed package"
+      ]
+    },
+    {
+      "id": "cdkd-source-s3vectors",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: providers used in chapter 27",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd 0.296.28 registers a provider for AWS::S3Vectors::VectorBucket and requires VectorBucketName",
+        "It registers no provider for AWS::S3Vectors::Index",
+        "Its providers for AWS::DynamoDB::Table and AWS::Lambda::EventSourceMapping handle StreamSpecification, FilterCriteria, FunctionResponseTypes, DestinationConfig, BisectBatchOnFunctionError and MaximumRetryAttempts"
+      ],
+      "note": "Read in the bundled dist files of the installed package, not in the repository's source tree."
+    },
+    {
+      "id": "cloudflare-vectorize-pricing",
+      "url": "https://developers.cloudflare.com/vectorize/platform/pricing/",
+      "title": "Cloudflare Vectorize: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vectorize bills queried and stored vector dimensions, with allowances on the Free and Paid plans",
+        "No charge for active hours or for the number of indexes"
+      ]
+    },
+    {
+      "id": "cloudflare-vectorize-limits",
+      "url": "https://developers.cloudflare.com/vectorize/platform/limits/",
+      "title": "Cloudflare Vectorize: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Up to 1,536 dimensions, 20,000,000 vectors per index, topK of 100 (50 with values or metadata)",
+        "Up to 50,000 namespaces per index on the Paid plan"
+      ]
+    },
+    {
+      "id": "cloudflare-vectorize-metadata-filtering",
+      "url": "https://developers.cloudflare.com/vectorize/reference/metadata-filtering/",
+      "title": "Cloudflare Vectorize: Metadata filtering",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A metadata index must exist before vectors are inserted for their metadata to be filterable",
+        "The filter is applied before topK is taken",
+        "A namespace filter is applied before metadata filters"
+      ]
+    },
+    {
+      "id": "cloudflare-ai-search",
+      "url": "https://developers.cloudflare.com/ai-search/",
+      "title": "Cloudflare AI Search",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AI Search adds search to an application without building the retrieval infrastructure",
+        "Hybrid search, combining semantic and keyword matching, is on by default",
+        "Custom metadata fields can filter results"
+      ]
+    },
+    {
+      "id": "cloudflare-ai-search-limits-pricing",
+      "url": "https://developers.cloudflare.com/ai-search/platform/limits-pricing/",
+      "title": "Cloudflare AI Search: Limits and pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AI Search billing begins on November 1, 2026",
+        "Included monthly usage and the unit prices for ingestion, storage and queries",
+        "At most 5 custom metadata fields per instance"
+      ]
+    },
+    {
+      "id": "vercel-storage",
+      "url": "https://vercel.com/docs/storage",
+      "title": "Vercel Storage overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel's own storage products are Blob and Global Config",
+        "Vector databases are offered through Marketplace providers, not as a Vercel product"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "embedding",
+      "ja": "埋め込み（embedding）",
+      "en": "embedding",
+      "firstUse": "27",
+      "definition": {
+        "ja": "文章を、決まった個数の数の並び（ベクトル）に変えたもの。意味の近い文章が近い向きのベクトルになるように、モデルが作る。",
+        "en": "A text turned into a list of numbers of a fixed length (a vector). A model produces it so that texts with similar meaning get vectors that point in similar directions."
+      }
+    },
+    {
+      "id": "vector-index",
+      "ja": "ベクトルインデックス",
+      "en": "vector index",
+      "firstUse": "27",
+      "definition": {
+        "ja": "ベクトルを保存し、与えたベクトルに近いものを返す入れ物。S3 Vectors では、ベクトルバケットの中に作る。",
+        "en": "A store that keeps vectors and returns the ones nearest to a vector you give it. In S3 Vectors it lives inside a vector bucket."
+      }
+    },
+    {
+      "id": "rag",
+      "ja": "RAG（retrieval-augmented generation）",
+      "en": "RAG (retrieval-augmented generation)",
+      "firstUse": "27",
+      "definition": {
+        "ja": "質問に関係する文章を先に検索し、その文章をモデルに渡して答えを書かせる方法。",
+        "en": "Searching for text related to a question first, then handing that text to a model to write the answer from."
+      }
+    },
+    {
+      "id": "passage",
+      "ja": "パッセージ",
+      "en": "passage",
+      "firstUse": "27",
+      "definition": {
+        "ja": "検索と引用の単位として切り出した、ノートの一部分。この本では 800 文字ごとに、100 文字ずつ重ねて切る。",
+        "en": "A piece of a note cut out as the unit of search and citation. This book cuts every 800 characters with 100 characters of overlap."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "27.architecture",
+      "sources": ["examples/27-search/infra/lib/search-stack.ts"],
+      "tasks": ["search:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "27.choice",
+      "sources": ["examples/27-search/infra/lib/search-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "27.when-not",
+      "sources": ["examples/27-search/src/search.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "27.words",
+      "sources": [
+        "examples/27-search/src/tokenize.ts",
+        "examples/27-search/src/bm25.ts",
+        "examples/27-search/test/ranking.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "27.passages",
+      "sources": ["examples/27-search/src/chunk.ts", "examples/27-search/test/chunk.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "27.embeddings",
+      "sources": [
+        "examples/27-search/src/embedder.ts",
+        "examples/27-search/src/bedrock-embedder.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "27.index",
+      "sources": [
+        "examples/27-search/src/vector-index.ts",
+        "examples/27-search/src/memory-vector-index.ts",
+        "examples/27-search/src/s3-vectors-index.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "27.sync",
+      "sources": [
+        "examples/27-search/src/indexer.ts",
+        "examples/27-search/src/stream.ts",
+        "examples/27-search/src/indexer-lambda.ts",
+        "examples/27-search/test/indexer.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "27.search",
+      "sources": [
+        "examples/27-search/src/search.ts",
+        "examples/27-search/src/fusion.ts",
+        "examples/27-search/test/search.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "27.reindex",
+      "sources": [
+        "examples/27-search/src/reconcile.ts",
+        "examples/27-search/scripts/reindex.ts",
+        "examples/27-search/test/reconcile.test.ts"
+      ],
+      "tasks": ["test:unit", "search:reindex"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "27.rag",
+      "sources": [
+        "examples/27-search/src/prompt.ts",
+        "examples/27-search/src/answer.ts",
+        "examples/27-search/src/app.ts",
+        "examples/27-search/src/contract.ts",
+        "examples/27-search/src/owner.ts",
+        "examples/27-search/test/answer.test.ts",
+        "examples/27-search/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "27.local",
+      "sources": [
+        "examples/27-search/src/dev.ts",
+        "examples/27-search/src/local.ts",
+        "examples/27-search/src/compose.ts",
+        "examples/27-search/src/env.ts",
+        "examples/27-search/fixtures",
+        "examples/27-search/.env.example"
+      ],
+      "tasks": ["dev:search"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "27.tests",
+      "sources": ["examples/27-search/test", "examples/27-search/infra/test/search-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "27.stack",
+      "sources": [
+        "examples/27-search/infra/lib/search-stack.ts",
+        "examples/27-search/infra/bin/app.ts",
+        "examples/27-search/infra/test/search-stack.test.ts",
+        "examples/27-search/src/lambda.ts",
+        "examples/27-search/src/aws-parts.ts",
+        "examples/27-search/cdk.json"
+      ],
+      "tasks": ["search:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "27.deploy",
+      "sources": [
+        "examples/27-search/scripts/seed.ts",
+        "examples/27-search/scripts/smoke.ts",
+        "examples/27-search/scripts/sign.ts",
+        "examples/27-search/scripts/logs.ts"
+      ],
+      "tasks": [
+        "search:infra:diff",
+        "search:infra:deploy",
+        "search:seed",
+        "search:smoke",
+        "search:logs",
+        "search:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "27.compare",
+      "sources": ["examples/27-search/src/search.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "27.cost",
+      "sources": ["examples/27-search/infra/lib/search-stack.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "27.cleanup",
+      "sources": ["examples/27-search/infra/lib/search-stack.ts"],
+      "tasks": ["search:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "s3vectors.storage",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "W4MVVPVR5QXNHQRQ",
+      "usageType": "APN1-Vectors-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0660000000",
+          "description": "$0.066 per GB-Mo of Storage in Vectors "
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3vectors.put",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "GK2VX34WQEBSDDRY",
+      "usageType": "APN1-Vectors-Put-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2190000000",
+          "description": "$0.219 per GB fee for bytes put to S3 Vectors"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3vectors.query.request",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "3AGGMH853AXDBH8G",
+      "usageType": "APN1-Vectors-Request-Tier3",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000027000",
+          "description": "$0.0027 per 1,000 Query Vectors API Requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3vectors.query.processed.tier1",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "WW6CEUZCWUEHKE7Q",
+      "usageType": "APN1-Vectors-Query-ProcessedBytes-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000042780",
+          "description": "$0.000004278 per GB fee for bytes processed by S3 Vectors Query"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3vectors.request.other",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-1",
+      "sku": "YZGKE3JQ8CCVUXA2",
+      "usageType": "APN1-Vectors-Request-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000600000",
+          "description": "$0.06 per 1,000 Tier1 Vectors API Requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "opensearch.serverless.ocu.indexing",
+      "offerCode": "AmazonES",
+      "region": "ap-northeast-1",
+      "sku": "PR82GQ5XEEYXM2QQ",
+      "usageType": "APN1-IndexingOCU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "OCU-hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3340000000",
+          "description": "$0.334 per OCU-hours for IndexingOCU in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonES/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-27T12:24:24Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "opensearch.serverless.ocu.search",
+      "offerCode": "AmazonES",
+      "region": "ap-northeast-1",
+      "sku": "2254F7J73B9CWH2S",
+      "usageType": "APN1-SearchOCU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "OCU-hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3340000000",
+          "description": "$0.334 per OCU-hours for SearchOCU in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonES/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-27T12:24:24Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.titan-embed-text-v2.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "HSPSH92KBVRBRFHP",
+      "usageType": "APN1-TitanEmbeddingV2-Text-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000290000",
+          "description": "$0.000029 per 1K tokens for TitanEmbeddingV2-Text-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "s3vectors.storage",
+      "reason": "The S3 pricing page names no monthly free allowance for S3 Vectors storage; none is applied."
+    },
+    {
+      "priceId": "s3vectors.put",
+      "reason": "The S3 pricing page names no monthly free allowance for S3 Vectors PUT bytes; none is applied."
+    },
+    {
+      "priceId": "s3vectors.query.request",
+      "reason": "The S3 pricing page names no monthly free allowance for S3 Vectors query requests; none is applied."
+    },
+    {
+      "priceId": "s3vectors.query.processed.tier1",
+      "reason": "The S3 pricing page names no monthly free allowance for data processed by S3 Vectors queries; none is applied."
+    },
+    {
+      "priceId": "s3vectors.request.other",
+      "reason": "The S3 pricing page names no monthly free allowance for other S3 Vectors requests; none is applied."
+    },
+    {
+      "priceId": "opensearch.serverless.ocu.indexing",
+      "reason": "No always-free allowance for OpenSearch Serverless OCUs was confirmed; none is applied."
+    },
+    {
+      "priceId": "opensearch.serverless.ocu.search",
+      "reason": "No always-free allowance for OpenSearch Serverless OCUs was confirmed; none is applied."
+    },
+    {
+      "priceId": "bedrock.titan-embed-text-v2.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "search-idle",
+      "chapter": "27",
+      "title": {
+        "ja": "検索: デプロイ済みで、書き込みも検索もない月",
+        "en": "Search: deployed, with no writes and no searches for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "1,000 件のノートが索引済みで、パッセージは 1 件あたり平均 2 つ（ベクトル 2,000 本）と仮定",
+          "ベクトル 1 本は 4.2 KB と仮定（1,024 次元 × 4 バイト、キー約 30 バイト、メタデータ約 70 バイト）",
+          "書き込み、検索、回答はゼロ",
+          "DynamoDB の保存量は 25 GB の無料枠の内側（1,000 件 × 約 2 KB）",
+          "空のデッドレターキューと、7 日で消えるログは 0"
+        ],
+        "en": [
+          "Assumed 1,000 indexed notes with 2 passages each on average (2,000 vectors)",
+          "Assumed 4.2 KB per vector (1,024 dimensions x 4 bytes, a key of about 30 bytes, about 70 bytes of metadata)",
+          "No writes, searches, or answers",
+          "DynamoDB storage stays inside its 25 GB free tier (1,000 notes of about 2 KB)",
+          "The empty dead-letter queue and logs that expire after 7 days cost nothing"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3vectors.storage",
+          "quantity": 0.008011,
+          "basis": "2,000 vectors x 4.2 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "search-month",
+      "chapter": "27",
+      "title": {
+        "ja": "検索: 月に書き込み 1,000 件、検索 10,000 件、回答 1,000 件",
+        "en": "Search: 1,000 writes, 10,000 searches, and 1,000 answers a month"
+      },
+      "assumptions": {
+        "ja": [
+          "索引は search-idle と同じ 2,000 本",
+          "書き込み 1,000 件。1 件あたりパッセージ 2 つ、1 パッセージ 400 トークンと仮定（日本語の文字とトークンの比は確かめていない）",
+          "PutVectors は書き込み 1 件につき 1 回。1 回の最低課金 128 KB が適用されると仮定",
+          "検索 10,000 件。問い合わせの埋め込みは 1 件 30 トークンと仮定",
+          "1 回の検索で読む所有者のノートは 10 件、約 20 KB（3 読み込みユニット）と仮定",
+          "検索のうち 1,000 件が回答まで進む。回答 1 件は入力 2,500 トークン、出力 150 トークンと仮定",
+          "Lambda は 256 MB、arm64。検索 0.5 秒、回答 4 秒、索引 1 秒と仮定",
+          "ログは 1 件あたり 1 KB と仮定",
+          "データ転送と、問い合わせが返すバイト数（1 回 512 KB まで無料）は未算入"
+        ],
+        "en": [
+          "The same 2,000-vector index as search-idle",
+          "1,000 writes, each assumed to be 2 passages of 400 tokens (the ratio of Japanese characters to tokens was not checked)",
+          "One PutVectors call per write, each assumed to be billed at the 128 KB minimum",
+          "10,000 searches, each query assumed to embed as 30 tokens",
+          "Each search assumed to read 10 notes of the owner, about 20 KB (3 read units)",
+          "1,000 of the searches go on to an answer, assumed at 2,500 input and 150 output tokens",
+          "Lambda at 256 MB on arm64: assumed 0.5 s per search, 4 s per answer, 1 s per indexed write",
+          "Assumed 1 KB of logs per request",
+          "Data transfer and bytes returned by queries (free up to 512 KB per query) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "s3vectors.storage",
+          "quantity": 0.008011,
+          "basis": "2,000 vectors x 4.2 KB, in GB"
+        },
+        {
+          "priceId": "s3vectors.put",
+          "quantity": 0.12207,
+          "basis": "1,000 PutVectors calls x the 128 KB minimum, in GB"
+        },
+        {
+          "priceId": "s3vectors.query.request",
+          "quantity": 10000,
+          "basis": "one QueryVectors call per search"
+        },
+        {
+          "priceId": "s3vectors.query.processed.tier1",
+          "quantity": 80.108643,
+          "basis": "10,000 queries x 2,000 vectors x 4.2 KB, in GB"
+        },
+        {
+          "priceId": "bedrock.titan-embed-text-v2.input",
+          "quantity": 1100,
+          "basis": "1,000 writes x 800 tokens + 10,000 queries x 30 tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-2-lite.input",
+          "quantity": 2500,
+          "basis": "1,000 answers x 2,500 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 150,
+          "basis": "1,000 answers x 150 output tokens, in 1K tokens"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 2000,
+          "basis": "1,000 notes of about 2 KB, 2 write units each"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 30000,
+          "basis": "10,000 searches x 3 read units"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 11000,
+          "basis": "10,000 searches + 1,000 indexer invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 2375,
+          "basis": "(9,000 x 0.5 s + 1,000 x 4 s + 1,000 x 1 s) x 0.25 GB"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.01049,
+          "basis": "11,000 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "search-opensearch-classic-minimum",
+      "chapter": "27",
+      "title": {
+        "ja": "比較: OpenSearch Serverless の Classic コレクションを 1 か月置いた場合の最低額",
+        "en": "Comparison: the minimum for one OpenSearch Serverless Classic collection kept for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "Classic コレクションの最初の 1 つ。冗長構成（既定）で、最低 2 OCU（索引 1、検索 1）",
+          "730 時間。リクエストはゼロ",
+          "保存量の料金は含まない"
+        ],
+        "en": [
+          "The first Classic collection in an account, with redundancy (the default): at least 2 OCUs (1 indexing, 1 search)",
+          "730 hours, no requests",
+          "Storage is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "opensearch.serverless.ocu.indexing",
+          "quantity": 730,
+          "basis": "1 OCU x 730 h"
+        },
+        {
+          "priceId": "opensearch.serverless.ocu.search",
+          "quantity": 730,
+          "basis": "1 OCU x 730 h"
+        }
+      ]
+    },
+    {
+      "id": "search-opensearch-classic-dev",
+      "chapter": "27",
+      "title": {
+        "ja": "比較: OpenSearch Serverless の Classic コレクション（冗長なし）の最低額",
+        "en": "Comparison: the minimum for a Classic collection without standby replicas"
+      },
+      "assumptions": {
+        "ja": [
+          "冗長なし（dev-test）。最低 1 OCU（索引 0.5、検索 0.5）",
+          "730 時間。リクエストはゼロ",
+          "保存量の料金は含まない"
+        ],
+        "en": [
+          "No standby replicas (dev-test): at least 1 OCU (0.5 indexing, 0.5 search)",
+          "730 hours, no requests",
+          "Storage is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "opensearch.serverless.ocu.indexing",
+          "quantity": 365,
+          "basis": "0.5 OCU x 730 h"
+        },
+        {
+          "priceId": "opensearch.serverless.ocu.search",
+          "quantity": 365,
+          "basis": "0.5 OCU x 730 h"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "27",
+        "command": "vp test run examples/27-search",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "9 ファイル、80 件。トークン化と BM25、順位の合わせ込み、パッセージの切り分け、所有者の分離（絞り込みを無視するインデックス、偽の所有者、乱数で作った当たり 200 回）、テーブルとインデックスのずれ、索引の冪等性と削除、バッチの途中の失敗とやり直し、作り直しとストリームの競合、回答の出典と引用、API の入力の上限、S3 Vectors に渡すリクエストの形、スタックのアサーション",
+          "en": "9 files, 80 tests: tokenizing and BM25, rank fusion, cutting passages, owner separation (an index that ignores the filter, a forged owner, 200 rounds of random hits), table and index out of step, idempotent indexing and deletes, a failure mid-batch and its retry, the race between a rebuild and the stream, sources and citations of an answer, input limits of the API, the shape of requests to S3 Vectors, and stack assertions"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "tsc --noEmit -p examples/27-search",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "src、infra、test、scripts の型検査",
+          "en": "Type check of src, infra, test and scripts"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "esbuild で 2 つの関数をバンドルし、14 リソースのテンプレートを出力した。AWS には問い合わせていない",
+          "en": "Bundled the two functions with esbuild and wrote a template with 14 resources. Asked AWS nothing"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run dev:search",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "SEARCH_BACKEND=local で起動し、本文の curl（/health、所有者ごとの /search、所有者なしの 401、/answers、何も見つからない /answers）を実行した。本文に載せた出力はこの実行のもの",
+          "en": "Started with SEARCH_BACKEND=local and ran the curl commands in the chapter (/health, /search per owner, the 401 without an owner, /answers, and /answers that finds nothing). The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない。S3 Vectors のインデックスが Cloud Control 経由で作られること、イベントソースマッピングの作成が通ることは未確認",
+          "en": "Not deployed. That the S3 Vectors index is created through Cloud Control and that the event source mapping is accepted are unconfirmed"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:seed",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。Titan の埋め込み、S3 Vectors の問い合わせ、回答のストリーミングは一度も実際に呼んでいない",
+          "en": "Not run. Titan embeddings, S3 Vectors queries and the streamed answer have never been called for real"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:reindex",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:logs",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "27",
+        "command": "vp run search:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。ベクトルの入ったインデックスとバケットが削除できることは未確認",
+          "en": "Not run. That an index holding vectors, and then its bucket, can be deleted is unconfirmed"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "27-aws",
+        "summary": {
+          "ja": "27章のスタックを AWS に一度もデプロイしていない。未確認: cdkd 0.296.28 が AWS::S3Vectors::Index を Cloud Control 経由で作れること、Titan Text Embeddings V2 が東京から呼べて 1,024 次元を返すこと、S3 Vectors の実際の応答がアダプターのスキーマに合うこと、所有者のフィルターつきの問い合わせが通ること、存在しないキーを DeleteVectors に渡したときの振る舞い、DynamoDB Streams の実際のレコードがハンドラーのスキーマに合うこと、失敗したバッチがデッドレターキューに届くこと、function URL 経由で回答が少しずつ届くこと。",
+          "en": "The chapter 27 stack has never been deployed. Unconfirmed: that cdkd 0.296.28 creates AWS::S3Vectors::Index through Cloud Control, that Titan Text Embeddings V2 can be called from Tokyo and returns 1,024 dimensions, that real S3 Vectors responses fit the adapter's schema, that a query with the owner filter is accepted, what DeleteVectors does with a key that does not exist, that real DynamoDB Streams records fit the handler's schema, that a failed batch reaches the dead-letter queue, and that the answer arrives piece by piece through the function URL."
+        },
+        "resume": {
+          "ja": "`vp run search:infra:deploy`、`vp run search:seed`、`vp run search:smoke` の順に実行する。`vp run search:logs -- --indexer` で索引のログを、`vp run search:reindex` で表と索引の差を見る。存在しないキーの削除は、`search:seed` のあとノートを 1 件消し、同じ REMOVE を再配送させる代わりに `search:reindex -- --apply` を 2 回続けて実行して確かめる。最後に `vp run search:infra:destroy`。",
+          "en": "Run `vp run search:infra:deploy`, `vp run search:seed`, then `vp run search:smoke`. Read the indexer's log with `vp run search:logs -- --indexer` and the difference between table and index with `vp run search:reindex`. To see what deleting a missing key does, delete one note after `search:seed` and run `search:reindex -- --apply` twice in a row. Finish with `vp run search:infra:destroy`."
+        }
+      },
+      {
+        "id": "27-distance",
+        "summary": {
+          "ja": "意味の検索で「無関係」とみなす距離のしきい値（`MAX_DISTANCE`、0.7）と、パッセージの長さ（800 文字）は、Titan の実際の埋め込みで調整していない。日本語 1 文字が何トークンになるかも測っていない。",
+          "en": "The distance past which a hit counts as unrelated (`MAX_DISTANCE`, 0.7) and the passage length (800 characters) were not tuned against real Titan embeddings. How many tokens a Japanese character takes was not measured either."
+        },
+        "resume": {
+          "ja": "デプロイ後、`search:smoke` と自分のノートで検索し、ログの `embedded` 行の `tokens` と、S3 Vectors が返す距離を見て `examples/27-search/src/search.ts` の `MAX_DISTANCE` を決め直す。",
+          "en": "After deploying, search with `search:smoke` and with your own notes, read `tokens` in the `embedded` log lines and the distances S3 Vectors returns, and set `MAX_DISTANCE` in `examples/27-search/src/search.ts` again."
+        }
+      },
+      {
+        "id": "27-opensearch-nextgen",
+        "summary": {
+          "ja": "OpenSearch Serverless の NextGen コレクションについて、東京リージョンで使えること、東京での OCU 単価が Classic と同じか、ゼロから戻るまでの時間は、開いた一次情報からは確認できなかった。Bedrock のマネージド型ナレッジベースの料金（1 GB あたり月 5 ドル、Retrieve 1,000 回あたり 1 ドル）は料金ページの値で、Price List の東京の行としては見つけていない。",
+          "en": "For OpenSearch Serverless NextGen collections, availability in Tokyo, whether the Tokyo OCU price equals Classic's, and the time to come back from zero could not be confirmed from the primary sources opened. The Bedrock managed knowledge base prices (USD 5 per GB a month, USD 1 per 1,000 Retrieve calls) are the pricing page's figures and were not found as Tokyo rows in the Price List."
+        },
+        "resume": {
+          "ja": "OpenSearch Serverless のコンソールで東京リージョンを選び、NextGen のコレクショングループを作れるかを見る。料金は請求書か Cost Explorer の usage type で確かめる。",
+          "en": "Choose Tokyo in the OpenSearch Serverless console and see whether a NextGen collection group can be created. Confirm prices from the bill or from the usage types in Cost Explorer."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 27: search ----------------------------------------------\n      // The search API on plain Node: seed notes, a hashing embedder, a canned answer. No AWS.\n      \"dev:search\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", {\n        cwd: \"examples/27-search\",\n      }),\n      ...infra(\"search\", \"examples/27-search\", \"AihSearch\"),\n      // Writes the seed notes to the deployed table. The indexer then embeds them (billed).\n      \"search:seed\": live(\"node --env-file-if-exists=../../.env scripts/seed.ts\", {\n        cwd: \"examples/27-search\",\n      }),\n      // BILLED: three embeddings and one short answer through the deployed function URL.\n      \"search:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", {\n        cwd: \"examples/27-search\",\n      }),\n      // Compares table and index. Changes nothing unless --apply is given (then embeddings are billed).\n      \"search:reindex\": live(\"node --env-file-if-exists=../../.env scripts/reindex.ts\", {\n        cwd: \"examples/27-search\",\n      }),\n      \"search:logs\": live(\"node --env-file-if-exists=../../.env scripts/logs.ts\", {\n        cwd: \"examples/27-search\",\n      }),",
+    "synth": ["search:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/27-search"]
+  }
+}

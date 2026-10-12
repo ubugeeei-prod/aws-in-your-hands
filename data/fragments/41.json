@@ -1,0 +1,1588 @@
+{
+  "chapterId": "41",
+  "manifest": {
+    "id": "41",
+    "slug": "fargate",
+    "title": {
+      "ja": "Fargate: task の大きさ、Spot、auto scaling、定期実行、ECS Exec",
+      "en": "Fargate: Task Sizing, Spot, Auto Scaling, Scheduled Tasks, and ECS Exec"
+    },
+    "prerequisites": ["11", "12", "16"],
+    "services": [
+      "Fargate",
+      "ECS",
+      "Application Auto Scaling",
+      "EventBridge Scheduler",
+      "ALB",
+      "ECR"
+    ],
+    "samplePath": "examples/41-fargate",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "fg-fargate-architect",
+      "fg-pull-behavior",
+      "fg-platform-versions",
+      "fg-platform-changelog",
+      "fg-task-maintenance",
+      "fg-prepare-task-retirement",
+      "fg-task-sizes",
+      "fg-ephemeral-storage",
+      "fg-api-ephemeral-storage",
+      "fg-task-definition-parameters",
+      "fg-out-of-memory",
+      "fg-cloudwatch-metrics",
+      "fg-container-insights-metrics",
+      "fg-container-insights-enhanced",
+      "fg-container-insights-ecs",
+      "fg-cloudwatch-pricing",
+      "fg-ecs-quotas",
+      "fg-throttling",
+      "fg-fargate-pricing",
+      "fg-price-list-ecs",
+      "fg-price-list-cloudwatch",
+      "fg-capacity-providers",
+      "fg-api-capacity-provider-strategy",
+      "fg-target-tracking",
+      "fg-service-auto-scaling",
+      "fg-aas-target-tracking",
+      "fg-aas-api-predefined-metric",
+      "fg-scheduled-scaling",
+      "fg-scaling-best-practice",
+      "fg-task-scale-in-protection",
+      "fg-ecs-exec",
+      "fg-task-role-exec",
+      "fg-ssm-plugin",
+      "fg-vpc-endpoints-ecs",
+      "fg-vpc-endpoints-ecr",
+      "fg-scheduler-ecs",
+      "fg-scheduler-api-ecs-parameters",
+      "fg-api-run-task",
+      "fg-standalone-tasks",
+      "fg-task-events",
+      "fg-cfn-ecs-service",
+      "fg-secrets-env",
+      "fg-api-health-check",
+      "fg-api-log-configuration",
+      "fg-firelens",
+      "fg-savings-plans",
+      "fg-cloudflare-limits",
+      "fg-cloudflare-scaling",
+      "fg-cloudflare-cron",
+      "fg-vercel-docker",
+      "fg-vercel-functions-limits",
+      "fg-vercel-cron",
+      "fg-cdkd-providers",
+      "fg-aws-cdk-lib",
+      "ecs-task-lifecycle",
+      "ecs-connection-draining",
+      "alb-target-group-attributes",
+      "ecs-task-execution-role",
+      "ecs-rolling-update",
+      "eventbridge-scheduler",
+      "scheduler-retry-policy",
+      "scheduler-confused-deputy",
+      "aws-price-list-elb",
+      "aws-price-list-lambda",
+      "aws-price-list-apigw",
+      "aws-price-list-ec2",
+      "aws-price-list-vpc",
+      "cloudflare-containers",
+      "cloudflare-containers-pricing",
+      "cloudflare-containers-rollouts",
+      "cdkd-introduction"
+    ]
+  },
+  "sources": [
+    {
+      "id": "fg-fargate-architect",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html",
+      "title": "Architect for AWS Fargate for Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each Fargate task has its own isolation boundary and does not share the underlying kernel, CPU resources, memory resources, or elastic network interface with another task"
+      ]
+    },
+    {
+      "id": "fg-pull-behavior",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-pull-behavior.html",
+      "title": "Linux containers on Fargate container image pull behavior for Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every Fargate task runs on its own single use, single tenant instance",
+        "Images and layers are not cached: the whole image is pulled for every task, and the pull time is directly correlated to the time taken to start a task",
+        "The size of the image, the compression algorithm, and the number of vCPUs affect the time; zstd decompresses faster",
+        "For images larger than 250 MB lazy loading may be better than downloading all of the image"
+      ]
+    },
+    {
+      "id": "fg-platform-versions",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/platform-fargate.html",
+      "title": "Fargate platform versions for Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The LATEST Linux platform version is 1.4.0",
+        "Each task runs on one platform version revision during its lifecycle; to use the latest revision you must start a new task",
+        "A service changes platform version through a new deployment; tasks added by scaling get the version of the service's current deployment"
+      ]
+    },
+    {
+      "id": "fg-platform-changelog",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/platform-versions-changelog.html",
+      "title": "Fargate Linux platform version change log",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "1.4.0 is the only Linux platform version listed as available; it is based on Amazon Linux 2"
+      ],
+      "note": "The deprecation table on platform-versions-retired.html gives June 15, 2026 for 1.3.0."
+    },
+    {
+      "id": "fg-task-maintenance",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-maintenance.html",
+      "title": "Task retirement and maintenance for AWS Fargate on Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When a platform version revision is retired, all tasks running on it are stopped; running tasks are never migrated",
+        "Notices go to the AWS Health Dashboard and by email; the default wait before retirement is 7 days",
+        "Service tasks are replaced by the scheduler: with the defaults (minimum healthy percent 100, maximum percent 200) a new task is started and running before an old one is retired",
+        "A standalone task is stopped on or after the retirement date and is not replaced",
+        "If a replacement cannot be launched, the retired task is stopped without one",
+        "A fault in the underlying host is handled by replacing the host without a retirement notice",
+        "Task retirement cannot be opted out of"
+      ],
+      "note": "The page credits maximumPercent in one passage and minimum healthy percent in another for start-before-stop."
+    },
+    {
+      "id": "fg-prepare-task-retirement",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/prepare-task-retirement.html",
+      "title": "Prepare for AWS Fargate task retirement on Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The account setting fargateTaskRetirementWaitPeriod takes 0, 7 (the default), or 14 days",
+        "Since 2025-12-18 an EC2 event window can be configured for Fargate tasks (fargateEventWindows) and takes precedence over the wait period"
+      ]
+    },
+    {
+      "id": "fg-task-sizes",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html",
+      "title": "Amazon ECS task definition differences for Fargate",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The task size table: 256 CPU units with 512 MiB, 1 GB, 2 GB; 512 with 1 to 4 GB; 1024 with 2 to 8 GB; 2048 with 4 to 16 GB in 1 GB steps; 4096 with 8 to 30 GB in 1 GB steps; 8192 with 16 to 60 GB in 4 GB steps; 16384 with 32 to 120 GB in 8 GB steps; 32768 with 60, 120, or 244 GB",
+        "The 8, 16, and 32 vCPU sizes need Linux platform version 1.4.0 or later",
+        "Tasks on Linux platform version 1.4.0 can use Seekable OCI (SOCI) indexes to start without waiting for the whole image; new users are limited to index manifest v2",
+        "SOCI works for X86_64 and ARM64, for images in Amazon ECR private registries, compressed with gzip or not at all (not zstd), and is recommended for images larger than 250 MiB compressed"
+      ]
+    },
+    {
+      "id": "fg-ephemeral-storage",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-task-storage.html",
+      "title": "Fargate task ephemeral storage for Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Tasks on platform version 1.4.0 or later receive a minimum of 20 GiB of ephemeral storage, which can be increased to a maximum of 200 GiB with the ephemeralStorage parameter",
+        "The pulled, compressed, and uncompressed image is stored on the ephemeral storage"
+      ],
+      "note": "What happens when the storage fills was not found on the pages read."
+    },
+    {
+      "id": "fg-api-ephemeral-storage",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_EphemeralStorage.html",
+      "title": "Amazon ECS API Reference: EphemeralStorage",
+      "checkedAt": "2026-10-13",
+      "supports": ["sizeInGiB: the minimum supported value is 21 GiB and the maximum is 200 GiB"]
+    },
+    {
+      "id": "fg-task-definition-parameters",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html",
+      "title": "Amazon ECS task definition parameters for Fargate",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Task-level memory is the hard limit of memory to present to the task",
+        "If a container attempts to exceed its container-level memory, the container is killed"
+      ]
+    },
+    {
+      "id": "fg-out-of-memory",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/out-of-memory.html",
+      "title": "Troubleshooting Amazon ECS OutOfMemoryError errors",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The error 'container killed due to memory usage' occurs when a container exits because its processes consumed more memory than was allocated in the task definition"
+      ],
+      "note": "The exact stoppedReason text and an exit code for Fargate were not found on the pages read."
+    },
+    {
+      "id": "fg-cloudwatch-metrics",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/available-metrics.html",
+      "title": "Amazon ECS CloudWatch metrics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For Fargate, CPUUtilization and MemoryUtilization in the AWS/ECS namespace exist per service: usage divided by what the service's tasks reserve",
+        "The metrics are sent in 1-minute periods without any setup"
+      ],
+      "note": "The 1-minute period and the automatic metrics are stated on cloudwatch-metrics.html."
+    },
+    {
+      "id": "fg-container-insights-metrics",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-ECS.html",
+      "title": "Amazon ECS Container Insights metrics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Container Insights adds CpuUtilized, CpuReserved, MemoryUtilized, MemoryReserved, EphemeralStorageUtilized and others in the ECS/ContainerInsights namespace, by cluster, service, and task definition family",
+        "CpuUtilized is in CPU units; MemoryUtilized is in MiB although the unit is labelled megabytes"
+      ]
+    },
+    {
+      "id": "fg-container-insights-enhanced",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-enhanced-observability-metrics-ECS.html",
+      "title": "Amazon ECS Container Insights with enhanced observability metrics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Enhanced observability adds task-level and container-level metrics such as TaskCpuUtilization, TaskMemoryUtilization, ContainerCpuUtilized, and ContainerMemoryUtilized"
+      ]
+    },
+    {
+      "id": "fg-container-insights-ecs",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-container-insights.html",
+      "title": "Monitor Amazon ECS containers using Container Insights with enhanced observability",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Metrics collected by Container Insights are charged as custom metrics",
+        "The cluster setting containerInsights takes enabled or enhanced; the account default is disabled"
+      ],
+      "note": "The setting's values and the account default are on ecs-account-settings.html."
+    },
+    {
+      "id": "fg-cloudwatch-pricing",
+      "url": "https://aws.amazon.com/cloudwatch/pricing/",
+      "title": "Amazon CloudWatch Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Container Insights with enhanced observability for ECS is priced per metric, per month, prorated by the hour",
+        "Pricing example 19 counts, for Fargate without enhanced observability, 13 metrics per cluster, 15 per service (RunningTaskCount at no charge from 2026-10-01), and 10 per task, aggregated by name"
+      ],
+      "note": "The page's numbers are for US East (N. Virginia)."
+    },
+    {
+      "id": "fg-ecs-quotas",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/ecs-service.html",
+      "title": "Amazon ECS endpoints and quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate On-Demand vCPU resource count: 6 by default in each supported Region, adjustable",
+        "Fargate Spot vCPU resource count: 6 by default in each supported Region, adjustable",
+        "Fargate On-Demand and Spot launch rates outside the 16 listed Regions: burst 100, sustained 20 per second, adjustable",
+        "Rate of tasks launched by a service on Fargate: 500 per minute outside the listed Regions, not adjustable",
+        "Tasks launched per run-task: 10",
+        "New accounts might start with lower quotas, which Fargate raises automatically with usage"
+      ],
+      "note": "ap-northeast-1 is not among the 16 Regions with the lower launch rates."
+    },
+    {
+      "id": "fg-throttling",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/throttling.html",
+      "title": "AWS Fargate throttling quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate limits task launch rates with a token bucket per account and Region: 100 tokens, refilled at 20 a second",
+        "Launch rates in practice also depend on the image to download and unpack, health checks, and load balancer registration",
+        "The rate quota for RunTask is 20 calls per second, each launching up to 10 tasks"
+      ]
+    },
+    {
+      "id": "fg-fargate-pricing",
+      "url": "https://aws.amazon.com/fargate/pricing/",
+      "title": "AWS Fargate Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate is billed for requested vCPU, memory, operating system, CPU architecture, and storage from the start of the image download until the task terminates, per second with a 1-minute minimum",
+        "20 GB of ephemeral storage is included; only additional storage is billed, per GB-hour",
+        "Fargate Spot runs interrupt-tolerant tasks at up to a 70% discount; its prices are set by AWS Fargate and adjust gradually",
+        "Fargate Spot is available for Linux on x86 and ARM",
+        "Savings Plans offer up to 50% on Fargate for a commitment in dollars per hour over one or three years"
+      ],
+      "note": "The price tables are filled in by script; no Tokyo number, on demand or Spot, is in the page's static text."
+    },
+    {
+      "id": "fg-price-list-ecs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon ECS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate ephemeral storage: USD 0.000133 per GB-hour",
+        "Fargate ARM: USD 0.04045 per vCPU-hour and USD 0.00442 per GB-hour; x86: USD 0.05056 and USD 0.00553",
+        "The offer has no Fargate Spot price"
+      ],
+      "note": "Offer published 2026-09-11T12:44:25Z."
+    },
+    {
+      "id": "fg-price-list-cloudwatch",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon CloudWatch, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-CW:MetricsUsage: USD 0.07 per metric-month, the Container Insights with enhanced observability rate"
+      ],
+      "note": "Offer published 2026-10-07T11:55:40Z. That this usage type is the one billed for ECS enhanced observability was inferred from the pricing page's USD 0.07 example."
+    },
+    {
+      "id": "fg-capacity-providers",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-capacity-providers.html",
+      "title": "Amazon ECS clusters for Fargate",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A capacity provider must be associated with a cluster before a strategy can name it; a strategy has at most 20 providers",
+        "Only one provider in a strategy can have a base; at least one needs a weight above zero",
+        "A service can be changed from a launch type to a capacity provider strategy, with a forced new deployment",
+        "A Fargate Spot task gets a two-minute warning before it is stopped, as a task state change event and as SIGTERM to the task",
+        "When Spot capacity is unavailable, services retry until it is; Fargate does not replace Spot capacity with on-demand capacity",
+        "The stop code of an interrupted task is SpotInterruption; stopTimeout can be at most 120 seconds"
+      ]
+    },
+    {
+      "id": "fg-api-capacity-provider-strategy",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_CapacityProviderStrategyItem.html",
+      "title": "Amazon ECS API Reference: CapacityProviderStrategyItem",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "base is how many tasks, at a minimum, run on the provider; it is satisfied before weights; range 0 to 100,000",
+        "weight is the relative share of tasks beyond the base; range 0 to 1,000; weights 1 and 4 mean one task on A for every four on B",
+        "FARGATE_SPOT supports Linux X86_64 on platform version 1.3.0 or later and ARM64 on 1.4.0 or later"
+      ]
+    },
+    {
+      "id": "fg-target-tracking",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-autoscaling-targettracking.html",
+      "title": "Use a target metric to scale Amazon ECS services",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The service scales out proportionally to the metric as fast as it can, and scales in more gradually",
+        "With several target tracking policies it scales out if any is ready and in only if all are",
+        "A policy does not scale on insufficient data",
+        "ALBRequestCountPerTarget is not supported for the blue/green deployment type",
+        "Scale-in is turned off while a deployment is in progress"
+      ]
+    },
+    {
+      "id": "fg-service-auto-scaling",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html",
+      "title": "Automatically scale your Amazon ECS service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Target tracking, step scaling, scheduled scaling, and predictive scaling are supported",
+        "Scale-in is blocked until the scale-in cooldown has expired; a scale-out during it happens immediately",
+        "Scaling starts from the running task count, not the desired count",
+        "With a minimum capacity of 0 and target tracking, Service Auto Scaling waits for one data point of demand and then scales out by the minimum possible amount",
+        "Step scaling lets you react more quickly because you define the thresholds and adjustments yourself"
+      ]
+    },
+    {
+      "id": "fg-aas-target-tracking",
+      "url": "https://docs.aws.amazon.com/autoscaling/application/userguide/target-tracking-scaling-policy-overview.html",
+      "title": "How target tracking scaling for Application Auto Scaling works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default cooldown for ECS services is 300 seconds",
+        "Scale-in happens only when utilization is far enough below the target, usually more than 10% lower",
+        "A metric that emits real zeros, such as ALBRequestCountPerTarget, lets a target with minimum capacity 0 scale in to 0",
+        "A scheduled action can start a scaling activity during a cooldown"
+      ]
+    },
+    {
+      "id": "fg-aas-api-predefined-metric",
+      "url": "https://docs.aws.amazon.com/autoscaling/application/APIReference/API_PredefinedMetricSpecification.html",
+      "title": "Application Auto Scaling API Reference: PredefinedMetricSpecification",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ECSServiceAverageCPUUtilization, ECSServiceAverageMemoryUtilization, and ALBRequestCountPerTarget are predefined metric types; high-resolution variants of the first two use 20-second metrics",
+        "ResourceLabel is app/<load-balancer-name>/<load-balancer-id>/targetgroup/<target-group-name>/<target-group-id>"
+      ],
+      "note": "DisableScaleIn and the cooldown fields are on API_TargetTrackingScalingPolicyConfiguration.html."
+    },
+    {
+      "id": "fg-scheduled-scaling",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-autoscaling-schedulescaling.html",
+      "title": "Use scheduled actions to scale Amazon ECS services",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Scheduled actions change the number of tasks at set times; scaling policies keep working inside the minimum and maximum the action set"
+      ]
+    },
+    {
+      "id": "fg-scaling-best-practice",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/capacity-autoscaling-best-practice.html",
+      "title": "Optimizing Amazon ECS service auto scaling",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A scaling metric has to be correlated with demand and change in proportion to capacity; load testing is how to find it",
+        "Scaling on memory is not recommended for garbage-collected runtimes, whose memory use is often uncorrelated with throughput"
+      ]
+    },
+    {
+      "id": "fg-task-scale-in-protection",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-scale-in-protection.html",
+      "title": "Protect your Amazon ECS tasks from being terminated by scale-in events",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Task scale-in protection keeps a service's task from being terminated by scale-in from service auto scaling or deployments: 2 hours by default, 48 hours at most",
+        "A container sets it at $ECS_AGENT_URI/task-protection/v1/state; the task role needs ecs:GetTaskProtection and ecs:UpdateTaskProtection",
+        "It is supported only for tasks deployed from a service"
+      ]
+    },
+    {
+      "id": "fg-ecs-exec",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html",
+      "title": "Monitor Amazon ECS containers with ECS Exec",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ECS Exec uses Systems Manager Session Manager; the agent's binaries are bind-mounted into the container",
+        "Commands run as root, even when the container specifies a user",
+        "A read-only root file system (readonlyRootFilesystem) is not supported, because the agent has to write to the container's file system",
+        "ECS Exec cannot be turned on for existing tasks, only for new ones",
+        "A session's idle timeout is 20 minutes and cannot be changed",
+        "CloudTrail records an ExecuteCommand event; commands and output can be logged to CloudWatch Logs or S3",
+        "Access can be limited with condition keys such as ecs:container-name and ecs:ResourceTag, and enabling it can be denied with ecs:enable-execute-command",
+        "Tasks without internet access need the ssmmessages interface endpoint",
+        "initProcessEnabled is recommended to clean up zombie processes"
+      ]
+    },
+    {
+      "id": "fg-task-role-exec",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html",
+      "title": "Amazon ECS task IAM role: ECS Exec permissions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ECS Exec needs ssmmessages:CreateControlChannel, CreateDataChannel, OpenControlChannel, and OpenDataChannel on the task role, with Resource *"
+      ]
+    },
+    {
+      "id": "fg-ssm-plugin",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html",
+      "title": "Install the Session Manager plugin for the AWS CLI",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Starting Session Manager sessions with the AWS CLI requires the Session Manager plugin on the local machine"
+      ],
+      "note": "The ECS Exec page read on the same day does not mention the plugin."
+    },
+    {
+      "id": "fg-vpc-endpoints-ecs",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/vpc-endpoints.html",
+      "title": "Amazon ECS interface VPC endpoints (AWS PrivateLink)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Tasks using Fargate do not require the interface endpoints for Amazon ECS itself, but may need the ones for Amazon ECR, Secrets Manager, or CloudWatch Logs"
+      ]
+    },
+    {
+      "id": "fg-vpc-endpoints-ecr",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html",
+      "title": "Amazon ECR interface VPC endpoints (AWS PrivateLink)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate tasks on platform version 1.4.0 or later need both ECR endpoints (ecr.dkr and ecr.api) and the S3 gateway endpoint",
+        "With the awslogs driver and no internet gateway, the com.amazonaws.region.logs interface endpoint is required"
+      ]
+    },
+    {
+      "id": "fg-scheduler-ecs",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/tasks-scheduled-eventbridge-scheduler.html",
+      "title": "Using Amazon EventBridge Scheduler to schedule Amazon ECS tasks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EventBridge Scheduler runs ECS tasks on rate, cron, and one-time schedules, in any time zone",
+        "To use a capacity provider strategy, a capacity provider must be associated with the cluster",
+        "A retry policy re-runs the schedule if it fails to invoke its target"
+      ]
+    },
+    {
+      "id": "fg-scheduler-api-ecs-parameters",
+      "url": "https://docs.aws.amazon.com/scheduler/latest/APIReference/API_EcsParameters.html",
+      "title": "EventBridge Scheduler API Reference: EcsParameters",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EcsParameters is the templated target for ECS RunTask: TaskDefinitionArn is required; CapacityProviderStrategy, LaunchType, NetworkConfiguration, PlatformVersion, and EnableExecuteCommand are optional"
+      ],
+      "note": "What the Target's Input means for an ECS templated target was not found on the pages read."
+    },
+    {
+      "id": "fg-api-run-task",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RunTask.html",
+      "title": "Amazon ECS API Reference: RunTask",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "count: up to 10 tasks for each call",
+        "clientToken ensures the idempotency of the request; reusing it with different parameters is a ConflictException",
+        "overrides.containerOverrides can replace the command, environment variables, cpu, and memory of a named container for one run"
+      ],
+      "note": "The override fields are on API_ContainerOverride.html and API_TaskOverride.html."
+    },
+    {
+      "id": "fg-standalone-tasks",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/standalone-tasks.html",
+      "title": "Amazon ECS standalone tasks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A standalone task is for an application that performs some work and then stops, such as a batch process"
+      ]
+    },
+    {
+      "id": "fg-task-events",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_task_events.html",
+      "title": "Amazon ECS task state change events",
+      "checkedAt": "2026-10-13",
+      "supports": ["For a stopped task the event's stoppedReason and stopCode say why it stopped"]
+    },
+    {
+      "id": "fg-cfn-ecs-service",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ecs-service.html",
+      "title": "AWS::ECS::Service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "If a capacityProviderStrategy is specified, the launchType parameter must be omitted",
+        "EnableExecuteCommand is a property of the service"
+      ]
+    },
+    {
+      "id": "fg-secrets-env",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-secrets-manager.html",
+      "title": "Pass Secrets Manager secrets through Amazon ECS environment variables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A secret is injected when the container is initially started; after a rotation the container does not get the new value until a new task is launched",
+        "valueFrom may name a JSON key and a version: arn:...:secret:secret-name:json-key:version-stage:version-id (platform version 1.4.0 or later)"
+      ],
+      "note": "The task execution role needs secretsmanager:GetSecretValue (task_execution_IAM_role.html). Parameter Store: secrets-envvar-ssm-paramstore.html."
+    },
+    {
+      "id": "fg-api-health-check",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_HealthCheck.html",
+      "title": "Amazon ECS API Reference: HealthCheck",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Container health check defaults: interval 30 seconds, timeout 5 seconds, retries 3, start period off",
+        "A service task that reports unhealthy is stopped and replaced; a task run manually continues regardless of its health status"
+      ]
+    },
+    {
+      "id": "fg-api-log-configuration",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_LogConfiguration.html",
+      "title": "Amazon ECS API Reference: LogConfiguration",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On June 25, 2025 the default log driver mode changed from blocking to non-blocking; the account setting defaultLogDriverMode changes it back",
+        "In blocking mode a write to stdout blocks when logs cannot be sent; in non-blocking mode logs go to a buffer of max-buffer-size and can be lost"
+      ]
+    },
+    {
+      "id": "fg-firelens",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_firelens.html",
+      "title": "Send Amazon ECS logs to an AWS service or AWS Partner",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "FireLens routes logs to AWS services or partner destinations with Fluentd or Fluent Bit, as a container in the task"
+      ]
+    },
+    {
+      "id": "fg-savings-plans",
+      "url": "https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html",
+      "title": "What are Savings Plans?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Savings Plans trade a commitment to an amount of compute, measured per hour, for one or three years against lower prices",
+        "Compute Savings Plans apply to EC2 regardless of family, size, or Region, and also to Fargate and Lambda"
+      ],
+      "note": "Whether Fargate Spot usage counts was not found."
+    },
+    {
+      "id": "fg-cloudflare-limits",
+      "url": "https://developers.cloudflare.com/containers/platform-details/limits/",
+      "title": "Cloudflare Containers: Limits and Instance Types",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Six predefined instance types from lite (1/16 vCPU, 256 MiB, 2 GB disk) to standard-4 (4 vCPU, 12 GiB, 20 GB disk); custom types up to 4 vCPU and 12 GiB",
+        "Account defaults: 6 TiB of memory, 1,500 vCPU, and 30 TB of disk concurrently"
+      ]
+    },
+    {
+      "id": "fg-cloudflare-scaling",
+      "url": "https://developers.cloudflare.com/containers/platform-details/scaling-and-routing/",
+      "title": "Cloudflare Containers: Scaling and Routing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Requests are spread over a fixed number of instances with the getRandom helper; built-in autoscaling and routing are planned"
+      ],
+      "note": "The FAQ (developers.cloudflare.com/containers/faq/) says built-in autoscaling for stateless applications is not available today, cold starts are often 1 to 3 seconds, and sleepAfter is 10 minutes by default."
+    },
+    {
+      "id": "fg-cloudflare-cron",
+      "url": "https://developers.cloudflare.com/containers/examples/cron/",
+      "title": "Cloudflare Containers: Cron container",
+      "checkedAt": "2026-10-13",
+      "supports": ["A Workers Cron Trigger starts a container that does a short task and exits"]
+    },
+    {
+      "id": "fg-vercel-docker",
+      "url": "https://vercel.com/kb/guide/does-vercel-support-docker-deployments",
+      "title": "Vercel Knowledge Base: Does Vercel support Docker deployments?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel runs OCI-compatible container images as Vercel Functions: it builds the image from a Dockerfile.vercel, stores it in Vercel Container Registry, and serves it from a function that scales automatically"
+      ]
+    },
+    {
+      "id": "fg-vercel-functions-limits",
+      "url": "https://vercel.com/docs/functions/limitations",
+      "title": "Vercel Functions Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With Fluid compute the maximum duration is 300 seconds on Hobby and 800 seconds on Pro and Enterprise, with an extended 1,800 seconds in beta"
+      ]
+    },
+    {
+      "id": "fg-vercel-cron",
+      "url": "https://vercel.com/docs/cron-jobs",
+      "title": "Vercel Cron Jobs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A cron job is an HTTP GET request to a path of the project's production deployment"
+      ]
+    },
+    {
+      "id": "fg-cdkd-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: providers for ECS, Scheduler, and Application Auto Scaling",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::ECS::Cluster, TaskDefinition, and Service share one provider, which handles CapacityProviders on the cluster and CapacityProviderStrategy and EnableExecuteCommand on the service",
+        "AWS::Scheduler::Schedule has a provider that handles Target, including EcsParameters, and ScheduleExpressionTimezone",
+        "No provider is registered for AWS::ApplicationAutoScaling::ScalableTarget, ScalingPolicy, AWS::EC2::SecurityGroupEgress, or AWS::ECS::ClusterCapacityProviderAssociations, and none is on the unsupported list, so they go through Cloud Control API"
+      ],
+      "note": "Read from the v0.296.28 tag: register-providers.ts, providers/ecs-provider.ts, providers/scheduler-schedule-provider.ts, unsupported-types.generated.ts."
+    },
+    {
+      "id": "fg-aws-cdk-lib",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: what the ECS constructs synthesize",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "enableFargateCapacityProviders creates an AWS::ECS::ClusterCapacityProviderAssociations resource that the service does not depend on",
+        "FargateService with enableExecuteCommand adds the four ssmmessages actions and logs actions on Resource * to the task role",
+        "FargateTaskDefinition.grantRun grants ecs:RunTask on the task definition and iam:PassRole on its two roles, conditioned on ecs-tasks.amazonaws.com"
+      ],
+      "note": "Observed by synthesizing with the pinned version on 2026-10-13, not read from documentation."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "fargate-spot",
+      "ja": "Fargate Spot",
+      "en": "Fargate Spot",
+      "firstUse": "41",
+      "definition": {
+        "ja": "AWS の空いている容量でタスクを動かす、割引された Fargate。AWS が容量を取り戻すとき、2 分前に SIGTERM が届いてタスクが止まる。",
+        "en": "Fargate at a discount, on capacity AWS has to spare. When AWS takes the capacity back, the task gets SIGTERM two minutes before it is stopped."
+      }
+    },
+    {
+      "id": "capacity-provider-strategy",
+      "ja": "capacity provider strategy",
+      "en": "capacity provider strategy",
+      "firstUse": "41",
+      "definition": {
+        "ja": "タスクをどの capacity provider にどの割合で置くかの指定。`base` は最低限そこに置く数、`weight` は残りを分ける比。",
+        "en": "Which capacity providers tasks go to and in what proportion. `base` is the number placed there first; `weight` is the ratio for the rest."
+      }
+    },
+    {
+      "id": "platform-version",
+      "ja": "プラットフォームバージョン",
+      "en": "platform version",
+      "firstUse": "41",
+      "definition": {
+        "ja": "Fargate がタスクを動かす実行環境（カーネルとコンテナランタイム）の版。Linux で選べるのは 1.4.0 で、`LATEST` もこれを指す。",
+        "en": "The version of the runtime environment (kernel and container runtime) Fargate runs a task on. For Linux the one available is 1.4.0, which is also what `LATEST` means."
+      }
+    },
+    {
+      "id": "task-retirement",
+      "ja": "タスクのリタイア（task retirement）",
+      "en": "task retirement",
+      "firstUse": "41",
+      "definition": {
+        "ja": "Fargate が、古くなったプラットフォームバージョンのリビジョンで動いているタスクを、予告のうえで止めること。サービスのタスクは置き換えられ、単発のタスクは止まるだけ。",
+        "en": "Fargate stopping, after a notice, the tasks that run on an outdated platform version revision. A service's tasks are replaced; a standalone task is only stopped."
+      }
+    },
+    {
+      "id": "scale-in",
+      "ja": "スケールイン",
+      "en": "scale-in",
+      "firstUse": "41",
+      "definition": {
+        "ja": "タスクの数を減らすこと。増やすほうはスケールアウト。減らされるタスクが抱えているリクエストをどう終わらせるかが問題になる。",
+        "en": "Reducing the number of tasks; adding them is scale-out. The question is what happens to the requests a removed task is holding."
+      }
+    },
+    {
+      "id": "ecs-exec",
+      "ja": "ECS Exec",
+      "en": "ECS Exec",
+      "firstUse": "41",
+      "definition": {
+        "ja": "動いているコンテナの中でコマンドを実行する機能。Systems Manager の Session Manager を使い、コマンドは root で動く。新しく起動したタスクにしか有効にできない。",
+        "en": "Running a command inside a running container. It goes through Systems Manager Session Manager, runs as root, and can only be turned on for newly started tasks."
+      }
+    },
+    {
+      "id": "ephemeral-storage",
+      "ja": "エフェメラルストレージ",
+      "en": "ephemeral storage",
+      "firstUse": "41",
+      "definition": {
+        "ja": "タスクが動いている間だけ使えるディスク。Fargate では 20 GiB が付き、200 GiB まで増やせる。イメージもここに展開される。",
+        "en": "Disk that exists only while the task runs. Fargate gives 20 GiB and allows up to 200 GiB. The image is unpacked onto it too."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "41.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "41.architecture",
+      "sources": [
+        "examples/41-fargate/infra/lib/fargate-stack.ts",
+        "examples/41-fargate/src/config.ts"
+      ],
+      "tasks": ["fargate:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "41.underneath",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "41.sizing",
+      "sources": [
+        "examples/41-fargate/src/sizes.ts",
+        "examples/41-fargate/src/sizing.ts",
+        "examples/41-fargate/scripts/size.ts",
+        "examples/41-fargate/test/sizes.test.ts"
+      ],
+      "tasks": ["test:unit", "fargate:size"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "41.spot",
+      "sources": [
+        "examples/41-fargate/src/strategy.ts",
+        "examples/41-fargate/src/spot.ts",
+        "examples/41-fargate/src/config.ts",
+        "examples/41-fargate/test/strategy.test.ts",
+        "examples/41-fargate/test/spot.test.ts",
+        "examples/41-fargate/infra/lib/fargate-stack.ts"
+      ],
+      "tasks": ["test:unit", "fargate:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "41.scaling",
+      "sources": [
+        "examples/41-fargate/src/scaling.ts",
+        "examples/41-fargate/src/drain.ts",
+        "examples/41-fargate/src/model-defaults.ts",
+        "examples/41-fargate/scripts/simulate.ts",
+        "examples/41-fargate/test/scaling.test.ts",
+        "examples/41-fargate/infra/lib/fargate-stack.ts"
+      ],
+      "tasks": ["test:unit", "fargate:simulate", "fargate:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "41.tasks",
+      "sources": [
+        "examples/41-fargate/src/job.ts",
+        "examples/41-fargate/src/job-main.ts",
+        "examples/41-fargate/src/commands.ts",
+        "examples/41-fargate/scripts/task.ts",
+        "examples/41-fargate/test/job.test.ts",
+        "examples/41-fargate/test/commands.test.ts",
+        "examples/41-fargate/infra/lib/fargate-stack.ts"
+      ],
+      "tasks": ["test:unit", "dev:fargate:job", "fargate:job:run"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "41.network",
+      "sources": [
+        "examples/41-fargate/infra/lib/fargate-stack.ts",
+        "examples/41-fargate/infra/test/fargate-stack.test.ts",
+        "examples/11-network/src/cost.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "41.exec",
+      "sources": [
+        "examples/41-fargate/infra/lib/fargate-stack.ts",
+        "examples/41-fargate/infra/bin/app.ts",
+        "examples/41-fargate/src/config.ts",
+        "examples/41-fargate/src/commands.ts",
+        "examples/41-fargate/infra/test/fargate-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "fargate:infra:synth", "fargate:exec"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "41.operate",
+      "sources": ["examples/41-fargate/infra/lib/fargate-stack.ts"],
+      "tasks": ["fargate:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "41.limits",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "41.local",
+      "sources": [
+        "examples/41-fargate/test",
+        "examples/41-fargate/infra/test/fargate-stack.test.ts",
+        "examples/41-fargate/scripts/check-bundle.ts",
+        "examples/41-fargate/scripts/bundle.ts",
+        "examples/41-fargate/Dockerfile"
+      ],
+      "tasks": [
+        "test:unit",
+        "fargate:bundle",
+        "fargate:bundle:check",
+        "fargate:infra:synth",
+        "fargate:simulate",
+        "fargate:size",
+        "dev:fargate:job"
+      ],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "41.deploy",
+      "sources": [
+        "examples/41-fargate/infra/bin/app.ts",
+        "examples/41-fargate/cdk.json",
+        "examples/41-fargate/scripts/image.ts",
+        "examples/41-fargate/scripts/task.ts"
+      ],
+      "tasks": [
+        "fargate:infra:diff",
+        "fargate:infra:deploy",
+        "fargate:image:build",
+        "fargate:image:push",
+        "fargate:job:run",
+        "fargate:exec",
+        "fargate:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["type"],
+      "verification": "unverified"
+    },
+    {
+      "id": "41.cost",
+      "sources": [
+        "examples/41-fargate/src/cost.ts",
+        "examples/41-fargate/src/breakeven.ts",
+        "examples/41-fargate/src/sizing.ts",
+        "examples/41-fargate/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "41.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "41.cleanup",
+      "sources": [],
+      "tasks": ["fargate:infra:deploy", "fargate:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "fargate.ephemeral-storage.gb-hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "7KKPR3R7N63ZMK5F",
+      "usageType": "APN1-Fargate-EphemeralStorage-GB-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0001330000",
+          "description": "AWS Fargate - Ephemeral Storage - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "fargate-idle",
+      "chapter": "41",
+      "title": {
+        "ja": "Fargate: 既定の構成を置いたまま 1 か月",
+        "en": "Fargate: the default configuration left running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "タスク 2 つ（0.25 vCPU、0.5 GB、arm64、オンデマンド）をパブリックサブネットで 730 時間",
+          "ALB 1 つを 730 時間、パブリック IPv4 アドレスは ALB のノード 2 つとタスク 2 つで 4 つ。LCU は未算入",
+          "夜間のジョブは 1 日 1 回、最低課金の 60 秒ぶんをオンデマンドの単価で計算（Spot の単価は Price List に無い）。ジョブのパブリック IPv4 は 1 か月で 0.5 時間ぶんで、未算入",
+          "リポジトリに 0.1 GB（仮定）、Scheduler の呼び出し 30 回",
+          "ログ、データ転送、auto scaling で増えたタスクは未算入"
+        ],
+        "en": [
+          "Two tasks (0.25 vCPU, 0.5 GB, arm64, on demand) in public subnets for 730 hours",
+          "One load balancer for 730 hours and four public IPv4 addresses (two load balancer nodes, two tasks). LCUs are not included",
+          "The nightly job once a day, the 60-second minimum each time, at the on-demand rate (the Spot rate is not in the Price List). The job's public IPv4 address, half an hour a month, is not included",
+          "0.1 GB in the repository (assumption) and 30 Scheduler invocations",
+          "Logs, data transfer, and tasks added by auto scaling are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365.125,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours; nightly job: 30 runs x 60 s, 30 tasks x 0.25 vCPU x 0.016666666666666666 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730.25,
+          "basis": "2 tasks x 0.5 GB x 730 hours; nightly job: 30 runs x 60 s, 30 tasks x 0.5 GB x 0.016666666666666666 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 tasks) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "one image, assumed 0.1 GB"
+        },
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "30 invocations"
+        }
+      ]
+    },
+    {
+      "id": "fargate-one-day",
+      "chapter": "41",
+      "title": {
+        "ja": "Fargate: 既定の構成を 1 日",
+        "en": "Fargate: the default configuration for one day"
+      },
+      "assumptions": {
+        "ja": [
+          "fargate-idle と同じ構成を 24 時間。ジョブは 1 回",
+          "イメージの保存と Scheduler は未算入"
+        ],
+        "en": [
+          "The same configuration as fargate-idle for 24 hours, with one run of the job",
+          "Image storage and Scheduler are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 12.004166666666666,
+          "basis": "2 tasks x 0.25 vCPU x 24 hours; nightly job: 1 runs x 60 s, 1 tasks x 0.25 vCPU x 0.016666666666666666 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 24.008333333333333,
+          "basis": "2 tasks x 0.5 GB x 24 hours; nightly job: 1 runs x 60 s, 1 tasks x 0.5 GB x 0.016666666666666666 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 24,
+          "basis": "1 load balancer x 24 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 96,
+          "basis": "(2 load balancer nodes + 2 tasks) x 24 hours"
+        }
+      ]
+    },
+    {
+      "id": "fargate-ceiling",
+      "chapter": "41",
+      "title": {
+        "ja": "Fargate: auto scaling の上限（タスク 6 つ）のまま 1 か月",
+        "en": "Fargate: a month at the auto scaling ceiling of six tasks"
+      },
+      "assumptions": {
+        "ja": [
+          "タスク 6 つがすべてオンデマンドの単価で 730 時間動いたとした上限。実際には 3 つが Spot で、Spot の単価は Price List に無い",
+          "パブリック IPv4 アドレスは ALB 2 + タスク 6",
+          "そのほかは fargate-idle と同じ"
+        ],
+        "en": [
+          "An upper bound: six tasks for 730 hours, all at the on-demand rate. Three of them would be on Spot, whose rate is not in the Price List",
+          "Eight public IPv4 addresses: two load balancer nodes and six tasks",
+          "Otherwise as fargate-idle"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 1095.125,
+          "basis": "6 tasks x 0.25 vCPU x 730 hours; nightly job: 30 runs x 60 s, 30 tasks x 0.25 vCPU x 0.016666666666666666 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 2190.25,
+          "basis": "6 tasks x 0.5 GB x 730 hours; nightly job: 30 runs x 60 s, 30 tasks x 0.5 GB x 0.016666666666666666 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 5840,
+          "basis": "(2 load balancer nodes + 6 tasks) x 730 hours"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "one image, assumed 0.1 GB"
+        },
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 30,
+          "basis": "30 invocations"
+        }
+      ]
+    },
+    {
+      "id": "fargate-vs-steady-lambda",
+      "chapter": "41",
+      "title": {
+        "ja": "比較: 1 秒に 20 件が 1 か月続く負荷を Lambda で",
+        "en": "Comparison: 20 requests a second all month, on Lambda"
+      },
+      "assumptions": {
+        "ja": [
+          "1 秒に 20 件が 24 時間、30 日。5,184 万リクエスト",
+          "04章の形: HTTP API と arm64 の Lambda、メモリ 512 MB、1 リクエスト平均 50 ms",
+          "ログ、データ転送、DynamoDB などは未算入"
+        ],
+        "en": [
+          "20 requests a second, 24 hours a day for 30 days: 51.84 million requests",
+          "Chapter 04's shape: an HTTP API and an arm64 Lambda function with 512 MB, 50 ms per request on average",
+          "Logs, data transfer, DynamoDB and the like are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 51840000,
+          "basis": "51840000 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 51840000,
+          "basis": "51840000 requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 1296000,
+          "basis": "51840000 requests x 50 ms x 0.5 GB"
+        }
+      ]
+    },
+    {
+      "id": "fargate-vs-steady-fargate",
+      "chapter": "41",
+      "title": {
+        "ja": "比較: 1 秒に 20 件が 1 か月続く負荷を Fargate で",
+        "en": "Comparison: 20 requests a second all month, on Fargate"
+      },
+      "assumptions": {
+        "ja": [
+          "1 秒に 20 件が 24 時間、30 日。タスク 2 つを 730 時間",
+          "12章の形: タスク（0.25 vCPU、0.5 GB、arm64、オンデマンド）をパブリックサブネットに置き、ALB を前に置く",
+          "LCU は 1 リクエスト 1 接続として新規接続数で計算",
+          "タスク 2 つでこのリクエスト数に答えられるかどうかは計っていない（仮定）",
+          "ログ、データ転送、イメージの保存は未算入"
+        ],
+        "en": [
+          "20 requests a second, 24 hours a day for 30 days; two tasks for 730 hours",
+          "Chapter 12's shape: tasks (0.25 vCPU, 0.5 GB, arm64, on demand) in public subnets behind a load balancer",
+          "LCUs from new connections, one connection per request",
+          "Whether two tasks can answer this many requests was not measured (an assumption)",
+          "Logs, data transfer, and image storage are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 365,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 730,
+          "basis": "2 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "alb.lcu.hour",
+          "quantity": 576,
+          "basis": "20 new connections/s / 25 x 720 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 tasks) x 730 hours + 0 tasks x 720 hours"
+        }
+      ]
+    },
+    {
+      "id": "fargate-vs-steady-ec2",
+      "chapter": "41",
+      "title": {
+        "ja": "比較: 同じ負荷を EC2 の t4g.small 2 台で",
+        "en": "Comparison: the same load on two t4g.small EC2 instances"
+      },
+      "assumptions": {
+        "ja": [
+          "23章の t4g.small を 2 台、それぞれ gp3 の 8 GB、パブリックサブネット、同じ ALB の後ろ",
+          "OS の更新、コンテナの入れ替え、台数の調整を自分で持つ費用は金額に入っていない",
+          "t4g の CPU クレジットの追加課金、ログ、データ転送、スナップショットは未算入"
+        ],
+        "en": [
+          "Two of chapter 23's t4g.small instances, each with 8 GB of gp3, in public subnets behind the same load balancer",
+          "The cost of owning OS updates, container replacement, and the instance count is not in the amount",
+          "Extra t4g CPU credits, logs, data transfer, and snapshots are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-small.linux.hour",
+          "quantity": 1460,
+          "basis": "2 instances x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "2 volumes x 8 GB"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "alb.lcu.hour",
+          "quantity": 576,
+          "basis": "20 new connections/s / 25 x 720 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2920,
+          "basis": "(2 load balancer nodes + 2 instances) x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "fargate-vs-spiky-lambda",
+      "chapter": "41",
+      "title": {
+        "ja": "比較: 1 日 2 時間だけ 1 秒に 20 件の負荷を Lambda で",
+        "en": "Comparison: 20 requests a second for two hours a day, on Lambda"
+      },
+      "assumptions": {
+        "ja": [
+          "1 秒に 20 件が 1 日 2 時間、30 日。432 万リクエスト。残りの 22 時間は 0 件",
+          "04章の形: HTTP API と arm64 の Lambda、メモリ 512 MB、1 リクエスト平均 50 ms",
+          "ログ、データ転送、DynamoDB などは未算入"
+        ],
+        "en": [
+          "20 requests a second for two hours a day, 30 days: 4.32 million requests. Nothing in the other 22 hours",
+          "Chapter 04's shape: an HTTP API and an arm64 Lambda function with 512 MB, 50 ms per request on average",
+          "Logs, data transfer, DynamoDB and the like are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 4320000,
+          "basis": "4320000 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 4320000,
+          "basis": "4320000 requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 108000,
+          "basis": "4320000 requests x 50 ms x 0.5 GB"
+        }
+      ]
+    },
+    {
+      "id": "fargate-vs-spiky-fargate",
+      "chapter": "41",
+      "title": {
+        "ja": "比較: 1 日 2 時間だけ 1 秒に 20 件の負荷を Fargate で",
+        "en": "Comparison: 20 requests a second for two hours a day, on Fargate"
+      },
+      "assumptions": {
+        "ja": [
+          "タスク 2 つを 730 時間、忙しい 2 時間だけ auto scaling がさらに 2 つ足すとした",
+          "12章の形: タスク（0.25 vCPU、0.5 GB、arm64、オンデマンド）をパブリックサブネットに置き、ALB を前に置く",
+          "LCU は 1 リクエスト 1 接続として新規接続数で計算",
+          "ログ、データ転送、イメージの保存は未算入"
+        ],
+        "en": [
+          "Two tasks for 730 hours, and two more added by auto scaling for the two busy hours",
+          "Chapter 12's shape: tasks (0.25 vCPU, 0.5 GB, arm64, on demand) in public subnets behind a load balancer",
+          "LCUs from new connections, one connection per request",
+          "Logs, data transfer, and image storage are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 395,
+          "basis": "2 tasks x 0.25 vCPU x 730 hours + 2 tasks x 0.25 vCPU x 60 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 790,
+          "basis": "2 tasks x 0.5 GB x 730 hours + 2 tasks x 0.5 GB x 60 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "alb.lcu.hour",
+          "quantity": 48,
+          "basis": "20 new connections/s / 25 x 60 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 3040,
+          "basis": "(2 load balancer nodes + 2 tasks) x 730 hours + 2 tasks x 60 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "41",
+        "command": "vp test run examples/41-fargate",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "8 ファイル 89 件。大きさの表と選び方、strategy、target tracking のモデル（Application Auto Scaling ではない）、止められるタスクのリクエスト、12章のサーバーへの SIGTERM、ジョブの中断と再開、コマンドの組み立て、料金、スタックのアサーション",
+          "en": "8 files, 89 tests: the size table and the choice from it, the strategy, the model of target tracking (not Application Auto Scaling), a stopping task's requests, SIGTERM to chapter 12's server, interrupting and resuming the job, command assembly, cost, and the stack assertions"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "tsc --noEmit -p examples/41-fargate",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "タグなし、-c imageTag=f1、-c imageTag=f1 -c exec=true、-c imageTag=f1 -c taskSubnets=private で synth。-c exec=yes が拒否されることも確認",
+          "en": "Synthesized with no tag, with -c imageTag=f1, with -c exec=true added, and with -c taskSubnets=private. -c exec=yes is refused"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:bundle && vp run fargate:bundle:check",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "server.mjs と job.mjs を node_modules の無い場所で起動。サーバーは SIGTERM で 0、ジョブは完走で 0、中断で 75",
+          "en": "Started server.mjs and job.mjs away from node_modules: the server exits with 0 on SIGTERM, the job with 0 when done and 75 when interrupted"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:simulate",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "この章のモデルを朝の負荷の曲線で実行。Application Auto Scaling ではない",
+          "en": "Ran this chapter's model over the morning curve. It is not Application Auto Scaling"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:size --cpu 180 --memory 410",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "表と data/pricing の単価から 0.5 vCPU、1 GB、USD 17.99 と表示",
+          "en": "Printed 0.5 vCPU, 1 GB, USD 17.99 from the table and the prices in data/pricing"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:job:run --dry-run / fargate:exec --dry-run / fargate:image:push --dry-run",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AWS CLI と docker のコマンドを表示するだけ。フラグは AWS CLI 2.35.11 の help と照合",
+          "en": "Prints the AWS CLI and docker commands only. Flags checked against the help of AWS CLI 2.35.11"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:image:build f1",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Docker のデーモンが無いため未実行。イメージは一度もビルドしていない",
+          "en": "Not run: no Docker daemon. The image has never been built"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:image:push f1",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:infra:diff",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:job:run",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:exec",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "41",
+        "command": "vp run fargate:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "fargate-deploy",
+        "summary": {
+          "ja": "41章のスタックは一度もデプロイしていない。cdkd 0.296.28 が capacity provider strategy 付きのサービス、クラスターの CapacityProviders、EcsParameters を持つ Schedule、Cloud Control 経由の scaling policy 2 つを作れることは、ソースを読んだだけ。",
+          "en": "Chapter 41's stack has never been deployed. That cdkd 0.296.28 can create the service with a capacity provider strategy, the cluster's CapacityProviders, the Schedule with EcsParameters, and the two scaling policies through Cloud Control was read from source only."
+        },
+        "resume": {
+          "ja": "11章の VPC をデプロイし、fargate:infra:deploy、fargate:bundle、fargate:image:build f1、fargate:image:push f1、fargate:infra:deploy -c imageTag=f1 の順に実行して、ecs describe-services の capacityProviderStrategy と、application-autoscaling describe-scaling-policies を確かめる。終わったら destroy する。",
+          "en": "Deploy chapter 11's VPC, then run fargate:infra:deploy, fargate:bundle, fargate:image:build f1, fargate:image:push f1, and fargate:infra:deploy -c imageTag=f1 in that order; check capacityProviderStrategy in ecs describe-services and application-autoscaling describe-scaling-policies. Destroy afterwards."
+        }
+      },
+      {
+        "id": "fargate-spot-order",
+        "summary": {
+          "ja": "Spot の中断のとき、ALB からの登録解除と SIGTERM のどちらが先かを、読んだページから確定できなかった。本文とテストは、同時に届く最悪の場合を仮定している。Spot の東京の単価も Price List に無く、料金のページの表はスクリプトで埋まるため読めていない。",
+          "en": "Whether a Spot interruption deregisters the task from the load balancer before SIGTERM could not be settled from the pages read. The page and the tests assume the worst case, both at once. The Tokyo Spot price is not in the Price List, and the pricing page's table is filled in by script."
+        },
+        "resume": {
+          "ja": "Spot のタスクを動かし、aws ecs stop-task では再現できないので、EventBridge の ECS Task State Change（stopCode が SpotInterruption）と ALB のアクセスログの時刻を突き合わせる。単価は料金のページをブラウザで開いて読む。",
+          "en": "Run tasks on Spot. A stop-task call does not reproduce it, so compare the times of the ECS Task State Change event (stopCode SpotInterruption) with the load balancer's access log. Read the price from the pricing page in a browser."
+        }
+      },
+      {
+        "id": "fargate-scaling-model",
+        "summary": {
+          "ja": "target tracking のアラームが何分で動くか（モデルでは増やす側 3 分、減らす側 15 分）と、スケールインで一度に何個減るかは、一次情報に数値が無く、モデルの仮定のまま。",
+          "en": "How many minutes the target tracking alarms take (3 to scale out and 15 to scale in, in the model) and how many tasks one scale-in removes are not given as numbers in the primary sources; they remain assumptions of the model."
+        },
+        "resume": {
+          "ja": "デプロイ後に aws application-autoscaling describe-scaling-policies の Alarms からアラームの名前を取り、aws cloudwatch describe-alarms で EvaluationPeriods と Period を読み、src/model-defaults.ts の数値を置き換える。負荷をかけて describe-scaling-activities と比べる。",
+          "en": "After deploying, take the alarm names from Alarms in aws application-autoscaling describe-scaling-policies, read EvaluationPeriods and Period with aws cloudwatch describe-alarms, and replace the numbers in src/model-defaults.ts. Apply load and compare with describe-scaling-activities."
+        }
+      },
+      {
+        "id": "fargate-scheduler-input",
+        "summary": {
+          "ja": "Scheduler の ECS 用テンプレートターゲットで Target の Input が何として渡るか（RunTask の overrides なのか）を一次情報で確認できなかったため、サンプルは Input を使っていない。ジョブは予定時刻を受け取らない。",
+          "en": "What a Target's Input becomes for Scheduler's ECS templated target (the RunTask overrides or not) could not be confirmed from primary sources, so the example does not use Input. The job does not receive its scheduled time."
+        },
+        "resume": {
+          "ja": "デプロイ後に Input に containerOverrides の JSON を入れたスケジュールを 1 つ作り、起動したタスクの describe-tasks の overrides を見る。",
+          "en": "After deploying, create one schedule whose Input is a containerOverrides JSON and look at overrides in describe-tasks for the task it starts."
+        }
+      },
+      {
+        "id": "fargate-exec-session",
+        "summary": {
+          "ja": "ECS Exec は一度も実行していない。既定のログ設定（DEFAULT）でセッションの内容がタスクのロググループに出るのか、そのためにタスクロールへログの権限が要るのか、Nix の devShell の AWS CLI に Session Manager plugin が入っているのかは未確認。",
+          "en": "ECS Exec was never run. Whether the default logging (DEFAULT) writes the session to the task's log group, whether that needs log permissions on the task role, and whether the AWS CLI in the Nix devShell has the Session Manager plugin are not confirmed."
+        },
+        "resume": {
+          "ja": "-c exec=true でデプロイし、aws ecs describe-tasks で ExecuteCommandAgent が RUNNING になるのを待って fargate:exec を実行する。CloudTrail の ExecuteCommand とロググループを確かめたら、exec なしでデプロイし直す。",
+          "en": "Deploy with -c exec=true, wait until ExecuteCommandAgent is RUNNING in aws ecs describe-tasks, and run fargate:exec. Check CloudTrail's ExecuteCommand event and the log group, then deploy again without exec."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 41: Fargate --------------------------------------------\n      // The cheapest task size for a measured peak, from the documented table. Reads only this checkout.\n      \"fargate:size\": fresh(\"node scripts/size.ts\", { cwd: \"examples/41-fargate\" }),\n      // This chapter's model of target tracking over a hand-written load curve. Not Application Auto Scaling.\n      \"fargate:simulate\": fresh(\"node scripts/simulate.ts\", { cwd: \"examples/41-fargate\" }),\n      // The nightly job on plain Node. Ctrl-C interrupts it the way a Spot notice would.\n      \"dev:fargate:job\": fresh(\"node src/job-main.ts\", { cwd: \"examples/41-fargate\" }),\n      // Chapter 12's server and this chapter's job, one file each: all the image copies.\n      \"fargate:bundle\": fresh(\"node scripts/bundle.ts\", { cwd: \"examples/41-fargate\" }),\n      \"fargate:bundle:check\": fresh(\"node scripts/check-bundle.ts\", {\n        cwd: \"examples/41-fargate\",\n        dependsOn: [\"fargate:bundle\"],\n      }),\n      // Needs a running Docker daemon, which the Nix shell does not provide.\n      \"fargate:image:build\": fresh(\"node scripts/image.ts build\", {\n        cwd: \"examples/41-fargate\",\n        dependsOn: [\"fargate:bundle\"],\n      }),\n      \"fargate:image:push\": live(\"node --env-file-if-exists=../../.env scripts/image.ts push\", {\n        cwd: \"examples/41-fargate\",\n      }),\n      // BILLED BY THE HOUR once deployed with -c imageTag=...: a load balancer and two Fargate tasks.\n      ...infra(\"fargate\", \"examples/41-fargate\", \"AihFargate\"),\n      // Starts the job once, outside its schedule. Starts a billed task.\n      \"fargate:job:run\": live(\"node --env-file-if-exists=../../.env scripts/task.ts run\", {\n        cwd: \"examples/41-fargate\",\n      }),\n      // A shell in a running task. Only works on a stack deployed with -c exec=true.\n      \"fargate:exec\": live(\"node --env-file-if-exists=../../.env scripts/task.ts exec\", {\n        cwd: \"examples/41-fargate\",\n      }),",
+    "synth": ["fargate:infra:synth"],
+    "checkAll": ["fargate:bundle:check"],
+    "typecheck": ["examples/41-fargate"]
+  }
+}

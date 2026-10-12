@@ -1,0 +1,1263 @@
+{
+  "chapterId": "40",
+  "manifest": {
+    "id": "40",
+    "slug": "disaster-recovery",
+    "title": {
+      "ja": "Disaster Recovery: Elastic Disaster Recovery（DRS）、復旧訓練、failback",
+      "en": "Disaster Recovery: Elastic Disaster Recovery (DRS), Drills, and Failback"
+    },
+    "prerequisites": ["11", "22", "23"],
+    "services": ["Elastic Disaster Recovery", "EC2", "EBS", "EventBridge"],
+    "samplePath": "examples/40-disaster-recovery",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "drs-what-is",
+      "drs-initialization",
+      "drs-regions",
+      "drs-network-requirements",
+      "drs-network-preparations",
+      "drs-network-diagrams",
+      "drs-private-install",
+      "drs-privatelink",
+      "drs-point-in-time",
+      "drs-replication-faq",
+      "drs-concepts-faq",
+      "drs-volumes",
+      "drs-data-routing",
+      "drs-security-group",
+      "drs-supported-linux",
+      "drs-linux-agent",
+      "drs-credentials",
+      "drs-instance-profile",
+      "drs-ec2-instance-policy",
+      "drs-add-from-ec2",
+      "drs-launch-template",
+      "drs-preparing",
+      "drs-failback-overview",
+      "drs-failover",
+      "drs-cross-az",
+      "drs-cross-region",
+      "drs-failback",
+      "drs-launch-into",
+      "drs-command-menus",
+      "drs-best-practices",
+      "drs-source-networks",
+      "drs-post-launch",
+      "drs-recovery-plans",
+      "drs-events",
+      "drs-metrics",
+      "drs-recovery-dashboard",
+      "drs-quotas",
+      "drs-api-start-recovery",
+      "drs-api-disconnect",
+      "drs-api-data-replication-info",
+      "drs-sdk",
+      "drs-pricing",
+      "aws-price-list-drs",
+      "aws-price-list-ec2-csv",
+      "drs-faqs",
+      "backup-plan-retention",
+      "cfn-resource-schemas",
+      "aws-cdk-lib-drs",
+      "cdkd-source-drs",
+      "cloudflare-how-workers-works",
+      "vercel-function-regions",
+      "al2023-on-ec2",
+      "ebs-snapshots",
+      "vpc-interface-endpoints"
+    ]
+  },
+  "sources": [
+    {
+      "id": "drs-what-is",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html",
+      "title": "What is Elastic Disaster Recovery?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Source servers are replicated to a staging area subnet in your account, in the Region you select",
+        "Drill and recovery instances are launched from the most up-to-date state or a previous point in time",
+        "After recovery you can keep applications on AWS or replicate back to the primary site and fail back"
+      ]
+    },
+    {
+      "id": "drs-initialization",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/getting-started-initializing.html",
+      "title": "Elastic Disaster Recovery initialization and permissions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The service must be initialized in each Region before use; the console does it when the default replication settings are saved",
+        "Initialization creates AWSServiceRoleForElasticDisasterRecovery and the Replication Server, Conversion Server, Recovery Instance, Agent, Failback, and RecoveryInstanceWithLaunchActions roles",
+        "Initialization through the API is `aws drs initialize-service`, after which the replication settings template still has to be created"
+      ]
+    },
+    {
+      "id": "drs-regions",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/supported-regions.html",
+      "title": "AWS Elastic Disaster Recovery supported AWS Regions",
+      "checkedAt": "2026-10-13",
+      "supports": ["ap-northeast-1 (Tokyo) and ap-northeast-3 (Osaka) are supported"]
+    },
+    {
+      "id": "drs-network-requirements",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/Network-Requirements.html",
+      "title": "Elastic Disaster Recovery network requirements",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Source servers talk to drs.<region>.amazonaws.com on TCP 443, continuously",
+        "Source servers send replicated data to the replication servers on TCP 1500",
+        "The staging area subnet needs the DRS endpoint on TCP 443, S3, and outbound access to the EC2 endpoint of its Region",
+        "The S3 buckets to allow include aws-elastic-disaster-recovery-<REGION> and the Amazon Linux 2023 repository bucket, because replication servers run Amazon Linux 2023",
+        "Replication uses TLS 1.2 from the agent to the replication server"
+      ]
+    },
+    {
+      "id": "drs-network-preparations",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/Network-Settings-Preparations.html",
+      "title": "Elastic Disaster Recovery network setting preparations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The staging area subnet is named in the replication template; a dedicated subnet is the stated best practice",
+        "Drill and recovery instances launch in the subnet named in each source server's EC2 launch template, which is created when the server is added"
+      ]
+    },
+    {
+      "id": "drs-network-diagrams",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/Network-diagrams.html",
+      "title": "Elastic Disaster Recovery network diagrams",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Supported sources are on premises, other clouds, and EC2 across Regions or across Availability Zones",
+        "Cross-Region replication is recommended over cross-AZ for protection against Region-level events"
+      ]
+    },
+    {
+      "id": "drs-private-install",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/installing-agent-blocked.html",
+      "title": "Installing the agent on a secured network",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An interface VPC endpoint for DRS carries management traffic only; replication data goes directly from the source to the replication servers",
+        "A staging area in a private subnet also needs an EC2 interface endpoint and an S3 gateway endpoint",
+        "The installer takes --endpoint and --s3-endpoint for endpoint-specific DNS names"
+      ],
+      "note": "The page describes an on-premises source reaching the endpoints over VPN or Direct Connect. That an agent inside the VPC finds the endpoint through private DNS without --endpoint follows from the VPC documentation, and was not tried."
+    },
+    {
+      "id": "drs-privatelink",
+      "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html",
+      "title": "AWS services that integrate with AWS PrivateLink",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Elastic Disaster Recovery has the endpoint service name com.amazonaws.region.drs"
+      ]
+    },
+    {
+      "id": "drs-point-in-time",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/point-in-time.html",
+      "title": "Point in time (PIT) policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Snapshots can be kept for 1 to 365 days",
+        "The policy has exactly three rules; MINUTE (every 10, kept 60) and HOUR (every 1, kept 24) are fixed, and only the DAY rule's retention is configurable"
+      ]
+    },
+    {
+      "id": "drs-replication-faq",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/Replication-Related-FAQ.html",
+      "title": "Replication related FAQ",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default snapshot retention is 7 days",
+        "A t3.small replication server is provisioned by default; the typical ratio of volumes to replication servers is 15:1",
+        "Replication is crash consistent",
+        "Replication servers are recycled approximately every 14 days",
+        "Snapshots no longer used, or past the retention, are deleted automatically"
+      ]
+    },
+    {
+      "id": "drs-concepts-faq",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/CloudEndure-Concepts.html",
+      "title": "Elastic Disaster Recovery concepts FAQ",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The guide states an RPO typically in the sub-second range and an RTO typically ranging between 5 and 20 minutes",
+        "RPO is measured to the latest crash-consistent point copied to the staging area; data still in memory on the source is not there",
+        "The RTO depends on the operating system's boot time",
+        "\"Use most recent data\" needs a connection to the source server and may time out when it is offline"
+      ]
+    },
+    {
+      "id": "drs-volumes",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/volumes-drs.html",
+      "title": "Amazon EBS volumes (replication settings)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default disks of 125 GiB or less use Magnetic HDD staging volumes; the volume type setting affects larger disks",
+        "Changing the encryption option after replication has started restarts replication from the beginning"
+      ]
+    },
+    {
+      "id": "drs-data-routing",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/data-routing.html",
+      "title": "Data routing and throttling",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default data goes to the replication servers' automatically assigned public IPv4 addresses",
+        "With the private IP option, replication uses an existing private connection such as VPC peering"
+      ]
+    },
+    {
+      "id": "drs-security-group",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/drs-security-group.html",
+      "title": "Elastic Disaster Recovery security groups",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default DRS security group opens inbound TCP 1500 and is monitored and repaired by the service; using it is the recommended setting"
+      ]
+    },
+    {
+      "id": "drs-supported-linux",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/Supported-Operating-Systems-Linux.html",
+      "title": "AWS DRS supported Linux operating systems",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon Linux 2023 is supported up to kernel version 6.12",
+        "arm64 is supported only for Graviton-based EC2 source instances that recover to AWS"
+      ]
+    },
+    {
+      "id": "drs-linux-agent",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/linux-agent.html",
+      "title": "Installing the AWS Replication Agent on Linux",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The installer is architecture-specific and is downloaded from aws-elastic-disaster-recovery-<REGION>; the arm64 one is under latest/linux_arm64/",
+        "The installer runs as root, creates the aws-replication user, and adds it to sudoers",
+        "The root disk is always replicated; whole disks are replicated, not partitions"
+      ]
+    },
+    {
+      "id": "drs-credentials",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/credentials.html",
+      "title": "Generating the required AWS credentials",
+      "checkedAt": "2026-10-13",
+      "supports": ["Temporary credentials from STS are the recommended way to install the agent"]
+    },
+    {
+      "id": "drs-instance-profile",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/agent-installations-in-aws.html",
+      "title": "Using an instance profile for agent installation in AWS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On an EC2 instance no credentials have to be generated: an instance profile whose role has AWSElasticDisasterRecoveryEc2InstancePolicy is enough"
+      ]
+    },
+    {
+      "id": "drs-ec2-instance-policy",
+      "url": "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSElasticDisasterRecoveryEc2InstancePolicy.html",
+      "title": "AWSElasticDisasterRecoveryEc2InstancePolicy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Version v5 has five statements: installation and registration actions on *, drs:TagResource on create for source servers and source networks, ten agent actions on source-server/*, and sts:AssumeRole on DRSCrossAccountAgentAuthorizedRole_*"
+      ]
+    },
+    {
+      "id": "drs-add-from-ec2",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/adding-servers-from-aws-instances.html",
+      "title": "Adding instances from the Amazon EC2 Console",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The console installs the agent through Systems Manager on instances that have AmazonSSMManagedInstanceCore and AWSElasticDisasterRecoveryEc2InstancePolicy",
+        "Volumes that are offline, unmounted, or unformatted are not replicated",
+        "The target Region may be the Region the instance is in"
+      ]
+    },
+    {
+      "id": "drs-launch-template",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/ec2-key-considerations.html",
+      "title": "Key considerations for EC2 launch templates",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Without a default VPC the subnet has to be set in the launch template, or the launch fails",
+        "For an arm64 source server the instance type has to be a Graviton type; the launch fails on a mismatch",
+        "The launch template is deleted when the source server is disconnected"
+      ]
+    },
+    {
+      "id": "drs-preparing",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/preparing-failover.html",
+      "title": "Preparing for recovery",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A recovery drill is a non-disruptive test that performs the same steps as a recovery, with the same launch settings and snapshots",
+        "Drills are recommended at least quarterly",
+        "A drill can be performed once the initial sync has completed, even in lag or stall status",
+        "`aws drs start-recovery --source-servers ... --is-drill` starts a drill; `aws drs terminate-recovery-instances` cleans up",
+        "Drill instances are billed until deleted, and are cleaned up when the same server is drilled again"
+      ]
+    },
+    {
+      "id": "drs-failback-overview",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/failback.html",
+      "title": "Using Elastic Disaster Recovery for recovery and failback",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Recovery launches instances; failover, the redirection of traffic, is performed by you outside the service",
+        "For an EC2 source in the same account, failback is reversed replication started on the recovery instance"
+      ]
+    },
+    {
+      "id": "drs-failover",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/failback-preparing-failover.html",
+      "title": "Performing a failover with Elastic Disaster Recovery",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "After the recovery instances are launched, you redirect traffic to them yourself",
+        "Launching a new recovery instance from the same source server cleans up the previous recovery instances"
+      ]
+    },
+    {
+      "id": "drs-cross-az",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/failback-failover-cross-availability-zone-failback.html",
+      "title": "Cross Availability Zone recovery",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replication settings and the launch template name a subnet in an Availability Zone other than the instance's",
+        "Protecting the recovered instance starts replication from it back to the original zone, as a rescan and not a full sync, and stops replication of the original instance"
+      ]
+    },
+    {
+      "id": "drs-cross-region",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/failback-failover-region-region.html",
+      "title": "Performing a cross-Region failback",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Reversed replication copies the recovery instance's data back and creates a source server in the original Region",
+        "Stopping replication of the original source deletes all its points in time",
+        "Traffic redirection is not done by DRS; the guide suggests Amazon Route 53",
+        "Cross-Region replication, failover, and failback add data transfer and replication resource costs not in the pricing examples"
+      ]
+    },
+    {
+      "id": "drs-failback",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/failback-performing-main.html",
+      "title": "Performing a failback with Elastic Disaster Recovery",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Data written to the failover systems has to be replicated back before traffic is redirected",
+        "arm64 servers support failback within AWS only"
+      ]
+    },
+    {
+      "id": "drs-launch-into",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/default-drs-launch-into-source-instance.html",
+      "title": "Launch into source instance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The instance to launch into needs the tag AWSDRS=AllowLaunchingIntoThisInstance and the same architecture"
+      ]
+    },
+    {
+      "id": "drs-command-menus",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/command-menus.html",
+      "title": "Source servers page command menus",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Disconnect from AWS uninstalls the agent and stops replication; only disconnected servers can be deleted",
+        "Stop replication ends the charges for replication and the staging area, and deletes all saved snapshots"
+      ]
+    },
+    {
+      "id": "drs-best-practices",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/best_practices_drs.html",
+      "title": "Best practices",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Source servers are billed by DRS and consume replication resources until Disconnect from AWS is performed",
+        "Disconnecting discards the points in time of the source server"
+      ]
+    },
+    {
+      "id": "drs-source-networks",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/source-networks.html",
+      "title": "Source networks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Network replication copies the configuration of an in-AWS VPC and recovers it as a CloudFormation stack"
+      ]
+    },
+    {
+      "id": "drs-post-launch",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/post-launch-action-settings-overview.html",
+      "title": "Configuring the default post-launch actions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Post-launch actions are SSM command or automation documents run after a launch; predefined ones verify HTTP responses, connectivity, disk space, and tags"
+      ]
+    },
+    {
+      "id": "drs-recovery-plans",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/recovery-plans.html",
+      "title": "Orchestrating recovery with recovery plans",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A recovery plan launches groups of source servers in ordered steps, with optional waits, as a drill or as a recovery"
+      ]
+    },
+    {
+      "id": "drs-events",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/monitoring-event-bridge.html",
+      "title": "Alarm events and EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Events have source aws.drs and the detail types DRS Source Server Launch Result, DRS Source Server Data Replication Stalled Change, DRS Recovery Instance Failback State Change, and DRS PIT Snapshot Taken",
+        "The launch result carries state, job-id, and is-drill as the strings TRUE or FALSE"
+      ]
+    },
+    {
+      "id": "drs-metrics",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/monitoring-event-bridge-metrics.html",
+      "title": "CloudWatch Metrics for DRS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DRS publishes LagDuration (the age of the latest consistent snapshot, in seconds), Backlog (bytes yet to be synced), and DurationSinceLastSuccessfulRecoveryLaunch"
+      ]
+    },
+    {
+      "id": "drs-recovery-dashboard",
+      "url": "https://docs.aws.amazon.com/drs/latest/userguide/recovery-dashboard.html",
+      "title": "Recovery dashboard",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When replication is stalled, the dashboard shows the replication initiation steps and where the error occurred",
+        "Lag is how far behind the source a recovery instance launched now would be"
+      ]
+    },
+    {
+      "id": "drs-quotas",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/drs.html",
+      "title": "AWS Elastic Disaster Recovery endpoints and quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "300 replicating source servers per account and Region, not adjustable; 20 concurrent jobs; one job per source server at a time; one launch configuration template per account and Region"
+      ]
+    },
+    {
+      "id": "drs-api-start-recovery",
+      "url": "https://docs.aws.amazon.com/drs/latest/APIReference/API_StartRecovery.html",
+      "title": "StartRecovery",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "isDrill is a boolean; each source server may name a recoverySnapshotID or get an on-demand snapshot"
+      ]
+    },
+    {
+      "id": "drs-api-disconnect",
+      "url": "https://docs.aws.amazon.com/drs/latest/APIReference/API_DisconnectSourceServer.html",
+      "title": "DisconnectSourceServer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replication stops immediately and the replication resources are deleted within 90 minutes",
+        "A source server that has a recovery instance cannot be disconnected"
+      ]
+    },
+    {
+      "id": "drs-api-data-replication-info",
+      "url": "https://docs.aws.amazon.com/drs/latest/APIReference/API_DataReplicationInfo.html",
+      "title": "DataReplicationInfo",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "lagDuration is a string of 1 to 64 characters with no stated format",
+        "dataReplicationState is one of STOPPED, INITIATING, INITIAL_SYNC, BACKLOG, CREATING_SNAPSHOT, CONTINUOUS, PAUSED, RESCAN, STALLED, DISCONNECTED"
+      ]
+    },
+    {
+      "id": "drs-sdk",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-drs/v/3.1149.0",
+      "title": "@aws-sdk/client-drs 3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Member names and enum values of SourceServer, RecoverySnapshot, Job, RecoveryInstance, and the requests of StartRecovery, TerminateRecoveryInstances, CreateReplicationConfigurationTemplate, and CreateLaunchConfigurationTemplate"
+      ],
+      "note": "Read from the type definitions in the npm tarball."
+    },
+    {
+      "id": "drs-pricing",
+      "url": "https://aws.amazon.com/disaster-recovery/pricing/",
+      "title": "AWS Elastic Disaster Recovery pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A flat hourly fee per replicating source server, whatever the number of disks, drills, or the Region",
+        "Staging disks, snapshots, replication servers, and launched instances are billed by EBS and EC2 on top",
+        "One base snapshot per source disk, the size of that disk, plus incremental snapshots for the retention",
+        "A conversion server runs for several minutes per launch and generally costs less than USD 0.05"
+      ]
+    },
+    {
+      "id": "aws-price-list-drs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSElasticDisasterRecovery/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Elastic Disaster Recovery, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": ["APN1-DRS-Replication: USD 0.028 per replication hour"]
+    },
+    {
+      "id": "aws-price-list-ec2-csv",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "title": "AWS Price List: Amazon EC2, ap-northeast-1 (CSV)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-BoxUsage:t3.small, Linux, shared tenancy: USD 0.0272 per hour",
+        "APN1-EBS:VolumeUsage (Magnetic): USD 0.08 per GB-month; APN1-EBS:VolumeIOUsage: USD 0.08 per million I/O requests"
+      ],
+      "note": "The same offer file as the JSON the other chapters cite, publication 2026-10-09T20:31:34Z, read as CSV and filtered by usage type."
+    },
+    {
+      "id": "drs-faqs",
+      "url": "https://aws.amazon.com/disaster-recovery/faqs/",
+      "title": "AWS Elastic Disaster Recovery FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Backup and disaster recovery are described as complementary; backups are used for long-term retention"
+      ]
+    },
+    {
+      "id": "backup-plan-retention",
+      "url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/plan-options-and-configuration.html",
+      "title": "AWS Backup: backup plan options and configuration",
+      "checkedAt": "2026-10-13",
+      "supports": ["Snapshot backups can be retained from 1 day to 100 years, or indefinitely"]
+    },
+    {
+      "id": "cfn-resource-schemas",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-type-schemas.html",
+      "title": "CloudFormation resource provider schemas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudFormation publishes one zip of resource provider schemas per Region, and says to check a resource's availability in a Region against that Region's schemas"
+      ],
+      "note": "On 2026-10-13 the zips for us-east-1 and us-west-2 contained aws-drs-launchconfigurationtemplate, aws-drs-recoveryplan, aws-drs-replicationconfigurationtemplate, and aws-drs-sourcenetwork. The zips for ap-northeast-1, ap-northeast-3, us-east-2, eu-west-1, and ap-southeast-1 contained no aws-drs file. The Template Reference's table of contents had no AWS::DRS section."
+    },
+    {
+      "id": "aws-cdk-lib-drs",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-drs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The module has three L1 constructs: CfnReplicationConfigurationTemplate, CfnLaunchConfigurationTemplate, and CfnSourceNetwork"
+      ],
+      "note": "Read from the type definitions in the installed package."
+    },
+    {
+      "id": "cdkd-source-drs",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "cdkd 0.296.28: provider registry",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers exist for AWS::EC2::SecurityGroup, AWS::Events::Rule, AWS::IAM::ManagedPolicy, AWS::IAM::Policy, AWS::IAM::Role, AWS::Lambda::Function, AWS::Lambda::Permission, and AWS::Logs::LogGroup",
+        "There is none for AWS::EC2::VPCEndpoint, AWS::EC2::SecurityGroupEgress, or any AWS::DRS type, which therefore go through Cloud Control API"
+      ],
+      "note": "Read from the bundled JavaScript of the installed package."
+    },
+    {
+      "id": "cloudflare-how-workers-works",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "How Workers works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers run on Cloudflare's global network, on isolates rather than a virtual machine per function, and a request is handled by the data center that receives it"
+      ]
+    },
+    {
+      "id": "vercel-function-regions",
+      "url": "https://vercel.com/docs/functions/configuring-functions/region",
+      "title": "Configuring regions for Vercel Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Functions run in the regions set for the project, with multiple availability zone redundancy by default",
+        "Enterprise teams can set functionFailoverRegions for the Node.js runtime"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "source-server",
+      "ja": "source server",
+      "en": "source server",
+      "firstUse": "40",
+      "definition": {
+        "ja": "Elastic Disaster Recovery が保護しているサーバー 1 台。agent を入れた時点で登録され、切り離すまで時間単位で課金される。",
+        "en": "One server protected by Elastic Disaster Recovery. It is registered when the agent is installed and billed by the hour until it is disconnected."
+      }
+    },
+    {
+      "id": "replication-agent",
+      "ja": "AWS Replication Agent",
+      "en": "AWS Replication Agent",
+      "firstUse": "40",
+      "definition": {
+        "ja": "source server の中で動き、disk への書き込みを block 単位で replication server に送り続けるプログラム。",
+        "en": "The program on a source server that keeps sending disk writes, block by block, to a replication server."
+      }
+    },
+    {
+      "id": "staging-area",
+      "ja": "staging area",
+      "en": "staging area",
+      "firstUse": "40",
+      "definition": {
+        "ja": "複製先のリージョンで、replication server と複製された disk が置かれるサブネット。復旧するまでは、ここに起動済みのサーバーは無い。",
+        "en": "The subnet in the recovery Region that holds the replication servers and the replicated disks. Until a recovery, no launched copy of the server exists there."
+      }
+    },
+    {
+      "id": "replication-server",
+      "ja": "replication server",
+      "en": "replication server",
+      "firstUse": "40",
+      "definition": {
+        "ja": "staging area で agent からデータを受け取り、staging 用の volume に書く EC2 インスタンス。サービスが起動し、入れ替える。",
+        "en": "The EC2 instance in the staging area that receives data from agents and writes it to staging volumes. The service launches and replaces it."
+      }
+    },
+    {
+      "id": "recovery-instance",
+      "ja": "recovery instance",
+      "en": "recovery instance",
+      "firstUse": "40",
+      "definition": {
+        "ja": "選んだ時点の snapshot から起動した EC2 インスタンス。訓練で起動したものは drill instance と呼ぶ。",
+        "en": "An EC2 instance launched from the snapshot of a chosen point in time. One launched for a test is a drill instance."
+      }
+    },
+    {
+      "id": "recovery-drill",
+      "ja": "復旧訓練（recovery drill）",
+      "en": "recovery drill",
+      "firstUse": "40",
+      "definition": {
+        "ja": "本番に触れずに、復旧と同じ手順でインスタンスを起動して確かめること。確かめ終えたら終了する。",
+        "en": "Launching instances by the same steps as a recovery, without touching production, to check that it works. They are terminated afterwards."
+      }
+    },
+    {
+      "id": "failover",
+      "ja": "failover",
+      "en": "failover",
+      "firstUse": "40",
+      "definition": {
+        "ja": "利用者の通信の宛先を、元のシステムから復旧先に切り替えること。Elastic Disaster Recovery の外で、自分で行う。",
+        "en": "Redirecting clients from the primary system to the recovered one. It happens outside Elastic Disaster Recovery, and you do it."
+      }
+    },
+    {
+      "id": "failback",
+      "ja": "failback",
+      "en": "failback",
+      "firstUse": "40",
+      "definition": {
+        "ja": "復旧先で増えたデータを元の場所へ複製し直し、通信の宛先を戻すこと。",
+        "en": "Replicating what changed on the recovery side back to the original site, and redirecting clients there again."
+      }
+    },
+    {
+      "id": "split-brain",
+      "ja": "split brain",
+      "en": "split brain",
+      "firstUse": "40",
+      "definition": {
+        "ja": "2 つの場所が、どちらも自分が本番だと思って書き込みを受け付けている状態。片方の書き込みは、あとで必ず捨てることになる。",
+        "en": "Two sites each believing they are production and accepting writes. One side's writes will have to be thrown away."
+      }
+    },
+    {
+      "id": "crash-consistent",
+      "ja": "crash consistent",
+      "en": "crash consistent",
+      "firstUse": "40",
+      "definition": {
+        "ja": "電源が突然切れた瞬間の disk と同じ状態。メモリにあって disk に書かれていなかったデータは含まれない。",
+        "en": "The state a disk would be in had the power been cut at that instant. Data that was in memory and not yet written is not in it."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "40.what",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "40.cost",
+      "sources": [
+        "examples/40-disaster-recovery/src/cost.ts",
+        "examples/40-disaster-recovery/test/pricing.test.ts",
+        "examples/40-disaster-recovery/scripts/plan.ts",
+        "data/pricing"
+      ],
+      "tasks": ["dr:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.pieces",
+      "sources": [
+        "examples/40-disaster-recovery/infra/lib/dr-stack.ts",
+        "examples/40-disaster-recovery/src/config.ts"
+      ],
+      "tasks": ["dr:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type"],
+      "verification": "local"
+    },
+    {
+      "id": "40.when-not",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "40.source",
+      "sources": [
+        "examples/40-disaster-recovery/src/source.ts",
+        "examples/40-disaster-recovery/test/plan.test.ts"
+      ],
+      "tasks": ["dr:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.network",
+      "sources": [
+        "examples/40-disaster-recovery/src/network.ts",
+        "examples/40-disaster-recovery/infra/lib/dr-stack.ts",
+        "examples/40-disaster-recovery/test/plan.test.ts"
+      ],
+      "tasks": ["dr:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "40.agent",
+      "sources": [
+        "examples/40-disaster-recovery/infra/lib/dr-stack.ts",
+        "examples/40-disaster-recovery/infra/test/dr-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.declarable",
+      "sources": [
+        "examples/40-disaster-recovery/src/templates.ts",
+        "examples/40-disaster-recovery/infra/lib/dr-stack.ts",
+        "examples/40-disaster-recovery/infra/test/dr-stack.test.ts"
+      ],
+      "tasks": ["dr:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "40.planner",
+      "sources": [
+        "examples/40-disaster-recovery/src/drill.ts",
+        "examples/40-disaster-recovery/src/drs.ts",
+        "examples/40-disaster-recovery/src/adapter.ts",
+        "examples/40-disaster-recovery/test/drill.test.ts",
+        "examples/40-disaster-recovery/test/billing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.order",
+      "sources": [
+        "examples/40-disaster-recovery/src/order.ts",
+        "examples/40-disaster-recovery/test/order.test.ts"
+      ],
+      "tasks": ["test:unit", "dr:demo"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "40.events",
+      "sources": [
+        "examples/40-disaster-recovery/src/events.ts",
+        "examples/40-disaster-recovery/src/events-lambda.ts",
+        "examples/40-disaster-recovery/test/events.test.ts",
+        "examples/40-disaster-recovery/test/fixtures.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.local",
+      "sources": [
+        "examples/40-disaster-recovery/scripts/demo.ts",
+        "examples/40-disaster-recovery/scripts/plan.ts",
+        "examples/40-disaster-recovery/test"
+      ],
+      "tasks": ["dr:demo", "dr:plan", "test:unit", "dr:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.setup",
+      "sources": [
+        "examples/40-disaster-recovery/infra/bin/app.ts",
+        "examples/40-disaster-recovery/src/templates.ts"
+      ],
+      "tasks": ["dr:infra:deploy", "dr:plan"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "40.drill",
+      "sources": [
+        "examples/40-disaster-recovery/scripts/dr.ts",
+        "examples/40-disaster-recovery/src/drill.ts",
+        "examples/40-disaster-recovery/drill/record.template.json"
+      ],
+      "tasks": ["dr:status", "dr:drill", "dr:job", "dr:terminate"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "40.failover",
+      "sources": [
+        "examples/40-disaster-recovery/src/order.ts",
+        "examples/40-disaster-recovery/scripts/dr.ts"
+      ],
+      "tasks": ["dr:status"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "40.objectives",
+      "sources": ["examples/40-disaster-recovery/src/drill.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.distributed",
+      "sources": [
+        "examples/40-disaster-recovery/src/sites.ts",
+        "examples/40-disaster-recovery/test/sites.test.ts",
+        "examples/40-disaster-recovery/scripts/demo.ts"
+      ],
+      "tasks": ["test:unit", "dr:demo"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "40.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "40.cleanup",
+      "sources": [
+        "examples/40-disaster-recovery/src/billing.ts",
+        "examples/40-disaster-recovery/scripts/dr.ts",
+        "examples/40-disaster-recovery/test/billing.test.ts"
+      ],
+      "tasks": ["dr:billed", "dr:terminate", "dr:infra:destroy"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "drs.source-server.hour",
+      "offerCode": "AWSElasticDisasterRecovery",
+      "region": "ap-northeast-1",
+      "sku": "WUXZ9J67FGEE4Q5H",
+      "usageType": "APN1-DRS-Replication",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Replication-hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0280000000",
+          "description": "Normal-Replication Replication-hour in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSElasticDisasterRecovery/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.t3-small.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "7MJR4RD25PP93ENY",
+      "usageType": "APN1-BoxUsage:t3.small",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0272000000",
+          "description": "$0.0272 per On Demand Linux t3.small Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ebs.magnetic.storage",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "H3DK473URKC757VE",
+      "usageType": "APN1-EBS:VolumeUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0800000000",
+          "description": "$0.08 per GB-month of Magnetic provisioned storage - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "drs.source-server.hour",
+      "reason": "Neither the pricing page nor the Price List mentions a free allowance for Elastic Disaster Recovery. Whether Free Tier credits apply to an account was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "ec2.t3-small.linux.hour",
+      "reason": "Free Tier eligibility of the replication server was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "ebs.magnetic.storage",
+      "reason": "Free Tier eligibility of staging disks was not confirmed; nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "dr-private-idle",
+      "chapter": "40",
+      "title": {
+        "ja": "DRS: private subnet で 1 台を 1 か月保護したまま",
+        "en": "DRS: one server protected for a month, private subnets"
+      },
+      "assumptions": {
+        "ja": [
+          "23章のインスタンス 1 台を source server として保護したまま、訓練はしない 730 時間。23章と 11章の料金は含まない",
+          "replication server は既定の t3.small が 1 台。staging の disk は、source の disk と同じ大きさ（root 8 GiB は 23章の仮定、data 8 GiB）で、125 GiB 以下なので magnetic",
+          "snapshot は、料金ページの「source の disk と同じ大きさの base snapshot」をそのまま 16 GB として計上。増分の snapshot は変更量しだいで、未算入",
+          "未算入で金額が不明なもの: replication server 自身の root volume、magnetic volume の I/O リクエスト、endpoint のデータ処理、AZ をまたぐデータ転送、t3 の余剰 CPU credit",
+          "staging は 2 つ目の AZ の private subnet。この章の stack が interface endpoint を 2 つ（drs、ec2）、その AZ にだけ置く"
+        ],
+        "en": [
+          "One source server, the chapter 23 instance, protected for 730 hours with no drill. Chapter 23 and chapter 11 are billed separately",
+          "One replication server of the default type, t3.small. Staging disks match the source disks (8 GiB root as chapter 23 assumes, 8 GiB data) and are magnetic because they are under 125 GiB",
+          "Snapshots: the pricing page's \"one base snapshot the size of each source disk\", taken as 16 GB. Incremental snapshots depend on the change rate and are not included",
+          "Not included, amount unknown: the replication server's own root volume, I/O requests on magnetic volumes, endpoint data processing, data transfer between zones, surplus CPU credits of the t3",
+          "The staging area is the private subnet of the second zone. This chapter's stack adds two interface endpoints (drs, ec2) in that zone only"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "drs.source-server.hour",
+          "quantity": 730,
+          "basis": "1 replicating source server x 730 hours"
+        },
+        {
+          "priceId": "ec2.t3-small.linux.hour",
+          "quantity": 730,
+          "basis": "1 t3.small replication server x 730 hours"
+        },
+        {
+          "priceId": "ebs.magnetic.storage",
+          "quantity": 16,
+          "basis": "16 GiB of staging disks (magnetic), 730 of 730 hours"
+        },
+        {
+          "priceId": "ebs.snapshot.storage",
+          "quantity": 16,
+          "basis": "base snapshots the size of the source disks, 16 GB, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 1460,
+          "basis": "2 interface endpoints (drs, ec2) x 1 zone x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "dr-public-idle",
+      "chapter": "40",
+      "title": {
+        "ja": "DRS: public subnet で 1 台を 1 か月保護したまま",
+        "en": "DRS: one server protected for a month, public subnets"
+      },
+      "assumptions": {
+        "ja": [
+          "23章のインスタンス 1 台を source server として保護したまま、訓練はしない 730 時間。23章と 11章の料金は含まない",
+          "replication server は既定の t3.small が 1 台。staging の disk は、source の disk と同じ大きさ（root 8 GiB は 23章の仮定、data 8 GiB）で、125 GiB 以下なので magnetic",
+          "snapshot は、料金ページの「source の disk と同じ大きさの base snapshot」をそのまま 16 GB として計上。増分の snapshot は変更量しだいで、未算入",
+          "未算入で金額が不明なもの: replication server 自身の root volume、magnetic volume の I/O リクエスト、endpoint のデータ処理、AZ をまたぐデータ転送、t3 の余剰 CPU credit",
+          "`-c placement=public`。endpoint は作らず、replication server が public IPv4 address を 1 つ持つ"
+        ],
+        "en": [
+          "One source server, the chapter 23 instance, protected for 730 hours with no drill. Chapter 23 and chapter 11 are billed separately",
+          "One replication server of the default type, t3.small. Staging disks match the source disks (8 GiB root as chapter 23 assumes, 8 GiB data) and are magnetic because they are under 125 GiB",
+          "Snapshots: the pricing page's \"one base snapshot the size of each source disk\", taken as 16 GB. Incremental snapshots depend on the change rate and are not included",
+          "Not included, amount unknown: the replication server's own root volume, I/O requests on magnetic volumes, endpoint data processing, data transfer between zones, surplus CPU credits of the t3",
+          "`-c placement=public`. No endpoints; the replication server holds one public IPv4 address"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "drs.source-server.hour",
+          "quantity": 730,
+          "basis": "1 replicating source server x 730 hours"
+        },
+        {
+          "priceId": "ec2.t3-small.linux.hour",
+          "quantity": 730,
+          "basis": "1 t3.small replication server x 730 hours"
+        },
+        {
+          "priceId": "ebs.magnetic.storage",
+          "quantity": 16,
+          "basis": "16 GiB of staging disks (magnetic), 730 of 730 hours"
+        },
+        {
+          "priceId": "ebs.snapshot.storage",
+          "quantity": 16,
+          "basis": "base snapshots the size of the source disks, 16 GB, 730 of 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 public IPv4 address on the replication server x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "dr-drill-2h",
+      "chapter": "40",
+      "title": {
+        "ja": "DRS: 訓練のインスタンスを 2 時間置く",
+        "en": "DRS: a drill instance kept for two hours"
+      },
+      "assumptions": {
+        "ja": [
+          "t4g.micro の訓練用インスタンス 1 台と、16 GiB の volume を 2 時間。volume の種類は launch template が決めるので、gp3 は仮定",
+          "launch のたびに数分動く conversion server は未算入。料金ページは 1 回あたりおおむね USD 0.05 未満としている"
+        ],
+        "en": [
+          "One t4g.micro drill instance and 16 GiB of volumes for two hours. The launch template decides the volume type; gp3 is an assumption",
+          "The conversion server that runs for a few minutes per launch is not included. The pricing page puts it at generally under USD 0.05 per launch"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-micro.linux.hour",
+          "quantity": 2,
+          "basis": "1 t4g.micro drill instance x 2 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 0.043836,
+          "basis": "16 GiB of volumes (gp3 assumed), 2 of 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "40",
+        "command": "vp test run examples/40-disaster-recovery",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "訓練の planner と判定、復旧の順序の途中失敗と再実行、2 拠点のモデルと split brain、DRS のイベントの検証、API の応答の形と「まだ課金されているもの」の一覧、source と経路の検査、料金の入力、stack の assertion",
+          "en": "The drill planner and verdict, a recovery order failing in the middle and resumed, the two-site model and split brain, validation of DRS events, API response shapes and the still-billed list, source and path checks, pricing inputs, and stack assertions"
+        }
+      },
+      {
+        "scope": "40",
+        "command": "tsc --noEmit -p examples/40-disaster-recovery",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "40",
+        "command": "vp run dr:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の構成と、`-c placement=public`、`-c templates=declare`、`-c sourceRoleName=... -c sourceSecurityGroupId=sg-0123456789abcdef0` で synth した",
+          "en": "Synthesized the default layout and `-c placement=public`, `-c templates=declare`, and `-c sourceRoleName=... -c sourceSecurityGroupId=sg-0123456789abcdef0`"
+        }
+      },
+      {
+        "scope": "40",
+        "command": "vp run dr:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "2 拠点の failover と failback、順序の再実行、訓練の集計を手元で表示した",
+          "en": "Printed the two-site failover and failback, the resumed order, and a drill summary locally"
+        }
+      },
+      {
+        "scope": "40",
+        "command": "vp run dr:plan",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の引数では、kernel 6.18 が対象外として BLOCKER になり、終了コード 2 で終わることを確かめた。`kernel=6.1` と `placement=public` でも実行した",
+          "en": "With default arguments the 6.18 kernel is reported as a BLOCKER and the task exits with 2, as intended. Also run with `kernel=6.1` and `placement=public`"
+        }
+      },
+      {
+        "scope": "40",
+        "command": "vp run dr:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない",
+          "en": "Not deployed"
+        }
+      },
+      {
+        "scope": "40",
+        "command": "aws drs initialize-service / create-replication-configuration-template",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "サービスの初期化とテンプレートの作成は実行していない",
+          "en": "The service was not initialized and no template was created"
+        }
+      },
+      {
+        "scope": "40",
+        "command": "vp run dr:status / dr:drill / dr:job / dr:terminate / dr:billed",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "DRS の API は一度も呼んでいない。訓練も復旧も failback もしていない",
+          "en": "The DRS API was never called. No drill, recovery, or failback was performed"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "40-deploy",
+        "summary": {
+          "ja": "40章の stack を AWS に一度もデプロイしていない。cdkd 0.296.28 が interface endpoint（drs、ec2）と `AWS::EC2::SecurityGroupEgress` を Cloud Control API 経由で作れること、別の stack のロールへ managed policy を付けられること、EventBridge の rule から関数が呼ばれることが未確認。",
+          "en": "The chapter 40 stack has never been deployed. Unverified: that cdkd 0.296.28 creates the interface endpoints (drs, ec2) and `AWS::EC2::SecurityGroupEgress` through Cloud Control API, that the managed policy attaches to another stack's role, and that the EventBridge rule invokes the function."
+        },
+        "resume": {
+          "ja": "11章と 23章をデプロイした後に `vp run dr:infra:deploy -c sourceRoleName=<role> -c sourceSecurityGroupId=<sg>`、`vp run dr:infra:drift`、23章の `vp run ec2:infra:drift` を通す。終わったら「片付け」の順に消す（endpoint は時間課金）。",
+          "en": "After deploying chapters 11 and 23, run `vp run dr:infra:deploy -c sourceRoleName=<role> -c sourceSecurityGroupId=<sg>`, `vp run dr:infra:drift`, and chapter 23's `vp run ec2:infra:drift`. Then delete everything in the order of the cleanup section (the endpoints are billed by the hour)."
+        }
+      },
+      {
+        "id": "40-agent",
+        "summary": {
+          "ja": "AWS Replication Agent を一度も入れていない。Graviton の Amazon Linux 2023（kernel 6.12 以下）で installer が通ること、managed policy から cross-account と source network の権限を除いたこの章の policy で足りること、private DNS の interface endpoint を `--endpoint` なしで使えること、IMDSv2 必須で hop limit 1 の設定で動くこと、S3 gateway endpoint だけで installer と replication server のソフトウェアを取得できることが未確認。",
+          "en": "The AWS Replication Agent was never installed. Unverified: that the installer succeeds on Graviton Amazon Linux 2023 with a kernel up to 6.12, that this chapter's policy (the managed one minus cross-account and source network permissions) is enough, that the interface endpoint is found through private DNS without `--endpoint`, that the agent works with IMDSv2 required and a hop limit of 1, and that the S3 gateway endpoint alone delivers the installer and the replication server software."
+        },
+        "resume": {
+          "ja": "`-c amiId=` で kernel 6.12 以下の AMI を固定した 23章のインスタンスに、`vp run ec2:session` で入って installer を実行する。失敗したら、まず AWS 管理の `AWSElasticDisasterRecoveryEc2InstancePolicy` に付け替えて権限の不足かどうかを切り分ける。",
+          "en": "On a chapter 23 instance pinned with `-c amiId=` to an AMI whose kernel is 6.12 or older, open `vp run ec2:session` and run the installer. On failure, first swap in the AWS managed `AWSElasticDisasterRecoveryEc2InstancePolicy` to tell a permission gap from anything else."
+        }
+      },
+      {
+        "id": "40-drill",
+        "summary": {
+          "ja": "訓練、復旧、failback を一度も実行していない。したがって RPO と RTO の実測値は無い。`lagDuration` の実際の書式、`StartRecovery` の job が完了するまでの時間、起動した instance が SSM に現れること、data volume が同じ UUID でマウントされること、reversed replication と元の instance への launch、切り離してから課金が止まるまでの時間が未確認。",
+          "en": "No drill, recovery, or failback was ever run, so there are no measured RPO or RTO values. Unverified: the real format of `lagDuration`, how long a `StartRecovery` job takes, that the launched instance appears in SSM, that the data volume mounts by the same UUID, reversed replication and launching into the original instance, and how long after a disconnect the charges stop."
+        },
+        "resume": {
+          "ja": "初期同期が終わったら `vp run dr:status`、`vp run dr:drill --apply`、`vp run dr:job --job <id>`。`drill/record.template.json` を写して時刻を埋め、確認が済んだら `vp run dr:terminate --apply`、最後に `vp run dr:billed`。",
+          "en": "Once the initial sync is done: `vp run dr:status`, `vp run dr:drill --apply`, `vp run dr:job --job <id>`. Copy `drill/record.template.json`, fill in the times, then `vp run dr:terminate --apply`, and finally `vp run dr:billed`."
+        }
+      },
+      {
+        "id": "40-cfn-drs-types",
+        "summary": {
+          "ja": "2026-10-13 に取得した CloudFormation の resource provider schema では、`AWS::DRS::*` が us-east-1 と us-west-2 にあり、ap-northeast-1 など 5 リージョンには無かった。全リージョンを調べたわけではなく、registry への問い合わせ（認証情報が要る）もしていない。`-c templates=declare` は一度もデプロイしていない。",
+          "en": "In the CloudFormation resource provider schemas downloaded on 2026-10-13, `AWS::DRS::*` existed in us-east-1 and us-west-2 and was absent from ap-northeast-1 and four other Regions. Not every Region was checked, and the registry itself (which needs credentials) was not asked. `-c templates=declare` was never deployed."
+        },
+        "resume": {
+          "ja": "`aws cloudformation describe-type --type RESOURCE --type-name AWS::DRS::ReplicationConfigurationTemplate --region ap-northeast-1` で確かめる。あれば `vp run dr:infra:deploy -c templates=declare` を試し、初期化の順序（先に `initialize-service` が要るか）を記録する。",
+          "en": "Check with `aws cloudformation describe-type --type RESOURCE --type-name AWS::DRS::ReplicationConfigurationTemplate --region ap-northeast-1`. If it exists, try `vp run dr:infra:deploy -c templates=declare` and record the order of initialization (whether `initialize-service` has to come first)."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 40: disaster recovery ----------------------------------\n      // Source checks, network paths, idle cost, and the setup commands. Reads only this checkout.\n      \"dr:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/40-disaster-recovery\" }),\n      // A failover and a failback between two sites in memory. No AWS.\n      \"dr:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/40-disaster-recovery\" }),\n      // The private layout adds two interface endpoints, billed by the hour.\n      ...infra(\"dr\", \"examples/40-disaster-recovery\", \"AihDr\"),\n      // These read the DRS API.\n      \"dr:status\": live(\"node --env-file-if-exists=../../.env scripts/dr.ts status\", { cwd: \"examples/40-disaster-recovery\" }),\n      \"dr:job\": live(\"node --env-file-if-exists=../../.env scripts/dr.ts job\", { cwd: \"examples/40-disaster-recovery\" }),\n      \"dr:billed\": live(\"node --env-file-if-exists=../../.env scripts/dr.ts billed\", { cwd: \"examples/40-disaster-recovery\" }),\n      // These print their plan and change nothing unless --apply is given.\n      \"dr:drill\": live(\"node --env-file-if-exists=../../.env scripts/dr.ts drill\", { cwd: \"examples/40-disaster-recovery\" }),\n      \"dr:terminate\": live(\"node --env-file-if-exists=../../.env scripts/dr.ts terminate\", { cwd: \"examples/40-disaster-recovery\" }),",
+    "synth": ["dr:infra:synth"],
+    "checkAll": ["dr:demo"],
+    "typecheck": ["examples/40-disaster-recovery"]
+  }
+}

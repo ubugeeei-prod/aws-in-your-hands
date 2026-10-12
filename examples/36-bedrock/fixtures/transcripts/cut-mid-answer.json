@@ -1,0 +1,27 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html, https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html, https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-client-side.html and https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-use-converse-api.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "The stream closes after part of the answer has been sent on.",
+  "calls": [
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "金曜のリリースまでに"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

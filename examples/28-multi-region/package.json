@@ -1,0 +1,23 @@
+{
+  "name": "@aih/example-28-multi-region",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aih/example-05-dynamodb": "workspace:*",
+    "@aih/example-22-recovery": "workspace:*",
+    "@aws-sdk/client-dynamodb": "3.1149.0",
+    "@aws-sdk/client-s3": "3.1149.0",
+    "@aws-sdk/lib-dynamodb": "3.1149.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "@types/aws-lambda": "8.10.164",
+    "vite-plus": "1.1.0"
+  }
+}

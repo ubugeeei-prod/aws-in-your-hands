@@ -1,0 +1,23 @@
+{
+  "version": "1",
+  "flags": {
+    "readOnly": {
+      "name": "Read-only mode",
+      "description": "Operational switch. While on, POST and DELETE answer 503."
+    },
+    "noteStats": {
+      "name": "Note statistics",
+      "description": "Release flag for GET /stats. Off means the route does not exist.",
+      "attributes": {
+        "rolloutPercent": {
+          "description": "Share of callers who see the route.",
+          "constraints": { "type": "number", "required": true, "minimum": 0, "maximum": 100 }
+        }
+      }
+    }
+  },
+  "values": {
+    "readOnly": { "enabled": false },
+    "noteStats": { "enabled": false, "rolloutPercent": 0 }
+  }
+}

@@ -1,0 +1,1289 @@
+{
+  "chapterId": "56",
+  "manifest": {
+    "id": "56",
+    "slug": "nova",
+    "title": {
+      "ja": "Nova: Amazon のモデルで文章、画像、動画、音声を扱う",
+      "en": "Nova: Text, Images, Video, and Speech with Amazon's Models"
+    },
+    "prerequisites": ["17", "07"],
+    "services": ["Bedrock", "Amazon Nova", "S3", "Lambda function URL", "IAM", "CloudWatch Logs"],
+    "samplePath": "examples/56-nova",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "nova-model-cards",
+      "nova-card-2-lite",
+      "nova-card-lite",
+      "nova-card-pro",
+      "nova-card-micro",
+      "nova-card-2-sonic",
+      "nova-card-embeddings",
+      "nova-card-canvas",
+      "nova-card-reel",
+      "nova-model-lifecycle",
+      "nova-model-lifecycle-legacy",
+      "nova-docs-index",
+      "nova2-what-is",
+      "nova2-multimodal",
+      "nova2-prompting-multimodal",
+      "nova2-embeddings",
+      "nova2-speech",
+      "nova2-sonic-languages",
+      "nova2-release-notes",
+      "nova2-responsible-use",
+      "nova1-image-understanding",
+      "nova1-image-generation",
+      "nova1-video-generation",
+      "nova-converse-guide",
+      "nova-api-converse",
+      "nova-api-image-block",
+      "nova-api-s3-location",
+      "nova-api-message-stop",
+      "nova-api-start-async-invoke",
+      "nova-api-get-async-invoke",
+      "nova-api-bidirectional",
+      "nova-inference-profiles-prereq",
+      "nova-inference-profiles-support",
+      "nova-s3-conditional-writes",
+      "nova-lambda-url-invocation",
+      "nova-price-list",
+      "nova-cf-workers-ai-models",
+      "nova-vercel-ai-gateway",
+      "nova-sdk-bedrock-runtime",
+      "nova-sdk-bedrock",
+      "nova-cdkd-package"
+    ]
+  },
+  "sources": [
+    {
+      "id": "nova-model-cards",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-cards.html",
+      "title": "Models at a glance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On 2026-10-13 the Amazon row lists these Nova model cards: Amazon Nova Multimodal Embeddings, Nova 2 Lite, Nova 2 Sonic, Nova Canvas, Nova Lite, Nova Micro, Nova Pro, Nova Reel",
+        "No card is listed for Nova Premier, Nova 2 Pro, Nova 2 Omni or Nova 2.5 Sonic"
+      ]
+    },
+    {
+      "id": "nova-card-2-lite",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-2-lite.html",
+      "title": "Nova 2 Lite (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Input text, image, video; output text; APIs Invoke and Converse; context 1M tokens, max output 64K; launched 2025-12-02, EOL no sooner than 2026-12-02, lifecycle Active",
+        "From ap-northeast-1: not In-Region; Geo jp.amazon.nova-2-lite-v1:0 (destinations ap-northeast-1 and ap-northeast-3) and Global global.amazon.nova-2-lite-v1:0",
+        "Guardrails supported; structured outputs not supported"
+      ]
+    },
+    {
+      "id": "nova-card-lite",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-lite.html",
+      "title": "Nova Lite (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Input text, image, video; output text; context 300K, max output 10K; launched 2024-12-05, EOL no sooner than 2025-12-05, lifecycle Active",
+        "From ap-northeast-1: In-Region as amazon.nova-lite-v1:0, and Geo apac.amazon.nova-lite-v1:0 with destinations ap-northeast-1, ap-northeast-2, ap-northeast-3, ap-south-1, ap-southeast-1, ap-southeast-2"
+      ]
+    },
+    {
+      "id": "nova-card-pro",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-pro.html",
+      "title": "Nova Pro (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Input text, image, video; output text; context 300K, max output 10K; launched 2024-12-05, EOL no sooner than 2025-12-05, lifecycle Active",
+        "From ap-northeast-1: Geo only, apac.amazon.nova-pro-v1:0, same six destinations as Nova Lite's apac. profile"
+      ]
+    },
+    {
+      "id": "nova-card-micro",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-micro.html",
+      "title": "Nova Micro (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Text in, text out; context 128K, max output 10K; launched 2024-12-05, EOL no sooner than 2025-12-05, lifecycle Active",
+        "The regional table marks Geo for ap-northeast-1, but the Geo inference IDs listed are only us.amazon.nova-micro-v1:0 and eu.amazon.nova-micro-v1:0"
+      ],
+      "note": "The card contradicts itself for Tokyo. The chapter treats Nova Micro as having no confirmed route from ap-northeast-1."
+    },
+    {
+      "id": "nova-card-2-sonic",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-2-sonic.html",
+      "title": "Nova 2 Sonic (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Input speech and text, output speech and text; the only API is InvokeModelWithBidirectionalStream; In-Region in us-east-1, us-west-2, eu-north-1 and ap-northeast-1; no inference profile",
+        "Launched 2025-12-02, EOL no sooner than 2026-12-02; Guardrails not supported",
+        "Default quota: 20 concurrent InvokeModelWithBidirectionalStream sessions per account per Region, not adjustable"
+      ]
+    },
+    {
+      "id": "nova-card-embeddings",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-amazon-nova-multimodal-embeddings.html",
+      "title": "Amazon Nova Multimodal Embeddings (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Model ID amazon.nova-2-multimodal-embeddings-v1:0; input text, image, video, audio; output embedding; In-Region in us-east-1 and us-gov-west-1 only",
+        "Launched 2025-10-28, EOL no sooner than 2026-10-28; the card marks StartAsyncInvoke as supported and Invoke as not"
+      ],
+      "note": "The Nova 2 guide's embeddings page calls invoke_model for a synchronous text embedding, which the card's API table does not mark."
+    },
+    {
+      "id": "nova-card-canvas",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-canvas.html",
+      "title": "Nova Canvas (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Model lifecycle Legacy, Model EOL date September 30, 2026; listed for us-east-1, eu-west-1, ap-northeast-1 as Legacy (EOL: 2026-09-30)",
+        "It took text and image and returned an image through InvokeModel"
+      ]
+    },
+    {
+      "id": "nova-card-reel",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-reel.html",
+      "title": "Nova Reel (model card)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Model lifecycle Legacy, Model EOL date September 30, 2026",
+        "It took text and image and returned video through StartAsyncInvoke, writing to an S3 URI"
+      ]
+    },
+    {
+      "id": "nova-model-lifecycle",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html",
+      "title": "Model lifecycle",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A model is Active, Legacy or End-of-Life; after the EOL date requests fail and migration is not automatic",
+        "Once Legacy begins, new customers cannot adopt the model and existing customers may lose access after 15 days of inactivity",
+        "Model cards show an 'EOL no sooner than' date and a Legacy period of 6 months or 45 days"
+      ]
+    },
+    {
+      "id": "nova-model-lifecycle-legacy",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle-legacy.html",
+      "title": "Model lifecycle (Legacy)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Under 'Models that have reached EOL': Nova Canvas amazon.nova-canvas-v1:0 (legacy 2026-03-30, EOL 2026-09-30), Nova Reel amazon.nova-reel-v1:0 and v1:1 (EOL 2026-09-30), Nova Sonic amazon.nova-sonic-v1:0 (legacy 2026-03-13, EOL 2026-09-14)",
+        "These models have been removed from the Regions listed, and requests to them fail",
+        "For models launched before 2026-09-07: at least 12 months on Bedrock before EOL, and at least 6 months in Legacy"
+      ]
+    },
+    {
+      "id": "nova-docs-index",
+      "url": "https://docs.aws.amazon.com/nova/",
+      "title": "Amazon Nova Documentation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The landing page's summary of Nova 2.0 names Nova 2.0 Omni and Pro, which the Nova 2 developer guide and the model cards do not list"
+      ]
+    },
+    {
+      "id": "nova2-what-is",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/what-is-nova-2.html",
+      "title": "What is Amazon Nova 2?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon Nova 2 includes Nova 2 Lite, Nova 2 Sonic and Nova Multimodal Embeddings; no image or video generation model is listed"
+      ]
+    },
+    {
+      "id": "nova2-multimodal",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/using-multimodal-models.html",
+      "title": "Multimodal understanding",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Images: PNG, JPEG, GIF, WebP; embedded in the request up to 25 MB and 5 images; by Amazon S3 URI up to 2 GB total and 1000 images",
+        "Each image is billed at a flat 230 tokens, and inputTokens reflects that; resolution up to 8,000 x 8,000 px",
+        "The models do not identify or name people in images; multilingual text in images is a stated limitation",
+        "Video by S3 URI up to 1 GB; documents up to 5 per request"
+      ]
+    },
+    {
+      "id": "nova2-prompting-multimodal",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/prompting-multimodal.html",
+      "title": "Prompting multimodal inputs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The document or image must always be placed before the user prompt in the request"
+      ]
+    },
+    {
+      "id": "nova2-embeddings",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/embeddings.html",
+      "title": "Using Amazon Nova embeddings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nova Multimodal Embeddings has synchronous and asynchronous APIs; the asynchronous one (StartAsyncInvoke) segments long text, video and audio and writes to S3"
+      ]
+    },
+    {
+      "id": "nova2-speech",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/using-conversational-speech.html",
+      "title": "Speech-to-Speech (Amazon Nova 2 Sonic)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Bidirectional streaming API; connection limit of 8 minutes; voices in English, French, Italian, German, Spanish, Portuguese and Hindi"
+      ]
+    },
+    {
+      "id": "nova2-sonic-languages",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/sonic-language-support.html",
+      "title": "Language support and multilingual capabilities",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The voice table lists en-US, en-GB, en-AU, en-IN, fr-FR, it-IT, de-DE, es-US, pt-BR and hi-IN; Japanese is not listed"
+      ]
+    },
+    {
+      "id": "nova2-release-notes",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/release-notes.html",
+      "title": "Release notes for Amazon Nova 2",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nova 2 Sonic is generally available in US East (N. Virginia), US West (Oregon), Asia Pacific (Tokyo) and Europe (Stockholm)"
+      ]
+    },
+    {
+      "id": "nova2-responsible-use",
+      "url": "https://docs.aws.amazon.com/nova/latest/nova2-userguide/responsible-use.html",
+      "title": "Responsible use",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Model outputs may be inaccurate or inappropriate and should be evaluated before being shown to end users",
+        "Bedrock does not store or review prompts and completions, and does not use them to train models"
+      ]
+    },
+    {
+      "id": "nova1-image-understanding",
+      "url": "https://docs.aws.amazon.com/nova/latest/userguide/modalities-image.html",
+      "title": "Image understanding (Amazon Nova Version 1)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For the version 1 models an image costs roughly 800 to 2,600 tokens depending on its resolution (900x450 about 800, 1.3Kx1.3K about 2,600)"
+      ]
+    },
+    {
+      "id": "nova1-image-generation",
+      "url": "https://docs.aws.amazon.com/nova/latest/userguide/image-generation.html",
+      "title": "Generating images with Amazon Nova Canvas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nova Canvas added an invisible watermark to every generated image and supported Content Credentials for provenance"
+      ],
+      "note": "The page is still published. The model it describes reached end of life on 2026-09-30."
+    },
+    {
+      "id": "nova1-video-generation",
+      "url": "https://docs.aws.amazon.com/nova/latest/userguide/video-gen-access.html",
+      "title": "Video generation access and usage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nova Reel was asynchronous: StartAsyncInvoke wrote a folder per invocation ID to S3 with manifest.json, output.mp4 and a status file; about 90 seconds for a 6 second video",
+        "The calling role needed s3:PutObject, bedrock:InvokeModel and bedrock:GetAsyncInvoke"
+      ],
+      "note": "The page is still published. The model it describes reached end of life on 2026-09-30."
+    },
+    {
+      "id": "nova-converse-guide",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html",
+      "title": "Inference using Converse API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An image can be passed as bytes or as s3Location with uri and bucketOwner",
+        "The assumed role must have the s3:GetObject permission to the Amazon S3 URI; bucketOwner must be specified if the account making the request does not own the bucket"
+      ]
+    },
+    {
+      "id": "nova-api-converse",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html",
+      "title": "Converse",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Converse requires permission for the bedrock:InvokeModel action",
+        "The response carries output.message, stopReason and usage"
+      ]
+    },
+    {
+      "id": "nova-api-image-block",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ImageBlock.html",
+      "title": "ImageBlock",
+      "checkedAt": "2026-10-13",
+      "supports": ["format is one of png, jpeg, gif, webp"]
+    },
+    {
+      "id": "nova-api-s3-location",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_S3Location.html",
+      "title": "S3Location",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "uri is an object URI starting with s3://, at most 1024 characters; bucketOwner is a 12-digit account ID and optional"
+      ]
+    },
+    {
+      "id": "nova-api-message-stop",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_MessageStopEvent.html",
+      "title": "MessageStopEvent",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "stopReason values: end_turn, tool_use, max_tokens, stop_sequence, guardrail_intervened, content_filtered, malformed_model_output, malformed_tool_use, model_context_window_exceeded"
+      ]
+    },
+    {
+      "id": "nova-api-start-async-invoke",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_StartAsyncInvoke.html",
+      "title": "StartAsyncInvoke",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Takes modelId, modelInput, outputDataConfig and an optional clientRequestToken for idempotency; returns an invocationArn; requires bedrock:InvokeModel"
+      ]
+    },
+    {
+      "id": "nova-api-get-async-invoke",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_GetAsyncInvoke.html",
+      "title": "GetAsyncInvoke",
+      "checkedAt": "2026-10-13",
+      "supports": ["An asynchronous invocation's status is InProgress, Completed or Failed"]
+    },
+    {
+      "id": "nova-api-bidirectional",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModelWithBidirectionalStream.html",
+      "title": "InvokeModelWithBidirectionalStream",
+      "checkedAt": "2026-10-13",
+      "supports": ["The stream stays open for 8 minutes; requires bedrock:InvokeModel"]
+    },
+    {
+      "id": "nova-inference-profiles-prereq",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html",
+      "title": "Prerequisites for inference profiles",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A policy that names an inference profile must also name the foundation model in each Region associated with it",
+        "The bedrock:InferenceProfileArn condition key restricts a foundation-model statement to calls made through one profile"
+      ]
+    },
+    {
+      "id": "nova-inference-profiles-support",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html",
+      "title": "Supported Regions and models for inference profiles",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Profile IDs and destination Regions are documented on each model's card; ListInferenceProfiles and GetInferenceProfile answer for a source Region",
+        "Do not rely on the geographic prefix of a profile ID alone to determine where requests can be routed"
+      ]
+    },
+    {
+      "id": "nova-s3-conditional-writes",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
+      "title": "How to prevent object overwrites with conditional writes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PutObject with If-None-Match: * fails with 412 when the key exists; of several such writes the first to finish succeeds",
+        "PutObject with If-Match compares the ETag and fails with 412 when it differs; it needs s3:PutObject and s3:GetObject",
+        "A 409 Conflict is possible when a delete races a conditional write; a 404 when the object was deleted before an If-Match write"
+      ]
+    },
+    {
+      "id": "nova-lambda-url-invocation",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-invocation.html",
+      "title": "Invoking Lambda function URLs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With AuthType AWS_IAM the event carries requestContext.authorizer.iam with accountId, userArn and userId"
+      ]
+    },
+    {
+      "id": "nova-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Amazon Bedrock, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Publication date 2026-10-10T18:22:42Z. Per 1K tokens in Tokyo: Nova 2 Lite 0.000396 in / 0.003311 out; Nova Lite 0.000072 / 0.000288; Nova Micro 0.000042 / 0.000168; Nova Pro 0.00096 / 0.00384",
+        "Nova Sonic 2.0: speech 0.00363 in / 0.01452 out, text 0.000396 in / 0.003311 out per 1K tokens",
+        "The file still carries prices for Nova Canvas (USD 0.04 to 0.08 per image) and Nova Reel (USD 0.08 per unit, the unit being one video), and has rows for Nova 2.0 Pro, Nova 2.0 Omni and Nova 2.5 Sonic"
+      ],
+      "note": "A price row is not proof that a model can be called. The chapter counts a model as existing only when it has a model card."
+    },
+    {
+      "id": "nova-cf-workers-ai-models",
+      "url": "https://developers.cloudflare.com/workers-ai/models/",
+      "title": "Workers AI: Models",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On 2026-10-13 the catalog has Text-to-Image, Image-to-Text, Text-to-Speech and Automatic Speech Recognition tasks, and text generation models that accept images; no video generation task is listed"
+      ],
+      "note": "Read through a summarizing fetch, not line by line."
+    },
+    {
+      "id": "nova-vercel-ai-gateway",
+      "url": "https://vercel.com/docs/ai-gateway",
+      "title": "Vercel AI Gateway",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AI Gateway routes requests to model providers and does not run models itself; it lists text, image generation, video generation, speech, transcription, realtime, embeddings and reranking as modalities"
+      ]
+    },
+    {
+      "id": "nova-sdk-bedrock-runtime",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0",
+      "title": "@aws-sdk/client-bedrock-runtime 3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The installed types declare ImageBlock with format and source, ImageSource with bytes or s3Location, S3Location with uri and bucketOwner, and the commands Converse, StartAsyncInvoke, GetAsyncInvoke and InvokeModelWithBidirectionalStream"
+      ]
+    },
+    {
+      "id": "nova-sdk-bedrock",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-bedrock/v/3.1149.0",
+      "title": "@aws-sdk/client-bedrock 3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Version 3.1149.0 exists on the registry; scripts/models.ts uses ListFoundationModels and paginateListInferenceProfiles from it"
+      ]
+    },
+    {
+      "id": "nova-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The installed bundle registers a dedicated provider for AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::Lambda::Function, AWS::Lambda::Url, AWS::IAM::Role, AWS::IAM::Policy and AWS::Logs::LogGroup"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "multimodal",
+      "ja": "マルチモーダル",
+      "en": "multimodal",
+      "firstUse": "56",
+      "definition": {
+        "ja": "文章だけでなく、画像、動画、音声のような別の種類の入力も 1 つのリクエストで受け取れること。受け取れる種類はモデルごとに違う。",
+        "en": "Able to take other kinds of input, such as images, video or speech, in the same request as text. Which kinds differs by model."
+      }
+    },
+    {
+      "id": "model-card",
+      "ja": "モデルカード",
+      "en": "model card",
+      "firstUse": "56",
+      "definition": {
+        "ja": "Bedrock のユーザーガイドにある、モデルごとのページ。入出力の種類、使える API、モデル ID と inference profile の ID、呼べるリージョン、終了の目安が載っている。",
+        "en": "The page the Bedrock user guide has for each model: what it takes and returns, which APIs it speaks, its model ID and inference profile IDs, the Regions it can be called from, and its earliest end of life."
+      }
+    },
+    {
+      "id": "work-claim",
+      "ja": "claim（処理の先取り）",
+      "en": "claim",
+      "firstUse": "56",
+      "definition": {
+        "ja": "「この処理はいま自分がやっている」という、期限つきの記録。条件付き書き込みで作るので、同時に来た 2 つのリクエストのうち一方しか作れない。期限が過ぎたものは、ほかのリクエストが引き継げる。",
+        "en": "A record with an expiry that says 'I am doing this work now'. It is made with a conditional write, so only one of two simultaneous requests can make it. Once it has expired, another request may take it over."
+      }
+    },
+    {
+      "id": "alt-text",
+      "ja": "代替テキスト",
+      "en": "alternative text",
+      "firstUse": "56",
+      "definition": {
+        "ja": "画像を見られない読者のために、画像の内容を文章で書いたもの。HTML では img 要素の alt 属性に入れる。",
+        "en": "A description of an image in words, for a reader who cannot see it. In HTML it goes in the alt attribute of an img element."
+      }
+    },
+    {
+      "id": "speech-to-speech",
+      "ja": "speech-to-speech",
+      "en": "speech-to-speech",
+      "firstUse": "56",
+      "definition": {
+        "ja": "音声を受け取り、音声で答えるモデル。文字起こし、文章の生成、読み上げを 1 つのモデルが続けて行い、双方向のストリームで会話する。",
+        "en": "A model that takes speech and answers in speech. One model transcribes, generates and speaks in turn, over a bidirectional stream."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "56.family",
+      "sources": ["examples/56-nova/src/catalog.ts", "examples/56-nova/test/catalog.test.ts"],
+      "tasks": ["test:unit", "nova:catalog"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "56.retired",
+      "sources": ["examples/56-nova/src/catalog.ts", "examples/56-nova/test/env.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "56.architecture",
+      "sources": ["examples/56-nova/infra/lib/nova-stack.ts", "examples/56-nova/src/app.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "56.catalog",
+      "sources": [
+        "examples/56-nova/src/catalog.ts",
+        "examples/56-nova/scripts/catalog.ts",
+        "examples/56-nova/scripts/models.ts",
+        "examples/56-nova/src/env.ts"
+      ],
+      "tasks": ["nova:catalog", "nova:models", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "56.image",
+      "sources": [
+        "examples/56-nova/src/image.ts",
+        "examples/56-nova/scripts/hello.ts",
+        "examples/56-nova/test/image.test.ts"
+      ],
+      "tasks": ["test:unit", "nova:hello"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "56.job",
+      "sources": [
+        "examples/56-nova/src/describe.ts",
+        "examples/56-nova/src/media.ts",
+        "examples/56-nova/src/s3-media.ts",
+        "examples/56-nova/src/memory-media.ts",
+        "examples/56-nova/test/describe.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "56.stored",
+      "sources": [
+        "examples/56-nova/src/describe.ts",
+        "examples/56-nova/src/model.ts",
+        "examples/56-nova/src/bedrock.ts",
+        "examples/56-nova/test/describe.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "56.owner",
+      "sources": [
+        "examples/56-nova/src/media.ts",
+        "examples/56-nova/src/identity.ts",
+        "examples/56-nova/src/app.ts",
+        "examples/56-nova/src/contract.ts",
+        "examples/56-nova/test/app.test.ts",
+        "examples/56-nova/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "56.cheaper",
+      "sources": [
+        "examples/56-nova/src/cost.ts",
+        "examples/56-nova/src/catalog.ts",
+        "examples/56-nova/test/cost.test.ts"
+      ],
+      "tasks": ["test:unit", "nova:catalog"],
+      "boundary": "local",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "56.speech",
+      "sources": ["examples/56-nova/src/catalog.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "56.local",
+      "sources": [
+        "examples/56-nova/src/dev.ts",
+        "examples/56-nova/src/scripted-model.ts",
+        "examples/56-nova/src/fixtures.ts",
+        "examples/56-nova/fixtures/converse",
+        "examples/56-nova/.env.example",
+        "examples/56-nova/src/compose.ts",
+        "examples/56-nova/src/env.ts"
+      ],
+      "tasks": ["dev:nova"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "56.tests",
+      "sources": ["examples/56-nova/test", "examples/56-nova/infra/test/nova-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "56.stack",
+      "sources": [
+        "examples/56-nova/infra/lib/nova-stack.ts",
+        "examples/56-nova/infra/bin/app.ts",
+        "examples/56-nova/src/lambda.ts",
+        "examples/56-nova/infra/test/nova-stack.test.ts",
+        "examples/56-nova/cdk.json"
+      ],
+      "tasks": ["nova:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "56.deploy",
+      "sources": [
+        "examples/56-nova/scripts/smoke.ts",
+        "examples/56-nova/scripts/sign.ts",
+        "examples/56-nova/scripts/models.ts"
+      ],
+      "tasks": [
+        "nova:infra:diff",
+        "nova:infra:deploy",
+        "nova:smoke",
+        "nova:models",
+        "nova:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "56.compare",
+      "sources": ["examples/56-nova/src/catalog.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "56.cost",
+      "sources": ["examples/56-nova/src/cost.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "56.cleanup",
+      "sources": ["examples/56-nova/scripts/empty.ts"],
+      "tasks": ["nova:empty", "nova:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "bedrock.nova-lite.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "P569N2VH2DAWEFWX",
+      "usageType": "APN1-NovaLite-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000720000",
+          "description": "$0.000072 per 1K tokens for APN1-NovaLite-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.nova-lite.output",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "FGQ9PVC9YXM9YY52",
+      "usageType": "APN1-NovaLite-output-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0002880000",
+          "description": "$0.000288 per 1K tokens for APN1-NovaLite-output-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.nova-micro.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "E2YFAAVHDTTN26JD",
+      "usageType": "APN1-NovaMicro-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000420000",
+          "description": "$0.000042 per 1K tokens for APN1-NovaMicro-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.nova-micro.output",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "AHHXPKHWKNM54MZK",
+      "usageType": "APN1-NovaMicro-output-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0001680000",
+          "description": "$0.000168 per 1K tokens for APN1-NovaMicro-output-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.nova-pro.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "MW5E2RRQFRGR96C3",
+      "usageType": "APN1-NovaPro-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0009600000",
+          "description": "$0.00096 per 1K tokens for APN1-NovaPro-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.nova-pro.output",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "NGEWXEWTZRVVAR4Q",
+      "usageType": "APN1-NovaPro-output-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0038400000",
+          "description": "$0.00384 per 1K tokens for APN1-NovaPro-output-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.nova-2-sonic.speech.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "GGDZY6Y9TRWKREXT",
+      "usageType": "APN1-NovaSonic2.0-speech-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0036300000",
+          "description": "$0.00363 per 1K tokens for APN1-NovaSonic2.0-speech-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "bedrock.nova-2-sonic.speech.output",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "HGZERQDFFHHDPUT2",
+      "usageType": "APN1-NovaSonic2.0-speech-output-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0145200000",
+          "description": "$0.01452 per 1K tokens for APN1-NovaSonic2.0-speech-output-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "bedrock.nova-lite.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-lite.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-micro.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-micro.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-pro.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-pro.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-2-sonic.speech.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-2-sonic.speech.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "nova-idle",
+      "chapter": "56",
+      "title": {
+        "ja": "画像の説明: デプロイ済みで呼ばれない月",
+        "en": "Image descriptions: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": ["リクエストゼロ", "バケットにオブジェクトなし", "ログは 1 週間で失効し、保存量ゼロ"],
+        "en": [
+          "No requests",
+          "No objects in the bucket",
+          "Logs expire after a week; nothing is stored"
+        ]
+      },
+      "items": []
+    },
+    {
+      "id": "nova-describe-nova-2-lite",
+      "chapter": "56",
+      "title": {
+        "ja": "画像の説明: 月 1,000 枚（Nova 2 Lite、jp. profile）",
+        "en": "Image descriptions: 1,000 images a month (Nova 2 Lite, jp. profile)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 枚を 1 回ずつ説明する。2 回目以降の PUT は保存済みのものを返すので、モデルを呼ばない",
+          "入力は 1 枚あたり 320 トークンと仮定（画像 1 枚は 230 トークンの定額。残りの 90 は 2 つのプロンプトの見積もり）",
+          "出力は 1 枚あたり 60 トークンと仮定（上限は 300）",
+          "Lambda は 256 MB、arm64、1 枚あたり平均 3 秒と仮定（推論を待つ時間も課金される）",
+          "S3 は 1 枚あたり、書き込み 2 回（claim と説明）、読み出し 3 回（説明の有無、アップロードの確認、Bedrock による画像の取得を 1 回と仮定）",
+          "1 枚あたりログ 1 KB と仮定",
+          "説明文の保存量（1 件 1 KB 未満）とデータ転送は未算入"
+        ],
+        "en": [
+          "1,000 images a month, each described once. Later PUTs return the stored description and do not call the model",
+          "Assumed 320 input tokens per image (an image is a flat 230 tokens; the other 90 are an estimate for the two prompts)",
+          "Assumed 60 output tokens per image (the limit is 300)",
+          "Lambda at 256 MB on arm64, assumed 3 seconds each on average (waiting for the model is billed too)",
+          "S3 per image: 2 writes (the claim and the description) and 3 reads (is there a description, the upload's metadata, and Bedrock fetching the image, assumed to be one request)",
+          "Assumed 1 KB of logs per image",
+          "Storage of the descriptions (under 1 KB each) and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-2-lite.input",
+          "quantity": 320,
+          "basis": "1,000 images x 320 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 60,
+          "basis": "1,000 images x 60 output tokens, in 1K tokens"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000,
+          "basis": "one invocation per image"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 750,
+          "basis": "1,000 x 3 s x 0.25 GB"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 2000,
+          "basis": "1,000 x 2 PutObject"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 3000,
+          "basis": "1,000 x 3 GET or HEAD"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.000954,
+          "basis": "1,000 x 1 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "nova-describe-ceiling-nova-2-lite",
+      "chapter": "56",
+      "title": {
+        "ja": "画像の説明: 1,000 枚すべてが出力の上限に達した場合の推論分",
+        "en": "Image descriptions: inference cost if all 1,000 hit the output limit"
+      },
+      "assumptions": {
+        "ja": [
+          "1,000 枚すべてが maxTokens の 300 トークンまで出力",
+          "入力は 1 枚あたり 320 トークンと仮定",
+          "推論の分だけ"
+        ],
+        "en": [
+          "All 1,000 write up to the maxTokens of 300",
+          "Assumed 320 input tokens per image",
+          "Inference only"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-2-lite.input",
+          "quantity": 320,
+          "basis": "1,000 images x 320 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 300,
+          "basis": "1,000 images x 300 output tokens, in 1K tokens"
+        }
+      ]
+    },
+    {
+      "id": "nova-summaries-nova-lite",
+      "chapter": "56",
+      "title": {
+        "ja": "要約: 17章と同じトークン数を Nova Lite で（推論の分だけ）",
+        "en": "Summaries: chapter 17's token counts on Nova Lite (inference only)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 件の要約",
+          "入力は 1 件あたり 2,000 トークン、出力は 150 トークンと仮定（17章の表と同じ）",
+          "トークンの数え方はモデルごとに違う。単価の比較のための仮定",
+          "推論の分だけ。Lambda は含まない"
+        ],
+        "en": [
+          "1,000 summaries a month",
+          "Assumed 2,000 input tokens and 150 output tokens each (the same as chapter 17's table)",
+          "Tokenizers differ by model; this is for comparing unit prices",
+          "Inference only; Lambda is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-lite.input",
+          "quantity": 2000,
+          "basis": "1,000 summaries x 2,000 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-lite.output",
+          "quantity": 150,
+          "basis": "1,000 summaries x 150 output tokens, in 1K tokens"
+        }
+      ]
+    },
+    {
+      "id": "nova-summaries-nova-micro",
+      "chapter": "56",
+      "title": {
+        "ja": "要約: 17章と同じトークン数を Nova Micro で（推論の分だけ）",
+        "en": "Summaries: chapter 17's token counts on Nova Micro (inference only)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 件の要約",
+          "入力は 1 件あたり 2,000 トークン、出力は 150 トークンと仮定（17章の表と同じ）",
+          "トークンの数え方はモデルごとに違う。単価の比較のための仮定",
+          "推論の分だけ。Lambda は含まない"
+        ],
+        "en": [
+          "1,000 summaries a month",
+          "Assumed 2,000 input tokens and 150 output tokens each (the same as chapter 17's table)",
+          "Tokenizers differ by model; this is for comparing unit prices",
+          "Inference only; Lambda is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-micro.input",
+          "quantity": 2000,
+          "basis": "1,000 summaries x 2,000 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-micro.output",
+          "quantity": 150,
+          "basis": "1,000 summaries x 150 output tokens, in 1K tokens"
+        }
+      ]
+    },
+    {
+      "id": "nova-summaries-nova-2-lite",
+      "chapter": "56",
+      "title": {
+        "ja": "要約: 17章と同じトークン数を Nova 2 Lite で（推論の分だけ）",
+        "en": "Summaries: chapter 17's token counts on Nova 2 Lite (inference only)"
+      },
+      "assumptions": {
+        "ja": [
+          "月 1,000 件の要約",
+          "入力は 1 件あたり 2,000 トークン、出力は 150 トークンと仮定（17章の表と同じ）",
+          "トークンの数え方はモデルごとに違う。単価の比較のための仮定",
+          "推論の分だけ。Lambda は含まない"
+        ],
+        "en": [
+          "1,000 summaries a month",
+          "Assumed 2,000 input tokens and 150 output tokens each (the same as chapter 17's table)",
+          "Tokenizers differ by model; this is for comparing unit prices",
+          "Inference only; Lambda is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "bedrock.nova-2-lite.input",
+          "quantity": 2000,
+          "basis": "1,000 summaries x 2,000 input tokens, in 1K tokens"
+        },
+        {
+          "priceId": "bedrock.nova-2-lite.output",
+          "quantity": 150,
+          "basis": "1,000 summaries x 150 output tokens, in 1K tokens"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "56",
+        "command": "vp test run examples/56-nova",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "98 件。一覧と終了したモデルの扱い、料金の計算、リクエストの組み立てと上限、説明文を作る処理（同時のリクエスト、リースを超えた実行、止まった実行の引き継ぎ、失敗、切れた答え、ほかの利用者）、アプリ、S3 に送るリクエストの形、CDK の assertion",
+          "en": "98 tests: the list and retired models, the cost arithmetic, building the request and its limits, the describing job (simultaneous requests, a run that outlives its lease, taking over a dead run, failures, cut-off answers, another user), the app, the shape of the requests sent to S3, and the CDK assertions"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "tsc --noEmit -p examples/56-nova",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "src、test、infra、scripts を含む",
+          "en": "Includes src, test, infra and scripts"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run nova:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "esbuild による bundle（Docker なし）を含む。7 リソース、出力 4 つ",
+          "en": "Includes the esbuild bundle (no Docker); 7 resources and 4 outputs"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run nova:catalog",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "カタログを今日の日付と照らして表示する。AWS は呼ばない",
+          "en": "Prints the catalog against today's date; no AWS call"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run dev:nova (NOVA_BACKEND=scripted)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "curl で PUT を 2 つ重ねて 202 と 200 を確かめ、3 回目の PUT が reused: true を返すこと、ログの billed を確かめた。終了したモデルの ID では起動しないことも確かめた",
+          "en": "Overlapped two PUTs with curl and saw the 202 and the 200, then a third PUT answer reused: true, and checked billed in the log. Also confirmed that the server does not start with the ID of a retired model"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run nova:models",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "アカウントに ListFoundationModels と ListInferenceProfiles を問い合わせる。認証情報が要る",
+          "en": "Asks the account with ListFoundationModels and ListInferenceProfiles; needs credentials"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run nova:hello",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実際のモデルに画像を 1 枚渡す。課金される",
+          "en": "Hands one image to a real model; billed"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run nova:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "スタックをデプロイする",
+          "en": "Deploys the stack"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run nova:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイした function URL を通して 1 枚を説明させる。課金される",
+          "en": "Describes one image through the deployed function URL; billed"
+        }
+      },
+      {
+        "scope": "56",
+        "command": "vp run nova:empty / nova:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "バケットを空にしてスタックを消す",
+          "en": "Empties the bucket and destroys the stack"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "56-live-model",
+        "summary": {
+          "ja": "56章は実際の Bedrock を一度も呼んでいない。jp.amazon.nova-2-lite-v1:0 が S3 URI で渡した画像を読めること、実際の Converse の応答がフィクスチャの形に合うこと、画像 1 枚が usage に 230 トークンとして現れること、モデルが画像を断るときの応答（stopReason が content_filtered になるのか、別の形か）は未確認。画像のバケットが推論の行き先と別のリージョン（jp. の profile なら大阪）にあっても読めるかも、ドキュメントでは確認できなかった。",
+          "en": "Chapter 56 has never called real Bedrock. Unconfirmed: that jp.amazon.nova-2-lite-v1:0 can read an image passed by S3 URI; that a real Converse response has the shape of the fixtures; that one image shows up as 230 tokens in usage; what the model answers when it declines an image (stopReason content_filtered, or something else). Whether the image can be read when the bucket is in a different Region from where the inference runs (Osaka, with the jp. profile) could not be confirmed from the documentation either."
+        },
+        "resume": {
+          "ja": "vp run nova:hello に画像のパスを渡して実行する（課金される）。次に vp run nova:infra:deploy と vp run nova:smoke を実行する。応答の形が違えば fixtures/converse と src/describe.ts を直す。",
+          "en": "Run vp run nova:hello with the path of an image (billed). Then run vp run nova:infra:deploy and vp run nova:smoke. If the response differs, fix fixtures/converse and src/describe.ts."
+        }
+      },
+      {
+        "id": "56-catalog-against-account",
+        "summary": {
+          "ja": "src/catalog.ts はモデルカードとライフサイクルのページを 2026-10-13 に読んで書いたもので、アカウントに問い合わせた結果ではない。Nova Micro は、モデルカードの表では東京に Geo の印があるのに、載っている profile の ID が us. と eu. だけで、東京から呼ぶ ID を確認できていない。Price List にだけ行がある Nova 2.0 Pro、Nova 2.0 Omni、Nova 2.5 Sonic が呼べるのかも未確認。",
+          "en": "src/catalog.ts was written from the model cards and the lifecycle pages as read on 2026-10-13, not from an answer by an account. Nova Micro is marked Geo for Tokyo in its card's table, but the only profile IDs listed are us. and eu., so no ID for calling it from Tokyo is confirmed. Whether Nova 2.0 Pro, Nova 2.0 Omni and Nova 2.5 Sonic, which have rows only in the Price List, can be called is unconfirmed too."
+        },
+        "resume": {
+          "ja": "vp run nova:models を実行し、表示された profile とモデルの一覧で src/catalog.ts を直す。テスト（test/catalog.test.ts）が、直した内容に合わせて落ちる。",
+          "en": "Run vp run nova:models and correct src/catalog.ts from the profiles and models it lists. The tests in test/catalog.test.ts fail until they match."
+        }
+      },
+      {
+        "id": "56-deployed-stack",
+        "summary": {
+          "ja": "56章のスタックはデプロイしていない。S3 の条件付き書き込み（If-None-Match と If-Match）がこの章のロールの権限で通ること、同時のリクエストで claim が 1 つしか作られないこと、function URL のイベントの requestContext.authorizer.iam.userId が引き受けたロールでどういう値になるか、Bedrock が画像を取りに行く S3 のリクエストが何回で、誰に課金されるかは未確認。",
+          "en": "The chapter 56 stack has not been deployed. Unconfirmed: that S3 conditional writes (If-None-Match and If-Match) pass with this chapter's role; that simultaneous requests create only one claim; what requestContext.authorizer.iam.userId holds in the function URL event for an assumed role; how many S3 requests Bedrock makes to fetch the image, and who is billed for them."
+        },
+        "resume": {
+          "ja": "vp run nova:infra:deploy、vp run nova:smoke、vp run nova:infra:drift、vp run nova:empty --yes、vp run nova:infra:destroy の順に実行する。",
+          "en": "Run vp run nova:infra:deploy, vp run nova:smoke, vp run nova:infra:drift, vp run nova:empty --yes and vp run nova:infra:destroy, in that order."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 56: the Amazon Nova family ------------------------------\n      // The description API on plain Node. Plays a script unless .env says NOVA_BACKEND=bedrock.\n      \"dev:nova\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/56-nova\" }),\n      // Local: the family as src/catalog.ts has it, against today's date.\n      \"nova:catalog\": fresh(\"node scripts/catalog.ts\", { cwd: \"examples/56-nova\" }),\n      ...infra(\"nova\", \"examples/56-nova\", \"AihNova\"),\n      // Reads AWS and calls no model: what the account lists, against the catalog.\n      \"nova:models\": live(\"node --env-file-if-exists=../../.env scripts/models.ts\", { cwd: \"examples/56-nova\" }),\n      // BILLED: the next two call a real model. Neither is part of check:all.\n      \"nova:hello\": live(\"node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/hello.ts\", { cwd: \"examples/56-nova\" }),\n      \"nova:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/56-nova\" }),\n      \"nova:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty.ts\", { cwd: \"examples/56-nova\" }),",
+    "synth": ["nova:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/56-nova"]
+  }
+}

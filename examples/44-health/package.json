@@ -1,0 +1,20 @@
+{
+  "name": "@aih/example-44-health",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.1149.0",
+    "@aws-sdk/client-sns": "3.1149.0",
+    "@aws-sdk/lib-dynamodb": "3.1149.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "@types/aws-lambda": "8.10.164",
+    "vite-plus": "1.1.0"
+  }
+}

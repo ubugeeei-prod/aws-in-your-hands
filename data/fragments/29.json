@@ -1,0 +1,1258 @@
+{
+  "chapterId": "29",
+  "manifest": {
+    "id": "29",
+    "slug": "lambda-tuning",
+    "title": {
+      "ja": "Lambda Tuning: cold start、メモリ、同時実行数、bundle",
+      "en": "Lambda Tuning: Cold Starts, Memory, Concurrency, and Bundles"
+    },
+    "prerequisites": ["04", "19"],
+    "services": ["Lambda", "API Gateway HTTP API", "DynamoDB", "CloudWatch Logs"],
+    "samplePath": "examples/29-lambda-tuning",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "tune-lambda-lifecycle",
+      "tune-lambda-concurrency",
+      "tune-lambda-scaling",
+      "tune-lambda-reserved",
+      "tune-lambda-provisioned",
+      "tune-lambda-memory",
+      "tune-lambda-timeout",
+      "tune-lambda-quotas",
+      "tune-lambda-best-practices",
+      "tune-lambda-nodejs",
+      "tune-lambda-nodejs-handler",
+      "tune-lambda-nodejs-package",
+      "tune-lambda-telemetry-schema",
+      "tune-lambda-log-format",
+      "tune-lambda-metrics",
+      "tune-lambda-layers",
+      "tune-lambda-extensions",
+      "tune-lambda-snapstart",
+      "tune-lambda-sqs-configure",
+      "tune-apigw-http-quotas",
+      "tune-logs-insights-fields",
+      "tune-sdk-js-keepalive",
+      "tune-lambda-pricing",
+      "tune-lambda-init-billing",
+      "tune-price-list-lambda",
+      "tune-lambda-power-tuning",
+      "tune-esbuild-platform",
+      "tune-cdk-nodejs-bundling",
+      "tune-smithy-types",
+      "tune-cdkd-register-providers",
+      "tune-cloud-control-resources",
+      "tune-cloudflare-how-workers-works",
+      "tune-cloudflare-workers-limits",
+      "tune-cloudflare-workers-pricing",
+      "tune-vercel-fluid-compute"
+    ]
+  },
+  "sources": [
+    {
+      "id": "tune-lambda-lifecycle",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html",
+      "title": "Understanding the Lambda execution environment lifecycle",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Init phase starts all extensions, bootstraps the runtime and runs the function's static code; it is limited to 10 seconds, and if it does not complete Lambda retries it at the first invocation with the configured function timeout",
+        "The 10-second limit does not apply to provisioned concurrency, SnapStart or Lambda Managed Instances",
+        "The function's timeout limits the entire Invoke phase, extensions included",
+        "After a failed invocation Lambda resets the environment and re-initializes it with the next invocation (a suppressed init), without reporting a separate Init phase in CloudWatch Logs",
+        "Lambda keeps an environment for some time after an invocation and terminates environments every few hours; objects declared outside the handler remain initialized while it is reused",
+        "Cold starts typically occur in under 1% of invocations and take from under 100 ms to over 1 second",
+        "The example REPORT and INIT_REPORT lines used as test fixtures, including Init Duration, Status and Error Type",
+        "Factors of initialization latency: package size including layers, the amount of initialization code, and the libraries' own setup; objects used only on some paths can be loaded lazily",
+        "For on-demand functions Lambda might occasionally initialize environments ahead of requests"
+      ],
+      "note": "The page lists three Init tasks. Whether downloading the code and starting the environment are inside the reported Init Duration is not stated there."
+    },
+    {
+      "id": "tune-lambda-concurrency",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-concurrency.html",
+      "title": "Understanding Lambda function scaling",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Concurrency = (average requests per second) x (average request duration in seconds)",
+        "An execution environment is busy for the whole of Init and Invoke and cannot process other requests meanwhile",
+        "The default account concurrency limit is 1,000 per Region, shared by all functions",
+        "Lambda always keeps 100 units for functions without reserved concurrency",
+        "Lambda enforces a requests-per-second limit of 10 times the concurrency, at the account and the function level",
+        "Reserved concurrency is both the maximum and the minimum for a function and is free of charge; provisioned concurrency pre-initializes environments and is charged",
+        "With provisioned concurrency a cold start can still occur when Lambda has to reset an environment",
+        "aws lambda get-account-settings returns ConcurrentExecutions and UnreservedConcurrentExecutions"
+      ],
+      "note": "One paragraph of the page says a function can gain 500 concurrency every 10 seconds; the scaling page and the quotas page say 1,000. The chapter quotes the latter two."
+    },
+    {
+      "id": "tune-lambda-scaling",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/scaling-behavior.html",
+      "title": "Lambda scaling behavior",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Per function and Region, concurrency scales by at most 1,000 execution environments every 10 seconds (or 10,000 requests per second every 10 seconds)",
+        "Requests that arrive faster than the function can scale, or at maximum concurrency, fail with a throttling error (429)"
+      ]
+    },
+    {
+      "id": "tune-lambda-reserved",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-concurrency.html",
+      "title": "Configuring reserved concurrency for a function",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "You can reserve up to the unreserved account concurrency minus 100",
+        "Reserved concurrency 0 stops the function from processing any event",
+        "Configuring reserved concurrency incurs no additional charge"
+      ]
+    },
+    {
+      "id": "tune-lambda-provisioned",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html",
+      "title": "Configuring provisioned concurrency for a function",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Provisioned concurrency cannot be used with $LATEST; it is set on a version or an alias, and the event source must point at that qualifier",
+        "Provisioned concurrency cannot exceed the function's reserved concurrency",
+        "Initialization code runs at allocation time and again when Lambda recycles environments, and is billed even if the environment never serves a request",
+        "With provisioned concurrency Lambda logs a platform.initReport event in the JSON log format each time an environment is initialized",
+        "Excess traffic is served by on-demand environments; AWS_LAMBDA_INITIALIZATION_TYPE is provisioned-concurrency or on-demand",
+        "Lambda suggests a 10% buffer on top of the usual peak concurrency"
+      ]
+    },
+    {
+      "id": "tune-lambda-memory",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-memory.html",
+      "title": "Configure Lambda function memory",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Memory is 128 MB to 10,240 MB in 1-MB increments; CPU is allocated in proportion to memory, and 1,769 MB corresponds to one vCPU",
+        "The documentation points to the open source AWS Lambda Power Tuning tool to find the right setting",
+        "Compute Optimizer's memory recommendations support only x86_64 functions"
+      ]
+    },
+    {
+      "id": "tune-lambda-timeout",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-timeout.html",
+      "title": "Configure Lambda function timeout",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default timeout is 3 seconds and the maximum 900 seconds",
+        "A timeout close to the average duration risks unexpected timeouts"
+      ]
+    },
+    {
+      "id": "tune-lambda-quotas",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "New AWS accounts have reduced concurrency and memory quotas, raised automatically based on usage",
+        "Concurrent executions: 1,000 by default, adjustable",
+        "Function concurrency scaling limit: 1,000 execution environments every 10 seconds per function",
+        "Deployment package: 50 MB zipped through the API, 250 MB unzipped including layers",
+        "Five layers per function",
+        "Lambda's documentation uses MB to mean 1,024 KB"
+      ]
+    },
+    {
+      "id": "tune-lambda-best-practices",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html",
+      "title": "Best practices for working with AWS Lambda functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Initialize SDK clients and database connections outside the handler so that later invocations in the same environment reuse them",
+        "Do not keep user data or anything with security implications in the execution environment between invocations",
+        "Max Memory Used in the REPORT line shows whether the function is over- or under-provisioned",
+        "For an SQS event source the function's invocation time must not exceed the queue's visibility timeout",
+        "Reserved concurrency can be used to limit how far a function scales; setting it to 0 stops a runaway function"
+      ]
+    },
+    {
+      "id": "tune-lambda-nodejs",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-nodejs.html",
+      "title": "Building Lambda functions with Node.js",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every supported Node.js runtime includes a specific minor version of the AWS SDK for JavaScript v3, which depends on the runtime version and the Region and is not the latest",
+        "Keep-alive for TCP connections is on by default in the supported Node.js runtimes",
+        "nodejs24.x is a supported runtime on Amazon Linux 2023; nodejs26.x is listed as well"
+      ]
+    },
+    {
+      "id": "tune-lambda-nodejs-handler",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html",
+      "title": "Define Lambda function handler in Node.js",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda recommends ES modules because they support top-level await, so asynchronous initialization completes in the Init phase",
+        "Code outside the handler runs during initialization and what it creates stays in memory between invocations",
+        "To control dependencies, package them with the function instead of relying on the libraries in the runtime, which Lambda updates periodically",
+        "Minimize the deployment package to its runtime necessities to reduce the time to download and unpack it"
+      ]
+    },
+    {
+      "id": "tune-lambda-nodejs-package",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-package.html",
+      "title": "Deploy Node.js Lambda functions with .zip file archives",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Bundling with esbuild, rollup or similar is the recommended way to ship dependencies and improves performance by reducing I/O operations",
+        "A different version of a runtime-included library can be bundled with the function"
+      ]
+    },
+    {
+      "id": "tune-lambda-telemetry-schema",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html",
+      "title": "Lambda Telemetry API Event schema reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "platform.report carries metrics durationMs, billedDurationMs, memorySizeMB, maxMemoryUsedMB and, optionally, initDurationMs and restoreDurationMs",
+        "platform.initReport carries initializationType (on-demand or provisioned-concurrency), phase (init, invoke or snap-start), status and metrics.durationMs",
+        "For Lambda Managed Instances platform.report contains only durationMs",
+        "The two example events used as test fixtures"
+      ],
+      "note": "The page's platform.report example ends with a trailing comma and omits the status it lists as present."
+    },
+    {
+      "id": "tune-lambda-log-format",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-logformat.html",
+      "title": "Configuring JSON and plain text log formats",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default log format is plain text",
+        "In the JSON format each system log item is an object with time, type and record, shaped like the Telemetry API's events, and often carries more than the text form"
+      ]
+    },
+    {
+      "id": "tune-lambda-metrics",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "title": "Types of metrics for Lambda functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Duration metric does not include cold start time",
+        "Throttles counts refused invocations, which are in neither Invocations nor Errors",
+        "ProvisionedConcurrencySpilloverInvocations counts invocations served on standard concurrency when all provisioned concurrency is in use",
+        "ConcurrentExecutions is the number of function instances processing events"
+      ]
+    },
+    {
+      "id": "tune-lambda-layers",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html",
+      "title": "Managing Lambda dependencies with layers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A layer is a .zip archive extracted into /opt; up to five per function, only for .zip functions",
+        "Reasons the page gives for layers: smaller packages, shared dependencies, the console editor, pinning an SDK version",
+        "For Go and Rust the page advises against layers because loading from them can lengthen cold starts"
+      ]
+    },
+    {
+      "id": "tune-lambda-extensions",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-extensions.html",
+      "title": "Augment Lambda functions using Lambda extensions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Extensions share the function's CPU, memory and storage, and each must finish initializing before the function is invoked",
+        "You are charged for the time an extension runs, in 1 ms increments",
+        "PostRuntimeExtensionsDuration measures the time extensions take after the function code has completed"
+      ]
+    },
+    {
+      "id": "tune-lambda-snapstart",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/snapstart.html",
+      "title": "Improving startup performance with Lambda SnapStart",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SnapStart supports Java 11 and later, Python 3.12 and later and .NET 8 and later; other managed runtimes such as nodejs24.x are not supported"
+      ]
+    },
+    {
+      "id": "tune-lambda-sqs-configure",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html",
+      "title": "Creating and configuring an Amazon SQS event source mapping",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Set the queue's visibility timeout to at least six times the function timeout, plus MaximumBatchingWindowInSeconds when a batch window is used",
+        "Lambda returns an error when the function timeout exceeds the queue's visibility timeout"
+      ]
+    },
+    {
+      "id": "tune-apigw-http-quotas",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-quotas.html",
+      "title": "Quotas for configuring and running an HTTP API",
+      "checkedAt": "2026-10-13",
+      "supports": ["Maximum integration timeout: 30 seconds, not adjustable"]
+    },
+    {
+      "id": "tune-logs-insights-fields",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData-discoverable-fields.html",
+      "title": "Supported logs and discovered fields",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For Lambda logs Logs Insights discovers @requestId, @duration, @billedDuration, @type, @maxMemoryUsed and @memorySize"
+      ],
+      "note": "The list does not name @initDuration. The chapter's script parses the report itself instead of relying on a discovered field."
+    },
+    {
+      "id": "tune-sdk-js-keepalive",
+      "url": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/node-reusing-connections.html",
+      "title": "Reuse connections with keep-alive in Node.js",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS SDK for JavaScript v3 reuses TCP connections by default",
+        "For short operations such as DynamoDB queries, setting up a TCP connection can take longer than the operation itself"
+      ]
+    },
+    {
+      "id": "tune-lambda-pricing",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Duration charges apply to code in the handler and to initialization code declared outside it",
+        "Provisioned concurrency is charged from enabling to disabling, rounded up to five minutes, by configured memory and concurrency",
+        "The Lambda free tier does not apply to functions with provisioned concurrency enabled",
+        "The free tier includes one million requests and 400,000 GB-seconds per month"
+      ],
+      "note": "Prices on the page are filled in by script; the numbers come from the Price List bulk API."
+    },
+    {
+      "id": "tune-lambda-init-billing",
+      "url": "https://aws.amazon.com/blogs/compute/aws-lambda-standardizes-billing-for-init-phase/",
+      "title": "AWS Lambda standardizes billing for INIT Phase",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Since August 1, 2025 the INIT phase is billed for on-demand invocations of ZIP-packaged functions on managed runtimes too, and its duration is included in Billed Duration",
+        "The post says the INIT phase includes creating the execution environment, downloading the function code and initializing it"
+      ]
+    },
+    {
+      "id": "tune-price-list-lambda",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AWS Lambda, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Provisioned concurrency: USD 0.0000043068 per GB-second on arm64 and 0.0000053835 on x86",
+        "Duration while provisioned: USD 0.0000100492 per GB-second on arm64 and 0.0000125615 on x86",
+        "On-demand duration, first tier: USD 0.0000133334 per GB-second on arm64 and 0.0000166667 on x86"
+      ],
+      "note": "Offer published 2026-10-09T22:31:22Z."
+    },
+    {
+      "id": "tune-lambda-power-tuning",
+      "url": "https://github.com/alexcasalboni/aws-lambda-power-tuning",
+      "title": "AWS Lambda Power Tuning",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Step Functions state machine that invokes a function at several memory settings in your account and reports cost and speed for each"
+      ],
+      "note": "Read the README only. The tool was not deployed."
+    },
+    {
+      "id": "tune-esbuild-platform",
+      "url": "https://esbuild.github.io/api/#platform",
+      "title": "esbuild API: Platform and Main fields",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With platform node the main fields default to main,module, so tree shaking will likely not happen for packages that provide both",
+        "The setting can be changed to module,main when that is known to be safe"
+      ]
+    },
+    {
+      "id": "tune-cdk-nodejs-bundling",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-lambda-nodejs/lib/bundling.js",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "NodejsFunction passes --main-fields to esbuild only when the mainFields option is given",
+        "When externalModules is not given, NodejsFunction excludes @aws-sdk/* (and @smithy/* under a feature flag) from the bundle for runtimes that include SDK v3"
+      ],
+      "note": "Read from the installed package's source, not from the documentation."
+    },
+    {
+      "id": "tune-smithy-types",
+      "url": "https://www.npmjs.com/package/@smithy/types/v/4.19.0",
+      "title": "@smithy/types 4.19.0: NodeHttpHandlerOptions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "connectionTimeout and requestTimeout default to 0, which disables them",
+        "A breach of requestTimeout only logs a warning unless throwOnRequestTimeout is true",
+        "HttpHandlerOptions accepts an abortSignal per call"
+      ],
+      "note": "Read from the type definitions installed with @aws-sdk/client-dynamodb 3.1149.0."
+    },
+    {
+      "id": "tune-cdkd-register-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers exist for AWS::Lambda::Function, AWS::Lambda::Permission, AWS::IAM::Role, AWS::IAM::Policy, AWS::DynamoDB::Table and AWS::Logs::LogGroup",
+        "No provider is registered for AWS::Lambda::Version or AWS::Lambda::Alias"
+      ]
+    },
+    {
+      "id": "tune-cloud-control-resources",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::Lambda::Alias and AWS::Lambda::Version are listed with create, read, update, delete and list"
+      ]
+    },
+    {
+      "id": "tune-cloudflare-how-workers-works",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "Cloudflare Workers: How Workers works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers run in V8 isolates inside an already running runtime instead of a virtual machine or container per function, which the page says eliminates the cold starts of the virtual machine model",
+        "A single Workers instance may handle multiple requests concurrently in one event loop, and isolates may be evicted"
+      ]
+    },
+    {
+      "id": "tune-cloudflare-workers-limits",
+      "url": "https://developers.cloudflare.com/workers/platform/limits/",
+      "title": "Cloudflare Workers: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Memory: 128 MB per isolate on both plans",
+        "CPU time per HTTP request: 10 ms on Free; on Paid 30 seconds by default, up to 5 minutes",
+        "Worker size: 64 MiB uncompressed; larger bundles can affect startup time",
+        "Startup time: the global scope must parse and execute within 1 second, checked at deployment"
+      ]
+    },
+    {
+      "id": "tune-cloudflare-workers-pricing",
+      "url": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "title": "Cloudflare Workers: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": ["Workers Standard charges for requests and CPU time and not for duration"]
+    },
+    {
+      "id": "tune-vercel-fluid-compute",
+      "url": "https://vercel.com/docs/fluid-compute",
+      "title": "Vercel: Fluid compute",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fluid compute lets multiple invocations share one function instance (Node.js and Python), and is enabled by default for new projects since April 23, 2025",
+        "Vercel reduces cold starts with bytecode caching on Node.js 20+ in production and with pre-warming of functions on production deployments"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "init-phase",
+      "ja": "Init フェーズ",
+      "en": "Init phase",
+      "firstUse": "29",
+      "definition": {
+        "ja": "実行環境を作った直後に 1 回だけ走る段階。extension の起動、ランタイムの起動、ハンドラーの外に書いたコードの実行までを含む。",
+        "en": "The phase that runs once, right after an execution environment is created: extensions start, the runtime starts, and the code outside the handler runs."
+      }
+    },
+    {
+      "id": "invoke-phase",
+      "ja": "Invoke フェーズ",
+      "en": "Invoke phase",
+      "firstUse": "29",
+      "definition": {
+        "ja": "ハンドラーが 1 件のリクエストを処理する段階。関数のタイムアウトはこの段階全体にかかる。",
+        "en": "The phase in which the handler processes one request. The function timeout applies to all of it."
+      }
+    },
+    {
+      "id": "report-line",
+      "ja": "REPORT 行",
+      "en": "REPORT line",
+      "firstUse": "29",
+      "definition": {
+        "ja": "Lambda が呼び出しごとに 1 行書く記録。実行時間、課金された時間、メモリの設定と最大使用量、コールドスタートなら初期化の時間が入る。",
+        "en": "The record Lambda writes once per invocation: duration, billed duration, the memory setting and the most memory used, and the initialization time on a cold start."
+      }
+    },
+    {
+      "id": "gb-second",
+      "ja": "GB 秒",
+      "en": "GB-second",
+      "firstUse": "29",
+      "definition": {
+        "ja": "Lambda の実行時間の課金単位。メモリの設定（GB）に、課金された時間（秒）を掛けたもの。",
+        "en": "The unit Lambda charges duration in: the memory setting in GB multiplied by the billed time in seconds."
+      }
+    },
+    {
+      "id": "reserved-concurrency",
+      "ja": "予約済み同時実行数",
+      "en": "reserved concurrency",
+      "firstUse": "29",
+      "definition": {
+        "ja": "関数に取り分ける同時実行数。その関数の上限であり、ほかの関数に使われない下限でもある。料金はかからない。",
+        "en": "Concurrency set aside for one function. It is that function's ceiling and also a floor no other function can use. It costs nothing."
+      }
+    },
+    {
+      "id": "provisioned-concurrency",
+      "ja": "provisioned concurrency",
+      "en": "provisioned concurrency",
+      "firstUse": "29",
+      "definition": {
+        "ja": "あらかじめ初期化しておく実行環境の数。バージョンかエイリアスに付け、使われなくても時間で課金される。",
+        "en": "A number of execution environments kept initialized in advance. Set on a version or an alias, and billed by time whether used or not."
+      }
+    },
+    {
+      "id": "tree-shaking",
+      "ja": "tree shaking",
+      "en": "tree shaking",
+      "firstUse": "29",
+      "definition": {
+        "ja": "バンドルするときに、どこからも使われていないコードを落とすこと。ES modules で書かれたコードにしか効かない。",
+        "en": "Dropping code nothing uses while bundling. It works only on code written as ES modules."
+      }
+    },
+    {
+      "id": "lambda-layer",
+      "ja": "レイヤー",
+      "en": "layer",
+      "firstUse": "29",
+      "definition": {
+        "ja": "関数に追加で載せる .zip。中身は実行環境の /opt に展開される。",
+        "en": "An extra .zip attached to a function. Its contents are extracted into /opt in the execution environment."
+      }
+    },
+    {
+      "id": "lambda-extension",
+      "ja": "extension",
+      "en": "extension",
+      "firstUse": "29",
+      "definition": {
+        "ja": "関数と同じ実行環境で動く別のプログラム。監視の道具などが使う。CPU とメモリを関数と分け合う。",
+        "en": "A separate program that runs in the function's execution environment, used by monitoring tools among others. It shares CPU and memory with the function."
+      }
+    },
+    {
+      "id": "isolate",
+      "ja": "isolate",
+      "en": "isolate",
+      "firstUse": "29",
+      "definition": {
+        "ja": "V8 が 1 つのプロセスの中に作る、互いにメモリを共有しない実行の単位。Cloudflare Workers はこの単位でコードを動かす。",
+        "en": "A unit of execution V8 creates inside one process, sharing no memory with the others. Cloudflare Workers runs code in such units."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "29.overview",
+      "sources": [
+        "examples/29-lambda-tuning/src/lambda.ts",
+        "examples/29-lambda-tuning/infra/lib/tuning-stack.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "29.report",
+      "sources": [
+        "examples/29-lambda-tuning/src/report.ts",
+        "examples/29-lambda-tuning/test/report.test.ts",
+        "examples/29-lambda-tuning/fixtures/report-lines.txt",
+        "examples/29-lambda-tuning/scripts/report.ts"
+      ],
+      "tasks": ["test:unit", "tune:report:sample"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "29.when-not",
+      "sources": ["examples/29-lambda-tuning/src/cost-inputs.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "29.bundle",
+      "sources": [
+        "examples/29-lambda-tuning/src/bundle",
+        "examples/29-lambda-tuning/measure/aggregated.ts",
+        "examples/29-lambda-tuning/test/bundle.test.ts",
+        "examples/29-lambda-tuning/scripts/bundle.ts",
+        "examples/29-lambda-tuning/infra/lib/tuning-stack.ts"
+      ],
+      "tasks": ["test:unit", "tune:bundle"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "29.init",
+      "sources": [
+        "examples/29-lambda-tuning/src/lambda.ts",
+        "examples/29-lambda-tuning/src/compose.ts",
+        "examples/29-lambda-tuning/test/deadline.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "29.memory",
+      "sources": [
+        "examples/29-lambda-tuning/src/cost-inputs.ts",
+        "examples/29-lambda-tuning/src/plan.ts",
+        "examples/29-lambda-tuning/scripts/plan.ts",
+        "examples/29-lambda-tuning/test/cost-inputs.test.ts",
+        "examples/29-lambda-tuning/test/plan.test.ts"
+      ],
+      "tasks": ["test:unit", "tune:plan"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "29.concurrency",
+      "sources": [
+        "examples/29-lambda-tuning/src/concurrency.ts",
+        "examples/29-lambda-tuning/test/concurrency.test.ts",
+        "examples/29-lambda-tuning/infra/lib/tuning-stack.ts",
+        "examples/29-lambda-tuning/infra/bin/app.ts",
+        "examples/29-lambda-tuning/infra/test/tuning-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "tune:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "29.timeouts",
+      "sources": [
+        "examples/29-lambda-tuning/src/timeouts.ts",
+        "examples/29-lambda-tuning/src/deadline.ts",
+        "examples/29-lambda-tuning/src/lambda.ts",
+        "examples/29-lambda-tuning/test/timeouts.test.ts",
+        "examples/29-lambda-tuning/test/deadline.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "29.layers",
+      "sources": ["examples/29-lambda-tuning/infra/lib/tuning-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "29.local",
+      "sources": [
+        "examples/29-lambda-tuning/scripts/bundle.ts",
+        "examples/29-lambda-tuning/scripts/plan.ts",
+        "examples/29-lambda-tuning/scripts/report.ts",
+        "examples/29-lambda-tuning/src/bundle/measure.ts"
+      ],
+      "tasks": ["test:unit", "tune:bundle", "tune:plan", "tune:report:sample"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "29.deploy",
+      "sources": [
+        "examples/29-lambda-tuning/infra/bin/app.ts",
+        "examples/29-lambda-tuning/infra/lib/tuning-stack.ts",
+        "examples/29-lambda-tuning/scripts/smoke.ts",
+        "examples/29-lambda-tuning/scripts/report.ts"
+      ],
+      "tasks": [
+        "tune:infra:diff",
+        "tune:infra:deploy",
+        "tune:smoke",
+        "tune:report",
+        "tune:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "29.cost",
+      "sources": [
+        "examples/29-lambda-tuning/src/cost-inputs.ts",
+        "examples/29-lambda-tuning/src/plan.ts",
+        "examples/29-lambda-tuning/test/cost-inputs.test.ts"
+      ],
+      "tasks": ["test:unit", "tune:plan"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "29.workers",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "29.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["tune:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "lambda.provisioned.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "VZ2BZJB73ZRZTDTK",
+      "usageType": "APN1-Lambda-Provisioned-Concurrency-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000043068",
+          "description": "AWS Lambda - Provisioned Concurrency for ARM - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.duration.provisioned.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "RH4PFTVX4T4KZF9J",
+      "usageType": "APN1-Lambda-Provisioned-GB-Second-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100492",
+          "description": "AWS Lambda - Total Compute (Provisioned) for ARM - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.provisioned.x86",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "ZVA2Z6TTQNFCXFSU",
+      "usageType": "APN1-Lambda-Provisioned-Concurrency",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000053835",
+          "description": "AWS Lambda - Provisioned Concurrency - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.duration.provisioned.x86",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "CQ446M27PP4V4UVB",
+      "usageType": "APN1-Lambda-Provisioned-GB-Second",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Lambda-GB-Second",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000125615",
+          "description": "AWS Lambda - Total Compute (Provisioned) - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "tune-idle",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: 既定の設定でデプロイして、呼ばれない月",
+        "en": "Lambda Tuning: deployed with the defaults, never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ",
+          "provisioned concurrency を付けていない（既定）。予約済み同時実行数は付けても料金がかからない",
+          "ログは 7 日で失効し、保存量ゼロ"
+        ],
+        "en": [
+          "No requests",
+          "No provisioned concurrency (the default). Reserved concurrency costs nothing either way",
+          "Logs expire after 7 days; nothing is stored"
+        ]
+      },
+      "items": []
+    },
+    {
+      "id": "tune-1m-256",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: 月 100 万回、256 MB、50 ms",
+        "en": "Lambda Tuning: 1,000,000 invocations a month at 256 MB and 50 ms"
+      },
+      "assumptions": {
+        "ja": [
+          "Lambda の料金だけ。API Gateway、DynamoDB、ログの料金は 04章、05章、19章の計算のとおりで、ここには含めていない",
+          "arm64、256 MB、1 回あたりの課金時間 50 ms（04章と同じ仮定）",
+          "コールドスタートなし"
+        ],
+        "en": [
+          "Lambda only. API Gateway, DynamoDB and logs are priced in chapters 04, 05 and 19 and are not included here",
+          "arm64, 256 MB, 50 ms billed per invocation (the assumption of chapter 04)",
+          "No cold starts"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 12500,
+          "basis": "1,000,000 x 0.05 s x 0.25 GB, in GB-seconds"
+        }
+      ]
+    },
+    {
+      "id": "tune-1m-1024",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: 月 100 万回、1,024 MB にしても 50 ms のままだった場合",
+        "en": "Lambda Tuning: 1,000,000 invocations a month at 1,024 MB, still 50 ms"
+      },
+      "assumptions": {
+        "ja": [
+          "Lambda の料金だけ。API Gateway、DynamoDB、ログの料金は 04章、05章、19章の計算のとおりで、ここには含めていない",
+          "arm64、1,024 MB。メモリを 4 倍にしても実行時間が 50 ms のまま変わらなかったという仮定（待ち時間の大半がネットワークである場合）",
+          "コールドスタートなし"
+        ],
+        "en": [
+          "Lambda only. API Gateway, DynamoDB and logs are priced in chapters 04, 05 and 19 and are not included here",
+          "arm64, 1,024 MB. Assumes four times the memory left the duration at 50 ms, as when most of it is waiting on the network",
+          "No cold starts"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 50000,
+          "basis": "1,000,000 x 0.05 s x 1 GB, in GB-seconds"
+        }
+      ]
+    },
+    {
+      "id": "tune-1m-cold",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: 月 100 万回のうち 1% がコールドスタートだった場合",
+        "en": "Lambda Tuning: 1,000,000 invocations a month, 1% of them cold"
+      },
+      "assumptions": {
+        "ja": [
+          "Lambda の料金だけ。API Gateway、DynamoDB、ログの料金は 04章、05章、19章の計算のとおりで、ここには含めていない",
+          "arm64、256 MB、ハンドラー 50 ms",
+          "1%（1 万回）がコールドスタートで、初期化に 300 ms かかるという仮定。300 ms は計測値ではない",
+          "初期化の時間も実行時間と同じ単価で課金される（2025 年 8 月 1 日から）"
+        ],
+        "en": [
+          "Lambda only. API Gateway, DynamoDB and logs are priced in chapters 04, 05 and 19 and are not included here",
+          "arm64, 256 MB, 50 ms in the handler",
+          "Assumes 1% (10,000) start cold with 300 ms of initialization each. The 300 ms is an assumption, not a measurement",
+          "Initialization is billed at the same rate as duration (since August 1, 2025)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 13250,
+          "basis": "12,500 + 10,000 x 0.3 s x 0.25 GB, in GB-seconds"
+        }
+      ]
+    },
+    {
+      "id": "tune-provisioned-1",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: provisioned concurrency 1 を 1 か月置いた場合（呼ばれなくてもかかる分）",
+        "en": "Lambda Tuning: provisioned concurrency of 1 kept for a month (what it costs unused)"
+      },
+      "assumptions": {
+        "ja": [
+          "-c provisionedConcurrency=1、256 MB、arm64 でデプロイして 730 時間置く",
+          "リクエストゼロ。呼ばれたぶんのリクエスト料金と実行時間の料金は別にかかる",
+          "provisioned concurrency を有効にした関数には Lambda の無料枠が適用されない"
+        ],
+        "en": [
+          "Deployed with -c provisionedConcurrency=1 at 256 MB on arm64 and left for 730 hours",
+          "No requests. Requests and duration are charged on top when it is called",
+          "The Lambda free tier does not apply to a function with provisioned concurrency"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.provisioned.arm",
+          "quantity": 657000,
+          "basis": "1 x 0.25 GB x 2,628,000 s, in GB-seconds"
+        }
+      ]
+    },
+    {
+      "id": "tune-flood-1024",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: 1,024 MB にした関数が、スロットリングの上限に 30 日張り付いた場合",
+        "en": "Lambda Tuning: a 1,024 MB function held at the stage throttle for 30 days"
+      },
+      "assumptions": {
+        "ja": [
+          "Lambda の料金だけ。ほかの行は 19章の「叩かれたら」と同じ",
+          "ステージのスロットリング（毎秒 10 件）に 30 日張り付く: 2,592 万回",
+          "1 回 60 ms、1,024 MB、arm64（19章の表の仮定を、メモリだけ 4 倍にしたもの）"
+        ],
+        "en": [
+          "Lambda only. The other lines are those of chapter 19's flood table",
+          "Held at the stage throttle of 10 a second for 30 days: 25,920,000 invocations",
+          "60 ms each at 1,024 MB on arm64: chapter 19's assumption with four times the memory"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 25920000,
+          "basis": "10 a second x 2,592,000 s"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 1555200,
+          "basis": "25,920,000 x 0.06 s x 1 GB, in GB-seconds"
+        }
+      ]
+    },
+    {
+      "id": "tune-flood-stalled",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: スロットリングの上限に張り付かれ、どの呼び出しもタイムアウトまで動いた場合",
+        "en": "Lambda Tuning: held at the stage throttle while every invocation runs to the timeout"
+      },
+      "assumptions": {
+        "ja": [
+          "Lambda の料金だけ。計算上の上限で、請求で確かめたものではない",
+          "ステージのスロットリング（毎秒 10 件）に 30 日張り付く: 2,592 万回",
+          "下流が応答せず、どの呼び出しも関数のタイムアウトの 10 秒まで課金されるという仮定。256 MB、arm64",
+          "予約済み同時実行数なし。同時実行数は 10 x 10 = 100 に達する"
+        ],
+        "en": [
+          "Lambda only. An arithmetic upper bound, not checked against a bill",
+          "Held at the stage throttle of 10 a second for 30 days: 25,920,000 invocations",
+          "Assumes the downstream does not answer and every invocation is billed up to the 10-second function timeout. 256 MB, arm64",
+          "No reserved concurrency: concurrency reaches 10 x 10 = 100"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 25920000,
+          "basis": "10 a second x 2,592,000 s"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 64800000,
+          "basis": "25,920,000 x 10 s x 0.25 GB, in GB-seconds"
+        }
+      ]
+    },
+    {
+      "id": "tune-flood-stalled-reserved",
+      "chapter": "29",
+      "title": {
+        "ja": "Lambda Tuning: 同じ状況で、予約済み同時実行数が 5 の場合",
+        "en": "Lambda Tuning: the same situation with a reserved concurrency of 5"
+      },
+      "assumptions": {
+        "ja": [
+          "Lambda の料金だけ。計算上の上限で、請求で確かめたものではない",
+          "-c reservedConcurrency=5。実行環境は 5 つまでで、それを超えたリクエストは関数を動かさずに断られる",
+          "5 つの実行環境が 30 日のあいだ休みなく 10 秒の呼び出しを続ける: 129.6 万回、256 MB、arm64"
+        ],
+        "en": [
+          "Lambda only. An arithmetic upper bound, not checked against a bill",
+          "-c reservedConcurrency=5: at most five environments; requests beyond them are refused without running the function",
+          "Five environments running 10-second invocations without pause for 30 days: 1,296,000 invocations, 256 MB, arm64"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1296000,
+          "basis": "5 environments x 2,592,000 s / 10 s"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 3240000,
+          "basis": "5 x 2,592,000 s x 0.25 GB, in GB-seconds"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "29",
+        "command": "vp test run examples/29-lambda-tuning",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "REPORT 行と platform.report の読み取り（Lambda のドキュメントに載っている行で）、課金時間の計算、同時実行数の模型、タイムアウトの並びの検査、応答しないテーブルに対する締め切り、5 通りのバンドルの大きさと予算、デプロイするバンドルを素の Node.js で読み込んで DynamoDB の代役と通信させる検査、インフラのアサーション",
+          "en": "Reading REPORT lines and platform.report (with the lines printed in the Lambda documentation), billed duration, the concurrency model, the timeout chain, the deadline against a table that never answers, the size and budget of five bundles, the deployed bundle loaded in plain Node.js and talking to a stand-in for DynamoDB, and infrastructure assertions"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "tsc --noEmit -p examples/29-lambda-tuning",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "esbuild のバンドル込みで template を生成。AWS には問い合わせない",
+          "en": "Synthesizes the template, bundling with esbuild. Makes no call to AWS"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:bundle",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "5 通りのバンドルのバイト数、パッケージごとの内訳、新しい Node.js プロセスでの読み込み時間。時間は手元の Mac の値で、Lambda の値ではない",
+          "en": "Bytes of five bundles, the share of each package, and the time a fresh Node.js process takes to import each. The times are a Mac's, not Lambda's"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:plan",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "タイムアウトの並び、メモリごとの料金、provisioned concurrency の料金を表示。AWS には問い合わせない",
+          "en": "Prints the timeout chain, the price at each memory setting and the price of provisioned concurrency. Makes no call to AWS"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:report:sample",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "Lambda のドキュメントから写した REPORT 行を集計して表示",
+          "en": "Summarizes the REPORT lines copied from the Lambda documentation"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:report",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。Lambda 上の時間は 1 つも測っていない",
+          "en": "Not run. No time was measured on Lambda"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "29",
+        "command": "vp run tune:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "tune-no-lambda-timings",
+        "summary": {
+          "ja": "Lambda 上の時間を 1 つも測っていない。初期化の時間、コールドスタートの割合、メモリを変えたときの実行時間は、この章のどこにも実測値がない。手元で測ったのはバンドルのバイト数と、Mac での読み込み時間だけ。",
+          "en": "No time was measured on Lambda. The chapter has no measured value for initialization time, the share of cold starts, or duration at another memory setting. What was measured locally is bundle bytes and import time on a Mac."
+        },
+        "resume": {
+          "ja": "vp run tune:infra:deploy、vp run tune:smoke の後、数分待って vp run tune:report を実行する。-c memorySize=512 などでデプロイし直して同じ手順を繰り返し、表を比べる。",
+          "en": "After vp run tune:infra:deploy and vp run tune:smoke, wait a few minutes and run vp run tune:report. Redeploy with -c memorySize=512 and so on, repeat, and compare the tables."
+        }
+      },
+      {
+        "id": "tune-json-report-shape",
+        "summary": {
+          "ja": "JSON ログ形式の platform.report が、ドキュメントの形のまま CloudWatch Logs に入り、aws logs filter-log-events の message として読めることを実機で確かめていない。",
+          "en": "Not checked in AWS: that platform.report in the JSON log format reaches CloudWatch Logs in the documented shape and can be read as the message of aws logs filter-log-events."
+        },
+        "resume": {
+          "ja": "vp run tune:report を実行する。「No reports found」になるか、形が違うというエラーになったら、aws logs tail でそのまま 1 行を見て src/report.ts のスキーマと比べる。",
+          "en": "Run vp run tune:report. If it prints No reports found, or fails on the shape, look at one raw line with aws logs tail and compare it with the schemas in src/report.ts."
+        }
+      },
+      {
+        "id": "tune-module-first-on-lambda",
+        "summary": {
+          "ja": "mainFields を module,main にしてミニファイしたバンドルを、Lambda では動かしていない。素の Node.js 24 で読み込み、DynamoDB の代役に GetItem を送るところまでは確かめた。",
+          "en": "The bundle built with mainFields module,main and minified has not run on Lambda. It was loaded in plain Node.js 24 and sent a GetItem to a stand-in for DynamoDB."
+        },
+        "resume": {
+          "ja": "vp run tune:infra:deploy の後、vp run tune:smoke が 201、200、204 を返すことを確かめる。500 が返ったら vp run tune:report とログで初期化の失敗を探す。",
+          "en": "After vp run tune:infra:deploy, check that vp run tune:smoke answers 201, 200 and 204. On a 500, look for a failed initialization with vp run tune:report and in the logs."
+        }
+      },
+      {
+        "id": "tune-deadline-on-lambda",
+        "summary": {
+          "ja": "ハンドラーが自分で設ける締め切り（関数のタイムアウトの 1 秒前）が、Lambda の上で SDK の呼び出しを止め、500 の応答とログを残すことを確かめていない。関数がタイムアウトしたときに API Gateway が返すステータスも確かめていない。",
+          "en": "Not checked on Lambda: that the handler's own deadline, one second before the function timeout, stops the SDK call and leaves a 500 answer and a log line. Nor what API Gateway answers when the function times out."
+        },
+        "resume": {
+          "ja": "テーブルへの権限を一時的に外すのではなく、到達できないエンドポイントを環境変数 DYNAMODB_ENDPOINT に入れた関数を別に用意して呼び、応答と REPORT 行の Status を見る。",
+          "en": "Rather than removing the table permission, deploy a copy of the function whose DYNAMODB_ENDPOINT points at an unreachable address, call it, and read the answer and the Status in its REPORT line."
+        }
+      },
+      {
+        "id": "tune-concurrency-options",
+        "summary": {
+          "ja": "-c reservedConcurrency と -c provisionedConcurrency を付けたデプロイを実行していない。cdkd 0.296.28 は AWS::Lambda::Version と AWS::Lambda::Alias を Cloud Control API 経由で扱う。新しいアカウントで予約が断られる条件、provisioned concurrency の割り当てにかかる時間も未確認。",
+          "en": "Deploys with -c reservedConcurrency and -c provisionedConcurrency were not run. cdkd 0.296.28 handles AWS::Lambda::Version and AWS::Lambda::Alias through Cloud Control API. Also unconfirmed: when a new account refuses a reservation, and how long allocating provisioned concurrency takes."
+        },
+        "resume": {
+          "ja": "aws lambda get-account-settings で ConcurrentExecutions を確かめてから、vp run tune:infra:deploy -c reservedConcurrency=5 -c provisionedConcurrency=1 を実行する。確かめたら、-c を外してデプロイし直すか destroy して、時間課金を止める。",
+          "en": "Check ConcurrentExecutions with aws lambda get-account-settings, then run vp run tune:infra:deploy -c reservedConcurrency=5 -c provisionedConcurrency=1. Afterwards redeploy without the options, or destroy, to stop the hourly charge."
+        }
+      },
+      {
+        "id": "tune-init-duration-contents",
+        "summary": {
+          "ja": "REPORT の Init Duration に、コードのダウンロードと実行環境の起動が含まれるかどうかを、ドキュメントから読み取れなかった。",
+          "en": "Whether Init Duration in the REPORT line includes downloading the code and starting the environment could not be read from the documentation."
+        },
+        "resume": {
+          "ja": "デプロイ後、最初の呼び出しについて、API Gateway の IntegrationLatency と、REPORT の Init Duration + Duration を比べる。",
+          "en": "After a deploy, compare API Gateway's IntegrationLatency for the first call with Init Duration plus Duration in its REPORT line."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 29: lambda tuning ------------------------------------\n      // Bundles the function five ways and times a fresh Node.js process importing each. No AWS.\n      \"tune:bundle\": fresh(\"node scripts/bundle.ts\", { cwd: \"examples/29-lambda-tuning\" }),\n      // The timeout chain and what memory and provisioned concurrency cost. Reads only this checkout.\n      \"tune:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/29-lambda-tuning\" }),\n      // Summarizes the REPORT lines copied from the Lambda documentation. No AWS.\n      \"tune:report:sample\": fresh(\"node scripts/report.ts --file fixtures/report-lines.txt\", {\n        cwd: \"examples/29-lambda-tuning\",\n      }),\n      ...infra(\"tune\", \"examples/29-lambda-tuning\", \"AihLambdaTuning\"),\n      // Creates one note, reads it a number of times, deletes it.\n      \"tune:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", {\n        cwd: \"examples/29-lambda-tuning\",\n      }),\n      // Reads the function's log group and summarizes the invocation reports.\n      \"tune:report\": live(\"node --env-file-if-exists=../../.env scripts/report.ts\", {\n        cwd: \"examples/29-lambda-tuning\",\n      }),",
+    "synth": ["tune:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/29-lambda-tuning"]
+  }
+}

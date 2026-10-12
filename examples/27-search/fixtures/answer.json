@@ -1,0 +1,38 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html (read 2026-10-13). Not recorded from a real inference call, and not an answer to whatever question is asked.",
+  "description": "A model answers in three pieces, citing source 1 twice and a source 7 that does not exist.",
+  "steps": [
+    { "event": { "messageStart": { "role": "assistant" } } },
+    {
+      "event": {
+        "contentBlockDelta": { "contentBlockIndex": 0, "delta": { "text": "金曜のリリースまでに、" } }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": { "text": "決済の結合テストと負荷試験を終える予定です [1]。" }
+        }
+      }
+    },
+    {
+      "event": {
+        "contentBlockDelta": {
+          "contentBlockIndex": 0,
+          "delta": { "text": "進み具合は水曜の朝会で確認します [1][7]。" }
+        }
+      }
+    },
+    { "event": { "contentBlockStop": { "contentBlockIndex": 0 } } },
+    { "event": { "messageStop": { "stopReason": "end_turn" } } },
+    {
+      "event": {
+        "metadata": {
+          "usage": { "inputTokens": 640, "outputTokens": 62, "totalTokens": 702 },
+          "metrics": { "latencyMs": 900 }
+        }
+      }
+    }
+  ]
+}

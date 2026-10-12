@@ -1,0 +1,1280 @@
+{
+  "chapterId": "43",
+  "manifest": {
+    "id": "43",
+    "slug": "glue",
+    "title": {
+      "ja": "Glue: Data Catalog、crawler、ETL job、Data Quality",
+      "en": "Glue: The Data Catalog, Crawlers, ETL Jobs, and Data Quality"
+    },
+    "prerequisites": ["05", "07", "16", "26"],
+    "services": [
+      "AWS Glue",
+      "AWS Glue Data Catalog",
+      "AWS Glue Data Quality",
+      "S3",
+      "EventBridge",
+      "SNS",
+      "CloudWatch",
+      "CloudWatch Logs"
+    ],
+    "samplePath": "examples/43-glue",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "glue-what-is",
+      "glue-ray-end-of-support",
+      "glue-add-job",
+      "glue-versions",
+      "glue-python-shell",
+      "glue-python-shell-migration",
+      "glue-job-bookmarks",
+      "glue-job-bookmarks-programming",
+      "glue-job-parameters",
+      "glue-get-resolved-options",
+      "glue-logging",
+      "glue-iam-role",
+      "glue-managed-policy-service-role",
+      "glue-crawlers",
+      "glue-crawler-schema-changes",
+      "glue-update-catalog-from-job",
+      "glue-triggers",
+      "glue-cron",
+      "glue-workflows",
+      "glue-schema-registry",
+      "glue-data-quality",
+      "glue-dqdl",
+      "glue-dqdl-columnvalues",
+      "glue-dqdl-iscomplete",
+      "glue-dqdl-isunique",
+      "glue-dq-in-etl",
+      "glue-eventbridge",
+      "glue-eventbridge-reference",
+      "glue-cdk-alpha-job-events",
+      "glue-eventbridge-metrics",
+      "glue-athena-partition-projection",
+      "glue-athena-partitions",
+      "glue-athena-ctas-limits",
+      "glue-athena-insert-into",
+      "glue-lake-formation-defaults",
+      "glue-lake-formation",
+      "glue-spark-json",
+      "glue-spark-save-modes",
+      "glue-spark-partition-discovery",
+      "glue-firehose-object-name",
+      "glue-pricing-page",
+      "glue-price-list",
+      "glue-cdkd-providers",
+      "glue-cdk-lib-types",
+      "glue-aws-cli-help",
+      "glue-cloudflare-basin-catalog",
+      "glue-cloudflare-basin-catalog-pricing",
+      "glue-cloudflare-basin-pipelines",
+      "glue-vercel-docs-index"
+    ]
+  },
+  "sources": [
+    {
+      "id": "glue-what-is",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html",
+      "title": "What is AWS Glue?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Glue is a serverless data integration service; its features are grouped as discovering and organizing data (the Data Catalog, crawlers), transforming data (jobs), and building and monitoring pipelines (triggers, workflows)",
+        "Related services named on the page: AWS Lake Formation as an authorization layer over the Data Catalog, and AWS Glue DataBrew"
+      ]
+    },
+    {
+      "id": "glue-ray-end-of-support",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/awsglue-ray-jobs-availability-change.html",
+      "title": "AWS Glue for Ray end of support",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Glue for Ray is closed to new customers starting April 30, 2026; existing customers can continue; no new features are planned",
+        "The alternative AWS recommends is Ray on Amazon EKS with the KubeRay operator"
+      ]
+    },
+    {
+      "id": "glue-add-job",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/add-job.html",
+      "title": "Configuring job properties for Spark jobs in AWS Glue",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Job types and their commands: Spark (glueetl), Spark Streaming (gluestreaming), Python shell (pythonshell)",
+        "AWS Glue versions: 6.0 is Spark 4.1.1 and Python 3.13, 5.1 is Spark 3.5.6 and Python 3.11; a job created without a version gets 5.1",
+        "A DPU is 4 vCPUs and 16 GB of memory; G.1X is 1 DPU per worker, G.2X is 2 DPU; G.025X is for streaming jobs only",
+        "The job timeout defaults to 480 minutes for AWS Glue 5.0 and later (2,880 for 4.0 and earlier); the maximum is 10,080 minutes; jobs are billed for execution time",
+        "Number of retries is 0 to 10; a job that reaches its timeout is not restarted",
+        "Maximum concurrency defaults to 1 and an error is returned when it is reached",
+        "The flexible execution class is for non-urgent jobs, and is supported with G.1X and G.2X on AWS Glue 3.0 or later",
+        "Jobs that access Lake Formation tables with cell-level filters cannot use job bookmarks or push-down predicates"
+      ]
+    },
+    {
+      "id": "glue-versions",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/release-notes.html",
+      "title": "AWS Glue versions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Glue 5.1 is the default version for jobs created without specifying one",
+        "AWS Glue 6.0 removes EMRFS and uses S3A as the only S3 connector"
+      ]
+    },
+    {
+      "id": "glue-python-shell",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/add-job-python.html",
+      "title": "Configuring job properties for Python shell jobs in AWS Glue",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Python shell jobs run Python 3.9; Python shell 3.6 reached end of life on June 1, 2026",
+        "Job bookmarks cannot be used with Python shell jobs"
+      ]
+    },
+    {
+      "id": "glue-python-shell-migration",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/pyshell-migration.html",
+      "title": "Migrate from AWS Glue Python shell jobs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS documents alternatives to Python shell jobs: AWS Glue Spark jobs, AWS Lambda, and Amazon ECS on Fargate",
+        "The minimum number of workers of an AWS Glue Spark job is 2",
+        "AWS Lambda's maximum timeout is 900 seconds"
+      ]
+    },
+    {
+      "id": "glue-job-bookmarks",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/monitor-continuations.html",
+      "title": "Tracking processed data using job bookmarks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A job bookmark is state persisted from a job run so that later runs process only new data; the default option is Disable, with which the job always processes the entire dataset",
+        "For Amazon S3 sources the bookmark checks the last modified time of objects; a timestamp is used to filter the new files",
+        "The state elements are saved atomically when job.commit is invoked from the user script",
+        "Only source files are tracked: when a bookmark is rewound or reset, AWS Glue does not clean the target files, and the page suggests different output targets to avoid duplicate data",
+        "Bookmarks are kept per job and are deleted with the job",
+        "Changing a source's path without changing its transformation_ctx makes the job use the old bookmark state and skip files"
+      ]
+    },
+    {
+      "id": "glue-job-bookmarks-programming",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/programming-etl-connect-bookmarks.html",
+      "title": "Using job bookmarks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Bookmarks do not work without job.init at the beginning of the script and job.commit at the end",
+        "A dynamic frame method called without transformation_ctx does not take part in the bookmark"
+      ]
+    },
+    {
+      "id": "glue-job-parameters",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html",
+      "title": "Using job parameters in AWS Glue jobs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "--job-bookmark-option takes job-bookmark-enable, job-bookmark-disable or job-bookmark-pause",
+        "Arguments set on a job run override the job's DefaultArguments, and NonOverridableArguments override both",
+        "Job arguments are limited to 260 KB"
+      ]
+    },
+    {
+      "id": "glue-get-resolved-options",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-crawler-pyspark-extensions-get-resolved-options.html",
+      "title": "Accessing parameters using getResolvedOptions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "getResolvedOptions(sys.argv, [names]) returns the named arguments; names are passed with two leading hyphens and may contain underscores, not hyphens"
+      ]
+    },
+    {
+      "id": "glue-logging",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/monitor-continuous-logging.html",
+      "title": "Logging for AWS Glue jobs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In AWS Glue 5.0 all jobs log in real time: system, Spark daemon and AWS Glue logger output to /aws-glue/jobs/error, user stdout and stderr to /aws-glue/jobs/output",
+        "--custom-logGroup-prefix replaces the prefix, giving <prefix>/error and <prefix>/output"
+      ]
+    },
+    {
+      "id": "glue-iam-role",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/create-an-iam-role.html",
+      "title": "Step 2: Create an IAM role for AWS Glue",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Data sources require s3:ListBucket and s3:GetObject; data targets require s3:ListBucket, s3:PutObject and s3:DeleteObject",
+        "The console's default is the managed policy AWSGlueServiceRole; the page also allows a policy of your own for specific Amazon S3 resources"
+      ]
+    },
+    {
+      "id": "glue-managed-policy-service-role",
+      "url": "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSGlueServiceRole.html",
+      "title": "AWSGlueServiceRole (AWS managed policy reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The managed policy allows glue:*, cloudwatch:PutMetricData, Amazon S3 actions on buckets named aws-glue-*, and logs:CreateLogGroup, CreateLogStream and PutLogEvents on log groups under /aws-glue/"
+      ]
+    },
+    {
+      "id": "glue-crawlers",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html",
+      "title": "Using crawlers to populate the Data Catalog",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A crawler classifies files to infer format and schema, groups them into tables and partitions by its heuristics, and writes the result to the Data Catalog",
+        "A crawler must download a compressed file to process it"
+      ]
+    },
+    {
+      "id": "glue-crawler-schema-changes",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/crawler-schema-changes-prevent.html",
+      "title": "Preventing a crawler from changing an existing schema",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default a crawler updates the schema in the Data Catalog to match the data source being crawled",
+        "Setting the schema change policy's UpdateBehavior to LOG, with partitions inheriting from the table, prevents it"
+      ]
+    },
+    {
+      "id": "glue-update-catalog-from-job",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/update-from-job.html",
+      "title": "Updating the schema, and adding new partitions in the Data Catalog using AWS Glue ETL jobs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A job can register the partitions it writes with enableUpdateCatalog and partitionKeys on a catalog sink, without rerunning a crawler"
+      ]
+    },
+    {
+      "id": "glue-triggers",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/about-triggers.html",
+      "title": "AWS Glue triggers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A trigger starts jobs and crawlers on demand, on a schedule, or on conditions; its states are CREATED, ACTIVATED and DEACTIVATED"
+      ]
+    },
+    {
+      "id": "glue-cron",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/monitor-data-warehouse-schedule.html",
+      "title": "Time-based schedules for jobs and crawlers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Schedules are cron(Minutes Hours Day-of-month Month Day-of-week Year), in UTC, with a minimum precision of 5 minutes"
+      ]
+    },
+    {
+      "id": "glue-workflows",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/workflows_overview.html",
+      "title": "Overview of workflows in AWS Glue",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A workflow groups jobs, crawlers and triggers into one graph with a start trigger that is a schedule, on demand, or an EventBridge event"
+      ]
+    },
+    {
+      "id": "glue-schema-registry",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/schema-registry.html",
+      "title": "AWS Glue Schema registry",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Schema Registry holds versioned schemas (Avro, JSON Schema, Protobuf) for data streams such as Kafka, Amazon MSK and Kinesis Data Streams, with compatibility checks; the page calls it serverless and free to use"
+      ]
+    },
+    {
+      "id": "glue-data-quality",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/glue-data-quality.html",
+      "title": "AWS Glue Data Quality",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Glue Data Quality is built on the open-source DeeQu framework and evaluates rules written in DQDL",
+        "It has two entry points: tables in the Data Catalog, and AWS Glue ETL jobs; only the ETL entry point identifies the records that failed"
+      ]
+    },
+    {
+      "id": "glue-dqdl",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/dqdl.html",
+      "title": "Data Quality Definition Language (DQDL) reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A ruleset is a list named Rules in square brackets with comma-separated rules; DQDL is case sensitive",
+        "The expression `between x and y` is true in a range that excludes both ends; `in [a, b]` is true for a value in the set"
+      ]
+    },
+    {
+      "id": "glue-dqdl-columnvalues",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/dqdl-rule-types-ColumnValues.html",
+      "title": "ColumnValues",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ColumnValues runs an expression against the values of a column; for every expression other than != and NOT IN a NULL row fails the rule"
+      ]
+    },
+    {
+      "id": "glue-dqdl-iscomplete",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/dqdl-rule-types-IsComplete.html",
+      "title": "IsComplete",
+      "checkedAt": "2026-10-13",
+      "supports": ["IsComplete checks that every value of a column is non-null"]
+    },
+    {
+      "id": "glue-dqdl-isunique",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/dqdl-rule-types-IsUnique.html",
+      "title": "IsUnique",
+      "checkedAt": "2026-10-13",
+      "supports": ["IsUnique checks that every value of a column is unique"]
+    },
+    {
+      "id": "glue-dq-in-etl",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/data-quality-gs-studio-notebooks.html",
+      "title": "Data Quality for ETL jobs in AWS Glue Studio notebooks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EvaluateDataQuality().process_rows(frame, ruleset, publishing_options, additional_options) is imported from awsgluedq.transforms and returns a collection whose ruleOutcomes frame has the columns Rule, Outcome, FailureReason and EvaluatedMetrics",
+        "A Spark DataFrame becomes the frame through DynamicFrame.fromDF"
+      ],
+      "note": "The tutorial sets the notebook to AWS Glue 3.0. The chapter's job names 5.1; the call was not run on either."
+    },
+    {
+      "id": "glue-eventbridge",
+      "url": "https://docs.aws.amazon.com/glue/latest/dg/automating-awsglue-with-cloudwatch-events.html",
+      "title": "Automating AWS Glue with EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Events with detail-type Glue Job State Change are generated for SUCCEEDED, FAILED, TIMEOUT and STOPPED"
+      ]
+    },
+    {
+      "id": "glue-eventbridge-reference",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/ref/events-ref-glue.html",
+      "title": "AWS Glue events (Amazon EventBridge events reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Glue sends Glue Job State Change with source aws.glue; the delivery type is best effort"
+      ]
+    },
+    {
+      "id": "glue-cdk-alpha-job-events",
+      "url": "https://github.com/aws/aws-cdk/blob/v2.273.0/packages/@aws-cdk/aws-glue-alpha/lib/jobs/job.ts",
+      "title": "aws-cdk v2.273.0: aws-glue-alpha job.ts",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWS's own construct matches job events on detail.jobName and detail.state"],
+      "note": "The page the construct cites for the event's shape (CloudWatch Events EventTypes) now redirects to the EventBridge user guide's first page, so the field names were taken from this source."
+    },
+    {
+      "id": "glue-eventbridge-metrics",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-monitoring.html",
+      "title": "Monitoring Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS/Events namespace has MatchedEvents: with the RuleName dimension, the number of events that matched that rule on the default event bus"
+      ]
+    },
+    {
+      "id": "glue-athena-partition-projection",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/partition-projection.html",
+      "title": "Use partition projection with Amazon Athena",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Partition projection is usable only when the table is queried through Athena; another service such as Redshift Spectrum, Athena for Spark or Amazon EMR uses the standard partition metadata"
+      ]
+    },
+    {
+      "id": "glue-athena-partitions",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/partitions.html",
+      "title": "Partition your data (Athena)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Partitions are registered in the catalog with MSCK REPAIR TABLE for Hive-style folders or with ALTER TABLE ADD PARTITION"
+      ]
+    },
+    {
+      "id": "glue-athena-ctas-limits",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/ctas-considerations-limitations.html",
+      "title": "Considerations and limitations for CTAS queries",
+      "checkedAt": "2026-10-13",
+      "supports": ["A CTAS query that creates a partitioned table can write at most 100 partitions"]
+    },
+    {
+      "id": "glue-athena-insert-into",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/insert-into.html",
+      "title": "INSERT INTO (Athena)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "INSERT INTO can convert data from a JSON table into a Parquet table; each INSERT creates new files and does not replace existing ones; one query can write at most 100 partitions"
+      ]
+    },
+    {
+      "id": "glue-lake-formation-defaults",
+      "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/change-settings.html",
+      "title": "Changing the default settings for your data lake",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default the Super permission is granted to IAMAllowedPrincipals on Data Catalog resources and new resources use IAM access control only, so access is controlled solely by IAM policies and individual Lake Formation permissions are not in effect"
+      ]
+    },
+    {
+      "id": "glue-lake-formation",
+      "url": "https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html",
+      "title": "What is AWS Lake Formation?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lake Formation adds grant and revoke permissions on Data Catalog resources at column, row and cell level, enforced across Athena, Redshift Spectrum, Amazon EMR and AWS Glue"
+      ]
+    },
+    {
+      "id": "glue-spark-json",
+      "url": "https://spark.apache.org/docs/3.5.6/sql-data-sources-json.html",
+      "title": "Spark 3.5.6: JSON Files",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The reader's mode option: PERMISSIVE sets malformed fields to null, DROPMALFORMED ignores corrupted records, FAILFAST throws an exception when it meets a corrupted record"
+      ]
+    },
+    {
+      "id": "glue-spark-save-modes",
+      "url": "https://spark.apache.org/docs/3.5.6/sql-data-sources-load-save-functions.html",
+      "title": "Spark 3.5.6: Generic Load/Save Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Save modes use no locking and are not atomic; with Overwrite the data is deleted before the new data is written"
+      ]
+    },
+    {
+      "id": "glue-spark-partition-discovery",
+      "url": "https://spark.apache.org/docs/3.5.6/sql-data-sources-parquet.html",
+      "title": "Spark 3.5.6: Parquet Files (Partition Discovery)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "All built-in file sources, JSON included, discover partition columns from key=value directories under the path they are given"
+      ]
+    },
+    {
+      "id": "glue-firehose-object-name",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/s3-object-name.html",
+      "title": "Configure Amazon S3 object name format (Firehose)",
+      "checkedAt": "2026-10-13",
+      "supports": ["With Gzip compression Firehose appends .gz to the object name"]
+    },
+    {
+      "id": "glue-pricing-page",
+      "url": "https://aws.amazon.com/glue/pricing/",
+      "title": "AWS Glue Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Spark jobs need at least 2 DPUs and are billed per second with a 1-minute minimum on AWS Glue 2.0 and later; Python shell jobs use 0.0625 or 1 DPU with a 1-minute minimum",
+        "Crawlers are billed per second with a 10-minute minimum per crawl; the page's example uses 2 DPUs for a crawl",
+        "Data quality checks inside an ETL job add to the job's run time and DPU use; they are billed at the job's rate",
+        "The first million objects stored in the Data Catalog and the first million requests a month are free"
+      ],
+      "note": "Only the billing rules were read here. The unit prices are from the Price List."
+    },
+    {
+      "id": "glue-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWSGlue, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Tokyo, published 2026-10-06: ETL job USD 0.44 per DPU-hour, Flex USD 0.29, AWS Glue 6.0 and later USD 0.308 (Flex 0.203), crawler USD 0.44 per DPU-hour"
+      ]
+    },
+    {
+      "id": "glue-cdkd-providers",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed dist/)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for AWS::Glue::Database, AWS::Glue::Table, AWS::Glue::Job, AWS::Glue::Trigger, AWS::Events::Rule, AWS::CloudWatch::Alarm, AWS::SNS::Topic, AWS::SNS::TopicPolicy, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::Logs::LogGroup, AWS::IAM::Role and AWS::IAM::Policy",
+        "The Glue job provider passes Command, Role, GlueVersion, WorkerType, NumberOfWorkers, Timeout, MaxRetries, ExecutionProperty and DefaultArguments to CreateJob",
+        "The Glue trigger provider passes StartOnCreation to CreateTrigger only; an update sends Description, Schedule, Actions, Predicate and EventBatchingCondition and restarts a trigger that was active",
+        "File assets are uploaded as they are, and every occurrence of the default CDK bootstrap bucket name in the template is rewritten to cdkd's own asset bucket"
+      ],
+      "note": "Read from the installed package's dist/, not from a deployment."
+    },
+    {
+      "id": "glue-cdk-lib-types",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 type definitions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CfnJob.JobCommandProperty: name is glueetl for a Spark job; pythonVersion is documented for Python shell jobs",
+        "CfnTrigger: startOnCreation starts SCHEDULED and CONDITIONAL triggers when created"
+      ]
+    },
+    {
+      "id": "glue-aws-cli-help",
+      "url": "https://docs.aws.amazon.com/cli/latest/reference/glue/start-job-run.html",
+      "title": "AWS CLI 2.35.11: aws glue start-job-run, get-job-run (help output)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "start-job-run takes --job-name and --arguments and returns JobRunId; get-job-run takes --job-name and --run-id and returns JobRun.JobRunState, ExecutionTime (seconds) and ErrorMessage"
+      ],
+      "note": "Read from the installed CLI's help output, not from this URL."
+    },
+    {
+      "id": "glue-cloudflare-basin-catalog",
+      "url": "https://developers.cloudflare.com/r2/data-catalog/",
+      "title": "Cloudflare Basin Catalog",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Basin Catalog, formerly R2 Data Catalog, is a managed Apache Iceberg catalog built into an R2 bucket with a standard Iceberg REST interface for engines such as Spark, Snowflake and PyIceberg; it is generally available"
+      ]
+    },
+    {
+      "id": "glue-cloudflare-basin-catalog-pricing",
+      "url": "https://developers.cloudflare.com/r2/data-catalog/platform/pricing/",
+      "title": "Cloudflare Basin Catalog pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Billed for catalog operations (1 million a month included, then USD 9.00 per million) and for compaction when it is turned on (USD 0.005 per GB and USD 2.00 per million objects processed)"
+      ]
+    },
+    {
+      "id": "glue-cloudflare-basin-pipelines",
+      "url": "https://developers.cloudflare.com/pipelines/",
+      "title": "Cloudflare Basin Pipelines",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Basin Pipelines ingests events, transforms them with SQL at ingestion time, and delivers them to R2 as Iceberg tables or as Parquet and JSON files"
+      ]
+    },
+    {
+      "id": "glue-vercel-docs-index",
+      "url": "https://vercel.com/docs/llms.txt",
+      "title": "Vercel documentation index (llms.txt)",
+      "checkedAt": "2026-10-13",
+      "supports": ["The index names no data catalog and no batch transformation product"],
+      "note": "A negative finding from one index page, not from every page of the documentation."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "glue-data-catalog",
+      "ja": "Data Catalog（Glue）",
+      "en": "Data Catalog (Glue)",
+      "firstUse": "43",
+      "definition": {
+        "ja": "テーブルの定義を置く場所。S3 のどのフォルダーに、どんな列のファイルが、どの形式で入っているかを持つ。ファイルの中身は持たず、検査もしない。",
+        "en": "Where table definitions live: which S3 folder holds files of which columns in which format. It holds no data and checks none."
+      }
+    },
+    {
+      "id": "glue-crawler",
+      "ja": "crawler",
+      "en": "crawler",
+      "firstUse": "43",
+      "definition": {
+        "ja": "S3 などのデータを読んで形式と列を推測し、テーブルとパーティションを Data Catalog に書く Glue の機能。",
+        "en": "The AWS Glue feature that reads data in S3 or elsewhere, infers its format and columns, and writes tables and partitions to the Data Catalog."
+      }
+    },
+    {
+      "id": "glue-job",
+      "ja": "job（Glue）",
+      "en": "job (Glue)",
+      "firstUse": "43",
+      "definition": {
+        "ja": "Glue が実行するスクリプト。Spark の job は、最小でも 2 DPU のワーカーの上で動き、動いた秒数に課金される。",
+        "en": "A script AWS Glue runs. A Spark job runs on workers of at least 2 DPUs in total and is billed for the seconds it runs."
+      }
+    },
+    {
+      "id": "job-bookmark",
+      "ja": "job bookmark",
+      "en": "job bookmark",
+      "firstUse": "43",
+      "definition": {
+        "ja": "job がどの入力まで読んだかを Glue が覚えておく状態。job.commit() で保存される。覚えるのは入力だけで、出力は追跡しない。",
+        "en": "State AWS Glue keeps about which input a job has read, saved by job.commit(). It tracks sources only, never what was written."
+      }
+    },
+    {
+      "id": "dqdl",
+      "ja": "DQDL",
+      "en": "DQDL",
+      "firstUse": "43",
+      "definition": {
+        "ja": "Data Quality Definition Language。AWS Glue Data Quality のルールを書く言語。",
+        "en": "Data Quality Definition Language: the language AWS Glue Data Quality rules are written in."
+      }
+    },
+    {
+      "id": "etl",
+      "ja": "ETL",
+      "en": "ETL",
+      "firstUse": "43",
+      "definition": {
+        "ja": "extract、transform、load。データを読み、形を変え、別の場所に書く処理。",
+        "en": "Extract, transform, load: reading data, reshaping it, and writing it somewhere else."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "43.overview",
+      "sources": ["examples/43-glue/infra/lib/glue-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "43.names",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "43.choices",
+      "sources": ["examples/43-glue/infra/lib/glue-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "43.catalog",
+      "sources": [
+        "examples/43-glue/src/names.ts",
+        "examples/43-glue/infra/lib/glue-stack.ts",
+        "examples/43-glue/infra/test/glue-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "glue:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "43.partitions",
+      "sources": [
+        "examples/43-glue/infra/lib/glue-stack.ts",
+        "examples/43-glue/infra/test/glue-stack.test.ts",
+        "examples/43-glue/src/cost.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "43.spec",
+      "sources": [
+        "examples/43-glue/src/curate.ts",
+        "examples/43-glue/src/layout.ts",
+        "examples/43-glue/src/sample.ts",
+        "examples/43-glue/test/curate.test.ts",
+        "examples/43-glue/test/layout.test.ts"
+      ],
+      "tasks": ["test:unit", "glue:spec"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "43.script",
+      "sources": [
+        "examples/43-glue/glue/curate.py",
+        "examples/43-glue/src/contract.ts",
+        "examples/43-glue/scripts/contract.ts",
+        "examples/43-glue/test/contract.test.ts"
+      ],
+      "tasks": ["test:unit", "glue:contract"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "type"],
+      "verification": "local"
+    },
+    {
+      "id": "43.bookmark",
+      "sources": ["examples/43-glue/src/model.ts", "examples/43-glue/test/model.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "43.quality",
+      "sources": ["examples/43-glue/src/quality.ts", "examples/43-glue/test/quality.test.ts"],
+      "tasks": ["test:unit", "glue:spec"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "type"],
+      "verification": "local"
+    },
+    {
+      "id": "43.job",
+      "sources": [
+        "examples/43-glue/src/job.ts",
+        "examples/43-glue/infra/lib/glue-stack.ts",
+        "examples/43-glue/infra/test/glue-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "glue:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "43.failure",
+      "sources": [
+        "examples/43-glue/infra/lib/glue-stack.ts",
+        "examples/43-glue/infra/test/glue-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "glue:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "43.local",
+      "sources": [
+        "examples/43-glue/scripts/spec.ts",
+        "examples/43-glue/scripts/contract.ts",
+        "examples/43-glue/src/sample.ts"
+      ],
+      "tasks": ["glue:spec", "glue:contract", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "43.deploy",
+      "sources": [
+        "examples/43-glue/infra/bin/app.ts",
+        "examples/43-glue/scripts/seed.ts",
+        "examples/43-glue/scripts/run.ts",
+        "examples/43-glue/scripts/verify.ts",
+        "examples/43-glue/src/compare.ts",
+        "examples/43-glue/src/parquet.ts",
+        "examples/43-glue/test/compare.test.ts"
+      ],
+      "tasks": [
+        "glue:infra:synth",
+        "glue:infra:diff",
+        "glue:infra:deploy",
+        "glue:seed",
+        "glue:run",
+        "glue:verify",
+        "glue:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "43.cost",
+      "sources": ["examples/43-glue/src/cost.ts", "examples/43-glue/test/cost.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "43.compare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "43.cleanup",
+      "sources": ["examples/43-glue/scripts/empty.ts"],
+      "tasks": ["glue:empty", "glue:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "glue.etl.dpu-hour",
+      "offerCode": "AWSGlue",
+      "region": "ap-northeast-1",
+      "sku": "WMNX4K4XYQ9DM5YP",
+      "usageType": "APN1-ETL-DPU-Hour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU-Hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4400000000",
+          "description": "$0.44 per Data Processing Unit-Hour for AWS Glue ETL job"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T19:23:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "glue.etl.flex.dpu-hour",
+      "offerCode": "AWSGlue",
+      "region": "ap-northeast-1",
+      "sku": "BPX8Y299VVP4CFXJ",
+      "usageType": "APN1-ETL-Flex-DPU-Hour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU-Hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2900000000",
+          "description": "$0.29 per Data Processing Unit-Hour for AWS Glue Flex ETL job"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T19:23:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "glue.etl.gen2.dpu-hour",
+      "offerCode": "AWSGlue",
+      "region": "ap-northeast-1",
+      "sku": "3GW7GD22UECNTZC9",
+      "usageType": "APN1-ETL-DPU-Hour-Gen2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU-Hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3080000000",
+          "description": "$0.308 per Data Processing Unit-Hour for AWS Glue ETL Job Run Glue 6.0+"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T19:23:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "glue.crawler.dpu-hour",
+      "offerCode": "AWSGlue",
+      "region": "ap-northeast-1",
+      "sku": "PSC3VBJTCB5KUZA9",
+      "usageType": "APN1-Crawler-DPU-Hour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU-Hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4400000000",
+          "description": "$0.44 per Data Processing Unit-Hour for AWS Glue crawler"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSGlue/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T19:23:38Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "glue.etl.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    },
+    {
+      "priceId": "glue.etl.flex.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    },
+    {
+      "priceId": "glue.etl.gen2.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    },
+    {
+      "priceId": "glue.crawler.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "glue-idle",
+      "chapter": "43",
+      "title": {
+        "ja": "Glue の job: デプロイ済みで 1 回も実行しない月",
+        "en": "The Glue job: deployed, and never run for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "job を 1 回も実行しない。trigger は作られているが有効にしていない",
+          "Data Catalog のオブジェクトは、データベース 1 つとテーブル 2 つ",
+          "アラームは 1 つ。アカウントのほかのアラームと合わせて 10 個までは無料枠に入る",
+          "バケットが空。SNS のトピックには購読がなく、配信もない"
+        ],
+        "en": [
+          "The job is never run. The trigger exists and is not activated",
+          "The Data Catalog holds one database and two tables",
+          "One alarm. The free allowance covers the first ten alarms of the account, this one among them",
+          "The bucket is empty. The SNS topic has no subscription and delivers nothing"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "glue.catalog.storage",
+          "quantity": 3,
+          "basis": "1 database + 2 tables"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 1,
+          "basis": "1 alarm on AWS/Events MatchedEvents"
+        }
+      ]
+    },
+    {
+      "id": "glue-daily-minimum",
+      "chapter": "43",
+      "title": {
+        "ja": "Glue の job: 毎日 1 回、どの run も 1 分以内",
+        "en": "The Glue job: once a day, every run within a minute"
+      },
+      "assumptions": {
+        "ja": [
+          "30 回の run。G.1X のワーカー 2 つで 2 DPU",
+          "どの run も 60 秒以内に終わり、最低の 1 分ぶんが課金される。run の時間は測っていない。これは下限",
+          "S3 のリクエストと保存、ログは含めていない"
+        ],
+        "en": [
+          "30 runs. Two G.1X workers, 2 DPUs",
+          "Every run ends within 60 seconds and is billed the one-minute minimum. No run was timed: this is the floor",
+          "S3 requests and storage, and logs, are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "glue.etl.dpu-hour",
+          "quantity": 1,
+          "basis": "30 runs x 2 DPU x 60 s / 3600"
+        }
+      ]
+    },
+    {
+      "id": "glue-daily-three-minutes",
+      "chapter": "43",
+      "title": {
+        "ja": "Glue の job: 毎日 1 回、どの run も 3 分",
+        "en": "The Glue job: once a day, three minutes a run"
+      },
+      "assumptions": {
+        "ja": [
+          "30 回の run。2 DPU",
+          "どの run も 180 秒ぶん課金されると仮定する。測定した値ではない"
+        ],
+        "en": [
+          "30 runs. 2 DPUs",
+          "Every run is assumed to be billed 180 seconds. Not a measured value"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "glue.etl.dpu-hour",
+          "quantity": 3,
+          "basis": "30 runs x 2 DPU x 180 s / 3600"
+        }
+      ]
+    },
+    {
+      "id": "glue-daily-timeout",
+      "chapter": "43",
+      "title": {
+        "ja": "Glue の job: 毎日 1 回、どの run もタイムアウトまで動く",
+        "en": "The Glue job: once a day, every run until its timeout"
+      },
+      "assumptions": {
+        "ja": [
+          "30 回の run。2 DPU",
+          "どの run も、job に設定した 10 分のタイムアウトまで動く。このスタックの設定での上限"
+        ],
+        "en": [
+          "30 runs. 2 DPUs",
+          "Every run goes on until the job's 10-minute timeout: the ceiling with this stack's settings"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "glue.etl.dpu-hour",
+          "quantity": 10,
+          "basis": "30 runs x 2 DPU x 600 s / 3600"
+        }
+      ]
+    },
+    {
+      "id": "glue-daily-crawler",
+      "chapter": "43",
+      "title": {
+        "ja": "crawler を毎日 1 回動かした場合（このスタックには無い）",
+        "en": "A crawler run once a day (not in this stack)"
+      },
+      "assumptions": {
+        "ja": [
+          "30 回の crawl。どれも最低の 10 分ぶんが課金される",
+          "crawler が使う DPU は 2 と仮定する。料金ページの例の値で、crawler が実際にいくつ使うかは確かめていない"
+        ],
+        "en": [
+          "30 crawls, each billed the 10-minute minimum",
+          "A crawl is assumed to use 2 DPUs, the figure in the pricing page's example. How many a crawler really uses was not confirmed"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "glue.crawler.dpu-hour",
+          "quantity": 10,
+          "basis": "30 crawls x 2 DPU x 600 s / 3600"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "43",
+        "command": "vp test run examples/43-glue",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "62 件。仕様の関数（日付の境目、重複）、フォルダーの置き方と再計算できる日の範囲、job の run のモデル（再実行、途中での中断、bookmark を使う設計との比較）、DQDL の文字列とルールの評価、スクリプトに写した列とルール、料金の数量、Parquet から読み戻した行の比較、スタックのアサーション",
+          "en": "62 tests: the specification (midnight, duplicates), the folder layout and which days can be rebuilt, the model of job runs (re-runs, a crash part-way, designs that use a bookmark), the DQDL text and the evaluation of the rules, the columns and rules copied into the script, the pricing quantities, rows read back from Parquet, and stack assertions"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "tsc --noEmit -p examples/43-glue",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "synth。-c schedule=on を付けた場合も",
+          "en": "Synth, also with -c schedule=on"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:spec",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "サンプルの raw ファイル 11 個から、2026-10-10 に 401 行、2026-10-11 に 400 行。7 つのルールがどちらの日も Passed",
+          "en": "From the 11 sample raw files: 401 rows for 2026-10-10 and 400 for 2026-10-11; all seven rules pass on both days"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:contract",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "スクリプトの生成ブロックが最新であること",
+          "en": "The script's generated block is up to date"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "python3 -c 'ast.parse(...)' glue/curate.py",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "構文の検査だけ。Nix の shell には Python が無いので、手元の Python 3.12.2 で実行した。awsglue も pyspark も import していない",
+          "en": "A syntax check only. The Nix shell has no Python, so the machine's own Python 3.12.2 parsed the file. Neither awsglue nor pyspark was imported"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp check --fix (chapter 43's paths)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "サンプル、本文、断片の整形と lint（awscdk-lint を含む）",
+          "en": "Formatting and lint, awscdk-lint included, over the example, the pages and the fragment"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "node book/theme/figure-cli.ts (chapter 43's pages)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "日英の図 4 つ",
+          "en": "The four figures, two in each language"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "スタックを作っていない",
+          "en": "The stack was not created"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:seed",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "サンプルをアップロードしていない",
+          "en": "The sample was not uploaded"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:run",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "job を実行していない。Spark のスクリプトは一度も動いていない",
+          "en": "The job was not run. The Spark script has never been executed"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:verify",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "job の出力を仕様と比べていない",
+          "en": "The job's output was not compared with the specification"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ドリフトの検査をしていない",
+          "en": "No drift check was made"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:empty",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "バケットを空にしていない",
+          "en": "The bucket was not emptied"
+        }
+      },
+      {
+        "scope": "43",
+        "command": "vp run glue:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "スタックを消していない",
+          "en": "The stack was not destroyed"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "glue-script-not-executed",
+        "summary": {
+          "ja": "glue/curate.py を一度も実行していない。手元には Spark が無く、AWS にも触れていない。スクリプトが src/curate.ts の仕様どおりに動くことは、主張であって確認した事実ではない。とくに、user schema に dt STRING を足したときのパーティションの読み取り、FAILFAST が型の合わない項目で止まること、DataFrame.isEmpty、awsgluedq の process_rows が Glue 5.1 で同じ形の結果を返すこと、上書きで dt=<日>/ のフォルダーだけが置き換わること。",
+          "en": "glue/curate.py has never been executed. There is no Spark on this machine and AWS was not touched. That the script does what src/curate.ts specifies is a claim, not an observation. In particular: reading the partition column with dt STRING added to a user schema, FAILFAST stopping on a field of the wrong type, DataFrame.isEmpty, awsgluedq's process_rows returning the same shape on AWS Glue 5.1, and an overwrite replacing only the dt=<day>/ folder."
+        },
+        "resume": {
+          "ja": "vp run glue:infra:deploy、vp run glue:seed、vp run glue:run --days 2026-10-10,2026-10-11 の順に実行し、state が SUCCEEDED になることを確かめる。続けて vp run glue:verify を実行し、2 日とも identical to the specification と表示されることを確かめる。同じ glue:run をもう一度実行して、glue:verify の結果が変わらないことを確かめる。",
+          "en": "Run vp run glue:infra:deploy, vp run glue:seed, then vp run glue:run --days 2026-10-10,2026-10-11 and check that the state is SUCCEEDED. Run vp run glue:verify and check that both days print identical to the specification. Run the same glue:run once more and check that glue:verify still says the same."
+        }
+      },
+      {
+        "id": "glue-role-minimum",
+        "summary": {
+          "ja": "job のロールが足りているかを確かめていない。ロールにあるのは、バケットの一覧、raw の読み取り、curated の読み書きと削除、スクリプト 1 つの読み取り、2 つのロググループへの書き込みだけで、glue: と cloudwatch: のアクションは 1 つも無い。Glue 5.1 の job が、bookmark を無効にし Data Quality の結果を公開しない設定でも Glue の API を呼ぶか、既にあるロググループに logs:CreateLogGroup を求めるか、S3 のコネクターが curated のプレフィックスの外にマーカーのオブジェクトを書くかは、ドキュメントから読み取れなかった。",
+          "en": "Whether the job's role is enough was not checked. It can list the bucket, read raw, read, write and delete curated, read the one script, and write to two log groups; it has no glue: and no cloudwatch: action at all. Whether an AWS Glue 5.1 job with bookmarks disabled and data quality publishing off still calls an AWS Glue API, whether it asks for logs:CreateLogGroup on groups that exist, and whether the S3 connector writes marker objects outside the curated prefix could not be read from the documentation."
+        },
+        "resume": {
+          "ja": "glue:run が AccessDenied で失敗したら、ロググループ /aih/glue/curate/error と CloudTrail で、拒否されたアクションとリソースを調べる。そのアクションだけを infra/lib/glue-stack.ts のロールに足し、テストの期待値を直す。",
+          "en": "If glue:run fails with AccessDenied, find the denied action and resource in the log group /aih/glue/curate/error and in CloudTrail. Add that action alone to the role in infra/lib/glue-stack.ts and update the test's expectation."
+        }
+      },
+      {
+        "id": "glue-dq-model",
+        "summary": {
+          "ja": "src/quality.ts の evaluate は、DQDL のリファレンスを読んで書いたこの章のモデルで、AWS Glue Data Quality ではない。between が両端を含まないこと、ColumnValues で NULL が失敗になることはリファレンスの記述どおり。IsUnique が NULL をどう数えるか、行が 0 件のときの結果、数値の = の比較のしかたは確かめていない。",
+          "en": "evaluate in src/quality.ts is this chapter's model written from the DQDL reference, not AWS Glue Data Quality. That between excludes both ends and that a NULL fails ColumnValues follow the reference. How IsUnique counts NULLs, what an empty dataset gives, and how a numeric = compares were not confirmed."
+        },
+        "resume": {
+          "ja": "デプロイ後、status が 600 の行を 1 つ含む raw ファイルを requests_json/dt=<日>/ に置いて glue:run を実行する。state が FAILED になり、エラーに ColumnValues \"status\" between 99 and 600 が出ることと、その日の curated のフォルダーが前のままであることを確かめる。",
+          "en": "After deploying, put a raw file with one row whose status is 600 under requests_json/dt=<day>/ and run glue:run. Check that the state is FAILED, that the error names ColumnValues \"status\" between 99 and 600, and that the day's curated folder is as it was."
+        }
+      },
+      {
+        "id": "glue-failure-signal",
+        "summary": {
+          "ja": "失敗の通知を確かめていない。Glue Job State Change の detail の項目名（jobName、state）は、AWS のドキュメントのページがリダイレクトになっていたため、aws-cdk の aws-glue-alpha のソースから取った。AWS/Events の MatchedEvents がこのルールで記録されること、アラームが 1 日のあいだ ALARM にとどまることも未確認。",
+          "en": "The failure signal was not exercised. The field names in the detail of Glue Job State Change (jobName, state) were taken from the source of aws-cdk's aws-glue-alpha, because the AWS documentation page for them now redirects. That MatchedEvents in AWS/Events is recorded for this rule, and that the alarm stays in ALARM for a day, are unconfirmed too."
+        },
+        "resume": {
+          "ja": "デプロイ後、トピックにメールを購読させる。JSON として読めない行を含むファイルを requests_json/dt=<日>/ に置き、その日を指定して glue:run を実行して失敗させる。メールに jobName と state が入っていること、CloudWatch のアラームが ALARM になることを確かめる。",
+          "en": "After deploying, subscribe an email address to the topic. Put a file with a line that is not JSON under requests_json/dt=<day>/ and make a run fail by running glue:run for that day. Check that the email carries jobName and state, and that the CloudWatch alarm goes to ALARM."
+        }
+      },
+      {
+        "id": "glue-cdkd-deploy",
+        "summary": {
+          "ja": "cdkd 0.296.28 でこのスタックをデプロイしていない。ソースから読み取っただけの点: スクリプトのファイルアセットが cdkd のアセット用バケットに置かれ、ScriptLocation とロールの ARN の中のバケット名がそこへ書き換えられること。Glue の trigger の更新で StartOnCreation が送られないこと（-c schedule=on をあとから付けても、既にある trigger は有効にならない）。",
+          "en": "This stack was not deployed with cdkd 0.296.28. Read from its source only: that the script's file asset goes to cdkd's asset bucket and that the bucket name inside ScriptLocation and inside the role's ARN is rewritten to it; and that an update of a Glue trigger does not send StartOnCreation (adding -c schedule=on later does not activate a trigger that already exists)."
+        },
+        "resume": {
+          "ja": "vp run glue:infra:deploy の後、aws glue get-job --job-name aih-glue-curate で ScriptLocation のバケットを見て、aws s3 ls でそのオブジェクトがあることを確かめる。-c schedule=on を付けてもう一度デプロイし、aws glue get-trigger --name aih-glue-curate-daily の State を見る。CREATED のままなら aws glue start-trigger で有効にする。",
+          "en": "After vp run glue:infra:deploy, look at the bucket in ScriptLocation with aws glue get-job --job-name aih-glue-curate and check with aws s3 ls that the object is there. Deploy again with -c schedule=on and look at State in aws glue get-trigger --name aih-glue-curate-daily. If it is still CREATED, activate it with aws glue start-trigger."
+        }
+      },
+      {
+        "id": "glue-run-duration",
+        "summary": {
+          "ja": "run にかかる時間を測っていない。料金の表は、最低の 1 分、仮定の 3 分、タイムアウトの 10 分の 3 通りを計算しただけ。起動にかかる時間が課金に入るかどうかも確かめていない。",
+          "en": "No run was timed. The price table works out three cases only: the one-minute minimum, an assumed three minutes, and the ten-minute timeout. Whether start-up time is billed was not confirmed either."
+        },
+        "resume": {
+          "ja": "glue:run が表示する execution time を数回ぶん記録し、請求の ETL-DPU-Hour の数量と比べる。",
+          "en": "Record the execution time glue:run prints over several runs and compare it with the ETL-DPU-Hour quantity on the bill."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 43: glue ------------------------------------------------\n      // What the job has to write for the sample raw files. No Spark, no AWS.\n      \"glue:spec\": fresh(\"node scripts/spec.ts\", { cwd: \"examples/43-glue\" }),\n      // Copies the columns and the data quality rules from TypeScript into glue/curate.py.\n      \"glue:contract\": fresh(\"node scripts/contract.ts\", { cwd: \"examples/43-glue\" }),\n      ...infra(\"glue\", \"examples/43-glue\", \"AihGlue\"),\n      // Uploads the sample raw files to the stack's bucket.\n      \"glue:seed\": live(\"node --env-file-if-exists=../../.env scripts/seed.ts\", { cwd: \"examples/43-glue\" }),\n      // BILLED per DPU-second, for one minute at least. Replaces the days' curated folders.\n      \"glue:run\": live(\"node --env-file-if-exists=../../.env scripts/run.ts\", { cwd: \"examples/43-glue\" }),\n      // Downloads what the job wrote for the sample days and compares it with the specification.\n      \"glue:verify\": live(\"node --env-file-if-exists=../../.env scripts/verify.ts\", { cwd: \"examples/43-glue\" }),\n      // Counts the objects in the bucket; with --yes, deletes them all.\n      \"glue:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty.ts\", { cwd: \"examples/43-glue\" }),",
+    "synth": ["glue:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/43-glue"]
+  }
+}

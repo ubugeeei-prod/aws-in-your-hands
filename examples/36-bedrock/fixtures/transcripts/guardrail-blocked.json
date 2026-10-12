@@ -1,0 +1,55 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html, https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html, https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-client-side.html and https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-use-converse-api.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "A guardrail answers in the model's place: its configured message as text, stopReason guardrail_intervened, and zero tokens.",
+  "calls": [
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "この質問にはお答えできません。"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "guardrail_intervened"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "totalTokens": 0
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,985 @@
+{
+  "chapterId": "32",
+  "manifest": {
+    "id": "32",
+    "slug": "limits",
+    "title": {
+      "ja": "Limits: quota、throttling、retry、負荷試験、費用の内訳",
+      "en": "Limits: Quotas, Throttling, Retries, Load Tests, and Cost Breakdown"
+    },
+    "prerequisites": ["04", "14", "19"],
+    "services": [
+      "Service Quotas",
+      "API Gateway HTTP API",
+      "Lambda",
+      "DynamoDB",
+      "CloudWatch",
+      "AWS Budgets",
+      "Cost Explorer"
+    ],
+    "samplePath": "examples/32-limits",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "limits-service-quotas-intro",
+      "limits-service-quotas-increase",
+      "limits-lambda-quotas",
+      "limits-lambda-reserved-concurrency",
+      "limits-lambda-scaling",
+      "limits-apigw-http-throttling",
+      "limits-apigw-http-quotas",
+      "limits-apigw-account-quotas",
+      "limits-apigw-usage-plans",
+      "limits-dynamodb-quotas",
+      "limits-dynamodb-errors",
+      "limits-sdk-retry-behavior",
+      "limits-smithy-util-retry",
+      "limits-builders-library-retries",
+      "limits-backoff-jitter-blog",
+      "limits-ec2-testing-policy",
+      "limits-pentest-policy",
+      "limits-cost-allocation-tags",
+      "limits-activating-tags",
+      "limits-user-defined-tags",
+      "limits-ce-get-cost-and-usage",
+      "limits-ce-pricing",
+      "limits-budgets-pricing",
+      "limits-cfn-budget-data",
+      "limits-cdkd-register-providers",
+      "limits-price-list-cost-explorer",
+      "limits-price-list-budgets",
+      "limits-cloudflare-workers-limits",
+      "limits-cloudflare-rate-limit-binding",
+      "limits-vercel-limits",
+      "limits-vercel-spend-management"
+    ]
+  },
+  "sources": [
+    {
+      "id": "limits-service-quotas-intro",
+      "url": "https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html",
+      "title": "What is Service Quotas?",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Quotas, also referred to as limits, are the maximum values for the resources, actions, and items in an AWS account; each service defines its quotas and their default values",
+        "The console shows whether a quota is adjustable; an applied quota is the value after an increase, the default value is the initial value AWS set",
+        "A quota applies to an account or to a Region; a global quota can be raised only from US East (N. Virginia)",
+        "Utilization is the percentage of a quota in use; the console graphs it after the account has been active for a period of time",
+        "Support might approve, deny, or partially approve an increase request"
+      ]
+    },
+    {
+      "id": "limits-service-quotas-increase",
+      "url": "https://docs.aws.amazon.com/servicequotas/latest/userguide/request-quota-increase.html",
+      "title": "Requesting a quota increase",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Smaller increases are usually approved automatically; larger requests go to Support and take time to review, process, approve and deploy",
+        "Quota increase requests do not receive priority support",
+        "aws service-quotas list-service-quotas --service-code <code> prints QuotaName, QuotaCode, Value and Adjustable for each quota",
+        "aws service-quotas request-service-quota-increase takes --service-code, --quota-code and --desired-value, and answers with a Status of PENDING",
+        "Requesting through the CLI needs permission to create a service-linked role (ServiceQuotasFullAccess or iam:CreateServiceLinkedRole)"
+      ]
+    },
+    {
+      "id": "limits-lambda-quotas",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Concurrent executions: default 1,000 per Region, can be increased up to tens of thousands",
+        "New AWS accounts have reduced concurrency and memory quotas; AWS raises them automatically based on usage",
+        "Function timeout is 900 seconds; the synchronous invocation payload is 6 MB each for request and response; these cannot be changed",
+        "Each instance of an execution environment can serve up to 10 requests per second, so the invocation limit is 10 times the concurrency",
+        "API Gateway's default throttle of 10,000 requests per second and Lambda's default concurrency of 1,000 do not match; the page recommends load testing to find the quota that limits first",
+        "Service quotas consist of hard limits, which cannot be changed, and soft limits, for which an increase can be requested"
+      ]
+    },
+    {
+      "id": "limits-lambda-reserved-concurrency",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-concurrency.html",
+      "title": "Configuring reserved concurrency for a function",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Reserved concurrency is both the maximum and the minimum for a function: no other function can use it, and the function cannot scale past it",
+        "Configuring reserved concurrency incurs no additional charge",
+        "You can reserve up to the unreserved account concurrency minus 100; the remaining 100 are for functions without reserved concurrency",
+        "Setting reserved concurrency to 0 stops the function from processing any events",
+        "Concurrency = average requests per second x average request duration in seconds"
+      ]
+    },
+    {
+      "id": "limits-lambda-scaling",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/scaling-behavior.html",
+      "title": "Lambda scaling behavior",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "For each function in each Region, concurrency can grow by 1,000 execution environments every 10 seconds",
+        "Requests that arrive faster than the function can scale, or while it is at maximum concurrency, fail with a throttling error (429 status code)"
+      ]
+    },
+    {
+      "id": "limits-apigw-http-throttling",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-throttling.html",
+      "title": "Throttle requests to your HTTP APIs for better throughput in API Gateway",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "API Gateway throttles with the token bucket algorithm, where a token counts for a request",
+        "Throttles are applied on a best-effort basis and should be thought of as targets rather than guaranteed request ceilings",
+        "Past the rate and burst limits, clients may receive 429 Too Many Requests",
+        "Account-level limits apply to all APIs of the account in a Region; stage and route limits cannot exceed them",
+        "Route-level throttling is set with RouteSettings keyed by the route key, with ThrottlingBurstLimit and ThrottlingRateLimit"
+      ],
+      "note": "The page does not show the body of a 429 or say whether it carries a Retry-After header."
+    },
+    {
+      "id": "limits-apigw-http-quotas",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-quotas.html",
+      "title": "Quotas for configuring and running an HTTP API in API Gateway",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Maximum integration timeout: 30 seconds, cannot be increased",
+        "Payload size: 10 MB, cannot be increased",
+        "Routes per API: 300, can be increased (quota code L-65B5C802)"
+      ]
+    },
+    {
+      "id": "limits-apigw-account-quotas",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html",
+      "title": "Amazon API Gateway quotas",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Throttle quota per account, per Region, across HTTP, REST and WebSocket APIs: 10,000 requests per second with a bucket of 5,000; can be increased (quota code L-8A5B8E43)",
+        "The burst quota is set by the API Gateway team from the account's rate quota and cannot be requested separately",
+        "Thirteen named Regions default to 2,500 requests per second; Asia Pacific (Tokyo) is not among them"
+      ]
+    },
+    {
+      "id": "limits-apigw-usage-plans",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-usage-plans.html",
+      "title": "Usage plans and API keys for REST APIs in API Gateway",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Usage plans and API keys are a REST API feature: they throttle and set a quota per API key",
+        "Usage plan throttling and quotas are not hard limits and are applied on a best-effort basis; AWS says not to rely on them to control costs or block access",
+        "API keys are not to be used for authentication or authorization"
+      ]
+    },
+    {
+      "id": "limits-dynamodb-quotas",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ServiceQuotas.html",
+      "title": "Quotas in Amazon DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "On-demand tables: 40,000 read request units and 40,000 write request units per second per table by default, adjustable; no account-level throughput quota applies to on-demand tables",
+        "The listed values are initial defaults, not maximums"
+      ]
+    },
+    {
+      "id": "limits-dynamodb-errors",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html",
+      "title": "Error handling with DynamoDB",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "ProvisionedThroughputExceededException, RequestLimitExceeded and ThrottlingException are HTTP 400 errors that are OK to retry",
+        "For on-demand tables ThrottlingException can be returned for any data plane operation; the error carries ThrottlingReason fields such as IndexWriteMaxOnDemandThroughputExceeded",
+        "After a 500 on a single-item write the write may or may not have happened; the application should read the item or use a condition before retrying",
+        "The page recommends stopping retries after about a minute"
+      ]
+    },
+    {
+      "id": "limits-sdk-retry-behavior",
+      "url": "https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html",
+      "title": "Retry behavior (AWS SDKs and Tools Reference Guide)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The page describes a retry behaviour that needs AWS_NEW_RETRIES_2026=true until it becomes the default",
+        "Retry modes: standard (default), adaptive (adds a client-side rate limiter that can delay first attempts; not recommended as a general default), legacy (not available in JavaScript)",
+        "Max attempts defaults to 3 including the first; DynamoDB clients default to 4 under the described behaviour",
+        "delay = random(0, 1) x min(20,000 ms, base x 2^retry); base is 50 ms for transient errors and 1,000 ms for throttling errors",
+        "Retry quota: 500 tokens, 14 per transient retry, 5 per throttling retry, 1 restored by a first-try success; typically scoped to one client instance",
+        "With 3 attempts the quota starts to drain above roughly 22% sustained transient failures or 32% throttling",
+        "Full jitter spreads retries so that clients that failed together do not retry together"
+      ],
+      "note": "Read again for chapter 32. The installed @smithy/util-retry 4.6.2 uses the older numbers (100 ms / 500 ms bases, costs 5 and 10) unless the variable is set; see limits-smithy-util-retry."
+    },
+    {
+      "id": "limits-smithy-util-retry",
+      "url": "https://www.npmjs.com/package/@smithy/util-retry/v/4.6.2",
+      "title": "@smithy/util-retry 4.6.2 (installed package, with @smithy/core 3.35.2)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DEFAULT_MAX_ATTEMPTS is 3 and DEFAULT_RETRY_MODE is standard",
+        "Without the opt-in: base delay 100 ms, throttling base delay 500 ms, maximum delay 20 s, 500 retry tokens, 5 per throttling retry, 10 per transient retry, 1 restored by a success without retry",
+        "The backoff is Math.floor(Math.random() x min(base x 2^i, 20,000))",
+        "ProvisionedThroughputExceededException, ThrottlingException, RequestLimitExceeded and TooManyRequestsException are classified as throttling errors",
+        "@aws-sdk/core 3.978.2 turns the 2026 behaviour on when AWS_NEW_RETRIES_2026 is \"true\"; the DynamoDB client then defaults to 4 attempts"
+      ],
+      "note": "Read in node_modules, not on the web page: @smithy/core/dist-es/submodules/retry and @aws-sdk/client-dynamodb/dist-es/runtimeConfig.js. A test compares the constants."
+    },
+    {
+      "id": "limits-builders-library-retries",
+      "url": "https://builder.aws.com/content/3EumjoZascWd1oZiEgL8ORlv3qE/timeouts-retries-and-backoff-with-jitter",
+      "title": "Timeouts, retries, and backoff with jitter (Amazon Builders' Library)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Retries are selfish: they spend more of the server's capacity to improve one client's odds, and make an overload worse",
+        "Retries at every layer multiply: five layers with three retries each can raise load on the bottom layer 243 times",
+        "Retries can be limited locally with a token bucket; the AWS SDK adopted this in 2016",
+        "A call with side effects is safe to retry only if the API is idempotent"
+      ],
+      "note": "aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/ redirects here. Read through a summary of the page, not word for word."
+    },
+    {
+      "id": "limits-backoff-jitter-blog",
+      "url": "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/",
+      "title": "Exponential Backoff And Jitter (AWS Architecture Blog)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Backoff without jitter takes more work and more time than any jittered variant",
+        "Full jitter needs the least work among the variants compared"
+      ],
+      "note": "The formulas are in images on the page and were not read. The full-jitter formula in this chapter is the one in the SDK reference and the installed package."
+    },
+    {
+      "id": "limits-ec2-testing-policy",
+      "url": "https://aws.amazon.com/ec2/testing/",
+      "title": "Amazon EC2 Testing Policy",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The guidelines concern high volume network tests run from EC2 instances; a network stress test sends a large volume of legitimate or test traffic to a specific intended target application that is expected to handle it",
+        "Tests that purposefully attempt to overwhelm the target with floods are DDoS tests, and volumetric network-based DDoS simulations are prohibited from EC2",
+        "Endpoints hosted in AWS should be in the same Region as the test",
+        "AWS may shape traffic where surges exceed 25 Gbps or 100 Gbps, depending on the paths and Regions"
+      ],
+      "note": "The page states no request-rate threshold and no approval step for a stress test. It says nothing about tests sent from outside AWS."
+    },
+    {
+      "id": "limits-pentest-policy",
+      "url": "https://aws.amazon.com/security/penetration-testing/",
+      "title": "AWS Customer Support Policy for Penetration Testing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Security assessments of the listed services need no prior approval; API Gateway, Lambda and CloudFront are on the list",
+        "Prohibited: DoS and DDoS, simulated or not, port flooding, protocol flooding, and request flooding (login request flooding, API request flooding)",
+        "Network stress testing or load testing is a performance test that sends a large volume of legitimate or test traffic to a specific intended target application; the page sends readers to the stress test policy"
+      ]
+    },
+    {
+      "id": "limits-cost-allocation-tags",
+      "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html",
+      "title": "Organizing and tracking costs using AWS cost allocation tags",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "User-defined and AWS-generated tags must each be activated before they appear in Cost Explorer or a cost allocation report",
+        "Only the management account of an organization, or a single account that is not a member, can manage cost allocation tags",
+        "The report includes both tagged and untagged resources"
+      ]
+    },
+    {
+      "id": "limits-activating-tags",
+      "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html",
+      "title": "Activating user-defined cost allocation tags",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Activation is done per tag key in the Billing and Cost Management console under Cost allocation tags, or with the UpdateCostAllocationTagsStatus API",
+        "It can take up to 24 hours for a new tag key to appear for activation, and up to 24 hours more for it to activate"
+      ]
+    },
+    {
+      "id": "limits-user-defined-tags",
+      "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/custom-tags.html",
+      "title": "Using user-defined cost allocation tags",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Tags are not applied to resources that were created before the tags were created",
+        "User-defined tag names carry the prefix user: in the cost allocation report",
+        "How cost allocation tags behave varies across services"
+      ]
+    },
+    {
+      "id": "limits-ce-get-cost-and-usage",
+      "url": "https://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_GetCostAndUsage.html",
+      "title": "GetCostAndUsage (AWS Billing and Cost Management API Reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "GroupBy takes up to two groups, of type DIMENSION, TAG, COST_CATEGORY or PRODUCT_ATTRIBUTE; grouping by TAG returns all tag values, including empty strings",
+        "The sample response shows a tag group key in the form key$value (Environment$Prod)",
+        "TimePeriod's start is inclusive and its end exclusive; Granularity is DAILY, MONTHLY or HOURLY",
+        "Amounts are returned as strings; the sample request is sent to ce.us-east-1.amazonaws.com",
+        "LimitExceededException: too many calls in a short period of time"
+      ]
+    },
+    {
+      "id": "limits-ce-pricing",
+      "url": "https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/",
+      "title": "AWS Cost Explorer pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Each API request using the primary billing view costs USD 0.01",
+        "Hourly granularity is charged per usage record"
+      ],
+      "note": "The page did not say in so many words that the console is free; the chapter does not claim it."
+    },
+    {
+      "id": "limits-budgets-pricing",
+      "url": "https://aws.amazon.com/aws-cost-management/aws-budgets/pricing/",
+      "title": "AWS Budgets pricing",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Monitoring budgets and receiving notifications is free of charge",
+        "The first two action-enabled budgets a month are free; each further one costs USD 0.10 a day"
+      ]
+    },
+    {
+      "id": "limits-cfn-budget-data",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-budgets-budget-budgetdata.html",
+      "title": "AWS::Budgets::Budget BudgetData",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "BudgetType COST and TimeUnit MONTHLY are allowed values; BudgetLimit is required for a cost budget",
+        "FilterExpression is a property of type Expression, with no description on the page; CostFilters is JSON and lists Tag among its filters"
+      ],
+      "note": "The page does not say how a tag key is written in FilterExpression. aws-cdk-lib 2.273.0 types it as tags: { key, values, matchOptions }."
+    },
+    {
+      "id": "limits-cdkd-register-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd 0.296.28 registers its own providers for AWS::ApiGatewayV2::Api, Integration, Route and Stage, AWS::Budgets::Budget, AWS::CloudWatch::Alarm, AWS::DynamoDB::Table, AWS::IAM::Policy, AWS::IAM::Role, AWS::Lambda::Function, AWS::Lambda::Permission and AWS::Logs::LogGroup",
+        "The Budgets provider's comment says the API is global and served from us-east-1"
+      ],
+      "note": "The installed package's dist shows the Lambda provider handling ReservedConcurrentExecutions, the stage provider handling DefaultRouteSettings and RouteSettings, and the budget provider passing the Budget object on to the Budgets API."
+    },
+    {
+      "id": "limits-price-list-cost-explorer",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSCostExplorer/current/index.json",
+      "title": "AWS Price List: AWSCostExplorer",
+      "checkedAt": "2026-10-13",
+      "supports": ["SKU BX68HKNBJP73AFBV, usage type USE1-APIRequest: USD 0.01 per API request"]
+    },
+    {
+      "id": "limits-price-list-budgets",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBudgets/current/index.json",
+      "title": "AWS Price List: AWSBudgets",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Usage type BudgetsUsage: USD 0.00 for budget-days",
+        "Usage type ActionEnabledBudgetsUsage: USD 0.00 up to 62 budget-days, then USD 0.10 per budget-day"
+      ]
+    },
+    {
+      "id": "limits-cloudflare-workers-limits",
+      "url": "https://developers.cloudflare.com/workers/platform/limits/",
+      "title": "Cloudflare Workers: Limits",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "As of 2026-10-12: the Free plan allows 100,000 requests a day and answers with error 1027 past that; the Paid plan has no daily limit",
+        "The page states no general limit on requests per second for Workers",
+        "Limits such as the number of Workers per account can be raised through a limit increase request form"
+      ],
+      "note": "Read through a summary of the page, not word for word."
+    },
+    {
+      "id": "limits-cloudflare-rate-limit-binding",
+      "url": "https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/",
+      "title": "Cloudflare Workers: Rate Limiting binding",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "As of 2026-10-12: a binding with a limit and a period of 10 or 60 seconds, enforced from Worker code with limit()",
+        "Limits are local to the Cloudflare location the Worker runs in",
+        "The API is described as permissive, eventually consistent, and not an accurate accounting system"
+      ]
+    },
+    {
+      "id": "limits-vercel-limits",
+      "url": "https://vercel.com/docs/limits",
+      "title": "Vercel: Limits",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "As of 2026-10-12 (page last updated 2026-09-16): limits depend on the plan (Hobby, Pro, Enterprise); Enterprise raises them through the account team, Pro by talking to sales, Hobby by upgrading",
+        "REST API rate limits are hard limits with a scope of user, team or project; a request over a limit gets a 429 with rate_limit_exceeded"
+      ]
+    },
+    {
+      "id": "limits-vercel-spend-management",
+      "url": "https://vercel.com/docs/spend-management",
+      "title": "Vercel: Spend Management",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "As of 2026-10-12 (page last updated 2026-09-18): on Pro and Enterprise Flexible Commitment plans, a spend amount can notify at 50%, 75% and 100%, call a webhook, and pause the production deployments of all projects",
+        "Setting an amount does not stop usage by itself; pausing must be turned on",
+        "Usage is checked every few minutes, so pausing can come several minutes after the amount is crossed; paused deployments answer 503 DEPLOYMENT_PAUSED and must be resumed by hand"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "service-quota",
+      "ja": "クォータ",
+      "en": "service quota",
+      "firstUse": "32",
+      "definition": {
+        "ja": "サービスがアカウントやリージョンごとに決めている、リソースや操作の上限。引き上げを申請できるものと、変えられないものがある。",
+        "en": "The most of a resource or an operation a service allows per account or Region. Some can be raised on request; others are fixed."
+      }
+    },
+    {
+      "id": "throttling",
+      "ja": "スロットリング",
+      "en": "throttling",
+      "firstUse": "32",
+      "definition": {
+        "ja": "受け付ける量を超えたリクエストを、処理せずに断ること。HTTP では 429 で返ることが多い。",
+        "en": "Refusing requests beyond what a service accepts, without doing the work. Over HTTP it usually arrives as a 429."
+      }
+    },
+    {
+      "id": "token-bucket",
+      "ja": "トークンバケット",
+      "en": "token bucket",
+      "firstUse": "32",
+      "definition": {
+        "ja": "一定の速さでトークンがたまり、リクエスト 1 件が 1 つ使う数え方。ためられる数の上限がバーストになる。",
+        "en": "A way of counting in which tokens build up at a fixed rate and each request spends one. The most the bucket holds is the burst."
+      }
+    },
+    {
+      "id": "exponential-backoff",
+      "ja": "指数バックオフ",
+      "en": "exponential backoff",
+      "firstUse": "32",
+      "definition": {
+        "ja": "再試行のたびに、待つ時間の上限を 2 倍にしていく待ち方。",
+        "en": "Waiting before each retry, with the ceiling of the wait doubling every time."
+      }
+    },
+    {
+      "id": "jitter",
+      "ja": "ジッター",
+      "en": "jitter",
+      "firstUse": "32",
+      "definition": {
+        "ja": "待つ時間に混ぜる乱数。同時に失敗したクライアントが、同時に戻ってこないようにする。",
+        "en": "Randomness added to a wait, so that clients that failed together do not come back together."
+      }
+    },
+    {
+      "id": "retry-budget",
+      "ja": "再試行の予算",
+      "en": "retry budget",
+      "firstUse": "32",
+      "definition": {
+        "ja": "1 つのクライアントが出せる再試行の総量。成功すると少し戻り、失敗が続くと尽きて、再試行をやめる。",
+        "en": "How many retries one client may send in all. Successes refill it a little; sustained failure empties it, and retries stop."
+      }
+    },
+    {
+      "id": "retry-storm",
+      "ja": "リトライストーム",
+      "en": "retry storm",
+      "firstUse": "32",
+      "definition": {
+        "ja": "失敗への再試行が負荷を増やし、増えた負荷がさらに失敗を生む状態。",
+        "en": "Retries of failed calls add load, and the added load causes more failures."
+      }
+    },
+    {
+      "id": "reserved-concurrency",
+      "ja": "予約済み同時実行数",
+      "en": "reserved concurrency",
+      "firstUse": "32",
+      "definition": {
+        "ja": "1 つの関数に取り分けた同時実行数。その関数の上限であり、ほかの関数が使えなくなる取り分でもある。",
+        "en": "Concurrency set aside for one function. It is that function's ceiling, and a share no other function can use."
+      }
+    },
+    {
+      "id": "cost-allocation-tag",
+      "ja": "コスト配分タグ",
+      "en": "cost allocation tag",
+      "firstUse": "32",
+      "definition": {
+        "ja": "請求の内訳に使うと決めて有効にしたタグのキー。有効にするまで、タグは料金のデータに現れない。",
+        "en": "A tag key that has been activated for billing. Until it is, the tag does not appear in cost data."
+      }
+    },
+    {
+      "id": "load-test",
+      "ja": "負荷試験",
+      "en": "load test",
+      "firstUse": "32",
+      "definition": {
+        "ja": "決めた量のリクエストを送り、どの上限に最初に当たるかと、そのときの応答を確かめる試験。",
+        "en": "Sending a planned amount of traffic to learn which limit is reached first and how the system answers then."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "32.overview",
+      "sources": ["examples/32-limits/infra/lib/limits-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "32.quotas",
+      "sources": [
+        "examples/32-limits/src/quotas.ts",
+        "examples/32-limits/test/quotas.test.ts",
+        "examples/32-limits/scripts/quotas.ts"
+      ],
+      "tasks": ["test:unit", "limits:quotas:book", "limits:quotas"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "32.bucket",
+      "sources": [
+        "examples/32-limits/src/token-bucket.ts",
+        "examples/32-limits/test/token-bucket.test.ts",
+        "examples/32-limits/src/throttle.ts",
+        "examples/32-limits/test/throttle.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "32.retry",
+      "sources": [
+        "examples/32-limits/src/retry.ts",
+        "examples/32-limits/src/backoff.ts",
+        "examples/32-limits/test/retry.test.ts",
+        "examples/32-limits/test/backoff.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "32.storm",
+      "sources": [
+        "examples/32-limits/src/simulation.ts",
+        "examples/32-limits/src/random.ts",
+        "examples/32-limits/src/retry-budget.ts",
+        "examples/32-limits/test/simulation.test.ts",
+        "examples/32-limits/test/retry-budget.test.ts",
+        "examples/32-limits/scripts/simulate.ts"
+      ],
+      "tasks": ["test:unit", "limits:simulate"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "32.sdk",
+      "sources": [
+        "examples/32-limits/src/sdk-retry.ts",
+        "examples/32-limits/src/compose.ts",
+        "examples/32-limits/test/sdk-retry.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "32.brakes",
+      "sources": [
+        "examples/32-limits/infra/lib/limits-stack.ts",
+        "examples/32-limits/infra/test/limits-stack.test.ts",
+        "examples/32-limits/src/lambda.ts"
+      ],
+      "tasks": ["test:unit", "limits:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "32.first-limit",
+      "sources": ["examples/32-limits/src/ceilings.ts", "examples/32-limits/test/ceilings.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "32.local",
+      "sources": [
+        "examples/32-limits/src/dev.ts",
+        "examples/32-limits/src/throttle.ts",
+        "examples/32-limits/.env.example"
+      ],
+      "tasks": ["dev:limits", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "32.load",
+      "sources": [
+        "examples/32-limits/src/load.ts",
+        "examples/32-limits/test/load.test.ts",
+        "examples/32-limits/scripts/load.ts"
+      ],
+      "tasks": ["limits:load", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "32.deploy",
+      "sources": [
+        "examples/32-limits/infra/bin/app.ts",
+        "examples/32-limits/infra/lib/limits-stack.ts",
+        "examples/32-limits/scripts/quotas.ts"
+      ],
+      "tasks": ["limits:infra:diff", "limits:infra:deploy", "limits:quotas", "limits:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "32.allocation",
+      "sources": [
+        "examples/32-limits/src/cost.ts",
+        "examples/32-limits/test/cost.test.ts",
+        "examples/32-limits/scripts/cost.ts",
+        "examples/32-limits/infra/lib/limits-stack.ts"
+      ],
+      "tasks": ["test:unit", "limits:cost:print", "limits:cost"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "32.cost",
+      "sources": ["examples/32-limits/infra/lib/limits-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "32.compare",
+      "sources": ["examples/32-limits"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "32.cleanup",
+      "sources": ["examples/32-limits/infra/lib/limits-stack.ts"],
+      "tasks": ["limits:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "costexplorer.api.request",
+      "offerCode": "AWSCostExplorer",
+      "region": "us-east-1",
+      "sku": "BX68HKNBJP73AFBV",
+      "usageType": "USE1-APIRequest",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0100000000",
+          "description": "$0.01 per API Request"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSCostExplorer/current/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:38Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "costexplorer.api.request",
+      "reason": "No free allowance for Cost Explorer API requests was found on the pricing page or in the Price List. None is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "limits-idle",
+      "chapter": "32",
+      "title": {
+        "ja": "上限つきノート API: デプロイ済みで呼ばれない月",
+        "en": "Notes API with its limits: deployed, but never called for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "リクエストゼロ。API Gateway、Lambda、DynamoDB、ログのどれにも使用量がない",
+          "アラーム 1 つが参照するメトリクスは 1 つ（Lambda の Throttles）",
+          "予算は 1 つで、アクションを付けていない。Price List の BudgetsUsage は USD 0.00",
+          "予約済み同時実行数とステージのスロットリングの設定に料金はかからない",
+          "Cost Explorer の API は 1 回も呼ばない"
+        ],
+        "en": [
+          "No requests: no usage for API Gateway, Lambda, DynamoDB or logs",
+          "The one alarm refers to one metric (Lambda's Throttles)",
+          "One budget with no action; the Price List gives USD 0.00 for BudgetsUsage",
+          "Reserved concurrency and the stage's throttle settings are not charged for",
+          "The Cost Explorer API is never called"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 1,
+          "basis": "1 alarm on 1 metric"
+        }
+      ]
+    },
+    {
+      "id": "limits-cost-report",
+      "chapter": "32",
+      "title": {
+        "ja": "タグ別の費用を毎日 1 回、スクリプトで見る月",
+        "en": "Reading cost by tag from the script once a day for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "vp run limits:cost を 1 日 1 回、30 日。1 回が Cost Explorer の API リクエスト 1 件",
+          "結果は 1 ページに収まる（2 ページ目を取ると、もう 1 件ぶんかかる。スクリプトは取らない）",
+          "コンソールの Cost Explorer を開いたぶんは含めていない"
+        ],
+        "en": [
+          "vp run limits:cost once a day for 30 days; each run is one Cost Explorer API request",
+          "The result fits in one page (a second page would be another request; the script does not fetch one)",
+          "Opening Cost Explorer in the console is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "costexplorer.api.request",
+          "quantity": 30,
+          "basis": "30 runs x 1 request"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "32",
+        "command": "vp test run examples/32-limits",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "12 ファイル 91 件。トークンバケット、バックオフとジッター、再試行の予算、再試行するクライアント、乱数の種を固定した 2 つのシミュレーション、導入済みの SDK が DynamoDB のスロットリングに何回試行するか（偽のハンドラーに対して）、開発サーバーの 2 つの制限、最初に当たる上限の計算、負荷の送り先の検査と集計、Cost Explorer の応答の読み取り、スタックのアサーション",
+          "en": "12 files, 91 tests: the token bucket, backoff and jitter, the retry budget, the retrying client, two seeded simulations, how many attempts the installed SDK makes when DynamoDB throttles (against a fake handler), the development server's two limits, the first-limit arithmetic, the load target check and summary, reading a Cost Explorer response, and stack assertions"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "tsc --noEmit -p examples/32-limits",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "synth（esbuild のバンドル込み）。AWS には問い合わせない",
+          "en": "Synth, including the esbuild bundle. Asks AWS nothing"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:simulate",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "2 つのシミュレーションの表。本文の数字はこの出力",
+          "en": "The table of the two simulations. The numbers in the chapter are this output"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run dev:limits + vp run limits:load",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "開発サーバーを起動し、毎秒 5、10、20、40 件を 5 秒ずつ送った。CALLER_LIMIT が既定の 50 のときと 100000 のときの 2 回。本文の表はこの出力。localhost 以外の宛先を断ることも確認",
+          "en": "Started the development server and sent 5, 10, 20 and 40 requests a second for 5 seconds each, once with the default CALLER_LIMIT of 50 and once with 100000. The tables in the chapter are this output. Also checked that a target other than localhost is refused"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:cost:print / vp run limits:quotas:book",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "実行するコマンドの表示と、本の中の上限の一覧。AWS は呼ばない。aws service-quotas と aws ce のヘルプで引数の名前を確認（AWS CLI 2.35.11）",
+          "en": "Prints the command that would run, and the book's list of quotas. No AWS call. Argument names checked against the help of aws service-quotas and aws ce (AWS CLI 2.35.11)"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない",
+          "en": "Not deployed"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:quotas",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "アカウントの実際のクォータは読んでいない",
+          "en": "The account's actual quotas were not read"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:cost",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Cost Explorer は呼んでいない（1 回 USD 0.01）",
+          "en": "Cost Explorer was not called (USD 0.01 a run)"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "32",
+        "command": "vp run limits:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "limits-stage-429-shape",
+        "summary": {
+          "ja": "API Gateway の HTTP API がスロットリングで返す 429 のボディと、Retry-After ヘッダーの有無を確かめていない。手元の代役は {\"message\":\"Too Many Requests\"} を返し、ヘッダーは付けない。",
+          "en": "Not confirmed: the body of the 429 an HTTP API returns when it throttles, and whether it carries a Retry-After header. The local stand-in answers {\"message\":\"Too Many Requests\"} with no such header."
+        },
+        "resume": {
+          "ja": "vp run limits:infra:deploy のあと、スタックの出力 ApiUrl に対して curl -i を 1 秒に 30 回ほど続けて送り、429 のヘッダーとボディを記録する。違っていたら src/throttle.ts の代役と本文を直す。",
+          "en": "After vp run limits:infra:deploy, send about 30 curl -i requests within a second to the ApiUrl output and record the headers and body of a 429. If they differ, fix the stand-in in src/throttle.ts and the page."
+        }
+      },
+      {
+        "id": "limits-route-throttle-cdkd",
+        "summary": {
+          "ja": "ルートごとのスロットリング（RouteSettings の \"POST /notes\"）と DependsOn を、cdkd 0.296.28 が反映するか動かしていない。ルートより先にステージが作られると失敗する、という前提も確かめていない。",
+          "en": "Not run: whether cdkd 0.296.28 applies the per-route throttle (RouteSettings for \"POST /notes\") and honours the DependsOn. The assumption that a stage created before its route fails was not checked either."
+        },
+        "resume": {
+          "ja": "デプロイ後に aws apigatewayv2 get-stage --api-id <id> --stage-name '$default' で RouteSettings を読み、POST /notes を 1 秒に 10 回送って 429 が毎秒 2 件のあたりから返ることを確かめる。",
+          "en": "After a deploy, read RouteSettings with aws apigatewayv2 get-stage --api-id <id> --stage-name '$default', and send POST /notes ten times a second to see 429s start at about two a second."
+        }
+      },
+      {
+        "id": "limits-lambda-throttle-status",
+        "summary": {
+          "ja": "Lambda が関数をスロットリングしたとき（予約済み同時実行数に当たったとき）、HTTP API が呼び出し元に返すステータスを確かめていない。",
+          "en": "Not confirmed: the status an HTTP API returns to the caller when Lambda throttles the function (reserved concurrency reached)."
+        },
+        "resume": {
+          "ja": "-c reservedConcurrency=1 でデプロイし（アカウントの同時実行数が 101 以上あること）、同時に数件のリクエストを送って、返るステータスと Throttles のメトリクスを記録する。",
+          "en": "Deploy with -c reservedConcurrency=1 (the account needs a concurrency of at least 101), send a few requests at the same moment, and record the status returned and the Throttles metric."
+        }
+      },
+      {
+        "id": "limits-budget-tag-filter",
+        "summary": {
+          "ja": "タグで絞った予算（FilterExpression の Tags）を cdkd が作れるか、キーを project と書くのか user:project と書くのか、有効化の前に作った予算が有効化のあとで数え始めるかを確かめていない。",
+          "en": "Not confirmed: that cdkd can create the tag-filtered budget (Tags in FilterExpression), whether the key is written project or user:project, and whether a budget created before the tag is activated starts counting afterwards."
+        },
+        "resume": {
+          "ja": "デプロイし、コンソールの Budgets で予算のフィルターを見る。project タグを有効化して 2 日ほど置き、予算の実績と vp run limits:cost の結果が同じ額を指すか比べる。",
+          "en": "Deploy and look at the budget's filter in the Budgets console. Activate the project tag, wait about two days, and compare the budget's actual spend with what vp run limits:cost prints."
+        }
+      },
+      {
+        "id": "limits-untagged-charges",
+        "summary": {
+          "ja": "このスタックの料金のうち、どれが project タグを運ぶかを請求で確かめていない（API Gateway のリクエスト、データ転送、CloudWatch のアラーム、税）。",
+          "en": "Not checked on a bill: which of this stack's charges carry the project tag (API Gateway requests, data transfer, the CloudWatch alarm, tax)."
+        },
+        "resume": {
+          "ja": "タグを有効化して数日使ったあと vp run limits:cost を実行し、(no tag) の行にどのサービスが残るかを記録する。",
+          "en": "After activating the tag and using the stack for a few days, run vp run limits:cost and record which services remain in the (no tag) rows."
+        }
+      },
+      {
+        "id": "limits-load-test-outside-aws",
+        "summary": {
+          "ja": "AWS の外（手元の端末）から自分の API に負荷をかける試験に、申請や上限が要るかを一次情報から読み取れなかった。EC2 のテストポリシーは EC2 からの試験についてのもので、ペネトレーションテストのポリシーはリクエストフラッディングを禁じている。この章の負荷生成スクリプトは localhost 以外を断る。",
+          "en": "Could not determine from primary sources whether a load test sent from outside AWS (a laptop) against your own API needs notice or has a threshold. The EC2 testing policy is about tests from EC2, and the penetration testing policy prohibits request flooding. This chapter's load generator refuses anything but localhost."
+        },
+        "resume": {
+          "ja": "実環境で負荷試験をする前に、2 つのポリシーのページを読み直し、判断がつかなければ AWS Support に計画を伝えて確認する。",
+          "en": "Before load testing a deployed API, read the two policy pages again and, if in doubt, tell AWS Support the plan and ask."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 32: limits -----------------------------------------------\n      // The notes API behind a token bucket and a per-caller limit. No Docker, no AWS.\n      \"dev:limits\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/32-limits\" }),\n      // Two seeded simulations of retries against a service that refuses. Local.\n      \"limits:simulate\": fresh(\"node scripts/simulate.ts\", { cwd: \"examples/32-limits\" }),\n      // Sends load to the development server. Refuses any address that is not this machine.\n      \"limits:load\": fresh(\"node scripts/load.ts\", { cwd: \"examples/32-limits\" }),\n      // The quota defaults the book's chapters lean on, with where each was read. Local.\n      \"limits:quotas:book\": fresh(\"node scripts/quotas.ts --book\", { cwd: \"examples/32-limits\" }),\n      // Prints the Cost Explorer command. Runs nothing.\n      \"limits:cost:print\": fresh(\"node scripts/cost.ts --print\", { cwd: \"examples/32-limits\" }),\n      ...infra(\"limits\", \"examples/32-limits\", \"AihLimits\"),\n      // The quotas that apply to your account, for one service.\n      \"limits:quotas\": live(\"node --env-file-if-exists=../../.env scripts/quotas.ts\", { cwd: \"examples/32-limits\" }),\n      // BILLED: USD 0.01 for every run.\n      \"limits:cost\": live(\"node --env-file-if-exists=../../.env scripts/cost.ts\", { cwd: \"examples/32-limits\" }),",
+    "synth": ["limits:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/32-limits"]
+  }
+}

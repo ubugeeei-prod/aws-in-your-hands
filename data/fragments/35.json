@@ -1,0 +1,1310 @@
+{
+  "chapterId": "35",
+  "manifest": {
+    "id": "35",
+    "slug": "lambda-managed-instances",
+    "title": {
+      "ja": "Lambda Managed Instances: Lambda を自分の EC2 キャパシティで動かす",
+      "en": "Lambda Managed Instances: Lambda on EC2 Capacity You Choose"
+    },
+    "prerequisites": ["04", "11", "23"],
+    "services": ["Lambda", "EC2", "API Gateway", "VPC"],
+    "samplePath": "examples/35-lambda-managed-instances",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "lmi-overview",
+      "lmi-core-concepts",
+      "lmi-capacity-providers",
+      "lmi-scaling",
+      "lmi-runtimes",
+      "lmi-nodejs-runtime",
+      "lmi-networking",
+      "lmi-security",
+      "lmi-operator-role",
+      "lmi-quotas",
+      "lmi-execution-environment",
+      "lmi-version-publishing",
+      "lmi-getting-started",
+      "lmi-troubleshooting",
+      "lmi-lambda-limits",
+      "lmi-launch-blog",
+      "lmi-pricing-page",
+      "lmi-price-list-lambda",
+      "lmi-price-list-ec2",
+      "lmi-cfn-capacityprovider",
+      "lmi-cfn-function-config",
+      "lmi-api-create-capacity-provider",
+      "lmi-api-create-function",
+      "lmi-cdk-capacity-provider",
+      "lmi-cdkd-package",
+      "lmi-tag-propagation",
+      "lmi-node-async-context",
+      "lmi-cloudflare-how-workers-works",
+      "lmi-vercel-fluid",
+      "lmi-vercel-pricing"
+    ]
+  },
+  "sources": [
+    {
+      "id": "lmi-overview",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances.html",
+      "title": "Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda Managed Instances runs Lambda functions on current-generation EC2 instances in your account without you managing instance lifecycles, OS and runtime patching, routing, load balancing, or scaling policies",
+        "Capacity providers are the foundation: create a capacity provider, create a function attached to it, publish a function version",
+        "When a function version is published with a capacity provider, Lambda launches three instances by default for AZ resiliency and starts three execution environments before marking the version ACTIVE",
+        "One execution environment handles multiple invocations at the same time; Lambda (default) runs at most one invocation per execution environment",
+        "Managed Instances use containers on EC2 Nitro instances for isolation rather than Firecracker; the capacity provider is the security boundary",
+        "The instances are EC2 managed instances: the Operator field appears in DescribeInstances, they carry the aws:lambda:capacity-provider tag, they cannot be terminated directly, and they are hidden from the EC2 console and list operations by default while remaining billable",
+        "Pricing is EC2-based with a 15% management fee on top of the EC2 instance cost; EC2 Savings Plans, Reserved Instances and other EC2 discounts apply to the EC2 compute only, not to the management fee",
+        "Lambda Managed Instances scales asynchronously on CPU resource utilization, without cold starts, and scales to the configured minimum of execution environments without traffic; Lambda (default) scales to zero",
+        "By default Managed Instances scale to handle traffic doubling within five minutes"
+      ]
+    },
+    {
+      "id": "lmi-core-concepts",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-core-concepts.html",
+      "title": "Core concepts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "All functions assigned to the same capacity provider must be mutually trusted",
+        "If traffic more than doubles within 5 minutes, throttles may occur while Lambda scales up",
+        "Users need lambda:PassCapacityProvider to assign functions to a capacity provider"
+      ]
+    },
+    {
+      "id": "lmi-capacity-providers",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-capacity-providers.html",
+      "title": "Capacity providers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A capacity provider takes a VPC configuration (1 to 16 subnets, security groups), an operator role, and optionally instance requirements and a scaling configuration",
+        "Architectures is x86_64 or arm64, default x86_64; AllowedInstanceTypes and ExcludedInstanceTypes are mutually exclusive",
+        "Lambda chooses instance types by default, and restricting them might result in lower availability",
+        "MaxVCpuCount defaults to 400; ScalingMode is Auto or Manual",
+        "KmsKeyArn is a KMS key for EBS encryption, defaulting to an AWS managed key",
+        "A capacity provider that has function versions attached cannot be deleted",
+        "States: Pending, Active, Failed, Deleting"
+      ]
+    },
+    {
+      "id": "lmi-scaling",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-scaling.html",
+      "title": "Scaling Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Managed Instances does not scale when invocations arrive and does not support cold starts; it scales asynchronously on CPU utilization and multi-concurrency saturation",
+        "The smallest supported function size is 2 GB and 1 vCPU",
+        "Maximum concurrency per execution environment can be raised to 64 per vCPU",
+        "The default minimum is 3 execution environments across Availability Zones with no default maximum; values below 3 reduce Availability Zone redundancy",
+        "MinExecutionEnvironments and MaxExecutionEnvironments range from 0 to 15000 and are set together; a minimum of 0 is valid only when the maximum is also 0, which deactivates the function version",
+        "A deactivated function does not scale back up with traffic; Lambda terminates an instance once it has no active execution environments, and instance charges continue until termination completes",
+        "The Router and Scaler are shared Lambda components; a Lambda Agent runs on each instance",
+        "The default target keeps enough headroom for traffic to double within 5 minutes without throttles",
+        "For testing or development you might choose smaller instance types"
+      ]
+    },
+    {
+      "id": "lmi-runtimes",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-runtimes.html",
+      "title": "Lambda Managed Instances runtimes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Supported: Java 21 and later, Python 3.13 and later, Node.js 22 and later, .NET 8 and later, and Rust on the OS-only runtime provided.al2023 and later",
+        "Node.js uses worker threads with asynchronous execution; Python uses one process per concurrent request; Java uses OS threads"
+      ]
+    },
+    {
+      "id": "lmi-nodejs-runtime",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-nodejs-runtime.html",
+      "title": "Node.js runtime for Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Function initialization occurs once per worker thread; concurrent requests on the same worker thread share the handler object and global state",
+        "For Node.js the default maximum is 64 concurrent requests per vCPU; the number of worker threads follows the vCPU count or AWS_LAMBDA_NODEJS_WORKER_COUNT",
+        "For mutable objects, avoid global state or use AsyncLocalStorage; AWS SDK clients are async safe",
+        "On Node.js 22, callback-based handlers cannot be used with Managed Instances",
+        "/tmp is shared across all concurrent requests in the execution environment",
+        "Functions on Managed Instances always use the structured JSON log format, which carries the requestId",
+        "context.awsRequestId and context.xRayTraceId are async-safe; the _X_AMZN_TRACE_ID environment variable is not supported",
+        "process.on() cannot be used with worker threads, so a function cannot subscribe to SIGTERM",
+        "Minimum versions: AWS SDK for JavaScript v3 3.933.0, Powertools for AWS Lambda (TypeScript) 2.29.0"
+      ]
+    },
+    {
+      "id": "lmi-networking",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-networking.html",
+      "title": "Networking for Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Connectivity is needed for functions to reach resources outside the VPC and for transmitting telemetry to CloudWatch Logs and X-Ray",
+        "Three options: public subnet with an internet gateway, VPC endpoints, private subnet with a NAT gateway",
+        "VPC endpoints are recommended for production with strict security requirements and are billed per endpoint, per Availability Zone, and per GB"
+      ]
+    },
+    {
+      "id": "lmi-security",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-security.html",
+      "title": "Security and permissions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Containers are not a security boundary between functions on a capacity provider",
+        "lambda:PassCapacityProvider is required when creating or updating functions that use a capacity provider, including through infrastructure as code",
+        "Lambda uses the AWSServiceRoleForLambda service-linked role to manage the EC2 resources of capacity providers"
+      ]
+    },
+    {
+      "id": "lmi-operator-role",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-operator-role.html",
+      "title": "Lambda operator role for Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda assumes the operator role to manage EC2 instances in the capacity provider; its trust policy names lambda.amazonaws.com",
+        "The role needs at least the AWSLambdaManagedEC2ResourceOperator managed policy; the page prints its statements (ec2:RunInstances, ec2:CreateTags, ec2:AttachNetworkInterface, ec2:CreateNetworkInterface, several ec2:Describe*, logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents)",
+        "The service-linked role is created with the first capacity provider, needs iam:CreateServiceLinkedRole for lambda.amazonaws.com, and holds ec2:TerminateInstances and ec2:DescribeInstances"
+      ]
+    },
+    {
+      "id": "lmi-quotas",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-quotas.html",
+      "title": "Lambda Managed Instances quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "1,000 capacity providers per account; 100 function versions per capacity provider (cannot be increased); 15,000 vCPUs per capacity provider",
+        "Capacity provider APIs: 15 read requests and 1 write request per second, not adjustable",
+        "EC2 quotas apply as well: vCPU limits, EBS volume limits, and free IP addresses in the subnets",
+        "Event source mappings on Managed Instances support SQS, DynamoDB Streams, Kinesis Data Streams, Amazon MSK, and self-managed Apache Kafka"
+      ]
+    },
+    {
+      "id": "lmi-execution-environment",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-execution-environment.html",
+      "title": "Understanding the Lambda Managed Instances execution environment",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The execution environment stays active between invocations instead of being frozen",
+        "The configured timeout applies to each invocation; when one times out Lambda reports it failed but does not stop the code, which keeps running and keeps a runtime worker busy",
+        "If all runtime workers are busy, new invocations are rejected until one is free",
+        "Initialization may take up to the larger of 130 seconds and the function timeout",
+        "Unhealthy containers are terminated and replaced rather than reset"
+      ]
+    },
+    {
+      "id": "lmi-version-publishing",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-version-publishing.html",
+      "title": "$LATEST.PUBLISHED version in Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An unqualified ARN of a Managed Instances function invokes $LATEST.PUBLISHED, not $LATEST",
+        "CloudFormation and the console create the $LATEST.PUBLISHED version automatically"
+      ]
+    },
+    {
+      "id": "lmi-getting-started",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-getting-started.html",
+      "title": "Getting started with Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A function is attached with --capacity-provider-config LambdaManagedInstancesCapacityProviderConfig={CapacityProviderArn=...}, and a version must be published before it runs",
+        "Cleanup deletes the function first, then the capacity provider",
+        "Function creation typically takes several minutes"
+      ]
+    },
+    {
+      "id": "lmi-troubleshooting",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-troubleshooting.html",
+      "title": "Troubleshooting Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Throttles are HTTP 429; the throttle reason metrics tell CPU, memory, disk and concurrency apart",
+        "Node.js state isolation issues: global variables are shared across concurrent invocations on the same worker thread",
+        "Missing logs are a VPC connectivity problem: the instances need a path to CloudWatch Logs, for example the com.amazonaws.<region>.logs interface endpoint with private DNS",
+        "A function version stays pending while Lambda launches three instances and starts three execution environments; this typically takes several minutes",
+        "Metrics are in the AWS/Lambda namespace with the dimensions CapacityProviderName, FunctionName, or InstanceType"
+      ]
+    },
+    {
+      "id": "lmi-lambda-limits",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
+      "title": "Lambda quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On Managed Instances, asynchronous and event source mapping invocations may run up to 5,400 seconds (90 minutes); the general function timeout is 900 seconds",
+        "Managed Instances use a file descriptor limit of 4,096 and the process and thread limits of Bottlerocket"
+      ]
+    },
+    {
+      "id": "lmi-launch-blog",
+      "url": "https://aws.amazon.com/blogs/aws/introducing-aws-lambda-managed-instances-serverless-simplicity-with-ec2-flexibility/",
+      "title": "Introducing AWS Lambda Managed Instances: Serverless simplicity with EC2 flexibility (AWS News Blog, 2025-11-30)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "At launch the feature was available in US East (N. Virginia), US East (Ohio), US West (Oregon), Asia Pacific (Tokyo), and Europe (Ireland)",
+        "New instances are launched within tens of seconds; by default a capacity provider absorbs spikes of up to 50% without scaling, and throttles with 429 beyond what is provisioned",
+        "Instances have a maximum lifetime of 14 days"
+      ],
+      "note": "The blog says a 50% spike is absorbed without scaling; the developer guide says capacity is kept for traffic doubling within five minutes. The chapter quotes both and treats neither as measured."
+    },
+    {
+      "id": "lmi-pricing-page",
+      "url": "https://aws.amazon.com/lambda/pricing/",
+      "title": "AWS Lambda pricing: Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Three components: USD 0.20 per million requests, a compute management fee of 15% of the EC2 On-Demand price, and standard EC2 instance charges",
+        "Compute Savings Plans, EC2 Instance Savings Plans and Reserved Instances reduce the EC2 instance charges",
+        "Functions on Managed Instances do not pay for the execution duration of each request",
+        "Worked example: 100 million requests, m7g.xlarge at USD 0.1632 per hour in us-east-1, a 3-year Compute Savings Plan at 72% off, about 2,000 instance-hours: 20 + 91.40 + 48.96 = USD 160.36"
+      ],
+      "note": "The page does not say whether the Lambda free tier covers Managed Instances requests, and does not mention the EBS volumes of the instances."
+    },
+    {
+      "id": "lmi-price-list-lambda",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWSLambda, ap-northeast-1 (published 2026-10-09)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-Lambda-Managed-Instances-m6g.large-Management-Hours is USD 0.01485 per hour; m7g.large is USD 0.01581 per hour",
+        "APN1-Lambda-Managed-Instances-Request-ARM is USD 0.0000002 per request, the same as APN1-Request-ARM",
+        "493 instance types have a management fee in ap-northeast-1; the smallest size listed is large, and no c-family large type is listed",
+        "The same offer for 30 Regions lists Managed Instances usage types; ap-southeast-6, il-central-1, me-central-1, me-south-1 and the two GovCloud Regions do not"
+      ],
+      "note": "Read through region_index.json, one file per Region, counting usage types that contain Lambda-Managed-Instances-. A price being published is not the same statement as the feature being offered; the chapter says which of the two it read."
+    },
+    {
+      "id": "lmi-price-list-ec2",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonEC2, ap-northeast-1 (published 2026-10-09)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-BoxUsage:m6g.large (2 vCPUs, 8 GiB), Linux, shared tenancy, On-Demand: USD 0.099 per hour",
+        "APN1-BoxUsage:m7g.large (2 vCPUs, 8 GiB), Linux, shared tenancy, On-Demand: USD 0.1054 per hour"
+      ]
+    },
+    {
+      "id": "lmi-cfn-capacityprovider",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-capacityprovider.html",
+      "title": "AWS::Lambda::CapacityProvider",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Properties: CapacityProviderName, CapacityProviderScalingConfig, InstanceRequirements, KmsKeyArn, PermissionsConfig (required), PropagateTags, Tags, TelemetryConfig, VpcConfig (required)",
+        "Changing VpcConfig, PermissionsConfig, InstanceRequirements, KmsKeyArn, or the name replaces the capacity provider"
+      ]
+    },
+    {
+      "id": "lmi-cfn-function-config",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-lambda-function-lambdamanagedinstancescapacityproviderconfig.html",
+      "title": "AWS::Lambda::Function LambdaManagedInstancesCapacityProviderConfig",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CapacityProviderArn is required; ExecutionEnvironmentMemoryGiBPerVCpu ranges from 2 to 8; PerExecutionEnvironmentMaxConcurrency ranges from 1 to 1600"
+      ]
+    },
+    {
+      "id": "lmi-api-create-capacity-provider",
+      "url": "https://docs.aws.amazon.com/lambda/latest/api/API_CreateCapacityProvider.html",
+      "title": "CreateCapacityProvider",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The API operation is CreateCapacityProvider; its request carries VpcConfig, PermissionsConfig, InstanceRequirements, and CapacityProviderScalingConfig"
+      ]
+    },
+    {
+      "id": "lmi-api-create-function",
+      "url": "https://docs.aws.amazon.com/lambda/latest/api/API_CreateFunction.html",
+      "title": "CreateFunction",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CreateFunction takes CapacityProviderConfig and PublishTo, whose only valid value is LATEST_PUBLISHED"
+      ]
+    },
+    {
+      "id": "lmi-cdk-capacity-provider",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-lambda/lib/capacity-provider.d.ts and its JavaScript",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "lambda.CapacityProvider is an L2 construct with subnets, securityGroups, operatorRole, architectures, instanceTypeFilter, maxVCpuCount, scalingOptions, kmsKey, propagateTags, logGroup",
+        "addFunction(func, options) sets CapacityProviderConfig and FunctionScalingConfig on the function",
+        "The construct refuses a maxVCpuCount outside 12 to 15000",
+        "When operatorRole is omitted the construct creates a role with AWSLambdaManagedEC2ResourceOperator"
+      ],
+      "note": "The type comment on perExecutionEnvironmentMaxConcurrency says the default maximum is 10, while the developer guide gives 64 per vCPU as the Node.js default. The stack does not set it, and the chapter quotes the guide."
+    },
+    {
+      "id": "lmi-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: the installed package's dist",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The provider registry registers AWS::Lambda::Function and AWS::Lambda::Permission and has no entry for AWS::Lambda::CapacityProvider, which therefore goes through Cloud Control API",
+        "The property coverage of AWS::Lambda::Function lists CapacityProviderConfig and FunctionScalingConfig as 'not yet implemented by cdkd'; a function that has them is routed through Cloud Control API instead of the SDK provider",
+        "PublishToLatestPublished is listed as a CloudFormation-only directive with no SDK equivalent"
+      ],
+      "note": "Read in the bundled JavaScript of the npm package (deploy-engine and program chunks), not in the GitHub source tree."
+    },
+    {
+      "id": "lmi-tag-propagation",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-tag-propagation.html",
+      "title": "Tag propagation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PropagateTags applies up to 40 tags to the instances, EBS volumes, and network interfaces that Lambda creates, for cost allocation"
+      ]
+    },
+    {
+      "id": "lmi-node-async-context",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/async_context.html",
+      "title": "Node.js v24: Asynchronous context tracking",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AsyncLocalStorage is stable; run(store, callback) makes the store available to everything called inside the callback, across asynchronous operations, and getStore() returns undefined outside of it"
+      ]
+    },
+    {
+      "id": "lmi-cloudflare-how-workers-works",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "Cloudflare Workers: How Workers works (last updated 2026-09-18)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A single Workers instance may handle multiple requests, including concurrent requests, in a single-threaded event loop",
+        "Cloudflare recommends not using or mutating global state, because requests may or may not share an instance and an isolate may be evicted"
+      ]
+    },
+    {
+      "id": "lmi-vercel-fluid",
+      "url": "https://vercel.com/docs/fluid-compute",
+      "title": "Vercel: Fluid compute (last updated 2026-08-24)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With Fluid compute multiple invocations share one function instance; optimized concurrency is available on the Node.js and Python runtimes",
+        "Fluid compute has been enabled by default for new projects since April 23, 2025",
+        "Multiple invocations can share the same physical instance (a global state/process) concurrently"
+      ]
+    },
+    {
+      "id": "lmi-vercel-pricing",
+      "url": "https://vercel.com/docs/functions/usage-and-pricing",
+      "title": "Vercel: Functions usage and pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fluid compute bills Active CPU, Provisioned Memory, and Invocations; after all requests complete the instance is paused and nothing is charged until the next invocation"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "lambda-managed-instances",
+      "ja": "Lambda Managed Instances",
+      "en": "Lambda Managed Instances",
+      "firstUse": "35",
+      "definition": {
+        "ja": "Lambda の関数を、自分のアカウントの VPC にある EC2 インスタンスで動かす機能。インスタンスの起動、パッチ、ルーティング、スケーリングは Lambda が行い、料金はインスタンスの時間に対してかかる。",
+        "en": "The Lambda feature that runs functions on EC2 instances in a VPC of your own account. Lambda launches, patches, routes to, and scales the instances, and you pay for instance-hours."
+      }
+    },
+    {
+      "id": "capacity-provider",
+      "ja": "キャパシティプロバイダー（Lambda）",
+      "en": "capacity provider (Lambda)",
+      "firstUse": "35",
+      "definition": {
+        "ja": "Lambda Managed Instances で、関数を動かすインスタンスの置き場所と条件を決めるリソース。サブネット、セキュリティグループ、オペレーターロール、インスタンスの種類、vCPU の上限を持つ。同じキャパシティプロバイダーに載せた関数は、互いに信頼できるものとして扱われる。",
+        "en": "In Lambda Managed Instances, the resource that says where and on what the functions run: subnets, security groups, an operator role, instance types, and a vCPU ceiling. Functions on the same capacity provider are treated as trusting one another."
+      }
+    },
+    {
+      "id": "operator-role",
+      "ja": "オペレーターロール",
+      "en": "operator role",
+      "firstUse": "35",
+      "definition": {
+        "ja": "Lambda が、キャパシティプロバイダーのインスタンスを起動し管理するために引き受ける IAM ロール。関数が動くときの実行ロールとは別のもの。",
+        "en": "The IAM role Lambda assumes to launch and manage the instances of a capacity provider. It is not the execution role a function runs as."
+      }
+    },
+    {
+      "id": "multi-concurrency",
+      "ja": "マルチコンカレンシー",
+      "en": "multi-concurrency",
+      "firstUse": "35",
+      "definition": {
+        "ja": "1 つの実行環境が、同時に複数のリクエストを処理すること。標準の Lambda は 1 つの実行環境で一度に 1 つしか処理しない。",
+        "en": "One execution environment handling several requests at the same time. Standard Lambda handles one at a time per execution environment."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "35.what",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "35.cost",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/cost.ts",
+        "examples/35-lambda-managed-instances/src/report.ts",
+        "examples/35-lambda-managed-instances/scripts/plan.ts",
+        "examples/35-lambda-managed-instances/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["lmi:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.architecture",
+      "sources": [
+        "examples/35-lambda-managed-instances/infra/lib/managed-instances-stack.ts",
+        "examples/35-lambda-managed-instances/infra/bin/app.ts",
+        "examples/35-lambda-managed-instances/src/config.ts",
+        "examples/35-lambda-managed-instances/test/config.test.ts"
+      ],
+      "tasks": ["lmi:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.when",
+      "sources": ["examples/35-lambda-managed-instances/src/break-even.ts"],
+      "tasks": ["lmi:plan"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "35.others",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "35.concurrency",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/lambda.ts",
+        "examples/35-lambda-managed-instances/src/app.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "type"],
+      "verification": "local"
+    },
+    {
+      "id": "35.leak",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/scope.ts",
+        "examples/35-lambda-managed-instances/src/audit.ts",
+        "examples/35-lambda-managed-instances/test/scope.test.ts",
+        "examples/35-lambda-managed-instances/test/harness.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.fix",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/scope.ts",
+        "examples/35-lambda-managed-instances/test/scope.test.ts",
+        "examples/35-lambda-managed-instances/test/server.test.ts"
+      ],
+      "tasks": ["test:unit", "dev:lmi"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.threads",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/app.ts",
+        "examples/35-lambda-managed-instances/test/threads.test.ts",
+        "examples/35-lambda-managed-instances/test/fixtures/thread.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.runtime",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/lambda.ts",
+        "examples/35-lambda-managed-instances/infra/lib/managed-instances-stack.ts"
+      ],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "35.scaling",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/config.ts",
+        "examples/35-lambda-managed-instances/infra/lib/managed-instances-stack.ts"
+      ],
+      "tasks": ["lmi:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "35.capacity-provider",
+      "sources": [
+        "examples/35-lambda-managed-instances/infra/lib/managed-instances-stack.ts",
+        "examples/35-lambda-managed-instances/src/network.ts",
+        "examples/35-lambda-managed-instances/test/network.test.ts",
+        "examples/35-lambda-managed-instances/infra/test/managed-instances-stack.test.ts",
+        "examples/11-network/infra/lib/import-network.ts"
+      ],
+      "tasks": ["lmi:plan", "lmi:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.function",
+      "sources": [
+        "examples/35-lambda-managed-instances/infra/lib/managed-instances-stack.ts",
+        "examples/35-lambda-managed-instances/infra/test/managed-instances-stack.test.ts"
+      ],
+      "tasks": ["lmi:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.cdkd",
+      "sources": [
+        "examples/35-lambda-managed-instances/infra/test/managed-instances-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "lmi:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "35.local",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/dev.ts",
+        "examples/35-lambda-managed-instances/.env.example",
+        "examples/35-lambda-managed-instances/scripts/plan.ts",
+        "examples/35-lambda-managed-instances/test"
+      ],
+      "tasks": ["dev:lmi", "test:unit", "lmi:plan", "lmi:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.deploy",
+      "sources": ["examples/35-lambda-managed-instances/scripts/smoke.ts", "tools/src/infra"],
+      "tasks": [
+        "net:infra:deploy",
+        "lmi:infra:diff",
+        "lmi:infra:deploy",
+        "lmi:smoke",
+        "lmi:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "35.break-even",
+      "sources": [
+        "examples/35-lambda-managed-instances/src/break-even.ts",
+        "examples/35-lambda-managed-instances/src/prices.ts",
+        "examples/35-lambda-managed-instances/src/report.ts",
+        "examples/35-lambda-managed-instances/test/break-even.test.ts",
+        "examples/35-lambda-managed-instances/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["lmi:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "35.limits",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "35.failures",
+      "sources": ["examples/35-lambda-managed-instances/src/network.ts"],
+      "tasks": ["lmi:plan"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "35.production",
+      "sources": ["examples/35-lambda-managed-instances/infra/lib/managed-instances-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "35.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["lmi:infra:destroy", "net:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "35.distributed",
+      "sources": [
+        "examples/35-lambda-managed-instances/test/scope.test.ts",
+        "examples/35-lambda-managed-instances/test/threads.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "ec2.m6g-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "2XJBDRXCQP8BJ6ZV",
+      "usageType": "APN1-BoxUsage:m6g.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0990000000",
+          "description": "$0.099 per On Demand Linux m6g.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.m7g-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "ZW83F4MNM6773ERR",
+      "usageType": "APN1-BoxUsage:m7g.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1054000000",
+          "description": "$0.1054 per On Demand Linux m7g.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.managed-instances.m6g-large.management.hour",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "5K5H9ZPBDMNG7JSQ",
+      "usageType": "APN1-Lambda-Managed-Instances-m6g.large-Management-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0148500000",
+          "description": "$0.01485 per Hour for Lambda-Managed-Instances-m6g.large-Management-Hours in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.managed-instances.m7g-large.management.hour",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "55549DXSJZWEMDJZ",
+      "usageType": "APN1-Lambda-Managed-Instances-m7g.large-Management-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0158100000",
+          "description": "$0.01581 per Hour for Lambda-Managed-Instances-m7g.large-Management-Hours in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "lambda.managed-instances.request.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "UMGQMPBC7GZX2EKT",
+      "usageType": "APN1-Lambda-Managed-Instances-Request-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000002000",
+          "description": "$0.0000002 per Request for Lambda-Managed-Instances-Request-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "lambda.managed-instances.request.arm",
+      "reason": "The Lambda pricing page does not say whether the monthly free tier of one million requests covers requests to functions on Managed Instances. Nothing is deducted."
+    },
+    {
+      "priceId": "ec2.m6g-large.linux.hour",
+      "reason": "No free tier statement for m6g.large was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "ec2.m7g-large.linux.hour",
+      "reason": "No free tier statement for m7g.large was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "lmi-idle",
+      "chapter": "35",
+      "title": {
+        "ja": "Lambda Managed Instances: 1 件も処理しないまま 1 か月",
+        "en": "Lambda Managed Instances: a month without one request"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の構成。Lambda が m6g.large を 3 台起動すると仮定（Lambda のガイドは、関数のバージョンを公開したとき既定で 3 台と書いている。実機では確かめていない）",
+          "EC2 のオンデマンドの定価と、その 15% にあたる Lambda の管理料",
+          "11章のスタックに、CloudWatch Logs のインターフェースエンドポイントを 1 つ、2 つの AZ に置いたまま",
+          "インスタンスの EBS ボリューム（大きさを確認できていない）、API Gateway、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "The default layout, assuming Lambda launches three m6g.large instances (its guide says three by default when a function version is published; not checked on AWS)",
+          "EC2 On-Demand list price, and Lambda's management fee of 15% of it",
+          "One interface endpoint for CloudWatch Logs in two zones, left in the chapter 11 stack",
+          "The EBS volumes of the instances (size not confirmed), API Gateway, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.m6g-large.linux.hour",
+          "quantity": 2190,
+          "basis": "3 m6g.large x 730 hours"
+        },
+        {
+          "priceId": "lambda.managed-instances.m6g-large.management.hour",
+          "quantity": 2190,
+          "basis": "management fee, 3 m6g.large x 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 1460,
+          "basis": "1 interface endpoint x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "lmi-one-day",
+      "chapter": "35",
+      "title": {
+        "ja": "Lambda Managed Instances: 1 日だけ置く",
+        "en": "Lambda Managed Instances: left for one day"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の構成。Lambda が m6g.large を 3 台起動すると仮定（Lambda のガイドは、関数のバージョンを公開したとき既定で 3 台と書いている。実機では確かめていない）",
+          "11章のスタックに、CloudWatch Logs のインターフェースエンドポイントを 1 つ、2 つの AZ に置いたまま",
+          "インスタンスの EBS ボリューム（大きさを確認できていない）、API Gateway、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "The default layout, assuming Lambda launches three m6g.large instances (its guide says three by default when a function version is published; not checked on AWS)",
+          "One interface endpoint for CloudWatch Logs in two zones, left in the chapter 11 stack",
+          "The EBS volumes of the instances (size not confirmed), API Gateway, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.m6g-large.linux.hour",
+          "quantity": 72,
+          "basis": "3 m6g.large x 24 hours"
+        },
+        {
+          "priceId": "lambda.managed-instances.m6g-large.management.hour",
+          "quantity": 72,
+          "basis": "management fee, 3 m6g.large x 24 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 48,
+          "basis": "1 interface endpoint x 2 zones x 24 hours"
+        }
+      ]
+    },
+    {
+      "id": "lmi-ceiling",
+      "chapter": "35",
+      "title": {
+        "ja": "Lambda Managed Instances: vCPU の上限まで増えたまま 1 か月",
+        "en": "Lambda Managed Instances: a month at the vCPU ceiling"
+      },
+      "assumptions": {
+        "ja": [
+          "maxVCpuCount が 12 なので、m6g.large（2 vCPU）は最大 6 台。6 台が 730 時間動き続けた場合",
+          "11章のスタックに、CloudWatch Logs のインターフェースエンドポイントを 1 つ、2 つの AZ に置いたまま",
+          "インスタンスの EBS ボリューム（大きさを確認できていない）、API Gateway、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "maxVCpuCount is 12, so at most six m6g.large (2 vCPUs each). All six running for 730 hours",
+          "One interface endpoint for CloudWatch Logs in two zones, left in the chapter 11 stack",
+          "The EBS volumes of the instances (size not confirmed), API Gateway, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.m6g-large.linux.hour",
+          "quantity": 4380,
+          "basis": "6 m6g.large x 730 hours"
+        },
+        {
+          "priceId": "lambda.managed-instances.m6g-large.management.hour",
+          "quantity": 4380,
+          "basis": "management fee, 6 m6g.large x 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 1460,
+          "basis": "1 interface endpoint x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "lmi-steady",
+      "chapter": "35",
+      "title": {
+        "ja": "Lambda Managed Instances: 一定の負荷が続く 1 か月",
+        "en": "Lambda Managed Instances: a month of steady load"
+      },
+      "assumptions": {
+        "ja": [
+          "1 か月に 1 億リクエスト、1 リクエストあたり平均 200 ミリ秒（同時に処理中のリクエストは平均 7.6 件）",
+          "3 台の m6g.large でこの負荷を処理できると仮定（1 リクエストが使う CPU 時間によるので、確かめていない）",
+          "11章のスタックに、CloudWatch Logs のインターフェースエンドポイントを 1 つ、2 つの AZ に置いたまま",
+          "インスタンスの EBS ボリューム（大きさを確認できていない）、API Gateway、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "100 million requests a month at 200 ms each on average (7.6 requests in flight on average)",
+          "Assumes three m6g.large can carry this load (it depends on CPU time per request, and was not measured)",
+          "One interface endpoint for CloudWatch Logs in two zones, left in the chapter 11 stack",
+          "The EBS volumes of the instances (size not confirmed), API Gateway, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.managed-instances.request.arm",
+          "quantity": 100000000,
+          "basis": "100 million requests"
+        },
+        {
+          "priceId": "ec2.m6g-large.linux.hour",
+          "quantity": 2190,
+          "basis": "3 m6g.large x 730 hours"
+        },
+        {
+          "priceId": "lambda.managed-instances.m6g-large.management.hour",
+          "quantity": 2190,
+          "basis": "management fee, 3 m6g.large x 730 hours"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 1460,
+          "basis": "1 interface endpoint x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "lmi-compare-standard-256mb",
+      "chapter": "35",
+      "title": {
+        "ja": "比較: 標準の Lambda（arm64、256 MB）で同じ 1 か月",
+        "en": "Comparison: the same month on standard Lambda (arm64, 256 MB)"
+      },
+      "assumptions": {
+        "ja": [
+          "1 か月に 1 億リクエスト、1 リクエストあたり平均 200 ミリ秒（同時に処理中のリクエストは平均 7.6 件）",
+          "メモリは 256 MB。課金される時間は 1 リクエスト 200 ミリ秒のまま変わらないと仮定（メモリを変えると実行時間も変わるが、計測していない）",
+          "無料利用枠を引く前の定価。API Gateway、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "100 million requests a month at 200 ms each on average (7.6 requests in flight on average)",
+          "Memory is 256 MB. Billed duration is assumed to stay at 200 ms per request (memory changes duration, and none of it was measured)",
+          "List price before the free tier. API Gateway, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 100000000,
+          "basis": "100 million requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 5000000,
+          "basis": "100 million x 0.2 s x 256 MB"
+        }
+      ]
+    },
+    {
+      "id": "lmi-compare-standard-1gb",
+      "chapter": "35",
+      "title": {
+        "ja": "比較: 標準の Lambda（arm64、1 GB）で同じ 1 か月",
+        "en": "Comparison: the same month on standard Lambda (arm64, 1 GB)"
+      },
+      "assumptions": {
+        "ja": [
+          "1 か月に 1 億リクエスト、1 リクエストあたり平均 200 ミリ秒（同時に処理中のリクエストは平均 7.6 件）",
+          "メモリは 1 GB。課金される時間は 1 リクエスト 200 ミリ秒のまま変わらないと仮定（メモリを変えると実行時間も変わるが、計測していない）",
+          "無料利用枠を引く前の定価。API Gateway、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "100 million requests a month at 200 ms each on average (7.6 requests in flight on average)",
+          "Memory is 1 GB. Billed duration is assumed to stay at 200 ms per request (memory changes duration, and none of it was measured)",
+          "List price before the free tier. API Gateway, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 100000000,
+          "basis": "100 million requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 20000000,
+          "basis": "100 million x 0.2 s x 1 GB"
+        }
+      ]
+    },
+    {
+      "id": "lmi-compare-standard-2gb",
+      "chapter": "35",
+      "title": {
+        "ja": "比較: 標準の Lambda（arm64、2 GB）で同じ 1 か月",
+        "en": "Comparison: the same month on standard Lambda (arm64, 2 GB)"
+      },
+      "assumptions": {
+        "ja": [
+          "1 か月に 1 億リクエスト、1 リクエストあたり平均 200 ミリ秒（同時に処理中のリクエストは平均 7.6 件）",
+          "メモリは 2 GB。課金される時間は 1 リクエスト 200 ミリ秒のまま変わらないと仮定（メモリを変えると実行時間も変わるが、計測していない）",
+          "無料利用枠を引く前の定価。API Gateway、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "100 million requests a month at 200 ms each on average (7.6 requests in flight on average)",
+          "Memory is 2 GB. Billed duration is assumed to stay at 200 ms per request (memory changes duration, and none of it was measured)",
+          "List price before the free tier. API Gateway, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 100000000,
+          "basis": "100 million requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 40000000,
+          "basis": "100 million x 0.2 s x 2 GB"
+        }
+      ]
+    },
+    {
+      "id": "lmi-compare-ec2",
+      "chapter": "35",
+      "title": {
+        "ja": "比較: 同じ m6g.large 3 台を EC2 で自分で持つ 1 か月",
+        "en": "Comparison: the same three m6g.large as plain EC2 for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "m6g.large を 3 台、730 時間",
+          "ボリューム、ロードバランサー、パブリック IPv4 アドレス、データ転送は未算入。OS のパッチ、プロセスの監視、スケーリングは自分の仕事になる"
+        ],
+        "en": [
+          "Three m6g.large for 730 hours",
+          "Volumes, a load balancer, public IPv4 addresses, and data transfer are not included. Patching, process supervision, and scaling become your work"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.m6g-large.linux.hour",
+          "quantity": 2190,
+          "basis": "3 m6g.large x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "lmi-compare-fargate",
+      "chapter": "35",
+      "title": {
+        "ja": "比較: 同じ大きさ（2 vCPU、8 GB）の Fargate タスク 3 つで 1 か月",
+        "en": "Comparison: three Fargate tasks of the same shape (2 vCPUs, 8 GB) for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "arm64 の Fargate タスクを 3 つ、それぞれ 2 vCPU と 8 GB、730 時間",
+          "ロードバランサー、パブリック IPv4 アドレス、ECR、データ転送は未算入（12章のシナリオに含まれる）"
+        ],
+        "en": [
+          "Three arm64 Fargate tasks of 2 vCPUs and 8 GB each for 730 hours",
+          "A load balancer, public IPv4 addresses, ECR, and data transfer are not included (chapter 12's scenarios have them)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 4380,
+          "basis": "3 tasks x 2 vCPUs x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 17520,
+          "basis": "3 tasks x 8 GB x 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "35",
+        "command": "vp test run examples/35-lambda-managed-instances",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "8 ファイル、52 件。同時に処理中の 2 つのリクエストでリクエスト ID が入れ替わること（モジュールスコープ）と入れ替わらないこと（AsyncLocalStorage）を、関数の呼び出しと本物のソケットの両方で決まった順序で再現。ワーカースレッド 2 本で Map が別々になること。設定の検証、ログへの経路のモデル、料金の入力、損益分岐の計算、スタックのアサーション",
+          "en": "8 files, 52 tests. Two requests in flight swapping request IDs with module scope and not with AsyncLocalStorage, replayed in a fixed order both as function calls and over real sockets. Two worker threads each holding their own Map. Settings validation, the model of the path to CloudWatch Logs, pricing inputs, the break-even arithmetic, and stack assertions"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "tsc --noEmit -p examples/35-lambda-managed-instances",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run lmi:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の設定と、`-c instanceType=m7g.large`、`-c minExecutionEnvironments=0 -c maxExecutionEnvironments=0`、`-c maxVCpuCount=16` で synth した。esbuild がハンドラーをバンドルする。AWS には問い合わせない",
+          "en": "Synthesized the defaults and `-c instanceType=m7g.large`, `-c minExecutionEnvironments=0 -c maxExecutionEnvironments=0`, and `-c maxVCpuCount=16`. esbuild bundles the handler. Nothing is asked of AWS"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run lmi:plan",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定、`instanceType=m7g.large`、`interfaceEndpoints=`（エンドポイントなし。終了コード 2）、`maxVCpuCount=8`（不正な設定。終了コード 1）で実行した",
+          "en": "Ran the defaults, `instanceType=m7g.large`, `interfaceEndpoints=` (no endpoint, exit code 2), and `maxVCpuCount=8` (an invalid setting, exit code 1)"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run dev:lmi",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "タスクで手元のサーバーを起動し、`/health` と `POST /notes` に curl で応答を得た",
+          "en": "Started the local server through the task and got answers from `/health` and `POST /notes` with curl"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "node src/dev.ts (the command behind vp run dev:lmi, without --watch)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "手元のサーバーを起動し、`/health` と `POST /notes` に curl で応答を得た。`SCOPE=module` でも起動した",
+          "en": "Started the local server and got answers from `/health` and `POST /notes` with curl. Also started it with `SCOPE=module`"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run net:infra:deploy -c interfaceEndpoints=logs",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "11章のネットワークに CloudWatch Logs のエンドポイントを足す。時間課金",
+          "en": "Adds the CloudWatch Logs endpoint to the chapter 11 network. Billed by the hour"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run lmi:infra:diff",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run lmi:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。インスタンスが 3 台起動する想定で、時間課金",
+          "en": "Not run. Three instances are expected to start, billed by the hour"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run lmi:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run lmi:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "35",
+        "command": "vp run lmi:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "35-deploy",
+        "summary": {
+          "ja": "35章のスタックを AWS に一度もデプロイしていない。cdkd 0.296.28 が `AWS::Lambda::CapacityProvider` と、`CapacityProviderConfig` を持つ `AWS::Lambda::Function` を Cloud Control API 経由で作れること、`$LATEST.PUBLISHED` が自動で公開されること、API Gateway が修飾子なしの関数を呼べること、デプロイする IAM identity に `lambda:PassCapacityProvider` と `iam:CreateServiceLinkedRole` が要ることが未確認。",
+          "en": "The chapter 35 stack has never been deployed. Unverified: that cdkd 0.296.28 creates `AWS::Lambda::CapacityProvider` and an `AWS::Lambda::Function` with `CapacityProviderConfig` through Cloud Control API, that `$LATEST.PUBLISHED` is published automatically, that API Gateway can invoke the unqualified function, and that the deploying identity needs `lambda:PassCapacityProvider` and `iam:CreateServiceLinkedRole`."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy -c interfaceEndpoints=logs` の後に `vp run lmi:infra:deploy`、`vp run lmi:smoke`、`vp run lmi:infra:drift` を通す。終わったら `vp run lmi:infra:destroy`、`vp run net:infra:destroy` の順に消す（時間課金。1 日でおよそ USD 8.87）。",
+          "en": "After `vp run net:infra:deploy -c interfaceEndpoints=logs`, run `vp run lmi:infra:deploy`, `vp run lmi:smoke`, and `vp run lmi:infra:drift`. Then delete with `vp run lmi:infra:destroy` and `vp run net:infra:destroy`, in that order (hourly charges, about USD 8.87 a day)."
+        }
+      },
+      {
+        "id": "35-fleet",
+        "summary": {
+          "ja": "インスタンスの台数、EBS ボリュームの大きさと料金、2 つの AZ のサブネットに 3 台がどう配置されるか、`minExecutionEnvironments` を 3 未満にしたときの台数を確認していない。料金の計算は「3 台」という仮定に立っている。",
+          "en": "Not confirmed: how many instances start, the size and price of their EBS volumes, how three instances are placed across subnets in two zones, and the count when `minExecutionEnvironments` is below 3. The cost figures rest on the assumption of three instances."
+        },
+        "resume": {
+          "ja": "デプロイ後に、キャパシティプロバイダーのシステムログと CloudWatch のメトリクス（名前空間 `AWS/Lambda`、ディメンション `CapacityProviderName`）で台数を見る。EC2 の managed resource visibility を切り替えてインスタンスとボリュームを確かめ、数日後に請求の明細と突き合わせる。",
+          "en": "After a deploy, read the instance count from the capacity provider's system logs and CloudWatch metrics (namespace `AWS/Lambda`, dimension `CapacityProviderName`). Switch EC2's managed resource visibility to see the instances and volumes, and compare with the bill a few days later."
+        }
+      },
+      {
+        "id": "35-runtime",
+        "summary": {
+          "ja": "Lambda の実行環境で、同時実行、ワーカースレッドの数、スケーリング、スロットリング（429）、インスタンスの入れ替え、タイムアウト後もコードが動き続けることを一度も観測していない。手元のテストが再現しているのは、1 つの Node.js プロセスと、自分で起こした worker_threads だけ。",
+          "en": "Never observed on Lambda's own execution environment: concurrent invocations, the number of worker threads, scaling, throttling (429), instance replacement, and code that keeps running after a timeout. The local tests reproduce one Node.js process and worker_threads started by the test itself."
+        },
+        "resume": {
+          "ja": "デプロイ後に `vp run lmi:smoke` を通し、負荷をかけて `ConcurrencyThrottles`、`CPUThrottles` と実行環境の数を見る。負荷試験は 32章の方針に従う。",
+          "en": "After a deploy, pass `vp run lmi:smoke`, then apply load and watch `ConcurrencyThrottles`, `CPUThrottles`, and the number of execution environments. Follow chapter 32 for load testing."
+        }
+      },
+      {
+        "id": "35-network",
+        "summary": {
+          "ja": "インスタンスが VPC から届く必要のある宛先を、CloudWatch Logs と X-Ray のほかに確認できていない。CloudWatch Logs のインターフェースエンドポイントだけのプライベートサブネットで関数のバージョンが ACTIVE になるかは未確認。",
+          "en": "Beyond CloudWatch Logs and X-Ray, the destinations the instances must reach from the VPC were not confirmed. Whether a function version becomes ACTIVE in private subnets with only the CloudWatch Logs interface endpoint is unverified."
+        },
+        "resume": {
+          "ja": "既定の構成でデプロイし、関数のバージョンが ACTIVE になるかを見る。ならなければ `vp run net:infra:deploy -c egress=nat` で試し、VPC Flow Logs で拒否された宛先を調べる。",
+          "en": "Deploy the default layout and see whether the function version becomes ACTIVE. If not, try `vp run net:infra:deploy -c egress=nat` and look up the refused destinations in VPC Flow Logs."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 35: Lambda Managed Instances --------------------------\n      // The chapter 04 API in one Node.js process, which answers many requests at once. No AWS.\n      \"dev:lmi\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/35-lambda-managed-instances\" }),\n      // What the stack would run, whether its logs could leave the VPC, the idle cost, and the break-even. Reads only this checkout.\n      \"lmi:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/35-lambda-managed-instances\" }),\n      ...infra(\"lmi\", \"examples/35-lambda-managed-instances\", \"AihManagedInstances\"),\n      \"lmi:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/35-lambda-managed-instances\" }),",
+    "synth": ["lmi:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/35-lambda-managed-instances"]
+  }
+}

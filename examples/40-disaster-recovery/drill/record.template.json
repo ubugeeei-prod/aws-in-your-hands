@@ -1,0 +1,17 @@
+{
+  "name": "drill-YYYY-MM-DD",
+  "region": "ap-northeast-1",
+  "kind": "drill",
+  "objectives": { "rpoSeconds": 600, "rtoSeconds": 3600 },
+  "jobID": null,
+  "timeline": {
+    "declaredAt": null,
+    "startRequestedAt": null,
+    "recoveryPointAt": null,
+    "launchedAt": null,
+    "verifiedAt": null,
+    "terminatedAt": null
+  },
+  "checks": [],
+  "notes": ""
+}

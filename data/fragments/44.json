@@ -1,0 +1,903 @@
+{
+  "chapterId": "44",
+  "manifest": {
+    "id": "44",
+    "slug": "health",
+    "title": {
+      "ja": "Health: AWS 側の障害とメンテナンスを知る",
+      "en": "Health: Knowing When the Problem Is on AWS's Side"
+    },
+    "prerequisites": ["08", "19", "23"],
+    "services": [
+      "AWS Health",
+      "EventBridge",
+      "Lambda",
+      "DynamoDB",
+      "SNS",
+      "SQS",
+      "AWS User Notifications"
+    ],
+    "samplePath": "examples/44-health",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "health-what-is",
+      "health-concepts",
+      "health-account-views",
+      "health-dashboard-status",
+      "health-eventbridge",
+      "health-eventbridge-regions",
+      "health-eventbridge-public",
+      "health-eventbridge-pagination",
+      "health-eventbridge-schema",
+      "health-eventbridge-rule-examples",
+      "health-eventbridge-org",
+      "health-org-view",
+      "health-org-enable",
+      "health-delegated-admin",
+      "health-user-notifications",
+      "health-planned-lifecycle",
+      "health-ec2-automation",
+      "health-api-guide",
+      "health-api-reference",
+      "health-public-feed",
+      "ec2-scheduled-events",
+      "ec2-instance-retirement",
+      "lambda-runtime-deprecation-notices",
+      "user-notifications-what-is",
+      "user-notifications-faq",
+      "support-plans",
+      "support-pricing",
+      "health-eventbridge-pricing",
+      "health-price-list-sns",
+      "health-sns-publish",
+      "health-lambda-async-errors",
+      "health-eventbridge-bus-to-bus",
+      "health-cdkd-register-providers",
+      "cloudflare-notifications",
+      "cloudflare-available-notifications",
+      "vercel-status",
+      "vercel-alerts"
+    ]
+  },
+  "sources": [
+    {
+      "id": "health-what-is",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/what-is-aws-health.html",
+      "title": "What is AWS Health?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS Health Dashboard is available to all AWS customers at no additional cost and requires no setup",
+        "All AWS customers can receive AWS Health events through Amazon EventBridge at no additional cost",
+        "The AWS Health API needs an AWS Business Support+, AWS Enterprise Support, or AWS Unified Operations plan; in a Region that does not offer these plans, or for an account that has not transitioned, a Business, Enterprise On-Ramp, or Enterprise Support plan"
+      ]
+    },
+    {
+      "id": "health-concepts",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/aws-health-concepts-and-terms.html",
+      "title": "Concepts for AWS Health",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Health events are notifications that AWS Health sends on behalf of other AWS services; there are account-specific events and public events",
+        "A public event is reported even if the account does not use that service or has no resources in that Region",
+        "Public events are not available through AWS managed notifications in AWS User Notifications; an EventBridge rule or a user-configured notification is needed",
+        "Event type categories: account notification, issue, scheduled change; all scheduled change events are account-specific",
+        "Example event type codes, including AWS_EC2_OPERATIONAL_ISSUE, AWS_EBS_VOLUME_ATTACHMENT_ISSUE, AWS_ABUSE_PII_CONTENT_REMOVAL_REPORT (listed under issue), AWS_EC2_INSTANCE_RETIREMENT_SCHEDULED, AWS_RDS_PLANNED_LIFECYCLE_EVENT, AWS_S3_OPEN_ACCESS_BUCKET_NOTIFICATION, AWS_BILLING_SUSPENSION_NOTICE",
+        "Event status is open, closed, or upcoming; events can be viewed in the dashboard or the API for up to 90 days",
+        "Actionability is ACTION_REQUIRED, ACTION_MAY_BE_REQUIRED, or INFORMATIONAL; events about service issues carry no actionability label",
+        "Personas are OPERATIONS, SECURITY, and BILLING",
+        "Calling the AWS Health API without one of the required Support plans returns SubscriptionRequiredException",
+        "The public Service health page is https://health.aws.amazon.com/health/status and needs no account; the signed-in dashboard is https://health.aws.amazon.com/health/home"
+      ]
+    },
+    {
+      "id": "health-account-views",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/aws-health-account-views.html",
+      "title": "Viewing your account events in the AWS Health Dashboard",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Your account health has the tabs Open and recent issues, Scheduled changes, Other notifications, and Event log; the event log shows the events of the past 90 days"
+      ]
+    },
+    {
+      "id": "health-dashboard-status",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/aws-health-dashboard-status.html",
+      "title": "AWS Health Dashboard",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Service health page shows only public events, for all services and Regions, without signing in; Service history covers the last 12 months",
+        "An RSS feed exists but its format is subject to change; AWS recommends EventBridge for ingesting events programmatically"
+      ]
+    },
+    {
+      "id": "health-eventbridge",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/cloudwatch-events-health.html",
+      "title": "Monitoring events in AWS Health with Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Health delivers events on a durable basis and attempts to deliver each to EventBridge at least once",
+        "A rule receives events for its own account only; organizational view is needed for other accounts",
+        "Public events might take up to one hour to start arriving after a rule is created"
+      ]
+    },
+    {
+      "id": "health-eventbridge-regions",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/choosing-a-region.html",
+      "title": "Creating EventBridge rules for AWS Region coverage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A rule is created in each Region whose events are wanted",
+        "In the standard partition US West (Oregon) is the backup Region of every other Region and US East (N. Virginia) is the backup of US West (Oregon); events are sent to both the primary and the backup Region",
+        "A rule in a backup Region that should not receive copies filters on detail.backupEvent",
+        "Simplified integration: one rule in US West (Oregon) receives account-specific events of all standard-partition Regions, without public events and without high availability",
+        "Global events, such as those of IAM, require a rule in US East (N. Virginia)",
+        "For a highly available setup, rules in both Regions and de-duplication by detail.communicationId"
+      ]
+    },
+    {
+      "id": "health-eventbridge-public",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/about-public-events.html",
+      "title": "Monitoring account-specific and public events for AWS Health",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A rule with \"source\": [\"aws.health\"] delivers both account-specific and public events; a wildcard such as \"aws.health*\" matches nothing",
+        "eventScopeCode is PUBLIC or ACCOUNT_SPECIFIC and can be filtered on",
+        "Public events reach the backup Region only when a valid rule exists in the impacted Region; account-specific events reach both regardless of rules",
+        "AWS recommends de-duplicating by eventARN and communicationId"
+      ]
+    },
+    {
+      "id": "health-eventbridge-pagination",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/pagnation-of-health-events.html",
+      "title": "Viewing paginated lists of AWS Health events on EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An event whose resources or affectedEntities exceed EventBridge's 256 KB limit is split into pages published as separate messages with the same eventARN",
+        "For human-readable notifications a filter on detail.page keeps only the first page",
+        "The communicationId carries the page number after a hyphen even when there is one page"
+      ]
+    },
+    {
+      "id": "health-eventbridge-schema",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/aws-health-events-eventbridge-schema.html",
+      "title": "Reference: AWS Health events Amazon EventBridge schema",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "detail-type is AWS Health Event or AWS Health Abuse Event; source is aws.health",
+        "region is the Region the notification was delivered to; the impacted Region is detail.eventRegion",
+        "The fields of detail, their required flags, and the time format 'DoW, DD MMM YYYY HH:MM:SS TZ'",
+        "eventTypeCategory is issue, accountNotification, investigation, or scheduledChange; statusCode is open, closed, or upcoming",
+        "An event ARN is not unique to an account or Region; communicationId with the account ID helps de-duplicate",
+        "For public events latestDescription holds only the latest update, not the history",
+        "page, totalPages and backupEvent are strings in the sample payloads",
+        "The five sample payloads copied into examples/44-health/fixtures/documented.json",
+        "Events that include MAINTENANCE_SCHEDULED are generally pushed about two weeks before the start time"
+      ],
+      "note": "The field table marks lastUpdatedTime as required, but two of the five samples leave it out; one sample leaves out resources. The table spells the persona OPERATIONAL while the samples and the concepts page say OPERATIONS. The samples' weekdays do not fit their dates. No sample and no field list is given for AWS Health Abuse Event."
+    },
+    {
+      "id": "health-eventbridge-rule-examples",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/creating-event-bridge-events-rule-for-aws-health.html",
+      "title": "Configuring an EventBridge rule to send notifications about events in AWS Health",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Example patterns that filter on detail.service with the codes EC2, AUTOSCALING and VPC, on eventTypeCategory, and on actionability",
+        "For security use cases AWS suggests all AWS Health Abuse events and events with the SECURITY persona"
+      ]
+    },
+    {
+      "id": "health-eventbridge-org",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/aggregating-health-events.html",
+      "title": "Aggregating AWS Health events using organizational view and delegated administrator access",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With organizational view on, the management account or a delegated administrator account receives one feed of events from all accounts of the organization on EventBridge; rules in other accounts keep working"
+      ]
+    },
+    {
+      "id": "health-org-view",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/aggregate-events.html",
+      "title": "Aggregating AWS Health events across accounts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Organizational view needs an organization with all features enabled and is turned on from the management account",
+        "AWS calls delegating the view to a member account a best practice",
+        "Organizational events are available for 90 days"
+      ]
+    },
+    {
+      "id": "health-org-enable",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/enable-organizational-view.html",
+      "title": "Enabling organizational view",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Organizational view is available in the AWS Health console for all AWS Support plans at no additional cost"
+      ]
+    },
+    {
+      "id": "health-delegated-admin",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/register-a-delegated-administrator.html",
+      "title": "Registering a delegated administrator for your organizational view",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Up to five member accounts can be registered as delegated administrators, with aws organizations register-delegated-administrator and the service principal health.amazonaws.com"
+      ]
+    },
+    {
+      "id": "health-user-notifications",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/manage-user-notifications.html",
+      "title": "Manage AWS Health notifications in AWS User Notifications",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Since December 15, 2025 AWS Health email is delivered by AWS managed notifications in AWS User Notifications, from health@aws.com, to the account contacts by default",
+        "Channels: email, chat, and push notifications to the AWS Console Mobile Application",
+        "The notifications are less detailed than the AWS Health API, the aws.health source in EventBridge, and the dashboard",
+        "Public service events are not available through AWS managed notifications"
+      ]
+    },
+    {
+      "id": "health-planned-lifecycle",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/aws-health-planned-lifecycle-events.html",
+      "title": "Planned lifecycle events for AWS Health",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Planned lifecycle events are scheduled changes with the type code AWS_{SERVICE}_PLANNED_LIFECYCLE_EVENT",
+        "The start time is the soonest date resources are affected and is to be treated as the change date; an end time is not always given",
+        "Lead time is designed to be at least 180 days for major changes and 90 days for minor ones, where possible",
+        "Affected resources are PENDING until acted on, then RESOLVED; these updates can lag by up to 72 hours",
+        "An event with unresolved resources stays open for four years after its start or end date"
+      ]
+    },
+    {
+      "id": "health-ec2-automation",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/automating-instance-actions.html",
+      "title": "Running operations on EC2 instances automatically in response to events in AWS Health",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS_EC2_PERSISTENT_INSTANCE_RETIREMENT_SCHEDULED is sent for EBS-backed instances and AWS_EC2_INSTANCE_RETIREMENT_SCHEDULED for instance store-backed ones",
+        "The EventBridge console's rule builder lists the Health service codes and event type codes to choose from"
+      ]
+    },
+    {
+      "id": "health-api-guide",
+      "url": "https://docs.aws.amazon.com/health/latest/ug/health-api.html",
+      "title": "Integrating AWS Health with other systems using the AWS Health API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS Health API needs a Business Support+, Enterprise Support, or Unified Operations plan, or one of the older Business, Enterprise On-Ramp, or Enterprise Support plans where those still apply; otherwise SubscriptionRequiredException",
+        "The API has an active endpoint in us-east-1, a passive one in us-east-2, and the global endpoint global.health.amazonaws.com"
+      ]
+    },
+    {
+      "id": "health-api-reference",
+      "url": "https://docs.aws.amazon.com/health/latest/APIReference/Welcome.html",
+      "title": "AWS Health API Reference: Welcome",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The API returns the information shown in the AWS Health Dashboard",
+        "The Event data type: service is a code such as EC2 or RDS; statusCode is open, closed, or upcoming; eventScopeCode is PUBLIC, ACCOUNT_SPECIFIC, or NONE"
+      ],
+      "note": "On 2026-10-13 this page still names the Business, Enterprise On-Ramp, and Enterprise Support plans only, while the user guide names Business Support+, Enterprise Support, and Unified Operations first. The chapter follows the user guide and says so."
+    },
+    {
+      "id": "health-public-feed",
+      "url": "https://health.aws.amazon.com/health/status",
+      "title": "AWS Health Dashboard: Service health",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On 2026-10-13 the data behind the page listed a public event whose ARN carried the service MULTIPLE_SERVICES and the type code AWS_MULTIPLE_SERVICES_OPERATIONAL_ISSUE"
+      ],
+      "note": "Read from https://health.aws.amazon.com/public/currentevents, the JSON the page loads. That endpoint is not documented; it is used here only as an observation of one service code."
+    },
+    {
+      "id": "ec2-scheduled-events",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html",
+      "title": "Scheduled events for Amazon EC2 instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS notifies of a scheduled event in advance by email to the address associated with the account, and also sends an AWS Health event",
+        "The types of scheduled events: instance stop, instance retirement, instance reboot, system reboot, system maintenance",
+        "An instance in an Auto Scaling group is eventually replaced with no further action"
+      ]
+    },
+    {
+      "id": "ec2-instance-retirement",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-retirement.html",
+      "title": "Instance retirement",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An instance is scheduled for retirement when AWS detects irreparable failure of the underlying hardware",
+        "An EBS-backed instance is stopped and can be started again, which moves it to new hardware; an instance store-backed instance is terminated",
+        "The primary contact and the operations contact of the account receive the email"
+      ]
+    },
+    {
+      "id": "lambda-runtime-deprecation-notices",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html",
+      "title": "Lambda runtimes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "At least 180 days before a runtime is deprecated, Lambda sends email to the primary account contact and shows a notification in the Health Dashboard for accounts with functions on that runtime in $LATEST",
+        "Deprecation notifications are not available for functions that use container images"
+      ]
+    },
+    {
+      "id": "user-notifications-what-is",
+      "url": "https://docs.aws.amazon.com/notifications/latest/userguide/what-is-service.html",
+      "title": "What is AWS User Notifications?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS managed notifications are generated by default by services such as AWS Health; user-configured notifications are built on EventBridge rules the user specifies",
+        "Channels: the Console Notifications Center, email, Amazon Q Developer in chat applications, and AWS Console Mobile App push notifications"
+      ]
+    },
+    {
+      "id": "user-notifications-faq",
+      "url": "https://aws.amazon.com/notifications/faqs/",
+      "title": "AWS User Notifications FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWS User Notifications is offered free of charge"]
+    },
+    {
+      "id": "support-plans",
+      "url": "https://aws.amazon.com/premiumsupport/plans/",
+      "title": "Compare AWS Support Plans",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The plans listed are Basic Support, Business Support+, Enterprise Support, and Unified Operations; Basic Support is included for all AWS customers",
+        "The comparison lists the AWS Health API under health monitoring"
+      ],
+      "note": "The page was read as text; which plan columns carry the check mark for the AWS Health API could not be read from it. The rule in the chapter comes from the AWS Health user guide."
+    },
+    {
+      "id": "support-pricing",
+      "url": "https://aws.amazon.com/premiumsupport/pricing/",
+      "title": "AWS Support Plan Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Business Support+: the greater of USD 29 a month per account or 9% of monthly AWS charges up to USD 10K, with lower percentages above",
+        "Enterprise Support starts at USD 5,000 a month and Unified Operations at USD 50,000 a month"
+      ]
+    },
+    {
+      "id": "health-eventbridge-pricing",
+      "url": "https://aws.amazon.com/eventbridge/pricing/",
+      "title": "Amazon EventBridge Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS management events are ingested by the event bus for free",
+        "The page lists no charge for rules"
+      ]
+    },
+    {
+      "id": "health-price-list-sns",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon SNS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Email and Email-JSON notifications: the first 1,000 a month are free, then USD 2.00 per 100,000 (SKU U7N84S2RCJJJKURJ, publication date 2026-09-15)"
+      ]
+    },
+    {
+      "id": "health-sns-publish",
+      "url": "https://docs.aws.amazon.com/sns/latest/api/API_Publish.html",
+      "title": "Amazon SNS API Reference: Publish",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A subject must be UTF-8 text with no line breaks or control characters, and less than 100 characters long"
+      ]
+    },
+    {
+      "id": "health-lambda-async-errors",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-error-handling.html",
+      "title": "How Lambda handles errors and retries with asynchronous invocation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A function error is retried twice by default, one minute after the first attempt and two minutes after the second",
+        "A function can receive the same event more than once even without an error",
+        "A dead-letter queue captures discarded events"
+      ]
+    },
+    {
+      "id": "health-eventbridge-bus-to-bus",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-bus-to-bus.html",
+      "title": "Sending events between event buses in the same account and Region",
+      "checkedAt": "2026-10-13",
+      "supports": ["Events sent from one event bus to another are charged as custom events"],
+      "note": "Read while deciding against forwarding us-east-1's events to Tokyo's bus. The chapter does not build that."
+    },
+    {
+      "id": "health-cdkd-register-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd 0.296.28 registers its own providers for AWS::Events::Rule, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::DynamoDB::Table, AWS::SNS::Topic, AWS::SNS::TopicPolicy, AWS::SNS::Subscription, AWS::SQS::Queue, AWS::SQS::QueuePolicy, AWS::Logs::LogGroup, AWS::IAM::Role and AWS::IAM::Policy"
+      ]
+    },
+    {
+      "id": "cloudflare-notifications",
+      "url": "https://developers.cloudflare.com/notifications/",
+      "title": "Cloudflare Notifications",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Notifications are delivered by email and webhooks on all plans, and by PagerDuty on Business plans and higher"
+      ]
+    },
+    {
+      "id": "cloudflare-available-notifications",
+      "url": "https://developers.cloudflare.com/notifications/notification-available/",
+      "title": "Cloudflare: Available Notifications",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Incident Alerts tell an account when Cloudflare incidents are created, updated, and resolved, on all plans, and can be filtered by impact level and by affected component",
+        "Maintenance Notification tells when maintenance of a point of presence is scheduled, changed, or canceled, on all plans, and can be filtered by point of presence"
+      ]
+    },
+    {
+      "id": "vercel-status",
+      "url": "https://www.vercel-status.com/",
+      "title": "Vercel Status",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The status page offers subscriptions by email, SMS, Slack, webhook, and an Atom or RSS feed to incidents Vercel creates, updates, or resolves",
+        "The subscription forms offer no choice of component or region"
+      ]
+    },
+    {
+      "id": "vercel-alerts",
+      "url": "https://vercel.com/docs/alerts",
+      "title": "Vercel Alerts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Alerts report usage and error anomalies of the account's own projects by email, Slack, or webhook, on Enterprise plans and on Pro plans with Observability Plus",
+        "The page does not mention incidents of the Vercel platform"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "health-event",
+      "ja": "Health イベント",
+      "en": "Health event",
+      "firstUse": "44",
+      "definition": {
+        "ja": "AWS Health が、ほかの AWS サービスに代わって送る知らせ。サービスの障害、予定された変更、アカウントへの通知がある。",
+        "en": "A notification that AWS Health sends on behalf of other AWS services: a service issue, a scheduled change, or a notice to the account."
+      }
+    },
+    {
+      "id": "public-event",
+      "ja": "public イベント",
+      "en": "public event",
+      "firstUse": "44",
+      "definition": {
+        "ja": "アカウントに関係なく公開される Health イベント。そのサービスやリージョンを使っていなくても届く。",
+        "en": "A Health event that is not specific to an account. It is reported whether or not the account uses that service or Region."
+      }
+    },
+    {
+      "id": "account-specific-event",
+      "ja": "アカウント固有のイベント",
+      "en": "account-specific event",
+      "firstUse": "44",
+      "definition": {
+        "ja": "自分のアカウントのリソースに関わる Health イベント。影響を受けるリソースの ID が付く。",
+        "en": "A Health event about resources in your own account. It names the affected resources."
+      }
+    },
+    {
+      "id": "planned-lifecycle-event",
+      "ja": "planned lifecycle event",
+      "en": "planned lifecycle event",
+      "firstUse": "44",
+      "definition": {
+        "ja": "ランタイムやバージョンのサポート終了のように、利用者の対応が要る変更を前もって知らせる Health イベント。開始時刻が変更の日付になる。",
+        "en": "A Health event that announces, ahead of time, a change that needs the customer to act, such as the end of support of a runtime or version. Its start time is the date of the change."
+      }
+    },
+    {
+      "id": "organizational-view",
+      "ja": "organizational view",
+      "en": "organizational view",
+      "firstUse": "44",
+      "definition": {
+        "ja": "AWS Organizations の全アカウントの Health イベントを、管理アカウントか委任した管理者アカウントでまとめて見る機能。",
+        "en": "A feature that gathers the Health events of every account in an AWS Organizations organization into the management account or a delegated administrator account."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "44.overview",
+      "sources": ["examples/44-health"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "44.pieces",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "44.silence",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "44.responses",
+      "sources": ["examples/44-health/src/classify.ts", "examples/44-health/src/message.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "44.regions",
+      "sources": [
+        "examples/44-health/src/watch.ts",
+        "examples/44-health/src/pattern.ts",
+        "examples/44-health/test/pattern.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "44.event-shape",
+      "sources": [
+        "examples/44-health/src/event.ts",
+        "examples/44-health/fixtures",
+        "examples/44-health/test/event.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "44.classify",
+      "sources": ["examples/44-health/src/classify.ts", "examples/44-health/test/classify.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "44.dedup",
+      "sources": [
+        "examples/44-health/src/ledger.ts",
+        "examples/44-health/src/notify.ts",
+        "examples/44-health/src/dynamodb-ledger.ts",
+        "examples/44-health/test/ledger.test.ts",
+        "examples/44-health/test/notify.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "44.stack",
+      "sources": [
+        "examples/44-health/infra/lib/health-stack.ts",
+        "examples/44-health/infra/bin/app.ts",
+        "examples/44-health/infra/test/health-stack.test.ts",
+        "examples/44-health/src/lambda.ts"
+      ],
+      "tasks": ["test:unit", "health:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "44.local",
+      "sources": ["examples/44-health/scripts/replay.ts", "examples/44-health/fixtures"],
+      "tasks": ["health:replay", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "44.deploy",
+      "sources": ["examples/44-health/infra/bin/app.ts"],
+      "tasks": [
+        "health:infra:synth",
+        "health:infra:diff",
+        "health:infra:deploy",
+        "health:global:infra:deploy",
+        "health:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "44.cost",
+      "sources": ["examples/44-health/infra/lib/health-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "44.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "44.cleanup",
+      "sources": ["examples/44-health/infra/lib/health-stack.ts"],
+      "tasks": ["health:infra:destroy", "health:global:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "sns.delivery.email",
+      "offerCode": "AmazonSNS",
+      "region": "ap-northeast-1",
+      "sku": "U7N84S2RCJJJKURJ",
+      "usageType": "APN1-DeliveryAttempts-SMTP",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Notifications",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 1000,
+          "usd": "0.0000000000",
+          "description": "First 1,000 Amazon SNS Email/Email-JSON Notifications per month are free"
+        },
+        {
+          "from": 1000,
+          "to": null,
+          "usd": "0.0000200000",
+          "description": "$2.00 per 100,000 Amazon SNS Email/Email-JSON Notifications thereafter"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-15T15:19:44Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "health-idle",
+      "chapter": "44",
+      "title": {
+        "ja": "Health の通知: デプロイ済みで、イベントが 1 件も届かない月",
+        "en": "Health notices: deployed, and no event arrives for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "AihHealth（東京）と AihHealthGlobal（バージニア北部）の両方をデプロイ済み",
+          "Health イベントが 1 件も届かない。関数は呼ばれず、テーブルは空で、ログも書かれない",
+          "ルール、空のキュー、空のテーブル、購読者のいるトピックには、置いてあるだけでかかる料金が無い"
+        ],
+        "en": [
+          "Both AihHealth (Tokyo) and AihHealthGlobal (N. Virginia) are deployed",
+          "No Health event arrives: the function is not invoked, the table is empty, and nothing is logged",
+          "Rules, an empty queue, an empty table, and a topic with a subscriber carry no charge for merely existing"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 0,
+          "basis": "no invocations"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 0,
+          "basis": "no writes"
+        },
+        {
+          "priceId": "sns.delivery.email",
+          "quantity": 0,
+          "basis": "no notices"
+        }
+      ]
+    },
+    {
+      "id": "health-month",
+      "chapter": "44",
+      "title": {
+        "ja": "Health の通知: イベントが 40 回届く月",
+        "en": "Health notices: a month in which events arrive 40 times"
+      },
+      "assumptions": {
+        "ja": [
+          "両方のスタックを合わせて、関数が 40 回呼ばれる。数時間続く障害が 1 件（30 分ごとの更新）と、予定された変更や通知が数件、という想定で、実測ではない",
+          "40 回のうち 30 回が通知になり、10 回は重複か古い更新として捨てられる",
+          "関数は 256 MB で、1 回あたり 1 秒と仮定（未計測）",
+          "台帳は 1 回につき強い整合性の読み取り 1 回（1 RRU）、通知 1 件につき書き込み 2 回（2 WRU）。アイテムは 1 KB 未満",
+          "ログは 1 回の呼び出しあたり 2 KB と仮定（Lambda が書く行を含む。未計測）",
+          "us-east-1 のスタックのぶんも、東京の単価で数えている。us-east-1 の単価は調べていない",
+          "通知のメール 30 通。SQS のデッドレターキューには何も入らない"
+        ],
+        "en": [
+          "The function is invoked 40 times across both stacks: one issue lasting a few hours with an update every 30 minutes, and a few scheduled changes and notices. An assumption, not a measurement",
+          "30 of the 40 become a notice; 10 are dropped as duplicates or stale updates",
+          "The function has 256 MB and is assumed to run for 1 second each time (not measured)",
+          "The ledger takes one strongly consistent read per invocation (1 RRU) and two writes per notice (2 WRU); items are under 1 KB",
+          "2 KB of logs per invocation is assumed, including the lines Lambda writes (not measured)",
+          "The us-east-1 stack's share is counted at Tokyo prices; us-east-1 prices were not looked up",
+          "30 notices by email. Nothing reaches the SQS dead-letter queue"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 40,
+          "basis": "40 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 10,
+          "basis": "40 x 1 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 40,
+          "basis": "40 strongly consistent reads of an item under 4 KB"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 60,
+          "basis": "30 notices x 2 writes of an item under 1 KB"
+        },
+        {
+          "priceId": "sns.request",
+          "quantity": 30,
+          "basis": "30 Publish requests"
+        },
+        {
+          "priceId": "sns.delivery.email",
+          "quantity": 30,
+          "basis": "30 email notifications to one address"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0000763,
+          "basis": "40 x 2 KB, in GB"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "44",
+        "command": "vp test run examples/44-health",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "89 件。ドキュメントのサンプル 5 件の読み取り、時刻の解釈、ルールのパターンと fixture の照合、分類、台帳の判定、重複・順序の入れ替わり・終了・publish の失敗・途中での中断・同時実行の再現、通知の文面、スタックの assertion（パターンがテストと同じであること、最小権限、トピックが公開されていないこと、使うリソースの種類）",
+          "en": "89 tests: reading the five documented samples, time parsing, the rule patterns against the fixtures, classification, the ledger's decisions, a duplicate, an out-of-order update, a closure, a failed publish, a crash in the middle and a concurrent copy reproduced, the text of a notice, and stack assertions (the deployed patterns are the tested ones, least privilege, the topic is not public, the resource types in use)"
+        }
+      },
+      {
+        "scope": "44",
+        "command": "tsc --noEmit -p examples/44-health",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "44",
+        "command": "vp run health:replay",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "fixture 12 件を届いた順に流し、8 通の文面が出ること、重複と古い更新が捨てられること、2 ページ目と us-west-2 に届いた写しでは関数が呼ばれないことを確認",
+          "en": "Replayed 12 arrivals from the fixtures: 8 notices are printed, the duplicate and the stale update are dropped, and the second page and the copy delivered to us-west-2 never reach the function"
+        }
+      },
+      {
+        "scope": "44",
+        "command": "vp run health:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AihHealth と AihHealthGlobal の 2 つのテンプレートが、AWS に問い合わせずに生成されること（esbuild のバンドル込み）",
+          "en": "Both templates, AihHealth and AihHealthGlobal, are synthesized without asking AWS anything, including the esbuild bundle"
+        }
+      },
+      {
+        "scope": "44",
+        "command": "vp run health:infra:deploy / health:global:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない。ルールが実際の Health イベントに一致すること、関数、台帳、通知のメールは AWS では確かめていない",
+          "en": "Not deployed. That the rules match real Health events, the function, the ledger, and the mail have not been checked on AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "health-no-real-event",
+        "summary": {
+          "ja": "実際の Health イベントを 1 件も受け取っていない。イベントの形はドキュメントの表とサンプルから書いた。表とサンプルが食い違う項目（lastUpdatedTime の有無、persona の綴り）、AWS Health Abuse Event の detail の形、グローバルなイベントの eventRegion の値、表に無い項目の有無は未確認。",
+          "en": "No real Health event has been received. The event shape was written from the documentation's table and samples. Unconfirmed: the fields on which table and samples disagree (whether lastUpdatedTime is present, the spelling of the persona), the detail of an AWS Health Abuse Event, the eventRegion of a global event, and any field the table does not list."
+        },
+        "resume": {
+          "ja": "vp run health:infra:deploy と vp run health:global:infra:deploy の後、イベントが届くのを待つ（障害は起こせない。予定された変更や通知は月に数件届くことがある）。届いたら関数のロググループで sent、ignored、unreadable の行を読み、UNREADABLE の通知が来た場合は本文の「What did not fit」に従って src/event.ts のスキーマを直し、届いた JSON を個人情報を除いて fixtures に足す。",
+          "en": "After vp run health:infra:deploy and vp run health:global:infra:deploy, wait for events (an outage cannot be provoked; scheduled changes and notices may arrive a few times a month). Read the sent, ignored and unreadable lines in the function's log group. If an UNREADABLE notice arrives, fix the schema in src/event.ts as its 'What did not fit' list says, and add the received JSON to the fixtures with identifying values removed."
+        }
+      },
+      {
+        "id": "health-service-codes",
+        "summary": {
+          "ja": "detail.service に入るサービスのコードの一覧は、ドキュメントに無い。確認できたのは EC2、LAMBDA、ELASTICLOADBALANCING、VPC、AUTOSCALING、RDS（文中の例）、EBS と S3（イベントタイプコードからの読み取り）、MULTIPLE_SERVICES（公開ページのデータで観測）だけ。DynamoDB、API Gateway、CloudFront、Cognito、SQS、SNS などのコードは未確認で、SERVICES に入れていない。",
+          "en": "The documentation has no list of the service codes that appear in detail.service. Confirmed: EC2, LAMBDA, ELASTICLOADBALANCING, VPC, AUTOSCALING and RDS (examples in the text), EBS and S3 (read off event type codes), and MULTIPLE_SERVICES (observed in the public page's data). The codes for DynamoDB, API Gateway, CloudFront, Cognito, SQS, SNS and others are unconfirmed and are not in SERVICES."
+        },
+        "resume": {
+          "ja": "EventBridge のコンソールでルールを作る画面を開き、Service name に Health、Specific service(s) を選ぶと、コードの一覧が出る（ドキュメントの手順にある）。サポートプランがあれば aws health describe-event-types でも取れる。確かめたコードを src/watch.ts の SERVICES に足す。それまでは、一覧に無いサービスの public な障害は INFO として届き、件名にコードが出る。",
+          "en": "Open the rule builder in the EventBridge console and choose Health as the service name and Specific service(s): the list of codes appears (the documented procedure). With a Support plan, aws health describe-event-types returns them too. Add the confirmed codes to SERVICES in src/watch.ts. Until then a public issue of an unlisted service arrives as INFO with its code in the subject."
+        }
+      },
+      {
+        "id": "health-deploy-unverified",
+        "summary": {
+          "ja": "スタックを cdkd でデプロイしていない。us-east-1 への 2 つ目のスタックのデプロイ（bootstrap がそのリージョンに要るかどうかを含む）、ルールから関数への権限、関数の実行、TTL、デッドレターキュー、SNS の件名と本文がメールでどう見えるかは未確認。-c alarmTopicArn で 19章のトピックを渡したとき、関数のロールの許可だけで publish できるか（19章のトピックポリシーは CloudWatch だけを許可している）も確かめていない。",
+          "en": "The stacks have not been deployed with cdkd. Unverified: deploying the second stack to us-east-1 (including whether that Region needs its own bootstrap), the rules' permission to invoke the function, a real invocation, TTL, the dead-letter queue, and how the subject and body look in mail. Also unverified: that with -c alarmTopicArn pointing at chapter 19's topic the function's role alone is enough to publish (that topic's policy allows only CloudWatch)."
+        },
+        "resume": {
+          "ja": "vp run health:infra:diff、vp run health:infra:deploy -c alarmEmail=<address>、続けて vp run health:global:infra:deploy -c alarmEmail=<address> を実行し、確認メールを承認する。EventBridge のコンソールのルールの画面で「Use sample events provided」から Health のサンプルを選び、パターンに一致するかを見る（イベントは送られない）。関数のテスト実行に fixtures/documented.json の event を渡すと、台帳と SNS まで通して確かめられる。終わったら destroy する。",
+          "en": "Run vp run health:infra:diff, vp run health:infra:deploy -c alarmEmail=<address>, then vp run health:global:infra:deploy -c alarmEmail=<address>, and confirm the subscription mail. In the rule's page of the EventBridge console choose a Health sample under 'Use sample events provided' and see whether the pattern matches (no event is sent). Invoking the function with an event from fixtures/documented.json as the test payload exercises the ledger and SNS end to end. Destroy afterwards."
+        }
+      },
+      {
+        "id": "health-support-plan-pages-disagree",
+        "summary": {
+          "ja": "Health API に要るサポートプランの名前が、ユーザーガイド（Business Support+、Enterprise Support、Unified Operations。移行前や提供の無いリージョンでは Business、Enterprise On-Ramp、Enterprise）と、API リファレンスの Welcome（Business、Enterprise On-Ramp、Enterprise のみ）で食い違っている。古いプランがいつまで有効かは、読んだページからは分からなかった。",
+          "en": "The Support plans named as required for the AWS Health API differ between the user guide (Business Support+, Enterprise Support, Unified Operations; Business, Enterprise On-Ramp, or Enterprise where those plans are not offered or the account has not transitioned) and the API reference's Welcome page (Business, Enterprise On-Ramp, Enterprise only). Until when the older plans remain valid could not be read from the pages opened."
+        },
+        "resume": {
+          "ja": "https://aws.amazon.com/premiumsupport/plans/ と AWS Health のユーザーガイドの冒頭を読み直す。自分のアカウントのプランは Support Center で確かめる。",
+          "en": "Re-read https://aws.amazon.com/premiumsupport/plans/ and the opening of the AWS Health user guide. Check your own account's plan in the Support Center."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 44: AWS Health ------------------------------------------\n      // Sends the fixtures through the function's own code and prints what it would publish. No AWS.\n      \"health:replay\": fresh(\"node scripts/replay.ts\", { cwd: \"examples/44-health\" }),\n      // The Region the book's stacks run in.\n      ...infra(\"health\", \"examples/44-health\", \"AihHealth\"),\n      // us-east-1: global events arrive only there.\n      ...infra(\"health:global\", \"examples/44-health\", \"AihHealthGlobal\"),",
+    "synth": ["health:infra:synth"],
+    "checkAll": ["health:replay"],
+    "typecheck": ["examples/44-health"]
+  }
+}

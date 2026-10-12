@@ -45,8 +45,11 @@ const chapterItems = (from: number, to: number): SidebarItem[] =>
           }),
     }));
 
+/** Chapters by number, in the order given. One that is not written yet is simply absent. */
+const pick = (...ids: number[]): SidebarItem[] => ids.flatMap((id) => chapterItems(id, id));
+
 // Links are ja source paths. Ox Content rewrites each to the locale being rendered.
-export const sidebar: SidebarItem[] = [
+const groups: SidebarItem[] = [
   {
     text: { ja: "はじめに", en: "Start Here" },
     items: [
@@ -57,14 +60,30 @@ export const sidebar: SidebarItem[] = [
       },
     ],
   },
-  // Grouped by what the reader is doing, in the order the book does it.
+  // Grouped by what the reader is doing. 00 to 24 are in the order the book does it; from 25 on,
+  // chapters stand on their own and are grouped by subject, whatever their number.
   { text: { ja: "準備する", en: "Get Ready" }, items: chapterItems(0, 2) },
   { text: { ja: "アプリを作る", en: "Build the App" }, items: chapterItems(3, 8) },
   { text: { ja: "動かす場所を選ぶ", en: "Choose Where It Runs" }, items: chapterItems(9, 12) },
   { text: { ja: "データを置く", en: "Store Data" }, items: chapterItems(13, 14) },
-  { text: { ja: "機能を足す", en: "Add Features" }, items: chapterItems(15, 18) },
+  { text: { ja: "機能を足す", en: "Add Features" }, items: [...chapterItems(15, 18), ...pick(51)] },
   { text: { ja: "運用する", en: "Operate It" }, items: chapterItems(19, 22) },
-  { text: { ja: "サーバーを持つ", en: "Run Your Own Servers" }, items: chapterItems(23, 24) },
+  { text: { ja: "サーバーを持つ", en: "Run Your Own Servers" }, items: pick(23, 24, 64, 66) },
+  { text: { ja: "つなぐ", en: "Connect Services" }, items: pick(25, 61, 54, 47) },
+  {
+    text: { ja: "データを深める", en: "Deeper into Data" },
+    items: pick(30, 59, 60, 39, 58, 53, 38),
+  },
+  { text: { ja: "分析する", en: "Analyze" }, items: pick(26, 49, 43, 27) },
+  { text: { ja: "AI を深める", en: "Deeper into AI" }, items: pick(36, 56, 50, 57) },
+  {
+    text: { ja: "動かす場所を深める", en: "Deeper into Compute" },
+    items: pick(29, 35, 41, 52, 34),
+  },
+  { text: { ja: "守る、備える", en: "Protect and Prepare" }, items: pick(42, 46, 44, 28, 40) },
+  { text: { ja: "磨く", en: "Tune It" }, items: pick(31, 32, 55) },
+  { text: { ja: "開発の道具", en: "Developer Tools" }, items: pick(48, 37, 45, 62, 63) },
+  { text: { ja: "本番に出す", en: "Go to Production" }, items: pick(33) },
   {
     text: { ja: "リファレンス", en: "Reference" },
     items: [
@@ -84,3 +103,6 @@ export const sidebar: SidebarItem[] = [
     ],
   },
 ];
+
+// A group whose chapters are all still unwritten would be a heading over nothing.
+export const sidebar: SidebarItem[] = groups.filter((group) => (group.items?.length ?? 1) > 0);

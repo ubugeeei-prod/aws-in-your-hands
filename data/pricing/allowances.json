@@ -175,6 +175,38 @@
       "kind": "always-free",
       "sourceId": "kms-pricing",
       "note": "Calculated across all Regions. Requests on asymmetric keys and GenerateDataKeyPair are excluded."
+    },
+    {
+      "priceId": "glue.catalog.storage",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-glue",
+      "note": "Objects. From the Global-Catalog-Storage USD 0 tier (0 to 1,000,000)."
+    },
+    {
+      "priceId": "glue.catalog.request",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-glue",
+      "note": "Requests. From the Global-Catalog-Request USD 0 tier (0 to 1,000,000)."
+    },
+    {
+      "priceId": "sqs.request.fifo",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sqs61-pricing-page",
+      "note": "The same 1 million requests a month that sqs.request.standard lists: the pricing page gives one allowance for standard and FIFO queues together (Price List: Global-Requests, queue type Any). A scenario with both kinds of request must not count it twice."
+    },
+    {
+      "priceId": "codebuild.arm1.small.minute",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cir-cb-pricing",
+      "note": "100 build minutes a month, shared between general1.small and arm1.small. The pricing page says it does not expire after 12 months."
     }
   ],
   "unknown": [
@@ -329,6 +361,474 @@
     {
       "priceId": "config.item.continuous",
       "reason": "No free allowance for configuration items was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "events.custom-event",
+      "reason": "No always-free allowance for custom events was found on the EventBridge pricing page (read 2026-10-13)."
+    },
+    {
+      "priceId": "events.pipe-request",
+      "reason": "No always-free allowance for Pipes requests was found on the EventBridge pricing page (read 2026-10-13)."
+    },
+    {
+      "priceId": "events.archive.processing",
+      "reason": "No always-free allowance for archive processing was found on the EventBridge pricing page (read 2026-10-13)."
+    },
+    {
+      "priceId": "events.archive.storage",
+      "reason": "No always-free allowance for archive storage was found on the EventBridge pricing page (read 2026-10-13)."
+    },
+    {
+      "priceId": "s3vectors.storage",
+      "reason": "The S3 pricing page names no monthly free allowance for S3 Vectors storage; none is applied."
+    },
+    {
+      "priceId": "s3vectors.put",
+      "reason": "The S3 pricing page names no monthly free allowance for S3 Vectors PUT bytes; none is applied."
+    },
+    {
+      "priceId": "s3vectors.query.request",
+      "reason": "The S3 pricing page names no monthly free allowance for S3 Vectors query requests; none is applied."
+    },
+    {
+      "priceId": "s3vectors.query.processed.tier1",
+      "reason": "The S3 pricing page names no monthly free allowance for data processed by S3 Vectors queries; none is applied."
+    },
+    {
+      "priceId": "s3vectors.request.other",
+      "reason": "The S3 pricing page names no monthly free allowance for other S3 Vectors requests; none is applied."
+    },
+    {
+      "priceId": "opensearch.serverless.ocu.indexing",
+      "reason": "No always-free allowance for OpenSearch Serverless OCUs was confirmed; none is applied."
+    },
+    {
+      "priceId": "opensearch.serverless.ocu.search",
+      "reason": "No always-free allowance for OpenSearch Serverless OCUs was confirmed; none is applied."
+    },
+    {
+      "priceId": "bedrock.titan-embed-text-v2.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "dynamodb.replicated-write.osaka",
+      "reason": "No free allowance for replicated write request units was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "datatransfer.tokyo-osaka",
+      "reason": "No free allowance for inter-Region data transfer was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "s3.rtc.tokyo-osaka",
+      "reason": "No free allowance for Replication Time Control was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "cloudwatch.contributor-insights.dynamodb.rule",
+      "reason": "The price list has a global USD 0 tier for one Contributor Insights rule, but it is not labelled for the DynamoDB-managed rules; none is applied."
+    },
+    {
+      "priceId": "cloudwatch.contributor-insights.dynamodb.event",
+      "reason": "The price list has a global USD 0 tier for one million Contributor Insights events, but it is not labelled for the DynamoDB-managed events; none is applied."
+    },
+    {
+      "priceId": "appconfig.request",
+      "reason": "The bulk price list has no USD 0 tier for AppConfig, and no free allowance was confirmed elsewhere; none is applied."
+    },
+    {
+      "priceId": "appconfig.received",
+      "reason": "The bulk price list has no USD 0 tier for AppConfig, and no free allowance was confirmed elsewhere; none is applied."
+    },
+    {
+      "priceId": "costexplorer.api.request",
+      "reason": "No free allowance for Cost Explorer API requests was found on the pricing page or in the Price List. None is applied."
+    },
+    {
+      "priceId": "eks.cluster.hour",
+      "reason": "The EKS pricing page lists no free allowance for the cluster hour; none is applied."
+    },
+    {
+      "priceId": "eks.cluster.extended-support.hour",
+      "reason": "The EKS pricing page lists no free allowance; none is applied."
+    },
+    {
+      "priceId": "eks.auto.t4g-medium.hour",
+      "reason": "The EKS pricing page lists no free allowance for Auto Mode; none is applied."
+    },
+    {
+      "priceId": "ec2.t4g-medium.linux.hour",
+      "reason": "Free tier offers for EC2 depend on when the account was created and on the instance type; none is applied."
+    },
+    {
+      "priceId": "lambda.managed-instances.request.arm",
+      "reason": "The Lambda pricing page does not say whether the monthly free tier of one million requests covers requests to functions on Managed Instances. Nothing is deducted."
+    },
+    {
+      "priceId": "ec2.m6g-large.linux.hour",
+      "reason": "No free tier statement for m6g.large was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "ec2.m7g-large.linux.hour",
+      "reason": "No free tier statement for m7g.large was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.cache-read",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.cache-write",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.input.batch",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.output.batch",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.input.flex",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.output.flex",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.cache-read",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.cache-write",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.cache-write-1h",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.input.batch",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.output.batch",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.guardrail.sensitive-information",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.guardrail.content",
+      "reason": "No always-free allowance for Amazon Bedrock inference or Guardrails was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "datasync.basic.gb.osaka",
+      "reason": "No free allowance for DataSync was found on its pricing page; none is applied."
+    },
+    {
+      "priceId": "datasync.enhanced.gb.osaka",
+      "reason": "No free allowance for DataSync was found on its pricing page; none is applied."
+    },
+    {
+      "priceId": "datasync.enhanced.execution.osaka",
+      "reason": "No free allowance for DataSync was found on its pricing page; none is applied."
+    },
+    {
+      "priceId": "dms.serverless.dcu1.hour",
+      "reason": "No free allowance for AWS DMS Serverless capacity was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "dms.instance.t3.micro.hour",
+      "reason": "The pricing page ties free dms.t3.micro hours to accounts that joined the Free Tier before July 15, 2025, and gives later accounts credits instead. Which applies to the reader's account was not determined, so none is applied."
+    },
+    {
+      "priceId": "dms.instance.t3.medium.hour",
+      "reason": "No free allowance for this instance class was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "drs.source-server.hour",
+      "reason": "Neither the pricing page nor the Price List mentions a free allowance for Elastic Disaster Recovery. Whether Free Tier credits apply to an account was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "ec2.t3-small.linux.hour",
+      "reason": "Free Tier eligibility of the replication server was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "ebs.magnetic.storage",
+      "reason": "Free Tier eligibility of staging disks was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "fms.policy.global.wafv2",
+      "reason": "No free allowance for Firewall Manager policies was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "fms.policy.apne1.sg-content-audit",
+      "reason": "No free allowance for Firewall Manager policies was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "config.use1.item.continuous",
+      "reason": "No free allowance for AWS Config was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "config.use1.rule.evaluation",
+      "reason": "No free allowance for AWS Config was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "config.rule.evaluation",
+      "reason": "No free allowance for AWS Config was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "networkfirewall.endpoint.hour",
+      "reason": "No free allowance for AWS Network Firewall was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "glue.etl.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    },
+    {
+      "priceId": "glue.etl.flex.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    },
+    {
+      "priceId": "glue.etl.gen2.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    },
+    {
+      "priceId": "glue.crawler.dpu-hour",
+      "reason": "No always-free allowance for these DPU-hours appears in the Price List or on the AWS Glue pricing page (read 2026-10-13). None is applied."
+    },
+    {
+      "priceId": "shield.advanced.subscription",
+      "reason": "No free allowance or trial for the Shield Advanced subscription was found on the pricing page or in the Price List. None is applied."
+    },
+    {
+      "priceId": "shield.advanced.transfer.cloudfront",
+      "reason": "No free allowance for Shield Advanced data transfer out was found. None is applied."
+    },
+    {
+      "priceId": "waf.global.amr.antiddos",
+      "reason": "No free allowance for the Anti-DDoS managed rule group was found for the pay-as-you-go model. None is applied."
+    },
+    {
+      "priceId": "waf.global.amr.antiddos.request",
+      "reason": "No free allowance for requests processed by the Anti-DDoS managed rule group was found. None is applied."
+    },
+    {
+      "priceId": "cloudwatch.alarm.standard.use1",
+      "reason": "The Price List has a global USD 0 tier for the first 10 alarm metrics. Whether an alarm in us-east-1 shares it with alarms in ap-northeast-1 was not confirmed, so nothing is deducted here."
+    },
+    {
+      "priceId": "sfn.express.request",
+      "reason": "The pricing page names a free tier for state transitions only. No free allowance for Express requests was found on it (read 2026-10-13)."
+    },
+    {
+      "priceId": "sfn.express.duration",
+      "reason": "The pricing page names a free tier for state transitions only. No free allowance for Express duration was found on it (read 2026-10-13)."
+    },
+    {
+      "priceId": "athena.scanned",
+      "reason": "Neither the Price List nor the pricing page shows a monthly free allowance for Athena SQL queries; none is applied."
+    },
+    {
+      "priceId": "chime.sdk.attendee-minute",
+      "reason": "The Amazon Chime SDK pricing page names no free allowance for WebRTC media, and the Price List has no zero-priced tier. Nothing is deducted."
+    },
+    {
+      "priceId": "inspector.image.initial-scan",
+      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "inspector.image.rescan",
+      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "ecr.storage.archive",
+      "reason": "No free allowance for archive storage was found; none is applied."
+    },
+    {
+      "priceId": "ecr.archive.retrieval",
+      "reason": "No free allowance for archive retrieval was found; none is applied."
+    },
+    {
+      "priceId": "ecr.signing",
+      "reason": "No free allowance for managed signing was found; none is applied."
+    },
+    {
+      "priceId": "efs.standard.storage",
+      "reason": "The EFS pricing page gives new customers 5 GB of Standard storage on a Regional file system for 12 months, and accounts created from July 15, 2025 Free Tier credits instead. Neither is an always-free allowance, and which applies to a given account was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.shard-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.put-payload-unit",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.extended-retention.shard-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.efo.consumer-shard-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.efo.retrieval",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.on-demand.stream-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.on-demand.ingest",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.advantage.ingest",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.advantage.retrieval",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.on-demand.retrieval",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "grafana.user.editor",
+      "reason": "The pricing page describes a 90-day free trial with up to five free users per account, not a monthly allowance. None is applied."
+    },
+    {
+      "priceId": "grafana.user.viewer",
+      "reason": "The pricing page describes a 90-day free trial with up to five free users per account, not a monthly allowance. None is applied."
+    },
+    {
+      "priceId": "cloudwatch.api.getmetricdata",
+      "reason": "Whether any monthly free allowance covers metrics requested through GetMetricData was not confirmed. None is applied."
+    },
+    {
+      "priceId": "bedrock.nova-lite.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-lite.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-micro.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-micro.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-pro.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-pro.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-2-sonic.speech.input",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "bedrock.nova-2-sonic.speech.output",
+      "reason": "No free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source."
+    },
+    {
+      "priceId": "polly.neural.characters",
+      "reason": "The pricing page gives 1 million characters a month for the first 12 months only, and says accounts created since 2025-07-15 receive credits instead. Not an always-free allowance; none is applied."
+    },
+    {
+      "priceId": "polly.standard.characters",
+      "reason": "The pricing page gives 5 million characters a month without a time limit, while the FAQ speaks of the first 12 months, and accounts created since 2025-07-15 receive credits instead. Not confirmed as always-free; none is applied."
+    },
+    {
+      "priceId": "rds.postgres.t4g-micro.multi-az",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.gp3.storage.multi-az",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.c6gd-medium.multi-az-cluster",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.proxy.postgres.vcpu-hour",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.backup.charged",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.extended-support.yr1-yr2",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.extended-support.yr3",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "aurora.postgres.serverless-v2.acu.io-optimized",
+      "reason": "Whether any free tier or credit applies to Aurora was not checked while writing chapter 60."
+    },
+    {
+      "priceId": "aurora.postgres.storage.io-optimized",
+      "reason": "Whether any free tier or credit applies to Aurora was not checked while writing chapter 60."
+    },
+    {
+      "priceId": "aurora.postgres.io",
+      "reason": "Whether any free tier or credit applies to Aurora was not checked while writing chapter 60."
+    },
+    {
+      "priceId": "aurora.postgres.data-api",
+      "reason": "Whether any free tier or credit applies to the Data API was not checked while writing chapter 60."
+    },
+    {
+      "priceId": "codebuild.general1.small.minute",
+      "reason": "The 100 free build minutes are shared with arm1.small and are applied there; nothing is deducted here."
+    },
+    {
+      "priceId": "datatransfer.regional",
+      "reason": "The price list has a separate Global-DataTransfer-Regional-Bytes line at $0 \"under the monthly global free tier\" for the first GB. Whether and how it applies to a given account was not determined, so none is applied."
+    },
+    {
+      "priceId": "ec2.c7i-large.linux.hour",
+      "reason": "No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "ec2.c8i-large.linux.hour",
+      "reason": "No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "ec2.c5-metal.linux.hour",
+      "reason": "No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "ec2.t3-micro.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6g-large.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6i-large.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6i-xlarge.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
     }
   ]
 }

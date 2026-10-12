@@ -1,0 +1,4 @@
+# The build context is this directory. Only the two files the bundle task writes go to the daemon.
+*
+!dist/entry.mjs
+!dist/settings.json

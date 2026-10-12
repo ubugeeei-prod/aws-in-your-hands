@@ -1,0 +1,788 @@
+{
+  "chapterId": "48",
+  "manifest": {
+    "id": "48",
+    "slug": "sdk",
+    "title": {
+      "ja": "SDK: AWS SDK for JavaScript v3 を端から端まで",
+      "en": "SDK: The AWS SDK for JavaScript v3, End to End"
+    },
+    "prerequisites": ["01", "04", "05", "07"],
+    "services": ["AWS SDK for JavaScript v3", "DynamoDB", "S3", "IAM"],
+    "samplePath": "examples/48-sdk",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "sdk48-retry-behavior",
+      "sdk48-smithy-core",
+      "sdk48-aws-sdk-core",
+      "sdk48-client-dynamodb",
+      "sdk48-node-http-handler",
+      "sdk48-credential-provider-node",
+      "sdk48-credentials-node",
+      "sdk48-login-credentials",
+      "sdk48-lambda-envvars",
+      "sdk48-lambda-credentials",
+      "sdk48-keepalive",
+      "sdk48-maxsockets",
+      "sdk48-readme",
+      "sdk48-clients-doc",
+      "sdk48-error-handling",
+      "sdk48-lib-storage",
+      "sdk48-lib-dynamodb",
+      "sdk48-presigner",
+      "sdk48-s3-presigned-url",
+      "sdk48-endpoints",
+      "sdk48-client-mock",
+      "sdk48-cloudflare-bindings"
+    ]
+  },
+  "sources": [
+    {
+      "id": "sdk48-retry-behavior",
+      "url": "https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html",
+      "title": "Retry behavior - AWS SDKs and Tools Reference Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The behaviour the page describes requires opting in with AWS_NEW_RETRIES_2026=true until it becomes the default; without it the SDK uses pre-2026 retry behaviour",
+        "Retry modes standard and adaptive; legacy is not available in JavaScript; adaptive is not recommended as a general default",
+        "AWS_RETRY_MODE / retry_mode and AWS_MAX_ATTEMPTS / max_attempts, and the precedence code, environment, shared config file, default",
+        "Under the 2026 behaviour: base delay 50 ms for transient errors and 1,000 ms for throttling, cap 20 seconds, full jitter",
+        "Under the 2026 behaviour: retry quota of 500 tokens, 14 per transient retry, 5 per throttling retry, 1 restored by a success without retry",
+        "Under the 2026 behaviour: DynamoDB and DynamoDB Streams clients default to 4 max attempts with a 25 ms transient base delay",
+        "x-amz-retry-after is a delay in milliseconds, clamped between the computed backoff and that plus 5,000 ms",
+        "The token budget is typically scoped to a single client instance"
+      ],
+      "note": "The page describes the opt-in behaviour only. The pre-2026 numbers in the chapter (100 ms, 500 ms, costs 10 and 5) are from the installed @smithy/core 3.35.2, not from this page."
+    },
+    {
+      "id": "sdk48-smithy-core",
+      "url": "https://www.npmjs.com/package/@smithy/core/v/3.35.2",
+      "title": "@smithy/core 3.35.2 (installed package source)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "submodules/retry/util-retry/retries-2026-config.js: Retry.v2026 is read once at module load from SMITHY_NEW_RETRIES_2026 === \"true\"; delay 100 or 50, throttling delay 500 or 1,000, costs 5/10 or 14/5",
+        "submodules/retry/util-retry/StandardRetryStrategy.js: capacity 500, refusal by error type, attempts, then capacity; retry-after hint clamped to computed delay + 5,000 ms",
+        "submodules/retry/service-error-classification: the throttling codes, the transient codes and statuses 500, 502, 503, 504, and that 429 or $retryable.throttling is throttling",
+        "submodules/retry/middleware-retry/retryMiddleware.js: amz-sdk-invocation-id and amz-sdk-request headers, $metadata.attempts and totalRetryDelay, a streaming payload is not retried, step finalizeRequest with priority high",
+        "submodules/client/middleware-stack/MiddlewareStack.js: the five steps and three priorities",
+        "submodules/client/smithy-client/defaults-mode.js and config/defaults-mode: defaultsMode is legacy when unset and then sets no timeout",
+        "submodules/client/util-waiter: minDelay, maxDelay, maxWaitTime, exponential backoff with jitter between polls, TimeoutError and AbortError",
+        "submodules/config: the Region is read from AWS_REGION or the profile's region; a missing Region throws 'Region is missing'",
+        "submodules/endpoints: AWS_ENDPOINT_URL_<SERVICE> and AWS_ENDPOINT_URL, and endpoint_url in the shared config file"
+      ],
+      "note": "Read from node_modules, the dist-es build. Node.js loads the dist-cjs build of the same version; the tests run against that."
+    },
+    {
+      "id": "sdk48-aws-sdk-core",
+      "url": "https://www.npmjs.com/package/@aws-sdk/core/v/3.978.2",
+      "title": "@aws-sdk/core 3.978.2 (installed package source)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "submodules/client/setFeature.js sets Retry.v2026 when AWS_NEW_RETRIES_2026 === \"true\", at module load",
+        "setCredentialFeature records the provider on the credentials' $source"
+      ]
+    },
+    {
+      "id": "sdk48-client-dynamodb",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-dynamodb/v/3.1149.0",
+      "title": "@aws-sdk/client-dynamodb 3.1149.0 (installed package source)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "runtimeConfig.js: max attempts default 4 only when Retry.v2026, retry mode from AWS_RETRY_MODE or the defaults mode, the request handler is NodeHttpHandler",
+        "DynamoDBClient.js: resolveRetryConfig with defaultBaseDelay 25 and defaultMaxAttempts 4 only when Retry.v2026; the plugins the constructor adds to the middleware stack",
+        "waiters/waitForTableExists.js: every exception is answered with RETRY; minDelay 20 and maxDelay 120 seconds by default",
+        "models/errors.js: the exception classes, their $fault, and that only ReplicatedWriteConflictException declares $retryable"
+      ]
+    },
+    {
+      "id": "sdk48-node-http-handler",
+      "url": "https://www.npmjs.com/package/@smithy/node-http-handler/v/4.12.1",
+      "title": "@smithy/node-http-handler 4.12.1 (installed package source)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "No connection, request or socket timeout unless configured",
+        "keepAlive true and maxSockets 50 on the agents it creates",
+        "A request that exceeds requestTimeout only logs a warning unless throwOnRequestTimeout is true",
+        "An aborted signal rejects with AbortError; ECONNRESET, EPIPE and ETIMEDOUT become TimeoutError"
+      ],
+      "note": "The option comments in @smithy/types 4.19.0 (http/httpHandlerInitialization.d.ts) say the same about requestTimeout and throwOnRequestTimeout."
+    },
+    {
+      "id": "sdk48-credential-provider-node",
+      "url": "https://www.npmjs.com/package/@aws-sdk/credential-provider-node/v/3.972.85",
+      "title": "@aws-sdk/credential-provider-node 3.972.85 (installed package source)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "defaultProvider tries fromEnv, fromSSO, fromIni, fromProcess, fromTokenFile, then the remote provider",
+        "fromEnv is skipped when AWS_PROFILE is set, with a warning if static keys are also in the environment",
+        "The remote provider is the container endpoint when its environment variables exist, otherwise instance metadata unless AWS_EC2_METADATA_DISABLED is set",
+        "Credentials with an expiration are refreshed when less than five minutes remain"
+      ],
+      "note": "@aws-sdk/credential-provider-ini 3.973.18 resolves a profile with login_session through @aws-sdk/credential-provider-login; the chain itself has no separate login step, unlike the table in the developer guide."
+    },
+    {
+      "id": "sdk48-credentials-node",
+      "url": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html",
+      "title": "Set credentials in Node.js - AWS SDK for JavaScript v3 Developer Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SDK provides a default credential provider chain in Node.js and stops at the first source that returns credentials",
+        "The order of the table: fromEnv, fromSSO, fromIni, fromLoginCredentials, fromProcess, fromTokenFile, fromContainerMetadata, fromInstanceMetadata",
+        "The guide recommends short-term credentials"
+      ],
+      "note": "The table lists fromLoginCredentials as its own step after fromIni. The installed provider reaches login credentials only through a profile, inside fromIni."
+    },
+    {
+      "id": "sdk48-login-credentials",
+      "url": "https://docs.aws.amazon.com/sdkref/latest/guide/feature-login-credentials.html",
+      "title": "Login credentials provider - AWS SDKs and Tools Reference Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "aws login writes login_session to the profile and caches short-term credentials under ~/.aws/login/cache",
+        "The credentials expire in 15 minutes and are refreshed by the CLI and SDKs for up to 12 hours",
+        "SDK for JavaScript 3.x supports it"
+      ]
+    },
+    {
+      "id": "sdk48-lambda-envvars",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+      "title": "Working with Lambda environment variables - AWS Lambda Developer Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN are reserved variables that Lambda sets"
+      ]
+    },
+    {
+      "id": "sdk48-lambda-credentials",
+      "url": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/loading-node-credentials-lambda.html",
+      "title": "Load credentials for a Node.js Lambda function - AWS SDK for JavaScript v3 Developer Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The execution role provides the function's credentials, so the code supplies none"
+      ]
+    },
+    {
+      "id": "sdk48-keepalive",
+      "url": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/node-reusing-connections.html",
+      "title": "Reuse connections with keep-alive in Node.js - AWS SDK for JavaScript v3 Developer Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SDK reuses TCP connections by default",
+        "keepAlive can be turned off per client through the request handler's agent"
+      ]
+    },
+    {
+      "id": "sdk48-maxsockets",
+      "url": "https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/node-configuring-maxsockets.html",
+      "title": "Configure maxSockets in Node.js - AWS SDK for JavaScript v3 Developer Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "maxSockets is 50 when neither a value nor an agent is supplied; requests beyond it are queued",
+        "The shorthand requestHandler configuration object, as of v3.521.0"
+      ]
+    },
+    {
+      "id": "sdk48-readme",
+      "url": "https://github.com/aws/aws-sdk-js-v3/blob/v3.1149.0/README.md",
+      "title": "AWS SDK for JavaScript v3 README, at tag v3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The middleware stack and what each of its five steps is for; a request change made in build applies to all retries",
+        "In Lambda, one client per service and Region, made outside the handler",
+        "Stream outputs carry transformToString and friends, which can be called once",
+        "Paginators are async generators; AbortController support and the AbortError"
+      ]
+    },
+    {
+      "id": "sdk48-clients-doc",
+      "url": "https://github.com/aws/aws-sdk-js-v3/blob/v3.1149.0/supplemental-docs/CLIENTS.md",
+      "title": "SDK Clients - aws-sdk-js-v3 supplemental docs, at tag v3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Node.js request handler uses node:http and node:https even where fetch exists",
+        "A streaming response body must be read to the end or destroyed for its socket to be released, because keepAlive defaults to true",
+        "When a retryStrategy is given, retryMode and maxAttempts are ignored",
+        "cacheMiddleware and its side effect"
+      ]
+    },
+    {
+      "id": "sdk48-error-handling",
+      "url": "https://github.com/aws/aws-sdk-js-v3/blob/v3.1149.0/supplemental-docs/ERROR_HANDLING.md",
+      "title": "Error Handling - aws-sdk-js-v3 supplemental docs, at tag v3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Non-2xx responses are thrown as errors; an unmodeled error is an instance of the service's base exception class",
+        "Errors can be told apart by name, by instanceof (the base class overrides Symbol.hasInstance), and by $metadata.httpStatusCode"
+      ]
+    },
+    {
+      "id": "sdk48-lib-storage",
+      "url": "https://github.com/aws/aws-sdk-js-v3/blob/v3.1149.0/lib/lib-storage/README.md",
+      "title": "@aws-sdk/lib-storage README, at tag v3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": ["Upload's defaults: queueSize 4, partSize 5 MB, leavePartsOnError false"],
+      "note": "The installed Upload.js agrees: MIN_PART_SIZE 5 * 1024 * 1024, MAX_PARTS 10,000, and AbortMultipartUpload on failure unless leavePartsOnError."
+    },
+    {
+      "id": "sdk48-lib-dynamodb",
+      "url": "https://github.com/aws/aws-sdk-js-v3/blob/v3.1149.0/lib/lib-dynamodb/README.md",
+      "title": "@aws-sdk/lib-dynamodb README, at tag v3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "What marshallOptions convertEmptyValues, removeUndefinedValues, convertClassInstanceToMap, allowImpreciseNumbers and unmarshallOptions wrapNumbers do",
+        "For removeUndefinedValues, an item is not itself considered a map: only its attributes are examined",
+        "NumberValue for numbers beyond Number.MAX_SAFE_INTEGER"
+      ],
+      "note": "The README does not list the defaults in one place. What the document client does with no option set is pinned by test/document.test.ts."
+    },
+    {
+      "id": "sdk48-presigner",
+      "url": "https://github.com/aws/aws-sdk-js-v3/blob/v3.1149.0/packages/s3-request-presigner/README.md",
+      "title": "@aws-sdk/s3-request-presigner README, at tag v3.1149.0",
+      "checkedAt": "2026-10-13",
+      "supports": ["getSignedUrl(client, command, { expiresIn }) and the default of 900 seconds"],
+      "note": "The installed presigner.js sets expiresIn: 900."
+    },
+    {
+      "id": "sdk48-s3-presigned-url",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html",
+      "title": "Download and upload objects with presigned URLs - Amazon S3 User Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A presigned URL made with temporary credentials expires when the credentials expire, even if a later expiration time was specified",
+        "A presigned URL expires at its configured time or when its credentials expire, whichever is first"
+      ]
+    },
+    {
+      "id": "sdk48-endpoints",
+      "url": "https://docs.aws.amazon.com/sdkref/latest/guide/feature-endpoints.html",
+      "title": "Dual-stack and FIPS endpoints - AWS SDKs and Tools Reference Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS_USE_DUALSTACK_ENDPOINT and AWS_USE_FIPS_ENDPOINT, both false by default; the request fails where no such endpoint exists"
+      ]
+    },
+    {
+      "id": "sdk48-client-mock",
+      "url": "https://registry.npmjs.org/aws-sdk-client-mock",
+      "title": "aws-sdk-client-mock on the npm registry",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The package exists and is not deprecated; latest is 4.1.0, published 2024-10-15; it depends on sinon"
+      ],
+      "note": "Not installed and not tried against the pinned SDK."
+    },
+    {
+      "id": "sdk48-cloudflare-bindings",
+      "url": "https://developers.cloudflare.com/workers/runtime-apis/bindings/",
+      "title": "Bindings (env) - Cloudflare Workers docs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A binding is a permission and an API in one; no secret key or token is added to the Worker to reach a resource on the account"
+      ],
+      "note": "The page said it was last updated on 2026-09-11."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "sdk-command",
+      "ja": "コマンド",
+      "en": "command",
+      "firstUse": "48",
+      "definition": {
+        "ja": "AWS SDK for JavaScript v3 で、1 つの API 操作とその入力を表すオブジェクト。クライアントの send に渡して実行する。",
+        "en": "In the AWS SDK for JavaScript v3, the object that stands for one API operation and its input. It runs when passed to a client's send."
+      }
+    },
+    {
+      "id": "middleware-stack",
+      "ja": "ミドルウェアスタック",
+      "en": "middleware stack",
+      "firstUse": "48",
+      "definition": {
+        "ja": "SDK のクライアントが 1 回の呼び出しで順に通す処理の並び。initialize、serialize、build、finalizeRequest、deserialize の 5 つのステップに分かれ、再試行と署名は finalizeRequest にある。",
+        "en": "The ordered functions an SDK client runs for one call, in five steps: initialize, serialize, build, finalizeRequest, deserialize. Retries and signing live in finalizeRequest."
+      }
+    },
+    {
+      "id": "credential-provider-chain",
+      "ja": "認証情報プロバイダーチェーン",
+      "en": "credential provider chain",
+      "firstUse": "48",
+      "definition": {
+        "ja": "認証情報を明示しなかったときに、SDK が決まった順に試す取得元の並び。最初に認証情報を返したところで止まる。",
+        "en": "The sources an SDK tries in a fixed order when no credentials are given in code. It stops at the first one that returns credentials."
+      }
+    },
+    {
+      "id": "paginator",
+      "ja": "ページネーター",
+      "en": "paginator",
+      "firstUse": "48",
+      "definition": {
+        "ja": "続きを指すトークンやキーを次のリクエストに渡す処理を、非同期のイテレーターとして包んだ SDK の関数。",
+        "en": "An SDK function that wraps passing the continuation token or key to the next request as an async iterator."
+      }
+    },
+    {
+      "id": "waiter",
+      "ja": "ウェイター",
+      "en": "waiter",
+      "firstUse": "48",
+      "definition": {
+        "ja": "リソースが目的の状態になるまで、間隔をあけて状態を問い合わせ続ける SDK の関数。待つ時間の上限は呼び出す側が決める。",
+        "en": "An SDK function that polls a resource's state at intervals until it reaches the wanted one. The caller sets how long it may wait."
+      }
+    },
+    {
+      "id": "marshalling",
+      "ja": "マーシャリング",
+      "en": "marshalling",
+      "firstUse": "48",
+      "definition": {
+        "ja": "JavaScript の値と、DynamoDB の型つきの属性値（S、N、M など）を相互に変換すること。lib-dynamodb のドキュメントクライアントが送受信のたびに行う。",
+        "en": "Converting between JavaScript values and DynamoDB's typed attribute values (S, N, M and so on). The document client in lib-dynamodb does it on every send and receive."
+      }
+    },
+    {
+      "id": "service-exception",
+      "ja": "サービス例外",
+      "en": "service exception",
+      "firstUse": "48",
+      "definition": {
+        "ja": "AWS のサービスが返したエラーを表す SDK のクラス。サービスごとの基底クラスを継承し、$fault、$metadata、name を持つ。",
+        "en": "The SDK class for an error an AWS service returned. It extends the service's base class and carries $fault, $metadata and name."
+      }
+    },
+    {
+      "id": "request-handler",
+      "ja": "リクエストハンドラー",
+      "en": "request handler",
+      "firstUse": "48",
+      "definition": {
+        "ja": "SDK のクライアントの中で、実際に HTTP リクエストを送る部品。Node.js では node:http と node:https を使い、接続の再利用とタイムアウトをここで設定する。",
+        "en": "The part of an SDK client that actually sends the HTTP request. In Node.js it uses node:http and node:https; connection reuse and timeouts are set here."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "48.overview",
+      "sources": ["examples/48-sdk/src/local-endpoint.ts"],
+      "tasks": [],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "48.client-command",
+      "sources": [
+        "examples/48-sdk/src/local-endpoint.ts",
+        "examples/48-sdk/test/attempt-log.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.local-endpoint",
+      "sources": ["examples/48-sdk/src/local-endpoint.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "48.when-not",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "48.middleware",
+      "sources": [
+        "examples/48-sdk/src/attempt-log.ts",
+        "examples/48-sdk/test/attempt-log.test.ts",
+        "examples/48-sdk/scripts/tour.ts"
+      ],
+      "tasks": ["test:unit", "sdk:tour"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.credentials",
+      "sources": [
+        "examples/48-sdk/src/credentials.ts",
+        "examples/48-sdk/test/credentials.test.ts",
+        "examples/48-sdk/scripts/credentials.ts"
+      ],
+      "tasks": ["test:unit", "sdk:credentials"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "48.region-endpoint",
+      "sources": ["examples/48-sdk/test/credentials.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.retries",
+      "sources": [
+        "examples/48-sdk/src/defaults.ts",
+        "examples/48-sdk/test/defaults.test.ts",
+        "examples/48-sdk/test/retry.test.ts",
+        "examples/48-sdk/scripts/defaults.ts"
+      ],
+      "tasks": ["test:unit", "sdk:defaults"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "48.timeouts",
+      "sources": ["examples/48-sdk/src/call-policy.ts", "examples/48-sdk/test/timeouts.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "48.errors",
+      "sources": ["examples/48-sdk/src/errors.ts", "examples/48-sdk/test/errors.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.pages-waiters",
+      "sources": ["examples/48-sdk/src/pages.ts", "examples/48-sdk/test/pages-waiters.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.streams",
+      "sources": ["examples/48-sdk/src/body.ts", "examples/48-sdk/test/streams.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.presign",
+      "sources": ["examples/48-sdk/test/presign.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.marshalling",
+      "sources": ["examples/48-sdk/src/document.ts", "examples/48-sdk/test/document.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.bundle",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "48.testing",
+      "sources": ["examples/48-sdk/test/support.ts", "examples/48-sdk/src/local-endpoint.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.local",
+      "sources": [
+        "examples/48-sdk/scripts/tour.ts",
+        "examples/48-sdk/scripts/defaults.ts",
+        "examples/48-sdk/scripts/credentials.ts"
+      ],
+      "tasks": ["sdk:tour", "sdk:defaults", "sdk:credentials", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "48.cost",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "48.pitfalls",
+      "sources": [
+        "examples/48-sdk/test/timeouts.test.ts",
+        "examples/48-sdk/test/pages-waiters.test.ts",
+        "examples/48-sdk/test/document.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "48.production",
+      "sources": ["examples/48-sdk/src/call-policy.ts", "examples/48-sdk/src/errors.ts"],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "48.distributed",
+      "sources": [
+        "examples/48-sdk/test/lost-response.test.ts",
+        "examples/48-sdk/test/retry.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    }
+  ],
+  "unitPrices": [],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [],
+  "validation": {
+    "records": [
+      {
+        "scope": "48",
+        "command": "vp test run examples/48-sdk",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "11 ファイル 104 件。本物のクライアントを、ループバックの HTTP サーバーにつないで観察。既定値のテストは別のプロセスで、環境変数と ~/.aws を切り離して実行",
+          "en": "11 files, 104 tests. The real clients, observed against an HTTP server on the loopback interface. The tests of the defaults run in a separate process with environment variables and ~/.aws cut off"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "tsc --noEmit -p examples/48-sdk",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "vp check examples/48-sdk (format and lint)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "整形と lint。警告なし",
+          "en": "Format and lint. No warnings"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "vp run sdk:tour",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "2 回スロットリングしてから答える台本に対して 1 回呼び、試行ごとのログを 3 行出力。本文の出力はこの実行のもの",
+          "en": "One call against a script that throttles twice and then answers; three log lines, one per attempt. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "vp run sdk:defaults",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "環境変数なしと AWS_NEW_RETRIES_2026=true の 2 通り。この端末の ~/.aws/config を読む。本文の出力はこの実行のもの",
+          "en": "Run with no variable and with AWS_NEW_RETRIES_2026=true. Reads this machine's ~/.aws/config. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "AWS_ACCESS_KEY_ID=<not real> AWS_SECRET_ACCESS_KEY=<not real> vp run sdk:credentials",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "偽のキーを環境変数に入れ、AWS_PROFILE を外して実行。fromEnv で止まり、AWS には届いていない",
+          "en": "Run with keys that are not real in the environment and AWS_PROFILE unset. It stopped at fromEnv and did not reach AWS"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "node book/theme/figure-cli.ts (48-sdk pages)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "日英 4 つの図に問題なし",
+          "en": "No problems in the four figures, two per language"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "vp run sdk:credentials (with this machine's real profile)",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。プロファイルによっては STS、IAM Identity Center、サインインのトークン更新で AWS に届く",
+          "en": "Not run. Depending on the profile it reaches AWS: STS, IAM Identity Center, or a sign-in token refresh"
+        }
+      },
+      {
+        "scope": "48",
+        "command": "any call to a real AWS endpoint with the pinned SDK",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。この章の観察はすべて手元のサーバーに対するもの",
+          "en": "Not run. Everything this chapter observed was against the local server"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "48-real-service-errors",
+        "summary": {
+          "ja": "本物のサービスが返すエラーの形、ステータス、リクエスト ID、x-amz-retry-after の有無を確かめていない",
+          "en": "The form of real services' errors, their statuses and request IDs, and whether they send x-amz-retry-after were not checked"
+        },
+        "resume": {
+          "ja": "05章か 32章のスタックをデプロイし、attemptLogPlugin を付けたクライアントでスロットリングを起こして、ログの status、error、awsRequestId を見る",
+          "en": "Deploy chapter 05's or 32's stack, cause throttling with a client that has attemptLogPlugin, and read status, error and awsRequestId in the log"
+        }
+      },
+      {
+        "id": "48-https-and-connection-timeout",
+        "summary": {
+          "ja": "HTTPS のエンドポイントでの接続の挙動と connectionTimeout を確かめていない。手元のサーバーは平文の HTTP",
+          "en": "Connection behaviour against an HTTPS endpoint and connectionTimeout were not checked. The local server is plain HTTP"
+        },
+        "resume": {
+          "ja": "自己署名証明書の HTTPS サーバーを examples/48-sdk に足すか、応答しないアドレスに connectionTimeout を設定したクライアントを向けて、TimeoutError になるまでの時間を計る",
+          "en": "Add an HTTPS server with a self-signed certificate to examples/48-sdk, or point a client with connectionTimeout at an address that does not respond, and time how long until TimeoutError"
+        }
+      },
+      {
+        "id": "48-retries-2026-default-date",
+        "summary": {
+          "ja": "2026 年の再試行の動作がいつ既定になるかを確認できていない。DynamoDB Streams の 4 回、DynamoDB の 25 ミリ秒で実際に待つところも未確認",
+          "en": "When the 2026 retry behaviour becomes the default was not established. Nor were DynamoDB Streams' 4 attempts or an actual wait at DynamoDB's 25 ms"
+        },
+        "resume": {
+          "ja": "リファレンスの Retry behavior が指している告知の記事を読む。SDK を上げるたびに vp test run examples/48-sdk を実行し、defaults.test.ts が落ちたら PINNED_DEFAULTS と本文の表を直す",
+          "en": "Read the announcement the reference's Retry behavior page points to. Run vp test run examples/48-sdk on every SDK upgrade, and when defaults.test.ts fails, update PINNED_DEFAULTS and the tables in the pages"
+        }
+      },
+      {
+        "id": "48-adaptive-mode",
+        "summary": {
+          "ja": "adaptive モードを動かしていない",
+          "en": "adaptive mode was not run"
+        },
+        "resume": {
+          "ja": "retryMode: \"adaptive\" のクライアントをスロットリングだけ返す台本に向け、最初のリクエストが遅らされることを届いた時刻で確かめる",
+          "en": "Point a client with retryMode: \"adaptive\" at a script that only throttles, and confirm from arrival times that the first request of a later call is delayed"
+        }
+      },
+      {
+        "id": "48-credential-sources",
+        "summary": {
+          "ja": "環境変数とプロファイルの静的なキー以外の取得元（Lambda、ECS、EC2、IAM Identity Center、aws login、ロールの引き受け、credential_process、Web identity）を通していない",
+          "en": "Sources other than environment variables and static keys in a profile were not exercised: Lambda, ECS, EC2, IAM Identity Center, aws login, assuming a role, credential_process, web identity"
+        },
+        "resume": {
+          "ja": "aws login を済ませた端末で vp run sdk:credentials を実行し、sources と tried を見る。Lambda では reportDefaultCredentials の結果をログに出す",
+          "en": "Run vp run sdk:credentials on a machine where aws login was done and read sources and tried. On Lambda, log the result of reportDefaultCredentials"
+        }
+      },
+      {
+        "id": "48-presign-expiry",
+        "summary": {
+          "ja": "署名付き URL が認証情報の失効で切れるところ、Lambda の実行ロールの認証情報の残り時間、PutObject の署名付き URL の空のチェックサムが実際のアップロードに与える影響を確かめていない",
+          "en": "A presigned URL expiring with its credentials, how much life a Lambda execution role's credentials have left, and what the empty-body checksum in a presigned PutObject URL does to a real upload were not checked"
+        },
+        "resume": {
+          "ja": "07章のスタックで、関数の中で config.credentials() の expiration をログに出す。PutObject の URL に本文を PUT して、S3 の応答を見る",
+          "en": "In chapter 07's stack, log the expiration from config.credentials() inside the function. PUT a body to a PutObject URL and read S3's answer"
+        }
+      },
+      {
+        "id": "48-client-mock",
+        "summary": {
+          "ja": "aws-sdk-client-mock を固定している版の SDK と組み合わせて試していない",
+          "en": "aws-sdk-client-mock was not tried with the pinned SDK"
+        },
+        "resume": {
+          "ja": "examples/48-sdk に devDependency として足し、DynamoDBDocumentClient の send を置き換えるテストを 1 つ書いて通るかを見る",
+          "en": "Add it to examples/48-sdk as a devDependency and write one test that replaces DynamoDBDocumentClient's send"
+        }
+      },
+      {
+        "id": "48-update-add-twice",
+        "summary": {
+          "ja": "DynamoDB の UpdateItem が同じ ADD を 2 度受け取って 2 度足すことを、本物でも DynamoDB Local でも確かめていない",
+          "en": "That DynamoDB's UpdateItem adds twice on receiving the same ADD twice was confirmed neither against the real service nor against DynamoDB Local"
+        },
+        "resume": {
+          "ja": "05章の DynamoDB Local の手順で起動し、同じ UpdateItemCommand を 2 回送って値を読む",
+          "en": "Start DynamoDB Local as chapter 05 does, send the same UpdateItemCommand twice, and read the value"
+        }
+      },
+      {
+        "id": "48-cloudflare-binding-retries",
+        "summary": {
+          "ja": "Cloudflare の binding が再試行とタイムアウトをどこまで受け持つかを確かめていない",
+          "en": "How much of retrying and timing out a Cloudflare binding takes on was not checked"
+        },
+        "resume": {
+          "ja": "D1 と R2 の Workers API のページで、再試行とタイムアウトの記述を探す",
+          "en": "Look for statements on retries and timeouts in the Workers API pages of D1 and R2"
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 48: the SDK ----------------------------------------------\n      // What the installed SDK does when nothing is configured, read from the SDK itself. Local.\n      \"sdk:defaults\": fresh(\"node scripts/defaults.ts\", { cwd: \"examples/48-sdk\" }),\n      // One throttled call against a local endpoint, with a log line per attempt. Local.\n      \"sdk:tour\": fresh(\"node scripts/tour.ts\", { cwd: \"examples/48-sdk\" }),\n      // Where this machine's default credentials come from. Some providers call AWS to refresh.\n      \"sdk:credentials\": live(\"node scripts/credentials.ts\", { cwd: \"examples/48-sdk\" }),",
+    "synth": [],
+    "checkAll": [],
+    "typecheck": ["examples/48-sdk"]
+  }
+}

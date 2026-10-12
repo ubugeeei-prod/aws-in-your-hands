@@ -1,0 +1,26 @@
+{
+  "name": "@aih/example-48-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@aih/example-05-dynamodb": "workspace:*",
+    "@aih/example-19-observability": "workspace:*",
+    "@aih/example-32-limits": "workspace:*",
+    "@aws-sdk/client-dynamodb": "3.1149.0",
+    "@aws-sdk/client-s3": "3.1149.0",
+    "@aws-sdk/credential-provider-node": "3.972.85",
+    "@aws-sdk/lib-dynamodb": "3.1149.0",
+    "@aws-sdk/lib-storage": "3.1149.0",
+    "@aws-sdk/s3-request-presigner": "3.1149.0",
+    "@smithy/core": "3.35.2",
+    "@smithy/types": "4.19.0",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "vite-plus": "1.1.0"
+  }
+}

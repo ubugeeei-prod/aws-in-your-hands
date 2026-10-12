@@ -1,0 +1,1092 @@
+{
+  "chapterId": "49",
+  "manifest": {
+    "id": "49",
+    "slug": "athena",
+    "title": {
+      "ja": "Athena: workgroup、partition、CTAS、Iceberg、ログを引く",
+      "en": "Athena: Workgroups, Partitions, CTAS, Iceberg, and Querying Logs"
+    },
+    "prerequisites": ["07", "19", "26"],
+    "services": ["Athena", "AWS Glue Data Catalog", "S3", "IAM"],
+    "samplePath": "examples/49-athena",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "athena-workgroup-limits",
+      "athena-pricing",
+      "aws-price-list-athena",
+      "athena49-engine-versions",
+      "athena49-engine-v3",
+      "athena49-engine-versions-changing",
+      "athena49-ctas-considerations",
+      "athena49-create-table-as",
+      "athena49-insert-into",
+      "athena49-unload",
+      "athena49-parameterized-queries",
+      "athena49-prepared-statements-iam",
+      "athena49-select-escaping",
+      "athena49-reserved-words",
+      "athena49-result-reuse",
+      "athena49-managed-results",
+      "athena49-iceberg",
+      "athena49-iceberg-create",
+      "athena49-iceberg-update",
+      "athena49-merge-into",
+      "athena49-iceberg-time-travel",
+      "athena49-iceberg-optimize",
+      "athena49-iceberg-schema",
+      "athena49-s3-tables",
+      "athena49-federated",
+      "athena49-capacity",
+      "athena49-service-limits",
+      "athena49-api-start",
+      "athena49-api-status",
+      "athena49-api-results",
+      "athena49-workgroup-policies",
+      "athena49-glue-permissions",
+      "athena49-s3-permissions",
+      "athena49-partitions",
+      "athena49-data-optimization",
+      "athena49-output-files",
+      "athena49-cloudtrail-table",
+      "athena49-alb-table",
+      "athena49-cloudfront-table",
+      "athena49-s3-access-table",
+      "athena49-cfn-engine-version",
+      "athena49-cdkd-source",
+      "athena49-cdk-types",
+      "athena49-sdk-client",
+      "athena49-cloudflare-basin-sql",
+      "athena49-vercel-query"
+    ]
+  },
+  "sources": [
+    {
+      "id": "athena49-engine-versions",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/engine-versions-reference.html",
+      "title": "Athena engine versioning",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Engine versioning is configured per workgroup; by default workgroups are configured to auto upgrade, and Athena upgrades them unless it finds incompatibilities",
+        "A workgroup configured to use a given version keeps it until that version is no longer available",
+        "The only engine version the page lists is Athena engine version 3"
+      ]
+    },
+    {
+      "id": "athena49-engine-v3",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/engine-versions-reference-0003.html",
+      "title": "Athena engine version 3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Engine version 3 follows a continuous integration approach with the Trino and Presto projects; the page refers to the Trino documentation for the full list of operators and functions",
+        "Neither Trino nor Presto connectors are supported; federated query is used to connect data sources",
+        "approx_percentile returns approximations that can change from one version to the next",
+        "OPTIMIZE on an Iceberg table supports filtering by partition columns only"
+      ],
+      "note": "The page names no Trino release number."
+    },
+    {
+      "id": "athena49-engine-versions-changing",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/engine-versions-changing.html",
+      "title": "Change Athena engine versions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CLI example sets EngineVersion={SelectedEngineVersion='Athena engine version 3'}; Automatic lets Athena choose when to upgrade"
+      ]
+    },
+    {
+      "id": "athena49-cfn-engine-version",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-athena-workgroup-engineversion.html",
+      "title": "AWS::Athena::WorkGroup EngineVersion",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SelectedEngineVersion takes the values ListEngineVersions returns, including AUTO; the default is AUTO"
+      ]
+    },
+    {
+      "id": "athena49-ctas-considerations",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/ctas-considerations-limitations.html",
+      "title": "Considerations and limitations for CTAS queries",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "If the workgroup overrides the client-side setting for the query results location, Athena creates a CTAS table under <results location>/tables/<query-id>/",
+        "external_location must be empty; CTAS never overwrites data",
+        "A failed CTAS or INSERT INTO can leave orphaned data files that later queries read; the data manifest file lists them; Iceberg is recommended for atomic transactions",
+        "CTAS ignores ORDER BY; Parquet is the default format with GZIP as the default compression; a partitioned CTAS writes at most 100 partitions"
+      ]
+    },
+    {
+      "id": "athena49-create-table-as",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/create-table-as.html",
+      "title": "CREATE TABLE AS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A CTAS query that specifies external_location in a workgroup that enforces a query results location fails with an error",
+        "table_type is HIVE or ICEBERG, default HIVE; for Iceberg, is_external must be false and location is required; partitioned_by does not apply to Iceberg tables, partitioning does"
+      ]
+    },
+    {
+      "id": "athena49-insert-into",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/insert-into.html",
+      "title": "INSERT INTO",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each INSERT operation creates a new file rather than appending to an existing one; Athena does not rewrite or modify existing files",
+        "INSERT INTO writes at most 100 partitions, is not supported on bucketed tables or for federated queries, and expects the partition column last in the SELECT list",
+        "Supported formats include Parquet with ParquetHiveSerDe and JSON with the Hive JsonSerDe",
+        "Athena writes a data manifest file for each INSERT query to the query result location"
+      ]
+    },
+    {
+      "id": "athena49-unload",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/unload.html",
+      "title": "UNLOAD",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "UNLOAD writes the result of a SELECT as Parquet, ORC, Avro, JSON or text files without creating a table; SELECT itself only produces CSV",
+        "Except when writing to partitions, the TO location must hold no data; UNLOAD does not overwrite",
+        "Files are written in parallel with no ordering between them; orphaned data is not deleted on failure; at most 100 partitions; UNLOAD can be used with prepared statements"
+      ]
+    },
+    {
+      "id": "athena49-parameterized-queries",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-with-prepared-statements.html",
+      "title": "Use parameterized queries (with the pages on execution parameters and prepared statements)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Parameterized queries help prevent SQL injection; they are execution parameters in any DML query, or PREPARE and EXECUTE statements",
+        "Execution parameters are not workgroup specific; prepared statements are, and a workgroup holds at most 1,000 of them",
+        "Parameterized queries are supported only for SELECT, INSERT INTO, CTAS and UNLOAD statements",
+        "Parameters are positional question marks, cannot be placed in quotes, and a value to be treated as a string must be enclosed in single quotes; CAST can be used in a value",
+        "The CLI passes the values in --execution-parameters"
+      ],
+      "note": "Also read: querying-with-prepared-statements-querying-using-execution-parameters.html, ...-using-the-aws-cli.html, querying-with-prepared-statements-querying.html and ...-sql-statements.html."
+    },
+    {
+      "id": "athena49-prepared-statements-iam",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/security-iam-athena-prepared-statements.html",
+      "title": "Configure access to prepared statements",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PREPARE needs athena:CreatePreparedStatement, EXECUTE needs athena:GetPreparedStatement, each with athena:StartQueryExecution, on the workgroup"
+      ]
+    },
+    {
+      "id": "athena49-select-escaping",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/select.html",
+      "title": "SELECT (escaping single quotes)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "To escape a single quote, precede it with another single quote, as in 'O''Reilly'"
+      ]
+    },
+    {
+      "id": "athena49-reserved-words",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/reserved-words.html",
+      "title": "Escape reserved keywords in queries",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Reserved keywords are escaped with backticks in DDL statements and with double quotes in SELECT statements",
+        "AT is in neither list"
+      ]
+    },
+    {
+      "id": "athena49-result-reuse",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/reusing-query-results.html",
+      "title": "Reuse query results in Athena",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Reuse is enabled per query; Athena looks for a previous execution of the same query in the same workgroup and returns its result without running the query",
+        "The default maximum age is 60 minutes and the largest is 7 days; Athena does not check for changes in the source data within that age, so stale results can be returned",
+        "The caller must have access to the tables and to the S3 location of the stored result",
+        "Not reused: non-deterministic queries such as LIMIT without ORDER BY, statements other than SELECT and EXECUTE, federated catalogs, tables under Lake Formation, and workgroups with managed query results"
+      ]
+    },
+    {
+      "id": "athena49-managed-results",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/managed-results.html",
+      "title": "Managed query results",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A workgroup can store query results in Athena-managed storage instead of an S3 bucket of yours; results are kept 24 hours at no cost and then deleted",
+        "Managed query results do not support query result reuse; access is through GetQueryResults on the workgroup"
+      ]
+    },
+    {
+      "id": "athena49-iceberg",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg.html",
+      "title": "Query Apache Iceberg tables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Athena performs read, time travel, write and DDL queries on Iceberg tables; it creates and operates on Iceberg v2 tables only",
+        "Only Iceberg tables in the AWS Glue catalog are supported, with AWS Glue optimistic locking only",
+        "Parquet, ORC and Avro files are supported; timestamps have millisecond precision in Athena"
+      ]
+    },
+    {
+      "id": "athena49-iceberg-create",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg-creating-tables.html",
+      "title": "Create Iceberg tables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CREATE TABLE … PARTITIONED BY (col | transform) LOCATION … TBLPROPERTIES ('table_type'='ICEBERG'); CREATE EXTERNAL TABLE is an error for Iceberg",
+        "Partition columns are declared among the columns first and named in PARTITIONED BY without a type",
+        "Table properties and defaults: format parquet, vacuum_min_snapshots_to_keep 1, vacuum_max_snapshot_age_seconds 432000 (5 days), optimize_rewrite_delete_file_threshold 2"
+      ]
+    },
+    {
+      "id": "athena49-iceberg-update",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg-updating-iceberg-table-data.html",
+      "title": "Update Iceberg table data",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "INSERT, UPDATE and DELETE each produce a new snapshot; UPDATE and DELETE write position delete files and enforce snapshot isolation",
+        "Athena always uses merge-on-read for UPDATE, MERGE INTO and DELETE FROM, whatever the table properties say"
+      ]
+    },
+    {
+      "id": "athena49-merge-into",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/merge-into-statement.html",
+      "title": "MERGE INTO",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "MERGE INTO target [AS alias] USING { source_table | query } [AS alias] ON condition, with WHEN MATCHED THEN DELETE or UPDATE and WHEN NOT MATCHED THEN INSERT (…) VALUES (…)",
+        "MERGE INTO is transactional and supported only for Iceberg tables in engine version 3",
+        "An error is raised when a single target row matches more than one source row"
+      ]
+    },
+    {
+      "id": "athena49-iceberg-time-travel",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg-time-travel-and-version-travel-queries.html",
+      "title": "Perform time travel and version travel queries",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SELECT … FROM table FOR TIMESTAMP AS OF timestamp reads a consistent snapshot as of that time; FOR VERSION AS OF takes a snapshot ID",
+        "The example uses FOR TIMESTAMP AS OF (current_timestamp - interval '1' day)"
+      ]
+    },
+    {
+      "id": "athena49-iceberg-optimize",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg-data-optimization.html",
+      "title": "Optimize Iceberg tables (with the OPTIMIZE and VACUUM statement pages)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "OPTIMIZE table REWRITE DATA USING BIN_PACK [WHERE predicate] rewrites data files by size and by the number of delete files; only partition columns are allowed in WHERE; it is charged by the data scanned during the rewrite",
+        "VACUUM table expires snapshots and removes orphan files; expired snapshots can no longer be reached by time travel; its S3 requests are charged",
+        "VACUUM needs s3:DeleteObject on the table's location; without it the query succeeds but the files are not deleted; it fails if the table sits at the root of a bucket"
+      ],
+      "note": "Also read: optimize-statement.html and vacuum-statement.html."
+    },
+    {
+      "id": "athena49-iceberg-schema",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-iceberg-evolving-table-schema.html",
+      "title": "Evolve Iceberg table schema",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Iceberg schema updates are metadata-only changes: no data files are changed; add, drop, rename, reorder and some type promotions are supported"
+      ]
+    },
+    {
+      "id": "athena49-s3-tables",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/gdc-register-s3-table-bucket-cat.html",
+      "title": "Register S3 table bucket catalogs and query Tables from Athena",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 table buckets store Iceberg tables and automate compaction, snapshot management and garbage collection",
+        "From Athena, OPTIMIZE and VACUUM are not supported on S3 Tables: maintenance is managed in S3",
+        "The tables are reached through a Glue catalog named s3tablescatalog/<bucket>, with s3tables permissions or Lake Formation"
+      ],
+      "note": "S3 Tables prices were not read for this chapter."
+    },
+    {
+      "id": "athena49-federated",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/federated-queries.html",
+      "title": "Use Amazon Athena Federated Query",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Federated query runs SQL across sources other than S3 through data source connectors; Athena data catalog connectors need a Lambda function in your account",
+        "Starting April 21, 2026, certain newly created connectors are registered as Glue Data Catalogs and use no Lambda function in your account"
+      ]
+    },
+    {
+      "id": "athena49-capacity",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/capacity-management.html",
+      "title": "Manage query processing capacity",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A capacity reservation holds a number of DPUs for the workgroups assigned to it; the minimum is 4 DPUs",
+        "DML queries use between 4 and 124 DPUs and DDL queries 4"
+      ]
+    },
+    {
+      "id": "athena49-service-limits",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/service-limits.html",
+      "title": "Service Quotas (Athena)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The maximum query string length is 262,144 bytes",
+        "Active DML and DDL query quotas count both running and queued queries; the DML query timeout can be raised to at most 240 minutes"
+      ],
+      "note": "Quotas as read on 2026-10-13. The default values are in the Service Quotas console and were not copied."
+    },
+    {
+      "id": "athena49-api-start",
+      "url": "https://docs.aws.amazon.com/athena/latest/APIReference/API_StartQueryExecution.html",
+      "title": "StartQueryExecution (Athena API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ClientRequestToken makes the request idempotent: a repeated request returns the same response and creates no other query; an error is returned if a parameter such as QueryString changed; 32 to 128 characters; SDKs generate one when it is left out",
+        "ExecutionParameters is a list of strings of 1 to 1,024 characters applied in order; QueryString is at most 262,144 characters",
+        "ResultReuseConfiguration holds ResultReuseByAgeConfiguration with Enabled and MaxAgeInMinutes (0 to 10080, default 60)"
+      ],
+      "note": "Also read: API_ResultReuseByAgeConfiguration.html and API_StopQueryExecution.html."
+    },
+    {
+      "id": "athena49-api-status",
+      "url": "https://docs.aws.amazon.com/athena/latest/APIReference/API_QueryExecutionStatus.html",
+      "title": "QueryExecutionStatus and QueryExecutionStatistics (Athena API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "State is QUEUED, RUNNING, SUCCEEDED, FAILED or CANCELLED; for certain transient errors the state goes from RUNNING back to QUEUED; FAILED is always terminal",
+        "Statistics hold DataScannedInBytes, ResultReuseInformation and DataManifestLocation"
+      ],
+      "note": "Also read: API_QueryExecutionStatistics.html and API_GetQueryExecution.html."
+    },
+    {
+      "id": "athena49-api-results",
+      "url": "https://docs.aws.amazon.com/athena/latest/APIReference/API_GetQueryResults.html",
+      "title": "GetQueryResults (Athena API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "GetQueryResults streams the results from the query results location and pages with NextToken, at most 1,000 rows a request",
+        "The caller also needs s3:GetObject on the results location; anyone with s3:GetObject there can read results from S3 without the Athena permission"
+      ],
+      "note": "The page does not say that the first row of a SELECT result repeats the column names."
+    },
+    {
+      "id": "athena49-workgroup-policies",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/example-policies-workgroup.html",
+      "title": "Example workgroup policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Athena actions on queries, named queries and prepared statements are granted on the workgroup's ARN, arn:aws:athena:<region>:<account>:workgroup/<name>",
+        "The example for running queries in one workgroup notes that it does not deny access to other workgroups"
+      ]
+    },
+    {
+      "id": "athena49-glue-permissions",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/fine-grained-access-to-glue-resources.html",
+      "title": "Configure access to databases and tables in the AWS Glue Data Catalog",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Access is limited at the database and table level, not per partition; an action on a table also needs permission on its database and on the catalog",
+        "The CREATE TABLE example grants glue:GetDatabase, glue:GetTables, glue:GetTable, glue:GetPartitions and glue:CreateTable"
+      ]
+    },
+    {
+      "id": "athena49-s3-permissions",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/s3-permissions.html",
+      "title": "Control access to Amazon S3 from Athena",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A user's permissions pass through Athena: the user must be allowed to read the S3 buckets to query them",
+        "aws:SourceIp, aws:SourceVpc and aws:SourceVpce cannot be used to restrict Athena's access to S3"
+      ]
+    },
+    {
+      "id": "athena49-partitions",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/partitions.html",
+      "title": "Partition your data",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Partitioning restricts the data each query scans; with a partition column in the WHERE clause Athena scans only that partition's data"
+      ]
+    },
+    {
+      "id": "athena49-data-optimization",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/performance-tuning-data-optimization-techniques.html",
+      "title": "Optimize data (with Optimize queries)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With a columnar format, reading fewer columns reduces the data read from S3; many small files hurt, columnar files most of all",
+        "Most compression formats must be read from the beginning, so compressed text files cannot in general be processed in parallel",
+        "ORDER BY with LIMIT is run as a top N query"
+      ],
+      "note": "Also read: performance-tuning-query-optimization-techniques.html. Neither page says that LIMIT reduces the bytes scanned, or that it does not."
+    },
+    {
+      "id": "athena49-output-files",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/querying-finding-output-files.html",
+      "title": "Identify query output files",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A query leaves <QueryID>.csv and <QueryID>.csv.metadata in the result location, and statements that write data leave <QueryID>-manifest.csv"
+      ]
+    },
+    {
+      "id": "athena49-cloudtrail-table",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/create-cloudtrail-table-partition-projection.html",
+      "title": "Create the table for CloudTrail logs in Athena using partition projection",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CREATE EXTERNAL TABLE statement stored in examples/49-athena/sql/cloudtrail.sql, with the placeholders amzn-s3-demo-bucket, account-id, aws-region and the start date"
+      ]
+    },
+    {
+      "id": "athena49-alb-table",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/create-alb-access-logs-table.html",
+      "title": "Create the table for ALB access logs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CREATE EXTERNAL TABLE statement stored in examples/49-athena/sql/alb.sql; the trailing ?( .*)? of the regular expression should stay so that new fields do not break the table"
+      ]
+    },
+    {
+      "id": "athena49-cloudfront-table",
+      "url": "https://docs.aws.amazon.com/athena/latest/ug/create-cloudfront-table-standard-logs.html",
+      "title": "Create a table for CloudFront standard logs (legacy)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CREATE EXTERNAL TABLE statement stored in examples/49-athena/sql/cloudfront.sql, for tab-separated standard logs with two header lines"
+      ],
+      "note": "The same guide has separate pages for CloudFront logs delivered as Parquet; they were not read."
+    },
+    {
+      "id": "athena49-s3-access-table",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-s3-access-logs-to-identify-requests.html",
+      "title": "Using Amazon S3 server access logs to identify requests",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CREATE EXTERNAL TABLE statement with date-based partitioning stored in examples/49-athena/sql/s3-access.sql"
+      ]
+    },
+    {
+      "id": "athena49-cdkd-source",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: providers, unsupported types and implicit delete dependencies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd 0.296.28 registers no provider of its own for AWS::Athena::WorkGroup or AWS::Athena::NamedQuery; they go through Cloud Control API",
+        "Its generated list of types Cloud Control API cannot handle names AWS::Athena::Session and neither of the two",
+        "It deletes AWS::Athena::NamedQuery resources before the AWS::Athena::WorkGroup they belong to"
+      ],
+      "note": "Read in the installed package's dist/ bundles (provider-classes, deploy-engine), which are built from this source."
+    },
+    {
+      "id": "athena49-cdk-types",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-athena type definitions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CfnWorkGroup.WorkGroupConfigurationProperty has bytesScannedCutoffPerQuery, enforceWorkGroupConfiguration, engineVersion, resultConfiguration and managedQueryResultsConfiguration; ResultConfigurationProperty has expectedBucketOwner",
+        "CfnNamedQuery takes database, queryString, name, description and workGroup; CfnPreparedStatement takes statementName, workGroup and queryStatement"
+      ]
+    },
+    {
+      "id": "athena49-sdk-client",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-athena/v/3.1149.0",
+      "title": "@aws-sdk/client-athena 3.1149.0 type definitions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "StartQueryExecutionInput has ExecutionParameters?: string[] and ClientRequestToken?: string; ResultReuseInformation has ReusedPreviousResult: boolean; a result cell is Datum with VarCharValue?: string"
+      ]
+    },
+    {
+      "id": "athena49-cloudflare-basin-sql",
+      "url": "https://developers.cloudflare.com/r2-sql/sql-reference/",
+      "title": "Cloudflare Basin SQL (formerly R2 SQL): overview and SQL reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Basin SQL, formerly R2 SQL, is generally available and queries Apache Iceberg tables managed by Basin Catalog",
+        "Its SQL reference documents SELECT with joins and set operations, SHOW, DESCRIBE and EXPLAIN, and no INSERT, UPDATE, DELETE, MERGE or CREATE TABLE AS; it mentions no query parameters; the default LIMIT is 500 rows"
+      ],
+      "note": "Read through a summarising fetch of https://developers.cloudflare.com/r2-sql/ and /r2-sql/sql-reference/."
+    },
+    {
+      "id": "athena49-vercel-query",
+      "url": "https://vercel.com/docs/query",
+      "title": "Vercel Query",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Query builds metric queries from form fields or an AI assistant, over Vercel's own observability events, and exports results as CSV or JSON; full access requires Observability Plus on Pro or Enterprise",
+        "The page describes no SQL interface and no way to query files of your own"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "athena-execution-parameter",
+      "ja": "実行パラメーター（Athena）",
+      "en": "execution parameter (Athena)",
+      "firstUse": "49",
+      "definition": {
+        "ja": "SQL の文に書いた `?` に、実行のときに順番に当てはめる値。文とは別の引数として Athena に渡す。",
+        "en": "A value that takes the place of a `?` in a statement when it runs, in order. It is handed to Athena beside the statement, not inside it."
+      }
+    },
+    {
+      "id": "athena-ctas",
+      "ja": "CTAS",
+      "en": "CTAS",
+      "firstUse": "49",
+      "definition": {
+        "ja": "CREATE TABLE AS SELECT の略。クエリの結果を S3 にファイルとして書き、それを指すテーブルを同時に作る文。",
+        "en": "Short for CREATE TABLE AS SELECT: a statement that writes a query's result to S3 as files and creates the table that points at them."
+      }
+    },
+    {
+      "id": "athena-iceberg-table",
+      "ja": "Iceberg テーブル",
+      "en": "Iceberg table",
+      "firstUse": "49",
+      "definition": {
+        "ja": "Apache Iceberg の形式で管理するテーブル。どのファイルがテーブルに属するかをメタデータが持つので、行単位の変更と、過去の時点の読み出しができる。",
+        "en": "A table kept in the Apache Iceberg format. Its metadata records which files belong to the table, which makes row-level changes and reads of a past state possible."
+      }
+    },
+    {
+      "id": "athena-result-reuse",
+      "ja": "クエリ結果の再利用",
+      "en": "query result reuse",
+      "firstUse": "49",
+      "definition": {
+        "ja": "同じワークグループで同じクエリが最近実行されていれば、実行せずにその結果を返す Athena の機能。クエリごとに、許す古さを指定して有効にする。",
+        "en": "An Athena feature that returns the stored result of the same query run recently in the same workgroup instead of running it again. It is turned on per query, with the age you accept."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "49.overview",
+      "sources": ["examples/49-athena/infra/lib/athena-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "49.choices",
+      "sources": ["examples/49-athena/infra/lib/athena-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "49.scan",
+      "sources": ["examples/49-athena/src/cost.ts", "examples/49-athena/test/cost.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "49.workgroup",
+      "sources": [
+        "examples/49-athena/infra/lib/athena-stack.ts",
+        "examples/49-athena/infra/test/athena-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "athena:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "49.parameters",
+      "sources": [
+        "examples/49-athena/src/statement.ts",
+        "examples/49-athena/src/queries.ts",
+        "examples/49-athena/test/statement.test.ts",
+        "examples/49-athena/test/queries.test.ts"
+      ],
+      "tasks": ["test:unit", "athena:sql"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "49.client",
+      "sources": [
+        "examples/49-athena/src/client.ts",
+        "examples/49-athena/src/athena-sdk.ts",
+        "examples/49-athena/test/client.test.ts",
+        "examples/49-athena/test/fake-athena.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "49.writes",
+      "sources": ["examples/49-athena/src/queries.ts", "examples/49-athena/test/queries.test.ts"],
+      "tasks": ["test:unit", "athena:sql"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "49.iceberg",
+      "sources": ["examples/49-athena/src/queries.ts", "examples/49-athena/test/queries.test.ts"],
+      "tasks": ["test:unit", "athena:sql"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "49.logs",
+      "sources": [
+        "examples/49-athena/src/logs.ts",
+        "examples/49-athena/sql",
+        "examples/49-athena/test/logs.test.ts",
+        "examples/49-athena/scripts/log-table.ts"
+      ],
+      "tasks": ["test:unit", "athena:logs:ddl"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "49.permissions",
+      "sources": [
+        "examples/49-athena/infra/lib/athena-stack.ts",
+        "examples/49-athena/infra/test/athena-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "athena:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "49.local",
+      "sources": [
+        "examples/49-athena/scripts/query.ts",
+        "examples/49-athena/scripts/log-table.ts",
+        "examples/49-athena/test"
+      ],
+      "tasks": ["test:unit", "athena:sql", "athena:logs:ddl", "athena:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "49.deploy",
+      "sources": ["examples/49-athena/infra/bin/app.ts", "examples/49-athena/scripts/query.ts"],
+      "tasks": ["athena:infra:diff", "athena:infra:deploy", "athena:run", "athena:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "49.cost",
+      "sources": ["examples/49-athena/src/cost.ts", "examples/49-athena/test/cost.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "49.compare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "49.cleanup",
+      "sources": ["examples/49-athena/scripts/empty-output.ts"],
+      "tasks": ["athena:empty", "athena:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "athena.capacity.dpu-hour",
+      "offerCode": "AmazonAthena",
+      "region": "ap-northeast-1",
+      "sku": "KRCG7FCJWPMHSB6T",
+      "usageType": "APN1-ReservedCapacityInDPUHours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU-Hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4300000000",
+          "description": "0.43 USD per DPU-Hour for ReservedCapacityInDPUHours in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonAthena/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:08Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "athena.scanned",
+      "reason": "Neither the Price List nor the pricing page shows a monthly free allowance for Athena SQL queries; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "athena-idle",
+      "chapter": "49",
+      "title": {
+        "ja": "Athena: デプロイ済みで、クエリを 1 回も実行しない月",
+        "en": "Athena: deployed, and not one query run in the month"
+      },
+      "assumptions": {
+        "ja": [
+          "ワークグループ、保存したクエリ 6 個、ロール、空のバケットだけがある",
+          "派生テーブルを作っていないので、Glue Data Catalog のオブジェクトも S3 のオブジェクトも増えない",
+          "キャパシティ予約は使わない"
+        ],
+        "en": [
+          "Only the workgroup, six saved queries, the role and an empty bucket exist",
+          "No derived table was created, so neither the Glue Data Catalog nor S3 holds anything more",
+          "No capacity reservation"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "athena.scanned",
+          "quantity": 0,
+          "basis": "no query"
+        }
+      ]
+    },
+    {
+      "id": "athena-1000-pruned",
+      "chapter": "49",
+      "title": {
+        "ja": "Athena: 月 1,000 回、日付で絞って gzip の JSON を 1 日ぶん読む",
+        "en": "Athena: 1,000 queries a month, each reading one day of gzip JSON"
+      },
+      "assumptions": {
+        "ja": [
+          "1 日 100 万件の記録が 365 日ぶんあるテーブル。gzip 後は 1 件 58.68 バイト（26章のサンプル 5,000 件の実測）で、1 日ぶんは 58,684,400 バイト",
+          "クエリは日付で 1 日に絞る。JSON なのでその日のファイルをすべて読み、MB 単位に切り上げて 56 MB として課金される",
+          "S3 へのリクエスト、クエリ結果の保存、Glue へのリクエストは含めていない（Athena がクエリ 1 回に行うリクエストの数は未確認）"
+        ],
+        "en": [
+          "A table with 365 days of one million records a day. A record takes 58.68 bytes after gzip (measured on chapter 26's 5,000 sample records), so a day is 58,684,400 bytes",
+          "Each query names one day. The format is JSON, so the whole day is read, and billed as 56 MB after rounding up",
+          "S3 requests, result storage and Glue requests are not included (how many requests Athena makes per query was not confirmed)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "athena.scanned",
+          "quantity": 0.053406,
+          "basis": "1,000 queries x 56 MB"
+        }
+      ]
+    },
+    {
+      "id": "athena-1000-unpruned",
+      "chapter": "49",
+      "title": {
+        "ja": "Athena: 同じ 1,000 回を、日付の条件なしで、上限のないワークグループで実行する",
+        "en": "Athena: the same 1,000 queries without the date condition, in a workgroup with no limit"
+      },
+      "assumptions": {
+        "ja": [
+          "テーブルは同じ。日付の条件がないので 365 日ぶんの 21,419,806,000 バイトを読み、20,428 MB として課金される",
+          "LIMIT を付けても、並べ替えや集計のあるクエリは全体を読む前提（LIMIT だけのクエリが早く止まるかどうかは未確認）",
+          "1 回のクエリの読む量に上限を付けていない"
+        ],
+        "en": [
+          "The same table. With no date condition a query reads all 365 days, 21,419,806,000 bytes, billed as 20,428 MB",
+          "A query that sorts or aggregates is taken to read everything whether or not it has a LIMIT (whether a bare LIMIT stops early was not confirmed)",
+          "No per-query limit on data scanned"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "athena.scanned",
+          "quantity": 19.481659,
+          "basis": "1,000 queries x 20,428 MB"
+        }
+      ]
+    },
+    {
+      "id": "athena-1000-cancelled",
+      "chapter": "49",
+      "title": {
+        "ja": "Athena: 同じ 1,000 回が、この章のワークグループの上限（1 GiB）で取り消される",
+        "en": "Athena: the same 1,000 queries cancelled by this chapter's workgroup at its 1 GiB limit"
+      },
+      "assumptions": {
+        "ja": [
+          "どのクエリも 1 GiB を読んだところで取り消され、答えは返らない",
+          "取り消されたクエリは読んだぶんだけ課金される。読んだ量を上限ちょうどの 1 GiB として計算（上限をどれだけ超えてから止まるかは未確認）"
+        ],
+        "en": [
+          "Every query is cancelled once it has read 1 GiB, and returns no answer",
+          "A cancelled query is billed for what it read, taken here as exactly 1 GiB (how far past the limit a query gets before it stops was not confirmed)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "athena.scanned",
+          "quantity": 0.976563,
+          "basis": "1,000 queries x 1 GiB"
+        }
+      ]
+    },
+    {
+      "id": "athena-1000-parquet",
+      "chapter": "49",
+      "title": {
+        "ja": "Athena: 月 1,000 回、Parquet の 1 日ぶんから 2 列だけ読む",
+        "en": "Athena: 1,000 queries a month, each reading two columns of one day of Parquet"
+      },
+      "assumptions": {
+        "ja": [
+          "同じ記録を Parquet にしたテーブル。at と status の 2 列は 1 件あたり 6.38 バイト（26章のサンプルを手元のライブラリで書いた実測。Athena が書く Parquet の大きさは未確認）で、1 日ぶんは 6,384,400 バイト",
+          "10 MB に届かないので、どのクエリも最低の 10 MB として課金される"
+        ],
+        "en": [
+          "The same records as a Parquet table. The two columns at and status take 6.38 bytes a record (measured on chapter 26's sample written by a library on the laptop; the size of the Parquet Athena writes was not confirmed), so a day is 6,384,400 bytes",
+          "That is under 10 MB, so every query is billed the 10 MB minimum"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "athena.scanned",
+          "quantity": 0.009537,
+          "basis": "1,000 queries x 10 MB minimum"
+        }
+      ]
+    },
+    {
+      "id": "athena-capacity-minimum",
+      "chapter": "49",
+      "title": {
+        "ja": "Athena: 最小のキャパシティ予約（4 DPU）を 1 か月持ち続ける",
+        "en": "Athena: the smallest capacity reservation (4 DPUs) held for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "この章のスタックは作らない。比較のためだけの計算",
+          "4 DPU を 730 時間。クエリを 1 回も実行しなくても同じ金額",
+          "予約したキャパシティで実行するクエリが、読んだ量でも課金されるかどうかは、この章では確かめていない"
+        ],
+        "en": [
+          "Not created by this chapter's stack: computed for comparison only",
+          "4 DPUs for 730 hours. The same amount whether or not a query runs",
+          "Whether queries that run on reserved capacity are also billed by data scanned was not checked for this chapter"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "athena.capacity.dpu-hour",
+          "quantity": 2920,
+          "basis": "4 DPUs x 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "49",
+        "command": "vp test run examples/49-athena",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "70 件。文の本文が利用者の値で変わらないこと、パラメーターの引用、DDL と MERGE に入れる値の検査、開始の重複・待ちの上限・取り消し・ページ送りを自作の API の代役で、読む量と料金の計算、ログのテーブル定義の穴埋め、スタックのアサーション。SQL は 1 つも実行していない",
+          "en": "70 tests: statement text that does not change with a user's value, quoting of parameters, checks on values placed into DDL and MERGE, a duplicated start, the bounded wait, stopping, and paging against the chapter's own stand-in for the API, the scan and cost arithmetic, filling in the documented log tables, and stack assertions. No SQL was executed"
+        }
+      },
+      {
+        "scope": "49",
+        "command": "tsc --noEmit -p examples/49-athena",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "49",
+        "command": "vp run athena:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "synth。-c lakeBucketName=<名前> を付けた場合も。AWS には問い合わせない",
+          "en": "Synth, also with -c lakeBucketName=<name>. Makes no call to AWS"
+        }
+      },
+      {
+        "scope": "49",
+        "command": "vp run athena:sql / vp run athena:logs:ddl",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "10 個の文と 4 種類のログのテーブル定義を出力。文字列を出すだけで、何も実行しない",
+          "en": "Printed the ten statements and the four log table definitions. They only print text; nothing is run"
+        }
+      },
+      {
+        "scope": "49",
+        "command": "vp run athena:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。ワークグループ、保存したクエリ、ロール、バケットのどれも実際には作っていない",
+          "en": "Not run. Neither the workgroup, the saved queries, the role nor the bucket was created"
+        }
+      },
+      {
+        "scope": "49",
+        "command": "vp run athena:run",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。この章の SQL を Athena が受け付けるかは確かめていない",
+          "en": "Not run. Whether Athena accepts this chapter's SQL was not checked"
+        }
+      },
+      {
+        "scope": "49",
+        "command": "vp run athena:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "49",
+        "command": "vp run athena:empty / athena:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "athena-sql-not-executed",
+        "summary": {
+          "ja": "この章の SQL（パラメーター付きの SELECT、CREATE EXTERNAL TABLE、INSERT INTO、CTAS、UNLOAD、Iceberg の CREATE TABLE、MERGE INTO、OPTIMIZE、VACUUM、FOR TIMESTAMP AS OF）を Athena で 1 つも実行していない。構文はドキュメントの書式に合わせただけ。パラメーターにした dt の条件でパーティションが絞られるか、GROUP BY に全列を並べる重複の除き方が通るかも未確認。",
+          "en": "None of this chapter's SQL (the parameterized SELECT, CREATE EXTERNAL TABLE, INSERT INTO, CTAS, UNLOAD, the Iceberg CREATE TABLE, MERGE INTO, OPTIMIZE, VACUUM, FOR TIMESTAMP AS OF) was executed in Athena. The syntax follows the documented forms and nothing more. Also unconfirmed: that a dt condition given as parameters prunes partitions, and that removing duplicates by grouping on every column is accepted."
+        },
+        "resume": {
+          "ja": "26章のスタックと、この章のスタックを -c lakeBucketName=<26章の LakeBucketName> でデプロイし、26章の analytics:smoke の後に vp run athena:run --name route、create-compact、compact、create-iceberg、merge、merge（2 回目）、yesterday、optimize、vacuum、scratch、unload の順で実行する。それぞれ SUCCEEDED になること、route の scanned がその日のオブジェクトの合計以下であること、merge の 2 回目で行が増えないことを確かめる。",
+          "en": "Deploy chapter 26's stack and this one with -c lakeBucketName=<chapter 26's LakeBucketName>, run chapter 26's analytics:smoke, then vp run athena:run --name route, create-compact, compact, create-iceberg, merge, merge again, yesterday, optimize, vacuum, scratch, unload in that order. Check that each reaches SUCCEEDED, that route scans no more than the day's objects, and that the second merge adds no rows."
+        }
+      },
+      {
+        "id": "athena-execution-parameter-parsing",
+        "summary": {
+          "ja": "実行パラメーターの値を Athena がどう解釈するかを確かめていない。ドキュメントは、文字列として扱わせるには一重引用符で囲むことと、値に CAST(...) を書けることを述べているので、値は SQL のリテラルや式として読まれると考え、文字列は引用符を二重にして囲んでいる。引用符で囲んだ値が常に 1 つの文字列として扱われるかは未確認。",
+          "en": "Not checked: how Athena interprets an execution parameter's value. The documentation says a string must be enclosed in single quotes and that a value may be CAST(...), so the value is taken to be read as a SQL literal or expression, and text is quoted with its quotes doubled. That a quoted value is always treated as one string was not confirmed."
+        },
+        "resume": {
+          "ja": "デプロイ後、Athena のコンソールか CLI で SELECT ? AS v を実行し、実行パラメーターに 'O''Reilly'、'a'' OR ''1''=''1'、引用符なしの abc を順に渡して、返る値とエラーを見る。",
+          "en": "After deploying, run SELECT ? AS v in the console or with the CLI, passing as the execution parameter 'O''Reilly', then 'a'' OR ''1''=''1', then abc without quotes, and look at the value or the error that comes back."
+        }
+      },
+      {
+        "id": "athena-enforced-workgroup-writes",
+        "summary": {
+          "ja": "結果の保存先を強制するワークグループで、location を指定した Iceberg の CREATE TABLE、TO を指定した UNLOAD、LOCATION を指定した CREATE EXTERNAL TABLE が通るかを確かめていない。ドキュメントが失敗すると明記しているのは、external_location を指定した CTAS だけ。CTAS のテーブルが results/tables/<クエリ ID>/ に置かれることも、ドキュメントの記述のまま。",
+          "en": "Not checked: that a workgroup which enforces its result location accepts an Iceberg CREATE TABLE with a location, an UNLOAD with TO, and a CREATE EXTERNAL TABLE with LOCATION. The documentation says only that a CTAS with external_location fails there. That a CTAS table lands under results/tables/<query ID>/ is also as documented, not as observed."
+        },
+        "resume": {
+          "ja": "デプロイ後、vp run athena:run --name create-iceberg、--name unload、--name scratch を実行する。scratch の後で aws s3 ls s3://<OutputBucketName>/results/tables/ を見て、ファイルの場所を確かめる。",
+          "en": "After deploying, run vp run athena:run --name create-iceberg, --name unload and --name scratch. After scratch, look at aws s3 ls s3://<OutputBucketName>/results/tables/ to see where the files went."
+        }
+      },
+      {
+        "id": "athena-analyst-role-sufficient",
+        "summary": {
+          "ja": "アナリストのロールの権限で、この章の文がすべて実行できるかを確かめていない。Glue の操作は、ドキュメントの例（GetDatabase、GetTable、GetTables、GetPartitions、CreateTable）に、INSERT INTO と Iceberg のコミットに要ると考えた CreatePartition、BatchCreatePartition、UpdateTable、DeleteTable を足したもの。足りない操作があれば AccessDenied になる。",
+          "en": "Not checked: that the analyst role can run every statement in this chapter. Its Glue actions are those of the documented examples (GetDatabase, GetTable, GetTables, GetPartitions, CreateTable) plus CreatePartition, BatchCreatePartition, UpdateTable and DeleteTable, which INSERT INTO and Iceberg commits are thought to need. A missing action would show as AccessDenied."
+        },
+        "resume": {
+          "ja": "AnalystRoleArn のロールを引き受けて（aws sts assume-role）、athena-sql-not-executed の手順を実行する。AccessDenied が出たら、メッセージの操作名を infra/lib/athena-stack.ts の該当するステートメントに足す。",
+          "en": "Assume the role in AnalystRoleArn (aws sts assume-role) and run the steps of athena-sql-not-executed. On AccessDenied, add the action named in the message to the matching statement in infra/lib/athena-stack.ts."
+        }
+      },
+      {
+        "id": "athena-result-header-row",
+        "summary": {
+          "ja": "GetQueryResults の最初の行が列の名前であることを、API リファレンスでは確認できなかった。クライアントは、最初のページの最初の行が列の名前と完全に一致するときだけ取り除く。1 行だけの結果がたまたま列の名前と同じ値だと、その行を落とす。",
+          "en": "The API reference does not say that the first row GetQueryResults returns holds the column names. The client drops the first row of the first page only when it equals the column names exactly. A one-row result whose values happen to equal its column names would lose that row."
+        },
+        "resume": {
+          "ja": "デプロイ後、vp run athena:run --name route を実行し、表示される行と、コンソールの結果を比べる。",
+          "en": "After deploying, run vp run athena:run --name route and compare the rows it prints with the result in the console."
+        }
+      },
+      {
+        "id": "athena-limit-and-cutoff",
+        "summary": {
+          "ja": "LIMIT だけのクエリが途中で読むのをやめるか、ワークグループの上限を超えたクエリがどれだけ読んでから取り消されるかを確かめていない。料金のシナリオは、並べ替えや集計のあるクエリは全体を読み、取り消されたクエリは上限ちょうどを読んだものとして計算している。",
+          "en": "Not checked: whether a query with only a LIMIT stops reading early, and how much a query reads past the workgroup's limit before it is cancelled. The pricing scenarios take a query that sorts or aggregates to read everything, and a cancelled query to have read exactly the limit."
+        },
+        "resume": {
+          "ja": "記録が数日ぶんたまった後、SELECT * FROM aih_analytics.requests LIMIT 10 と、ORDER BY duration_ms DESC LIMIT 10 を付けたものを実行して、scanned を比べる。上限は、--from を 2026-10-01 にした route のクエリが取り消されたときの scanned で見る。",
+          "en": "Once a few days of records exist, run SELECT * FROM aih_analytics.requests LIMIT 10 and the same with ORDER BY duration_ms DESC LIMIT 10, and compare the bytes scanned. For the limit, look at the bytes scanned when the route query with --from 2026-10-01 is cancelled."
+        }
+      },
+      {
+        "id": "athena-cdkd-cloud-control",
+        "summary": {
+          "ja": "cdkd 0.296.28 が、AWS::Athena::WorkGroup（engineVersion と expectedBucketOwner を含む）と AWS::Athena::NamedQuery を Cloud Control API 経由で作成・更新・削除できるかを確かめていない。",
+          "en": "Not checked: that cdkd 0.296.28 creates, updates and deletes AWS::Athena::WorkGroup (with engineVersion and expectedBucketOwner) and AWS::Athena::NamedQuery through Cloud Control API."
+        },
+        "resume": {
+          "ja": "vp run athena:infra:deploy の出力で、リソースごとの経路と結果を確かめる。その後 vp run athena:infra:drift、vp run athena:empty --yes、vp run athena:infra:destroy まで実行する。",
+          "en": "Read the route and result per resource in the output of vp run athena:infra:deploy, then run vp run athena:infra:drift, vp run athena:empty --yes and vp run athena:infra:destroy."
+        }
+      },
+      {
+        "id": "athena-log-tables-not-created",
+        "summary": {
+          "ja": "CloudTrail、ALB、CloudFront、S3 のアクセスログのテーブル定義は、ドキュメントの文をそのまま保存したもので、どれも Athena で作っていない。この本のスタックは、これらのログを S3 に配送していない。",
+          "en": "The table definitions for CloudTrail, ALB, CloudFront and S3 access logs are the documentation's statements stored as they are; none was created in Athena. None of the book's stacks delivers these logs to S3."
+        },
+        "resume": {
+          "ja": "ログの配送を有効にしたバケットがあれば、vp run athena:logs:ddl --kind <種類> --bucket <名前> --prefix <フォルダー> の出力を Athena のコンソールで実行し、SELECT * … LIMIT 10 で列が読めることを確かめる。",
+          "en": "With a bucket that receives one of these logs, run the output of vp run athena:logs:ddl --kind <kind> --bucket <name> --prefix <folder> in the Athena console and check with SELECT * … LIMIT 10 that the columns are read."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 49: athena ---------------------------------------------\n      // Prints one of the chapter's statements and its parameters. Runs nothing.\n      \"athena:sql\": fresh(\"node scripts/query.ts\", { cwd: \"examples/49-athena\" }),\n      // Prints the CREATE TABLE statement AWS documents for a log, filled in. Runs nothing.\n      \"athena:logs:ddl\": fresh(\"node scripts/log-table.ts\", { cwd: \"examples/49-athena\" }),\n      ...infra(\"athena\", \"examples/49-athena\", \"AihAthena\"),\n      // BILLED by the bytes Athena scans, 10 MB at least per query. Writes to S3.\n      \"athena:run\": live(\"node --env-file-if-exists=../../.env scripts/query.ts --run\", { cwd: \"examples/49-athena\" }),\n      // Counts the objects in the output bucket; with --yes, deletes them all.\n      \"athena:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty-output.ts\", { cwd: \"examples/49-athena\" }),",
+    "synth": ["athena:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/49-athena"]
+  }
+}

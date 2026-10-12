@@ -1,0 +1,1239 @@
+{
+  "chapterId": "38",
+  "manifest": {
+    "id": "38",
+    "slug": "data-movement",
+    "title": {
+      "ja": "Data Movement: DataSync、Data Pipeline のいま、データを運ぶ手段の選び方",
+      "en": "Data Movement: DataSync, Data Pipeline Today, and Choosing How to Move Data"
+    },
+    "prerequisites": ["07", "16", "22"],
+    "services": [
+      "AWS DataSync",
+      "AWS Data Pipeline",
+      "S3",
+      "EventBridge",
+      "Lambda",
+      "SNS",
+      "CloudWatch Logs"
+    ],
+    "samplePath": "examples/38-data-movement",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "dm-datapipeline-what",
+      "dm-datapipeline-migration",
+      "dm-datapipeline-blog",
+      "dm-datapipeline-concepts",
+      "dm-datasync-what",
+      "dm-datasync-how",
+      "dm-datasync-task-mode",
+      "dm-datasync-locations",
+      "dm-datasync-agent",
+      "dm-datasync-s3-location",
+      "dm-datasync-cross-account",
+      "dm-datasync-options",
+      "dm-datasync-metadata-options",
+      "dm-datasync-metadata",
+      "dm-datasync-verify",
+      "dm-datasync-filters",
+      "dm-datasync-manifest",
+      "dm-datasync-schedule",
+      "dm-datasync-run",
+      "dm-datasync-reports",
+      "dm-datasync-logging",
+      "dm-datasync-events",
+      "dm-eventbridge-datasync",
+      "dm-datasync-event-sample",
+      "dm-datasync-quotas",
+      "dm-datasync-deputy",
+      "dm-datasync-other-cloud",
+      "dm-datasync-pricing",
+      "dm-price-list-datasync",
+      "dm-price-list-s3-osaka",
+      "dm-price-list-data-transfer",
+      "dm-datasync-endpoints",
+      "dm-cfn-datasync-task",
+      "dm-cloud-control-supported",
+      "dm-cdkd-package",
+      "dm-s3-replication",
+      "dm-s3-replication-requirements",
+      "dm-s3-api-object",
+      "dm-lambda-async-retries",
+      "dm-s3-consistency",
+      "dm-s3-batch-operations",
+      "dm-aws-cli-s3-sync",
+      "dm-transfer-family",
+      "dm-snowball-edge",
+      "dm-dms",
+      "dm-firehose",
+      "dm-cloudflare-super-slurper",
+      "dm-cloudflare-sippy",
+      "dm-cloudflare-r2-pricing"
+    ]
+  },
+  "sources": [
+    {
+      "id": "dm-datapipeline-what",
+      "url": "https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/what-is-datapipeline.html",
+      "title": "What is AWS Data Pipeline?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Data Pipeline is no longer available to new customers; existing customers can continue to use the service as normal",
+        "The service is in maintenance mode and no new features or region expansions are planned",
+        "A pipeline definition specifies the business logic, a pipeline schedules and runs tasks by creating Amazon EC2 instances, and Task Runner polls for tasks and performs them",
+        "Tasks can be dependent on the successful completion of previous tasks"
+      ]
+    },
+    {
+      "id": "dm-datapipeline-migration",
+      "url": "https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/migration.html",
+      "title": "Migrating workloads from AWS Data Pipeline",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Typical Data Pipeline use cases can be migrated to AWS Glue, AWS Step Functions, or Amazon MWAA",
+        "Step Functions is recommended for a serverless orchestration service that charges per task execution and orchestrates other AWS services",
+        "The concept table maps pipelines to workflows, activities to states and tasks, attempts to catchers and retriers, and the pipeline schedule to EventBridge Scheduler",
+        "Glue is recommended when the pipeline came from a console template such as exporting a DynamoDB table to S3; MWAA when workflows are written in Python on Apache Airflow"
+      ]
+    },
+    {
+      "id": "dm-datapipeline-blog",
+      "url": "https://aws.amazon.com/blogs/big-data/migrate-workloads-from-aws-data-pipeline/",
+      "title": "Migrate workloads from AWS Data Pipeline (AWS Big Data Blog)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "New customer access to AWS Data Pipeline was closed effective July 25, 2024",
+        "Existing customers can continue to use the service as normal"
+      ],
+      "note": "Read through a fetch tool that returned excerpts. No end-of-support date is stated on this page or on the two guide pages."
+    },
+    {
+      "id": "dm-datapipeline-concepts",
+      "url": "https://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/dp-how-pipeline-definition.html",
+      "title": "AWS Data Pipeline: Pipeline Definition, Activities, Data Nodes, Preconditions, Resources",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A pipeline definition contains data sources, activities, their schedule, the resources that run them, preconditions, and ways to alert",
+        "Activity types include CopyActivity, EmrActivity, HiveActivity, ShellCommandActivity, and SqlActivity",
+        "Data nodes include S3DataNode, DynamoDBDataNode, SqlDataNode, and RedshiftDataNode; resources are Ec2Resource and EmrCluster",
+        "A precondition must be true before an activity can run, for example S3KeyExists"
+      ],
+      "note": "Also read: dp-concepts-activities.html, dp-concepts-datanodes.html, dp-concepts-preconditions.html, dp-concepts-resources.html in the same guide."
+    },
+    {
+      "id": "dm-datasync-what",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/what-is-datasync.html",
+      "title": "What is AWS DataSync?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DataSync is a file transfer service for file or object data to, from, and between AWS storage services",
+        "The other clouds it lists include Google Cloud Storage, Azure Blob Storage, and Cloudflare R2 Storage",
+        "DataSync includes encryption in transit and data integrity validation"
+      ]
+    },
+    {
+      "id": "dm-datasync-how",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/how-datasync-transfer-works.html",
+      "title": "How AWS DataSync transfers work",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An agent is a VM appliance; a location is where data is copied from or to; a task describes a transfer; a task execution is one run of it",
+        "By default DataSync prepares a transfer by scanning both locations to find differences; with transfer-all it does not compare",
+        "DataSync always performs integrity checks during a transfer and can verify again at the end",
+        "A file written to during a transfer can be detected at verification, and getting its latest version needs another run",
+        "Transfers between AWS storage services in one account need no agent and stay on the AWS network"
+      ]
+    },
+    {
+      "id": "dm-datasync-task-mode",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/choosing-task-mode.html",
+      "title": "Choosing a task mode for your data transfer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Enhanced mode lists, prepares, transfers, and verifies in parallel and works with virtually unlimited numbers of objects; Basic mode does these sequentially and is subject to quotas",
+        "Enhanced mode verifies only transferred data; Basic mode verifies all data by default",
+        "Enhanced mode logs are structured JSON; Basic mode logs are unstructured",
+        "The task mode cannot be changed after the task is created",
+        "Creating an Enhanced mode task needs iam:CreateServiceLinkedRole"
+      ]
+    },
+    {
+      "id": "dm-datasync-locations",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/working-with-locations.html",
+      "title": "Where can I transfer my data with AWS DataSync?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 to S3 needs no agent in Basic and Enhanced mode, within one account and across accounts",
+        "Other cloud storage to S3 needs an agent only in Basic mode; NFS and SMB always need an agent",
+        "Between AWS storage services in different Regions, one of the two locations must be in the Region where DataSync is used",
+        "Data transferred between Regions is billed as data transfer out from the source Region to the destination Region"
+      ]
+    },
+    {
+      "id": "dm-datasync-agent",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/do-i-need-datasync-agent.html",
+      "title": "Do I need an AWS DataSync agent?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An agent is needed between AWS storage and on-premises storage, and between EFS or FSx and other clouds",
+        "No agent is needed between AWS storage services in the same account, or between S3 and object storage in other clouds"
+      ]
+    },
+    {
+      "id": "dm-datasync-s3-location",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/create-s3-location.html",
+      "title": "Configuring AWS DataSync transfers with Amazon S3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The IAM permissions a source location role and a destination location role need, action by action",
+        "New objects get the storage class of the destination location; existing objects keep theirs unless the task transfers all data",
+        "In a versioned bucket DataSync creates a new version when the source object is modified, and only the latest version of a source object is transferred",
+        "DataSync makes LIST, HEAD, GET, PUT, and COPY requests on every run, HEAD requests even when nothing moves",
+        "Standard-IA, One Zone-IA, and Glacier Instant Retrieval can charge for overwriting, deleting, or retrieving, and objects under 128 KB are stored in S3 Standard instead; archived objects must be restored before DataSync can read them",
+        "A bucket encrypted with SSE-C cannot be accessed; SSE-KMS needs the role in the key policy"
+      ]
+    },
+    {
+      "id": "dm-datasync-cross-account",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/tutorial_s3-s3-cross-account-transfer.html",
+      "title": "Tutorial: Transferring data between Amazon S3 buckets across AWS accounts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The DataSync role, both locations, and the task are created in the source account",
+        "The destination bucket's policy names that role and allows ten S3 actions on the bucket and its objects",
+        "ACLs are disabled on the destination bucket so that its account owns the objects",
+        "A cross-account location cannot be created in the console; create-location-s3 is run with the destination bucket's Region",
+        "To avoid a network connection error the task is created in the same Region as the destination location; with Basic mode across accounts and Regions the alternative is an Enhanced mode task"
+      ]
+    },
+    {
+      "id": "dm-datasync-options",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/API_Options.html",
+      "title": "DataSync API: Options",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "TransferMode CHANGED (default) or ALL; OverwriteMode ALWAYS (default) or NEVER; PreserveDeletedFiles PRESERVE (default) or REMOVE",
+        "VerifyMode ONLY_FILES_TRANSFERRED, POINT_IN_TIME_CONSISTENT (default for Basic mode, not supported in Enhanced mode), or NONE",
+        "ObjectTags PRESERVE (default) or NONE; LogLevel OFF, BASIC, or TRANSFER",
+        "OverwriteMode NEVER protects against overwriting changes made in the destination"
+      ]
+    },
+    {
+      "id": "dm-datasync-metadata-options",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/configure-metadata.html",
+      "title": "Configuring how to handle files, objects, and metadata",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A task cannot both delete data in the destination and transfer all data, because transfer-all does not scan the destination",
+        "Deleting or overwriting objects can incur minimum storage duration, retrieval, or early deletion charges in some storage classes"
+      ]
+    },
+    {
+      "id": "dm-datasync-metadata",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/metadata-copied.html",
+      "title": "Understanding how DataSync handles file and object metadata",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Between object storage and Amazon S3, DataSync copies user-defined metadata, object tags, and Content-Disposition, Content-Encoding, Content-Language, and Content-Type",
+        "DataSync does not copy object ACLs, prior object versions, or the Last-Modified key"
+      ],
+      "note": "The table row is headed 'Object storage, Amazon S3'. The page has no row that names S3 to S3 separately."
+    },
+    {
+      "id": "dm-datasync-verify",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/configure-data-verification-options.html",
+      "title": "Configuring how AWS DataSync verifies data integrity",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "During a transfer DataSync uses checksum verification; verification at the end is an additional, configurable step",
+        "Verify-all checks the entire source and destination at the end and cannot be used with Enhanced mode or with Glacier Flexible Retrieval and Deep Archive destinations"
+      ]
+    },
+    {
+      "id": "dm-datasync-filters",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/filtering.html",
+      "title": "Transferring specific files, objects, and folders by using filters",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A filter is patterns joined by a pipe; filters are case sensitive and relative to the source location path",
+        "/dir and /dir/ both match the folder and its content, and a slash in an S3 key is treated as a folder",
+        "Include filters support the wildcard only as the rightmost character of a pattern",
+        "A backslash escapes *, | and \\"
+      ],
+      "note": "The page does not say whether a destination object that a filter excludes is deleted when deleted files are removed."
+    },
+    {
+      "id": "dm-datasync-manifest",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/transferring-with-manifest.html",
+      "title": "Transferring specific files or objects by using a manifest",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A manifest is a CSV file listing the exact files or objects to transfer, optionally with an S3 version ID",
+        "A manifest cannot be combined with filters, and DataSync deletes nothing in the destination when one is used",
+        "The maximum manifest size with Enhanced mode is 20 GB"
+      ]
+    },
+    {
+      "id": "dm-datasync-schedule",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/task-scheduling.html",
+      "title": "Scheduling when your AWS DataSync task runs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A task schedule is a cron or rate expression with a minimum interval of one hour",
+        "DataSync may disable a schedule when the task fails repeatedly with the same error; the schedule's Status, DisabledBy, and DisabledReason show it"
+      ]
+    },
+    {
+      "id": "dm-datasync-run",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/run-task.html",
+      "title": "Starting a task to transfer your data",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Task execution statuses are QUEUED, LAUNCHING, LAUNCHED, PREPARING, TRANSFERRING, VERIFYING, SUCCESS, CANCELLING, and ERROR",
+        "start-task-execution starts a run and can override options for that run"
+      ]
+    },
+    {
+      "id": "dm-datasync-reports",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/task-reports.html",
+      "title": "Monitoring your data transfers with task reports",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Task reports are JSON files about what DataSync attempted to transfer, skip, verify, and delete, as a summary or with per-object lists",
+        "A task report is written to an S3 bucket named in the task report configuration"
+      ],
+      "note": "The destination is read from API_TaskReportConfig.html."
+    },
+    {
+      "id": "dm-datasync-logging",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/configure-logging.html",
+      "title": "Monitoring data transfers with Amazon CloudWatch Logs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An Enhanced mode task logs to the log group /aws/datasync, created through a service-linked role",
+        "A Basic mode task logs to a group named by CloudWatchLogGroupArn, which needs a CloudWatch Logs resource policy for datasync.amazonaws.com with CreateLogStream and PutLogEvents"
+      ]
+    },
+    {
+      "id": "dm-datasync-events",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/events.html",
+      "title": "Monitoring events by using Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DataSync emits events for agent, location, task, and task execution state changes on a best-effort basis",
+        "Task execution states include Success and Error"
+      ]
+    },
+    {
+      "id": "dm-eventbridge-datasync",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/ref/events-ref-datasync.html",
+      "title": "EventBridge events reference: AWS DataSync",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The source is aws.datasync and the detail types include DataSync Task Execution State Change",
+        "Delivery is best effort"
+      ]
+    },
+    {
+      "id": "dm-datasync-event-sample",
+      "url": "https://repost.aws/knowledge-center/datasync-task-execution-notification",
+      "title": "AWS Knowledge Center: email notifications for DataSync task execution status",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A sample event carries the task execution ARN in resources and detail.State with the value SUCCESS",
+        "An event pattern that matches detail.State SUCCESS or ERROR, optionally with a prefix match on the execution ARN in resources"
+      ],
+      "note": "Marked AWS OFFICIAL. The sample's ARN is written arn:aws:sync:...; the patterns on the same page use arn:aws:datasync:.... The spellings of other states in detail.State are not shown."
+    },
+    {
+      "id": "dm-datasync-quotas",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/datasync-limits.html",
+      "title": "AWS DataSync quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "100 tasks per account and Region (adjustable)",
+        "Basic mode between AWS storage services: 25 million files, objects, and directories per execution, with S3 prefixes counted as directories; 50 million with on-premises or other clouds",
+        "Enhanced mode: virtually unlimited objects per execution, 120 concurrent executions",
+        "Filters up to 102,400 characters; 50 queued executions per task; execution history kept 30 days; S3 object names up to 1,024 UTF-8 characters"
+      ]
+    },
+    {
+      "id": "dm-datasync-deputy",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/cross-service-confused-deputy-prevention.html",
+      "title": "Cross-service confused deputy prevention (DataSync)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A trust policy for datasync.amazonaws.com with aws:SourceAccount and an aws:SourceArn of the form arn:aws:datasync:<region>:<account>:*"
+      ]
+    },
+    {
+      "id": "dm-datasync-other-cloud",
+      "url": "https://docs.aws.amazon.com/datasync/latest/userguide/creating-other-cloud-object-location.html",
+      "title": "Configuring transfers with other cloud object storage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Cloudflare R2 is reached at <account-id>.r2.cloudflarestorage.com as an object storage location",
+        "Transfers between other clouds' object storage and S3 in Enhanced mode need no agent",
+        "Copying object tags can fail with providers that do not support them"
+      ]
+    },
+    {
+      "id": "dm-datasync-pricing",
+      "url": "https://aws.amazon.com/datasync/pricing/",
+      "title": "AWS DataSync pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A flat per-gigabyte fee for data transferred; Enhanced mode tasks are also charged a fee per task execution",
+        "There are no upfront costs and no minimum charges",
+        "S3 LIST, HEAD, GET, PUT, and COPY requests, data transfer between Regions, and CloudWatch Logs are charged at their standard rates"
+      ],
+      "note": "Read through a fetch tool that returned excerpts. The page does not say whether an execution that copies nothing, fails, or is cancelled is charged the per-execution fee."
+    },
+    {
+      "id": "dm-price-list-datasync",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataSync/current/ap-northeast-3/index.json",
+      "title": "AWS Price List: AWS DataSync, ap-northeast-3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN3-Transferred-Bytes: USD 0.0125 per GB copied",
+        "APN3-Transferred-Bytes-Enhanced: USD 0.015 per GB copied in Enhanced mode",
+        "APN3-Task-Executions-Enhanced: USD 0.55 per task execution in Enhanced mode"
+      ],
+      "note": "Offer publication date 2026-09-11T12:45:38Z. The ap-northeast-1 file has the same three prices."
+    },
+    {
+      "id": "dm-price-list-s3-osaka",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-3/index.json",
+      "title": "AWS Price List: Amazon S3, ap-northeast-3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN3-Requests-Tier1: USD 0.0047 per 1,000 PUT, COPY, POST, or LIST requests",
+        "APN3-Requests-Tier2: USD 0.0037 per 10,000 GET and all other requests",
+        "APN3-TimedStorage-ByteHrs: USD 0.025 per GB-month for the first 50 TB"
+      ],
+      "note": "Offer publication date 2026-09-28T23:04:16Z."
+    },
+    {
+      "id": "dm-price-list-data-transfer",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Data Transfer, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-APN3-AWS-Out-Bytes: USD 0.09 per GB from Asia Pacific (Tokyo) to Asia Pacific (Osaka)",
+        "APN1-DataTransfer-Out-Bytes: USD 0.114 per GB to the internet for the first 10 TB a month"
+      ],
+      "note": "Offer publication date 2026-09-16T13:22:08Z."
+    },
+    {
+      "id": "dm-datasync-endpoints",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/datasync.html",
+      "title": "AWS DataSync endpoints and quotas",
+      "checkedAt": "2026-10-13",
+      "supports": ["DataSync has endpoints in ap-northeast-1 (Tokyo) and ap-northeast-3 (Osaka)"]
+    },
+    {
+      "id": "dm-cfn-datasync-task",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-datasync-task.html",
+      "title": "AWS::DataSync::Task and AWS::DataSync::LocationS3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The task's properties include SourceLocationArn, DestinationLocationArn, TaskMode (BASIC or ENHANCED, replacement on change), Options, Schedule, Includes, Excludes, and CloudWatchLogGroupArn",
+        "LocationS3 takes S3BucketArn, S3Config.BucketAccessRoleArn, S3StorageClass, and Subdirectory"
+      ],
+      "note": "Also read: aws-resource-datasync-locations3.html."
+    },
+    {
+      "id": "dm-cloud-control-supported",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::DataSync::LocationS3, AWS::DataSync::Task, and AWS::Logs::ResourcePolicy support create, read, update, delete, and list"
+      ]
+    },
+    {
+      "id": "dm-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: bundled dist (provider registry)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::Logs::LogGroup, AWS::Events::Rule, AWS::SNS::Topic, and AWS::SNS::TopicPolicy",
+        "No provider is registered for the AWS::DataSync types or for AWS::Logs::ResourcePolicy; of them only AWS::DataSync::TaskExecution is in the list of types Cloud Control cannot provision",
+        "A non-empty bucket is not deleted unless it opted into automatic emptying"
+      ],
+      "note": "Read from the installed package's dist/program and dist/deploy-engine files. Nothing was run against AWS."
+    },
+    {
+      "id": "dm-s3-replication",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html",
+      "title": "Replicating objects within and across Regions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Live replication copies new and updated objects automatically and asynchronously, and does not replicate objects that existed before it was set up",
+        "S3 Batch Replication replicates existing objects on demand",
+        "S3 Replication Time Control replicates 99.99 percent of new objects within 15 minutes"
+      ]
+    },
+    {
+      "id": "dm-s3-replication-requirements",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-requirements.html",
+      "title": "Requirements and considerations for replication",
+      "checkedAt": "2026-10-13",
+      "supports": ["Both source and destination buckets must have versioning enabled"]
+    },
+    {
+      "id": "dm-s3-api-object",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html",
+      "title": "Amazon S3 API: Object (ETag)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An ETag is an MD5 digest of the object data only for objects created by PUT, POST, or Copy with SSE-S3 or no encryption; for multipart uploads it is not"
+      ]
+    },
+    {
+      "id": "dm-lambda-async-retries",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-error-handling.html",
+      "title": "How Lambda handles errors and retries with asynchronous invocation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When a function invoked asynchronously returns an error, Lambda by default runs it two more times",
+        "EventBridge event buses and rules invoke Lambda asynchronously"
+      ],
+      "note": "The second claim is from lambda-services.html in the same guide."
+    },
+    {
+      "id": "dm-s3-consistency",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html",
+      "title": "What is Amazon S3? (data consistency model)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Updates to a single key are atomic: a concurrent GET returns the old data or the new data, never partial or corrupt data",
+        "There is no way to make atomic updates across keys"
+      ]
+    },
+    {
+      "id": "dm-s3-batch-operations",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/batch-ops.html",
+      "title": "Performing object operations in bulk with Batch Operations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A job performs one operation, such as copy, on every object in a manifest, which can come from an S3 Inventory report",
+        "S3 tracks progress and stores a completion report"
+      ]
+    },
+    {
+      "id": "dm-aws-cli-s3-sync",
+      "url": "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/s3/sync.html",
+      "title": "AWS CLI: s3 sync",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "sync recursively copies new and updated files from the source to the destination, between a local directory and S3 or between two S3 URIs",
+        "--delete removes files that exist in the destination but not in the source, except those excluded by filters"
+      ]
+    },
+    {
+      "id": "dm-transfer-family",
+      "url": "https://docs.aws.amazon.com/transfer/latest/userguide/what-is-aws-transfer-family.html",
+      "title": "What is AWS Transfer Family?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Transfer Family offers managed SFTP, AS2, FTPS, FTP, and browser-based transfers into and out of S3 and EFS"
+      ]
+    },
+    {
+      "id": "dm-snowball-edge",
+      "url": "https://docs.aws.amazon.com/snowball/latest/developer-guide/whatisedge.html",
+      "title": "What is Snowball Edge?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Snowball Edge is no longer available to new customers, who are pointed to DataSync for online transfers and AWS Data Transfer Terminal for physical ones"
+      ],
+      "note": "Only the notice on this page was read. Other Snow family devices and Data Transfer Terminal's own pages were not checked."
+    },
+    {
+      "id": "dm-dms",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/Welcome.html",
+      "title": "What is AWS Database Migration Service?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DMS migrates relational databases, data warehouses, and NoSQL databases, as a one-time migration or by replicating ongoing changes"
+      ]
+    },
+    {
+      "id": "dm-firehose",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html",
+      "title": "What is Amazon Data Firehose?",
+      "checkedAt": "2026-10-13",
+      "supports": ["Firehose delivers real-time streaming data to destinations such as Amazon S3"]
+    },
+    {
+      "id": "dm-cloudflare-super-slurper",
+      "url": "https://developers.cloudflare.com/r2/data-migration/super-slurper/",
+      "title": "Cloudflare R2: Super Slurper",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Super Slurper copies objects from other cloud providers, including Amazon S3, into an R2 bucket as a one-off bulk job",
+        "Objects in Glacier tiers other than Instant Retrieval are skipped, and objects over 1 TB are skipped",
+        "ETags may differ after migration"
+      ],
+      "note": "Read through a fetch tool that returned excerpts."
+    },
+    {
+      "id": "dm-cloudflare-sippy",
+      "url": "https://developers.cloudflare.com/r2/data-migration/sippy/",
+      "title": "Cloudflare R2: Sippy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Sippy copies an object from the source bucket to R2 the first time it is requested, while returning it to the client",
+        "Later modifications to the object in the source are not reflected in R2"
+      ],
+      "note": "Read through a fetch tool that returned excerpts."
+    },
+    {
+      "id": "dm-cloudflare-r2-pricing",
+      "url": "https://developers.cloudflare.com/r2/pricing/",
+      "title": "Cloudflare R2: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Egress (data transfer to the internet) is free",
+        "Standard storage is USD 0.015 per GB-month; Class A operations USD 4.50 and Class B USD 0.36 per million",
+        "Super Slurper is charged only for the Class A operations it makes on the R2 bucket"
+      ],
+      "note": "Read through a fetch tool that returned excerpts."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "datasync-location",
+      "ja": "ロケーション（DataSync）",
+      "en": "location (DataSync)",
+      "firstUse": "38",
+      "definition": {
+        "ja": "DataSync がコピーの元か先として扱う置き場所の登録。S3 なら、バケットと、DataSync がそのバケットに届くためのロールの組。作るだけでは何も動かない。",
+        "en": "A storage place registered with DataSync as somewhere to copy from or to. For S3 it is a bucket together with the role DataSync uses to reach it. Creating one runs nothing."
+      }
+    },
+    {
+      "id": "datasync-task",
+      "ja": "タスク（DataSync）",
+      "en": "task (DataSync)",
+      "firstUse": "38",
+      "definition": {
+        "ja": "ソースとデスティネーションのロケーション、コピーのしかたの設定、スケジュールをまとめたもの。ECS のタスクとは別のもの。",
+        "en": "A source location, a destination location, the options for how to copy, and a schedule, as one resource. Not related to an ECS task."
+      }
+    },
+    {
+      "id": "datasync-task-execution",
+      "ja": "タスク実行（task execution）",
+      "en": "task execution",
+      "firstUse": "38",
+      "definition": {
+        "ja": "DataSync のタスクを 1 回動かしたもの。準備、転送、検証の段階を進み、SUCCESS か ERROR で終わる。",
+        "en": "One run of a DataSync task. It goes through preparing, transferring, and verifying, and ends in SUCCESS or ERROR."
+      }
+    },
+    {
+      "id": "datasync-agent",
+      "ja": "エージェント（DataSync）",
+      "en": "agent (DataSync)",
+      "firstUse": "38",
+      "definition": {
+        "ja": "自分のネットワークの中に置く仮想マシンで、DataSync の代わりに NFS や SMB のストレージを読み書きする。S3 どうしのコピーには要らない。",
+        "en": "A virtual machine placed in your own network that reads and writes NFS or SMB storage on DataSync's behalf. A copy between two S3 buckets needs none."
+      }
+    },
+    {
+      "id": "confused-deputy",
+      "ja": "混乱した代理（confused deputy）",
+      "en": "confused deputy",
+      "firstUse": "38",
+      "definition": {
+        "ja": "権限を持つサービスが、別の誰かの依頼で、依頼した人には触れないはずのリソースを操作してしまう問題。信頼ポリシーに `aws:SourceAccount` と `aws:SourceArn` の条件を書いて防ぐ。",
+        "en": "A service with permissions being talked into acting on a resource its caller could not touch. Prevented with `aws:SourceAccount` and `aws:SourceArn` conditions in the trust policy."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "38.overview",
+      "sources": ["examples/38-data-movement"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "38.data-pipeline",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "38.choosing",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "38.datasync",
+      "sources": ["examples/38-data-movement/src/task.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "38.task",
+      "sources": [
+        "examples/38-data-movement/src/task.ts",
+        "examples/38-data-movement/infra/lib/archive-stack.ts",
+        "examples/38-data-movement/infra/test/stacks.test.ts"
+      ],
+      "tasks": ["test:unit", "move:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "38.access",
+      "sources": [
+        "examples/38-data-movement/infra/lib/datasync-access.ts",
+        "examples/38-data-movement/infra/lib/source-stack.ts",
+        "examples/38-data-movement/infra/lib/archive-stack.ts",
+        "examples/38-data-movement/infra/test/stacks.test.ts"
+      ],
+      "tasks": ["test:unit", "move:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "38.planner",
+      "sources": [
+        "examples/38-data-movement/src/plan.ts",
+        "examples/38-data-movement/src/filters.ts",
+        "examples/38-data-movement/test/plan.test.ts",
+        "examples/38-data-movement/test/filters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "38.execution",
+      "sources": [
+        "examples/38-data-movement/src/execution.ts",
+        "examples/38-data-movement/src/memory-bucket.ts",
+        "examples/38-data-movement/test/execution.test.ts",
+        "examples/38-data-movement/test/world.ts"
+      ],
+      "tasks": ["test:unit", "move:demo"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "38.events",
+      "sources": [
+        "examples/38-data-movement/src/execution-event.ts",
+        "examples/38-data-movement/src/alert.ts",
+        "examples/38-data-movement/src/alert-lambda.ts",
+        "examples/38-data-movement/src/notifier.ts",
+        "examples/38-data-movement/src/env.ts",
+        "examples/38-data-movement/src/lag.ts",
+        "examples/38-data-movement/test/execution-event.test.ts",
+        "examples/38-data-movement/infra/lib/archive-stack.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "38.local",
+      "sources": ["examples/38-data-movement/scripts/demo.ts", "examples/38-data-movement/test"],
+      "tasks": ["test:unit", "move:demo"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "38.deploy",
+      "sources": [
+        "examples/38-data-movement/infra/bin/app.ts",
+        "examples/38-data-movement/infra/lib/source-stack.ts",
+        "examples/38-data-movement/infra/lib/archive-stack.ts",
+        "examples/38-data-movement/infra/lib/regions.ts",
+        "examples/38-data-movement/cdk.json"
+      ],
+      "tasks": [
+        "move:infra:synth",
+        "move:infra:diff",
+        "move:infra:deploy",
+        "move:archive:infra:diff",
+        "move:archive:infra:deploy",
+        "move:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "38.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "38.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "38.cleanup",
+      "sources": ["examples/38-data-movement/scripts/empty.ts"],
+      "tasks": ["move:empty", "move:archive:infra:destroy", "move:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "datasync.basic.gb.osaka",
+      "offerCode": "AWSDataSync",
+      "region": "ap-northeast-3",
+      "sku": "PKH7BF6ENQU8XEU5",
+      "usageType": "APN3-Transferred-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0125000000",
+          "description": "$0.0125 per GB copied in Asia Pacific (Osaka) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataSync/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "datasync.enhanced.gb.osaka",
+      "offerCode": "AWSDataSync",
+      "region": "ap-northeast-3",
+      "sku": "MP9AMC9RKMHWGE4H",
+      "usageType": "APN3-Transferred-Bytes-Enhanced",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0150000000",
+          "description": "$0.015 per GB copied for tasks using Enhanced mode in Asia Pacific (Osaka)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataSync/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "datasync.enhanced.execution.osaka",
+      "offerCode": "AWSDataSync",
+      "region": "ap-northeast-3",
+      "sku": "YCNZW8PQJXH472TC",
+      "usageType": "APN3-Task-Executions-Enhanced",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Task-Executions",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.5500000000",
+          "description": "$0.55 per task execution using Enhanced mode in Asia Pacific (Osaka)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataSync/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3.request.tier1.osaka",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-3",
+      "sku": "3VFP3QBE5N8CKEHH",
+      "usageType": "APN3-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000047000",
+          "description": "$0.0047 per 1,000 PUT, COPY, POST, or LIST requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3.request.tier2.osaka",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-3",
+      "sku": "Z32ZAMGY3C9XT7UD",
+      "usageType": "APN3-Requests-Tier2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000003700",
+          "description": "$0.0037 per 10,000 GET and all other requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "datatransfer.tokyo-osaka",
+      "offerCode": "AWSDataTransfer",
+      "region": "ap-northeast-1",
+      "sku": "4364QHA6R42PYPXS",
+      "usageType": "APN1-APN3-AWS-Out-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0900000000",
+          "description": "$0.09 per GB - Asia Pacific (Tokyo) data transfer to Asia Pacific (Osaka)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-16T13:22:08Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "s3.standard.storage.osaka",
+      "offerCode": "AmazonS3",
+      "region": "ap-northeast-3",
+      "sku": "FZJPRKCZ5H2HPU55",
+      "usageType": "APN3-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 51200,
+          "usd": "0.0250000000",
+          "description": "$0.025 per GB - first 50 TB / month of storage used"
+        },
+        {
+          "from": 51200,
+          "to": 512000,
+          "usd": "0.0240000000",
+          "description": "$0.024 per GB - next 450 TB / month of storage used"
+        },
+        {
+          "from": 512000,
+          "to": null,
+          "usd": "0.0230000000",
+          "description": "$0.023 per GB - storage used / month over 500 TB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-3/index.json",
+      "offerPublicationDate": "2026-09-28T23:04:16Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "datasync.basic.gb.osaka",
+      "reason": "No free allowance for DataSync was found on its pricing page; none is applied."
+    },
+    {
+      "priceId": "datasync.enhanced.gb.osaka",
+      "reason": "No free allowance for DataSync was found on its pricing page; none is applied."
+    },
+    {
+      "priceId": "datasync.enhanced.execution.osaka",
+      "reason": "No free allowance for DataSync was found on its pricing page; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "move-quiet-month",
+      "chapter": "38",
+      "title": {
+        "ja": "データの移動: 何も変わらない 1 か月（Basic モード、毎日 1 回の実行）",
+        "en": "Data movement: a month in which nothing changes (Basic mode, one execution a day)"
+      },
+      "assumptions": {
+        "ja": [
+          "添付は 10,000 個で合計 10 GB。キーは 07章の形（`u/<owner>/<note>/<attachment>`）で、所有者 100 人、ノート 1,000 件。フォルダーにあたるプレフィックスは 1,101 個",
+          "実行は 30 回。どの実行も、コピーするものがない",
+          "リクエストの数は仮定。実行 1 回につき、両側でプレフィックスごとに LIST を 1 回、オブジェクトごとに HEAD を 1 回、ソース側でオブジェクトごとにタグの GET を 1 回と数えた。ドキュメントは回数を示していない",
+          "バケットの保存料、ログ、Lambda、SNS は含めない"
+        ],
+        "en": [
+          "10,000 attachments, 10 GB in all, with chapter 07's keys (`u/<owner>/<note>/<attachment>`): 100 owners and 1,000 notes, so 1,101 prefixes that count as folders",
+          "30 executions, none of which has anything to copy",
+          "The request counts are assumptions: per execution, one LIST per prefix and one HEAD per object on each side, and one tagging GET per object on the source. The documentation gives no counts",
+          "Bucket storage, logs, Lambda, and SNS are left out"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "datasync.basic.gb.osaka",
+          "quantity": 0,
+          "basis": "nothing copied"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 33030,
+          "basis": "source LIST: 1,101 prefixes x 30 executions"
+        },
+        {
+          "priceId": "s3.request.tier1.osaka",
+          "quantity": 33030,
+          "basis": "archive LIST: 1,101 prefixes x 30 executions"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 600000,
+          "basis": "source HEAD and tagging GET: 2 x 10,000 objects x 30 executions"
+        },
+        {
+          "priceId": "s3.request.tier2.osaka",
+          "quantity": 300000,
+          "basis": "archive HEAD: 10,000 objects x 30 executions"
+        }
+      ]
+    },
+    {
+      "id": "move-first-copy",
+      "chapter": "38",
+      "title": {
+        "ja": "データの移動: 最初の 1 回（10 GB を東京から大阪へ）と、写しの 1 か月の保存料",
+        "en": "Data movement: the first execution (10 GB from Tokyo to Osaka) and a month of storing the copy"
+      },
+      "assumptions": {
+        "ja": [
+          "添付は 10,000 個で合計 10 GB。キーは 07章の形（`u/<owner>/<note>/<attachment>`）で、所有者 100 人、ノート 1,000 件。フォルダーにあたるプレフィックスは 1,101 個",
+          "実行は 1 回で、全部をコピーする。Basic モード",
+          "リクエストの数は仮定。ソース側は LIST 1,101、HEAD 10,000、GET 10,000、タグの GET 20,000。アーカイブ側は LIST 1,101、PUT 10,000、検証の HEAD 10,000。1 個は 1 回の PUT で書かれるとした",
+          "リージョン間のデータ転送は、ソースのリージョンから出る料金として数えた",
+          "アーカイブの保存料は S3 Standard で 10 GB を 1 か月ぶん"
+        ],
+        "en": [
+          "10,000 attachments, 10 GB in all, with chapter 07's keys (`u/<owner>/<note>/<attachment>`): 100 owners and 1,000 notes, so 1,101 prefixes that count as folders",
+          "One execution in Basic mode that copies everything",
+          "The request counts are assumptions. Source: 1,101 LIST, 10,000 HEAD, 10,000 GET, 20,000 tagging GET. Archive: 1,101 LIST, 10,000 PUT, 10,000 HEAD for verification. Each object is taken to be written with one PUT",
+          "Data transfer between Regions is counted as transfer out of the source Region",
+          "Archive storage is 10 GB in S3 Standard for one month"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "datasync.basic.gb.osaka",
+          "quantity": 10,
+          "basis": "10 GB copied"
+        },
+        {
+          "priceId": "datatransfer.tokyo-osaka",
+          "quantity": 10,
+          "basis": "10 GB from Tokyo to Osaka"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 1101,
+          "basis": "source LIST"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 40000,
+          "basis": "source HEAD, GET, and tagging GET"
+        },
+        {
+          "priceId": "s3.request.tier1.osaka",
+          "quantity": 11101,
+          "basis": "archive LIST and PUT"
+        },
+        {
+          "priceId": "s3.request.tier2.osaka",
+          "quantity": 10000,
+          "basis": "archive HEAD"
+        },
+        {
+          "priceId": "s3.standard.storage.osaka",
+          "quantity": 10,
+          "basis": "10 GB in the archive, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "move-enhanced-month",
+      "chapter": "38",
+      "title": {
+        "ja": "データの移動: 同じ 1 か月を Enhanced モードで実行した場合の実行料",
+        "en": "Data movement: the per-execution fee for the same month in Enhanced mode"
+      },
+      "assumptions": {
+        "ja": [
+          "毎日 1 回、30 回の実行。コピーするものがない実行にも実行料がかかると仮定した。料金ページは、そうだとも違うとも書いていない",
+          "S3 のリクエストは含めない"
+        ],
+        "en": [
+          "One execution a day, 30 in the month. An execution with nothing to copy is assumed to be charged the fee; the pricing page says neither that it is nor that it is not",
+          "S3 requests are left out"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "datasync.enhanced.execution.osaka",
+          "quantity": 30,
+          "basis": "30 task executions"
+        },
+        {
+          "priceId": "datasync.enhanced.gb.osaka",
+          "quantity": 0,
+          "basis": "nothing copied"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "38",
+        "command": "vp test run examples/38-data-movement",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "63 件。計画（新規・変更・同じ、PRESERVE と REMOVE、ソースの一覧が空のときの全削除、フィルターで外したものは削除しない、アーカイブ側が新しいオブジェクトの上書きと OverwriteMode NEVER、TransferMode ALL、include と exclude、ALL と REMOVE の組み合わせの拒否、一覧のスキーマ）。フィルターのモデル（分割、エスケープ、フォルダー、ワイルドカード、include の制約）。実行のモデル（静かなソースでの収束と再実行、途中で止まった実行の続き、コピー後・一覧後の上書き、一覧後のアップロード、全体検証での ERROR、ソースの削除、アーカイブ側での書き込み）。イベントのスキーマと判断、ハンドラーの通知と失敗、遅れの上限、環境変数。2 つのスタックのアサーション",
+          "en": "63 tests. The plan (new, changed, same; PRESERVE and REMOVE; an empty source listing deleting everything; filtered-out objects not deleted; overwriting a newer archive object and OverwriteMode NEVER; TransferMode ALL; include and exclude; refusing ALL with REMOVE; the listing schema). The filter model (splitting, escapes, folders, wildcards, the include restriction). The execution model (convergence and re-runs on a quiet source, finishing an interrupted execution, overwrites after the copy and after the listing, an upload after the listing, ERROR under whole-dataset verification, deletes in the source, writes made in the archive). The event schema and decision, the handler's notification and failure, the lag bound, the environment. Assertions for both stacks"
+        }
+      },
+      {
+        "scope": "38",
+        "command": "tsc --noEmit -p examples/38-data-movement",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "src、infra、test、scripts の型検査",
+          "en": "Type check of src, infra, test, and scripts"
+        }
+      },
+      {
+        "scope": "38",
+        "command": "vp run move:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "メモリ上の 2 つのバケットで、途中で止まる実行、続きの実行、ソースとアーカイブを変えたあとの実行、何も変わらない実行を動かした。本文に載せた出力はこの実行のもの",
+          "en": "Ran, on two in-memory buckets, an execution that stops part-way, the one that finishes it, one after changes on both sides, and one with nothing to do. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "38",
+        "command": "vp run move:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "2 つのスタックのテンプレートを書き出した。`-c sourceLocation=<ARN>` を付けた構成は、テストの中と、`node infra/bin/app.ts` にコンテキストを渡す形で synth した",
+          "en": "Wrote the templates of both stacks. The layout with `-c sourceLocation=<ARN>` was synthesized inside the tests and by passing context to `node infra/bin/app.ts`"
+        }
+      },
+      {
+        "scope": "38",
+        "command": "vp run move:infra:diff / deploy / drift / destroy, move:archive:infra:diff / deploy / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "東京にバケットと DataSync のロケーション、大阪にアーカイブのバケットとロケーションを作る。`-c sourceLocation=<ARN>` で、スケジュール付きのタスク、ロググループ、EventBridge のルール、関数、SNS のトピックが加わる。DataSync のリソースは Cloud Control API 経由",
+          "en": "Creates a bucket and a DataSync location in Tokyo, and the archive bucket and its location in Osaka. `-c sourceLocation=<ARN>` adds the scheduled task, a log group, an EventBridge rule, a function, and an SNS topic. The DataSync resources go through Cloud Control API"
+        }
+      },
+      {
+        "scope": "38",
+        "command": "aws datasync start-task-execution / describe-task-execution, vp run move:empty",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "タスクの実行と片付け。AWS に対しては 1 つも実行していない",
+          "en": "Running the task and cleaning up. None was run against AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "38-datasync-run",
+        "summary": {
+          "ja": "38章の DataSync のタスクを AWS で一度も実行していない。未確認: cdkd 0.296.28 が `AWS::DataSync::LocationS3` と `AWS::DataSync::Task` を Cloud Control API 経由で作れること、`AWS::Logs::ResourcePolicy` の作成、大阪リージョンのスタックのデプロイに追加の準備が要るか、ロケーションの作成時にロールの権限が検査されること、別リージョンのロケーションの ARN を持つ Basic モードのタスクが動くこと、スケジュールでの実行、DataSync が何を「変わった」と判定するか（とくにタグだけの変更とマルチパートで書かれたオブジェクト）、実行中にソースが変わったときの結果、フィルターで外したオブジェクトが REMOVE で消えるかどうか、バージョニングを有効にしたアーカイブで削除が削除マーカーになること、EventBridge のイベントの実物の形と SUCCESS・ERROR 以外の状態の綴り、何もコピーしない実行の S3 リクエストの数と料金。",
+          "en": "The chapter 38 DataSync task has never been run on AWS. Unconfirmed: that cdkd 0.296.28 can create `AWS::DataSync::LocationS3` and `AWS::DataSync::Task` through Cloud Control API; creating `AWS::Logs::ResourcePolicy`; whether deploying a stack to the Osaka Region needs extra preparation; that the role is checked when a location is created; that a Basic mode task holding a location ARN from another Region runs; scheduled executions; what DataSync treats as changed (a tag-only change and objects written in parts in particular); the outcome when the source changes during an execution; whether an object a filter excludes is deleted under REMOVE; that a delete in the versioned archive becomes a delete marker; the real shape of the EventBridge event and the spelling of states other than SUCCESS and ERROR; the number and cost of S3 requests in an execution that copies nothing."
+        },
+        "resume": {
+          "ja": "`vp run move:infra:deploy` の出力の `SourceLocationArn` を控え、`vp run move:archive:infra:deploy -c sourceLocation=<ARN>` を実行する。本文「デプロイ」の順に、東京のバケットにオブジェクトを置き、`aws datasync start-task-execution --region ap-northeast-3 --task-arn <TaskArn>` で実行して `describe-task-execution` の数を読む。同じ実行をもう一度行い、コピーが 0 件になることと、請求の S3 リクエストを確かめる。最後に `vp run move:empty --yes`、`move:archive:infra:destroy`、`move:infra:destroy`。",
+          "en": "Note `SourceLocationArn` from `vp run move:infra:deploy`, then run `vp run move:archive:infra:deploy -c sourceLocation=<ARN>`. Following the chapter's deploy page, put objects in the Tokyo bucket, run `aws datasync start-task-execution --region ap-northeast-3 --task-arn <TaskArn>`, and read the counters from `describe-task-execution`. Run it again to see zero copies, and check the S3 requests on the bill. Finish with `vp run move:empty --yes`, `move:archive:infra:destroy`, and `move:infra:destroy`."
+        }
+      },
+      {
+        "id": "38-cross-account",
+        "summary": {
+          "ja": "アカウントをまたぐコピーを試していない。`-c writerRole=<ARN>` はアーカイブのバケットポリシーに 1 つのステートメントを足すだけで、ソース側のアカウントでのロール、ロケーション、タスクの作成は、この章のスタックに含まれていない。R2 とのあいだのコピー（DataSync の object storage ロケーション、Super Slurper、Sippy）も実行していない。",
+          "en": "A copy across accounts was not tried. `-c writerRole=<ARN>` only adds one statement to the archive's bucket policy; creating the role, the locations, and the task in the source account is not part of this chapter's stacks. Copies to and from R2 (a DataSync object storage location, Super Slurper, Sippy) were not run either."
+        },
+        "resume": {
+          "ja": "DataSync のユーザーガイドの「Transferring data between Amazon S3 buckets across AWS accounts」の手順に沿って、ソース側のアカウントでロールを作り、その ARN を `-c writerRole=` に渡してアーカイブのスタックをデプロイする。ロケーションは `aws datasync create-location-s3` で作る。",
+          "en": "Follow the DataSync user guide's \"Transferring data between Amazon S3 buckets across AWS accounts\": create the role in the source account, pass its ARN as `-c writerRole=` when deploying the archive stack, and create the location with `aws datasync create-location-s3`."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 38: data movement ---------------------------------------\n      // Local: four executions of the archive copy against two buckets in memory. No AWS.\n      \"move:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/38-data-movement\" }),\n      // The source stack, in Tokyo. `move:infra:synth` writes the templates of both stacks.\n      ...infra(\"move\", \"examples/38-data-movement\", \"AihDataMovement\"),\n      // The archive stack, in Osaka. `-c sourceLocation=<arn>` adds the scheduled task; each execution reads both buckets.\n      \"move:archive:infra:diff\": live(`${node} tools/src/infra/cdkd.ts diff examples/38-data-movement AihDataMovementArchive`),\n      \"move:archive:infra:deploy\": live(`${node} tools/src/infra/cdkd.ts deploy examples/38-data-movement AihDataMovementArchive`),\n      \"move:archive:infra:destroy\": live(`${node} tools/src/infra/cdkd.ts destroy examples/38-data-movement AihDataMovementArchive`),\n      // Counts the object versions in both buckets; --yes deletes them.\n      \"move:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty.ts\", { cwd: \"examples/38-data-movement\" }),",
+    "synth": ["move:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/38-data-movement"]
+  }
+}

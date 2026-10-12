@@ -1,0 +1,16 @@
+{
+  "AihReadyProduction": [
+    {
+      "rule": "iam-wildcard",
+      "resource": "HandlerRoleDefaultPolicy0112C0A8",
+      "detail": "wildcard-resource: xray:PutTraceSegments on Resource \"*\"",
+      "reason": "Added by CDK for Tracing.ACTIVE. The AWS service reference lists no resource type for it."
+    },
+    {
+      "rule": "iam-wildcard",
+      "resource": "HandlerRoleDefaultPolicy0112C0A8",
+      "detail": "wildcard-resource: xray:PutTelemetryRecords on Resource \"*\"",
+      "reason": "Added by CDK for Tracing.ACTIVE. The AWS service reference lists no resource type for it."
+    }
+  ]
+}

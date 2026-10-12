@@ -18,15 +18,20 @@ peerDependencyRules:
     vite: 1.1.0
 
 # pnpm 10 runs no dependency install scripts unless they are listed under
-# onlyBuiltDependencies. None is needed here, and these two are declined on
+# onlyBuiltDependencies. None is needed here, and these are declined on
 # purpose so that `vp install` prints no pending-approval warning:
 # - esbuild: its script swaps bin/esbuild for the native binary, which breaks
 #   the Node shim pnpm generated for it. Without the script, the JS launcher
 #   finds the same binary in the @esbuild/<platform> optional dependency.
 # - puppeteer: its script would download a browser this book never launches.
+# - workerd (chapter 64): its script only checks that the platform binary runs. The binary is in
+#   the @cloudflare/workerd-<platform> optional dependency, and the chapter's tests start it.
+# - protobufjs (a dependency of amazon-chime-sdk-js, chapter 51): its script prints a notice.
 ignoredBuiltDependencies:
   - esbuild
+  - protobufjs
   - puppeteer
+  - workerd
 
 # Place package files as copy-on-write clones (or plain copies), never as hard
 # links. pnpm's store keeps one file per distinct content, so with hard links

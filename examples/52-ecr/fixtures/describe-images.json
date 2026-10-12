@@ -1,0 +1,480 @@
+{
+  "imageDetails": [
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:de8a29219883afaf986706ab11a3b65973384ec77c3df9bba8a35fd6d8b38034",
+      "imageTags": [
+        "sha-12627c4f440671bc8abe7536b4f65b9b887f4bd9",
+        "v1.1.0"
+      ],
+      "imageSizeInBytes": 61044000,
+      "imagePushedAt": "2026-08-30T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:f3af275b0dab9816c8784ad750560d93df926d36ed4430d83f0cf8c5fddcdea3",
+      "imageTags": [
+        "sha-7a886bab3b34adade8e78d1d5467abf10cc5f3a3"
+      ],
+      "imageSizeInBytes": 61043000,
+      "imagePushedAt": "2026-08-31T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:e71e9a100c02aa2e94d1c91ca8f63d0dc265127f59edec89ca4485f7d4f84b89",
+      "imageTags": [
+        "sha-a77516c04d959709a1e1075bf2d0579fe4945161",
+        "v1.2.0"
+      ],
+      "imageSizeInBytes": 61042000,
+      "imagePushedAt": "2026-09-01T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:471119cd1cb224d134d0041d3e94ae3d5d7fa483848ba591805c878b17d1759d",
+      "imageTags": [
+        "sha-360cdaf89f8676b5f36ab93e04edf82805fce3ee"
+      ],
+      "imageSizeInBytes": 61041000,
+      "imagePushedAt": "2026-09-02T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:ac7fcdca2bbf853988578e543d60cbeeb7b174c541f5a3cfb5ee85d828d38fb6",
+      "imageTags": [
+        "sha-9378de5e107c01a751356b8cfd9bf5b6a5cde8af",
+        "v1.3.0"
+      ],
+      "imageSizeInBytes": 61040000,
+      "imagePushedAt": "2026-09-03T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:1dcefaf50983625fa4d1c970a8e9ada94d44f0619100451b85d0f4c6e1959e4e",
+      "imageTags": [
+        "sha-599ca3372fce884640ab68536e8ae873bb13ea3c"
+      ],
+      "imageSizeInBytes": 61039000,
+      "imagePushedAt": "2026-09-04T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:28042e7c937538c3423ef6c22497f7e943162dd0abd3d4a304ba19dadf9362dc",
+      "imageTags": [
+        "sha-cc31cee166508cafbf7a4a99fc5e8c57dd80c395",
+        "v1.4.0"
+      ],
+      "imageSizeInBytes": 61038000,
+      "imagePushedAt": "2026-09-05T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:1b655cdcf4f7fc8566ddc5089051f1b774799472de9fda09e7c7f37765ab2ea2",
+      "imageTags": [
+        "sha-f37c7c4dd8004944cc2feac467ee6df3f6e80f23"
+      ],
+      "imageSizeInBytes": 61037000,
+      "imagePushedAt": "2026-09-06T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:c4523b3b1821b367b788ce053d5422e52eb3034665239c89fc0651ddf23b9c1a",
+      "imageTags": [
+        "sha-ffbd6448d609bf46ad973b0d8ff090e86a12375a",
+        "v1.5.0"
+      ],
+      "imageSizeInBytes": 61036000,
+      "imagePushedAt": "2026-09-07T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:9c6fb4a2ecb7466af3b06330162c3addcd2f99f5ca619af7443a72f736f8574f",
+      "imageTags": [
+        "sha-e6c2a943b872bbdb522c498f490c7a4c7573e738"
+      ],
+      "imageSizeInBytes": 61035000,
+      "imagePushedAt": "2026-09-08T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:24476ad704c157f1be7baf4f1af58410860a7f6dc7949c83c37fc37110903d6c",
+      "imageTags": [
+        "sha-c75938acbe37ce72abe56aaec8b760f9709930f4",
+        "v1.6.0"
+      ],
+      "imageSizeInBytes": 61034000,
+      "imagePushedAt": "2026-09-09T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:11bc0a14f03c05b698aa59afa30f85e83ecfab8ac21444780ee8eecabab21ff3",
+      "imageTags": [
+        "sha-900af6060d18109016b4ab8bdda4eb880562f221"
+      ],
+      "imageSizeInBytes": 61033000,
+      "imagePushedAt": "2026-09-10T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:0dbe9731fe9e0c42f311c82647a3da332eeefb34929c9a92d76185a3ceac57d2",
+      "imageTags": [
+        "sha-82d53f6bd3121ab5bf6a1735b1d5d0e1840c5ead",
+        "v1.7.0"
+      ],
+      "imageSizeInBytes": 61032000,
+      "imagePushedAt": "2026-09-11T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:59bdd208f16a5305803c6dbf64b9471ef9f24fca2a14f6d00d448ead38890c54",
+      "imageTags": [
+        "sha-47adfbc5f135f77ee6534ef28a04fbc88adcf1d3"
+      ],
+      "imageSizeInBytes": 61031000,
+      "imagePushedAt": "2026-09-12T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:b353cf8cca960e6be91c64eb798a227d640635912114393a9d1ed8c2f2bf840a",
+      "imageTags": [
+        "sha-4327a1b30084fcefea00dcf0234792d8667a4484",
+        "v1.8.0"
+      ],
+      "imageSizeInBytes": 61030000,
+      "imagePushedAt": "2026-09-13T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:b57f1feb73c6101759422c37208dfd0f5563cc5c50eb3100720d7f7faed71176",
+      "imageTags": [
+        "sha-33509de10444a68c95b3d881d31e55274057a5aa"
+      ],
+      "imageSizeInBytes": 61029000,
+      "imagePushedAt": "2026-09-14T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:8d1b74ff03f8d17e3a1bb05267224671489042f77f4b1c64b015da33639f6ee2",
+      "imageTags": [
+        "sha-896fe076cea80b7cc07c6b120d60a66e2bb8d3ef",
+        "v1.9.0"
+      ],
+      "imageSizeInBytes": 61028000,
+      "imagePushedAt": "2026-09-15T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:6b3c2c8a6831bb03cb20b72e088fb9a59467e70c8bf5585632eb4e51a5416931",
+      "imageTags": [
+        "sha-ddd56e452d306fc6a2bac1614a31c1a5f9244f23"
+      ],
+      "imageSizeInBytes": 61027000,
+      "imagePushedAt": "2026-09-16T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:391a3b6d17dcdc83f620ec7758f37123cf72e0f36e68d34ab626865291621628",
+      "imageTags": [
+        "sha-00198ca01896ec6fe9cf293c31cbfef654c9cf99",
+        "v1.10.0"
+      ],
+      "imageSizeInBytes": 61026000,
+      "imagePushedAt": "2026-09-17T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:479c201967126e268b13e56d2d11a99be6033cc5364e2e4f540ca949f6cf79bc",
+      "imageTags": [
+        "sha-294bd6264033040677d1c461e924922d1062a0cc"
+      ],
+      "imageSizeInBytes": 61025000,
+      "imagePushedAt": "2026-09-18T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:7c9eb33c344037adb14f92438eaa05a14e0c599b2a978a14150812794cdd4b61",
+      "imageTags": [
+        "sha-83a7414b51acbb2032a3c7c352fcd4c68d940a32",
+        "v1.11.0"
+      ],
+      "imageSizeInBytes": 61024000,
+      "imagePushedAt": "2026-09-19T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:291ad5e677d4534605eff8022cf58632beb3c90e3e4f356ec8b46b9b5cc8e23b",
+      "imageTags": [
+        "sha-0e4db50aa590eeca383a98ea7065cccaf7b51a35"
+      ],
+      "imageSizeInBytes": 61023000,
+      "imagePushedAt": "2026-09-20T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:43a3ed06760d5ecec725c760771f2509b82ffdba3b9c2f10412502b5e82b0586",
+      "imageTags": [
+        "sha-f3aceafca0f5a9bdb600f1a9c844e57c24c5fa49",
+        "v1.12.0"
+      ],
+      "imageSizeInBytes": 61022000,
+      "imagePushedAt": "2026-09-21T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:d919c5d81518480a1801cde6bc9f8c602cadb142ec25e185eef9241d8067cbed",
+      "imageTags": [
+        "sha-28a12175b8f15ce269af4827cf263246094d8349"
+      ],
+      "imageSizeInBytes": 61021000,
+      "imagePushedAt": "2026-09-22T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:c4fa4be7b78ed91d2d3011d6e76b0e9d266291a7ee58fd77d783afd4f676290b",
+      "imageTags": [
+        "sha-0c783e744ee8776f010e693118af140d75340871",
+        "v1.13.0"
+      ],
+      "imageSizeInBytes": 61020000,
+      "imagePushedAt": "2026-09-23T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:90162a3357fe560b42d67c743890a8bc78b85d160b0f29243557dc6eb038253e",
+      "imageTags": [
+        "sha-b15e41ddf352520c1e1b35869371c7550b6bcacd"
+      ],
+      "imageSizeInBytes": 61019000,
+      "imagePushedAt": "2026-09-24T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:c4b3fd97d6383c71f1d86023883239de219422ba70516c83664090cda9e211c5",
+      "imageTags": [
+        "sha-998b9a0ed612fccca95f978f8d4037a49a785577",
+        "v1.14.0"
+      ],
+      "imageSizeInBytes": 61018000,
+      "imagePushedAt": "2026-09-25T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:1533cc5e2f0e905a7dc09f0e8a07b7c99458402bbcddaa2a624126f5d711a792",
+      "imageTags": [
+        "sha-751758eb097a3ae953b300736bf58ff38ec26728"
+      ],
+      "imageSizeInBytes": 61017000,
+      "imagePushedAt": "2026-09-26T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:f0e81837b7b5d9c857544ab99f22e088409fb8edee7058f70342ec90a397fe25",
+      "imageTags": [
+        "sha-4bca3b12b704cc7b3dc7a0789e4b963646ddd49b",
+        "v1.15.0"
+      ],
+      "imageSizeInBytes": 61016000,
+      "imagePushedAt": "2026-09-27T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:7c9dcbe640b2be324083bb246d570327ab186ae3405d54585cf924e3726de35f",
+      "imageTags": [
+        "sha-5136b586190b63789005f4b13c6df52789c4cd9c"
+      ],
+      "imageSizeInBytes": 61015000,
+      "imagePushedAt": "2026-09-28T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:deaa974cfb4b63dbde386c542c7d0b15497eef1d3b7d5c21c74836680ad33eb5",
+      "imageTags": [
+        "sha-e2ee02f3d314e1a3e31545e5b7ed6fe00a91e805",
+        "v1.16.0"
+      ],
+      "imageSizeInBytes": 61014000,
+      "imagePushedAt": "2026-09-29T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:634f90685cd198030af15fdcb6d75d6bb0a0c190cf7563fd10968db6bdee524b",
+      "imageTags": [
+        "sha-d15a2e5ad16398c057940806fecbb6c90119e7ab"
+      ],
+      "imageSizeInBytes": 61013000,
+      "imagePushedAt": "2026-09-30T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:e266b58145945f087c902fc3783ff22b6fc25fa47e03614dc0173628a0296ea8",
+      "imageTags": [
+        "sha-ebae477fd558d7ca4c7eaca63a9c9a504b121084",
+        "v1.17.0"
+      ],
+      "imageSizeInBytes": 61012000,
+      "imagePushedAt": "2026-10-01T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:ef9ed2bea017488c623ca0b6058165487fea103da4a89d9f792340a65f2967e2",
+      "imageTags": [
+        "sha-af2e20143d68eff552c5b24bb01e911f43a8f3f7"
+      ],
+      "imageSizeInBytes": 61011000,
+      "imagePushedAt": "2026-10-02T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:1d7261d6cb3c1b3083aecf3d14fb201ff2abc5f7b6f96cf6cbeac50d92a39c2e",
+      "imageTags": [
+        "sha-c7a5fdecb1f90378a6c78c0804d0c0f9de83d367",
+        "v1.18.0"
+      ],
+      "imageSizeInBytes": 61010000,
+      "imagePushedAt": "2026-10-03T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:b6c5b852d65ffb315a31c8756f816f988657538bd180c16361508629a4df0c27",
+      "imageTags": [
+        "sha-1d2a3c891dbcf97eda3ff230e890e339c72d9686"
+      ],
+      "imageSizeInBytes": 61009000,
+      "imagePushedAt": "2026-10-04T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:f66535be1c241fc69993246272a968f83aab24074fb01a99061a97dc081d9463",
+      "imageTags": [
+        "sha-2aa8016a1ae49fe79cde9be51ac51e576115db1f",
+        "v1.19.0"
+      ],
+      "imageSizeInBytes": 61008000,
+      "imagePushedAt": "2026-10-05T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:5355e9f2521a6026d5edf913ad1a25807b7e051557ce4de3699744e9a4f3ceff",
+      "imageTags": [
+        "sha-6bc96f923d399f4ab15280704a1d92e866c57657"
+      ],
+      "imageSizeInBytes": 61007000,
+      "imagePushedAt": "2026-10-06T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:d0a032f1b3fa82291edd3b0e3ad5627b64e1ed4af324cc24b3ec98a9a7198082",
+      "imageTags": [
+        "sha-227b91486218eee1d52de4b7bc8286b5dd18da03",
+        "v1.20.0"
+      ],
+      "imageSizeInBytes": 61006000,
+      "imagePushedAt": "2026-10-07T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:83814f14eeda6cb024c88051bfc40adb451807ac05b8c160d5804216243dc50b",
+      "imageTags": [
+        "sha-cdbed3a915745f1ad336f322948fa30c4ea8d82f"
+      ],
+      "imageSizeInBytes": 61005000,
+      "imagePushedAt": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:cd533242d1d4e398d9986b64c96feeca9e03fd0b900b4eaac5ed510c27ef1d4a",
+      "imageTags": [
+        "sha-6b3c45f2d43d16c028ef18e38cb1e516f653463d",
+        "v1.21.0"
+      ],
+      "imageSizeInBytes": 61004000,
+      "imagePushedAt": "2026-10-09T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:65e7da23460c6ad7058cbea931e3a9d18cdbb77779eddfa505a26a251c8b7544",
+      "imageTags": [
+        "sha-59395c05c18b9c8904853715d4136921de0b48f1"
+      ],
+      "imageSizeInBytes": 61003000,
+      "imagePushedAt": "2026-10-10T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:391930e122e67020d1ff7c80706c00319dcd54b7dce0730dfc889e9750dbc8da",
+      "imageTags": [
+        "sha-54563f95fefa691baa82a522156322c21f7d6df3",
+        "v1.22.0"
+      ],
+      "imageSizeInBytes": 61002000,
+      "imagePushedAt": "2026-10-11T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:6a6203f891eab5524216afb7c6c038707b35a8dcbc03901911dc0c975572584d",
+      "imageTags": [
+        "sha-ec0b4f0b5c90ed0fa911a2972ccc452641b31563"
+      ],
+      "imageSizeInBytes": 61001000,
+      "imagePushedAt": "2026-10-12T09:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:64684731fd889ca92585390c9c39ce84352a6633b17349c3b477282e6cfa9c3b",
+      "imageSizeInBytes": 61000000,
+      "imagePushedAt": "2026-10-08T00:00:00+00:00"
+    },
+    {
+      "registryId": "111122223333",
+      "repositoryName": "fixture",
+      "imageDigest": "sha256:d16a0dbe43561d1314a61d58ad1829254233e4be774a2b8dee26a5021a0f2d4f",
+      "imageSizeInBytes": 61000000,
+      "imagePushedAt": "2026-10-12T21:00:00+00:00"
+    }
+  ]
+}

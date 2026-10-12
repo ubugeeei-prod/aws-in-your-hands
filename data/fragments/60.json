@@ -1,0 +1,1179 @@
+{
+  "chapterId": "60",
+  "manifest": {
+    "id": "60",
+    "slug": "aurora",
+    "title": {
+      "ja": "Aurora: storage と compute が分かれた PostgreSQL",
+      "en": "Aurora: PostgreSQL with Storage and Compute Apart"
+    },
+    "prerequisites": ["11", "13", "22"],
+    "services": [
+      "Aurora PostgreSQL",
+      "Aurora Serverless v2",
+      "RDS Data API",
+      "Secrets Manager",
+      "Aurora DSQL"
+    ],
+    "samplePath": "examples/60-aurora",
+    "writing": { "ja": "complete", "en": "complete" },
+    "sourceRevision": 1,
+    "translatedRevision": { "en": 1 },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "aurora60-storage",
+      "aurora60-endpoints",
+      "aurora60-endpoint-cluster",
+      "aurora60-endpoint-reader",
+      "aurora60-endpoint-custom",
+      "aurora60-high-availability",
+      "aurora60-fast-failover",
+      "aurora60-replication",
+      "aurora60-serverless-how",
+      "aurora60-auto-pause",
+      "aurora60-serverless-capacity",
+      "aurora60-serverless-regions",
+      "aurora60-storage-config-regions",
+      "aurora60-limits",
+      "aurora60-clone",
+      "aurora60-backtrack",
+      "aurora60-global-database",
+      "aurora60-zero-etl",
+      "aurora60-data-api",
+      "aurora60-data-api-limitations",
+      "aurora60-data-api-regions",
+      "aurora60-data-api-operations",
+      "aurora60-data-api-timeouts",
+      "aurora60-data-api-sessions",
+      "aurora60-data-api-access",
+      "aurora60-data-api-troubleshooting",
+      "aurora60-data-api-json",
+      "aurora60-secrets-manager",
+      "aurora60-postgresql",
+      "aurora60-extensions",
+      "aurora60-release-notes",
+      "aurora60-dsql-what-is",
+      "aurora60-dsql-migration-guide",
+      "aurora60-dsql-quotas",
+      "aurora60-dsql-concurrency",
+      "aurora60-postgres-errcodes",
+      "aurora60-price-list-rds",
+      "aurora60-price-list-secretsmanager",
+      "aurora60-cdk-rds-types",
+      "aurora60-cdkd-package",
+      "aurora60-rds-data-client",
+      "aurora60-node-postgres",
+      "aurora60-cloudflare-hyperdrive",
+      "aurora60-vercel-postgres",
+      "aurora60-vercel-marketplace-aws"
+    ]
+  },
+  "sources": [
+    {
+      "id": "aurora60-storage",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Overview.StorageReliability.html",
+      "title": "Amazon Aurora storage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Aurora data is stored in the cluster volume, a single virtual volume with copies of the data across three Availability Zones in one Region",
+        "The amount of replication is independent of the number of DB instances in the cluster",
+        "Adding a DB instance does not copy the table data; removing one removes no data; only deleting the cluster removes the data",
+        "Two storage configurations: Aurora Standard (pay per 1 million I/O requests) and Aurora I/O-Optimized (no I/O charge)",
+        "AWS's guidance: I/O-Optimized when I/O spending is 25% or more of total Aurora spending",
+        "Switching from Standard to I/O-Optimized is possible once every 30 days; back to Standard at any time; no downtime for serverless instances",
+        "The volume grows automatically and you are charged for the space used; freed space reduces the charge"
+      ]
+    },
+    {
+      "id": "aurora60-endpoints",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Overview.Endpoints.html",
+      "title": "Amazon Aurora endpoint connections",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The four endpoint types: cluster, reader, instance, custom, plus the Global Database writer endpoint",
+        "Up to 15 Aurora Replicas handle read-only traffic",
+        "Cluster and reader endpoints change which instance they connect to when an instance becomes unavailable; instance endpoints do not",
+        "During a failover the reader endpoint might direct connections to the new primary for a short time"
+      ]
+    },
+    {
+      "id": "aurora60-endpoint-cluster",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Cluster.html",
+      "title": "Cluster endpoints for Amazon Aurora",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The IP address behind the cluster endpoint changes when a failover promotes a new primary",
+        "With connection pooling, be prepared to flush or shorten the time-to-live of cached DNS information, so as not to open a read/write connection to an instance that is unavailable or is now read-only after a failover"
+      ]
+    },
+    {
+      "id": "aurora60-endpoint-reader",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Reader.html",
+      "title": "Reader endpoints for Amazon Aurora",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The reader endpoint balances connections, not individual queries",
+        "With only a primary instance and no replicas, the reader endpoint connects to the primary, and writes go through"
+      ]
+    },
+    {
+      "id": "aurora60-endpoint-custom",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.html",
+      "title": "Custom endpoints for Amazon Aurora",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A custom endpoint is a set of instances you choose; up to five per cluster",
+        "Custom endpoints distribute connections passively, using DNS to return the address of one of the instances at random"
+      ]
+    },
+    {
+      "id": "aurora60-high-availability",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.AuroraHighAvailability.html",
+      "title": "High availability for Amazon Aurora",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Writes are replicated synchronously across Availability Zones to six storage nodes; replicas use asynchronous replication",
+        "With a replica, failover promotes it: read and write operations fail with an exception meanwhile; service is typically restored in less than 60 seconds, often less than 30",
+        "Without a replica, the primary is recreated in the same AZ, which typically takes less than 10 minutes",
+        "If an AZ outage takes a single-instance cluster's primary, you must create a new instance in another AZ yourself",
+        "Promotion tiers 0 to 15 decide which replica is promoted",
+        "RDS Proxy bypasses DNS caches and can reduce failover times by up to 66%"
+      ]
+    },
+    {
+      "id": "aurora60-fast-failover",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.BestPractices.FastFailover.html",
+      "title": "Fast failover with Amazon Aurora PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Recommended TCP keepalive settings: idle 1 second, interval 1 second, count 5",
+        "Updating the DNS record of an endpoint typically takes less than 30 seconds",
+        "After connecting, SHOW transaction_read_only tells a writer (OFF) from a reader (ON)",
+        "FailoverDBCluster promotes another instance and is the API for testing a failover; the cluster needs two or more instances",
+        "The page's examples are for the JDBC driver; nothing in it is about node-postgres"
+      ]
+    },
+    {
+      "id": "aurora60-replication",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Replication.html",
+      "title": "Replication with Amazon Aurora PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replicas read the same cluster volume as the writer, so no copy of the data is made per replica",
+        "ReplicaLag for Aurora PostgreSQL is the lag of the replica's page cache behind the writer's"
+      ]
+    },
+    {
+      "id": "aurora60-serverless-how",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.how-it-works.html",
+      "title": "How Aurora serverless works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "One ACU is approximately 2 GiB of memory with corresponding CPU and networking; capacity ranges from 0 to 256 ACUs",
+        "A minimum of 0 ACUs needs Aurora PostgreSQL 13.15, 14.12, 15.7, 16.3 or higher",
+        "Scaling happens in increments as small as 0.5 ACU, while connections are open and transactions are in progress, without disrupting them",
+        "The larger the current capacity, the larger the scaling increment",
+        "Readers in promotion tiers 0 and 1 are kept at least as large as the writer; tiers 2 to 15 scale on their own",
+        "A cluster with n instances consumes about n times the minimum ACUs when idle",
+        "The page now calls the feature 'Aurora serverless' and says Serverless v1 is a deprecated product"
+      ]
+    },
+    {
+      "id": "aurora60-auto-pause",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2-auto-pause.html",
+      "title": "Scaling to Zero ACUs with automatic pause and resume for Aurora serverless",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With a minimum of 0 ACUs an instance pauses after a period with no user connections; the instance charge is zero while paused; storage is still charged",
+        "The interval is 300 seconds (the default) to 86,400 seconds",
+        "Resuming typically takes about 15 seconds; after more than 24 hours paused it can take 30 seconds or longer",
+        "An open user connection, an RDS Proxy, logical replication, a zero-ETL integration, and membership of a global database prevent pausing",
+        "A request through the RDS Data API resumes a paused writer",
+        "Aurora resumes paused instances for some maintenance, and then waits at least 20 minutes before pausing again",
+        "An instance resumes at a relatively small capacity whatever it had before",
+        "AWS recommends retry logic for connections, and timeouts longer than 15 seconds (30 or more if idle for over a day)"
+      ]
+    },
+    {
+      "id": "aurora60-serverless-capacity",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.setting-capacity.html",
+      "title": "Performance and scaling for Aurora serverless",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The scaling rate depends on current capacity: the higher it is, the faster the instance scales up",
+        "With a minimum of 0 or 0.5 ACUs on PostgreSQL, max_connections is capped at 2,000"
+      ]
+    },
+    {
+      "id": "aurora60-serverless-regions",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.Aurora_Fea_Regions_DB-eng.Feature.ServerlessV2.html",
+      "title": "Supported Regions and Aurora DB engines for Aurora serverless",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In Asia Pacific (Tokyo), Aurora serverless with Aurora PostgreSQL: 18.3, 17.4, 16.1, 15.2, 14.3, 13.6 and higher"
+      ]
+    },
+    {
+      "id": "aurora60-storage-config-regions",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.Aurora_Fea_Regions_DB-eng.Feature.storage-type.html",
+      "title": "Supported Regions and Aurora DB engines for cluster storage configurations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Aurora I/O-Optimized is available in all Regions for Aurora PostgreSQL 17.4, 16.1, 15.2, 14.7, 13.10 and higher"
+      ]
+    },
+    {
+      "id": "aurora60-limits",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_Limits.html",
+      "title": "Quotas and constraints for Amazon Aurora",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The cluster volume's maximum size is 256 TiB for Aurora PostgreSQL 17.5, 16.9, 15.13 and higher, and 128 TiB for earlier versions"
+      ]
+    },
+    {
+      "id": "aurora60-clone",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Managing.Clone.html",
+      "title": "Cloning a volume for an Amazon Aurora DB cluster",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A clone is a new cluster that initially shares the source's data pages (copy-on-write); storage is added only as either side changes pages",
+        "Shared pages are billed to the source cluster only",
+        "Up to 15 copy-on-write clones; the next one is a full copy",
+        "A clone cannot be created in another Region"
+      ]
+    },
+    {
+      "id": "aurora60-backtrack",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Managing.Backtrack.html",
+      "title": "Backtracking an Aurora DB cluster",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Backtrack rewinds an Aurora MySQL cluster to a time without restoring from a backup",
+        "Backtrack is not available for Aurora PostgreSQL"
+      ]
+    },
+    {
+      "id": "aurora60-global-database",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-global-database.html",
+      "title": "Using Amazon Aurora Global Database",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "One primary Region where data is written and up to 10 read-only secondary Regions",
+        "Replication uses the storage layer, with latency typically under a second",
+        "Switchover moves the primary with no data loss when healthy; failover is for an outage of the primary Region"
+      ]
+    },
+    {
+      "id": "aurora60-zero-etl",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/zero-etl.html",
+      "title": "Aurora zero-ETL integrations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A zero-ETL integration makes the cluster's data available in Amazon Redshift or an Amazon SageMaker AI lakehouse in near real time"
+      ]
+    },
+    {
+      "id": "aurora60-data-api",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.html",
+      "title": "Using the Amazon RDS Data API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Data API is an HTTP endpoint for running SQL without a persistent connection",
+        "It uses database credentials stored in Secrets Manager; the caller passes none",
+        "A Lambda function can use it without being configured for access to a VPC"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-limitations",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.limitations.html",
+      "title": "Limitations for the Amazon RDS Data API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Queries run on the writer instance only",
+        "Not supported on T DB instance classes",
+        "The response size limit is 1 MiB"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-regions",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.Aurora_Fea_Regions_DB-eng.Feature.Data_API.html",
+      "title": "Supported Regions and Aurora DB engines for RDS Data API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In Asia Pacific (Tokyo), the Data API with Aurora PostgreSQL serverless and provisioned: 17.4, 16.1, 15.3, 14.8, 13.11 and higher"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-operations",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api-operations.html",
+      "title": "Amazon RDS Data API operations reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ExecuteStatement, BatchExecuteStatement, BeginTransaction, CommitTransaction, RollbackTransaction",
+        "Every call takes resourceArn (the cluster) and secretArn",
+        "Parameters are name-value pairs (SqlParameter) with a Field value",
+        "Supported Aurora PostgreSQL types include UUID, TIMESTAMP, JSONB, TEXT, INT, BOOL"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-timeouts",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api-timeouts.html",
+      "title": "Controlling Data API timeout behavior",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A call is cancelled with a timeout error after 45 seconds by default",
+        "If the SDK reports a timeout while the operation still completes, retrying might insert duplicate data; the SDK might retry automatically"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-sessions",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.session-management.html",
+      "title": "Session management with Amazon RDS Data API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Data API keeps a pool of database connections and resets session state (DISCARD ALL on PostgreSQL) before reusing one"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-access",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.access.html",
+      "title": "Authorizing access to the Amazon RDS Data API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The minimum policy: the five rds-data actions on the cluster's ARN, and secretsmanager:GetSecretValue on the secret",
+        "AWS recommends a specific ARN and not a wildcard"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-troubleshooting",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api.troubleshooting.html",
+      "title": "Troubleshooting Amazon RDS Data API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'Transaction is not found': each call of a transaction must come within three minutes of the previous one",
+        "A row in a result set is limited to 64 KB",
+        "Multi-statements are not supported"
+      ]
+    },
+    {
+      "id": "aurora60-data-api-json",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/data-api-json.html",
+      "title": "Processing Amazon RDS Data API query results in JSON format",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "formatRecordsAs JSON returns the result set as one JSON string in formattedRecords"
+      ],
+      "note": "The installed client's types add that this applies to SELECT statements only and is ignored for others, which is why the chapter reads `records` with column metadata instead."
+    },
+    {
+      "id": "aurora60-secrets-manager",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/rds-secrets-manager.html",
+      "title": "Password management with Amazon Aurora and AWS Secrets Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Aurora can create the master user password, keep it in Secrets Manager, and rotate it every seven days by default",
+        "Deleting the cluster deletes the secret it manages",
+        "Secrets stored in Secrets Manager incur charges"
+      ]
+    },
+    {
+      "id": "aurora60-postgresql",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.AuroraPostgreSQL.html",
+      "title": "Working with Amazon Aurora PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWS describes Aurora PostgreSQL as a drop-in replacement for PostgreSQL"]
+    },
+    {
+      "id": "aurora60-extensions",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraPostgreSQLReleaseNotes/AuroraPostgreSQL.Extensions.html",
+      "title": "Extension versions for Amazon Aurora PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Aurora PostgreSQL supports a published list of extensions per engine version; the list includes pgvector, pg_cron, and plpgsql"
+      ]
+    },
+    {
+      "id": "aurora60-release-notes",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraPostgreSQLReleaseNotes/AuroraPostgreSQL.Updates.html",
+      "title": "Amazon Aurora PostgreSQL updates",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Aurora PostgreSQL 17.9 was released on 2026-04-06, and 17.11 on 2026-09-29",
+        "PostgreSQL 18 versions exist (18.3 from 2026-06-11)"
+      ],
+      "note": "The page lists releases. It does not say which versions a new cluster can be created with in a given Region today; that needs `aws rds describe-db-engine-versions`, which was not run."
+    },
+    {
+      "id": "aurora60-dsql-what-is",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/what-is-aurora-dsql.html",
+      "title": "What is Amazon Aurora DSQL?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Aurora DSQL is serverless and distributed, with no instances and, in AWS's words, no traditional database failover",
+        "Compatible with PostgreSQL version 16",
+        "Available in Asia Pacific (Tokyo) and (Osaka)",
+        "Multi-Region peered clusters accept reads and writes in each Region with strong consistency"
+      ]
+    },
+    {
+      "id": "aurora60-dsql-migration-guide",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-postgresql-compatibility-migration-guide.html",
+      "title": "Migrating from PostgreSQL to Aurora DSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "No temporary tables, no triggers, no PL/pgSQL; the isolation level is fixed at Repeatable Read",
+        "A transaction can modify up to 3,000 rows",
+        "Connections time out after 1 hour"
+      ],
+      "note": "Neither this page nor the others read for chapter 60 mention CREATE EXTENSION. Whether Aurora DSQL supports any extension was not confirmed."
+    },
+    {
+      "id": "aurora60-dsql-quotas",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/CHAP_quotas.html",
+      "title": "Cluster quotas and database limits in Amazon Aurora DSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "10,000 connections per cluster (adjustable); 100 new connections per second",
+        "A write transaction is limited to 10 MiB of modified data, 3,000 rows, and 5 minutes"
+      ]
+    },
+    {
+      "id": "aurora60-dsql-concurrency",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/working-with-concurrency-control.html",
+      "title": "Concurrency control in Aurora DSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Aurora DSQL takes no locks and checks for conflicts at commit; the loser gets SQLSTATE 40001",
+        "AWS states that this eliminates deadlocks"
+      ]
+    },
+    {
+      "id": "aurora60-postgres-errcodes",
+      "url": "https://www.postgresql.org/docs/17/errcodes-appendix.html",
+      "title": "PostgreSQL 17: Appendix A. PostgreSQL Error Codes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Class 08 is connection exceptions (08000, 08003, 08006)",
+        "25006 read_only_sql_transaction, 40001 serialization_failure, 40P01 deadlock_detected",
+        "57P01 admin_shutdown, 57P02 crash_shutdown, 57P03 cannot_connect_now"
+      ],
+      "note": "Which of these Aurora PostgreSQL actually sends to a session during a failover was not observed."
+    },
+    {
+      "id": "aurora60-price-list-rds",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Amazon RDS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Publication 2026-10-06T22:40:50Z. Aurora PostgreSQL Serverless v2: USD 0.15 per ACU-hour (Standard), USD 0.20 (I/O-Optimized)",
+        "Storage: USD 0.12 per GB-month (Standard), USD 0.27 (I/O-Optimized); I/O: USD 0.24 per 1 million requests (Standard only)",
+        "Data API: USD 0.00000042 per request up to 1 billion a month, USD 0.00000024 beyond",
+        "Backup storage beyond the free allocation: USD 0.023 per GB-month",
+        "Provisioned db.t4g.medium running Aurora PostgreSQL: USD 0.113 per hour"
+      ]
+    },
+    {
+      "id": "aurora60-price-list-secretsmanager",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AWS Secrets Manager, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": ["Publication 2026-09-11T12:46:10Z. USD 0.40 per secret per month"]
+    },
+    {
+      "id": "aurora60-cdk-rds-types",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0: aws-rds/lib/rds.generated.d.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CfnDBCluster has enableHttpEndpoint, manageMasterUserPassword, storageType (aurora | aurora-iopt1), and serverlessV2ScalingConfiguration with minCapacity, maxCapacity, secondsUntilAutoPause",
+        "The maximum capacity must be higher than 0.5 ACUs; the minimum can be 0 where auto-pause is supported",
+        "The storage type is not returned when it is set to aurora",
+        "attrMasterUserSecretSecretArn, attrDbClusterArn, attrEndpointAddress, attrReadEndpointAddress exist"
+      ],
+      "note": "Read in the installed package. The generated documentation still says the largest maximum is 128 ACUs, where the user guide says 256."
+    },
+    {
+      "id": "aurora60-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: dist/rds-provider and dist/deploy-engine",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An SDK provider is registered for AWS::RDS::DBSubnetGroup, AWS::RDS::DBCluster and AWS::RDS::DBInstance, and for AWS::EC2::SecurityGroup",
+        "The DBCluster provider's handled properties do not include EnableHttpEndpoint or StorageType, and it sends only MinCapacity and MaxCapacity of ServerlessV2ScalingConfiguration",
+        "A resource that declares a property its SDK provider does not handle is routed through Cloud Control API ('Auto-routing ... via Cloud Control (silent-drop properties: ...)')"
+      ],
+      "note": "Read in the bundled JavaScript of the installed package, not in the repository's TypeScript. Nothing was deployed."
+    },
+    {
+      "id": "aurora60-rds-data-client",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-rds-data/v/3.1149.0",
+      "title": "@aws-sdk/client-rds-data 3.1149.0: dist-types",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A transaction can run for at most 24 hours, and times out when no call uses its ID for three minutes",
+        "DatabaseResumingException: the request was cancelled because the Aurora Serverless instance was paused; wait and try again",
+        "DatabaseUnavailableException: the writer instance is not available; TransactionNotFoundException; ServiceUnavailableError",
+        "DatabaseErrorException has no member carrying the SQLSTATE",
+        "formatRecordsAs applies to SELECT statements only",
+        "TypeHint values: DATE, DECIMAL, JSON, TIME, TIMESTAMP, UUID"
+      ]
+    },
+    {
+      "id": "aurora60-node-postgres",
+      "url": "https://www.npmjs.com/package/pg/v/8.23.1",
+      "title": "pg 8.23.1: lib/client.js, lib/connection.js, lib/connection-parameters.js",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When the socket closes under a running query, the query fails with an Error ('Connection terminated unexpectedly') that is not a DatabaseError and has no SQLSTATE",
+        "keepAlive and keepAliveInitialDelayMillis are passed to the socket's setKeepAlive"
+      ],
+      "note": "Read in the installed source. Not run against a server that went away."
+    },
+    {
+      "id": "aurora60-cloudflare-hyperdrive",
+      "url": "https://developers.cloudflare.com/hyperdrive/",
+      "title": "Cloudflare Hyperdrive",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Hyperdrive pools connections and caches queries between Workers and an existing Postgres or MySQL database, including databases hosted on AWS",
+        "Available on Free and Paid plans; the page was last updated 2026-06-22"
+      ]
+    },
+    {
+      "id": "aurora60-vercel-postgres",
+      "url": "https://vercel.com/docs/postgres",
+      "title": "Postgres on Vercel",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Postgres is no longer available; existing databases were moved to Neon in December 2024",
+        "New projects install a Postgres integration from the Marketplace"
+      ]
+    },
+    {
+      "id": "aurora60-vercel-marketplace-aws",
+      "url": "https://vercel.com/marketplace/aws",
+      "title": "Vercel Marketplace: AWS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS integration on the Vercel Marketplace lists Amazon Aurora PostgreSQL, Amazon Aurora DSQL, and Amazon DynamoDB"
+      ],
+      "note": "Read through a page summary. How the integration provisions and bills was not read."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "cluster-volume",
+      "ja": "クラスターボリューム",
+      "en": "cluster volume",
+      "firstUse": "60",
+      "definition": {
+        "ja": "Aurora のデータが入る 1 つの仮想ボリューム。3 つの AZ にまたがって複製され、インスタンスの数とは無関係に存在する。",
+        "en": "The single virtual volume that holds an Aurora cluster's data. It is replicated across three Availability Zones and exists independently of how many instances there are."
+      }
+    },
+    {
+      "id": "writer-instance",
+      "ja": "writer",
+      "en": "writer",
+      "firstUse": "60",
+      "definition": {
+        "ja": "Aurora のクラスターで書き込みを受け付ける、ただ 1 つのインスタンス。primary instance とも呼ぶ。",
+        "en": "The one instance of an Aurora cluster that accepts writes. Also called the primary instance."
+      }
+    },
+    {
+      "id": "reader-instance",
+      "ja": "reader",
+      "en": "reader",
+      "firstUse": "60",
+      "definition": {
+        "ja": "writer と同じクラスターボリュームを読む、読み取り専用のインスタンス。Aurora Replica とも呼ぶ。フェイルオーバーで writer に昇格する候補でもある。",
+        "en": "A read-only instance that reads the same cluster volume as the writer. Also called an Aurora Replica. It is also what a failover promotes to writer."
+      }
+    },
+    {
+      "id": "cluster-endpoint",
+      "ja": "クラスターエンドポイント",
+      "en": "cluster endpoint",
+      "firstUse": "60",
+      "definition": {
+        "ja": "いまの writer を指す DNS 名。フェイルオーバーのあと、同じ名前が新しい writer を指す。",
+        "en": "The DNS name that points at the current writer. After a failover the same name points at the new one."
+      }
+    },
+    {
+      "id": "auto-pause",
+      "ja": "auto-pause",
+      "en": "auto-pause",
+      "firstUse": "60",
+      "definition": {
+        "ja": "最小容量を 0 ACU にした Aurora Serverless v2 のインスタンスが、接続のない時間が続くと止まり、次の接続で再開するしくみ。",
+        "en": "An Aurora Serverless v2 instance with a minimum of 0 ACUs stopping after a time with no connections and resuming on the next one."
+      }
+    },
+    {
+      "id": "data-api",
+      "ja": "Data API",
+      "en": "Data API",
+      "firstUse": "60",
+      "definition": {
+        "ja": "Aurora に HTTPS で SQL を送る API。接続を持たず、認証は IAM と Secrets Manager のシークレットで行う。",
+        "en": "An API that sends SQL to Aurora over HTTPS. It holds no connection, and authenticates with IAM and a secret in Secrets Manager."
+      }
+    },
+    {
+      "id": "aurora-clone",
+      "ja": "クローン",
+      "en": "clone",
+      "firstUse": "60",
+      "definition": {
+        "ja": "元のクラスターとデータのページを共有して始まる、新しい Aurora のクラスター。どちらかがページを書き換えたときに、そのページだけが複製される。",
+        "en": "A new Aurora cluster that starts by sharing its source's data pages. A page is copied only when either side changes it."
+      }
+    },
+    {
+      "id": "io-optimized",
+      "ja": "I/O-Optimized",
+      "en": "I/O-Optimized",
+      "firstUse": "60",
+      "definition": {
+        "ja": "Aurora のストレージの料金構成の 1 つ。I/O の回数に課金しない代わりに、容量とストレージの単価が高い。もう 1 つは Standard。",
+        "en": "One of Aurora's two storage price configurations. It does not charge for I/O requests, and charges more for capacity and storage. The other is Standard."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "60.architecture",
+      "sources": ["examples/60-aurora/infra/lib/aurora-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "60.endpoints",
+      "sources": ["examples/60-aurora/infra/lib/aurora-stack.ts", "examples/60-aurora/src/pg.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "60.failover",
+      "sources": ["examples/60-aurora/src/failure.ts", "examples/60-aurora/test/failure.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "60.features",
+      "sources": ["examples/60-aurora/infra/lib/aurora-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "60.choices",
+      "sources": ["examples/60-aurora/src/once.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "60.invariant",
+      "sources": [
+        "examples/60-aurora/src/once.ts",
+        "examples/60-aurora/src/append.ts",
+        "examples/60-aurora/migrations",
+        "examples/60-aurora/src/migrations.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "60.faults",
+      "sources": ["examples/60-aurora/test/support.ts", "examples/60-aurora/test/once.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "60.serverless",
+      "sources": ["examples/60-aurora/src/config.ts", "examples/60-aurora/src/pg.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "type"],
+      "verification": "local"
+    },
+    {
+      "id": "60.data-api",
+      "sources": ["examples/60-aurora/src/data-api.ts", "examples/60-aurora/test/data-api.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "60.stack",
+      "sources": [
+        "examples/60-aurora/infra/lib/aurora-stack.ts",
+        "examples/60-aurora/infra/bin/app.ts",
+        "examples/60-aurora/infra/test/aurora-stack.test.ts",
+        "examples/60-aurora/src/config.ts",
+        "examples/60-aurora/cdk.json"
+      ],
+      "tasks": ["aurora:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "60.deploy",
+      "sources": [
+        "examples/60-aurora/scripts/cloud.ts",
+        "examples/60-aurora/infra/lib/aurora-stack.ts"
+      ],
+      "tasks": [
+        "aurora:infra:diff",
+        "aurora:infra:deploy",
+        "aurora:db:schema",
+        "aurora:smoke",
+        "aurora:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "60.failover-drill",
+      "sources": ["examples/60-aurora/scripts/cloud.ts"],
+      "tasks": ["aurora:smoke"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "60.cost",
+      "sources": ["examples/60-aurora/src/cost.ts", "examples/60-aurora/test/cost.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "60.platforms",
+      "sources": ["examples/60-aurora/src/data-api.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "60.cleanup",
+      "sources": ["examples/60-aurora/infra/lib/aurora-stack.ts"],
+      "tasks": ["aurora:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "aurora.postgres.serverless-v2.acu.io-optimized",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "UD3CK3ZCN4ZBB6CX",
+      "usageType": "APN1-Aurora:ServerlessV2IOOptimizedUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ACU-Hr",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2000000000",
+          "description": "USD 0.20 per Aurora Capacity Unit hour running Aurora PostgreSQL Serverless v2 IO-Optimized"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "aurora.postgres.storage.io-optimized",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "SPPB3CBHFB9RBKYQ",
+      "usageType": "APN1-Aurora:IO-OptimizedStorageUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2700000000",
+          "description": "USD 0.27 per GB-month of I/O-Optimized consumed storage (Aurora PostgreSQL)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "aurora.postgres.io",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "HSMQ9C43F35T8QMX",
+      "usageType": "APN1-Aurora:StorageIOUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "IOs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000002400",
+          "description": "USD 0.24 per 1 million I/O requests for Aurora PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "aurora.postgres.data-api",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "TM6XUS7XKDTCZMRY",
+      "usageType": "APN1-RDS:Data-API-Usage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "API Calls",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 1000000000,
+          "usd": "0.0000004200",
+          "description": "$0.00000042 per Aurora PostgreSQL Data API request up to 1B in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 1000000000,
+          "to": null,
+          "usd": "0.0000002400",
+          "description": "$0.00000024 per Aurora PostgreSQL Data API request over 1B in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "aurora.postgres.serverless-v2.acu.io-optimized",
+      "reason": "Whether any free tier or credit applies to Aurora was not checked while writing chapter 60."
+    },
+    {
+      "priceId": "aurora.postgres.storage.io-optimized",
+      "reason": "Whether any free tier or credit applies to Aurora was not checked while writing chapter 60."
+    },
+    {
+      "priceId": "aurora.postgres.io",
+      "reason": "Whether any free tier or credit applies to Aurora was not checked while writing chapter 60."
+    },
+    {
+      "priceId": "aurora.postgres.data-api",
+      "reason": "Whether any free tier or credit applies to the Data API was not checked while writing chapter 60."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "aurora-paused-month",
+      "chapter": "60",
+      "title": {
+        "ja": "Aurora（60章の既定の構成）: 1 か月ずっと止まっていた場合",
+        "en": "Aurora (chapter 60's default configuration): paused for the whole month"
+      },
+      "assumptions": {
+        "ja": [
+          "最小 0 ACU。1 か月のあいだ一度も接続がなく、再開もしなかったと仮定",
+          "実際には保守のために Aurora がインスタンスを再開することがあり、その時間は課金される",
+          "データは 1 GB、Aurora Standard",
+          "Aurora が管理するシークレットが 1 つ",
+          "バックアップの超過分、VPC の料金（11章）は含めない"
+        ],
+        "en": [
+          "0 ACU minimum, assuming no connection and no resume for the whole month",
+          "In practice Aurora resumes the instance for maintenance at times, and that time is billed",
+          "1 GB of data, Aurora Standard",
+          "One secret managed by Aurora",
+          "Backup storage beyond the free allocation and VPC charges (chapter 11) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 0,
+          "basis": "paused for all 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        },
+        { "priceId": "secretsmanager.secret", "quantity": 1, "basis": "the master user secret" }
+      ]
+    },
+    {
+      "id": "aurora-practice-month",
+      "chapter": "60",
+      "title": {
+        "ja": "Aurora（60章の既定の構成）: 練習で合計 10 時間だけ起きていた月",
+        "en": "Aurora (chapter 60's default configuration): awake for 10 hours of practice in the month"
+      },
+      "assumptions": {
+        "ja": [
+          "起きていた時間は合計 10 時間。そのあいだずっと上限の 1 ACU だったと置く（上側の見積もり）",
+          "I/O は 100 万回、Data API の呼び出しは 1 万回と置く。測った値ではない",
+          "データは 1 GB、Aurora Standard、シークレット 1 つ",
+          "バックアップの超過分、VPC の料金（11章）は含めない"
+        ],
+        "en": [
+          "Awake for 10 hours in total, taken to be at the 1 ACU maximum throughout (an upper estimate)",
+          "1 million I/O requests and 10,000 Data API calls are assumed, not measured",
+          "1 GB of data, Aurora Standard, one secret",
+          "Backup storage beyond the free allocation and VPC charges (chapter 11) are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 10,
+          "basis": "1 ACU x 10 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        },
+        {
+          "priceId": "aurora.postgres.io",
+          "quantity": 1000000,
+          "basis": "1 million I/O requests (assumed)"
+        },
+        {
+          "priceId": "aurora.postgres.data-api",
+          "quantity": 10000,
+          "basis": "10,000 Data API calls (assumed)"
+        },
+        { "priceId": "secretsmanager.secret", "quantity": 1, "basis": "the master user secret" }
+      ]
+    },
+    {
+      "id": "aurora-awake-month",
+      "chapter": "60",
+      "title": {
+        "ja": "Aurora（60章の既定の構成）: 一度も止まらず、上限の 1 ACU のままだった月",
+        "en": "Aurora (chapter 60's default configuration): never paused, at the 1 ACU maximum all month"
+      },
+      "assumptions": {
+        "ja": [
+          "接続が開いたままなどの理由で auto-pause が働かず、730 時間ずっと上限の 1 ACU だったと置く。この構成でのインスタンスの料金の上限",
+          "I/O は含めない",
+          "データは 1 GB、Aurora Standard、シークレット 1 つ"
+        ],
+        "en": [
+          "Auto-pause never happens (a connection left open, for example) and the instance stays at the 1 ACU maximum for 730 hours: the ceiling of the instance charge in this configuration",
+          "I/O is not included",
+          "1 GB of data, Aurora Standard, one secret"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 730,
+          "basis": "1 ACU x 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        },
+        { "priceId": "secretsmanager.secret", "quantity": 1, "basis": "the master user secret" }
+      ]
+    },
+    {
+      "id": "aurora-standard-300m-io",
+      "chapter": "60",
+      "title": {
+        "ja": "Aurora Standard: 平均 1 ACU、100 GB、I/O が月 3 億回",
+        "en": "Aurora Standard: 1 ACU on average, 100 GB, 300 million I/O requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "writer 1 台が 730 時間、平均 1 ACU",
+          "データは 100 GB",
+          "I/O は 3 億回と置く。測った値ではない",
+          "シークレット、バックアップ、VPC の料金は含めない"
+        ],
+        "en": [
+          "One writer for 730 hours at 1 ACU on average",
+          "100 GB of data",
+          "300 million I/O requests, assumed and not measured",
+          "The secret, backups, and VPC charges are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 730,
+          "basis": "1 ACU x 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 100,
+          "basis": "100 GB stored for the month"
+        },
+        {
+          "priceId": "aurora.postgres.io",
+          "quantity": 300000000,
+          "basis": "300 million I/O requests (assumed)"
+        }
+      ]
+    },
+    {
+      "id": "aurora-io-optimized-300m-io",
+      "chapter": "60",
+      "title": {
+        "ja": "Aurora I/O-Optimized: 平均 1 ACU、100 GB、I/O が月 3 億回",
+        "en": "Aurora I/O-Optimized: 1 ACU on average, 100 GB, 300 million I/O requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "writer 1 台が 730 時間、平均 1 ACU",
+          "データは 100 GB",
+          "I/O は何回でも課金されない",
+          "シークレット、バックアップ、VPC の料金は含めない"
+        ],
+        "en": [
+          "One writer for 730 hours at 1 ACU on average",
+          "100 GB of data",
+          "I/O requests are not charged, however many",
+          "The secret, backups, and VPC charges are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu.io-optimized",
+          "quantity": 730,
+          "basis": "1 ACU x 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage.io-optimized",
+          "quantity": 100,
+          "basis": "100 GB stored for the month"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "60",
+        "command": "vp test run examples/60-aurora",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "PGlite の上で、追記の 5 つの文それぞれの前と後で接続を落とし、どの場合も 1 回だけ適用されること。キーのない再試行が 2 回適用すること。キーの持ち主ごとの分離、記録の掃除。SQLSTATE の分類。Data API の adapter（パラメーターと行の変換、例外の仕分け、PGlite で作った代役のサービスに対する commit の応答の喪失）。Standard と I/O-Optimized の損益分岐。スタックのアサーション。5 ファイル 54 件",
+          "en": "On PGlite: the session dropped before and after each of the append's five statements, applied once in every case; a retry without a key applying twice; keys kept apart per owner; purging. SQLSTATE classification. The Data API adapter (parameter and row conversion, sorting of exceptions, a lost answer to commit against a stand-in service built on PGlite). The break-even between Standard and I/O-Optimized. Stack assertions. 54 tests in 5 files"
+        }
+      },
+      {
+        "scope": "60",
+        "command": "tsc --noEmit -p examples/60-aurora",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "src、infra、test、scripts の型検査。node-postgres の adapter（src/pg.ts）と scripts/cloud.ts は、型検査だけで、実行していない",
+          "en": "Type check of src, infra, test, and scripts. The node-postgres adapter (src/pg.ts) and scripts/cloud.ts were type-checked only, never run"
+        }
+      },
+      {
+        "scope": "60",
+        "command": "vp run aurora:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の構成のテンプレートを cdk.out に書き出した。AWS には問い合わせない",
+          "en": "Wrote the default configuration's template to cdk.out. Asks AWS nothing"
+        }
+      },
+      {
+        "scope": "60",
+        "command": "vp run aurora:infra:deploy / aurora:db:schema / aurora:smoke / aurora:infra:drift / aurora:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "クラスターを作っていない。Data API も、auto-pause も、フェイルオーバーも、実物では見ていない",
+          "en": "No cluster was created. The Data API, auto-pause, and a failover were never seen on the real service"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "aurora-real-cluster",
+        "summary": {
+          "ja": "60章のスタックを一度もデプロイしていない。未確認: エンジンの版 17.9 で東京に新しいクラスターを作れること。cdkd 0.296.28 が DBCluster を Cloud Control API 経由で作り、EnableHttpEndpoint と SecondsUntilAutoPause が効き、MasterUserSecret.SecretArn の出力が解決されること。インバウンドのルールが 1 つもないセキュリティグループのまま Data API が届くこと。Aurora が管理するシークレットを Data API の secretArn に使えること。$1 を :p1 に書き換えた SQL と CAST が通ること。UPDATE ... RETURNING の行が records と columnMetadata の label で返ること。止まっているインスタンスへの呼び出しが DatabaseResumingException になるのか、待たされて成功するのか。300 秒で実際に止まること、再開にかかる時間。",
+          "en": "The chapter 60 stack has never been deployed. Unconfirmed: that a new cluster can be created in Tokyo with engine version 17.9; that cdkd 0.296.28 creates the DBCluster through Cloud Control API, that EnableHttpEndpoint and SecondsUntilAutoPause take effect, and that the MasterUserSecret.SecretArn output resolves; that the Data API reaches a cluster whose security group has no inbound rule; that the secret Aurora manages works as the Data API's secretArn; that SQL with $1 rewritten to :p1 and the CASTs are accepted; that rows of UPDATE ... RETURNING come back in records with labels in columnMetadata; whether a call to a paused instance fails with DatabaseResumingException or waits and succeeds; that the instance really pauses after 300 seconds, and how long a resume takes."
+        },
+        "resume": {
+          "ja": "学習用アカウントで 11章の VPC をデプロイしたうえで、vp run aurora:infra:deploy、aurora:db:schema、aurora:smoke を順に実行する。10 分ほど置いて CloudWatch の ServerlessDatabaseCapacity が 0 になるのを確かめ、もう一度 aurora:smoke を実行して、再試行のログと所要時間を記録する。結果を data/validation.json に書き、vp run aurora:infra:destroy で消す。",
+          "en": "In a practice account, with the chapter 11 VPC deployed, run vp run aurora:infra:deploy, aurora:db:schema, and aurora:smoke in that order. Wait about ten minutes, check that ServerlessDatabaseCapacity in CloudWatch reads 0, run aurora:smoke again, and record the retry log and the time taken. Write the results to data/validation.json and remove everything with vp run aurora:infra:destroy."
+        }
+      },
+      {
+        "id": "aurora-failover-not-exercised",
+        "summary": {
+          "ja": "フェイルオーバーを一度も起こしていない。接続の喪失は、PGlite の 1 本のセッションの上で、文を実行したあとに ROLLBACK して例外を投げることで模している。未確認: フェイルオーバーの最中に node-postgres が実際に返すエラー（SQLSTATE 57P01 か、SQLSTATE のない切断か）。降格した writer につながったままのセッションが書き込みに 25006 を返すこと。クラスターエンドポイントの名前が新しい writer を指すまでの時間。Data API がフェイルオーバー中に返す例外の種類。",
+          "en": "No failover was ever caused. A lost connection is imitated on PGlite's single session by running a statement, issuing ROLLBACK, and throwing. Unconfirmed: the error node-postgres really reports during a failover (SQLSTATE 57P01, or a disconnect with no SQLSTATE); that a session still attached to a demoted writer answers a write with 25006; how long the cluster endpoint's name takes to point at the new writer; which exceptions the Data API throws during a failover."
+        },
+        "resume": {
+          "ja": "デプロイしたクラスターに 2 台目の db.serverless のインスタンスを別の AZ に足す（スタックに CfnDBInstance をもう 1 つ書く。起きている間は 2 台分の料金）。aurora:smoke を繰り返し実行しながら aws rds failover-db-cluster --db-cluster-identifier <ID> を実行し、出た例外と、同じキーが 1 回だけ適用されたことを記録する。VPC の中で src/pg.ts を使う場合も同じ手順で、エラーの code を記録する。",
+          "en": "Add a second db.serverless instance in another AZ to the deployed cluster (one more CfnDBInstance in the stack; two instances are billed while awake). Run aurora:smoke in a loop while running aws rds failover-db-cluster --db-cluster-identifier <ID>, and record the exceptions seen and that the same key was applied once. Do the same with src/pg.ts from inside the VPC, and record each error's code."
+        }
+      },
+      {
+        "id": "aurora-concurrent-same-key",
+        "summary": {
+          "ja": "同じキーの 2 つのリクエストが別々のセッションで同時に走る場合を、実際の PostgreSQL では動かしていない。PGlite のセッションは 1 本なので、テストは「INSERT ... ON CONFLICT DO NOTHING が行を返さなかった」という応答を台本で与えているだけである。",
+          "en": "Two requests with the same key running at once in separate sessions were not run on a real PostgreSQL. PGlite has one session, so the test only scripts the answer 'INSERT ... ON CONFLICT DO NOTHING returned no row'."
+        },
+        "resume": {
+          "ja": "PostgreSQL のサーバー（デプロイした Aurora でよい）に 2 本の接続を張り、同じ owner と key で appendToNote を同時に実行する。片方が行ロックで待ち、もう片方のコミットのあとにやり直して、保存された結果を返すことを確かめる。",
+          "en": "Open two connections to a PostgreSQL server (the deployed Aurora will do) and run appendToNote at the same time with the same owner and key. Check that one waits on the row lock, starts over after the other commits, and returns the stored result."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 60: Aurora ------------------------------------------------\n      // Deployed, the cluster bills for storage and one secret, and for capacity whenever it is awake.\n      ...infra(\"aurora\", \"examples/60-aurora\", \"AihAurora\"),\n      // These reach the deployed cluster through the RDS Data API and change it. They wake a paused instance.\n      \"aurora:db:schema\": live(\"node --env-file-if-exists=../../.env scripts/cloud.ts schema\", {\n        cwd: \"examples/60-aurora\",\n      }),\n      \"aurora:smoke\": live(\"node --env-file-if-exists=../../.env scripts/cloud.ts smoke\", {\n        cwd: \"examples/60-aurora\",\n      }),",
+    "synth": ["aurora:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/60-aurora"]
+  }
+}

@@ -1,0 +1,914 @@
+{
+  "chapterId": "57",
+  "manifest": {
+    "id": "57",
+    "slug": "polly",
+    "title": {
+      "ja": "Polly: ノートを読み上げる",
+      "en": "Polly: Reading a Note Aloud"
+    },
+    "prerequisites": ["07", "17"],
+    "services": ["Amazon Polly", "S3", "Lambda"],
+    "samplePath": "examples/57-polly",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "polly-limits",
+      "polly-voices",
+      "polly-neural-voices",
+      "polly-generative-voices",
+      "polly-long-form-voices",
+      "polly-api-synthesize-speech",
+      "polly-api-start-task",
+      "polly-api-start-stream",
+      "polly-async",
+      "polly-async-iam",
+      "polly-ssml",
+      "polly-ssml-tags",
+      "polly-ssml-reserved",
+      "polly-ssml-break",
+      "polly-speech-marks",
+      "polly-speech-mark-output",
+      "polly-lexicons",
+      "polly-iam",
+      "polly-service-reference",
+      "polly-cloudwatch",
+      "polly-data-protection",
+      "polly-faq",
+      "polly-ai-opt-out",
+      "polly-pricing",
+      "polly-price-list",
+      "polly-s3-conditional-writes",
+      "polly-xml-char",
+      "polly-sdk-client",
+      "polly-cdkd-package",
+      "polly-cloudflare-models",
+      "polly-cloudflare-melotts",
+      "polly-cloudflare-aura",
+      "polly-ai-sdk-speech",
+      "polly-mdn-speech-synthesis",
+      "polly-mdn-voice-local"
+    ]
+  },
+  "sources": [
+    {
+      "id": "polly-limits",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/limits.html",
+      "title": "Quotas in Amazon Polly",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SynthesizeSpeech input is up to 3000 billed characters (6000 total characters); SSML tags are not counted as billed characters",
+        "The output audio stream of SynthesizeSpeech is limited to 10 minutes; any remaining speech is cut off",
+        "StartSpeechSynthesisTask input is up to 100,000 billed characters (200,000 total characters)",
+        "SynthesizeSpeech throttle rates: standard 80 tps (burst 100), neural 8 tps (burst 10), long-form 8 tps (burst 10), generative 8 tps; neural supports up to 18 concurrent requests",
+        "A throttled request returns HTTP status 400 with ThrottlingException; the page recommends retrying with backoff and jitter",
+        "Up to 100 lexicons per account, names up to 20 alphanumeric characters, each up to 40,000 characters; up to five lexicons per request; the size of a lexicon affects the latency of SynthesizeSpeech",
+        "SSML limits: the audio, lexicon, lookup and voice tags are not supported; a break is at most 10 seconds"
+      ]
+    },
+    {
+      "id": "polly-voices",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/available-voices.html",
+      "title": "Available voices",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Japanese (ja-JP) voices: Mizuki (standard only), Takumi (neural and standard), Kazuha (neural only), Tomoko (neural only); none has a generative or long-form variant",
+        "Joanna (en-US) is available as generative, neural and standard"
+      ]
+    },
+    {
+      "id": "polly-neural-voices",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/neural-voices.html",
+      "title": "Neural voices",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Neural voices are available in ap-northeast-1 (Tokyo), among other Regions",
+        "Neural voices support real-time and asynchronous synthesis and all speech marks; the default sampling rate is 24 kHz",
+        "The standard engine concatenates phonemes of recorded speech; the neural engine uses a sequence-to-sequence model and a vocoder"
+      ]
+    },
+    {
+      "id": "polly-generative-voices",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/generative-voices.html",
+      "title": "Generative voices",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Generative voices are available in ap-northeast-1 (Tokyo) among ten Regions, and no Japanese voice is listed",
+        "Speech marks are not available with the generative engine",
+        "The bidirectional streaming API is offered for the generative engine in eight Regions, which do not include Tokyo",
+        "Updates to the model may slightly change how a generative voice sounds over time"
+      ]
+    },
+    {
+      "id": "polly-long-form-voices",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/long-form-voices.html",
+      "title": "Long-form voices",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Long-form voices exist for en-US and es-ES only and are available in us-east-1 only"
+      ]
+    },
+    {
+      "id": "polly-api-synthesize-speech",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html",
+      "title": "SynthesizeSpeech",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Engine is standard, neural, long-form or generative; standard is the default, and a voice the standard engine does not support results in an error",
+        "OutputFormat is json, mp3, ogg_opus, ogg_vorbis, pcm, mulaw or alaw; pcm is signed 16-bit mono little-endian",
+        "TextType is ssml or text, text by default; SpeechMarkTypes are sentence, ssml, viseme, word",
+        "The response carries ContentType (audio/mpeg for mp3) and x-amzn-RequestCharacters, the number of characters synthesized",
+        "TextLengthExceededException: at most 6000 characters, of which no more than 3000 billed; InvalidSsmlException for invalid SSML"
+      ]
+    },
+    {
+      "id": "polly-api-start-task",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/API_StartSpeechSynthesisTask.html",
+      "title": "StartSpeechSynthesisTask",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "OutputS3BucketName is required, OutputS3KeyPrefix and SnsTopicArn are optional; all four engines are valid values"
+      ]
+    },
+    {
+      "id": "polly-api-start-stream",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/API_StartSpeechSynthesisStream.html",
+      "title": "StartSpeechSynthesisStream",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A bidirectional streaming counterpart to SynthesizeSpeech over HTTP/2; currently only the generative engine is supported"
+      ]
+    },
+    {
+      "id": "polly-async",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/asynchronous.html",
+      "title": "Long audio files",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Asynchronous synthesis queues the request, writes the result to the caller's S3 bucket, and can notify an SNS topic",
+        "SynthesizeSpeech produces audio in near-real time and can only synthesize 3000 characters"
+      ]
+    },
+    {
+      "id": "polly-async-iam",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/asynchronous-iam.html",
+      "title": "Setting up the IAM policy for asynchronous synthesis",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Asynchronous synthesis needs permission for the Polly task operations, for writing to the output bucket, and optionally for publishing to the SNS topic"
+      ]
+    },
+    {
+      "id": "polly-ssml",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/ssml.html",
+      "title": "Generating speech from SSML documents",
+      "checkedAt": "2026-10-13",
+      "supports": ["SSML input is wrapped in a speak element; Polly supports a subset of SSML 1.1"]
+    },
+    {
+      "id": "polly-ssml-tags",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/supportedtags.html",
+      "title": "Supported SSML tags",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "All tags except the news domain are supported for standard voices; for neural voices break, lang, mark, p, phoneme, s, sub, w are fully available, prosody and say-as partially, and emphasis, auto-breaths, max-duration and soft phonation are not available"
+      ]
+    },
+    {
+      "id": "polly-ssml-reserved",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/escapees.html",
+      "title": "Reserved characters in SSML",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The five reserved characters and their escape codes: \" &quot;, & &amp;, ' &apos;, < &lt;, > &gt;",
+        "For &, < and > the escape codes are always necessary in SSML"
+      ]
+    },
+    {
+      "id": "polly-ssml-break",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/break-tag.html",
+      "title": "Adding a pause <break>",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The break tag is supported by all four engines and takes a time in seconds or milliseconds, at most 10s"
+      ]
+    },
+    {
+      "id": "polly-speech-marks",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/speechmarks.html",
+      "title": "Speech marks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Speech marks are metadata such as where a sentence or word starts; a request for them returns the metadata instead of audio; available with the neural, long-form and standard engines"
+      ]
+    },
+    {
+      "id": "polly-speech-mark-output",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/output.html",
+      "title": "Speech mark output",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Speech marks are a line-delimited JSON stream with time in milliseconds and start and end as byte offsets into the input text"
+      ]
+    },
+    {
+      "id": "polly-lexicons",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/managing-lexicons.html",
+      "title": "Managing lexicons",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A pronunciation lexicon follows the W3C PLS format, is stored per Region, and is applied to the input text before synthesis"
+      ]
+    },
+    {
+      "id": "polly-iam",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/security_iam_service-with-iam.html",
+      "title": "How Amazon Polly works with IAM",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Polly supports identity-based policies only: no resource-based policies, no service-specific condition keys, no tag-based access control"
+      ]
+    },
+    {
+      "id": "polly-service-reference",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/polly/polly.json",
+      "title": "Service reference for Amazon Polly (machine-readable Service Authorization Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The only resource type Polly defines is lexicon (arn:${Partition}:polly:${Region}:${Account}:lexicon/${LexiconName}); SynthesizeSpeech lists it as its only resource type and no condition keys"
+      ],
+      "note": "The HTML page of the Service Authorization Reference needs JavaScript; the JSON it is built from was read instead. Whether a SynthesizeSpeech request that names no lexicon is authorized against a lexicon ARN pattern was not confirmed, so the stack grants the action on \"*\"."
+    },
+    {
+      "id": "polly-cloudwatch",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/cloud-watch.html",
+      "title": "Integrating CloudWatch with Amazon Polly",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Polly publishes RequestCharacters (billable characters only), ResponseLatency, 2XXCount, 4XXCount and 5XXCount to the AWS/Polly namespace every minute, with the Operation dimension"
+      ]
+    },
+    {
+      "id": "polly-data-protection",
+      "url": "https://docs.aws.amazon.com/polly/latest/dg/data-protection.html",
+      "title": "Data Protection in Amazon Polly",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS recommends never putting sensitive identifying information into free-form fields; data entered into Polly might be picked up for inclusion in diagnostic logs"
+      ]
+    },
+    {
+      "id": "polly-faq",
+      "url": "https://aws.amazon.com/polly/faqs/",
+      "title": "Amazon Polly FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Polly may store and use text inputs to provide and maintain the service and to improve and develop Polly and other Amazon machine-learning technologies; an AWS Organizations opt-out policy turns that use off",
+        "Content is stored at rest in the Region where Polly is used; some may be stored in another Region for service improvement unless the account has opted out",
+        "A speech request and a speech marks request for the same text are both billed",
+        "Generated speech can be cached and replayed at no additional cost"
+      ]
+    },
+    {
+      "id": "polly-ai-opt-out",
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out.html",
+      "title": "AI services opt-out policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An opt-out policy in AWS Organizations stops AWS AI services from using and storing content for service improvement, and deletes what was stored for that purpose"
+      ]
+    },
+    {
+      "id": "polly-pricing",
+      "url": "https://aws.amazon.com/polly/pricing/",
+      "title": "Amazon Polly Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Per 1 million characters: standard USD 4.00, neural USD 16.00, long-form USD 100.00, generative USD 30",
+        "Free tier as stated: 5 million characters per month for standard voices; 1 million per month for neural, 500 thousand for long-form and 100 thousand for generative, each for the first 12 months",
+        "Since 2025-07-15 new AWS customers receive Free Tier credits instead, which can be applied to Polly",
+        "The page's example: 1 million characters is about 23 hours 8 minutes of speech"
+      ]
+    },
+    {
+      "id": "polly-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonPolly/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonPolly, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-SynthesizeSpeechNeural-Characters is USD 0.0000160000 per character and APN1-SynthesizeSpeech-Characters is USD 0.0000040000 per character"
+      ],
+      "note": "Publication date 2026-09-11. The Tokyo offer file holds only these two SKUs: no long-form or generative price is listed for ap-northeast-1."
+    },
+    {
+      "id": "polly-s3-conditional-writes",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
+      "title": "How to prevent object overwrites with conditional writes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PutObject with If-None-Match: * succeeds only if no object has the key; of several conditional writes for one key the first to finish succeeds and the others get 412 Precondition Failed",
+        "PutObject with If-Match succeeds only if the object's ETag matches; otherwise 412, and 404 if the object no longer exists; it needs s3:PutObject and s3:GetObject",
+        "A 409 Conflict can be returned for concurrent requests; with PutObject the upload may be retried"
+      ]
+    },
+    {
+      "id": "polly-xml-char",
+      "url": "https://www.w3.org/TR/xml/#charsets",
+      "title": "Extensible Markup Language (XML) 1.0 (Fifth Edition): Characters",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]: any Unicode character, excluding the surrogate blocks, FFFE, and FFFF"
+      ],
+      "note": "Whether Polly rejects, drops, or reads a character outside this range was not tested."
+    },
+    {
+      "id": "polly-sdk-client",
+      "url": "https://registry.npmjs.org/@aws-sdk/client-polly/3.1149.0",
+      "title": "@aws-sdk/client-polly 3.1149.0 (npm registry)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "@aws-sdk/client-polly exists at 3.1149.0, the version the other examples pin for the AWS SDK"
+      ]
+    },
+    {
+      "id": "polly-cdkd-package",
+      "url": "https://registry.npmjs.org/@go-to-k/cdkd/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (npm registry; the installed dist was read)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The installed package registers dedicated providers for AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::Lambda::Function, AWS::Lambda::Url, AWS::Logs::LogGroup, AWS::IAM::Role and AWS::IAM::Policy"
+      ],
+      "note": "Found as registry.register(\"AWS::...\") calls in node_modules/@go-to-k/cdkd/dist. The GitHub source at the v0.296.28 tag was not opened."
+    },
+    {
+      "id": "polly-cloudflare-models",
+      "url": "https://developers.cloudflare.com/workers-ai/models/",
+      "title": "Cloudflare Workers AI: Models",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers AI lists four text-to-speech models: @cf/deepgram/aura-1, @cf/deepgram/aura-2-en, @cf/deepgram/aura-2-es and @cf/myshell-ai/melotts"
+      ],
+      "note": "Read as Markdown at /workers-ai/models/index.md."
+    },
+    {
+      "id": "polly-cloudflare-melotts",
+      "url": "https://developers.cloudflare.com/workers-ai/models/melotts/",
+      "title": "Cloudflare Workers AI: melotts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "MeloTTS takes a prompt and a lang parameter that defaults to en, returns MP3, and is priced at USD 0.000205 per audio minute; the page does not list the languages it supports"
+      ]
+    },
+    {
+      "id": "polly-cloudflare-aura",
+      "url": "https://developers.cloudflare.com/workers-ai/models/aura-2-en/",
+      "title": "Cloudflare Workers AI: aura-2-en",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Deepgram Aura-2 on Workers AI is priced at USD 0.03 per 1k characters and comes in an English and a Spanish model"
+      ]
+    },
+    {
+      "id": "polly-ai-sdk-speech",
+      "url": "https://ai-sdk.dev/docs/ai-sdk-core/speech",
+      "title": "AI SDK: Speech",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AI SDK's generateSpeech function calls a speech model of a provider such as OpenAI and returns the audio bytes"
+      ]
+    },
+    {
+      "id": "polly-mdn-speech-synthesis",
+      "url": "https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/api/speechsynthesis/index.md",
+      "title": "MDN: SpeechSynthesis (source of the page)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SpeechSynthesis interface of the Web Speech API retrieves the synthesis voices available on the device and starts and pauses speech"
+      ],
+      "note": "The page is https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis; its Markdown source was read."
+    },
+    {
+      "id": "polly-mdn-voice-local",
+      "url": "https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/api/speechsynthesisvoice/localservice/index.md",
+      "title": "MDN: SpeechSynthesisVoice.localService (source of the page)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A browser voice is supplied either by a local synthesizer or by a remote service, and localService tells which"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "ssml",
+      "ja": "SSML",
+      "en": "SSML",
+      "firstUse": "57",
+      "definition": {
+        "ja": "Speech Synthesis Markup Language。読み上げる文章に、間や読み方の指示をタグで書き込む XML の形式。",
+        "en": "Speech Synthesis Markup Language: an XML format that adds instructions such as pauses and pronunciations, as tags, to text that is to be spoken."
+      }
+    },
+    {
+      "id": "billed-characters",
+      "ja": "課金対象の文字",
+      "en": "billed characters",
+      "firstUse": "57",
+      "definition": {
+        "ja": "Polly が料金を数える文字。SSML のタグは含まれない。",
+        "en": "The characters Polly charges for. SSML tags are not among them."
+      }
+    },
+    {
+      "id": "lexicon",
+      "ja": "レキシコン",
+      "en": "lexicon",
+      "firstUse": "57",
+      "definition": {
+        "ja": "単語ごとの読み方を登録しておく発音辞書。Polly ではリージョンごとに保存し、合成のときに名前で指定する。",
+        "en": "A pronunciation dictionary: how particular words are to be read. Polly stores lexicons per Region and a synthesis request names the ones to apply."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "57.overview",
+      "sources": ["examples/57-polly"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "57.polly",
+      "sources": ["examples/57-polly/src/voices.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "57.alternatives",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "57.cache",
+      "sources": [
+        "examples/57-polly/src/cache-key.ts",
+        "examples/57-polly/src/audio-cache.ts",
+        "examples/57-polly/test/cache-key.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "57.once",
+      "sources": [
+        "examples/57-polly/src/speak.ts",
+        "examples/57-polly/src/s3-audio-cache.ts",
+        "examples/57-polly/test/naive.ts",
+        "examples/57-polly/test/speak.test.ts",
+        "examples/57-polly/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "57.chunk",
+      "sources": [
+        "examples/57-polly/src/chunk.ts",
+        "examples/57-polly/src/voices.ts",
+        "examples/57-polly/test/chunk.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "57.ssml",
+      "sources": ["examples/57-polly/src/ssml.ts", "examples/57-polly/test/ssml.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "57.route",
+      "sources": [
+        "examples/57-polly/src/app.ts",
+        "examples/57-polly/src/contract.ts",
+        "examples/57-polly/src/polly.ts",
+        "examples/57-polly/src/player.ts",
+        "examples/57-polly/test/app.test.ts",
+        "examples/57-polly/test/player.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "57.stack",
+      "sources": [
+        "examples/57-polly/infra/lib/polly-stack.ts",
+        "examples/57-polly/infra/bin/app.ts",
+        "examples/57-polly/src/lambda.ts",
+        "examples/57-polly/infra/test/polly-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "polly:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "57.local",
+      "sources": [
+        "examples/57-polly/src/dev.ts",
+        "examples/57-polly/src/fake-synthesizer.ts",
+        "examples/57-polly/src/memory-audio-cache.ts",
+        "examples/57-polly/.env.example"
+      ],
+      "tasks": ["dev:polly", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "57.deploy",
+      "sources": ["examples/57-polly/scripts/listen.ts", "examples/57-polly/infra/bin/app.ts"],
+      "tasks": ["polly:infra:diff", "polly:infra:deploy", "polly:listen", "polly:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "57.cost",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "57.privacy",
+      "sources": ["examples/57-polly/src/app.ts", "examples/57-polly/test/app.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "57.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "57.cleanup",
+      "sources": ["examples/57-polly/scripts/empty.ts"],
+      "tasks": ["polly:empty", "polly:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "polly.neural.characters",
+      "offerCode": "AmazonPolly",
+      "region": "ap-northeast-1",
+      "sku": "PVMWWHY4RWQDR5JC",
+      "usageType": "APN1-SynthesizeSpeechNeural-Characters",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Characters",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000160000",
+          "description": "$16 per million characters for SynthesizeSpeechNeural-Characters in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonPolly/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:59Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "polly.standard.characters",
+      "offerCode": "AmazonPolly",
+      "region": "ap-northeast-1",
+      "sku": "FUSWNSR5TNRQ9N45",
+      "usageType": "APN1-SynthesizeSpeech-Characters",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Characters",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000040000",
+          "description": "$4 per million characters"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonPolly/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:59Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "polly.neural.characters",
+      "reason": "The pricing page gives 1 million characters a month for the first 12 months only, and says accounts created since 2025-07-15 receive credits instead. Not an always-free allowance; none is applied."
+    },
+    {
+      "priceId": "polly.standard.characters",
+      "reason": "The pricing page gives 5 million characters a month without a time limit, while the FAQ speaks of the first 12 months, and accounts created since 2025-07-15 receive credits instead. Not confirmed as always-free; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "polly-idle",
+      "chapter": "57",
+      "title": {
+        "ja": "読み上げ: デプロイ済みで、誰も聞かない月",
+        "en": "Read aloud: deployed, and nobody listens for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "AihPolly をデプロイ済みで、関数は 1 回も呼ばれない",
+          "バケットは空。ライフサイクルルールが、前の月の音声をすべて消している",
+          "ロググループには何も書かれない"
+        ],
+        "en": [
+          "AihPolly is deployed and the function is never invoked",
+          "The bucket is empty: the lifecycle rules have removed last month's audio",
+          "Nothing is written to the log group"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "polly.neural.characters",
+          "quantity": 0,
+          "basis": "no synthesis"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 0,
+          "basis": "no invocations"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0,
+          "basis": "an empty bucket"
+        }
+      ]
+    },
+    {
+      "id": "polly-month",
+      "chapter": "57",
+      "title": {
+        "ja": "読み上げ: 1,000 回聞かれる月（neural の声）",
+        "en": "Read aloud: 1,000 listens in a month (a neural voice)"
+      },
+      "assumptions": {
+        "ja": [
+          "「聞く」が月に 1,000 回押される。ノートは題と本文を合わせて平均 600 文字で、題と本文の 2 つの部分になる",
+          "1,000 回のうち 300 回は、キャッシュに音声がある文章（同じノートをもう一度聞く）。残りの 700 回が Polly を呼ぶ。この割合は仮定で、実測ではない",
+          "声は neural。700 回 × 600 文字で 420,000 文字。Polly が数える文字数を、1 文字 = 1 と仮定している（数え方は未確認）",
+          "関数は 256 MB。Polly を呼ぶリクエストは 3 秒、キャッシュだけで済むリクエストは 0.3 秒と仮定（未計測）",
+          "S3 への書き込みは、合成した部分ごとに 2 回（claim と音声）。読み取りは、リクエストごとに部分の数だけの HEAD と、聞く人のブラウザからの GET",
+          "音声は 1 回ぶんで 0.3 MB と仮定（未計測。Polly の MP3 のビットレートを確認していない）。700 回ぶんが 30 日のあいだ残る",
+          "聞く人への転送は 1,000 回 × 0.3 MB。ログは 1 リクエスト 1 KB と仮定（未計測）",
+          "無料枠は適用していない。Polly の無料枠は期間つきで、2025-07-15 以降に作ったアカウントでは credits に変わっている"
+        ],
+        "en": [
+          "Listen is pressed 1,000 times in the month. A note averages 600 characters, title and body together, and becomes two parts: the title and the body",
+          "For 300 of the 1,000 the audio is already cached (the same note heard again). The other 700 call Polly. The ratio is an assumption, not a measurement",
+          "A neural voice. 700 x 600 characters is 420,000 characters. One character of text is assumed to count as one for Polly (how it counts was not confirmed)",
+          "The function has 256 MB. A request that calls Polly is assumed to take 3 seconds and one served from the cache 0.3 seconds (not measured)",
+          "Two writes to S3 per synthesized part (the claim and the audio). Reads are one HEAD per part per request, and the GETs from the listener's browser",
+          "The audio of one listen is assumed to be 0.3 MB (not measured; the bitrate of Polly's MP3 was not confirmed). 700 of them stay for the 30 days",
+          "Transfer to listeners is 1,000 x 0.3 MB. Logs are assumed at 1 KB per request (not measured)",
+          "No free tier is applied. Polly's is time-limited, and accounts created since 2025-07-15 receive credits instead"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "polly.neural.characters",
+          "quantity": 420000,
+          "basis": "700 listens x 600 characters"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000,
+          "basis": "1,000 requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 547.5,
+          "basis": "(700 x 3 s + 300 x 0.3 s) x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 2800,
+          "basis": "700 listens x 2 parts x 2 PUTs (claim, audio)"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 4000,
+          "basis": "1,000 requests x 2 HEADs, and 1,000 listens x 2 GETs"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.21,
+          "basis": "700 x 0.3 MB kept for 30 days, in GB-months"
+        },
+        {
+          "priceId": "datatransfer.out.internet",
+          "quantity": 0.3,
+          "basis": "1,000 listens x 0.3 MB, in GB"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.00095,
+          "basis": "1,000 x 1 KB, in GB"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "57",
+        "command": "vp test run examples/57-polly",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "72 件。SSML のエスケープとタグの混入、長いノートの分割、キャッシュのキー、同時に届いた 2 件と 10 件・合成の失敗・印を置いたままの停止・古い印の同時の引き継ぎの再現、ルートと入力の検査、ログにノートの文章が出ないこと、再生の順序、S3 と Polly へのリクエストの形、スタックの assertion（最小権限、バケットが公開されていないこと、ライフサイクルルール、タイムアウトと印の期限の大小、使うリソースの種類）",
+          "en": "72 tests: SSML escaping and injected tags, chunking a long note, cache keys, two and ten simultaneous requests, a failed synthesis, a holder that stops with its claim, two simultaneous takeovers of an old claim, the route and its input checks, no note text in the logs, playback order, the shape of the requests to S3 and Polly, and stack assertions (least privilege, the bucket is not public, lifecycle rules, the timeout against the claim's lifetime, the resource types in use)"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "tsc --noEmit -p examples/57-polly",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "vp run polly:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AihPolly のテンプレートが、AWS に問い合わせずに生成される（esbuild のバンドル込み）",
+          "en": "The AihPolly template is produced without asking AWS anything, bundling included"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "SPEECH_BACKEND=fake node src/dev.ts (examples/57-polly) と curl",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "POST /speech が 2 つの部分の URL を返し、同じノートの 2 回目は billedCharacters が 0 で source が cache になること、URL から WAV（RIFF）が返ること、一覧に無い声が 400 になることを確認",
+          "en": "POST /speech answered with the URLs of two parts; the second request for the same note had billedCharacters 0 and source cache; a URL returned a WAV (RIFF) file; a voice outside the list was refused with 400"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "vp check --fix (examples/57-polly and the chapter's pages)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "自分のファイルだけにかけ、awscdk-lint を含めて警告が出ないことを確認",
+          "en": "Run on this chapter's own files only: no finding, awscdk-lint included"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "vp run polly:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない",
+          "en": "Not deployed"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "vp run polly:listen",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。Polly を 1 回も呼んでいない。課金される（1 回およそ 70 文字）",
+          "en": "Not run. Polly was never called. Billed: about 70 characters a run"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "vp run polly:empty --yes",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "57",
+        "command": "vp run polly:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "polly-never-called",
+        "summary": {
+          "ja": "Polly を 1 回も呼んでいない。声の聞こえ方、合成にかかる時間、返ってくる MP3 の大きさとビットレート、x-amzn-RequestCharacters の値、SSML をエスケープした文字（&amp; など）や改行が何文字と数えられるか、日本語の声が英単語をどう読むかは、どれも未確認。",
+          "en": "Polly was never called. Unconfirmed: how the voices sound, how long a synthesis takes, the size and bitrate of the MP3 that comes back, the value of x-amzn-RequestCharacters, how an escaped character such as &amp; or a line break is counted, and how a Japanese voice reads English words."
+        },
+        "resume": {
+          "ja": "vp run polly:infra:deploy の後、vp run polly:listen を実行する（課金される）。1 回目の billedCharacters を送った文章の文字数と比べ、2 回目が 0 であること、音声の Content-Type とバイト数、かかった時間を記録する。& と改行を含む文章でも試し、数え方を src/ssml.ts の billedSize のコメントと本文に反映する。",
+          "en": "After vp run polly:infra:deploy, run vp run polly:listen (billed). Compare the first call's billedCharacters with the length of the text sent, confirm the second is 0, and record the audio's Content-Type, size and the time taken. Try a text with & and line breaks too, and bring what you learn about counting into the comment on billedSize in src/ssml.ts and into the page."
+        }
+      },
+      {
+        "id": "polly-conditional-writes-on-s3",
+        "summary": {
+          "ja": "S3 の条件付き書き込みを実際の S3 で試していない。If-None-Match と If-Match の PutObject が同時に届いたときに 1 つだけが通ること、負けた側に返るエラー（412 と 409）の形、SDK が 409 を自動で再試行するかどうかは、ドキュメントと SDK の型から書いた。",
+          "en": "The conditional writes were not tried against S3. That only one of several simultaneous PutObject calls with If-None-Match or If-Match succeeds, the shape of the errors the losers get (412 and 409), and whether the SDK retries a 409 by itself, are written from the documentation and the SDK's types."
+        },
+        "resume": {
+          "ja": "デプロイ後、同じ新しい文章で vp run polly:listen を 2 つの端末から同時に実行し、関数のログで synthesized が合わせて 1 件分であること、片方が waited になることを確かめる。関数のログに 412 や 409 以外のエラー名が出たら、src/s3-audio-cache.ts の refused を直す。",
+          "en": "After deploying, run vp run polly:listen from two terminals at once with the same new text, and check in the function's log that the two together synthesized once and that one of them waited. If an error name other than a 412 or a 409 shows up in the log, fix refused in src/s3-audio-cache.ts."
+        }
+      },
+      {
+        "id": "polly-iam-resource",
+        "summary": {
+          "ja": "polly:SynthesizeSpeech を Resource \"*\" で許可している。Polly のリソースの種類はレキシコンだけで、レキシコンを使わないリクエストがどの ARN で評価されるかを確認できなかったため。",
+          "en": "polly:SynthesizeSpeech is allowed on Resource \"*\". Polly's only resource type is the lexicon, and it could not be confirmed which ARN a request that uses no lexicon is evaluated against."
+        },
+        "resume": {
+          "ja": "デプロイ後、ロールのポリシーの Resource を arn:aws:polly:ap-northeast-1:<account>:lexicon/* に変えて vp run polly:listen を実行し、AccessDenied になるかどうかを見る。通るなら、スタックとテストをその ARN に変える。",
+          "en": "After deploying, change the Resource in the role's policy to arn:aws:polly:ap-northeast-1:<account>:lexicon/* and run vp run polly:listen to see whether it is denied. If it is allowed, change the stack and its test to that ARN."
+        }
+      },
+      {
+        "id": "polly-player-in-a-browser",
+        "summary": {
+          "ja": "src/player.ts をブラウザで動かしていない。audio 要素の代わりのオブジェクトでテストしただけで、署名付き URL の音声が audio 要素で再生できること、部分のつなぎ目がどう聞こえるかは未確認。",
+          "en": "src/player.ts was not run in a browser. It was tested against a stand-in for the audio element only; that an audio element plays the presigned URLs, and how the joins between parts sound, are unconfirmed."
+        },
+        "resume": {
+          "ja": "06章の Web アプリのノートの画面にボタンを足し、requestSpeech と playInOrder(urls, (url) => new Audio(url)) を呼ぶ。2 つ以上の部分になる長さのノートで、つなぎ目の間を聞く。",
+          "en": "Add a button to the note view of chapter 06's web app that calls requestSpeech and playInOrder(urls, (url) => new Audio(url)). Listen to the joins with a note long enough to become two or more parts."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 57: a note read aloud by Polly --------------------------------\n      // The speech API on plain Node. A tone stands in for the voice unless .env says SPEECH_BACKEND=polly.\n      \"dev:polly\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", {\n        cwd: \"examples/57-polly\",\n      }),\n      ...infra(\"polly\", \"examples/57-polly\", \"AihPolly\"),\n      // BILLED: calls Polly through the deployed function. Not part of check:all.\n      \"polly:listen\": live(\"node --env-file-if-exists=../../.env scripts/listen.ts\", {\n        cwd: \"examples/57-polly\",\n      }),\n      \"polly:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty.ts\", {\n        cwd: \"examples/57-polly\",\n      }),",
+    "synth": ["polly:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/57-polly"]
+  }
+}

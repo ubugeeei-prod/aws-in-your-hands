@@ -1,0 +1,23 @@
+{
+  "name": "@aih/example-46-shield",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aih/example-32-limits": "workspace:*",
+    "@aih/example-33-production-readiness": "workspace:*",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "@types/aws-lambda": "8.10.164",
+    "vite-plus": "1.1.0"
+  }
+}

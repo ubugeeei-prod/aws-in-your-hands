@@ -1,0 +1,1113 @@
+{
+  "chapterId": "47",
+  "manifest": {
+    "id": "47",
+    "slug": "step-functions",
+    "title": {
+      "ja": "Step Functions: 状態機械、retry と catch、Map、待ち合わせ、saga",
+      "en": "Step Functions: State Machines, Retry and Catch, Map, Callbacks, and Sagas"
+    },
+    "prerequisites": ["08", "16"],
+    "services": ["Step Functions", "DynamoDB", "S3", "SQS", "SNS", "CloudWatch Logs", "IAM"],
+    "samplePath": "examples/47-step-functions",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "sfn-types-guarantees",
+      "sfn-jsonata",
+      "sfn-variables",
+      "asl-spec",
+      "sfn-patterns",
+      "sfn-retry-catch",
+      "sfn-task-fields",
+      "sfn-sdk-integrations",
+      "sfn-connect-ddb",
+      "sfn-connect-sqs",
+      "sfn-connect-sns",
+      "sfn-map",
+      "sfn-map-inline",
+      "sfn-map-distributed",
+      "sfn-choice",
+      "sfn-parallel",
+      "sfn-wait",
+      "sfn-quotas-2",
+      "sfn-redrive-2",
+      "sfn-versions",
+      "sfn-aliases",
+      "sfn-update-state-machine",
+      "sfn-start-execution-2",
+      "sfn-start-sync",
+      "sfn-send-task",
+      "sfn-send-heartbeat",
+      "sfn-test-state",
+      "sfn-test-state-api",
+      "sfn-local-unsupported",
+      "sfn-cw-logs",
+      "sfn-metrics",
+      "sfn-eventbridge-2",
+      "sfn-iam-role-2",
+      "sfn-pricing-2",
+      "aws-price-list-states-2",
+      "s3-delete-object",
+      "s3-copy-object-permissions",
+      "dynamodb-reserved-words",
+      "jsonata-npm",
+      "cdkd-source-step-functions",
+      "cloudflare-workflows-2",
+      "cloudflare-workflows-rollback",
+      "vercel-workflows"
+    ]
+  },
+  "sources": [
+    {
+      "id": "sfn-types-guarantees",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html",
+      "title": "Choosing workflow type in Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The workflow type cannot be changed after a state machine is created",
+        "Standard: up to one year, exactly-once workflow execution unless Retry is specified in ASL, execution state persisted between state transitions, history retrievable through the API for 90 days after completion, billed by state transition",
+        "Express: up to five minutes, billed by number of executions, duration and memory; asynchronous Express is at-least-once, synchronous Express is at-most-once; execution state is not persisted between transitions and history is not captured by Step Functions",
+        "Express Workflows do not support the .sync and .waitForTaskToken integration patterns, Distributed Map, or activities",
+        "For Standard, starting an execution with the name of a running one returns an idempotent response; for Express, the same name results in concurrent executions",
+        "StartSyncExecution from the console expires after 60 seconds"
+      ]
+    },
+    {
+      "id": "sfn-jsonata",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/transforming-data.html",
+      "title": "Transforming data with JSONata in Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Step Functions implements JSONata based on the 2.0.6 specification; $eval is not available, $parse replaces it",
+        "When creating a workflow in the console, AWS recommends JSONata as the top-level QueryLanguage; without the field the default is JSONPath",
+        "JSONata states use Arguments and Output in place of InputPath, Parameters, ResultSelector, ResultPath and OutputPath, and a string is an expression only when it starts with {% and ends with %}",
+        "$states holds input, result, errorOutput (in a Catch) and context",
+        "An expression that returns no value, a type error, an evaluation longer than one second, and exceeded memory all raise States.QueryEvaluationError, which Retry and Catch can name",
+        "Step Functions adds $partition, $range, $hash, $random, $uuid and $parse",
+        "A Choice rule in JSONata has a Condition"
+      ]
+    },
+    {
+      "id": "sfn-variables",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/workflow-variables.html",
+      "title": "Passing data between states with variables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Assign is available on Pass, Task, Map, Parallel, Choice and Wait states, and inside Catch and Choice rules",
+        "All expressions in an Assign are evaluated with the values on state entry, then assigned; the new values are visible from the next state",
+        "Assign and Output are processed in parallel",
+        "A variable is at most 256 KiB, all variables in one Assign at most 256 KiB together, and all stored variables at most 10 MiB per execution",
+        "Parallel branches and Map iterations read outer variables and keep their own; a Distributed Map cannot reference outer variables"
+      ]
+    },
+    {
+      "id": "asl-spec",
+      "url": "https://states-language.net/spec.html",
+      "title": "Amazon States Language (specification)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In JSONata states a Catcher may have Output and Assign, which may reference $states.errorOutput; without Output the state output is the Error Output, an object with Error and usually Cause",
+        "When a state reports an error, the matching Catcher's Assign is evaluated and the state's top-level Assign is not",
+        "ItemSelector overrides each item of a Map; $states.context.Map.Item.Value and .Index describe the item",
+        "A MaxConcurrency of 1 processes the items in order"
+      ],
+      "note": "The specification states the default of a missing Output twice and differently: \"the result in a Task, Map, and Parallel State\" in the section on Arguments and Output, and \"the Task State copies its input through to its output\" in the section on the Task state. The chapter's definitions write Output in every Task and Map so that neither reading matters."
+    },
+    {
+      "id": "sfn-patterns",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html",
+      "title": "Discover service integration patterns in Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Three patterns: Request Response, Run a Job (.sync), Wait for a Callback with Task Token (.waitForTaskToken), chosen by the suffix of Resource",
+        "AWS SDK integrations: Request Response in Standard and Express, .waitForTaskToken in Standard, no .sync",
+        "Optimized DynamoDB supports Request Response only; SQS, SNS and Lambda support Request Response and, in Standard, the callback; Step Functions, ECS, and others support .sync",
+        "A task waiting for a token waits until the execution reaches one year unless HeartbeatSeconds or TimeoutSeconds is set",
+        "If a task using a callback token times out, a new random token is generated",
+        "Task tokens must be returned by principals in the same account",
+        "A .sync task that is aborted is cancelled on a best-effort basis; .sync polling consumes API quota"
+      ]
+    },
+    {
+      "id": "sfn-retry-catch",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html",
+      "title": "Handling errors in Step Functions workflows",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Retrier fields and defaults: IntervalSeconds 1, MaxAttempts 3 (0 never retries), BackoffRate 2.0, MaxDelaySeconds, JitterStrategy FULL or NONE (default NONE; FULL randomizes each interval between 0 and its computed value)",
+        "A retrier's counters apply across all visits to it within one state execution (the page's complex retry scenario: ErrorA, ErrorB, ErrorC, ErrorB)",
+        "States.ALL matches every known error name except States.Runtime and States.DataLimitExceeded, must be alone and last; States.TaskFailed matches every error except States.Timeout",
+        "Retries are treated as state transitions",
+        "Catchers exist for Task, Parallel and Map states, not for the execution as a whole",
+        "The page lists States.HeartbeatTimeout as the error of a missed heartbeat"
+      ]
+    },
+    {
+      "id": "sfn-task-fields",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-task.html",
+      "title": "Task workflow state",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "TimeoutSeconds and HeartbeatSeconds both default to 99,999,999; HeartbeatSeconds must be smaller than TimeoutSeconds",
+        "The page says a missed heartbeat fails the task with States.Timeout",
+        "The optimized Lambda integration is arn:aws:states:::lambda:invoke; a function ARN as Resource is the legacy form",
+        "Arguments and Output are the JSONata fields of a Task"
+      ],
+      "note": "Two pages name the error of a missed heartbeat differently (States.Timeout here and on the integration patterns page, States.HeartbeatTimeout on the error handling page). The chapter's Retry names both."
+    },
+    {
+      "id": "sfn-sdk-integrations",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html",
+      "title": "Learning to use AWS service SDK integrations in Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Resource of an SDK integration is arn:aws:states:::aws-sdk:serviceName:apiAction, with parameters in PascalCase",
+        "The error name of an SDK integration is ServiceName.ErrorName with the suffix Exception added even when the service's own name lacks it (S3.BucketAlreadyExistsException); the exception prefix of Amazon S3 is S3",
+        "Step Functions cannot generate IAM policies for SDK integrations"
+      ]
+    },
+    {
+      "id": "sfn-connect-ddb",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html",
+      "title": "Perform DynamoDB CRUD operations with Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The optimized integration offers GetItem, PutItem, UpdateItem and DeleteItem, Request Response only",
+        "Errors of the optimized integration carry the prefix DynamoDB; the SDK integration uses DynamoDb",
+        "The IAM policy for static resources names the table ARN"
+      ]
+    },
+    {
+      "id": "sfn-connect-sqs",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-sqs.html",
+      "title": "Send messages to an Amazon SQS queue with Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "arn:aws:states:::sqs:sendMessage.waitForTaskToken with the token from $states.context.Task.Token in a MessageBody object",
+        "The role needs sqs:SendMessage on the queue"
+      ]
+    },
+    {
+      "id": "sfn-connect-sns",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/connect-sns.html",
+      "title": "Publish messages to an Amazon SNS topic with Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "arn:aws:states:::sns:publish with TopicArn, Message and MessageAttributes",
+        "The role needs sns:Publish on the topic"
+      ]
+    },
+    {
+      "id": "sfn-map",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-map.html",
+      "title": "Map workflow state",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Inline mode: up to 40 concurrent iterations, a JSON array as input, iterations recorded in the parent's history",
+        "Distributed mode: each iteration a child workflow execution, up to 10,000 in parallel, input from a JSON array or S3; for datasets over 256 KiB, histories over 25,000 events, or more than 40 concurrent iterations"
+      ]
+    },
+    {
+      "id": "sfn-map-inline",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-map-inline.html",
+      "title": "Using Map state in Inline mode in Step Functions workflows",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In inline mode the failure of any iteration fails the Map state and stops all iterations",
+        "MaxConcurrency 0 places no limit; 1 processes items in order; the output is an array of the iterations' outputs",
+        "Items is the JSONata field for the array; ItemProcessor replaces Iterator"
+      ]
+    },
+    {
+      "id": "sfn-map-distributed",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-map-distributed.html",
+      "title": "Using Map state in Distributed mode for large-scale parallel workloads",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Distributed mode is supported in Standard workflows only; ExecutionType of the child workflows is STANDARD or EXPRESS",
+        "ToleratedFailurePercentage and ToleratedFailureCount set how many failed items a Map Run tolerates before it fails",
+        "A Retry on a Distributed Map applies to the whole Map Run and creates a new one"
+      ]
+    },
+    {
+      "id": "sfn-choice",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-choice.html",
+      "title": "Choice workflow state",
+      "checkedAt": "2026-10-13",
+      "supports": ["A JSONata Choice rule has a Condition; Default is optional and recommended"]
+    },
+    {
+      "id": "sfn-parallel",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-parallel.html",
+      "title": "Parallel workflow state",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Branches are state machines run in parallel; the state has Arguments, Output, Assign, Retry and Catch"
+      ]
+    },
+    {
+      "id": "sfn-wait",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/state-wait.html",
+      "title": "Wait workflow state",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Seconds or Timestamp; the longest wait is one year in Standard and five minutes in Express"
+      ]
+    },
+    {
+      "id": "sfn-quotas-2",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/service-quotas.html",
+      "title": "Step Functions service quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "256 KiB of UTF-8 for the input or output of a task, state, or execution, in both types",
+        "25,000 events in a Standard execution's history; unlimited in Express",
+        "Maximum execution time one year (Standard) and five minutes (Express)",
+        "Redrivable period 14 days; redrive is not supported for Express",
+        "Outside us-east-1, us-west-2 and eu-west-1: StartExecution bucket 800 with 150 refilled per second for Standard, 6,000 and 6,000 for Express; StateTransition bucket 800, refill 800 for Standard, unlimited for Express",
+        "1,000 published versions and 100 aliases per state machine",
+        "Up to 10,000 parallel child executions in a Map Run"
+      ]
+    },
+    {
+      "id": "sfn-redrive-2",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/redrive-executions.html",
+      "title": "Restarting state machine executions with redrive in Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A redrive continues from the unsuccessful step with the same input and the same definition, even if an alias now points elsewhere",
+        "A redriven Task state is scheduled again and its retry count reset; a Fail state is re-entered and fails again",
+        "An inline Map redrives only the iterations that failed",
+        "Redrives count as state transitions",
+        "The caller needs states:RedriveExecution on the execution ARN"
+      ]
+    },
+    {
+      "id": "sfn-versions",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/concepts-state-machine-version.html",
+      "title": "State machine versions in Step Functions workflows",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A version is a numbered, immutable snapshot with the ARN <state machine ARN>:<number>",
+        "Definition, role, tracing and logging configuration belong to a version"
+      ]
+    },
+    {
+      "id": "sfn-aliases",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/concepts-state-machine-alias.html",
+      "title": "State machine aliases in Step Functions workflows",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An alias points to one or two versions of the same state machine and can route traffic between them"
+      ]
+    },
+    {
+      "id": "sfn-update-state-machine",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_UpdateStateMachine.html",
+      "title": "UpdateStateMachine",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Running executions continue to use the previous definition and role",
+        "Executions started immediately after the call may still use the previous definition"
+      ]
+    },
+    {
+      "id": "sfn-start-execution-2",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_StartExecution.html",
+      "title": "StartExecution",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Idempotent for Standard: the same name and input as a running execution returns the same response; a closed execution or a different input returns ExecutionAlreadyExists; a name can be reused 90 days after the execution closes",
+        "Not idempotent for Express",
+        "An unqualified state machine ARN uses the latest revision; a version or alias ARN starts that version"
+      ]
+    },
+    {
+      "id": "sfn-start-sync",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_StartSyncExecution.html",
+      "title": "StartSyncExecution",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Only for Express; answers 200 even when the execution fails, with the status in the body",
+        "The response carries billingDetails with billedDurationInMilliseconds and billedMemoryUsedInMB"
+      ]
+    },
+    {
+      "id": "sfn-send-task",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_SendTaskSuccess.html",
+      "title": "SendTaskSuccess",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Reports that the task identified by taskToken completed, with output as a JSON string of at most 262,144 bytes",
+        "Errors include TaskTimedOut: the task token has either expired or the task associated with the token has already been closed"
+      ]
+    },
+    {
+      "id": "sfn-send-heartbeat",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_SendTaskHeartbeat.html",
+      "title": "SendTaskHeartbeat",
+      "checkedAt": "2026-10-13",
+      "supports": ["Resets the heartbeat clock of the task that owns the token"]
+    },
+    {
+      "id": "sfn-test-state",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/test-state-isolation.html",
+      "title": "Testing state machines with TestState API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Since November 2025 TestState accepts a mock for the service integration, a full definition with stateName, a context, and a state configuration such as the retry count",
+        "With a mock the role is optional and no service is called",
+        "status is SUCCEEDED, FAILED, RETRIABLE or CAUGHT_ERROR, and nextState names the next state",
+        "Mocked results are validated against the service's API model unless fieldValidationMode is relaxed",
+        "Testing a Map state tests its input and output processing, not the ItemProcessor",
+        "The console's test feature does not support mocks yet"
+      ]
+    },
+    {
+      "id": "sfn-test-state-api",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_TestState.html",
+      "title": "TestState",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Request fields: definition, stateName, input, mock, context, stateConfiguration, variables, roleArn, inspectionLevel",
+        "A mock may be given only for Task, Map and Parallel states, and a context only together with a mock"
+      ]
+    },
+    {
+      "id": "sfn-local-unsupported",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/sfn-local.html",
+      "title": "Testing state machines with Step Functions Local (unsupported)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Step Functions Local does not provide feature parity and is unsupported; AWS points to the TestState API instead"
+      ]
+    },
+    {
+      "id": "sfn-cw-logs",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/cw-logs.html",
+      "title": "Using CloudWatch Logs to log execution history in Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Express workflows record no history in Step Functions; logging to CloudWatch Logs must be configured to see one, and delivery is best effort",
+        "Logs are billed at the vended logs rate",
+        "The execution role needs the ten logs actions of the example policy on Resource *, because those actions accept no resource",
+        "Log levels ALL, ERROR, FATAL, OFF",
+        "Log group names prefixed /aws/vendedlogs/states keep the account's resource policy small"
+      ]
+    },
+    {
+      "id": "sfn-metrics",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/procedure-cw-metrics.html",
+      "title": "Monitoring Step Functions metrics using Amazon CloudWatch",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS/States namespace has ExecutionsFailed, ExecutionsTimedOut, ExecutionsAborted, ExecutionThrottled, ExecutionTime, and for Express ExpressExecutionMemory, ExpressExecutionBilledMemory and ExpressExecutionBilledDuration"
+      ]
+    },
+    {
+      "id": "sfn-eventbridge-2",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/eventbridge-integration.html",
+      "title": "Automating Step Functions event delivery with EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Only Standard workflows emit execution status change events to the default event bus"
+      ]
+    },
+    {
+      "id": "sfn-iam-role-2",
+      "url": "https://docs.aws.amazon.com/step-functions/latest/dg/procedure-create-iam-role.html",
+      "title": "Creating an IAM role for your state machine in Step Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS recommends aws:SourceArn and aws:SourceAccount in the role's trust policy, with arn:aws:states:<region>:<account>:stateMachine:* as an example"
+      ]
+    },
+    {
+      "id": "sfn-pricing-2",
+      "url": "https://aws.amazon.com/step-functions/pricing/",
+      "title": "AWS Step Functions pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Standard: charged per state transition, retries included; 4,000 transitions a month are free indefinitely",
+        "The page's first example counts four transitions for a workflow of two steps: Start, the two steps, End",
+        "Express: a request is counted each time a workflow starts; duration is rounded up to 100 ms and memory is billed in 64 MB chunks",
+        "Express memory is estimated as 50 MB plus the definition size plus the execution data size times the number of Map or Parallel steps"
+      ]
+    },
+    {
+      "id": "aws-price-list-states-2",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonStates, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Published 2026-09-11T12:45:11Z: USD 0.000025 per state transition; Express USD 0.000001 per request and USD 0.00001667 per GB-second for the first 3.6 million GB-seconds, then 0.00000833, then 0.00000456"
+      ]
+    },
+    {
+      "id": "s3-delete-object",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html",
+      "title": "DeleteObject",
+      "checkedAt": "2026-10-13",
+      "supports": ["Deleting a key that does not exist returns 204"]
+    },
+    {
+      "id": "s3-copy-object-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html",
+      "title": "CopyObject",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Copying within general purpose buckets needs s3:GetObject on the source object and s3:PutObject on the destination"
+      ]
+    },
+    {
+      "id": "dynamodb-reserved-words",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html",
+      "title": "Reserved words in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "STATE and STATUS are reserved words, so an attribute by such a name needs an expression attribute name"
+      ]
+    },
+    {
+      "id": "jsonata-npm",
+      "url": "https://registry.npmjs.org/jsonata",
+      "title": "jsonata (npm registry metadata)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The reference implementation of JSONata, MIT licensed, without dependencies; version 2.0.6 was published on 2024-11-29",
+        "Expression.evaluate(input, bindings) returns a promise and binds each key of bindings as a variable"
+      ],
+      "note": "Read from the registry metadata and the installed package's jsonata.d.ts."
+    },
+    {
+      "id": "cdkd-source-step-functions",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd 0.296.28 registers dedicated providers for AWS::DynamoDB::Table, AWS::IAM::Policy, AWS::IAM::Role, AWS::Logs::LogGroup, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::SNS::Topic, AWS::SNS::TopicPolicy, AWS::SQS::Queue, AWS::SQS::QueuePolicy and AWS::StepFunctions::StateMachine",
+        "Its state machine provider passes DefinitionString, RoleArn, StateMachineType, LoggingConfiguration and TracingConfiguration to CreateStateMachine",
+        "It has no provider named for AWS::StepFunctions::StateMachineVersion or StateMachineAlias"
+      ],
+      "note": "Confirmed in the dist of the installed package (@go-to-k/cdkd 0.296.28), not on GitHub."
+    },
+    {
+      "id": "cloudflare-workflows-2",
+      "url": "https://developers.cloudflare.com/workflows/",
+      "title": "Cloudflare Workflows",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13: durable multi-step execution on Workers, written as code with step.do, with automatic retries, sleep, and step.waitForEvent to pause for external events; available on the Free and Paid plans"
+      ]
+    },
+    {
+      "id": "cloudflare-workflows-rollback",
+      "url": "https://developers.cloudflare.com/workflows/build/sleeping-and-retrying/",
+      "title": "Cloudflare Workflows: Sleeping and retrying",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13: a step takes retries (limit, delay, backoff) and a timeout; NonRetryableError stops retrying",
+        "A rollback handler can be attached to step.do for saga-style compensation; when the Workflow later fails, registered handlers run in reverse step-start order"
+      ]
+    },
+    {
+      "id": "vercel-workflows",
+      "url": "https://vercel.com/docs/workflow",
+      "title": "Vercel Workflows",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13: Vercel Workflows runs multi-step logic as durable code that can retry failed steps, wait for external events, and resume across crashes and deployments"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "saga",
+      "ja": "saga",
+      "en": "saga",
+      "firstUse": "47",
+      "definition": {
+        "ja": "いくつかのサービスにまたがる変更を、1 つのトランザクションにまとめる代わりに、ステップごとに確定させていくやり方。後のステップが失敗したら、済んだステップを補償処理で打ち消す。途中の状態は外から見える。",
+        "en": "A change that spans several services, made by committing one step at a time instead of in one transaction. When a later step fails, the steps already done are cancelled by compensations. The states in between are visible from outside."
+      }
+    },
+    {
+      "id": "task-token",
+      "ja": "タスクトークン（task token）",
+      "en": "task token",
+      "firstUse": "47",
+      "definition": {
+        "ja": "Step Functions が、外からの返事を待つタスクに付ける文字列。返事をする側は、このトークンを添えて SendTaskSuccess か SendTaskFailure を呼ぶ。",
+        "en": "A string Step Functions attaches to a task that waits for an answer from outside. Whoever answers calls SendTaskSuccess or SendTaskFailure with it."
+      }
+    },
+    {
+      "id": "jsonata",
+      "ja": "JSONata",
+      "en": "JSONata",
+      "firstUse": "47",
+      "definition": {
+        "ja": "JSON を選んで組み替えるための式の言語。Step Functions のステートの中では、`{% %}` で囲んだ文字列が JSONata の式として評価される。",
+        "en": "An expression language for selecting and reshaping JSON. Inside a Step Functions state, a string wrapped in `{% %}` is evaluated as JSONata."
+      }
+    },
+    {
+      "id": "express-workflow",
+      "ja": "Express ワークフロー",
+      "en": "Express workflow",
+      "firstUse": "47",
+      "definition": {
+        "ja": "Step Functions のワークフローの種類の 1 つ。最長 5 分で、途中の状態を保存せず、実行の回数と時間とメモリで課金される。同じ実行が 2 回走ることがある。",
+        "en": "One of the two kinds of Step Functions workflow: five minutes at most, no state persisted between steps, billed by executions, duration and memory, and an execution may run twice."
+      }
+    },
+    {
+      "id": "heartbeat",
+      "ja": "ハートビート（heartbeat）",
+      "en": "heartbeat",
+      "firstUse": "47",
+      "definition": {
+        "ja": "長くかかるタスクが「まだ動いている」と知らせる合図。HeartbeatSeconds の間に届かなければ、Step Functions はそのタスクを失敗にする。",
+        "en": "The signal by which a long task says it is still working. If none arrives within HeartbeatSeconds, Step Functions fails the task."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "47.overview",
+      "sources": [
+        "examples/47-step-functions/src/saga.ts",
+        "examples/47-step-functions/src/digest.ts",
+        "examples/47-step-functions/infra/lib/step-functions-stack.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "47.types",
+      "sources": [
+        "examples/47-step-functions/src/saga.ts",
+        "examples/47-step-functions/src/digest.ts",
+        "examples/47-step-functions/test/digest.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "47.language",
+      "sources": [
+        "examples/47-step-functions/src/asl.ts",
+        "examples/47-step-functions/src/saga.ts",
+        "examples/47-step-functions/src/interpreter.ts",
+        "examples/47-step-functions/test/interpreter.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "47.integrations",
+      "sources": [
+        "examples/47-step-functions/src/saga.ts",
+        "examples/47-step-functions/src/interpreter.ts",
+        "examples/47-step-functions/test/saga.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "47.retry",
+      "sources": [
+        "examples/47-step-functions/src/asl.ts",
+        "examples/47-step-functions/src/saga.ts",
+        "examples/47-step-functions/src/interpreter.ts",
+        "examples/47-step-functions/test/interpreter.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "47.saga",
+      "sources": [
+        "examples/47-step-functions/src/saga.ts",
+        "examples/47-step-functions/src/invariant.ts",
+        "examples/47-step-functions/test/saga.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "47.flow",
+      "sources": [
+        "examples/47-step-functions/src/digest.ts",
+        "examples/47-step-functions/src/interpreter.ts",
+        "examples/47-step-functions/test/digest.test.ts",
+        "examples/47-step-functions/test/interpreter.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "47.local",
+      "sources": [
+        "examples/47-step-functions/src/interpreter.ts",
+        "examples/47-step-functions/src/local-world.ts",
+        "examples/47-step-functions/src/local.ts",
+        "examples/47-step-functions/scripts/run-local.ts"
+      ],
+      "tasks": ["sfn:local", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "47.tests",
+      "sources": [
+        "examples/47-step-functions/test/saga.test.ts",
+        "examples/47-step-functions/test/harness.ts",
+        "examples/47-step-functions/src/invariant.ts",
+        "examples/47-step-functions/src/local-world.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "47.test-state",
+      "sources": [
+        "examples/47-step-functions/src/test-state-cases.ts",
+        "examples/47-step-functions/test/test-state-cases.test.ts",
+        "examples/47-step-functions/scripts/test-state.ts"
+      ],
+      "tasks": ["sfn:test-state", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "47.infra",
+      "sources": [
+        "examples/47-step-functions/infra/lib/step-functions-stack.ts",
+        "examples/47-step-functions/infra/bin/app.ts",
+        "examples/47-step-functions/infra/test/step-functions-stack.test.ts",
+        "examples/47-step-functions/cdk.json"
+      ],
+      "tasks": ["sfn:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "47.deploy",
+      "sources": [
+        "examples/47-step-functions/scripts/start.ts",
+        "examples/47-step-functions/scripts/callback.ts",
+        "examples/47-step-functions/scripts/status.ts",
+        "examples/47-step-functions/scripts/digest.ts"
+      ],
+      "tasks": [
+        "sfn:infra:diff",
+        "sfn:infra:deploy",
+        "sfn:start",
+        "sfn:callback",
+        "sfn:status",
+        "sfn:digest",
+        "sfn:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "47.versions",
+      "sources": [
+        "examples/47-step-functions/scripts/status.ts",
+        "examples/47-step-functions/infra/lib/step-functions-stack.ts"
+      ],
+      "tasks": ["sfn:status"],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "47.observability",
+      "sources": [
+        "examples/47-step-functions/infra/lib/step-functions-stack.ts",
+        "examples/47-step-functions/scripts/status.ts"
+      ],
+      "tasks": ["sfn:status"],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "47.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "47.cleanup",
+      "sources": ["examples/47-step-functions/scripts/empty.ts"],
+      "tasks": ["sfn:empty", "sfn:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "sfn.express.request",
+      "offerCode": "AmazonStates",
+      "region": "ap-northeast-1",
+      "sku": "DAVXY63QBMD93BC2",
+      "usageType": "APN1-StepFunctions-Request",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000010000",
+          "description": "Express Workflows - Total Requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:11Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "sfn.express.duration",
+      "offerCode": "AmazonStates",
+      "region": "ap-northeast-1",
+      "sku": "JPANJD82Y29D5MXT",
+      "usageType": "APN1-StepFunctions-GB-Second",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Seconds",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 3600000,
+          "usd": "0.0000166700",
+          "description": "Express Workflows - Duration - USD 0.00001667 per GB-S for the first 3.6 million GB-Seconds"
+        },
+        {
+          "from": 3600000,
+          "to": 18000000,
+          "usd": "0.0000083300",
+          "description": "Express Workflows - Duration - USD 0.00000833 per GB-S for the next 14.4 million GB-Seconds"
+        },
+        {
+          "from": 18000000,
+          "to": null,
+          "usd": "0.0000045600",
+          "description": "Express Workflows - Duration - USD 0.00000456 per GB-S above 18 million GB-Seconds"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:11Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "sfn.express.request",
+      "reason": "The pricing page names a free tier for state transitions only. No free allowance for Express requests was found on it (read 2026-10-13)."
+    },
+    {
+      "priceId": "sfn.express.duration",
+      "reason": "The pricing page names a free tier for state transitions only. No free allowance for Express duration was found on it (read 2026-10-13)."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "sfn-idle",
+      "chapter": "47",
+      "title": {
+        "ja": "Step Functions: デプロイ済みで、1 回も実行しない月",
+        "en": "Step Functions: deployed, and never started, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "ステートマシン、テーブル（オンデマンド）、バケット、キュー、トピック、ロググループは、置いてあるだけでは課金されない",
+          "バケットにもテーブルにも何も入っていない"
+        ],
+        "en": [
+          "The state machines, the on-demand table, the bucket, the queue, the topic, and the log group cost nothing while they only exist",
+          "Neither the bucket nor the table holds anything"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 0,
+          "basis": "no execution started"
+        },
+        {
+          "priceId": "sfn.express.request",
+          "quantity": 0,
+          "basis": "no execution started"
+        }
+      ]
+    },
+    {
+      "id": "sfn-import-1k",
+      "chapter": "47",
+      "title": {
+        "ja": "Step Functions: 取り込みを月に 1,000 回（Standard、すべて成功）",
+        "en": "Step Functions: 1,000 imports a month (Standard, all succeeding)"
+      },
+      "assumptions": {
+        "ja": [
+          "1 回の実行は CreateNote、AttachFile、WaitForScan、Verdict、Publish、Notify、Imported を 1 回ずつ通る。開始と終了を足して状態遷移は 9 と数える（料金ページの例の数え方。実測ではない）",
+          "再試行、補償処理、redrive は起きない。起きれば、そのぶん状態遷移が増える",
+          "DynamoDB の書き込みは PutItem と UpdateItem の 2 回で、アイテムは 1 KB 以下（1 回 1 unit）",
+          "S3 はアップロードの PUT と、取り込みの COPY が 1 回ずつ",
+          "SQS は、送信、受信、削除が 1 回ずつ。空の受信は数えていない",
+          "未算入: 添付ファイルの保存料金、通知の配送先ごとの料金、スキャンをする側の料金"
+        ],
+        "en": [
+          "One execution passes CreateNote, AttachFile, WaitForScan, Verdict, Publish, Notify and Imported once each. With start and end that is counted as 9 state transitions (the pricing page's way of counting; not measured)",
+          "No retries, compensations or redrives. Each one would add state transitions",
+          "Two DynamoDB writes, PutItem and UpdateItem, on an item of at most 1 KB (one unit each)",
+          "S3 sees one PUT for the upload and one COPY for the import",
+          "SQS sees one send, one receive and one delete. Empty receives are not counted",
+          "Not included: storage of the attachments, delivery charges of the notice per subscriber, whatever does the scanning"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 9000,
+          "basis": "1,000 executions x 9 transitions"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 2000,
+          "basis": "1,000 x (PutItem + UpdateItem)"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 2000,
+          "basis": "1,000 x (PUT of the upload + COPY)"
+        },
+        {
+          "priceId": "sqs.request.standard",
+          "quantity": 3000,
+          "basis": "1,000 x (send + receive + delete)"
+        },
+        {
+          "priceId": "sns.request",
+          "quantity": 1000,
+          "basis": "one publish per import"
+        }
+      ]
+    },
+    {
+      "id": "sfn-digest-express-100k",
+      "chapter": "47",
+      "title": {
+        "ja": "Step Functions: 10 件の照会を月に 100,000 回（Express）",
+        "en": "Step Functions: 100,000 lookups of 10 notes a month (Express)"
+      },
+      "assumptions": {
+        "ja": [
+          "1 回の実行は 10 件のノートを GetItem で読む。300 ミリ秒かかると仮定（計測した値ではない）",
+          "メモリは 64 MB として課金される（50 MB と、定義と入出力の大きさの合計が 64 MB に収まる）",
+          "GetItem は結果整合で、4 KB 以下のアイテムにつき 0.5 unit",
+          "ログは ERROR だけで、失敗は起きない。ログの取り込みは 0"
+        ],
+        "en": [
+          "One execution reads 10 notes with GetItem and is assumed to take 300 ms (not measured)",
+          "Billed at 64 MB of memory (50 MB plus the definition and the payloads stays within 64 MB)",
+          "GetItem is eventually consistent: 0.5 units for an item of at most 4 KB",
+          "Logging is at ERROR and nothing fails, so nothing is ingested"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "sfn.express.request",
+          "quantity": 100000,
+          "basis": "one request per execution"
+        },
+        {
+          "priceId": "sfn.express.duration",
+          "quantity": 1875,
+          "basis": "100,000 x 0.3 s x 0.0625 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 500000,
+          "basis": "100,000 x 10 GetItem x 0.5 units"
+        }
+      ]
+    },
+    {
+      "id": "sfn-digest-standard-100k",
+      "chapter": "47",
+      "title": {
+        "ja": "Step Functions: 同じ照会を Standard で動かしたとき",
+        "en": "Step Functions: the same lookups as a Standard workflow"
+      },
+      "assumptions": {
+        "ja": [
+          "仕事は「10 件の照会を月に 100,000 回（Express）」と同じ",
+          "状態遷移は、Map が 1、10 回の GetNote が 10、開始と終了で 2、合わせて 13 と数える。Map の繰り返しがどう数えられるかは料金ページに書かれておらず、この数は見積もりで、実測ではない",
+          "Standard は実行の時間には課金されない"
+        ],
+        "en": [
+          "The same work as \"100,000 lookups of 10 notes a month (Express)\"",
+          "State transitions are counted as 13: one for the Map, ten for the ten GetNote states, two for start and end. The pricing page does not say how Map iterations are counted; this is an estimate, not a measurement",
+          "A Standard workflow is not billed for its duration"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "sfn.standard.transition",
+          "quantity": 1300000,
+          "basis": "100,000 executions x 13 transitions"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 500000,
+          "basis": "100,000 x 10 GetItem x 0.5 units"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "47",
+        "command": "vp test run examples/47-step-functions",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "テスト 66 件。手元の実行器（Retry の数え方と待ち時間、エラー名の一致、値のない式、Catch の出力、Assign の評価順、コールバックのトークン、Map）、取り込みの saga（各ステップの失敗と、応答だけが失われた場合、2 回走ったステップ、スキャンの拒否、Publish の先での失敗、補償処理の失敗と redrive、同じノート ID の 2 つの取り込み、わざと壊した定義 2 つ）、照会（公開前のノートを見せないこと、2 回走っても同じ答え）、TestState に送る表と実行器の一致、スタックのアサーション。相手はすべてメモリ上の代役で、Step Functions でも DynamoDB でも S3 でもない",
+          "en": "66 tests. The local interpreter (how retries are counted and how long they wait, error name matching, an expression with no value, a catcher's output, the evaluation order of Assign, callback tokens, Map), the import saga (each step failing and each step's answer getting lost, a step that runs twice, a refused scan, failures past Publish, a failing compensation and its redrive, two imports of one note ID, two definitions broken on purpose), the digest (a note not yet published stays hidden, the same answer when run twice), the table sent to TestState against the interpreter, and stack assertions. Everything ran against in-memory stand-ins: not Step Functions, DynamoDB, or S3"
+        }
+      },
+      {
+        "scope": "47",
+        "command": "tsc --noEmit -p examples/47-step-functions",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "src、test、scripts、infra の型検査",
+          "en": "Type check of src, test, scripts, and infra"
+        }
+      },
+      {
+        "scope": "47",
+        "command": "vp run sfn:local",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定、`--infected --refuse RemoveAttachment --times 4 --redrive`、`--lose CreateNote` の 3 通りを実行し、通ったステート、残ったもの、不変条件の判定が本文の出力と同じであることを確かめた",
+          "en": "Ran the default, `--infected --refuse RemoveAttachment --times 4 --redrive`, and `--lose CreateNote`, and checked that the states passed, what was left behind, and the invariant verdict are what the page shows"
+        }
+      },
+      {
+        "scope": "47",
+        "command": "vp run sfn:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AihStepFunctions のテンプレートが、AWS に問い合わせずに生成されること",
+          "en": "The AihStepFunctions template is synthesized without asking AWS anything"
+        }
+      },
+      {
+        "scope": "47",
+        "command": "vp run sfn:infra:deploy / sfn:start / sfn:callback / sfn:status / sfn:digest / sfn:empty / sfn:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない。2 つのステートマシンは、AWS では一度も動かしていない",
+          "en": "Not deployed. Neither state machine has ever run on AWS"
+        }
+      },
+      {
+        "scope": "47",
+        "command": "vp run sfn:test-state",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "TestState API を呼んでいない（認証情報が要る）。手元の実行器と本物の Step Functions が同じ答えを出すかどうかは、確かめていない",
+          "en": "The TestState API was not called (it needs credentials). Whether the local interpreter and the real Step Functions give the same answers has not been checked"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "47-test-state",
+        "summary": {
+          "ja": "47章の手元の実行器は自作のモデルで、本物の Step Functions と突き合わせていない。未確認: JSONata の式（`$merge`、`&` での連結、`$exists`、`$count`、要素が 1 つの配列の扱い）を Step Functions が同じ値に評価すること。Retry と Catch の選び方、`MaxAttempts: 0` の retrier の扱い。`Output` を省いたときの既定（仕様書の 2 か所で記述が食い違う）。",
+          "en": "Chapter 47's local interpreter is a model of the author's own and has not been compared with the real Step Functions. Unconfirmed: that Step Functions evaluates the JSONata expressions (`$merge`, concatenation with `&`, `$exists`, `$count`, an array of one element) to the same values; how retriers and catchers are chosen, and how a retrier with `MaxAttempts: 0` behaves; the default of a missing `Output` (the specification says two different things in two places)."
+        },
+        "resume": {
+          "ja": "認証情報を用意して `vp run sfn:test-state` を実行する。スタックは要らず、モックを使うので他のサービスは呼ばれない。`DIFFERENT` と出た行が、モデルの誤りか、表の誤り。直したら `vp test run examples/47-step-functions` で表と実行器が一致することを確かめる。",
+          "en": "With credentials, run `vp run sfn:test-state`. No stack is needed, and with mocks no other service is called. A line marked `DIFFERENT` is an error in the model or in the table. After fixing it, check with `vp test run examples/47-step-functions` that the table and the interpreter agree."
+        }
+      },
+      {
+        "id": "47-deploy",
+        "summary": {
+          "ja": "47章のスタックを AWS に一度もデプロイしていない。未確認: cdkd 0.296.28 が、`Fn::Join` で組み立てた JSONata の `DefinitionString` と `LoggingConfiguration` つきの Express ステートマシンを作れること。ロールの信頼ポリシーの条件が通ること。各ステートの権限が足りること（特に、`aws-sdk:s3:copyObject` に `s3:GetObject` と `s3:PutObject` だけで足りるか）。DynamoDB の条件式が意図どおりに働くこと、エラー名が `DynamoDB.ConditionalCheckFailedException` であること。コピー元がないときのエラー名。`sqs:sendMessage.waitForTaskToken` が `MessageBody` のオブジェクトを JSON の文字列として送ること。ハートビートが途切れたときのエラー名（ドキュメントのページによって `States.Timeout` と `States.HeartbeatTimeout` に分かれる）。再試行で新しいトークンが配られること。redrive が補償処理のステートから再開すること。Express の実行時間と課金されるメモリ、状態遷移の実際の数（Map の繰り返しの数え方を含む）。",
+          "en": "The chapter 47 stack has never been deployed. Unconfirmed: that cdkd 0.296.28 creates a state machine from a JSONata `DefinitionString` assembled with `Fn::Join`, and an Express one with a `LoggingConfiguration`; that the trust policy conditions are accepted; that each state's permissions suffice (in particular whether `s3:GetObject` and `s3:PutObject` are enough for `aws-sdk:s3:copyObject`); that the DynamoDB condition expressions behave as intended and the error is named `DynamoDB.ConditionalCheckFailedException`; the error name when the copy source is missing; that `sqs:sendMessage.waitForTaskToken` sends an object `MessageBody` as a JSON string; the error name of a missed heartbeat (the documentation says `States.Timeout` on some pages and `States.HeartbeatTimeout` on another); that a retry is given a new token; that a redrive resumes from a compensation state; the duration and billed memory of the Express workflow, and the real number of state transitions, including how Map iterations are counted."
+        },
+        "resume": {
+          "ja": "`vp run sfn:infra:deploy`、`vp run sfn:start`、`vp run sfn:callback --verdict clean`、`vp run sfn:status`、`vp run sfn:digest --ids note-1,nope` の順に実行する。失敗の経路は、別のノート ID で `sfn:start` し、`sfn:callback --verdict infected` で確かめる。補償処理の失敗は、実行中にロールから `s3:DeleteObject` を一時的に外して起こし、戻してから `vp run sfn:status --redrive <ARN>` で再開する。終わったら `vp run sfn:empty --yes` と `vp run sfn:infra:destroy`。",
+          "en": "Run `vp run sfn:infra:deploy`, `vp run sfn:start`, `vp run sfn:callback --verdict clean`, `vp run sfn:status`, and `vp run sfn:digest --ids note-1,nope`. For the failure path, start another note ID and answer `sfn:callback --verdict infected`. To make a compensation fail, remove `s3:DeleteObject` from the role for a while during a run, put it back, and resume with `vp run sfn:status --redrive <ARN>`. Finish with `vp run sfn:empty --yes` and `vp run sfn:infra:destroy`."
+        }
+      }
+    ]
+  },
+  "toolchain": [
+    {
+      "name": "jsonata (the JSONata reference implementation, used by the local interpreter)",
+      "version": "2.0.6",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/47-step-functions/package.json, pnpm-lock.yaml"
+    }
+  ],
+  "tasks": {
+    "snippet": "      // ---- chapter 47: Step Functions in depth -------------------------------\n      // The import's definition, walked in memory with injected failures. No AWS.\n      \"sfn:local\": fresh(\"node scripts/run-local.ts\", { cwd: \"examples/47-step-functions\" }),\n      ...infra(\"sfn\", \"examples/47-step-functions\", \"AihStepFunctions\"),\n      // Uploads a small file and starts one import.\n      \"sfn:start\": live(\"node --env-file-if-exists=../../.env scripts/start.ts\", { cwd: \"examples/47-step-functions\" }),\n      // Plays the scanner: answers one waiting task token.\n      \"sfn:callback\": live(\"node --env-file-if-exists=../../.env scripts/callback.ts\", { cwd: \"examples/47-step-functions\" }),\n      // Recent imports and where each stopped. --redrive <arn> resumes a failed one.\n      \"sfn:status\": live(\"node --env-file-if-exists=../../.env scripts/status.ts\", { cwd: \"examples/47-step-functions\" }),\n      // Runs the Express workflow synchronously.\n      \"sfn:digest\": live(\"node --env-file-if-exists=../../.env scripts/digest.ts\", { cwd: \"examples/47-step-functions\" }),\n      // Asks the TestState API, with mocks, what single states do. Needs credentials, no stack.\n      \"sfn:test-state\": live(\"node --env-file-if-exists=../../.env scripts/test-state.ts\", { cwd: \"examples/47-step-functions\" }),\n      // Counts, and with --yes deletes, every object in the files bucket.\n      \"sfn:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty.ts\", { cwd: \"examples/47-step-functions\" }),",
+    "synth": ["sfn:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/47-step-functions"]
+  }
+}

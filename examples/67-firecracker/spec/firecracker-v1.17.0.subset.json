@@ -1,0 +1,613 @@
+{
+  "source": {
+    "url": "https://raw.githubusercontent.com/firecracker-microvm/firecracker/v1.17.0/src/firecracker/swagger/firecracker.yaml",
+    "sha256": "473a0a392927b407834b341bf5fbc7925524fedaf9d925e1bbbafb6a1f48c671",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "info": {
+    "title": "Firecracker API",
+    "version": "1.17.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "describeInstance",
+        "summary": "Returns general information about an instance.",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/InstanceInfo"
+            },
+            "description": "The instance information"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "operationId": "getFirecrackerVersion",
+        "summary": "Gets the Firecracker version.",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/FirecrackerVersion"
+            },
+            "description": "OK"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/machine-config": {
+      "put": {
+        "operationId": "putMachineConfiguration",
+        "summary": "Updates the Machine Configuration of the VM. Pre-boot only.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/MachineConfiguration"
+            },
+            "description": "Machine Configuration Parameters"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Machine Configuration created/updated"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Machine Configuration cannot be updated due to bad input"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal server error"
+          }
+        },
+        "description": "Updates the Virtual Machine Configuration with the specified input. Firecracker starts with default values for vCPU count (=1) and memory size (=128 MiB). The vCPU count is restricted to the [1, 32] range. With SMT enabled, the vCPU count is required to be either 1 or an even number in the range. otherwise there are no restrictions regarding the vCPU count. If 2M hugetlbfs pages are specified, then `mem_size_mib` must be a multiple of 2. If any of the parameters has an incorrect value, the whole update fails. All parameters that are optional and are not specified are set to their default values (smt = false, track_dirty_pages = false, cpu_template = None, huge_pages = None)."
+      }
+    },
+    "/boot-source": {
+      "put": {
+        "operationId": "putGuestBootSource",
+        "summary": "Creates or updates the boot source. Pre-boot only.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BootSource"
+            },
+            "description": "Guest boot source properties"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Boot source created/updated"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Boot source cannot be created due to bad input"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal server error"
+          }
+        },
+        "description": "Creates new boot source if one does not already exist, otherwise updates it. Will fail if update is not possible."
+      }
+    },
+    "/drives/{drive_id}": {
+      "put": {
+        "operationId": "putGuestDriveByID",
+        "summary": "Creates or updates a drive. Pre-boot only.",
+        "parameters": [
+          {
+            "name": "drive_id",
+            "in": "path",
+            "required": true,
+            "description": "The id of the guest drive",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Drive"
+            },
+            "description": "Guest drive properties"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Drive created/updated"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Drive cannot be created/updated due to bad input"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal server error."
+          }
+        },
+        "description": "Creates new drive with ID specified by drive_id path parameter. If a drive with the specified ID already exists, updates its state based on new input. Will fail if update is not possible."
+      }
+    },
+    "/network-interfaces/{iface_id}": {
+      "put": {
+        "operationId": "putGuestNetworkInterfaceByID",
+        "summary": "Creates a network interface. Pre-boot only.",
+        "parameters": [
+          {
+            "name": "iface_id",
+            "in": "path",
+            "required": true,
+            "description": "The id of the guest network interface",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NetworkInterface"
+            },
+            "description": "Guest network interface properties"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Network interface created/updated"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Network interface cannot be created due to bad input"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal server error"
+          }
+        },
+        "description": "Creates new network interface with ID specified by iface_id path parameter."
+      }
+    },
+    "/actions": {
+      "put": {
+        "operationId": "createSyncAction",
+        "summary": "Creates a synchronous action.",
+        "parameters": [
+          {
+            "name": "info",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InstanceActionInfo"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The update was successful"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "The action cannot be executed due to bad input"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/vm": {
+      "patch": {
+        "operationId": "patchVm",
+        "summary": "Updates the microVM state.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Vm"
+            },
+            "description": "The microVM state"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Vm state updated"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Vm state cannot be updated due to bad input"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal server error"
+          }
+        },
+        "description": "Sets the desired state (Paused or Resumed) for the microVM."
+      }
+    },
+    "/snapshot/create": {
+      "put": {
+        "operationId": "createSnapshot",
+        "summary": "Creates a full or diff snapshot. Post-boot only.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SnapshotCreateParams"
+            },
+            "description": "The configuration used for creating a snapshot."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Snapshot created"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Snapshot cannot be created due to bad input"
+          },
+          "default": {
+            "schema": {
+              "$ref": "#/definitions/Error"
+            },
+            "description": "Internal server error"
+          }
+        },
+        "description": "Creates a snapshot of the microVM state. The microVM should be in the `Paused` state."
+      }
+    }
+  },
+  "definitions": {
+    "BlockTopology": {
+      "type": "object",
+      "properties": {
+        "physical_block_exp": {
+          "type": "integer",
+          "description": "log2 of the number of logical blocks per physical block."
+        },
+        "alignment_offset": {
+          "type": "integer",
+          "description": "Offset of the first aligned logical block."
+        },
+        "min_io_size": {
+          "type": "integer",
+          "description": "Suggested minimum I/O size, in units of logical blocks."
+        },
+        "opt_io_size": {
+          "type": "integer",
+          "description": "Suggested optimal (maximum) I/O size, in units of logical blocks."
+        }
+      },
+      "description": "Block device topology exposed to the guest via VIRTIO_BLK_F_TOPOLOGY. When value is present, it is used instead of Firecracker defaults. All I/O size fields are expressed in units of logical blocks. This field is optional for virtio-block config and should be omitted for vhost-user-block configuration."
+    },
+    "BootSource": {
+      "type": "object",
+      "required": ["kernel_image_path"],
+      "properties": {
+        "boot_args": {
+          "type": "string",
+          "description": "Kernel boot arguments"
+        },
+        "initrd_path": {
+          "type": "string",
+          "description": "Host level path to the initrd image used to boot the guest"
+        },
+        "kernel_image_path": {
+          "type": "string",
+          "description": "Host level path to the kernel image used to boot the guest"
+        }
+      },
+      "description": "Boot source descriptor."
+    },
+    "CpuTemplate": {
+      "type": "string",
+      "enum": ["C3", "T2", "T2S", "T2CL", "T2A", "V1N1", "None"],
+      "description": "The CPU Template defines a set of flags to be disabled from the microvm so that the features exposed to the guest are the same as in the selected instance type. This parameter has been deprecated and it will be removed in future Firecracker release.",
+      "default": "None"
+    },
+    "Drive": {
+      "type": "object",
+      "required": ["drive_id", "is_root_device"],
+      "properties": {
+        "drive_id": {
+          "type": "string"
+        },
+        "partuuid": {
+          "type": "string",
+          "description": "Represents the unique id of the boot partition of this device. It is optional and it will be taken into account only if the is_root_device field is true."
+        },
+        "is_root_device": {
+          "type": "boolean"
+        },
+        "cache_type": {
+          "type": "string",
+          "enum": ["Unsafe", "Writeback"],
+          "description": "Represents the caching strategy for the block device.",
+          "default": "Unsafe"
+        },
+        "is_read_only": {
+          "type": "boolean",
+          "description": "Is block read only. This field is required for virtio-block config and should be omitted for vhost-user-block configuration."
+        },
+        "discard": {
+          "type": "boolean",
+          "description": "Enables virtio-blk discard support. When enabled, the guest can issue discard/TRIM requests for this drive. Only supported for writable virtio-block devices using the Sync IO engine. This field is optional for virtio-block config and should be omitted for vhost-user-block configuration.",
+          "default": false
+        },
+        "path_on_host": {
+          "type": "string",
+          "description": "Host level path for the guest drive. This field is required for virtio-block config and should be omitted for vhost-user-block configuration."
+        },
+        "rate_limiter": {
+          "$ref": "#/definitions/RateLimiter"
+        },
+        "io_engine": {
+          "type": "string",
+          "enum": ["Sync", "Async"],
+          "description": "Type of the IO engine used by the device. \"Async\" is supported on host kernels newer than 5.10.51. This field is optional for virtio-block config and should be omitted for vhost-user-block configuration.",
+          "default": "Sync"
+        },
+        "blk_size": {
+          "type": "integer",
+          "description": "Logical block size advertised to the guest via VIRTIO_BLK_F_BLK_SIZE. This field is optional for virtio-block config and should be omitted for vhost-user-block configuration.",
+          "default": 512
+        },
+        "topology": {
+          "$ref": "#/definitions/BlockTopology"
+        },
+        "socket": {
+          "type": "string",
+          "description": "Path to the socket of vhost-user-block backend. This field is required for vhost-user-block config should be omitted for virtio-block configuration."
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "fault_message": {
+          "type": "string",
+          "description": "A description of the error condition",
+          "readOnly": true
+        }
+      }
+    },
+    "FirecrackerVersion": {
+      "type": "object",
+      "required": ["firecracker_version"],
+      "properties": {
+        "firecracker_version": {
+          "type": "string",
+          "description": "Firecracker build version."
+        }
+      },
+      "description": "Describes the Firecracker version."
+    },
+    "InstanceActionInfo": {
+      "type": "object",
+      "required": ["action_type"],
+      "properties": {
+        "action_type": {
+          "type": "string",
+          "enum": ["FlushMetrics", "InstanceStart", "SendCtrlAltDel"],
+          "description": "Enumeration indicating what type of action is contained in the payload"
+        }
+      },
+      "description": "Variant wrapper containing the real action."
+    },
+    "InstanceInfo": {
+      "type": "object",
+      "required": ["app_name", "id", "state", "vmm_version"],
+      "properties": {
+        "app_name": {
+          "type": "string",
+          "description": "Application name."
+        },
+        "id": {
+          "type": "string",
+          "description": "MicroVM / instance ID."
+        },
+        "state": {
+          "type": "string",
+          "enum": ["Not started", "Running", "Paused"],
+          "description": "The current detailed state (Not started, Running, Paused) of the Firecracker instance. This value is read-only for the control-plane."
+        },
+        "vmm_version": {
+          "type": "string",
+          "description": "MicroVM hypervisor build version."
+        }
+      },
+      "description": "Describes MicroVM instance information."
+    },
+    "MachineConfiguration": {
+      "type": "object",
+      "required": ["mem_size_mib", "vcpu_count"],
+      "properties": {
+        "cpu_template": {
+          "$ref": "#/definitions/CpuTemplate"
+        },
+        "smt": {
+          "type": "boolean",
+          "description": "Flag for enabling/disabling simultaneous multithreading. Can be enabled only on x86.",
+          "default": false
+        },
+        "mem_size_mib": {
+          "type": "integer",
+          "description": "Memory size of VM"
+        },
+        "track_dirty_pages": {
+          "type": "boolean",
+          "description": "Enable dirty page tracking. If this is enabled, then incremental guest memory snapshots can be created. These belong to diff snapshots, which contain, besides the microVM state, only the memory dirtied since a previous snapshot. Full snapshots each contain a full copy of the guest memory.",
+          "default": false
+        },
+        "vcpu_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32,
+          "description": "Number of vCPUs (either 1 or an even number)"
+        },
+        "huge_pages": {
+          "type": "string",
+          "enum": ["None", "Transparent", "2M"],
+          "default": "None",
+          "description": "Which huge pages configuration should be used to back guest memory. \"None\" uses regular 4K pages. \"Transparent\" enables THP via madvise(MADV_HUGEPAGE). \"2M\" uses explicit hugetlbfs 2MB pages."
+        }
+      },
+      "description": "Describes the number of vCPUs, memory size, SMT capabilities, huge page configuration and the CPU template."
+    },
+    "NetworkInterface": {
+      "type": "object",
+      "required": ["host_dev_name", "iface_id"],
+      "properties": {
+        "guest_mac": {
+          "type": "string"
+        },
+        "host_dev_name": {
+          "type": "string",
+          "description": "Host level path for the guest network interface"
+        },
+        "iface_id": {
+          "type": "string"
+        },
+        "mtu": {
+          "type": "integer",
+          "minimum": 68,
+          "maximum": 65535,
+          "description": "MTU to advertise to the guest via VIRTIO_NET_F_MTU. When set, a compatible guest driver will configure the interface with this MTU. When absent, VIRTIO_NET_F_MTU is not advertised and the guest uses its default MTU."
+        },
+        "rx_rate_limiter": {
+          "$ref": "#/definitions/RateLimiter"
+        },
+        "tx_rate_limiter": {
+          "$ref": "#/definitions/RateLimiter"
+        }
+      },
+      "description": "Defines a network interface."
+    },
+    "RateLimiter": {
+      "type": "object",
+      "properties": {
+        "bandwidth": {
+          "$ref": "#/definitions/TokenBucket",
+          "description": "Token bucket with bytes as tokens"
+        },
+        "ops": {
+          "$ref": "#/definitions/TokenBucket",
+          "description": "Token bucket with operations as tokens"
+        }
+      },
+      "description": "Defines an IO rate limiter with independent bytes/s and ops/s limits. Limits are defined by configuring each of the _bandwidth_ and _ops_ token buckets. This field is optional for virtio-block config and should be omitted for vhost-user-block configuration."
+    },
+    "SnapshotCreateParams": {
+      "type": "object",
+      "required": ["mem_file_path", "snapshot_path"],
+      "properties": {
+        "mem_file_path": {
+          "type": "string",
+          "description": "Path to the file that will contain the guest memory."
+        },
+        "snapshot_path": {
+          "type": "string",
+          "description": "Path to the file that will contain the microVM state."
+        },
+        "snapshot_type": {
+          "type": "string",
+          "enum": ["Full", "Diff"],
+          "description": "Type of snapshot to create. It is optional and by default, a full snapshot is created."
+        },
+        "sync_snapshot_files": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the snapshot state and guest memory files are synced to disk (fsync) before the request returns. Optional, defaults to true, guaranteeing durability across host crashes. Setting it to false returns without waiting for the writeback, making snapshot creation faster at the cost of durability across a host crash; the data stays in the host page cache, so same-host reads still see the full contents. Block device backing files are always fsync'd regardless of this setting."
+        }
+      }
+    },
+    "TokenBucket": {
+      "type": "object",
+      "required": ["refill_time", "size"],
+      "properties": {
+        "one_time_burst": {
+          "type": "integer",
+          "minimum": 0,
+          "format": "int64",
+          "description": "The initial size of a token bucket."
+        },
+        "refill_time": {
+          "type": "integer",
+          "minimum": 0,
+          "format": "int64",
+          "description": "The amount of milliseconds it takes for the bucket to refill."
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "format": "int64",
+          "description": "The total number of tokens this bucket can hold."
+        }
+      },
+      "description": "Defines a token bucket with a maximum capacity (size), an initial burst size (one_time_burst) and an interval for refilling purposes (refill_time). The refill-rate is derived from size and refill_time, and it is the constant rate at which the tokens replenish. The refill process only starts happening after the initial burst budget is consumed. Consumption from the token bucket is unbounded in speed which allows for bursts bound in size by the amount of tokens available. Once the token bucket is empty, consumption speed is bound by the refill_rate."
+    },
+    "Vm": {
+      "type": "object",
+      "required": ["state"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["Paused", "Resumed"]
+        }
+      },
+      "description": "Defines the microVM running state. It is especially useful in the snapshotting context."
+    }
+  }
+}

@@ -1,0 +1,1279 @@
+{
+  "chapterId": "68",
+  "manifest": {
+    "id": "68",
+    "slug": "nitro",
+    "title": {
+      "ja": "Nitro: EC2 を支えるしくみ、Nitro Enclaves、Graviton",
+      "en": "Nitro: What EC2 Stands On, Nitro Enclaves, and Graviton"
+    },
+    "prerequisites": ["11", "21", "23"],
+    "services": ["EC2", "Nitro Enclaves", "KMS", "EBS"],
+    "samplePath": "examples/68-nitro",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "nitro-instances",
+      "nitro-overview",
+      "nitro-wp-intro",
+      "nitro-wp-primer",
+      "nitro-wp-journey",
+      "nitro-wp-components",
+      "nitro-wp-ebs-attach",
+      "nitro-wp-no-operator",
+      "nitro-wp-side-channels",
+      "nitro-wp-conclusion",
+      "nitro-ncc-blog",
+      "nitro-type-names",
+      "nitro-gp-specs",
+      "nitro-co-specs",
+      "nitro-ebs-nvme",
+      "nitro-ebs-nvme-identify",
+      "nitro-device-naming",
+      "nitro-ebs-optimized",
+      "nitro-ena",
+      "nitro-lsblk-man",
+      "nitro-lsblk-source",
+      "nitro-graviton",
+      "nitro-lambda-arch",
+      "nitro-ecs-arm64",
+      "nitro-enclaves-what-is",
+      "nitro-enclaves-faq",
+      "nitro-enclaves-concepts",
+      "nitro-enclaves-flow",
+      "nitro-enclaves-attestation",
+      "nitro-enclaves-kms",
+      "nitro-enclaves-verify-root",
+      "nitro-enclaves-security",
+      "nitro-enclaves-build-eif",
+      "nitro-enclaves-create",
+      "nitro-enclaves-hello",
+      "nitro-enclaves-vsock",
+      "nitro-enclaves-kms-start",
+      "nitro-enclaves-cli-install",
+      "nitro-enclaves-cmd-run",
+      "nitro-enclaves-cmd-build",
+      "nitro-enclaves-cmd-terminate",
+      "nitro-enclaves-kmstool",
+      "nitro-enclaves-allocator",
+      "nitro-kms-attestation",
+      "nitro-kms-conditions-attestation",
+      "nitro-kms-conditions-enclave",
+      "nitro-kms-attested-calls",
+      "nitro-kms-attestation-cloudtrail",
+      "nitro-kms-api-decrypt",
+      "nitro-kms-api-recipient",
+      "nitro-kms-default-policy",
+      "nitro-kms-control-access",
+      "nitro-cfn-enclave-options",
+      "nitro-imds-hop-limit",
+      "nitro-node-net",
+      "nitro-cloudflare-workers",
+      "nitro-cdkd-property-coverage",
+      "kms-pricing",
+      "kms-deleting-keys"
+    ]
+  },
+  "sources": [
+    {
+      "id": "nitro-instances",
+      "url": "https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-nitro-instances.html",
+      "title": "Instances built on the AWS Nitro System",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Nitro System's components are Nitro cards (local NVMe storage, networking, management, monitoring, security), the Nitro security chip on the motherboard, and the Nitro hypervisor, which manages memory and CPU allocation",
+        "Instances built on the Nitro System use ENA for enhanced networking and see storage volumes as NVMe block devices",
+        "Lists which virtualized and bare metal families are built on each Nitro version (v2 to v6); T4g, M6g, C6g and T3 are Nitro v2",
+        "A bare metal instance can take 20 minutes or more from the running state until it is reachable",
+        "AWS Graviton processors only support Linux operating systems and need an arm64 AMI"
+      ]
+    },
+    {
+      "id": "nitro-overview",
+      "url": "https://aws.amazon.com/ec2/nitro/",
+      "title": "AWS Nitro System",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS's statement that the Nitro System delivers practically all of the compute and memory resources of the host hardware to instances"
+      ]
+    },
+    {
+      "id": "nitro-wp-intro",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/security-design-of-aws-nitro-system.html",
+      "title": "The Security Design of the AWS Nitro System: introduction",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The whitepaper was published on November 18, 2022 and last updated on February 15, 2024",
+        "The Nitro System is the underlying platform for all EC2 instances launched since the beginning of 2018",
+        "Its three key components are the Nitro Cards, the Nitro Security Chip, and the Nitro Hypervisor"
+      ]
+    },
+    {
+      "id": "nitro-wp-primer",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/traditional-virtualization-primer.html",
+      "title": "Traditional virtualization primer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A classical virtualization host needs device models and a general-purpose operating system beside the VMM; in early EC2 this was an Amazon Linux VM running as Xen's dom0"
+      ]
+    },
+    {
+      "id": "nitro-wp-journey",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/the-nitro-system-journey.html",
+      "title": "The Nitro System journey",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Starting with C5 in 2017 the Nitro System eliminated dom0; a minimized hypervisor based on KVM provides the VMM, and what device models did moved to Nitro Cards"
+      ]
+    },
+    {
+      "id": "nitro-wp-components",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/the-components-of-the-nitro-system.html",
+      "title": "The components of the Nitro System",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nitro Cards provide all I/O interfaces and all outward-facing control interfaces, on hardware physically separate from the system main board that runs customer workloads",
+        "Nitro Cards present NVMe for block storage and ENA for networking over PCIe, divided into SR-IOV virtual functions assigned directly to VMs",
+        "Encryption keys for EBS, instance storage and VPC networking are present in plaintext only in the protected volatile memory of the Nitro Cards",
+        "The Nitro Controller is the hardware root of trust and the only gateway between the server and the EC2 control plane",
+        "The Nitro Security Chip mediates writes to firmware and holds the main board in reset until the controller has verified it, which is what makes bare metal instances possible",
+        "The Nitro Hypervisor has no networking stack, no general-purpose file system, no peripheral device drivers, no shell and no interactive access mode"
+      ]
+    },
+    {
+      "id": "nitro-wp-ebs-attach",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/putting-the-pieces-together-ebs-volume-attachment.html",
+      "title": "Putting the pieces together: EBS volume attachment",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Attaching a volume ends with the Nitro Card for EBS presenting an NVMe device and the hypervisor sending a hot-plug event to the VM",
+        "The volume's data key is decrypted in KMS, re-encrypted to the host's public key, and kept in plaintext only in the volatile memory of that Nitro Card"
+      ]
+    },
+    {
+      "id": "nitro-wp-no-operator",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/no-aws-operator-access.html",
+      "title": "No AWS operator access",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS's statement that there is no mechanism for any system or person to log in to EC2 Nitro hosts, access the memory of EC2 instances, or access customer data on encrypted instance storage or encrypted EBS volumes",
+        "Operators can use only a limited set of authenticated, authorized, logged and audited administrative APIs, none of which gives access to customer data",
+        "The stated trade-off: some issues cannot be debugged in place and must be reproduced on dedicated non-production hardware"
+      ]
+    },
+    {
+      "id": "nitro-wp-side-channels",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/the-ec2-approach-to-preventing-side-channels.html",
+      "title": "The EC2 approach to preventing side-channels",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fixed performance instances get dedicated cores and memory; CPU cores are never shared simultaneously between customers through SMT",
+        "Burstable instances (T3, T3a, T4g) can use overcommitted CPU and memory and can run one after another on the same core, with state flushed between them",
+        "Graviton instances get multiples of one vCPU because the hardware has no SMT; SMT hardware gives multiples of two",
+        "A Nitro Enclave inherits the same isolation and side-channel mitigations as any EC2 instance; its vCPUs (at least one full core) and memory are hot-unplugged from the parent"
+      ]
+    },
+    {
+      "id": "nitro-wp-conclusion",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/security-design-of-aws-nitro-system/conclusion.html",
+      "title": "The Security Design of the AWS Nitro System: conclusion",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Since the beginning of 2018, all new EC2 instance types are based on the Nitro System"
+      ]
+    },
+    {
+      "id": "nitro-ncc-blog",
+      "url": "https://aws.amazon.com/blogs/compute/aws-nitro-system-gets-independent-affirmation-of-its-confidential-compute-capabilities/",
+      "title": "AWS Nitro System gets independent affirmation of its confidential compute capabilities",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS engaged NCC Group for an architecture review of the Nitro System; AWS's post of 2023-05-09 quotes the report: \"As a matter of design, NCC Group found no gaps in the Nitro System that would compromise [AWS] security claims\"",
+        "The claims the post says were validated, including that no administrative API can access customer content on the host"
+      ],
+      "note": "An AWS blog post about a report AWS commissioned. The report itself was not read for this chapter."
+    },
+    {
+      "id": "nitro-type-names",
+      "url": "https://docs.aws.amazon.com/ec2/latest/instancetypes/instance-type-names.html",
+      "title": "Amazon EC2 instance type naming conventions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A name is series, generation, options, then the size after a period, or metal for bare metal",
+        "The series letters and the option letters copied into examples/68-nitro/src/instance-type.ts (a, g, i for the processor; b, d, e, flex, n, q, z for capabilities)",
+        "The page lists neither a series Gr or DL nor an option f, and does not state the order of option letters"
+      ]
+    },
+    {
+      "id": "nitro-gp-specs",
+      "url": "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+      "title": "Specifications for Amazon EC2 general purpose instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "m6g.large: 8 GiB, AWS Graviton2, 2 vCPUs, 2 cores, 1 thread per core; m7g is Graviton3, m8g Graviton4, m9g Graviton5",
+        "m6i.xlarge: 4 vCPUs on 2 cores, 2 threads per core",
+        "The security table marks Nitro Enclaves as supported for m6g.large and not for t4g.micro or t3.micro"
+      ]
+    },
+    {
+      "id": "nitro-co-specs",
+      "url": "https://docs.aws.amazon.com/ec2/latest/instancetypes/co.html",
+      "title": "Specifications for Amazon EC2 compute optimized instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "c6g.large: 4 GiB, AWS Graviton2, 2 vCPUs, 2 cores, 1 thread per core; c7g is Graviton3, c8g Graviton4, c9g Graviton5",
+        "c6i.xlarge: 8 GiB, 4 vCPUs on 2 cores"
+      ]
+    },
+    {
+      "id": "nitro-ebs-nvme",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/nvme-ebs-volumes.html",
+      "title": "Amazon EBS volumes and NVMe",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EBS volumes are exposed as NVMe block devices on Nitro instances; the names in a block device mapping are renamed to /dev/nvme[0-26]n1, possibly in another order"
+      ]
+    },
+    {
+      "id": "nitro-ebs-nvme-identify",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/identify-nvme-ebs-device.html",
+      "title": "Map Amazon EBS volumes to NVMe device names",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Device nodes are created in the order devices respond, so an NVMe device name can change between instance starts",
+        "The EBS volume ID is the NVMe serial number (shown without the hyphen); `lsblk -o +SERIAL` lists it",
+        "Amazon Linux provides a udev rule that creates a symbolic link from the block device mapping name (for example /dev/sdf) to the NVMe device, and the ebsnvme-id command",
+        "AWS recommends stable identifiers: the volume ID, or the file system's UUID or label"
+      ]
+    },
+    {
+      "id": "nitro-device-naming",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html",
+      "title": "Device names for volumes on Amazon EC2 instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The device name given at attach time is used by EC2; the block device driver may assign another name",
+        "Amazon Linux creates a symbolic link for the name you specified; other operating systems could behave differently"
+      ]
+    },
+    {
+      "id": "nitro-ebs-optimized",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-optimized.html",
+      "title": "Amazon EBS-optimized instance types",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "t3.micro, t4g.micro, c6g.large and m6g.large are in the list that is EBS-optimized by default, with no way and no need to turn it on",
+        "The types where it must be enabled for an hourly fee are previous generations (c1, c3, i2, m1, m2, m3, r3)"
+      ]
+    },
+    {
+      "id": "nitro-ena",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking-ena.html",
+      "title": "Enable enhanced networking with ENA on your EC2 instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Enhanced networking on Nitro instances goes through the Elastic Network Adapter and needs an AMI with the ENA driver"
+      ]
+    },
+    {
+      "id": "nitro-lsblk-man",
+      "url": "https://man7.org/linux/man-pages/man8/lsblk.8.html",
+      "title": "lsblk(8)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The options --json, --nodeps and --output used in examples/68-nitro/src/volume.ts"
+      ]
+    },
+    {
+      "id": "nitro-lsblk-source",
+      "url": "https://github.com/util-linux/util-linux/blob/v2.40.2/misc-utils/lsblk.c",
+      "title": "util-linux 2.40.2: lsblk.c",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The JSON table is named blockdevices and a SERIAL column exists; libsmartcols writes column names in lower case and may write null"
+      ],
+      "note": "Read at the v2.40.2 tag. Which util-linux version Amazon Linux 2023 ships was not checked, and lsblk was not run."
+    },
+    {
+      "id": "nitro-graviton",
+      "url": "https://aws.amazon.com/ec2/graviton/",
+      "title": "AWS Graviton Processors",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS's statement that Graviton-based instances cost up to 20% less than comparable x86-based instances",
+        "t4g instances are powered by Graviton2; Graviton5 exists as of 2026-10-13"
+      ]
+    },
+    {
+      "id": "nitro-lambda-arch",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/foundation-arch.html",
+      "title": "Selecting and configuring an instruction set architecture for your Lambda function",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda's arm64 architecture runs on AWS Graviton2",
+        "Before moving a function to arm64: every third-party dependency, layer and extension needs an arm64 version, and a container image has to be rebuilt for the architecture"
+      ]
+    },
+    {
+      "id": "nitro-ecs-arm64",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-arm64.html",
+      "title": "Amazon ECS task definitions for 64-bit ARM workloads",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "64-bit ARM tasks run on Graviton with Fargate (Linux only, platform version 1.4.0 or later); the page does not name a Graviton generation"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-what-is",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave.html",
+      "title": "What is Nitro Enclaves?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An enclave is a separate, hardened virtual machine with only a local socket to its parent instance: no persistent storage, no interactive access, no external networking",
+        "Data and applications inside the enclave cannot be accessed by processes, applications, or users (root or admin) of the parent instance",
+        "The list of parent instance types: no T family, no x86 .large (M6i, C6i start at xlarge), Graviton families from .large (M6g, C6g except medium and metal)",
+        "Up to four enclaves per parent; enclaves stop when the parent stops; hibernation and enclaves cannot be enabled together; supported in all Regions",
+        "There are no additional charges for Nitro Enclaves beyond the instance and other services used"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-faq",
+      "url": "https://aws.amazon.com/ec2/nitro/nitro-enclaves/faqs/",
+      "title": "AWS Nitro Enclaves FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nitro Enclaves is not available on bare metal instances, burstable instance types (for example T3), and instances with only one CPU core"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-concepts",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html",
+      "title": "Nitro Enclaves concepts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An enclave is a VM with its own kernel, memory and CPUs, made by partitioning memory and vCPUs from the parent instance",
+        "The KMS proxy runs on the parent; sessions with KMS are established logically between KMS and the enclave, and the traffic is protected from the parent",
+        "The vsock is the only channel an enclave has; the parent's CID is always 3"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-flow",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/flow.html",
+      "title": "Enclave workflow overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The three parties (data owner, parent instance administrator, application developer); the parent instance administrator should have no permission to use the key or to change the key policy",
+        "The decryption flow: the enclave sends the encrypted data key with its attestation document through the parent's KMS proxy, and KMS encrypts the plaintext key to the enclave's public key"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-attestation",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/set-up-attestation.html",
+      "title": "Cryptographic attestation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The six measurements: PCR0 (image file), PCR1 (kernel and bootstrap), PCR2 (application), PCR3 (parent's IAM role), PCR4 (parent's instance ID), PCR8 (signing certificate)",
+        "PCR0 to PCR2 are printed by nitro-cli build-enclave; PCR3 and PCR4 are SHA-384 over 48 zero bytes followed by the ARN or the instance ID, with the example values the tests check",
+        "Enclaves started with --debug-mode or --attach-console produce attestation documents whose PCRs are all zeros, unusable for attestation",
+        "An attestation document can be requested only from inside the enclave"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-kms",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/kms.html",
+      "title": "Using cryptographic attestation with AWS KMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The example key policy: Allow for the instance role on kms:Decrypt, kms:GenerateDataKey and kms:GenerateRandom with StringEqualsIgnoreCase on kms:RecipientAttestation:ImageSha384 and PCR keys",
+        "If the request does not include an attestation document, the role has no permission because the condition cannot be satisfied"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-verify-root",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/verify-root.html",
+      "title": "Verifying the root of trust",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The attestation document is CBOR, signed as COSE_Sign1 with ECDSA 384, with the fields module_id, timestamp, digest, pcrs, certificate, cabundle and the optional public_key, user_data, nonce",
+        "Documents are signed by the AWS Nitro Attestation PKI, whose root certificate is published with its fingerprint"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-security",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/security.html",
+      "title": "Nitro Enclaves security",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Enclaves use the same Nitro Hypervisor isolation that separates EC2 instances to isolate their vCPUs and memory from the parent"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-build-eif",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/building-eif.html",
+      "title": "Building an enclave image file",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An enclave image file is made from a Docker image with nitro-cli build-enclave, which prints the measurements"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-create",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/create-enclave.html",
+      "title": "Creating an enclave",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A parent instance is launched with --enclave-options 'Enabled=true'",
+        "Image files can be built with the Nitro CLI on any Linux environment, also outside AWS; running an enclave needs a parent instance"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-hello",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/getting-started.html",
+      "title": "Getting started: Hello Enclaves sample application",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The commands of the walkthrough: docker build of /usr/share/nitro_enclaves/examples/hello, nitro-cli build-enclave, run-enclave, describe-enclaves, console, terminate-enclave",
+        "The tutorial is written for an m5.xlarge and preallocates 2 vCPUs and 512 MiB"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-vsock",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/enclave-networking.html",
+      "title": "Getting started: Connect the parent instance with an enclave by using virtio-vsock",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A vsock address is a 32-bit CID and a 32-bit port; the first enclave gets CID 16 by default and the parent is CID 3",
+        "The guide's example passes the role's temporary credentials from IMDSv2 into the enclave over vsock, in Python, with the parent application in a container",
+        "Virtio-vsock libraries are available for languages such as Rust, Go and Python"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-kms-start",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/connect-enclave-kms.html",
+      "title": "Getting started: Connect an enclave with AWS KMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The image file contains unencrypted copies of all code and data, so secrets must not be part of it",
+        "vsock-proxy on the parent listens on CID 3 port 8000 and forwards to the KMS endpoints in /etc/nitro_enclaves/vsock-proxy.yaml; TLS runs between KMS and the enclave",
+        "kmstool-enclave-cli creates an ephemeral key pair, requests an attestation document from the NSM device with the public key, and attaches it to the Decrypt request",
+        "A debug enclave's PCR0 is 96 zeros; otherwise PCR0 is read from nitro-cli describe-enclaves"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-cli-install",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-cli-install.html",
+      "title": "Install the Nitro Enclaves CLI on Linux",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On Amazon Linux 2023: dnf install aws-nitro-enclaves-cli and aws-nitro-enclaves-cli-devel, the ne and docker groups, the allocator service, the docker service",
+        "The allocator preallocates 512 MiB and 2 vCPUs by default (/etc/nitro_enclaves/allocator.yaml); on a Graviton instance with 2 vCPUs it must preallocate only 1"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-cmd-run",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/cmd-nitro-run-enclave.html",
+      "title": "nitro-cli run-enclave",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The options --cpu-count, --memory (at least 64 MiB), --eif-path, --enclave-cid (4 and higher), --debug-mode",
+        "With multithreading the parent keeps at least 2 vCPUs and the enclave takes an even number; without it the parent keeps at least 1"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-cmd-build",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/cmd-nitro-build-enclave.html",
+      "title": "nitro-cli build-enclave",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The options --docker-uri, --docker-dir, --output-file, --private-key and --signing-certificate; a signed image also gets PCR8"
+      ]
+    },
+    {
+      "id": "nitro-enclaves-cmd-terminate",
+      "url": "https://docs.aws.amazon.com/enclaves/latest/user/cmd-nitro-terminate-enclave.html",
+      "title": "nitro-cli terminate-enclave",
+      "checkedAt": "2026-10-13",
+      "supports": ["The options --enclave-id, --enclave-name and --all"]
+    },
+    {
+      "id": "nitro-enclaves-kmstool",
+      "url": "https://github.com/aws/aws-nitro-enclaves-sdk-c/blob/main/bin/kmstool-enclave-cli/README.md",
+      "title": "kmstool-enclave-cli",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The decrypt and genkey commands and their parameters; output is PLAINTEXT: and CIPHERTEXT: followed by base64",
+        "It is meant to be called as a subprocess from any language, with libnsm.so beside it"
+      ],
+      "note": "Read on the main branch on 2026-10-13. Not built and not run."
+    },
+    {
+      "id": "nitro-enclaves-allocator",
+      "url": "https://github.com/aws/aws-nitro-enclaves-cli/blob/main/bootstrap/allocator.yaml",
+      "title": "aws-nitro-enclaves-cli: allocator.yaml",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The file has two settings, memory_mib: 512 and cpu_count: 2, and an optional cpu_pool"
+      ]
+    },
+    {
+      "id": "nitro-kms-attestation",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/cryptographic-attestation.html",
+      "title": "Cryptographic attestation support in AWS KMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With a signed attestation document, Decrypt, DeriveSharedSecret, GenerateDataKey, GenerateDataKeyPair and GenerateRandom return the plaintext encrypted under the public key from the document instead of the plaintext",
+        "GenerateDataKey still returns the copy of the data key encrypted by the KMS key"
+      ]
+    },
+    {
+      "id": "nitro-kms-conditions-attestation",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-attestation.html",
+      "title": "AWS KMS condition keys for attested platforms",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default key policy allows the account every action including Decrypt; AWS recommends least privilege and mentions NotAction kms:Decrypt as one way to restrict it"
+      ]
+    },
+    {
+      "id": "nitro-kms-conditions-enclave",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-nitro-enclave.html",
+      "title": "Condition keys for Nitro Enclaves",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "kms:RecipientAttestation:ImageSha384 corresponds to PCR0, and kms:RecipientAttestation:PCR<PCR_ID> to a named PCR; both are single-valued strings for key policies and IAM policies",
+        "Both are effective only when the Recipient parameter carries a signed attestation document; without one, permission is denied because the condition is not satisfied",
+        "StringEqualsIgnoreCase is the operator AWS's examples use for PCR values"
+      ]
+    },
+    {
+      "id": "nitro-kms-attested-calls",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/attested-calls.html",
+      "title": "How to make attested calls to AWS KMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Recipient parameter carries the document and the key encryption algorithm; the response has CiphertextForRecipient and an empty Plaintext",
+        "KMS relies on the document's signature; you cannot supply your own certificate to sign it",
+        "AWS SDKs take the Recipient parameter; the document comes from the Nitro Secure Module through the NSM API"
+      ]
+    },
+    {
+      "id": "nitro-kms-attestation-cloudtrail",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/ct-attestation.html",
+      "title": "Monitoring attested requests",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudTrail entries for attested requests carry a recipient field in additionalEventData"
+      ]
+    },
+    {
+      "id": "nitro-kms-api-decrypt",
+      "url": "https://docs.aws.amazon.com/kms/latest/APIReference/API_Decrypt.html",
+      "title": "KMS API: Decrypt",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Recipient and CiphertextForRecipient as request and response fields; Plaintext is null or empty when CiphertextForRecipient is present"
+      ]
+    },
+    {
+      "id": "nitro-kms-api-recipient",
+      "url": "https://docs.aws.amazon.com/kms/latest/APIReference/API_RecipientInfo.html",
+      "title": "KMS API: RecipientInfo",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AttestationDocument (up to 262144 bytes) and KeyEncryptionAlgorithm, whose only valid value is RSAES_OAEP_SHA_256"
+      ]
+    },
+    {
+      "id": "nitro-kms-default-policy",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html",
+      "title": "Default key policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A KMS key policy gives no permission to the account or its identities unless a statement says so",
+        "A statement whose principal is the account lets IAM policies allow the listed actions; without it IAM policies that allow access are ineffective"
+      ]
+    },
+    {
+      "id": "nitro-kms-control-access",
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/control-access.html",
+      "title": "KMS key access and permissions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The key policy alone can control access when the key and the IAM principal are in the same account"
+      ]
+    },
+    {
+      "id": "nitro-cfn-enclave-options",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-instance.html",
+      "title": "AWS::EC2::Instance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EnclaveOptions has one member, Enabled, and updating it requires replacement",
+        "Hibernation and Nitro Enclaves cannot be enabled on the same instance"
+      ]
+    },
+    {
+      "id": "nitro-imds-hop-limit",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-metadata-v2-how-it-works.html",
+      "title": "How Instance Metadata Service Version 2 works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The PUT response hop limit is 1 by default; a bigger one may be needed for container services running on the instance"
+      ]
+    },
+    {
+      "id": "nitro-node-net",
+      "url": "https://nodejs.org/docs/latest-v24.x/api/net.html",
+      "title": "Node.js v24: net",
+      "checkedAt": "2026-10-13",
+      "supports": ["The net module's documentation does not mention vsock"],
+      "note": "Absence of a word on one page. Whether another built-in module or an add-on opens AF_VSOCK sockets was not investigated."
+    },
+    {
+      "id": "nitro-cloudflare-workers",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "How Workers works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers run in V8 isolates on machines of Cloudflare's network, not in a virtual machine per function"
+      ]
+    },
+    {
+      "id": "nitro-cdkd-property-coverage",
+      "url": "https://github.com/go-to-k/cdkd/tree/v0.296.28",
+      "title": "cdkd 0.296.28: provider registry and property coverage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for AWS::EC2::Instance, AWS::EC2::SecurityGroup, AWS::IAM::InstanceProfile, AWS::IAM::Role and AWS::KMS::Key",
+        "The EC2 instance provider does not wire EnclaveOptions (\"not yet implemented by cdkd\"); a template that sets it is routed through Cloud Control API with the full property map"
+      ],
+      "note": "Read in the installed npm package (dist/deploy-engine-*.js), not on GitHub. No deploy was run."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "nitro-system",
+      "ja": "Nitro System",
+      "en": "Nitro System",
+      "firstUse": "68",
+      "definition": {
+        "ja": "いまの EC2 のインスタンスが載っている土台。ネットワークとストレージの入出力を専用のカード（Nitro Card）に移し、ホストの CPU には CPU とメモリを分けるだけのハイパーバイザーを残した構成。Nuxt のサーバーエンジンの Nitro とは別物。",
+        "en": "What today's EC2 instances stand on: network and storage I/O moved to dedicated cards (Nitro Cards), and a hypervisor on the host CPU that only divides CPU and memory. Unrelated to the Nitro server engine of Nuxt."
+      }
+    },
+    {
+      "id": "nitro-hypervisor",
+      "ja": "Nitro Hypervisor",
+      "en": "Nitro Hypervisor",
+      "firstUse": "68",
+      "definition": {
+        "ja": "Nitro System のハイパーバイザー。CPU とメモリをインスタンスに割り当て、Nitro Card のデバイスを渡すだけで、ネットワークスタックもシェルも持たない、と AWS は説明している。",
+        "en": "The hypervisor of the Nitro System. AWS describes it as allocating CPU and memory and handing Nitro Card devices to instances, with no network stack and no shell."
+      }
+    },
+    {
+      "id": "graviton",
+      "ja": "Graviton",
+      "en": "Graviton",
+      "firstUse": "68",
+      "definition": {
+        "ja": "AWS が設計した Arm（arm64）のプロセッサー。インスタンスタイプの名前では g の文字で表される。",
+        "en": "The Arm (arm64) processors AWS designs. In an instance type name, the letter g."
+      }
+    },
+    {
+      "id": "nitro-enclave",
+      "ja": "エンクレーブ",
+      "en": "enclave",
+      "firstUse": "68",
+      "definition": {
+        "ja": "インスタンスの vCPU とメモリの一部を切り出して作る、隔離された仮想マシン。ネットワークも永続的なストレージも対話的な入口も持たず、親インスタンスとは vsock だけでつながる。",
+        "en": "An isolated virtual machine carved out of an instance's vCPUs and memory. It has no network, no persistent storage and no interactive access, and reaches its parent instance over vsock only."
+      }
+    },
+    {
+      "id": "parent-instance",
+      "ja": "親インスタンス",
+      "en": "parent instance",
+      "firstUse": "68",
+      "definition": {
+        "ja": "エンクレーブに vCPU とメモリを渡し、エンクレーブを起動して止める EC2 のインスタンス。",
+        "en": "The EC2 instance that gives an enclave its vCPUs and memory, and starts and stops it."
+      }
+    },
+    {
+      "id": "enclave-image-file",
+      "ja": "エンクレーブイメージファイル",
+      "en": "enclave image file",
+      "firstUse": "68",
+      "definition": {
+        "ja": "エンクレーブで起動する OS とアプリを 1 つにまとめたファイル（.eif）。Docker のイメージから nitro-cli build-enclave で作る。",
+        "en": "The one file (.eif) with the operating system and application an enclave boots. Built from a Docker image with nitro-cli build-enclave."
+      }
+    },
+    {
+      "id": "pcr",
+      "ja": "PCR",
+      "en": "PCR",
+      "firstUse": "68",
+      "definition": {
+        "ja": "platform configuration register。エンクレーブのイメージや親インスタンスの素性から計算した SHA-384 のハッシュ。PCR0 はイメージファイル全体の計測値。",
+        "en": "Platform configuration register: a SHA-384 hash computed from the enclave's image or from facts about its parent. PCR0 measures the whole image file."
+      }
+    },
+    {
+      "id": "attestation-document",
+      "ja": "アテステーションドキュメント",
+      "en": "attestation document",
+      "firstUse": "68",
+      "definition": {
+        "ja": "Nitro Hypervisor が署名する文書。エンクレーブの PCR と、エンクレーブが渡した公開鍵が入っている。エンクレーブはこれを見せて、自分がどのイメージから起動したかを外に証明する。",
+        "en": "A document signed by the Nitro Hypervisor, carrying an enclave's PCRs and a public key the enclave supplied. The enclave shows it to prove which image it was started from."
+      }
+    },
+    {
+      "id": "vsock",
+      "ja": "vsock",
+      "en": "vsock",
+      "firstUse": "68",
+      "definition": {
+        "ja": "仮想マシンとそのホストの間のソケット。アドレスは CID とポートの組で、エンクレーブと親インスタンスをつなぐ唯一の経路。",
+        "en": "A socket between a virtual machine and its host, addressed by a CID and a port. The only path between an enclave and its parent instance."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "68.cost",
+      "sources": [
+        "examples/68-nitro/src/cost.ts",
+        "examples/68-nitro/scripts/prices.ts",
+        "examples/68-nitro/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["nitro:prices", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.system",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.claims",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.when-not",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.devices",
+      "sources": [
+        "examples/68-nitro/src/volume.ts",
+        "examples/68-nitro/test/volume.test.ts",
+        "examples/68-nitro/test/fixtures/lsblk.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.names",
+      "sources": [
+        "examples/68-nitro/src/instance-type.ts",
+        "examples/68-nitro/scripts/names.ts",
+        "examples/68-nitro/test/instance-type.test.ts"
+      ],
+      "tasks": ["nitro:names", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.graviton",
+      "sources": [
+        "examples/68-nitro/src/arch.ts",
+        "examples/68-nitro/scripts/prices.ts",
+        "examples/68-nitro/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["nitro:prices", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.enclave",
+      "sources": [
+        "examples/68-nitro/src/measurement.ts",
+        "examples/68-nitro/test/measurement.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.policy",
+      "sources": ["examples/68-nitro/src/policy.ts", "examples/68-nitro/test/policy.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.design",
+      "sources": [
+        "examples/68-nitro/src/enclave/vault.ts",
+        "examples/68-nitro/src/enclave/protocol.ts",
+        "examples/68-nitro/test/enclave.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "68.stack",
+      "sources": [
+        "examples/68-nitro/infra/lib/nitro-stack.ts",
+        "examples/68-nitro/infra/bin/app.ts",
+        "examples/68-nitro/src/config.ts",
+        "examples/68-nitro/infra/test/nitro-stack.test.ts"
+      ],
+      "tasks": ["nitro:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.local",
+      "sources": [
+        "examples/68-nitro/src/enclave/model.ts",
+        "examples/68-nitro/src/enclave/attestation.ts",
+        "examples/68-nitro/src/enclave/kms-model.ts",
+        "examples/68-nitro/scripts/demo.ts",
+        "examples/68-nitro/test/enclave.test.ts"
+      ],
+      "tasks": ["nitro:demo", "test:unit", "nitro:infra:synth"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "68.deploy",
+      "sources": [
+        "examples/68-nitro/infra/bin/app.ts",
+        "examples/68-nitro/infra/lib/nitro-stack.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["nitro:infra:diff", "nitro:infra:deploy", "nitro:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.walkthrough",
+      "sources": ["examples/68-nitro/infra/bin/app.ts", "examples/68-nitro/src/measurement.ts"],
+      "tasks": ["nitro:infra:deploy"],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.limits",
+      "sources": [
+        "examples/68-nitro/test/enclave.test.ts",
+        "examples/68-nitro/src/enclave/model.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "68.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.cleanup",
+      "sources": ["examples/68-nitro/infra/lib/nitro-stack.ts"],
+      "tasks": ["nitro:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "ec2.t3-micro.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "DAPC5MD4ZQN9K67N",
+      "usageType": "APN1-BoxUsage:t3.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0136000000",
+          "description": "$0.0136 per On Demand Linux t3.micro Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c6g-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "367GKYK8T8KTCEGA",
+      "usageType": "APN1-BoxUsage:c6g.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0856000000",
+          "description": "$0.0856 per On Demand Linux c6g.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c6i-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "YWJM42SBFH2YFKVN",
+      "usageType": "APN1-BoxUsage:c6i.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1070000000",
+          "description": "$0.107 per On Demand Linux c6i.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c6i-xlarge.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "U5GNAU94PPRNDA36",
+      "usageType": "APN1-BoxUsage:c6i.xlarge",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2140000000",
+          "description": "$0.214 per On Demand Linux c6i.xlarge Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "ec2.t3-micro.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6g-large.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6i-large.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6i-xlarge.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "nitro-idle-running",
+      "chapter": "68",
+      "title": {
+        "ja": "Nitro: エンクレーブ対応のインスタンスと鍵を 1 か月置いたまま",
+        "en": "Nitro: the enclave-enabled instance and its key, left running for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "c6g.large 1 台を起動したまま 730 時間。エンクレーブは起動していてもいなくても同じ",
+          "ルートボリュームは 8 GiB の gp3（23章と同じ仮定。AMI が決める値で、確かめていない）",
+          "customer managed key が 1 つ。リクエストは 0 件",
+          "パブリックサブネットに置き、自動割り当てのパブリック IPv4 アドレスを 1 つ持つ",
+          "11章のネットワークの料金、データ転送、KMS のリクエストは含まない"
+        ],
+        "en": [
+          "One c6g.large left running for 730 hours. The same whether an enclave runs or not",
+          "An 8 GiB gp3 root volume (chapter 23's assumption; the AMI decides it, and it was not checked)",
+          "One customer managed key, and no requests",
+          "In a public subnet, with one auto-assigned public IPv4 address",
+          "Not included: the chapter 11 network, data transfer, KMS requests"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.c6g-large.linux.hour",
+          "quantity": 730,
+          "basis": "1 c6g.large x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 public IPv4 address x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 8,
+          "basis": "8 GiB root (assumed), 730 of 730 hours"
+        },
+        {
+          "priceId": "kms.key",
+          "quantity": 1,
+          "basis": "1 customer managed key, 730 of 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "nitro-idle-stopped",
+      "chapter": "68",
+      "title": {
+        "ja": "Nitro: インスタンスを停止して 1 か月",
+        "en": "Nitro: the instance stopped for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "c6g.large 1 台を停止したまま 730 時間。エンクレーブは起動していてもいなくても同じ",
+          "ルートボリュームは 8 GiB の gp3（23章と同じ仮定。AMI が決める値で、確かめていない）",
+          "customer managed key が 1 つ。リクエストは 0 件",
+          "自動割り当てのパブリック IPv4 アドレスは、停止すると解放される",
+          "11章のネットワークの料金、データ転送、KMS のリクエストは含まない"
+        ],
+        "en": [
+          "One c6g.large left stopped for 730 hours. The same whether an enclave runs or not",
+          "An 8 GiB gp3 root volume (chapter 23's assumption; the AMI decides it, and it was not checked)",
+          "One customer managed key, and no requests",
+          "The auto-assigned public IPv4 address is released when the instance stops",
+          "Not included: the chapter 11 network, data transfer, KMS requests"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 8,
+          "basis": "8 GiB root (assumed), 730 of 730 hours"
+        },
+        {
+          "priceId": "kms.key",
+          "quantity": 1,
+          "basis": "1 customer managed key, 730 of 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "68",
+        "command": "vp test run examples/68-nitro",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "インスタンスタイプの名前の読み取り、ボリューム ID からのデバイスの特定、PCR3 と PCR4 の計算（ユーザーガイドの例の値と一致）、キーポリシーとその評価器、親・エンクレーブ・KMS のモデルと不変条件、料金の入力、スタックのアサーション",
+          "en": "Reading instance type names, finding a device from a volume ID, PCR3 and PCR4 (matching the user guide's example values), the key policy and its evaluator, the model of parent, enclave and KMS with its invariant, pricing inputs, and stack assertions"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "tsc --noEmit -p examples/68-nitro",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "vp run nitro:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の構成と、`-c measurement=<96 桁>`、`-c instanceType=m6g.large` で synth した",
+          "en": "Synthesized the default layout and `-c measurement=<96 hex digits>`, `-c instanceType=m6g.large`"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "vp run nitro:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "モデルの上で、ノートの封印と開封、親による直接の Decrypt の拒否、ドキュメントの再送、デバッグモードの拒否を通した",
+          "en": "On the model: sealing and opening a note, the parent's direct Decrypt refused, a replayed document, and debug mode refused"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "vp run nitro:names",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の 6 つの名前を読んだ",
+          "en": "Read the six default names"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "vp run nitro:prices",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "arm64 と x86 の単価の差と、スタックの置いてあるだけの料金を表示した",
+          "en": "Printed the arm64 and x86 unit prices and the stack's idle cost"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "vp run nitro:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない",
+          "en": "Not deployed"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "nitro-cli build-enclave / run-enclave",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "エンクレーブのイメージを作っていないし、エンクレーブを起動していない。この機械は macOS で、Docker も無い",
+          "en": "No enclave image was built and no enclave was started. This machine is macOS without Docker"
+        }
+      },
+      {
+        "scope": "68",
+        "command": "vp run nitro:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていないので、片付けも実行していない",
+          "en": "Nothing was deployed, so nothing was destroyed"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "68-deploy",
+        "summary": {
+          "ja": "68章のスタックを AWS に一度もデプロイしていない。cdkd 0.296.28 の EC2 のプロバイダーは `EnclaveOptions` を扱わず、指定があるとインスタンスを Cloud Control API 経由に回す、とインストールした版のコードにある。その経路でエンクレーブ対応のインスタンスが作れること、Principal だけで権限を与えるキーポリシーを KMS が受け付けること、明示した管理用のアクションだけで cdkd がキーを作って消せることが未確認。",
+          "en": "The chapter 68 stack has never been deployed. The installed cdkd 0.296.28 does not wire `EnclaveOptions` in its EC2 provider and routes an instance that sets it through Cloud Control API. Unverified: that this route creates an enclave-enabled instance, that KMS accepts the key policy, and that the listed administrative actions are enough for cdkd to create and delete the key."
+        },
+        "resume": {
+          "ja": "11章をデプロイした後に `vp run nitro:infra:deploy`。`aws ec2 describe-instances --query 'Reservations[].Instances[].EnclaveOptions'` が `Enabled: true` を返すことを見て、`vp run nitro:infra:drift` を通す。終わったら `vp run nitro:infra:destroy`（インスタンスは時間課金）。",
+          "en": "After deploying chapter 11, run `vp run nitro:infra:deploy`, check that `aws ec2 describe-instances --query 'Reservations[].Instances[].EnclaveOptions'` returns `Enabled: true`, and run `vp run nitro:infra:drift`. Then `vp run nitro:infra:destroy` (the instance is billed by the hour)."
+        }
+      },
+      {
+        "id": "68-enclave",
+        "summary": {
+          "ja": "エンクレーブを一度も起動していない。Graviton の 2 vCPU のインスタンスで allocator を 1 vCPU にして hello のサンプルが動くこと、`--cpu-count 1` で起動できること、既定のルートボリュームに Docker のイメージとイメージファイルが収まること、hop limit 1 のままユーザーガイドの親側のコンテナが IMDSv2 から認証情報を取れるかどうかが未確認。",
+          "en": "No enclave was ever started. Unverified: that the hello sample runs on a 2-vCPU Graviton instance with the allocator set to 1 vCPU and `--cpu-count 1`, that the default root volume holds the Docker images and the image file, and whether the user guide's parent container can read credentials from IMDSv2 with a hop limit of 1."
+        },
+        "resume": {
+          "ja": "デプロイの後、Session Manager で入り、本文「エンクレーブを起動するまで」の順に `dnf install`、allocator の設定、`docker build`、`nitro-cli build-enclave`、`run-enclave --debug-mode`、`console`、`terminate-enclave` を通す。",
+          "en": "After the deploy, enter with Session Manager and follow the page's steps in order: `dnf install`, the allocator setting, `docker build`, `nitro-cli build-enclave`, `run-enclave --debug-mode`, `console`, `terminate-enclave`."
+        }
+      },
+      {
+        "id": "68-attestation",
+        "summary": {
+          "ja": "KMS のアテステーションを一度も通していない。この章のキーポリシーで、エンクレーブの中からの Decrypt と GenerateDataKey が通り、親からの同じ呼び出しが拒否されることは、ドキュメントの記述と自作の評価器でしか確かめていない。ノートを封印する TypeScript のコード（`src/enclave/vault.ts`）をエンクレーブのイメージにする部分（vsock の待ち受け、NSM からのドキュメントの取得、`kmstool_enclave_cli` の呼び出し）は、このリポジトリに無い。",
+          "en": "KMS attestation was never exercised. That Decrypt and GenerateDataKey succeed from inside the enclave and are refused from the parent under this chapter's key policy is known only from the documentation and from the book's own evaluator. The part that would turn the TypeScript vault (`src/enclave/vault.ts`) into an enclave image (a vsock listener, the attestation document from the NSM, the call to `kmstool_enclave_cli`) is not in this repository."
+        },
+        "resume": {
+          "ja": "ユーザーガイドの「Connect the parent instance with an enclave by using virtio-vsock」と「Connect an enclave with AWS KMS」をそのまま通す。`nitro-cli build-enclave` が出した PCR0 を `vp run nitro:infra:deploy -c measurement=<PCR0>` で渡し、デバッグモードなしで起動したエンクレーブから `kmstool_enclave_cli decrypt` が通ること、親で `aws kms decrypt` が AccessDenied になること、CloudTrail の `additionalEventData.recipient` を確かめる。",
+          "en": "Follow the user guide's \"Connect the parent instance with an enclave by using virtio-vsock\" and \"Connect an enclave with AWS KMS\" as written. Pass the PCR0 printed by `nitro-cli build-enclave` with `vp run nitro:infra:deploy -c measurement=<PCR0>`, then check that `kmstool_enclave_cli decrypt` succeeds from an enclave started without debug mode, that `aws kms decrypt` on the parent is denied, and what CloudTrail records under `additionalEventData.recipient`."
+        }
+      },
+      {
+        "id": "68-lsblk",
+        "summary": {
+          "ja": "`lsblk --json --nodeps --output NAME,SERIAL` をインスタンスで実行していない。テストの入力は util-linux 2.40.2 のソースを読んで手で書いたもので、Amazon Linux 2023 が出す実際の JSON と突き合わせていない。",
+          "en": "`lsblk --json --nodeps --output NAME,SERIAL` was not run on an instance. The test input was written by hand from the util-linux 2.40.2 source and was not compared with what Amazon Linux 2023 prints."
+        },
+        "resume": {
+          "ja": "23章のインスタンスで `lsblk --json --nodeps --output NAME,SERIAL` を実行し、出力を `findDevice` に渡して、`vp run ec2:status` が示すボリューム ID のデバイスが返ることを確かめる。",
+          "en": "On the chapter 23 instance run `lsblk --json --nodeps --output NAME,SERIAL`, pass the output to `findDevice`, and check that it returns the device of the volume ID that `vp run ec2:status` shows."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 68: the Nitro System, Nitro Enclaves, Graviton -----------\n      // Instance type names read part by part, from the naming page. No AWS.\n      \"nitro:names\": fresh(\"node scripts/names.ts\", { cwd: \"examples/68-nitro\" }),\n      // arm64 against x86 unit prices, and what this stack costs idle. Reads data/pricing only.\n      \"nitro:prices\": fresh(\"node scripts/prices.ts\", { cwd: \"examples/68-nitro\" }),\n      // A parent, an enclave, and KMS in one process: who can get the data key. No AWS.\n      \"nitro:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/68-nitro\" }),\n      // One c6g.large, billed by the hour, and one KMS key, billed by the month.\n      ...infra(\"nitro\", \"examples/68-nitro\", \"AihNitro\"),",
+    "synth": ["nitro:infra:synth"],
+    "checkAll": ["nitro:demo"],
+    "typecheck": ["examples/68-nitro"]
+  }
+}

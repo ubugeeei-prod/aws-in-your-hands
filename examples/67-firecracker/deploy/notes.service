@@ -1,0 +1,14 @@
+[Unit]
+Description=Notes API of chapter 04, inside the microVM
+After=network.target
+
+[Service]
+User=nobody
+Environment=PORT=8080
+Environment=STAGE=microvm
+Environment=ALLOWED_ORIGIN=http://localhost:5173
+ExecStart=/opt/node/bin/node /opt/notes/server.mjs
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

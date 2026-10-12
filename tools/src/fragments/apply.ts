@@ -77,6 +77,10 @@ if (fragment.chapterId !== id || fragment.manifest.id !== id) {
 }
 
 const manifest = readJson("data/chapters.json") as { chapters: { id: string }[] };
+// A chapter the manifest does not know yet is added, in the order of the IDs.
+if (!manifest.chapters.some((chapter) => chapter.id === id)) {
+  manifest.chapters = [...manifest.chapters, { id }].toSorted((a, b) => a.id.localeCompare(b.id));
+}
 manifest.chapters = manifest.chapters.map((chapter) =>
   chapter.id === id ? fragment.manifest : chapter,
 );

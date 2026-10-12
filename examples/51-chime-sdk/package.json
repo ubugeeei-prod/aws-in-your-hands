@@ -1,0 +1,30 @@
+{
+  "name": "@aih/example-51-chime-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aih/example-05-dynamodb": "workspace:*",
+    "@aih/example-06-auth": "workspace:*",
+    "@aws-sdk/client-chime-sdk-meetings": "3.1149.0",
+    "@aws-sdk/client-dynamodb": "3.1149.0",
+    "@aws-sdk/lib-dynamodb": "3.1149.0",
+    "amazon-chime-sdk-js": "3.32.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "oauth4webapi": "3.8.8",
+    "valibot": "1.5.0",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "@types/aws-lambda": "8.10.164",
+    "@vizejs/vite-plugin": "0.443.0",
+    "jose": "6.2.12",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "vite-plus": "1.1.0",
+    "vize": "0.443.0"
+  }
+}

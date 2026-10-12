@@ -1,0 +1,55 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html, https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html, https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-client-side.html and https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-use-converse-api.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "The JSON is cut off by maxTokens.",
+  "calls": [
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "{\"items\":[{\"task\":\"決済の結合テストを終える\",\"owner\":\"佐藤\",\"due\":\"2026-10-16\"},{\"task\":\"負荷試験を"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "max_tokens"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 395,
+                "outputTokens": 600,
+                "totalTokens": 995
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

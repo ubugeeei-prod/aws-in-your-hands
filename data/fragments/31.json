@@ -1,0 +1,1057 @@
+{
+  "chapterId": "31",
+  "manifest": {
+    "id": "31",
+    "slug": "progressive-delivery",
+    "title": {
+      "ja": "Progressive Delivery: alias、canary、blue/green、feature flag",
+      "en": "Progressive Delivery: Aliases, Canaries, Blue/Green, and Feature Flags"
+    },
+    "prerequisites": ["20", "12"],
+    "services": ["Lambda", "CloudWatch", "AppConfig", "API Gateway", "CodeDeploy", "ECS"],
+    "samplePath": "examples/31-progressive-delivery",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "pd-lambda-alias-routing",
+      "pd-codedeploy-deployment-configs",
+      "pd-lambda-api-update-alias",
+      "pd-lambda-api-publish-version",
+      "pd-lambda-api-delete-function",
+      "pd-sdk-appconfig",
+      "pd-lambda-metrics-types",
+      "pd-lambda-metrics-view",
+      "pd-lambda-envvars",
+      "pd-apigw-http-metrics",
+      "pd-cfn-update-policy",
+      "pd-appconfig-lambda-extension",
+      "pd-appconfig-extension-how",
+      "pd-appconfig-extension-config",
+      "pd-appconfig-extension-versions",
+      "pd-appconfig-feature-flag-type",
+      "pd-appconfig-deployment-strategy",
+      "pd-appconfig-predefined-strategies",
+      "pd-appconfig-agent-entity",
+      "pd-appconfig-setup-rollback",
+      "pd-appconfig-validators",
+      "pd-appconfig-api-delete-profile",
+      "pd-ecs-blue-green",
+      "pd-ecs-canary",
+      "pd-ecs-api-deployment-configuration",
+      "pd-ecs-api-canary-configuration",
+      "pd-ecs-circuit-breaker",
+      "pd-ecs-deployment-alarms",
+      "pd-price-list-ssm",
+      "pd-price-list-codedeploy",
+      "pd-aws-service-reference",
+      "pd-cdkd-providers",
+      "pd-aws-cdk-lib",
+      "pd-cloudflare-gradual",
+      "pd-cloudflare-flagship",
+      "pd-cloudflare-flagship-concepts",
+      "pd-vercel-rolling-releases",
+      "pd-vercel-skew-protection",
+      "pd-vercel-flags"
+    ]
+  },
+  "sources": [
+    {
+      "id": "pd-lambda-alias-routing",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuring-alias-routing.html",
+      "title": "Implement Lambda canary deployments using a weighted alias",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An alias can point to at most two function versions; both must be published, have the same execution role, and the same dead-letter queue configuration",
+        "Lambda uses a simple probabilistic model to distribute traffic, and at low traffic the actual split can differ widely from the configured one",
+        "The START log line names the invoked version, and synchronous responses carry x-amz-executed-version",
+        "update-alias with an empty AdditionalVersionWeights and a new function-version routes everything to the new version and resets the routing configuration"
+      ]
+    },
+    {
+      "id": "pd-codedeploy-deployment-configs",
+      "url": "https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html",
+      "title": "Working with deployment configurations in CodeDeploy",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The nine predefined Lambda configurations: four LambdaCanary10Percent{5,10,15,30}Minutes, four LambdaLinear10PercentEvery{1,2,3,10}Minute(s), and LambdaAllAtOnce",
+        "A canary configuration shifts 10 percent first and the remaining 90 percent after the wait; a linear one shifts 10 percent at each interval"
+      ]
+    },
+    {
+      "id": "pd-lambda-api-update-alias",
+      "url": "https://docs.aws.amazon.com/lambda/latest/api/API_UpdateAlias.html",
+      "title": "UpdateAlias (Lambda API reference)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "UpdateAlias takes FunctionVersion, RoutingConfig.AdditionalVersionWeights, and RevisionId",
+        "With RevisionId the alias is only updated if it has not changed since it was read; otherwise PreconditionFailedException (HTTP 412)"
+      ]
+    },
+    {
+      "id": "pd-lambda-api-publish-version",
+      "url": "https://docs.aws.amazon.com/lambda/latest/api/API_PublishVersion.html",
+      "title": "PublishVersion (Lambda API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PublishVersion creates a version from the current code and configuration of the function",
+        "Lambda does not publish a version if the code and configuration have not changed since the last version"
+      ]
+    },
+    {
+      "id": "pd-lambda-api-delete-function",
+      "url": "https://docs.aws.amazon.com/lambda/latest/api/API_DeleteFunction.html",
+      "title": "DeleteFunction (Lambda API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Deleting a function without a qualifier deletes all its versions and aliases",
+        "A version that an alias references cannot be deleted on its own"
+      ]
+    },
+    {
+      "id": "pd-sdk-appconfig",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-appconfig/v/3.1149.0",
+      "title": "@aws-sdk/client-appconfig 3.1149.0 (type definitions)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "StopDeployment works only on a deployment in DEPLOYING unless AllowRevert is supplied; with it an in-progress deployment becomes ROLLED_BACK and a completed one REVERTED, within 72 hours of completion",
+        "Deployment states are VALIDATING, DEPLOYING, BAKING, COMPLETE, ROLLING_BACK, ROLLED_BACK, REVERTED"
+      ]
+    },
+    {
+      "id": "pd-lambda-metrics-types",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "title": "Types of metrics for Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Errors counts invocations that end in a function error (thrown exceptions, timeouts, configuration errors); view it with the Sum statistic",
+        "Invocations are not recorded for throttled requests"
+      ]
+    },
+    {
+      "id": "pd-lambda-metrics-view",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-view.html",
+      "title": "Viewing metrics for Lambda functions",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The Resource dimension gives metrics for a version or an alias",
+        "The ExecutedVersion dimension gives metrics for a combination of alias and version, to compare the two versions behind a weighted alias"
+      ]
+    },
+    {
+      "id": "pd-lambda-envvars",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+      "title": "Working with Lambda environment variables",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS_LAMBDA_FUNCTION_VERSION is a reserved runtime variable: the version of the function being executed",
+        "Environment variables are locked into a version when it is published"
+      ]
+    },
+    {
+      "id": "pd-apigw-http-metrics",
+      "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-metrics.html",
+      "title": "Monitor CloudWatch metrics for HTTP APIs in API Gateway",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "HTTP APIs publish 4xx, 5xx, Count, IntegrationLatency, Latency, and DataProcessed, by ApiId or by ApiId and Stage, in one-minute periods"
+      ]
+    },
+    {
+      "id": "pd-cfn-update-policy",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-updatepolicy.html",
+      "title": "UpdatePolicy attribute (CloudFormation template reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CodeDeployLambdaAliasUpdate is an UpdatePolicy on AWS::Lambda::Alias: CloudFormation performs a CodeDeploy deployment when the version changes on the alias"
+      ],
+      "note": "Reached through a redirect from the User Guide URL."
+    },
+    {
+      "id": "pd-appconfig-lambda-extension",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html",
+      "title": "Using AWS AppConfig Agent with AWS Lambda",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS recommends adding the AppConfig Agent Lambda extension as a layer to functions that read feature flags",
+        "AppConfig pricing is based on the number of times a configuration is called and received, and costs increase with cold starts"
+      ]
+    },
+    {
+      "id": "pd-appconfig-extension-how",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-lambda-extensions-how-it-works.html",
+      "title": "Understanding how the AWS AppConfig Agent Lambda extension works",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The function calls the extension at an HTTP endpoint on localhost:2772; the extension keeps a local cache and calls AppConfig when the data is not cached",
+        "On each invocation the extension checks whether the poll interval has elapsed and, if so, checks AppConfig for newly deployed data",
+        "Each execution environment has its own cache"
+      ]
+    },
+    {
+      "id": "pd-appconfig-extension-config",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-lambda-extensions-config.html",
+      "title": "Configuring the AWS AppConfig Agent Lambda extension",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS_APPCONFIG_EXTENSION_POLL_INTERVAL_SECONDS defaults to 45, AWS_APPCONFIG_EXTENSION_HTTP_PORT to 2772, AWS_APPCONFIG_EXTENSION_POLL_TIMEOUT_MILLIS to 3000 ms",
+        "When AppConfig does not answer within the poll timeout, the extension skips that poll and returns the previously cached data",
+        "AWS_APPCONFIG_EXTENSION_PREFETCH_LIST makes the extension retrieve a configuration, named by its /applications/.../environments/.../configurations/... path, before the function is initialized"
+      ]
+    },
+    {
+      "id": "pd-appconfig-extension-versions",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-integration-lambda-extensions-versions.html",
+      "title": "Understanding available versions of the AWS AppConfig Agent Lambda extension",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Extension version 2.0.22365 for ARM64 in ap-northeast-1 is arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension-Arm64:231",
+        "The latest layer ARN is also published as the public SSM parameter /aws/service/aws-appconfig/lambda-extension/arm64/latest"
+      ]
+    },
+    {
+      "id": "pd-appconfig-feature-flag-type",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-type-reference-feature-flags.html",
+      "title": "Understanding the type reference for AWS.AppConfig.FeatureFlags",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The stored document has version \"1\", flags (definitions with attributes and constraints), and values; keys match ^[a-z][a-zA-Z\\d_-]{0,63}$",
+        "What GetLatestConfiguration returns is a map of flag key to {enabled, ...attributes}, without the definitions, and the attributes are present only if the flag is enabled"
+      ]
+    },
+    {
+      "id": "pd-appconfig-deployment-strategy",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-creating-deployment-strategy.html",
+      "title": "Working with deployment strategies (AppConfig)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A deployment strategy has a type (linear or exponential), a step percentage (growth factor), a deployment time, and a bake time",
+        "If an alarm is triggered during the bake time, AppConfig rolls the deployment back"
+      ]
+    },
+    {
+      "id": "pd-appconfig-predefined-strategies",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-creating-deployment-strategy-predefined.html",
+      "title": "Using predefined deployment strategies (AppConfig)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The predefined strategies are AppConfig.Linear20PercentEvery6Minutes, AppConfig.Canary10Percent20Minutes, AppConfig.AllAtOnce, and AppConfig.Linear50PercentEvery30Seconds"
+      ]
+    },
+    {
+      "id": "pd-appconfig-agent-entity",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-agent-how-to-use.html",
+      "title": "How to use AWS AppConfig Agent to retrieve configuration data",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The agent serves GET /applications/{Application}/environments/{Environment}/configurations/{Configuration} on localhost:2772",
+        "With an Entity-Id header the agent keeps one entity on one configuration version throughout a gradual deployment; this needs agent version 2.0.136060 or later"
+      ]
+    },
+    {
+      "id": "pd-appconfig-setup-rollback",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/setting-up-appconfig.html",
+      "title": "Setting up AWS AppConfig: configure permissions for automatic rollback",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AppConfig rolls back on CloudWatch alarms through an IAM role that trusts appconfig.amazonaws.com and allows cloudwatch:DescribeAlarms",
+        "The documented policy uses Resource \"*\", which is required to read composite alarms"
+      ]
+    },
+    {
+      "id": "pd-appconfig-validators",
+      "url": "https://docs.aws.amazon.com/appconfig/latest/userguide/appconfig-creating-configuration-and-profile-validators.html",
+      "title": "Understanding validators (AppConfig)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AppConfig validates feature flag documents against a JSON Schema automatically; Lambda validators are also supported for feature flags"
+      ]
+    },
+    {
+      "id": "pd-appconfig-api-delete-profile",
+      "url": "https://docs.aws.amazon.com/appconfig/2019-10-09/APIReference/API_DeleteConfigurationProfile.html",
+      "title": "DeleteConfigurationProfile (AppConfig API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DeleteConfigurationProfile can answer ConflictException; the page does not say whether stored versions must be deleted first"
+      ]
+    },
+    {
+      "id": "pd-ecs-blue-green",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-blue-green.html",
+      "title": "Amazon ECS blue/green deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ECS runs the blue and the green service revision side by side and shifts traffic itself for services behind a load balancer, Service Connect, or VPC Lattice",
+        "Bake time is how long both revisions keep running after production traffic has shifted",
+        "Both revisions run at once, which may double resource usage during a deployment"
+      ]
+    },
+    {
+      "id": "pd-ecs-canary",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/canary-deployment.html",
+      "title": "Amazon ECS canary deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An ECS canary deployment shifts the canary percentage first and the rest after the canary bake time, using two target groups and weighted routing on the load balancer",
+        "Lifecycle stages run from RECONCILE_SERVICE to CLEAN_UP, and hooks can run at most of them",
+        "CloudWatch alarms can trigger an automatic rollback"
+      ]
+    },
+    {
+      "id": "pd-ecs-api-deployment-configuration",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_DeploymentConfiguration.html",
+      "title": "DeploymentConfiguration (ECS API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "strategy is one of ROLLING, BLUE_GREEN, LINEAR, CANARY",
+        "The API reference says the deployment circuit breaker can only be used for services using the rolling update (ECS) deployment type"
+      ]
+    },
+    {
+      "id": "pd-ecs-api-canary-configuration",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_CanaryConfiguration.html",
+      "title": "CanaryConfiguration (ECS API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "canaryPercent takes multiples of 0.1 from 0.1 to 100.0 and defaults to 5.0; canaryBakeTimeInMinutes takes 0 to 1440 and defaults to 10"
+      ]
+    },
+    {
+      "id": "pd-ecs-circuit-breaker",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-circuit-breaker.html",
+      "title": "How the Amazon ECS deployment circuit breaker detects failures",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The circuit breaker counts tasks that fail to reach RUNNING and tasks replaced for failing health checks",
+        "The default threshold is 50 percent of the desired count, bounded to at least 3 and at most 200"
+      ]
+    },
+    {
+      "id": "pd-ecs-deployment-alarms",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-alarm-failure.html",
+      "title": "How CloudWatch alarms detect Amazon ECS deployment failures",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ECS fails a deployment when a named alarm goes into ALARM, and can roll back",
+        "If an alarm is already in ALARM when a deployment starts, ECS does not monitor alarms for that deployment"
+      ]
+    },
+    {
+      "id": "pd-price-list-ssm",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSystemsManager/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AWS Systems Manager (AppConfig), ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AppConfig in Tokyo: USD 0.0000002 per configuration request and USD 0.0008 per configuration received",
+        "The AWSAppConfig offer code does not exist in the bulk API; AppConfig is priced under AWSSystemsManager"
+      ],
+      "note": "Publication date 2026-10-08T07:10:21Z."
+    },
+    {
+      "id": "pd-price-list-codedeploy",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSCodeDeploy/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AWS CodeDeploy, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The only CodeDeploy price listed for Tokyo is USD 0.02 per on-premises instance update"
+      ],
+      "note": "The pricing web page did not state the Lambda and ECS case in text that could be read; the absence of a SKU is all that was confirmed."
+    },
+    {
+      "id": "pd-aws-service-reference",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/appconfig/appconfig.json",
+      "title": "AWS service reference: AppConfig (also read: cloudwatch.json, lambda.json)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "StartConfigurationSession and GetLatestConfiguration act on the configuration resource arn:...:application/{id}/environment/{id}/configuration/{id}",
+        "cloudwatch:DescribeAlarms supports the alarm resource type",
+        "lambda:GetAlias, UpdateAlias, and PublishVersion act on the function resource"
+      ]
+    },
+    {
+      "id": "pd-cdkd-providers",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for Lambda::Function, Lambda::Permission, CloudWatch::Alarm, ApiGatewayV2::*, IAM::Role, IAM::Policy, and Logs::LogGroup",
+        "No provider is registered for Lambda::Alias, Lambda::Version, or any AppConfig type; they go through the Cloud Control API",
+        "The bundle contains neither UpdatePolicy nor CodeDeploy, so a CodeDeployLambdaAliasUpdate policy is not acted on"
+      ],
+      "note": "Read in the installed dist bundle (program-*.js, deploy-engine-*.js), not on GitHub."
+    },
+    {
+      "id": "pd-aws-cdk-lib",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (type definitions and README)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ecs.DeploymentStrategy has ROLLING, BLUE_GREEN, LINEAR, CANARY; canaryConfiguration and linearConfiguration take stepPercent and stepBakeTime",
+        "codedeploy.LambdaDeploymentGroup takes an alias, a deployment config, and alarms",
+        "appconfig.Monitor.fromCloudWatchAlarm takes an alarm and an optional role"
+      ]
+    },
+    {
+      "id": "pd-cloudflare-gradual",
+      "url": "https://developers.cloudflare.com/workers/configuration/versions-and-deployments/gradual-deployments/",
+      "title": "Cloudflare Workers: Gradual deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A gradual deployment splits traffic between two versions of a Worker by percentage, and each request is routed independently by default",
+        "Version affinity can keep a user on one version; only one version of a Durable Object runs at a time",
+        "The page describes rolling back by hand and no automatic rollback on an error rate"
+      ]
+    },
+    {
+      "id": "pd-cloudflare-flagship",
+      "url": "https://developers.cloudflare.com/flagship/",
+      "title": "Cloudflare Flagship",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Flagship is Cloudflare's feature flag service, evaluated through a Worker binding or OpenFeature SDKs, with targeting rules and percentage rollouts by consistent hashing"
+      ],
+      "note": "The page states neither a beta or GA status nor a price."
+    },
+    {
+      "id": "pd-cloudflare-flagship-concepts",
+      "url": "https://developers.cloudflare.com/flagship/concepts/",
+      "title": "Cloudflare Flagship: Concepts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Flag configuration is distributed across Cloudflare's network within seconds, and can take up to 30 seconds",
+        "If the dashboard is unavailable, evaluation continues with the last propagated configuration"
+      ]
+    },
+    {
+      "id": "pd-vercel-rolling-releases",
+      "url": "https://vercel.com/docs/rolling-releases",
+      "title": "Vercel: Rolling Releases",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Rolling Releases are available on Pro (one project) and Enterprise plans",
+        "Stages are traffic fractions ending at 100%; advancing is by hand or after a configured time, and aborting is by hand or Instant Rollback",
+        "A visitor is assigned to a bucket stored in a cookie, so the same device keeps seeing the same deployment"
+      ]
+    },
+    {
+      "id": "pd-vercel-skew-protection",
+      "url": "https://vercel.com/docs/skew-protection",
+      "title": "Vercel: Skew Protection",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Skew Protection pins framework-managed requests to the deployment that served the page, by a dpl query parameter or x-deployment-id header",
+        "It is available on Pro and Enterprise plans, with a default maximum age of one day"
+      ]
+    },
+    {
+      "id": "pd-vercel-flags",
+      "url": "https://vercel.com/docs/flags",
+      "title": "Vercel: Flags",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel can be the feature flag provider itself (Vercel Flags) or connect providers from its Marketplace"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "weighted-alias",
+      "ja": "重み付きエイリアス（weighted alias）",
+      "en": "weighted alias",
+      "firstUse": "31",
+      "definition": {
+        "ja": "2 つのバージョンを指し、リクエストを割合で振り分ける Lambda のエイリアス。振り分けはリクエストごとの確率で決まる。",
+        "en": "A Lambda alias that points at two versions and splits requests between them by percentage. The split is a per-request probability."
+      }
+    },
+    {
+      "id": "canary-deployment",
+      "ja": "canary デプロイ",
+      "en": "canary deployment",
+      "firstUse": "31",
+      "definition": {
+        "ja": "新しいバージョンにまず少ない割合のリクエストだけを送り、問題が無ければ残りを切り替えるやり方。19章の Synthetics の canary とは別のもの。",
+        "en": "Sending a small share of requests to the new version first and the rest only if nothing goes wrong. Unrelated to the Synthetics canary of chapter 19."
+      }
+    },
+    {
+      "id": "blue-green-deployment",
+      "ja": "blue/green デプロイ",
+      "en": "blue/green deployment",
+      "firstUse": "31",
+      "definition": {
+        "ja": "古い環境（blue）を動かしたまま新しい環境（green）を横に用意し、トラフィックを切り替えるやり方。戻すときは blue に切り替え直す。",
+        "en": "Standing up the new environment (green) beside the old one (blue), which keeps running, and switching traffic over. Going back is switching to blue again."
+      }
+    },
+    {
+      "id": "bake-time",
+      "ja": "bake time",
+      "en": "bake time",
+      "firstUse": "31",
+      "definition": {
+        "ja": "切り替えが終わった後、アラームを見ながら古いバージョンをすぐ戻せる状態で待つ時間。",
+        "en": "The time after a shift has finished during which the alarms are still watched and the old version can still be brought back at once."
+      }
+    },
+    {
+      "id": "feature-flag",
+      "ja": "フィーチャーフラグ",
+      "en": "feature flag",
+      "firstUse": "31",
+      "definition": {
+        "ja": "デプロイ済みのコードのふるまいを、デプロイせずに切り替えるための設定値。",
+        "en": "A configuration value that switches the behaviour of code that is already deployed, without deploying."
+      }
+    },
+    {
+      "id": "version-skew",
+      "ja": "version skew",
+      "en": "version skew",
+      "firstUse": "31",
+      "definition": {
+        "ja": "クライアントとサーバー、あるいは同時に動く 2 つのバージョンのあいだで、前提にしている形式やふるまいが食い違うこと。",
+        "en": "A mismatch in the formats or behaviour assumed by client and server, or by two versions running at the same time."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "31.overview",
+      "sources": ["examples/31-progressive-delivery"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "31.release-vs-deploy",
+      "sources": [
+        "examples/31-progressive-delivery/src/app.ts",
+        "examples/31-progressive-delivery/src/shift/plan.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "31.choices",
+      "sources": [
+        "examples/31-progressive-delivery/infra/lib/progressive-stack.ts",
+        "examples/31-progressive-delivery/infra/lib/codedeploy-sketch.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "31.alias",
+      "sources": [
+        "examples/31-progressive-delivery/infra/lib/progressive-stack.ts",
+        "examples/31-progressive-delivery/infra/test/progressive-stack.test.ts"
+      ],
+      "tasks": ["rollout:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "31.plan",
+      "sources": [
+        "examples/31-progressive-delivery/src/shift/plan.ts",
+        "examples/31-progressive-delivery/test/plan.test.ts"
+      ],
+      "tasks": ["rollout:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "31.decide",
+      "sources": [
+        "examples/31-progressive-delivery/src/shift/decide.ts",
+        "examples/31-progressive-delivery/test/decide.test.ts",
+        "examples/31-progressive-delivery/infra/lib/progressive-stack.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "31.run",
+      "sources": [
+        "examples/31-progressive-delivery/src/shift/run.ts",
+        "examples/31-progressive-delivery/src/shift/aws.ts",
+        "examples/31-progressive-delivery/test/run.test.ts",
+        "examples/31-progressive-delivery/test/fakes.ts",
+        "examples/31-progressive-delivery/scripts/rollout.ts"
+      ],
+      "tasks": ["test:unit", "rollout:start"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "31.codedeploy",
+      "sources": [
+        "examples/31-progressive-delivery/infra/lib/codedeploy-sketch.ts",
+        "examples/31-progressive-delivery/infra/test/sketches.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "31.flag-document",
+      "sources": [
+        "examples/31-progressive-delivery/flags/flags.json",
+        "examples/31-progressive-delivery/src/flags/document.ts",
+        "examples/31-progressive-delivery/test/flags-document.test.ts"
+      ],
+      "tasks": ["flags:check", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "31.flag-read",
+      "sources": [
+        "examples/31-progressive-delivery/src/flags/evaluate.ts",
+        "examples/31-progressive-delivery/src/flags/reader.ts",
+        "examples/31-progressive-delivery/test/flags-evaluate.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "31.flag-fallback",
+      "sources": [
+        "examples/31-progressive-delivery/src/flags/reader.ts",
+        "examples/31-progressive-delivery/test/flags-reader.test.ts",
+        "examples/31-progressive-delivery/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "31.flag-app",
+      "sources": [
+        "examples/31-progressive-delivery/src/app.ts",
+        "examples/31-progressive-delivery/src/compose.ts",
+        "examples/31-progressive-delivery/src/env.ts",
+        "examples/31-progressive-delivery/test/app.test.ts"
+      ],
+      "tasks": ["dev:rollout", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "31.flag-deploy",
+      "sources": [
+        "examples/31-progressive-delivery/infra/lib/progressive-stack.ts",
+        "examples/31-progressive-delivery/src/flags/appconfig.ts",
+        "examples/31-progressive-delivery/scripts/flags.ts",
+        "examples/31-progressive-delivery/test/flags-appconfig.test.ts"
+      ],
+      "tasks": ["flags:deploy", "flags:status", "flags:stop", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "31.shared-data",
+      "sources": ["examples/31-progressive-delivery/test/versions.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "31.ecs",
+      "sources": [
+        "examples/31-progressive-delivery/infra/lib/ecs-canary-sketch.ts",
+        "examples/31-progressive-delivery/infra/test/sketches.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "31.local",
+      "sources": [
+        "examples/31-progressive-delivery/src/dev.ts",
+        "examples/31-progressive-delivery/.env.example",
+        "examples/31-progressive-delivery/scripts/probe.ts",
+        "examples/31-progressive-delivery/src/probe.ts"
+      ],
+      "tasks": ["dev:rollout", "rollout:plan", "flags:check", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "31.deploy",
+      "sources": [
+        "examples/31-progressive-delivery/infra/bin/app.ts",
+        "examples/31-progressive-delivery/infra/lib/progressive-stack.ts"
+      ],
+      "tasks": [
+        "rollout:infra:synth",
+        "rollout:infra:diff",
+        "rollout:infra:deploy",
+        "rollout:probe"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "31.shift-steps",
+      "sources": [
+        "examples/31-progressive-delivery/scripts/rollout.ts",
+        "examples/31-progressive-delivery/scripts/probe.ts"
+      ],
+      "tasks": ["rollout:start", "rollout:status", "rollout:rollback", "rollout:probe"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "31.flag-steps",
+      "sources": ["examples/31-progressive-delivery/scripts/flags.ts"],
+      "tasks": ["flags:deploy", "flags:status", "flags:stop"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "31.compare",
+      "sources": ["examples/31-progressive-delivery"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "31.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "31.cleanup",
+      "sources": ["examples/31-progressive-delivery/scripts/flags.ts"],
+      "tasks": ["flags:clear", "rollout:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "appconfig.request",
+      "offerCode": "AWSSystemsManager",
+      "region": "ap-northeast-1",
+      "sku": "2FVA2EECXGM6NRVA",
+      "usageType": "APN1-AppConfig-Requests",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Configuration Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000002000",
+          "description": "$0.0000002 per Request for AppConfig-Requests in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSystemsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T07:10:21Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "appconfig.received",
+      "offerCode": "AWSSystemsManager",
+      "region": "ap-northeast-1",
+      "sku": "A25FEG7PTJ5XNV99",
+      "usageType": "APN1-AppConfig-Deployments",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Configuration Received",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0008000000",
+          "description": "$0.0008 per Configuration Received for AppConfig-Deployments in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSystemsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T07:10:21Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "appconfig.request",
+      "reason": "The bulk price list has no USD 0 tier for AppConfig, and no free allowance was confirmed elsewhere; none is applied."
+    },
+    {
+      "priceId": "appconfig.received",
+      "reason": "The bulk price list has no USD 0 tier for AppConfig, and no free allowance was confirmed elsewhere; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "progressive-idle",
+      "chapter": "31",
+      "title": {
+        "ja": "Progressive Delivery: デプロイして 1 か月、何も呼ばれなかった場合",
+        "en": "Progressive delivery: deployed for a month and never called"
+      },
+      "assumptions": {
+        "ja": [
+          "既定のスタック。標準解像度のアラームが 2 つ",
+          "リクエストは 0 件。関数が起動しないので、拡張機能も AppConfig を呼ばない",
+          "ログは書かれない"
+        ],
+        "en": [
+          "The default stack: two standard-resolution alarms",
+          "No requests. The function never starts, so the extension never calls AppConfig",
+          "No logs are written"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 2,
+          "basis": "2 alarms, one metric each, for one month"
+        }
+      ]
+    },
+    {
+      "id": "progressive-flags-month",
+      "chapter": "31",
+      "title": {
+        "ja": "Progressive Delivery: フラグとアラームの 1 か月ぶん（実行環境 1 つが動き続け、コールドスタートが 1,000 回）",
+        "en": "Progressive delivery: a month of flags and alarms (one execution environment always warm, 1,000 cold starts)"
+      },
+      "assumptions": {
+        "ja": [
+          "実行環境 1 つが 730 時間ずっと呼ばれ続け、拡張機能が 45 秒ごとに AppConfig に問い合わせる: 730 × 3,600 ÷ 45 = 58,400 回",
+          "設定を受け取る回数は 1,000 回。コールドスタートのたびに 1 回、動いている実行環境がフラグのデプロイのたびに 1 回受け取るものとして数えた。この数え方は料金表の単位名とドキュメントの注記から読み取ったもので、請求で確かめてはいない",
+          "API Gateway、Lambda、ログの料金は 04章と同じなので含めない"
+        ],
+        "en": [
+          "One execution environment is invoked for all 730 hours, and the extension asks AppConfig every 45 seconds: 730 × 3,600 ÷ 45 = 58,400 requests",
+          "1,000 configurations received: one per cold start, and one per flag deployment for an environment that is running. This way of counting is read from the unit name in the price list and a note in the documentation, and was not checked against a bill",
+          "API Gateway, Lambda, and logs cost what they do in chapter 04 and are left out"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 2,
+          "basis": "2 alarms, one metric each, for one month"
+        },
+        {
+          "priceId": "appconfig.request",
+          "quantity": 58400,
+          "basis": "730 h x 3600 s / 45 s poll interval"
+        },
+        {
+          "priceId": "appconfig.received",
+          "quantity": 1000,
+          "basis": "1,000 configurations received"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "31",
+        "command": "vp test run examples/31-progressive-delivery",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "切り替えの計画（CodeDeploy の既定の 9 つの名前）、アラームの状態からの判断、切り替えの実行（アラーム、応答の喪失、書き込みの失敗、他者による変更、中断と再開）、AppConfig への呼び出しの順序と停止の計画、フラグの定義ファイルの検査、フラグの評価と割合での公開、AppConfig に届かないときのフォールバック、アプリへの組み込み、2 つのバージョンが同じレコードを読むテスト、スタックのアサーション、CodeDeploy と ECS canary のテンプレート。12 ファイル 103 件",
+          "en": "The shift plan (CodeDeploy's nine predefined names), decisions from alarm states, running a shift (alarms, a lost answer, a failed write, a change by someone else, interruption and resume), the order of the calls to AppConfig and the stop plan, checks on the flag file, flag evaluation and percentage rollout, the fallback when AppConfig cannot be reached, the application layer, two versions reading the same records, stack assertions, and the CodeDeploy and ECS canary templates. 12 files, 103 tests"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "tsc --noEmit -p examples/31-progressive-delivery",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "The type check"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run rollout:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "cdkd 0.296.28 での synth。AWS には問い合わせない",
+          "en": "Synthesis with cdkd 0.296.28. It asks AWS nothing"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run rollout:plan",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "計画の表示。本文に載せた出力はこの実行のもの",
+          "en": "Printing the plan. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run flags:check",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "フラグの定義ファイルの検査。本文に載せた出力はこの実行のもの",
+          "en": "Checking the flag file. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run dev:rollout",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "手元のサーバーで、フラグのファイルを書き換えると次のリクエストから反映されること、ファイルを壊すと直前の値で動き続けること、probe がバージョンごとの件数を数えることを確かめた",
+          "en": "On the local server: editing the flag file takes effect from the next request, a broken file leaves the last values in use, and the probe counts answers per version"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run rollout:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。Cloud Control API 経由になる Lambda のエイリアスとバージョン、AppConfig の 4 種類が、cdkd から実際に作れるかは未確認",
+          "en": "Not run. Whether cdkd can actually create the Lambda alias and version and the four AppConfig types, all of which go through the Cloud Control API, is unconfirmed"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run rollout:start --apply",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run rollout:status / rollout:rollback / rollout:probe",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run flags:deploy --apply / flags:status / flags:stop / flags:clear",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "31",
+        "command": "vp run rollout:infra:diff / rollout:infra:drift / rollout:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "31-shift-on-aws",
+        "summary": {
+          "ja": "31章のスタックと 2 つのスクリプトを AWS で一度も動かしていない。未確認: cdkd 0.296.28 が Cloud Control API 経由で `AWS::Lambda::Alias`、`AWS::Lambda::Version`、AppConfig の 4 種類を作れること、スタックの更新がエイリアスを動かさないこと、`UpdateAlias` の `RevisionId` が食い違ったときのエラーの名前、重みを空の map で消せること、重み付きエイリアスの実際の振り分け、`x-app-version` が示すバージョン番号、1 分のアラームが切り替えの間に `ALARM` になるまでの時間、cdkd のドリフト検査がエイリアスの変更をどう報告するか。",
+          "en": "Chapter 31's stack and its two scripts have never been run on AWS. Unconfirmed: that cdkd 0.296.28 can create `AWS::Lambda::Alias`, `AWS::Lambda::Version`, and the four AppConfig types through the Cloud Control API; that updating the stack leaves the alias alone; the name of the error when `RevisionId` does not match in `UpdateAlias`; that an empty map removes the weights; how a weighted alias really splits requests; the version number `x-app-version` reports; how long a one-minute alarm takes to reach `ALARM` during a shift; and how cdkd's drift check reports the moved alias."
+        },
+        "resume": {
+          "ja": "`vp run rollout:infra:deploy` のあと `vp run rollout:probe`、`vp run flags:deploy --apply`、`vp run rollout:infra:deploy -c fault=50`、`vp run rollout:start --apply`（別の端末で `vp run rollout:probe --count 300`）を順に実行し、ロールバックされることを見る。続けて `-c fault=0` でデプロイし直して `rollout:start --apply` が完了することを見る。最後に `vp run rollout:infra:drift`、`vp run flags:clear --apply`、`vp run rollout:infra:destroy`。",
+          "en": "After `vp run rollout:infra:deploy`, run `vp run rollout:probe`, `vp run flags:deploy --apply`, `vp run rollout:infra:deploy -c fault=50`, then `vp run rollout:start --apply` (with `vp run rollout:probe --count 300` in another terminal) and watch it roll back. Deploy again with `-c fault=0` and watch `rollout:start --apply` complete. Finish with `vp run rollout:infra:drift`, `vp run flags:clear --apply`, and `vp run rollout:infra:destroy`."
+        }
+      },
+      {
+        "id": "31-appconfig-behaviour",
+        "summary": {
+          "ja": "AppConfig と拡張機能のふるまいのうち、ドキュメントで確認できなかったもの: 一度もデプロイしていない設定を拡張機能に問い合わせたときの応答、コールドスタートの直後に AppConfig に届かないときの応答と待ち時間、アラームの ARN に絞った `cloudwatch:DescribeAlarms` で AppConfig の自動ロールバックが動くか（ドキュメントの例は `*`）、保存したバージョンが残っている設定プロファイルを削除できるか、「Configuration Received」が数えられる単位。",
+          "en": "Behaviour of AppConfig and its extension that the documentation did not settle: what the extension answers for a configuration that was never deployed; what it answers, and after how long, when AppConfig cannot be reached right after a cold start; whether automatic rollback works with `cloudwatch:DescribeAlarms` limited to the alarms' ARNs (the documented example uses `*`); whether a configuration profile with stored versions can be deleted; and what exactly counts as one \"Configuration Received\"."
+        },
+        "resume": {
+          "ja": "デプロイ直後、`flags:deploy` の前に `vp run rollout:probe` を実行して `x-flags-origin` が `defaults` になることとログの `flags` の行を見る。`flags:deploy --apply` の後、`-c fault=50` の版に切り替えてアラームを鳴らし、`flags:status` が `ROLLED_BACK` になるかを見る。`flags:clear` を実行せずに `rollout:infra:destroy` を試し、失敗するかを記録する。請求の `APN1-AppConfig-Deployments` の数量を、コールドスタートの回数と比べる。",
+          "en": "Right after deploying and before `flags:deploy`, run `vp run rollout:probe` and look for `x-flags-origin: defaults` and the `flags` line in the log. After `flags:deploy --apply`, shift to a `-c fault=50` build to fire the alarms and see whether `flags:status` shows `ROLLED_BACK`. Try `rollout:infra:destroy` without `flags:clear` and record whether it fails. Compare the billed quantity of `APN1-AppConfig-Deployments` with the number of cold starts."
+        }
+      },
+      {
+        "id": "31-ecs-and-codedeploy",
+        "summary": {
+          "ja": "ECS の canary と CodeDeploy の構成は、テンプレートを合成してテストで読んだだけで、デプロイするアプリには入っていない。ECS の circuit breaker が `BLUE_GREEN`、`LINEAR`、`CANARY` の方式でも働くか、12章のサービスを方式を変えて更新できるか、cdkd が `AdvancedConfiguration` と `DeploymentConfiguration.Strategy` を送るかは未確認。CodeDeploy の Lambda と ECS へのデプロイに料金がかからないことは、料金表に SKU が無いことしか確かめていない。",
+          "en": "The ECS canary and the CodeDeploy setup were only synthesized and read in tests; neither is in the deployed app. Unconfirmed: whether the ECS circuit breaker acts under the `BLUE_GREEN`, `LINEAR`, and `CANARY` strategies, whether chapter 12's service can be updated to another strategy in place, and whether cdkd sends `AdvancedConfiguration` and `DeploymentConfiguration.Strategy`. That CodeDeploy charges nothing for Lambda and ECS deployments is supported only by the absence of a SKU in the price list."
+        },
+        "resume": {
+          "ja": "12章のスタックを練習用のアカウントにデプロイし、`examples/31-progressive-delivery/infra/lib/ecs-canary-sketch.ts` の設定を 12章のサービスに移して更新を試す。CodeDeploy は 20章の `ship:cfn:*` の経路で `codedeploy-sketch.ts` をスタックに足して試す。",
+          "en": "Deploy chapter 12's stack to a practice account, move the settings of `examples/31-progressive-delivery/infra/lib/ecs-canary-sketch.ts` into its service, and try an update. Try CodeDeploy through chapter 20's `ship:cfn:*` path by adding `codedeploy-sketch.ts` to that stack."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 31: progressive delivery --------------------------------\n      // The notes API with flags read from flags/flags.json on every request. Local.\n      \"dev:rollout\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      // The steps of a shift, and how much a small share of requests sees. Arithmetic only.\n      \"rollout:plan\": fresh(\"node scripts/rollout.ts plan\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      // Reads flags/flags.json the way the application would. Local.\n      \"flags:check\": fresh(\"node scripts/flags.ts check\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      ...infra(\"rollout\", \"examples/31-progressive-delivery\", \"AihProgressive\"),\n      // Reads the alias and the two alarms.\n      \"rollout:status\": live(\"node --env-file-if-exists=../../.env scripts/rollout.ts status\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      // Sends GET /health and counts which version answered. Creates nothing.\n      \"rollout:probe\": live(\"node --env-file-if-exists=../../.env scripts/probe.ts\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      // Everything below prints its plan and changes nothing unless --apply is given.\n      \"rollout:start\": live(\"node --env-file-if-exists=../../.env scripts/rollout.ts start\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      \"rollout:rollback\": live(\"node --env-file-if-exists=../../.env scripts/rollout.ts rollback\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      \"flags:status\": live(\"node --env-file-if-exists=../../.env scripts/flags.ts status\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      \"flags:deploy\": live(\"node --env-file-if-exists=../../.env scripts/flags.ts deploy\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      \"flags:stop\": live(\"node --env-file-if-exists=../../.env scripts/flags.ts stop\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),\n      \"flags:clear\": live(\"node --env-file-if-exists=../../.env scripts/flags.ts clear\", {\n        cwd: \"examples/31-progressive-delivery\",\n      }),",
+    "synth": ["rollout:infra:synth"],
+    "checkAll": ["flags:check"],
+    "typecheck": ["examples/31-progressive-delivery"]
+  }
+}

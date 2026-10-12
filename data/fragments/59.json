@@ -1,0 +1,1750 @@
+{
+  "chapterId": "59",
+  "manifest": {
+    "id": "59",
+    "slug": "rds",
+    "title": {
+      "ja": "RDS: PostgreSQL を運用する",
+      "en": "RDS: Running PostgreSQL"
+    },
+    "prerequisites": ["13", "11", "21", "22"],
+    "services": [
+      "RDS for PostgreSQL",
+      "RDS Proxy",
+      "Secrets Manager",
+      "Lambda",
+      "API Gateway HTTP API",
+      "IAM",
+      "VPC",
+      "CloudWatch"
+    ],
+    "samplePath": "examples/59-rds",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "rds59-multi-az-instance",
+      "rds59-multi-az-failover",
+      "rds59-best-practices",
+      "rds59-multi-az-cluster",
+      "rds59-multi-az-cluster-failover",
+      "rds59-multi-az-cluster-limits",
+      "rds59-read-replicas",
+      "rds59-read-replica-create",
+      "rds59-pg-read-replicas",
+      "rds59-pg-read-replica-config",
+      "rds59-pg-read-replica-monitor",
+      "rds59-metrics",
+      "rds59-instance-classes",
+      "rds59-storage",
+      "rds59-storage-autoscaling",
+      "rds59-parameter-groups",
+      "rds59-maintenance",
+      "rds59-upgrading",
+      "rds59-pg-upgrade",
+      "rds59-pg-upgrade-process",
+      "rds59-pg-minor",
+      "rds59-release-calendar",
+      "rds59-extended-support",
+      "rds59-extended-support-creating",
+      "rds59-extended-support-charges",
+      "rds59-blue-green",
+      "rds59-blue-green-considerations",
+      "rds59-blue-green-replication",
+      "rds59-backup-intro",
+      "rds59-backup-retention",
+      "rds59-backup-window",
+      "rds59-limits",
+      "rds59-pitr",
+      "rds59-delete",
+      "rds59-stop",
+      "rds59-encryption",
+      "rds59-vpc",
+      "rds59-secrets-manager",
+      "rds59-iam-auth",
+      "rds59-iam-auth-policy",
+      "rds59-iam-auth-accounts",
+      "rds59-ssl",
+      "rds59-pg-ssl",
+      "rds59-lambda-nodejs-ca",
+      "rds59-lambda-rds",
+      "rds59-lambda-vpc",
+      "rds59-proxy",
+      "rds59-proxy-planning",
+      "rds59-proxy-pinning",
+      "rds59-proxy-endpoints",
+      "rds59-proxy-pricing",
+      "rds59-pg-pricing",
+      "rds59-free-tier",
+      "rds59-database-insights",
+      "rds59-database-insights-rds",
+      "rds59-pg-logs",
+      "rds59-pg-log-params",
+      "rds59-pg-query-logging",
+      "rds59-cfn-dbinstance",
+      "rds59-cloud-control",
+      "rds59-cdkd-package",
+      "rds59-aws-cdk-lib",
+      "rds59-rds-signer",
+      "rds59-price-list",
+      "rds59-postgres-admin-functions",
+      "rds59-postgres-hot-standby",
+      "rds59-postgres-default-privileges",
+      "rds59-cloudflare-hyperdrive",
+      "rds59-cloudflare-hyperdrive-pricing",
+      "rds59-cloudflare-hyperdrive-private",
+      "rds59-cloudflare-d1-sessions",
+      "rds59-vercel-postgres",
+      "rds59-vercel-storage"
+    ]
+  },
+  "sources": [
+    {
+      "id": "rds59-multi-az-instance",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZSingleStandby.html",
+      "title": "Multi-AZ DB instance deployments for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Multi-AZ DB instance deployment keeps a synchronous standby replica in another Availability Zone",
+        "The standby cannot serve read traffic",
+        "Synchronous replication can raise write and commit latency compared with Single-AZ"
+      ]
+    },
+    {
+      "id": "rds59-multi-az-failover",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.Failover.html",
+      "title": "Failing over a Multi-AZ DB instance for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Failover times are typically 60-120 seconds, longer with large transactions or a lengthy recovery",
+        "Failover changes the DNS record of the DB instance to point to the standby, and existing connections must be re-established",
+        "The listed reasons for a failover include OS patching, an unhealthy or unreachable primary host, a customer modification, a storage failure, and a reboot with failover"
+      ]
+    },
+    {
+      "id": "rds59-best-practices",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_BestPractices.html",
+      "title": "Best practices for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A client that caches DNS should use a TTL of less than 30 seconds, because the address of a DB instance can change after a failover",
+        "Test failover to learn how long it takes for your use case"
+      ]
+    },
+    {
+      "id": "rds59-multi-az-cluster",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html",
+      "title": "Multi-AZ DB cluster deployments for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Multi-AZ DB cluster has one writer and two readable DB instances in three Availability Zones",
+        "Replication is semisynchronous: a commit needs the acknowledgment of at least one reader",
+        "Supported instance classes are db.c6gd, db.m5d, db.m6gd, db.m6id, db.m6idn, db.m8gd, db.r5d, db.r6gd, db.r6id, db.r6idn, db.r8gd and db.x2iedn",
+        "Multi-AZ DB clusters are not Aurora DB clusters"
+      ]
+    },
+    {
+      "id": "rds59-multi-az-cluster-failover",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts-failover.html",
+      "title": "Failing over a Multi-AZ DB cluster for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": ["Failover times are typically under 35 seconds"]
+    },
+    {
+      "id": "rds59-multi-az-cluster-limits",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.Limitations.html",
+      "title": "Limitations of Multi-AZ DB clusters for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Multi-AZ DB clusters cannot be stopped and started, and do not support storage autoscaling by a maximum allocated storage"
+      ]
+    },
+    {
+      "id": "rds59-read-replicas",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html",
+      "title": "Working with DB instance read replicas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Updates to the primary DB instance are copied asynchronously to a read replica",
+        "RDS does not autoscale read replicas"
+      ]
+    },
+    {
+      "id": "rds59-read-replica-create",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.Create.html",
+      "title": "Creating a read replica",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Automatic backups must be enabled on the source DB instance (a backup retention period other than 0) before a read replica can be created",
+        "The same or a larger instance class and storage type than the source is recommended for a replica"
+      ]
+    },
+    {
+      "id": "rds59-pg-read-replicas",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PostgreSQL.Replication.ReadReplicas.html",
+      "title": "Working with read replicas for Amazon RDS for PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PostgreSQL read replicas are read-only, and a promotion cannot be reversed",
+        "Point-in-time recovery is not supported for read replicas",
+        "With no transactions on the source, a PostgreSQL replica reports a lag of up to five minutes"
+      ]
+    },
+    {
+      "id": "rds59-pg-read-replica-config",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PostgreSQL.Replication.ReadReplicas.Configuration.html",
+      "title": "Read replica configuration with PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A PostgreSQL read replica is an asynchronously created physical replica that uses native streaming replication",
+        "Up to 15 read replicas per source DB instance in the same Region",
+        "A read replica can itself be a Multi-AZ DB instance"
+      ]
+    },
+    {
+      "id": "rds59-pg-read-replica-monitor",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PostgreSQL.Replication.ReadReplicas.Monitor.html",
+      "title": "Monitoring and tuning the replication process",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The ReplicaLag metric is the result of SELECT extract(epoch from now() - pg_last_xact_replay_timestamp())"
+      ]
+    },
+    {
+      "id": "rds59-metrics",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-metrics.html",
+      "title": "Amazon CloudWatch metrics for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ReplicaLag is reported in seconds; FreeStorageSpace and DatabaseConnections are instance metrics in the AWS/RDS namespace",
+        "The T DB instance classes are recommended only for development, test and other non-production servers",
+        "Surplus CPU credits beyond what an instance can earn in 24 hours incur an additional charge"
+      ]
+    },
+    {
+      "id": "rds59-instance-classes",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.Types.html",
+      "title": "DB instance class types",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The families are general purpose (db.m), memory optimized (db.r, db.x, db.z), compute optimized (db.c6gd, Multi-AZ DB clusters only), and burstable (db.t)",
+        "db.t4g instances are configured for Unlimited mode and can burst beyond the baseline for an additional charge"
+      ]
+    },
+    {
+      "id": "rds59-storage",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Storage.html",
+      "title": "Amazon RDS DB instance storage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "gp3 gives a baseline of 3,000 IOPS and 125 MiB/s; for PostgreSQL the baseline rises to 12,000 IOPS and 500 MiB/s from 400 GiB",
+        "gp3 storage for PostgreSQL ranges from 20 to 65,536 GiB",
+        "Magnetic storage is deprecated and new DB instances cannot use it"
+      ]
+    },
+    {
+      "id": "rds59-storage-autoscaling",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIOPS.Autoscaling.html",
+      "title": "Managing capacity automatically with Amazon RDS storage autoscaling",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Autoscaling starts when free space is at most 10 percent of allocated storage for at least five minutes, and fewer than four storage modifications happened in the past 24 hours",
+        "The increment is the greatest of 10 GiB, 10 percent of allocated storage, and the growth predicted for the next 7 hours",
+        "Allocated storage cannot be reduced after it has been allocated",
+        "The maximum storage threshold must be at least 10 percent above the allocated storage"
+      ]
+    },
+    {
+      "id": "rds59-parameter-groups",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/parameter-groups-overview.html",
+      "title": "Overview of parameter groups",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The settings of a default parameter group cannot be modified",
+        "A static parameter takes effect only after a manual reboot; a dynamic parameter takes effect immediately by default",
+        "A pending-reboot status does not cause an automatic reboot in the next maintenance window"
+      ]
+    },
+    {
+      "id": "rds59-maintenance",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html",
+      "title": "Maintaining a DB instance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every DB instance has a weekly maintenance window; an unspecified one is a 30-minute window on a random day inside an 8-hour block per Region (13:00-21:00 UTC for Tokyo)",
+        "The window decides when pending operations start and does not limit how long they run",
+        "With Multi-AZ, operating system updates are applied to the standby first, then the standby is promoted",
+        "For an engine upgrade of a Multi-AZ DB instance, primary and standby are upgraded at the same time and both are unavailable"
+      ]
+    },
+    {
+      "id": "rds59-upgrading",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Upgrading.html",
+      "title": "Upgrading a DB instance engine version",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Major version upgrades must be started manually; minor version upgrades can be automatic",
+        "Database engine upgrades require downtime",
+        "RDS applies a minor version upgrade even with auto minor version upgrade off for critical security issues or an end of support"
+      ]
+    },
+    {
+      "id": "rds59-pg-upgrade",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.html",
+      "title": "Upgrades of the RDS for PostgreSQL DB engine",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "RDS uses pg_upgrade for major version upgrades, and an upgrade cannot be reverted",
+        "With a backup retention above 0, RDS takes two DB snapshots during a major upgrade",
+        "In-Region read replicas are upgraded together with the source in a major version upgrade"
+      ]
+    },
+    {
+      "id": "rds59-pg-upgrade-process",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.MajorVersion.Process.html",
+      "title": "How to perform a major version upgrade for RDS for PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A major upgrade does not upgrade extensions, and optimizer statistics must be regenerated with ANALYZE afterwards",
+        "A version-compatible parameter group must be ready before the upgrade"
+      ]
+    },
+    {
+      "id": "rds59-pg-minor",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.Minor.html",
+      "title": "Performing a minor version upgrade for RDS for PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "One minor version per major version is designated as the automatic upgrade version and is applied in the maintenance window"
+      ]
+    },
+    {
+      "id": "rds59-release-calendar",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html",
+      "title": "Release calendars for Amazon RDS for PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PostgreSQL 18 is the newest major version on RDS; its RDS end of standard support is 28 February 2031",
+        "RDS end of standard support: 17 on 28 February 2030, 16 on 28 February 2029, 15 on 29 February 2028, 14 on 28 February 2027; 13 ended on 28 February 2026",
+        "Each major version has dates for the start of Extended Support year 1 pricing, year 3 pricing, and the end of Extended Support"
+      ]
+    },
+    {
+      "id": "rds59-extended-support",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support.html",
+      "title": "Amazon RDS Extended Support with Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "RDS Extended Support keeps a database on a major version past the RDS end of standard support date for an additional cost, for up to 3 years",
+        "After Extended Support ends, RDS upgrades the major version automatically"
+      ]
+    },
+    {
+      "id": "rds59-extended-support-creating",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-creating-db-instance.html",
+      "title": "Creating a DB instance with Amazon RDS Extended Support",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Through the AWS CLI or the RDS API, an unspecified setting defaults to open-source-rds-extended-support (enabled); in the console the option is not selected by default",
+        "With open-source-rds-extended-support-disabled, RDS upgrades the instance to a supported version on or shortly after the end of standard support"
+      ]
+    },
+    {
+      "id": "rds59-extended-support-charges",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support-charges.html",
+      "title": "Amazon RDS Extended Support charges",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Charges begin the day after the RDS end of standard support date and apply to standby instances in Multi-AZ deployments too"
+      ]
+    },
+    {
+      "id": "rds59-blue-green",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-overview.html",
+      "title": "Overview of Amazon RDS Blue/Green Deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A blue/green deployment creates a staging (green) environment that stays in sync with production",
+        "The switchover causes downtime, usually under one minute"
+      ]
+    },
+    {
+      "id": "rds59-blue-green-considerations",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-considerations.html",
+      "title": "Limitations and considerations for Amazon RDS blue/green deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Blue/green deployments do not support managing master user passwords with AWS Secrets Manager",
+        "Blue/green deployments are not supported with CloudFormation",
+        "Point-in-time recovery history does not carry over to the new production instance after a switchover"
+      ]
+    },
+    {
+      "id": "rds59-blue-green-replication",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-replication-type.html",
+      "title": "PostgreSQL replication methods for blue/green deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "RDS for PostgreSQL uses physical replication for blue/green deployments, and logical replication when a major version upgrade is requested"
+      ]
+    },
+    {
+      "id": "rds59-backup-intro",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html",
+      "title": "Introduction to backups",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Automated backups are storage volume snapshots of the whole DB instance, and the instance can be recovered to any point in the retention period",
+        "Automated backups are deleted with the DB instance unless retained; final and manual snapshots are not",
+        "Automated backups do not occur while the instance is in a state other than available, such as storage_full"
+      ]
+    },
+    {
+      "id": "rds59-backup-retention",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.BackupRetention.html",
+      "title": "Backup retention period",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The retention period is 0 to 35 days; 0 disables automated backups; the default is one day through the API or CLI and seven days in the console",
+        "Changing the retention between 0 and a nonzero value causes an outage"
+      ]
+    },
+    {
+      "id": "rds59-backup-window",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ManagingAutomatedBackups.html",
+      "title": "Managing automated backups",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "During the backup window storage I/O might be suspended briefly while the backup initializes, typically under a few seconds",
+        "For PostgreSQL Multi-AZ deployments I/O is not suspended on the primary, because the backup is taken from the standby",
+        "The backup window cannot overlap with the weekly maintenance window"
+      ]
+    },
+    {
+      "id": "rds59-limits",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Limits.html",
+      "title": "Quotas and constraints for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default of max_connections for PostgreSQL is LEAST({DBInstanceClassMemory/9531392}, 5000)"
+      ]
+    },
+    {
+      "id": "rds59-pitr",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIT.html",
+      "title": "Restoring a DB instance to a specified time for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A point-in-time restore creates a new DB instance and does not modify the source",
+        "RDS uploads transaction logs to Amazon S3 every five minutes; LatestRestorableTime shows how recent a restore can be",
+        "A restored DB instance gets the default DB parameter group unless one is specified"
+      ]
+    },
+    {
+      "id": "rds59-delete",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DeleteInstance.html",
+      "title": "Deleting a DB instance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Deletion protection must be off before a DB instance can be deleted, and it is on by default for instances created in the console",
+        "A final snapshot and retained automated backups are the two ways to restore a deleted instance"
+      ]
+    },
+    {
+      "id": "rds59-stop",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_StopInstance.html",
+      "title": "Stopping an Amazon RDS DB instance temporarily",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A stopped DB instance is started automatically after seven consecutive days",
+        "While stopped, provisioned storage and backup storage are charged and DB instance hours are not",
+        "A DB instance that has a read replica, or is one, cannot be stopped",
+        "Starting an instance requires instance recovery and can take from minutes to hours"
+      ]
+    },
+    {
+      "id": "rds59-encryption",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html",
+      "title": "Encrypting Amazon RDS resources",
+      "checkedAt": "2026-10-13",
+      "supports": ["A DB instance can be encrypted only when it is created, not afterwards"]
+    },
+    {
+      "id": "rds59-vpc",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html",
+      "title": "Working with a DB instance in a VPC",
+      "checkedAt": "2026-10-13",
+      "supports": ["A DB subnet group should have subnets in at least two Availability Zones"]
+    },
+    {
+      "id": "rds59-secrets-manager",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-secrets-manager.html",
+      "title": "Password management with Amazon RDS and AWS Secrets Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "RDS generates the master user password, stores it in Secrets Manager, and rotates it every seven days by default",
+        "The secret is deleted when the DB instance is deleted",
+        "Not supported: creating a read replica when the source manages credentials with Secrets Manager, and Blue/Green Deployments"
+      ]
+    },
+    {
+      "id": "rds59-iam-auth",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html",
+      "title": "IAM database authentication for MariaDB, MySQL, and PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An authentication token is generated with Signature Version 4 and has a lifetime of 15 minutes; it does not affect a session once established",
+        "For PostgreSQL, a user with the rds_iam role must log in as an IAM user: IAM authentication takes precedence over the password",
+        "IAM database authentication needs between 300 and 1000 MiB of extra memory on the DB instance",
+        "CloudWatch and CloudTrail do not log IAM authentication"
+      ]
+    },
+    {
+      "id": "rds59-iam-auth-policy",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html",
+      "title": "Creating and using an IAM policy for IAM database access",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The action is rds-db:connect and the resource is arn:aws:rds-db:region:account-id:dbuser:DbiResourceId/db-user-name"
+      ]
+    },
+    {
+      "id": "rds59-iam-auth-accounts",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.DBAccounts.html",
+      "title": "Creating a database account using IAM authentication",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For PostgreSQL the user is created and then granted the rds_iam role: GRANT rds_iam TO db_userx"
+      ]
+    },
+    {
+      "id": "rds59-ssl",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html",
+      "title": "Using SSL/TLS to encrypt a connection to a DB instance or cluster",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The certificate authorities are rds-ca-rsa2048-g1 (the default), rds-ca-rsa4096-g1 and rds-ca-ecc384-g1",
+        "With these CAs RDS rotates the DB server certificate automatically before it expires",
+        "The certificate bundles are published as global-bundle.pem and one bundle per Region"
+      ]
+    },
+    {
+      "id": "rds59-pg-ssl",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.SSL.html",
+      "title": "Using SSL with a PostgreSQL DB instance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "rds.force_ssl defaults to 1 (on) for RDS for PostgreSQL 15 and later, and to 0 for 14 and older"
+      ]
+    },
+    {
+      "id": "rds59-lambda-nodejs-ca",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-nodejs.html",
+      "title": "Building Lambda functions with Node.js",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Starting with Node.js 20, Lambda no longer loads additional CA certificates by default; NODE_EXTRA_CA_CERTS=/var/runtime/ca-cert.pem restores the earlier behaviour, which included the Amazon RDS certificates"
+      ]
+    },
+    {
+      "id": "rds59-lambda-rds",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-rds.html",
+      "title": "Using AWS Lambda with Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Direct connections are useful in simple scenarios, and proxies are recommended for production"
+      ]
+    },
+    {
+      "id": "rds59-lambda-vpc",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
+      "title": "Giving Lambda functions access to resources in an Amazon VPC",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The execution role needs six ec2 network interface actions, allowed on all resources"
+      ]
+    },
+    {
+      "id": "rds59-proxy",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html",
+      "title": "Amazon RDS Proxy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "RDS Proxy pools and shares database connections, and queues or rejects connections it cannot serve",
+        "A proxy must be in the same VPC as the database and cannot be publicly accessible",
+        "For DB instances in replication configurations, a proxy can be associated only with the writer DB instance, not a read replica",
+        "Each account is limited to 20 proxies by default"
+      ]
+    },
+    {
+      "id": "rds59-proxy-planning",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-planning.html",
+      "title": "Planning where to use RDS Proxy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda functions and DB instances that hit too many connections are good candidates for a proxy",
+        "RDS Proxy bypasses DNS caches to reduce failover times by up to 66% for RDS Multi-AZ DB instances"
+      ]
+    },
+    {
+      "id": "rds59-proxy-pinning",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-pinning.html",
+      "title": "Avoiding pinning an RDS Proxy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A pinned client connection keeps one database connection until the session ends",
+        "For PostgreSQL, SET commands, PREPARE/DEALLOCATE/EXECUTE, temporary objects, cursors, LISTEN, session-level advisory locks and sequence functions cause pinning; transaction-level advisory locks do not",
+        "Any statement larger than 16 KB pins the session",
+        "DatabaseConnectionsCurrentlySessionPinned shows how often pinning occurs"
+      ]
+    },
+    {
+      "id": "rds59-proxy-endpoints",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-endpoints.html",
+      "title": "Working with Amazon RDS Proxy endpoints",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Read-only proxy endpoints are described for proxies associated with a Multi-AZ DB cluster"
+      ]
+    },
+    {
+      "id": "rds59-proxy-pricing",
+      "url": "https://aws.amazon.com/rds/proxy/pricing/",
+      "title": "Amazon RDS Proxy pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For provisioned instances RDS Proxy is priced per vCPU per hour of the database instance, with a minimum charge of 2 vCPUs"
+      ]
+    },
+    {
+      "id": "rds59-pg-pricing",
+      "url": "https://aws.amazon.com/rds/postgresql/pricing/",
+      "title": "Amazon RDS for PostgreSQL pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "There is no additional charge for backup storage up to 100% of the total database storage for a Region",
+        "T4g and T3 instances run in Unlimited mode and are charged when average CPU over a rolling 24 hours exceeds the baseline",
+        "The page describes a free tier of 750 hours for one year for new customers"
+      ]
+    },
+    {
+      "id": "rds59-free-tier",
+      "url": "https://aws.amazon.com/rds/free/",
+      "title": "Amazon RDS Free Tier",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The page describes credits of up to USD 200 and a Free plan of up to 6 months for new customers, not hours of a named instance class"
+      ]
+    },
+    {
+      "id": "rds59-database-insights",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Database-Insights.html",
+      "title": "CloudWatch Database Insights",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The end-of-life date for Performance Insights was July 31, 2026, and its users were migrated to Database Insights",
+        "Database Insights has a Standard mode (the default) and an Advanced mode"
+      ]
+    },
+    {
+      "id": "rds59-database-insights-rds",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DatabaseInsights.html",
+      "title": "Monitoring Amazon RDS databases with CloudWatch Database Insights",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default RDS enables the Standard mode of Database Insights for RDS databases"
+      ]
+    },
+    {
+      "id": "rds59-pg-logs",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.Concepts.PostgreSQL.html",
+      "title": "RDS for PostgreSQL database log files",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The PostgreSQL log, the upgrade log and the IAM database authentication error log can be published to CloudWatch Logs",
+        "The PostgreSQL log goes to the log group /aws/rds/instance/<instance>/postgresql"
+      ]
+    },
+    {
+      "id": "rds59-pg-log-params",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.Concepts.PostgreSQL.overview.parameter-groups.html",
+      "title": "Parameters for logging in RDS for PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "rds.log_retention_period defaults to 4320 minutes: log files on the instance are deleted after 3 days"
+      ]
+    },
+    {
+      "id": "rds59-pg-query-logging",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.Concepts.PostgreSQL.Query_Logging.html",
+      "title": "Turning on query logging for your RDS for PostgreSQL DB instance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "log_min_duration_statement logs any statement that runs at least the given number of milliseconds"
+      ]
+    },
+    {
+      "id": "rds59-cfn-dbinstance",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-rds-dbinstance.html",
+      "title": "AWS::RDS::DBInstance",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The properties ManageMasterUserPassword, EngineLifecycleSupport, EnableIAMDatabaseAuthentication, MaxAllocatedStorage and AutoMinorVersionUpgrade exist on the resource"
+      ]
+    },
+    {
+      "id": "rds59-cloud-control",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWS::RDS::DBParameterGroup is in the list of supported resource types"]
+    },
+    {
+      "id": "rds59-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The installed package registers providers for AWS::RDS::DBInstance, AWS::RDS::DBSubnetGroup, AWS::EC2::SecurityGroup, AWS::EC2::SecurityGroupIngress and AWS::CloudWatch::Alarm, and none for AWS::RDS::DBParameterGroup"
+      ]
+    },
+    {
+      "id": "rds59-aws-cdk-lib",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (installed types)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "rds.DatabaseInstance has manageMasterUserPassword, iamAuthentication, engineLifecycleSupport and maxAllocatedStorage; rds.PostgresEngineVersion lists versions up to 18.3"
+      ]
+    },
+    {
+      "id": "rds59-rds-signer",
+      "url": "https://www.npmjs.com/package/@aws-sdk/rds-signer/v/3.1149.0",
+      "title": "@aws-sdk/rds-signer 3.1149.0 (installed types)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Signer takes hostname, port, username and region, and getAuthToken() returns the token"
+      ]
+    },
+    {
+      "id": "rds59-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon RDS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Unit prices of db.t4g.micro (Single-AZ and Multi-AZ, 2 vCPUs), gp3 storage, RDS Proxy, backup storage beyond the free allocation, RDS Extended Support for PostgreSQL, and the db.c6gd.medium Multi-AZ DB cluster"
+      ]
+    },
+    {
+      "id": "rds59-postgres-admin-functions",
+      "url": "https://www.postgresql.org/docs/18/functions-admin.html",
+      "title": "PostgreSQL 18: System Administration Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "pg_current_wal_lsn() returns the current write-ahead log write location and cannot be executed during recovery",
+        "pg_last_wal_replay_lsn() returns the last write-ahead log location replayed during recovery"
+      ]
+    },
+    {
+      "id": "rds59-postgres-hot-standby",
+      "url": "https://www.postgresql.org/docs/18/hot-standby.html",
+      "title": "PostgreSQL 18: Hot Standby",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Connections to a hot standby are strictly read-only, and data on the standby is eventually consistent with the primary"
+      ]
+    },
+    {
+      "id": "rds59-postgres-default-privileges",
+      "url": "https://www.postgresql.org/docs/18/sql-alterdefaultprivileges.html",
+      "title": "PostgreSQL 18: ALTER DEFAULT PRIVILEGES",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ALTER DEFAULT PRIVILEGES sets the privileges applied to objects created in the future by the role that runs it"
+      ]
+    },
+    {
+      "id": "rds59-cloudflare-hyperdrive",
+      "url": "https://developers.cloudflare.com/hyperdrive/",
+      "title": "Cloudflare Hyperdrive",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Hyperdrive accelerates queries from Workers to an existing Postgres or MySQL database, including ones hosted on AWS"
+      ]
+    },
+    {
+      "id": "rds59-cloudflare-hyperdrive-pricing",
+      "url": "https://developers.cloudflare.com/hyperdrive/platform/pricing/",
+      "title": "Cloudflare Hyperdrive: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Hyperdrive is included in the Workers Free and Paid plans; connection pooling and query caching incur no additional charge on the Paid plan"
+      ]
+    },
+    {
+      "id": "rds59-cloudflare-hyperdrive-private",
+      "url": "https://developers.cloudflare.com/hyperdrive/configuration/connect-to-private-database/",
+      "title": "Cloudflare Hyperdrive: Connect to a private database using Tunnel",
+      "checkedAt": "2026-10-13",
+      "supports": ["Hyperdrive reaches a database in a private network through Cloudflare Tunnel"]
+    },
+    {
+      "id": "rds59-cloudflare-d1-sessions",
+      "url": "https://developers.cloudflare.com/d1/best-practices/read-replication/",
+      "title": "Cloudflare D1: Global read replication",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The D1 Sessions API gives sequential consistency within a session, carried between requests by a bookmark"
+      ]
+    },
+    {
+      "id": "rds59-vercel-postgres",
+      "url": "https://vercel.com/docs/postgres",
+      "title": "Vercel Postgres",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Postgres is no longer available; existing databases were moved to Neon in December 2024, and new projects install a Postgres integration from the Marketplace"
+      ]
+    },
+    {
+      "id": "rds59-vercel-storage",
+      "url": "https://vercel.com/docs/storage",
+      "title": "Vercel Storage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Relational databases on Vercel come through Marketplace providers such as Neon and Supabase"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "multi-az",
+      "ja": "Multi-AZ",
+      "en": "Multi-AZ",
+      "firstUse": "59",
+      "definition": {
+        "ja": "RDS が別の Availability Zone に待機用の複製を持ち、障害のときにそちらへ切り替える構成。",
+        "en": "A deployment in which RDS keeps a standby copy in another Availability Zone and switches to it on failure."
+      }
+    },
+    {
+      "id": "read-replica",
+      "ja": "リードレプリカ",
+      "en": "read replica",
+      "firstUse": "59",
+      "definition": {
+        "ja": "プライマリの変更を非同期に受け取る、読み取り専用のデータベースインスタンス。プライマリより古いことがある。",
+        "en": "A read-only DB instance that receives the primary's changes asynchronously, and can therefore be behind it."
+      }
+    },
+    {
+      "id": "replica-lag",
+      "ja": "レプリカラグ",
+      "en": "replica lag",
+      "firstUse": "59",
+      "definition": {
+        "ja": "プライマリでコミットされた変更が、リードレプリカに反映されるまでの遅れ。",
+        "en": "The delay between a commit on the primary and its being applied on a read replica."
+      }
+    },
+    {
+      "id": "lsn",
+      "ja": "LSN",
+      "en": "LSN (log sequence number)",
+      "firstUse": "59",
+      "definition": {
+        "ja": "PostgreSQL の write-ahead log の中の位置。プライマリがどこまで書いたか、レプリカがどこまで再生したかを比べるのに使う。",
+        "en": "A position in PostgreSQL's write-ahead log, used to compare how far the primary has written with how far a replica has replayed."
+      }
+    },
+    {
+      "id": "read-your-writes",
+      "ja": "read-your-writes",
+      "en": "read-your-writes",
+      "firstUse": "59",
+      "definition": {
+        "ja": "書き込んだ本人が、そのあとの読み取りで自分の書き込みを必ず見られる、という保証。",
+        "en": "The guarantee that whoever wrote something sees that write in their own later reads."
+      }
+    },
+    {
+      "id": "rds-proxy",
+      "ja": "RDS Proxy",
+      "en": "RDS Proxy",
+      "firstUse": "59",
+      "definition": {
+        "ja": "アプリと RDS の間に置く接続プール。多数のクライアント接続を、少数のデータベース接続にまとめる。",
+        "en": "A connection pool placed between applications and RDS that folds many client connections into few database connections."
+      }
+    },
+    {
+      "id": "db-parameter-group",
+      "ja": "パラメーターグループ",
+      "en": "DB parameter group",
+      "firstUse": "59",
+      "definition": {
+        "ja": "データベースエンジンの設定値をまとめたもの。インスタンスに関連づけて使う。",
+        "en": "A named set of database engine settings that is associated with DB instances."
+      }
+    },
+    {
+      "id": "iam-database-authentication",
+      "ja": "IAM データベース認証",
+      "en": "IAM database authentication",
+      "firstUse": "59",
+      "definition": {
+        "ja": "パスワードの代わりに、IAM の認証情報で署名した 15 分有効のトークンでデータベースにサインインする方法。",
+        "en": "Signing in to a database with a 15-minute token signed by IAM credentials, in place of a password."
+      }
+    },
+    {
+      "id": "rds-extended-support",
+      "ja": "RDS Extended Support",
+      "en": "RDS Extended Support",
+      "firstUse": "59",
+      "definition": {
+        "ja": "標準サポートが終わったメジャーバージョンを、vCPU 時間あたりの追加料金で使い続ける仕組み。",
+        "en": "A paid arrangement, charged per vCPU-hour, for staying on a major version after its standard support has ended."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "59.architecture",
+      "sources": ["examples/59-rds/infra/lib/rds-stack.ts"],
+      "tasks": ["rds:infra:synth"],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "59.sizing",
+      "sources": ["examples/59-rds/src/config.ts", "examples/59-rds/infra/lib/rds-stack.ts"],
+      "tasks": ["rds:infra:synth"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "59.choices",
+      "sources": ["examples/59-rds/infra/lib/rds-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "59.instance",
+      "sources": [
+        "examples/59-rds/infra/lib/rds-stack.ts",
+        "examples/59-rds/infra/bin/app.ts",
+        "examples/59-rds/src/config.ts",
+        "examples/59-rds/infra/test/rds-stack.test.ts",
+        "examples/59-rds/test/config.test.ts",
+        "examples/59-rds/cdk.json"
+      ],
+      "tasks": ["rds:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "59.auth",
+      "sources": [
+        "examples/59-rds/src/roles.ts",
+        "examples/59-rds/src/ops.ts",
+        "examples/59-rds/src/ops-lambda.ts",
+        "examples/59-rds/src/rds.ts",
+        "examples/59-rds/src/env.ts",
+        "examples/59-rds/test/ops.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "59.connections",
+      "sources": [
+        "examples/59-rds/src/rds.ts",
+        "examples/59-rds/src/lambda.ts",
+        "examples/59-rds/infra/lib/rds-stack.ts"
+      ],
+      "tasks": ["rds:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "59.multi-az",
+      "sources": ["examples/59-rds/src/config.ts", "examples/59-rds/infra/test/rds-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "59.replica",
+      "sources": [
+        "examples/59-rds/src/model/replication.ts",
+        "examples/59-rds/test/routing.test.ts",
+        "examples/59-rds/test/support.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "59.read-your-writes",
+      "sources": [
+        "examples/59-rds/src/lsn.ts",
+        "examples/59-rds/src/position.ts",
+        "examples/59-rds/src/routing.ts",
+        "examples/59-rds/src/app.ts",
+        "examples/59-rds/test/lsn.test.ts",
+        "examples/59-rds/test/routing.test.ts",
+        "examples/59-rds/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed", "type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "59.local",
+      "sources": [
+        "examples/59-rds/src/dev.ts",
+        "examples/59-rds/src/migrations.ts",
+        "examples/59-rds/src/model/replication.ts",
+        "examples/59-rds/.env.example"
+      ],
+      "tasks": ["dev:rds"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "59.deploy",
+      "sources": [
+        "examples/59-rds/scripts/ops.ts",
+        "examples/59-rds/scripts/smoke.ts",
+        "examples/59-rds/src/ops.ts"
+      ],
+      "tasks": [
+        "rds:infra:diff",
+        "rds:infra:deploy",
+        "rds:db:bootstrap",
+        "rds:db:migrate",
+        "rds:db:status",
+        "rds:smoke",
+        "rds:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "59.backup",
+      "sources": ["examples/59-rds/src/config.ts", "examples/59-rds/infra/lib/rds-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "59.upgrade",
+      "sources": ["examples/59-rds/infra/lib/rds-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "59.observe",
+      "sources": ["examples/59-rds/infra/lib/rds-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "59.cost",
+      "sources": ["data/pricing", "tools/src/pricing/calc.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "59.cleanup",
+      "sources": ["tools/src/infra", "examples/59-rds/infra/lib/rds-stack.ts"],
+      "tasks": ["rds:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "rds.postgres.t4g-micro.multi-az",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "3CGDWX8M4ZQMD2FD",
+      "usageType": "APN1-Multi-AZUsage:db.t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0500000000",
+          "description": "$ 0.05 per RDS db.t4g.micro Multi-AZ instance hour (or partial hour) running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "rds.postgres.gp3.storage.multi-az",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "V3SXBAA72P93JFMB",
+      "usageType": "APN1-RDS:Multi-AZ-GP3-Storage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2760000000",
+          "description": "$0.276 per GB-month of provisioned GP3 storage for Multi-AZ deployments running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "rds.postgres.c6gd-medium.multi-az-cluster",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "RRJV2QZ6UEZPQWQZ",
+      "usageType": "APN1-Multi-AZClusterUsage:db.c6gd.medium",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3279000000",
+          "description": "$ 0.3279 per RDS db.c6gd.medium Multi-AZ (readable standbys) instance hour (or partial hour) running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "rds.proxy.postgres.vcpu-hour",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "JP9CGVDFGVTEPYYR",
+      "usageType": "APN1-RDS:ProxyUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0180000000",
+          "description": "$0.018 per hour per vCPU of the RDS PostgreSQL instances associated with an RDS Proxy"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "rds.postgres.backup.charged",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "8EP35HPTSYF38J3V",
+      "usageType": "APN1-RDS:ChargedBackupUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0950000000",
+          "description": "$0.095 per additional GB-month of backup storage exceeding free allocation running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "rds.postgres.extended-support.yr1-yr2",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "ZWKH23VM3Y9FZ4MX",
+      "usageType": "APN1-ExtendedSupport:Yr1-Yr2:PostgreSQL13",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "vCPU-hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1200000000",
+          "description": "USD 0.120 per hour per vCPU running RDS Extended Support for PostgreSQL 13 in Year 1, Year 2"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "rds.postgres.extended-support.yr3",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "VJRGXE44NTN45SSE",
+      "usageType": "APN1-ExtendedSupport:Yr3:PostgreSQL13",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "vCPU-hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2400000000",
+          "description": "USD 0.240 per hour per vCPU running RDS Extended Support for PostgreSQL 13 in Year 3"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "rds.postgres.t4g-micro.multi-az",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.gp3.storage.multi-az",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.c6gd-medium.multi-az-cluster",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.proxy.postgres.vcpu-hour",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.backup.charged",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.extended-support.yr1-yr2",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    },
+    {
+      "priceId": "rds.postgres.extended-support.yr3",
+      "reason": "The two AWS pages on the RDS free tier disagree (750 hours for a year on the pricing page, credits on the free tier page), and which applies depends on the account. Nothing is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "rds-practice-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS: 既定のスタックを 730 時間置いておく",
+        "en": "RDS: the default stack left running for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "db.t4g.micro、Single-AZ、止めずに 730 時間",
+          "gp3 を 20 GB",
+          "マスターユーザーのシークレット 1 つ。RDS が管理するシークレットも通常のシークレットと同じ単価と仮定した（未確認）",
+          "アラーム 1 つ",
+          "リクエストは 0。Lambda、API Gateway、ログの取り込みは発生しない",
+          "バックアップは無料の範囲（データベースのストレージと同じ量まで）に収まるとした",
+          "CPU クレジットの超過分、データ転送は含めない"
+        ],
+        "en": [
+          "db.t4g.micro, Single-AZ, never stopped, 730 hours",
+          "20 GB of gp3",
+          "One secret for the master user. A secret that RDS manages is assumed to cost what an ordinary secret costs (not confirmed)",
+          "One alarm",
+          "No requests, so nothing from Lambda, API Gateway, or log ingestion",
+          "Backups are assumed to stay within the free allocation (as much as the database storage)",
+          "Surplus CPU credits and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.t4g-micro.single-az",
+          "quantity": 730,
+          "basis": "one instance for 730 hours"
+        },
+        {
+          "priceId": "rds.postgres.gp3.storage",
+          "quantity": 20,
+          "basis": "20 GB provisioned for the month"
+        },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "the master user secret, assumed to be billed as an ordinary secret"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 1,
+          "basis": "one standard-resolution alarm on FreeStorageSpace"
+        }
+      ]
+    },
+    {
+      "id": "rds-stopped-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS: 1 か月ずっと止まっていたとした場合",
+        "en": "RDS: as if stopped for the whole month"
+      },
+      "assumptions": {
+        "ja": [
+          "インスタンスの時間は 0。実際には 7 日で自動的に起動するので、この金額にはならない",
+          "gp3 を 20 GB。止まっていても課金される",
+          "シークレットとアラームは残る"
+        ],
+        "en": [
+          "No instance hours. In reality the instance starts by itself after 7 days, so this figure is never reached",
+          "20 GB of gp3, billed while stopped",
+          "The secret and the alarm remain"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.gp3.storage",
+          "quantity": 20,
+          "basis": "20 GB provisioned for the month"
+        },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "the master user secret, assumed to be billed as an ordinary secret"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 1,
+          "basis": "one standard-resolution alarm on FreeStorageSpace"
+        }
+      ]
+    },
+    {
+      "id": "rds-production-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS: production のプロファイル（Multi-AZ）を 730 時間",
+        "en": "RDS: the production profile (Multi-AZ) for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "db.t4g.micro、Multi-AZ（待機 1 台）、730 時間。インスタンスクラスは既定のまま",
+          "gp3 を 20 GB、Multi-AZ の単価",
+          "シークレット 1 つ、アラーム 1 つ",
+          "バックアップは無料の範囲に収まるとした"
+        ],
+        "en": [
+          "db.t4g.micro, Multi-AZ (one standby), 730 hours. The instance class is left at the default",
+          "20 GB of gp3 at the Multi-AZ rate",
+          "One secret, one alarm",
+          "Backups are assumed to stay within the free allocation"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.t4g-micro.multi-az",
+          "quantity": 730,
+          "basis": "one Multi-AZ deployment for 730 hours"
+        },
+        {
+          "priceId": "rds.postgres.gp3.storage.multi-az",
+          "quantity": 20,
+          "basis": "20 GB provisioned for the month"
+        },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "the master user secret, assumed to be billed as an ordinary secret"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 1,
+          "basis": "one standard-resolution alarm on FreeStorageSpace"
+        }
+      ]
+    },
+    {
+      "id": "rds-replica-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS: リードレプリカを 1 台足して 730 時間",
+        "en": "RDS: with one read replica, for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "db.t4g.micro、Single-AZ を 2 台（プライマリとレプリカ）、730 時間ずつ",
+          "gp3 を 20 GB ずつ、計 40 GB",
+          "CloudFormation が作るシークレット 1 つ、アラーム 1 つ"
+        ],
+        "en": [
+          "Two db.t4g.micro Single-AZ instances (primary and replica), 730 hours each",
+          "20 GB of gp3 each, 40 GB in all",
+          "One secret created by CloudFormation, one alarm"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.t4g-micro.single-az",
+          "quantity": 1460,
+          "basis": "two instances for 730 hours"
+        },
+        {
+          "priceId": "rds.postgres.gp3.storage",
+          "quantity": 40,
+          "basis": "2 x 20 GB provisioned for the month"
+        },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "the master user secret, assumed to be billed as an ordinary secret"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 1,
+          "basis": "one standard-resolution alarm on FreeStorageSpace"
+        }
+      ]
+    },
+    {
+      "id": "rds-proxy-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS Proxy: db.t4g.micro の前に 1 つ置いて 730 時間",
+        "en": "RDS Proxy: one in front of a db.t4g.micro for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "db.t4g.micro は 2 vCPU（Price List の属性）。最低料金も 2 vCPU 分",
+          "プロキシの分だけ。インスタンスとプロキシ用のシークレットは含めない"
+        ],
+        "en": [
+          "db.t4g.micro has 2 vCPUs (the price list's attribute), which is also the minimum charge",
+          "The proxy only. The instance and the proxy's own secret are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.proxy.postgres.vcpu-hour",
+          "quantity": 1460,
+          "basis": "2 vCPUs x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "rds-extended-support-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS Extended Support: db.t4g.micro を 1〜2 年目の単価で 730 時間",
+        "en": "RDS Extended Support: a db.t4g.micro at the year 1-2 rate for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "2 vCPU、Single-AZ、730 時間",
+          "単価は PostgreSQL 13 のもの。Price List に載っているのは、すでに Extended Support に入った版だけ",
+          "インスタンスとストレージの料金に上乗せされる分だけ"
+        ],
+        "en": [
+          "2 vCPUs, Single-AZ, 730 hours",
+          "The rate is that of PostgreSQL 13. The price list carries rates only for versions already in Extended Support",
+          "Only the amount added on top of the instance and its storage"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.extended-support.yr1-yr2",
+          "quantity": 1460,
+          "basis": "2 vCPUs x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "rds-extended-support-year3-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS Extended Support: 同じインスタンスを 3 年目の単価で 730 時間",
+        "en": "RDS Extended Support: the same instance at the year 3 rate for 730 hours"
+      },
+      "assumptions": {
+        "ja": ["2 vCPU、Single-AZ、730 時間", "単価は PostgreSQL 13 の 3 年目"],
+        "en": ["2 vCPUs, Single-AZ, 730 hours", "The year 3 rate of PostgreSQL 13"]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.extended-support.yr3",
+          "quantity": 1460,
+          "basis": "2 vCPUs x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "rds-multi-az-cluster-month",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS: Multi-AZ DB cluster のいちばん小さいクラスを 730 時間",
+        "en": "RDS: the smallest class of a Multi-AZ DB cluster for 730 hours"
+      },
+      "assumptions": {
+        "ja": [
+          "db.c6gd.medium の Multi-AZ (readable standbys) の単価 x 730 時間",
+          "この単価が 3 台分をまとめたものかどうかは確認していない。db.m6gd.large では Single-AZ の 3 倍より少し安いので、まとめたものと読んだ",
+          "ストレージは含めない"
+        ],
+        "en": [
+          "The Multi-AZ (readable standbys) rate of db.c6gd.medium x 730 hours",
+          "Whether this rate covers all three instances was not confirmed. For db.m6gd.large it is a little under three times the Single-AZ rate, so it was read as covering them",
+          "Storage is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.c6gd-medium.multi-az-cluster",
+          "quantity": 730,
+          "basis": "one Multi-AZ DB cluster for 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "rds-backup-overage",
+      "chapter": "59",
+      "title": {
+        "ja": "RDS: 無料の範囲を 10 GB 超えたバックアップ",
+        "en": "RDS: backups 10 GB beyond the free allocation"
+      },
+      "assumptions": {
+        "ja": [
+          "20 GB のストレージに対して、バックアップと手動スナップショットが合わせて 30 GB あった月",
+          "超過は 10 GB"
+        ],
+        "en": [
+          "A month in which automated backups and manual snapshots add up to 30 GB against 20 GB of storage",
+          "10 GB beyond the allocation"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "rds.postgres.backup.charged",
+          "quantity": 10,
+          "basis": "30 GB of backups - 20 GB free"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "59",
+        "command": "vp test run examples/59-rds",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "48 件。LSN の解析と比較、PGlite が返す実際の位置、プライマリとレプリカのモデルの上での read-your-writes と読み取りが巻き戻らないこと、遅れたレプリカの昇格で書き込みが失われること、API のヘッダーと CORS、運用用の関数（ロールの作成、13章のマイグレーション、notes_api の権限、冪等性、入力の検査）、設定と環境変数、スタックのアサーション 15 件（3 通りの synth）",
+          "en": "48 tests. Parsing and comparing LSNs, the real positions PGlite reports, read-your-writes and reads that never go back on the model of a primary and a replica, the write lost when a lagging replica is promoted, the API's headers and CORS, the operations function (creating roles, chapter 13's migrations, what notes_api may do, idempotency, input checks), configuration and environment, and 15 stack assertions over three synthesized variants"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "tsc --noEmit -p examples/59-rds",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "src、infra、test、scripts の型検査",
+          "en": "Type check of src, infra, test, and scripts"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "テンプレート（リソース 32、出力 8）と 2 つのバンドルを cdk.out に出力。AWS には問い合わせない。2 つのバンドルを Node.js 24.21.0 で読み込み、API の関数が GET /health に 200 を返すことと、運用用の関数が知らないコマンドを接続の前に断ることを確かめた",
+          "en": "Writes the template (32 resources, 8 outputs) and two bundles to cdk.out. Asks AWS nothing. Both bundles were loaded under Node.js 24.21.0: the API function answered GET /health with 200, and the operations function refused an unknown command before opening a connection"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run dev:rds + curl",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "REPLICA_LAG_MS=1500 で起動し、作成、ヘッダーなしの読み取り（レプリカから 404）、x-notes-seen つきの読み取り（プライマリから 200）、2 秒後のヘッダーなしの読み取り（レプリカから 200）、/health を確かめた",
+          "en": "Started with REPLICA_LAG_MS=1500 and checked a create, a read without the header (404 from the replica), a read with x-notes-seen (200 from the primary), a read without the header two seconds later (200 from the replica), and /health"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "RDS のインスタンス、パラメーターグループ、サブネットグループ、セキュリティグループ、関数 2 つ、HTTP API、アラームを作る。時間課金",
+          "en": "Creates the RDS instance, parameter group, subnet group, security groups, two functions, the HTTP API, and the alarm. Billed by the hour"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:db:bootstrap",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "マスターユーザーのシークレットを読み、運用用の関数を呼んで 2 つのデータベースロールを作る",
+          "en": "Reads the master user's secret and invokes the operations function to create the two database roles"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:db:migrate",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "13章のマイグレーションを運用用の関数に渡して流す",
+          "en": "Hands chapter 13's migrations to the operations function, which applies them"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:db:status",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "接続しているロール、PostgreSQL の版、TLS かどうかを表示する",
+          "en": "Prints the connected role, the PostgreSQL version, and whether the session uses TLS"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "API を通して作成、読み戻し、削除",
+          "en": "Creates, reads back, and deletes a note through the API"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "cdkd の state と実物を比べる",
+          "en": "Compares cdkd's state with the live resources"
+        }
+      },
+      {
+        "scope": "59",
+        "command": "vp run rds:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "スタックを消す。インスタンスと自動バックアップも消える",
+          "en": "Destroys the stack, the instance and its automated backups included"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "rds59-never-deployed",
+        "summary": {
+          "ja": "59章のスタックを一度もデプロイしていない。未確認: cdkd 0.296.28 が AWS::RDS::DBInstance を ManageMasterUserPassword つきで作り、MasterUserSecret.SecretArn と DbiResourceId と Endpoint.Address を解決できること。AWS::RDS::DBParameterGroup を Cloud Control API 経由で作れること。先に作ったロググループ /aws/rds/instance/aih-notes/postgresql に RDS がそのまま書くこと。PostgreSQL 18.3 がいまも新規のインスタンスに選べること。db.t4g.micro で IAM データベース認証のメモリが足りること。Database Insights の既定の状態。Fn::ImportValue を cdkd が 11章のスタックから解決すること。",
+          "en": "The chapter 59 stack has never been deployed. Unconfirmed: that cdkd 0.296.28 creates AWS::RDS::DBInstance with ManageMasterUserPassword and resolves MasterUserSecret.SecretArn, DbiResourceId and Endpoint.Address; that AWS::RDS::DBParameterGroup can be created through Cloud Control API; that RDS writes into the log group /aws/rds/instance/aih-notes/postgresql created beforehand; that PostgreSQL 18.3 can still be chosen for a new instance; that a db.t4g.micro has enough memory for IAM database authentication; what Database Insights is set to by default; and that cdkd resolves Fn::ImportValue from the chapter 11 stack."
+        },
+        "resume": {
+          "ja": "学習用アカウントで vp run net:infra:deploy のあと vp run rds:infra:deploy を実行する。版で止まったら aws rds describe-db-engine-versions --engine postgres で選べる版を調べ、-c postgresVersion=<版> を付ける。終わったら vp run rds:infra:drift の結果を記録し、vp run rds:infra:destroy で消す。",
+          "en": "In a practice account run vp run net:infra:deploy and then vp run rds:infra:deploy. If it stops on the version, list what is offered with aws rds describe-db-engine-versions --engine postgres and pass -c postgresVersion=<version>. Afterwards record what vp run rds:infra:drift says and remove everything with vp run rds:infra:destroy."
+        }
+      },
+      {
+        "id": "rds59-never-connected",
+        "summary": {
+          "ja": "実際の RDS に一度もつないでいない。未確認: NODE_EXTRA_CA_CERTS=/var/runtime/ca-cert.pem で Node.js 24 のランタイムが RDS の証明書を検証できること。@aws-sdk/rds-signer のトークンが node-postgres の password の関数を通って受け付けられること。RDS が管理するシークレットの JSON に username と password があること。notes_admin が rds_iam を GRANT でき、データベースと public スキーマへの CREATE を渡せること。notes_migrator が 13章のマイグレーションを流せること。呼び出しの payload でパスワードを渡す bootstrap が通ること。フェイルオーバーや再起動のあと、切れた接続が node-postgres でどう見えるか。",
+          "en": "Nothing was ever connected to a real RDS instance. Unconfirmed: that NODE_EXTRA_CA_CERTS=/var/runtime/ca-cert.pem lets the Node.js 24 runtime verify the RDS certificate; that a token from @aws-sdk/rds-signer is accepted through node-postgres's password function; that the JSON of the secret RDS manages has username and password; that notes_admin may grant rds_iam and CREATE on the database and on the public schema; that notes_migrator can run chapter 13's migrations; that the bootstrap, which carries the password in the invocation payload, goes through; and how a dropped connection looks to node-postgres after a failover or a reboot."
+        },
+        "resume": {
+          "ja": "デプロイのあと vp run rds:db:bootstrap、rds:db:migrate、rds:db:status、rds:smoke を順に実行する。status の tls が true であること、role が notes_migrator であることを見る。aws rds reboot-db-instance --db-instance-identifier aih-notes のあとにもう一度 rds:smoke を実行し、関数のログの idle connection lost の行と応答を記録する。",
+          "en": "After the deploy run vp run rds:db:bootstrap, rds:db:migrate, rds:db:status and rds:smoke in that order. Check that status reports tls true and role notes_migrator. Run rds:smoke again after aws rds reboot-db-instance --db-instance-identifier aih-notes, and record the function's idle connection lost lines and the answers."
+        }
+      },
+      {
+        "id": "rds59-replica-not-exercised",
+        "summary": {
+          "ja": "リードレプリカは手元のモデルでしか動かしていない。モデルはコミットされた文を順に流し直すもので、PostgreSQL のストリーミングレプリケーションではない。未確認: -c readReplica=true のスタックがデプロイできること（同じリージョンのレプリカに CloudFormation が受け付けるプロパティ）。レプリカで pg_last_wal_replay_lsn() が、プライマリの pg_current_wal_lsn() と比べられる値を返すこと。notes_api がレプリカにも IAM トークンでサインインできること。実際のラグの大きさ。",
+          "en": "The read replica ran only as the local model. The model replays committed statements in order; it is not PostgreSQL streaming replication. Unconfirmed: that the stack deploys with -c readReplica=true (which properties CloudFormation accepts for a same-Region replica); that pg_last_wal_replay_lsn() on the replica returns values comparable with the primary's pg_current_wal_lsn(); that notes_api can sign in to the replica with an IAM token too; and how large the real lag is."
+        },
+        "resume": {
+          "ja": "vp run rds:infra:deploy -c readReplica=true のあと bootstrap と migrate を実行する。rds:smoke の出力で、作成直後の読み取りが primary か replica のどちらから返ったかを見る。CloudWatch の ReplicaLag を記録する。レプリカは時間課金なので、終わったらスタックを消す。",
+          "en": "Run vp run rds:infra:deploy -c readReplica=true, then the bootstrap and the migration. In the output of rds:smoke, see whether the read right after the create came from the primary or the replica. Record ReplicaLag from CloudWatch. The replica is billed by the hour, so destroy the stack afterwards."
+        }
+      },
+      {
+        "id": "rds59-operations-not-exercised",
+        "summary": {
+          "ja": "Multi-AZ のフェイルオーバー、ポイントインタイムリストア、スナップショットからの復元、マイナーとメジャーのバージョンアップ、blue/green deployment、RDS Proxy、ストレージの自動拡張、停止と 7 日後の自動起動は、どれも実行していない。本文の数値（60〜120 秒、35 秒未満、5 分、66% など）は公式ドキュメントの記述で、この本の測定ではない。料金は Price List の単価と仮定から計算しただけで、請求を見ていない。RDS が管理するシークレットに料金がかかるかどうか、無料枠がどう適用されるかは確認できていない。",
+          "en": "None of these was run: a Multi-AZ failover, a point-in-time restore, a restore from a snapshot, a minor or a major version upgrade, a blue/green deployment, RDS Proxy, storage autoscaling, and a stop with its automatic start after seven days. The figures in the text (60-120 seconds, under 35 seconds, five minutes, 66% and so on) are the documentation's statements, not this book's measurements. Prices were computed from the price list and stated assumptions; no bill was looked at. Whether a secret that RDS manages is charged, and how the free tier applies, could not be confirmed."
+        },
+        "resume": {
+          "ja": "production のプロファイルでデプロイし、aws rds reboot-db-instance --force-failover のあいだ rds:smoke を繰り返して、失敗が続いた秒数を記録する。aws rds restore-db-instance-to-point-in-time で別名のインスタンスに戻し、エンドポイントが新しいこととパラメーターグループが既定に戻ることを見る。1 か月後に Cost Explorer で RDS と Secrets Manager の行を確かめる。",
+          "en": "Deploy with the production profile, repeat rds:smoke during aws rds reboot-db-instance --force-failover, and record for how many seconds it fails. Restore to a new instance with aws rds restore-db-instance-to-point-in-time and see that the endpoint is new and the parameter group is back to the default. After a month, look at the RDS and Secrets Manager lines in Cost Explorer."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 59: RDS -----------------------------------------------\n      // The API on a model of a primary and a lagging replica (two PGlite). No Docker, no AWS.\n      \"dev:rds\": fresh(\"node --watch --env-file-if-exists=.env src/dev.ts\", { cwd: \"examples/59-rds\" }),\n      ...infra(\"rds\", \"examples/59-rds\", \"AihRds\"),\n      // These invoke the operations function in the VPC, which changes the database.\n      \"rds:db:bootstrap\": live(\"node --env-file-if-exists=../../.env scripts/ops.ts bootstrap\", {\n        cwd: \"examples/59-rds\",\n      }),\n      \"rds:db:migrate\": live(\"node --env-file-if-exists=../../.env scripts/ops.ts migrate\", {\n        cwd: \"examples/59-rds\",\n      }),\n      \"rds:db:status\": live(\"node --env-file-if-exists=../../.env scripts/ops.ts status\", {\n        cwd: \"examples/59-rds\",\n      }),\n      \"rds:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", { cwd: \"examples/59-rds\" }),",
+    "synth": ["rds:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/59-rds"]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@aih/example-64-isolates",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@aih/example-04-http-api": "workspace:*",
+    "@aih/example-11-network": "workspace:*",
+    "@aih/example-12-containers": "workspace:*",
+    "@aih/example-35-lambda-managed-instances": "workspace:*",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "esbuild": "0.28.2",
+    "vite-plus": "1.1.0",
+    "workerd": "1.20261012.1"
+  }
+}

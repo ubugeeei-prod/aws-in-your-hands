@@ -1,0 +1,25 @@
+{
+  "source": "Hand-written from the response syntax in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html (read 2026-10-13). Not recorded from a real inference call. Which answer a Nova model gives when it declines an image is not documented; content_filtered is one of the stopReason values the API reference lists.",
+  "description": "The model declines: stopReason content_filtered and no text.",
+  "steps": [
+    {
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": []
+          }
+        },
+        "stopReason": "content_filtered",
+        "usage": {
+          "inputTokens": 318,
+          "outputTokens": 0,
+          "totalTokens": 318
+        },
+        "metrics": {
+          "latencyMs": 1200
+        }
+      }
+    }
+  ]
+}

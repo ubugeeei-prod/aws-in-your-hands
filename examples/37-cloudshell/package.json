@@ -1,0 +1,17 @@
+{
+  "name": "@aih/example-37-cloudshell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@aih/tools": "workspace:*",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "vite-plus": "1.1.0"
+  }
+}

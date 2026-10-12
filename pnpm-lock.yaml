@@ -988,6 +988,1642 @@ importers:
         specifier: 1.1.0
         version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
 
+  examples/25-events:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-07-uploads':
+        specifier: workspace:*
+        version: link:../07-uploads
+      '@aih/example-08-async':
+        specifier: workspace:*
+        version: link:../08-async
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-sdk/client-eventbridge':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-sqs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/26-analytics:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aws-sdk/client-firehose':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      hyparquet:
+        specifier: 1.31.3
+        version: 1.31.3
+      hyparquet-writer:
+        specifier: 0.16.11
+        version: 0.16.11
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/27-search:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-17-ai':
+        specifier: workspace:*
+        version: link:../17-ai
+      '@aws-sdk/client-bedrock-runtime':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-s3vectors':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-crypto/sha256-js':
+        specifier: 5.2.0
+        version: 5.2.0
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.85
+        version: 3.972.85
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@smithy/signature-v4':
+        specifier: 5.7.4
+        version: 5.7.4
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/28-multi-region:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-22-recovery':
+        specifier: workspace:*
+        version: link:../22-recovery
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/29-lambda-tuning:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/30-data-modeling:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-07-uploads':
+        specifier: workspace:*
+        version: link:../07-uploads
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/31-progressive-delivery:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-12-containers':
+        specifier: workspace:*
+        version: link:../12-containers
+      '@aws-sdk/client-appconfig':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-cloudwatch':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-lambda':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/32-limits:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-14-kv-cache':
+        specifier: workspace:*
+        version: link:../14-kv-cache
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@smithy/util-retry':
+        specifier: 4.6.2
+        version: 4.6.2
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/33-production-readiness:
+    dependencies:
+      '@aih/example-19-observability':
+        specifier: workspace:*
+        version: link:../19-observability
+      '@aih/example-21-security':
+        specifier: workspace:*
+        version: link:../21-security
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/34-eks:
+    dependencies:
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-12-containers':
+        specifier: workspace:*
+        version: link:../12-containers
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/35-lambda-managed-instances:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/36-bedrock:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-06-auth':
+        specifier: workspace:*
+        version: link:../06-auth
+      '@aih/example-17-ai':
+        specifier: workspace:*
+        version: link:../17-ai
+      '@aws-sdk/client-bedrock-runtime':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-crypto/sha256-js':
+        specifier: 5.2.0
+        version: 5.2.0
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.85
+        version: 3.972.85
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@smithy/signature-v4':
+        specifier: 5.7.4
+        version: 5.7.4
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/37-cloudshell:
+    dependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/38-data-movement:
+    dependencies:
+      '@aih/example-07-uploads':
+        specifier: workspace:*
+        version: link:../07-uploads
+      '@aih/example-22-recovery':
+        specifier: workspace:*
+        version: link:../22-recovery
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-sns':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/39-database-migration:
+    dependencies:
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-13-sql':
+        specifier: workspace:*
+        version: link:../13-sql
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@electric-sql/pglite':
+        specifier: 0.5.8
+        version: 0.5.8
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/40-disaster-recovery:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-23-ec2':
+        specifier: workspace:*
+        version: link:../23-ec2
+      '@aws-sdk/client-drs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/41-fargate:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-12-containers':
+        specifier: workspace:*
+        version: link:../12-containers
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/42-firewall-manager:
+    dependencies:
+      '@aih/example-21-security':
+        specifier: workspace:*
+        version: link:../21-security
+      '@aws-sdk/client-sns':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/43-glue:
+    dependencies:
+      '@aih/example-26-analytics':
+        specifier: workspace:*
+        version: link:../26-analytics
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      hyparquet:
+        specifier: 1.31.3
+        version: 1.31.3
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/44-health:
+    dependencies:
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-sns':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/45-infrastructure-composer:
+    dependencies:
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/46-shield:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-32-limits':
+        specifier: workspace:*
+        version: link:../32-limits
+      '@aih/example-33-production-readiness':
+        specifier: workspace:*
+        version: link:../33-production-readiness
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/47-step-functions:
+    dependencies:
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      jsonata:
+        specifier: 2.0.6
+        version: 2.0.6
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-sfn':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-sqs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/48-sdk:
+    dependencies:
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-19-observability':
+        specifier: workspace:*
+        version: link:../19-observability
+      '@aih/example-32-limits':
+        specifier: workspace:*
+        version: link:../32-limits
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.85
+        version: 3.972.85
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      '@aws-sdk/lib-storage':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-s3@3.1149.0)
+      '@aws-sdk/s3-request-presigner':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@smithy/core':
+        specifier: 3.35.2
+        version: 3.35.2
+      '@smithy/types':
+        specifier: 4.19.0
+        version: 4.19.0
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/49-athena:
+    dependencies:
+      '@aih/example-26-analytics':
+        specifier: workspace:*
+        version: link:../26-analytics
+      '@aws-sdk/client-athena':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/50-agentcore:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-06-auth':
+        specifier: workspace:*
+        version: link:../06-auth
+      '@aih/example-17-ai':
+        specifier: workspace:*
+        version: link:../17-ai
+      '@aih/example-36-bedrock':
+        specifier: workspace:*
+        version: link:../36-bedrock
+      '@aws-sdk/client-bedrock-agentcore':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/51-chime-sdk:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aih/example-06-auth':
+        specifier: workspace:*
+        version: link:../06-auth
+      '@aws-sdk/client-chime-sdk-meetings':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      amazon-chime-sdk-js:
+        specifier: 3.32.0
+        version: 3.32.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      oauth4webapi:
+        specifier: 3.8.8
+        version: 3.8.8
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+      vue:
+        specifier: 3.5.43
+        version: 3.5.43(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      '@vizejs/vite-plugin':
+        specifier: 0.443.0
+        version: 0.443.0(@voidzero-dev/vite-plus-core@1.1.0(@types/node@24.19.2)(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1))(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite-plus@1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1))(vue@3.5.43(typescript@7.0.2))
+      jose:
+        specifier: 6.2.12
+        version: 6.2.12
+      vite:
+        specifier: npm:@voidzero-dev/vite-plus-core@1.1.0
+        version: '@voidzero-dev/vite-plus-core@1.1.0(@types/node@24.19.2)(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)'
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+      vize:
+        specifier: 0.443.0
+        version: 0.443.0(vue@3.5.43(typescript@7.0.2))
+
+  examples/52-ecr:
+    dependencies:
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/53-efs:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-23-ec2':
+        specifier: workspace:*
+        version: link:../23-ec2
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/54-kinesis:
+    dependencies:
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-sdk/client-kinesis':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-sqs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/55-grafana:
+    dependencies:
+      '@aih/example-19-observability':
+        specifier: workspace:*
+        version: link:../19-observability
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/56-nova:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-07-uploads':
+        specifier: workspace:*
+        version: link:../07-uploads
+      '@aih/example-17-ai':
+        specifier: workspace:*
+        version: link:../17-ai
+      '@aws-sdk/client-bedrock-runtime':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-crypto/sha256-js':
+        specifier: 5.2.0
+        version: 5.2.0
+      '@aws-sdk/client-bedrock':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.85
+        version: 3.972.85
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@smithy/signature-v4':
+        specifier: 5.7.4
+        version: 5.7.4
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/57-polly:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aws-sdk/client-polly':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/example-17-ai':
+        specifier: workspace:*
+        version: link:../17-ai
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/58-ledger:
+    dependencies:
+      '@aih/example-30-data-modeling':
+        specifier: workspace:*
+        version: link:../30-data-modeling
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-s3':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/59-rds:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-13-sql':
+        specifier: workspace:*
+        version: link:../13-sql
+      '@aws-sdk/rds-signer':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@aws-sdk/client-lambda':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-secrets-manager':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@electric-sql/pglite':
+        specifier: 0.5.8
+        version: 0.5.8
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/60-aurora:
+    dependencies:
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-13-sql':
+        specifier: workspace:*
+        version: link:../13-sql
+      '@aws-sdk/client-rds-data':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@electric-sql/pglite':
+        specifier: 0.5.8
+        version: 0.5.8
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/61-sqs:
+    dependencies:
+      '@aih/example-05-dynamodb':
+        specifier: workspace:*
+        version: link:../05-dynamodb
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-sqs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/62-ci-runners:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aws-sdk/client-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-ecs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-secrets-manager':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: 3.1149.0
+        version: 3.1149.0(@aws-sdk/client-dynamodb@3.1149.0)
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
+
+  examples/63-agent-sandbox:
+    dependencies:
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-17-ai':
+        specifier: workspace:*
+        version: link:../17-ai
+      '@aih/example-33-production-readiness':
+        specifier: workspace:*
+        version: link:../33-production-readiness
+      '@aih/example-36-bedrock':
+        specifier: workspace:*
+        version: link:../36-bedrock
+      '@aws-sdk/client-cloudwatch':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-ecs':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      '@aws-sdk/client-secrets-manager':
+        specifier: 3.1149.0
+        version: 3.1149.0
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/aws-lambda':
+        specifier: 8.10.164
+        version: 8.10.164
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/64-isolates:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-12-containers':
+        specifier: workspace:*
+        version: link:../12-containers
+      '@aih/example-35-lambda-managed-instances':
+        specifier: workspace:*
+        version: link:../35-lambda-managed-instances
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+      workerd:
+        specifier: 1.20261012.1
+        version: 1.20261012.1
+
+  examples/66-distributed-sql:
+    dependencies:
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      '@aih/example-13-sql':
+        specifier: workspace:*
+        version: link:../13-sql
+      '@aih/example-23-ec2':
+        specifier: workspace:*
+        version: link:../23-ec2
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@electric-sql/pglite':
+        specifier: 0.5.8
+        version: 0.5.8
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
+  examples/67-firecracker:
+    dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
+
+  examples/68-nitro:
+    dependencies:
+      '@aih/example-11-network':
+        specifier: workspace:*
+        version: link:../11-network
+      aws-cdk-lib:
+        specifier: 2.273.0
+        version: 2.273.0(constructs@10.8.1)
+      constructs:
+        specifier: 10.8.1
+        version: 10.8.1
+      valibot:
+        specifier: 1.5.0
+        version: 1.5.0(typescript@7.0.2)
+    devDependencies:
+      '@aih/tools':
+        specifier: workspace:*
+        version: link:../../tools
+      '@go-to-k/cdkd':
+        specifier: 0.296.28
+        version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
+      vite-plus:
+        specifier: 1.1.0
+        version: 1.1.0(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(@vitest/ui@5.0.3(vitest@5.0.3))(@volar/typescript@2.4.28)(@vue/language-core@3.3.13)(esbuild@0.28.2)(jiti@2.7.0)(playwright@1.64.0)(terser@5.51.2)(typescript@7.0.2)(vue-tsc@3.3.13(typescript@7.0.2))(yaml@2.9.1)
+
   tools:
     dependencies:
       '@aws-sdk/client-cloudfront':
@@ -1079,9 +2715,15 @@ packages:
     peerDependencies:
       '@aws-cdk/cli-plugin-contract': ^2
 
+  '@aws-crypto/sha256-js@2.0.2':
+    resolution: {integrity: sha512-iXLdKH19qPmIC73fVCrHWCSYjN/sxaAvZ3jNNyw6FclmHyjLKg0f69WlC9KTnyElxCR5MO9SKaG00VwlJwyAkQ==}
+
   '@aws-crypto/sha256-js@5.2.0':
     resolution: {integrity: sha512-FFQQyu7edu4ufvIZ+OadFpHHOt+eSTBaYaki44c+akjg7qZg9oOQeLlk77F6tSYqjDAFClrHJk9tMf0HdVyOvA==}
     engines: {node: '>=16.0.0'}
+
+  '@aws-crypto/util@2.0.2':
+    resolution: {integrity: sha512-Lgu5v/0e/BcrZ5m/IWqzPUf3UYFTy/PpeED+uc9SWUR1iZQL8XXbGQg10UfllwwBryO3hFF5dizK+78aoXC1eA==}
 
   '@aws-crypto/util@5.2.0':
     resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
@@ -1102,12 +2744,20 @@ packages:
     resolution: {integrity: sha512-nP+BKUUmPKxVXP+6rIt7rveZfLJp9wyyeuRqlQjJNTq5nk0bF2KaRZBF1ywNAUMoUVet5oFqOyqtjy/4yXKqYg==}
     engines: {node: '>=20.0.0'}
 
+  '@aws-sdk/client-appconfig@3.1149.0':
+    resolution: {integrity: sha512-FzBCaKiUPGLsnoGr2vm34nhxIskSYFaV4aolV0NU+EfViSWsNyUWGPbaRFE8meW1sXJe1BnzOsYctrt45B0fFg==}
+    engines: {node: '>=20.0.0'}
+
   '@aws-sdk/client-application-auto-scaling@3.1149.0':
     resolution: {integrity: sha512-kO1tXaUH00BsFDUwOXqh+f9sZbOogZi1Gwf/PktllFKH55TveS4KBJxqG7FZMxyEMWCUyULxftWetcCu0d1Bzg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-appsync@3.1149.0':
     resolution: {integrity: sha512-ku/z3EGxbcBcC/i1UFShinKh3mlCaKB9VUkIS15Wvu6JxdW/1TmMF51W3CmQCf0lfQNXR+UPujIwO7MVSDjzuA==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-athena@3.1149.0':
+    resolution: {integrity: sha512-GPHrphuEDhybsEkcCOnmadtIkCAzJ6wckZ1gllkHhkicO5EccXwMHeZNsmTWyjkrnafD4EjSz5Oaf+HfbHLIZA==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-auto-scaling@3.1149.0':
@@ -1126,8 +2776,20 @@ packages:
     resolution: {integrity: sha512-FArzHL7gOVLDCuF9VeYNgzlR7l119+iIexadd8tRp+UZvEIGWzIt9rWvNnGxJsXK5Ga2MEdKCu9MvTn7q2vFHg==}
     engines: {node: '>=20.0.0'}
 
+  '@aws-sdk/client-bedrock@3.1149.0':
+    resolution: {integrity: sha512-EVFHKVPWDu/rG/GuTKLuOGeVbHEfSmPH2JfYb3kpFRz4Fwi5a4AUlQa+ikzklBwjvJ3kmXeLeUtGTve5dS80LA==}
+    engines: {node: '>=20.0.0'}
+
   '@aws-sdk/client-budgets@3.1149.0':
     resolution: {integrity: sha512-RsQZB/Ae6UK2q+HjX47X8wgoynyN/00C0ZPIss+retNAiGZ5VpT8QVDVYACermrNLPiyIslZvDwUOutrYi6O7w==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-chime-sdk-meetings@3.1149.0':
+    resolution: {integrity: sha512-BAj3BtOlVfevEyTnaygzE/JFYMYinNLovzmzVifpMP/FJKaEokMnNWWwnQnOf4ermwug0+6PCLWohDy5RKEAbQ==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-chime-sdk-messaging@3.1149.0':
+    resolution: {integrity: sha512-/S7reEmR6JB7age+RiEJHRVNQ9AZ+u37PHt3ItVcqZX7N8bLOm/9l2NyV/UhwMnUrwb9YdvEZ/TKpUsD1YOjXA==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-cloudcontrol@3.1149.0':
@@ -1180,6 +2842,10 @@ packages:
 
   '@aws-sdk/client-docdb@3.1149.0':
     resolution: {integrity: sha512-y3UgbOsldFF2WlMWC0lJowfRZOXBTTqtmr//uudBJ4udFiidJ+PdUo5KGYBWPNVxciuKZivS2X6FBP2LX2cUfQ==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-drs@3.1149.0':
+    resolution: {integrity: sha512-Q4SRO+ghFNlwvPieqeI4c+/xnh9xKeKJNr/Rg8dbCuYEn2QQRN3BjY/Y6OmNJ9FTvyeYn6WyFioR/vOnZIlbJg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-dynamodb@3.1149.0':
@@ -1276,6 +2942,14 @@ packages:
 
   '@aws-sdk/client-pipes@3.1149.0':
     resolution: {integrity: sha512-Borz+YZ5keIVUizRsLpEBkrJnLP/vCAdIX1SUx9YBldTjQSmYcQ1QdRg2TTerTM18SnOyNsUTe8Nu3I+dvGXgg==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-polly@3.1149.0':
+    resolution: {integrity: sha512-VzGPTIK4pCOoQKowWSJJS08Fle7YHF+ta5ZXzEVmkyRagegA9RB5cWesBDQI5mgG0zbBCLOqvmteAbRLc2sqfg==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-rds-data@3.1149.0':
+    resolution: {integrity: sha512-6Agjp1rkNmb/W/YCd499qokOJ7SV82VCC4OzeGWrE+bwy6v2jV6RLU0gr4mRLk086IQpNl31cZlzTsvgAx+X8A==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-rds@3.1149.0':
@@ -1462,6 +3136,10 @@ packages:
     resolution: {integrity: sha512-bovCKvDsLocNTzaj6VrrMVJ2BGROqO0JlwcGseO67a+I9Bo+08nUJhSQfZUIx4+A4a7I4101GEJd/AYm7dQ68w==}
     engines: {node: '>=20.0.0'}
 
+  '@aws-sdk/rds-signer@3.1149.0':
+    resolution: {integrity: sha512-fwrziU9d1+e0dwR6zHQLPqPbQfZI6e6766JIXG7hlnTlAJYi7Tmlh8SpA66+DWnTatl66XW/+g/zAMmC6He3RA==}
+    engines: {node: '>=20.0.0'}
+
   '@aws-sdk/s3-presigned-post@3.1149.0':
     resolution: {integrity: sha512-QIHgXjkhOt48E+YFfQ8DSm/jtvrvUWvxwTDBIC4zpNtMb8V/CqYgXx5vO2UdhamiaQN6+hXV3tC1dq1m0PaJzw==}
     engines: {node: '>=20.0.0'}
@@ -1491,6 +3169,14 @@ packages:
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@aws-sdk/client-dynamodb': ^3.1111.0
+
+  '@aws-sdk/util-hex-encoding@3.374.0':
+    resolution: {integrity: sha512-14X7MDYCFle2Cuq0/Hvz2CHQoYVeoKKBY2Uf+wn0lKnKU+f0K81xRObUM/A7bLmZX4jFRk83gyE8Rj3BOqBdfA==}
+    engines: {node: '>=14.0.0'}
+    deprecated: This package has moved to @smithy/util-hex-encoding
+
+  '@aws-sdk/util-utf8-browser@3.259.0':
+    resolution: {integrity: sha512-UvFa/vR+e19XookZF8RzFZBrw2EUkQWxiBW0yYQAhvk3C+QVGl0H3ouca8LDBlBfQKXwmW3huo/59H8rwb1wJw==}
 
   '@aws-sdk/xml-builder@3.972.41':
     resolution: {integrity: sha512-ctjVSyCMegrWfXlx6VqzSBFI6UqmQ5ZlnfMhdLIiWmhoH8UAQxSCP5N3OpG7X3k4LnS7ou74C4mt20+bfTW2aQ==}
@@ -1676,6 +3362,36 @@ packages:
   '@cloudflare/kv-asset-handler@0.4.2':
     resolution: {integrity: sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==}
     engines: {node: '>=18.0.0'}
+
+  '@cloudflare/workerd-darwin-64@1.20261012.1':
+    resolution: {integrity: sha512-dkTL9aY3V4D40b+jBpGPCistWUPFQ/M61wlWi6i1o8MvHFFgEw7EQkcaYEv6Yd3bkPDD/3TFT4hRsMb2xVZSwQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20261012.1':
+    resolution: {integrity: sha512-2/nVGcKXjNNI+DhxKSepTKvFng9H7aN2WXv6Zu67iqgI6JrxypNt5kTPv4ZHosxrcfyKMci/2RfN7GIrN0BitQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-linux-64@1.20261012.1':
+    resolution: {integrity: sha512-uMe7ONHnLxStD1Ye0YFHBO36uj4cStv5P53rW+5GVWXFT8BRjqVixlH0IqCAHe1Pmcwyd1+7fVoGde89MZSCJg==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
+  '@cloudflare/workerd-linux-arm64@1.20261012.1':
+    resolution: {integrity: sha512-I0VMdcXk7ygG5vYDce0ePTBFdnBXC0i9WiBY5mWiv0iTinbfea6/rHqSQ7B1UMpjgrYVs9E0m4bZ9ufsk5GCFA==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@cloudflare/workerd-windows-64@1.20261012.1':
+    resolution: {integrity: sha512-c5hQvNx574UEoknaCFvMa/NdLrrYiALNbe6sx1okW8uOiRYWxrFuA8WpXFnBJ5XJypm0TEAHYaUTGv3rRLpY7Q==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
 
   '@colordx/core@7.3.0':
     resolution: {integrity: sha512-LVzTTPhX7wpy7TkGjouA9zbbCBIw92RGm7ZQqSKFE0oYE3sMx2FGXz90eVpgw7k/+wrrY+qJ86nHXifZWMS5jA==}
@@ -3193,6 +4909,33 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
+  '@protobufjs/aspromise@1.1.2':
+    resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
+
+  '@protobufjs/base64@1.1.2':
+    resolution: {integrity: sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==}
+
+  '@protobufjs/codegen@2.0.5':
+    resolution: {integrity: sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==}
+
+  '@protobufjs/eventemitter@1.1.1':
+    resolution: {integrity: sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg==}
+
+  '@protobufjs/fetch@1.1.1':
+    resolution: {integrity: sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw==}
+
+  '@protobufjs/float@1.0.2':
+    resolution: {integrity: sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==}
+
+  '@protobufjs/path@1.1.2':
+    resolution: {integrity: sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==}
+
+  '@protobufjs/pool@1.1.0':
+    resolution: {integrity: sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==}
+
+  '@protobufjs/utf8@1.1.2':
+    resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
+
   '@puppeteer/browsers@3.2.4':
     resolution: {integrity: sha512-okJ6yQMc0SBexOKxMi966omwAV1uAPwgF/YMZdb04gZQPXVjWHl9bmXjZYtIcsN1+PN3Bz4iFfGK3g+c6lZJ0Q==}
     engines: {node: '>=22.12.0'}
@@ -3705,6 +5448,10 @@ packages:
     resolution: {integrity: sha512-IJdWBbTcMQ6DA0gdNhh/BwrLkDR+ADW5Kr1aZmd4k3DIF6ezMV4R2NIAmT08wQJ3yUK82thHWmC/TnK/wpMMIA==}
     engines: {node: '>=14.0.0'}
 
+  '@smithy/util-hex-encoding@1.1.0':
+    resolution: {integrity: sha512-7UtIE9eH0u41zpB60Jzr0oNCQ3hMJUabMcKRUVjmyHTXiWDE4vjSqN6qlih7rCNeKGbioS7f/y2Jgym4QZcKFg==}
+    engines: {node: '>=14.0.0'}
+
   '@smithy/util-retry@4.6.2':
     resolution: {integrity: sha512-q6MXFNu+W4ZCNdNKutzDLP/Hzumd1FU9CQX++P/7ylanYIYiGhgZwSzwZWAw+G1RNcfY+RBYv61XcGlSYhj+BA==}
     engines: {node: '>=18.0.0'}
@@ -3870,6 +5617,9 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
+  '@types/ua-parser-js@0.7.39':
+    resolution: {integrity: sha512-P/oDfpofrdtF5xw433SPALpdSchtJmY7nsJItf8h3KXqOslkbySh8zq4dSWXH2oTjRvJ5PczVEoCZPow6GicLg==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -4607,6 +6357,10 @@ packages:
 
   alien-signals@3.2.1:
     resolution: {integrity: sha512-I8FjmltrfnDFoZedi5CG8DghVYNhzb/Ijluz7tCSJH0xpd0484Kowhbb1XDYOxfJpU1p5wnM2X54dA+IfGyD1g==}
+
+  amazon-chime-sdk-js@3.32.0:
+    resolution: {integrity: sha512-47EhjDTr9YBNPuxdsTr0Qy0iwg9ZEhXt9E0qHmo2wOs1tVdZeOsRhpIkJSlswVCkQSbjBNqLYPfhXS8XdjVTMg==}
+    engines: {node: '>=20', npm: '>=10'}
 
   amazon-ivs-player@1.57.0:
     resolution: {integrity: sha512-AZyCA3WvkOjnpPZ4VHfrW+DsjXVAE/jLSMZ9lGDdaFbIs8IPJ3/BwaeoXuO8pKE90DblGdZOhi38FBKDE7QMWQ==}
@@ -5449,6 +7203,9 @@ packages:
   destr@2.0.5:
     resolution: {integrity: sha512-ugFTXCtDZunbzasqBxrK93Ik/DRYsO6S/fedkWEMKqt04xZ4csmnmwGDBAb07QWNaGMAmnTIemsYZCksjATwsA==}
 
+  detect-browser@5.3.0:
+    resolution: {integrity: sha512-53rsFbGdwMwlF7qvCt0ypLM5V5/Mbl0szB7GPN8y9NCcbknYOeVVXdrXEq+90IwAfrrzt6Hd+u2E2ntakICU8w==}
+
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
@@ -5922,6 +7679,12 @@ packages:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
 
+  hyparquet-writer@0.16.11:
+    resolution: {integrity: sha512-Q0hI/Cf0RC5PX0iV0L8k02HdnqyPBuYc0t5gq/h9HO9n8eZiu4y5Fq3/AStGKi3lLYCePTCqyrmEymGOlnm61A==}
+
+  hyparquet@1.31.3:
+    resolution: {integrity: sha512-qThDJfCrTClFdaIQuQTtFOGp33bkbOyk+y1NrwcC8YZjvr5wxjNdKz7/PUF3xfNd7ZKLsYW+fY6N8dInjjMWJg==}
+
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
@@ -6125,6 +7888,10 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  jsonata@2.0.6:
+    resolution: {integrity: sha512-WhQB5tXQ32qjkx2GYHFw2XbL90u+LLzjofAYwi+86g6SyZeXHz9F1Q0amy3dWRYczshOC3Haok9J4pOCgHtwyQ==}
+    engines: {node: '>= 8'}
+
   jsonc-parser@3.3.1:
     resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
 
@@ -6286,6 +8053,9 @@ packages:
 
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
+
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
 
   lower-case@2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
@@ -6687,6 +8457,9 @@ packages:
   pako@0.2.9:
     resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
 
+  pako@2.2.0:
+    resolution: {integrity: sha512-zJq6RP/5q+TO2OpFV3FHzlPnFjmkb7Nc99a5SNjJE+uu/PkpChs+NIZSSzbBoD+6kjiISXjfYdwj1ZRQ81dz/w==}
+
   param-case@3.0.4:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
 
@@ -7032,6 +8805,10 @@ packages:
   property-information@7.2.0:
     resolution: {integrity: sha512-IAtzIB6sUiWaJYrX9smp3V46pBGbBeLFRGdh25kg1334VcBlD8HzhPeNIWQH9zhGmo2itIe25EHt9dQP7G5hmg==}
 
+  protobufjs@7.6.6:
+    resolution: {integrity: sha512-dYDWdjSl5RNb7SgPxGQcRU+GtvP7s2fpkrY0r432PcOIaZ0/rBcxEZnQN67iJhFuQiVw754JDoPruPCNdGsbjg==}
+    engines: {node: '>=12.0.0'}
+
   proxy-agent-negotiate@1.1.0:
     resolution: {integrity: sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ==}
     engines: {node: '>= 20'}
@@ -7147,6 +8924,9 @@ packages:
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
+
+  resize-observer@1.0.4:
+    resolution: {integrity: sha512-AQ2MdkWTng9d6JtjHvljiQR949qdae91pjSNugGGeOFzKIuLHvoZIYhUTjePla5hCFDwQHrnkciAIzjzdsTZew==}
 
   resolve-from@5.0.0:
     resolution: {integrity: sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==}
@@ -7548,6 +9328,9 @@ packages:
     resolution: {integrity: sha512-JfJeIHke7y2egdGGgRAvpCwYFUsHlM2gPcrVOxFkznt/4uzQ7HFmvE63iFHVLBJNDuyDOQgijDK/tXH/f6Msjg==}
     engines: {node: '>=6.10'}
 
+  tslib@1.14.1:
+    resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -7575,6 +9358,10 @@ packages:
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
     engines: {node: '>=16.20.0'}
+    hasBin: true
+
+  ua-parser-js@1.0.41:
+    resolution: {integrity: sha512-LbBDqdIC5s8iROCUjMbW1f5dJQTEFB1+KO9ogbvlb3nm9n4YHa5p4KTvFPWvh2Hs8gZMBuiB1/8+pdfe/tDPug==}
     hasBin: true
 
   ufo@1.6.4:
@@ -8106,6 +9893,11 @@ packages:
     engines: {node: '>=20.11'}
     hasBin: true
 
+  workerd@1.20261012.1:
+    resolution: {integrity: sha512-tEHoMPsMga0seVjxfsR8Pd3f8IRqYwkq++dTUKI5Gdgj6zuSDluYwisydq+dn90SsIACwBquJUQ1nBpcOqaWTA==}
+    engines: {node: '>=16'}
+    hasBin: true
+
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
@@ -8336,11 +10128,23 @@ snapshots:
       yaml: 1.10.3
       yazl: 3.3.1
 
+  '@aws-crypto/sha256-js@2.0.2':
+    dependencies:
+      '@aws-crypto/util': 2.0.2
+      '@aws-sdk/types': 3.974.6
+      tslib: 1.14.1
+
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
       '@aws-sdk/types': 3.974.6
       tslib: 2.8.1
+
+  '@aws-crypto/util@2.0.2':
+    dependencies:
+      '@aws-sdk/types': 3.974.6
+      '@aws-sdk/util-utf8-browser': 3.259.0
+      tslib: 1.14.1
 
   '@aws-crypto/util@5.2.0':
     dependencies:
@@ -8390,6 +10194,17 @@ snapshots:
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
+  '@aws-sdk/client-appconfig@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
   '@aws-sdk/client-application-auto-scaling@3.1149.0':
     dependencies:
       '@aws-sdk/core': 3.978.2
@@ -8402,6 +10217,17 @@ snapshots:
       tslib: 2.8.1
 
   '@aws-sdk/client-appsync@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-athena@3.1149.0':
     dependencies:
       '@aws-sdk/core': 3.978.2
       '@aws-sdk/credential-provider-node': 3.972.85
@@ -8460,7 +10286,41 @@ snapshots:
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
+  '@aws-sdk/client-bedrock@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/token-providers': 3.1149.0
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
   '@aws-sdk/client-budgets@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-chime-sdk-meetings@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-chime-sdk-messaging@3.1149.0':
     dependencies:
       '@aws-sdk/core': 3.978.2
       '@aws-sdk/credential-provider-node': 3.972.85
@@ -8610,6 +10470,17 @@ snapshots:
       '@aws-sdk/core': 3.978.2
       '@aws-sdk/credential-provider-node': 3.972.85
       '@aws-sdk/middleware-sdk-rds': 3.972.61
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-drs@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
       '@aws-sdk/types': 3.974.6
       '@smithy/core': 3.35.2
       '@smithy/fetch-http-handler': 5.8.0
@@ -8876,6 +10747,30 @@ snapshots:
       tslib: 2.8.1
 
   '@aws-sdk/client-pipes@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-polly@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-provider-node': 3.972.85
+      '@aws-sdk/eventstream-handler-node': 3.972.36
+      '@aws-sdk/middleware-eventstream': 3.972.31
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.35.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-rds-data@3.1149.0':
     dependencies:
       '@aws-sdk/core': 3.978.2
       '@aws-sdk/credential-provider-node': 3.972.85
@@ -9343,6 +11238,15 @@ snapshots:
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
+  '@aws-sdk/rds-signer@3.1149.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.2
+      '@aws-sdk/credential-providers': 3.1149.0
+      '@smithy/core': 3.35.2
+      '@smithy/signature-v4': 5.7.4
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
   '@aws-sdk/s3-presigned-post@3.1149.0':
     dependencies:
       '@aws-sdk/client-s3': 3.1149.0
@@ -9391,6 +11295,15 @@ snapshots:
   '@aws-sdk/util-dynamodb@3.996.9(@aws-sdk/client-dynamodb@3.1149.0)':
     dependencies:
       '@aws-sdk/client-dynamodb': 3.1149.0
+      tslib: 2.8.1
+
+  '@aws-sdk/util-hex-encoding@3.374.0':
+    dependencies:
+      '@smithy/util-hex-encoding': 1.1.0
+      tslib: 2.8.1
+
+  '@aws-sdk/util-utf8-browser@3.259.0':
+    dependencies:
       tslib: 2.8.1
 
   '@aws-sdk/xml-builder@3.972.41':
@@ -9616,6 +11529,21 @@ snapshots:
       sisteransi: 1.0.5
 
   '@cloudflare/kv-asset-handler@0.4.2': {}
+
+  '@cloudflare/workerd-darwin-64@1.20261012.1':
+    optional: true
+
+  '@cloudflare/workerd-darwin-arm64@1.20261012.1':
+    optional: true
+
+  '@cloudflare/workerd-linux-64@1.20261012.1':
+    optional: true
+
+  '@cloudflare/workerd-linux-arm64@1.20261012.1':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20261012.1':
+    optional: true
 
   '@colordx/core@7.3.0': {}
 
@@ -11139,6 +13067,26 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
+  '@protobufjs/aspromise@1.1.2': {}
+
+  '@protobufjs/base64@1.1.2': {}
+
+  '@protobufjs/codegen@2.0.5': {}
+
+  '@protobufjs/eventemitter@1.1.1': {}
+
+  '@protobufjs/fetch@1.1.1':
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+
+  '@protobufjs/float@1.0.2': {}
+
+  '@protobufjs/path@1.1.2': {}
+
+  '@protobufjs/pool@1.1.0': {}
+
+  '@protobufjs/utf8@1.1.2': {}
+
   '@puppeteer/browsers@3.2.4':
     dependencies:
       modern-tar: 0.8.5
@@ -11511,6 +13459,10 @@ snapshots:
       '@smithy/is-array-buffer': 2.2.0
       tslib: 2.8.1
 
+  '@smithy/util-hex-encoding@1.1.0':
+    dependencies:
+      tslib: 2.8.1
+
   '@smithy/util-retry@4.6.2':
     dependencies:
       '@smithy/core': 3.35.2
@@ -11709,6 +13661,8 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
+
+  '@types/ua-parser-js@0.7.39': {}
 
   '@types/unist@3.0.3': {}
 
@@ -12360,6 +14314,18 @@ snapshots:
 
   alien-signals@3.2.1:
     optional: true
+
+  amazon-chime-sdk-js@3.32.0:
+    dependencies:
+      '@aws-crypto/sha256-js': 2.0.2
+      '@aws-sdk/client-chime-sdk-messaging': 3.1149.0
+      '@aws-sdk/util-hex-encoding': 3.374.0
+      '@types/ua-parser-js': 0.7.39
+      detect-browser: 5.3.0
+      pako: 2.2.0
+      protobufjs: 7.6.6
+      resize-observer: 1.0.4
+      ua-parser-js: 1.0.41
 
   amazon-ivs-player@1.57.0(bowser@2.14.1)(lodash@4.18.1):
     dependencies:
@@ -13250,6 +15216,8 @@ snapshots:
 
   destr@2.0.5: {}
 
+  detect-browser@5.3.0: {}
+
   detect-libc@2.1.2: {}
 
   devalue@6.0.2: {}
@@ -13752,6 +15720,12 @@ snapshots:
 
   human-signals@5.0.0: {}
 
+  hyparquet-writer@0.16.11:
+    dependencies:
+      hyparquet: 1.31.3
+
+  hyparquet@1.31.3: {}
+
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -13919,6 +15893,8 @@ snapshots:
 
   json5@2.2.3: {}
 
+  jsonata@2.0.6: {}
+
   jsonc-parser@3.3.1: {}
 
   jsonfile@6.2.1:
@@ -14056,6 +16032,8 @@ snapshots:
   lodash.truncate@4.4.2: {}
 
   lodash@4.18.1: {}
+
+  long@5.3.2: {}
 
   lower-case@2.0.2:
     dependencies:
@@ -14760,6 +16738,8 @@ snapshots:
 
   pako@0.2.9: {}
 
+  pako@2.2.0: {}
+
   param-case@3.0.4:
     dependencies:
       dot-case: 3.0.4
@@ -15086,6 +17066,20 @@ snapshots:
 
   property-information@7.2.0: {}
 
+  protobufjs@7.6.6:
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+      '@protobufjs/base64': 1.1.2
+      '@protobufjs/codegen': 2.0.5
+      '@protobufjs/eventemitter': 1.1.1
+      '@protobufjs/fetch': 1.1.1
+      '@protobufjs/float': 1.0.2
+      '@protobufjs/path': 1.1.2
+      '@protobufjs/pool': 1.1.0
+      '@protobufjs/utf8': 1.1.2
+      '@types/node': 24.19.2
+      long: 5.3.2
+
   proxy-agent-negotiate@1.1.0: {}
 
   proxy-from-env@2.1.0: {}
@@ -15230,6 +17224,8 @@ snapshots:
   relateurl@0.2.7: {}
 
   require-from-string@2.0.2: {}
+
+  resize-observer@1.0.4: {}
 
   resolve-from@5.0.0: {}
 
@@ -15675,6 +17671,8 @@ snapshots:
 
   ts-dedent@2.3.0: {}
 
+  tslib@1.14.1: {}
+
   tslib@2.8.1: {}
 
   type-detect@4.0.8: {}
@@ -15711,6 +17709,8 @@ snapshots:
       '@typescript/typescript-sunos-x64': 7.0.2
       '@typescript/typescript-win32-arm64': 7.0.2
       '@typescript/typescript-win32-x64': 7.0.2
+
+  ua-parser-js@1.0.41: {}
 
   ufo@1.6.4: {}
 
@@ -16271,6 +18271,14 @@ snapshots:
       isexe: 4.0.0
 
   why-is-node-running@3.2.1: {}
+
+  workerd@1.20261012.1:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20261012.1
+      '@cloudflare/workerd-darwin-arm64': 1.20261012.1
+      '@cloudflare/workerd-linux-64': 1.20261012.1
+      '@cloudflare/workerd-linux-arm64': 1.20261012.1
+      '@cloudflare/workerd-windows-64': 1.20261012.1
 
   wrap-ansi@7.0.0:
     dependencies:

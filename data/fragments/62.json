@@ -1,0 +1,1276 @@
+{
+  "chapterId": "62",
+  "manifest": {
+    "id": "62",
+    "slug": "ci-runners",
+    "title": {
+      "ja": "CI Runner: GitHub Actions と GitLab Runner を自分の AWS で動かす",
+      "en": "CI Runners: Self-Hosted GitHub Actions and GitLab Runners on AWS"
+    },
+    "prerequisites": ["11", "12", "20", "21", "23"],
+    "services": [
+      "Fargate",
+      "ECS",
+      "Lambda",
+      "DynamoDB",
+      "Secrets Manager",
+      "EventBridge Scheduler",
+      "CodeBuild"
+    ],
+    "samplePath": "examples/62-ci-runners",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "cir-gh-rest-runners",
+      "cir-gh-secure-use",
+      "cir-gh-runner-reference",
+      "cir-gh-remove-runners",
+      "cir-gh-arc",
+      "cir-gh-scaleset",
+      "cir-gh-webhook-events",
+      "cir-gh-openapi",
+      "cir-gh-validating",
+      "cir-gh-failed-deliveries",
+      "cir-gh-webhook-practices",
+      "cir-gh-app-jwt",
+      "cir-gh-app-token",
+      "cir-gh-app-permissions",
+      "cir-gh-fork-settings",
+      "cir-gh-oidc",
+      "cir-gh-limits",
+      "cir-gh-hosted-reference",
+      "cir-gh-runner-pricing",
+      "cir-gh-actions-billing",
+      "cir-gh-pricing-change",
+      "cir-gh-cache",
+      "cir-gh-runner-image",
+      "cir-gl-new-workflow",
+      "cir-gl-register",
+      "cir-gl-tokens",
+      "cir-gl-executors",
+      "cir-gl-instance",
+      "cir-gl-docker-autoscaler",
+      "cir-gl-fleeting-aws",
+      "cir-gl-advanced-config",
+      "cir-gl-long-polling",
+      "cir-gl-fargate",
+      "cir-gl-security",
+      "cir-gl-fork-pipelines",
+      "cir-gl-docker-build",
+      "cir-gl-kaniko",
+      "cir-gl-buildkit",
+      "cir-gl-autoscale-cache",
+      "cir-gl-pricing",
+      "cir-gl-compute-minutes",
+      "cir-gl-oidc-aws",
+      "cir-cb-action-runner",
+      "cir-cb-runner-questions",
+      "cir-cb-gitlab-runner",
+      "cir-cb-gitlab-questions",
+      "cir-cb-environment",
+      "cir-cb-lambda",
+      "cir-cb-pricing",
+      "cir-cb-price-list",
+      "cir-ecs-run-task",
+      "cir-ecs-idempotency",
+      "cir-ecs-container-override",
+      "cir-fargate-security",
+      "cir-ecs-task-role",
+      "cir-ecs-role-credentials",
+      "cir-ecs-stop-task",
+      "cir-fargate-pricing",
+      "cir-lambda-url-auth",
+      "cir-lambda-url-invocation",
+      "cir-ec2-imds-credentials",
+      "cir-cdkd-providers",
+      "cir-kaniko",
+      "cir-buildkit-rootless",
+      "cir-cf-workers-builds",
+      "cir-vercel-builds",
+      "github-oidc-aws",
+      "github-oidc-reference",
+      "github-secure-use",
+      "github-environments",
+      "aws-price-list-ecs",
+      "aws-price-list-vpc",
+      "aws-price-list-lambda",
+      "aws-price-list-secretsmanager",
+      "aws-price-list-dynamodb",
+      "cdkd-introduction"
+    ]
+  },
+  "sources": [
+    {
+      "id": "cir-gh-rest-runners",
+      "url": "https://docs.github.com/en/rest/actions/self-hosted-runners?apiVersion=2022-11-28",
+      "title": "REST API endpoints for self-hosted runners",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "POST /repos/{owner}/{repo}/actions/runners/generate-jitconfig: 'Generates a configuration that can be passed to the runner application at startup'; body name, runner_group_id, labels (1 to 100) are required, work_folder defaults to _work; answers 201, 404, 409, 422; the response has runner.id and encoded_jit_config",
+        "A registration token for a repository 'expires after one hour'",
+        "DELETE /repos/{owner}/{repo}/actions/runners/{runner_id} 'Forces the removal of a self-hosted runner from a repository' and answers 204"
+      ],
+      "note": "The page does not say what a 409 from generate-jitconfig means, nor how long encoded_jit_config is."
+    },
+    {
+      "id": "cir-gh-secure-use",
+      "url": "https://docs.github.com/en/actions/reference/security/secure-use",
+      "title": "Secure use reference (GitHub Actions)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Self-hosted runners 'do not have guarantees around running in ephemeral clean virtual machines, and can be persistently compromised by untrusted code in a workflow'",
+        "Self-hosted runners 'should almost never be used for public repositories'; for private repositories anyone who can fork and open a pull request can compromise the runner environment",
+        "Just-in-time runners 'perform at most one job before being automatically removed'; 're-using hardware to host JIT runners can risk exposing information from the environment'; started with ./run.sh --jitconfig",
+        "'there is no way to guarantee that a self-hosted runner only runs one job' is said of runners destroyed by automation after each job, before the JIT section",
+        "pull_request_target and workflow_run are privileged triggers and must not check out untrusted code"
+      ]
+    },
+    {
+      "id": "cir-gh-runner-reference",
+      "url": "https://docs.github.com/en/actions/reference/runners/self-hosted-runners",
+      "title": "Self-hosted runners reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'The host machine must be able to make outbound HTTPS connections over port 443'; the hosts include github.com, api.github.com, *.actions.githubusercontent.com and codeload.github.com",
+        "A new runner version must be installed within 30 days",
+        "'GitHub recommends implementing autoscaling with ephemeral self-hosted runners; autoscaling with persistent self-hosted runners is not recommended'",
+        "'You can create your own autoscaling environment by using payloads received from the workflow_job webhook'",
+        "ARC is recommended for teams with Kubernetes; the Scale Set Client 'orchestrates GitHub API interactions for scale sets while leaving infrastructure provisioning to you'",
+        "Docker container actions and service containers need a Linux machine with Docker installed"
+      ]
+    },
+    {
+      "id": "cir-gh-remove-runners",
+      "url": "https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/remove-runners",
+      "title": "Removing self-hosted runners",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A self-hosted runner that has not connected for more than 14 days is removed automatically; an ephemeral one after 1 day"
+      ]
+    },
+    {
+      "id": "cir-gh-arc",
+      "url": "https://docs.github.com/en/actions/concepts/runners/actions-runner-controller",
+      "title": "Actions Runner Controller",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ARC is a Kubernetes operator; its listener holds an HTTPS long poll to the Actions service and the controller requests a just-in-time configuration for each ephemeral runner pod",
+        "The actions-runner image 'contains the least amount of packages necessary for the container runtime and the runner binaries'; the runner is launched with /home/runner/run.sh"
+      ]
+    },
+    {
+      "id": "cir-gh-scaleset",
+      "url": "https://github.com/actions/scaleset",
+      "title": "actions/scaleset",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A standalone Go client for the Runner Scale Set APIs, in public preview; starting and managing the runners is left to the user"
+      ]
+    },
+    {
+      "id": "cir-gh-webhook-events",
+      "url": "https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+      "title": "Webhook events and payloads",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Delivery headers X-GitHub-Event, X-GitHub-Delivery (a GUID), X-Hub-Signature-256 (sent when the webhook has a secret); payloads are capped at 25 MB",
+        "workflow_job has the actions queued, in_progress, completed, waiting; a GitHub App needs read access to the Actions repository permission to subscribe"
+      ]
+    },
+    {
+      "id": "cir-gh-openapi",
+      "url": "https://github.com/github/rest-api-description/blob/main/descriptions/api.github.com/api.github.com.yaml",
+      "title": "github/rest-api-description: api.github.com.yaml",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "webhook-workflow-job-queued: action, repository, sender, workflow_job are required; workflow_job has id, run_id, run_attempt, labels (array of strings), head_branch, runner_id (nullable) and no field naming the head repository",
+        "repository has full_name, private (boolean), fork, visibility; installation (id, node_id) is present when the event is sent to a GitHub App",
+        "workflow-run requires head_repository, repository, event and head_branch"
+      ],
+      "note": "Read from the main branch on 2026-10-13. The schema lists head_repository as required and not nullable; the receiver accepts null and refuses it."
+    },
+    {
+      "id": "cir-gh-validating",
+      "url": "https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries",
+      "title": "Validating webhook deliveries",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "X-Hub-Signature-256 is an HMAC hex digest of the payload, keyed with the webhook secret, and always starts with sha256=",
+        "Compare with a constant-time comparison, not ==",
+        "The test values: secret \"It's a Secret to Everybody\", payload \"Hello, World!\", signature sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17"
+      ]
+    },
+    {
+      "id": "cir-gh-failed-deliveries",
+      "url": "https://docs.github.com/en/webhooks/using-webhooks/handling-failed-webhook-deliveries",
+      "title": "Handling failed webhook deliveries",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'GitHub does not automatically redeliver failed deliveries'; a delivery fails when the server is down or takes longer than 10 seconds"
+      ]
+    },
+    {
+      "id": "cir-gh-webhook-practices",
+      "url": "https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks",
+      "title": "Best practices for using webhooks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Answer with a 2XX within 10 seconds; a redelivery carries the same X-GitHub-Delivery value as the original"
+      ]
+    },
+    {
+      "id": "cir-gh-app-jwt",
+      "url": "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app",
+      "title": "Generating a JSON Web Token (JWT) for a GitHub App",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "RS256; iat (60 seconds in the past is recommended), exp no more than 10 minutes ahead, iss the client ID or app ID; sent as Authorization: Bearer"
+      ]
+    },
+    {
+      "id": "cir-gh-app-token",
+      "url": "https://docs.github.com/en/rest/apps/apps?apiVersion=2022-11-28",
+      "title": "REST API endpoints for GitHub Apps",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "POST /app/installations/{installation_id}/access_tokens: the token expires after one hour and can be limited with repositories and permissions (administration, actions: read or write)"
+      ]
+    },
+    {
+      "id": "cir-gh-app-permissions",
+      "url": "https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps?apiVersion=2022-11-28",
+      "title": "Permissions required for GitHub Apps",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "generate-jitconfig and the runner DELETE need the Administration repository permission (write); GET /repos/{owner}/{repo}/actions/runs/{run_id} needs Actions (read); all accept installation tokens"
+      ]
+    },
+    {
+      "id": "cir-gh-fork-settings",
+      "url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository",
+      "title": "Managing GitHub Actions settings for a repository",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Approval for fork pull request workflows: three levels; first-time contributors need approval by default; pull_request_target workflows always run regardless of approval settings",
+        "With self-hosted runners, 'potentially malicious user-controlled workflow code will execute automatically' once approval is bypassed or given",
+        "Private repositories: 'Run workflows from fork pull requests' and its sub-options"
+      ]
+    },
+    {
+      "id": "cir-gh-oidc",
+      "url": "https://docs.github.com/en/actions/reference/security/oidc",
+      "title": "OpenID Connect reference",
+      "checkedAt": "2026-10-13",
+      "supports": ["The token has a runner_environment claim: github-hosted or self-hosted"],
+      "note": "The page does not state in a sentence that jobs on self-hosted runners can request the token; the claim value is the evidence."
+    },
+    {
+      "id": "cir-gh-limits",
+      "url": "https://docs.github.com/en/actions/reference/limits",
+      "title": "Actions limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A job waits for a self-hosted runner for 24 hours before it is cancelled; a job on a self-hosted runner may run 5 days, on a GitHub-hosted runner 6 hours",
+        "1,500 runner registrations per 5 minutes per repository, organization or enterprise"
+      ]
+    },
+    {
+      "id": "cir-gh-hosted-reference",
+      "url": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners",
+      "title": "GitHub-hosted runners reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Standard Linux runners: 4 cores and 16 GB for public repositories, 2 cores and 8 GB for private ones, x64 (ubuntu-latest) and arm64 (ubuntu-24.04-arm), 14 GB SSD"
+      ]
+    },
+    {
+      "id": "cir-gh-runner-pricing",
+      "url": "https://docs.github.com/en/billing/reference/actions-runner-pricing",
+      "title": "Actions runner pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Linux 2-core x64 USD 0.006 per minute, Linux 2-core arm64 USD 0.005; each job is rounded up to the nearest whole minute"
+      ]
+    },
+    {
+      "id": "cir-gh-actions-billing",
+      "url": "https://docs.github.com/en/billing/concepts/product-billing/github-actions",
+      "title": "GitHub Actions billing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'GitHub Actions usage is free for self-hosted runners and for public repositories that use standard GitHub-hosted runners'",
+        "Included minutes a month: Free 2,000, Pro 3,000, Team 3,000, Enterprise Cloud 50,000"
+      ]
+    },
+    {
+      "id": "cir-gh-pricing-change",
+      "url": "https://github.blog/changelog/2025-12-16-coming-soon-simpler-pricing-and-a-better-experience-for-github-actions/",
+      "title": "Update to GitHub Actions pricing (GitHub Changelog)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A USD 0.002 per minute charge for self-hosted runner usage was announced for 2026-03-01 and then postponed: 'We're postponing the announced billing change for self-hosted GitHub Actions to take time to re-evaluate our approach'; no new date is given"
+      ]
+    },
+    {
+      "id": "cir-gh-cache",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching",
+      "title": "Dependency caching reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "10 GB of cache per repository by default; entries not accessed for 7 days are removed"
+      ],
+      "note": "The page does not mention self-hosted runners."
+    },
+    {
+      "id": "cir-gh-runner-image",
+      "url": "https://github.com/actions/runner/blob/v2.338.0/images/Dockerfile",
+      "title": "actions/runner v2.338.0: images/Dockerfile",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The image is built on dotnet/runtime-deps 8.0-noble, runs as the user runner in /home/runner, sets no ENTRYPOINT, and contains the Docker CLI and buildx but starts no daemon"
+      ],
+      "note": "The manifest of ghcr.io/actions/actions-runner:2.338.0 was read anonymously from ghcr.io on 2026-10-13: an index with linux/amd64 and linux/arm64, digest sha256:4ffadc0002b2581327e06101fc8c06cd189232baf79fe561fac9caeb76f5e807. v2.338.0 was the latest release that day."
+    },
+    {
+      "id": "cir-gl-new-workflow",
+      "url": "https://docs.gitlab.com/ci/runners/new_creation_workflow/",
+      "title": "Migrating to the new runner registration workflow",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Runners register with a runner authentication token (prefix glrt-), created in the UI or with POST /user/runners; the legacy registration workflow can be disabled"
+      ]
+    },
+    {
+      "id": "cir-gl-register",
+      "url": "https://docs.gitlab.com/runner/register/",
+      "title": "Registering runners",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Runner registration tokens are deprecated and scheduled for removal in GitLab 20.0"
+      ]
+    },
+    {
+      "id": "cir-gl-tokens",
+      "url": "https://docs.gitlab.com/security/tokens/",
+      "title": "GitLab token overview",
+      "checkedAt": "2026-10-13",
+      "supports": ["The runner authentication token is stored in config.toml"]
+    },
+    {
+      "id": "cir-gl-executors",
+      "url": "https://docs.gitlab.com/runner/executors/",
+      "title": "Executors",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Kubernetes, Docker, Docker Autoscaler and Instance are the main executors; Shell, SSH, Custom and others are in maintenance mode; Docker Machine is deprecated"
+      ]
+    },
+    {
+      "id": "cir-gl-instance",
+      "url": "https://docs.gitlab.com/runner/executors/instance/",
+      "title": "Instance executor",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'When the capacity and use count are set to 1, each job is given a secure ephemeral instance that cannot be affected by other jobs'; the instance is deleted when the job completes"
+      ]
+    },
+    {
+      "id": "cir-gl-docker-autoscaler",
+      "url": "https://docs.gitlab.com/runner/executors/docker_autoscaler/",
+      "title": "Docker Autoscaler executor",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An autoscale-enabled Docker executor that creates instances on demand through fleeting plugins"
+      ]
+    },
+    {
+      "id": "cir-gl-fleeting-aws",
+      "url": "https://gitlab.com/gitlab-org/fleeting/plugins/aws",
+      "title": "fleeting-plugin-aws",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Scales an EC2 Auto Scaling group whose desired and minimum capacity are zero, whose scaling policy is None, with AZRebalance suspended and scale-in protection enabled; lists the IAM actions the runner manager needs"
+      ]
+    },
+    {
+      "id": "cir-gl-advanced-config",
+      "url": "https://docs.gitlab.com/runner/configuration/advanced-configuration/",
+      "title": "Advanced configuration (config.toml)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "[runners.autoscaler]: plugin, capacity_per_instance, max_use_count, max_instances, and policies with idle_count and idle_time",
+        "[runners.cache] with Type s3 and [runners.cache.s3] (BucketName, BucketLocation, AuthenticationType iam or access-key, RoleARN)"
+      ]
+    },
+    {
+      "id": "cir-gl-long-polling",
+      "url": "https://docs.gitlab.com/ci/runners/long_polling/",
+      "title": "Long polling",
+      "checkedAt": "2026-10-13",
+      "supports": ["A runner polls GitLab for jobs with POST /api/v4/jobs/request"]
+    },
+    {
+      "id": "cir-gl-fargate",
+      "url": "https://docs.gitlab.com/runner/configuration/runner_autoscale_aws_fargate/",
+      "title": "Autoscaling GitLab CI on AWS Fargate",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Fargate driver is community supported and 'not meant for production use'; it still needs an EC2 instance for the runner manager, and ignores image and services"
+      ]
+    },
+    {
+      "id": "cir-gl-security",
+      "url": "https://docs.gitlab.com/runner/security/",
+      "title": "Security for self-managed runners",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The shell executor carries high risk; privileged mode disables the container's security mechanisms; non-ephemeral runners shared between projects raise the risk; protected runners run jobs only on protected branches"
+      ]
+    },
+    {
+      "id": "cir-gl-fork-pipelines",
+      "url": "https://docs.gitlab.com/ci/pipelines/merge_request_pipelines/",
+      "title": "Merge request pipelines",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A pipeline for a merge request from a fork runs in the fork by default; running it in the parent project uses the parent's runners and can expose its secrets"
+      ]
+    },
+    {
+      "id": "cir-gl-docker-build",
+      "url": "https://docs.gitlab.com/ci/docker/using_docker_build/",
+      "title": "Use Docker to build Docker images",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Docker-in-Docker needs privileged mode; without it, use BuildKit (rootless) or Buildah"
+      ]
+    },
+    {
+      "id": "cir-gl-kaniko",
+      "url": "https://docs.gitlab.com/ci/docker/using_kaniko/",
+      "title": "Use kaniko to build Docker images (removed)",
+      "checkedAt": "2026-10-13",
+      "supports": ["'kaniko is no longer a maintained project'"]
+    },
+    {
+      "id": "cir-gl-buildkit",
+      "url": "https://docs.gitlab.com/ci/docker/using_buildkit/",
+      "title": "Build Docker images with BuildKit",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Rootless BuildKit with the moby/buildkit:rootless image and --oci-worker-no-process-sandbox"
+      ]
+    },
+    {
+      "id": "cir-gl-autoscale-cache",
+      "url": "https://docs.gitlab.com/runner/configuration/autoscale/",
+      "title": "Docker Machine Executor autoscaling configuration",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With autoscaling most jobs run on a new host, so the local cache is of no use and a distributed cache is needed; Docker Machine is deprecated since 17.5"
+      ]
+    },
+    {
+      "id": "cir-gl-pricing",
+      "url": "https://about.gitlab.com/pricing/",
+      "title": "GitLab pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Included compute minutes a month on GitLab.com: Free 400, Premium 10,000, Ultimate 50,000; additional minutes USD 10 per 1,000"
+      ]
+    },
+    {
+      "id": "cir-gl-compute-minutes",
+      "url": "https://about.gitlab.com/pricing/faq-compute-minutes/",
+      "title": "Compute minutes FAQ",
+      "checkedAt": "2026-10-13",
+      "supports": ["Minutes used on your own runners do not count against the limit"]
+    },
+    {
+      "id": "cir-gl-oidc-aws",
+      "url": "https://docs.gitlab.com/ci/cloud_services/aws/",
+      "title": "Configure OpenID Connect in AWS to retrieve temporary credentials",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A job asks for an ID token with id_tokens and exchanges it with sts assume-role-with-web-identity; the trust policy conditions on gitlab.com:sub (project_path:...:ref_type:branch:ref:main)"
+      ]
+    },
+    {
+      "id": "cir-cb-action-runner",
+      "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/action-runner.html",
+      "title": "Tutorial: Configure a CodeBuild-hosted GitHub Actions runner",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The project receives WORKFLOW_JOB_QUEUED webhook events; the workflow uses runs-on: codebuild-<project-name>-${{ github.run_id }}-${{ github.run_attempt }}",
+        "'For each job in the workflow, CodeBuild starts a build to run an ephemeral GitHub Actions runner'; the build ends when the job does; buildspec commands are ignored by default",
+        "CodeBuild connects to GitHub with a personal access token, a Secrets Manager secret, an OAuth app or a GitHub App"
+      ]
+    },
+    {
+      "id": "cir-cb-runner-questions",
+      "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/action-runner-questions.html",
+      "title": "Troubleshoot the webhook / About CodeBuild-hosted GitHub Actions runners",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CodeBuild-hosted GitHub Actions runners are supported on EC2 and Lambda compute"
+      ]
+    },
+    {
+      "id": "cir-cb-gitlab-runner",
+      "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/sample-gitlab-runners.html",
+      "title": "Tutorial: Configure a CodeBuild-hosted GitLab runner",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "tags: codebuild-<project-name>-$CI_PROJECT_ID-$CI_PIPELINE_IID-$CI_JOB_NAME; one build runs one ephemeral GitLab runner for one job; connection through CodeConnections with an OAuth app"
+      ]
+    },
+    {
+      "id": "cir-cb-gitlab-questions",
+      "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/gitlab-runner-questions.html",
+      "title": "About CodeBuild-hosted GitLab runners",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The runner in CodeBuild runs with the shell executor inside the build container"
+      ]
+    },
+    {
+      "id": "cir-cb-environment",
+      "url": "https://docs.aws.amazon.com/codebuild/latest/APIReference/API_ProjectEnvironment.html",
+      "title": "CodeBuild API: ProjectEnvironment",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "privilegedMode enables running the Docker daemon inside a Docker container and is false by default"
+      ]
+    },
+    {
+      "id": "cir-cb-lambda",
+      "url": "https://docs.aws.amazon.com/codebuild/latest/userguide/lambda.html",
+      "title": "Run builds on AWS Lambda compute",
+      "checkedAt": "2026-10-13",
+      "supports": ["Lambda compute supports neither Docker builds nor runs longer than 15 minutes"]
+    },
+    {
+      "id": "cir-cb-pricing",
+      "url": "https://aws.amazon.com/codebuild/pricing/",
+      "title": "AWS CodeBuild Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On-demand EC2 builds are billed by the minute from submission to termination, rounded up; 100 build minutes a month of general1.small or arm1.small are free and the allowance does not expire"
+      ]
+    },
+    {
+      "id": "cir-cb-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/CodeBuild/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: CodeBuild, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "arm1.small USD 0.00425 per minute, general1.small USD 0.005 per minute in Tokyo"
+      ]
+    },
+    {
+      "id": "cir-ecs-run-task",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RunTask.html",
+      "title": "ECS API: RunTask",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'A total of 8192 characters are allowed for overrides'; clientToken makes the request idempotent (up to 64 characters); startedBy; a 200 answer can carry failures instead of tasks"
+      ]
+    },
+    {
+      "id": "cir-ecs-idempotency",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/ECS_Idempotency.html",
+      "title": "ECS API: Ensuring idempotency",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The RunTask client token lives 24 hours and is scoped to the cluster; the same token with other parameters fails with ConflictException"
+      ]
+    },
+    {
+      "id": "cir-ecs-container-override",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerOverride.html",
+      "title": "ECS API: ContainerOverride",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A container override can set command, environment, environmentFiles, cpu, memory, memoryReservation and resourceRequirements; secrets is not among them"
+      ]
+    },
+    {
+      "id": "cir-fargate-security",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-security-considerations.html",
+      "title": "Fargate security considerations for Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'Features such as privileged containers or access are currently unavailable on Fargate. This will affect uses cases such as running Docker in Docker'",
+        "'Workloads that run on Fargate do not share network interfaces, ephemeral storage, CPU, or memory with other tasks'"
+      ]
+    },
+    {
+      "id": "cir-ecs-task-role",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html",
+      "title": "Amazon ECS task IAM role",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'Containers are not a security boundary and the use of task IAM roles does not change this. Each task running on Fargate has its own isolation boundary and does not share the underlying kernel, CPU resources, memory resources, or elastic network interface with another task'"
+      ]
+    },
+    {
+      "id": "cir-ecs-role-credentials",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-roles.html",
+      "title": "IAM roles best practices for Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The task role's credentials are served to the container at 169.254.170.2$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+        "On EC2 container instances, block containers from the instance metadata service so that they cannot reach the instance profile's credentials"
+      ]
+    },
+    {
+      "id": "cir-ecs-stop-task",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_StopTask.html",
+      "title": "ECS API: StopTask",
+      "checkedAt": "2026-10-13",
+      "supports": ["StopTask sends SIGTERM and, after 30 seconds by default, SIGKILL"]
+    },
+    {
+      "id": "cir-fargate-pricing",
+      "url": "https://aws.amazon.com/fargate/pricing/",
+      "title": "AWS Fargate Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Billed per second with a one-minute minimum, from the start of the image pull until the task terminates"
+      ]
+    },
+    {
+      "id": "cir-lambda-url-auth",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html",
+      "title": "Control access to Lambda function URLs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With AuthType NONE Lambda performs no authentication; the resource-based policy must allow lambda:InvokeFunctionUrl and, for function URLs created from October 2025, lambda:InvokeFunction"
+      ]
+    },
+    {
+      "id": "cir-lambda-url-invocation",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-invocation.html",
+      "title": "Invoking Lambda function URLs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The event follows API Gateway payload format version 2.0; a binary body is base64-encoded"
+      ]
+    },
+    {
+      "id": "cir-ec2-imds-credentials",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-metadata-security-credentials.html",
+      "title": "Retrieve security credentials from instance metadata",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An application on the instance gets the role's credentials from iam/security-credentials/role-name"
+      ]
+    },
+    {
+      "id": "cir-cdkd-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::DynamoDB::Table, AWS::EC2::SecurityGroup, AWS::ECS::Cluster, AWS::ECS::TaskDefinition, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::Lambda::Url, AWS::Logs::LogGroup, AWS::Scheduler::Schedule and AWS::SecretsManager::Secret have providers of their own"
+      ],
+      "note": "Checked in the installed package's dist (register(\"AWS::...\") calls), not in the repository at the tag."
+    },
+    {
+      "id": "cir-kaniko",
+      "url": "https://github.com/GoogleContainerTools/kaniko",
+      "title": "GoogleContainerTools/kaniko",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "'This project is archived and no longer developed or maintained'; archived on 2025-06-03"
+      ]
+    },
+    {
+      "id": "cir-buildkit-rootless",
+      "url": "https://github.com/moby/buildkit/blob/master/docs/rootless.md",
+      "title": "BuildKit: rootless mode",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Rootless BuildKit in a container is documented with seccomp=unconfined and apparmor=unconfined, or with --oci-worker-no-process-sandbox, which the document discourages"
+      ],
+      "note": "Says nothing about Fargate. GitLab's BuildKit page says not to set seccomp:unconfined; the two documents differ."
+    },
+    {
+      "id": "cir-cf-workers-builds",
+      "url": "https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/",
+      "title": "Workers Builds: limits and pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Free: 3,000 build minutes a month, 1 concurrent build, 2 vCPU; Paid: 6,000 minutes then USD 0.005 per minute, 6 concurrent builds, 4 vCPU; 8 GB memory and a 20-minute timeout on both"
+      ],
+      "note": "No way to bring a build machine of one's own was found on this page; other pages were not searched."
+    },
+    {
+      "id": "cir-vercel-builds",
+      "url": "https://vercel.com/docs/builds/managing-builds",
+      "title": "Vercel: Managing builds",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Build machines from Basic (2 vCPU, 8 GB) to Turbo (30 vCPU, 60 GB); paid teams pay USD 0.007 per build minute on Basic"
+      ],
+      "note": "No way to bring a build machine of one's own was found on this page; other pages were not searched."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "self-hosted-runner",
+      "ja": "セルフホストランナー",
+      "en": "self-hosted runner",
+      "firstUse": "62",
+      "definition": {
+        "ja": "CI のジョブを実行するプログラムを、CI のサービスではなく自分の計算資源で動かしたもの。ワークフローが書いたとおりのコマンドを、置かれた場所の権限で実行する。",
+        "en": "The program that executes CI jobs, run on your own compute instead of the CI service's. It runs whatever a workflow says, with whatever the place it runs in can reach."
+      }
+    },
+    {
+      "id": "jit-runner",
+      "ja": "just-in-time runner",
+      "en": "just-in-time runner",
+      "firstUse": "62",
+      "definition": {
+        "ja": "GitHub の API で登録を先に作り、その設定を渡して起動するランナー。ジョブを多くても 1 件実行すると、GitHub が登録を消す。",
+        "en": "A runner whose registration is created first, through GitHub's API, and handed to it at startup. GitHub removes it after it has run at most one job."
+      }
+    },
+    {
+      "id": "runner-manager",
+      "ja": "runner manager",
+      "en": "runner manager",
+      "firstUse": "62",
+      "definition": {
+        "ja": "GitLab Runner の常駐プロセス。GitLab にジョブを問い合わせ、executor を通してジョブを実行する。",
+        "en": "GitLab Runner's long-running process. It asks GitLab for jobs and runs them through an executor."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "62.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "62.rule",
+      "sources": [
+        "examples/62-ci-runners/src/decide.ts",
+        "examples/62-ci-runners/infra/test/runner-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "62.architecture",
+      "sources": [
+        "examples/62-ci-runners/infra/lib/runner-stack.ts",
+        "examples/62-ci-runners/src/config.ts"
+      ],
+      "tasks": ["runners:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "62.registration",
+      "sources": [
+        "examples/62-ci-runners/src/github.ts",
+        "examples/62-ci-runners/test/github.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "62.receiver",
+      "sources": [
+        "examples/62-ci-runners/src/receive.ts",
+        "examples/62-ci-runners/src/signature.ts",
+        "examples/62-ci-runners/src/events.ts",
+        "examples/62-ci-runners/src/app.ts",
+        "examples/62-ci-runners/test/signature.test.ts",
+        "examples/62-ci-runners/test/receive.test.ts"
+      ],
+      "tasks": ["test:unit", "runners:decide"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "62.decision",
+      "sources": [
+        "examples/62-ci-runners/src/decide.ts",
+        "examples/62-ci-runners/test/decide.test.ts"
+      ],
+      "tasks": ["test:unit", "runners:decide"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "62.launch",
+      "sources": [
+        "examples/62-ci-runners/src/claims.ts",
+        "examples/62-ci-runners/src/dynamodb-claims.ts",
+        "examples/62-ci-runners/src/launcher.ts",
+        "examples/62-ci-runners/src/sweep.ts",
+        "examples/62-ci-runners/src/sweeper.ts",
+        "examples/62-ci-runners/test/receive.test.ts",
+        "examples/62-ci-runners/test/launcher.test.ts",
+        "examples/62-ci-runners/test/sweep.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "62.stack",
+      "sources": [
+        "examples/62-ci-runners/infra/lib/runner-stack.ts",
+        "examples/62-ci-runners/infra/bin/app.ts",
+        "examples/62-ci-runners/infra/test/runner-stack.test.ts"
+      ],
+      "tasks": ["runners:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "62.options",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "62.gitlab",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "62.docker-builds",
+      "sources": ["examples/62-ci-runners/workflows/ci.yml"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "62.local",
+      "sources": [
+        "examples/62-ci-runners/scripts/decide.ts",
+        "examples/62-ci-runners/fixtures/workflow-job-queued.json",
+        "examples/62-ci-runners/test"
+      ],
+      "tasks": ["runners:decide", "test:unit", "runners:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "62.deploy",
+      "sources": [
+        "examples/62-ci-runners/infra/bin/app.ts",
+        "examples/62-ci-runners/workflows/ci.yml"
+      ],
+      "tasks": ["runners:infra:diff", "runners:infra:deploy", "runners:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "62.cost",
+      "sources": [
+        "examples/62-ci-runners/src/cost.ts",
+        "examples/62-ci-runners/test/pricing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "62.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "62.cleanup",
+      "sources": [],
+      "tasks": ["runners:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "codebuild.arm1.small.minute",
+      "offerCode": "CodeBuild",
+      "region": "ap-northeast-1",
+      "sku": "N5J4FK3UZ7A2P5S4",
+      "usageType": "APN1-Build-Min:ARM:g1.small",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "minutes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0042500000",
+          "description": "$0.00425 per minutes for Build-Min:ARM:g1.small in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/CodeBuild/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "codebuild.general1.small.minute",
+      "offerCode": "CodeBuild",
+      "region": "ap-northeast-1",
+      "sku": "2QWXT3AS89P93XZS",
+      "usageType": "APN1-Build-Min:Linux:g1.small",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "minutes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0050000000",
+          "description": "AWS CodeBuild - Build minutes on build.general1.small - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/CodeBuild/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:25Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "codebuild.arm1.small.minute",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cir-cb-pricing",
+      "note": "100 build minutes a month, shared between general1.small and arm1.small. The pricing page says it does not expire after 12 months."
+    }
+  ],
+  "unknownAllowances": [
+    {
+      "priceId": "codebuild.general1.small.minute",
+      "reason": "The 100 free build minutes are shared with arm1.small and are applied there; nothing is deducted here."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ci-runners-idle",
+      "chapter": "62",
+      "title": {
+        "ja": "CI Runner: ジョブが 1 件も無い 1 か月",
+        "en": "CI runners: a month without a single job"
+      },
+      "assumptions": {
+        "ja": [
+          "シークレット 2 つ（webhook のシークレットと GitHub App の秘密鍵）",
+          "15 分ごとの見回りの Lambda が 2,920 回、1 回 1 秒（仮定）、256 MB",
+          "タスク、受信の Lambda、DynamoDB の書き込み、ログは 0"
+        ],
+        "en": [
+          "Two secrets (the webhook secret and the GitHub App's private key)",
+          "The sweeper Lambda every 15 minutes: 2,920 runs of one second (assumed) at 256 MB",
+          "No task, no delivery, no DynamoDB write, no log"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 2,
+          "basis": "webhook secret and app private key"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 2920,
+          "basis": "one sweep every 15 min"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 730,
+          "basis": "2920 sweeps x 1 s (assumed) x 0.25 GB"
+        },
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 2920,
+          "basis": "2920 invocations"
+        }
+      ]
+    },
+    {
+      "id": "ci-runners-1000-jobs",
+      "chapter": "62",
+      "title": {
+        "ja": "CI Runner: 5 分のジョブを 1,000 件（Fargate）",
+        "en": "CI runners: 1,000 five-minute jobs on Fargate"
+      },
+      "assumptions": {
+        "ja": [
+          "2 vCPU、8 GB、arm64 のタスクを 1 ジョブにつき 6 分（ジョブ 5 分と、イメージの取得と登録の 1 分。1 分は計っていない仮定）",
+          "タスクごとにパブリック IPv4 アドレス 1 つ",
+          "受信の Lambda は配送 3,000 回、1 回 1 秒（仮定）、256 MB。DynamoDB の書き込みは 2,000 回。Secrets Manager の呼び出しは 4,000 回",
+          "シークレットの月額、ログ、データ転送、エフェメラルストレージの追加ぶんは未算入"
+        ],
+        "en": [
+          "A 2 vCPU, 8 GB, arm64 task for six minutes per job (five for the job, one for the image pull and registration; the one minute is an assumption, not a measurement)",
+          "One public IPv4 address per task",
+          "The receiver Lambda: 3,000 deliveries of one second (assumed) at 256 MB. 2,000 DynamoDB writes. 4,000 Secrets Manager calls",
+          "The secrets' monthly fee, logs, data transfer and extra ephemeral storage are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 200,
+          "basis": "1000 jobs x 6 min x 2 vCPU"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 800,
+          "basis": "1000 jobs x 6 min x 8 GB"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 100,
+          "basis": "1000 jobs x 6 min, one address per task"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 3000,
+          "basis": "3 deliveries per job (queued, in_progress, completed)"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 750,
+          "basis": "3,000 deliveries x 1 s (assumed) x 0.25 GB"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 2000,
+          "basis": "claim and complete, one write each per job"
+        },
+        {
+          "priceId": "secretsmanager.api",
+          "quantity": 4000,
+          "basis": "the webhook secret per delivery, the private key per launch"
+        }
+      ]
+    },
+    {
+      "id": "ci-runners-codebuild-1000-jobs",
+      "chapter": "62",
+      "title": {
+        "ja": "CI Runner: 同じ 1,000 件を CodeBuild で",
+        "en": "CI runners: the same 1,000 jobs on CodeBuild"
+      },
+      "assumptions": {
+        "ja": [
+          "arm1.small のオンデマンドで 1 ジョブにつき 6 分（Fargate と同じ仮定。CodeBuild の起動にかかる時間は計っていない）",
+          "無料枠はビルド 100 分",
+          "arm1.small の大きさは Fargate のタスクと同じではない"
+        ],
+        "en": [
+          "On-demand arm1.small, six minutes per job (the same assumption as for Fargate; CodeBuild's start-up time was not measured)",
+          "The free allowance is 100 build minutes",
+          "arm1.small is not the same size as the Fargate task"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "codebuild.arm1.small.minute",
+          "quantity": 6000,
+          "basis": "1,000 jobs x 6 minutes"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "62",
+        "command": "vp test run examples/62-ci-runners",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "9 ファイル 95 件。署名（GitHub のドキュメントの検算用の値を含む）、判定、受信の処理（偽の署名、フォーク、重複と同時の配送、起動の失敗と再送、途中で止まった受信）、GitHub の API に送るリクエスト（fetch は代役）、RunTask の入力、見回り、設定、ワークフロー、料金、スタックのアサーション",
+          "en": "9 files, 95 tests: the signature (including the test values in the GitHub documentation), the decision, the receiver (a forged signature, a fork, duplicate and simultaneous deliveries, a failed launch and its redelivery, a receiver that stopped midway), the requests sent to the GitHub API (with fetch replaced), the RunTask input, the sweeper, the configuration, the workflow, cost, and the stack assertions"
+        }
+      },
+      {
+        "scope": "62",
+        "command": "tsc --noEmit -p examples/62-ci-runners",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "62",
+        "command": "vp run runners:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "コンテキストなしと、-c repositories=example-org/notes -c appClientId=Iv23example つきで synth。-c repositories='example-org/*' が拒否されることも確認",
+          "en": "Synthesized without context and with -c repositories=example-org/notes -c appClientId=Iv23example. -c repositories='example-org/*' is refused"
+        }
+      },
+      {
+        "scope": "62",
+        "command": "vp run runners:decide",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "手書きの配送 7 件を本物の受信処理に通した。GitHub、ECS、DynamoDB は代役",
+          "en": "Seven hand-written deliveries through the real receiver, with stand-ins for GitHub, ECS and DynamoDB"
+        }
+      },
+      {
+        "scope": "62",
+        "command": "vp run runners:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS に対しては何も実行していない",
+          "en": "Nothing was run against AWS"
+        }
+      },
+      {
+        "scope": "62",
+        "command": "GitHub App の作成、webhook の配送、ジョブの実行",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "GitHub App は作っていない。GitHub の API は認証つきでは一度も呼んでいない。ランナーは登録しておらず、ジョブは 1 件も動かしていない",
+          "en": "No GitHub App was created, GitHub's API was never called with credentials, no runner was registered and no job ran"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "ci-runners-end-to-end",
+        "summary": {
+          "ja": "62章の構成は一度も動かしていない。GitHub App からの配送を受け、JIT の設定を作り、Fargate のタスクがランナーとして登録され、ジョブを 1 件実行して消えるまでを、実物で確かめていない。",
+          "en": "Chapter 62's design has never run. Receiving a delivery from a GitHub App, creating a JIT configuration, a Fargate task registering as the runner, running one job and going away: none of it was observed."
+        },
+        "resume": {
+          "ja": "11章の VPC をデプロイし、runners:infra:deploy を -c repositories と -c appClientId つきで実行する。GitHub App を作って webhook の URL とシークレットを設定し、秘密鍵を AppPrivateKey のシークレットに入れる。workflows/ci.yml を練習用の非公開リポジトリの .github/workflows/ に置いて push し、ECS のタスク、ランナーの一覧、ジョブのログを確かめる。終わったら destroy する。",
+          "en": "Deploy chapter 11's VPC, then run runners:infra:deploy with -c repositories and -c appClientId. Create a GitHub App, set the webhook URL and secret, and put its private key into the AppPrivateKey secret. Put workflows/ci.yml into .github/workflows/ of a private practice repository, push, and check the ECS task, the list of runners and the job's log. Destroy afterwards."
+        }
+      },
+      {
+        "id": "ci-runners-jit-config-size",
+        "summary": {
+          "ja": "encoded_jit_config の長さを確認していない。RunTask の overrides は全体で 8,192 文字までで、これを超えると、この章の渡し方（コンテナの引数）は使えない。",
+          "en": "The length of encoded_jit_config was not confirmed. RunTask allows 8,192 characters for all overrides; a longer configuration cannot be passed the way this chapter passes it (as container arguments)."
+        },
+        "resume": {
+          "ja": "実際に generate-jitconfig を呼び、応答の encoded_jit_config の文字数を見る。launcher.ts は超えたときに RunTask を呼ばずに失敗する。超えるなら、設定を S3 に置いて environmentFiles で渡す（ランナーは ACTIONS_RUNNER_INPUT_JITCONFIG を読む。actions/runner v2.338.0 の CommandSettings.cs で確認）か、タスクごとにタスク定義を登録する。",
+          "en": "Call generate-jitconfig for real and count the characters of encoded_jit_config. launcher.ts fails before calling RunTask when it is too long. If it is, put the configuration in S3 and pass it with environmentFiles (the runner reads ACTIONS_RUNNER_INPUT_JITCONFIG, as seen in CommandSettings.cs of actions/runner v2.338.0), or register a task definition per task."
+        }
+      },
+      {
+        "id": "ci-runners-runner-labels",
+        "summary": {
+          "ja": "JIT で登録したランナーに self-hosted などの既定のラベルが付くかどうかを確認していない。この章は自分で付けた 1 つのラベルだけを使う。runner_group_id の既定のグループが 1 であることも、API の例から読んだだけ。",
+          "en": "Whether a runner registered just in time gets default labels such as self-hosted was not confirmed. The chapter relies on its one custom label only. That the default runner group has ID 1 was read from the API's example only."
+        },
+        "resume": {
+          "ja": "登録したランナーを GET /repos/{owner}/{repo}/actions/runners で見て labels を確かめる。グループの ID は組織の runner groups の API で確かめ、違えば -c runnerGroupId で渡す。",
+          "en": "Look at a registered runner with GET /repos/{owner}/{repo}/actions/runners and read its labels. Check the group's ID with the organization's runner groups API and pass -c runnerGroupId if it differs."
+        }
+      },
+      {
+        "id": "ci-runners-run-lookup",
+        "summary": {
+          "ja": "workflow_job の配送が届いた時点で、その run_id の workflow run を API で読めること、fork からのプルリクエストで head_repository が fork を指すことを、実物で確かめていない。",
+          "en": "That the workflow run of a workflow_job delivery can be read through the API when the delivery arrives, and that head_repository names the fork for a pull request from a fork, was not observed."
+        },
+        "resume": {
+          "ja": "非公開リポジトリの fork からプルリクエストを出し（fork のワークフローを動かす設定にしたうえで）、受信の Lambda のログに reason: fork が出ることを確かめる。",
+          "en": "Open a pull request from a fork of a private repository (with fork workflows enabled) and check that the receiver's log shows reason: fork."
+        }
+      },
+      {
+        "id": "ci-runners-image-on-fargate",
+        "summary": {
+          "ja": "ghcr.io/actions/actions-runner のイメージを Fargate で起動していない。arm64 のイメージが含まれることはマニフェストで確かめたが、取得にかかる時間、run.sh が非特権のタスクで動くこと、ジョブが終わるとプロセスが終了してタスクが止まることは未確認。",
+          "en": "The ghcr.io/actions/actions-runner image was never started on Fargate. The manifest shows an arm64 image, but the pull time, run.sh working in an unprivileged task, and the process exiting (and the task stopping) after the job were not observed."
+        },
+        "resume": {
+          "ja": "end-to-end の手順のあと、aws ecs describe-tasks で pullStartedAt、pullStoppedAt、startedAt、stoppedAt、終了コードを読む。",
+          "en": "After the end-to-end steps, read pullStartedAt, pullStoppedAt, startedAt, stoppedAt and the exit code with aws ecs describe-tasks."
+        }
+      },
+      {
+        "id": "ci-runners-function-url-policy",
+        "summary": {
+          "ja": "aws-cdk-lib 2.273.0 の addFunctionUrl が作るリソースベースのポリシーが、2025 年 10 月以降に必要な lambda:InvokeFunction も含むことは synth の結果で見た。cdkd 0.296.28 がそれを作れること、URL が実際に呼べることは未確認。",
+          "en": "That addFunctionUrl in aws-cdk-lib 2.273.0 also grants lambda:InvokeFunction, required since October 2025, was seen in the synthesized template. That cdkd 0.296.28 creates it and that the URL answers was not observed."
+        },
+        "resume": {
+          "ja": "デプロイ後に curl -X POST <WebhookUrl> を送り、401 と {\"error\":\"bad_signature\"} が返ることを確かめる。403 なら Lambda のリソースベースのポリシーを見る。",
+          "en": "After deploying, send curl -X POST <WebhookUrl> and expect 401 with {\"error\":\"bad_signature\"}. On a 403, read the function's resource-based policy."
+        }
+      },
+      {
+        "id": "ci-runners-other-platforms",
+        "summary": {
+          "ja": "CodeBuild のランナー、ARC、scale set client、GitLab Runner とその fleeting plugin は、どれもドキュメントを読んだだけで、動かしていない。CodeBuild の起動時間と、arm1.small の大きさが 2 vCPU、8 GB のタスクとどう違うかも確かめていない。",
+          "en": "CodeBuild-hosted runners, ARC, the scale set client, and GitLab Runner with its fleeting plugin were read about, not run. CodeBuild's start-up time, and how arm1.small compares with a 2 vCPU, 8 GB task, were not checked."
+        },
+        "resume": {
+          "ja": "それぞれの公式のチュートリアルに従う。CodeBuild は action-runner.html、GitLab は fleeting plugin の README と Instance executor のページ。",
+          "en": "Follow each one's official tutorial: action-runner.html for CodeBuild; the fleeting plugin's README and the Instance executor page for GitLab."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 62: CI runners ------------------------------------------\n      // Hand-written deliveries through the real receiver, with stand-ins for GitHub, ECS and DynamoDB.\n      \"runners:decide\": fresh(\"node scripts/decide.ts\", { cwd: \"examples/62-ci-runners\" }),\n      // Nothing billed by the hour. Two secrets at USD 0.40 a month each; a Fargate task per job.\n      ...infra(\"runners\", \"examples/62-ci-runners\", \"AihCiRunners\"),",
+    "synth": ["runners:infra:synth"],
+    "checkAll": ["runners:decide"],
+    "typecheck": ["examples/62-ci-runners"]
+  }
+}

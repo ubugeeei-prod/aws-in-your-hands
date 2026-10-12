@@ -1,0 +1,404 @@
+{
+  "note": "Written for this chapter on 2026-10-13 from the field table and the samples in https://docs.aws.amazon.com/health/latest/ug/aws-health-events-eventbridge-schema.html. None of these was received from AWS. Event type codes that the documentation does not list (AWS_LAMBDA_OPERATIONAL_ISSUE, AWS_MULTIPLE_SERVICES_OPERATIONAL_ISSUE, AWS_WORKSPACES_OPERATIONAL_ISSUE), the service code WORKSPACES, the descriptions, and every identifier are made up to exercise the code. The documentation gives no detail shape for AWS Health Abuse Event, so that fixture carries an empty detail.",
+  "events": [
+    {
+      "name": "tokyo-lambda-issue-open",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000001",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T18:04:10Z",
+        "region": "ap-northeast-1",
+        "resources": [],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/LAMBDA/AWS_LAMBDA_OPERATIONAL_ISSUE/AWS_LAMBDA_OPERATIONAL_ISSUE_EXAMPLE_0001",
+          "service": "LAMBDA",
+          "eventTypeCode": "AWS_LAMBDA_OPERATIONAL_ISSUE",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "PUBLIC",
+          "communicationId": "example0001-1",
+          "startTime": "Tue, 13 Oct 2026 17:48:00 GMT",
+          "statusCode": "open",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "We are investigating increased error rates for Lambda invocations in the AP-NORTHEAST-1 Region."
+            }
+          ],
+          "affectedEntities": [],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "affectedAccount": "123456789012",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "lastUpdatedTime": "Tue, 13 Oct 2026 18:04:00 GMT"
+        }
+      }
+    },
+    {
+      "name": "tokyo-lambda-issue-update",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T18:31:05Z",
+        "region": "ap-northeast-1",
+        "resources": [],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/LAMBDA/AWS_LAMBDA_OPERATIONAL_ISSUE/AWS_LAMBDA_OPERATIONAL_ISSUE_EXAMPLE_0001",
+          "service": "LAMBDA",
+          "eventTypeCode": "AWS_LAMBDA_OPERATIONAL_ISSUE",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "PUBLIC",
+          "communicationId": "example0001-1",
+          "startTime": "Tue, 13 Oct 2026 17:48:00 GMT",
+          "statusCode": "open",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "We have identified the cause of the increased error rates and are working on a fix."
+            }
+          ],
+          "affectedEntities": [],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "affectedAccount": "123456789012",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "lastUpdatedTime": "Tue, 13 Oct 2026 18:31:00 GMT"
+        }
+      }
+    },
+    {
+      "name": "tokyo-lambda-issue-closed",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000003",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T19:12:40Z",
+        "region": "ap-northeast-1",
+        "resources": [],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/LAMBDA/AWS_LAMBDA_OPERATIONAL_ISSUE/AWS_LAMBDA_OPERATIONAL_ISSUE_EXAMPLE_0001",
+          "service": "LAMBDA",
+          "eventTypeCode": "AWS_LAMBDA_OPERATIONAL_ISSUE",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "PUBLIC",
+          "communicationId": "example0001-1",
+          "startTime": "Tue, 13 Oct 2026 17:48:00 GMT",
+          "statusCode": "closed",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "[RESOLVED] Error rates have returned to normal levels."
+            }
+          ],
+          "affectedEntities": [],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "affectedAccount": "123456789012",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "lastUpdatedTime": "Tue, 13 Oct 2026 19:12:30 GMT",
+          "endTime": "Tue, 13 Oct 2026 19:12:30 GMT"
+        }
+      }
+    },
+    {
+      "name": "tokyo-multiple-services-issue",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000004",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T18:10:00Z",
+        "region": "ap-northeast-1",
+        "resources": [],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/MULTIPLE_SERVICES/AWS_MULTIPLE_SERVICES_OPERATIONAL_ISSUE/AWS_MULTIPLE_SERVICES_OPERATIONAL_ISSUE_EXAMPLE_0002",
+          "service": "MULTIPLE_SERVICES",
+          "eventTypeCode": "AWS_MULTIPLE_SERVICES_OPERATIONAL_ISSUE",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "PUBLIC",
+          "communicationId": "example0002-1",
+          "startTime": "Tue, 13 Oct 2026 17:48:00 GMT",
+          "statusCode": "open",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "We are investigating issues with AWS services in the AP-NORTHEAST-1 Region."
+            }
+          ],
+          "affectedEntities": [],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "affectedAccount": "123456789012",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "lastUpdatedTime": "Tue, 13 Oct 2026 18:09:50 GMT"
+        }
+      }
+    },
+    {
+      "name": "tokyo-unlisted-service-issue",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000005",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T18:20:00Z",
+        "region": "ap-northeast-1",
+        "resources": [],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/WORKSPACES/AWS_WORKSPACES_OPERATIONAL_ISSUE/AWS_WORKSPACES_OPERATIONAL_ISSUE_EXAMPLE_0003",
+          "service": "WORKSPACES",
+          "eventTypeCode": "AWS_WORKSPACES_OPERATIONAL_ISSUE",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "PUBLIC",
+          "communicationId": "example0003-1",
+          "startTime": "Tue, 13 Oct 2026 17:48:00 GMT",
+          "statusCode": "open",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "We are investigating connectivity issues for WorkSpaces in the AP-NORTHEAST-1 Region."
+            }
+          ],
+          "affectedEntities": [],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "affectedAccount": "123456789012",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "lastUpdatedTime": "Tue, 13 Oct 2026 18:19:50 GMT"
+        }
+      }
+    },
+    {
+      "name": "tokyo-ec2-retirement",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000006",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T02:00:10Z",
+        "region": "ap-northeast-1",
+        "resources": [
+          "i-0123456789abcdef0"
+        ],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/AWS_EC2_PERSISTENT_INSTANCE_RETIREMENT_SCHEDULED_EXAMPLE_0004",
+          "service": "EC2",
+          "eventTypeCode": "AWS_EC2_PERSISTENT_INSTANCE_RETIREMENT_SCHEDULED",
+          "eventTypeCategory": "scheduledChange",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "example0004-1",
+          "startTime": "Tue, 20 Oct 2026 02:00:00 GMT",
+          "lastUpdatedTime": "Tue, 13 Oct 2026 02:00:00 GMT",
+          "statusCode": "upcoming",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "EC2 has detected degradation of the underlying hardware hosting your instance. The instance will be stopped at the scheduled time."
+            }
+          ],
+          "affectedEntities": [
+            {
+              "entityValue": "i-0123456789abcdef0",
+              "lastUpdatedTime": "Tue, 13 Oct 2026 02:00:00 GMT",
+              "status": "PENDING"
+            }
+          ],
+          "affectedAccount": "123456789012",
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "actionability": "ACTION_REQUIRED"
+        }
+      }
+    },
+    {
+      "name": "tokyo-lambda-runtime-lifecycle",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000007",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T03:00:10Z",
+        "region": "ap-northeast-1",
+        "resources": [
+          "arn:aws:lambda:ap-northeast-1:123456789012:function:example-handler"
+        ],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/AWS_LAMBDA_PLANNED_LIFECYCLE_EVENT_EXAMPLE_0005",
+          "service": "LAMBDA",
+          "eventTypeCode": "AWS_LAMBDA_PLANNED_LIFECYCLE_EVENT",
+          "eventTypeCategory": "scheduledChange",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "example0005-1",
+          "startTime": "Fri, 30 Apr 2027 00:00:00 GMT",
+          "lastUpdatedTime": "Tue, 13 Oct 2026 03:00:00 GMT",
+          "statusCode": "upcoming",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "A runtime used by functions in your account is approaching its end of support."
+            }
+          ],
+          "affectedEntities": [
+            {
+              "entityValue": "arn:aws:lambda:ap-northeast-1:123456789012:function:example-handler",
+              "lastUpdatedTime": "Tue, 13 Oct 2026 03:00:00 GMT",
+              "status": "PENDING"
+            }
+          ],
+          "affectedAccount": "123456789012",
+          "page": "1",
+          "totalPages": "2",
+          "backupEvent": "false",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "actionability": "ACTION_REQUIRED"
+        }
+      }
+    },
+    {
+      "name": "tokyo-lambda-runtime-lifecycle-page-2",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000008",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T03:00:11Z",
+        "region": "ap-northeast-1",
+        "resources": [
+          "arn:aws:lambda:ap-northeast-1:123456789012:function:example-worker"
+        ],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/AWS_LAMBDA_PLANNED_LIFECYCLE_EVENT_EXAMPLE_0005",
+          "service": "LAMBDA",
+          "eventTypeCode": "AWS_LAMBDA_PLANNED_LIFECYCLE_EVENT",
+          "eventTypeCategory": "scheduledChange",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "example0005-2",
+          "startTime": "Fri, 30 Apr 2027 00:00:00 GMT",
+          "lastUpdatedTime": "Tue, 13 Oct 2026 03:00:00 GMT",
+          "statusCode": "upcoming",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "A runtime used by functions in your account is approaching its end of support."
+            }
+          ],
+          "affectedEntities": [
+            {
+              "entityValue": "arn:aws:lambda:ap-northeast-1:123456789012:function:example-worker",
+              "lastUpdatedTime": "Tue, 13 Oct 2026 03:00:00 GMT",
+              "status": "PENDING"
+            }
+          ],
+          "affectedAccount": "123456789012",
+          "page": "2",
+          "totalPages": "2",
+          "backupEvent": "false",
+          "personas": [
+            "OPERATIONS"
+          ],
+          "actionability": "ACTION_REQUIRED"
+        }
+      }
+    },
+    {
+      "name": "tokyo-s3-open-access-notification",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000009",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T04:00:10Z",
+        "region": "ap-northeast-1",
+        "resources": [
+          "example-bucket"
+        ],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-northeast-1::event/AWS_S3_OPEN_ACCESS_BUCKET_NOTIFICATION_EXAMPLE_0006",
+          "service": "S3",
+          "eventTypeCode": "AWS_S3_OPEN_ACCESS_BUCKET_NOTIFICATION",
+          "eventTypeCategory": "accountNotification",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "example0006-1",
+          "startTime": "Tue, 13 Oct 2026 04:00:00 GMT",
+          "lastUpdatedTime": "Tue, 13 Oct 2026 04:00:00 GMT",
+          "statusCode": "open",
+          "eventRegion": "ap-northeast-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "You have an Amazon S3 bucket that might allow public access."
+            }
+          ],
+          "affectedEntities": [
+            {
+              "entityValue": "example-bucket"
+            }
+          ],
+          "affectedAccount": "123456789012",
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "personas": [
+            "SECURITY"
+          ]
+        }
+      }
+    },
+    {
+      "name": "abuse-event-undocumented-detail",
+      "event": {
+        "version": "0",
+        "id": "00000000-0000-4000-8000-000000000010",
+        "detail-type": "AWS Health Abuse Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-10-13T05:00:10Z",
+        "region": "us-east-1",
+        "resources": [],
+        "detail": {}
+      }
+    }
+  ]
+}

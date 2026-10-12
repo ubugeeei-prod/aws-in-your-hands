@@ -1,0 +1,15 @@
+{
+  "name": "@aih/example-45-infrastructure-composer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "vite-plus": "1.1.0"
+  }
+}

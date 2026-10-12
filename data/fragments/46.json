@@ -1,0 +1,1579 @@
+{
+  "chapterId": "46",
+  "manifest": {
+    "id": "46",
+    "slug": "shield",
+    "title": {
+      "ja": "Shield: DDoS への備え、Standard と Advanced",
+      "en": "Shield: Preparing for DDoS, Standard and Advanced"
+    },
+    "prerequisites": ["03", "12", "21"],
+    "services": ["AWS Shield", "CloudFront", "AWS WAF", "Lambda", "CloudWatch"],
+    "samplePath": "examples/46-shield",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "shield-how-it-works",
+      "shield-standard-overview",
+      "shield-advanced-overview",
+      "shield-advanced-protected-resources",
+      "shield-advanced-capabilities",
+      "shield-advanced-deciding",
+      "shield-srt-support",
+      "shield-cost-protection-credit",
+      "shield-health-based-detection",
+      "shield-automatic-app-layer",
+      "shield-protection-groups",
+      "shield-metrics",
+      "shield-responding",
+      "shield-subscribing",
+      "shield-detection-infrastructure",
+      "shield-mitigation-cloudfront-route53",
+      "shield-proactive-engagement",
+      "shield-pricing-page",
+      "shield-price-list",
+      "shield-waf-rate-based-settings",
+      "shield-waf-rate-based-caveats",
+      "shield-waf-rate-limiting-behaviour",
+      "shield-waf-rate-limited-ips",
+      "shield-ddos-simulation-policy",
+      "shield-waf-anti-ddos",
+      "shield-waf-metrics",
+      "shield-price-list-waf",
+      "shield-cloudfront-blocked-free",
+      "shield-cloudfront-restrict-alb",
+      "shield-cloudfront-vpc-origins",
+      "shield-cloudfront-oac-lambda",
+      "shield-cloudfront-prefix-list",
+      "shield-vpc-prefix-list-weight",
+      "shield-cloudfront-managed-cache-policies",
+      "shield-cloudfront-request-collapsing",
+      "shield-cloudfront-flat-rate-plans",
+      "shield-price-list-cloudfront-plans",
+      "shield-cloudfront-metrics",
+      "shield-lambda-url-throttling",
+      "shield-lambda-reserved-concurrency",
+      "shield-whitepaper-mitigation",
+      "shield-whitepaper-origin",
+      "shield-whitepaper-api",
+      "shield-cfn-protection",
+      "shield-cloud-control-supported",
+      "shield-cdkd-register-providers",
+      "shield-price-list-cloudwatch-use1",
+      "shield-cloudflare-ddos",
+      "shield-cloudflare-ddos-faq",
+      "shield-cloudflare-workers-pricing",
+      "shield-cloudflare-rate-limiting-rules",
+      "shield-vercel-firewall",
+      "shield-vercel-rate-limiting",
+      "shield-vercel-ddos-mitigation"
+    ]
+  },
+  "sources": [
+    {
+      "id": "shield-how-it-works",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-overview.html",
+      "title": "How AWS Shield and Shield Advanced work",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Shield Standard is provided automatically and at no extra charge when you use AWS; Shield Advanced is a subscription for higher levels of protection",
+        "Classes of attack: network volumetric (layer 3), network protocol (layer 4, such as a TCP SYN flood), and application layer (layer 7, such as web request floods)"
+      ]
+    },
+    {
+      "id": "shield-standard-overview",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-standard-summary.html",
+      "title": "AWS Shield Standard overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Shield Standard defends against the most common, frequently occurring network and transport layer DDoS attacks, for all AWS customers, at no additional charge",
+        "Route 53 hosted zones, CloudFront distributions and Global Accelerator standard accelerators receive comprehensive availability protection against all known network and transport layer attacks",
+        "If the first point of entry is in an AWS Region the application perimeter is the VPC; with CloudFront or Global Accelerator it begins at the edge of the AWS network"
+      ]
+    },
+    {
+      "id": "shield-advanced-overview",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary.html",
+      "title": "AWS Shield Advanced overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The subscription covers standard AWS WAF fees (web ACL, rule, and base request fee up to 1,500 WCUs and the default body size) for resources protected with Shield Advanced, up to 50 billion requests a calendar month",
+        "It does not cover AWS WAF for resources that are not protected with Shield Advanced, nor Bot Control, CAPTCHA and other non-standard costs",
+        "The subscription includes access to the Layer 7 Anti-DDoS managed rule group",
+        "For accounts in one AWS Organizations consolidated billing family, one subscription price covers all subscribed accounts"
+      ]
+    },
+    {
+      "id": "shield-advanced-protected-resources",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary-protected-resources.html",
+      "title": "List of AWS resources that AWS Shield Advanced protects",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Protection applies only to resources explicitly specified in Shield Advanced or through a Firewall Manager Shield Advanced policy; nothing is protected automatically",
+        "Resource types: CloudFront distributions, Route 53 hosted zones, Global Accelerator standard accelerators, EC2 Elastic IP addresses (and instances and Network Load Balancers through them), Application Load Balancers, Classic Load Balancers"
+      ]
+    },
+    {
+      "id": "shield-advanced-capabilities",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary-capabilities.html",
+      "title": "AWS Shield Advanced capabilities and options",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Capabilities: AWS WAF integration, automatic application layer DDoS mitigation, health-based detection, protection groups, enhanced visibility, Firewall Manager policies at no additional charge, the Shield Response Team (SRT), proactive engagement, cost protection",
+        "To use the services of the SRT you must also be subscribed to the Business Support plan or the Enterprise Support plan",
+        "Health-based detection is available for any resource type except Route 53 hosted zones; proactive engagement only for resources with health-based detection",
+        "Cost protection is provided in the form of Shield Advanced service credits"
+      ]
+    },
+    {
+      "id": "shield-advanced-deciding",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary-deciding.html",
+      "title": "Deciding whether to subscribe to AWS Shield Advanced and apply additional protections",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Consider Shield Advanced where you need guaranteed availability, rapid access to DDoS mitigation experts, awareness and notification by AWS, or predictability in cloud costs during an attack",
+        "You pay one monthly subscription fee for all accounts under a consolidated billing account, plus usage fees based on GB of data transferred out"
+      ]
+    },
+    {
+      "id": "shield-srt-support",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-srt-support.html",
+      "title": "Managed DDoS event response with Shield Response Team (SRT) support",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SRT can analyze AWS WAF logs and, with approval, change the web ACL; build custom network mitigations; engage AWS networking teams; and recommend architecture changes",
+        "To use the SRT you must be subscribed to the Business Support plan or the Enterprise Support plan"
+      ]
+    },
+    {
+      "id": "shield-cost-protection-credit",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-request-service-credit.html",
+      "title": "Requesting a credit in AWS Shield Advanced after an attack",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Credits cover only: Shield Advanced data transfer out, CloudFront HTTP/HTTPS requests, CloudFront data transfer out, Route 53 queries, Global Accelerator data transfer, Application Load Balancer capacity units, and EC2 instances launched by auto scaling in response to the attack",
+        "Prerequisites: the resource had Shield Advanced protection before the attack began; for CloudFront and Application Load Balancers a web ACL with a rate-based rule in Block mode was associated; the DDoS resiliency best practices were implemented",
+        "The request is a billing case with 'DDoS Concession' in the subject, submitted within 15 days after the billing month of the attack; credits apply only to Shield Advanced usage and are valid for 12 months"
+      ]
+    },
+    {
+      "id": "shield-health-based-detection",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-health-checks.html",
+      "title": "Health-based detection using health checks with Shield Advanced and Route 53",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "You define a Route 53 health check, verify it reports healthy, and associate it with the protection; Shield Advanced does not manage health checks",
+        "With an unhealthy health check Shield Advanced requires smaller deviations to alert and reports events more quickly; with a healthy one it requires larger deviations",
+        "Health checks are required for proactive engagement"
+      ]
+    },
+    {
+      "id": "shield-automatic-app-layer",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-automatic-app-layer-response.html",
+      "title": "Automating application layer DDoS mitigation with Shield Advanced",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Starting March 26, 2026, the Anti-DDoS Managed Rule Group for AWS WAF is the default solution against HTTP request floods and supersedes Layer 7 Auto Mitigation; a new Shield Advanced customer who needs the legacy solution contacts AWS Support",
+        "The Anti-DDoS Managed Rule Group detects and mitigates attacks within seconds rather than minutes",
+        "The legacy automatic mitigation needs between 24 hours and 30 days to establish a traffic baseline after a web ACL is associated"
+      ]
+    },
+    {
+      "id": "shield-protection-groups",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-protection-groups.html",
+      "title": "Grouping your AWS Shield Advanced protections",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A protection group treats several protected resources as one unit for detection and mitigation; membership can be all protected resources, a resource type, or named resources",
+        "Automatic application layer mitigation does not interact with protection groups"
+      ]
+    },
+    {
+      "id": "shield-metrics",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/shield-metrics.html",
+      "title": "AWS Shield Advanced metrics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Shield Advanced publishes detection, mitigation and top contributor metrics in the AWS/DDoSProtection namespace for the resources it protects",
+        "DDoSDetected has a non-zero value during an event and is posted with no dimension other than the resource; DDoSAttackRequestsPerSecond is reported only for the most significant layer 7 events",
+        "Metrics for CloudFront, Route 53 and protection groups are reported in us-east-1",
+        "Metrics are reported once a minute during an event and once a day otherwise",
+        "AWS recommends an alarm for each protected resource when DDoSDetected is non-zero, and says a non-zero value does not necessarily imply an attack"
+      ]
+    },
+    {
+      "id": "shield-responding",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-responding.html",
+      "title": "Responding to DDoS events in AWS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS automatically mitigates network and transport layer attacks",
+        "For application layer attacks AWS attempts to detect and notify Shield Advanced customers through CloudWatch alarms and by default does not automatically apply mitigations, to avoid blocking valid traffic",
+        "A Shield Advanced customer can contact the AWS Support Center; critical and urgent cases are routed directly to DDoS experts"
+      ]
+    },
+    {
+      "id": "shield-subscribing",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/enable-ddos-prem.html",
+      "title": "Subscribing to AWS Shield Advanced",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "You subscribe each account in the AWS WAF & Shield console; you do not subscribe to Shield Standard",
+        "Once subscribed, to unsubscribe you must contact AWS Support; auto-renewal is disabled with the UpdateSubscription API",
+        "Subscribing does not protect any resource: you must specify the resources"
+      ]
+    },
+    {
+      "id": "shield-detection-infrastructure",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-event-detection-infrastructure.html",
+      "title": "AWS Shield detection logic for infrastructure layer threats (layer 3 and layer 4)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For CloudFront and Route 53 all packets are inspected by a fully inline DDoS mitigation system and attacks are mitigated in real time, regardless of whether you use Shield Advanced",
+        "For regional resources such as load balancers and Elastic IP addresses, traffic is evaluated every minute and a mitigation is placed when the resource's capacity is exceeded; mitigations reduce DDoS traffic but might not eliminate it",
+        "Shield Advanced adds lower detection thresholds (half the calculated capacity), intermittent attack protection, and health-based detection"
+      ]
+    },
+    {
+      "id": "shield-mitigation-cloudfront-route53",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-event-mitigation-logic-continuous-inspection.html",
+      "title": "AWS Shield mitigation logic for CloudFront and Route 53",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudFront only lets traffic that is valid for web applications through; TCP SYN floods are mitigated by a SYN proxy and TLS is terminated at the edge, so the origin only receives well-formed web requests",
+        "Shield Advanced does not support CloudFront tenants"
+      ]
+    },
+    {
+      "id": "shield-proactive-engagement",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/ddos-srt-proactive-engagement.html",
+      "title": "Setting up proactive engagement for the SRT to contact you directly",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Proactive engagement needs the Business or Enterprise Support plan, a Route 53 health check on the protected resource, and at least one contact (up to ten)",
+        "Proactive engagement is not available for events detected by the Anti-DDoS managed rule group"
+      ]
+    },
+    {
+      "id": "shield-pricing-page",
+      "url": "https://aws.amazon.com/shield/pricing/",
+      "title": "AWS Shield Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Shield Advanced requires a 1-year subscription commitment and charges a monthly fee plus a usage fee on data transfer out",
+        "Subscriptions auto-renew annually; the renewal can be cancelled through the Support Center between 30 and 5 days before the renewal date",
+        "All Shield Advanced benefits, including DDoS cost protection, are subject to fulfillment of the 1-year commitment",
+        "If CloudFront is in front of a load balancer that receives all its traffic from CloudFront, only CloudFront needs protection",
+        "To contact the Shield Response Team customers need the Enterprise or Business Support levels"
+      ],
+      "note": "The monthly fee is filled in by script on the page; the amount was read from the Price List (shield-price-list)."
+    },
+    {
+      "id": "shield-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSShield/current/index.json",
+      "title": "AWS Price List: AWSShield",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Shield-Monthly-Fee: USD 3,000 for the first subscription, USD 0 for additional subscriptions",
+        "Global-DataTransfer-Shield-Bytes out of CloudFront: USD 0.025 per GB for the first 100 TB",
+        "APN1-DataTransfer-Shield-Bytes out of ELB and of Elastic IP in Tokyo: USD 0.05 per GB for the first 100 TB"
+      ]
+    },
+    {
+      "id": "shield-waf-rate-based-settings",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-high-level-settings.html",
+      "title": "Rate-based rule high-level settings in AWS WAF",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The evaluation window is 60, 120, 300 or 600 seconds, 300 by default; it sets how far back AWS WAF looks, not how often it checks",
+        "The lowest rate limit is 10",
+        "A rate-based rule that counts all requests together needs a scope-down statement"
+      ]
+    },
+    {
+      "id": "shield-waf-rate-based-caveats",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-caveats.html",
+      "title": "Rate-based rule caveats in AWS WAF",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS WAF rate limiting is not intended for precise request-rate limiting and does not guarantee an exact limit match",
+        "Requests can come in at too high a rate for up to several minutes before AWS WAF detects and rate limits them; usually this delay is below 30 seconds",
+        "Changing a rate limit setting resets the rule's counts and can pause rate limiting for up to a minute"
+      ]
+    },
+    {
+      "id": "shield-waf-rate-limiting-behaviour",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-request-limiting.html",
+      "title": "Applying rate limiting to requests in AWS WAF",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The rule action applies to a request that belongs to an aggregation instance whose request count is currently over the limit",
+        "With the Count action the rule does not limit the rate of requests"
+      ]
+    },
+    {
+      "id": "shield-waf-rate-limited-ips",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/listing-managed-ips.html",
+      "title": "Listing IP addresses that are being rate limited by rate-based rules",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The list of rate-limited IP addresses is read with get-rate-based-statement-managed-keys; the console does not provide it",
+        "A single rate-based rule instance can rate limit at most 10,000 IP addresses; beyond that it limits those with the highest rates"
+      ]
+    },
+    {
+      "id": "shield-ddos-simulation-policy",
+      "url": "https://aws.amazon.com/security/ddos-simulation-testing/",
+      "title": "DDoS Simulation Testing Policy",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DDoS simulation testing must be performed by an AWS DDoS Test Partner pre-approved by AWS",
+        "The target must be a Protected Resource in an account you own that is subscribed to Shield Advanced, or an edge-optimized API Gateway endpoint in such an account",
+        "The request volume may not exceed 50,000 requests per second, and the test may not originate from an AWS resource"
+      ]
+    },
+    {
+      "id": "shield-waf-anti-ddos",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-anti-ddos.html",
+      "title": "AWS WAF Distributed Denial of Service (DDoS) prevention",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWSManagedRulesAntiDDoSRuleSet builds traffic baselines for the protected resource and manages requests during probable DDoS events, for CloudFront distributions, Application Load Balancers and other resources AWS WAF supports",
+        "The managed rule group is charged for in addition to standard AWS WAF fees"
+      ]
+    },
+    {
+      "id": "shield-waf-metrics",
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-metrics.html",
+      "title": "AWS WAF metrics and dimensions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "BlockedRequests is in the AWS/WAFV2 namespace with the dimensions Rule and WebACL; the Region dimension is required for all protected resource types except CloudFront distributions"
+      ]
+    },
+    {
+      "id": "shield-price-list-waf",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "title": "AWS Price List: awswaf",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Global-AMR-AntiDDoS: USD 20.00 per month in CloudFront; Global-AMR-AntiDDoS-Request: USD 0.15 per million requests",
+        "Global-WebACLV2 USD 5.00 per web ACL per month, Global-RuleV2 USD 1.00 per rule per month, Global-RequestV2-Tier1 USD 0.60 per million requests",
+        "For Shield protected resources the web ACL, rule and tier-0 request SKUs are USD 0"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-blocked-free",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2024/10/amazon-cloudfront-charges-requests-blocked-aws-waf/",
+      "title": "Amazon CloudFront no longer charges for requests blocked by AWS WAF",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Effective October 25, 2024, CloudFront requests blocked by AWS WAF incur no request fees or data transfer charges",
+        "AWS WAF continues billing for evaluating and blocking these requests"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-restrict-alb",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/restrict-access-to-load-balancer.html",
+      "title": "Restrict access to Application Load Balancers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An internal Application Load Balancer in private subnets can be used through VPC origins",
+        "For an internet-facing load balancer: CloudFront adds a secret custom header to origin requests and the listener forwards only requests that carry it, answering 403 otherwise; HTTPS is required for the header to stay secret",
+        "Optionally the load balancer's security group admits only the AWS-managed prefix list for CloudFront"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-vpc-origins",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html",
+      "title": "Restrict access with VPC origins",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Application Load Balancers, Network Load Balancers and EC2 instances in private subnets can be VPC origins, making CloudFront the single point of entry",
+        "The VPC needs an internet gateway although it is not used for routing to the origin; the origin's security group must admit the CloudFront managed prefix list or the service-managed security group CloudFront-VPCOrigins-Service-SG",
+        "Supported Regions include ap-northeast-1 except the Availability Zone apne1-az3",
+        "VPC origins do not support gRPC or Lambda@Edge origin request and origin response triggers"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-oac-lambda",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html",
+      "title": "Restrict access to an AWS Lambda function URL origin",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Origin access control for a function URL needs AuthType AWS_IAM and permissions for cloudfront.amazonaws.com on lambda:InvokeFunctionUrl and lambda:InvokeFunction, conditioned on the distribution's ARN",
+        "With PUT or POST the caller must send the SHA256 of the body in the x-amz-content-sha256 header; Lambda does not support unsigned payloads"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-prefix-list",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/LocationsOfEdgeServers.html",
+      "title": "Locations and IP address ranges of CloudFront edge servers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The managed prefix lists com.amazonaws.global.cloudfront.origin-facing (IPv4) and com.amazonaws.global.ipv6.cloudfront.origin-facing (IPv6) contain the ranges of CloudFront's origin-facing servers"
+      ]
+    },
+    {
+      "id": "shield-vpc-prefix-list-weight",
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/working-with-aws-managed-prefix-lists.html",
+      "title": "AWS-managed prefix lists",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CloudFront managed prefix list has a weight of 55: in a security group, whose default quota is 60 rules, it leaves room for 5 more"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-managed-cache-policies",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html",
+      "title": "Use managed cache policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CachingOptimized includes no query strings or cookies in the cache key, only the normalized Accept-Encoding header; minimum TTL 1 second, default TTL 86,400 seconds",
+        "The ID of CachingOptimized is 658327ea-f89d-4fab-a63d-7e88639e58f6"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-request-collapsing",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorCustomOrigin.html",
+      "title": "Request and response behavior for custom origins",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When simultaneous requests for the same object arrive at an edge location before the first response, CloudFront pauses and sends the response of the first request to all of them (request collapsing), only for requests that share a cache key",
+        "The CachingDisabled policy prevents request collapsing"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-flat-rate-plans",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/flat-rate-pricing-plan.html",
+      "title": "CloudFront flat-rate pricing plans",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Plans (Free, Pro, Business, Premium) have a monthly price with no overage charges regardless of traffic spikes or attacks; blocked DDoS attacks and requests blocked by AWS WAF never count against the usage allowance",
+        "Monthly allowances: 1 M requests and 100 GB (Free), 10 M and 50 TB (Pro), 125 M and 50 TB (Business), 500 M and 50 TB (Premium)",
+        "Usage above the allowance is not billed; sustained excess can lead to traffic being served from fewer or more distant edge locations",
+        "A distribution with Shield Advanced enabled is not eligible; an account using AWS Free Tier is not eligible; a web ACL must be associated; at most 3 Free plans per account",
+        "A plan covers one distribution; other costs, such as Lambda@Edge invocations, are billed separately"
+      ]
+    },
+    {
+      "id": "shield-price-list-cloudfront-plans",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/CloudFrontPlans/current/index.json",
+      "title": "AWS Price List: CloudFrontPlans",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "FlatRate terms: Free USD 0.00, Pro USD 15.00, Business USD 200.00, Premium USD 1,000.00 per plan",
+        "Every feature quota has the overage policy NO_OVERAGE_THROTTLE"
+      ]
+    },
+    {
+      "id": "shield-cloudfront-metrics",
+      "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/programming-cloudwatch-metrics.html",
+      "title": "Metric types for CloudFront",
+      "checkedAt": "2026-10-13",
+      "supports": ["CloudFront metrics are read from the US East (N. Virginia) Region"]
+    },
+    {
+      "id": "shield-lambda-url-throttling",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/urls-configuration.html",
+      "title": "Creating and managing Lambda function URLs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With reserved concurrency a function URL's maximum request rate is 10 times the reserved concurrency; beyond the concurrency or that rate it returns HTTP 429",
+        "Setting reserved concurrency to zero throttles all requests to the function URL"
+      ]
+    },
+    {
+      "id": "shield-lambda-reserved-concurrency",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-concurrency.html",
+      "title": "Configuring reserved concurrency for a function",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Configuring reserved concurrency incurs no additional charges",
+        "You can reserve up to the unreserved account concurrency minus 100"
+      ]
+    },
+    {
+      "id": "shield-whitepaper-mitigation",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/mitigation-techniques.html",
+      "title": "AWS Best Practices for DDoS Resiliency: Mitigation techniques",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudFront, Global Accelerator and Route 53 give access to DDoS mitigation capacity across the AWS global edge network",
+        "You are not charged for HTTP requests or data transfer out for requests rejected by CloudFront or AWS WAF",
+        "CloudFront origin fetches are free from any AWS origin"
+      ]
+    },
+    {
+      "id": "shield-whitepaper-origin",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/protecting-your-origin-bp1-bp5.html",
+      "title": "AWS Best Practices for DDoS Resiliency: Protecting your origin (BP1, BP5)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "VPC origins are the newest and recommended way to make sure only the CloudFront distribution reaches an origin in a VPC, at no additional cost",
+        "For S3, AWS Elemental and Lambda function URL origins, origin access control remains the recommended solution"
+      ]
+    },
+    {
+      "id": "shield-whitepaper-api",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/protecting-api-endpoints-bp4.html",
+      "title": "AWS Best Practices for DDoS Resiliency: Protecting API endpoints (BP4)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS recommends a regional API endpoint behind your own CloudFront distribution, an origin custom header x-api-key against direct access, and rate limits for each method of a REST API"
+      ]
+    },
+    {
+      "id": "shield-cfn-protection",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-shield-protection.html",
+      "title": "AWS::Shield::Protection",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Properties: Name and ResourceArn are required; HealthCheckArns, ApplicationLayerAutomaticResponseConfiguration and Tags are optional",
+        "The account must be subscribed to Shield Advanced before the resource can be created"
+      ],
+      "note": "The page does not say in which Region a protection for a CloudFront distribution must be declared."
+    },
+    {
+      "id": "shield-cloud-control-supported",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::Shield::Protection, AWS::Shield::ProtectionGroup, AWS::Shield::ProactiveEngagement and AWS::Shield::DRTAccess are listed"
+      ]
+    },
+    {
+      "id": "shield-cdkd-register-providers",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package, dist/)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Providers are registered for AWS::CloudFront::Distribution, AWS::CloudFront::OriginAccessControl, AWS::IAM::Policy, AWS::IAM::Role, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::Lambda::Url, AWS::Logs::LogGroup, AWS::WAFv2::WebACL and AWS::CloudWatch::Alarm",
+        "No provider is registered for AWS::Shield::Protection"
+      ],
+      "note": "Read as register(\"<type>\" calls in the installed bundle."
+    },
+    {
+      "id": "shield-price-list-cloudwatch-use1",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/us-east-1/index.json",
+      "title": "AWS Price List: AmazonCloudWatch (us-east-1)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CW:AlarmMonitorUsage: USD 0.10 per alarm metric month (standard resolution) in US East (N. Virginia)"
+      ]
+    },
+    {
+      "id": "shield-cloudflare-ddos",
+      "url": "https://developers.cloudflare.com/ddos-protection/",
+      "title": "Cloudflare DDoS Protection",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Standard, unmetered DDoS protection for layers 3 to 7 is available on all plans, including Free"
+      ]
+    },
+    {
+      "id": "shield-cloudflare-ddos-faq",
+      "url": "https://developers.cloudflare.com/ddos-protection/frequently-asked-questions/",
+      "title": "Cloudflare DDoS Protection: FAQ",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Cloudflare does not charge for DDoS attack traffic; its billing systems exclude DDoS attack traffic from usage"
+      ]
+    },
+    {
+      "id": "shield-cloudflare-workers-pricing",
+      "url": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "title": "Cloudflare Workers: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "To prevent runaway bills or denial-of-wallet attacks, a Worker's maximum CPU time per invocation can be limited in the Wrangler file or the dashboard"
+      ]
+    },
+    {
+      "id": "shield-cloudflare-rate-limiting-rules",
+      "url": "https://developers.cloudflare.com/waf/rate-limiting-rules/",
+      "title": "Cloudflare WAF: Rate limiting rules",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Rate limiting rules are listed for the Free, Pro, Business and Enterprise plans, with counting by IP on Free and Pro"
+      ]
+    },
+    {
+      "id": "shield-vercel-firewall",
+      "url": "https://vercel.com/docs/vercel-firewall",
+      "title": "Vercel Firewall",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The platform-wide firewall with DDoS mitigation is free for all customers without configuration; the Vercel WAF is available on all plans"
+      ]
+    },
+    {
+      "id": "shield-vercel-rate-limiting",
+      "url": "https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting",
+      "title": "Vercel WAF: Rate Limiting",
+      "checkedAt": "2026-10-13",
+      "supports": ["WAF Rate Limiting is available on all plans"]
+    },
+    {
+      "id": "shield-vercel-ddos-mitigation",
+      "url": "https://vercel.com/docs/vercel-firewall/ddos-mitigation",
+      "title": "Vercel: DDoS Mitigation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel mitigates L3, L4 and L7 DDoS attacks on all plans and does not charge for traffic blocked by the Firewall",
+        "Usage is incurred for requests served before a mitigation, and for requests not recognized as a DDoS event",
+        "Attack Mode challenges all visitors and is free on all plans; Pro teams can pause projects at a spend amount with Spend Management"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "ddos",
+      "ja": "DDoS",
+      "en": "DDoS",
+      "firstUse": "46",
+      "definition": {
+        "ja": "分散サービス拒否（distributed denial of service）。多数の送信元から通信を送りつけて、本来の利用者が使えない状態にする攻撃。回線を埋めるもの、プロトコルの状態を使い切らせるもの、正しい形のリクエストを大量に送るものがある。",
+        "en": "Distributed denial of service: traffic from many sources meant to leave real users unable to use a service. Some attacks fill the network, some exhaust protocol state, and some send floods of well-formed requests."
+      }
+    },
+    {
+      "id": "denial-of-wallet",
+      "ja": "denial of wallet",
+      "en": "denial of wallet",
+      "firstUse": "46",
+      "definition": {
+        "ja": "従量課金のサービスに大量のリクエストを送り、止めるのではなく請求を膨らませる攻撃。サービスは動き続けるので、気づくのが請求書になりやすい。",
+        "en": "An attack on pay-per-request services that inflates the bill instead of stopping the service. The service keeps working, so the bill is often the first sign."
+      }
+    },
+    {
+      "id": "shield-advanced",
+      "ja": "Shield Advanced",
+      "en": "Shield Advanced",
+      "firstUse": "46",
+      "definition": {
+        "ja": "AWS Shield の有料の契約。指定したリソースに、より低い検知の閾値、専門チームへの連絡、攻撃による料金の一部への補填などを足す。月額と 1 年の約束がある。無料で全員に付くほうは Shield Standard。",
+        "en": "The paid subscription of AWS Shield. For the resources you name it adds lower detection thresholds, access to a response team, and credits for part of an attack's cost. It has a monthly fee and a one-year commitment. The free part everyone has is Shield Standard."
+      }
+    },
+    {
+      "id": "managed-prefix-list",
+      "ja": "マネージドプレフィックスリスト",
+      "en": "managed prefix list",
+      "firstUse": "46",
+      "definition": {
+        "ja": "AWS が中身を管理している IP アドレス範囲の一覧。セキュリティグループのルールで、CIDR の代わりに ID で指定できる。CloudFront がオリジンへ接続するサーバーの範囲をまとめたものがある。",
+        "en": "A list of IP address ranges that AWS maintains. A security group rule can name it by ID in place of a CIDR. One of them holds the ranges of the servers CloudFront uses to reach origins."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "46.overview",
+      "sources": ["examples/46-shield/infra/bin/app.ts", "examples/46-shield/src/defences.ts"],
+      "tasks": ["shield:infra:synth"],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "46.standard",
+      "sources": ["examples/46-shield/infra/lib/shield-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "46.advanced",
+      "sources": ["examples/46-shield/infra/lib/edge-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "46.origins",
+      "sources": [
+        "examples/46-shield/src/origins.ts",
+        "examples/46-shield/test/origins.test.ts",
+        "examples/46-shield/scripts/origins.ts",
+        "examples/46-shield/infra/lib/alb-origin.ts",
+        "examples/46-shield/infra/lib/shield-stack.ts"
+      ],
+      "tasks": ["test:unit", "shield:origins", "shield:origins:gate"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "46.edge",
+      "sources": [
+        "examples/46-shield/src/cache.ts",
+        "examples/46-shield/test/cache.test.ts",
+        "examples/46-shield/infra/lib/shield-stack.ts",
+        "examples/46-shield/infra/lib/edge-stack.ts",
+        "examples/46-shield/infra/test/shield-stack.test.ts",
+        "examples/46-shield/infra/test/edge-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "shield:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "46.brake",
+      "sources": [
+        "examples/46-shield/src/defences.ts",
+        "examples/46-shield/infra/lib/config.ts",
+        "examples/46-shield/infra/lib/shield-stack.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "46.flood",
+      "sources": [
+        "examples/46-shield/src/flood.ts",
+        "examples/46-shield/src/runs.ts",
+        "examples/46-shield/test/flood.test.ts",
+        "examples/46-shield/scripts/flood.ts"
+      ],
+      "tasks": ["test:unit", "shield:flood"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "46.wallet",
+      "sources": [
+        "examples/46-shield/src/bill.ts",
+        "examples/46-shield/test/pricing.test.ts",
+        "examples/46-shield/scripts/flood.ts"
+      ],
+      "tasks": ["test:unit", "shield:flood"],
+      "boundary": "local",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "46.advanced-stack",
+      "sources": [
+        "examples/46-shield/infra/lib/edge-stack.ts",
+        "examples/46-shield/infra/lib/config.ts",
+        "examples/46-shield/infra/test/edge-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "shield:edge:infra:deploy"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "46.deploy",
+      "sources": ["examples/46-shield/infra/bin/app.ts", "examples/46-shield/infra/lib/config.ts"],
+      "tasks": [
+        "shield:infra:diff",
+        "shield:infra:deploy",
+        "shield:edge:infra:deploy",
+        "shield:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "46.runbook",
+      "sources": [
+        "examples/46-shield/infra/lib/edge-stack.ts",
+        "examples/46-shield/infra/lib/config.ts"
+      ],
+      "tasks": ["shield:infra:deploy"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "46.cost",
+      "sources": ["examples/46-shield/src/bill.ts", "examples/46-shield/test/pricing.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "46.compare",
+      "sources": ["examples/46-shield/src/flood.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "46.cleanup",
+      "sources": ["examples/46-shield/infra/bin/app.ts"],
+      "tasks": ["shield:infra:destroy", "shield:edge:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "shield.advanced.subscription",
+      "offerCode": "AWSShield",
+      "region": "global",
+      "sku": "GF3X85SG7UFVT4QG",
+      "usageType": "Shield-Monthly-Fee",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 1,
+          "usd": "3000.0000000000",
+          "description": "$3,000 for First Subscription"
+        },
+        {
+          "from": 1,
+          "to": null,
+          "usd": "0.0000000000",
+          "description": "$0 for additional Subscriptions"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSShield/current/index.json",
+      "offerPublicationDate": "2026-09-16T13:22:08Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "shield.advanced.transfer.cloudfront",
+      "offerCode": "AWSShield",
+      "region": "global",
+      "sku": "7FMZ7KQU3BTHFHZC",
+      "usageType": "Global-DataTransfer-Shield-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 102400,
+          "usd": "0.0250000000",
+          "description": "Shield Data Transfer out of CloudFront - First 100 TB"
+        },
+        {
+          "from": 102400,
+          "to": 512000,
+          "usd": "0.0200000000",
+          "description": "Shield Data Transfer out of CloudFront - Next 400 TB"
+        },
+        {
+          "from": 512000,
+          "to": 1024001,
+          "usd": "0.0150000000",
+          "description": "Shield Data Transfer out of CloudFront - Next 500 TB"
+        },
+        {
+          "from": 1024001,
+          "to": null,
+          "usd": "0.0100000000",
+          "description": "Shield Data Transfer out of CloudFront - Above 1000 TB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSShield/current/index.json",
+      "offerPublicationDate": "2026-09-16T13:22:08Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "waf.global.amr.antiddos",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "X4AZR4PCQBNT3XHT",
+      "usageType": "Global-AMR-AntiDDoS",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "20.0000000000",
+          "description": "$20.00 per Month for Global-AMR-AntiDDoS in CloudFront"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "waf.global.amr.antiddos.request",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "X29XVJ6T2CJAYQPM",
+      "usageType": "Global-AMR-AntiDDoS-Request",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000001500",
+          "description": "$0.15 per million Request for AMR Anti-DDoS Request Processed in CloudFront"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "cloudwatch.alarm.standard.use1",
+      "offerCode": "AmazonCloudWatch",
+      "region": "us-east-1",
+      "sku": "EVETVUGEN3MUTMXM",
+      "usageType": "CW:AlarmMonitorUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Alarms",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per alarm metric month (standard resolution) - US East (Northern Virginia)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/us-east-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "shield.advanced.subscription",
+      "reason": "No free allowance or trial for the Shield Advanced subscription was found on the pricing page or in the Price List. None is applied."
+    },
+    {
+      "priceId": "shield.advanced.transfer.cloudfront",
+      "reason": "No free allowance for Shield Advanced data transfer out was found. None is applied."
+    },
+    {
+      "priceId": "waf.global.amr.antiddos",
+      "reason": "No free allowance for the Anti-DDoS managed rule group was found for the pay-as-you-go model. None is applied."
+    },
+    {
+      "priceId": "waf.global.amr.antiddos.request",
+      "reason": "No free allowance for requests processed by the Anti-DDoS managed rule group was found. None is applied."
+    },
+    {
+      "priceId": "cloudwatch.alarm.standard.use1",
+      "reason": "The Price List has a global USD 0 tier for the first 10 alarm metrics. Whether an alarm in us-east-1 shares it with alarms in ap-northeast-1 was not confirmed, so nothing is deducted here."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "shield-edge-month",
+      "chapter": "46",
+      "title": {
+        "ja": "AihShieldEdge を 1 か月置く（リクエストなし）",
+        "en": "AihShieldEdge kept for a month, with no requests"
+      },
+      "assumptions": {
+        "ja": [
+          "web ACL 1 つ、ルール 1 つ、アラーム 1 つ（参照するメトリクスは 1 つ）",
+          "web ACL が検査したリクエストは 0 件",
+          "Shield Advanced の保護は付けていない"
+        ],
+        "en": [
+          "One web ACL, one rule, one alarm on one metric",
+          "The web ACL inspected no requests",
+          "No Shield Advanced protection"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "waf.global.webacl",
+          "quantity": 1,
+          "basis": "1 web ACL"
+        },
+        {
+          "priceId": "waf.global.rule",
+          "quantity": 1,
+          "basis": "1 rate-based rule"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard.use1",
+          "quantity": 1,
+          "basis": "1 alarm on 1 metric, in us-east-1"
+        }
+      ]
+    },
+    {
+      "id": "shield-advanced-month",
+      "chapter": "46",
+      "title": {
+        "ja": "Shield Advanced を契約した 1 か月（データ転送なし）",
+        "en": "One month of a Shield Advanced subscription, with no data transfer"
+      },
+      "assumptions": {
+        "ja": [
+          "契約は 1 年の約束なので、この金額が 12 回かかる",
+          "保護したディストリビューションの web ACL とルールの月額は Price List で USD 0（Shield Protected の SKU）",
+          "アラームは 2 つ（レートベースのルールと DDoSDetected）",
+          "Shield Advanced のデータ転送料金、SRT を呼ぶのに要るサポートプランの料金は含めていない"
+        ],
+        "en": [
+          "The subscription is a commitment for a year, so this amount is charged twelve times",
+          "The web ACL and rule of a protected distribution are USD 0 a month in the Price List (the Shield Protected SKUs)",
+          "Two alarms (the rate-based rule and DDoSDetected)",
+          "Shield Advanced data transfer fees and the Support plan needed to reach the SRT are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "shield.advanced.subscription",
+          "quantity": 1,
+          "basis": "1 subscription for the payer account"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard.use1",
+          "quantity": 2,
+          "basis": "2 alarms on 1 metric each, in us-east-1"
+        }
+      ]
+    },
+    {
+      "id": "shield-flood-few-open",
+      "chapter": "46",
+      "title": {
+        "ja": "洪水の 1 時間: 20 アドレスから、防御なし",
+        "en": "An hour of flood: 20 addresses, no defence"
+      },
+      "assumptions": {
+        "ja": [
+          "攻撃は 20 アドレスから各毎秒 250 件。web ACL もブレーキもキャッシュも無い",
+          "1 時間。利用者は 200 アドレスから合計で毎秒 100 件、うち 2 割がキャッシュできるルート",
+          "攻撃は 5 分目から 55 分目まで、合計で毎秒 5,000 件",
+          "応答 1 件は 1,024 バイト、関数の実行は 256 MB で 50 ms と仮定（計測値ではない）",
+          "エッジは日本の料金。ブレーキが返した 429 のバイト数と、断られた呼び出しの Lambda 料金は数えていない",
+          "examples/46-shield/src/flood.ts のモデルの出力で、実測ではない"
+        ],
+        "en": [
+          "The attack is 250 requests a second from each of 20 addresses. No web ACL, brake or cache",
+          "One hour. Users: 200 addresses, 100 requests a second in all, a fifth of them for the cacheable route",
+          "The attack runs from minute 5 to minute 55, at 5,000 requests a second in all",
+          "One answer is assumed to be 1,024 bytes and one run of the function 50 ms at 256 MB (not measured)",
+          "Edge prices for Japan. The bytes of a 429 from the brake, and any Lambda charge for a refused invocation, are not counted",
+          "The output of the model in examples/46-shield/src/flood.ts, not a measurement"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 15360000,
+          "basis": "15360000 requests CloudFront answered or passed on"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 14.648438,
+          "basis": "15360000 answers x 1024 bytes"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 15360000,
+          "basis": "15360000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 192000,
+          "basis": "15360000 invocations x 50 ms x 256 MB"
+        }
+      ]
+    },
+    {
+      "id": "shield-flood-few-rule",
+      "chapter": "46",
+      "title": {
+        "ja": "洪水の 1 時間: 20 アドレスから、レートベースのルール",
+        "en": "An hour of flood: 20 addresses, with the rate-based rule"
+      },
+      "assumptions": {
+        "ja": [
+          "攻撃は 20 アドレスから各毎秒 250 件。ルールは 60 秒で 300 件、気づくまで 30 秒と仮定",
+          "1 時間。利用者は 200 アドレスから合計で毎秒 100 件、うち 2 割がキャッシュできるルート",
+          "攻撃は 5 分目から 55 分目まで、合計で毎秒 5,000 件",
+          "応答 1 件は 1,024 バイト、関数の実行は 256 MB で 50 ms と仮定（計測値ではない）",
+          "エッジは日本の料金。ブレーキが返した 429 のバイト数と、断られた呼び出しの Lambda 料金は数えていない",
+          "examples/46-shield/src/flood.ts のモデルの出力で、実測ではない"
+        ],
+        "en": [
+          "The attack is 250 requests a second from each of 20 addresses. The rule is 300 in 60 seconds, and is assumed to act after 30 seconds",
+          "One hour. Users: 200 addresses, 100 requests a second in all, a fifth of them for the cacheable route",
+          "The attack runs from minute 5 to minute 55, at 5,000 requests a second in all",
+          "One answer is assumed to be 1,024 bytes and one run of the function 50 ms at 256 MB (not measured)",
+          "Edge prices for Japan. The bytes of a 429 from the brake, and any Lambda charge for a refused invocation, are not counted",
+          "The output of the model in examples/46-shield/src/flood.ts, not a measurement"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 515000,
+          "basis": "515000 requests CloudFront answered or passed on"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 0.491142,
+          "basis": "515000 answers x 1024 bytes"
+        },
+        {
+          "priceId": "waf.global.request",
+          "quantity": 15360000,
+          "basis": "15360000 requests inspected, blocked or not"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 515000,
+          "basis": "515000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 6437.5,
+          "basis": "515000 invocations x 50 ms x 256 MB"
+        }
+      ]
+    },
+    {
+      "id": "shield-flood-many-rule",
+      "chapter": "46",
+      "title": {
+        "ja": "洪水の 1 時間: 20,000 アドレスから、レートベースのルール",
+        "en": "An hour of flood: 20,000 addresses, with the rate-based rule"
+      },
+      "assumptions": {
+        "ja": [
+          "攻撃は 20,000 アドレスから各 4 秒に 1 件。どのアドレスもルールの上限に届かない",
+          "1 時間。利用者は 200 アドレスから合計で毎秒 100 件、うち 2 割がキャッシュできるルート",
+          "攻撃は 5 分目から 55 分目まで、合計で毎秒 5,000 件",
+          "応答 1 件は 1,024 バイト、関数の実行は 256 MB で 50 ms と仮定（計測値ではない）",
+          "エッジは日本の料金。ブレーキが返した 429 のバイト数と、断られた呼び出しの Lambda 料金は数えていない",
+          "examples/46-shield/src/flood.ts のモデルの出力で、実測ではない"
+        ],
+        "en": [
+          "The attack is one request every four seconds from each of 20,000 addresses. No address reaches the rule's limit",
+          "One hour. Users: 200 addresses, 100 requests a second in all, a fifth of them for the cacheable route",
+          "The attack runs from minute 5 to minute 55, at 5,000 requests a second in all",
+          "One answer is assumed to be 1,024 bytes and one run of the function 50 ms at 256 MB (not measured)",
+          "Edge prices for Japan. The bytes of a 429 from the brake, and any Lambda charge for a refused invocation, are not counted",
+          "The output of the model in examples/46-shield/src/flood.ts, not a measurement"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 15360000,
+          "basis": "15360000 requests CloudFront answered or passed on"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 14.648438,
+          "basis": "15360000 answers x 1024 bytes"
+        },
+        {
+          "priceId": "waf.global.request",
+          "quantity": 15360000,
+          "basis": "15360000 requests inspected, blocked or not"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 15360000,
+          "basis": "15360000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 192000,
+          "basis": "15360000 invocations x 50 ms x 256 MB"
+        }
+      ]
+    },
+    {
+      "id": "shield-flood-many-brake",
+      "chapter": "46",
+      "title": {
+        "ja": "洪水の 1 時間: 20,000 アドレスから、ルールとブレーキ",
+        "en": "An hour of flood: 20,000 addresses, with the rule and the brake"
+      },
+      "assumptions": {
+        "ja": [
+          "攻撃は 20,000 アドレスから各 4 秒に 1 件。予約済み同時実行数 20（function URL は毎秒 200 件まで）",
+          "1 時間。利用者は 200 アドレスから合計で毎秒 100 件、うち 2 割がキャッシュできるルート",
+          "攻撃は 5 分目から 55 分目まで、合計で毎秒 5,000 件",
+          "応答 1 件は 1,024 バイト、関数の実行は 256 MB で 50 ms と仮定（計測値ではない）",
+          "エッジは日本の料金。ブレーキが返した 429 のバイト数と、断られた呼び出しの Lambda 料金は数えていない",
+          "examples/46-shield/src/flood.ts のモデルの出力で、実測ではない"
+        ],
+        "en": [
+          "The attack is one request every four seconds from each of 20,000 addresses. Reserved concurrency 20 (the function URL takes 200 requests a second)",
+          "One hour. Users: 200 addresses, 100 requests a second in all, a fifth of them for the cacheable route",
+          "The attack runs from minute 5 to minute 55, at 5,000 requests a second in all",
+          "One answer is assumed to be 1,024 bytes and one run of the function 50 ms at 256 MB (not measured)",
+          "Edge prices for Japan. The bytes of a 429 from the brake, and any Lambda charge for a refused invocation, are not counted",
+          "The output of the model in examples/46-shield/src/flood.ts, not a measurement"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 15360000,
+          "basis": "15360000 requests CloudFront answered or passed on"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 0.629443,
+          "basis": "660019 answers x 1024 bytes"
+        },
+        {
+          "priceId": "waf.global.request",
+          "quantity": 15360000,
+          "basis": "15360000 requests inspected, blocked or not"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 660019,
+          "basis": "660019 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 8250.2375,
+          "basis": "660019 invocations x 50 ms x 256 MB"
+        }
+      ]
+    },
+    {
+      "id": "shield-flood-cached-cache",
+      "chapter": "46",
+      "title": {
+        "ja": "洪水の 1 時間: キャッシュされるルートへ 20,000 アドレスから",
+        "en": "An hour of flood: 20,000 addresses on the cached route"
+      },
+      "assumptions": {
+        "ja": [
+          "攻撃は 20,000 アドレスから各 4 秒に 1 件、すべて /health へ。キャッシュは 5 秒、エッジは 1 か所と仮定",
+          "1 時間。利用者は 200 アドレスから合計で毎秒 100 件、うち 2 割がキャッシュできるルート",
+          "攻撃は 5 分目から 55 分目まで、合計で毎秒 5,000 件",
+          "応答 1 件は 1,024 バイト、関数の実行は 256 MB で 50 ms と仮定（計測値ではない）",
+          "エッジは日本の料金。ブレーキが返した 429 のバイト数と、断られた呼び出しの Lambda 料金は数えていない",
+          "examples/46-shield/src/flood.ts のモデルの出力で、実測ではない"
+        ],
+        "en": [
+          "The attack is one request every four seconds from each of 20,000 addresses, all for /health. The cache lives 5 seconds, and one edge location is assumed",
+          "One hour. Users: 200 addresses, 100 requests a second in all, a fifth of them for the cacheable route",
+          "The attack runs from minute 5 to minute 55, at 5,000 requests a second in all",
+          "One answer is assumed to be 1,024 bytes and one run of the function 50 ms at 256 MB (not measured)",
+          "Edge prices for Japan. The bytes of a 429 from the brake, and any Lambda charge for a refused invocation, are not counted",
+          "The output of the model in examples/46-shield/src/flood.ts, not a measurement"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 15360000,
+          "basis": "15360000 requests CloudFront answered or passed on"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 14.648438,
+          "basis": "15360000 answers x 1024 bytes"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 288720,
+          "basis": "288720 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 3609,
+          "basis": "288720 invocations x 50 ms x 256 MB"
+        }
+      ]
+    },
+    {
+      "id": "shield-flood-month-open",
+      "chapter": "46",
+      "title": {
+        "ja": "洪水が 30 日続いたら: 防御なし",
+        "en": "If the flood lasted 30 days: no defence"
+      },
+      "assumptions": {
+        "ja": [
+          "毎秒 5,000 件が 30 日続き、すべてが関数まで届く（129 億 6,000 万件）。利用者のぶんは含めていない",
+          "web ACL もブレーキもキャッシュも無い。モデルは使わず、件数に単価を掛けただけ",
+          "応答 1 件は 1,024 バイト、関数の実行は 256 MB で 50 ms と仮定（計測値ではない）",
+          "Lambda がこの流量を処理し続けられる前提。アカウントの同時実行数のクォータ（32章）は考慮していない"
+        ],
+        "en": [
+          "5,000 requests a second for 30 days, every one of them reaching the function (12.96 billion). The users' own requests are not included",
+          "No web ACL, brake or cache. No model: counts multiplied by unit prices",
+          "One answer is assumed to be 1,024 bytes and one run of the function 50 ms at 256 MB (not measured)",
+          "Assumes Lambda keeps up with that rate. The account's concurrency quota (chapter 32) is not considered"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 12960000000,
+          "basis": "12960000000 requests CloudFront answered or passed on"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 12359.619141,
+          "basis": "12960000000 answers x 1024 bytes"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 12960000000,
+          "basis": "12960000000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 162000000,
+          "basis": "12960000000 invocations x 50 ms x 256 MB"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "46",
+        "command": "vp test run examples/46-shield",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "6 ファイル 64 件。オリジンの検査（CDK が実際に出力したテンプレートと手書きの JSON の両方）、キャッシュのヘッダー、乱数の種を固定した洪水のシミュレーション（レートベースのルール、キャッシュ、ブレーキ）、料金の行とシナリオの一致、2 つのスタックのアサーション",
+          "en": "6 files, 64 tests: the origin check (on templates CDK actually produced and on hand-written JSON), the cache header, the seeded flood simulation (rate-based rule, cache, brake), usage lines against the recorded scenarios, and assertions on the two stacks"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "tsc --noEmit -p examples/46-shield",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AihShield と AihShieldEdge の 2 つのテンプレートを cdk.out に書き出した（esbuild のバンドル込み）。AWS への問い合わせなし",
+          "en": "Wrote the two templates, AihShield and AihShieldEdge, to cdk.out (with the esbuild bundle). No call to AWS"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:origins:gate",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AihShield の function URL は closed",
+          "en": "The function URL of AihShield is closed"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "node examples/46-shield/scripts/origins.ts",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "手元にあった 56 個のテンプレートを読んだ（28 個のうち direct が 22、closed が 6）。shield:origins はこの前に infra:synth を実行するが、ここでは既にある cdk.out に対して直接実行した。ほかの章の synth が進むと数は変わる",
+          "en": "Read the 56 templates present in this checkout (of 28 resources, 22 direct and 6 closed). The numbers change as other chapters are synthesized. shield:origins runs infra:synth first; here the script was run directly against the cdk.out directories that already existed"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:flood",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "本文の表はこの出力",
+          "en": "The table in the chapter is this output"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "node -e import(cdk.out/asset.*/index.mjs) with a function URL event",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "synth が作ったバンドルを Node.js 25.8.1 で読み込み、function URL の形のイベントで /health と /notes を呼んだ。cache-control は public, max-age=5 と no-store",
+          "en": "Loaded the bundle that synth produced in Node.js 25.8.1 and called /health and /notes with an event shaped like a function URL's. cache-control was public, max-age=5 and no-store"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:edge:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。web ACL は作った時点から月額がかかる",
+          "en": "Not run. A web ACL is billed by the month from the moment it exists"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:edge:infra:deploy -c shieldAdvanced=on -c distributionArn=<arn>",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない。Shield Advanced を契約したアカウントが要る",
+          "en": "Not run. Needs an account subscribed to Shield Advanced"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "46",
+        "command": "vp run shield:infra:destroy / shield:edge:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "shield-deploy-not-run",
+        "summary": {
+          "ja": "AihShield と AihShieldEdge を実際の AWS にデプロイしていない。function URL を直接呼ぶと 403 になること、CloudFront 経由で /health がキャッシュされること、クエリ文字列を変えても同じオブジェクトになることは、ドキュメントとテンプレートから読んだだけ。",
+          "en": "AihShield and AihShieldEdge were not deployed. That a direct request to the function URL gets 403, that /health is cached through CloudFront, and that a different query string is the same object, are read from the documentation and the template only."
+        },
+        "resume": {
+          "ja": "vp run shield:infra:deploy のあと、出力 FunctionUrl に curl -i して 403 を、出力 Url の /health に curl -i を 2 回して 2 回目の x-cache が Hit from cloudfront で x-request-id が同じことを、/health?x=1 でも同じことを確かめる。",
+          "en": "After vp run shield:infra:deploy: curl -i the FunctionUrl output and expect 403; curl -i <Url>/health twice and expect the second to say x-cache: Hit from cloudfront with the same x-request-id; then the same for /health?x=1."
+        }
+      },
+      {
+        "id": "shield-rate-rule-timing",
+        "summary": {
+          "ja": "レートベースのルールが実際に何秒で効き始めるかを計測していない。シミュレーションの 30 秒は、ドキュメントが「ふつうはそれ未満」と書く値を仮定に使ったもの。ブロックされたリクエストが数え続けられることも、ドキュメントの文面からの読み取り。",
+          "en": "How many seconds the rate-based rule takes to act was not measured. The simulation's 30 seconds is the value the documentation calls the usual upper bound. That blocked requests keep being counted is this chapter's reading of the documentation."
+        },
+        "resume": {
+          "ja": "AihShieldEdge を付けた AihShield に、自分の 1 アドレスから毎秒 10 件を 3 分送り、最初の 403 までの秒数と、送るのをやめてから通るまでの秒数を記録する。自分のリソースに自分で送る範囲に留める。",
+          "en": "With AihShieldEdge attached to AihShield, send 10 requests a second from one address of your own for three minutes, and record the seconds until the first 403 and, after stopping, until requests pass again. Keep it to your own resources."
+        }
+      },
+      {
+        "id": "shield-function-url-brake",
+        "summary": {
+          "ja": "予約済み同時実行数を付けた function URL が、毎秒 10 倍の件数で 429 を返し始めることと、CloudFront がその 429 をどう返すか（キャッシュするかどうかを含む）を確かめていない。モデルのバースト（予約 1 単位につき 1 件）は、この章の仮定。断られた呼び出しに Lambda の料金がかかるかどうかも確認していない。",
+          "en": "Not confirmed: that a function URL with reserved concurrency starts answering 429 at ten times that many requests a second, and what CloudFront does with the 429 (including whether it caches it). The model's burst (one request per reserved unit) is this chapter's assumption. Whether Lambda charges for a refused invocation is not confirmed either."
+        },
+        "resume": {
+          "ja": "vp run shield:infra:deploy -c reservedConcurrency=1 のあと、/notes に毎秒 30 件ほどを 10 秒送り、429 の割合、ヘッダー、x-cache を記録する。翌日に請求の Lambda の Request 数と CloudWatch の Invocations、Throttles を比べる。",
+          "en": "After vp run shield:infra:deploy -c reservedConcurrency=1, send about 30 requests a second to /notes for 10 seconds and record the share of 429s, their headers and x-cache. The next day, compare Lambda's billed requests with the Invocations and Throttles metrics."
+        }
+      },
+      {
+        "id": "shield-waf-metric-dimensions",
+        "summary": {
+          "ja": "アラームが見ている AWS/WAFV2 の BlockedRequests を、CloudFront 用の web ACL に対して WebACL と Rule の 2 つのディメンションだけで引けることを、実際のメトリクスで確かめていない。",
+          "en": "Not confirmed against live metrics: that BlockedRequests in AWS/WAFV2 for a CloudFront web ACL is found with only the WebACL and Rule dimensions the alarm uses."
+        },
+        "resume": {
+          "ja": "AihShieldEdge をデプロイしてルールを 1 度発動させ、us-east-1 で aws cloudwatch list-metrics --namespace AWS/WAFV2 --metric-name BlockedRequests を実行して、ディメンションの組を見る。違っていたら infra/lib/edge-stack.ts を直す。",
+          "en": "Deploy AihShieldEdge, trip the rule once, and run aws cloudwatch list-metrics --namespace AWS/WAFV2 --metric-name BlockedRequests in us-east-1 to see the dimension sets. If they differ, fix infra/lib/edge-stack.ts."
+        }
+      },
+      {
+        "id": "shield-advanced-not-subscribed",
+        "summary": {
+          "ja": "Shield Advanced は契約していない。AWS::Shield::Protection を cdkd 0.296.28（専用の実装が無く Cloud Control API 経由）で作れること、CloudFront の保護を us-east-1 のスタックに書いてよいこと、DDoSDetected のディメンション名が ResourceArn であること、契約前のデプロイがどう失敗するかは、どれも確かめていない。SRT、費用の保護、proactive engagement、health-based detection は、ドキュメントを読んだだけ。",
+          "en": "No Shield Advanced subscription was taken. Not confirmed: that cdkd 0.296.28 can create AWS::Shield::Protection (it has no provider of its own and goes through Cloud Control API), that a protection for CloudFront may be declared in a us-east-1 stack, that DDoSDetected's dimension is named ResourceArn, and how a deploy fails without a subscription. The SRT, cost protection, proactive engagement and health-based detection are from the documentation only."
+        },
+        "resume": {
+          "ja": "契約済みのアカウントで vp run shield:edge:infra:deploy -c shieldAdvanced=on -c distributionArn=<AihShield の DistributionArn> を実行し、Shield のコンソールで保護を、us-east-1 の list-metrics --namespace AWS/DDoSProtection でディメンションを確かめる。契約は 1 年で USD 36,000 になるので、このためだけには行わない。",
+          "en": "In a subscribed account, run vp run shield:edge:infra:deploy -c shieldAdvanced=on -c distributionArn=<DistributionArn of AihShield>, then check the protection in the Shield console and the dimensions with list-metrics --namespace AWS/DDoSProtection in us-east-1. The subscription comes to USD 36,000 over its year, so do not take it for this alone."
+        }
+      },
+      {
+        "id": "shield-flat-rate-plan",
+        "summary": {
+          "ja": "CloudFront の flat-rate pricing plan は試していない。この章のディストリビューション（function URL のオリジン、OAC）がプランに入れられること、CloudFormation からプランを指定できるかどうか、許容量を超えたときの実際の挙動は確かめていない。",
+          "en": "CloudFront's flat-rate pricing plans were not tried. Not confirmed: that this chapter's distribution (a function URL origin with origin access control) can join a plan, whether a plan can be set from CloudFormation, and what actually happens above the allowance."
+        },
+        "resume": {
+          "ja": "デプロイしたディストリビューションを CloudFront のコンソールで開き、プランの選択画面で Free を選べるか、断られるなら理由を記録する。AWS Free Tier を使っているアカウントは対象外とドキュメントにある。",
+          "en": "Open the deployed distribution in the CloudFront console and record whether the Free plan can be chosen, or why it is refused. The documentation says an account using AWS Free Tier is not eligible."
+        }
+      },
+      {
+        "id": "shield-alb-closing-not-deployed",
+        "summary": {
+          "ja": "ALB を CloudFront だけに閉じる 3 つの形（infra/lib/alb-origin.ts）は、テンプレートを synth してこの章の検査にかけただけで、どのスタックにも入れていない。VPC origin と prefix list の ID の調べ方は実環境で試していない。",
+          "en": "The three ways of putting a load balancer behind CloudFront (infra/lib/alb-origin.ts) were only synthesized and run through this chapter's check; no stack deploys them. VPC origins and looking up the prefix list ID were not tried in an account."
+        },
+        "resume": {
+          "ja": "12章のスタックに prefixListLoadBalancer の形を入れ、aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing で ID を調べてデプロイし、ALB の DNS 名に直接 curl して届かないことを確かめる。ALB は時間課金。",
+          "en": "Put the shape of prefixListLoadBalancer into chapter 12's stack, look up the ID with aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing, deploy, and confirm that curl to the load balancer's DNS name does not connect. A load balancer is billed by the hour."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 46: Shield ----------------------------------------------\n      // Seeded floods against the rate rule, the cache and the brake, priced with data/pricing. Local.\n      \"shield:flood\": fresh(\"node scripts/flood.ts\", { cwd: \"examples/46-shield\" }),\n      // Every function URL, load balancer and API in the book's synthesized stacks: reachable without CloudFront?\n      \"shield:origins\": fresh(\"node examples/46-shield/scripts/origins.ts\", {\n        dependsOn: [\"infra:synth\"],\n      }),\n      // This chapter's own stack has to come out closed.\n      \"shield:origins:gate\": fresh(\n        \"node examples/46-shield/scripts/origins.ts --gate AihShield examples/46-shield/cdk.out\",\n        { dependsOn: [\"shield:infra:synth\"] },\n      ),\n      ...infra(\"shield\", \"examples/46-shield\", \"AihShield\"),\n      // In us-east-1 whatever AIH_AWS_REGION says. BILLED by the month once deployed: a web ACL and a rule.\n      // `-c shieldAdvanced=on` adds a protection, for an account already subscribed (USD 3,000 a month, for a year).\n      ...infra(\"shield:edge\", \"examples/46-shield\", \"AihShieldEdge\"),",
+    "synth": ["shield:infra:synth"],
+    "checkAll": ["shield:origins:gate"],
+    "typecheck": ["examples/46-shield"]
+  }
+}

@@ -1,0 +1,22 @@
+# Log lines copied from the AWS Lambda Developer Guide on 2026-10-13, not from a function of this book.
+# Plain text: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html
+# JSON: https://docs.aws.amazon.com/lambda/latest/dg/telemetry-schema-reference.html, one object per line.
+# The guide's platform.report example ends with a trailing comma, which is not JSON; it is removed here.
+START RequestId: c3252230-c73d-49f6-8844-968c01d1e2e1 Version: $LATEST
+RequestId: c3252230-c73d-49f6-8844-968c01d1e2e1 Error: Runtime exited without providing a reason
+Runtime.ExitError
+END RequestId: c3252230-c73d-49f6-8844-968c01d1e2e1
+REPORT RequestId: c3252230-c73d-49f6-8844-968c01d1e2e1 Duration: 933.59 ms Billed Duration: 934 ms Memory Size: 128 MB Max Memory Used: 9 MB
+START RequestId: b70435cc-261c-4438-b9b6-efe4c8f04b21 Version: $LATEST
+2024-03-04T17:22:38.033Z b70435cc-261c-4438-b9b6-efe4c8f04b21 Task timed out after 3.00 seconds
+END RequestId: b70435cc-261c-4438-b9b6-efe4c8f04b21
+REPORT RequestId: b70435cc-261c-4438-b9b6-efe4c8f04b21 Duration: 3004.92 ms Billed Duration: 3117 ms Memory Size: 128 MB Max Memory Used: 33 MB Init Duration: 111.23 ms
+START RequestId: 5b866fb1-7154-4af6-8078-6ef6ca4c2ddd Version: $LATEST
+END RequestId: 5b866fb1-7154-4af6-8078-6ef6ca4c2ddd
+REPORT RequestId: 5b866fb1-7154-4af6-8078-6ef6ca4c2ddd Duration: 133.61 ms Billed Duration: 214 ms Memory Size: 128 MB Max Memory Used: 31 MB Init Duration: 80.00 ms Status: error Error Type: Runtime.ExitError
+START RequestId: 527cb862-4f5e-49a9-9ae4-a7edc90f0fda Version: $LATEST
+END RequestId: 527cb862-4f5e-49a9-9ae4-a7edc90f0fda
+REPORT RequestId: 527cb862-4f5e-49a9-9ae4-a7edc90f0fda Duration: 3016.78 ms Billed Duration: 3101 ms Memory Size: 128 MB Max Memory Used: 31 MB Init Duration: 84.00 ms Status: timeout
+INIT_REPORT Init Duration: 1236.04 ms Phase: init Status: timeout
+{"time":"2022-10-12T00:01:15.000Z","type":"platform.report","record":{"metrics":{"billedDurationMs":694,"durationMs":693.92,"initDurationMs":397.68,"maxMemoryUsedMB":84,"memorySizeMB":128},"requestId":"6d68ca91-49c9-448d-89b8-7ca3e6dc66aa"}}
+{"time":"2022-10-12T00:01:15.000Z","type":"platform.initReport","record":{"initializationType":"on-demand","status":"success","phase":"init","metrics":{"durationMs":125.33}}}

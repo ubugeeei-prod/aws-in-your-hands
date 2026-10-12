@@ -1,0 +1,930 @@
+{
+  "chapterId": "64",
+  "manifest": {
+    "id": "64",
+    "slug": "isolates",
+    "title": {
+      "ja": "Isolates: V8 isolate の実行環境を AWS でセルフホストする",
+      "en": "Isolates: Self-Hosting a V8 Isolate Runtime on AWS"
+    },
+    "prerequisites": ["04", "10", "11", "12", "23", "24", "35"],
+    "services": ["Fargate", "ECS", "ALB", "ECR", "CloudWatch Logs"],
+    "samplePath": "examples/64-isolates",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "iso-workerd-readme",
+      "iso-workerd-capnp",
+      "iso-workerd-server-source",
+      "iso-workerd-license",
+      "iso-workerd-npm",
+      "iso-cf-how-workers-works",
+      "iso-cf-security-model",
+      "iso-cf-pricing",
+      "iso-cf-limits",
+      "iso-cf-nodejs",
+      "iso-cf-compat-dates",
+      "iso-aws-fargate",
+      "iso-al2023-glibc",
+      "iso-elb-pricing",
+      "iso-price-list-ecs",
+      "iso-price-list-elb",
+      "iso-price-list-vpc",
+      "iso-price-list-lambda",
+      "iso-price-list-apigw",
+      "iso-supabase-edge-runtime",
+      "iso-cdkd-package"
+    ]
+  },
+  "sources": [
+    {
+      "id": "iso-workerd-readme",
+      "url": "https://github.com/cloudflare/workerd/blob/v1.20261012.1/README.md",
+      "title": "workerd, Cloudflare's JavaScript/Wasm Runtime (README at v1.20261012.1)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "workerd is a JavaScript / Wasm server runtime based on the same code that powers Cloudflare Workers",
+        "Its stated uses: an application server to self-host applications designed for Cloudflare Workers, a development tool, and a programmable HTTP proxy",
+        "WARNING: workerd is not a hardened sandbox. It tries to isolate each Worker, but on its own does not contain suitable defense-in-depth against implementation bugs; to run possibly-malicious code you must run it inside an appropriate secure sandbox, such as a virtual machine",
+        "When one nanoservice calls another, the callee runs in the same thread and process",
+        "Updating workerd never breaks existing code; the version number is a date, the maximum compatibility date that version supports",
+        "Configuration is a file in Cap'n Proto text format; `workerd serve my-config.capnp` serves it",
+        "Prebuilt binaries are distributed via npm; on Linux they need glibc 2.35 or higher (Ubuntu 22.04, Debian Bookworm), on macOS 13.5 or higher",
+        "Tested on Linux and macOS (x86-64 and arm64) and Windows (x86-64)",
+        "For production the README suggests systemd, with sockets inherited through --socket-fd, and Restart=always"
+      ],
+      "note": "The README on the main branch was byte-identical to the one at the tag on 2026-10-13."
+    },
+    {
+      "id": "iso-workerd-capnp",
+      "url": "https://github.com/cloudflare/workerd/blob/v1.20261012.1/src/workerd/server/workerd.capnp",
+      "title": "workerd.capnp: the configuration schema (v1.20261012.1)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Config has services, sockets, v8Flags, extensions, autogates, and logging; a Service is a worker, a network, an external server, or a disk directory",
+        "A Worker has modules or a serviceWorkerScript, a required compatibilityDate, compatibilityFlags, bindings, globalOutbound, Durable Object namespaces and storage",
+        "Binding kinds include text, data, json, cryptoKey, service, durableObjectNamespace, kvNamespace, r2Bucket, queue, analyticsEngine, hyperdrive, fromEnvironment, memoryCache, and workerLoader",
+        "kvNamespace, r2Bucket, and queue bindings turn operations into HTTP requests aimed at a service named in the configuration; workerd does not contain the stores",
+        "fromEnvironment takes the value from getenv() of the named variable; the binding is null if the variable is not set",
+        "Durable Object storage is none, inMemory (for local testing), or localDisk (marked EXPERIMENTAL); objects are always local to one instance of the runtime",
+        "A worker that inherits another runs in the same isolate as the base worker",
+        "The default globalOutbound is the service `internet`, which allows publicly routable addresses only",
+        "HttpOptions.forwardedProtoHeader names the header that tells the worker which protocol the original client used",
+        "The schema has no field that limits a worker's CPU time or memory (the only limits struct is MemoryCacheLimits)",
+        "`workerd compile` builds a self-contained binary from the workerd binary, a configuration, and its source code"
+      ]
+    },
+    {
+      "id": "iso-workerd-server-source",
+      "url": "https://github.com/cloudflare/workerd/blob/v1.20261012.1/src/workerd/server/server.c++",
+      "title": "workerd server.c++ (v1.20261012.1)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The server defines `NullIsolateLimitEnforcer`, commented as an IsolateLimitEnforcer that enforces no limits, and creates one for each worker's isolate"
+      ],
+      "note": "Read lines 3330-3331 and 5906-5931 of the file at the tag. Nothing else in the file was studied."
+    },
+    {
+      "id": "iso-workerd-license",
+      "url": "https://github.com/cloudflare/workerd/blob/v1.20261012.1/LICENSE",
+      "title": "workerd LICENSE",
+      "checkedAt": "2026-10-13",
+      "supports": ["workerd is licensed under the Apache License, Version 2.0"]
+    },
+    {
+      "id": "iso-workerd-npm",
+      "url": "https://registry.npmjs.org/workerd",
+      "title": "npm registry: workerd",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The latest version on 2026-10-13 was 1.20261012.1, published 2026-10-12",
+        "The package has a postinstall script and optional dependencies for darwin-arm64, darwin-64, linux-arm64, linux-64, and windows-64",
+        "@cloudflare/workerd-linux-arm64@1.20261012.1 is a 39,889,339-byte archive whose registry integrity is sha512-I0VMdcXk7ygG5vYDce0ePTBFdnBXC0i9WiBY5mWiv0iTinbfea6/rHqSQ7B1UMpjgrYVs9E0m4bZ9ufsk5GCFA=="
+      ],
+      "note": "The Linux arm64 archive was downloaded and its SHA-512 re-computed. Its binary is a dynamically linked aarch64 ELF that names libc.so.6, libm.so.6 and symbol versions up to GLIBC_2.35 (read with `file` and `strings`; it was not run)."
+    },
+    {
+      "id": "iso-cf-how-workers-works",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "Cloudflare Workers: How Workers works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "V8 isolates are lightweight contexts; one instance of the runtime runs hundreds or thousands of them, and each isolate's memory is completely isolated",
+        "An isolate is created within an existing environment instead of a virtual machine per function, which eliminates the cold starts of the virtual machine model",
+        "Any given isolate can start around a hundred times faster than a Node process on a container or virtual machine, and on startup consumes an order of magnitude less memory",
+        "A single Workers instance may handle multiple requests, including concurrent requests, in a single-threaded event loop; Cloudflare recommends you do not use or mutate global state",
+        "Isolates may be evicted for resource limits on the machine, suspicious scripts, or individual resource limits"
+      ],
+      "note": "Page last updated 2026-09-18."
+    },
+    {
+      "id": "iso-cf-security-model",
+      "url": "https://developers.cloudflare.com/workers/reference/security-model/",
+      "title": "Cloudflare Workers: Security model",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "V8 isolates prevent code from accessing memory outside the isolate, even within the same process, which lets Cloudflare run many isolates in a single process",
+        "Around the isolates Cloudflare adds: a process-level sandbox built from Linux namespaces and seccomp that prohibits all filesystem and network access, a supervisor process that mediates everything else, cordons that separate Workers by trust level into different processes, and process isolation for some Workers",
+        "Date.now() is locked in place while code executes, no other timers are provided, and there is no multi-threading, as defenses against Spectre",
+        "Cloudflare builds and deploys a new runtime after a V8 security patch within 24 hours",
+        "V8 creates a wider attack surface than virtual machines"
+      ],
+      "note": "Page last updated 2026-09-18."
+    },
+    {
+      "id": "iso-cf-pricing",
+      "url": "https://developers.cloudflare.com/workers/platform/pricing/",
+      "title": "Cloudflare Workers: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers Paid has a minimum charge of USD 5 a month per account, with no additional charges for data transfer (egress) or throughput (bandwidth)",
+        "Standard usage model: 10 million requests included per month, then USD 0.30 per additional million; 30 million CPU milliseconds included, then USD 0.02 per additional million; no charge or limit for duration",
+        "Example on the page: 15 million requests a month at 7 ms of CPU time each costs USD 8.00; 100 million at 7 ms costs USD 45.40"
+      ],
+      "note": "Page last updated 2026-10-02."
+    },
+    {
+      "id": "iso-cf-limits",
+      "url": "https://developers.cloudflare.com/workers/platform/limits/",
+      "title": "Cloudflare Workers: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CPU time per HTTP request: 10 ms on Free; on Paid, 30 seconds by default and up to 5 minutes",
+        "Memory per isolate: 128 MB, per isolate and not per invocation; when exceeded the runtime lets in-flight requests complete and creates a new isolate",
+        "A Worker that exceeds its CPU time limit is answered with Error 1102",
+        "Worker startup time limit: 1 second"
+      ],
+      "note": "Page last updated 2026-10-12."
+    },
+    {
+      "id": "iso-cf-nodejs",
+      "url": "https://developers.cloudflare.com/workers/runtime-apis/nodejs/",
+      "title": "Cloudflare Workers: Node.js compatibility",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For compatibility dates of 2026-08-04 or later, nodejs_compat is enabled by default",
+        "node:crypto and AsyncLocalStorage (node:async_hooks) are listed as supported"
+      ],
+      "note": "Page last updated 2026-08-12."
+    },
+    {
+      "id": "iso-cf-compat-dates",
+      "url": "https://developers.cloudflare.com/workers/configuration/compatibility-dates/",
+      "title": "Cloudflare Workers: Compatibility dates",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A compatibility date opts a Worker into the runtime changes made up to that date; the runtime supports old compatibility dates forever"
+      ]
+    },
+    {
+      "id": "iso-aws-fargate",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html",
+      "title": "Amazon ECS: Architect for AWS Fargate",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each Fargate task has its own isolation boundary and does not share the underlying kernel, CPU resources, memory resources, or elastic network interface with another task"
+      ]
+    },
+    {
+      "id": "iso-al2023-glibc",
+      "url": "https://docs.aws.amazon.com/linux/al2023/ug/glibc-gcc-and-binutils.html",
+      "title": "Amazon Linux 2023: Improved toolchain: gcc, binutils, and glibc",
+      "checkedAt": "2026-10-13",
+      "supports": ["AL2023 ships glibc 2.34 (AL2 shipped 2.26)"]
+    },
+    {
+      "id": "iso-elb-pricing",
+      "url": "https://aws.amazon.com/elasticloadbalancing/pricing/",
+      "title": "Elastic Load Balancing pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For an Application Load Balancer, one LCU contains 25 new connections per second"
+      ]
+    },
+    {
+      "id": "iso-price-list-ecs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AmazonECS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate ARM in Tokyo: USD 0.04045 per vCPU-hour (SKU ZNX9M5D8R95VT2QQ) and USD 0.00442 per GB-hour (SKU WXXGZM434J9JXCU5); offer published 2026-09-11"
+      ]
+    },
+    {
+      "id": "iso-price-list-elb",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AWSELB, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Application Load Balancer in Tokyo: USD 0.0243 per hour (SKU 98ZU8QNDMR4AS8FJ) and USD 0.008 per LCU-hour (SKU F2UQT6CZGM7BTWS8); offer published 2026-09-11"
+      ]
+    },
+    {
+      "id": "iso-price-list-vpc",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AmazonVPC, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An in-use public IPv4 address costs USD 0.005 per hour (SKU ZP85FQT9FHKJRAG5); offer published 2026-09-17"
+      ]
+    },
+    {
+      "id": "iso-price-list-lambda",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AWSLambda, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda ARM in Tokyo: USD 0.0000002 per request (SKU AA4Q79463N2JQHZA) and USD 0.0000133334 per GB-second in the first tier (SKU ZSE7CMBEBTMPH8ET); offer published 2026-10-09"
+      ]
+    },
+    {
+      "id": "iso-price-list-apigw",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonApiGateway/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AmazonApiGateway, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "HTTP API in Tokyo: USD 1.29 per million requests for the first 300 million (SKU 5TU3JKA59EGYZ8XY); offer published 2026-10-02"
+      ]
+    },
+    {
+      "id": "iso-supabase-edge-runtime",
+      "url": "https://github.com/supabase/edge-runtime",
+      "title": "supabase/edge-runtime (README)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Supabase Edge Runtime is a web server based on the Deno runtime, for self-hosting Supabase Edge Functions or any Deno function; its README calls it beta software",
+        "It separates a main runtime, which proxies, from user runtimes, which execute users' code under memory and timeout limits",
+        "Not archived; MIT license; latest release v1.77.4 on 2026-10-01 (GitHub API)"
+      ],
+      "note": "Read only as far as these statements. Nothing of it was installed or run."
+    },
+    {
+      "id": "iso-cdkd-package",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The installed 0.296.28 registers its own providers for AWS::ECR::Repository, AWS::ECS::Cluster, AWS::ECS::Service, AWS::ECS::TaskDefinition, AWS::ElasticLoadBalancingV2::LoadBalancer, Listener and TargetGroup, AWS::IAM::Role, AWS::IAM::Policy, AWS::Logs::LogGroup, AWS::EC2::SecurityGroup and AWS::EC2::SecurityGroupIngress; AWS::EC2::SecurityGroupEgress has none"
+      ],
+      "note": "Read as `register(\"<type>\", ...)` calls in the dist files of the installed package. The per-property lists in the stack test are the ones chapter 12 recorded from the same version."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "workerd",
+      "ja": "workerd",
+      "en": "workerd",
+      "firstUse": "64",
+      "definition": {
+        "ja": "Cloudflare が公開している、Workers と同じコードにもとづく JavaScript と Wasm のランタイム。1 つのプロセスの中に isolate を作り、設定ファイルで定義した worker を動かす。それだけでは堅牢なサンドボックスではないと、README に明記されている。",
+        "en": "Cloudflare's open-source JavaScript and Wasm runtime, based on the same code as Workers. One process creates isolates and runs the workers its configuration file defines. Its README states that it is not a hardened sandbox on its own."
+      }
+    },
+    {
+      "id": "compatibility-date",
+      "ja": "compatibility date",
+      "en": "compatibility date",
+      "firstUse": "64",
+      "definition": {
+        "ja": "Workers と workerd で、worker がどの日付までのランタイムの変更を受け入れるかを示す設定。ランタイムを新しくしても、古い日付を指定した worker の動きは変わらない。",
+        "en": "In Workers and workerd, the setting that says up to which date a worker accepts changes to the runtime. A newer runtime does not change how a worker with an older date behaves."
+      }
+    },
+    {
+      "id": "binding",
+      "ja": "binding",
+      "en": "binding",
+      "firstUse": "64",
+      "definition": {
+        "ja": "Workers と workerd で、worker が外のリソースや設定値に触れるための入口。設定に書いた binding だけが、worker の `env` に現れる。",
+        "en": "In Workers and workerd, a worker's way to an outside resource or a setting. Only the bindings its configuration declares appear in the worker's `env`."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "64.what",
+      "sources": ["examples/64-isolates/src/release.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "64.isolate",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "64.leave",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "64.architecture",
+      "sources": [
+        "examples/64-isolates/infra/lib/isolates-stack.ts",
+        "examples/64-isolates/infra/bin/app.ts",
+        "examples/64-isolates/src/config.ts"
+      ],
+      "tasks": ["isolates:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "64.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "64.adapter",
+      "sources": [
+        "examples/64-isolates/src/worker.ts",
+        "examples/64-isolates/src/entry.ts",
+        "examples/64-isolates/src/bundle.ts",
+        "examples/64-isolates/test/worker.test.ts"
+      ],
+      "tasks": ["isolates:bundle", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "64.config",
+      "sources": [
+        "examples/64-isolates/src/definition.ts",
+        "examples/64-isolates/src/capnp.ts",
+        "examples/64-isolates/src/deployments.ts",
+        "examples/64-isolates/test/definition.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "64.apart",
+      "sources": [
+        "examples/64-isolates/test/workerd.test.ts",
+        "examples/64-isolates/test/harness.ts",
+        "examples/64-isolates/src/runtime.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "64.scope",
+      "sources": [
+        "examples/64-isolates/src/entry-scoped.ts",
+        "examples/64-isolates/test/workerd.test.ts",
+        "examples/64-isolates/test/worker.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "64.limits",
+      "sources": ["examples/64-isolates/src/spin.ts", "examples/64-isolates/scripts/observe.ts"],
+      "tasks": ["isolates:observe"],
+      "boundary": "local",
+      "criteria": ["local-dx", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "64.image",
+      "sources": [
+        "examples/64-isolates/src/release.ts",
+        "examples/64-isolates/scripts/fetch.ts",
+        "examples/64-isolates/Dockerfile",
+        "examples/64-isolates/.dockerignore",
+        "examples/64-isolates/src/image.ts",
+        "examples/64-isolates/scripts/image.ts",
+        "examples/64-isolates/infra/lib/isolates-stack.ts",
+        "examples/64-isolates/infra/test/isolates-stack.test.ts"
+      ],
+      "tasks": ["isolates:fetch", "isolates:image:build", "isolates:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "64.local",
+      "sources": [
+        "examples/64-isolates/scripts/serve.ts",
+        "examples/64-isolates/scripts/bundle.ts",
+        "examples/64-isolates/scripts/observe.ts",
+        "examples/64-isolates/test"
+      ],
+      "tasks": [
+        "dev:isolates",
+        "isolates:bundle",
+        "isolates:observe",
+        "test:unit",
+        "isolates:infra:synth"
+      ],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "64.deploy",
+      "sources": [
+        "examples/64-isolates/scripts/image.ts",
+        "examples/64-isolates/scripts/smoke.ts",
+        "examples/64-isolates/infra/bin/app.ts"
+      ],
+      "tasks": [
+        "isolates:fetch",
+        "isolates:bundle",
+        "isolates:image:build",
+        "isolates:image:push",
+        "isolates:infra:diff",
+        "isolates:infra:deploy",
+        "isolates:smoke",
+        "isolates:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "64.cost",
+      "sources": [
+        "examples/64-isolates/src/cost.ts",
+        "examples/64-isolates/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "64.pitfalls",
+      "sources": [],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "64.production",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "64.cleanup",
+      "sources": [],
+      "tasks": ["isolates:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "isolates-idle",
+      "chapter": "64",
+      "title": {
+        "ja": "Isolates: 1 件も処理しないまま 1 か月",
+        "en": "Isolates: a month without one request"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c imageTag=...` でデプロイした既定の構成。タスク 1 つ（0.25 vCPU、0.5 GB、arm64）をパブリックサブネットで 730 時間",
+          "ロードバランサー 1 台を 730 時間。LCU は未算入",
+          "パブリック IPv4 アドレス 3 つ（ロードバランサーのノード 2 つと、タスク 1 つ）",
+          "リポジトリの保存料、ログ、データ転送は未算入"
+        ],
+        "en": [
+          "The default layout deployed with `-c imageTag=...`: one task (0.25 vCPU, 0.5 GB, arm64) in a public subnet for 730 hours",
+          "One load balancer for 730 hours. LCUs are not included",
+          "Three public IPv4 addresses: two load balancer nodes and one task",
+          "Repository storage, logs, and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 182.5,
+          "basis": "1 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 365,
+          "basis": "1 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2190,
+          "basis": "(2 load balancer nodes + 1 tasks) x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "isolates-one-day",
+      "chapter": "64",
+      "title": {
+        "ja": "Isolates: 1 日だけ置く",
+        "en": "Isolates: left for one day"
+      },
+      "assumptions": {
+        "ja": [
+          "`isolates-idle` の構成を 24 時間",
+          "リポジトリの保存料、ログ、データ転送、LCU は未算入"
+        ],
+        "en": [
+          "The layout of `isolates-idle` for 24 hours",
+          "Repository storage, logs, data transfer, and LCUs are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 6,
+          "basis": "1 tasks x 0.25 vCPU x 24 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 12,
+          "basis": "1 tasks x 0.5 GB x 24 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 24,
+          "basis": "1 load balancer x 24 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 72,
+          "basis": "(2 load balancer nodes + 1 tasks) x 24 hours"
+        }
+      ]
+    },
+    {
+      "id": "isolates-repository-only",
+      "chapter": "64",
+      "title": {
+        "ja": "Isolates: リポジトリだけ",
+        "en": "Isolates: the repository alone"
+      },
+      "assumptions": {
+        "ja": [
+          "`-c imageTag` を付けずにデプロイした状態。ロードバランサーもタスクも無い",
+          "イメージ 1 つで 0.1 GB と仮定（イメージを一度もビルドしていないので、実際の大きさは測っていない。workerd のバイナリだけで、展開後 139 MB、圧縮した配布物で 40 MB ある）"
+        ],
+        "en": [
+          "Deployed without `-c imageTag`: no load balancer, no task",
+          "0.1 GB assumed for one image (the image was never built, so its real size is not measured; the workerd binary alone is 139 MB unpacked and 40 MB as the compressed archive)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.1,
+          "basis": "0.1 GB stored (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "isolates-load-fargate",
+      "chapter": "64",
+      "title": {
+        "ja": "Isolates: 月 1,500 万リクエストを workerd と Fargate で",
+        "en": "Isolates: 15 million requests a month on workerd and Fargate"
+      },
+      "assumptions": {
+        "ja": [
+          "`isolates-idle` の構成のまま、タスクは 1 つ",
+          "1 リクエストあたり CPU 時間 7 ms。月の平均では 0.25 vCPU の 16% にあたる。瞬間的な集中は考えていない",
+          "LCU は新しい接続の数で数えた。1 リクエストにつき接続 1 本と仮定すると毎秒 5.7 本で 0.228 LCU、730 時間で 166.7 LCU 時間",
+          "ログ、データ転送、リポジトリの保存料は未算入"
+        ],
+        "en": [
+          "The layout of `isolates-idle`, still one task",
+          "7 ms of CPU time per request: 16% of 0.25 vCPU averaged over the month. Bursts are not considered",
+          "LCUs counted on the new-connection dimension: one connection per request is 5.7 a second or 0.228 LCU, which is 166.7 LCU-hours over 730 hours",
+          "Logs, data transfer, and repository storage are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 182.5,
+          "basis": "1 tasks x 0.25 vCPU x 730 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 365,
+          "basis": "1 tasks x 0.5 GB x 730 hours"
+        },
+        {
+          "priceId": "alb.hour",
+          "quantity": 730,
+          "basis": "1 load balancer x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2190,
+          "basis": "(2 load balancer nodes + 1 tasks) x 730 hours"
+        },
+        {
+          "priceId": "alb.lcu.hour",
+          "quantity": 166.7,
+          "basis": "0.228 LCU x 730 hours (assumption: one new connection per request)"
+        }
+      ]
+    },
+    {
+      "id": "isolates-load-lambda",
+      "chapter": "64",
+      "title": {
+        "ja": "Isolates: 同じ月 1,500 万リクエストを 04章の構成で",
+        "en": "Isolates: the same 15 million requests on chapter 04's stack"
+      },
+      "assumptions": {
+        "ja": [
+          "API Gateway の HTTP API と、256 MB、arm64 の Lambda 関数",
+          "Lambda は CPU 時間ではなく実行時間に課金する。1 リクエストの実行時間は、04章のシナリオと同じ 50 ms と仮定した",
+          "ログとデータ転送は未算入"
+        ],
+        "en": [
+          "An API Gateway HTTP API in front of a 256 MB arm64 Lambda function",
+          "Lambda bills duration, not CPU time. 50 ms per request is assumed, as in chapter 04's scenario",
+          "Logs and data transfer are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 15000000,
+          "basis": "one HTTP API request each"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 15000000,
+          "basis": "one invocation per request"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 187500,
+          "basis": "15000000 x 0.05 s x 0.25 GB, in GB-seconds"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "64",
+        "command": "vp test run examples/64-isolates",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "5 ファイル、45 件。そのうち test/workerd.test.ts は、npm で入れた workerd 1.20261012.1（darwin-arm64）の実物を Nix の devShell の中で起動する。04章のアプリがコントラクトどおりに答えること、同じコードの worker 2 つが 1 つのプロセスの中で状態を共有しないこと、処理中の 2 つのリクエストでモジュールスコープのリクエスト ID が入れ替わり AsyncLocalStorage では入れ替わらないこと、binding が環境変数から届くこと。ほかに、設定の検証と描画、アダプター、料金、スタックのアサーション",
+          "en": "5 files, 45 tests. test/workerd.test.ts starts the real workerd 1.20261012.1 (darwin-arm64) from npm inside the Nix devShell: chapter 04's app answers as its contract says, two workers running the same code in one process share no state, two requests in flight swap a request ID kept in module scope and do not with AsyncLocalStorage, and bindings arrive from environment variables. Also: validating and rendering the configuration, the adapter, pricing, and stack assertions"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "tsc --noEmit -p examples/64-isolates",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:bundle",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "notes.mjs、scoped.mjs、spin.mjs と、イメージ用の config.capnp を dist/ に書いた",
+          "en": "Wrote notes.mjs, scoped.mjs, spin.mjs, and the image's config.capnp to dist/"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run dev:isolates",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "手元の workerd で 04章のアプリを起動し、curl で /health、POST /notes、GET /notes を呼んだ",
+          "en": "Started chapter 04's app in the local workerd and called /health, POST /notes, and GET /notes with curl"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:observe",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "macOS（arm64）の workerd で 4 つの観察を実行した。2000 ms の CPU ループは打ち切られず、同じプロセスの別の worker の /health は 1807 ms 待たされた。SIGTERM のとき、処理中のリクエストには 201 を返してから終了コード 0 で終了し、その間に来た新しいリクエストには答えなかった。処理中のものが無ければ 2 ms で終了した",
+          "en": "Ran the four observations on workerd for macOS (arm64). A 2000 ms CPU loop was not cut off, and /health on another worker in the same process waited 1807 ms. On SIGTERM it answered the request in flight with 201 and then exited with code 0, without answering a new request that arrived meanwhile. With nothing in flight it exited in 2 ms"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:fetch",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "Linux arm64 用の配布物（39,889,339 バイト）を npm のレジストリから取得し、固定した SHA-512 と一致することを確かめて、バイナリを展開した。バイナリは実行していない",
+          "en": "Downloaded the Linux arm64 archive (39,889,339 bytes) from the npm registry, matched it against the pinned SHA-512, and unpacked the binary. The binary was not run"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定（リポジトリだけ）と、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private` で synth した。AWS には問い合わせない",
+          "en": "Synthesized the default (repository only), `-c imageTag=v1`, and `-c imageTag=v1 -c taskSubnets=private`. Nothing is asked of AWS"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:image:build v1 --dry-run",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "docker のコマンドを表示するだけで、実行しない。`isolates:image:push v1 --dry-run` も同じ",
+          "en": "Prints the docker commands and runs none. The same for `isolates:image:push v1 --dry-run`"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:image:build <tag>",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行。Nix のシェルに Docker のデーモンが無い。イメージは一度もビルドしていない",
+          "en": "Not run. The Nix shell has no Docker daemon. The image was never built"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:image:push <tag>",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:infra:diff -c imageTag=<tag>",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:infra:deploy -c imageTag=<tag>",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:infra:drift",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "64",
+        "command": "vp run isolates:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "64-image",
+        "summary": {
+          "ja": "64章のコンテナイメージを一度もビルドしていない（Nix のシェルに Docker のデーモンが無い）。Linux arm64 の workerd は取得してダイジェストを確かめたが、実行していない。`debian:bookworm-slim` の上で起動すること、ユーザー `nobody` でポート 8080 を開けること、PID 1 として SIGTERM を受け取ること、イメージの大きさが未確認。",
+          "en": "The chapter 64 container image was never built (the Nix shell has no Docker daemon). The Linux arm64 workerd was downloaded and its digest checked, but it was not run. Unverified: that it starts on `debian:bookworm-slim`, that user `nobody` can listen on port 8080, that it receives SIGTERM as PID 1, and how large the image is."
+        },
+        "resume": {
+          "ja": "Docker のデーモンを用意して `vp run isolates:fetch`、`vp run isolates:bundle`、`vp run isolates:image:build v1` を実行し、`docker run --rm --read-only -p 8080:8080 -e ALLOWED_ORIGIN=http://localhost:5173 aih-isolates:v1` で起動して `/health` を呼ぶ。`docker stop` で終了コードと所要時間を見る。",
+          "en": "With a Docker daemon, run `vp run isolates:fetch`, `vp run isolates:bundle`, and `vp run isolates:image:build v1`, start it with `docker run --rm --read-only -p 8080:8080 -e ALLOWED_ORIGIN=http://localhost:5173 aih-isolates:v1`, and call `/health`. Use `docker stop` to see the exit code and how long it takes."
+        }
+      },
+      {
+        "id": "64-deploy",
+        "summary": {
+          "ja": "64章のスタックを AWS に一度もデプロイしていない。Fargate の上で workerd が起動すること、`readonlyRootFilesystem` のままで動くこと（macOS でファイルへの書き込みを禁じて起動できることだけ確かめた）、ヘルスチェックが通ること、入れ替えのあいだリクエストが失われないこと、ログが CloudWatch Logs に 1 行ずつ届くことが未確認。",
+          "en": "The chapter 64 stack has never been deployed. Unverified: that workerd starts on Fargate, that it runs with `readonlyRootFilesystem` (only checked on macOS, where it started with file writes denied), that the health check passes, that no request is lost while tasks are replaced, and that log lines reach CloudWatch Logs one by one."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy`、`vp run isolates:infra:deploy` でリポジトリを作り、イメージを push してから `vp run isolates:infra:deploy -c imageTag=<tag>`、`vp run isolates:smoke`、`vp run isolates:infra:drift` を通す。タスクが起動しなければ、タスクのログと停止理由を見て、`readonlyRootFilesystem` を外して切り分ける。終わったら `vp run isolates:infra:destroy`、`vp run net:infra:destroy` の順に消す（時間課金。1 日でおよそ USD 1.24）。",
+          "en": "Run `vp run net:infra:deploy` and `vp run isolates:infra:deploy` to create the repository, push the image, then `vp run isolates:infra:deploy -c imageTag=<tag>`, `vp run isolates:smoke`, and `vp run isolates:infra:drift`. If the task does not start, read its logs and stopped reason, and remove `readonlyRootFilesystem` to narrow it down. Delete with `vp run isolates:infra:destroy` and then `vp run net:infra:destroy` (hourly charges, about USD 1.24 a day)."
+        }
+      },
+      {
+        "id": "64-linux-behaviour",
+        "summary": {
+          "ja": "CPU のループが打ち切られないこと、同じプロセスの worker が待たされること、SIGTERM での動きは、macOS（arm64）の workerd 1.20261012.1 でだけ観察した。Linux で同じかどうか、処理中のリクエストをいつまで待つのか（上限があるのか）は確認していない。メモリの上限は試していない（設定のスキーマに項目が無いことと、サーバーのソースに「上限を課さない」実装があることを読んだだけ）。",
+          "en": "That a CPU loop is not cut off, that a worker in the same process waits, and the behaviour on SIGTERM were observed only on workerd 1.20261012.1 for macOS (arm64). Not confirmed: that Linux behaves the same, and how long it waits for a request in flight (whether there is a bound). No memory limit was tried (only read: the configuration schema has no such field, and the server source has an enforcer that enforces no limits)."
+        },
+        "resume": {
+          "ja": "Linux のマシンかコンテナで `vp run isolates:observe` を実行して、出力を比べる。待ち時間の上限は、処理中のリクエストを `stopTimeout` より長く止めて確かめる。",
+          "en": "Run `vp run isolates:observe` on a Linux machine or in a container and compare the output. For the bound, hold a request in flight for longer than `stopTimeout`."
+        }
+      },
+      {
+        "id": "64-install-script",
+        "summary": {
+          "ja": "`workerd` の npm パッケージには postinstall スクリプトがあり、pnpm 10 は許可が無いので実行しない。`vp install` のたびに「Ignored build scripts: workerd」と表示される。スクリプトが無くても、この章のコードはプラットフォーム別のパッケージからバイナリを直接見つけて動く。`pnpm-workspace.yaml` は共有ファイルなので、この章からは変更していない。",
+          "en": "The `workerd` npm package has a postinstall script, which pnpm 10 does not run without approval. Every `vp install` prints \"Ignored build scripts: workerd\". Without the script the chapter's code still finds the binary in the per-platform package. `pnpm-workspace.yaml` is a shared file and was not changed from this chapter."
+        },
+        "resume": {
+          "ja": "`pnpm-workspace.yaml` の `ignoredBuiltDependencies` に `workerd` を足す（esbuild と同じ理由で、スクリプトは不要）。",
+          "en": "Add `workerd` to `ignoredBuiltDependencies` in `pnpm-workspace.yaml` (the script is not needed, for the same reason as esbuild's)."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 64: isolates ------------------------------------------\n      // One bundle per worker, and the configuration the container runs. No AWS, no Docker.\n      \"isolates:bundle\": fresh(\"node scripts/bundle.ts\", { cwd: \"examples/64-isolates\" }),\n      // Chapter 04's app in the real workerd on this machine. No AWS, no Docker.\n      \"dev:isolates\": fresh(\"node scripts/serve.ts\", {\n        cwd: \"examples/64-isolates\",\n        dependsOn: [\"isolates:bundle\"],\n      }),\n      // Starts workerd and prints what it does under a busy worker and at SIGTERM. No AWS, no Docker.\n      \"isolates:observe\": fresh(\"node scripts/observe.ts\", { cwd: \"examples/64-isolates\" }),\n      // Downloads the pinned Linux arm64 workerd from the npm registry and checks its digest. No AWS.\n      \"isolates:fetch\": live(\"node scripts/fetch.ts\", { cwd: \"examples/64-isolates\" }),\n      // Needs a running Docker daemon, which the Nix shell does not provide.\n      \"isolates:image:build\": fresh(\"node scripts/image.ts build\", {\n        cwd: \"examples/64-isolates\",\n        dependsOn: [\"isolates:bundle\"],\n      }),\n      // Logs Docker in to the stack's repository and pushes the image.\n      \"isolates:image:push\": live(\"node --env-file-if-exists=../../.env scripts/image.ts push\", {\n        cwd: \"examples/64-isolates\",\n      }),\n      // BILLED BY THE HOUR once deployed with -c imageTag=...: a load balancer and one Fargate task.\n      ...infra(\"isolates\", \"examples/64-isolates\", \"AihIsolates\"),\n      \"isolates:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", {\n        cwd: \"examples/64-isolates\",\n      }),",
+    "synth": ["isolates:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/64-isolates"]
+  }
+}

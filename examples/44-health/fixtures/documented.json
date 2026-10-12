@@ -1,0 +1,246 @@
+{
+  "note": "Copied on 2026-10-13 from the sample payloads in https://docs.aws.amazon.com/health/latest/ug/aws-health-events-eventbridge-schema.html, unchanged. They are samples from the documentation, not events received in an account.",
+  "events": [
+    {
+      "name": "docs-public-ec2-operational-issue",
+      "heading": "Public Health Event - Amazon EC2 operational issue",
+      "event": {
+        "version": "0",
+        "id": "7bf73129-1428-4cd3-a780-95db273d1602",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2023-01-27T09:01:22Z",
+        "region": "af-south-1",
+        "resources": [],
+        "detail": {
+          "eventArn": "arn:aws:health:af-south-1::event/EC2/AWS_EC2_OPERATIONAL_ISSUE/AWS_EC2_OPERATIONAL_ISSUE_7f35c8ae-af1f-54e6-a526-d0179ed6d68f",
+          "service": "EC2",
+          "eventTypeCode": "AWS_EC2_OPERATIONAL_ISSUE",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "PUBLIC",
+          "communicationId": "01b0993207d81a09dcd552ebd1e633e36cf1f09a-1",
+          "startTime": "Fri, 27 Jan 2023 06:02:51 GMT",
+          "endTime": "Fri, 27 Jan 2023 09:01:22 GMT",
+          "lastUpdatedTime": "Fri, 27 Jan 2023 09:01:22 GMT",
+          "statusCode": "open",
+          "eventRegion": "af-south-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "Current severity level: Operating normally\n\n[RESOLVED] \n\n [03:15 PM PST] We continue see recovery \n\nThe following AWS services were previously impacted but are now operating normally: APPSYNC, BACKUP, EVENTS."
+            }
+          ],
+          "affectedEntities": [],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "affectedAccount": "123456789012",
+          "personas": ["OPERATIONS"]
+        }
+      }
+    },
+    {
+      "name": "docs-account-elb-api-issue",
+      "heading": "Account-specific AWS Health Event - Elastic Load Balancing API Issue",
+      "event": {
+        "version": "0",
+        "id": "121345678-1234-1234-1234-123456789012",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2022-06-10T06:27:57Z",
+        "region": "ap-southeast-2",
+        "resources": [],
+        "detail": {
+          "eventArn": "arn:aws:health:ap-southeast-2::event/AWS_ELASTICLOADBALANCING_API_ISSUE_90353408594353980",
+          "service": "ELASTICLOADBALANCING",
+          "eventTypeCode": "AWS_ELASTICLOADBALANCING_API_ISSUE",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "01b0993207d81a09dcd552ebd1e633e36cf1f09a-1",
+          "startTime": "Fri, 10 Jun 2022 05:01:10 GMT",
+          "endTime": "Fri, 10 Jun 2022 05:30:57 GMT",
+          "statusCode": "open",
+          "eventRegion": "ap-southeast-2",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "A description of the event will be provided here"
+            }
+          ],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "affectedAccount": "123456789012",
+          "personas": ["OPERATIONS"]
+        }
+      }
+    },
+    {
+      "name": "docs-account-ec2-backup-copy",
+      "heading": "Account-specific AWS Health Event - backup event for Amazon EC2 Instance Store Drive Performance Degraded",
+      "event": {
+        "version": "0",
+        "id": "121345678-1234-1234-1234-123456789012",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2022-06-03T06:27:57Z",
+        "region": "us-west-2",
+        "resources": ["i-abcd1111"],
+        "detail": {
+          "eventArn": "arn:aws:health:us-east-1::event/AWS_EC2_INSTANCE_STORE_DRIVE_PERFORMANCE_DEGRADED_90353408594353980",
+          "service": "EC2",
+          "eventTypeCode": "AWS_EC2_INSTANCE_STORE_DRIVE_PERFORMANCE_DEGRADED",
+          "eventTypeCategory": "issue",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "01b0993207d81a09dcd552ebd1e633e36cf1f09a-1",
+          "startTime": "Fri, 3 Jun 2022 05:01:10 GMT",
+          "endTime": "Fri, 3 Jun 2022 05:30:57 GMT",
+          "statusCode": "open",
+          "eventRegion": "us-east-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "A description of the event will be provided here"
+            }
+          ],
+          "affectedEntities": [
+            {
+              "entityValue": "i-abcd1111"
+            }
+          ],
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "true",
+          "affectedAccount": "123456789012",
+          "personas": ["OPERATIONS"]
+        }
+      }
+    },
+    {
+      "name": "docs-account-ec2-instance-retirement",
+      "heading": "Account-specific AWS Health Event - Amazon EC2 Instance Retirement",
+      "event": {
+        "version": "0",
+        "id": "7bf73129-1428-4cd3-a780-95db273d1602",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2026-01-27T01:43:21Z",
+        "region": "us-east-1",
+        "detail": {
+          "eventArn": "arn:aws:health:us-east-1::event/AWS_EC2_INSTANCE_RETIREMENT_SCHEDULED_90353408594353983",
+          "service": "EC2",
+          "eventTypeCode": "AWS_EC2_INSTANCE_RETIREMENT_SCHEDULED",
+          "eventTypeCategory": "scheduledChange",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "1234abc01232a4012345678-1",
+          "startTime": "Thu, 27 Aug 2026 13:19:03 GMT",
+          "lastUpdatedTime": "Thu, 27 Jan 2026 13:44:13 GMT",
+          "statusCode": "open",
+          "eventRegion": "us-east-1",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "A description of the event will be provided here"
+            }
+          ],
+          "eventMetadata": {
+            "keystring1": "valuestring1",
+            "keystring2": "valuestring2",
+            "keystring3": "valuestring3",
+            "keystring4": "valuestring4",
+            "truncated": "true"
+          },
+          "affectedEntities": [
+            {
+              "entityValue": "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+              "lastUpdatedTime": "Thu, 26 Jan 2026 19:01:55 GMT",
+              "status": "PENDING"
+            }
+          ],
+          "affectedAccount": "123456789012",
+          "page": "1",
+          "totalPages": "1",
+          "backupEvent": "false",
+          "personas": ["OPERATIONS"],
+          "actionability": "ACTION_REQUIRED"
+        }
+      }
+    },
+    {
+      "name": "docs-account-lambda-planned-lifecycle",
+      "heading": "Account-specific AWS Health Event - Lambda Planned Lifecycle Event",
+      "event": {
+        "version": "0",
+        "id": "7bf73129-1428-4cd3-a780-95db273d1602",
+        "detail-type": "AWS Health Event",
+        "source": "aws.health",
+        "account": "123456789012",
+        "time": "2023-01-27T01:43:21Z",
+        "region": "us-west-2",
+        "resources": [
+          "arn:lambda-1-101002929",
+          "arn:lambda-1-101002930",
+          "arn:lambda-1-101002931",
+          "arn:lambda-1-101002932"
+        ],
+        "detail": {
+          "eventArn": "arn:aws:health:us-west-2::event/AWS_LAMBDA_PLANNED_LIFECYCLE_EVENT_90353408594353980",
+          "service": "LAMBDA",
+          "eventTypeCode": "AWS_LAMBDA_PLANNED_LIFECYCLE_EVENT",
+          "eventTypeCategory": "scheduledChange",
+          "eventScopeCode": "ACCOUNT_SPECIFIC",
+          "communicationId": "1234abc01232a4012345678-1",
+          "startTime": "Thu, 27 Aug 2026 13:19:03 GMT",
+          "lastUpdatedTime": "Thu, 27 Jan 2026 13:44:13 GMT",
+          "statusCode": "open",
+          "eventRegion": "us-west-2",
+          "eventDescription": [
+            {
+              "language": "en_US",
+              "latestDescription": "A description of the event will be provided here"
+            }
+          ],
+          "eventMetadata": {
+            "keystring1": "valuestring1",
+            "keystring2": "valuestring2",
+            "keystring3": "valuestring3",
+            "keystring4": "valuestring4",
+            "truncated": "true"
+          },
+          "affectedEntities": [
+            {
+              "entityValue": "arn:lambda-1-101002929",
+              "lastUpdatedTime": "Thu, 26 Jan 2026 19:01:55 GMT",
+              "status": "PENDING"
+            },
+            {
+              "entityValue": "arn:lambda-1-101002930",
+              "lastUpdatedTime": "Thu, 26 Jan 2026 19:05:12 GMT",
+              "status": "PENDING"
+            },
+            {
+              "entityValue": "arn:lambda-1-101002931",
+              "lastUpdatedTime": "Thu, 26 Jan 2026 19:07:13 GMT",
+              "status": "PENDING"
+            },
+            {
+              "entityValue": "arn:lambda-1-101002932",
+              "lastUpdatedTime": "Thu, 26 Jan 2026 19:10:59 GMT",
+              "status": "RESOLVED"
+            }
+          ],
+          "affectedAccount": "123456789012",
+          "page": "1",
+          "totalPages": "10",
+          "backupEvent": "false",
+          "personas": ["OPERATIONS"],
+          "actionability": "ACTION_REQUIRED"
+        }
+      }
+    }
+  ]
+}

@@ -228,3 +228,255 @@ generated: true
 | drain | drain | 24 | ノードを止める前に、担当している仕事をほかへ引き渡すこと。celld では SIGTERM がその合図。 |
 | スーパーバイザー | supervisor | 24 | プロセスを起動し、落ちたら起動し直す仕組み。この章では systemd。 |
 | セルフホスト | self-hosting | 24 | managed service を使わず、ソフトウェアを自分のマシンで動かして、更新や障害対応も自分で受け持つこと。 |
+| operational readiness review（ORR） | operational readiness review (ORR) | 33 | サービスを公開する前に、運用できる状態かどうかを決まった質問の一覧で確かめる点検。AWS が自社の障害の教訓から作った仕組みで、Well-Architected Framework も勧めている。 |
+| 対応手順（runbook） | runbook | 33 | 決まった結果を得るための手順を書いた文書。アラームが鳴ったときに最初に開くものと、試すことを書いておく。 |
+| game day | game day | 33 | 障害をわざと起こして、手順、権限、アラームが実際に働くかを、本番で対応する人たちで確かめる訓練。 |
+| Aspect（CDK） | aspect (CDK) | 33 | スタックの中のすべてのコンストラクトを 1 つずつ訪ねて、設定を調べたり書き換えたりする CDK の仕組み。あとから足したリソースにも同じ処理がかかる。 |
+| パーティション（Athena） | partition (Athena) | 26 | テーブルのデータを、キーの値ごとに別のフォルダーへ分けたもの。条件にパーティションのキーがあるクエリは、該当するフォルダーだけを読む。 |
+| partition projection | partition projection | 26 | Athena が、パーティションの一覧をカタログに問い合わせるかわりに、テーブルのプロパティに書いた規則から計算する機能。 |
+| 列指向フォーマット | columnar format | 26 | Parquet や ORC のように、データを行ごとではなく列ごとにまとめて保存する形式。クエリは必要な列だけを読める。 |
+| SerDe | SerDe | 26 | serializer/deserializer の略。ファイルの中身をテーブルの行として読む方法を決める部品で、テーブルの定義に名前を書く。 |
+| ワークグループ（Athena） | workgroup (Athena) | 26 | Athena のクエリをまとめる単位。結果の保存先と、1 回のクエリが読んでよいバイト数の上限を持てる。 |
+| Firehose ストリーム | Firehose stream | 26 | Amazon Data Firehose が受け取ったレコードをためて、まとめて宛先（この章では S3）へ書く入口。 |
+| クォータ | service quota | 32 | サービスがアカウントやリージョンごとに決めている、リソースや操作の上限。引き上げを申請できるものと、変えられないものがある。 |
+| スロットリング | throttling | 32 | 受け付ける量を超えたリクエストを、処理せずに断ること。HTTP では 429 で返ることが多い。 |
+| トークンバケット | token bucket | 32 | 一定の速さでトークンがたまり、リクエスト 1 件が 1 つ使う数え方。ためられる数の上限がバーストになる。 |
+| 指数バックオフ | exponential backoff | 32 | 再試行のたびに、待つ時間の上限を 2 倍にしていく待ち方。 |
+| ジッター | jitter | 32 | 待つ時間に混ぜる乱数。同時に失敗したクライアントが、同時に戻ってこないようにする。 |
+| 再試行の予算 | retry budget | 32 | 1 つのクライアントが出せる再試行の総量。成功すると少し戻り、失敗が続くと尽きて、再試行をやめる。 |
+| リトライストーム | retry storm | 32 | 失敗への再試行が負荷を増やし、増えた負荷がさらに失敗を生む状態。 |
+| 予約済み同時実行数 | reserved concurrency | 32 | 1 つの関数に取り分けた同時実行数。その関数の上限であり、ほかの関数が使えなくなる取り分でもある。 |
+| コスト配分タグ | cost allocation tag | 32 | 請求の内訳に使うと決めて有効にしたタグのキー。有効にするまで、タグは料金のデータに現れない。 |
+| 負荷試験 | load test | 32 | 決めた量のリクエストを送り、どの上限に最初に当たるかと、そのときの応答を確かめる試験。 |
+| 埋め込み（embedding） | embedding | 27 | 文章を、決まった個数の数の並び（ベクトル）に変えたもの。意味の近い文章が近い向きのベクトルになるように、モデルが作る。 |
+| ベクトルインデックス | vector index | 27 | ベクトルを保存し、与えたベクトルに近いものを返す入れ物。S3 Vectors では、ベクトルバケットの中に作る。 |
+| RAG（retrieval-augmented generation） | RAG (retrieval-augmented generation) | 27 | 質問に関係する文章を先に検索し、その文章をモデルに渡して答えを書かせる方法。 |
+| パッセージ | passage | 27 | 検索と引用の単位として切り出した、ノートの一部分。この本では 800 文字ごとに、100 文字ずつ重ねて切る。 |
+| グローバルテーブル（global table） | Global table | 28 | DynamoDB のテーブルを複数のリージョンに置き、どのレプリカへの書き込みもほかのレプリカに届ける機能。レプリカはどれも読み書きできる。 |
+| MREC（multi-Region eventual consistency） | MREC (multi-Region eventual consistency) | 28 | グローバルテーブルの既定の整合性モード。書き込みは受けたリージョンで確定し、ほかのリージョンには後から届く。 |
+| MRSC（multi-Region strong consistency） | MRSC (multi-Region strong consistency) | 28 | グローバルテーブルの整合性モードの 1 つ。書き込みは、ほかのリージョンの少なくとも 1 つに届いてから成功を返す。3 つのリージョンが要る。 |
+| last writer wins | Last writer wins | 28 | 同じアイテムへの書き込みが食い違ったとき、時刻の新しいほうを残し、古いほうを捨てる決め方。捨てられた書き込みは、どこにも記録されない。 |
+| ウィットネス（witness） | Witness | 28 | MRSC のグローバルテーブルで、2 つのレプリカが合意するために使う 3 つ目のリージョン。読み書きはできない。 |
+| クロスリージョンレプリケーション（CRR） | Cross-Region Replication (CRR) | 28 | S3 のバケットに書かれた新しいオブジェクトを、別のリージョンのバケットへ非同期にコピーする設定。 |
+| フェイルオーバールーティング | Failover routing | 28 | Route 53 のルーティングポリシーの 1 つ。プライマリのレコードが正常なあいだはそれを返し、異常になるとセカンダリを返す。 |
+| レイテンシールーティング | Latency routing | 28 | Route 53 のルーティングポリシーの 1 つ。問い合わせた利用者から遅延のいちばん小さいリージョンのレコードを返す。 |
+| active-passive | Active-passive | 28 | ふだんは 1 つのリージョンだけがリクエストに答え、もう 1 つは切り替えに備えて待つ構成。両方が常に答える構成は active-active。 |
+| 重み付きエイリアス（weighted alias） | weighted alias | 31 | 2 つのバージョンを指し、リクエストを割合で振り分ける Lambda のエイリアス。振り分けはリクエストごとの確率で決まる。 |
+| canary デプロイ | canary deployment | 31 | 新しいバージョンにまず少ない割合のリクエストだけを送り、問題が無ければ残りを切り替えるやり方。19章の Synthetics の canary とは別のもの。 |
+| blue/green デプロイ | blue/green deployment | 31 | 古い環境（blue）を動かしたまま新しい環境（green）を横に用意し、トラフィックを切り替えるやり方。戻すときは blue に切り替え直す。 |
+| bake time | bake time | 31 | 切り替えが終わった後、アラームを見ながら古いバージョンをすぐ戻せる状態で待つ時間。 |
+| フィーチャーフラグ | feature flag | 31 | デプロイ済みのコードのふるまいを、デプロイせずに切り替えるための設定値。 |
+| version skew | version skew | 31 | クライアントとサーバー、あるいは同時に動く 2 つのバージョンのあいだで、前提にしている形式やふるまいが食い違うこと。 |
+| Lambda Managed Instances | Lambda Managed Instances | 35 | Lambda の関数を、自分のアカウントの VPC にある EC2 インスタンスで動かす機能。インスタンスの起動、パッチ、ルーティング、スケーリングは Lambda が行い、料金はインスタンスの時間に対してかかる。 |
+| キャパシティプロバイダー（Lambda） | capacity provider (Lambda) | 35 | Lambda Managed Instances で、関数を動かすインスタンスの置き場所と条件を決めるリソース。サブネット、セキュリティグループ、オペレーターロール、インスタンスの種類、vCPU の上限を持つ。同じキャパシティプロバイダーに載せた関数は、互いに信頼できるものとして扱われる。 |
+| オペレーターロール | operator role | 35 | Lambda が、キャパシティプロバイダーのインスタンスを起動し管理するために引き受ける IAM ロール。関数が動くときの実行ロールとは別のもの。 |
+| マルチコンカレンシー | multi-concurrency | 35 | 1 つの実行環境が、同時に複数のリクエストを処理すること。標準の Lambda は 1 つの実行環境で一度に 1 つしか処理しない。 |
+| Init フェーズ | Init phase | 29 | 実行環境を作った直後に 1 回だけ走る段階。extension の起動、ランタイムの起動、ハンドラーの外に書いたコードの実行までを含む。 |
+| Invoke フェーズ | Invoke phase | 29 | ハンドラーが 1 件のリクエストを処理する段階。関数のタイムアウトはこの段階全体にかかる。 |
+| REPORT 行 | REPORT line | 29 | Lambda が呼び出しごとに 1 行書く記録。実行時間、課金された時間、メモリの設定と最大使用量、コールドスタートなら初期化の時間が入る。 |
+| GB 秒 | GB-second | 29 | Lambda の実行時間の課金単位。メモリの設定（GB）に、課金された時間（秒）を掛けたもの。 |
+| provisioned concurrency | provisioned concurrency | 29 | あらかじめ初期化しておく実行環境の数。バージョンかエイリアスに付け、使われなくても時間で課金される。 |
+| tree shaking | tree shaking | 29 | バンドルするときに、どこからも使われていないコードを落とすこと。ES modules で書かれたコードにしか効かない。 |
+| レイヤー | layer | 29 | 関数に追加で載せる .zip。中身は実行環境の /opt に展開される。 |
+| extension | extension | 29 | 関数と同じ実行環境で動く別のプログラム。監視の道具などが使う。CPU とメモリを関数と分け合う。 |
+| isolate | isolate | 29 | V8 が 1 つのプロセスの中に作る、互いにメモリを共有しない実行の単位。Cloudflare Workers はこの単位でコードを動かす。 |
+| イベントバス | event bus | 25 | 「何が起きたか」を受け取って、それを知りたい相手に配る中継点。送る側は、誰が受け取るかを知らない。 |
+| イベントパターン | event pattern | 25 | EventBridge のルールが、どのイベントを受け取るかを書く JSON。イベントと同じ形をしていて、欄ごとに「この値のどれか」を並べる。 |
+| ファンアウト | fan-out | 25 | 1 つのメッセージを、複数の受け取り手それぞれに届けること。 |
+| リプレイ（イベントの） | replay (of events) | 25 | 保存してあった過去のイベントを、もう一度コンシューマーに届け直すこと。届く側から見れば、同じイベントがもう一度来る。 |
+| コントロールプレーン | control plane | 34 | Kubernetes の API サーバーと、クラスターの状態を持つ etcd など、クラスターを管理する側の部品。EKS では AWS が動かし、クラスター 1 つごとに時間で課金される。 |
+| Pod | pod | 34 | Kubernetes が動かす最小の単位。1 つ以上のコンテナと、それらが共有するネットワークからなる。ECS のタスクに当たる。 |
+| ノード | node | 34 | Pod を載せるマシン。EKS では EC2 のインスタンスで、Pod はノードの CPU とメモリを分け合う。 |
+| EKS Auto Mode | EKS Auto Mode | 34 | ノードの起動と入れ替え、ロードバランサー、Pod のネットワーク、ブロックストレージを EKS が受け持つ動かし方。ノードは利用者のアカウントの EC2 インスタンスだが、ログインも AMI の指定もできない。 |
+| ノードプール | node pool | 34 | Auto Mode（Karpenter）が起動してよいノードの条件と上限を書いた Kubernetes のオブジェクト。CPU アーキテクチャ、インスタンスタイプ、合計の vCPU などを決める。 |
+| EKS Pod Identity | EKS Pod Identity | 34 | クラスター、namespace、service account の組に IAM ロールを結び付ける仕組み。結び付けは EKS の API に持ち、ロールの信頼ポリシーは pods.eks.amazonaws.com を許すだけで済む。 |
+| アクセスエントリー | access entry | 34 | IAM のロールやユーザーに、Kubernetes の API で何をしてよいかを結び付ける EKS の設定。クラスターの中の ConfigMap ではなく EKS の API で管理する。 |
+| PodDisruptionBudget | PodDisruptionBudget | 34 | ノードの drain のような意図した中断で、同時に欠けてよい Pod の数を決める Kubernetes のオブジェクト。ノードの故障は止められない。 |
+| Ingress | Ingress | 34 | クラスターの外から来た HTTP を、どの Service へ送るかを書いた Kubernetes のオブジェクト。EKS では、これを見たコントローラーが Application Load Balancer を作る。 |
+| 延長サポート | extended support | 34 | Kubernetes のマイナーバージョンが EKS の標準サポート（公開から 14 か月）を過ぎたあとの 12 か月。クラスターの時間料金が上がる。 |
+| アクセスパターン | access pattern | 30 | アプリがデータをどう読み書きするかを 1 つずつ書いたもの。「ある持ち主のノートを更新の新しい順に 20 件」のように、条件と並び順まで含める。DynamoDB では、キーをこれに合わせて決める。 |
+| single-table design | single-table design | 30 | 種類の違うデータを 1 つの DynamoDB テーブルに置き、キーの形で区別する設計。一緒に読むものを同じパーティションキーの下に並べて、1 回の Query で返せるようにする。 |
+| アイテムコレクション | item collection | 30 | パーティションキーが同じアイテムの集まり。ソートキーの順に並んでいて、その一部を Query で範囲として読める。 |
+| global secondary index（GSI） | global secondary index (GSI) | 30 | テーブルのアイテムを、別のキーで引けるようにした写し。DynamoDB がテーブルへの書き込みのあとに非同期で更新するので、読み取りは結果整合だけになる。書き込みのたびにインデックスへの書き込みも料金になる。 |
+| sparse index | sparse index | 30 | テーブルの一部のアイテムだけが載っているインデックス。インデックスのキーにした属性を持たないアイテムは、載らない。 |
+| プロジェクション | projection | 30 | テーブルのアイテムから、インデックスに写す属性の範囲。キーだけ、指定した属性、すべての 3 通り。写していない属性は、インデックスからは読めない。 |
+| 非正規化 | denormalization | 30 | 同じ値を複数のアイテムに持たせること。読むときに結合しなくて済むかわりに、値が変わったときにすべての写しを書き直す責任がアプリに移る。 |
+| トランザクション（DynamoDB） | transaction (DynamoDB) | 30 | TransactWriteItems で、最大 100 個のアイテムへの書き込みと条件を、すべて成功かすべて失敗かにまとめる操作。1 回のリクエストで完結し、途中で読んだ結果を見て続きを決めることはできない。料金は通常の書き込みの 2 倍。 |
+| ストリーム（DynamoDB Streams） | stream (DynamoDB Streams) | 30 | テーブルのアイテムの変更を、起きた順に 24 時間保持する記録。変更 1 件が 1 レコードになる。Lambda がこれを読んで関数を呼ぶと、同じレコードが 2 回以上届くことがある。 |
+| ホットパーティション | hot partition | 30 | 読み書きが集中して、パーティション 1 つの上限に当たっているパーティション。テーブル全体の容量が余っていても、そこへのリクエストだけがスロットリングされる。 |
+| バックフィル | backfill | 30 | すでに保存されているデータに、あとから決めた形（新しい属性や新しいキー）を書き足していく作業。動いているアプリの書き込みと並行するので、何度実行しても同じ結果になり、途中から再開できるように作る。 |
+| ページトークン | page token | 30 | 一覧の続きを読むために、API がクライアントに渡す値。クライアントから戻ってきたときは信用できない入力として扱い、形を確かめ、誰のデータを読むかはトークンではなく認証した利用者から決める。 |
+| ロケーション（DataSync） | location (DataSync) | 38 | DataSync がコピーの元か先として扱う置き場所の登録。S3 なら、バケットと、DataSync がそのバケットに届くためのロールの組。作るだけでは何も動かない。 |
+| タスク（DataSync） | task (DataSync) | 38 | ソースとデスティネーションのロケーション、コピーのしかたの設定、スケジュールをまとめたもの。ECS のタスクとは別のもの。 |
+| タスク実行（task execution） | task execution | 38 | DataSync のタスクを 1 回動かしたもの。準備、転送、検証の段階を進み、SUCCESS か ERROR で終わる。 |
+| エージェント（DataSync） | agent (DataSync) | 38 | 自分のネットワークの中に置く仮想マシンで、DataSync の代わりに NFS や SMB のストレージを読み書きする。S3 どうしのコピーには要らない。 |
+| 混乱した代理（confused deputy） | confused deputy | 38 | 権限を持つサービスが、別の誰かの依頼で、依頼した人には触れないはずのリソースを操作してしまう問題。信頼ポリシーに `aws:SourceAccount` と `aws:SourceArn` の条件を書いて防ぐ。 |
+| CloudShell | CloudShell | 37 | コンソールの中で開くシェル。サインインしている identity の認証情報を最初から持ち、AWS の側の環境（1 vCPU、2 GiB、ホームディレクトリ 1 GB）で動く。追加の料金はない。 |
+| VPC 環境（CloudShell） | VPC environment (CloudShell) | 37 | VPC、サブネット、セキュリティグループを指定して作る CloudShell の環境。選んだサブネットの中から通信する。ホームディレクトリは残らず、画面からのファイルの上げ下ろしは使えない。 |
+| Cloud9 | Cloud9 | 37 | ブラウザで使う統合開発環境。EC2 のインスタンスか自分のサーバーの上で動く。2024 年 7 月 25 日から新しい利用者を受け付けていない。 |
+| Health イベント | Health event | 44 | AWS Health が、ほかの AWS サービスに代わって送る知らせ。サービスの障害、予定された変更、アカウントへの通知がある。 |
+| public イベント | public event | 44 | アカウントに関係なく公開される Health イベント。そのサービスやリージョンを使っていなくても届く。 |
+| アカウント固有のイベント | account-specific event | 44 | 自分のアカウントのリソースに関わる Health イベント。影響を受けるリソースの ID が付く。 |
+| planned lifecycle event | planned lifecycle event | 44 | ランタイムやバージョンのサポート終了のように、利用者の対応が要る変更を前もって知らせる Health イベント。開始時刻が変更の日付になる。 |
+| organizational view | organizational view | 44 | AWS Organizations の全アカウントの Health イベントを、管理アカウントか委任した管理者アカウントでまとめて見る機能。 |
+| CDC（change data capture） | CDC (change data capture) | 39 | データベースに加えられた変更を、その記録（PostgreSQL では WAL）から順に読み出すこと。AWS DMS は、読み出した変更をターゲットに同じ順で適用する。 |
+| full load | full load | 39 | AWS DMS が、ソースのテーブルにいまある行をすべてターゲットへ写す段階。テーブルごとに進み、順序は保証されない。 |
+| レプリケーションスロット | replication slot | 39 | PostgreSQL が、ある読み手がどこまで WAL を読んだかを覚えておく仕組み。読み手が読み終えるまで WAL を消さないので、読み手がいなくなったスロットはディスクを埋めていく。 |
+| 切り替え（cutover） | cutover | 39 | アプリケーションの接続先を、古いデータベースから新しいデータベースへ移す作業。書き込みを止め、残りの変更が届くのを待ち、確かめてから接続先を替える。 |
+| DCU（DMS capacity unit） | DCU (DMS capacity unit) | 39 | AWS DMS Serverless の容量の単位。1 DCU はメモリ 2 GB。動いているレプリケーションが使っている DCU に、時間単位で課金される。 |
+| source server | source server | 40 | Elastic Disaster Recovery が保護しているサーバー 1 台。agent を入れた時点で登録され、切り離すまで時間単位で課金される。 |
+| AWS Replication Agent | AWS Replication Agent | 40 | source server の中で動き、disk への書き込みを block 単位で replication server に送り続けるプログラム。 |
+| staging area | staging area | 40 | 複製先のリージョンで、replication server と複製された disk が置かれるサブネット。復旧するまでは、ここに起動済みのサーバーは無い。 |
+| replication server | replication server | 40 | staging area で agent からデータを受け取り、staging 用の volume に書く EC2 インスタンス。サービスが起動し、入れ替える。 |
+| recovery instance | recovery instance | 40 | 選んだ時点の snapshot から起動した EC2 インスタンス。訓練で起動したものは drill instance と呼ぶ。 |
+| 復旧訓練（recovery drill） | recovery drill | 40 | 本番に触れずに、復旧と同じ手順でインスタンスを起動して確かめること。確かめ終えたら終了する。 |
+| failover | failover | 40 | 利用者の通信の宛先を、元のシステムから復旧先に切り替えること。Elastic Disaster Recovery の外で、自分で行う。 |
+| failback | failback | 40 | 復旧先で増えたデータを元の場所へ複製し直し、通信の宛先を戻すこと。 |
+| split brain | split brain | 40 | 2 つの場所が、どちらも自分が本番だと思って書き込みを受け付けている状態。片方の書き込みは、あとで必ず捨てることになる。 |
+| crash consistent | crash consistent | 40 | 電源が突然切れた瞬間の disk と同じ状態。メモリにあって disk に書かれていなかったデータは含まれない。 |
+| Firewall Manager のポリシー | Firewall Manager policy | 42 | Firewall Manager の管理者アカウントに 1 つ作る設定で、保護の内容（WAF のルールグループや監査用のセキュリティグループなど）と、適用する範囲（アカウント、OU、リソースタイプ、タグ）を持つ。範囲に入るリソースには、あとから作られたものにも適用される。IAM のポリシーとは別のもの。 |
+| OU（organizational unit） | OU (organizational unit) | 42 | AWS Organizations で、アカウントをまとめる入れ物。入れ子にできる。Firewall Manager のポリシーや SCP で OU を指定すると、その OU と子の OU にあるアカウントすべてが対象になる。 |
+| 委任された管理者（delegated administrator） | delegated administrator | 42 | 組織の管理アカウントが、あるサービスの管理を任せたメンバーアカウント。Firewall Manager の管理者アカウントは、Organizations の委任された管理者として登録される。 |
+| 自動修復（automatic remediation） | automatic remediation | 42 | Firewall Manager のポリシーの設定。無効なら、ポリシーに合っていないリソースを報告するだけで何も変えない。有効なら、web ACL を関連付ける、ルールを消すといった変更を Firewall Manager がメンバーアカウントで行う。 |
+| Fargate Spot | Fargate Spot | 41 | AWS の空いている容量でタスクを動かす、割引された Fargate。AWS が容量を取り戻すとき、2 分前に SIGTERM が届いてタスクが止まる。 |
+| capacity provider strategy | capacity provider strategy | 41 | タスクをどの capacity provider にどの割合で置くかの指定。`base` は最低限そこに置く数、`weight` は残りを分ける比。 |
+| プラットフォームバージョン | platform version | 41 | Fargate がタスクを動かす実行環境（カーネルとコンテナランタイム）の版。Linux で選べるのは 1.4.0 で、`LATEST` もこれを指す。 |
+| タスクのリタイア（task retirement） | task retirement | 41 | Fargate が、古くなったプラットフォームバージョンのリビジョンで動いているタスクを、予告のうえで止めること。サービスのタスクは置き換えられ、単発のタスクは止まるだけ。 |
+| スケールイン | scale-in | 41 | タスクの数を減らすこと。増やすほうはスケールアウト。減らされるタスクが抱えているリクエストをどう終わらせるかが問題になる。 |
+| ECS Exec | ECS Exec | 41 | 動いているコンテナの中でコマンドを実行する機能。Systems Manager の Session Manager を使い、コマンドは root で動く。新しく起動したタスクにしか有効にできない。 |
+| エフェメラルストレージ | ephemeral storage | 41 | タスクが動いている間だけ使えるディスク。Fargate では 20 GiB が付き、200 GiB まで増やせる。イメージもここに展開される。 |
+| Infrastructure Composer | Infrastructure Composer | 45 | CloudFormation と SAM のテンプレートを、カードと線の図として表示し、図からも編集できる AWS の道具。以前の名前は Application Composer。単独のコンソールは 2026 年 12 月 7 日に終わり、AWS Toolkit for Visual Studio Code の中のものが残る。 |
+| template studio | template studio | 45 | CloudFormation のコンソールにあるテンプレートのエディタ。テンプレートの文字の横に、リソースと参照の図を表示する。正本は文字で、図からは編集できない。 |
+| tool use | tool use | 36 | モデルが、アプリの用意した関数を名前と入力で指定して実行を求めること。実行するのはアプリで、モデルではない。 |
+| tool result | tool result | 36 | tool use に対してアプリが返す結果。次のリクエストの user メッセージに入れてモデルへ渡す。 |
+| 構造化出力 | structured output | 36 | モデルの出力を、指定した JSON Schema に合う JSON に限る機能。合った JSON でも、業務上の条件はアプリが検証する。 |
+| ガードレール | guardrail | 36 | Bedrock Guardrails の設定の単位。入力と出力のテキストを決めたフィルターで調べ、該当すれば決めたメッセージに差し替える。 |
+| text unit | text unit | 36 | Guardrails の課金単位。1,000 文字までが 1 unit。 |
+| prompt caching | prompt caching | 36 | 毎回同じ内容で始まるプロンプトの先頭部分を、モデルの側で使い回す機能。読み出した分は入力より安い単価で課金される。 |
+| cache checkpoint | cache checkpoint | 36 | プロンプトの中で、ここまでをキャッシュの対象にすると示す目印。Converse API では cachePoint ブロック。 |
+| batch inference | batch inference | 36 | 多数のリクエストを S3 のファイルで渡し、結果をあとで S3 に受け取る推論。すぐには返らない代わりに安い。 |
+| burndown rate | burndown rate | 36 | 出力 1 トークンが、分あたりのトークンのクォータを何トークン分減らすかの倍率。モデルごとに違う。 |
+| Provisioned Throughput | Provisioned Throughput | 36 | モデルの処理能力を時間課金で確保する買い方。消すまで課金が続く。 |
+| プロンプトインジェクション | prompt injection | 36 | モデルが読むデータの中に指示を書き、開発者の指示の代わりに従わせようとする攻撃。 |
+| モデルのライフサイクル | model lifecycle | 36 | Bedrock のモデルの状態。Active、Legacy、End-of-Life の順に進み、終了日を過ぎると呼び出しが失敗する。 |
+| DDoS | DDoS | 46 | 分散サービス拒否（distributed denial of service）。多数の送信元から通信を送りつけて、本来の利用者が使えない状態にする攻撃。回線を埋めるもの、プロトコルの状態を使い切らせるもの、正しい形のリクエストを大量に送るものがある。 |
+| denial of wallet | denial of wallet | 46 | 従量課金のサービスに大量のリクエストを送り、止めるのではなく請求を膨らませる攻撃。サービスは動き続けるので、気づくのが請求書になりやすい。 |
+| Shield Advanced | Shield Advanced | 46 | AWS Shield の有料の契約。指定したリソースに、より低い検知の閾値、専門チームへの連絡、攻撃による料金の一部への補填などを足す。月額と 1 年の約束がある。無料で全員に付くほうは Shield Standard。 |
+| マネージドプレフィックスリスト | managed prefix list | 46 | AWS が中身を管理している IP アドレス範囲の一覧。セキュリティグループのルールで、CIDR の代わりに ID で指定できる。CloudFront がオリジンへ接続するサーバーの範囲をまとめたものがある。 |
+| saga | saga | 47 | いくつかのサービスにまたがる変更を、1 つのトランザクションにまとめる代わりに、ステップごとに確定させていくやり方。後のステップが失敗したら、済んだステップを補償処理で打ち消す。途中の状態は外から見える。 |
+| タスクトークン（task token） | task token | 47 | Step Functions が、外からの返事を待つタスクに付ける文字列。返事をする側は、このトークンを添えて SendTaskSuccess か SendTaskFailure を呼ぶ。 |
+| JSONata | JSONata | 47 | JSON を選んで組み替えるための式の言語。Step Functions のステートの中では、`{% %}` で囲んだ文字列が JSONata の式として評価される。 |
+| Express ワークフロー | Express workflow | 47 | Step Functions のワークフローの種類の 1 つ。最長 5 分で、途中の状態を保存せず、実行の回数と時間とメモリで課金される。同じ実行が 2 回走ることがある。 |
+| ハートビート（heartbeat） | heartbeat | 47 | 長くかかるタスクが「まだ動いている」と知らせる合図。HeartbeatSeconds の間に届かなければ、Step Functions はそのタスクを失敗にする。 |
+| 実行パラメーター（Athena） | execution parameter (Athena) | 49 | SQL の文に書いた `?` に、実行のときに順番に当てはめる値。文とは別の引数として Athena に渡す。 |
+| CTAS | CTAS | 49 | CREATE TABLE AS SELECT の略。クエリの結果を S3 にファイルとして書き、それを指すテーブルを同時に作る文。 |
+| Iceberg テーブル | Iceberg table | 49 | Apache Iceberg の形式で管理するテーブル。どのファイルがテーブルに属するかをメタデータが持つので、行単位の変更と、過去の時点の読み出しができる。 |
+| クエリ結果の再利用 | query result reuse | 49 | 同じワークグループで同じクエリが最近実行されていれば、実行せずにその結果を返す Athena の機能。クエリごとに、許す古さを指定して有効にする。 |
+| コマンド | command | 48 | AWS SDK for JavaScript v3 で、1 つの API 操作とその入力を表すオブジェクト。クライアントの send に渡して実行する。 |
+| ミドルウェアスタック | middleware stack | 48 | SDK のクライアントが 1 回の呼び出しで順に通す処理の並び。initialize、serialize、build、finalizeRequest、deserialize の 5 つのステップに分かれ、再試行と署名は finalizeRequest にある。 |
+| 認証情報プロバイダーチェーン | credential provider chain | 48 | 認証情報を明示しなかったときに、SDK が決まった順に試す取得元の並び。最初に認証情報を返したところで止まる。 |
+| ページネーター | paginator | 48 | 続きを指すトークンやキーを次のリクエストに渡す処理を、非同期のイテレーターとして包んだ SDK の関数。 |
+| ウェイター | waiter | 48 | リソースが目的の状態になるまで、間隔をあけて状態を問い合わせ続ける SDK の関数。待つ時間の上限は呼び出す側が決める。 |
+| マーシャリング | marshalling | 48 | JavaScript の値と、DynamoDB の型つきの属性値（S、N、M など）を相互に変換すること。lib-dynamodb のドキュメントクライアントが送受信のたびに行う。 |
+| サービス例外 | service exception | 48 | AWS のサービスが返したエラーを表す SDK のクラス。サービスごとの基底クラスを継承し、$fault、$metadata、name を持つ。 |
+| リクエストハンドラー | request handler | 48 | SDK のクライアントの中で、実際に HTTP リクエストを送る部品。Node.js では node:http と node:https を使い、接続の再利用とタイムアウトをここで設定する。 |
+| ファイルシステム（EFS） | file system (EFS) | 53 | EFS で作る、NFS でマウントする共有のディスク。容量を決めずに作り、置いた量と読み書きした量に課金される。同じリージョンの複数の実行環境から同時にマウントできる。 |
+| NFS | NFS | 53 | Network File System。ネットワークの向こうのファイルシステムを、手元のディレクトリとしてマウントするプロトコル。EFS が話すのは 4.0 と 4.1。 |
+| マウントターゲット | mount target | 53 | EFS のファイルシステムが、VPC のサブネットに出す NFS の接続先。AZ ごとに 1 つ作り、セキュリティグループはここに付く。 |
+| アクセスポイント（EFS） | access point (EFS) | 53 | ファイルシステムへの、アプリケーションごとの入口。そこから入るクライアントに、決まったディレクトリをルートとして見せ、決まった POSIX のユーザーとして扱う。 |
+| close-to-open の整合性 | close-to-open consistency | 53 | NFS の整合性の約束。あるクライアントがファイルを閉じたあとに別のクライアントが開けば、書いた内容が見える。開いたままのファイルについては約束しない。 |
+| アドバイザリロック | advisory lock | 53 | ロックを確かめる側だけが従うロック。取っていないプロセスの読み書きは止まらない。EFS のロックはすべてこれ。 |
+| rename による置き換え | rename into place | 53 | 新しい内容を別の名前のファイルに書き終えてから、rename で本来の名前に付け替える書き方。読む側には古い内容か新しい内容のどちらかだけが見える。 |
+| Elastic スループット | Elastic throughput | 53 | EFS のスループットの方式の 1 つ。前もって量を決めず、読み書きしたバイト数に課金される。 |
+| Data Catalog（Glue） | Data Catalog (Glue) | 43 | テーブルの定義を置く場所。S3 のどのフォルダーに、どんな列のファイルが、どの形式で入っているかを持つ。ファイルの中身は持たず、検査もしない。 |
+| crawler | crawler | 43 | S3 などのデータを読んで形式と列を推測し、テーブルとパーティションを Data Catalog に書く Glue の機能。 |
+| job（Glue） | job (Glue) | 43 | Glue が実行するスクリプト。Spark の job は、最小でも 2 DPU のワーカーの上で動き、動いた秒数に課金される。 |
+| job bookmark | job bookmark | 43 | job がどの入力まで読んだかを Glue が覚えておく状態。job.commit() で保存される。覚えるのは入力だけで、出力は追跡しない。 |
+| DQDL | DQDL | 43 | Data Quality Definition Language。AWS Glue Data Quality のルールを書く言語。 |
+| ETL | ETL | 43 | extract、transform、load。データを読み、形を変え、別の場所に書く処理。 |
+| AgentCore Runtime | AgentCore Runtime | 50 | Amazon Bedrock AgentCore のうち、エージェントのコードを預かって動かす部分。セッションごとに専用の microVM を用意し、`/invocations` と `/ping` を持つ HTTP サーバーとしてコードを呼ぶ。 |
+| ランタイムセッション | runtime session | 50 | AgentCore Runtime が 1 つの microVM に割り当てる単位。呼び出す側が決めた 33 文字以上の ID で区別される。ID がだれのものかを AgentCore は確かめない。 |
+| AgentCore Memory | AgentCore Memory | 50 | エージェントの記憶を預かる AgentCore のサービス。短期記憶は actor とセッションごとのイベントの列で、長期記憶はそこから非同期に取り出したレコード。 |
+| ワークスペース（Grafana） | workspace (Grafana) | 55 | Amazon Managed Grafana が用意する、論理的に分かれた 1 つの Grafana サーバー。ダッシュボード、データソース、利用者の割り当てを持つ。 |
+| データソース（Grafana） | data source (Grafana) | 55 | Grafana がクエリを送る先の設定。CloudWatch のデータソースは、ワークスペースのロールの権限で CloudWatch の API を呼ぶ。 |
+| サービスアカウント（Grafana） | service account (Grafana) | 55 | 人ではなくプログラムが Grafana の HTTP API を呼ぶための利用者。期限つきのトークンを発行して使い、料金の上では利用者 1 人として数えられる。 |
+| WebRTC | WebRTC | 51 | ブラウザーどうし、またはブラウザーとサーバーのあいだで、音声と映像を低い遅延でやり取りするための標準の仕組み。 |
+| ミーティング | meeting | 51 | Chime SDK で、通話 1 つを表す一時的なリソース。API で作り、誰も接続していない時間が 5 分続くか、24 時間を超えると、Chime が終わらせる。 |
+| アテンディー | attendee | 51 | ミーティングの参加者 1 人ぶんの席。サーバーが API で作り、作るたびに join token が 1 つ付く。 |
+| join token | join token | 51 | アテンディーとしてメディアサービスに接続するための秘密の文字列。持っている人がそのアテンディーになる。アテンディーを消すかミーティングが終わると使えなくなる。 |
+| メディアリージョン | media Region | 51 | Chime SDK のミーティングで、音声と映像を中継するリージョン。API を呼ぶ先のコントロールリージョンとは別に選べる。 |
+| データストリーム | data stream | 54 | レコードを届いた順に並べて、決めた期間だけ保持する記録。読んでも消えず、読む側がそれぞれ自分の位置を持つ。 |
+| shard | shard | 54 | Kinesis の stream を構成する 1 本の列。書き込みと読み取りの上限、順序の保証、料金は、どれも shard ごとに決まる。 |
+| partition key（Kinesis） | partition key (Kinesis) | 54 | レコードに付ける文字列。MD5 のハッシュ値で shard が決まるので、同じ partition key のレコードは同じ shard に並ぶ。DynamoDB の partition key とは別のもの。 |
+| sequence number | sequence number | 54 | Kinesis が、受け取ったレコードに付ける番号。shard の中で増えていく。数値型に収まらない桁数の 10 進の文字列で、連番ではない。 |
+| iterator age | iterator age | 54 | コンシューマーが最後に受け取ったレコードが、stream に届いてからどれだけ経っているか。コンシューマーの遅れを表す。保持期間を超えると、読まれないままレコードが消える。 |
+| poison record | poison record | 54 | 何度処理しても失敗するレコード。順序を守って読むコンシューマーでは、後ろに並んだレコードをすべて止める。 |
+| enhanced fan-out | enhanced fan-out | 54 | コンシューマーを stream に登録して、shard ごとに専用の読み取り帯域（2 MB/秒）を持たせるしくみ。登録している時間と読んだ量に料金がかかる。 |
+| resharding | resharding | 54 | shard を 2 つに分ける（split）、または 2 つを 1 つにまとめる（merge）操作。元の shard は閉じられ、中のレコードは保持期間が切れるまで読める。 |
+| ダイジェスト | digest | 52 | イメージのマニフェストの SHA-256。中身から決まるので、同じダイジェストなら同じイメージで、あとから別のものを指すことはない。 |
+| タグの immutability | tag immutability | 52 | すでにあるタグを別のイメージに付け替えるプッシュを、リポジトリが拒否する設定。 |
+| ライフサイクルポリシー（ECR） | lifecycle policy (ECR) | 52 | リポジトリのイメージを、タグの有無や名前、数、プッシュからの日数で選んで消す規則の集まり。 |
+| pull through cache | pull-through cache | 52 | 外のレジストリのイメージを、自分の ECR のレジストリ経由で取得し、写しを手元に残す仕組み。 |
+| enhanced scanning | enhanced scanning | 52 | ECR のイメージを Amazon Inspector が検査する設定。OS に加えて言語のパッケージも見て、新しい脆弱性が出るたびに検査し直す。 |
+| ハッシュチェーン | hash chain | 58 | 記録の 1 件ごとに、その内容と、1 つ前の記録のハッシュとを合わせて計算したハッシュを持たせた列。途中の 1 件を書き換えると、それより後ろのハッシュがすべて合わなくなる。 |
+| ダイジェスト | digest | 58 | ある時点での台帳の末尾の番号とハッシュを書き留めたもの。ハッシュチェーンでは、末尾のハッシュがそれまでの記録すべてを代表する。台帳とは別の、消せない場所に置く。 |
+| Object Lock | Object Lock | 58 | S3 のオブジェクトのバージョンを、決めた期間のあいだ削除も上書きもできなくする機能。governance モードは特別な権限で解除でき、compliance モードは root ユーザーにも解除できない。 |
+| マルチモーダル | multimodal | 56 | 文章だけでなく、画像、動画、音声のような別の種類の入力も 1 つのリクエストで受け取れること。受け取れる種類はモデルごとに違う。 |
+| モデルカード | model card | 56 | Bedrock のユーザーガイドにある、モデルごとのページ。入出力の種類、使える API、モデル ID と inference profile の ID、呼べるリージョン、終了の目安が載っている。 |
+| claim（処理の先取り） | claim | 56 | 「この処理はいま自分がやっている」という、期限つきの記録。条件付き書き込みで作るので、同時に来た 2 つのリクエストのうち一方しか作れない。期限が過ぎたものは、ほかのリクエストが引き継げる。 |
+| 代替テキスト | alternative text | 56 | 画像を見られない読者のために、画像の内容を文章で書いたもの。HTML では img 要素の alt 属性に入れる。 |
+| speech-to-speech | speech-to-speech | 56 | 音声を受け取り、音声で答えるモデル。文字起こし、文章の生成、読み上げを 1 つのモデルが続けて行い、双方向のストリームで会話する。 |
+| クラスターボリューム | cluster volume | 60 | Aurora のデータが入る 1 つの仮想ボリューム。3 つの AZ にまたがって複製され、インスタンスの数とは無関係に存在する。 |
+| writer | writer | 60 | Aurora のクラスターで書き込みを受け付ける、ただ 1 つのインスタンス。primary instance とも呼ぶ。 |
+| reader | reader | 60 | writer と同じクラスターボリュームを読む、読み取り専用のインスタンス。Aurora Replica とも呼ぶ。フェイルオーバーで writer に昇格する候補でもある。 |
+| クラスターエンドポイント | cluster endpoint | 60 | いまの writer を指す DNS 名。フェイルオーバーのあと、同じ名前が新しい writer を指す。 |
+| auto-pause | auto-pause | 60 | 最小容量を 0 ACU にした Aurora Serverless v2 のインスタンスが、接続のない時間が続くと止まり、次の接続で再開するしくみ。 |
+| Data API | Data API | 60 | Aurora に HTTPS で SQL を送る API。接続を持たず、認証は IAM と Secrets Manager のシークレットで行う。 |
+| クローン | clone | 60 | 元のクラスターとデータのページを共有して始まる、新しい Aurora のクラスター。どちらかがページを書き換えたときに、そのページだけが複製される。 |
+| I/O-Optimized | I/O-Optimized | 60 | Aurora のストレージの料金構成の 1 つ。I/O の回数に課金しない代わりに、容量とストレージの単価が高い。もう 1 つは Standard。 |
+| セルフホストランナー | self-hosted runner | 62 | CI のジョブを実行するプログラムを、CI のサービスではなく自分の計算資源で動かしたもの。ワークフローが書いたとおりのコマンドを、置かれた場所の権限で実行する。 |
+| just-in-time runner | just-in-time runner | 62 | GitHub の API で登録を先に作り、その設定を渡して起動するランナー。ジョブを多くても 1 件実行すると、GitHub が登録を消す。 |
+| runner manager | runner manager | 62 | GitLab Runner の常駐プロセス。GitLab にジョブを問い合わせ、executor を通してジョブを実行する。 |
+| SSML | SSML | 57 | Speech Synthesis Markup Language。読み上げる文章に、間や読み方の指示をタグで書き込む XML の形式。 |
+| 課金対象の文字 | billed characters | 57 | Polly が料金を数える文字。SSML のタグは含まれない。 |
+| レキシコン | lexicon | 57 | 単語ごとの読み方を登録しておく発音辞書。Polly ではリージョンごとに保存し、合成のときに名前で指定する。 |
+| Multi-AZ | Multi-AZ | 59 | RDS が別の Availability Zone に待機用の複製を持ち、障害のときにそちらへ切り替える構成。 |
+| リードレプリカ | read replica | 59 | プライマリの変更を非同期に受け取る、読み取り専用のデータベースインスタンス。プライマリより古いことがある。 |
+| レプリカラグ | replica lag | 59 | プライマリでコミットされた変更が、リードレプリカに反映されるまでの遅れ。 |
+| LSN | LSN (log sequence number) | 59 | PostgreSQL の write-ahead log の中の位置。プライマリがどこまで書いたか、レプリカがどこまで再生したかを比べるのに使う。 |
+| read-your-writes | read-your-writes | 59 | 書き込んだ本人が、そのあとの読み取りで自分の書き込みを必ず見られる、という保証。 |
+| RDS Proxy | RDS Proxy | 59 | アプリと RDS の間に置く接続プール。多数のクライアント接続を、少数のデータベース接続にまとめる。 |
+| パラメーターグループ | DB parameter group | 59 | データベースエンジンの設定値をまとめたもの。インスタンスに関連づけて使う。 |
+| IAM データベース認証 | IAM database authentication | 59 | パスワードの代わりに、IAM の認証情報で署名した 15 分有効のトークンでデータベースにサインインする方法。 |
+| RDS Extended Support | RDS Extended Support | 59 | 標準サポートが終わったメジャーバージョンを、vCPU 時間あたりの追加料金で使い続ける仕組み。 |
+| コーディングエージェント | coding agent | 63 | モデルが自分で選んだコマンドを実行し、ファイルを読み書きしながら、頼まれた変更をリポジトリに加えるプログラム。Claude Code はその 1 つ。 |
+| 出口の許可リスト | egress allowlist | 63 | 中から外へ出る通信の宛先を、列挙したものだけに限る決まり。載っていない宛先は、理由を問わず届かない。 |
+| installation access token | installation access token | 63 | GitHub App が、インストール先のリポジトリを操作するために発行するトークン。作ってから 1 時間で失効し、発行のときにリポジトリと権限を絞れる。 |
+| 非対話モード（claude -p） | non-interactive mode (claude -p) | 63 | Claude Code を、端末の画面なしで 1 回だけ実行するやり方。プロンプトを引数で受け取り、結果を標準出力に書いて、終了コードを返す。 |
+| FIFO キュー | FIFO queue | 61 | SQS のキューの種類の 1 つ。メッセージグループの中では送った順に渡し、同じ重複排除 ID の送信を 5 分間は 1 件として扱う。 |
+| メッセージグループ | message group | 61 | FIFO キューの中で、順序を保つ単位。同じ message group ID のメッセージは 1 件ずつ順に渡され、違うグループどうしは並行して進む。 |
+| 重複排除 ID | deduplication ID | 61 | FIFO キューに送るメッセージに付ける名前（MessageDeduplicationId）。受け付けてから 5 分のあいだ、同じ名前の送信はキューに入らない。 |
+| ロングポーリング | long polling | 61 | ReceiveMessage が、メッセージが来るまで最長 20 秒待ってから応答する受け取り方。空の応答の数が減り、そのぶんリクエストの料金も減る。 |
+| workerd | workerd | 64 | Cloudflare が公開している、Workers と同じコードにもとづく JavaScript と Wasm のランタイム。1 つのプロセスの中に isolate を作り、設定ファイルで定義した worker を動かす。それだけでは堅牢なサンドボックスではないと、README に明記されている。 |
+| compatibility date | compatibility date | 64 | Workers と workerd で、worker がどの日付までのランタイムの変更を受け入れるかを示す設定。ランタイムを新しくしても、古い日付を指定した worker の動きは変わらない。 |
+| binding | binding | 64 | Workers と workerd で、worker が外のリソースや設定値に触れるための入口。設定に書いた binding だけが、worker の `env` に現れる。 |
+| Firecracker | Firecracker | 67 | KVM の上で microVM を動かす、オープンソースの仮想マシンモニター。AWS が Lambda と Fargate のために作り、Apache 2.0 で公開している。プロセス 1 つが microVM 1 つを受け持つ。 |
+| microVM | microVM | 67 | デバイスを最小限に絞った小さな仮想マシン。自分のカーネルを持つので、分離の境界はハードウェア仮想化になる。 |
+| 仮想マシンモニター（VMM） | virtual machine monitor (VMM) | 67 | 仮想マシンにデバイスを見せ、ゲストが外に出ようとする操作を処理するプログラム。Firecracker や QEMU がこれにあたる。 |
+| KVM | KVM | 67 | Linux カーネルの仮想化機能。CPU の仮想化支援機能を使い、/dev/kvm を通じて VMM に仮想マシンを作らせる。 |
+| jailer | jailer | 67 | Firecracker に付属するプログラム。chroot、cgroup、名前空間を用意し、権限を落としてから Firecracker を起動する。 |
+| nested virtualization | nested virtualization | 67 | 仮想マシンの中でさらに仮想マシンを動かすこと。EC2 では一部の Intel のインスタンスタイプで、CPU オプションとして有効にできる。 |
+| Nitro System | Nitro System | 68 | いまの EC2 のインスタンスが載っている土台。ネットワークとストレージの入出力を専用のカード（Nitro Card）に移し、ホストの CPU には CPU とメモリを分けるだけのハイパーバイザーを残した構成。Nuxt のサーバーエンジンの Nitro とは別物。 |
+| Nitro Hypervisor | Nitro Hypervisor | 68 | Nitro System のハイパーバイザー。CPU とメモリをインスタンスに割り当て、Nitro Card のデバイスを渡すだけで、ネットワークスタックもシェルも持たない、と AWS は説明している。 |
+| Graviton | Graviton | 68 | AWS が設計した Arm（arm64）のプロセッサー。インスタンスタイプの名前では g の文字で表される。 |
+| エンクレーブ | enclave | 68 | インスタンスの vCPU とメモリの一部を切り出して作る、隔離された仮想マシン。ネットワークも永続的なストレージも対話的な入口も持たず、親インスタンスとは vsock だけでつながる。 |
+| 親インスタンス | parent instance | 68 | エンクレーブに vCPU とメモリを渡し、エンクレーブを起動して止める EC2 のインスタンス。 |
+| エンクレーブイメージファイル | enclave image file | 68 | エンクレーブで起動する OS とアプリを 1 つにまとめたファイル（.eif）。Docker のイメージから nitro-cli build-enclave で作る。 |
+| PCR | PCR | 68 | platform configuration register。エンクレーブのイメージや親インスタンスの素性から計算した SHA-384 のハッシュ。PCR0 はイメージファイル全体の計測値。 |
+| アテステーションドキュメント | attestation document | 68 | Nitro Hypervisor が署名する文書。エンクレーブの PCR と、エンクレーブが渡した公開鍵が入っている。エンクレーブはこれを見せて、自分がどのイメージから起動したかを外に証明する。 |
+| vsock | vsock | 68 | 仮想マシンとそのホストの間のソケット。アドレスは CID とポートの組で、エンクレーブと親インスタンスをつなぐ唯一の経路。 |
+| Raft | Raft | 66 | 複数の写しのあいだで、書き込みの順序を 1 つに決めるための合意の手順。1 つがリーダーになって書き込みを受け、過半数の写しに記録されたものだけを確定とする。 |
+| 過半数（quorum） | Quorum (majority) | 66 | 写しの半分より多い数。3 つなら 2 つ。過半数が生きているあいだだけ、リーダーを選べて、書き込みを確定できる。 |
+| tablet | Tablet | 66 | YugabyteDB がテーブルを分けた 1 かけら。行は主キーでどれか 1 つの tablet に入り、tablet ごとに写しの組（Raft のグループ）がある。 |
+| replication factor | Replication factor | 66 | 1 つの tablet の写しの数。3 なら、ノードを 1 つ失っても過半数が残る。 |
+| 時刻のずれ（clock skew） | Clock skew | 66 | ノードどうしの時計の差。YugabyteDB は時刻をトランザクションの順序づけに使うので、差が上限（既定で 500 ミリ秒）を超えたノードは自分で止まる。 |

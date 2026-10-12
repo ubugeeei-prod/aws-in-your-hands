@@ -1,0 +1,95 @@
+{
+  "Description": "A fixture written by hand for chapter 45. Never deployed, never validated by CloudFormation.",
+  "Resources": {
+    "NotesTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [{ "AttributeName": "pk", "AttributeType": "S" }],
+        "KeySchema": [{ "AttributeName": "pk", "KeyType": "HASH" }]
+      }
+    },
+    "FnRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": "lambda.amazonaws.com" },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        }
+      }
+    },
+    "FnPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "notes-read-write",
+        "Roles": [{ "Ref": "FnRole" }],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": ["dynamodb:GetItem", "dynamodb:PutItem"],
+              "Resource": { "Fn::GetAtt": ["NotesTable", "Arn"] }
+            }
+          ]
+        }
+      }
+    },
+    "NotesFn": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": ["FnPolicy"],
+      "Properties": {
+        "Runtime": "nodejs24.x",
+        "Handler": "index.handler",
+        "Role": { "Fn::GetAtt": ["FnRole", "Arn"] },
+        "Code": { "ZipFile": "export const handler = async () => ({ statusCode: 204 });" },
+        "Environment": { "Variables": { "TABLE_NAME": { "Ref": "NotesTable" } } }
+      }
+    },
+    "Api": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": { "Name": { "Fn::Sub": "${AWS::StackName}-notes" }, "ProtocolType": "HTTP" }
+    },
+    "ApiIntegration": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": { "Ref": "Api" },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": { "Fn::GetAtt": ["NotesFn", "Arn"] },
+        "PayloadFormatVersion": "2.0"
+      }
+    },
+    "ApiRoute": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": { "Ref": "Api" },
+        "RouteKey": "GET /notes",
+        "Target": { "Fn::Sub": "integrations/${ApiIntegration}" }
+      }
+    },
+    "InvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": { "Ref": "NotesFn" },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*"
+        }
+      }
+    },
+    "LeftoverQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": { "MessageRetentionPeriod": 345600 }
+    }
+  },
+  "Outputs": {
+    "ApiEndpoint": { "Value": { "Fn::GetAtt": ["Api", "ApiEndpoint"] } }
+  }
+}

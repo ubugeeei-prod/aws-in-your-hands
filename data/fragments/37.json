@@ -1,0 +1,854 @@
+{
+  "chapterId": "37",
+  "manifest": {
+    "id": "37",
+    "slug": "cloudshell",
+    "title": {
+      "ja": "CloudShell と Cloud9: AWS の中にある作業環境",
+      "en": "CloudShell and Cloud9: A Workspace Inside AWS"
+    },
+    "prerequisites": ["01", "02", "11", "23"],
+    "services": ["CloudShell", "Cloud9", "IAM", "Systems Manager"],
+    "samplePath": "examples/37-cloudshell",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "cloudshell-welcome",
+      "cloudshell-vm-specs",
+      "cloudshell-limits",
+      "cloudshell-endpoints-quotas",
+      "cloudshell-concepts",
+      "cloudshell-getting-started",
+      "cloudshell-cli",
+      "cloudshell-vpc",
+      "cloudshell-vpc-permissions",
+      "cloudshell-iam",
+      "cloudshell-managed-policy",
+      "cloudshell-service-reference",
+      "cloudshell-cloudtrail",
+      "cloudshell-security-faq",
+      "cloudshell-security-best-practices",
+      "cloudshell-troubleshooting",
+      "cloudshell-kiro",
+      "cloudshell-cdk-tutorial",
+      "cloudshell-pricing",
+      "cloudshell-faqs",
+      "cloud9-welcome",
+      "cloud9-migration-blog",
+      "cloud9-pricing",
+      "aws-service-lifecycle",
+      "codecatalyst-dev-environments",
+      "sagemaker-code-editor",
+      "toolkit-vscode-ec2",
+      "ssm-ssh-connections",
+      "s3-api-delete-objects",
+      "cloudshell-s3-list-object-versions",
+      "aws-cli-list-object-versions",
+      "aws-cli-s3-cp",
+      "budgets-api-describe-budget",
+      "aws-cli-logs-tail",
+      "nix-installing-binary",
+      "cloudflare-wrangler-general",
+      "cloudflare-workers-dashboard",
+      "vercel-cli-overview",
+      "cdkd-package-0-296-28",
+      "aws-cli-login"
+    ]
+  },
+  "sources": [
+    {
+      "id": "cloudshell-welcome",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/welcome.html",
+      "title": "What is AWS CloudShell? - AWS CloudShell User Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudShell is a browser-based, pre-authenticated shell launched from the console, on a compute environment based on Amazon Linux 2023",
+        "1 GB of persistent storage in $HOME per Region at no additional cost; VPC environments have none",
+        "Safe Paste is enabled by default",
+        "No additional charge; other resources and data transfer are billed"
+      ]
+    },
+    {
+      "id": "cloudshell-vm-specs",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/vm-specs.html",
+      "title": "AWS CloudShell compute environment: specifications and software",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "1 vCPU, 2 GiB RAM, 1 GB persistent storage",
+        "The list of preinstalled shells, CLIs, runtimes and tools; pnpm, Nix, vp and cdkd are not on it",
+        "The guide gives no version numbers and says to check with --version",
+        "Files added outside $HOME are deleted after the session; dnf installs are per session",
+        "All users have sudo",
+        "The session is carried by a Systems Manager WebSocket"
+      ],
+      "note": "The AWS CLI reinstall steps download awscli-exe-linux-x86_64.zip; the architecture is not stated otherwise."
+    },
+    {
+      "id": "cloudshell-limits",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/limits.html",
+      "title": "Service quotas and restrictions for AWS CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Home directory data is retained for 120 days after the last session in a Region",
+        "A session ends after 20-30 minutes without keyboard or pointer input; running processes do not count",
+        "A session ends after approximately 12 hours",
+        "Up to 10 concurrent shells per Region",
+        "Outbound internet access; no inbound ports and no public IP",
+        "Warning that users might export data from the environment",
+        "Up to two VPC environments per IAM principal"
+      ]
+    },
+    {
+      "id": "cloudshell-endpoints-quotas",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/cloudshell.html",
+      "title": "AWS CloudShell endpoints and quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudShell has an endpoint in ap-northeast-1",
+        "Monthly usage quota: 200 hours per Region, adjustable",
+        "Concurrent shells: 10 per Region, adjustable",
+        "Home directory size 1 GB and data retention 120 days, not adjustable"
+      ]
+    },
+    {
+      "id": "cloudshell-concepts",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/working-with-aws-cloudshell.html",
+      "title": "AWS CloudShell Concepts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each Region has its own environment and its own 1 GB home directory",
+        "AWS_REGION is set from the console Region and takes precedence over aws configure",
+        "Download is not available from the Console Toolbar",
+        "Docker is available in all Regions except AWS GovCloud (US)",
+        "VPC environments cannot be created in the Console Mobile Application"
+      ]
+    },
+    {
+      "id": "cloudshell-getting-started",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/getting-started.html",
+      "title": "Getting started with AWS CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Upload file and Download file under the Actions menu",
+        "Deleting the home directory from Actions is irreversible and restores the defaults",
+        "Restart from Actions stops all sessions in the Region"
+      ]
+    },
+    {
+      "id": "cloudshell-cli",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/working-with-aws-cli.html",
+      "title": "Manage AWS services from CLI in CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The credentials used to sign in to the console are forwarded to CloudShell",
+        "AWS CLI, EB CLI, ECS CLI and SAM CLI are installed"
+      ]
+    },
+    {
+      "id": "cloudshell-vpc",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/using-cshell-in-vpc.html",
+      "title": "Using AWS CloudShell in Amazon VPC",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A VPC environment takes a VPC, a subnet and up to five security groups",
+        "No upload or download from Actions, no persistent storage",
+        "Internet access only from a private subnet with NAT; no public IP",
+        "The VPC's local DNS zone is not used by default"
+      ]
+    },
+    {
+      "id": "cloudshell-vpc-permissions",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/aws-cloudshell-vpc-permissions-1.html",
+      "title": "Required IAM permissions for creating and using CloudShell VPC environments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The EC2 permissions a VPC environment needs",
+        "The condition keys cloudshell:VpcIds, SubnetIds and SecurityGroupIds",
+        "The DenyCloudShellNonVpcEnvironments statement (Null cloudshell:VpcIds)",
+        "Existing public environments stay accessible until each user deletes them"
+      ]
+    },
+    {
+      "id": "cloudshell-iam",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/sec-auth-with-identities.html",
+      "title": "Managing AWS CloudShell access and usage with IAM policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Launching needs CreateEnvironment, CreateSession, GetEnvironmentStatus and StartEnvironment",
+        "PutCredentials forwards the console credentials; without it users configure credentials themselves",
+        "CreateEnvironment expects * as Resource",
+        "Administrator and Developer power user managed policies can also launch CloudShell",
+        "The DenyCloudShell example policy"
+      ]
+    },
+    {
+      "id": "cloudshell-managed-policy",
+      "url": "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSCloudShellFullAccess.html",
+      "title": "AWSCloudShellFullAccess - AWS Managed Policy Reference",
+      "checkedAt": "2026-10-13",
+      "supports": ["AWSCloudShellFullAccess allows cloudshell:* on *"]
+    },
+    {
+      "id": "cloudshell-service-reference",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudshell/cloudshell.json",
+      "title": "AWS service reference: cloudshell (v1.4)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The cloudshell namespace has 11 actions",
+        "The Environment resource type and the three condition keys"
+      ],
+      "note": "Machine-readable service reference published by AWS; the HTML Service Authorization Reference page could not be read by the fetcher."
+    },
+    {
+      "id": "cloudshell-cloudtrail",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/logging-and-monitoring.html",
+      "title": "Logging and monitoring in AWS CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudTrail records CloudShell API calls as events",
+        "The event names createEnvironment, createSession, putCredentials, getFileUploadUrls, getFileDownloadUrls",
+        "No listed event records commands typed in the shell"
+      ]
+    },
+    {
+      "id": "cloudshell-security-faq",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-security-faqs.html",
+      "title": "AWS CloudShell Security FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Network access of public environments cannot be restricted",
+        "$HOME of a public environment is stored in S3 and encrypted; no customer key",
+        "Root access in the container is by design; temporary, regularly rotated credentials are the boundary"
+      ]
+    },
+    {
+      "id": "cloudshell-security-best-practices",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/security-best-practices.html",
+      "title": "Security best practices for AWS CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": ["Use IAM policies to control access to CloudShell", "Keep Safe Paste enabled"]
+    },
+    {
+      "id": "cloudshell-troubleshooting",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/troubleshooting.html",
+      "title": "Troubleshooting AWS CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The permissions error shown when launch actions are missing",
+        "Recovery from a broken .bashrc",
+        "The Failed to open sessions error and WebSockets"
+      ]
+    },
+    {
+      "id": "cloudshell-kiro",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/q-cli-features-in-cloudshell.html",
+      "title": "Kiro CLI in CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Kiro CLI is preinstalled in CloudShell, needs its own sign-in, and can only perform actions the user's permissions allow"
+      ]
+    },
+    {
+      "id": "cloudshell-cdk-tutorial",
+      "url": "https://docs.aws.amazon.com/cloudshell/latest/userguide/tutorial-docker-cdk-deploy.html",
+      "title": "Tutorial: Deploying a Lambda function using the AWS CDK in CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS documents running cdk deploy from CloudShell, in a folder under the home directory"
+      ]
+    },
+    {
+      "id": "cloudshell-pricing",
+      "url": "https://aws.amazon.com/cloudshell/pricing/",
+      "title": "AWS CloudShell Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "There is no additional charge for AWS CloudShell",
+        "Data transfer is billed at standard rates"
+      ]
+    },
+    {
+      "id": "cloudshell-faqs",
+      "url": "https://aws.amazon.com/cloudshell/faqs/",
+      "title": "AWS CloudShell FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudShell is pre-authenticated with console credentials and has only the privileges of the console login",
+        "CloudShell is intended for interactive workloads; background processes are not activity"
+      ],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "cloud9-welcome",
+      "url": "https://docs.aws.amazon.com/cloud9/latest/user-guide/welcome.html",
+      "title": "What is AWS Cloud9? - AWS Cloud9 User Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Banner: AWS Cloud9 is no longer available to new customers; existing customers can continue to use the service as normal",
+        "Cloud9 is a browser IDE with EC2 environments and SSH environments"
+      ]
+    },
+    {
+      "id": "cloud9-migration-blog",
+      "url": "https://aws.amazon.com/blogs/devops/how-to-migrate-from-aws-cloud9-to-aws-ide-toolkits-or-aws-cloudshell/",
+      "title": "How to migrate from AWS Cloud9 to AWS IDE Toolkits or AWS CloudShell",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "New customer access to Cloud9 closed on July 25, 2024",
+        "Existing customers can continue; no new features are planned",
+        "AWS recommends the AWS IDE Toolkits and CloudShell",
+        "Delete Cloud9 EC2 instances after migrating"
+      ],
+      "note": "Read through a summarizing fetcher that may have truncated the page; no end-of-service date was found in what was read."
+    },
+    {
+      "id": "cloud9-pricing",
+      "url": "https://aws.amazon.com/cloud9/pricing/",
+      "title": "AWS Cloud9 Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "No additional charge for Cloud9; EC2 environments pay for the instance and EBS storage"
+      ],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "aws-service-lifecycle",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/service-lifecycle.html",
+      "title": "AWS Lifecycle Changes",
+      "checkedAt": "2026-10-13",
+      "supports": ["Definitions of the Maintenance, Sunset and Full Shutdown stages"],
+      "note": "The list of services on the page is rendered by script and was not read; Cloud9's stage is unconfirmed."
+    },
+    {
+      "id": "codecatalyst-dev-environments",
+      "url": "https://docs.aws.amazon.com/codecatalyst/latest/userguide/devenvironment.html",
+      "title": "Write and modify code with Dev Environments in CodeCatalyst",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Banner: Amazon CodeCatalyst is no longer open to new customers",
+        "Dev Environments are cloud development environments configured by a devfile"
+      ]
+    },
+    {
+      "id": "sagemaker-code-editor",
+      "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/code-editor.html",
+      "title": "Code Editor in Amazon SageMaker Studio",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Code Editor is based on Code-OSS and is for analytics and machine learning code",
+        "A Code Editor space uses one EC2 instance and one EBS volume",
+        "No closing notice on the page as read"
+      ]
+    },
+    {
+      "id": "toolkit-vscode-ec2",
+      "url": "https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/ec2-overview.html",
+      "title": "Working with Amazon Elastic Compute Cloud - AWS Toolkit for VS Code",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS: Connect VS Code to EC2 instance command",
+        "Tested on Amazon Linux 2023 and Ubuntu 22.04; local SSH is required for a remote connection",
+        "The instance profile permissions are in AmazonSSMManagedInstanceCore"
+      ]
+    },
+    {
+      "id": "ssm-ssh-connections",
+      "url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html",
+      "title": "Allow and control permissions for SSH connections through Session Manager",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The ProxyCommand with AWS-StartSSHSession for ~/.ssh/config",
+        "A key already associated with the node is required",
+        "Logging isn't available for sessions that connect through port forwarding or SSH"
+      ]
+    },
+    {
+      "id": "s3-api-delete-objects",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html",
+      "title": "DeleteObjects - Amazon S3 API Reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A request can contain up to 1,000 keys",
+        "Quiet mode returns only the keys that failed",
+        "A delete without a version ID on a versioned bucket adds a delete marker and keeps all versions",
+        "x-amz-expected-bucket-owner fails the request with 403 for another owner"
+      ]
+    },
+    {
+      "id": "cloudshell-s3-list-object-versions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html",
+      "title": "ListObjectVersions - Amazon S3 API Reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The response lists Version and DeleteMarker entries with Key and VersionId",
+        "Up to 1,000 keys per response"
+      ]
+    },
+    {
+      "id": "aws-cli-list-object-versions",
+      "url": "https://docs.aws.amazon.com/cli/latest/reference/s3api/list-object-versions.html",
+      "title": "list-object-versions - AWS CLI Command Reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CLI output has Versions and DeleteMarkers arrays",
+        "--max-items yields a NextToken when more remain"
+      ]
+    },
+    {
+      "id": "aws-cli-s3-cp",
+      "url": "https://docs.aws.amazon.com/cli/latest/reference/s3/cp.html",
+      "title": "cp - AWS CLI Command Reference",
+      "checkedAt": "2026-10-13",
+      "supports": ["aws s3 cp s3://bucket/key - streams the object to standard output"]
+    },
+    {
+      "id": "budgets-api-describe-budget",
+      "url": "https://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_budgets_DescribeBudget.html",
+      "title": "DescribeBudget - AWS Billing and Cost Management API Reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The response carries BudgetLimit and CalculatedSpend.ActualSpend and ForecastedSpend as Amount and Unit strings"
+      ]
+    },
+    {
+      "id": "aws-cli-logs-tail",
+      "url": "https://docs.aws.amazon.com/cli/latest/reference/logs/tail.html",
+      "title": "tail - AWS CLI Command Reference",
+      "checkedAt": "2026-10-13",
+      "supports": ["aws logs tail with --since, --follow and --format"]
+    },
+    {
+      "id": "nix-installing-binary",
+      "url": "https://nix.dev/manual/nix/2.28/installation/installing-binary",
+      "title": "Installing a Binary Distribution - Nix Reference Manual",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nix stores its files in /nix; the installer uses sudo to create it",
+        "The page describes no install location other than /nix",
+        "Multi-user installs need systemd on Linux"
+      ],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "cloudflare-wrangler-general",
+      "url": "https://developers.cloudflare.com/workers/wrangler/commands/general/",
+      "title": "General commands - Wrangler",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "wrangler login authorizes through OAuth in a browser and stores tokens in the global Wrangler config directory",
+        "CLOUDFLARE_API_TOKEN takes precedence over stored OAuth credentials"
+      ],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "cloudflare-workers-dashboard",
+      "url": "https://developers.cloudflare.com/workers/get-started/dashboard/",
+      "title": "Get started: Dashboard - Cloudflare Workers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Creating and deploying a Worker from the dashboard goes through templates or a Git repository; the page mentions no terminal or shell"
+      ],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "vercel-cli-overview",
+      "url": "https://vercel.com/docs/cli",
+      "title": "Vercel CLI Overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Vercel CLI is installed locally with a package manager",
+        "vercel login in a terminal; VERCEL_TOKEN or --token in CI"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "cloudshell",
+      "ja": "CloudShell",
+      "en": "CloudShell",
+      "firstUse": "37",
+      "definition": {
+        "ja": "コンソールの中で開くシェル。サインインしている identity の認証情報を最初から持ち、AWS の側の環境（1 vCPU、2 GiB、ホームディレクトリ 1 GB）で動く。追加の料金はない。",
+        "en": "A shell opened inside the console. It starts out holding the credentials of the signed-in identity and runs in an environment on the AWS side (1 vCPU, 2 GiB, a 1 GB home directory). It has no additional charge."
+      }
+    },
+    {
+      "id": "cloudshell-vpc-environment",
+      "ja": "VPC 環境（CloudShell）",
+      "en": "VPC environment (CloudShell)",
+      "firstUse": "37",
+      "definition": {
+        "ja": "VPC、サブネット、セキュリティグループを指定して作る CloudShell の環境。選んだサブネットの中から通信する。ホームディレクトリは残らず、画面からのファイルの上げ下ろしは使えない。",
+        "en": "A CloudShell environment created with a VPC, a subnet and security groups. It communicates from inside the chosen subnet. Its home directory does not persist, and upload and download from the page are unavailable."
+      }
+    },
+    {
+      "id": "cloud9",
+      "ja": "Cloud9",
+      "en": "Cloud9",
+      "firstUse": "37",
+      "definition": {
+        "ja": "ブラウザで使う統合開発環境。EC2 のインスタンスか自分のサーバーの上で動く。2024 年 7 月 25 日から新しい利用者を受け付けていない。",
+        "en": "An integrated development environment in the browser, running on an EC2 instance or your own server. Closed to new customers since July 25, 2024."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "37.cloud9",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.environment",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.credentials",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.network",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.toolchain",
+      "sources": ["flake.nix"],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "37.when-not",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.bundle",
+      "sources": [
+        "examples/37-cloudshell/scripts/bundle.ts",
+        "examples/37-cloudshell/scripts/build.ts",
+        "examples/37-cloudshell/src/cli.ts",
+        "examples/37-cloudshell/src/aws-cli.ts",
+        "examples/37-cloudshell/src/commands.ts",
+        "examples/37-cloudshell/test/bundle.test.ts"
+      ],
+      "tasks": ["cloudshell:build", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "37.whoami",
+      "sources": [
+        "examples/37-cloudshell/src/account.ts",
+        "examples/37-cloudshell/src/cli.ts",
+        "examples/37-cloudshell/test/account.test.ts",
+        "tools/src/aws/target.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "37.left",
+      "sources": [
+        "examples/37-cloudshell/src/stacks.ts",
+        "examples/37-cloudshell/test/stacks.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "37.empty",
+      "sources": [
+        "examples/37-cloudshell/src/empty.ts",
+        "examples/37-cloudshell/src/aws-cli.ts",
+        "examples/37-cloudshell/test/empty.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "37.iam",
+      "sources": [
+        "examples/37-cloudshell/src/policy.ts",
+        "examples/37-cloudshell/scripts/policy.ts",
+        "examples/37-cloudshell/test/policy.test.ts"
+      ],
+      "tasks": ["cloudshell:policy", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "37.local",
+      "sources": ["examples/37-cloudshell/scripts/demo.ts", "examples/37-cloudshell/test/support"],
+      "tasks": ["cloudshell:demo", "cloudshell:policy", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "37.run",
+      "sources": ["examples/37-cloudshell/scripts/build.ts", "examples/37-cloudshell/src/cli.ts"],
+      "tasks": ["cloudshell:build"],
+      "boundary": "local+cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.commands",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.cost",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.alternatives",
+      "sources": ["examples/23-ec2/src/remote.ts"],
+      "tasks": ["ec2:forward"],
+      "boundary": "cloud",
+      "criteria": ["local-dx", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.compare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "37.cleanup",
+      "sources": ["examples/37-cloudshell/scripts/build.ts"],
+      "tasks": ["cloudshell:build"],
+      "boundary": "local+cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [],
+  "validation": {
+    "records": [
+      {
+        "scope": "37",
+        "command": "vp test run examples/37-cloudshell",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "5 ファイル 50 件。3 つのポリシーが通すアクション、予算の状態、state のキーとリソース、料金がかかる種類の表と各章のサンプルの照合、1,000 個ずつの分割、メモリ上のバケットを空にする繰り返し（拒否、再実行、途中の書き込み、終わらない場合）、ビルドしたファイルを偽物の aws で実行するテスト",
+          "en": "5 files, 50 tests. The actions the three policies let through; budget states; state keys and resources; the table of billed types against each chapter's example; batches of 1,000; the loop emptying an in-memory bucket (refusal, re-run, a write partway, no progress); and the built file run against a fake aws"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "tsc --noEmit -p examples/37-cloudshell",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "vp run cloudshell:build",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "dist/aih-cloudshell.mjs を出力。Node.js 24.21.0 で実行。Node.js 18 では実行していない",
+          "en": "Wrote dist/aih-cloudshell.mjs. Run on Node.js 24.21.0; not run on Node.js 18"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "vp run cloudshell:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "偽物の aws に対して whoami、budget、left、empty を実行。本文に載せた出力はこの実行のもの。AWS には届いていない",
+          "en": "Ran whoami, budget, left and empty against the fake aws. The output quoted in the chapter is from this run. Nothing reached AWS"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "vp run cloudshell:policy use-no-files",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "ポリシーの JSON を出力。本文に載せた JSON はこの実行のもの",
+          "en": "Printed the policy JSON quoted in the chapter"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "nix path-info -r (devShell の 5 つの道具) / du -sh node_modules",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "166 個のパッケージで 1,968,352,824 バイト、node_modules は 1.9 GB。macOS（aarch64-darwin）での値",
+          "en": "166 store paths and 1,968,352,824 bytes; node_modules is 1.9 GB. Values on macOS (aarch64-darwin)"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "node aih-cloudshell.mjs whoami / budget / left (CloudShell)",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "CloudShell を開いていない",
+          "en": "No CloudShell session was opened"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "node aih-cloudshell.mjs empty <bucket> --yes --account <id> (CloudShell)",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "37",
+        "command": "aws iam create-policy / attach (cloudshell:policy の出力)",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ポリシーを実際のロールに付けていない",
+          "en": "The policies were not attached to a real role"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "37-cloudshell-node",
+        "summary": {
+          "ja": "CloudShell の Node.js の版はドキュメントに書かれておらず、aih-cloudshell.mjs（esbuild の target は node18）がそこで動くかは確かめていない。Node.js 18 でも実行していない。",
+          "en": "CloudShell's Node.js version is not documented, and whether aih-cloudshell.mjs (esbuild target node18) runs there is unconfirmed. It was not run on Node.js 18 either."
+        },
+        "resume": {
+          "ja": "手元で vp run cloudshell:build を実行し、CloudShell を東京リージョンで開いて Actions の Upload file で dist/aih-cloudshell.mjs を上げる。node --version を記録し、node aih-cloudshell.mjs whoami を実行する。",
+          "en": "Run vp run cloudshell:build locally, open CloudShell in Tokyo, upload dist/aih-cloudshell.mjs with Actions > Upload file, record node --version, and run node aih-cloudshell.mjs whoami."
+        }
+      },
+      {
+        "id": "37-cloudshell-cli-shapes",
+        "summary": {
+          "ja": "偽物の aws が返す形が本物と同じかは確かめていない。空のプレフィックスに対する --query 'Contents[].Key' の出力、--max-items 付きの list-object-versions の NextToken、quiet モードの delete-objects の成功時の出力、cdkd が実際に書く state.json。",
+          "en": "Whether the fake aws answers in the real shapes is unconfirmed: --query 'Contents[].Key' on an empty prefix, NextToken from list-object-versions with --max-items, a successful quiet delete-objects, and the state.json cdkd really writes."
+        },
+        "resume": {
+          "ja": "02章の hello スタックをデプロイしたアカウントで、CloudShell から left を実行する。07章のバケットに数個のオブジェクトを上書きと削除を交えて置き、empty を --yes なし、ありの順に実行して、数と結果を比べる。食い違えば src/stacks.ts と src/empty.ts のスキーマを直す。",
+          "en": "In an account with chapter 02's hello stack deployed, run left from CloudShell. Put a few objects in chapter 07's bucket with an overwrite and a delete, run empty without and then with --yes, and compare counts and results. Fix the schemas in src/stacks.ts and src/empty.ts where they disagree."
+        }
+      },
+      {
+        "id": "37-cloudshell-policies",
+        "summary": {
+          "ja": "allowShell、denyShell、denyPublicEnvironments を実際のロールに付けたときの動作は確かめていない。src/policy.ts の allowedActions は IAM の評価ではない。",
+          "en": "The behavior of allowShell, denyShell and denyPublicEnvironments on a real role is unconfirmed. allowedActions in src/policy.ts is not IAM's evaluation."
+        },
+        "resume": {
+          "ja": "vp run cloudshell:policy use-no-files の出力だけを付けたロールでコンソールを開き、CloudShell が開くこと、Actions の Upload file が断られること、aws sts get-caller-identity が通ることを見る。deny を足して開かなくなることを見る。IAM のポリシーシミュレーターでも 11 個のアクションを確かめる。",
+          "en": "Open the console as a role with only the output of vp run cloudshell:policy use-no-files attached; see that CloudShell opens, that Upload file under Actions is refused, and that aws sts get-caller-identity works. Add deny and see that it no longer opens. Check the 11 actions in the IAM policy simulator as well."
+        }
+      },
+      {
+        "id": "37-cloudshell-nix",
+        "summary": {
+          "ja": "CloudShell に Nix を入れられるか、入れた場合にセッションをまたいで残るかは試していない。ホームディレクトリの外の空き容量と CPU アーキテクチャもドキュメントから確認できなかった。",
+          "en": "Whether Nix can be installed in CloudShell, and whether it would survive a session, was not tried. The free space outside the home directory and the CPU architecture could not be confirmed from the documentation."
+        },
+        "resume": {
+          "ja": "CloudShell で uname -m と df -h / /home を記録する。Nix の公式インストーラを --no-daemon で実行して結果を記録し、Actions の Restart のあとに /nix が残っているかを見る。",
+          "en": "In CloudShell record uname -m and df -h / /home. Run the official Nix installer with --no-daemon, record the result, and after Actions > Restart see whether /nix is still there."
+        }
+      },
+      {
+        "id": "37-cloudshell-vpc",
+        "summary": {
+          "ja": "VPC の中の CloudShell の環境は作っていない。11章の既定の構成（NAT なし）に置くと S3 と DynamoDB 以外の API に届かない、というのはドキュメントからの推論。",
+          "en": "No CloudShell VPC environment was created. That one placed in chapter 11's default configuration (no NAT) reaches no API other than S3 and DynamoDB is an inference from the documentation."
+        },
+        "resume": {
+          "ja": "net:infra:deploy のあと、CloudShell の + から Create VPC environment を選び、11章のプライベートサブネットとセキュリティグループを指定する。aws sts get-caller-identity と aws s3 ls の結果を比べ、使い終えたら環境を消してネットワークインターフェースが残っていないかを見る。",
+          "en": "After net:infra:deploy, choose Create VPC environment from + in CloudShell with chapter 11's private subnet and a security group. Compare aws sts get-caller-identity with aws s3 ls, then delete the environment and check that no network interface is left."
+        }
+      },
+      {
+        "id": "37-remote-editor",
+        "summary": {
+          "ja": "Session Manager を通した SSH と、AWS Toolkit for VS Code からの EC2 への接続は実行していない。23章のスタックは SSH の鍵を登録していない。Cloud9 を終える日付、CodeCatalyst が新規受付を閉じた日付、SageMaker Studio の Code Editor の前提と料金も確認していない。",
+          "en": "SSH through Session Manager and the AWS Toolkit for VS Code connection to EC2 were not run. Chapter 23's stack registers no SSH key. The end date of Cloud9, the date CodeCatalyst closed to new customers, and the prerequisites and price of Code Editor in SageMaker Studio are unconfirmed."
+        },
+        "resume": {
+          "ja": "23章のインスタンスに Session Manager で入り、ec2-user の authorized_keys に公開鍵を足してから、本文の ProxyCommand で ssh i-... を試す。Cloud9 と CodeCatalyst は、それぞれのユーザーガイドの告知と AWS Lifecycle Changes のページをブラウザで開いて読む。",
+          "en": "Enter chapter 23's instance with Session Manager, add a public key to ec2-user's authorized_keys, then try ssh i-... with the chapter's ProxyCommand. For Cloud9 and CodeCatalyst, read the notices in their user guides and the AWS Lifecycle Changes page in a browser."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 37: CloudShell --------------------------------------------\n      // One file for CloudShell: dist/aih-cloudshell.mjs. Local; nothing is uploaded.\n      \"cloudshell:build\": fresh(\"node scripts/build.ts\", { cwd: \"examples/37-cloudshell\" }),\n      // The built file against a fake `aws`: fixture answers, no AWS.\n      \"cloudshell:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/37-cloudshell\" }),\n      // Prints an IAM policy document: use, use-no-files, deny, or vpc-only. Creates nothing.\n      \"cloudshell:policy\": fresh(\"node scripts/policy.ts\", { cwd: \"examples/37-cloudshell\" }),",
+    "synth": [],
+    "checkAll": ["cloudshell:build"],
+    "typecheck": ["examples/37-cloudshell"]
+  }
+}

@@ -1,0 +1,26 @@
+[Unit]
+Description=YugabyteDB yb-tserver (AWS in Your Hands, chapter 66)
+After=network-online.target chronyd.service
+Wants=network-online.target
+RequiresMountsFor=/var/lib/yugabyte
+AssertPathIsMountPoint=/var/lib/yugabyte
+ConditionPathExists=/var/lib/yugabyte/current/bin/yb-tserver
+ConditionPathExists=/etc/yugabyte/tserver.conf
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=yugabyte
+Group=yugabyte
+ExecStartPre=+/bin/sh -c 'echo always > /sys/kernel/mm/transparent_hugepage/enabled'
+ExecStart=/var/lib/yugabyte/current/bin/yb-tserver --flagfile /etc/yugabyte/tserver.conf
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=60
+LimitNOFILE=1048576
+LimitNPROC=12000
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target

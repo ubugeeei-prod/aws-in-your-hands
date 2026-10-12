@@ -1,0 +1,33 @@
+# Not active here: GitHub only runs workflows in .github/workflows/. Never executed.
+#
+# The same job as chapter 20's pr.yml, on a runner of your own. The runner brings no AWS
+# permissions with it: the job still asks for a role by OIDC, exactly as it did on GitHub's runner.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # The one label this chapter's runners carry. Nothing else: a second label would never match.
+    runs-on: aih-fargate
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AIH_PLAN_ROLE_ARN }} # output PlanRoleArn of chapter 20's AihShipCi
+          aws-region: ap-northeast-1
+          allowed-account-ids: ${{ vars.AIH_AWS_ACCOUNT_ID }}
+      # The runner image has git, curl, jq and unzip, and no AWS CLI: install what the job needs.
+      - run: git log -1 --oneline

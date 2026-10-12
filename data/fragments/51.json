@@ -1,0 +1,907 @@
+{
+  "chapterId": "51",
+  "manifest": {
+    "id": "51",
+    "slug": "chime-sdk",
+    "title": {
+      "ja": "Chime SDK: 自分のアプリに音声とビデオの通話を入れる",
+      "en": "Chime SDK: Real-Time Audio and Video in Your Own App"
+    },
+    "prerequisites": ["06", "18"],
+    "services": ["Amazon Chime SDK", "API Gateway", "Lambda", "DynamoDB", "Cognito"],
+    "samplePath": "examples/51-chime-sdk",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "chime-app-end-of-support",
+      "chime-app-admin-guide-notice",
+      "chime-sdk-what-is",
+      "chime-sdk-concepts",
+      "chime-sdk-create-meetings",
+      "chime-sdk-meeting-regions",
+      "chime-sdk-available-regions",
+      "chime-sdk-quotas",
+      "chime-api-createmeeting",
+      "chime-api-createattendee",
+      "chime-api-attendee",
+      "chime-api-deleteattendee",
+      "chime-api-deletemeeting",
+      "chime-api-getmeeting",
+      "chime-sdk-namespace-migration",
+      "chime-sdk-events",
+      "chime-iam-service-reference",
+      "chime-cfn-resource-types",
+      "chime-sdk-pricing",
+      "chime-price-list",
+      "chime-sdk-media-pipelines",
+      "chime-sdk-transcription",
+      "chime-sdk-network",
+      "chime-sdk-webrtc-media",
+      "chime-sdk-client-libraries",
+      "chime-sdk-js-npm",
+      "chime-sdk-meetings-client-npm",
+      "chime-ivs-realtime-what-is",
+      "chime-ivs-quotas",
+      "chime-ivs-pricing",
+      "chime-price-list-ivs",
+      "chime-cloudflare-realtime",
+      "chime-cloudflare-sfu-pricing",
+      "chime-vercel-realtime",
+      "chime-mdn-secure-contexts",
+      "chime-cdkd-register-providers"
+    ]
+  },
+  "sources": [
+    {
+      "id": "chime-app-end-of-support",
+      "url": "https://aws.amazon.com/blogs/messaging-and-targeting/update-on-support-for-amazon-chime/",
+      "title": "Update on Support for Amazon Chime (AWS blog, 2025-02-19)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS ends support for the Amazon Chime service, including Business Calling, effective February 20, 2026",
+        "Amazon Chime accepts no new customers from February 19, 2025",
+        "The post states that this does not impact the availability of the Amazon Chime SDK service"
+      ]
+    },
+    {
+      "id": "chime-app-admin-guide-notice",
+      "url": "https://docs.aws.amazon.com/chime/latest/ag/what-is-chime.html",
+      "title": "What is Amazon Chime? (Administration Guide, end of support notice)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "After February 20, 2026 the Amazon Chime console and application resources can no longer be accessed",
+        "The notice repeats that the Amazon Chime SDK service is not affected"
+      ],
+      "note": "Read on 2026-10-13, after the date. The notice is still worded in the future tense."
+    },
+    {
+      "id": "chime-sdk-what-is",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/what-is-chime-sdk.html",
+      "title": "What is the Amazon Chime SDK?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Amazon Chime SDK is a set of real-time communications components for messaging, audio, video, and screen sharing in web or mobile applications",
+        "Pay-for-use pricing with no upfront fees; messaging, media pipelines, speech enhancement and PSTN audio are priced separately"
+      ]
+    },
+    {
+      "id": "chime-sdk-concepts",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/meetings-sdk.html",
+      "title": "Using the Amazon Chime SDK (prerequisites, concepts, architecture)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SDK works independently of any Amazon Chime administrator account",
+        "A server application manages meeting and attendee resources; a client application uses them to make media connections",
+        "A meeting is an ephemeral resource; an attendee is identified by an AttendeeId; a join token is an opaque secret the server must transfer securely to the client authorized to join on behalf of the attendee",
+        "Clients signal over secure WebSockets and DTLS; audio is mixed by the service; video is forwarded by an SFU, up to 25 simultaneous videos per meeting",
+        "Data messages of up to 2 KB; quotas are per API endpoint",
+        "Supported browsers for the JavaScript client library"
+      ]
+    },
+    {
+      "id": "chime-sdk-create-meetings",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/create-mtgs.html",
+      "title": "Creating meetings using the Amazon Chime SDK",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The server calls CreateMeeting with a MediaRegion and CreateAttendee, and transfers both to the client",
+        "A meeting ends on DeleteMeeting, when it exceeds 24 hours, or when no attendees are connected for five continuous minutes"
+      ]
+    },
+    {
+      "id": "chime-sdk-meeting-regions",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/chime-sdk-meetings-regions.html",
+      "title": "Using meeting Regions for Amazon Chime SDK meetings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Control Regions have the API endpoint; media Regions host the meetings; a control Region can create a meeting in any media Region of the same partition",
+        "A meeting can be updated only in the control Region that created it, and its events are delivered there",
+        "AWS recommends always specifying MediaRegion; https://nearest-media-region.l.chime.aws returns the nearest one"
+      ]
+    },
+    {
+      "id": "chime-sdk-available-regions",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/sdk-available-regions.html",
+      "title": "Available AWS Regions for the Amazon Chime SDK",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Asia Pacific (Tokyo) is both a meeting control Region and a meeting media Region"
+      ]
+    },
+    {
+      "id": "chime-sdk-quotas",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/chime-sdk.html",
+      "title": "Amazon Chime SDK endpoints and quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "meetings-chime.ap-northeast-1.amazonaws.com is an endpoint",
+        "Defaults: 250 concurrent meetings (adjustable), 250 attendees per meeting (not adjustable), 25 published video streams per meeting",
+        "CreateMeeting, CreateAttendee, DeleteAttendee, DeleteMeeting and GetMeeting each default to 10 requests per second"
+      ]
+    },
+    {
+      "id": "chime-api-createmeeting",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/APIReference/API_meeting-chime_CreateMeeting.html",
+      "title": "Amazon Chime SDK API: CreateMeeting",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ClientRequestToken, ExternalMeetingId and MediaRegion are required; the list of media Regions",
+        "'Use a different token for different meetings'",
+        "The response's Meeting carries MeetingId, MediaRegion and MediaPlacement URLs"
+      ],
+      "note": "The page does not say what a repeated ClientRequestToken returns."
+    },
+    {
+      "id": "chime-api-createattendee",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/APIReference/API_meeting-chime_CreateAttendee.html",
+      "title": "Amazon Chime SDK API: CreateAttendee",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ExternalUserId is 2 to 64 characters of a fixed pattern, may not begin with aws:, and 'links the attendee to an identity managed by a builder application'",
+        "NotFoundException when the meeting does not exist; ThrottlingException is HTTP 429"
+      ]
+    },
+    {
+      "id": "chime-api-attendee",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/APIReference/API_meeting-chime_Attendee.html",
+      "title": "Amazon Chime SDK API: Attendee",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The JoinToken lets a client authenticate and join as the attendee",
+        "The JoinToken expires when the meeting ends or when DeleteAttendee is called",
+        "AWS recommends transferring each JoinToken so that no client but the authorized one has it"
+      ]
+    },
+    {
+      "id": "chime-api-deleteattendee",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/APIReference/API_meeting-chime_DeleteAttendee.html",
+      "title": "Amazon Chime SDK API: DeleteAttendee",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Deletes the attendee and their JoinToken; attendees are deleted automatically when the meeting is deleted"
+      ]
+    },
+    {
+      "id": "chime-api-deletemeeting",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/APIReference/API_meeting-chime_DeleteMeeting.html",
+      "title": "Amazon Chime SDK API: DeleteMeeting",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Deletes all attendees, disconnects all clients, and prevents new clients from joining"
+      ]
+    },
+    {
+      "id": "chime-api-getmeeting",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/APIReference/API_meeting-chime_GetMeeting.html",
+      "title": "Amazon Chime SDK API: GetMeeting",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Returns the meeting details by MeetingId; NotFoundException is among its errors"
+      ]
+    },
+    {
+      "id": "chime-sdk-namespace-migration",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/meeting-namespace-migration.html",
+      "title": "Migrating to the Amazon Chime SDK meetings namespace",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ListMeetings is not available in the Amazon Chime SDK Meetings namespace",
+        "The Meetings namespace is the one to use when starting today; its endpoint is https://meetings-chime.<region>.amazonaws.com"
+      ]
+    },
+    {
+      "id": "chime-sdk-events",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/using-events.html",
+      "title": "Understanding Amazon Chime SDK meeting lifecycle events",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Events go to EventBridge, SNS or SQS with source aws.chime and detail-type 'Chime Meeting State Change'",
+        "chime:AttendeeAuthorized is sent when a user already in the meeting joins again with the same join token: the meeting is handed off to the new device",
+        "chime:AttendeeDropped is sent when the service receives no packets for 10 to 15 seconds; AttendeeLeft and AttendeeDropped are never both sent for one leave",
+        "chime:MeetingEnded is also sent on DeleteMeeting"
+      ]
+    },
+    {
+      "id": "chime-iam-service-reference",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/chime/chime.json",
+      "title": "Service Authorization Reference (machine-readable): Amazon Chime",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CreateMeeting lists no resource type; its condition keys are aws:RequestTag and aws:TagKeys",
+        "CreateAttendee, DeleteAttendee, DeleteMeeting and GetMeeting act on the meeting resource, arn:${Partition}:chime:${Region}:${AccountId}:meeting/${MeetingId}",
+        "The IAM action prefix is chime: for the meetings namespace as well"
+      ],
+      "note": "The HTML page of the reference did not render without JavaScript, so the JSON it is generated from was read instead."
+    },
+    {
+      "id": "chime-cfn-resource-types",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-template-resource-type-ref.html",
+      "title": "CloudFormation: AWS resource and property types reference",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The list of services has no Amazon Chime SDK entry: a meeting cannot be declared in a template"
+      ],
+      "note": "aws-cdk-lib 2.273.0 has no aws-chime* module either."
+    },
+    {
+      "id": "chime-sdk-pricing",
+      "url": "https://aws.amazon.com/chime/chime-sdk/pricing/",
+      "title": "Amazon Chime SDK Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "WebRTC media is billed per minute for each attendee while connected, whatever media is used, in 6-second increments with a 6-second minimum",
+        "A standard session holds up to 250 participants with video up to 720p; a high definition session is priced separately",
+        "Media capture, live connector, media streaming and concatenation are billed per minute on top of attendee minutes"
+      ],
+      "note": "The page names no charge for a meeting or an attendee that exists with nobody connected, and no free tier for WebRTC media."
+    },
+    {
+      "id": "chime-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonChime/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Amazon Chime, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Unit prices in data/pricing/unit-prices.json with offerCode AmazonChime",
+        "The Tokyo file holds three products: attendee minutes, high definition attendee minutes, and high definition capacity minutes"
+      ]
+    },
+    {
+      "id": "chime-sdk-media-pipelines",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/media-pipelines.html",
+      "title": "Creating Amazon Chime SDK media pipelines",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Media pipelines capture or stream a meeting",
+        "Recording may be subject to laws on recording communications; notifying participants and obtaining consent is the builder's responsibility"
+      ]
+    },
+    {
+      "id": "chime-sdk-transcription",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/meeting-transcription.html",
+      "title": "Using Amazon Chime SDK live transcription",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Live transcription sends the audio of the top two active talkers to Amazon Transcribe and delivers transcripts as data messages",
+        "Standard Amazon Transcribe costs apply",
+        "By default Amazon Transcribe may use and store audio to improve AWS AI services unless an opt-out policy is set through AWS Organizations"
+      ]
+    },
+    {
+      "id": "chime-sdk-network",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/network-config.html",
+      "title": "Configuring your network for Amazon Chime SDK meetings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Media and signaling go to *.chime.aws on TCP 443 and UDP 3478",
+        "Media uses UDP whenever possible and falls back to TLS when UDP is blocked; signaling and data messages use TCP and WebSocket"
+      ]
+    },
+    {
+      "id": "chime-sdk-webrtc-media",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/webrtc-media.html",
+      "title": "How Amazon Chime SDK meetings use WebRTC media",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each client sends one audio stream and receives one mix of the others",
+        "Each client can send one video stream and receive up to 25"
+      ]
+    },
+    {
+      "id": "chime-sdk-client-libraries",
+      "url": "https://docs.aws.amazon.com/chime-sdk/latest/dg/mtgs-sdk-client-lib.html",
+      "title": "Learn about the Amazon Chime SDK client libraries",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Client libraries exist for JavaScript (npm), iOS, Android, Windows, and a C++ signaling client"
+      ]
+    },
+    {
+      "id": "chime-sdk-js-npm",
+      "url": "https://www.npmjs.com/package/amazon-chime-sdk-js/v/3.32.0",
+      "title": "amazon-chime-sdk-js 3.32.0 (npm registry and tarball)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "3.32.0 is the version tagged latest, published 2026-07-15; the license is Apache-2.0",
+        "MeetingSessionConfiguration takes the CreateMeeting and CreateAttendee responses and reads MeetingId, ExternalMeetingId, MediaPlacement.AudioHostUrl, SignalingUrl, TurnControlUrl, EventIngestionUrl, and the attendee's AttendeeId, ExternalUserId and JoinToken",
+        "MeetingSessionStatusCode: Left, AudioJoinedFromAnotherDevice (same credentials used on another device), AudioAttendeeRemoved (DeleteAttendee was called), MeetingEnded, AudioAuthenticationRejected, AudioCallAtCapacity",
+        "The README's steps: choose devices, bindAudioElement, addObserver, start; bindVideoElement per tile; stop"
+      ],
+      "note": "Read from README.md, build/**/*.d.ts and build/meetingsession/MeetingSessionConfiguration.js of the installed tarball. Its dependency protobufjs has an install script that pnpm did not run."
+    },
+    {
+      "id": "chime-sdk-meetings-client-npm",
+      "url": "https://www.npmjs.com/package/@aws-sdk/client-chime-sdk-meetings/v/3.1149.0",
+      "title": "@aws-sdk/client-chime-sdk-meetings 3.1149.0 (npm tarball)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CreateMeetingCommand, GetMeetingCommand, CreateAttendeeCommand, DeleteAttendeeCommand, DeleteMeetingCommand and the NotFoundException and ThrottlingException classes exist at the version the other examples pin"
+      ]
+    },
+    {
+      "id": "chime-ivs-realtime-what-is",
+      "url": "https://docs.aws.amazon.com/ivs/latest/RealTimeUserGuide/what-is.html",
+      "title": "What is Amazon IVS Real-Time Streaming?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "IVS Real-Time Streaming exists today: latency that can be under 300 milliseconds, up to 12 hosts on a stage, audiences beyond 25,000 viewers",
+        "Its use cases are guest spots, versus mode, audio rooms and live auctions"
+      ]
+    },
+    {
+      "id": "chime-ivs-quotas",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/ivs.html",
+      "title": "Amazon IVS endpoints and quotas (real-time stages)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A stage holds 12 publishers (not adjustable) and 10,000 subscribers (adjustable) by default",
+        "Low-latency streaming defaults to 15,000 concurrent views per Region"
+      ]
+    },
+    {
+      "id": "chime-ivs-pricing",
+      "url": "https://aws.amazon.com/ivs/pricing/",
+      "title": "Amazon IVS Pricing (real-time streaming)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Real-time streaming is billed per participant hour for each host or viewer connected to a stage; audio-only is one tenth of the rate"
+      ]
+    },
+    {
+      "id": "chime-price-list-ivs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonIVS/current/index.json",
+      "title": "AWS Price List bulk API: IVS real-time hours",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AP-Real-Time-Hours (Japan, Hong Kong, SEA) is 0.0920 USD per participant hour for the first 10,000 hours a month"
+      ],
+      "note": "SKU CA8GCGFFMX4P2TNB, offer published 2026-09-11T12:44:44Z."
+    },
+    {
+      "id": "chime-cloudflare-realtime",
+      "url": "https://developers.cloudflare.com/realtime/",
+      "title": "Cloudflare Realtime: overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Cloudflare Realtime offers RealtimeKit (meeting SDKs with prebuilt UI, managed recording and transcription) and Realtime SFU (an SFU controlled over an HTTPS API, with signaling and permissions left to the application), plus TURN",
+        "In RealtimeKit the backend creates meetings, adds participants through a REST API, and passes participant auth tokens to the client SDK"
+      ],
+      "note": "Also read: /realtime/sfu/ and /realtime/realtimekit/. Page dated Oct 6, 2026."
+    },
+    {
+      "id": "chime-cloudflare-sfu-pricing",
+      "url": "https://developers.cloudflare.com/realtime/sfu/pricing/",
+      "title": "Cloudflare Realtime SFU: pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SFU and TURN are billed 0.05 USD per GB sent from Cloudflare to clients, with the first 1,000 GB a month free, shared between the two"
+      ],
+      "note": "RealtimeKit has a separate price table, which the fetched page did not show as text; it is not quoted."
+    },
+    {
+      "id": "chime-vercel-realtime",
+      "url": "https://vercel.com/kb/guide/publish-and-subscribe-to-realtime-data-on-vercel",
+      "title": "Vercel: Publish and subscribe to realtime data on Vercel",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Functions can hold WebSocket connections (public beta); the guide covers WebSockets, SSE, Redis and Queues"
+      ],
+      "note": "The guide and Vercel's documentation index (https://vercel.com/docs/llms.txt) do not mention WebRTC or a media service. That absence is all that was confirmed."
+    },
+    {
+      "id": "chime-mdn-secure-contexts",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Secure_Contexts",
+      "title": "MDN: Secure contexts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "http://localhost is a secure context; getUserMedia() requires a secure context (browser compatibility data, api.MediaDevices.getUserMedia.secure_context_required)"
+      ]
+    },
+    {
+      "id": "chime-cdkd-register-providers",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: providers for this chapter's resource types (npm tarball)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for AWS::ApiGatewayV2::Api, Authorizer, Integration, Route, Stage, AWS::Cognito::UserPool, AWS::DynamoDB::Table, AWS::IAM::Policy, AWS::IAM::Role, AWS::Lambda::Function, AWS::Lambda::Permission and AWS::Logs::LogGroup",
+        "None is registered for AWS::Cognito::UserPoolClient or AWS::Cognito::UserPoolDomain, which go through Cloud Control API, and none for any AWS::Chime type"
+      ],
+      "note": "Read from the bundled dist of the installed tarball."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "webrtc",
+      "ja": "WebRTC",
+      "en": "WebRTC",
+      "firstUse": "51",
+      "definition": {
+        "ja": "ブラウザーどうし、またはブラウザーとサーバーのあいだで、音声と映像を低い遅延でやり取りするための標準の仕組み。",
+        "en": "The standard way for browsers to exchange audio and video with each other or with a server at low latency."
+      }
+    },
+    {
+      "id": "chime-meeting",
+      "ja": "ミーティング",
+      "en": "meeting",
+      "firstUse": "51",
+      "definition": {
+        "ja": "Chime SDK で、通話 1 つを表す一時的なリソース。API で作り、誰も接続していない時間が 5 分続くか、24 時間を超えると、Chime が終わらせる。",
+        "en": "In the Chime SDK, the ephemeral resource for one call. It is created through the API, and Chime ends it after five minutes with nobody connected or after 24 hours."
+      }
+    },
+    {
+      "id": "chime-attendee",
+      "ja": "アテンディー",
+      "en": "attendee",
+      "firstUse": "51",
+      "definition": {
+        "ja": "ミーティングの参加者 1 人ぶんの席。サーバーが API で作り、作るたびに join token が 1 つ付く。",
+        "en": "One participant's seat in a meeting. The server creates it through the API, and each one comes with a join token."
+      }
+    },
+    {
+      "id": "join-token",
+      "ja": "join token",
+      "en": "join token",
+      "firstUse": "51",
+      "definition": {
+        "ja": "アテンディーとしてメディアサービスに接続するための秘密の文字列。持っている人がそのアテンディーになる。アテンディーを消すかミーティングが終わると使えなくなる。",
+        "en": "The secret string a client presents to the media service to connect as an attendee. Whoever holds it is that attendee. It stops working when the attendee is deleted or the meeting ends."
+      }
+    },
+    {
+      "id": "media-region",
+      "ja": "メディアリージョン",
+      "en": "media Region",
+      "firstUse": "51",
+      "definition": {
+        "ja": "Chime SDK のミーティングで、音声と映像を中継するリージョン。API を呼ぶ先のコントロールリージョンとは別に選べる。",
+        "en": "In a Chime SDK meeting, the Region that relays the audio and video. It is chosen separately from the control Region whose API is called."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "51.overview",
+      "sources": ["examples/51-chime-sdk/infra/lib/calls-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "51.status",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "51.model",
+      "sources": [
+        "examples/51-chime-sdk/api/src/meetings.ts",
+        "examples/51-chime-sdk/api/src/contract.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "51.choice",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "51.rooms",
+      "sources": [
+        "examples/51-chime-sdk/api/src/room-store.ts",
+        "examples/51-chime-sdk/api/src/rooms.ts",
+        "examples/51-chime-sdk/api/src/app.ts",
+        "examples/51-chime-sdk/api/src/contract.ts",
+        "examples/51-chime-sdk/api/test/authorization.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "51.join",
+      "sources": [
+        "examples/51-chime-sdk/api/src/rooms.ts",
+        "examples/51-chime-sdk/api/test/seats.test.ts",
+        "examples/51-chime-sdk/api/test/harness.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "51.revoke",
+      "sources": [
+        "examples/51-chime-sdk/api/src/rooms.ts",
+        "examples/51-chime-sdk/api/test/seats.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "51.store",
+      "sources": [
+        "examples/51-chime-sdk/api/src/dynamodb-room-store.ts",
+        "examples/51-chime-sdk/api/src/room-store.ts",
+        "examples/51-chime-sdk/api/test/dynamodb-room-store.test.ts",
+        "examples/51-chime-sdk/api/test/room-store.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "51.gateway",
+      "sources": [
+        "examples/51-chime-sdk/api/src/chime-meetings.ts",
+        "examples/51-chime-sdk/api/src/fake-meetings.ts",
+        "examples/51-chime-sdk/api/src/meetings.ts",
+        "examples/51-chime-sdk/api/test/chime-meetings.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "51.stack",
+      "sources": [
+        "examples/51-chime-sdk/infra/lib/calls-stack.ts",
+        "examples/51-chime-sdk/infra/bin/app.ts",
+        "examples/51-chime-sdk/infra/test/calls-stack.test.ts",
+        "examples/51-chime-sdk/api/src/lambda.ts"
+      ],
+      "tasks": ["test:unit", "calls:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "51.web",
+      "sources": [
+        "examples/51-chime-sdk/web/src/session.ts",
+        "examples/51-chime-sdk/web/src/call.ts",
+        "examples/51-chime-sdk/web/src/config.ts",
+        "examples/51-chime-sdk/web/src/App.vue",
+        "examples/51-chime-sdk/web/src/call.test.ts"
+      ],
+      "tasks": [
+        "dev:calls:web",
+        "build:calls:web",
+        "typecheck:calls:web",
+        "lint:calls:web",
+        "test:unit"
+      ],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "51.local",
+      "sources": ["examples/51-chime-sdk"],
+      "tasks": ["test:unit", "typecheck", "dev:calls:api", "dev:calls:web", "calls:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "51.deploy",
+      "sources": [
+        "examples/51-chime-sdk/scripts/write-config.ts",
+        "examples/51-chime-sdk/scripts/user.ts"
+      ],
+      "tasks": [
+        "calls:infra:diff",
+        "calls:infra:deploy",
+        "calls:user:create",
+        "calls:config",
+        "preview:calls:web",
+        "calls:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["local-dx", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "51.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "51.options",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "51.failures",
+      "sources": [
+        "examples/51-chime-sdk/api/src/rooms.ts",
+        "examples/51-chime-sdk/web/src/call.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "51.production",
+      "sources": ["examples/51-chime-sdk/infra/lib/calls-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "51.cleanup",
+      "sources": ["examples/51-chime-sdk/scripts/end-meetings.ts"],
+      "tasks": ["calls:end", "calls:user:delete", "calls:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost", "drift"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "chime.sdk.attendee-minute",
+      "offerCode": "AmazonChime",
+      "region": "ap-northeast-1",
+      "sku": "55MYHDHZWD8XDZRM",
+      "usageType": "APN1-Chime-SDK-attendee-minutes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "minutes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0017000000",
+          "description": "$0.0017 per minutes for Chime-SDK-attendee-minutes in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonChime/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:10Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "chime.sdk.attendee-minute",
+      "reason": "The Amazon Chime SDK pricing page names no free allowance for WebRTC media, and the Price List has no zero-priced tier. Nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "calls-one-to-one",
+      "chapter": "51",
+      "title": {
+        "ja": "通話: 2 人で 1 時間を、月に 8 回",
+        "en": "Calls: two people for an hour, eight times a month"
+      },
+      "assumptions": {
+        "ja": [
+          "メディアリージョンは東京。standard のセッション（映像は 720p まで）",
+          "2 人とも 60 分ずっと接続している。音声だけでも映像つきでも同じ単価",
+          "API Gateway、Lambda、DynamoDB、Cognito、CloudWatch Logs の料金は未算入"
+        ],
+        "en": [
+          "The media Region is Tokyo. Standard sessions (video up to 720p)",
+          "Both stay connected for all 60 minutes. Audio only and video are the same rate",
+          "API Gateway, Lambda, DynamoDB, Cognito and CloudWatch Logs are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "chime.sdk.attendee-minute",
+          "quantity": 960,
+          "basis": "8 calls x 2 attendees x 60 minutes"
+        }
+      ]
+    },
+    {
+      "id": "calls-team-daily",
+      "chapter": "51",
+      "title": {
+        "ja": "通話: 5 人で 30 分を、月に 20 回",
+        "en": "Calls: five people for 30 minutes, twenty times a month"
+      },
+      "assumptions": {
+        "ja": ["「2 人で 1 時間」と同じ仮定で、人数と回数だけが違う"],
+        "en": ["As assumed in the two-person scenario, with other numbers of people and calls"]
+      },
+      "items": [
+        {
+          "priceId": "chime.sdk.attendee-minute",
+          "quantity": 3000,
+          "basis": "20 calls x 5 attendees x 30 minutes"
+        }
+      ]
+    },
+    {
+      "id": "calls-tab-left-open",
+      "chapter": "51",
+      "title": {
+        "ja": "閉じ忘れ: 1 人が接続したまま、ミーティングの上限の 24 時間が過ぎた",
+        "en": "Left open: one tab stayed connected until the meeting's 24-hour limit"
+      },
+      "assumptions": {
+        "ja": [
+          "通話のあと 1 つのタブだけが接続したまま残った。誰かが接続しているあいだ、ミーティングは終わらない",
+          "24 時間でミーティングが終わる（ドキュメントの上限）。それまでの 1,440 分が課金される"
+        ],
+        "en": [
+          "After a call, one tab stayed connected. A meeting does not end while anyone is connected",
+          "The meeting ends at 24 hours, the documented limit. The 1,440 minutes until then are billed"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "chime.sdk.attendee-minute",
+          "quantity": 1440,
+          "basis": "1 attendee x 24 hours x 60 minutes"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "51",
+        "command": "vp test run examples/51-chime-sdk",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "69 件。誰に join token が渡るか（未サインイン、部屋のメンバーでない人、持ち主だけの操作）、席の順序（同時の最初の参加、2 つのタブからの参加、参加の途中での除外と閉鎖、ミーティングの自然終了、Chime の失敗）、メモリー上のテーブルの条件、DynamoDB と Chime への呼び出しの形、ページの判断、スタックのアサーション（最小権限、公開ルートが /health だけ、使うリソースの種類）。席の処理を 6 通りに壊して、テストが落ちることも確認",
+          "en": "69 tests: who gets a join token (not signed in, not a member, owner-only actions), the order of seat operations (two first joins at once, two tabs, a removal and a close in the middle of a join, a meeting ending by itself, Chime failing), the in-memory table's conditions, the shape of the calls to DynamoDB and Chime, the page's decisions, and stack assertions (least privilege, /health as the only open route, the resource types in use). The seat code was also broken in six ways and the tests failed for each"
+        }
+      },
+      {
+        "scope": "51",
+        "command": "tsc --noEmit -p examples/51-chime-sdk / vp run typecheck:calls:web / lint:calls:web",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "サンプル全体と、Vize によるページの型検査、テンプレートの lint",
+          "en": "Type checks for the example and, with Vize, the page; the template lint"
+        }
+      },
+      {
+        "scope": "51",
+        "command": "vp run calls:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "esbuild のバンドル込みでテンプレートを生成（リソース 40、出力 8）。AWS には問い合わせない。できたバンドルを Node.js で読み込めることも確認",
+          "en": "Synthesizes the template including the esbuild bundle (40 resources, 8 outputs) without contacting AWS. The bundle was also loaded in Node.js"
+        }
+      },
+      {
+        "scope": "51",
+        "command": "vp run build:calls:web",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "ページのビルド。amazon-chime-sdk-js を含むチャンクは 1,325.59 kB（gzip 294.80 kB）で、参加時にだけ読み込まれる",
+          "en": "The page build. The chunk containing amazon-chime-sdk-js is 1,325.59 kB (294.80 kB gzipped) and is loaded only on joining"
+        }
+      },
+      {
+        "scope": "51",
+        "command": "node --env-file=.env.example api/src/dev.ts と vp dev --port 5193（dev:calls:api、dev:calls:web と同じコマンド）",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "開発用の API に curl で、部屋の作成、メンバーでない人の 404、トークンなしの 401、追加、参加、退出、閉鎖を実行。ブラウザーで、サインイン、部屋の作成、参加、退出、閉鎖が画面に反映されることと、session.ts（amazon-chime-sdk-js）が読み込めることを確認。5173 番が使用中だったので 5193 番で起動",
+          "en": "Against the development API with curl: creating a room, 404 for a non-member, 401 without a token, adding a member, joining, leaving, closing. In a browser: sign-in, creating a room, joining, leaving and closing shown on screen, and session.ts (amazon-chime-sdk-js) loading. Port 5173 was in use, so the page ran on 5193"
+        }
+      },
+      {
+        "scope": "51",
+        "command": "vp run calls:infra:diff / deploy / drift / destroy, calls:user:create, calls:config, preview:calls:web, calls:end",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ユーザープール、テーブル、関数、HTTP API を作り、Chime SDK のミーティングで通話する。実際の通話は AWS が無いと確かめられない",
+          "en": "Creates the user pool, table, function and HTTP API, and makes a call in a Chime SDK meeting. A real call cannot be checked without AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "51-chime-real-call",
+        "summary": {
+          "ja": "51章: 実際の通話を一度も行っていない。未確認: Chime の API の実際の応答の形、終わったミーティングへの GetMeeting と CreateAttendee が NotFoundException になること、IAM のポリシーが 5 つの呼び出しを通すこと（メディアリージョンが東京以外のときの ARN のリージョン）、ブラウザーでのマイク、カメラ、音声、映像、再接続、同じ join token での 2 台目の接続や DeleteAttendee のあとにライブラリーへ届く状態コード、タブを閉じたあと課金が止まる時点。",
+          "en": "Chapter 51: no real call has been made. Unconfirmed: the real shapes of the Chime API's responses, that GetMeeting and CreateAttendee answer NotFoundException for an ended meeting, that the IAM policy lets the five calls through (and the Region in the ARN when the media Region is not Tokyo), microphone, camera, audio, video and reconnection in a browser, the status codes the library reports for a second connection with the same join token and after DeleteAttendee, and when billing stops after a tab is closed."
+        },
+        "resume": {
+          "ja": "AIH_AWS_ACCOUNT_ID を設定し、vp run calls:infra:deploy、calls:user:create を 2 人ぶん、calls:config、preview:calls:web の順に実行する。2 つのブラウザーで参加し、デプロイのページの 3 つの確認（Remove、Leave、別のタブからの Join）を行い、関数のログで MeetingsError が出ていないことを見る。終わったら calls:end --yes、calls:infra:destroy。",
+          "en": "Set AIH_AWS_ACCOUNT_ID, then run vp run calls:infra:deploy, calls:user:create for two users, calls:config and preview:calls:web. Join from two browsers, make the three checks on the Deploy page (Remove, Leave, Join from another tab), and look for MeetingsError in the function's log. Afterwards run calls:end --yes and calls:infra:destroy."
+        }
+      },
+      {
+        "id": "51-chime-dynamodb-conditions",
+        "summary": {
+          "ja": "51章: DynamoDbRoomStore の条件式（seats.#sub、contains(members, :sub)、size(members)、ADD と DELETE による文字列セットの更新）を DynamoDB に対して実行していない。テストは送る式の形を固定しているだけ。",
+          "en": "Chapter 51: DynamoDbRoomStore's condition expressions (seats.#sub, contains(members, :sub), size(members), and string-set updates with ADD and DELETE) have not been run against DynamoDB. The tests only pin the expressions that are sent."
+        },
+        "resume": {
+          "ja": "Docker が使える環境で vp run db:local:start（05章）を実行し、DYNAMODB_ENDPOINT と NOTES_STORE=dynamodb を設定して api/test/room-store.test.ts と同じ条件を DynamoDbRoomStore に対して流す。またはデプロイして、2 人で参加、除外、閉鎖を行う。",
+          "en": "Where Docker is available, run vp run db:local:start (chapter 05), set DYNAMODB_ENDPOINT and NOTES_STORE=dynamodb, and run the conditions of api/test/room-store.test.ts against DynamoDbRoomStore. Or deploy, and join, remove and close with two users."
+        }
+      },
+      {
+        "id": "51-chime-idempotency",
+        "summary": {
+          "ja": "51章: CreateMeeting に同じ ClientRequestToken を 2 回送ったとき、CreateAttendee に同じ ExternalUserId を 2 回送ったときの応答が、API リファレンスから読み取れなかった。コードはどちらにも頼っていない。",
+          "en": "Chapter 51: what CreateMeeting returns for a repeated ClientRequestToken, and CreateAttendee for a repeated ExternalUserId, could not be read from the API reference. The code relies on neither."
+        },
+        "resume": {
+          "ja": "デプロイ後、aws chime-sdk-meetings create-meeting を同じ --client-request-token で 2 回呼び、MeetingId を比べる。create-attendee も同じ --external-user-id で 2 回呼び、AttendeeId と JoinToken を比べる。終わったら delete-meeting。",
+          "en": "After deploying, call aws chime-sdk-meetings create-meeting twice with the same --client-request-token and compare the MeetingId. Call create-attendee twice with the same --external-user-id and compare AttendeeId and JoinToken. Then delete-meeting."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 51: calls with the Chime SDK -------------------------\n      // The notes API with rooms: local sign-in and a model of the meetings API. No Docker, no AWS, no media.\n      \"dev:calls:api\": fresh(\"node --watch --env-file-if-exists=.env api/src/dev.ts\", {\n        cwd: \"examples/51-chime-sdk\",\n      }),\n      \"dev:calls:web\": fresh(\"vp dev\", { cwd: \"examples/51-chime-sdk/web\" }),\n      \"build:calls:web\": { command: \"vp build\", cwd: \"examples/51-chime-sdk/web\" },\n      // Serves web/dist as it is, so the config written by calls:config survives.\n      \"preview:calls:web\": fresh(\"vp preview\", { cwd: \"examples/51-chime-sdk/web\" }),\n      \"typecheck:calls:web\": {\n        command: \"../node_modules/.bin/vize check\",\n        cwd: \"examples/51-chime-sdk/web\",\n      },\n      \"lint:calls:web\": {\n        command: \"../node_modules/.bin/vize lint src --preset essential\",\n        cwd: \"examples/51-chime-sdk/web\",\n      },\n      ...infra(\"calls\", \"examples/51-chime-sdk\", \"AihCalls\"),\n      // Points the built page at the deployed API and user pool, with media on.\n      \"calls:config\": live(\"node --env-file-if-exists=../../.env scripts/write-config.ts\", {\n        cwd: \"examples/51-chime-sdk\",\n        dependsOn: [\"build:calls:web\"],\n      }),\n      \"calls:user:create\": live(\"node --env-file-if-exists=../../.env scripts/user.ts create\", {\n        cwd: \"examples/51-chime-sdk\",\n      }),\n      \"calls:user:delete\": live(\"node --env-file-if-exists=../../.env scripts/user.ts delete\", {\n        cwd: \"examples/51-chime-sdk\",\n      }),\n      // BILLED per connected attendee until a meeting ends. Lists the meetings on record; ends them only with --yes.\n      \"calls:end\": live(\"node --env-file-if-exists=../../.env scripts/end-meetings.ts\", {\n        cwd: \"examples/51-chime-sdk\",\n      }),",
+    "synth": ["calls:infra:synth"],
+    "checkAll": ["lint:calls:web", "typecheck:calls:web", "build:calls:web"],
+    "typecheck": ["examples/51-chime-sdk"]
+  }
+}

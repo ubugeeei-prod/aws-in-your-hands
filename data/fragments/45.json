@@ -1,0 +1,606 @@
+{
+  "chapterId": "45",
+  "manifest": {
+    "id": "45",
+    "slug": "infrastructure-composer",
+    "title": {
+      "ja": "Infrastructure Composer: template を図で読む、図から書く",
+      "en": "Infrastructure Composer: Reading a Template as a Diagram, and Drawing One"
+    },
+    "prerequisites": ["02", "20"],
+    "services": ["Infrastructure Composer", "CloudFormation"],
+    "samplePath": "examples/45-infrastructure-composer",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "composer-what-is",
+      "composer-end-of-support",
+      "composer-product-page",
+      "composer-doc-history",
+      "composer-rename",
+      "composer-cfn-console-mode",
+      "composer-cards",
+      "composer-standard-cards",
+      "composer-connections",
+      "composer-groups",
+      "composer-local-sync",
+      "composer-file-system-access",
+      "composer-external-files",
+      "composer-change-inspector",
+      "composer-ide",
+      "composer-ide-visual",
+      "composer-ide-access",
+      "composer-toolkit-overview",
+      "composer-faqs",
+      "cfn-template-studio",
+      "cfn-ref",
+      "cfn-getatt",
+      "cfn-sub",
+      "cfn-dependson",
+      "cfn-troubleshooting"
+    ]
+  },
+  "sources": [
+    {
+      "id": "composer-what-is",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/what-is-composer.html",
+      "title": "What is AWS Infrastructure Composer? - AWS Infrastructure Composer Developer Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "End of support notice at the top: the standalone console is unavailable from December 7, 2026; the embedded console experiences were replaced by a visual IaC editor; the full experience remains in the AWS Toolkit for Visual Studio Code",
+        "Infrastructure Composer can be used from its console, the AWS Toolkit for Visual Studio Code, and in CloudFormation console mode",
+        "It creates CloudFormation and AWS SAM templates and syncs changes between the canvas and the template code",
+        "Existing CloudFormation and AWS SAM templates can be imported to visualize and modify them",
+        "Any CloudFormation resource can be dragged onto the canvas"
+      ]
+    },
+    {
+      "id": "composer-end-of-support",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/infrastructure-composer-end-of-support.html",
+      "title": "AWS Infrastructure Composer end of support",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "End of support is effective December 7, 2026; no new customers from October 29, 2026 (stated as a target date in the FAQ)",
+        "The standalone URL console.aws.amazon.com/composer is not accessible after December 7, 2026",
+        "The AWS Toolkit for Visual Studio Code keeps the visual authoring experience; no changes are planned",
+        "The embedded experience in the CloudFormation console is replaced by a visual editor integrated in that console",
+        "The Export to Infrastructure Composer entries in the Lambda and Step Functions consoles are removed",
+        "Infrastructure Composer exposes no customer-facing API, SDK or CLI",
+        "Templates saved locally or in Amazon S3, and existing stacks, are not affected",
+        "How to open a template in VS Code: the button in the editor, the context menu, or the Command Palette"
+      ]
+    },
+    {
+      "id": "composer-product-page",
+      "url": "https://aws.amazon.com/infrastructure-composer/",
+      "title": "AWS Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Notice: no longer available to new customers as of October 29, 2026; existing customers until December 7, 2026"
+      ],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "composer-doc-history",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/doc-history.html",
+      "title": "Document history for Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The end of support notice was added on September 29, 2026",
+        "Public release December 1, 2022; general availability March 7, 2023; all CloudFormation resources September 26, 2023; VS Code November 30, 2023; CloudFormation console mode March 28, 2024"
+      ]
+    },
+    {
+      "id": "composer-rename",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2024/10/aws-application-composer-infrastructure-composer/",
+      "title": "AWS Application Composer is now AWS Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS Application Composer was renamed AWS Infrastructure Composer; posted October 4, 2024"
+      ],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "composer-cfn-console-mode",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-console-cfn-mode.html",
+      "title": "Using Infrastructure Composer in CloudFormation console mode",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CloudFormation console mode has no local sync",
+        "Lambda Function and Lambda Layer cards need builds and packaging that are not available in that mode"
+      ],
+      "note": "The page still describes the mode as the recommended tool to visualize templates; the end of support page says the embedded experience is being replaced."
+    },
+    {
+      "id": "composer-cards",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-cards.html",
+      "title": "Configure and modify cards in Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An enhanced component card is a collection of CloudFormation resources combined into one curated card",
+        "A standard IaC resource card represents a single CloudFormation resource"
+      ]
+    },
+    {
+      "id": "composer-standard-cards",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-standard-cards.html",
+      "title": "Standard cards in Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "All CloudFormation resources are available as standard IaC resource cards",
+        "A standard card starts from a template with the type, required or common properties, and placeholders for their value types"
+      ]
+    },
+    {
+      "id": "composer-connections",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-connecting.html",
+      "title": "Card connections in Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A line between cards represents an event-driven relationship",
+        "Lines between enhanced component cards are solid; connections of standard cards are detected from the template and drawn dotted",
+        "Standard cards have no connector ports",
+        "Connecting enhanced cards provisions, when necessary, IAM policies (through AWS SAM policy templates), environment variables, and events"
+      ]
+    },
+    {
+      "id": "composer-groups",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/reference-navigation-gestures-group.html",
+      "title": "Group cards together on Infrastructure Composer's visual canvas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Enhanced cards are grouped by hand; a standard card is grouped into another when the template references it, as a role referenced by a function"
+      ],
+      "note": "The page does not say what grouping writes into the template."
+    },
+    {
+      "id": "composer-local-sync",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-project-local-sync.html",
+      "title": "Locally sync and save your project in the Infrastructure Composer console",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default the template is saved by hand; local sync saves it automatically to the local machine",
+        "Local sync writes the template, project folders, a backup directory named .aws-composer, and supported external files",
+        "Local sync is off by default"
+      ]
+    },
+    {
+      "id": "composer-file-system-access",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/reference-fsa.html",
+      "title": "Allow web page access to local files in Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Local sync needs a browser with the File System Access API; recent Google Chrome and Microsoft Edge are named",
+        "Infrastructure Composer gets read and write access to the allowed project folder and its children; the data is not stored beyond the local file system"
+      ]
+    },
+    {
+      "id": "composer-external-files",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-external-files.html",
+      "title": "Reference external files in Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "External files are supported for API Gateway REST APIs (OpenAPI) and Step Functions state machine definitions"
+      ]
+    },
+    {
+      "id": "composer-change-inspector",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-change-inspector.html",
+      "title": "View code updates with the Change Inspector in Infrastructure Composer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Change Inspector shows the template code added and removed by the most recent interaction on the canvas"
+      ]
+    },
+    {
+      "id": "composer-ide",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-ide.html",
+      "title": "Using Infrastructure Composer from the AWS Toolkit for Visual Studio Code",
+      "checkedAt": "2026-10-13",
+      "supports": ["Deployment from VS Code goes through sam sync of the AWS SAM CLI"]
+    },
+    {
+      "id": "composer-ide-visual",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/using-composer-ide-visual.html",
+      "title": "Visual overview of Infrastructure Composer from the AWS Toolkit for Visual Studio Code",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The parts of the canvas in VS Code: resource palette, list, arrange, sync, resource properties panel, card, line, group, port",
+        "Delete removes the card from the canvas and from the template"
+      ]
+    },
+    {
+      "id": "composer-ide-access",
+      "url": "https://docs.aws.amazon.com/infrastructure-composer/latest/dg/setting-up-composer-access-ide.html",
+      "title": "Access Infrastructure Composer from the AWS Toolkit for Visual Studio Code",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Toolkit for VS Code must be installed first; the canvas opens from a CloudFormation or AWS SAM template"
+      ],
+      "note": "Neither this page nor the Toolkit guide says whether JSON templates open, or whether AWS credentials are needed to draw."
+    },
+    {
+      "id": "composer-toolkit-overview",
+      "url": "https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/appcomposer-overview.html",
+      "title": "Working with AWS Infrastructure Composer in the Toolkit - AWS Toolkit for VS Code",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Changes made on the canvas are stored persistently, so one can switch between the file in the editor and the canvas",
+        "Three ways to open: the button in the editor, the context menu, the Command Palette"
+      ],
+      "note": "The context menu entry is written here as Open with App Composer, and on the end of support page as Open with Infrastructure Composer."
+    },
+    {
+      "id": "composer-faqs",
+      "url": "https://aws.amazon.com/infrastructure-composer/faqs/",
+      "title": "AWS Infrastructure Composer FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "There is no additional charge for using Infrastructure Composer; resources created with it are billed as usual",
+        "CloudFormation and AWS SAM templates can be imported and visualized"
+      ],
+      "note": "Read through a summarizing fetcher. The page names neither YAML nor JSON, and does not mention the AWS CDK."
+    },
+    {
+      "id": "cfn-template-studio",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-studio.html",
+      "title": "Edit templates visually with template studio - AWS CloudFormation User Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Template studio shows the template as text beside a diagram of its resources; the text is authoritative and the diagram cannot be edited",
+        "The diagram draws a connection wherever one resource refers to another through Ref, Fn::GetAtt, Fn::Sub, or DependsOn; a resource nothing references appears on its own",
+        "A role assumed by three functions is shown inside each function although the template declares one",
+        "It opens from the navigation pane, from Create stack, from an existing stack's update, and wherever the console shows a template",
+        "Edits are not saved automatically; saving writes to Amazon S3 at standard S3 rates, by default to the bucket CloudFormation manages for uploaded templates",
+        "It converts between YAML and JSON; YAML to JSON discards comments",
+        "Validate uses ValidateTemplate with TemplateBody, limited to 51,200 bytes",
+        "The diagram downloads as a PNG",
+        "Permissions: cloudformation:GetTemplate, s3:GetObject, cloudformation:ValidateTemplate, s3:PutObject, s3:CreateBucket, s3:ListBucket"
+      ],
+      "note": "The older address infrastructure-composer-for-cloudformation.html in the same guide now serves this page. The page does not use the name Infrastructure Composer and does not say how a file on the local machine is opened."
+    },
+    {
+      "id": "cfn-ref",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-ref.html",
+      "title": "Ref - CloudFormation Template Reference Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Ref takes the logical name of a resource or a parameter",
+        "With the AWS::LanguageExtensions transform the argument can be another intrinsic function"
+      ]
+    },
+    {
+      "id": "cfn-getatt",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-getatt.html",
+      "title": "Fn::GetAtt - CloudFormation Template Reference Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "JSON syntax is a pair [logicalNameOfResource, attributeName]; the dotted single string is the YAML short form",
+        "Without AWS::LanguageExtensions the logical name must be a string and the attribute name may only use Ref"
+      ]
+    },
+    {
+      "id": "cfn-sub",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-sub.html",
+      "title": "Fn::Sub - CloudFormation Template Reference Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fn::Sub takes a string, or a string and a map of variables",
+        "${Name} resolves like Ref and ${Name.Attribute} like Fn::GetAtt",
+        "${!Literal} is written out as ${Literal}"
+      ]
+    },
+    {
+      "id": "cfn-dependson",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-dependson.html",
+      "title": "DependsOn attribute - CloudFormation Template Reference Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DependsOn takes a string or a list of strings; the resource is created after the ones it names",
+        "Ref, GetAtt and Sub create implicit dependencies: the referenced resource is created first and deleted last"
+      ]
+    },
+    {
+      "id": "cfn-troubleshooting",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html",
+      "title": "Troubleshooting CloudFormation",
+      "checkedAt": "2026-10-13",
+      "supports": ["Read to look for a statement on circular dependencies; the page has none"],
+      "note": "How CloudFormation answers a template whose references form a cycle was not confirmed from a page read for this chapter."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "infrastructure-composer",
+      "ja": "Infrastructure Composer",
+      "en": "Infrastructure Composer",
+      "firstUse": "45",
+      "definition": {
+        "ja": "CloudFormation と SAM のテンプレートを、カードと線の図として表示し、図からも編集できる AWS の道具。以前の名前は Application Composer。単独のコンソールは 2026 年 12 月 7 日に終わり、AWS Toolkit for Visual Studio Code の中のものが残る。",
+        "en": "An AWS tool that shows a CloudFormation or SAM template as a diagram of cards and lines and lets you edit it from the diagram. Formerly Application Composer. Its standalone console ends on December 7, 2026; the one inside the AWS Toolkit for Visual Studio Code remains."
+      }
+    },
+    {
+      "id": "template-studio",
+      "ja": "template studio",
+      "en": "template studio",
+      "firstUse": "45",
+      "definition": {
+        "ja": "CloudFormation のコンソールにあるテンプレートのエディタ。テンプレートの文字の横に、リソースと参照の図を表示する。正本は文字で、図からは編集できない。",
+        "en": "The template editor in the CloudFormation console. It shows a diagram of resources and references beside the template text. The text is authoritative; the diagram cannot be edited."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "45.status",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "45.canvas",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "45.files",
+      "sources": [],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["local-dx", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "45.cdk",
+      "sources": ["examples/45-infrastructure-composer/src/diff.ts"],
+      "tasks": ["hello:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["drift", "local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "45.when-not",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "45.graph",
+      "sources": [
+        "examples/45-infrastructure-composer/src/template.ts",
+        "examples/45-infrastructure-composer/src/graph.ts",
+        "examples/45-infrastructure-composer/test/graph.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "45.summary",
+      "sources": [
+        "examples/45-infrastructure-composer/src/summary.ts",
+        "examples/45-infrastructure-composer/test/summary.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "45.render",
+      "sources": [
+        "examples/45-infrastructure-composer/src/render.ts",
+        "examples/45-infrastructure-composer/fixtures/notes-api.template.json",
+        "examples/45-infrastructure-composer/test/render.test.ts"
+      ],
+      "tasks": ["composer:graph", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "45.run",
+      "sources": [
+        "examples/45-infrastructure-composer/scripts/graph.ts",
+        "examples/45-infrastructure-composer/src/cdk-out.ts",
+        "examples/45-infrastructure-composer/test/cdk-out.test.ts"
+      ],
+      "tasks": ["composer:graph", "composer:graph:hello", "composer:graph:ship"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "45.diff",
+      "sources": [
+        "examples/45-infrastructure-composer/src/diff.ts",
+        "examples/45-infrastructure-composer/test/diff.test.ts"
+      ],
+      "tasks": ["composer:graph", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "drift", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "45.cost",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "45.cleanup",
+      "sources": ["examples/45-infrastructure-composer"],
+      "tasks": [],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [],
+  "validation": {
+    "records": [
+      {
+        "scope": "45",
+        "command": "vp test run examples/45-infrastructure-composer",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "5 ファイル 46 件。たどる 4 つの形とたどらない形、Fn::Sub の属性・リテラル・対応表、パラメーターと擬似パラメーター、テンプレートに無い名前、省いた種類、Type の無い項目と Fn::ForEach の拒否、要約（数、参照されないリソース、鎖、輪）、2 つのテンプレートの比較、文字と図の出力、本文の図と CLI の出力の一致、cdk.out からの選択",
+          "en": "5 files, 46 tests. The four forms followed and the forms not followed; attributes, literals and map variables of Fn::Sub; parameters and pseudo parameters; names missing from the template; omitted types; refusing an entry without a Type and Fn::ForEach; the summary (counts, unreferenced resources, chains, cycles); the comparison of two templates; text and figure output; that the figure in the pages equals the CLI's output; choosing a template in cdk.out"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "tsc --noEmit -p examples/45-infrastructure-composer",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "vp run composer:graph",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "fixture のグラフを表示。本文に載せた出力はこの実行のもの。--figure の出力を本文の図に貼った",
+          "en": "Printed the fixture's graph; the output quoted in the chapter is from this run. The --figure output was pasted into the chapter's figure"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "vp run composer:graph:hello",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "hello:infra:synth のあと AihHello を表示。2 リソース、1 つながり",
+          "en": "After hello:infra:synth, printed AihHello: 2 resources, 1 connection"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "vp run composer:graph:ship",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "ship:cfn:synth のあと AihShipApi を表示。18 リソース、29 つながり、いちばん長い鎖は 7",
+          "en": "After ship:cfn:synth, printed AihShipApi: 18 resources, 29 connections, longest chain 7"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "node scripts/graph.ts <リポジトリにあった cdk.out のテンプレート 50 個>",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "50 個すべてを読めた。テンプレートに無い名前と輪は 0。ほかの章が書きかけの時点の数",
+          "en": "All 50 templates found in the repository's cdk.out directories were read; no missing names and no cycles. The count is from a moment when other chapters were still being written"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "node book/theme/figure-cli.ts (45章の 4 ページ)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "図 4 つ、問題 0",
+          "en": "4 figures, 0 problems"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "Infrastructure Composer (AWS Toolkit for Visual Studio Code) で cdk.out のテンプレートを開く",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "VS Code の Infrastructure Composer を開いていない",
+          "en": "Infrastructure Composer in VS Code was not opened"
+        }
+      },
+      {
+        "scope": "45",
+        "command": "CloudFormation コンソールの template studio でテンプレートを開く",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "コンソールを開いていない",
+          "en": "The console was not opened"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "45-composer-vscode",
+        "summary": {
+          "ja": "VS Code の Infrastructure Composer を開いていない。cdk.out の JSON のテンプレートを開けるか、どのリソースが enhanced component card になるか、開いて保存しただけでテンプレートがどう変わるか、図の表示に認証情報が要るかは確かめていない。",
+          "en": "Infrastructure Composer in VS Code was not opened. Whether it opens the JSON templates in cdk.out, which resources become enhanced component cards, how a template changes when merely opened and saved, and whether drawing needs credentials are unconfirmed."
+        },
+        "resume": {
+          "ja": "VS Code に AWS Toolkit を入れ、vp run hello:infra:synth のあと examples/02-toolchain/cdk.out/AihHello.template.json を開いて Infrastructure Composer のボタンを押す。線を vp run composer:graph:hello の出力と比べる。ファイルを複製して図から何も変えずに保存し、vp run composer:graph ../02-toolchain AihHello --against <複製> と diff で元と比べる。",
+          "en": "Install the AWS Toolkit in VS Code, run vp run hello:infra:synth, open examples/02-toolchain/cdk.out/AihHello.template.json and press the Infrastructure Composer button. Compare the lines with the output of vp run composer:graph:hello. Copy the file, save it from the diagram unchanged, and compare with the original using vp run composer:graph ../02-toolchain AihHello --against <copy> and diff."
+        }
+      },
+      {
+        "id": "45-template-studio",
+        "summary": {
+          "ja": "template studio を開いていない。このモジュールのグラフが template studio の図と同じ線になるか、手元のファイルを読み込む手順があるかは確かめていない。template studio が告知の言う置き換えのエディタだというのは、以前の Infrastructure Composer のページの URL が template studio のページを返すことからの判断。",
+          "en": "Template studio was not opened. Whether this module's graph has the same lines as its diagram, and whether a local file can be loaded, are unconfirmed. That template studio is the replacement editor of the notice is a judgment from the former Infrastructure Composer page's URL now returning the template studio page."
+        },
+        "resume": {
+          "ja": "CloudFormation のコンソールでナビゲーションの Template studio を開き、examples/20-shipping/cdk.out/AihShipApi.template.json の中身をエディタに貼り付ける。図の線を vp run composer:graph:ship の connections と 1 本ずつ比べ、違いがあれば src/graph.ts のたどり方を直す。保存はしない。",
+          "en": "In the CloudFormation console open Template studio from the navigation and paste the contents of examples/20-shipping/cdk.out/AihShipApi.template.json into the editor. Compare the diagram's lines one by one with the connections printed by vp run composer:graph:ship, and fix the walk in src/graph.ts where they differ. Do not save."
+        }
+      },
+      {
+        "id": "45-cfn-cycle",
+        "summary": {
+          "ja": "参照が輪になったテンプレートを CloudFormation がどう扱うかは、読んだページから確認できなかった。",
+          "en": "How CloudFormation treats a template whose references form a cycle could not be confirmed from the pages read."
+        },
+        "resume": {
+          "ja": "CloudFormation のユーザーガイドで circular dependency の記述を探す。見つからなければ、輪のある 2 リソースのテンプレートを aws cloudformation validate-template にかけて応答を記録する（読み取りだが認証情報が要る）。",
+          "en": "Look for a statement on circular dependencies in the CloudFormation User Guide. Failing that, run aws cloudformation validate-template on a two-resource template with a cycle and record the answer (a read, but it needs credentials)."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 45: Infrastructure Composer -------------------------------\n      // A synthesized template as a graph, in text. Files only. With no argument: the fixture.\n      //   vp run composer:graph ../20-shipping AihShipCi [--figure] [--against other.template.json]\n      \"composer:graph\": fresh(\"node scripts/graph.ts\", {\n        cwd: \"examples/45-infrastructure-composer\",\n      }),\n      \"composer:graph:hello\": fresh(\"node scripts/graph.ts ../02-toolchain AihHello\", {\n        cwd: \"examples/45-infrastructure-composer\",\n        dependsOn: [\"hello:infra:synth\"],\n      }),\n      \"composer:graph:ship\": fresh(\"node scripts/graph.ts ../20-shipping AihShipApi\", {\n        cwd: \"examples/45-infrastructure-composer\",\n        dependsOn: [\"ship:cfn:synth\"],\n      }),",
+    "synth": [],
+    "checkAll": ["composer:graph"],
+    "typecheck": ["examples/45-infrastructure-composer"]
+  }
+}

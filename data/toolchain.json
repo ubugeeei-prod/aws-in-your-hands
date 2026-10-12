@@ -1,13 +1,7 @@
 {
   "recordedAt": "2026-10-11",
-  "verifiedPlatforms": [
-    "aarch64-darwin (macOS 26, Darwin 25.6.0)"
-  ],
-  "unverifiedPlatforms": [
-    "x86_64-darwin",
-    "aarch64-linux",
-    "x86_64-linux"
-  ],
+  "verifiedPlatforms": ["aarch64-darwin (macOS 26, Darwin 25.6.0)"],
+  "unverifiedPlatforms": ["x86_64-darwin", "aarch64-linux", "x86_64-linux"],
   "tools": [
     {
       "name": "Nix",
@@ -158,6 +152,18 @@
       "version": "1.0.3",
       "providedBy": "pnpm",
       "pinnedIn": "package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "jsonata (the JSONata reference implementation, used by the local interpreter)",
+      "version": "2.0.6",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/47-step-functions/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "YugabyteDB",
+      "version": "2025.2.7.0-b107",
+      "providedBy": "vp run distsql:fetch (software.yugabyte.com), into examples/66-distributed-sql/.yugabyte/",
+      "pinnedIn": "examples/66-distributed-sql/src/yugabyte.ts"
     }
   ]
 }

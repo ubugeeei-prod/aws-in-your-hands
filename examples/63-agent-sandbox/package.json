@@ -1,0 +1,25 @@
+{
+  "name": "@aih/example-63-agent-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aih/example-11-network": "workspace:*",
+    "@aih/example-17-ai": "workspace:*",
+    "@aih/example-33-production-readiness": "workspace:*",
+    "@aih/example-36-bedrock": "workspace:*",
+    "@aws-sdk/client-cloudwatch": "3.1149.0",
+    "@aws-sdk/client-ecs": "3.1149.0",
+    "@aws-sdk/client-secrets-manager": "3.1149.0",
+    "aws-cdk-lib": "2.273.0",
+    "constructs": "10.8.1",
+    "valibot": "1.5.0"
+  },
+  "devDependencies": {
+    "@aih/tools": "workspace:*",
+    "@go-to-k/cdkd": "0.296.28",
+    "@types/aws-lambda": "8.10.164",
+    "esbuild": "0.28.2",
+    "vite-plus": "1.1.0"
+  }
+}

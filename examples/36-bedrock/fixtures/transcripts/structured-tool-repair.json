@@ -1,0 +1,158 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html, https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html, https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-client-side.html and https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-use-converse-api.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "The first JSON has a due date that is not a date. Told so, the model sends a valid one.",
+  "calls": [
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStart": {
+              "contentBlockIndex": 0,
+              "start": {
+                "toolUse": {
+                  "toolUseId": "tooluse_fixture_01",
+                  "name": "record_action_items"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "{\"items\":[{\"task\":\"決済の結合テストを終え"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "る\",\"owner\":\"佐藤\",\"due\":\"金曜\"}]}"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "tool_use"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 410,
+                "outputTokens": 40,
+                "totalTokens": 450
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStart": {
+              "contentBlockIndex": 0,
+              "start": {
+                "toolUse": {
+                  "toolUseId": "tooluse_fixture_02",
+                  "name": "record_action_items"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "{\"items\":[{\"task\":\"決済の結合テストを終える\",\"owner\":\"佐藤\",\"due\":\"2026-10-16\"},{\"task\":\"負荷試験を終える\",\"ow"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "ner\":\"鈴木\",\"due\":\"2026-10-16\"},{\"task\":\"朝会で進み具合を確認する\",\"owner\":null,\"due\":\"2026-10-14\"}]}"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "tool_use"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 520,
+                "outputTokens": 96,
+                "totalTokens": 616
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

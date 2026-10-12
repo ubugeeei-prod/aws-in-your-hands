@@ -1,0 +1,1300 @@
+{
+  "chapterId": "39",
+  "manifest": {
+    "id": "39",
+    "slug": "database-migration",
+    "title": {
+      "ja": "Database Migration: DMS、full load、CDC、切り替え",
+      "en": "Database Migration: DMS, Full Load, CDC, and Cutover"
+    },
+    "prerequisites": ["11", "13", "22"],
+    "services": [
+      "AWS DMS",
+      "AWS DMS Serverless",
+      "RDS for PostgreSQL",
+      "Aurora PostgreSQL",
+      "Secrets Manager",
+      "EventBridge"
+    ],
+    "samplePath": "examples/39-database-migration",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "dbmig-dms-what-is",
+      "dbmig-dms-high-level",
+      "dbmig-dms-components",
+      "dbmig-dms-sources",
+      "dbmig-dms-targets",
+      "dbmig-dms-source-postgresql",
+      "dbmig-dms-target-postgresql",
+      "dbmig-dms-serverless",
+      "dbmig-dms-serverless-components",
+      "dbmig-dms-serverless-limitations",
+      "dbmig-dms-mapping-selection",
+      "dbmig-dms-mapping-transformation",
+      "dbmig-dms-mapping-wildcards",
+      "dbmig-dms-task-settings",
+      "dbmig-dms-task-settings-full-load",
+      "dbmig-dms-task-settings-errors",
+      "dbmig-dms-task-settings-validation",
+      "dbmig-dms-lob",
+      "dbmig-dms-validation",
+      "dbmig-dms-premigration",
+      "dbmig-dms-troubleshooting",
+      "dbmig-dms-secrets",
+      "dbmig-dms-secrets-vpc-endpoint",
+      "dbmig-dms-iam",
+      "dbmig-dms-slr",
+      "dbmig-dms-eventbridge",
+      "dbmig-dms-quotas",
+      "dbmig-dms-homogeneous",
+      "dbmig-dms-api-start-replication",
+      "dbmig-dms-api-start-replication-task",
+      "dbmig-dms-api-create-endpoint",
+      "dbmig-cfn-dms-replication-config",
+      "dbmig-cfn-dms-endpoint",
+      "dbmig-cfn-dms-subnet-group",
+      "dbmig-cloudcontrol-supported",
+      "dbmig-cdkd-dms",
+      "dbmig-dms-pricing",
+      "dbmig-price-list-dms",
+      "dbmig-postgres-restrictions",
+      "dbmig-postgres-publication",
+      "dbmig-postgres-slots",
+      "dbmig-postgres-replication-config",
+      "dbmig-postgres-slots-view",
+      "dbmig-postgres-admin-functions",
+      "dbmig-postgres-revoke",
+      "dbmig-postgres-stat-activity",
+      "dbmig-aws-cli-dms-model",
+      "dbmig-postgres-pg-dump",
+      "dbmig-postgres-sequences",
+      "dbmig-rds-logical-replication",
+      "dbmig-rds-metrics",
+      "dbmig-rds-blue-green",
+      "dbmig-rds-blue-green-considerations",
+      "dbmig-aurora-postgres-migrating",
+      "dbmig-dsql-loading-data",
+      "dbmig-cloudflare-d1-export",
+      "dbmig-cloudflare-d1-query",
+      "dbmig-vercel-postgres",
+      "dbmig-vercel-marketplace-storage",
+      "dbmig-neon-logical-replication",
+      "dbmig-neon-pg-dump",
+      "dbmig-neon-aws-dms"
+    ]
+  },
+  "sources": [
+    {
+      "id": "dbmig-dms-what-is",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/Welcome.html",
+      "title": "What is AWS Database Migration Service?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS DMS creates the tables and associated primary keys if they don't exist on the target; you can create the target tables yourself",
+        "DMS Schema Conversion is for migrating to a different database engine: it assesses and converts source schemas to a new target engine"
+      ]
+    },
+    {
+      "id": "dbmig-dms-high-level",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.HighLevelView.html",
+      "title": "High-level view of AWS DMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A task can consist of three phases: full load, application of cached changes, and ongoing replication (CDC)",
+        "AWS DMS doesn't capture changes for a given table until the full load for that table is started, so the point when change capture starts differs per table",
+        "After all cached changes are applied the tables are transactionally consistent and DMS moves to ongoing replication, applying changes as transactions",
+        "At steady state you can shut down your applications, allow any remaining transactions to be applied to the target, and bring your applications up pointing at the target",
+        "With the minimalist approach AWS DMS creates tables, primary keys, and in some cases unique indexes, and no other objects"
+      ]
+    },
+    {
+      "id": "dbmig-dms-components",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.Components.html",
+      "title": "Components of AWS DMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A replication instance is a managed Amazon EC2 instance that hosts one or more replication tasks, and comes with 50 GB or 100 GB of storage depending on its class",
+        "The three migration types are full load, full load + CDC, and CDC only",
+        "Target table preparation modes are do nothing, drop tables on target, and truncate",
+        "If changes are captured faster than they can be applied, pending changes spill to disk on the replication instance and target latency exceeds source latency"
+      ]
+    },
+    {
+      "id": "dbmig-dms-sources",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.Sources.html",
+      "title": "Sources for AWS DMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Source endpoints for data migration include PostgreSQL 9.4 and higher on premises and on EC2, RDS for PostgreSQL 10.x to 18.x, and Aurora PostgreSQL",
+        "The third-party managed PostgreSQL services listed are Microsoft Azure PostgreSQL Flexible Server and Google Cloud for PostgreSQL",
+        "The page lists neither Aurora DSQL, nor SQLite, nor Neon"
+      ]
+    },
+    {
+      "id": "dbmig-dms-targets",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.Targets.html",
+      "title": "Targets for AWS DMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Target endpoints for data migration include RDS for PostgreSQL, Aurora PostgreSQL-Compatible Edition, Aurora PostgreSQL Limitless, and Aurora Serverless v2",
+        "The page does not list Aurora DSQL"
+      ]
+    },
+    {
+      "id": "dbmig-dms-source-postgresql",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.PostgreSQL.html",
+      "title": "Using a PostgreSQL database as an AWS DMS source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For an RDS for PostgreSQL source, CDC needs rds.logical_replication set to 1 in the parameter group, a static parameter that requires a reboot",
+        "The user on an AWS-managed source must have the rds_superuser role and the rds_replication role; using the master account is not recommended",
+        "A captured table must have a primary key; without one AWS DMS ignores DELETE and UPDATE operations for that table",
+        "For full load and CDC tasks AWS DMS uses logical replication slots to retain WAL until the logs are decoded; on restart (not resume) the slot is recreated",
+        "Slots remain open even when the task is no longer running; DMS drops a slot it created when the task is deleted",
+        "DMS uses the pglogical plugin if it is available on the source and test_decoding otherwise",
+        "If max_slot_wal_keep_size is set and a slot's restart_lsn falls behind by more than that size, the DMS task fails",
+        "Changes held in a slot can cause elevated disk usage; AWS recommends space usage alarms on the source",
+        "HeartbeatEnable mimics a dummy transaction so that idle slots do not hold on to old WAL; HeartbeatSchema defaults to public",
+        "With CaptureDdls false, DMS does not need its DDL audit table and event trigger on the source",
+        "FailTasksOnLobTruncation makes a task fail instead of truncating a LOB larger than LobMaxSize",
+        "The source data type table maps TEXT, JSON and JSONB to NCLOB, XML to CLOB, BYTEA to BLOB, and UUID to STRING",
+        "For PostgreSQL to PostgreSQL migrations of an entire database, AWS recommends native tools such as pg_dump",
+        "AWS DMS does not support CDC for Amazon RDS Proxy for PostgreSQL as a source, and does not support materialized views",
+        "AWS DMS does not support change processing of ALTER COLUMN SET DEFAULT or SET/DROP NOT NULL"
+      ]
+    },
+    {
+      "id": "dbmig-dms-target-postgresql",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.PostgreSQL.html",
+      "title": "Using a PostgreSQL database as a target for AWS Database Migration Service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Table order during full load cannot be guaranteed, so active foreign keys can make the task fail; AWS recommends disabling them during the full load",
+        "AfterConnectScript=SET session_replication_role = replica makes AWS DMS bypass foreign keys and user triggers",
+        "AWS DMS doesn't migrate sequences during ongoing replication: update NEXTVAL for each sequence on the target after stopping replication from the source",
+        "The minimum grants for the target user: CONNECT and CREATE on the database, USAGE and CREATE on the schema, and UPDATE, INSERT, SELECT, DELETE, TRUNCATE on its tables"
+      ]
+    },
+    {
+      "id": "dbmig-dms-serverless",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Serverless.html",
+      "title": "Working with AWS DMS Serverless",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With AWS DMS Serverless you create endpoints and a replication configuration, and start, stop, modify, or delete replications",
+        "The current engine version for AWS DMS Serverless is 3.5.4"
+      ]
+    },
+    {
+      "id": "dbmig-dms-serverless-components",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Serverless.Components.html",
+      "title": "AWS DMS Serverless components",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A DCU is 2 GB of RAM, and AWS DMS bills for each DCU the replication is currently using",
+        "AWS DMS Serverless supports PostgreSQL-compatible databases as sources and PostgreSQL as a target",
+        "After a serverless replication has been started it is resumed with the start type resume-processing; a replication that has not started in 48 hours is deprovisioned and cannot be resumed",
+        "MinCapacityUnits defaults to 1 DCU; MultiAZ is recommended for CDC",
+        "CDCLatencySource is the gap between the last event captured from the source and the current time, and can be 0 when there are no new events",
+        "CDCLatencyTarget is the gap between the first event waiting to commit on the target and the current time",
+        "Logs go to a log group named dms-serverless-replication-<replication config resource ID>, which DMS creates only when the replication runs",
+        "A configuration can be modified only in the CREATED, STOPPED, FAILED, or FAILED_PROVISION states"
+      ]
+    },
+    {
+      "id": "dbmig-dms-serverless-limitations",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Serverless.Limitations.html",
+      "title": "AWS DMS Serverless limitations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Serverless replications must reach AWS Secrets Manager, Amazon S3 and other dependencies through VPC endpoints",
+        "AWS DMS Serverless does not support views and does not support custom CDC start points",
+        "A replication configuration can be deleted only in the STOPPED or FAILED states"
+      ]
+    },
+    {
+      "id": "dbmig-dms-mapping-selection",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TableMapping.SelectionTransformation.Selections.html",
+      "title": "Selection rules and actions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A selection rule has rule-type, rule-id (numeric, unique), rule-name (unique), rule-action (include, exclude, explicit) and an object-locator with schema-name and table-name",
+        "At least one selection rule is required",
+        "The documented example includes every table of a schema and then excludes those matching a pattern"
+      ]
+    },
+    {
+      "id": "dbmig-dms-mapping-transformation",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TableMapping.SelectionTransformation.Transformations.html",
+      "title": "Transformation rules and actions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A transformation rule with rule-action rename and rule-target schema renames a schema on the target, with the new name in value",
+        "Transformation rules that alter the target schema take effect only after the task is restarted, not resumed"
+      ]
+    },
+    {
+      "id": "dbmig-dms-mapping-wildcards",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TableMapping.SelectionTransformation.Wildcards.html",
+      "title": "Wildcards in table mapping",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "% matches zero or more characters and _ matches a single character",
+        "Bracket patterns may not work with all endpoint types"
+      ]
+    },
+    {
+      "id": "dbmig-dms-task-settings",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.html",
+      "title": "Specifying task settings for AWS Database Migration Service tasks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The example settings show the sections TargetMetadata, FullLoadSettings, Logging, ErrorBehavior and ValidationSettings, with LobMaxSize 32 in limited LOB mode"
+      ]
+    },
+    {
+      "id": "dbmig-dms-task-settings-full-load",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.FullLoad.html",
+      "title": "Full-load task settings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "TargetTablePrepMode is DO_NOTHING, DROP_AND_CREATE, or TRUNCATE_BEFORE_LOAD",
+        "MaxFullLoadSubTasks, the number of tables loaded in parallel, defaults to 8"
+      ]
+    },
+    {
+      "id": "dbmig-dms-task-settings-errors",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.ErrorHandling.html",
+      "title": "Error handling task settings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ApplyErrorInsertPolicy and ApplyErrorUpdatePolicy default to LOG_ERROR, ApplyErrorDeletePolicy to IGNORE_RECORD",
+        "TableErrorPolicy defaults to SUSPEND_TABLE: the task continues without that table",
+        "FailOnNoTablesCaptured defaults to true"
+      ]
+    },
+    {
+      "id": "dbmig-dms-task-settings-validation",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.DataValidation.html",
+      "title": "Data validation task settings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EnableValidation defaults to false; FailureMaxCount defaults to 10,000",
+        "ValidationPartialLobSize limits how much of a LOB column is validated"
+      ]
+    },
+    {
+      "id": "dbmig-dms-lob",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.LOBSupport.html",
+      "title": "Setting LOB support for source databases in an AWS DMS task",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In limited LOB mode, LOBs larger than the maximum LOB size are truncated and a warning is logged",
+        "A primary key or unique index is required for tables containing LOB columns during CDC"
+      ]
+    },
+    {
+      "id": "dbmig-dms-validation",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Validating.html",
+      "title": "AWS DMS data validation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Validation begins after a table's full load and compares incremental changes as they occur; DMS compares each source row with its target row",
+        "Data validation requires a primary key or unique index; a VARCHAR or CHAR key must declare a length under 1024",
+        "The per-table ValidationState values, including Validated, Mismatched records, Pending records, and No primary key",
+        "If the target is modified outside DMS during validation, discrepancies might not be reported accurately; continuously modified rows can't be validated",
+        "Validation stops after more than 10,000 failed or suspended records"
+      ]
+    },
+    {
+      "id": "dbmig-dms-premigration",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.AssessmentReport.html",
+      "title": "Enabling and working with premigration assessments for a task",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A premigration assessment run evaluates a task configuration for problems such as unsupported data types and primary key formats before the task runs"
+      ]
+    },
+    {
+      "id": "dbmig-dms-troubleshooting",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Troubleshooting.html",
+      "title": "Troubleshooting migration tasks in AWS Database Migration Service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In full or limited LOB mode AWS DMS doesn't support replication of primary keys that are LOB data types",
+        "A full load and CDC task can create duplicate records on target tables without a primary key or unique index",
+        "With target table preparation mode Do nothing, a restarted task can hit primary key violations from rows of a previous run"
+      ]
+    },
+    {
+      "id": "dbmig-dms-secrets",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/security_iam_secretsmanager.html",
+      "title": "Using secrets to access AWS Database Migration Service endpoints",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An endpoint takes either clear-text credentials or SecretsManagerSecretId with SecretsManagerAccessRoleArn, not both",
+        "The secret is JSON with username, password, port and host",
+        "Master credentials managed by Amazon RDS cannot be used because they lack host and port",
+        "The secret access role trusts the Regional principal dms.<region>.amazonaws.com and needs secretsmanager:GetSecretValue on the secret",
+        "AWS DMS does not allow the characters ; . : + { } * & , % \\ in endpoint passwords"
+      ]
+    },
+    {
+      "id": "dbmig-dms-secrets-vpc-endpoint",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Advanced.Endpoints.secretsmanager.html",
+      "title": "Configuring AWS DMS secrets manager VPC Endpoint",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A replication instance in a private subnet needs a VPC endpoint to reach AWS Secrets Manager"
+      ]
+    },
+    {
+      "id": "dbmig-dms-iam",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/security-iam.html",
+      "title": "Identity and access management for AWS Database Migration Service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Using the console, CLI or API requires the IAM roles dms-vpc-role and dms-cloudwatch-logs-role, with exactly these names, because AWS DMS looks them up by name",
+        "dms-vpc-role trusts dms.amazonaws.com and carries the managed policy AmazonDMSVPCManagementRole; dms-cloudwatch-logs-role carries AmazonDMSCloudWatchLogsRole"
+      ]
+    },
+    {
+      "id": "dbmig-dms-slr",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/slr-services-sl.html",
+      "title": "Service-linked role for AWS DMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS DMS Serverless uses the service-linked role AWSServiceRoleForDMSServerless, created when a replication is started"
+      ]
+    },
+    {
+      "id": "dbmig-dms-eventbridge",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_EventBridge.html",
+      "title": "Working with Amazon EventBridge events and notifications in AWS Database Migration Service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS DMS events arrive in EventBridge with source aws.dms and a detail.category such as StateChange or Failure",
+        "The Failure category covers 'A replication task has failed' and 'DMS replication has failed'",
+        "An SNS topic's access policy must allow events.amazonaws.com to publish"
+      ]
+    },
+    {
+      "id": "dbmig-dms-quotas",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Limits.html",
+      "title": "Quotas for AWS Database Migration Service",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Default quotas per account and Region read on the day: 100 serverless replications, 1,000 endpoints, 60 replication subnet groups, 60 replication instances"
+      ]
+    },
+    {
+      "id": "dbmig-dms-homogeneous",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/data-migrations.html",
+      "title": "Migrating databases to their Amazon RDS equivalents with AWS DMS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Homogeneous data migrations use native database tools, are serverless, and migrate secondary objects as well as data"
+      ]
+    },
+    {
+      "id": "dbmig-dms-api-start-replication",
+      "url": "https://docs.aws.amazon.com/dms/latest/APIReference/API_StartReplication.html",
+      "title": "StartReplication",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "StartReplication takes ReplicationConfigArn and StartReplicationType; the first run of a full-load or full-load-and-cdc replication must use start-replication",
+        "PremigrationAssessmentSettings runs a premigration assessment as part of starting"
+      ]
+    },
+    {
+      "id": "dbmig-dms-api-start-replication-task",
+      "url": "https://docs.aws.amazon.com/dms/latest/APIReference/API_StartReplicationTask.html",
+      "title": "StartReplicationTask",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For a full-load-and-cdc task, resume-processing replicates changes from the last stop position and reload-target loads all tables again"
+      ]
+    },
+    {
+      "id": "dbmig-dms-api-create-endpoint",
+      "url": "https://docs.aws.amazon.com/dms/latest/APIReference/API_CreateEndpoint.html",
+      "title": "CreateEndpoint",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EngineName values include postgres and aurora-postgresql; SslMode is none, require, verify-ca, or verify-full"
+      ]
+    },
+    {
+      "id": "dbmig-cfn-dms-replication-config",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dms-replicationconfig.html",
+      "title": "AWS::DMS::ReplicationConfig",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The resource takes ComputeConfig, ReplicationType, the two endpoint ARNs, TableMappings and ReplicationSettings as JSON, and returns ReplicationConfigArn"
+      ]
+    },
+    {
+      "id": "dbmig-cfn-dms-endpoint",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dms-endpoint.html",
+      "title": "AWS::DMS::Endpoint",
+      "checkedAt": "2026-10-13",
+      "supports": ["Ref returns the ARN of the endpoint"]
+    },
+    {
+      "id": "dbmig-cfn-dms-subnet-group",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dms-replicationsubnetgroup.html",
+      "title": "AWS::DMS::ReplicationSubnetGroup",
+      "checkedAt": "2026-10-13",
+      "supports": ["Ref returns the name of the replication subnet group"]
+    },
+    {
+      "id": "dbmig-cloudcontrol-supported",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Of the AWS::DMS types the table lists DataMigration, DataProvider, InstanceProfile, MigrationProject and ReplicationConfig; Endpoint, ReplicationSubnetGroup, ReplicationTask and ReplicationInstance are absent"
+      ],
+      "note": "The page says its table was last updated December 23, 2025."
+    },
+    {
+      "id": "dbmig-cdkd-dms",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28: bundled dist (provider registry, unsupported types)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "No dedicated provider is registered for any AWS::DMS type",
+        "AWS::DMS::ReplicationInstance is on the generated NON_PROVISIONABLE list, which cdkd refuses before deploying",
+        "Any other AWS:: type without a provider is routed through the Cloud Control API, and an UnsupportedActionException or TypeNotFoundException from it becomes 'not supported by Cloud Control API and no SDK provider is registered'",
+        "Dedicated providers are registered for AWS::EC2::SecurityGroup, AWS::EC2::SecurityGroupIngress, AWS::SecretsManager::Secret, AWS::IAM::Role, AWS::IAM::Policy, AWS::SNS::Topic, AWS::SNS::TopicPolicy and AWS::Events::Rule"
+      ],
+      "note": "Read from the installed package's dist/deploy-engine-*.js. Nothing was run against AWS."
+    },
+    {
+      "id": "dbmig-dms-pricing",
+      "url": "https://aws.amazon.com/dms/pricing/",
+      "title": "AWS Database Migration Service pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With AWS DMS Serverless you pay per hour for the capacity used; DCU increments are 1, 2, 4, 8, 16, 32, 64, 128, 192, 256 and 384",
+        "T-class replication instances include 50 GB of storage",
+        "Accounts that signed up for the Free Tier before July 15, 2025 get 750 hours a month of Single-AZ dms.t3.micro for one year; later accounts get credits instead",
+        "Data transfer into AWS DMS is free, and so is transfer between DMS and RDS in the same Availability Zone",
+        "DMS Schema Conversion is free to use; you pay for the S3 storage it uses"
+      ],
+      "note": "Read as fetched HTML; the price tables themselves are filled in by script and were taken from the Price List instead."
+    },
+    {
+      "id": "dbmig-price-list-dms",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDatabaseMigrationSvc/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS Database Migration Service, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "APN1-DMSServerlessRepCapacityUsg:1: USD 0.1144126570 per hour at 1 DCU, Single-AZ (2 DCU: 0.2288253130)",
+        "APN1-InstanceUsg:dms.t3.micro: USD 0.028 per instance hour; dms.t3.medium: USD 0.112",
+        "APN1-DMS:GP2-Storage: USD 0.138 per GB-month of additional replication instance storage"
+      ],
+      "note": "Offer publication date 2026-09-11T12:45:38Z."
+    },
+    {
+      "id": "dbmig-postgres-restrictions",
+      "url": "https://www.postgresql.org/docs/current/logical-replication-restrictions.html",
+      "title": "PostgreSQL 18: 29.8. Restrictions (logical replication)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The database schema and DDL commands are not replicated",
+        "Sequence data is not replicated; for a switchover the sequences must be updated to the latest values",
+        "Large objects are not replicated, and only tables can be replicated, not views or materialized views"
+      ]
+    },
+    {
+      "id": "dbmig-postgres-publication",
+      "url": "https://www.postgresql.org/docs/current/logical-replication-publication.html",
+      "title": "PostgreSQL 18: 29.1. Publication",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A published table needs a replica identity to replicate UPDATE and DELETE; by default this is the primary key"
+      ]
+    },
+    {
+      "id": "dbmig-postgres-slots",
+      "url": "https://www.postgresql.org/docs/current/warm-standby.html",
+      "title": "PostgreSQL 18: 26.2. Log-Shipping Standby Servers (replication slots)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replication slots can cause the server to retain so many WAL segments that they fill up the space allocated for pg_wal"
+      ]
+    },
+    {
+      "id": "dbmig-postgres-replication-config",
+      "url": "https://www.postgresql.org/docs/current/runtime-config-replication.html",
+      "title": "PostgreSQL 18: 19.6. Replication",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "max_slot_wal_keep_size defaults to -1, meaning slots may retain an unlimited amount of WAL",
+        "max_replication_slots and max_wal_senders default to 10"
+      ]
+    },
+    {
+      "id": "dbmig-postgres-slots-view",
+      "url": "https://www.postgresql.org/docs/current/view-pg-replication-slots.html",
+      "title": "PostgreSQL 18: pg_replication_slots",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "active is true while a slot is being streamed; restart_lsn is the oldest WAL the slot's consumer might still need"
+      ]
+    },
+    {
+      "id": "dbmig-postgres-admin-functions",
+      "url": "https://www.postgresql.org/docs/current/functions-admin.html",
+      "title": "PostgreSQL 18: 9.28. System Administration Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "pg_drop_replication_slot(slot_name) drops a physical or logical replication slot"
+      ]
+    },
+    {
+      "id": "dbmig-postgres-revoke",
+      "url": "https://www.postgresql.org/docs/current/sql-revoke.html",
+      "title": "PostgreSQL 18: REVOKE",
+      "checkedAt": "2026-10-13",
+      "supports": ["REVOKE removes previously granted privileges from one or more roles"]
+    },
+    {
+      "id": "dbmig-postgres-stat-activity",
+      "url": "https://www.postgresql.org/docs/current/monitoring-stats.html",
+      "title": "PostgreSQL 18: pg_stat_activity",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "state 'idle in transaction' means the backend is in a transaction and not executing a query; xact_start is when the current transaction started"
+      ]
+    },
+    {
+      "id": "dbmig-aws-cli-dms-model",
+      "url": "https://docs.aws.amazon.com/cli/latest/reference/dms/",
+      "title": "AWS CLI 2.35.11: bundled service definition for dms (2016-01-01)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "start-replication requires --replication-config-arn and --start-replication-type; stop-replication requires --replication-config-arn",
+        "describe-replications filters by replication-config-arn or replication-config-id; describe-replication-table-statistics requires --replication-config-arn",
+        "StopReplication does not deprovision the stopped replication",
+        "TableStatistics carries FullLoadRows, the applied insert, update and delete counts, and ValidationState with its documented values"
+      ],
+      "note": "Read from the service-2.json inside the AWS CLI of the Nix shell, not from the web page; the URL is where the same reference is published."
+    },
+    {
+      "id": "dbmig-postgres-pg-dump",
+      "url": "https://www.postgresql.org/docs/current/app-pgdump.html",
+      "title": "PostgreSQL 18: pg_dump",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "pg_dump makes consistent exports even if the database is being used concurrently and does not block readers or writers"
+      ]
+    },
+    {
+      "id": "dbmig-postgres-sequences",
+      "url": "https://www.postgresql.org/docs/current/functions-sequence.html",
+      "title": "PostgreSQL 18: 9.17. Sequence Manipulation Functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "setval(regclass, bigint, boolean): with is_called true the next nextval advances the sequence before returning a value"
+      ]
+    },
+    {
+      "id": "dbmig-rds-logical-replication",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/PostgreSQL.Concepts.General.FeatureSupport.LogicalReplication.html",
+      "title": "Performing logical replication for Amazon RDS for PostgreSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "rds.logical_replication is a static parameter; setting it to 1 needs a reboot and can increase WAL generation"
+      ]
+    },
+    {
+      "id": "dbmig-rds-metrics",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-metrics.html",
+      "title": "Amazon CloudWatch metrics for Amazon RDS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "OldestReplicationSlotLag, TransactionLogsDiskUsage and ReplicationSlotDiskUsage are published for PostgreSQL, in bytes"
+      ]
+    },
+    {
+      "id": "dbmig-rds-blue-green",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-overview.html",
+      "title": "Overview of Amazon RDS Blue/Green Deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Blue/green deployments are supported for RDS for PostgreSQL; the green environment is a copy that stays in sync, and switchover typically takes under a minute",
+        "The overview describes version upgrades and parameter changes, and no change of engine"
+      ]
+    },
+    {
+      "id": "dbmig-rds-blue-green-considerations",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-considerations.html",
+      "title": "Limitations and considerations for Amazon RDS blue/green deployments",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "During switchover Amazon RDS increments sequence values in the green environment to match the blue one"
+      ]
+    },
+    {
+      "id": "dbmig-aurora-postgres-migrating",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Migrating.html",
+      "title": "Migrating data to Amazon Aurora with PostgreSQL compatibility",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For an RDS for PostgreSQL source the page lists migration from a snapshot and migration through an Aurora read replica, and names AWS DMS for sources that are not PostgreSQL-compatible"
+      ]
+    },
+    {
+      "id": "dbmig-dsql-loading-data",
+      "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/loading-data.html",
+      "title": "Loading data into Aurora DSQL",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "To move from PostgreSQL, export each table to CSV or Parquet and load it with the Aurora DSQL Loader; the page describes no continuous replication and does not mention AWS DMS"
+      ]
+    },
+    {
+      "id": "dbmig-cloudflare-d1-export",
+      "url": "https://developers.cloudflare.com/d1/best-practices/import-export-data/",
+      "title": "Cloudflare D1: Import and export data",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "wrangler d1 export writes a D1 database to a .sql file",
+        "A running export blocks other database requests, and export is not supported for databases with virtual tables"
+      ]
+    },
+    {
+      "id": "dbmig-cloudflare-d1-query",
+      "url": "https://developers.cloudflare.com/d1/best-practices/query-d1/",
+      "title": "Cloudflare D1: Query a database",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "D1 is reached through the Workers binding, the REST API, and Wrangler; the docs list no database wire protocol"
+      ]
+    },
+    {
+      "id": "dbmig-vercel-postgres",
+      "url": "https://vercel.com/docs/postgres",
+      "title": "Vercel: Postgres on Vercel",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Postgres is no longer available; existing databases were moved to Neon in December 2024, and new projects install a Postgres integration from the Marketplace"
+      ]
+    },
+    {
+      "id": "dbmig-vercel-marketplace-storage",
+      "url": "https://vercel.com/docs/marketplace-storage",
+      "title": "Vercel: Marketplace storage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Postgres providers named are Neon, Supabase, Prisma Postgres and AWS Aurora Postgres"
+      ]
+    },
+    {
+      "id": "dbmig-neon-logical-replication",
+      "url": "https://neon.com/docs/guides/logical-replication-neon",
+      "title": "Neon: Logical replication in Neon",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Logical replication is enabled per project, sets wal_level to logical for good, and restarts all computes",
+        "Neon removes replication slots that have been inactive for about 40 hours, and a compute with a connected subscriber does not scale to zero",
+        "Roles created via SQL cannot be given the REPLICATION privilege; Neon supports the pgoutput and wal2json plugins"
+      ]
+    },
+    {
+      "id": "dbmig-neon-pg-dump",
+      "url": "https://neon.com/docs/import/migrate-from-postgres",
+      "title": "Neon: Migrate data from Postgres with pg_dump and pg_restore",
+      "checkedAt": "2026-10-13",
+      "supports": ["pg_dump must use an unpooled connection string"]
+    },
+    {
+      "id": "dbmig-neon-aws-dms",
+      "url": "https://neon.com/docs/import/migrate-aws-dms",
+      "title": "Neon: Migrate with AWS Database Migration Service (DMS)",
+      "checkedAt": "2026-10-13",
+      "supports": ["Neon documents AWS DMS with Neon as the target only"]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "cdc",
+      "ja": "CDC（change data capture）",
+      "en": "CDC (change data capture)",
+      "firstUse": "39",
+      "definition": {
+        "ja": "データベースに加えられた変更を、その記録（PostgreSQL では WAL）から順に読み出すこと。AWS DMS は、読み出した変更をターゲットに同じ順で適用する。",
+        "en": "Reading the changes made to a database, in order, from its own record of them (the WAL in PostgreSQL). AWS DMS applies what it reads to the target in the same order."
+      }
+    },
+    {
+      "id": "full-load",
+      "ja": "full load",
+      "en": "full load",
+      "firstUse": "39",
+      "definition": {
+        "ja": "AWS DMS が、ソースのテーブルにいまある行をすべてターゲットへ写す段階。テーブルごとに進み、順序は保証されない。",
+        "en": "The phase in which AWS DMS copies every row a source table holds to the target. It goes table by table, in no guaranteed order."
+      }
+    },
+    {
+      "id": "replication-slot",
+      "ja": "レプリケーションスロット",
+      "en": "replication slot",
+      "firstUse": "39",
+      "definition": {
+        "ja": "PostgreSQL が、ある読み手がどこまで WAL を読んだかを覚えておく仕組み。読み手が読み終えるまで WAL を消さないので、読み手がいなくなったスロットはディスクを埋めていく。",
+        "en": "PostgreSQL's record of how far one reader has read the WAL. The server keeps WAL until that reader has consumed it, so a slot whose reader is gone fills the disk."
+      }
+    },
+    {
+      "id": "cutover",
+      "ja": "切り替え（cutover）",
+      "en": "cutover",
+      "firstUse": "39",
+      "definition": {
+        "ja": "アプリケーションの接続先を、古いデータベースから新しいデータベースへ移す作業。書き込みを止め、残りの変更が届くのを待ち、確かめてから接続先を替える。",
+        "en": "Moving an application's connection from the old database to the new one: stop writes, wait for the remaining changes to arrive, verify, then switch."
+      }
+    },
+    {
+      "id": "dcu",
+      "ja": "DCU（DMS capacity unit）",
+      "en": "DCU (DMS capacity unit)",
+      "firstUse": "39",
+      "definition": {
+        "ja": "AWS DMS Serverless の容量の単位。1 DCU はメモリ 2 GB。動いているレプリケーションが使っている DCU に、時間単位で課金される。",
+        "en": "The capacity unit of AWS DMS Serverless. One DCU is 2 GB of memory, and a running replication is billed by the hour for the DCUs it uses."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "39.overview",
+      "sources": ["examples/39-database-migration"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "39.what-dms-is",
+      "sources": ["examples/39-database-migration/sql/target/0001_schema.sql"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "39.pieces",
+      "sources": ["examples/39-database-migration/infra/lib/migration-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "39.pairs",
+      "sources": ["examples/39-database-migration/infra/lib/migration-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "39.other-side",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "39.source-setup",
+      "sources": [
+        "examples/39-database-migration/sql/source/0001_as_found.sql",
+        "examples/39-database-migration/sql/source/0002_prepare.sql",
+        "examples/39-database-migration/sql/users/source.sql",
+        "examples/39-database-migration/sql/users/target.sql",
+        "examples/39-database-migration/src/catalog.ts",
+        "examples/39-database-migration/src/preflight.ts",
+        "examples/39-database-migration/test/preflight.test.ts"
+      ],
+      "tasks": ["test:unit", "dbmig:preflight"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "39.mappings",
+      "sources": [
+        "examples/39-database-migration/src/table-mappings.ts",
+        "examples/39-database-migration/test/table-mappings.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "39.settings",
+      "sources": [
+        "examples/39-database-migration/src/task-settings.ts",
+        "examples/39-database-migration/test/cutover.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "39.stack",
+      "sources": [
+        "examples/39-database-migration/infra/lib/migration-stack.ts",
+        "examples/39-database-migration/infra/bin/app.ts",
+        "examples/39-database-migration/src/config.ts",
+        "examples/39-database-migration/infra/test/migration-stack.test.ts",
+        "examples/39-database-migration/cdk.json"
+      ],
+      "tasks": ["dbmig:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "39.cutover",
+      "sources": [
+        "examples/39-database-migration/src/cutover.ts",
+        "examples/39-database-migration/src/sequences.ts",
+        "examples/39-database-migration/src/verify.ts",
+        "examples/39-database-migration/test/cutover.test.ts",
+        "examples/39-database-migration/test/sequences.test.ts",
+        "examples/39-database-migration/test/verify.test.ts"
+      ],
+      "tasks": ["test:unit", "dbmig:verify", "dbmig:sequences"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "39.distributed",
+      "sources": [
+        "examples/39-database-migration/src/cutover.ts",
+        "examples/39-database-migration/test/replicate.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "39.local",
+      "sources": [
+        "examples/39-database-migration/src/model/capture.ts",
+        "examples/39-database-migration/src/model/replicate.ts",
+        "examples/39-database-migration/test/replicate.test.ts",
+        "examples/39-database-migration/test/support.ts",
+        "examples/39-database-migration/scripts/demo.ts"
+      ],
+      "tasks": ["test:unit", "dbmig:demo"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "39.deploy",
+      "sources": [
+        "examples/39-database-migration/infra/lib/migration-stack.ts",
+        "examples/39-database-migration/scripts/db.ts",
+        "examples/39-database-migration/sql/users/source.sql",
+        "examples/39-database-migration/sql/users/target.sql"
+      ],
+      "tasks": [
+        "dbmig:infra:diff",
+        "dbmig:infra:deploy",
+        "dbmig:preflight",
+        "dbmig:verify",
+        "dbmig:sequences"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "39.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "39.pitfalls",
+      "sources": [
+        "examples/39-database-migration/src/preflight.ts",
+        "examples/39-database-migration/src/model/replicate.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "39.production",
+      "sources": ["examples/39-database-migration/infra/lib/migration-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "39.cleanup",
+      "sources": ["examples/39-database-migration/infra/lib/migration-stack.ts"],
+      "tasks": ["dbmig:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "dms.serverless.dcu1.hour",
+      "offerCode": "AWSDatabaseMigrationSvc",
+      "region": "ap-northeast-1",
+      "sku": "8R389BH2EFE7U6QW",
+      "usageType": "APN1-DMSServerlessRepCapacityUsg:1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DCU-Hr",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1144126570",
+          "description": "$0.1144 per DMS Serverless 1 DCU capacity DCU hours"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDatabaseMigrationSvc/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "dms.instance.t3.micro.hour",
+      "offerCode": "AWSDatabaseMigrationSvc",
+      "region": "ap-northeast-1",
+      "sku": "VXG5R8PR3YJGGHQU",
+      "usageType": "APN1-InstanceUsg:dms.t3.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0280000000",
+          "description": "$0.028 per On Demand DMS t3.micro Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDatabaseMigrationSvc/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:38Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "dms.instance.t3.medium.hour",
+      "offerCode": "AWSDatabaseMigrationSvc",
+      "region": "ap-northeast-1",
+      "sku": "9DZAVEX557TZS334",
+      "usageType": "APN1-InstanceUsg:dms.t3.medium",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1120000000",
+          "description": "$0.112 per On Demand DMS t3.medium Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDatabaseMigrationSvc/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:38Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "dms.serverless.dcu1.hour",
+      "reason": "No free allowance for AWS DMS Serverless capacity was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "dms.instance.t3.micro.hour",
+      "reason": "The pricing page ties free dms.t3.micro hours to accounts that joined the Free Tier before July 15, 2025, and gives later accounts credits instead. Which applies to the reader's account was not determined, so none is applied."
+    },
+    {
+      "priceId": "dms.instance.t3.medium.hour",
+      "reason": "No free allowance for this instance class was found on the pricing page; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "dbmig-idle",
+      "chapter": "39",
+      "title": {
+        "ja": "Database Migration: スタックを置いただけの 1 か月（レプリケーションは一度も開始しない）",
+        "en": "Database Migration: the stack for a month, replication never started"
+      },
+      "assumptions": {
+        "ja": [
+          "既定のスタック。シークレットが 2 つ。レプリケーションの設定は作るが、開始しない",
+          "2 つのデータベース、11章の VPC とそのエンドポイントは含めない",
+          "開始していない設定に DCU の課金がないことは、料金ページとユーザーガイドの記述から読んだもので、請求では確かめていない"
+        ],
+        "en": [
+          "The default stack: two secrets. The replication configuration exists and is never started",
+          "The two databases and the chapter 11 VPC with its endpoints are left out",
+          "That an unstarted configuration bills no DCU is read from the pricing page and the user guide, and was not confirmed on a bill"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 2,
+          "basis": "2 secrets for a month"
+        }
+      ]
+    },
+    {
+      "id": "dbmig-week",
+      "chapter": "39",
+      "title": {
+        "ja": "Database Migration: 1 DCU で 1 週間動かして切り替える",
+        "en": "Database Migration: one week at 1 DCU, then cutover"
+      },
+      "assumptions": {
+        "ja": [
+          "レプリケーションが 168 時間、ずっと 1 DCU（Single-AZ）で動く。スケールアップしない",
+          "Secrets Manager のインターフェースエンドポイントを 2 つのサブネットに 168 時間置く",
+          "シークレット 2 つは 1 か月分。2 つのデータベース、データ転送、ログは含めない"
+        ],
+        "en": [
+          "The replication runs 168 hours at 1 DCU, Single-AZ, and never scales up",
+          "A Secrets Manager interface endpoint in two subnets for 168 hours",
+          "Two secrets for a month. The two databases, data transfer, and logs are left out"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dms.serverless.dcu1.hour",
+          "quantity": 168,
+          "basis": "168 hours at 1 DCU"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 336,
+          "basis": "1 interface endpoint x 2 subnets x 168 hours"
+        },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 2,
+          "basis": "2 secrets for a month"
+        }
+      ]
+    },
+    {
+      "id": "dbmig-forgotten",
+      "chapter": "39",
+      "title": {
+        "ja": "Database Migration: 切り替えのあと、レプリケーションを止め忘れた 1 か月",
+        "en": "Database Migration: a month with the replication left running after the cutover"
+      },
+      "assumptions": {
+        "ja": [
+          "レプリケーションが 730 時間、1 DCU（Single-AZ）で動き続ける",
+          "Secrets Manager のインターフェースエンドポイントを 2 つのサブネットに 730 時間",
+          "シークレット 2 つ。データベースは含めない"
+        ],
+        "en": [
+          "The replication keeps running for 730 hours at 1 DCU, Single-AZ",
+          "A Secrets Manager interface endpoint in two subnets for 730 hours",
+          "Two secrets. The databases are left out"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dms.serverless.dcu1.hour",
+          "quantity": 730,
+          "basis": "730 hours at 1 DCU"
+        },
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 1460,
+          "basis": "1 interface endpoint x 2 subnets x 730 hours"
+        },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 2,
+          "basis": "2 secrets for a month"
+        }
+      ]
+    },
+    {
+      "id": "dbmig-instance-idle",
+      "chapter": "39",
+      "title": {
+        "ja": "Database Migration: 比較。レプリケーションインスタンス（dms.t3.micro）を置いただけの 1 か月",
+        "en": "Database Migration: for comparison, a dms.t3.micro replication instance left in place for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "この章のスタックは作らない構成。Single-AZ の dms.t3.micro を 730 時間。タスクは 1 つも動かさない",
+          "付属の 50 GB を超えるストレージは足さない"
+        ],
+        "en": [
+          "A layout this chapter's stack does not create: a Single-AZ dms.t3.micro for 730 hours with no task running",
+          "No storage beyond the included 50 GB"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dms.instance.t3.micro.hour",
+          "quantity": 730,
+          "basis": "730 instance hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "39",
+        "command": "vp test run examples/39-database-migration",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "この章のモデル（PGlite 2 つ、トリガーによる変更の記録）の上で: 写している間の更新と削除、写しと記録の両方に入った変更、チェックポイントが進む前の停止からの再開、主キーのないテーブルの重複と運ばれない更新、外部キーを眠らせた写し、シーケンスの衝突と前進、件数とダイジェストの比較が見るものと見ないもの、切り替え後の遅れた書き込みと再開による上書き。テーブルマッピングのスキーマと当てはめ、事前の検査、切り替えの判定、スタックのアサーション。7 ファイル 56 件",
+          "en": "On this chapter's model (two PGlite instances, changes recorded by triggers): updates and deletes during the copy, a change in both the copy and the log, a resume after a stop before the checkpoint advanced, duplicates and uncarried updates on a table without a primary key, a copy with foreign keys quiet, the sequence collision and the advance, what the count-and-digest comparison sees and misses, a late write and an overwrite by a resume after the switch. Also the table-mapping schema and its application, the preflight check, the cutover decisions, and the stack assertions. 7 files, 56 tests"
+        }
+      },
+      {
+        "scope": "39",
+        "command": "tsc --noEmit -p examples/39-database-migration",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "39",
+        "command": "vp run dbmig:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "2 つの PGlite の上で、事前の検査、準備、full load、変更の適用、書き込みの停止、比較、シーケンス、切り替えの判定までを実行した。本文に載せた出力はこの実行のもの。DMS ではなく、この章のモデル",
+          "en": "Ran the preflight check, the preparation, the full load, the apply step, the write stop, the comparison, the sequences, and the cutover decision on two PGlite instances. The output quoted in the chapter is from this run. It is this chapter's model, not DMS"
+        }
+      },
+      {
+        "scope": "39",
+        "command": "vp run dbmig:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の構成（存在しえないホスト名のプレースホルダー）で synth した。`-c accountRoles=existing` と容量の指定はテストの中で synth した",
+          "en": "Synthesized the default layout (placeholder host names that cannot exist). `-c accountRoles=existing` and the capacity options were synthesized inside the tests"
+        }
+      },
+      {
+        "scope": "39",
+        "command": "vp run dbmig:infra:diff / deploy / drift / destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "DMS Serverless の設定、エンドポイント 2 つ、サブネットグループ、シークレット 2 つ、IAM ロール、セキュリティグループとルール、SNS のトピックと EventBridge のルールを作る。cdkd 0.296.28 には AWS::DMS の専用の実装がなく、Endpoint と ReplicationSubnetGroup は Cloud Control API の対応一覧にないので、最後まで進まない見込み",
+          "en": "Creates a DMS Serverless configuration, two endpoints, a subnet group, two secrets, IAM roles, a security group and rules, an SNS topic and an EventBridge rule. cdkd 0.296.28 has no dedicated implementation for AWS::DMS, and Endpoint and ReplicationSubnetGroup are not in the Cloud Control API list of supported types, so it is not expected to finish"
+        }
+      },
+      {
+        "scope": "39",
+        "command": "aws dms start-replication / describe-replications / describe-replication-table-statistics / stop-replication",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "レプリケーションの開始、監視、停止。DMS は一度も動かしていない。所要時間、遅れ、停止時間の実測値はない",
+          "en": "Starting, watching, and stopping the replication. DMS was never run, and there are no measured durations, lags, or outage times"
+        }
+      },
+      {
+        "scope": "39",
+        "command": "vp run dbmig:preflight / dbmig:verify / dbmig:sequences",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "2 つの PostgreSQL に直接つなぐ。本物のデータベースに対しては実行していない。同じ関数は PGlite の上でテストしている",
+          "en": "Connect directly to two PostgreSQL databases. Not run against real databases; the same functions are tested on PGlite"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "39-cdkd-dms",
+        "summary": {
+          "ja": "39章のスタックを cdkd 0.296.28 でデプロイできるかを確かめていない。インストールしたパッケージには AWS::DMS の専用の実装がなく、AWS::DMS::ReplicationInstance は作れない種類の一覧にある。Cloud Control API の対応一覧（最終更新 2025-12-23）に AWS::DMS::Endpoint と AWS::DMS::ReplicationSubnetGroup はない。",
+          "en": "Whether cdkd 0.296.28 can deploy the chapter 39 stack was not confirmed. The installed package has no dedicated implementation for AWS::DMS, and AWS::DMS::ReplicationInstance is on its list of types that cannot be provisioned. The Cloud Control API list of supported types (last updated 2025-12-23) has neither AWS::DMS::Endpoint nor AWS::DMS::ReplicationSubnetGroup."
+        },
+        "resume": {
+          "ja": "`aws cloudformation describe-type --type RESOURCE --type-name AWS::DMS::Endpoint`（と ReplicationSubnetGroup）で `ProvisioningType` を読む。FULLY_MUTABLE か IMMUTABLE なら `vp run dbmig:infra:deploy` を試す。NON_PROVISIONABLE なら、このスタックは AWS CDK CLI だけで管理し、本文「cdkd でデプロイできる範囲」の表を直す。",
+          "en": "Read `ProvisioningType` from `aws cloudformation describe-type --type RESOURCE --type-name AWS::DMS::Endpoint` (and ReplicationSubnetGroup). If it is FULLY_MUTABLE or IMMUTABLE, try `vp run dbmig:infra:deploy`. If it is NON_PROVISIONABLE, manage this stack with the AWS CDK CLI alone and correct the table under \"How far cdkd can deploy\"."
+        }
+      },
+      {
+        "id": "39-dms-run",
+        "summary": {
+          "ja": "39章の移行を AWS で一度も実行していない。未確認: `text` の主キーが PostgreSQL どうしの移行で失敗するか、LobMaxSize 64 KB で 10,000 文字の本文が切り詰められないか、ターゲットのユーザーが `SET session_replication_role = replica` を実行できるか、HeartbeatSchema のスキーマを先に作る必要があるか、出ていく通信を 5432 番と VPC 内の 443 番に絞ったセキュリティグループで Serverless のレプリケーションが動くか、開始していない設定と止めた後のレプリケーションの課金、設定を消したときにソースのスロットが消えるか、DMS のロググループの保持期間、full load の所要時間・遅れ・停止時間。",
+          "en": "The chapter 39 migration was never run on AWS. Unconfirmed: whether a `text` primary key fails in a PostgreSQL to PostgreSQL migration, whether a 10,000-character body escapes truncation at LobMaxSize 64 KB, whether the target user can run `SET session_replication_role = replica`, whether the HeartbeatSchema schema must exist beforehand, whether a Serverless replication works behind a security group limited to port 5432 and port 443 inside the VPC, the billing of an unstarted configuration and of a stopped replication, whether deleting the configuration drops the source's slot, the retention of the DMS log group, and every duration (full load, lag, outage)."
+        },
+        "resume": {
+          "ja": "本文「デプロイ」の順に進める。11章の VPC を `-c interfaceEndpoints=secretsmanager` でデプロイし、RDS for PostgreSQL と Aurora PostgreSQL を用意して、`vp run dbmig:preflight`、`aws dms start-replication`（premigration assessment つき）、`aws dms describe-replication-table-statistics`、`vp run dbmig:verify`、`aws dms stop-replication`、`vp run dbmig:sequences --apply` を実行し、所要時間と遅れを記録する。最後に「片付け」の順で消し、ソースの `pg_replication_slots` を確かめる。",
+          "en": "Follow the Deploy page: deploy the chapter 11 VPC with `-c interfaceEndpoints=secretsmanager`, prepare an RDS for PostgreSQL and an Aurora PostgreSQL, then run `vp run dbmig:preflight`, `aws dms start-replication` (with a premigration assessment), `aws dms describe-replication-table-statistics`, `vp run dbmig:verify`, `aws dms stop-replication`, and `vp run dbmig:sequences --apply`, recording durations and lag. Finish in the order under Cleanup and check `pg_replication_slots` on the source."
+        }
+      },
+      {
+        "id": "39-other-sources",
+        "summary": {
+          "ja": "Neon を AWS DMS のソースにできるか、`wrangler d1 export` の出力を PostgreSQL に読み込めるかを試していない。DMS のソースの一覧に Neon と SQLite はなく、Neon のドキュメントは DMS を Neon をターゲットにする場合だけ扱っている。",
+          "en": "Whether Neon can be an AWS DMS source, and whether the output of `wrangler d1 export` loads into PostgreSQL, were not tried. Neither Neon nor SQLite is in the list of DMS sources, and Neon's documentation covers DMS only with Neon as the target."
+        },
+        "resume": {
+          "ja": "Neon のプロジェクトでロジカルレプリケーションを有効にし、DMS のソースのエンドポイントの接続テストと full load を試す。D1 は小さなデータベースを `wrangler d1 export` で書き出し、PGlite に読み込んで、直す必要のある型と構文を記録する。",
+          "en": "Enable logical replication on a Neon project and try the connection test and a full load from a DMS source endpoint. For D1, export a small database with `wrangler d1 export`, load it into PGlite, and record which types and syntax need changing."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 39: database migration ----------------------------------\n      // The cutover on two in-memory databases, with the chapter's model in place of AWS DMS. No AWS.\n      \"dbmig:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/39-database-migration\" }),\n      // Deployed, the stack bills for two secrets. A started replication bills by the hour.\n      ...infra(\"dbmig\", \"examples/39-database-migration\", \"AihDatabaseMigration\"),\n      // These connect to both databases (SOURCE_DATABASE_URL, TARGET_DATABASE_URL) and only read.\n      \"dbmig:preflight\": live(\"node --env-file-if-exists=../../.env scripts/db.ts preflight\", {\n        cwd: \"examples/39-database-migration\",\n      }),\n      \"dbmig:verify\": live(\"node --env-file-if-exists=../../.env scripts/db.ts verify\", {\n        cwd: \"examples/39-database-migration\",\n      }),\n      // Prints the plan. Moves the target's sequences only with --apply.\n      \"dbmig:sequences\": live(\"node --env-file-if-exists=../../.env scripts/db.ts sequences\", {\n        cwd: \"examples/39-database-migration\",\n      }),",
+    "synth": ["dbmig:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/39-database-migration"]
+  }
+}

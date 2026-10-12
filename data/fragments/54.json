@@ -1,0 +1,1411 @@
+{
+  "chapterId": "54",
+  "manifest": {
+    "id": "54",
+    "slug": "kinesis",
+    "title": {
+      "ja": "Kinesis: Data Streams、shard、順序、読み直し",
+      "en": "Kinesis: Data Streams, Shards, Ordering, and Replay"
+    },
+    "prerequisites": ["05", "08"],
+    "services": ["Kinesis Data Streams", "Lambda", "DynamoDB", "SQS", "CloudWatch"],
+    "samplePath": "examples/54-kinesis",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "kinesis-concepts",
+      "kinesis-quotas",
+      "kinesis-modes",
+      "kinesis-retention",
+      "kinesis-producers-sdk",
+      "kinesis-api-putrecords",
+      "kinesis-api-putrecord",
+      "kinesis-api-getsharditerator",
+      "kinesis-api-getrecords",
+      "kinesis-large-records",
+      "kinesis-efo",
+      "kinesis-resharding",
+      "kinesis-kcl",
+      "kinesis-duplicates",
+      "kinesis-sse-costs",
+      "kinesis-kms-permissions",
+      "kinesis-cloudwatch",
+      "kinesis-lambda-overview",
+      "kinesis-lambda-create",
+      "kinesis-lambda-parameters",
+      "kinesis-lambda-batch-failures",
+      "kinesis-lambda-failure-destination",
+      "kinesis-lambda-metrics",
+      "kinesis-lambda-esm",
+      "kinesis-cfn-stream",
+      "kinesis-pricing-page",
+      "kinesis-price-list",
+      "kinesis-ddb-streams-options",
+      "kinesis-sqs-welcome",
+      "kinesis-eventbridge",
+      "kinesis-eventbridge-custom-bus",
+      "kinesis-msk",
+      "kinesis-flink",
+      "kinesis-firehose-source",
+      "kinesis-cdkd-providers",
+      "kinesis-cf-pipelines",
+      "kinesis-cf-pipelines-streams",
+      "kinesis-cf-queues-how",
+      "kinesis-cf-queues-delivery"
+    ]
+  },
+  "sources": [
+    {
+      "id": "kinesis-concepts",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/key-concepts.html",
+      "title": "Amazon Kinesis Data Streams Terminology and concepts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A stream is a set of shards, and each shard has a sequence of data records with a sequence number assigned by Kinesis Data Streams",
+        "A partition key is a Unicode string of at most 256 characters; MD5 maps it to a 128-bit integer, and the hash key ranges of the shards decide which shard a record belongs to",
+        "The retention period is 24 hours by default and can be raised to 8,760 hours (365 days), with additional charges above 24 hours",
+        "A shard supports up to 5 read transactions a second and 2 MB a second of reads, and up to 1,000 records a second and 1 MB a second of writes including partition keys",
+        "There can be several applications for one stream, each consuming it independently and concurrently",
+        "The Kinesis Client Library keeps its consumption metadata in DynamoDB tables"
+      ],
+      "note": "This page still says a data blob can be up to 1 MB. The quotas page and the API reference, read the same day, say 1 MiB by default and up to 10 MiB as a setting of the stream."
+    },
+    {
+      "id": "kinesis-quotas",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/service-sizes-and-limits.html",
+      "title": "Quotas and limits (Kinesis Data Streams)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On-demand: 50 streams per account by default; a new stream has 4 MB/s of write and 8 MB/s of read throughput and scales up to 200 MB/s of write outside us-east-1, us-west-2 and eu-west-1",
+        "Provisioned: each shard supports up to 1 MB/s or 1,000 records/s of writes and up to 2 MB/s of reads; the default shard quota outside three named Regions is 1,000 or 6,000 per account",
+        "GetRecords: 5 transactions per second per shard, up to 10,000 records and 10 MB per call",
+        "PutRecords: up to 500 records per request and 10 MiB for the entire request including partition keys",
+        "A shard iterator expires 5 minutes after it is returned",
+        "Up to 20 registered (enhanced fan-out) consumers per stream in On-demand Standard and Provisioned modes, 50 in On-demand Advantage",
+        "A stream can switch between on-demand and provisioned twice within 24 hours"
+      ],
+      "note": "The PutRecord row says 10 MiB per second per shard and the PutRecords row 1 MB per second. The chapter uses 1 MB per second, which the concepts page and the pricing page also give."
+    },
+    {
+      "id": "kinesis-modes",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html",
+      "title": "Choose the right mode to stream in",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "There are three modes: On-demand Standard, On-demand Advantage, and Provisioned",
+        "On-demand manages shards itself, accommodates up to double the peak write throughput of the previous 30 days, and splits a shard when its traffic exceeds 500 KB/s",
+        "On-demand does not isolate a single hot partition key: a key that exceeds one shard's 1 MB/s or 1,000 records/s keeps being throttled, and provisioned mode is recommended for such keys",
+        "On-demand Advantage is an account-level setting with no per-stream charge that commits the account to at least 25 MiB/s of ingest and 25 MiB/s of retrieval across its on-demand streams, for at least 24 hours",
+        "number_of_shards = ceiling(max(incoming_write_bandwidth_in_KiB/1024, outgoing_read_bandwidth_in_KiB/2048)) for provisioned mode"
+      ]
+    },
+    {
+      "id": "kinesis-retention",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html",
+      "title": "Change the data retention period",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Records are stored for 24 hours by default and up to 8,760 hours",
+        "Decreasing the retention period makes records older than the new period inaccessible almost immediately",
+        "The retention period is described as a safety net that gives consumers more time to recover"
+      ]
+    },
+    {
+      "id": "kinesis-producers-sdk",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-sdk.html",
+      "title": "Develop producers using the Amazon Kinesis Data Streams API with the AWS SDK for Java",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A failed record in a PutRecords request does not stop the records after it, and the response array has one element per request record in the same order",
+        "Unsuccessful records carry ErrorCode (ProvisionedThroughputExceededException or InternalFailure) and are to be included in a subsequent request",
+        "All records with the same partition key map to the same shard",
+        "Records received through GetRecords are strictly ordered by sequence number"
+      ]
+    },
+    {
+      "id": "kinesis-api-putrecords",
+      "url": "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_PutRecords.html",
+      "title": "PutRecords (Kinesis API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PutRecords does not guarantee the ordering of records, because a single record failure does not stop the processing of subsequent records",
+        "To read records in the order they were written, the reference says to use PutRecord instead and write to the same shard",
+        "A request holds at most 500 records and 10 MiB including partition keys",
+        "After a record is written, neither the record nor its order within the stream can be changed"
+      ]
+    },
+    {
+      "id": "kinesis-api-putrecord",
+      "url": "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_PutRecord.html",
+      "title": "PutRecord (Kinesis API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Sequence numbers increase over time and are specific to a shard, not comparable across shards",
+        "SequenceNumberForOrdering guarantees strictly increasing sequence numbers for puts from the same client to the same partition key; without it records are coarsely ordered by arrival time",
+        "The data blob plus the partition key must not exceed the maximum record size (10 MiB)"
+      ]
+    },
+    {
+      "id": "kinesis-api-getsharditerator",
+      "url": "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_GetShardIterator.html",
+      "title": "GetShardIterator (Kinesis API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The iterator types are AT_SEQUENCE_NUMBER, AFTER_SEQUENCE_NUMBER, AT_TIMESTAMP, TRIM_HORIZON (the oldest record still in the shard), and LATEST",
+        "A shard iterator expires 5 minutes after it is returned"
+      ]
+    },
+    {
+      "id": "kinesis-api-getrecords",
+      "url": "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_GetRecords.html",
+      "title": "GetRecords (Kinesis API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When a shard has been closed and read to its end, NextShardIterator is null",
+        "MillisBehindLatest tells how far the reader is behind the tip of the shard",
+        "A record is up to 1 MiB by default, and large records of up to 10 MiB are supported",
+        "ApproximateArrivalTimestamp is set when the stream stores a record; its accuracy and monotonicity are not guaranteed"
+      ]
+    },
+    {
+      "id": "kinesis-large-records",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/large-records.html",
+      "title": "Large records (Kinesis Data Streams)",
+      "checkedAt": "2026-10-13",
+      "supports": ["Large records are meant for intermittent use and draw on burst capacity"]
+    },
+    {
+      "id": "kinesis-efo",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/enhanced-consumers.html",
+      "title": "Develop enhanced fan-out consumers with dedicated throughput",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Shared-throughput consumers share 2 MB/s per shard among them and pull with GetRecords; an enhanced fan-out consumer gets its own 2 MB/s per shard, pushed over HTTP/2 with SubscribeToShard",
+        "Propagation delay averages around 200 ms with one shared-throughput consumer and around 1,000 ms with five, against typically 70 ms with enhanced fan-out",
+        "Enhanced fan-out has a data retrieval cost and a consumer-shard hour cost"
+      ]
+    },
+    {
+      "id": "kinesis-resharding",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/kinesis-using-sdk-java-after-resharding.html",
+      "title": "Complete the resharding action",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "After a reshard the parent shard is closed: no records are added, and its existing records stay readable until they expire",
+        "Reading a child shard before the parent is exhausted can return a hash key's records out of the order of their sequence numbers; the guide says to read the parent to its end first"
+      ]
+    },
+    {
+      "id": "kinesis-kcl",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/kcl.html",
+      "title": "Use Kinesis Client Library",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "KCL is a Java library that balances shards across workers, checkpoints processed records, and follows shard splits and merges; other languages go through the MultiLangDaemon"
+      ]
+    },
+    {
+      "id": "kinesis-duplicates",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/kinesis-record-processor-duplicates.html",
+      "title": "Handle duplicate records",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Records reach an application more than once for two reasons: producer retries and consumer retries",
+        "A PutRecord retried after a timeout can store the same data twice under two sequence numbers, and applications that need strict guarantees should embed a primary key in the record"
+      ]
+    },
+    {
+      "id": "kinesis-sse-costs",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/costs-performance.html",
+      "title": "Costs, Regions, and performance considerations (server-side encryption)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The AWS managed key aws/kinesis is free, but the KMS API usage Kinesis incurs is billed for every key",
+        "For an encrypted stream read from the tip with one credential, Kinesis calls KMS approximately 12 times every 5 minutes"
+      ]
+    },
+    {
+      "id": "kinesis-kms-permissions",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/permissions-user-key-KMS.html",
+      "title": "Permissions to use user-generated KMS keys",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Using the default service key for encryption does not require custom IAM permissions"
+      ]
+    },
+    {
+      "id": "kinesis-cloudwatch",
+      "url": "https://docs.aws.amazon.com/streams/latest/dev/monitoring-with-cloudwatch.html",
+      "title": "Monitor the Amazon Kinesis Data Streams service with Amazon CloudWatch",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "GetRecords.IteratorAgeMilliseconds is the age of the last record of the GetRecords calls against a stream; the guide recommends an alarm on its Maximum before 50% of the retention period",
+        "WriteProvisionedThroughputExceeded counts records rejected by throttling from PutRecord and PutRecords"
+      ],
+      "note": "The page still describes retention as configurable up to 7 days; the retention page says 365."
+    },
+    {
+      "id": "kinesis-lambda-overview",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html",
+      "title": "Using Lambda to process records from Amazon Kinesis Data Streams",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With a standard iterator Lambda polls each shard at a base rate of once per second and shares read throughput with the shard's other consumers",
+        "Lambda processes the records of each shard in order and stops processing further records of a shard when the function returns an error",
+        "A batching window of up to 5 minutes can be set; a batch is also cut at the 6 MB payload limit",
+        "Event source mappings process each event at least once, and the guide strongly recommends idempotent function code",
+        "ParallelizationFactor from 1 to 10 processes one shard with several concurrent batches while keeping order at the partition-key level",
+        "The shape of the event a function receives from a Kinesis event source"
+      ]
+    },
+    {
+      "id": "kinesis-lambda-create",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-kinesis-create.html",
+      "title": "Process Amazon Kinesis Data Streams records with Lambda",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The permissions Lambda needs: kinesis:DescribeStream, DescribeStreamSummary, GetRecords, GetShardIterator, ListShards, and SubscribeToShard",
+        "Polling starts and stops with a delay of up to several minutes, so a mapping created with LATEST can miss events; TRIM_HORIZON or AT_TIMESTAMP avoids it",
+        "Several event source mappings can process the same stream with several functions"
+      ]
+    },
+    {
+      "id": "kinesis-lambda-parameters",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-kinesis-parameters.html",
+      "title": "Lambda parameters for Amazon Kinesis Data Streams event source mappings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Defaults: BatchSize 100 (maximum 10,000), BisectBatchOnFunctionError false, MaximumBatchingWindowInSeconds 0, MaximumRecordAgeInSeconds -1 (maximum 604,800), MaximumRetryAttempts -1 (maximum 10,000), ParallelizationFactor 1 (maximum 10)",
+        "StartingPosition is AT_TIMESTAMP, TRIM_HORIZON, or LATEST"
+      ]
+    },
+    {
+      "id": "kinesis-lambda-batch-failures",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-kinesis-batchfailurereporting.html",
+      "title": "Configuring partial batch response with Kinesis Data Streams and Lambda",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Without ReportBatchItemFailures in FunctionResponseTypes Lambda does not process a partial batch response, even when the function returns one",
+        "With several batchItemFailures Lambda uses the lowest sequence number as the checkpoint and retries all records from there",
+        "With both BisectBatchOnFunctionError and ReportBatchItemFailures, the batch is bisected at the returned sequence number and only the remaining records are retried",
+        "An empty or null batchItemFailures list is a complete success"
+      ]
+    },
+    {
+      "id": "kinesis-lambda-failure-destination",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/kinesis-on-failure-destination.html",
+      "title": "Retain discarded batch records for a Kinesis Data Streams event source in Lambda",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A function error is retried until the records expire, exceed MaximumRecordAgeInSeconds, or reach MaximumRetryAttempts; splitting a batch does not consume the retry quota",
+        "With the default settings a bad record can block processing on its shard for up to one week",
+        "An SQS or SNS destination receives only metadata (shardId, startSequenceNumber, endSequenceNumber, arrival times, batchSize, streamArn); the records must be read back from the stream before they expire. An S3 destination also receives the invocation record",
+        "The execution role needs sqs:SendMessage for an SQS destination"
+      ]
+    },
+    {
+      "id": "kinesis-lambda-metrics",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html",
+      "title": "Types of metrics for Lambda functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "IteratorAge is, for stream event sources, the age of the last record in the event: the time between the stream receiving the record and the event source mapping sending the event to the function"
+      ]
+    },
+    {
+      "id": "kinesis-lambda-esm",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html",
+      "title": "How Lambda processes records from stream and queue-based event sources",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default a failed batch is reprocessed until the function succeeds or the items expire, and processing of the affected shard pauses to keep order",
+        "Service errors or throttles in which the batch does not reach the function do not count toward retry attempts"
+      ]
+    },
+    {
+      "id": "kinesis-cfn-stream",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-kinesis-stream.html",
+      "title": "AWS::Kinesis::Stream (CloudFormation Template Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The properties of a stream resource: ShardCount, RetentionPeriodHours, StreamModeDetails, StreamEncryption, and MaxRecordSizeInKiB (1,024 to 10,240)"
+      ]
+    },
+    {
+      "id": "kinesis-pricing-page",
+      "url": "https://aws.amazon.com/kinesis/data-streams/pricing/",
+      "title": "Amazon Kinesis Data Streams pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Provisioned mode bills a shard hour and PUT payload units of 25 KB; on-demand standard bills a stream hour, data ingested with each record rounded up to 1 KB, and data retrieved",
+        "The page states that Kinesis Data Streams is not currently available in AWS Free Tier",
+        "On-demand Advantage has no stream-hour charge and a minimum charge of 25 MB/s ingested and 25 MB/s retrieved at the account level"
+      ],
+      "note": "The amounts on the page are filled in by script and were not in the text that was read. Every amount in the chapter is from the Price List bulk API."
+    },
+    {
+      "id": "kinesis-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AmazonKinesis, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Tokyo: USD 0.0195 per provisioned shard-hour, USD 0.0215 per million PUT payload units, USD 0.052 per on-demand stream-hour, USD 0.104 per GB ingested and USD 0.052 per GB retrieved on demand, USD 0.026 per extended shard-hour, USD 0.0195 per enhanced fan-out consumer-shard hour and USD 0.0169 per GB it retrieves"
+      ],
+      "note": "Publication date 2026-09-11T12:44:43Z."
+    },
+    {
+      "id": "kinesis-ddb-streams-options",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/streamsmain.html",
+      "title": "Change data capture with Amazon DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DynamoDB Streams keeps 24 hours, allows up to 2 simultaneous consumers per shard, has no duplicates, and orders each item's changes as they happened",
+        "Kinesis Data Streams for DynamoDB keeps up to a year, allows more consumers, may contain duplicates, and leaves ordering to a timestamp on each record"
+      ]
+    },
+    {
+      "id": "kinesis-sqs-welcome",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html",
+      "title": "What is Amazon Simple Queue Service?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Standard queues support at-least-once delivery and FIFO queues exactly-once processing"
+      ]
+    },
+    {
+      "id": "kinesis-eventbridge",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html",
+      "title": "What Is Amazon EventBridge?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Event buses are routers that deliver events to zero or more targets; Custom Event Bus - Classic routes with rules and targets, and the Custom Event Bus retains events and supports ordered delivery and replay"
+      ]
+    },
+    {
+      "id": "kinesis-eventbridge-custom-bus",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-what-is.html",
+      "title": "What is the EventBridge Custom Event Bus?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Custom Event Bus retains events for a configured number of days, and a subscriber can start from a point in the past"
+      ]
+    },
+    {
+      "id": "kinesis-msk",
+      "url": "https://docs.aws.amazon.com/msk/latest/developerguide/what-is-msk.html",
+      "title": "Welcome to the Amazon MSK Developer Guide",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon MSK runs open-source Apache Kafka; a provisioned cluster has broker nodes in each Availability Zone, at least one per zone, and MSK Serverless manages the brokers"
+      ]
+    },
+    {
+      "id": "kinesis-flink",
+      "url": "https://docs.aws.amazon.com/managed-flink/latest/java/what-is.html",
+      "title": "What is Amazon Managed Service for Apache Flink?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Managed Service for Apache Flink runs Apache Flink applications written in Java, Scala, Python, or SQL over streaming sources, and provides the infrastructure, scaling, and checkpoints"
+      ]
+    },
+    {
+      "id": "kinesis-firehose-source",
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/writing-with-kinesis-streams.html",
+      "title": "Configure source settings for Amazon Kinesis Data Streams (Firehose)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Firehose stream can take a Kinesis data stream as its source, starts reading at LATEST, and calls GetRecords once per second per shard; more than one Firehose stream can read the same data stream"
+      ]
+    },
+    {
+      "id": "kinesis-cdkd-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "cdkd 0.296.28 registers a provider for each of the twelve resource types the chapter's stack uses, including AWS::Kinesis::Stream, AWS::Lambda::EventSourceMapping, and AWS::CloudWatch::Alarm"
+      ],
+      "note": "Read as the raw file at the v0.296.28 tag, and matched against the installed package's dist."
+    },
+    {
+      "id": "kinesis-cf-pipelines",
+      "url": "https://developers.cloudflare.com/pipelines/",
+      "title": "Basin Pipelines (Cloudflare Docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13 Basin Pipelines, formerly Cloudflare Pipelines, is generally available on the Workers Paid plan: it ingests events over HTTP or a Worker binding, transforms them with SQL, and delivers them to R2 as Iceberg tables or Parquet and JSON files"
+      ]
+    },
+    {
+      "id": "kinesis-cf-pipelines-streams",
+      "url": "https://developers.cloudflare.com/pipelines/streams/",
+      "title": "Streams (Basin Pipelines, Cloudflare Docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Basin Pipelines stream is a durable, buffered queue that can be read by multiple pipelines"
+      ],
+      "note": "The pages read describe pipelines and sinks as the readers of a stream. No API for an application to read a stream from a position of its choosing was found on them."
+    },
+    {
+      "id": "kinesis-cf-queues-how",
+      "url": "https://developers.cloudflare.com/queues/reference/how-queues-works/",
+      "title": "How Queues Works (Cloudflare Docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Cloudflare Queues does not guarantee that messages are delivered in the order in which they are published"
+      ]
+    },
+    {
+      "id": "kinesis-cf-queues-delivery",
+      "url": "https://developers.cloudflare.com/queues/reference/delivery-guarantees/",
+      "title": "Delivery guarantees (Cloudflare Queues)",
+      "checkedAt": "2026-10-13",
+      "supports": ["Cloudflare Queues provides at-least-once delivery by default"]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "data-stream",
+      "ja": "データストリーム",
+      "en": "data stream",
+      "firstUse": "54",
+      "definition": {
+        "ja": "レコードを届いた順に並べて、決めた期間だけ保持する記録。読んでも消えず、読む側がそれぞれ自分の位置を持つ。",
+        "en": "A record of what arrived, in the order it arrived, kept for a set time. Reading removes nothing, and each reader keeps a position of its own."
+      }
+    },
+    {
+      "id": "kinesis-shard",
+      "ja": "shard",
+      "en": "shard",
+      "firstUse": "54",
+      "definition": {
+        "ja": "Kinesis の stream を構成する 1 本の列。書き込みと読み取りの上限、順序の保証、料金は、どれも shard ごとに決まる。",
+        "en": "One of the sequences a Kinesis stream is made of. Write and read limits, ordering, and the price are all per shard."
+      }
+    },
+    {
+      "id": "kinesis-partition-key",
+      "ja": "partition key（Kinesis）",
+      "en": "partition key (Kinesis)",
+      "firstUse": "54",
+      "definition": {
+        "ja": "レコードに付ける文字列。MD5 のハッシュ値で shard が決まるので、同じ partition key のレコードは同じ shard に並ぶ。DynamoDB の partition key とは別のもの。",
+        "en": "A string given with each record. Its MD5 hash picks the shard, so records with one partition key line up in one shard. Not DynamoDB's partition key."
+      }
+    },
+    {
+      "id": "sequence-number",
+      "ja": "sequence number",
+      "en": "sequence number",
+      "firstUse": "54",
+      "definition": {
+        "ja": "Kinesis が、受け取ったレコードに付ける番号。shard の中で増えていく。数値型に収まらない桁数の 10 進の文字列で、連番ではない。",
+        "en": "The number Kinesis gives a record it has stored. It increases within a shard. A decimal string with more digits than a number holds, and not consecutive."
+      }
+    },
+    {
+      "id": "iterator-age",
+      "ja": "iterator age",
+      "en": "iterator age",
+      "firstUse": "54",
+      "definition": {
+        "ja": "コンシューマーが最後に受け取ったレコードが、stream に届いてからどれだけ経っているか。コンシューマーの遅れを表す。保持期間を超えると、読まれないままレコードが消える。",
+        "en": "How long ago the last record a consumer was handed arrived in the stream: how far behind the consumer is. Past the retention period, records are gone unread."
+      }
+    },
+    {
+      "id": "poison-record",
+      "ja": "poison record",
+      "en": "poison record",
+      "firstUse": "54",
+      "definition": {
+        "ja": "何度処理しても失敗するレコード。順序を守って読むコンシューマーでは、後ろに並んだレコードをすべて止める。",
+        "en": "A record that fails however often it is processed. In a consumer that reads in order, it holds back everything behind it."
+      }
+    },
+    {
+      "id": "enhanced-fan-out",
+      "ja": "enhanced fan-out",
+      "en": "enhanced fan-out",
+      "firstUse": "54",
+      "definition": {
+        "ja": "コンシューマーを stream に登録して、shard ごとに専用の読み取り帯域（2 MB/秒）を持たせるしくみ。登録している時間と読んだ量に料金がかかる。",
+        "en": "Registering a consumer with a stream so that it gets read throughput of its own (2 MB/s) on every shard. Billed for the time registered and the data read."
+      }
+    },
+    {
+      "id": "resharding",
+      "ja": "resharding",
+      "en": "resharding",
+      "firstUse": "54",
+      "definition": {
+        "ja": "shard を 2 つに分ける（split）、または 2 つを 1 つにまとめる（merge）操作。元の shard は閉じられ、中のレコードは保持期間が切れるまで読める。",
+        "en": "Splitting a shard in two or merging two into one. The original shard is closed, and its records stay readable until retention runs out."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "54.architecture",
+      "sources": ["examples/54-kinesis/infra/lib/kinesis-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "54.log",
+      "sources": [
+        "examples/54-kinesis/src/local-stream.ts",
+        "examples/54-kinesis/test/stream.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "54.modes",
+      "sources": [
+        "examples/54-kinesis/infra/lib/kinesis-stack.ts",
+        "examples/54-kinesis/src/settings.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.choices",
+      "sources": ["examples/54-kinesis/infra/lib/kinesis-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.record",
+      "sources": [
+        "examples/54-kinesis/src/revision.ts",
+        "examples/54-kinesis/test/consumer.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "54.shards",
+      "sources": [
+        "examples/54-kinesis/src/local-stream.ts",
+        "examples/54-kinesis/test/stream.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "54.producer",
+      "sources": [
+        "examples/54-kinesis/src/producer.ts",
+        "examples/54-kinesis/src/kinesis-writer.ts",
+        "examples/54-kinesis/test/producer.test.ts",
+        "examples/54-kinesis/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "54.consumer",
+      "sources": [
+        "examples/54-kinesis/src/history.ts",
+        "examples/54-kinesis/src/dynamodb-history.ts",
+        "examples/54-kinesis/src/consumer.ts",
+        "examples/54-kinesis/src/consumer-lambda.ts",
+        "examples/54-kinesis/src/env.ts",
+        "examples/54-kinesis/test/consumer.test.ts",
+        "examples/54-kinesis/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "54.mapping",
+      "sources": [
+        "examples/54-kinesis/src/settings.ts",
+        "examples/54-kinesis/infra/lib/kinesis-stack.ts",
+        "examples/54-kinesis/src/failure-record.ts",
+        "examples/54-kinesis/test/poller.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "54.readers",
+      "sources": [
+        "examples/54-kinesis/src/shard-order.ts",
+        "examples/54-kinesis/test/shard-order.test.ts",
+        "examples/54-kinesis/scripts/replay.ts"
+      ],
+      "tasks": ["test:unit", "kinesis:replay"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.stack",
+      "sources": [
+        "examples/54-kinesis/infra/lib/kinesis-stack.ts",
+        "examples/54-kinesis/infra/bin/app.ts",
+        "examples/54-kinesis/infra/test/kinesis-stack.test.ts",
+        "examples/54-kinesis/cdk.json"
+      ],
+      "tasks": ["kinesis:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "54.local",
+      "sources": [
+        "examples/54-kinesis/src/local.ts",
+        "examples/54-kinesis/src/local-stream.ts",
+        "examples/54-kinesis/src/local-poller.ts",
+        "examples/54-kinesis/scripts/demo.ts",
+        "examples/54-kinesis/test/fixtures.ts"
+      ],
+      "tasks": ["kinesis:demo", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "54.failures",
+      "sources": [
+        "examples/54-kinesis/test/poller.test.ts",
+        "examples/54-kinesis/test/producer.test.ts",
+        "examples/54-kinesis/test/stream.test.ts",
+        "examples/54-kinesis/src/local-poller.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "54.deploy",
+      "sources": [
+        "examples/54-kinesis/scripts/put.ts",
+        "examples/54-kinesis/scripts/history.ts",
+        "examples/54-kinesis/infra/bin/app.ts"
+      ],
+      "tasks": [
+        "kinesis:infra:synth",
+        "kinesis:infra:diff",
+        "kinesis:infra:deploy",
+        "kinesis:put",
+        "kinesis:history",
+        "kinesis:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.operate",
+      "sources": [
+        "examples/54-kinesis/scripts/replay.ts",
+        "examples/54-kinesis/scripts/failures.ts",
+        "examples/54-kinesis/src/failure-record.ts",
+        "examples/54-kinesis/src/shard-order.ts"
+      ],
+      "tasks": ["kinesis:replay", "kinesis:failures", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.cost",
+      "sources": ["examples/54-kinesis/infra/lib/kinesis-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.pitfalls",
+      "sources": ["examples/54-kinesis/src/settings.ts", "examples/54-kinesis/test/poller.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.production",
+      "sources": ["examples/54-kinesis/infra/lib/kinesis-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.cleanup",
+      "sources": ["examples/54-kinesis/infra/lib/kinesis-stack.ts"],
+      "tasks": ["kinesis:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "54.distributed",
+      "sources": ["examples/54-kinesis/test/poller.test.ts", "examples/54-kinesis/src/history.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "kinesis.shard-hour",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "ZTFQNNTZBXXWZRBG",
+      "usageType": "APN1-Storage-ShardHour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ShardHour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0195000000",
+          "description": "$0.0195 per provisioned shard-hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.put-payload-unit",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "592RHJF77GPNRBKF",
+      "usageType": "APN1-PutRequestPayloadUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "PutRequest",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000000215",
+          "description": "$0.0215 per 1 million payload units"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.extended-retention.shard-hour",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "KVGZEUUUY8N663NB",
+      "usageType": "APN1-Extended-ShardHour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ShardHour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0260000000",
+          "description": "$0.026 per extended shard-hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.efo.consumer-shard-hour",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "JD6RHGF75Z88WSEG",
+      "usageType": "APN1-EnhancedFanoutHour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ConsumerShardHour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0195000000",
+          "description": "$0.0195 per enhanced fan-out consumer-shard hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.efo.retrieval",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "BWAM554PV2DWEF39",
+      "usageType": "APN1-ReadBytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0169000000",
+          "description": "$0.0169 per GB of data retrieved by consumers using enhanced fan-out"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.on-demand.stream-hour",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "8K42M39H8AUET4RZ",
+      "usageType": "APN1-OnDemand-StreamHour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "StreamHr",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0520000000",
+          "description": "0.052 per Stream Hour Used"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.on-demand.ingest",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "JU3GXBXA2AB3TGEA",
+      "usageType": "APN1-OnDemand-BilledIncomingBytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1040000000",
+          "description": "0.104 per GB of data written"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.advantage.ingest",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "S6YXDCBA96HGCGNN",
+      "usageType": "APN1-Advantage-BilledIncomingBytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0416000000",
+          "description": "$0.0416 per GB for Advantage-BilledIncomingBytes in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.advantage.retrieval",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "Z676N94RV7Q3BRMW",
+      "usageType": "APN1-Advantage-BilledOutgoingBytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0208000000",
+          "description": "$0.0208 per GB for Advantage-BilledOutgoingBytes in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "kinesis.on-demand.retrieval",
+      "offerCode": "AmazonKinesis",
+      "region": "ap-northeast-1",
+      "sku": "KGXKKHJFJDJ9JEAA",
+      "usageType": "APN1-OnDemand-BilledOutgoingBytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0520000000",
+          "description": "0.052 per GB of data read using GetRecords Consumer"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonKinesis/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:43Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "kinesis.shard-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.put-payload-unit",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.extended-retention.shard-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.efo.consumer-shard-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.efo.retrieval",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.on-demand.stream-hour",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.on-demand.ingest",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.advantage.ingest",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.advantage.retrieval",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    },
+    {
+      "priceId": "kinesis.on-demand.retrieval",
+      "reason": "The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "kinesis-idle",
+      "chapter": "54",
+      "title": {
+        "ja": "Kinesis: デプロイ済みで、1 件も書かない月（provisioned、shard 1 つ）",
+        "en": "Kinesis: deployed, with nothing written, for a month (provisioned, one shard)"
+      },
+      "assumptions": {
+        "ja": [
+          "provisioned の stream に shard が 1 つ。730 時間ずっと存在する",
+          "関数は、レコードが無いあいだ起動しない。event source mapping が shard を読みにいくこと自体には、provisioned の stream では料金が付かない（Price List に GetRecords の単価が無い）",
+          "stream は AWS 管理のキー（aws/kinesis）で暗号化する。キーそのものは無料だが、Kinesis が代わりに呼ぶ KMS の API は請求される、と Kinesis のガイドにある。1 つの認証情報で先頭から読み続けるとき 5 分に約 12 回という同じページの目安を、そのまま 1 か月ぶん（105,120 回）数えた。請求書では確かめていない",
+          "アラームは 3 つ。アカウント全体で最初の 10 個は無料の枠に入る",
+          "未算入: 空の履歴のテーブルと空のキュー（どちらも 0）"
+        ],
+        "en": [
+          "One shard in a provisioned stream, existing for all 730 hours",
+          "The function is not invoked while there are no records. In provisioned mode the event source mapping's reads are not billed by themselves (the Price List has no price per GetRecords call)",
+          "The stream is encrypted with the AWS managed key (aws/kinesis). The key is free, but the Kinesis guide says the KMS API calls Kinesis makes are billed. The same page's estimate, about 12 calls every 5 minutes for one credential reading from the tip, is counted for the whole month (105,120). Not checked on a bill",
+          "Three alarms. The first ten in the account fall in the free allowance",
+          "Not included: the empty history table and the empty queue (both 0)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "kinesis.shard-hour",
+          "quantity": 730,
+          "basis": "1 shard x 730 h"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "three standard alarms"
+        },
+        {
+          "priceId": "kms.request",
+          "quantity": 105120,
+          "basis": "12 calls every 5 minutes x 12 x 730 h, as the Kinesis guide estimates for one credential reading from the tip"
+        }
+      ]
+    },
+    {
+      "id": "kinesis-idle-on-demand",
+      "chapter": "54",
+      "title": {
+        "ja": "Kinesis: 同じスタックを on-demand（Standard）にして、1 件も書かない月",
+        "en": "Kinesis: the same stack with an on-demand (Standard) stream, nothing written, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "stream を on-demand の Standard にした場合。この章のスタックはこの設定ではデプロイしない。比べるための計算",
+          "stream が 1 本、730 時間。書き込みも読み取りも 0 GB",
+          "stream は AWS 管理のキー（aws/kinesis）で暗号化する。キーそのものは無料だが、Kinesis が代わりに呼ぶ KMS の API は請求される、と Kinesis のガイドにある。1 つの認証情報で先頭から読み続けるとき 5 分に約 12 回という同じページの目安を、そのまま 1 か月ぶん（105,120 回）数えた。請求書では確かめていない",
+          "アラームは 3 つ"
+        ],
+        "en": [
+          "What the stream would cost in On-demand Standard mode. The chapter's stack is not deployed this way; this is for comparison",
+          "One stream for 730 hours, with 0 GB written and read",
+          "The stream is encrypted with the AWS managed key (aws/kinesis). The key is free, but the Kinesis guide says the KMS API calls Kinesis makes are billed. The same page's estimate, about 12 calls every 5 minutes for one credential reading from the tip, is counted for the whole month (105,120). Not checked on a bill",
+          "Three alarms"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "kinesis.on-demand.stream-hour",
+          "quantity": 730,
+          "basis": "1 stream x 730 h"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "three standard alarms"
+        },
+        {
+          "priceId": "kms.request",
+          "quantity": 105120,
+          "basis": "12 calls every 5 minutes x 12 x 730 h, as the Kinesis guide estimates for one credential reading from the tip"
+        }
+      ]
+    },
+    {
+      "id": "kinesis-small",
+      "chapter": "54",
+      "title": {
+        "ja": "Kinesis: 月 1,000,000 件のリビジョン（provisioned、shard 1 つ）",
+        "en": "Kinesis: 1,000,000 revisions a month (provisioned, one shard)"
+      },
+      "assumptions": {
+        "ja": [
+          "provisioned の stream に shard が 1 つ。730 時間",
+          "1 か月に 1,000,000 件のリビジョンを書く。1 件は 0.2 KB で、25 KB の PUT payload unit 1 つに収まる",
+          "関数は平均 10 件ずつ受け取ると仮定して 100,000 回起動、1 回 200 ミリ秒、256 MB、arm64。再試行と重複はゼロとする",
+          "履歴のテーブルへの書き込みは 1 件につき 1 unit（アイテムは 1 KB 未満）",
+          "ログは 1 回の起動につき 0.2 KB",
+          "未算入: 履歴のテーブルの保存料金（数 MB）、失敗用のキューと SNS（何も流れない前提）",
+          "stream は AWS 管理のキー（aws/kinesis）で暗号化する。キーそのものは無料だが、Kinesis が代わりに呼ぶ KMS の API は請求される、と Kinesis のガイドにある。1 つの認証情報で先頭から読み続けるとき 5 分に約 12 回という同じページの目安を、そのまま 1 か月ぶん（105,120 回）数えた。請求書では確かめていない"
+        ],
+        "en": [
+          "One shard in a provisioned stream for 730 hours",
+          "1,000,000 revisions are written in the month. Each is 0.2 KB and fits in one 25 KB PUT payload unit",
+          "The function is assumed to receive 10 records at a time on average: 100,000 invocations of 200 ms at 256 MB on arm64. No retries and no duplicates",
+          "One write unit per revision on the history table (items are under 1 KB)",
+          "0.2 KB of logs per invocation",
+          "Not included: storage of the history table (a few MB), and the failure queue and SNS (nothing is assumed to flow through them)",
+          "The stream is encrypted with the AWS managed key (aws/kinesis). The key is free, but the Kinesis guide says the KMS API calls Kinesis makes are billed. The same page's estimate, about 12 calls every 5 minutes for one credential reading from the tip, is counted for the whole month (105,120). Not checked on a bill"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "kinesis.shard-hour",
+          "quantity": 730,
+          "basis": "1 shard x 730 h"
+        },
+        {
+          "priceId": "kinesis.put-payload-unit",
+          "quantity": 1000000,
+          "basis": "one 25 KB unit per record"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 100000,
+          "basis": "1,000,000 records in batches of 10"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 5000,
+          "basis": "100,000 x 0.2 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 1000000,
+          "basis": "one conditional update per revision"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.02,
+          "basis": "100,000 invocations x 0.2 KB"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "three standard alarms"
+        },
+        {
+          "priceId": "kms.request",
+          "quantity": 105120,
+          "basis": "12 calls every 5 minutes x 12 x 730 h, as the Kinesis guide estimates for one credential reading from the tip"
+        }
+      ]
+    },
+    {
+      "id": "kinesis-small-on-demand",
+      "chapter": "54",
+      "title": {
+        "ja": "Kinesis: 月 1,000,000 件のリビジョン（on-demand の Standard にした場合）",
+        "en": "Kinesis: 1,000,000 revisions a month (with an On-demand Standard stream)"
+      },
+      "assumptions": {
+        "ja": [
+          "stream を on-demand の Standard にした場合。比べるための計算",
+          "書き込みは 1 件を 1 KB に切り上げて数える（料金ページ）。1,000,000 KB = 0.9537 GB",
+          "読み取りは切り上げない。コンシューマーは 1 つで、1,000,000 × 0.2 KB = 0.1907 GB",
+          "関数は平均 10 件ずつ受け取ると仮定して 100,000 回起動、1 回 200 ミリ秒、256 MB、arm64。再試行と重複はゼロとする",
+          "履歴のテーブルへの書き込みは 1 件につき 1 unit（アイテムは 1 KB 未満）",
+          "ログは 1 回の起動につき 0.2 KB",
+          "未算入: 履歴のテーブルの保存料金（数 MB）、失敗用のキューと SNS（何も流れない前提）",
+          "stream は AWS 管理のキー（aws/kinesis）で暗号化する。キーそのものは無料だが、Kinesis が代わりに呼ぶ KMS の API は請求される、と Kinesis のガイドにある。1 つの認証情報で先頭から読み続けるとき 5 分に約 12 回という同じページの目安を、そのまま 1 か月ぶん（105,120 回）数えた。請求書では確かめていない"
+        ],
+        "en": [
+          "What the same month would cost in On-demand Standard mode, for comparison",
+          "Each record written is rounded up to 1 KB (pricing page): 1,000,000 KB = 0.9537 GB",
+          "Reads are not rounded. One consumer: 1,000,000 x 0.2 KB = 0.1907 GB",
+          "The function is assumed to receive 10 records at a time on average: 100,000 invocations of 200 ms at 256 MB on arm64. No retries and no duplicates",
+          "One write unit per revision on the history table (items are under 1 KB)",
+          "0.2 KB of logs per invocation",
+          "Not included: storage of the history table (a few MB), and the failure queue and SNS (nothing is assumed to flow through them)",
+          "The stream is encrypted with the AWS managed key (aws/kinesis). The key is free, but the Kinesis guide says the KMS API calls Kinesis makes are billed. The same page's estimate, about 12 calls every 5 minutes for one credential reading from the tip, is counted for the whole month (105,120). Not checked on a bill"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "kinesis.on-demand.stream-hour",
+          "quantity": 730,
+          "basis": "1 stream x 730 h"
+        },
+        {
+          "priceId": "kinesis.on-demand.ingest",
+          "quantity": 0.9537,
+          "basis": "1,000,000 records x 1 KB (rounded up) / 1,048,576"
+        },
+        {
+          "priceId": "kinesis.on-demand.retrieval",
+          "quantity": 0.1907,
+          "basis": "1,000,000 records x 0.2 KB / 1,048,576, one consumer"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 100000,
+          "basis": "1,000,000 records in batches of 10"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 5000,
+          "basis": "100,000 x 0.2 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 1000000,
+          "basis": "one conditional update per revision"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.02,
+          "basis": "100,000 invocations x 0.2 KB"
+        },
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 3,
+          "basis": "three standard alarms"
+        },
+        {
+          "priceId": "kms.request",
+          "quantity": 105120,
+          "basis": "12 calls every 5 minutes x 12 x 730 h, as the Kinesis guide estimates for one credential reading from the tip"
+        }
+      ]
+    },
+    {
+      "id": "kinesis-advantage-minimum",
+      "chapter": "54",
+      "title": {
+        "ja": "Kinesis: On-demand Advantage を有効にしたアカウントの、1 か月の最低料金",
+        "en": "Kinesis: the least an account pays in a month with On-demand Advantage enabled"
+      },
+      "assumptions": {
+        "ja": [
+          "On-demand Advantage はアカウント単位の設定で、有効にすると、そのリージョンの on-demand の stream 全体で、書き込み 25 MiB/秒と読み取り 25 MiB/秒ぶんを少なくとも支払う（ドキュメント）",
+          "25 MiB/秒 × 3,600 秒 × 730 時間 = 65,700,000 MiB = 64,160.16 GB。実際の使用量がこれより少なくても、差は同じ単価で請求される",
+          "この章のスタックは、この設定を使わない。誰が有効にしてはいけないかを示すための計算"
+        ],
+        "en": [
+          "On-demand Advantage is an account-level setting. Once enabled, the account pays for at least 25 MiB/s of ingest and 25 MiB/s of retrieval across the Region's on-demand streams (documentation)",
+          "25 MiB/s x 3,600 s x 730 h = 65,700,000 MiB = 64,160.16 GB. Usage below it is billed as a shortfall at the same rate",
+          "The chapter's stack does not use this setting. The arithmetic is here to show who must not enable it"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "kinesis.advantage.ingest",
+          "quantity": 64160.16,
+          "basis": "25 MiB/s x 3,600 s x 730 h, in GB"
+        },
+        {
+          "priceId": "kinesis.advantage.retrieval",
+          "quantity": 64160.16,
+          "basis": "25 MiB/s x 3,600 s x 730 h, in GB"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "54",
+        "command": "vp test run examples/54-kinesis",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "7 ファイル、76 件。partition key から shard への割り当て（MD5）、shard の中の順序、2 つの読み手が同じレコードを読むこと、位置を指定した読み直し、保持期間、shard ごとの書き込み上限と hot key、shard の split、PutRecords の部分的な失敗で順序が入れ替わることとその対策、応答を失った書き込みの重複、ハンドラーの適用と poison record の報告、失敗した batch の再配送で二重に数えないこと、poison record が shard を止めることと設定ごとの違い、partial batch response を返しても mapping が聞いていなければ読み飛ばされること、親より先に子の shard を読んだときの欠け、あとから足したコンシューマーの読み直し、DynamoDB と Kinesis へのリクエストの形、ドキュメントの例にある失敗の記録の読み取り、スタックの assertion。相手はメモリ上の stream と event source mapping のモデルで、Kinesis でも Lambda でもない。条件を 6 か所わざと壊して、テストがそれぞれ 4 件、5 件、7 件、8 件、3 件、1 件落ちることも確かめた",
+          "en": "7 files, 76 tests. Partition keys mapped to shards (MD5), order within a shard, two readers reading the same records, reading again from a chosen position, retention, the per-shard write limit and a hot key, a shard split, PutRecords reordering a note's revisions on a partial failure and the fix, a duplicate from a write whose answer was lost, the handler applying records and reporting a poison record, a failed batch redelivered without being counted twice, a poison record holding back a shard and what each setting changes, a partial batch response being skipped when the mapping is not told to listen, the gap left by reading a child shard before its parent, a consumer added later reading from the start, the shape of requests to DynamoDB and Kinesis, parsing the documented failure record, and stack assertions. They run against the in-memory stream and the model of the event source mapping, not Kinesis or Lambda. Six conditions were also broken on purpose, and 4, 5, 7, 8, 3, and 1 tests failed"
+        }
+      },
+      {
+        "scope": "54",
+        "command": "vp run kinesis:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "メモリ上の stream で 4 つの場面を流し、出力を読んだ。応答を失った batch の再配送で、版を比べるコンシューマーは 5 件のまま、比べないコンシューマーは 10 件になる。poison record は、Lambda の既定値では 500 回試しても後ろの b が適用されず、スタックの設定では 1 件だけが諦められて b は 2 件適用される。PutRecords で 1 件目だけ断られると、断られたぶんを送り直す書き方では版 2 に対してリビジョン 1 件、ノートごとに 1 件ずつ送る書き方では 2 件。1 時間あとに足したコンシューマーは、最初のコンシューマーと同じ履歴になる",
+          "en": "Ran the four scenes through the in-memory stream and read the output. After a batch is redelivered because its answer was lost, the consumer that compares versions stays at 5 revisions and the one that does not reaches 10. With Lambda's defaults the poison record keeps b unapplied after 500 tries; with the stack's settings one record is given up on and b gets both revisions. When the first of two entries in a PutRecords request is refused once, resending the refused entries leaves version 2 built from 1 revision, and one revision of a note per request leaves 2. A consumer added an hour later ends with the same history as the first"
+        }
+      },
+      {
+        "scope": "54",
+        "command": "vp run kinesis:infra:synth / tsc --noEmit -p examples/54-kinesis",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "テンプレートは AWS に問い合わせずに生成された（関数のバンドル込み）。リソースは 12 種類で、どれも cdkd 0.296.28 が専用の実装を持つ。Custom:: のリソースはない。scripts/ は型検査のみ",
+          "en": "The template was generated without calling AWS, function bundle included. Twelve resource types, each with a provider of its own in cdkd 0.296.28, and no Custom:: resource. scripts/ is type-checked only"
+        }
+      },
+      {
+        "scope": "54",
+        "command": "vp check --fix (examples/54-kinesis, the chapter's pages, data/fragments/54.json)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "自分のファイルだけにかけた。awscdk-lint を含めて警告なし",
+          "en": "Run on the chapter's own files only. No warnings, awscdk-lint included"
+        }
+      },
+      {
+        "scope": "54",
+        "command": "vp run kinesis:infra:diff / kinesis:infra:deploy / kinesis:put / kinesis:history / kinesis:replay / kinesis:failures / kinesis:infra:drift / kinesis:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS に対しては何も実行していない",
+          "en": "Nothing was run against AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "kinesis-mapping-on-aws",
+        "summary": {
+          "ja": "54章: event source mapping の動きは、ドキュメントから作ったモデルでしか確かめていない。実物で未確認なのは、partial batch response と bisect を両方有効にしたときに失敗した 1 件だけが諦められること、分割された batch で再試行の回数がどう数えられるか、失敗の記録が SQS にドキュメントの例どおりの形で届くこと、IteratorAge のメトリクスが詰まっているあいだ増え続けること。",
+          "en": "Chapter 54: the event source mapping's behaviour was checked only against a model built from the documentation. Not confirmed on AWS: that with partial batch responses and bisecting both on only the one failing record is given up on, how retries are counted for the halves of a split batch, that the failure record reaches SQS in the documented shape, and that the IteratorAge metric keeps growing while the mapping is stuck."
+        },
+        "resume": {
+          "ja": "vp run kinesis:infra:deploy の後、vp run kinesis:put でリビジョンを書き、vp run kinesis:history で確かめる。次に vp run kinesis:put -- --poison で JSON ではないレコードを 1 件書き、続けて vp run kinesis:put -- --from 6 --count 3 を実行する。数分後に vp run kinesis:failures が 1 件の範囲を出し、vp run kinesis:history が版 8 を示せば、モデルと同じ動き。関数のログの `poison record` の回数が、試行の回数になる。",
+          "en": "After vp run kinesis:infra:deploy, write revisions with vp run kinesis:put and check with vp run kinesis:history. Then put one record that is not JSON with vp run kinesis:put -- --poison, and run vp run kinesis:put -- --from 6 --count 3. If, a few minutes later, vp run kinesis:failures shows a range of one record and vp run kinesis:history shows version 8, the service behaves as the model does. The number of `poison record` lines in the function's log is the number of attempts."
+        }
+      },
+      {
+        "id": "kinesis-reshard-and-lambda",
+        "summary": {
+          "ja": "54章: shard を split または merge したあと、Lambda の event source mapping が親の shard を読み終えてから子を読むかどうかを、読んだ Lambda のドキュメントから確認できなかった。Kinesis のガイドは、読む側が親を先に読み切るよう求めている。この章のモデルは親を先に読む。",
+          "en": "Chapter 54: whether a Lambda event source mapping finishes a parent shard before reading its children after a split or merge could not be confirmed from the Lambda documentation that was read. The Kinesis guide asks a reader to exhaust the parent first, and the chapter's model does."
+        },
+        "resume": {
+          "ja": "デプロイした stream に 1 つのノートのリビジョンを書き続けながら `aws kinesis update-shard-count --target-shard-count 2 --scaling-type UNIFORM_SCALING` を実行し、vp run kinesis:history の missing が 0 のままかを見る。0 でなければ、関数のログで shard ごとの順序を確かめる。shard を 2 つにすると料金も 2 倍になるので、確かめたら 1 に戻す。",
+          "en": "While writing revisions of one note to the deployed stream, run `aws kinesis update-shard-count --target-shard-count 2 --scaling-type UNIFORM_SCALING` and watch whether vp run kinesis:history keeps showing missing 0. If not, read the order per shard from the function's log. Two shards cost twice as much, so set it back to 1 afterwards."
+        }
+      },
+      {
+        "id": "kinesis-idle-bill",
+        "summary": {
+          "ja": "54章: 使っていない月の料金のうち、KMS のリクエスト（月に約 105,120 回）は Kinesis のガイドの目安をそのまま使った。AWS 管理のキーでこの回数が実際に請求されるか、関数が動いていないあいだも同じ頻度かは、請求書で確かめていない。",
+          "en": "Chapter 54: of the idle month's cost, the KMS requests (about 105,120 a month) are the Kinesis guide's estimate taken as is. Whether that many are billed for the AWS managed key, and at the same rate while the function is not running, was not checked on a bill."
+        },
+        "resume": {
+          "ja": "デプロイして数日置き、Cost Explorer を usage type で分けて、`APN1-Storage-ShardHour` と `ap-northeast-1-KMS-Requests` を見る。",
+          "en": "Deploy, leave it for a few days, and look at `APN1-Storage-ShardHour` and `ap-northeast-1-KMS-Requests` in Cost Explorer grouped by usage type."
+        }
+      },
+      {
+        "id": "kinesis-alarm-topic",
+        "summary": {
+          "ja": "54章: `-c alarmTopicArn` で 19章のトピックを渡したとき、この章の 3 つのアラームがそのトピックに publish できることを、実物で確かめていない。",
+          "en": "Chapter 54: not confirmed on AWS that the chapter's three alarms can publish to chapter 19's topic when it is passed with `-c alarmTopicArn`."
+        },
+        "resume": {
+          "ja": "vp run kinesis:infra:deploy -c alarmTopicArn=<19章の AlarmTopicArn> のあと、`aws cloudwatch set-alarm-state` でアラームを ALARM にして、通知が届くかを見る。",
+          "en": "After vp run kinesis:infra:deploy -c alarmTopicArn=<chapter 19's AlarmTopicArn>, set an alarm to ALARM with `aws cloudwatch set-alarm-state` and see whether the notice arrives."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 54: Kinesis Data Streams ---------------------------------\n      // The chapter's failures through the in-memory stream and the model of the event source mapping. No AWS.\n      \"kinesis:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/54-kinesis\" }),\n      ...infra(\"kinesis\", \"examples/54-kinesis\", \"AihKinesis\"),\n      // Writes revisions of one note to the deployed stream with your credentials.\n      \"kinesis:put\": live(\"node --env-file-if-exists=../../.env scripts/put.ts\", {\n        cwd: \"examples/54-kinesis\",\n      }),\n      // What the function derived for one note.\n      \"kinesis:history\": live(\"node --env-file-if-exists=../../.env scripts/history.ts\", {\n        cwd: \"examples/54-kinesis\",\n      }),\n      // Reads the stream from its oldest record on your machine and builds the histories in memory.\n      \"kinesis:replay\": live(\"node --env-file-if-exists=../../.env scripts/replay.ts\", {\n        cwd: \"examples/54-kinesis\",\n      }),\n      // The batches Lambda gave up on, read back from the stream. Deletes the messages only with --delete.\n      \"kinesis:failures\": live(\"node --env-file-if-exists=../../.env scripts/failures.ts\", {\n        cwd: \"examples/54-kinesis\",\n      }),",
+    "synth": ["kinesis:infra:synth"],
+    "checkAll": ["kinesis:demo"],
+    "typecheck": ["examples/54-kinesis"]
+  }
+}

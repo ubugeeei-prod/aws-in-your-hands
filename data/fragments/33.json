@@ -1,0 +1,805 @@
+{
+  "chapterId": "33",
+  "manifest": {
+    "id": "33",
+    "slug": "production-readiness",
+    "title": {
+      "ja": "Production Readiness: 本番に出す前の点検",
+      "en": "Production Readiness: The Review Before You Ship"
+    },
+    "prerequisites": ["19", "20", "21", "22"],
+    "services": ["CloudFormation", "CloudWatch", "DynamoDB", "IAM", "Organizations"],
+    "samplePath": "examples/33-production-readiness",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "wa-pillars",
+      "wa-orr-guide",
+      "wa-ops07-bp02-orr",
+      "wa-ops07-bp03-runbooks",
+      "wa-ops06-bp01-unsuccessful-changes",
+      "wa-ops06-bp03-safe-deployment",
+      "wa-ops10-bp02-process-per-alert",
+      "wa-ops11-bp02-post-incident",
+      "wa-sec01-bp01-accounts",
+      "wa-sec03-bp02-least-privilege",
+      "wa-rel01-bp01-quotas",
+      "wa-rel09-bp04-recovery-testing",
+      "wa-rel12-bp05-game-days",
+      "wa-rel13-bp01-recovery-objectives",
+      "wa-cost01-bp03-budgets",
+      "aws-multi-account-whitepaper",
+      "cfn-deletion-policy-defaults",
+      "cfn-update-replace-policy",
+      "cfn-logs-loggroup",
+      "cfn-s3-public-access-block",
+      "cfn-dynamodb-table-protection",
+      "cfn-dynamodb-pitr-specification",
+      "cfn-cloudwatch-alarm",
+      "lambda-log-groups",
+      "logs-retention",
+      "s3-block-public-access",
+      "config-managed-rules",
+      "cdk-nag-readme",
+      "cfn-guard-readme",
+      "aws-cdk-lib-aspects",
+      "cdkd-0-296-28-removal-policies",
+      "aws-price-list-dynamodb-protection",
+      "vercel-production-checklist",
+      "cloudflare-workers-logs"
+    ]
+  },
+  "sources": [
+    {
+      "id": "wa-pillars",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/the-pillars-of-the-framework.html",
+      "title": "AWS Well-Architected Framework: The pillars of the framework",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The framework has six pillars: operational excellence, security, reliability, performance efficiency, cost optimization, and sustainability"
+      ]
+    },
+    {
+      "id": "wa-orr-guide",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/operational-readiness-reviews/wa-operational-readiness-reviews.html",
+      "title": "Operational Readiness Reviews (ORR)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS created the Operational Readiness Review to distill the learnings from its operational incidents into curated questions with best practice guidance",
+        "An ORR program can supplement Well-Architected reviews with lessons specific to your business, culture, tools, and governance rules"
+      ],
+      "note": "Publication date on the page: June 30, 2022. Only the abstract and introduction were read."
+    },
+    {
+      "id": "wa-ops07-bp02-orr",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/ops_ready_to_support_const_orr.html",
+      "title": "OPS07-BP02 Ensure a consistent review of operational readiness",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "An ORR is a review and inspection process using a checklist of requirements, run before a workload launches and then throughout its lifecycle",
+        "Your own post-incident analysis should drive the evolution of your own ORR"
+      ]
+    },
+    {
+      "id": "wa-ops07-bp03-runbooks",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/ops_ready_to_support_use_runbooks.html",
+      "title": "OPS07-BP03 Use runbooks to perform procedures",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "A runbook is a documented process to achieve a specific outcome; at its simplest, a checklist to complete a task"
+      ]
+    },
+    {
+      "id": "wa-ops06-bp01-unsuccessful-changes",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/ops_mit_deploy_risks_plan_for_unsucessful_changes.html",
+      "title": "OPS06-BP01 Plan for unsuccessful changes",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Plan to revert to a known good state, or remediate in production, if a deployment causes an undesired outcome"
+      ]
+    },
+    {
+      "id": "wa-ops06-bp03-safe-deployment",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/ops_mit_deploy_risks_deploy_mgmt_sys.html",
+      "title": "OPS06-BP03 Employ safe deployment strategies",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Safe roll-outs may include feature flags, one-box, rolling (canary releases), immutable, traffic splitting, and blue/green deployments"
+      ]
+    },
+    {
+      "id": "wa-ops10-bp02-process-per-alert",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/ops_event_response_process_per_alert.html",
+      "title": "OPS10-BP02 Have a process per alert",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Every alert initiates a specific, well-defined response plan, with clear ownership and a defined escalation path"
+      ]
+    },
+    {
+      "id": "wa-ops11-bp02-post-incident",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/ops_evolve_ops_perform_rca_process.html",
+      "title": "OPS11-BP02 Perform post-incident analysis",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Review customer-impacting events, identify the contributing factors and preventative actions, and use them to limit or prevent recurrence"
+      ]
+    },
+    {
+      "id": "wa-sec01-bp01-accounts",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/sec_securely_operate_multi_accounts.html",
+      "title": "SEC01-BP01 Separate workloads using accounts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Account-level separation is strongly recommended, as it provides a strong isolation boundary for security, billing, and access"
+      ]
+    },
+    {
+      "id": "wa-sec03-bp02-least-privilege",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/sec_permissions_least_privileges.html",
+      "title": "SEC03-BP02 Grant least privilege access",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Grant only the access that users require to perform specific actions on specific resources under specific conditions",
+        "Developers are given limited and controlled access to production only for the duration of a task"
+      ]
+    },
+    {
+      "id": "wa-rel01-bp01-quotas",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_manage_service_limits_aware_quotas_and_constraints.html",
+      "title": "REL01-BP01 Aware of service quotas and constraints",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Anti-patterns include deploying a workload without understanding its quotas, and assuming that quotas will be increased automatically"
+      ]
+    },
+    {
+      "id": "wa-rel09-bp04-recovery-testing",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_backing_up_data_periodic_recovery_testing_data.html",
+      "title": "REL09-BP04 Perform periodic recovery of the data to verify backup integrity and processes",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Validate that the backup process meets the RTO and RPO by performing a recovery test",
+        "Anti-patterns include assuming that a backup exists, and restoring a backup without querying any data to check that it is usable"
+      ]
+    },
+    {
+      "id": "wa-rel12-bp05-game-days",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_testing_resiliency_game_days_resiliency.html",
+      "title": "REL12-BP05 Conduct game days regularly",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Game days exercise the procedures for responding to workload-impacting events, with the same teams who would handle production scenarios"
+      ]
+    },
+    {
+      "id": "wa-rel13-bp01-recovery-objectives",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_planning_for_recovery_objective_defined_recovery.html",
+      "title": "REL13-BP01 Define recovery objectives for downtime and data loss",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "RTO is the maximum acceptable delay between the interruption of service and its restoration; RPO is the maximum acceptable time after the last data recovery point",
+        "Anti-patterns include arbitrary objectives and unrealistic ones such as zero time to recover"
+      ]
+    },
+    {
+      "id": "wa-cost01-bp03-budgets",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/cost_cloud_financial_management_budget_forecast.html",
+      "title": "COST01-BP03 Establish cloud budgets and forecasts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Budgeting and forecasting have to follow cloud costs that vary monthly, daily, or hourly"
+      ]
+    },
+    {
+      "id": "aws-multi-account-whitepaper",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/organizing-your-aws-environment.html",
+      "title": "Organizing Your AWS Environment Using Multiple Accounts",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "AWS describes a multi-account strategy as part of the foundation of an AWS environment"
+      ],
+      "note": "Publication date on the page: April 30, 2025. Only the abstract was read; the recommended OU structure is not quoted in the chapter."
+    },
+    {
+      "id": "cfn-deletion-policy-defaults",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html",
+      "title": "DeletionPolicy attribute",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "If a resource has no DeletionPolicy attribute, CloudFormation deletes the resource by default",
+        "The default is Snapshot for AWS::RDS::DBCluster, and for AWS::RDS::DBInstance resources that don't specify DBClusterIdentifier",
+        "The options are Delete, Retain, RetainExceptOnCreate, and Snapshot",
+        "A retained resource continues to exist and to incur charges after the stack is deleted"
+      ]
+    },
+    {
+      "id": "cfn-update-replace-policy",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-updatereplacepolicy.html",
+      "title": "UpdateReplacePolicy attribute",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When an update replaces a resource, CloudFormation creates the replacement first and by default then deletes the old resource",
+        "UpdateReplacePolicy can retain, or for some types snapshot, the old resource"
+      ]
+    },
+    {
+      "id": "cfn-logs-loggroup",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-logs-loggroup.html",
+      "title": "AWS::Logs::LogGroup",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "To set a log group so that its log events do not expire, do not specify RetentionInDays",
+        "The allowed values of RetentionInDays, 90 among them"
+      ]
+    },
+    {
+      "id": "cfn-s3-public-access-block",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-publicaccessblockconfiguration.html",
+      "title": "AWS::S3::Bucket PublicAccessBlockConfiguration",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The four Boolean properties BlockPublicAcls, BlockPublicPolicy, IgnorePublicAcls, and RestrictPublicBuckets, none of them required",
+        "Bucket-level settings work alongside account-level settings"
+      ]
+    },
+    {
+      "id": "cfn-dynamodb-table-protection",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dynamodb-table.html",
+      "title": "AWS::DynamoDB::Table",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "DeletionProtectionEnabled is disabled by default; when enabled, the table cannot be deleted by any user or process",
+        "PointInTimeRecoverySpecification is not required"
+      ]
+    },
+    {
+      "id": "cfn-dynamodb-pitr-specification",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-dynamodb-table-pointintimerecoveryspecification.html",
+      "title": "AWS::DynamoDB::Table PointInTimeRecoverySpecification",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "PointInTimeRecoveryEnabled is a Boolean; RecoveryPeriodInDays is 1 to 35 and defaults to 35"
+      ]
+    },
+    {
+      "id": "cfn-cloudwatch-alarm",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudwatch-alarm.html",
+      "title": "AWS::CloudWatch::Alarm",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AlarmActions is the list of actions to execute when the alarm transitions into ALARM; it is not required",
+        "ActionsEnabled defaults to TRUE",
+        "An alarm on a math expression uses Metrics and cannot specify Dimensions"
+      ]
+    },
+    {
+      "id": "lambda-log-groups",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-loggroups.html",
+      "title": "Configuring CloudWatch log groups (Lambda)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "By default a log group named /aws/lambda/<function name> is created automatically when the function is first invoked",
+        "A function can be configured to send its logs to an existing log group"
+      ]
+    },
+    {
+      "id": "config-managed-rules",
+      "url": "https://docs.aws.amazon.com/config/latest/developerguide/managed-rules-by-aws-config.html",
+      "title": "List of AWS Config Managed Rules",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "The list includes dynamodb-pitr-enabled, cw-loggroup-retention-period-check, s3-bucket-level-public-access-prohibited, lambda-dlq-check, and iam-policy-no-statements-with-admin-access"
+      ],
+      "note": "Only the rule names were read from the list. What each rule evaluates was not read, and no rule was enabled."
+    },
+    {
+      "id": "cdk-nag-readme",
+      "url": "https://github.com/cdklabs/cdk-nag/blob/main/README.md",
+      "title": "cdk-nag README",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "cdk-nag checks CDK applications or CloudFormation templates for best practices using rule packs such as AWS Solutions, HIPAA Security, and NIST 800-53",
+        "A violation is acknowledged on a construct with an id and a reason"
+      ],
+      "note": "The main branch as of the date read. Not installed and not run."
+    },
+    {
+      "id": "cfn-guard-readme",
+      "url": "https://github.com/aws-cloudformation/cloudformation-guard/blob/main/README.md",
+      "title": "AWS CloudFormation Guard README",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "CloudFormation Guard is an open-source policy-as-code tool with a DSL that validates JSON or YAML, CloudFormation templates among them"
+      ],
+      "note": "Only the opening of the README was read. Not installed and not run."
+    },
+    {
+      "id": "aws-cdk-lib-aspects",
+      "url": "https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0",
+      "title": "aws-cdk-lib 2.273.0 (installed package, type definitions)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "IAspect has one method, visit(node: IConstruct), and Aspects.of(scope).add(aspect) registers it",
+        "CfnResource.applyRemovalPolicy sets both DeletionPolicy and UpdateReplacePolicy (seen in the synthesized template)",
+        "CfnGlobalTable.ReplicaSpecificationProperty has pointInTimeRecoverySpecification per replica",
+        "BucketAccessControl.PUBLIC_READ is \"PublicRead\" and PUBLIC_READ_WRITE is \"PublicReadWrite\"",
+        "logs.RetentionDays.THREE_MONTHS is 90",
+        "A logical ID is a readable rendition of the construct path with a hash of the full path as its suffix"
+      ],
+      "note": "Read from node_modules: core/lib/aspect.d.ts, core/lib/cfn-resource.d.ts, core/lib/private/uniqueid.d.ts, aws-dynamodb/lib/dynamodb.generated.d.ts, aws-s3/lib/bucket.d.ts, aws-logs/lib/log-group.d.ts."
+    },
+    {
+      "id": "cdkd-0-296-28-removal-policies",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package, dist and help output)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "cdkd synth synthesizes every stack of the app, and takes -c key=value",
+        "The bundled deploy engine reads DeletionPolicy: Retain (a retained resource is left in AWS and removed from state) and UpdateReplacePolicy"
+      ],
+      "note": "Read from `cdkd synth --help` and from strings in dist/deploy-engine-*.js. No destroy or replacing update was run, with cdkd or with CloudFormation."
+    },
+    {
+      "id": "aws-price-list-dynamodb-protection",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: DynamoDB, ap-northeast-1 (all 27 products)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "APN1-TimedPITRStorage-ByteHrs is USD 0.228 per GB-month",
+        "None of the 27 products in the offer file mentions deletion protection"
+      ],
+      "note": "Offer publication date 2026-09-11T12:44:22Z."
+    },
+    {
+      "id": "vercel-production-checklist",
+      "url": "https://vercel.com/docs/production-checklist",
+      "title": "Vercel: Production checklist for launch",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Vercel publishes a production checklist grouped as operational excellence, security, reliability, performance efficiency, and cost optimization",
+        "Its items include an incident response plan with rollback strategies, the Vercel WAF, rate limiting, access roles, Log Drains to persist logs, and Spend Management",
+        "Several items are marked Enterprise only, among them audit logs, automatic function failover, and running a load test"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "operational-readiness-review",
+      "ja": "operational readiness review（ORR）",
+      "en": "operational readiness review (ORR)",
+      "firstUse": "33",
+      "definition": {
+        "ja": "サービスを公開する前に、運用できる状態かどうかを決まった質問の一覧で確かめる点検。AWS が自社の障害の教訓から作った仕組みで、Well-Architected Framework も勧めている。",
+        "en": "A review, against a fixed list of questions, of whether a service can be operated before it is opened to users. AWS built it from the lessons of its own incidents, and the Well-Architected Framework recommends it."
+      }
+    },
+    {
+      "id": "runbook",
+      "ja": "対応手順（runbook）",
+      "en": "runbook",
+      "firstUse": "33",
+      "definition": {
+        "ja": "決まった結果を得るための手順を書いた文書。アラームが鳴ったときに最初に開くものと、試すことを書いておく。",
+        "en": "A written procedure for reaching a specific outcome. For an alarm, it says what to open first and what to try."
+      }
+    },
+    {
+      "id": "game-day",
+      "ja": "game day",
+      "en": "game day",
+      "firstUse": "33",
+      "definition": {
+        "ja": "障害をわざと起こして、手順、権限、アラームが実際に働くかを、本番で対応する人たちで確かめる訓練。",
+        "en": "A rehearsal in which a failure is caused on purpose, so that the people who would handle the real one find out whether the procedures, the access and the alarms work."
+      }
+    },
+    {
+      "id": "cdk-aspect",
+      "ja": "Aspect（CDK）",
+      "en": "aspect (CDK)",
+      "firstUse": "33",
+      "definition": {
+        "ja": "スタックの中のすべてのコンストラクトを 1 つずつ訪ねて、設定を調べたり書き換えたりする CDK の仕組み。あとから足したリソースにも同じ処理がかかる。",
+        "en": "A CDK mechanism that visits every construct in a stack, one at a time, to inspect or change its settings. A resource added later is visited too."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "33.overview",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["ready:review"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "33.item",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/test/review.test.ts"
+      ],
+      "tasks": ["ready:review", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.stages",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.platforms",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.template",
+      "sources": [
+        "examples/33-production-readiness/src/template.ts",
+        "examples/33-production-readiness/test/template.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.rules",
+      "sources": [
+        "examples/33-production-readiness/src/rules",
+        "examples/33-production-readiness/test/rules.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.watching",
+      "sources": [
+        "examples/33-production-readiness/src/rules/watching.ts",
+        "examples/33-production-readiness/test/rules.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "33.waivers",
+      "sources": [
+        "examples/33-production-readiness/src/check.ts",
+        "examples/33-production-readiness/readiness/waivers.json",
+        "examples/33-production-readiness/test/check.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.twins",
+      "sources": [
+        "examples/33-production-readiness/infra/bin/app.ts",
+        "examples/33-production-readiness/infra/lib/production-settings.ts",
+        "examples/33-production-readiness/infra/test/twins.test.ts"
+      ],
+      "tasks": ["ready:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "33.local",
+      "sources": [
+        "examples/33-production-readiness/scripts/check.ts",
+        "examples/33-production-readiness/scripts/review.ts",
+        "examples/33-production-readiness/src/report.ts",
+        "examples/33-production-readiness/test/fixtures"
+      ],
+      "tasks": ["test:unit", "ready:review", "ready:infra:synth", "ready:gate"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.book-stacks",
+      "sources": [
+        "examples/33-production-readiness/scripts/check.ts",
+        "examples/33-production-readiness/src/report.ts"
+      ],
+      "tasks": ["ready:check"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "33.blind-spots",
+      "sources": ["examples/33-production-readiness/src/rules"],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.accounts",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["account:whoami", "sec:posture"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.identity",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["sec:iam:lint"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.data",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/src/rules/data.ts"
+      ],
+      "tasks": ["recovery:drill", "recovery:status"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.failure",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/src/rules/watching.ts"
+      ],
+      "tasks": ["obs:alarms", "obs:query:print", "recovery:drill"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.change",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["ship:cfn:diff", "ship:cfn:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.cost",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["account:budget:create"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.abuse",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/src/rules/doors.ts"
+      ],
+      "tasks": ["sec:posture", "sec:secret:versions", "sec:secret:rotate", "sec:trail:iam"],
+      "boundary": "local+cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.operations",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.costs",
+      "sources": ["examples/33-production-readiness/infra/lib/production-settings.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "33.cleanup",
+      "sources": ["examples/33-production-readiness/cdk.json"],
+      "tasks": ["ready:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    }
+  ],
+  "unitPrices": [],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "ready-added-small",
+      "chapter": "33",
+      "title": {
+        "ja": "本番向けの設定がノート API に足す料金: 月 100 万リクエスト",
+        "en": "What the production settings add to the notes API: 1,000,000 requests a month"
+      },
+      "assumptions": {
+        "ja": [
+          "19章の obs-small と同じ流量。ログは 1 リクエストあたり 1 KB で、月 0.953674 GB を取り込む",
+          "ログの保持を 7 日から 90 日に延ばす。月平均の保存量を、取り込み量の 90/30 と 7/30 の差と仮定",
+          "テーブルの大きさは 1 GB。PITR の保存量はテーブルと同じ 1 GB と仮定（変更の記録のぶんは未確認で、含めていない）",
+          "削除保護、DeletionPolicy、UpdateReplacePolicy には、Price List に対応する項目がない",
+          "アラーム、メトリクス、トレースは 19章の計算のとおりで、ここには含めていない。通知先のメールの料金も含めていない"
+        ],
+        "en": [
+          "The same traffic as chapter 19's obs-small: 1 KB of logs per request, 0.953674 GB ingested a month",
+          "Log retention goes from 7 days to 90; the average stored volume is assumed to be the difference between 90/30 and 7/30 of the monthly ingest",
+          "The table holds 1 GB, and PITR storage is assumed to equal the table's 1 GB (the size of the change history was not confirmed and is not included)",
+          "Deletion protection, DeletionPolicy and UpdateReplacePolicy have no item in the price list",
+          "Alarms, metrics and traces are priced in chapter 19 and are not included here, nor is the delivery of notification mail"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.pitr.storage",
+          "quantity": 1,
+          "basis": "1 GB table, PITR storage assumed equal to it"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 2.638498,
+          "basis": "0.953674 GB x (90 - 7)/30, in GB-month"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "33",
+        "command": "vp test run examples/33-production-readiness",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "5 ファイル、110 件。テンプレートの読み取り（テンプレートでないものの拒否、参照の辿り方、リテラルと組み込み関数の区別）、10 個のルールの通る例と落ちる例、例外（理由の必須、使われていない例外、21章の例外の取り込み）、判定（報告だけのスタックと通過を求めるスタック、読めなかった判定対象）、2 つのフィクスチャ、点検の項目（ルールの置き場所、タスクの実在）、練習用と本番向けの 2 つのスタックの synth と点検の結果、Aspect があとから足したテーブルに届くこと。コードを 11 か所わざと壊してテストが落ちることも確かめた（1 か所は最初は落ちず、バケットポリシーの配列を読み落とす誤りが見つかった）",
+          "en": "5 files, 110 tests. Reading a template (refusing what is not one, following references, telling a literal from an intrinsic), a passing and a failing case for each of the 10 rules, waivers (a reason is required, unused waivers, chapter 21's exceptions taken in), the verdict (reported stacks, gated stacks, a gate that read nothing), the two fixtures, the review items (every rule is placed, every task exists), the synth and the check result of the practice and production twins, and the aspect reaching a table added later. The code was also broken on purpose in 11 places to confirm that tests fail (one did not at first, which exposed a bucket policy array that was never read)"
+        }
+      },
+      {
+        "scope": "33",
+        "command": "tsc --noEmit -p examples/33-production-readiness",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "サンプル、スクリプト、テスト、CDK のコードの型検査",
+          "en": "Type check of the sample, its scripts, tests, and CDK code"
+        }
+      },
+      {
+        "scope": "33",
+        "command": "vp run ready:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "AihReadyPractice と AihReadyProduction の 2 つのテンプレートを cdk.out に書いた。AWS には問い合わせない",
+          "en": "Wrote the two templates, AihReadyPractice and AihReadyProduction, to cdk.out. It asks AWS nothing"
+        }
+      },
+      {
+        "scope": "33",
+        "command": "vp run ready:gate",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "練習用のスタックは 7 件の指摘を報告し、本番向けのスタックは理由つきの例外 2 件を使って通過した。本文に載せた出力はこの実行のもの",
+          "en": "The practice stack reported 7 findings and the production stack passed with 2 reasoned waivers. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "33",
+        "command": "vp run ready:review",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "8 つの分野、32 項目の一覧を表示した",
+          "en": "Printed the list: 8 areas, 32 items"
+        }
+      },
+      {
+        "scope": "33",
+        "command": "node examples/33-production-readiness/scripts/check.ts <cdk.out of chapters 02-24 and book/infra>",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "`vp run ready:check` のスクリプトを、依存する `infra:synth` を通さずに直接実行した（ほかの章が同じ作業ツリーで書かれている最中で、全スタックの synth をやり直せなかったため）。読んだのは、すでに cdk.out にあった 02〜24章と本のサイトの 27 個のテンプレート。結果は 81 件の指摘と 7 件の例外で、本文の件数はこの実行のもの。25〜32章と 34〜36章のスタックは含まない",
+          "en": "Ran the script behind `vp run ready:check` directly, without its `infra:synth` dependency (other chapters were being written in the same tree, so every stack could not be synthesized again). It read the 27 templates of chapters 02 to 24 and the book site that were already in cdk.out: 81 findings and 7 waived. The counts in the chapter are from this run and do not include the stacks of chapters 25 to 32 and 34 to 36"
+        }
+      },
+      {
+        "scope": "33",
+        "command": "vp run ready:check",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "タスクとしては実行していない。`infra:synth` に依存していて、本のすべてのスタックを synth し直すため",
+          "en": "Not run as a task: it depends on `infra:synth`, which synthesizes every stack of the book again"
+        }
+      },
+      {
+        "scope": "33",
+        "command": "account:whoami, sec:posture, sec:trail:iam, sec:secret:versions, sec:secret:rotate, obs:alarms, ship:cfn:diff, ship:cfn:drift, recovery:status, account:budget:create",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "点検の項目が指している、アカウントを読む・変えるタスク。この章では 1 つも実行していない",
+          "en": "The tasks the review points at that read or change the account. None was run for this chapter"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "33-live-account",
+        "summary": {
+          "ja": "33章の点検は、合成したテンプレートだけを読んでいる。指摘の内容を、デプロイ済みのアカウントの実際の設定と突き合わせたことはない。AihReadyProduction はデプロイしておらず、Aspect が付けた PITR、削除保護、Retain、90 日の保持が実物でどう働くかも見ていない。CloudFormation と cdkd のどちらでも、スタックの削除や置き換えの更新を実行していない。",
+          "en": "Chapter 33's check reads synthesized templates only. Its findings were never compared with the real settings of a deployed account. AihReadyProduction was not deployed, so PITR, deletion protection, Retain and the 90-day retention set by the aspect were not seen at work. No stack deletion and no replacing update was run, with CloudFormation or with cdkd."
+        },
+        "resume": {
+          "ja": "20章の経路（`ship:cfn:*` と同じ CDK CLI）で本番向けの設定を持つスタックを練習用のアカウントにデプロイし、`aws dynamodb describe-continuous-backups` と `aws logs describe-log-groups` で設定を確かめる。そのあとスタックを削除して、テーブルとロググループが残ることと、残ったものの消し方を記録する。",
+          "en": "Deploy a stack with the production settings to a practice account through chapter 20's path (the CDK CLI, as `ship:cfn:*` uses it), confirm the settings with `aws dynamodb describe-continuous-backups` and `aws logs describe-log-groups`, then delete the stack and record that the table and the log group remain, and how to remove them."
+        }
+      },
+      {
+        "id": "33-sibling-chapters",
+        "summary": {
+          "ja": "33章は 25〜32章と 34〜36章を、それぞれの章の範囲の説明だけをもとに参照している。本文は読んでおらず、それらの章のスタックを点検した結果も含んでいない。",
+          "en": "Chapter 33 refers to chapters 25 to 32 and 34 to 36 by their stated scope only. Their text was not read, and the check results do not include their stacks."
+        },
+        "resume": {
+          "ja": "すべての章が揃ったあとで `vp run ready:check` を実行し、本文の「本の全スタックに当てた結果」の件数と、各分野の節が指している章の内容を照らし合わせる。",
+          "en": "Once every chapter is in, run `vp run ready:check` and compare the counts in the chapter's section on the book's stacks, and what each area's section says about the chapters it points at."
+        }
+      },
+      {
+        "id": "33-other-platforms",
+        "summary": {
+          "ja": "Cloudflare が Vercel の production checklist にあたる一覧を公開しているかは確認していない。Cloudflare について読んだのは Workers Logs の保持の上限だけ。AWS Config の管理ルール、cdk-nag、CloudFormation Guard は名前と説明を読んだだけで、動かしていない。",
+          "en": "Whether Cloudflare publishes a list comparable to Vercel's production checklist was not confirmed. For Cloudflare, only the retention limit of Workers Logs was read. AWS Config managed rules, cdk-nag and CloudFormation Guard were read about, not run."
+        },
+        "resume": {
+          "ja": "Cloudflare の公式ドキュメントで公開前の確認事項にあたるページを探す。cdk-nag を 1 つのスタックに当てて、この章の 10 個のルールと重なる指摘、重ならない指摘を比べる。",
+          "en": "Look in Cloudflare's documentation for a page of pre-launch checks. Run cdk-nag on one stack and compare what it reports with this chapter's 10 rules."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 33: production readiness ---------------------------------\n      // The review as a list to go through. Reads only this checkout.\n      \"ready:review\": fresh(\"node examples/33-production-readiness/scripts/review.ts\"),\n      // Local: writes examples/33-production-readiness/cdk.out. Two stacks that are read, never deployed.\n      \"ready:infra:synth\": fresh(\n        `${node} tools/src/infra/cdkd.ts synth examples/33-production-readiness AihReadyProduction`,\n      ),\n      // The practice twin is reported; the production twin has to pass.\n      \"ready:gate\": fresh(\n        \"node examples/33-production-readiness/scripts/check.ts --gate AihReadyProduction examples/33-production-readiness/cdk.out\",\n        { dependsOn: [\"ready:infra:synth\"] },\n      ),\n      // Every synthesized stack of the book, as a report. The practice stacks have findings on purpose.\n      \"ready:check\": fresh(\"node examples/33-production-readiness/scripts/check.ts\", {\n        dependsOn: [\"infra:synth\"],\n      }),",
+    "synth": ["ready:infra:synth"],
+    "checkAll": ["ready:gate"],
+    "typecheck": ["examples/33-production-readiness"]
+  }
+}

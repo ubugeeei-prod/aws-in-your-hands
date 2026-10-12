@@ -1,0 +1,38 @@
+{
+  "_note": "Written by hand for chapter 62 after the webhook-workflow-job-queued schema in github/rest-api-description. Not a recording of a GitHub delivery.",
+  "action": "queued",
+  "workflow_job": {
+    "id": 31000000001,
+    "run_id": 9100000001,
+    "run_url": "https://api.github.com/repos/example-org/notes/actions/runs/9100000001",
+    "run_attempt": 1,
+    "node_id": "CR_example",
+    "head_sha": "0000000000000000000000000000000000000000",
+    "url": "https://api.github.com/repos/example-org/notes/actions/jobs/31000000001",
+    "html_url": "https://github.com/example-org/notes/actions/runs/9100000001/job/31000000001",
+    "status": "queued",
+    "conclusion": null,
+    "created_at": "2026-10-13T01:00:00Z",
+    "started_at": "2026-10-13T01:00:00Z",
+    "completed_at": null,
+    "name": "test",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/example-org/notes/check-runs/31000000001",
+    "labels": ["aih-fargate"],
+    "runner_id": null,
+    "runner_name": null,
+    "runner_group_id": null,
+    "runner_group_name": null,
+    "workflow_name": "ci",
+    "head_branch": "main"
+  },
+  "repository": {
+    "id": 700000001,
+    "name": "notes",
+    "full_name": "example-org/notes",
+    "private": true,
+    "fork": false
+  },
+  "installation": { "id": 50000001, "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9u" },
+  "sender": { "login": "example-user", "id": 1 }
+}

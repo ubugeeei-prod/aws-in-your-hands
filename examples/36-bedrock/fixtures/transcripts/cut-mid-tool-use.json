@@ -1,0 +1,197 @@
+{
+  "source": "Hand-written from the event shapes in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html, https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html, https://docs.aws.amazon.com/bedrock/latest/userguide/tool-use-client-side.html and https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-use-converse-api.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "The stream closes halfway through a tool request. The same call, made again, completes.",
+  "calls": [
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStart": {
+              "contentBlockIndex": 0,
+              "start": {
+                "toolUse": {
+                  "toolUseId": "tooluse_fixture_01",
+                  "name": "read_note"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "{\"id\":\"n1r"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStart": {
+              "contentBlockIndex": 0,
+              "start": {
+                "toolUse": {
+                  "toolUseId": "tooluse_fixture_02",
+                  "name": "read_note"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "{\"id\":\"n1"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "toolUse": {
+                  "input": "release\"}"
+                }
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "tool_use"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 320,
+                "outputTokens": 18,
+                "totalTokens": 338
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "event": {
+            "messageStart": {
+              "role": "assistant"
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "金曜のリリースまでに残っているのは、"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "決済の結合テストと負荷試験です。"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "担当は佐藤さんと鈴木さんで、"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockDelta": {
+              "contentBlockIndex": 0,
+              "delta": {
+                "text": "水曜の朝会で進み具合を確認します。"
+              }
+            }
+          }
+        },
+        {
+          "event": {
+            "contentBlockStop": {
+              "contentBlockIndex": 0
+            }
+          }
+        },
+        {
+          "event": {
+            "messageStop": {
+              "stopReason": "end_turn"
+            }
+          }
+        },
+        {
+          "event": {
+            "metadata": {
+              "usage": {
+                "inputTokens": 452,
+                "outputTokens": 61,
+                "totalTokens": 513
+              },
+              "metrics": {
+                "latencyMs": 600
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1190 @@
+{
+  "chapterId": "61",
+  "manifest": {
+    "id": "61",
+    "slug": "sqs",
+    "title": {
+      "ja": "SQS: FIFO、visibility timeout、batch、redrive",
+      "en": "SQS: FIFO, Visibility Timeout, Batches, and Redrive"
+    },
+    "prerequisites": ["08"],
+    "services": ["SQS", "Lambda", "DynamoDB", "CloudWatch"],
+    "samplePath": "examples/61-sqs",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "sqs61-queue-types",
+      "sqs61-fifo",
+      "sqs61-fifo-logic",
+      "sqs61-exactly-once",
+      "sqs61-dedup-id",
+      "sqs61-dedup-when",
+      "sqs61-group-id",
+      "sqs61-identifiers",
+      "sqs61-moving",
+      "sqs61-fifo-lambda",
+      "sqs61-high-throughput",
+      "sqs61-enable-high-throughput",
+      "sqs61-quotas-messages",
+      "sqs61-quotas-fifo",
+      "sqs61-visibility",
+      "sqs61-timely",
+      "sqs61-visibility-sdk",
+      "sqs61-polling",
+      "sqs61-batch",
+      "sqs61-large",
+      "sqs61-delay",
+      "sqs61-timers",
+      "sqs61-metadata",
+      "sqs61-dlq",
+      "sqs61-redrive",
+      "sqs61-sse",
+      "sqs61-kms",
+      "sqs61-metrics",
+      "sqs61-dlq-alarm",
+      "sqs61-fair",
+      "sqs61-policies",
+      "sqs61-api-send",
+      "sqs61-api-send-batch",
+      "sqs61-api-receive",
+      "sqs61-api-change-visibility",
+      "sqs61-api-delete",
+      "sqs61-api-create-queue",
+      "sqs61-api-move-task",
+      "sqs61-lambda-sqs",
+      "sqs61-lambda-configure",
+      "sqs61-lambda-scaling",
+      "sqs61-lambda-errors",
+      "sqs61-lambda-parameters",
+      "sqs61-sns-subscribe",
+      "sqs61-sns-fifo-delivery",
+      "sqs61-ddb-tx-iam",
+      "sqs61-ddb-transact",
+      "sqs61-ddb-ttl",
+      "sqs61-iam-eval",
+      "sqs61-iam-cross-account",
+      "sqs61-pricing-page",
+      "sqs61-price-list-sqs",
+      "sqs61-price-list-kms",
+      "sqs61-cf-queues-how",
+      "sqs61-cf-queues-delivery",
+      "sqs61-cf-queues-limits",
+      "sqs61-cf-queues-batching",
+      "sqs61-vercel-queues",
+      "sqs61-cdkd"
+    ]
+  },
+  "sources": [
+    {
+      "id": "sqs61-queue-types",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-types.html",
+      "title": "Amazon SQS queue types",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Standard queues: at-least-once delivery and best-effort ordering; FIFO queues: order preserved and no duplicates introduced",
+        "With batching a FIFO queue handles up to 3,000 messages per second per API method, from 300 API calls per second"
+      ],
+      "note": "This page says high throughput mode scales to 30,000 TPS 'with relaxed ordering within message groups'. The message quotas page gives per-Region figures (9,000 TPS in Tokyo) and the high throughput page does not mention relaxed ordering. The chapter quotes the quotas page and says the two differ."
+    },
+    {
+      "id": "sqs61-fifo",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-fifo-queues.html",
+      "title": "Amazon SQS FIFO queues",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The order in which messages are sent and received is preserved, and a message is delivered once and remains unavailable until a consumer processes and deletes it",
+        "A FIFO queue can hold many ordered message groups, with no quota on their number",
+        "FIFO queues are available in all Regions where SQS is"
+      ]
+    },
+    {
+      "id": "sqs61-fifo-logic",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-understanding-logic.html",
+      "title": "FIFO queue delivery logic in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A send without a message group ID fails",
+        "Ordering holds within a message group; messages of different groups may be processed out of order relative to each other",
+        "One receive may return several messages of the same group, up to 10, and may add messages of other groups",
+        "No more messages of a group are returned by later receives until the received ones are deleted or become visible again",
+        "A consumer cannot ask for a particular message group",
+        "A producer may retry SendMessage with the same deduplication ID without introducing duplicates, as long as an acknowledgment arrives before the deduplication interval expires"
+      ]
+    },
+    {
+      "id": "sqs61-exactly-once",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-exactly-once-processing.html",
+      "title": "Exactly-once processing in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A SendMessage retried within the 5-minute deduplication interval introduces no duplicate",
+        "Content-based deduplication uses a SHA-256 hash of the message body, not of its attributes",
+        "Deduplication needs either content-based deduplication or an explicit deduplication ID"
+      ]
+    },
+    {
+      "id": "sqs61-dedup-id",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/using-messagededuplicationid-property.html",
+      "title": "Using the message deduplication ID in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message whose deduplication ID was already accepted is acknowledged and not delivered",
+        "SQS keeps tracking the deduplication ID after the message has been received and deleted"
+      ]
+    },
+    {
+      "id": "sqs61-dedup-when",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/providing-message-deduplication-id.html",
+      "title": "When to provide a message deduplication ID in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A producer should give an explicit ID when identical bodies must count as different messages, or different bodies as the same message"
+      ]
+    },
+    {
+      "id": "sqs61-group-id",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/using-messagegroupid-property.html",
+      "title": "Using the message group ID with Amazon SQS FIFO Queues",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Messages of one message group are processed one at a time, in strict order",
+        "On a standard queue a MessageGroupId enables fair queues and does not order anything"
+      ]
+    },
+    {
+      "id": "sqs61-identifiers",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-fifo-queue-message-identifiers.html",
+      "title": "FIFO queue and message identifiers in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A FIFO queue's name ends in .fifo, and the suffix counts toward the 80 characters of a name",
+        "Each receive returns a different receipt handle, and a delete needs the most recent one",
+        "The sequence number is a large, non-consecutive number SQS assigns to each message"
+      ]
+    },
+    {
+      "id": "sqs61-moving",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-moving.html",
+      "title": "Moving from a standard queue to a FIFO queue in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A standard queue cannot be converted to a FIFO queue",
+        "FIFO queues support a delay per queue, not per message"
+      ]
+    },
+    {
+      "id": "sqs61-fifo-lambda",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/fifo-queue-lambda-behavior.html",
+      "title": "Amazon SQS FIFO queue and Lambda concurrency behavior",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "At any time only one Lambda instance processes messages of a given message group; different groups are processed concurrently"
+      ]
+    },
+    {
+      "id": "sqs61-high-throughput",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/high-throughput-fifo.html",
+      "title": "High throughput for FIFO queues in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A FIFO queue is stored in partitions, and the hash of the message group ID decides the partition",
+        "SQS recommends message group IDs with many distinct values"
+      ]
+    },
+    {
+      "id": "sqs61-enable-high-throughput",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/enable-high-throughput-fifo.html",
+      "title": "Enabling high throughput for FIFO queues in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "High throughput needs the deduplication scope set to the message group and the throughput limit set per message group ID"
+      ]
+    },
+    {
+      "id": "sqs61-quotas-messages",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html",
+      "title": "Amazon SQS message quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message is at most 1,048,576 bytes (1 MiB) and at least 1 byte",
+        "Retention defaults to 4 days and ranges from 60 seconds to 14 days",
+        "The visibility timeout defaults to 30 seconds and ranges from 0 seconds to 12 hours",
+        "A batch holds at most 10 messages, a message at most 10 attributes, and a message timer at most 15 minutes",
+        "Without high throughput a FIFO queue allows 300 transactions per second per API action, 3,000 messages with batching",
+        "With high throughput the limit in Asia Pacific (Tokyo) is 9,000 transactions per second, 90,000 messages with batching",
+        "A message group ID is at most 128 characters of alphanumerics and punctuation"
+      ]
+    },
+    {
+      "id": "sqs61-quotas-fifo",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-fifo.html",
+      "title": "Amazon SQS FIFO queue quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A FIFO queue supports at most 120,000 in-flight messages; no error is returned when the limit is reached",
+        "The longest long polling wait is 20 seconds, and the longest queue delay 15 minutes"
+      ]
+    },
+    {
+      "id": "sqs61-visibility",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html",
+      "title": "Amazon SQS visibility timeout",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A received message stays in the queue, hidden for the visibility timeout, and becomes visible again unless deleted",
+        "While a message of a FIFO message group is in flight, later messages of the group are not made available until it is deleted or its timeout expires",
+        "ChangeMessageVisibility extends or shortens the timeout of one message; 0 makes it available at once",
+        "The limit is 12 hours from when the message was first received, and extending does not reset it",
+        "The guide suggests a heartbeat that keeps extending the timeout when the processing time is not known"
+      ]
+    },
+    {
+      "id": "sqs61-timely",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/best-practices-processing-messages-timely-manner.html",
+      "title": "Processing messages in a timely manner in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A visibility timeout shorter than the processing time lets another consumer receive the message while the first still works on it",
+        "A heartbeat can start with 2 minutes and add 2 minutes every minute",
+        "A consumer that needs longer than 12 hours should use Step Functions"
+      ]
+    },
+    {
+      "id": "sqs61-visibility-sdk",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/working-with-visibility-timeouts.html",
+      "title": "Configuring visibility timeouts in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The visibility timeout should be longer than the SDK's read timeout for ReceiveMessage"
+      ]
+    },
+    {
+      "id": "sqs61-polling",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-short-and-long-polling.html",
+      "title": "Amazon SQS short and long polling",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Short polling asks a subset of servers and answers at once, even with nothing; long polling asks all servers and answers when a message is available or the wait time ends",
+        "The longest wait is 20 seconds",
+        "Long polling is in effect when the receive's WaitTimeSeconds, or else the queue's ReceiveMessageWaitTimeSeconds, is greater than 0"
+      ]
+    },
+    {
+      "id": "sqs61-batch",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-batch-api-actions.html",
+      "title": "Amazon SQS batch actions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SendMessageBatch, DeleteMessageBatch, and ChangeMessageVisibilityBatch each take up to 10 messages",
+        "The messages of one SendMessageBatch may not exceed 1 MiB in total",
+        "Permission for a batch action is the permission for the single action"
+      ]
+    },
+    {
+      "id": "sqs61-large",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-managing-large-messages.html",
+      "title": "Managing large Amazon SQS messages with Extended Client Library and Amazon S3",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Extended Client Libraries for Java and Python store the payload in S3 and send a reference in the message",
+        "The libraries work with standard and FIFO queues"
+      ],
+      "note": "The page still says 'payloads between 256 KB and 2 GB'. The quotas page and the API reference give 1 MiB as the message limit; the chapter uses 1 MiB."
+    },
+    {
+      "id": "sqs61-delay",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html",
+      "title": "Amazon SQS delay queues",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A delay queue hides every new message for up to 15 minutes",
+        "Changing the delay of a FIFO queue affects messages already in it; for a standard queue it does not",
+        "For longer or more flexible delays the guide points to EventBridge Scheduler"
+      ]
+    },
+    {
+      "id": "sqs61-timers",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-timers.html",
+      "title": "Amazon SQS message timers",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message timer hides one message for up to 15 minutes and overrides the queue's delay",
+        "FIFO queues do not support timers on individual messages"
+      ]
+    },
+    {
+      "id": "sqs61-metadata",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-metadata.html",
+      "title": "Message metadata for Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message can carry up to 10 attributes, each with a name, a type (String, Number, Binary), and a value",
+        "All parts of an attribute count toward the 1 MiB size limit"
+      ]
+    },
+    {
+      "id": "sqs61-dlq",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html",
+      "title": "Using dead-letter queues in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A dead-letter queue must be in the same account and Region as its source queue",
+        "The guide warns against a dead-letter queue on a FIFO queue when the exact order of operations must not be broken",
+        "For a FIFO queue the enqueue timestamp resets when a message moves to the dead-letter queue; for a standard queue it does not",
+        "A redrive allow policy can restrict which source queues may use a queue as their dead-letter queue"
+      ]
+    },
+    {
+      "id": "sqs61-redrive",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html",
+      "title": "Learn how to configure a dead-letter queue redrive in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A redrive moves messages to the source queue or another queue of the same type, oldest first",
+        "Redriven messages are new messages with a new message ID and enqueue time, and they interleave with what producers are sending",
+        "When a message moves from a FIFO queue to its FIFO dead-letter queue, its deduplication ID is replaced by its message ID",
+        "Messages cannot be filtered or changed while redriving; a task runs at most 36 hours"
+      ]
+    },
+    {
+      "id": "sqs61-sse",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-server-side-encryption.html",
+      "title": "Encryption at rest in Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A queue is encrypted with SQS-managed keys (SSE-SQS) or with a KMS key (SSE-KMS)",
+        "SSE encrypts the body; not the queue metadata, the message metadata including attributes, or the metrics",
+        "The data key reuse period is 60 seconds to 24 hours, 5 minutes by default",
+        "A queue encrypted with the AWS managed key for SQS cannot invoke a Lambda function in another account"
+      ]
+    },
+    {
+      "id": "sqs61-kms",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-key-management.html",
+      "title": "Amazon SQS Key management",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A producer to an SSE-KMS queue needs kms:GenerateDataKey and kms:Decrypt; a consumer needs kms:Decrypt",
+        "Calls to KMS per queue are estimated as R = (B / D) * (2 * P + C)",
+        "An AWS service that sends to an encrypted queue needs a customer managed key whose policy allows that service"
+      ]
+    },
+    {
+      "id": "sqs61-metrics",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-available-cloudwatch-metrics.html",
+      "title": "Available CloudWatch metrics for Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ApproximateAgeOfOldestMessage: a standard queue moves a message received three or more times to the back, so the metric skips it; a FIFO queue does not reorder, and a failed message blocks its group until it is deleted or expires",
+        "NumberOfEmptyReceives counts ReceiveMessage calls that returned nothing",
+        "NumberOfDeduplicatedSentMessages and ApproximateNumberOfGroupsWithInflightMessages exist for FIFO queues",
+        "NumberOfMessagesSent does not count messages SQS moves to a dead-letter queue itself"
+      ]
+    },
+    {
+      "id": "sqs61-dlq-alarm",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/dead-letter-queues-alarms-cloudwatch.html",
+      "title": "Creating alarms for dead-letter queues using Amazon CloudWatch",
+      "checkedAt": "2026-10-13",
+      "supports": ["The guide alarms on the dead-letter queue's ApproximateNumberOfMessagesVisible"]
+    },
+    {
+      "id": "sqs61-fair",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-fair-queues.html",
+      "title": "Amazon SQS fair queues",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On a standard queue, messages sent with a MessageGroupId are treated as tenants, and delivery to quiet tenants is prioritized when one tenant builds a backlog",
+        "A MessageGroupId on a standard queue does not enforce ordering"
+      ]
+    },
+    {
+      "id": "sqs61-policies",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",
+      "title": "Basic examples of Amazon SQS policies",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A queue policy grants another account sqs:SendMessage by naming the account as principal and the queue as resource"
+      ]
+    },
+    {
+      "id": "sqs61-api-send",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_SendMessage.html",
+      "title": "SendMessage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message sent with a deduplication ID that was accepted before is accepted and not delivered during the 5-minute deduplication interval",
+        "If the acknowledgment is lost and the message is resent with the same deduplication ID after the interval, SQS cannot detect the duplicate",
+        "DelaySeconds cannot be set per message on a FIFO queue",
+        "A body may contain only the characters #x9, #xA, #xD, #x20 to #xD7FF, #xE000 to #xFFFD, #x10000 to #x10FFFF; anything else is rejected with InvalidMessageContents",
+        "A deduplication ID is at most 128 characters; the sequence number keeps increasing within a message group"
+      ]
+    },
+    {
+      "id": "sqs61-api-send-batch",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_SendMessageBatch.html",
+      "title": "SendMessageBatch",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For a FIFO queue, the messages of one batch are enqueued in the order they are sent",
+        "Each entry's result is reported individually, so a call that returns HTTP 200 can contain failures"
+      ]
+    },
+    {
+      "id": "sqs61-api-receive",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html",
+      "title": "ReceiveMessage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A receive returns at most 10 messages",
+        "If a consumer is still processing when the visibility timeout expires, another worker can receive the same messages and process duplicates, and the first consumer's delete fails",
+        "ReceiveRequestAttemptId lets a FIFO consumer retry a receive whose answer was lost and get the same messages, for 5 minutes",
+        "The system attributes include ApproximateReceiveCount, MessageGroupId, MessageDeduplicationId, and SequenceNumber"
+      ]
+    },
+    {
+      "id": "sqs61-api-change-visibility",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ChangeMessageVisibility.html",
+      "title": "ChangeMessageVisibility",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The new timeout counts from the moment of the call",
+        "Asking for more than the time left of the 12 hours is an error; SQS does not shorten the request",
+        "The changed timeout applies to this receive only; the next receive uses the queue's value again"
+      ]
+    },
+    {
+      "id": "sqs61-api-delete",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessage.html",
+      "title": "DeleteMessage",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A delete with an old receipt handle succeeds as a request, and the message might not be deleted"
+      ]
+    },
+    {
+      "id": "sqs61-api-create-queue",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_CreateQueue.html",
+      "title": "CreateQueue",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The dead-letter queue of a FIFO queue must be a FIFO queue, and that of a standard queue a standard queue",
+        "maxReceiveCount defaults to 10; a message moves when its receive count exceeds it",
+        "DeduplicationScope is messageGroup or queue; FifoThroughputLimit is perQueue or perMessageGroupId",
+        "MaximumMessageSize ranges from 1,024 bytes to 1,048,576 bytes"
+      ]
+    },
+    {
+      "id": "sqs61-api-move-task",
+      "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_StartMessageMoveTask.html",
+      "title": "StartMessageMoveTask",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message move task works only from a queue that is the dead-letter queue of another SQS queue",
+        "With no destination, messages go back to the queues they came from; one task per queue at a time"
+      ]
+    },
+    {
+      "id": "sqs61-lambda-sqs",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "title": "Using Lambda with Amazon SQS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda polls the queue and invokes the function synchronously with a batch; it deletes the messages when the function succeeds",
+        "An event source mapping processes each event at least once, and the documentation strongly recommends idempotent function code",
+        "A FIFO record carries SequenceNumber, MessageGroupId, and MessageDeduplicationId among its attributes",
+        "Provisioned mode gives an event source mapping dedicated pollers, at extra cost"
+      ],
+      "note": "The page gives the maximum number of provisioned pollers as 10,000 in one place and the parameters page says 2,000. The chapter does not use provisioned mode and quotes neither."
+    },
+    {
+      "id": "sqs61-lambda-configure",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html",
+      "title": "Creating and configuring an Amazon SQS event source mapping",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The queue's visibility timeout should be at least six times the function's timeout, plus the batch window if there is one",
+        "Lambda refuses an event source mapping whose function timeout exceeds the queue's visibility timeout",
+        "The batch size is at most 10 for a FIFO queue and 10,000 for a standard queue",
+        "maxReceiveCount of at least 5 is recommended",
+        "An encrypted queue needs kms:Decrypt in the execution role"
+      ]
+    },
+    {
+      "id": "sqs61-lambda-scaling",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-scaling.html",
+      "title": "Configuring scaling behavior for SQS event source mappings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Maximum concurrency is a setting of the event source, from 2 to 1,000, and cannot be combined with provisioned mode",
+        "For a FIFO queue, concurrent invocations are capped by the number of message group IDs or by maximum concurrency, whichever is lower",
+        "When the function returns an error, all retries on the affected messages happen before Lambda receives more messages of the same group",
+        "At low traffic Lambda scales back to five concurrent invokes, and the further reduction to two is not available when maximum concurrency is set"
+      ]
+    },
+    {
+      "id": "sqs61-lambda-errors",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-errorhandling.html",
+      "title": "Handling errors for an SQS event source in Lambda",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With partial batch responses on a FIFO queue, the function should stop at the first failure and return the failed and all unprocessed messages",
+        "An exception fails the whole batch; an empty or null list is a complete success; an unknown or empty itemIdentifier fails the whole batch"
+      ]
+    },
+    {
+      "id": "sqs61-lambda-parameters",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-parameters.html",
+      "title": "Lambda parameters for Amazon SQS event source mappings",
+      "checkedAt": "2026-10-13",
+      "supports": ["A batching window is not supported for FIFO queues"]
+    },
+    {
+      "id": "sqs61-sns-subscribe",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/subscribe-sqs-queue-to-sns-topic.html",
+      "title": "Subscribing an Amazon SQS queue to an Amazon SNS topic",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The queue's policy must give the topic sqs:SendMessage before the subscription delivers"
+      ]
+    },
+    {
+      "id": "sqs61-sns-fifo-delivery",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/fifo-message-delivery.html",
+      "title": "Amazon SNS message delivery for FIFO topics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An SNS FIFO topic delivers to SQS FIFO queues, keeping order and deduplication, and to SQS standard queues with best-effort ordering"
+      ]
+    },
+    {
+      "id": "sqs61-ddb-tx-iam",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html",
+      "title": "Using IAM with DynamoDB transactions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Put and Update inside a transaction are authorized by the PutItem and UpdateItem permissions"
+      ]
+    },
+    {
+      "id": "sqs61-ddb-transact",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html",
+      "title": "TransactWriteItems",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The actions of a transaction all succeed or all fail",
+        "CancellationReasons lists one reason per item in request order; a failed condition has the code ConditionalCheckFailed and an item without error the code None"
+      ]
+    },
+    {
+      "id": "sqs61-ddb-ttl",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html",
+      "title": "Using time to live (TTL) in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The TTL attribute is a Number in Unix epoch seconds; expired items are deleted typically within a few days, without consuming write throughput"
+      ]
+    },
+    {
+      "id": "sqs61-iam-eval",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html",
+      "title": "Policy evaluation logic",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Within one account, the permissions of identity-based and resource-based policies are evaluated together and the result is their union; an explicit deny in either overrides an allow"
+      ]
+    },
+    {
+      "id": "sqs61-iam-cross-account",
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic-cross-account.html",
+      "title": "Cross-account policy evaluation logic",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Cross-account access needs a resource-based policy on the resource that names the other account or its principals, and an identity-based policy on the principal that allows the access"
+      ]
+    },
+    {
+      "id": "sqs61-pricing-page",
+      "url": "https://aws.amazon.com/sqs/pricing/",
+      "title": "Amazon SQS pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every SQS action is a request; all customers get 1 million requests a month free, for standard and FIFO queues alike",
+        "Each 64 KB chunk of a payload is billed as one request, so a 1 MiB payload is 16 requests",
+        "Fair queue requests are charged the fair queue rate on top of the standard rate",
+        "Calls SQS makes to KMS for a queue encrypted with a KMS key are charged by KMS"
+      ]
+    },
+    {
+      "id": "sqs61-price-list-sqs",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon SQS, Asia Pacific (Tokyo)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "FIFO requests: USD 0.50 per million (SKU SQUU378BX6EJ8NEF); standard: USD 0.40; fair queue requests: USD 0.10 per million",
+        "Global-Requests, queue type Any: the first 1,000,000 requests a month are USD 0"
+      ],
+      "note": "Publication date 2026-09-11T12:46:07Z."
+    },
+    {
+      "id": "sqs61-price-list-kms",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWS KMS, Asia Pacific (Tokyo)",
+      "checkedAt": "2026-10-13",
+      "supports": ["USD 0.03 per 10,000 requests and USD 1 per customer managed key a month"],
+      "note": "Publication date 2026-09-11T12:46:01Z."
+    },
+    {
+      "id": "sqs61-cf-queues-how",
+      "url": "https://developers.cloudflare.com/queues/reference/how-queues-works/",
+      "title": "Cloudflare Queues: How Queues Works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Queues does not guarantee that messages are delivered in the order they were published"
+      ]
+    },
+    {
+      "id": "sqs61-cf-queues-delivery",
+      "url": "https://developers.cloudflare.com/queues/reference/delivery-guarantees/",
+      "title": "Cloudflare Queues: Delivery guarantees",
+      "checkedAt": "2026-10-13",
+      "supports": ["Queues delivers at least once by default"]
+    },
+    {
+      "id": "sqs61-cf-queues-limits",
+      "url": "https://developers.cloudflare.com/queues/platform/limits/",
+      "title": "Cloudflare Queues: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message is at most 128 KB, a delay at most 24 hours, and a pull consumer's visibility timeout at most 12 hours"
+      ]
+    },
+    {
+      "id": "sqs61-cf-queues-batching",
+      "url": "https://developers.cloudflare.com/queues/configuration/batching-retries/",
+      "title": "Cloudflare Queues: Batching, Retries and Delays",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A message can be delayed when it is sent and when it is retried, by up to 24 hours"
+      ]
+    },
+    {
+      "id": "sqs61-vercel-queues",
+      "url": "https://vercel.com/docs/queues",
+      "title": "Vercel Queues",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Queues is in beta on all plans; a topic is a durable append-only log read by consumer groups, delivered at least once",
+        "A publish can carry an idempotency key that drops repeated publishes during the message's retention period"
+      ],
+      "note": "The overview page does not state an ordering guarantee. The chapter says so."
+    },
+    {
+      "id": "sqs61-cdkd",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The package registers dedicated providers for AWS::SQS::Queue, AWS::SQS::QueuePolicy, AWS::Lambda::EventSourceMapping, AWS::Lambda::Function, AWS::CloudWatch::Alarm, AWS::DynamoDB::Table, AWS::Logs::LogGroup, AWS::IAM::Role, and AWS::IAM::Policy",
+        "Its SQS provider names a queue that has no QueueName with generateResourceName(logicalId) and adds no .fifo suffix, so a FIFO queue needs an explicit name"
+      ],
+      "note": "Read from the dist files of the installed package, not from the repository."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "fifo-queue",
+      "ja": "FIFO キュー",
+      "en": "FIFO queue",
+      "firstUse": "61",
+      "definition": {
+        "ja": "SQS のキューの種類の 1 つ。メッセージグループの中では送った順に渡し、同じ重複排除 ID の送信を 5 分間は 1 件として扱う。",
+        "en": "One of the two kinds of SQS queue. It hands over the messages of a message group in the order they were sent, and treats sends with the same deduplication ID as one message for five minutes."
+      }
+    },
+    {
+      "id": "message-group",
+      "ja": "メッセージグループ",
+      "en": "message group",
+      "firstUse": "61",
+      "definition": {
+        "ja": "FIFO キューの中で、順序を保つ単位。同じ message group ID のメッセージは 1 件ずつ順に渡され、違うグループどうしは並行して進む。",
+        "en": "The unit within which a FIFO queue keeps order. Messages with the same message group ID are handed over one after another, and different groups proceed in parallel."
+      }
+    },
+    {
+      "id": "deduplication-id",
+      "ja": "重複排除 ID",
+      "en": "deduplication ID",
+      "firstUse": "61",
+      "definition": {
+        "ja": "FIFO キューに送るメッセージに付ける名前（MessageDeduplicationId）。受け付けてから 5 分のあいだ、同じ名前の送信はキューに入らない。",
+        "en": "The name given to a message sent to a FIFO queue (MessageDeduplicationId). For five minutes after it is accepted, a send with the same name queues nothing."
+      }
+    },
+    {
+      "id": "long-polling",
+      "ja": "ロングポーリング",
+      "en": "long polling",
+      "firstUse": "61",
+      "definition": {
+        "ja": "ReceiveMessage が、メッセージが来るまで最長 20 秒待ってから応答する受け取り方。空の応答の数が減り、そのぶんリクエストの料金も減る。",
+        "en": "A ReceiveMessage that waits up to 20 seconds for a message before it answers. Fewer empty answers, and so fewer billed requests."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "61.overview",
+      "sources": ["examples/61-sqs/infra/lib/sqs-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "61.fifo",
+      "sources": ["examples/61-sqs/src/fifo-queue.ts", "examples/61-sqs/test/fifo-queue.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "61.choices",
+      "sources": ["examples/61-sqs/infra/lib/sqs-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "61.command",
+      "sources": [
+        "examples/61-sqs/src/command.ts",
+        "examples/61-sqs/src/producer.ts",
+        "examples/61-sqs/test/producer.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "61.ledger",
+      "sources": [
+        "examples/61-sqs/src/ledger.ts",
+        "examples/61-sqs/src/dynamodb-ledger.ts",
+        "examples/61-sqs/src/naive.ts",
+        "examples/61-sqs/test/worker.test.ts",
+        "examples/61-sqs/test/adapters.test.ts",
+        "examples/61-sqs/test/harness.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "61.lease",
+      "sources": [
+        "examples/61-sqs/src/lease.ts",
+        "examples/61-sqs/test/lease.test.ts",
+        "examples/61-sqs/test/fifo-queue.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "61.consumer",
+      "sources": [
+        "examples/61-sqs/src/worker.ts",
+        "examples/61-sqs/src/poller.ts",
+        "examples/61-sqs/src/sqs-sender.ts",
+        "examples/61-sqs/test/worker.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "61.sending",
+      "sources": [
+        "examples/61-sqs/src/producer.ts",
+        "examples/61-sqs/src/sqs-sender.ts",
+        "examples/61-sqs/src/large-message.ts",
+        "examples/61-sqs/test/producer.test.ts",
+        "examples/61-sqs/test/large-message.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "61.local",
+      "sources": ["examples/61-sqs/scripts/demo.ts", "examples/61-sqs/src/fifo-queue.ts"],
+      "tasks": ["sqs:demo", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "61.stack",
+      "sources": [
+        "examples/61-sqs/infra/lib/sqs-stack.ts",
+        "examples/61-sqs/infra/bin/app.ts",
+        "examples/61-sqs/infra/test/sqs-stack.test.ts",
+        "examples/61-sqs/src/worker-lambda.ts",
+        "examples/61-sqs/src/env.ts",
+        "examples/61-sqs/src/settings.ts"
+      ],
+      "tasks": ["sqs:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "61.access",
+      "sources": [
+        "examples/61-sqs/infra/lib/sqs-stack.ts",
+        "examples/61-sqs/infra/test/sqs-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "61.deploy",
+      "sources": ["examples/61-sqs/scripts/send.ts", "examples/61-sqs/scripts/status.ts"],
+      "tasks": ["sqs:infra:diff", "sqs:infra:deploy", "sqs:send", "sqs:status", "sqs:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "61.cost",
+      "sources": ["examples/61-sqs/src/cost.ts", "examples/61-sqs/test/cost.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "61.cleanup",
+      "sources": ["examples/61-sqs/infra/lib/sqs-stack.ts"],
+      "tasks": ["sqs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "sqs.request.fifo",
+      "offerCode": "AWSQueueService",
+      "region": "ap-northeast-1",
+      "sku": "SQUU378BX6EJ8NEF",
+      "usageType": "APN1-Requests-FIFO-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 100000000000,
+          "usd": "0.0000005000",
+          "description": "$0.50 per million Amazon SQS FIFO requests in Tier1 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 100000000000,
+          "to": 200000000000,
+          "usd": "0.0000004600",
+          "description": "$0.46 per million Amazon SQS FIFO requests in Tier2 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 200000000000,
+          "to": null,
+          "usd": "0.0000004200",
+          "description": "$0.42 per million Amazon SQS FIFO requests in Tier3 in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:07Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [
+    {
+      "priceId": "sqs.request.fifo",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sqs61-pricing-page",
+      "note": "The same 1 million requests a month that sqs.request.standard lists: the pricing page gives one allowance for standard and FIFO queues together (Price List: Global-Requests, queue type Any). A scenario with both kinds of request must not count it twice."
+    }
+  ],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "sqs-idle",
+      "chapter": "61",
+      "title": {
+        "ja": "FIFO キューとワーカー: デプロイ済みで、コマンドが 1 件も来ない月",
+        "en": "FIFO queue and worker: deployed, with no command, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "アラームは 2 つ（DLQ の件数、いちばん古いメッセージの年齢）",
+          "Lambda は、空のキューを 20 秒のロングポーリングで、同時に 5 本読み続けると仮定する。5 × 730 × 3,600 ÷ 20 = 657,000 回。公式ドキュメントが書いているのは「トラフィックが少ないときは 5 つの同時実行まで戻す」ことと「maximum concurrency を設定すると 2 までの削減は使えない」ことで、受信の回数や待ち時間は書いていない。請求書でもメトリクスでも確かめていない",
+          "コマンドが無いので、関数の実行、DynamoDB、ログは 0。テーブルは空"
+        ],
+        "en": [
+          "Two alarms (messages in the dead-letter queue, age of the oldest message)",
+          "Lambda is assumed to keep five long polls of 20 seconds going on the empty queue: 5 x 730 x 3,600 / 20 = 657,000 receives. What the documentation states is that Lambda scales back to five concurrent invokes at low traffic and that the reduction to two is not available with maximum concurrency; it gives neither a count of receives nor the wait time. Not checked on a bill or in a metric",
+          "No commands, so function runs, DynamoDB, and logs are 0. The table is empty"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 2,
+          "basis": "two alarms, one metric each"
+        },
+        {
+          "priceId": "sqs.request.fifo",
+          "quantity": 657000,
+          "basis": "5 polls x 730 h x 3,600 s / 20 s (assumed)"
+        }
+      ]
+    },
+    {
+      "id": "sqs-small",
+      "chapter": "61",
+      "title": {
+        "ja": "FIFO キューとワーカー: 月 100,000 件のコマンド",
+        "en": "FIFO queue and worker: 100,000 commands a month"
+      },
+      "assumptions": {
+        "ja": [
+          "コマンドは 1 件ずつ送る（SendMessageBatch を使わない）。どれも 64 KB 未満なので、送信は 100,000 リクエスト",
+          "受信はバッチにならず、1 件につき ReceiveMessage 1 回と DeleteMessage 1 回と仮定する。200,000 リクエスト。重複、再試行、DLQ への退避はゼロ",
+          "空のキューの読み取りは、使っていない月と同じ 657,000 回と仮定する",
+          "ワーカーは 100,000 回起動し、1 回 100 ミリ秒、256 MB、arm64",
+          "1 件のコマンドは、目印とノートの 2 つを書くトランザクション。どちらも 1 KB 以下で、トランザクションの書き込みは 1 KB あたり 2 unit なので 4 unit",
+          "ログは 1 件につき 0.3 KB",
+          "未算入: テーブルの保存料金（目印は 30 日で消える。数十 MB）"
+        ],
+        "en": [
+          "Commands are sent one at a time (no SendMessageBatch). Each is under 64 KB, so sending is 100,000 requests",
+          "No batching on the way out: one ReceiveMessage and one DeleteMessage per command, 200,000 requests. No duplicates, retries, or dead letters",
+          "The empty queue is assumed to be polled 657,000 times, as in the idle month",
+          "The worker runs 100,000 times, 100 ms each at 256 MB on arm64",
+          "A command is a transaction of two writes, the marker and the note. Each is under 1 KB and a transactional write is 2 units per KB, so 4 units",
+          "0.3 KB of logs per command",
+          "Not included: the table's storage (markers expire after 30 days; tens of MB)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.alarm.standard",
+          "quantity": 2,
+          "basis": "two alarms, one metric each"
+        },
+        {
+          "priceId": "sqs.request.fifo",
+          "quantity": 957000,
+          "basis": "657,000 empty receives (assumed) + 100,000 x (send + receive + delete)"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 100000,
+          "basis": "one invocation per command"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 2500,
+          "basis": "100,000 x 0.1 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 400000,
+          "basis": "100,000 x 2 items x 2 units"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.03,
+          "basis": "100,000 x 0.3 KB, in GB"
+        }
+      ]
+    },
+    {
+      "id": "sqs-kms-option",
+      "chapter": "61",
+      "title": {
+        "ja": "キューを自分の KMS の鍵で暗号化した場合に増える分（1 か月）",
+        "en": "What encrypting the queue with your own KMS key adds, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "この章のスタックは SQS が管理する鍵（SSE-SQS）を使うので、この費用はかからない。自分で管理する鍵に替えた場合の見積もり",
+          "鍵は 1 つ。コマンドのキューだけを数える（DLQ のぶんは入れていない）",
+          "SQS の開発者ガイドの式 R = (B / D) × (2P + C)。B は 730 時間 = 2,628,000 秒、D は既定の 300 秒、送る主体 P は 1、受け取る主体 C は 1。8,760 × 3 = 26,280 回",
+          "ガイドは、実際の回数はこの式より多くなりうると書いている"
+        ],
+        "en": [
+          "This chapter's stack uses the key SQS manages (SSE-SQS) and does not pay this. It is the estimate for switching to a key of your own",
+          "One key. Only the command queue is counted, not the dead-letter queue",
+          "The SQS developer guide's formula R = (B / D) x (2P + C), with B = 730 hours = 2,628,000 seconds, D = the default 300 seconds, one producing principal, one consuming principal: 8,760 x 3 = 26,280 calls",
+          "The guide says actual calls can be higher than the formula gives"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "kms.key",
+          "quantity": 1,
+          "basis": "one customer managed key"
+        },
+        {
+          "priceId": "kms.request",
+          "quantity": 26280,
+          "basis": "(2,628,000 / 300) x (2 x 1 + 1)"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "61",
+        "command": "vp test run examples/61-sqs",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "8 ファイル、75 件。キューの模型の決まり（必須の ID、5 分の重複排除、グループの順序と、受け取られたままのグループから返さないこと、receipt handle、可視性タイムアウトの延長と 12 時間の限度、DLQ への移動と同じバッチの巻き添え、redrive）、ワーカーと台帳の不変条件（5 分後の送り直し、可視性タイムアウトを過ぎたワーカーとの競争、バッチの途中の失敗、読めないメッセージをよけること、長い障害の後の redrive）、バッチの組み立て、大きなメッセージ、料金の数え方、DynamoDB と SQS へのリクエストの形、インフラのアサーション。相手はメモリ上の模型で、SQS ではない。コードを 4 か所わざと壊して、テストがそれぞれ 3 件、4 件、2 件、3 件落ちることも確かめた",
+          "en": "8 files, 75 tests. The rules of the queue model (required IDs, five minutes of deduplication, order within a group and nothing returned from a group that is still out, receipt handles, extending the visibility timeout and the 12-hour limit, the move to the dead-letter queue and the messages of the same batch dragged along, redrive), the invariant of the worker and the ledger (a resend after five minutes, the race with a worker past its visibility timeout, a failure inside a batch, setting aside an unreadable message, a redrive after a long outage), the building of batches, large messages, how requests are counted, the shape of requests to DynamoDB and SQS, and infrastructure assertions. The queue is the in-memory model, not SQS. The code was also broken on purpose in four places, and 3, 4, 2, and 3 tests failed"
+        }
+      },
+      {
+        "scope": "61",
+        "command": "vp run sqs:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "模型のキューとデプロイするワーカーのコードで、すぐの送り直し、5 分後の送り直し、可視性タイムアウトを過ぎたワーカー、読めないメッセージを順に流し、目印を覚える台帳が 3 行、覚えない台帳が 5 行で終わること、読めないメッセージがどちらでも DLQ に入ることを出力で確認",
+          "en": "Ran an immediate resend, a resend after five minutes, a worker past its visibility timeout, and an unreadable message through the model queue and the deployed worker code, and read from the output that the ledger with markers ends with three lines, the one without with five, and the unreadable message is in the dead-letter queue either way"
+        }
+      },
+      {
+        "scope": "61",
+        "command": "vp run sqs:infra:synth / tsc --noEmit -p examples/61-sqs",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "リソースの種類は 9 つ（SQS::Queue、SQS::QueuePolicy、Lambda::Function、Lambda::EventSourceMapping、DynamoDB::Table、CloudWatch::Alarm、Logs::LogGroup、IAM::Role、IAM::Policy）で、どれも cdkd 0.296.28 に専用の実装がある。Custom:: のリソースはない。scripts/ は型検査のみ",
+          "en": "Nine resource types (SQS::Queue, SQS::QueuePolicy, Lambda::Function, Lambda::EventSourceMapping, DynamoDB::Table, CloudWatch::Alarm, Logs::LogGroup, IAM::Role, IAM::Policy), each with a dedicated provider in cdkd 0.296.28, and no Custom:: resource. scripts/ is type-checked only"
+        }
+      },
+      {
+        "scope": "61",
+        "command": "vp run sqs:infra:diff / sqs:infra:deploy / sqs:send / sqs:status / sqs:infra:drift / sqs:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS に対しては何も実行していない",
+          "en": "Nothing was run against AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "sqs-fifo-on-aws",
+        "summary": {
+          "ja": "61章: 名前を固定した 2 本の FIFO キューが cdkd 0.296.28 で作れること、FIFO キューの重複排除（5 分）とメッセージグループの順序、FIFO キューのイベントソースマッピングでの maximum concurrency と partial batch response が、模型とドキュメントのとおりに動くことを、実物で確かめていない。",
+          "en": "Chapter 61: not confirmed on AWS that cdkd 0.296.28 creates the two FIFO queues with their fixed names, or that a FIFO queue's deduplication (five minutes) and message group order, and maximum concurrency and partial batch responses on an event source mapping for a FIFO queue, behave as the model and the documentation say."
+        },
+        "resume": {
+          "ja": "vp run sqs:infra:deploy の後、vp run sqs:send と vp run sqs:status を実行する。ノートが題 Shopping、行 milk と eggs、適用 3 件になれば期待どおり。milk が 2 行あれば重複排除 ID を、順序が違えば message group ID を、ワーカーのロググループ（出力 WorkerLogGroupName）で確かめる。",
+          "en": "After vp run sqs:infra:deploy, run vp run sqs:send and vp run sqs:status. A note with the title Shopping, the lines milk and eggs, and three commands applied is the expected result. With two lines of milk check the deduplication ID, and with a wrong order the message group ID, in the worker's log group (output WorkerLogGroupName)."
+        }
+      },
+      {
+        "id": "sqs-park-and-redrive",
+        "summary": {
+          "ja": "61章: ワーカーが読めないメッセージを FIFO のデッドレターキューに SendMessage で直接送れること、そのメッセージを DestinationArn を指定した StartMessageMoveTask で元のキューに戻せることを、実物で確かめていない。DestinationArn を省いたときに、SQS が移したのではないメッセージがどう扱われるかも確かめていない。",
+          "en": "Chapter 61: not confirmed on AWS that the worker can send an unreadable message straight to the FIFO dead-letter queue with SendMessage, or that such a message can be moved back with StartMessageMoveTask and a DestinationArn. What happens to a message SQS did not move itself when DestinationArn is left out was not confirmed either."
+        },
+        "resume": {
+          "ja": "vp run sqs:send --poison の後、vp run sqs:status でデッドレターキューに「parked by the worker」の 1 件があることを見る。vp run sqs:status --redrive を実行し、移動のタスクの状態と、戻ったメッセージがもう一度よけられることを見る。",
+          "en": "After vp run sqs:send --poison, check with vp run sqs:status that the dead-letter queue holds one message marked \"parked by the worker\". Run vp run sqs:status --redrive and watch the move task's state, and that the message is set aside again once it is back."
+        }
+      },
+      {
+        "id": "sqs-batch-mates",
+        "summary": {
+          "ja": "61章: 失敗し続けるメッセージと同じバッチで渡されたメッセージが、受信の回数を一緒に増やしてデッドレターキューに移ること。ドキュメントの 2 つの決まり（受信の回数はメッセージごと、maxReceiveCount を超えたら移る）から導き、模型で再現しただけで、実物では確かめていない。Lambda のポーラーが 1 回に何件受け取るかは、ドキュメントに書かれていない。",
+          "en": "Chapter 61: that messages handed over in the same batch as a message that keeps failing have their receive counts go up with it and move to the dead-letter queue. This is derived from two documented rules (the receive count is per message; a message past maxReceiveCount is moved) and reproduced in the model only. How many messages Lambda's poller receives at a time is not documented."
+        },
+        "resume": {
+          "ja": "ワーカーの park を一時的に例外を投げるものに替えてデプロイし、同じノートに読めないメッセージと正しいコマンド 2 件を続けて送る。5 分ほど後に vp run sqs:status で、デッドレターキューに 3 件あるか、1 件だけかを見る。",
+          "en": "Deploy with the worker's park temporarily replaced by one that throws, and send an unreadable message followed by two good commands for the same note. About five minutes later, check with vp run sqs:status whether the dead-letter queue holds three messages or one."
+        }
+      },
+      {
+        "id": "sqs-ledger-on-dynamodb",
+        "summary": {
+          "ja": "61章: DynamoDB 用の台帳のトランザクション（list_append と if_not_exists を使う更新式、size の条件、CancellationReasons の並び）を、DynamoDB でも DynamoDB Local でも実行していない。DynamoDB Local は Docker が要り、Nix の shell には無い。TTL で目印が消えることも確かめていない。",
+          "en": "Chapter 61: the transaction of the DynamoDB ledger (the update expression with list_append and if_not_exists, the size condition, the order of CancellationReasons) was run against neither DynamoDB nor DynamoDB Local. DynamoDB Local needs Docker, which the Nix shell lacks. That TTL removes the markers was not confirmed either."
+        },
+        "resume": {
+          "ja": "vp run sqs:infra:deploy の後、vp run sqs:send を 2 回実行する（コマンド ID は毎回変わるので、行は増える）。ワーカーのログに ValidationException が無いこと、vp run sqs:status の適用件数が増えることを見る。同じコマンドを 5 分後に送り直す確認は、scripts/send.ts のコマンド ID を固定して行う。",
+          "en": "After vp run sqs:infra:deploy, run vp run sqs:send twice (command IDs differ each time, so lines are added). Check that the worker's log has no ValidationException and that the applied count in vp run sqs:status goes up. To resend the same command after five minutes, fix the command ID in scripts/send.ts."
+        }
+      },
+      {
+        "id": "sqs-empty-receives",
+        "summary": {
+          "ja": "61章: Lambda が空の FIFO キューを読む回数。料金の見積もりは「20 秒のロングポーリングが常に 5 本」という仮定（月 657,000 回）で、公式ドキュメントに回数は無い。ワーカーの実行時間（100 ミリ秒と仮定）も計測していない。",
+          "en": "Chapter 61: how often Lambda reads an empty FIFO queue. The cost estimate assumes five long polls of 20 seconds at all times (657,000 a month); the official documentation gives no count. The worker's run time (assumed 100 ms) was not measured either."
+        },
+        "resume": {
+          "ja": "デプロイして 1 日置き、CloudWatch でコマンドのキューの NumberOfEmptyReceives の合計を見る。30.4 倍して 657,000 と比べ、data/fragments/61.json の sqs-idle と sqs-small の数量を直す。",
+          "en": "Deploy, wait a day, and read the sum of NumberOfEmptyReceives for the command queue in CloudWatch. Multiply by 30.4, compare with 657,000, and correct the quantities of sqs-idle and sqs-small in data/fragments/61.json."
+        }
+      },
+      {
+        "id": "sqs-cross-account-and-alarms",
+        "summary": {
+          "ja": "61章: senderAccountId を渡したときのキューポリシーで別のアカウントから送れること、alarmTopicArn を渡したときに 2 つのアラームがトピックに通知することを、実物で確かめていない。テンプレートの形をアサーションで確かめただけ。",
+          "en": "Chapter 61: not confirmed on AWS that another account can send under the queue policy added by senderAccountId, or that the two alarms notify the topic given as alarmTopicArn. Only the template's shape was asserted."
+        },
+        "resume": {
+          "ja": "vp run sqs:infra:deploy -c alarmTopicArn=<19章の AlarmTopicArn> でデプロイし、vp run sqs:send --poison でデッドレターキューに 1 件入れて通知を待つ。別のアカウントからの送信は、2 つ目のアカウントがあるときに -c senderAccountId=<ID> で確かめる。",
+          "en": "Deploy with vp run sqs:infra:deploy -c alarmTopicArn=<chapter 19's AlarmTopicArn>, put one message in the dead-letter queue with vp run sqs:send --poison, and wait for the notification. Check the send from another account with -c senderAccountId=<ID> when a second account is at hand."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 61: sqs -----------------------------------------------\n      // The model queue and the worker's code, with a ledger that remembers and one that does not. No AWS.\n      \"sqs:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/61-sqs\" }),\n      ...infra(\"sqs\", \"examples/61-sqs\", \"AihSqs\"),\n      // Sends a few commands for one note with your credentials, one of them twice.\n      \"sqs:send\": live(\"node --env-file-if-exists=../../.env scripts/send.ts\", {\n        cwd: \"examples/61-sqs\",\n      }),\n      // Both queues, the dead letters, and one note. With --redrive it moves the dead letters back.\n      \"sqs:status\": live(\"node --env-file-if-exists=../../.env scripts/status.ts\", {\n        cwd: \"examples/61-sqs\",\n      }),",
+    "synth": ["sqs:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/61-sqs"]
+  }
+}

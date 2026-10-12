@@ -1,0 +1,1298 @@
+{
+  "chapterId": "25",
+  "manifest": {
+    "id": "25",
+    "slug": "events",
+    "title": {
+      "ja": "Events: EventBridge、SNS、Pipes、archive と replay",
+      "en": "Events: EventBridge, SNS, Pipes, Archive and Replay"
+    },
+    "prerequisites": ["08"],
+    "services": ["EventBridge", "EventBridge Pipes", "SNS", "SQS", "Lambda", "DynamoDB Streams"],
+    "samplePath": "examples/25-events",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "events-eb-what-is",
+      "events-eb-classic-bus",
+      "events-eb-custom-bus",
+      "events-eb-custom-bus-cfn",
+      "events-eb-custom-bus-ordering",
+      "events-eb-custom-bus-migrate",
+      "events-eb-patterns",
+      "events-eb-create-pattern",
+      "events-eb-pattern-operators",
+      "events-eb-retry",
+      "events-eb-dlq",
+      "events-eb-input-transformer",
+      "events-eb-archive",
+      "events-eb-replay",
+      "events-eb-startreplay",
+      "events-eb-putevents",
+      "events-eb-putevents-entry",
+      "events-eb-quotas",
+      "events-eb-troubleshooting",
+      "events-eb-resource-policies",
+      "events-pipes",
+      "events-pipes-dynamodb",
+      "events-pipes-filtering",
+      "events-pipes-enrichment",
+      "events-pipes-targets",
+      "events-pipes-batching",
+      "events-pipes-errors",
+      "events-pipes-permissions",
+      "events-cfn-pipe-ddb",
+      "events-cfn-archive",
+      "events-lambda-services",
+      "events-lambda-async-errors",
+      "events-lambda-destinations",
+      "events-sns-welcome",
+      "events-sns-filtering",
+      "events-sns-raw",
+      "events-sns-retries",
+      "events-sns-fifo-archive",
+      "events-sns-quotas",
+      "events-sns-faq",
+      "events-ddb-streams",
+      "events-ddb-service-auth",
+      "events-ddb-tx-iam",
+      "events-ddb-transact-api",
+      "events-ddb-ttl",
+      "events-cc-supported",
+      "events-cdkd-providers",
+      "events-price-list-events",
+      "events-price-list-dynamodb-streams",
+      "events-price-list-sns",
+      "events-eb-pricing",
+      "events-ddb-pricing",
+      "events-sns-pricing",
+      "events-cf-queues-how",
+      "events-cf-queues-delivery",
+      "events-cf-event-subscriptions",
+      "events-cf-event-schemas",
+      "events-cf-queues-limits",
+      "events-cf-queues-pricing",
+      "events-vercel-queues",
+      "events-vercel-queues-concepts"
+    ]
+  },
+  "sources": [
+    {
+      "id": "events-eb-what-is",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is.html",
+      "title": "What Is Amazon EventBridge?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EventBridge offers two event buses: the Custom Event Bus, which routes to subscribers, retains events, and supports ordered delivery and replay, and Custom Event Bus - Classic, which routes with rules and targets",
+        "The guide says to start new applications with the Custom Event Bus, and that Custom Event Bus - Classic remains available",
+        "A pipe with a DynamoDB stream as its source and an event bus as its target is given as a common use of pipes and buses together"
+      ]
+    },
+    {
+      "id": "events-eb-classic-bus",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-bus.html",
+      "title": "Amazon EventBridge event bus (default and Classic)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A Classic event bus evaluates each event against every rule on the bus and sends it to the targets of the rules it matches",
+        "An event may match several rules, and each rule can have up to five targets"
+      ]
+    },
+    {
+      "id": "events-eb-custom-bus",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-what-is.html",
+      "title": "What is the EventBridge Custom Event Bus?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Custom Event Bus retains every event for 1 to 365 days, delivers in order within an event group per subscriber, and deduplicates at publish time within a 5-minute window",
+        "A subscriber delivers to exactly one target; a Classic rule delivers to up to five",
+        "On the Custom Event Bus replay is a subscriber's starting position over retained events; on Classic it is a replay from an archive"
+      ]
+    },
+    {
+      "id": "events-eb-custom-bus-cfn",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-cloudformation.html",
+      "title": "Creating Custom Event Bus resources with CloudFormation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Custom Event Bus resources are in the AWS::EventsV2 namespace (EventBus, Subscriber, EventSource, ResourcePolicy); the AWS::Events types belong to Classic and cannot configure a Custom Event Bus"
+      ]
+    },
+    {
+      "id": "events-eb-custom-bus-ordering",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-ordering.html",
+      "title": "Ordering and deduplicating events on a Custom Event Bus",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EventBridge suppresses a duplicate publish that arrives within 5 minutes (300 seconds) of the entry it repeats",
+        "Ordering is a property of a subscriber (UNORDERED or FIFO) within an event group"
+      ]
+    },
+    {
+      "id": "events-eb-custom-bus-migrate",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-migrate.html",
+      "title": "Migrating from Custom Event Bus - Classic to the Custom Event Bus",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A rule and one of its targets becomes one subscriber; an event pattern becomes a DATA filter unchanged for PutEvents traffic, except wildcards; archive and replay become retention on the bus and a subscriber starting position",
+        "A subscriber retries a failed delivery for 300 seconds and 5 attempts by default, where a Classic target retries for 24 hours and 185 attempts"
+      ]
+    },
+    {
+      "id": "events-eb-patterns",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html",
+      "title": "Amazon EventBridge event patterns",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An event pattern has the same structure as the events it matches, and either matches an event or does not",
+        "A rule can lead to an infinite loop when what it triggers matches the same rule again"
+      ]
+    },
+    {
+      "id": "events-eb-create-pattern",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-pattern.html",
+      "title": "Creating Amazon EventBridge event patterns",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For a pattern to match, the event must contain all the field names in the pattern, in the same nesting; fields the pattern does not name are ignored",
+        "Values to match are given in an array, and any one of them matching is enough",
+        "Strings are matched character by character with no case folding; numbers are compared by their string representation, so 300, 300.0, and 3.0e2 are not equal"
+      ]
+    },
+    {
+      "id": "events-eb-pattern-operators",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-pattern-operators.html",
+      "title": "Comparison operators for use in event patterns in Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The operators: prefix, suffix, anything-but, exists, numeric, equals-ignore-case, wildcard, cidr, $or, with a table of which ones event buses and pipes support",
+        "Pipes do not support wildcard, nor anything-but combined with prefix, suffix, ignore-case, or wildcard",
+        "exists matching works only on leaf nodes",
+        "numeric matching compares 64-bit doubles"
+      ]
+    },
+    {
+      "id": "events-eb-retry",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-retry-policy.html",
+      "title": "How EventBridge retries delivering events",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default EventBridge retries sending an event to a target for 24 hours and up to 185 times, with exponential backoff and jitter",
+        "An event not delivered after all retries is dropped unless a dead-letter queue is configured"
+      ]
+    },
+    {
+      "id": "events-eb-dlq",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html",
+      "title": "Using dead-letter queues to process undelivered events in EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A target's dead-letter queue is a standard SQS queue in the same Region; FIFO queues are not supported",
+        "Each message carries RULE_ARN, TARGET_ARN, ERROR_CODE, ERROR_MESSAGE, EXHAUSTED_RETRY_CONDITION, and RETRY_ATTEMPTS as attributes",
+        "Errors such as missing permissions or a target that no longer exists are not retried and go straight to the dead-letter queue",
+        "When the queue is set through the API, a resource policy must allow events.amazonaws.com to SendMessage, conditioned on the rule's ARN"
+      ]
+    },
+    {
+      "id": "events-eb-input-transformer",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html",
+      "title": "Amazon EventBridge input transformation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An input transformer defines up to 100 variables by JSON path and fills them into a template; the target receives the result instead of the event",
+        "EventBridge adds quotes to variables that hold strings; a variable whose path is not in the event is not created and does not appear in the output"
+      ]
+    },
+    {
+      "id": "events-eb-archive",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-archive.html",
+      "title": "Archiving and replaying events in Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An archive takes events from one bus, optionally filtered by a pattern, and keeps them indefinitely unless a retention is set",
+        "An event may reach the archive with a delay; the guide recommends waiting 10 minutes before replaying",
+        "A replay goes only to the bus the archive was filled from, optionally to named rules, and adds a replay-name field to each event; replayed events are not archived again",
+        "Events are not necessarily replayed in the order they were archived; a replay works through its window in one-minute intervals",
+        "At most ten replays can be active per account and Region, and a replay does not remove events from the archive"
+      ]
+    },
+    {
+      "id": "events-eb-replay",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-replay-archived-event.html",
+      "title": "Creating replays of archived events in Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A replay is given a start time and an end time, and either all rules or chosen rules"
+      ]
+    },
+    {
+      "id": "events-eb-startreplay",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_StartReplay.html",
+      "title": "StartReplay",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "StartReplay takes ReplayName, EventSourceArn (the archive), EventStartTime, EventEndTime, and a Destination with the bus ARN and optional FilterArns of rules"
+      ]
+    },
+    {
+      "id": "events-eb-putevents",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-putevents.html",
+      "title": "Sending events with PutEvents in Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A PutEvents request holds up to 10 entries and less than 1 MB in total",
+        "A request can partly fail: each result entry carries either an event ID or an error code, and failed entries must be sent again by the caller"
+      ]
+    },
+    {
+      "id": "events-eb-putevents-entry",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEventsRequestEntry.html",
+      "title": "PutEventsRequestEntry",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Detail, DetailType, and Source are required for an entry to be accepted; DetailType is a free-form string of at most 128 characters"
+      ]
+    },
+    {
+      "id": "events-eb-quotas",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-quota.html",
+      "title": "Amazon EventBridge quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As read on 2026-10-13: 300 rules per event bus (adjustable) and 5 targets per rule (not adjustable) in ap-northeast-1; event pattern size 2,048 characters",
+        "As read on 2026-10-13: the PutEvents throttle in ap-northeast-1 is 1,200 transactions per second and the invocations throttle 2,250 per second"
+      ]
+    },
+    {
+      "id": "events-eb-troubleshooting",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-troubleshooting.html",
+      "title": "Troubleshooting Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In rare cases the same rule can run more than once for a single event, or the same target be invoked more than once for a triggered rule"
+      ]
+    },
+    {
+      "id": "events-eb-resource-policies",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html",
+      "title": "Using resource-based policies for Amazon EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A rule needs a resource-based policy on its target: lambda:InvokeFunction with the rule as source ARN for a function, sqs:SendMessage conditioned on the rule's ARN for a queue, and sns:Publish for events.amazonaws.com on a topic",
+        "The statement shown for an SNS topic has no condition"
+      ]
+    },
+    {
+      "id": "events-pipes",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes.html",
+      "title": "Amazon EventBridge Pipes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A pipe connects one source to one target, with optional filtering and enrichment; you are charged only for events that match the filter"
+      ]
+    },
+    {
+      "id": "events-pipes-dynamodb",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-dynamodb.html",
+      "title": "Amazon DynamoDB stream as a source for EventBridge Pipes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A pipe polls each shard of a DynamoDB stream at a base rate of four times per second and keeps the order of records",
+        "Delivery is at least once; a retry policy with a maximum age shorter than the stream's retention is suggested",
+        "LATEST as the starting position can miss events sent during pipe creation or updates; TRIM_HORIZON does not",
+        "Disabling the stream makes the pipe unusable, even if the stream is enabled again, because the stream gets a new ARN"
+      ]
+    },
+    {
+      "id": "events-pipes-filtering",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-event-filtering.html",
+      "title": "Event filtering in Amazon EventBridge Pipes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Pipe filters use event patterns; fields added by the poller, among them eventName and eventID, cannot be used in them",
+        "After a stream record is filtered out the iterator moves past it"
+      ]
+    },
+    {
+      "id": "events-pipes-enrichment",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/pipes-enrichment.html",
+      "title": "Event enrichment in Amazon EventBridge Pipes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An enrichment is invoked synchronously; its response is passed to the target, and an empty response invokes no target"
+      ]
+    },
+    {
+      "id": "events-pipes-targets",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-event-target.html",
+      "title": "Amazon EventBridge Pipes targets",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With an event bus as the target, the pipe's payload becomes the event's detail; Source and DetailType are set in PipeTargetEventBridgeEventBusParameters and may be JSON paths into the payload",
+        "A pipe can target an event bus in the same account and Region; the effective payload limit for that target is 1 MB"
+      ]
+    },
+    {
+      "id": "events-pipes-batching",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-batching-concurrency.html",
+      "title": "Amazon EventBridge Pipes batching and concurrency",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The largest batch a pipe sends to an event bus is 10",
+        "For partial batch failure handling, the eventID of each DynamoDB record must be in the array an enrichment returns",
+        "A pipe execution is limited to 5 minutes including enrichment and target"
+      ]
+    },
+    {
+      "id": "events-pipes-errors",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-error-troubleshooting.html",
+      "title": "Amazon EventBridge Pipes error handling and troubleshooting",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For a stream source, customer invocation errors are retried up to the pipe's maximum retry attempts or maximum record age; internal errors are retried until the record expires in the source",
+        "A pipe with a stream source can have a dead-letter queue (SQS or SNS); MaximumRecordAgeInSeconds should be less than the stream's own retention",
+        "A pipe can be disabled automatically after nearly continuous 4xx errors"
+      ]
+    },
+    {
+      "id": "events-pipes-permissions",
+      "url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-permissions.html",
+      "title": "Amazon EventBridge Pipes permissions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For a DynamoDB stream source the pipe's role needs dynamodb:DescribeStream, GetRecords, GetShardIterator, and ListStreams, and sqs:SendMessage for a dead-letter queue",
+        "Enrichment and target calls are made with the pipe's role, by the principal pipes.amazonaws.com"
+      ]
+    },
+    {
+      "id": "events-cfn-pipe-ddb",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-pipes-pipe-pipesourcedynamodbstreamparameters.html",
+      "title": "AWS::Pipes::Pipe PipeSourceDynamoDBStreamParameters",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "MaximumRetryAttempts and MaximumRecordAgeInSeconds default to -1, which means retrying until the record expires in the source",
+        "StartingPosition is required and is TRIM_HORIZON or LATEST"
+      ]
+    },
+    {
+      "id": "events-cfn-archive",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-events-archive.html",
+      "title": "AWS::Events::Archive",
+      "checkedAt": "2026-10-13",
+      "supports": ["RetentionDays defaults to 0, which keeps events indefinitely"]
+    },
+    {
+      "id": "events-lambda-services",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-services.html",
+      "title": "Invoking Lambda with events from other AWS services",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EventBridge event buses and rules invoke a function asynchronously; pipes invoke synchronously or asynchronously"
+      ]
+    },
+    {
+      "id": "events-lambda-async-errors",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-error-handling.html",
+      "title": "How Lambda handles errors and retries with asynchronous invocation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For an asynchronous invocation Lambda retries a function error two more times, one minute and then two minutes apart",
+        "A function can receive the same asynchronous event more than once even when it returns no error"
+      ]
+    },
+    {
+      "id": "events-lambda-destinations",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-retain-records.html",
+      "title": "Capturing records of Lambda asynchronous invocations",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An on-failure destination can be a standard SQS queue; the record holds requestContext (condition, approximateInvokeCount) and requestPayload"
+      ]
+    },
+    {
+      "id": "events-sns-welcome",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/welcome.html",
+      "title": "What is Amazon SNS?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Publishers send to a topic and SNS delivers to its subscribers: SQS, Lambda, HTTP(S), email, mobile push, SMS, Firehose"
+      ]
+    },
+    {
+      "id": "events-sns-filtering",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering.html",
+      "title": "Amazon SNS message filtering",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A subscriber receives every message of its topic unless its subscription has a filter policy, on message attributes or on the body"
+      ]
+    },
+    {
+      "id": "events-sns-raw",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-large-payload-raw-message-delivery.html",
+      "title": "Amazon SNS raw message delivery",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With raw message delivery an SQS subscriber receives the published message as is, without SNS's JSON around it"
+      ]
+    },
+    {
+      "id": "events-sns-retries",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/sns-message-delivery-retries.html",
+      "title": "Amazon SNS message delivery retries",
+      "checkedAt": "2026-10-13",
+      "supports": ["For SQS and Lambda endpoints SNS makes up to 100,015 attempts over 23 days"]
+    },
+    {
+      "id": "events-sns-fifo-archive",
+      "url": "https://docs.aws.amazon.com/sns/latest/dg/fifo-message-archiving-replay.html",
+      "title": "Amazon SNS message archiving and replay for FIFO topics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Archiving and replay in SNS exist for FIFO topics only, for up to 365 days, and a subscriber starts the replay"
+      ]
+    },
+    {
+      "id": "events-sns-quotas",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/sns.html",
+      "title": "Amazon SNS endpoints and quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As read on 2026-10-13: a standard topic takes 12,500,000 subscriptions and a FIFO topic 100; 200 filter policies per topic; the default maximum message size is 256 KiB"
+      ]
+    },
+    {
+      "id": "events-sns-faq",
+      "url": "https://aws.amazon.com/sns/faqs/",
+      "title": "Amazon SNS FAQs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A subscriber can occasionally receive a duplicate message, and applications should be designed so that processing a message more than once causes no errors"
+      ]
+    },
+    {
+      "id": "events-ddb-streams",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html",
+      "title": "Change data capture for DynamoDB Streams",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A stream holds item-level changes for up to 24 hours; each stream record appears exactly once in the stream, and the records of one item appear in the order of the changes"
+      ]
+    },
+    {
+      "id": "events-ddb-service-auth",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/dynamodb/dynamodb.json",
+      "title": "Service Authorization Reference data for Amazon DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DescribeStream, GetRecords, and GetShardIterator are authorized on the stream resource; ListStreams lists no resource type"
+      ]
+    },
+    {
+      "id": "events-ddb-tx-iam",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html",
+      "title": "Using IAM with DynamoDB transactions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Put and Update inside a transaction are governed by the permissions for PutItem and UpdateItem"
+      ]
+    },
+    {
+      "id": "events-ddb-transact-api",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html",
+      "title": "TransactWriteItems",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A cancelled transaction reports a reason per item, in order, with the code ConditionalCheckFailed for a failed condition"
+      ]
+    },
+    {
+      "id": "events-ddb-ttl",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html",
+      "title": "How it works: DynamoDB Time to Live (TTL)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Expired items are deleted typically within a few days after their expiration, without consuming write throughput"
+      ]
+    },
+    {
+      "id": "events-cc-supported",
+      "url": "https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/supported-resources.html",
+      "title": "Resource types that support Cloud Control API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::Events::Archive and AWS::Pipes::Pipe are listed; no AWS::EventsV2 type was in the list on 2026-10-13"
+      ]
+    },
+    {
+      "id": "events-cdkd-providers",
+      "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/src/provisioning/register-providers.ts",
+      "title": "cdkd v0.296.28: src/provisioning/register-providers.ts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Providers are registered for AWS::Events::EventBus, AWS::Events::Rule, AWS::Pipes::Pipe, AWS::SNS::Topic, AWS::SNS::Subscription, and AWS::SNS::TopicPolicy",
+        "No provider is registered for AWS::Events::Archive or for any AWS::EventsV2 type"
+      ],
+      "note": "Read as the raw file at the v0.296.28 tag, and compared with the dist of the installed package."
+    },
+    {
+      "id": "events-price-list-events",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon EventBridge, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Custom events USD 0.0000010000 per 64 KB chunk; Pipes requests USD 0.0000005000 per 64 KB chunk; archive processing USD 0.13 per GB; archive storage USD 0.025 per GB-month",
+        "The EventsV2 (Custom Event Bus) usage types are priced per GB of ingress, egress, and retention"
+      ]
+    },
+    {
+      "id": "events-price-list-dynamodb-streams",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon DynamoDB, ap-northeast-1 (Streams)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DynamoDB Streams read request units: the first 2.5 million a month at USD 0, then USD 0.000000228 each"
+      ]
+    },
+    {
+      "id": "events-price-list-sns",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: Amazon SNS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "SNS API requests: the first 1,000,000 a month free, then USD 0.50 per million; no charge for deliveries to SQS"
+      ]
+    },
+    {
+      "id": "events-eb-pricing",
+      "url": "https://aws.amazon.com/eventbridge/pricing/",
+      "title": "Amazon EventBridge pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each 64 KB chunk of a payload is billed as one event; a replay is billed at the custom events price",
+        "Pipes are billed per request after filtering, in 64 KB chunks",
+        "Custom events delivered to a service in the same account appear in the examples with no delivery charge"
+      ]
+    },
+    {
+      "id": "events-ddb-pricing",
+      "url": "https://aws.amazon.com/dynamodb/pricing/on-demand/",
+      "title": "Amazon DynamoDB pricing for on-demand capacity",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each GetRecords call is billed as a streams read request unit; calls made through DynamoDB triggers on Lambda and by global tables are not charged. Pipes is not named among the exceptions",
+        "Transactional writes require 2 write request units per 1 KB"
+      ]
+    },
+    {
+      "id": "events-sns-pricing",
+      "url": "https://aws.amazon.com/sns/pricing/",
+      "title": "Amazon SNS pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For standard topics each 64 KB chunk of a published message is billed as one request; there is no per-message charge for delivery to SQS or Lambda"
+      ]
+    },
+    {
+      "id": "events-cf-queues-how",
+      "url": "https://developers.cloudflare.com/queues/reference/how-queues-works/",
+      "title": "Cloudflare Queues: How Queues Works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13: each queue can have only one active consumer",
+        "Queues does not guarantee that messages are delivered in the order they were published"
+      ]
+    },
+    {
+      "id": "events-cf-queues-delivery",
+      "url": "https://developers.cloudflare.com/queues/reference/delivery-guarantees/",
+      "title": "Cloudflare Queues: Delivery guarantees",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Queues provides at-least-once delivery by default, and suggests a unique ID as an idempotency key"
+      ]
+    },
+    {
+      "id": "events-cf-event-subscriptions",
+      "url": "https://developers.cloudflare.com/queues/event-subscriptions/",
+      "title": "Cloudflare Queues: Event subscriptions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Event subscriptions deliver events that Cloudflare products publish about an account to a queue"
+      ]
+    },
+    {
+      "id": "events-cf-event-schemas",
+      "url": "https://developers.cloudflare.com/queues/event-subscriptions/events-schemas/",
+      "title": "Cloudflare Queues: Events & schemas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13 the sources are Access, Artifacts, Browser Run, Email Sending, R2, Super Slurper, Vectorize, Workers AI, Workers Builds, Workers KV, and Workflows: products, not an application's own events",
+        "Each event carries metadata.eventSchemaVersion"
+      ]
+    },
+    {
+      "id": "events-cf-queues-limits",
+      "url": "https://developers.cloudflare.com/queues/platform/limits/",
+      "title": "Cloudflare Queues: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13: 10,000 queues per account, 128 KB per message, retention configurable up to 14 days"
+      ]
+    },
+    {
+      "id": "events-cf-queues-pricing",
+      "url": "https://developers.cloudflare.com/queues/platform/pricing/",
+      "title": "Cloudflare Queues: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13: USD 0.40 per million operations after 1,000,000 a month on Workers Paid, an operation per 64 KB written, read, or deleted"
+      ]
+    },
+    {
+      "id": "events-vercel-queues",
+      "url": "https://vercel.com/docs/queues",
+      "title": "Vercel Queues",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "As of 2026-10-13 Vercel Queues is in beta on all plans: a topic is a durable append-only log that fans out to every consumer group, and a new consumer group can replay non-expired history",
+        "Delivery is at-least-once, and publishes can be deduplicated with idempotency keys"
+      ]
+    },
+    {
+      "id": "events-vercel-queues-concepts",
+      "url": "https://vercel.com/docs/queues/concepts",
+      "title": "Vercel Queues: Concepts",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Retention is set per message from 60 seconds to 7 days, 24 hours by default; consumer groups are isolated from each other; consumers should be idempotent"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "event-bus",
+      "ja": "イベントバス",
+      "en": "event bus",
+      "firstUse": "25",
+      "definition": {
+        "ja": "「何が起きたか」を受け取って、それを知りたい相手に配る中継点。送る側は、誰が受け取るかを知らない。",
+        "en": "A relay that takes in statements of what happened and hands each to whoever asked to hear of it. The sender does not know who receives."
+      }
+    },
+    {
+      "id": "event-pattern",
+      "ja": "イベントパターン",
+      "en": "event pattern",
+      "firstUse": "25",
+      "definition": {
+        "ja": "EventBridge のルールが、どのイベントを受け取るかを書く JSON。イベントと同じ形をしていて、欄ごとに「この値のどれか」を並べる。",
+        "en": "The JSON in which an EventBridge rule says which events it takes. It has the shape of the event, and lists the accepted values field by field."
+      }
+    },
+    {
+      "id": "fan-out",
+      "ja": "ファンアウト",
+      "en": "fan-out",
+      "firstUse": "25",
+      "definition": {
+        "ja": "1 つのメッセージを、複数の受け取り手それぞれに届けること。",
+        "en": "Delivering one message to each of several receivers."
+      }
+    },
+    {
+      "id": "event-replay",
+      "ja": "リプレイ（イベントの）",
+      "en": "replay (of events)",
+      "firstUse": "25",
+      "definition": {
+        "ja": "保存してあった過去のイベントを、もう一度コンシューマーに届け直すこと。届く側から見れば、同じイベントがもう一度来る。",
+        "en": "Delivering stored past events to consumers again. From the receiving side, the same event arrives once more."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "25.architecture",
+      "sources": ["examples/25-events/infra/lib/events-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "25.choices",
+      "sources": ["examples/25-events/infra/lib/events-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "25.contract",
+      "sources": ["examples/25-events/src/contract.ts", "examples/25-events/test/shape.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "25.pipe",
+      "sources": [
+        "examples/25-events/src/shape.ts",
+        "examples/25-events/src/shape-lambda.ts",
+        "examples/25-events/src/routes.ts",
+        "examples/25-events/test/shape.test.ts",
+        "examples/25-events/test/fixtures.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "25.rules",
+      "sources": [
+        "examples/25-events/src/routes.ts",
+        "examples/25-events/src/pattern.ts",
+        "examples/25-events/test/pattern.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "25.consumers",
+      "sources": [
+        "examples/25-events/src/timeline.ts",
+        "examples/25-events/src/counter.ts",
+        "examples/25-events/src/counter-queue.ts",
+        "examples/25-events/src/dynamodb-projections.ts",
+        "examples/25-events/test/bus.test.ts",
+        "examples/25-events/test/queue.test.ts",
+        "examples/25-events/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "25.replay",
+      "sources": [
+        "examples/25-events/src/local-bus.ts",
+        "examples/25-events/src/replay-plan.ts",
+        "examples/25-events/test/bus.test.ts",
+        "examples/25-events/test/operations.test.ts"
+      ],
+      "tasks": ["test:unit", "events:replay"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "25.local",
+      "sources": [
+        "examples/25-events/src/local.ts",
+        "examples/25-events/src/local-bus.ts",
+        "examples/25-events/scripts/demo.ts",
+        "examples/25-events/test/harness.ts"
+      ],
+      "tasks": ["events:demo", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "25.stack",
+      "sources": [
+        "examples/25-events/infra/lib/events-stack.ts",
+        "examples/25-events/infra/bin/app.ts",
+        "examples/25-events/infra/test/events-stack.test.ts",
+        "examples/25-events/src/timeline-lambda.ts",
+        "examples/25-events/src/counter-lambda.ts",
+        "examples/25-events/src/env.ts",
+        "examples/25-events/cdk.json"
+      ],
+      "tasks": ["events:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "25.deploy",
+      "sources": ["examples/25-events/scripts/smoke.ts"],
+      "tasks": ["events:infra:diff", "events:infra:deploy", "events:smoke", "events:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "25.operate",
+      "sources": [
+        "examples/25-events/scripts/status.ts",
+        "examples/25-events/scripts/replay.ts",
+        "examples/25-events/src/dead-letter.ts",
+        "examples/25-events/src/replay-plan.ts",
+        "examples/25-events/test/operations.test.ts"
+      ],
+      "tasks": ["events:status", "events:replay", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "25.cleanup",
+      "sources": ["examples/25-events/scripts/empty-uploads.ts"],
+      "tasks": ["events:empty", "events:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "events.custom-event",
+      "offerCode": "AWSEvents",
+      "region": "ap-northeast-1",
+      "sku": "SG5BXRDK8SBA9Y57",
+      "usageType": "APN1-Event-64K-Chunks",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "64K-Chunks",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000010000",
+          "description": "$1.00 per million EventBridge custom events received in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-24T16:39:03Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "events.pipe-request",
+      "offerCode": "AWSEvents",
+      "region": "ap-northeast-1",
+      "sku": "C7FAR2R8C6KWSG5G",
+      "usageType": "APN1-Request-64K-Chunks",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "64K-Chunks",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000005000",
+          "description": "$0.50 per million Pipes requests in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-24T16:39:03Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "events.archive.processing",
+      "offerCode": "AWSEvents",
+      "region": "ap-northeast-1",
+      "sku": "UA76NUFPSF2YA2BQ",
+      "usageType": "APN1-ArchivedEvents-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GigaBytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1300000000",
+          "description": "$0.13 per GB for ArchivedEvents-Bytes:ArchiveEvents in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-24T16:39:03Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "events.archive.storage",
+      "offerCode": "AWSEvents",
+      "region": "ap-northeast-1",
+      "sku": "KCK8Z988QU294FPN",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0250000000",
+          "description": "$0.025 per GB-Mo for TimedStorage-ByteHrs:StandardStorage in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-24T16:39:03Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "dynamodb.streams.read",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "3AEMTFQBUFRVM2WF",
+      "usageType": "APN1-Streams-Requests",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 2500000,
+          "usd": "0.0000000000",
+          "description": "$0.00 for 2.5 million DynamoDB Streams read request units for a month (free tier) (Asia Pacific (Tokyo))"
+        },
+        {
+          "from": 2500000,
+          "to": null,
+          "usd": "0.0000002280",
+          "description": "$0.000000228 per DynamoDB Streams read request unit beyond free tier (Asia Pacific (Tokyo))"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "events.custom-event",
+      "reason": "No always-free allowance for custom events was found on the EventBridge pricing page (read 2026-10-13)."
+    },
+    {
+      "priceId": "events.pipe-request",
+      "reason": "No always-free allowance for Pipes requests was found on the EventBridge pricing page (read 2026-10-13)."
+    },
+    {
+      "priceId": "events.archive.processing",
+      "reason": "No always-free allowance for archive processing was found on the EventBridge pricing page (read 2026-10-13)."
+    },
+    {
+      "priceId": "events.archive.storage",
+      "reason": "No always-free allowance for archive storage was found on the EventBridge pricing page (read 2026-10-13)."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "events-idle",
+      "chapter": "25",
+      "title": {
+        "ja": "イベントの配線: デプロイ済みで、ノートが 1 件も変わらない月",
+        "en": "Event wiring: deployed, with no note changing, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "08章のスタックの料金に上乗せされる分だけを数える",
+          "pipe は stream の shard を 1 秒に 4 回読みにいく（公式ドキュメントの「基本の頻度」）。shard は 1 つ、頻度は 1 か月変わらないと仮定する。4 × 3,600 × 730 = 10,512,000 回",
+          "この読み取りが DynamoDB Streams の read request unit として請求されると仮定する。料金ページが無料としているのは Lambda のトリガーと global tables からの GetRecords だけで、Pipes は挙がっていない。請求書では確かめていない",
+          "イベントが無いので、Pipes のリクエスト、custom event、archive、関数の実行、SNS はすべて 0",
+          "未算入: Lambda が counter の空の queue を long polling するときの SQS のリクエスト（頻度が公式ドキュメントに無い。08章と同じ）"
+        ],
+        "en": [
+          "Counts only what is added on top of chapter 08's stack",
+          "The pipe polls a shard of the stream four times a second (the documentation's base rate). One shard and an unchanged rate for the month are assumed: 4 x 3,600 x 730 = 10,512,000 reads",
+          "These reads are assumed to be billed as DynamoDB Streams read request units. The pricing page exempts GetRecords calls from Lambda triggers and global tables only, and does not name Pipes. This was not checked on a bill",
+          "No events, so Pipes requests, custom events, the archive, function runs, and SNS are all 0",
+          "Not included: the SQS requests Lambda makes while long-polling the counter's empty queue (the documentation gives no rate, as in chapter 08)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.streams.read",
+          "quantity": 10512000,
+          "basis": "4 polls a second x 3,600 s x 730 h, one shard"
+        }
+      ]
+    },
+    {
+      "id": "events-small",
+      "chapter": "25",
+      "title": {
+        "ja": "イベントの配線: 月 10,000 件のノートの変更と 10,000 件の検査",
+        "en": "Event wiring: 10,000 note changes and 10,000 inspections a month"
+      },
+      "assumptions": {
+        "ja": [
+          "ノートの変更は 10,000 件（作成 6,000、更新 3,000、削除 1,000）、検査の記録は 10,000 件でうち 100 件が rejected。重複と再試行はゼロとする",
+          "stream の読み取りは、使っていない月と同じ 10,512,000 回と仮定する",
+          "pipe を通るのは 20,000 件。batch は 1 件ずつ、どれも 64 KB 未満なので、Pipes のリクエストは 20,000。shape の関数は 20,000 回、custom event は 20,000 件",
+          "archive は 1 件 0.5 KB として 20,000 件で 0.01 GB を取り込み、7 日ぶん（月の 7/30）を置いておく",
+          "timeline は 10,000 回起動して 1 回ずつ書く。counter は 7,000 件を queue 経由で受け取り（SQS のリクエストは 1 件 3 回）、1 件につきトランザクションで 2 つの書き込み（トランザクションの書き込みは 1 KB あたり 2 unit なので 4 unit）",
+          "関数はどれも 1 回 100 ミリ秒、256 MB、arm64 と仮定する。counter は 1 メッセージにつき 1 回起動するものとする",
+          "rejected の 100 件は SNS に 100 回 publish され、inbox の queue に 100 回届く（SQS の SendMessage 100 回）",
+          "ログは 1 回の起動につき 0.5 KB",
+          "未算入: counter の queue の空振りの ReceiveMessage、projections のテーブルの保存料金（数 MB）"
+        ],
+        "en": [
+          "10,000 note changes (6,000 created, 3,000 updated, 1,000 deleted) and 10,000 inspection records, 100 of them rejected. No duplicates and no retries",
+          "The stream is assumed to be polled 10,512,000 times, as in the idle month",
+          "20,000 records pass the pipe. One per batch and each under 64 KB, so 20,000 Pipes requests, 20,000 runs of the shaping function, and 20,000 custom events",
+          "The archive takes in 0.01 GB (20,000 events of 0.5 KB) and holds seven days of it (7/30 of the month)",
+          "The timeline runs 10,000 times and writes once each. The counter receives 7,000 events through its queue (three SQS requests per message) and writes two items in a transaction for each (a transactional write is 2 units per KB, so 4 units)",
+          "Every function run is taken as 100 ms at 256 MB on arm64. The counter is taken to run once per message",
+          "The 100 rejections are published to SNS 100 times and reach the inbox queue 100 times (100 SQS SendMessage requests)",
+          "0.5 KB of logs per function run",
+          "Not included: empty receives on the counter's queue, and the storage of the projections table (a few MB)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.streams.read",
+          "quantity": 10512000,
+          "basis": "4 polls a second x 3,600 s x 730 h, one shard"
+        },
+        {
+          "priceId": "events.pipe-request",
+          "quantity": 20000,
+          "basis": "one request per record that passed the filter"
+        },
+        {
+          "priceId": "events.custom-event",
+          "quantity": 20000,
+          "basis": "one event per record"
+        },
+        {
+          "priceId": "events.archive.processing",
+          "quantity": 0.01,
+          "basis": "20,000 events x 0.5 KB"
+        },
+        {
+          "priceId": "events.archive.storage",
+          "quantity": 0.002333,
+          "basis": "0.01 GB x 7/30 of a month"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 37000,
+          "basis": "shape 20,000 + timeline 10,000 + counter 7,000"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 925,
+          "basis": "37,000 x 0.1 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 38000,
+          "basis": "timeline 10,000 x 1 + counter 7,000 x 4"
+        },
+        {
+          "priceId": "sqs.request.standard",
+          "quantity": 21100,
+          "basis": "counter 7,000 x 3 + 100 deliveries to the inbox"
+        },
+        {
+          "priceId": "sns.request",
+          "quantity": 100,
+          "basis": "one publish per rejection"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0185,
+          "basis": "37,000 runs x 0.5 KB"
+        }
+      ]
+    },
+    {
+      "id": "events-replay",
+      "chapter": "25",
+      "title": {
+        "ja": "イベントの配線: 7 日ぶんの archive をすべてのルールにリプレイする",
+        "en": "Event wiring: replaying seven days of the archive to every rule"
+      },
+      "assumptions": {
+        "ja": [
+          "月 20,000 件の例の 7 日ぶん、4,667 件をリプレイする。リプレイしたイベントは custom event の単価で請求される",
+          "timeline の規則に一致する 2,333 件と counter の規則に一致する 1,633 件が、もう一度それぞれの関数を動かす。関数は 1 回 100 ミリ秒、256 MB",
+          "timeline の条件付き書き込みは弾かれても 1 unit を使うものとして 2,333 unit を数える。counter のキャンセルされたトランザクションの消費量は確認していないので、成功したときと同じ 4 unit として 6,532 unit を数える",
+          "counter の SQS のリクエストは 1 件 3 回。rejected の 23 件は、通知のルールがリプレイされたイベントを通さないので、SNS には届かない"
+        ],
+        "en": [
+          "Replays seven days of the 20,000-a-month example: 4,667 events. A replayed event is billed at the custom event price",
+          "The 2,333 that match the timeline's rule and the 1,633 that match the counter's run those functions again, 100 ms at 256 MB each",
+          "A refused conditional write is taken to use 1 unit: 2,333 for the timeline. What a cancelled transaction consumes was not confirmed, so the counter is counted as if it had succeeded: 4 units each, 6,532",
+          "Three SQS requests per counter message. The 23 rejections do not reach SNS: the rule for notices lets no replayed event through"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "events.custom-event",
+          "quantity": 4667,
+          "basis": "20,000 x 7/30 events replayed"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 3966,
+          "basis": "timeline 2,333 + counter 1,633"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 99.15,
+          "basis": "3,966 x 0.1 s x 0.25 GB"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 8865,
+          "basis": "timeline 2,333 x 1 + counter 1,633 x 4"
+        },
+        {
+          "priceId": "sqs.request.standard",
+          "quantity": 4899,
+          "basis": "counter 1,633 x 3"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "25",
+        "command": "vp test run examples/25-events",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "7 ファイル、97 件。パターンの一致と不一致（スタックに入れるのと同じオブジェクトを、手元の matcher で評価）、matcher が実装していない演算子を断ること、stream のレコードからイベントへの変換と ID の安定性、契約と版（増えた欄は読める、次の版と欠けた欄は断る）、重複配送、順序の入れ替わり、失敗したターゲットの再試行と退避、archive からのリプレイを冪等なコンシューマーとそうでないコンシューマーに届けた結果、リプレイの計画、dead letter の読み分け、DynamoDB へのリクエストの形、インフラの assertion。相手はメモリ上のバスで、EventBridge ではない。条件を 4 か所わざと壊して、テストがそれぞれ 5 件、3 件、2 件、11 件落ちることも確かめた",
+          "en": "7 files, 97 tests. Patterns that match and do not (the very objects the stack deploys, evaluated by the local matcher), the matcher refusing operators it does not implement, stream records turned into events and the stability of their IDs, the contract and its version (a gained field is read, the next version and a lost field are refused), duplicate delivery, reordering, a failing target retried and set aside, a replay from the archive delivered to an idempotent and a non-idempotent consumer, replay planning, telling dead letters apart, the shape of requests to DynamoDB, and infrastructure assertions. The bus is the in-memory model, not EventBridge. Four conditions were also broken on purpose, and 5, 3, 2, and 11 tests failed"
+        }
+      },
+      {
+        "scope": "25",
+        "command": "vp run events:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "メモリ上のバスで、作成、更新、重複した publish、逆順の二重配送、リプレイを順に流し、ID を覚える counter が 1 のまま、覚えない counter が 3 になること、rejected の通知がリプレイの後も 1 通のままであることを出力で確認",
+          "en": "Ran creations, an update, a duplicate publish, a doubled delivery in reverse order, and a replay through the in-memory bus, and read from the output that the counter that remembers IDs stays at 1, the one that does not reaches 3, and the rejection notice is still sent once after the replay"
+        }
+      },
+      {
+        "scope": "25",
+        "command": "vp run events:infra:synth / tsc --noEmit -p examples/25-events",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "08章の 24 種類に 7 種類（Events::EventBus、Events::Rule、Events::Archive、Pipes::Pipe、SNS::Topic、SNS::TopicPolicy、SNS::Subscription）を足した 31 種類。Custom:: のリソースはない。scripts/ は型検査のみ",
+          "en": "Chapter 08's 24 resource types plus seven (Events::EventBus, Events::Rule, Events::Archive, Pipes::Pipe, SNS::Topic, SNS::TopicPolicy, SNS::Subscription): 31 in all, and no Custom:: resource. scripts/ is type-checked only"
+        }
+      },
+      {
+        "scope": "25",
+        "command": "vp run events:infra:diff / events:infra:deploy / events:smoke / events:status / events:replay / events:infra:drift / events:empty / events:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS に対しては何も実行していない",
+          "en": "Nothing was run against AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "events-pipe-to-bus",
+        "summary": {
+          "ja": "25章: pipe が DynamoDB の stream を読み、enrichment の関数が返した配列の要素を、そのまま event bus のイベントの detail にすること、DetailType に書いた `$.type` が enrichment の出力から解決されること、batch を 1 件にしたときも関数に配列で渡ることを、実物で確かめていない。信頼ポリシーに条件を付けていない pipe のロールで pipe が作れることも同じ。",
+          "en": "Chapter 25: not confirmed on AWS that the pipe reads the DynamoDB stream and puts each element of the array the enrichment function returns into an event's detail as is, that `$.type` in DetailType resolves against the enrichment's output, and that the function receives an array when the batch size is 1. The same goes for creating the pipe with a role whose trust policy has no condition."
+        },
+        "resume": {
+          "ja": "vp run events:infra:deploy の後、vp run events:smoke を実行する。timeline の記録ができなければ、Shape と Timeline のロググループと vp run events:status の dead letter を見る。shape のログに `shaped` があるのにバスに届いていなければ、pipe の target parameters を疑う。",
+          "en": "After vp run events:infra:deploy, run vp run events:smoke. If no timeline entry appears, read the Shape and Timeline log groups and the dead letters in vp run events:status. If the shape log says `shaped` and nothing reaches the bus, suspect the pipe's target parameters."
+        }
+      },
+      {
+        "id": "events-archive-cloud-control",
+        "summary": {
+          "ja": "25章: cdkd 0.296.28 は AWS::Events::Archive に専用の実装を持たず、Cloud Control API 経由で作る。作成、更新、削除が通ることを確かめていない。",
+          "en": "Chapter 25: cdkd 0.296.28 has no dedicated provider for AWS::Events::Archive and creates it through Cloud Control API. Creating, updating, and deleting it this way was not confirmed."
+        },
+        "resume": {
+          "ja": "vp run events:infra:deploy と vp run events:infra:destroy を実行する。archive で止まるなら、スタックから archive を外し、`aws events create-archive` で手で作って、消すのも手で行う。",
+          "en": "Run vp run events:infra:deploy and vp run events:infra:destroy. If either stops at the archive, take the archive out of the stack, create it by hand with `aws events create-archive`, and delete it by hand too."
+        }
+      },
+      {
+        "id": "events-replay-shape",
+        "summary": {
+          "ja": "25章: リプレイされたイベントが、関数の入力と SQS のメッセージの本文で `replay-name` を持つこと、元の id と time を保つかどうか、リプレイが指定したルールだけに届くこと、`replay-name` が無いことを条件にしたルール（rejections）がリプレイされたイベントに一致しないことを、実物で確かめていない。コンシューマーは EventBridge の id に頼っていない。",
+          "en": "Chapter 25: not confirmed on AWS that a replayed event carries `replay-name` in a function's input and in an SQS message body, whether it keeps its original id and time, that a replay reaches only the rules it names, and that a rule requiring `replay-name` to be absent (rejections) does not match a replayed event. The consumers do not rely on EventBridge's id."
+        },
+        "resume": {
+          "ja": "events:smoke の 10 分後に vp run events:replay -- --minutes 30 --rule timeline --yes を実行し、Timeline のログの `replay` の欄と、timeline の記録が変わらないことを見る。",
+          "en": "Ten minutes after events:smoke, run vp run events:replay -- --minutes 30 --rule timeline --yes, then read the `replay` field in the Timeline log and check that the timeline entries did not change."
+        }
+      },
+      {
+        "id": "events-delivery-permissions",
+        "summary": {
+          "ja": "25章: 次の組み合わせを実物で確かめていない。SQS が管理する鍵で暗号化したキューへの、EventBridge のルール、Pipes の dead-letter、Lambda の on-failure destination、SNS からの配送。条件のないトピックポリシーでの EventBridge から SNS への publish。input transformer の出力が SNS のメッセージになり、raw message delivery でそのままキューに入ること。",
+          "en": "Chapter 25: these were not confirmed on AWS. Delivery into queues encrypted with SQS-managed keys from an EventBridge rule, a pipe's dead-letter configuration, Lambda's on-failure destination, and SNS. Publishing from EventBridge to SNS under a topic policy with no condition. The input transformer's output becoming the SNS message and landing in the queue as is with raw message delivery."
+        },
+        "resume": {
+          "ja": "vp run events:smoke の最後の手順（画像でないファイルを置いて、inbox に通知が届くのを待つ）が通るかを見る。通らなければ vp run events:status で、どのルールの dead letter かと ERROR_CODE を読む。",
+          "en": "See whether the last step of vp run events:smoke passes (it puts a file that is not an image and waits for the notice in the inbox). If not, read which rule's dead letter and which ERROR_CODE vp run events:status shows."
+        }
+      },
+      {
+        "id": "events-streams-read-billing",
+        "summary": {
+          "ja": "25章: pipe が stream を読みにいく GetRecords が、DynamoDB Streams の read request unit として請求されるかどうかを確かめていない。料金ページは Lambda のトリガーと global tables だけを無料としている。本文の「使っていない月 USD 1.83」は、請求される、shard は 1 つ、1 秒に 4 回、という仮定での計算。",
+          "en": "Chapter 25: whether the GetRecords calls a pipe makes on the stream are billed as DynamoDB Streams read request units was not confirmed. The pricing page exempts Lambda triggers and global tables only. The page's USD 1.83 for an idle month assumes they are billed, one shard, and four polls a second."
+        },
+        "resume": {
+          "ja": "デプロイして数日置き、Cost Explorer で DynamoDB の usage type `APN1-Streams-Requests` の数量を見る。",
+          "en": "Deploy, leave it for a few days, and read the quantity of the DynamoDB usage type `APN1-Streams-Requests` in Cost Explorer."
+        }
+      },
+      {
+        "id": "events-pattern-matcher-gap",
+        "summary": {
+          "ja": "25章: 手元の matcher（src/pattern.ts）は EventBridge の実装ではない。数値の一致は JSON.parse の後の値で比べる（EventBridge は書かれた文字列で比べる）、exists は leaf でない値を「無い」と扱う、イベントの中の配列は扱わない。スタックのパターンが EventBridge で同じ結果になることは確かめていない。",
+          "en": "Chapter 25: the local matcher (src/pattern.ts) is not EventBridge's. It compares numbers after JSON.parse (EventBridge compares how they are written), treats a non-leaf value as absent for exists, and does not handle arrays in events. That the stack's patterns give the same answers in EventBridge was not confirmed."
+        },
+        "resume": {
+          "ja": "認証情報を用意して `aws events test-event-pattern --event-pattern <パターン> --event <イベント>` を、test/pattern.test.ts の一致する例と一致しない例で実行する。",
+          "en": "With credentials, run `aws events test-event-pattern --event-pattern <pattern> --event <event>` on the matching and non-matching cases of test/pattern.test.ts."
+        }
+      },
+      {
+        "id": "events-custom-event-bus-v2",
+        "summary": {
+          "ja": "25章: EventBridge の新しい Custom Event Bus（AWS::EventsV2）を使っていない。公式ドキュメントは新しいアプリケーションにこちらを勧めているが、cdkd 0.296.28 に実装がなく、2026-10-13 に読んだ Cloud Control API の対応一覧にも AWS::EventsV2 が無かった。Pipes のターゲットにできるかも確認していない。",
+          "en": "Chapter 25: EventBridge's new Custom Event Bus (AWS::EventsV2) is not used. The documentation recommends it for new applications, but cdkd 0.296.28 has no provider for it and the Cloud Control API list read on 2026-10-13 had no AWS::EventsV2 type. Whether a pipe can target it was not confirmed either."
+        },
+        "resume": {
+          "ja": "cdkd の版を上げるときに register-providers.ts と Cloud Control API の対応一覧を見直す。使えるなら、ルールと archive を subscriber と保持期間に置き換える（公式の移行ガイドの対応表）。",
+          "en": "When the cdkd version is raised, look at register-providers.ts and the Cloud Control API list again. If it can be deployed, replace the rules and the archive with subscribers and the bus's retention, following the mapping in the migration guide."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 25: events --------------------------------------------\n      // A morning of changes through the in-memory bus, a duplicate, and a replay. No AWS.\n      \"events:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/25-events\" }),\n      ...infra(\"events\", \"examples/25-events\", \"AihEvents\"),\n      // Writes a note and a rejected upload with your credentials and waits for the consumers to hear of them.\n      \"events:smoke\": live(\"node --env-file-if-exists=../../.env scripts/smoke.ts\", {\n        cwd: \"examples/25-events\",\n      }),\n      // The archive, the queues, and a look at the dead-letter queue.\n      \"events:status\": live(\"node --env-file-if-exists=../../.env scripts/status.ts\", {\n        cwd: \"examples/25-events\",\n      }),\n      // Prints what a replay would cover. Starts it only with --yes.\n      \"events:replay\": live(\"node --env-file-if-exists=../../.env scripts/replay.ts\", {\n        cwd: \"examples/25-events\",\n      }),\n      // Counts the uploaded images. Deletes them all only with --yes.\n      \"events:empty\": live(\"node --env-file-if-exists=../../.env scripts/empty-uploads.ts\", {\n        cwd: \"examples/25-events\",\n      }),",
+    "synth": ["events:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/25-events"]
+  }
+}

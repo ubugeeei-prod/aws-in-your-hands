@@ -1,0 +1,35 @@
+{
+  "description": "Notes of two owners for the local server and the tests. Both write about payments, so a search that leaked would show it.",
+  "notes": [
+    {
+      "owner": "alice",
+      "id": "0000000a1",
+      "title": "リリース前の確認",
+      "body": "金曜のリリースまでに、決済の結合テストと負荷試験を終える。担当は佐藤さんと鈴木さん。水曜の朝会で進み具合を確認する。"
+    },
+    {
+      "owner": "alice",
+      "id": "0000000a2",
+      "title": "障害の振り返り",
+      "body": "火曜の夜、決済のタイムアウトが増えた。原因は接続プールの上限で、再試行が重なって悪化した。上限を上げ、再試行に待ち時間を入れる。"
+    },
+    {
+      "owner": "alice",
+      "id": "0000000a3",
+      "title": "Reading list",
+      "body": "Papers on vector search: approximate nearest neighbours, product quantization, and how recall is measured. Start with the survey."
+    },
+    {
+      "owner": "alice",
+      "id": "0000000a4",
+      "title": "買い物",
+      "body": "牛乳、卵、コーヒー豆。土曜の朝に行く。"
+    },
+    {
+      "owner": "bob",
+      "id": "0000000b1",
+      "title": "決済の見積もり",
+      "body": "決済の手数料を見直す。来期の予算は未確定で、社外には出さない。"
+    }
+  ]
+}

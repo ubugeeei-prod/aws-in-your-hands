@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "types": ["node", "aws-lambda"]
+  },
+  "include": ["src", "measure", "infra", "test", "scripts"]
+}

@@ -1,0 +1,29 @@
+{
+  "source": "Hand-written from the response syntax in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "The model describes the image and finishes: stopReason end_turn.",
+  "steps": [
+    {
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "text": "木の机の上に、開いたノートと青いペンが置かれている。"
+              }
+            ]
+          }
+        },
+        "stopReason": "end_turn",
+        "usage": {
+          "inputTokens": 318,
+          "outputTokens": 27,
+          "totalTokens": 345
+        },
+        "metrics": {
+          "latencyMs": 1200
+        }
+      }
+    }
+  ]
+}

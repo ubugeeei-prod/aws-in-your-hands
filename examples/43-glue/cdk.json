@@ -1,0 +1,8 @@
+{
+  "app": "node infra/bin/app.ts",
+  "output": "cdk.out",
+  "watch": {
+    "include": ["src/**", "infra/**", "glue/**"],
+    "exclude": ["**/*.test.ts", "cdk.out/**", "node_modules/**"]
+  }
+}

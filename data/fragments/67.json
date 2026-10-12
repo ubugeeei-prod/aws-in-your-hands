@@ -1,0 +1,1064 @@
+{
+  "chapterId": "67",
+  "manifest": {
+    "id": "67",
+    "slug": "firecracker",
+    "title": {
+      "ja": "Firecracker: Lambda と Fargate の下で動く microVM",
+      "en": "Firecracker: The MicroVM under Lambda and Fargate"
+    },
+    "prerequisites": ["04", "12", "23", "29", "41"],
+    "services": ["Firecracker", "Lambda", "Fargate", "EC2"],
+    "samplePath": "examples/67-firecracker",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "fc-readme",
+      "fc-specification",
+      "fc-design",
+      "fc-faq",
+      "fc-charter",
+      "fc-license",
+      "fc-getting-started",
+      "fc-dev-machine",
+      "fc-jailer",
+      "fc-prod-host",
+      "fc-snapshot",
+      "fc-kernel-policy",
+      "fc-api-docs",
+      "fc-openapi",
+      "fc-release",
+      "fc-ci-rootfs",
+      "fc-nsdi",
+      "fc-aws-blog-2018",
+      "fc-aws-oss-blog-2018",
+      "fc-lambda-whitepaper",
+      "fc-logical-separation",
+      "fc-lambda-runtime-env",
+      "fc-snapstart",
+      "fc-lmi-overview",
+      "fc-lmi-security",
+      "fc-ecs-fargate-ec2",
+      "fc-ecs-task-roles",
+      "fc-lambda-microvms",
+      "fc-lambda-microvms-whatsnew",
+      "fc-ec2-nested",
+      "fc-cfn-lt-cpuoptions",
+      "fc-ec2-price-list",
+      "fc-node-shasums",
+      "fc-cloudflare-how",
+      "fc-cloudflare-security",
+      "fc-vercel-sandbox"
+    ]
+  },
+  "sources": [
+    {
+      "id": "fc-readme",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/README.md",
+      "title": "Firecracker README (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Firecracker is a virtual machine monitor that uses KVM to create and run microVMs, and excludes unnecessary devices and guest-facing functionality",
+        "It was developed at Amazon Web Services to accelerate the speed and efficiency of services like AWS Lambda and AWS Fargate, and is open source under Apache 2.0",
+        "One Firecracker process exposes an API endpoint; the defaults are 1 vCPU and 128 MiB",
+        "What the API can configure, including rate limiters for virtio devices, a vsock, an entropy device, pmem, memory hotplug",
+        "The jailer applies a cgroup and namespace barrier and drops privileges",
+        "Tested platforms are EC2 .metal instances of Intel, AMD and Graviton generations with host kernels 5.10, 6.1 and 6.18; 8th generation Intel only with 6.1 or 6.18",
+        "The security of microVMs depends on a well configured Linux host"
+      ]
+    },
+    {
+      "id": "fc-specification",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/SPECIFICATION.md",
+      "title": "Firecracker Specification (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On M5D.metal and M6G.metal: the VMM starts within 8 CPU ms, with wall-clock from 6 ms to 60 ms",
+        "For 1 vCPU and 128 MiB with the Firecracker-tuned kernel: VMM memory overhead <= 5 MiB, depending on workload and configuration",
+        "<= 125 ms from the InstanceStart call to the start of /sbin/init, measured with the serial console disabled and a minimal kernel and root file system",
+        "Guest CPU performance > 95% of bare metal, marked integration test pending",
+        "The API conforms to the in-tree OpenAPI specification"
+      ]
+    },
+    {
+      "id": "fc-design",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/design.md",
+      "title": "Firecracker Design (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each Firecracker process encapsulates one and only one microVM; threads are API, VMM and one per vCPU",
+        "Up to 32 vCPUs; 5 microVMs per host core per second with a minimal kernel, one vCPU and 128 MiB",
+        "Network devices are backed by TAP devices and block devices by files on the host",
+        "All vCPU threads are considered to run malicious code once started; Firecracker does not filter network traffic",
+        "Rate limiters are two token buckets, operations per second and bandwidth",
+        "Seccomp filters are installed by Firecracker; the jailer sets up cgroups and chroot, drops privileges, and execs Firecracker",
+        "In production builds the serial console is not exposed"
+      ]
+    },
+    {
+      "id": "fc-faq",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/FAQ.md",
+      "title": "Firecracker FAQ (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda launched in November 2014 with per-customer EC2 instances for isolation",
+        "Firecracker started from crosvm and is written in Rust",
+        "Only 6 emulated devices are named: virtio-net, virtio-balloon, virtio-block, virtio-vsock, serial console, and a minimal keyboard controller",
+        "Guest and host must have the same CPU architecture",
+        "Firecracker does not support guest reboot; on x86 `reboot` with reboot=k ends the process",
+        "The serial console is disabled by default for boot time"
+      ],
+      "note": "The FAQ's list of six devices is shorter than the README's feature list of the same tag, which also names an entropy device and pmem."
+    },
+    {
+      "id": "fc-charter",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/CHARTER.md",
+      "title": "Firecracker Charter (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Mission: secure, multi-tenant, minimal-overhead execution of container and function workloads",
+        "Tenets: built-in security, light-weight virtualization, minimalist in features, compute oversubscription"
+      ]
+    },
+    {
+      "id": "fc-license",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/LICENSE",
+      "title": "Firecracker LICENSE and NOTICE (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Apache License 2.0; portions from Chromium OS under a BSD-style license; the release bundle includes libseccomp under LGPLv2.1"
+      ]
+    },
+    {
+      "id": "fc-getting-started",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/getting-started.md",
+      "title": "Getting Started with Firecracker (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Firecracker requires read/write access to /dev/kvm and supports x86_64 and aarch64 Linux",
+        "The guide suggests an EC2 c5.metal instance and says EC2 only supports KVM on .metal instance types",
+        "The commands that fetch a kernel and an Ubuntu rootfs from the project's CI bucket, add an SSH key, and build an ext4 image",
+        "The TAP device, 172.16.0.1/30, NAT, the guest MAC 06:00:AC:10:00:02 and the guest address 172.16.0.2",
+        "The API calls of a boot: logger, boot-source, drives, network-interfaces, actions InstanceStart; requests are handled asynchronously",
+        "--config-file configures and starts a microVM without API requests",
+        "The integration tests enforce the specification as measured on EC2 .metal instances"
+      ],
+      "note": "The statement about .metal conflicts with the EC2 user guide's nested virtualization page read the same day."
+    },
+    {
+      "id": "fc-dev-machine",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/dev-machine-setup.md",
+      "title": "Firecracker development machine setup (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Development needs a bare-metal machine or a virtual machine with nested virtualization; the AWS section uses bare metal instances"
+      ]
+    },
+    {
+      "id": "fc-jailer",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/jailer.md",
+      "title": "The Firecracker Jailer (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The jailer's arguments and its steps: close file descriptors, clean the environment, copy the binary into a chroot, set resource limits, create cgroups, pivot_root, mknod /dev/net/tun and /dev/kvm, join a network namespace, drop privileges, exec",
+        "Copying the binary ensures the process shares no memory with another Firecracker process"
+      ]
+    },
+    {
+      "id": "fc-prod-host",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/prod-host-setup.md",
+      "title": "Production Host Setup Recommendations (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Firecracker should be started with the jailer in production, or under constraints at least as restrictive",
+        "Each Firecracker process should correspond to a workload of a single tenant",
+        "Firecracker cannot mitigate the host's hardware vulnerabilities; SMT and kernel samepage merging should be disabled for tenant separation",
+        "Firecracker does not filter guest traffic; a rule dropping packets from TAP devices to 169.254.169.254 is given",
+        "The serial device should not be enabled in production"
+      ]
+    },
+    {
+      "id": "fc-snapshot",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/snapshotting/snapshot-support.md",
+      "title": "Firecracker Snapshotting (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A snapshot is a guest memory file and a microVM state file; disk files are managed by the user",
+        "Loading maps the memory file MAP_PRIVATE, so pages load on demand and writes go to anonymous memory",
+        "Pause, Resume and CreateSnapshot only after boot; LoadSnapshot only before configuration",
+        "Diff snapshots are in developer preview",
+        "Resuming the same snapshot more than once is considered insecure without a mechanism for uniqueness; VMGenID reseeds the guest kernel's PRNG on Linux 5.18 and later",
+        "Network connectivity is not guaranteed after resume"
+      ]
+    },
+    {
+      "id": "fc-kernel-policy",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/kernel-policy.md",
+      "title": "Firecracker kernel support policy (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Supported host kernels 5.10, 6.1, 6.18 and guest kernels 5.10, 6.1, 6.18, with minimum end of support dates"
+      ]
+    },
+    {
+      "id": "fc-api-docs",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/docs/api_requests/actions.md",
+      "title": "Firecracker API request documents: actions, patch-network-interface (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "InstanceStart can only be successfully called once",
+        "SendCtrlAltDel is Intel and AMD only",
+        "Rate limiters of a network interface can be updated after boot with PATCH; a zero-sized bucket disables a limit"
+      ]
+    },
+    {
+      "id": "fc-openapi",
+      "url": "https://raw.githubusercontent.com/firecracker-microvm/firecracker/v1.17.0/src/firecracker/swagger/firecracker.yaml",
+      "title": "Firecracker API specification, Swagger 2.0 (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The paths, operationIds, success statuses and definitions that spec/firecracker-v1.17.0.subset.json is cut from; sha256 473a0a392927b407834b341bf5fbc7925524fedaf9d925e1bbbafb6a1f48c671",
+        "machine-config, boot-source, drives and network-interfaces are pre-boot only; vcpu_count is 1 to 32; a snapshot needs the Paused state",
+        "The transport is a Unix domain socket"
+      ]
+    },
+    {
+      "id": "fc-release",
+      "url": "https://github.com/firecracker-microvm/firecracker/releases/tag/v1.17.0",
+      "title": "Firecracker v1.17.0 release",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "v1.17.0 was published on 2026-09-10 and is the newest release; assets are firecracker-v1.17.0-x86_64.tgz and -aarch64.tgz with .sha256.txt files",
+        "bzImage guest kernels are supported on x86_64 from this release"
+      ],
+      "note": "Read through the GitHub releases API."
+    },
+    {
+      "id": "fc-ci-rootfs",
+      "url": "https://github.com/firecracker-microvm/firecracker/blob/v1.17.0/resources/rootfs/setup-ubuntu-ci.sh",
+      "title": "Firecracker CI rootfs setup script (v1.17.0)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The CI rootfs is Ubuntu with systemd, openssh-server, curl and apt left in place; fcnet.service assigns guest addresses"
+      ],
+      "note": "What libraries the image holds was inferred from the package list, not inspected."
+    },
+    {
+      "id": "fc-nsdi",
+      "url": "https://www.usenix.org/system/files/nsdi20-paper-agache.pdf",
+      "title": "Firecracker: Lightweight Virtualization for Serverless Applications (NSDI '20)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda first isolated functions with Linux containers and customers with virtual machines",
+        "Containers trade security against compatibility through the syscalls they allow; language VM isolation was unsuitable because Lambda and Fargate run arbitrary binaries",
+        "Firecracker has no BIOS, cannot boot arbitrary kernels, emulates no legacy devices nor PCI, and supports no VM migration (as of the paper)",
+        "Each Lambda worker runs hundreds or thousands of microVMs, each a slot for one function and one concurrent invocation, reused for serial invocations",
+        "A pool of pre-booted microVMs hides boot latency; slots lived at most 12 hours",
+        "Measured with Firecracker v0.20.0 on m5d.metal: memory overhead around 3 MB; boot figures; block and network throughput",
+        "The seccomp profile then allowed 24 syscalls and 30 ioctls",
+        "Lambda migrated to Firecracker on EC2 bare metal instances starting in 2018"
+      ],
+      "note": "Published February 2020 about Firecracker v0.20.0 and the Lambda of that time."
+    },
+    {
+      "id": "fc-aws-blog-2018",
+      "url": "https://aws.amazon.com/blogs/aws/firecracker-lightweight-virtualization-for-serverless-computing/",
+      "title": "Firecracker - Lightweight Virtualization for Serverless Computing (AWS News Blog)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS's 2018 statement that Firecracker powers Lambda and Fargate, launches a microVM in as little as 125 ms and uses about 5 MiB per microVM"
+      ]
+    },
+    {
+      "id": "fc-aws-oss-blog-2018",
+      "url": "https://aws.amazon.com/blogs/opensource/firecracker-open-source-secure-fast-microvm-serverless/",
+      "title": "Announcing the Firecracker Open Source Technology (AWS Open Source Blog, 27 Nov 2018)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate tasks previously ran in a dedicated EC2 VM each and, as of the post, execute on Firecracker microVMs on EC2 bare metal instances"
+      ]
+    },
+    {
+      "id": "fc-lambda-whitepaper",
+      "url": "https://docs.aws.amazon.com/pdfs/whitepapers/latest/security-overview-aws-lambda/security-overview-aws-lambda.pdf",
+      "title": "Security Overview of AWS Lambda (AWS Whitepaper)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda Workers are bare metal EC2 Nitro instances in a separate account, with one or more microVMs created by Firecracker; a Worker's lease is at most 14 hours",
+        "Execution environments are never reused across function versions or customers; one environment is reused between invocations of the same version",
+        "The isolation technologies listed: cgroups, namespaces, seccomp-bpf, iptables, chroot, Firecracker rate limiting"
+      ],
+      "note": "Last revision listed in the document: December 27, 2022. Its SnapStart paragraph is older than the developer guide. The HTML pages of the whitepaper redirected to the Lambda developer guide; the PDF was read."
+    },
+    {
+      "id": "fc-logical-separation",
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/logical-separation/serverless-and-containers.html",
+      "title": "Serverless and Containers - Logical Separation on AWS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS describes the isolation of Lambda and Fargate as layers: bare metal instances on Nitro, then Firecracker"
+      ]
+    },
+    {
+      "id": "fc-lambda-runtime-env",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html",
+      "title": "Understanding the Lambda execution environment lifecycle",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda invokes a function in an execution environment, a secure and isolated runtime environment"
+      ]
+    },
+    {
+      "id": "fc-snapstart",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/snapstart.html",
+      "title": "Improving startup performance with Lambda SnapStart",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda takes a Firecracker microVM snapshot of the memory and disk state of the initialized execution environment when a version is published, and resumes new environments from it",
+        "Supported runtimes: Java 11 and later, Python 3.12 and later, .NET 8 and later; other managed runtimes such as nodejs24.x are not supported",
+        "One snapshot is the initial state of many environments, so unique content must be generated after initialization; network connections are not guaranteed"
+      ]
+    },
+    {
+      "id": "fc-lmi-overview",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances.html",
+      "title": "Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda (default) uses Firecracker MicroVM technology to isolate execution environments on shared fleets; Managed Instances use containers on EC2 Nitro instances rather than Firecracker"
+      ]
+    },
+    {
+      "id": "fc-lmi-security",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-managed-instances-security.html",
+      "title": "Security for Lambda Managed Instances",
+      "checkedAt": "2026-10-13",
+      "supports": ["Containers are not a security boundary; the capacity provider is"]
+    },
+    {
+      "id": "fc-ecs-fargate-ec2",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-fargate-ec2.html",
+      "title": "Amazon ECS security considerations for when to use Fargate",
+      "checkedAt": "2026-10-13",
+      "supports": ["Fargate runs each task in a hardware virtualization environment"]
+    },
+    {
+      "id": "fc-ecs-task-roles",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html",
+      "title": "Amazon ECS task IAM role",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each task on Fargate has its own isolation boundary and does not share the underlying kernel, CPU, memory or elastic network interface with another task"
+      ]
+    },
+    {
+      "id": "fc-lambda-microvms",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-microvms-guide.html",
+      "title": "AWS Lambda MicroVMs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda MicroVMs are serverless environments with VM-level isolation, started from snapshots, suspended and resumed, delivered through Firecracker virtualization",
+        "They are meant for running user or AI-generated code: interactive environments, sandboxes, multi-tenant CI"
+      ]
+    },
+    {
+      "id": "fc-lambda-microvms-whatsnew",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/06/aws-lambda-microvms/",
+      "title": "AWS introduces Lambda MicroVMs (What's New, 22 Jun 2026)",
+      "checkedAt": "2026-10-13",
+      "supports": ["Posted June 22, 2026; available in Regions including Asia Pacific (Tokyo)"],
+      "note": "Read through a summarizing fetcher."
+    },
+    {
+      "id": "fc-ec2-nested",
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-ec2-nested-virtualization.html",
+      "title": "Use nested virtualization to run hypervisors in Amazon EC2 instances",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Nested virtualization runs KVM and Hyper-V inside virtual (non-bare-metal) EC2 instances at no additional cost",
+        "Supported types: M7i, M7i-flex, M8i, M8id, M8i-flex, C7i, C7i-flex, C8i, C8id, C8i-flex, R7i, R7iz, R8i, R8id, R8i-flex, X8i, I7i, I7ie",
+        "It is enabled with the NestedVirtualization CPU option at launch or on a stopped instance; describe-instance-types lists the types",
+        "AWS recommends evaluating bare metal for performance-sensitive workloads; the customer secures the hypervisor and nested virtual machines"
+      ]
+    },
+    {
+      "id": "fc-cfn-lt-cpuoptions",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-ec2-launchtemplate-cpuoptions.html",
+      "title": "AWS::EC2::LaunchTemplate CpuOptions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "NestedVirtualization is a property of a launch template's CpuOptions, with the values enabled and disabled"
+      ],
+      "note": "aws-cdk-lib 2.273.0 has the property on CfnLaunchTemplate and not on CfnInstance's CpuOptions."
+    },
+    {
+      "id": "fc-ec2-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "title": "AWS Price List: Amazon EC2, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On-Demand Linux prices per hour in ap-northeast-1: c7i.large 0.11235, c8i.large 0.11797, c5.metal 5.136, c7i.metal-24xl 5.3928, c6g.metal 2.7392"
+      ],
+      "note": "The CSV form of the offer file, publication date 2026-10-09T20:31:34Z."
+    },
+    {
+      "id": "fc-node-shasums",
+      "url": "https://nodejs.org/dist/v24.21.0/SHASUMS256.txt",
+      "title": "Node.js v24.21.0 SHASUMS256.txt",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The SHA-256 of node-v24.21.0-linux-x64.tar.xz and node-v24.21.0-linux-arm64.tar.xz written into deploy/prepare.sh"
+      ]
+    },
+    {
+      "id": "fc-cloudflare-how",
+      "url": "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+      "title": "How Workers works - Cloudflare Workers docs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "One runtime instance runs hundreds or thousands of isolates; an isolate starts around a hundred times faster than a Node process on a container or virtual machine and uses an order of magnitude less memory at startup"
+      ]
+    },
+    {
+      "id": "fc-cloudflare-security",
+      "url": "https://developers.cloudflare.com/workers/reference/security-model/",
+      "title": "Security model - Cloudflare Workers docs",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Tenants are isolated with V8 isolates, not processes nor VMs; the process around them is sandboxed with namespaces and seccomp with no file system or network access",
+        "V8 has a wider attack surface than virtual machines, in Cloudflare's own words, and Workers has its own Spectre strategy"
+      ]
+    },
+    {
+      "id": "fc-vercel-sandbox",
+      "url": "https://vercel.com/docs/vercel-sandbox",
+      "title": "Vercel Sandbox",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each sandbox runs in a Firecracker microVM with its own file system and network"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "firecracker",
+      "ja": "Firecracker",
+      "en": "Firecracker",
+      "firstUse": "67",
+      "definition": {
+        "ja": "KVM の上で microVM を動かす、オープンソースの仮想マシンモニター。AWS が Lambda と Fargate のために作り、Apache 2.0 で公開している。プロセス 1 つが microVM 1 つを受け持つ。",
+        "en": "An open-source virtual machine monitor that runs microVMs on KVM. AWS built it for Lambda and Fargate and publishes it under Apache 2.0. One process is one microVM."
+      }
+    },
+    {
+      "id": "microvm",
+      "ja": "microVM",
+      "en": "microVM",
+      "firstUse": "67",
+      "definition": {
+        "ja": "デバイスを最小限に絞った小さな仮想マシン。自分のカーネルを持つので、分離の境界はハードウェア仮想化になる。",
+        "en": "A small virtual machine with a minimal set of devices. It has its own kernel, so its isolation boundary is hardware virtualization."
+      }
+    },
+    {
+      "id": "vmm",
+      "ja": "仮想マシンモニター（VMM）",
+      "en": "virtual machine monitor (VMM)",
+      "firstUse": "67",
+      "definition": {
+        "ja": "仮想マシンにデバイスを見せ、ゲストが外に出ようとする操作を処理するプログラム。Firecracker や QEMU がこれにあたる。",
+        "en": "The program that presents devices to a virtual machine and handles what the guest does when it leaves guest mode. Firecracker and QEMU are VMMs."
+      }
+    },
+    {
+      "id": "kvm",
+      "ja": "KVM",
+      "en": "KVM",
+      "firstUse": "67",
+      "definition": {
+        "ja": "Linux カーネルの仮想化機能。CPU の仮想化支援機能を使い、/dev/kvm を通じて VMM に仮想マシンを作らせる。",
+        "en": "The virtualization feature of the Linux kernel. It uses the CPU's virtualization extensions and lets a VMM create virtual machines through /dev/kvm."
+      }
+    },
+    {
+      "id": "jailer",
+      "ja": "jailer",
+      "en": "jailer",
+      "firstUse": "67",
+      "definition": {
+        "ja": "Firecracker に付属するプログラム。chroot、cgroup、名前空間を用意し、権限を落としてから Firecracker を起動する。",
+        "en": "A program shipped with Firecracker. It sets up a chroot, cgroups and namespaces, drops privileges, and then execs Firecracker."
+      }
+    },
+    {
+      "id": "nested-virtualization",
+      "ja": "nested virtualization",
+      "en": "nested virtualization",
+      "firstUse": "67",
+      "definition": {
+        "ja": "仮想マシンの中でさらに仮想マシンを動かすこと。EC2 では一部の Intel のインスタンスタイプで、CPU オプションとして有効にできる。",
+        "en": "Running a virtual machine inside a virtual machine. On EC2 it is a CPU option of some Intel instance types."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "67.what",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.boundaries",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.aws",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.explains",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.who",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.api",
+      "sources": [
+        "examples/67-firecracker/src/spec.ts",
+        "examples/67-firecracker/src/subset.ts",
+        "examples/67-firecracker/spec/firecracker-v1.17.0.subset.json",
+        "examples/67-firecracker/scripts/spec.ts",
+        "examples/67-firecracker/test/spec.test.ts"
+      ],
+      "tasks": ["firecracker:spec", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "67.config",
+      "sources": [
+        "examples/67-firecracker/src/config.ts",
+        "examples/67-firecracker/src/requests.ts",
+        "examples/67-firecracker/test/config.test.ts"
+      ],
+      "tasks": ["firecracker:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "67.client",
+      "sources": [
+        "examples/67-firecracker/src/client.ts",
+        "examples/67-firecracker/test/client.test.ts",
+        "examples/67-firecracker/test/support/fake-firecracker.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "67.jailer",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.snapshot",
+      "sources": ["examples/67-firecracker/src/requests.ts"],
+      "tasks": ["firecracker:plan"],
+      "boundary": "local",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.local",
+      "sources": [
+        "examples/67-firecracker/scripts/plan.ts",
+        "examples/67-firecracker/src/args.ts",
+        "examples/67-firecracker/test"
+      ],
+      "tasks": ["firecracker:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "67.walkthrough",
+      "sources": [
+        "examples/67-firecracker/deploy/prepare.sh",
+        "examples/67-firecracker/deploy/tap.sh",
+        "examples/67-firecracker/deploy/notes.service",
+        "examples/67-firecracker/src/guest-server.ts",
+        "examples/67-firecracker/src/boot.ts",
+        "examples/67-firecracker/scripts/boot.ts",
+        "examples/67-firecracker/scripts/build.ts",
+        "examples/67-firecracker/test/boot.test.ts"
+      ],
+      "tasks": ["firecracker:kit:build", "firecracker:boot"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.host",
+      "sources": [
+        "examples/67-firecracker/infra/lib/firecracker-host-stack.ts",
+        "examples/67-firecracker/infra/bin/app.ts",
+        "examples/67-firecracker/src/host-config.ts",
+        "examples/67-firecracker/infra/test/firecracker-host-stack.test.ts",
+        "examples/67-firecracker/scripts/kit.ts"
+      ],
+      "tasks": [
+        "firecracker:infra:synth",
+        "firecracker:infra:deploy",
+        "firecracker:kit:publish",
+        "firecracker:kit:empty",
+        "firecracker:infra:destroy"
+      ],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.cost",
+      "sources": ["data/pricing"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "67.cleanup",
+      "sources": ["examples/67-firecracker/scripts/kit.ts"],
+      "tasks": ["firecracker:kit:empty", "firecracker:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "ec2.c7i-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "XUYX63YVF9ZC3MN6",
+      "usageType": "APN1-BoxUsage:c7i.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1123500000",
+          "description": "$0.11235 per On Demand Linux c7i.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c8i-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "NR6ZDSWTJNJXW99V",
+      "usageType": "APN1-BoxUsage:c8i.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1179700000",
+          "description": "$0.11797 per On Demand Linux c8i.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c5-metal.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "4TBNX74EV3WAWKY3",
+      "usageType": "APN1-BoxUsage:c5.metal",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.1360000000",
+          "description": "$5.136 per On Demand Linux c5.metal Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "ec2.c7i-large.linux.hour",
+      "reason": "No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "ec2.c8i-large.linux.hour",
+      "reason": "No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    },
+    {
+      "priceId": "ec2.c5-metal.linux.hour",
+      "reason": "No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "firecracker-host-two-hours",
+      "chapter": "67",
+      "title": {
+        "ja": "Firecracker を試すホスト: 2 時間で消す",
+        "en": "A host to try Firecracker: destroyed after two hours"
+      },
+      "assumptions": {
+        "ja": [
+          "-c run=true でデプロイし、2 時間後に destroy",
+          "c7i.large 1 台、パブリック IPv4 アドレス 1 つ、16 GiB の gp3 ルートボリューム",
+          "ダウンロードのデータ転送、S3 のキット（数十 KB）、Session Manager は未算入"
+        ],
+        "en": [
+          "Deployed with -c run=true and destroyed two hours later",
+          "One c7i.large, one public IPv4 address, a 16 GiB gp3 root volume",
+          "Data transfer of the downloads, the kit in S3 (tens of kilobytes) and Session Manager are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.c7i-large.linux.hour",
+          "quantity": 2,
+          "basis": "1 c7i.large x 2 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 2,
+          "basis": "1 public IPv4 address x 2 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 0.0438,
+          "basis": "16 GiB x 2 / 730 of a month"
+        }
+      ]
+    },
+    {
+      "id": "firecracker-host-month",
+      "chapter": "67",
+      "title": {
+        "ja": "Firecracker を試すホスト: 消し忘れて 1 か月",
+        "en": "A host to try Firecracker: forgotten for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "-c run=true でデプロイしたまま 730 時間",
+          "c7i.large 1 台、パブリック IPv4 アドレス 1 つ、16 GiB の gp3 ルートボリューム",
+          "11章のネットワークに NAT Gateway やエンドポイントを置いていない場合。データ転送は未算入"
+        ],
+        "en": [
+          "Deployed with -c run=true and left for 730 hours",
+          "One c7i.large, one public IPv4 address, a 16 GiB gp3 root volume",
+          "With no NAT gateway or endpoints in the chapter 11 network. Data transfer is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.c7i-large.linux.hour",
+          "quantity": 730,
+          "basis": "1 c7i.large x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 public IPv4 address x 730 hours"
+        },
+        {
+          "priceId": "ebs.gp3.storage",
+          "quantity": 16,
+          "basis": "16 GiB for the month"
+        }
+      ]
+    },
+    {
+      "id": "firecracker-metal-two-hours",
+      "chapter": "67",
+      "title": {
+        "ja": "参考: c5.metal で 2 時間",
+        "en": "For comparison: two hours of c5.metal"
+      },
+      "assumptions": {
+        "ja": [
+          "Firecracker の手引きが例に挙げる c5.metal を 2 時間。このスタックは作らない",
+          "インスタンスの時間料金だけ"
+        ],
+        "en": [
+          "Two hours of c5.metal, the type Firecracker's guide suggests. This stack does not create one",
+          "The instance-hour price only"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.c5-metal.linux.hour",
+          "quantity": 2,
+          "basis": "1 c5.metal x 2 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "67",
+        "command": "vp test run examples/67-firecracker",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "5 ファイル 67 件。仕様との照合、設定の検証、リクエストの順序、Unix ドメインソケット越しのクライアント、設定を断られたときに起動しないこと、InstanceStart の応答の喪失、スナップショットの前提、起動時間の測り方、スタックのアサーション",
+          "en": "5 files, 67 tests. The check against the specification, validation of the configuration, the order of requests, the client over a Unix domain socket, no start after a refused configuration, the lost answer to InstanceStart, the precondition of a snapshot, how boot time is measured, the assertions on the stack"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "tsc --noEmit -p examples/67-firecracker",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "vp run firecracker:plan",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "起動の 5 つのリクエストを curl の形で表示。本文に載せた出力はこの実行のもの",
+          "en": "Printed the five requests of a boot as curl commands; the output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "vp run firecracker:spec",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "GitHub から v1.17.0 の仕様を取得し、SHA-256 を確かめ、切り出した結果がリポジトリの JSON と一致",
+          "en": "Downloaded the v1.17.0 specification from GitHub, checked its SHA-256, and found the subset equal to the committed JSON"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "vp run firecracker:kit:build",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "dist/kit に guest-server.mjs、plan.mjs、boot.mjs、deploy/ を出力",
+          "en": "Wrote guest-server.mjs, plan.mjs, boot.mjs and deploy/ to dist/kit"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "PORT=18067 ALLOWED_ORIGIN=http://localhost:5173 node dist/kit/guest-server.mjs; curl /health",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "macOS の上でバンドルを起動し、/health が 200 と {\"status\":\"ok\",\"stage\":\"local\"} を返した。microVM の中ではない",
+          "en": "Started the bundle on macOS; /health answered 200 with {\"status\":\"ok\",\"stage\":\"local\"}. Not inside a microVM"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "vp run firecracker:boot (macOS)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "何も送らず、Linux と KVM が要ると表示して終了コード 69 で終わった",
+          "en": "Sent nothing, said Linux and KVM are needed, and exited with code 69"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "vp run firecracker:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "7 リソース、出力 1 つ（フラグなし）。AWS への問い合わせなし",
+          "en": "7 resources and 1 output (without the flag). No lookup against AWS"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "bash -n deploy/prepare.sh deploy/tap.sh",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "構文の検査だけ。実行はしていない",
+          "en": "Syntax check only. The scripts were not executed"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "node book/theme/figure-cli.ts (67章の図のある 4 ページ)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "図 6 つ、問題 0",
+          "en": "6 figures, 0 problems"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "bash deploy/prepare.sh; sudo bash deploy/tap.sh up; sudo work/firecracker --api-sock ...; sudo work/node/bin/node boot.mjs",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "macOS には KVM が無く、Firecracker を起動していない",
+          "en": "macOS has no KVM; Firecracker was never started"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "vp run firecracker:infra:deploy -c run=true / firecracker:kit:publish / firecracker:kit:empty / firecracker:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS に対しては何も実行していない",
+          "en": "Nothing was run against AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "67-firecracker-not-run",
+        "summary": {
+          "ja": "Firecracker を 1 度も起動していない。クライアントが本物の v1.17.0 と話せること、自作のサーバーの断り方が本物と一致すること、deploy/ のスクリプト、ゲストの中の Node.js とサーバー、起動時間、スナップショットは未確認。",
+          "en": "Firecracker was never started. That the client talks to the real v1.17.0, that this book's fake server refuses what the real one refuses, the scripts in deploy/, Node.js and the server inside the guest, boot times and snapshots are unconfirmed."
+        },
+        "resume": {
+          "ja": "Linux と KVM のあるマシンで vp run firecracker:kit:build の dist/kit を置き、bash deploy/prepare.sh、sudo bash deploy/tap.sh up、sudo work/firecracker --api-sock /tmp/firecracker.socket、別の端末で sudo work/node/bin/node boot.mjs を順に実行する。断られたリクエストのステータスと fault_message を test/support/fake-firecracker.ts の規則と比べて直し、表示された 3 つの時間を記録する。続けて --snapshot を試す。",
+          "en": "On a machine with Linux and KVM, place dist/kit from vp run firecracker:kit:build and run in order: bash deploy/prepare.sh, sudo bash deploy/tap.sh up, sudo work/firecracker --api-sock /tmp/firecracker.socket, and in another terminal sudo work/node/bin/node boot.mjs. Compare the status and fault_message of any refused request with the rules in test/support/fake-firecracker.ts and correct them, and record the three durations printed. Then try --snapshot."
+        }
+      },
+      {
+        "id": "67-nested-virtualization",
+        "summary": {
+          "ja": "nested virtualization を有効にした c7i.large で /dev/kvm が現れ、Firecracker が動くことは未確認。Firecracker のプロジェクトがテストしているのは .metal だけで、手引きは EC2 では .metal でしか KVM を使えないと書いている（EC2 のガイドと食い違う）。",
+          "en": "That /dev/kvm appears on a c7i.large with nested virtualization enabled, and that Firecracker runs there, is unconfirmed. The Firecracker project tests only .metal, and its quickstart says EC2 supports KVM only on .metal (which disagrees with the EC2 guide)."
+        },
+        "resume": {
+          "ja": "vp run net:infra:deploy、vp run firecracker:infra:deploy -c run=true、vp run firecracker:kit:publish のあと Session Manager で入り、ls -l /dev/kvm の結果から記録する。動かなければ instanceType を変えるか、.metal で試した結果と並べる。終わったら firecracker:kit:empty と firecracker:infra:destroy。",
+          "en": "After vp run net:infra:deploy, vp run firecracker:infra:deploy -c run=true and vp run firecracker:kit:publish, enter through Session Manager and record from the output of ls -l /dev/kvm onward. If it does not work, change instanceType or compare with a .metal instance. Finish with firecracker:kit:empty and firecracker:infra:destroy."
+        }
+      },
+      {
+        "id": "67-cdkd-cloud-control",
+        "summary": {
+          "ja": "AWS::EC2::LaunchTemplate と、LaunchTemplate プロパティを使う AWS::EC2::Instance を、cdkd 0.296.28 が Cloud Control API 経由で作れるかは未確認。前者に専用の実装が無いこと、後者の実装が書くプロパティの一覧に LaunchTemplate が無いことは、導入済みのパッケージで確かめた。",
+          "en": "Whether cdkd 0.296.28 can create AWS::EC2::LaunchTemplate, and an AWS::EC2::Instance that uses the LaunchTemplate property, through the Cloud Control API is unconfirmed. That the former has no provider of its own, and that LaunchTemplate is not in the list of properties the latter's provider writes, was checked in the installed package."
+        },
+        "resume": {
+          "ja": "vp run firecracker:infra:diff -c run=true で計画を読み、デプロイして、インスタンスの CPU オプションに nested virtualization が入っていることを aws ec2 describe-instances で確かめる。",
+          "en": "Read the plan with vp run firecracker:infra:diff -c run=true, deploy, and confirm with aws ec2 describe-instances that the instance's CPU options carry nested virtualization."
+        }
+      },
+      {
+        "id": "67-imds-from-guest",
+        "summary": {
+          "ja": "ホップ数 1 の設定と tap.sh の規則で、ゲストからインスタンスのメタデータに届かないことは未確認。",
+          "en": "That a guest cannot reach the instance metadata, given the hop limit of 1 and the rule in tap.sh, is unconfirmed."
+        },
+        "resume": {
+          "ja": "ゲストに SSH で入り、curl -m 2 -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' が応答を得られないことを確かめる。tap.sh の規則を外した場合も試し、どちらが効いているかを記録する。",
+          "en": "Enter the guest by SSH and check that curl -m 2 -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' gets no answer. Try it without the rule of tap.sh as well, and record which of the two is effective."
+        }
+      },
+      {
+        "id": "67-fargate-whitepaper",
+        "summary": {
+          "ja": "ホワイトペーパー Security Overview of AWS Fargate を読めなかった（d1.awsstatic.com が 403）。いまの Fargate のタスクがすべて Firecracker の上にあるかは、読んだページからは確認できない。",
+          "en": "The whitepaper Security Overview of AWS Fargate could not be read (d1.awsstatic.com answered 403). Whether every Fargate task today runs on Firecracker cannot be confirmed from the pages read."
+        },
+        "resume": {
+          "ja": "ECS のデベロッパーガイドの Fargate のセキュリティのページからホワイトペーパーへのリンクをブラウザで開き、Firecracker と EC2 インスタンスについての記述と改訂日を読んで、67.aws の節と sources を直す。",
+          "en": "Open the whitepaper in a browser from the link on the Fargate security pages of the ECS developer guide, read what it says about Firecracker and EC2 instances and its revision date, and correct section 67.aws and the sources."
+        }
+      },
+      {
+        "id": "67-node-in-ci-rootfs",
+        "summary": {
+          "ja": "公式の Node.js のバイナリが Firecracker の CI のルートファイルシステム（Ubuntu）の中で動くかは、パッケージの一覧からの見込みで、未確認。",
+          "en": "Whether the official Node.js binary runs in the root file system of Firecracker's CI (Ubuntu) is an expectation from its package list, and unconfirmed."
+        },
+        "resume": {
+          "ja": "prepare.sh のあと sudo chroot work/squashfs-root /opt/node/bin/node --version を実行する。動かなければ、足りないライブラリを ldd で調べ、apt で入れる手順を prepare.sh に足す。",
+          "en": "After prepare.sh, run sudo chroot work/squashfs-root /opt/node/bin/node --version. If it fails, find the missing libraries with ldd and add an apt step to prepare.sh."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 67: Firecracker ----------------------------------------\n      // The requests a boot would send, as curl commands. Opens no socket; runs on any machine.\n      //   vp run firecracker:plan [config.json] [--socket path] [--snapshot]\n      \"firecracker:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/67-firecracker\" }),\n      // dist/kit: the guest server, plan and boot as single files, with deploy/. Local.\n      \"firecracker:kit:build\": fresh(\"node scripts/build.ts\", { cwd: \"examples/67-firecracker\" }),\n      // Reads GitHub, not AWS: the pinned API specification against spec/*.subset.json.\n      \"firecracker:spec\": live(\"node scripts/spec.ts\", { cwd: \"examples/67-firecracker\" }),\n      // Linux with KVM only: sends the boot sequence to a listening Firecracker and times the guest.\n      \"firecracker:boot\": live(\"node scripts/boot.ts\", { cwd: \"examples/67-firecracker\" }),\n      // A place to try it. `-c run=true` adds a c7i.large, BILLED by the hour until destroyed.\n      ...infra(\"firecracker\", \"examples/67-firecracker\", \"AihFirecracker\"),\n      \"firecracker:kit:publish\": live(\"node --env-file-if-exists=../../.env scripts/kit.ts publish\", {\n        cwd: \"examples/67-firecracker\",\n        dependsOn: [\"firecracker:kit:build\"],\n      }),\n      \"firecracker:kit:empty\": live(\"node --env-file-if-exists=../../.env scripts/kit.ts empty\", { cwd: \"examples/67-firecracker\" }),",
+    "synth": ["firecracker:infra:synth"],
+    "checkAll": ["firecracker:plan"],
+    "typecheck": ["examples/67-firecracker"]
+  }
+}

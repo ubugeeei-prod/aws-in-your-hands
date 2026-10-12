@@ -1,0 +1,1099 @@
+{
+  "chapterId": "52",
+  "manifest": {
+    "id": "52",
+    "slug": "ecr",
+    "title": {
+      "ja": "ECR: tag と digest、lifecycle、scan、複製、pull through cache",
+      "en": "ECR: Tags and Digests, Lifecycle, Scanning, Replication, and Pull-Through Cache"
+    },
+    "prerequisites": ["12", "20", "21"],
+    "services": ["ECR", "IAM", "Amazon Inspector", "ECS"],
+    "samplePath": "examples/52-ecr",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "ecr52-tag-mutability",
+      "ecr52-api-put-image-tag-mutability",
+      "ecr52-api-exclusion-filter",
+      "ecr52-encryption",
+      "ecr52-repository-policies",
+      "ecr52-repository-policy-examples",
+      "ecr52-registry-permissions",
+      "ecr52-lifecycle",
+      "ecr52-lifecycle-properties",
+      "ecr52-lifecycle-examples",
+      "ecr52-lifecycle-preview",
+      "ecr52-scanning",
+      "ecr52-scanning-basic",
+      "ecr52-scanning-enhanced",
+      "ecr52-api-describe-scan-findings",
+      "ecr52-api-image-scan-status",
+      "ecr52-api-put-scanning-configuration",
+      "ecr52-pull-through-cache",
+      "ecr52-pull-through-cache-rule",
+      "ecr52-pull-through-cache-iam",
+      "ecr52-replication",
+      "ecr52-push-iam",
+      "ecr52-eventbridge",
+      "ecr52-signing",
+      "ecr52-managed-signing",
+      "ecr52-quotas",
+      "ecr52-pricing-page",
+      "ecr52-price-list",
+      "ecr52-price-list-inspector",
+      "ecr52-ecs-image-resolution",
+      "ecr52-docker-hub-limits",
+      "ecr52-public-node-manifest",
+      "ecr52-cloudflare-images",
+      "ecr52-awscli-model",
+      "ecr52-cdkd-ecr-provider"
+    ]
+  },
+  "sources": [
+    {
+      "id": "ecr52-tag-mutability",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-tag-mutability.html",
+      "title": "Preventing image tags from being overwritten in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With tag immutability on, pushing an image with a tag that is already in the repository returns ImageTagAlreadyExistsException",
+        "Immutable applies to all tags; exclusion filters with wildcards (*) make a few tags mutable in an immutable repository, or immutable in a mutable one",
+        "Mutable is recommended for repositories that use pull through cache, so ECR can update cached images",
+        "Encryption settings cannot be changed once the repository is created"
+      ]
+    },
+    {
+      "id": "ecr52-api-put-image-tag-mutability",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_PutImageTagMutability.html",
+      "title": "PutImageTagMutability",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "imageTagMutability is one of MUTABLE, IMMUTABLE, IMMUTABLE_WITH_EXCLUSION, MUTABLE_WITH_EXCLUSION",
+        "imageTagMutabilityExclusionFilters holds 1 to 5 filters"
+      ]
+    },
+    {
+      "id": "ecr52-api-exclusion-filter",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_ImageTagMutabilityExclusionFilter.html",
+      "title": "ImageTagMutabilityExclusionFilter",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "filterType has the single value WILDCARD; filter matches ^[0-9a-zA-Z._*-]{1,128}$"
+      ]
+    },
+    {
+      "id": "ecr52-encryption",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/encryption-at-rest.html",
+      "title": "Encryption at rest",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default ECR encrypts with Amazon S3-managed keys (AES-256) at no additional charge",
+        "A repository can instead use a KMS key: the AWS managed key aws/ecr or a customer managed key in the same Region",
+        "The encryption configuration cannot be changed after the repository is created",
+        "Revoking the grants ECR created on the KMS key makes the repository's images unreadable; KMS keys have their own cost",
+        "DSSE-KMS is only available in the AWS GovCloud (US) Regions"
+      ]
+    },
+    {
+      "id": "ecr52-repository-policies",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html",
+      "title": "Private repository policies in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default only the account that created the repository has access; a repository policy grants more",
+        "An action is allowed if either the repository policy or an IAM policy allows it, and denied if either denies it",
+        "ecr:GetAuthorizationToken must be allowed through an IAM policy before any push or pull"
+      ]
+    },
+    {
+      "id": "ecr52-repository-policy-examples",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policy-examples.html",
+      "title": "Private repository policy examples in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The pull actions in the examples are ecr:BatchGetImage and ecr:GetDownloadUrlForLayer",
+        "A repository policy names another account as arn:aws:iam::<account>:root in Principal",
+        "A service principal should be scoped with aws:SourceArn and aws:SourceAccount"
+      ]
+    },
+    {
+      "id": "ecr52-registry-permissions",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry-permissions.html",
+      "title": "Private registry permissions in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A registry policy grants permissions at the private registry level, for actions such as replication, pull through cache and repository creation",
+        "Listing specific actions is the stated best practice rather than ecr:*"
+      ]
+    },
+    {
+      "id": "ecr52-lifecycle",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html",
+      "title": "Automate the cleanup of images by using lifecycle policies in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Images are expired or archived within 24 hours after they meet the criteria, and each action is recorded in CloudTrail",
+        "All rules are evaluated at the same time; then they are applied by priority, and an image is expired by exactly one or zero rules",
+        "An image that matches the tagging requirements of a rule cannot be expired by a rule with a lower priority",
+        "An image referenced by a manifest list cannot be expired before the manifest list",
+        "imageCountMoreThan sorts by pushed_at_time, youngest first, and expires everything beyond the count; sinceImagePushed expires images older than the given number of days",
+        "Reference artifacts are expired within 24 hours of their subject image",
+        "A filter of prod* matches prod, prod1 and production-team1"
+      ]
+    },
+    {
+      "id": "ecr52-lifecycle-properties",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lifecycle_policy_parameters.html",
+      "title": "Lifecycle policy properties in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "rulePriority must be unique; a rule with tagStatus any must have the highest value",
+        "tagStatus is tagged, untagged or any; tagged requires tagPatternList or tagPrefixList, untagged must omit both",
+        "At most four wildcards per pattern string",
+        "countType is imageCountMoreThan, sinceImagePushed, sinceImagePulled or sinceImageTransitioned; countUnit is days and only for the time-based types; countNumber is a positive integer",
+        "The action type is expire or transition (to archive storage)"
+      ]
+    },
+    {
+      "id": "ecr52-lifecycle-examples",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lifecycle_policy_examples.html",
+      "title": "Examples of lifecycle policies in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The six worked examples (multiple rules A and B, multiple tags A and B, all images A and B) with their repositories and outcomes, which the evaluator's tests reproduce",
+        "sinceImagePulled can only be used with the transition action",
+        "Archived images have a minimum storage duration of 90 days"
+      ]
+    },
+    {
+      "id": "ecr52-lifecycle-preview",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lpp_creation.html",
+      "title": "Creating a lifecycle policy preview in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A preview shows the impact of a lifecycle policy before it is applied, and running one first is the stated best practice",
+        "A lifecycle policy acts only on the repository in the Region it was created in, so replicated repositories need their own"
+      ]
+    },
+    {
+      "id": "ecr52-scanning",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html",
+      "title": "Scan images for software vulnerabilities in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Basic scanning uses AWS native technology and covers operating system vulnerabilities, on push or manually",
+        "Enhanced scanning integrates with Amazon Inspector, covers operating system and programming language packages, on push or continuously",
+        "Switching between the two makes the previously established scans unavailable",
+        "Basic scanning results are read with DescribeImageScanFindings, not from DescribeImages",
+        "Archived images cannot be scanned"
+      ]
+    },
+    {
+      "id": "ecr52-scanning-basic",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic.html",
+      "title": "Scan images for OS vulnerabilities in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An image can be scanned once per 24 hours with basic scanning, the scan on push included",
+        "Repositories that match no scan-on-push filter are set to manual",
+        "ECR sends an event to EventBridge when an image scan completes",
+        "Severity comes from the upstream distribution when available, otherwise from the CVSS score"
+      ]
+    },
+    {
+      "id": "ecr52-scanning-enhanced",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+      "title": "Scan images for OS and programming language package vulnerabilities in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ECR does not charge for enhanced scanning; Amazon Inspector does",
+        "When enhanced scanning is first turned on, only images pushed in the last 14 days are recognized; older ones show SCAN_ELIGIBILITY_EXPIRED",
+        "With enhanced scanning on, repositories that match no filter are not scanned, and manual scans are not supported",
+        "Inspector emits EventBridge events when an initial scan completes and when a finding is created, updated or closed",
+        "By default Inspector monitors images until they are deleted or enhanced scanning is disabled"
+      ]
+    },
+    {
+      "id": "ecr52-api-describe-scan-findings",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_DescribeImageScanFindings.html",
+      "title": "DescribeImageScanFindings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The response carries imageId, imageScanStatus and imageScanFindings with findingSeverityCounts",
+        "The enhanced scanning sample shows status ACTIVE with findings",
+        "ScanNotFoundException is returned when no scan exists for the image"
+      ]
+    },
+    {
+      "id": "ecr52-api-image-scan-status",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_ImageScanStatus.html",
+      "title": "ImageScanStatus",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "status is one of IN_PROGRESS, COMPLETE, FAILED, UNSUPPORTED_IMAGE, ACTIVE, PENDING, SCAN_ELIGIBILITY_EXPIRED, FINDINGS_UNAVAILABLE, LIMIT_EXCEEDED, IMAGE_ARCHIVED"
+      ]
+    },
+    {
+      "id": "ecr52-api-put-scanning-configuration",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_PutImageScanningConfiguration.html",
+      "title": "PutImageScanningConfiguration",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The API is being deprecated in favor of specifying the scanning configuration at the registry level"
+      ]
+    },
+    {
+      "id": "ecr52-pull-through-cache",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache.html",
+      "title": "Sync an upstream registry with an Amazon ECR private registry",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Upstreams: Amazon ECR Public, the Kubernetes registry and Quay without authentication; Docker Hub, Azure Container Registry, GitHub Container Registry, GitLab Container Registry and Chainguard with a Secrets Manager secret; Amazon ECR with an IAM role",
+        "The first pull creates the repository and caches the image; later pulls check upstream at most once every 24 hours",
+        "If the upstream cannot be reached, the last cached image is still pulled",
+        "Secrets must be named with the ecr-pullthroughcache/ prefix, in the same account and Region",
+        "Lambda does not support pulling through a pull through cache rule",
+        "Repositories created by a rule are mutable, AES256, with no policy and no lifecycle policy unless a repository creation template matches",
+        "Turning on tag immutability stops ECR from updating a cached tag",
+        "The first pull may need a route to the internet even when interface VPC endpoints are used; later pulls do not"
+      ]
+    },
+    {
+      "id": "ecr52-pull-through-cache-rule",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-creating-rule.html",
+      "title": "Creating a pull through cache rule in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The ECR Public rule in the example uses prefix ecr-public and upstream public.ecr.aws; Docker Hub uses registry-1.docker.io with a credential ARN",
+        "Rules are created separately for each Region"
+      ]
+    },
+    {
+      "id": "ecr52-pull-through-cache-iam",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache-iam.html",
+      "title": "IAM permissions required to sync an upstream registry with an Amazon ECR private registry",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The first pull needs ecr:BatchImportUpstreamImage, and ecr:CreateRepository when the repository does not exist yet",
+        "Both can be granted by an identity policy scoped to repository/<prefix>/*"
+      ]
+    },
+    {
+      "id": "ecr52-replication",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/replication.html",
+      "title": "Private image replication in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Replication is configured on the registry, across Regions and across accounts",
+        "Only content pushed after replication is configured is replicated",
+        "Cross-account replication needs a registry policy in the destination account allowing ecr:ReplicateImage and ecr:CreateRepository; the source needs none",
+        "Most images replicate in under 30 minutes",
+        "Replication performs no deletes; repository settings and lifecycle policies are not replicated unless a repository creation template supplies them",
+        "With tag immutability on in the destination, an image whose tag already exists is replicated without the tag",
+        "Up to 25 rules and 25 unique destinations"
+      ]
+    },
+    {
+      "id": "ecr52-push-iam",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push-iam.html",
+      "title": "IAM permissions for pushing an image to an Amazon ECR private repository",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Pushing to one repository needs CompleteLayerUpload, UploadLayerPart, InitiateLayerUpload, BatchCheckLayerAvailability, PutImage and BatchGetImage on its ARN, and GetAuthorizationToken on *"
+      ]
+    },
+    {
+      "id": "ecr52-eventbridge",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/ecr-eventbridge.html",
+      "title": "Amazon ECR events and EventBridge",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Events are emitted on a best effort basis",
+        "A completed push sends ECR Image Action with the image digest and tag",
+        "A completed basic scan sends ECR Image Scan with finding-severity-counts, which lists only severities that have findings"
+      ]
+    },
+    {
+      "id": "ecr52-signing",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html",
+      "title": "Sign images in Amazon ECR",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ECR offers managed signing through AWS Signer, and manual signing with the Notation CLI",
+        "Each signature counts as one artifact against the images-per-repository quota",
+        "Lifecycle policies clean up reference artifacts within 24 hours of deleting the subject image"
+      ]
+    },
+    {
+      "id": "ecr52-managed-signing",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/managed-signing.html",
+      "title": "Managed signing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A registry signing configuration names Signer signing profiles and repository filters; images are signed as they are pushed",
+        "The principal that pushes needs signer:SignPayload on the signing profile",
+        "Up to 10 signing rules per registry; the signing profile must be in the registry's Region",
+        "Verifying by hand still needs the Notation CLI"
+      ]
+    },
+    {
+      "id": "ecr52-quotas",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/service-quotas.html",
+      "title": "Amazon ECR service quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "100,000 images per repository (adjustable), 50 rules per lifecycle policy, 1,000 tags per image, 50 pull through cache rules per registry",
+        "One basic scan per image per 24 hours",
+        "Rate quotas per Region, for example 10 PutImage requests per second"
+      ]
+    },
+    {
+      "id": "ecr52-pricing-page",
+      "url": "https://aws.amazon.com/ecr/pricing/",
+      "title": "Amazon ECR pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Data transferred in is free; transfer from a private repository to EC2, Lambda, App Runner or Fargate in the same Region is USD 0.00 per GB",
+        "Cross-Region transfer, replication included, is charged at the source Region's data transfer rate",
+        "New customers get 500 MB a month of private storage for one year"
+      ],
+      "note": "The rate tables did not load when the page was read as text; unit prices come from the Price List."
+    },
+    {
+      "id": "ecr52-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonECR, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Storage USD 0.10 per GB-month; archive storage USD 0.10 per GB-month up to 153,600 GB, then USD 0.07; archive retrieval USD 0.03 per GB; image signing USD 0.02 each"
+      ],
+      "note": "Publication date 2026-09-11T12:44:25Z."
+    },
+    {
+      "id": "ecr52-price-list-inspector",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AmazonInspectorV2, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": ["Container image initial scan USD 0.11; container image re-scan USD 0.01"],
+      "note": "Publication date 2026-09-11T12:44:40Z. What triggers a billed re-scan was not read from the pricing page."
+    },
+    {
+      "id": "ecr52-ecs-image-resolution",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-ecs.html",
+      "title": "Deploy Amazon ECS services by replacing tasks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default ECS resolves the image tags in a task definition to digests: the first task of a deployment establishes them, and the service's other tasks use the same digests",
+        "Forcing a new deployment establishes updated digests",
+        "The behavior is set per container with versionConsistency",
+        "Specifying digests in the task definition avoids the latency of resolution"
+      ]
+    },
+    {
+      "id": "ecr52-docker-hub-limits",
+      "url": "https://docs.docker.com/docker-hub/usage/pulls/",
+      "title": "Docker Hub pull usage and limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Unauthenticated: 100 pulls per 6 hours per IPv4 address or IPv6 /64 subnet; authenticated Personal: 200 per 6 hours"
+      ]
+    },
+    {
+      "id": "ecr52-public-node-manifest",
+      "url": "https://public.ecr.aws/v2/docker/library/node/manifests/24-bookworm-slim",
+      "title": "Amazon ECR Public registry API: docker/library/node, tag 24-bookworm-slim",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The tag exists on Amazon ECR Public and is an OCI image index, that is, a multi-architecture image"
+      ],
+      "note": "Requested with an anonymous token from https://public.ecr.aws/token/; the answer was HTTP 200 with content type application/vnd.oci.image.index.v1+json. No AWS credentials were used."
+    },
+    {
+      "id": "ecr52-cloudflare-images",
+      "url": "https://developers.cloudflare.com/containers/platform-details/image-management/",
+      "title": "Cloudflare Containers: image management",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Images for Cloudflare Containers live in the managed registry at registry.cloudflare.com; wrangler deploy builds and pushes them",
+        "Images can also be pulled from Docker Hub, Amazon ECR and Google Artifact Registry under the default policy"
+      ]
+    },
+    {
+      "id": "ecr52-awscli-model",
+      "url": "https://github.com/aws/aws-cli/blob/2.35.11/awscli/botocore/data/ecr/2015-09-21/service-2.json",
+      "title": "AWS CLI 2.35.11: ECR service model and waiters",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "StartLifecyclePolicyPreview takes repositoryName and lifecyclePolicyText; GetLifecyclePolicyPreview returns status, previewResults (imageDigest, imageTags, imagePushedAt, action, appliedRulePriority) and summary",
+        "The waiter image-scan-complete polls DescribeImageScanFindings every 5 seconds up to 60 times, succeeding on COMPLETE and failing on FAILED; lifecycle-policy-preview-complete polls every 5 seconds up to 20 times",
+        "FindingSeverity is INFORMATIONAL, LOW, MEDIUM, HIGH, CRITICAL or UNDEFINED"
+      ],
+      "note": "Read from the copy installed in the Nix shell (awscli2 2.35.11, service-2.json and waiters-2.json), not from this URL."
+    },
+    {
+      "id": "ecr52-cdkd-ecr-provider",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "cdkd 0.296.28: the ECR provider in the published package",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::ECR::Repository has its own provider, which handles ImageTagMutability, its exclusion filters, the scanning configuration, the lifecycle policy and EmptyOnDelete",
+        "AWS::ECR::PullThroughCacheRule appears nowhere in the package, so it is neither registered nor listed as unsupported"
+      ],
+      "note": "Read from dist/ in the installed package. That an unregistered type goes through Cloud Control is chapter 12's reading of register-providers.ts."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "image-digest",
+      "ja": "ダイジェスト",
+      "en": "digest",
+      "firstUse": "52",
+      "definition": {
+        "ja": "イメージのマニフェストの SHA-256。中身から決まるので、同じダイジェストなら同じイメージで、あとから別のものを指すことはない。",
+        "en": "The SHA-256 of an image's manifest. It follows from the content, so the same digest is the same image and can never come to mean another."
+      }
+    },
+    {
+      "id": "tag-immutability",
+      "ja": "タグの immutability",
+      "en": "tag immutability",
+      "firstUse": "52",
+      "definition": {
+        "ja": "すでにあるタグを別のイメージに付け替えるプッシュを、リポジトリが拒否する設定。",
+        "en": "A repository setting that refuses a push which would point an existing tag at another image."
+      }
+    },
+    {
+      "id": "ecr-lifecycle-policy",
+      "ja": "ライフサイクルポリシー（ECR）",
+      "en": "lifecycle policy (ECR)",
+      "firstUse": "52",
+      "definition": {
+        "ja": "リポジトリのイメージを、タグの有無や名前、数、プッシュからの日数で選んで消す規則の集まり。",
+        "en": "A set of rules that delete a repository's images, chosen by tag, by count, or by days since they were pushed."
+      }
+    },
+    {
+      "id": "pull-through-cache",
+      "ja": "pull through cache",
+      "en": "pull-through cache",
+      "firstUse": "52",
+      "definition": {
+        "ja": "外のレジストリのイメージを、自分の ECR のレジストリ経由で取得し、写しを手元に残す仕組み。",
+        "en": "Pulling an image of an outside registry through your own ECR registry, which keeps a copy."
+      }
+    },
+    {
+      "id": "enhanced-scanning",
+      "ja": "enhanced scanning",
+      "en": "enhanced scanning",
+      "firstUse": "52",
+      "definition": {
+        "ja": "ECR のイメージを Amazon Inspector が検査する設定。OS に加えて言語のパッケージも見て、新しい脆弱性が出るたびに検査し直す。",
+        "en": "Having Amazon Inspector scan ECR images: language packages as well as the operating system, and again whenever new vulnerabilities are published."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "52.overview",
+      "sources": ["examples/52-ecr"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "52.digest",
+      "sources": [
+        "examples/52-ecr/src/reference.ts",
+        "examples/52-ecr/src/registry.ts",
+        "examples/52-ecr/test/invariant.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "52.settings",
+      "sources": [
+        "examples/52-ecr/infra/lib/ecr-stack.ts",
+        "examples/52-ecr/src/mutability.ts",
+        "examples/52-ecr/test/mutability.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.lifecycle",
+      "sources": [
+        "examples/52-ecr/src/lifecycle.ts",
+        "examples/52-ecr/src/policy.ts",
+        "examples/52-ecr/src/wildcard.ts",
+        "examples/52-ecr/test/lifecycle.test.ts"
+      ],
+      "tasks": ["test:unit", "ecr:lifecycle:preview"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "52.scan",
+      "sources": [
+        "examples/52-ecr/src/scan.ts",
+        "examples/52-ecr/test/scan.test.ts",
+        "examples/52-ecr/scripts/scan-gate.ts"
+      ],
+      "tasks": ["test:unit", "ecr:scan:gate"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.cache",
+      "sources": ["examples/52-ecr/infra/lib/ecr-stack.ts", "examples/52-ecr/src/config.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "52.replication",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.push",
+      "sources": [
+        "examples/52-ecr/infra/lib/ecr-stack.ts",
+        "examples/52-ecr/infra/bin/app.ts",
+        "examples/52-ecr/src/config.ts",
+        "examples/52-ecr/infra/test/ecr-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ecr:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.local",
+      "sources": [
+        "examples/52-ecr/scripts/lifecycle-preview.ts",
+        "examples/52-ecr/src/describe.ts",
+        "examples/52-ecr/fixtures",
+        "examples/52-ecr/test/describe.test.ts"
+      ],
+      "tasks": ["test:unit", "ecr:lifecycle:preview", "ecr:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.deploy",
+      "sources": [
+        "examples/52-ecr/infra/bin/app.ts",
+        "examples/52-ecr/scripts/lifecycle-compare.ts",
+        "examples/52-ecr/scripts/scan-gate.ts"
+      ],
+      "tasks": [
+        "ecr:infra:diff",
+        "ecr:infra:deploy",
+        "ecr:lifecycle:compare",
+        "ecr:scan:gate",
+        "ecr:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.cost",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.pitfalls",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.production",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.cleanup",
+      "sources": [],
+      "tasks": ["ecr:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.distributed",
+      "sources": [
+        "examples/52-ecr/test/invariant.test.ts",
+        "examples/52-ecr/test/lifecycle.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "ecr.storage.archive",
+      "offerCode": "AmazonECR",
+      "region": "ap-northeast-1",
+      "sku": "VYM99M4HCC4JPT6C",
+      "usageType": "APN1-TimedStorage-Archive-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 153600,
+          "usd": "0.1000000000",
+          "description": "$0.10 per GB-Mo from 0 to 153,600 for TimedStorage-Archive-ByteHrs in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 153600,
+          "to": null,
+          "usd": "0.0700000000",
+          "description": "$0.07 per GB-Mo from 153,600 for TimedStorage-Archive-ByteHrs in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ecr.archive.retrieval",
+      "offerCode": "AmazonECR",
+      "region": "ap-northeast-1",
+      "sku": "AGSTWYZYHGV8SXU8",
+      "usageType": "APN1-Retrieval-Archive",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0300000000",
+          "description": "$0.03 per GB for Retrieval-Archive in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ecr.signing",
+      "offerCode": "AmazonECR",
+      "region": "ap-northeast-1",
+      "sku": "X8FZ4CKPMMVP6Q5U",
+      "usageType": "APN1-AsyncActions-ImageSigning",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Count",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0200000000",
+          "description": "$0.02 per Count for AsyncActions-ImageSigning in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "inspector.image.initial-scan",
+      "offerCode": "AmazonInspectorV2",
+      "region": "ap-northeast-1",
+      "sku": "X7HQKHYG7EKPNN8V",
+      "usageType": "APN1-container-image-initial-scan",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Resource-assessment",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1100000000",
+          "description": "$0.11 per Resource-assessment for container-image-initial-scan in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:40Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "inspector.image.rescan",
+      "offerCode": "AmazonInspectorV2",
+      "region": "ap-northeast-1",
+      "sku": "BSKUQR36ETBDFUZN",
+      "usageType": "APN1-container-image-re-scan",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Resource-assessment",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0100000000",
+          "description": "$0.01 per Resource-assessment for container-image-re-scan in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:40Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "inspector.image.initial-scan",
+      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "inspector.image.rescan",
+      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "ecr.storage.archive",
+      "reason": "No free allowance for archive storage was found; none is applied."
+    },
+    {
+      "priceId": "ecr.archive.retrieval",
+      "reason": "No free allowance for archive retrieval was found; none is applied."
+    },
+    {
+      "priceId": "ecr.signing",
+      "reason": "No free allowance for managed signing was found; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ecr-idle",
+      "chapter": "52",
+      "title": {
+        "ja": "ECR: スタックを置いただけで、イメージが 1 つも無い月",
+        "en": "ECR: the stack deployed, and not one image, for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "AihEcr を既定の設定（リポジトリだけ）でデプロイ済み",
+          "イメージを 1 つもプッシュしていない。保存量は 0"
+        ],
+        "en": [
+          "AihEcr deployed with its defaults: the repository alone",
+          "No image was pushed: nothing is stored"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0,
+          "basis": "0 GB stored"
+        }
+      ]
+    },
+    {
+      "id": "ecr-kept",
+      "chapter": "52",
+      "title": {
+        "ja": "ECR: ライフサイクルポリシーが残す上限まで溜まった状態",
+        "en": "ECR: as full as the lifecycle policy lets it get"
+      },
+      "assumptions": {
+        "ja": [
+          "ポリシーが残すのは、リリース 20 個と、新しいほうから 30 個。重なりが無いとして 50 個",
+          "イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている",
+          "取得は同じリージョンの Fargate からで、データ転送は USD 0"
+        ],
+        "en": [
+          "The policy keeps 20 releases and the 30 newest images: 50 if none overlap",
+          "0.15 GB assumed per image (no image was built, so this is not measured). How layers shared between images count toward storage was not confirmed, so every image is counted in full",
+          "Pulls come from Fargate in the same Region, so data transfer is USD 0"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ecr.storage",
+          "quantity": 7.5,
+          "basis": "50 images x 0.15 GB"
+        }
+      ]
+    },
+    {
+      "id": "ecr-unpruned",
+      "chapter": "52",
+      "title": {
+        "ja": "ECR: ライフサイクルポリシーなしで 1 年たった時点の月額",
+        "en": "ECR: the monthly charge after a year without a lifecycle policy"
+      },
+      "assumptions": {
+        "ja": [
+          "平日に 1 日 5 回プッシュし、何も消さない。月 20 日で 12 か月、1,200 個",
+          "イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている",
+          "1 年たった時点の 1 か月ぶん。それまでの月の合計ではない"
+        ],
+        "en": [
+          "Five pushes each working day and nothing deleted: 20 days a month for 12 months, 1,200 images",
+          "0.15 GB assumed per image (no image was built, so this is not measured). How layers shared between images count toward storage was not confirmed, so every image is counted in full",
+          "One month at the end of that year, not the sum of the months before"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ecr.storage",
+          "quantity": 180,
+          "basis": "1,200 images x 0.15 GB"
+        }
+      ]
+    },
+    {
+      "id": "ecr-enhanced-scan",
+      "chapter": "52",
+      "title": {
+        "ja": "ECR: enhanced scanning を有効にした月",
+        "en": "ECR: a month with enhanced scanning on"
+      },
+      "assumptions": {
+        "ja": [
+          "月に 100 回プッシュし、それぞれ最初の検査が 1 回",
+          "残っている 50 個のイメージが、月に 4 回ずつ検査し直されると仮定。検査し直しが何回起きるかは新しい脆弱性の公開しだいで、この回数に根拠はない",
+          "Inspector の無料トライアルは引いていない"
+        ],
+        "en": [
+          "100 pushes a month, each scanned once initially",
+          "The 50 images kept are assumed to be re-scanned four times a month each. How often a re-scan happens depends on new vulnerabilities being published; this number has no basis",
+          "Inspector's free trial is not deducted"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "inspector.image.initial-scan",
+          "quantity": 100,
+          "basis": "100 pushes"
+        },
+        {
+          "priceId": "inspector.image.rescan",
+          "quantity": 200,
+          "basis": "50 images x 4 re-scans (assumption)"
+        }
+      ]
+    },
+    {
+      "id": "ecr-replicate-osaka",
+      "chapter": "52",
+      "title": {
+        "ja": "ECR: 大阪リージョンへ複製する月のデータ転送",
+        "en": "ECR: a month's data transfer when replicating to Osaka"
+      },
+      "assumptions": {
+        "ja": [
+          "月に 100 回プッシュし、すべて大阪へ複製される",
+          "イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている",
+          "大阪側の保存料金は含めていない（大阪の単価は確認していない）"
+        ],
+        "en": [
+          "100 pushes a month, all replicated to Osaka",
+          "0.15 GB assumed per image (no image was built, so this is not measured). How layers shared between images count toward storage was not confirmed, so every image is counted in full",
+          "Storage in Osaka is not included (its unit price was not checked)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "datatransfer.tokyo-osaka",
+          "quantity": 15,
+          "basis": "100 images x 0.15 GB"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "52",
+        "command": "vp test run examples/52-ecr",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "60 件。参照の読み書き、ワイルドカード、タグの設定の 4 つの値、タグが動いたときの 2 つの壊れ方と 2 つの直し方（リポジトリのモデルの上で）、ドキュメントの 6 つの例の再現、この章のポリシー、スキーマが拒否するポリシー、デプロイの判定、describe-images の読み取り、preview との突き合わせ、スタックの assertion（テンプレートのライフサイクルポリシーがテストのものと同じであること、プッシュ用のロールの信頼ポリシーと許可した操作の一覧、消す操作と設定を変える操作が無いこと、使うリソースの種類）",
+          "en": "60 tests: writing and reading references, wildcards, the four values of the tag setting, the two ways a moved tag breaks the invariant and the two repairs (on the repository model), the documentation's six examples reproduced, this chapter's policy, policies the schema refuses, the deploy decision, reading describe-images, the comparison with a preview, and the stack's assertions (the template's lifecycle policy equals the tested one, the push role's trust policy and exact list of actions, no deleting or configuring action, the resource types used)"
+        }
+      },
+      {
+        "scope": "52",
+        "command": "tsc --noEmit -p examples/52-ecr",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "52",
+        "command": "vp run ecr:lifecycle:preview",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "fixture の 46 個のイメージに対して、ルール 1 が 2 個、ルール 2 が 1 個、ルール 3 が 8 個を消し、35 個が残ると表示されること。この章の evaluator の出力で、ECR の preview ではない",
+          "en": "On the 46 images of the fixture, rule 1 expires 2, rule 2 expires 1, rule 3 expires 8, and 35 are kept. This is the chapter's evaluator, not ECR's preview"
+        }
+      },
+      {
+        "scope": "52",
+        "command": "vp run ecr:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の構成（リポジトリだけ）と、-c githubRepository=example/notes -c pullThroughCache=on を渡した構成のテンプレートが、AWS に問い合わせずに生成されること",
+          "en": "The templates of the default layout (the repository alone) and of the layout with -c githubRepository=example/notes -c pullThroughCache=on are synthesized without asking AWS anything"
+        }
+      },
+      {
+        "scope": "52",
+        "command": "vp run ecr:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない。リポジトリ、プッシュ用のロール、pull through cache のルールは AWS では作っていない",
+          "en": "Not deployed. The repository, the push role and the pull-through cache rule were not created on AWS"
+        }
+      },
+      {
+        "scope": "52",
+        "command": "docker build / docker push",
+        "kind": "local",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Nix の shell には Docker のデーモンが無い。イメージは 1 つもビルドもプッシュもしていない",
+          "en": "The Nix shell has no Docker daemon. No image was built or pushed"
+        }
+      },
+      {
+        "scope": "52",
+        "command": "vp run ecr:lifecycle:compare",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "ECR の lifecycle policy preview を実行していない。evaluator と ECR の結果を比べていない",
+          "en": "ECR's lifecycle policy preview was not run. The evaluator has not been compared with ECR"
+        }
+      },
+      {
+        "scope": "52",
+        "command": "vp run ecr:scan:gate",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実際の検査結果を読んでいない",
+          "en": "No real scan result was read"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "ecr-lifecycle-not-previewed",
+        "summary": {
+          "ja": "ライフサイクルポリシーを ECR で評価していない。src/lifecycle.ts の evaluator は、ドキュメントの評価規則と 6 つの例から書いたもので、例の結果は再現するが、ECR の実装と同じである保証はない。「N 日より古い」の境界、プッシュ時刻が同じイメージの順序、manifest list と reference artifact の扱いは実装していないか、確かめていない。",
+          "en": "The lifecycle policy was never evaluated by ECR. The evaluator in src/lifecycle.ts is written from the documented evaluation rules and six worked examples; it reproduces the examples, which does not make it ECR's implementation. The boundary of \"older than N days\", the order of images pushed at the same instant, manifest lists and reference artifacts are not implemented or not confirmed."
+        },
+        "resume": {
+          "ja": "vp run ecr:infra:deploy の後、タグ付き・タグなしを混ぜて数十個のイメージをプッシュし、vp run ecr:lifecycle:compare を実行する。start-lifecycle-policy-preview の結果と evaluator の結果が、ダイジェストとルールの番号まで一致するかを報告する。食い違ったら src/lifecycle.ts を直し、その入力を test/lifecycle.test.ts に足す。",
+          "en": "After vp run ecr:infra:deploy, push a few dozen images, tagged and untagged, and run vp run ecr:lifecycle:compare. It reports whether start-lifecycle-policy-preview and the evaluator agree, digest by digest and rule by rule. On a difference, fix src/lifecycle.ts and add that input to test/lifecycle.test.ts."
+        }
+      },
+      {
+        "id": "ecr-nothing-pushed",
+        "summary": {
+          "ja": "イメージを 1 つもビルドもプッシュもしていない。immutable なリポジトリが同じタグの再プッシュを拒否すること、同じダイジェストに 2 つ目のタグを付けられること、イメージを消したあとで同じタグを付け直せるかどうか、プッシュ用のロールの権限で docker push が通ること、イメージの実際の大きさは、どれも確かめていない。",
+          "en": "No image was built or pushed. Not confirmed: that the immutable repository refuses a second push of a tag, that a second tag can be added to the same digest, whether a tag can be reused after its image is deleted, that docker push succeeds with the push role's permissions, and the real size of an image."
+        },
+        "resume": {
+          "ja": "Docker のデーモンがある環境で、12章の vp run ecs:image:build <tag> でイメージを作り、12章の deploy ページの手順で AihEcr の RepositoryUri にプッシュする。同じタグで別のイメージをプッシュして ImageTagAlreadyExistsException になること、aws ecr describe-images で imageSizeInBytes を読むこと、GitHub Actions からプッシュ用のロールでプッシュできることを確かめる。",
+          "en": "With a Docker daemon, build an image with chapter 12's vp run ecs:image:build <tag> and push it to AihEcr's RepositoryUri following chapter 12's deploy page. Check that pushing another image under the same tag fails with ImageTagAlreadyExistsException, read imageSizeInBytes from aws ecr describe-images, and push from GitHub Actions with the push role."
+        }
+      },
+      {
+        "id": "ecr-scan-not-observed",
+        "summary": {
+          "ja": "検査結果を 1 件も見ていない。scan on push が走ること、検査結果が無いときの findingSeverityCounts の形（空のオブジェクトか、項目が無いか）、検査が終わるまでの時間、12章のイメージ（node:24-bookworm-slim）が basic scanning の対応 OS に入っているかは確かめていない。",
+          "en": "No scan result was observed. Not confirmed: that scan on push runs, the shape of findingSeverityCounts when there are no findings (an empty object or absent), how long a scan takes, and whether chapter 12's image (node:24-bookworm-slim) is an operating system basic scanning supports."
+        },
+        "resume": {
+          "ja": "イメージをプッシュした後、vp run ecr:scan:gate --digest <ダイジェスト> を実行する。スキーマが応答を拒否したら、応答の形に合わせて src/scan.ts を直す。",
+          "en": "After pushing an image, run vp run ecr:scan:gate --digest <digest>. If the schema refuses the response, fix src/scan.ts to the shape that came back."
+        }
+      },
+      {
+        "id": "ecr-cache-not-deployed",
+        "summary": {
+          "ja": "pull through cache のルールをデプロイしていない。cdkd 0.296.28 が AWS::ECR::PullThroughCacheRule を Cloud Control API 経由で作れること、キャッシュ経由の最初の取得でリポジトリが作られること、プッシュ用のロールの権限でそれが通ることは確かめていない。",
+          "en": "The pull-through cache rule was not deployed. Not confirmed: that cdkd 0.296.28 creates AWS::ECR::PullThroughCacheRule through the Cloud Control API, that the first pull through the cache creates the repository, and that the push role's permissions are enough for it."
+        },
+        "resume": {
+          "ja": "vp run ecr:infra:deploy -c pullThroughCache=on -c githubRepository=<owner/repo> でデプロイし、docker pull <registry>/ecr-public/docker/library/node:24-bookworm-slim を実行する。aws ecr describe-repositories に ecr-public/docker/library/node が現れることを確かめる。片付けでは、このリポジトリを手で消す。",
+          "en": "Deploy with vp run ecr:infra:deploy -c pullThroughCache=on -c githubRepository=<owner/repo>, then docker pull <registry>/ecr-public/docker/library/node:24-bookworm-slim. Check that ecr-public/docker/library/node appears in aws ecr describe-repositories. Delete that repository by hand when cleaning up."
+        }
+      },
+      {
+        "id": "ecr-ecs-rollback-digest",
+        "summary": {
+          "ja": "ECS がタグをダイジェストに解決するのはデプロイごとだとドキュメントから読んだが、circuit breaker によるロールバックが、前のデプロイで解決したダイジェストを使うのか、タグを解決し直すのかは確認できていない。",
+          "en": "The documentation says ECS resolves tags to digests per deployment. Whether a circuit breaker rollback reuses the digests of the earlier deployment or resolves the tag again was not confirmed."
+        },
+        "resume": {
+          "ja": "ECS のドキュメントで service revision の説明を読み、ロールバック先のリビジョンがダイジェストを持つかを確かめる。mutable なリポジトリで実際にタグを動かしてロールバックさせ、動いたタスクの imageDigest を aws ecs describe-tasks で見る。",
+          "en": "Read the ECS documentation on service revisions to see whether the revision rolled back to carries digests. On a mutable repository, move a tag, force a rollback, and read imageDigest from aws ecs describe-tasks."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 52: ECR in depth ----------------------------------------\n      // The chapter's lifecycle evaluator over a saved image list. No AWS, and not ECR's own preview.\n      \"ecr:lifecycle:preview\": fresh(\"node scripts/lifecycle-preview.ts\", {\n        cwd: \"examples/52-ecr\",\n      }),\n      ...infra(\"ecr\", \"examples/52-ecr\", \"AihEcr\"),\n      // Asks ECR to preview the same policy on the real repository and compares. Deletes nothing.\n      \"ecr:lifecycle:compare\": live(\n        \"node --env-file-if-exists=../../.env scripts/lifecycle-compare.ts\",\n        { cwd: \"examples/52-ecr\" },\n      ),\n      // Waits for one image's scan and fails unless it may be deployed.\n      \"ecr:scan:gate\": live(\"node --env-file-if-exists=../../.env scripts/scan-gate.ts\", {\n        cwd: \"examples/52-ecr\",\n      }),",
+    "synth": ["ecr:infra:synth"],
+    "checkAll": ["ecr:lifecycle:preview"],
+    "typecheck": ["examples/52-ecr"]
+  }
+}

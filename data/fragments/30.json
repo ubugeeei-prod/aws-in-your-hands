@@ -1,0 +1,1140 @@
+{
+  "chapterId": "30",
+  "manifest": {
+    "id": "30",
+    "slug": "data-modeling",
+    "title": {
+      "ja": "Data Modeling: DynamoDB の single-table design、GSI、Streams、transaction",
+      "en": "Data Modeling: Single-Table Design, GSIs, Streams, and Transactions in DynamoDB"
+    },
+    "prerequisites": ["05"],
+    "services": ["DynamoDB", "DynamoDB Streams", "Lambda", "SQS"],
+    "samplePath": "examples/30-data-modeling",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "model-dynamodb-foundations",
+      "model-dynamodb-gsi",
+      "model-dynamodb-sparse-indexes",
+      "model-dynamodb-gsi-online",
+      "model-dynamodb-lsi",
+      "model-dynamodb-transactions",
+      "model-dynamodb-transactions-iam",
+      "model-dynamodb-constraints",
+      "model-dynamodb-quotas",
+      "model-dynamodb-conditional-capacity",
+      "model-dynamodb-reserved-words",
+      "model-dynamodb-query-api",
+      "model-dynamodb-streams",
+      "model-lambda-dynamodb",
+      "model-lambda-dynamodb-params",
+      "model-lambda-dynamodb-batch-failures",
+      "model-lambda-dynamodb-errors",
+      "model-lambda-dynamodb-filtering",
+      "model-dynamodb-ttl",
+      "model-dynamodb-partition-keys",
+      "model-dynamodb-adaptive-capacity",
+      "model-dynamodb-throttling-key-range",
+      "model-dynamodb-gsi-back-pressure",
+      "model-dynamodb-contributor-insights",
+      "model-dynamodb-local-usage",
+      "model-dynamodb-pricing-on-demand",
+      "model-price-list-dynamodb",
+      "model-price-list-cloudwatch",
+      "model-iam-service-reference-dynamodb",
+      "model-cdkd-providers",
+      "model-cloudflare-d1-limits",
+      "model-cloudflare-d1-indexes",
+      "model-cloudflare-d1-pricing",
+      "model-cloudflare-d1-batch",
+      "model-cloudflare-do-sqlite",
+      "model-cloudflare-do-limits",
+      "model-cloudflare-do-what",
+      "model-vercel-storage"
+    ]
+  },
+  "sources": [
+    {
+      "id": "model-dynamodb-foundations",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/data-modeling-foundations.html",
+      "title": "Data modeling foundations in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Single table design stores several entity types in one table; items with the same partition key (an item collection) are stored together, so one query can return several entity types",
+        "Listed disadvantages: backups are all or nothing, table encryption is shared, and every change goes to the stream even if only some entities are processed"
+      ]
+    },
+    {
+      "id": "model-dynamodb-gsi",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html",
+      "title": "Using Global Secondary Indexes in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A global secondary index is updated asynchronously and eventually consistently; propagation is within a fraction of a second under normal conditions, and longer delays are possible",
+        "A global secondary index supports only eventually consistent reads, and GetItem and BatchGetItem cannot be used on it",
+        "Only items in which the index key attributes exist appear in the index",
+        "Index key attributes must be top-level String, Number, or Binary",
+        "Projection is KEYS_ONLY, INCLUDE, or ALL; a query on the index cannot fetch attributes that were not projected",
+        "Index write cost: one write to put a new entry, two when an index key attribute changes, one when only a projected attribute changes, none when neither keys nor projected attributes change",
+        "If an index has insufficient write capacity, writes to the base table are throttled",
+        "Index storage is billed in addition to the table's",
+        "Global secondary indexes support multi-attribute keys of up to four attributes each for the partition key and the sort key"
+      ],
+      "note": "Multi-attribute keys are mentioned in the chapter but not used; they were not tried with cdkd 0.296.28 or DynamoDB Local 3.3.1."
+    },
+    {
+      "id": "model-dynamodb-sparse-indexes",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-indexes-general-sparse-indexes.html",
+      "title": "Take advantage of sparse indexes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An index where only a subset of the table's items appear is a sparse index; global secondary indexes are sparse by default"
+      ]
+    },
+    {
+      "id": "model-dynamodb-gsi-online",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.OnlineOps.html",
+      "title": "Managing Global Secondary Indexes in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default quota is 20 global secondary indexes per table",
+        "Adding an index to an existing table backfills it from the table's items; while it is backfilling, IndexStatus is CREATING and Backfilling is true",
+        "A skewed partition key on a new index can cause backfill and writes to throttle writes to the base table; Contributor Insights is suggested for seeing the distribution"
+      ]
+    },
+    {
+      "id": "model-dynamodb-lsi",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LSI.html",
+      "title": "Local secondary indexes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A local secondary index is specified when the table is created",
+        "A local secondary index can be read with strong consistency",
+        "A table with a local secondary index is limited to 10 GB per partition key value"
+      ]
+    },
+    {
+      "id": "model-dynamodb-transactions",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html",
+      "title": "Amazon DynamoDB Transactions: How it works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "TransactWriteItems groups up to 100 actions on up to 100 distinct items, 4 MB in total, in one all-or-nothing operation within one account and Region",
+        "One transaction cannot target the same item with more than one action",
+        "Actions are Put, Update, Delete, and ConditionCheck",
+        "Each item in a transaction costs two underlying reads or writes, and the capacity is consumed even when the transaction is cancelled",
+        "A cancelled transaction fails with TransactionCanceledException, which lists CancellationReasons in the order of the request's items; the AWS SDKs do not retry it",
+        "A transaction conflicts with another ongoing transaction or write on the same item",
+        "A client token makes TransactWriteItems idempotent for 10 minutes",
+        "Isolation between a transaction and a Query or Scan is read-committed, not serializable",
+        "Changes of one transaction reach indexes and the stream gradually; stream consumers should not assume atomicity or ordering across its records",
+        "Transactions are not supported across Regions in global tables"
+      ]
+    },
+    {
+      "id": "model-dynamodb-transactions-iam",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis-iam.html",
+      "title": "Using IAM with DynamoDB transactions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Put, Update, Delete, and Get inside a transaction are governed by the PutItem, UpdateItem, DeleteItem, and GetItem permissions; ConditionCheck needs dynamodb:ConditionCheckItem"
+      ]
+    },
+    {
+      "id": "model-dynamodb-constraints",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Constraints.html",
+      "title": "Constraints in Amazon DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A transaction cannot contain more than 100 unique items or more than 4 MB, and no two actions can work against the same item"
+      ]
+    },
+    {
+      "id": "model-dynamodb-quotas",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ServiceQuotas.html",
+      "title": "Quotas in Amazon DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Up to 5 local secondary indexes per table and a default of 20 global secondary indexes",
+        "Up to 100 attributes can be projected across all of a table's secondary indexes",
+        "Up to two simultaneous readers per stream shard for a table that is not a global table",
+        "DynamoDB counts 1 KB as 1024 bytes"
+      ]
+    },
+    {
+      "id": "model-dynamodb-conditional-capacity",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html",
+      "title": "Working with items and attributes in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A conditional write whose condition is false still consumes write capacity",
+        "Conditional writes check their condition against the most recently updated version of the item"
+      ]
+    },
+    {
+      "id": "model-dynamodb-reserved-words",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ReservedWords.html",
+      "title": "Reserved words in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "COUNT, SIZE, and NAME are reserved words, so they need expression attribute names"
+      ]
+    },
+    {
+      "id": "model-dynamodb-query-api",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html",
+      "title": "Query (DynamoDB API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ExclusiveStartKey is the primary key of the first item the operation evaluates, taken from the previous LastEvaluatedKey",
+        "The result of one Query is at most 1 MB"
+      ],
+      "note": "What DynamoDB answers to a starting key outside the queried partition is not stated on this page. DynamoDB Local 3.3.1 refused it; AWS was not tried."
+    },
+    {
+      "id": "model-dynamodb-streams",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html",
+      "title": "Change data capture for DynamoDB Streams",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A stream keeps item-level changes for up to 24 hours",
+        "Each stream record appears exactly once in the stream, and records for one item appear in the order of its modifications",
+        "Ordering is guaranteed for an individual item, not for a whole partition or item collection",
+        "StreamViewType is KEYS_ONLY, NEW_IMAGE, OLD_IMAGE, or NEW_AND_OLD_IMAGES, and cannot be edited once set",
+        "A PutItem or UpdateItem that changes no data writes no stream record"
+      ]
+    },
+    {
+      "id": "model-lambda-dynamodb",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html",
+      "title": "Using AWS Lambda with Amazon DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda event source mappings process each event at least once, and duplicate processing can occur",
+        "Lambda polls each shard at a base rate of four times a second",
+        "With LATEST as the starting position the mapping could miss events during creation or updates; TRIM_HORIZON avoids that",
+        "Up to two Lambda functions can read one shard of a single-Region table's stream at the same time"
+      ]
+    },
+    {
+      "id": "model-lambda-dynamodb-params",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-ddb-params.html",
+      "title": "Lambda parameters for Amazon DynamoDB event source mappings",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "MaximumRetryAttempts defaults to -1 (retry until the record expires); BatchSize defaults to 100; BisectBatchOnFunctionError defaults to false",
+        "The on-failure destination is a standard SQS queue or a standard SNS topic"
+      ]
+    },
+    {
+      "id": "model-lambda-dynamodb-batch-failures",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-ddb-batchfailurereporting.html",
+      "title": "Configuring partial batch response with DynamoDB and Lambda",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With ReportBatchItemFailures, the function returns batchItemFailures with the sequence number of a failed record; Lambda checkpoints at the lowest one and retries from there",
+        "An empty batchItemFailures list is a complete success",
+        "Partial batch responses reduce retries of successful records but do not entirely prevent them"
+      ]
+    },
+    {
+      "id": "model-lambda-dynamodb-errors",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/services-dynamodb-errors.html",
+      "title": "Retain discarded records for a DynamoDB event source in Lambda",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The message sent to an on-failure destination describes the batch but does not contain the records, which must be read from the stream before they expire",
+        "The execution role needs sqs:SendMessage for an SQS on-failure destination"
+      ]
+    },
+    {
+      "id": "model-lambda-dynamodb-filtering",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/with-ddb-filtering.html",
+      "title": "Using event filtering with a DynamoDB event source",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A DynamoDB event source mapping can filter only on the dynamodb key of the record, for example on dynamodb.Keys"
+      ]
+    },
+    {
+      "id": "model-dynamodb-ttl",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html",
+      "title": "Time to Live (TTL): how it works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Expired items are deleted typically within a few days of their expiry time, without consuming write throughput"
+      ]
+    },
+    {
+      "id": "model-dynamodb-partition-keys",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html",
+      "title": "Best practices for designing and using partition keys effectively in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Every partition is designed to deliver at most 3,000 read units and 1,000 write units a second"
+      ]
+    },
+    {
+      "id": "model-dynamodb-adaptive-capacity",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/burst-adaptive-capacity.html",
+      "title": "DynamoDB burst and adaptive capacity",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Adaptive capacity can isolate a frequently accessed item on its own partition, up to the partition maximum for that single item",
+        "Adaptive capacity does not split an item collection across partitions when the table has a local secondary index"
+      ]
+    },
+    {
+      "id": "model-dynamodb-throttling-key-range",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/throttling-key-range-limit-exceeded-mitigation.html",
+      "title": "Key range throughput exceeded (hot partitions)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A partition over its limit is throttled with the reason KeyRangeThroughputExceeded, for a table or an index, whatever the table's total capacity",
+        "Short-lived throttling can stop by itself when DynamoDB splits the hot partition"
+      ]
+    },
+    {
+      "id": "model-dynamodb-gsi-back-pressure",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/gsi-throttling.html",
+      "title": "Understanding GSI write throttling and back pressure in DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "When an index cannot keep up, writes to the base table are throttled, and the exception names the index",
+        "An index is partitioned by its own partition key, so it can have a hot partition while the table has none"
+      ]
+    },
+    {
+      "id": "model-dynamodb-contributor-insights",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/contributorinsights_HowItWorks.html",
+      "title": "CloudWatch contributor insights for DynamoDB: How it works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Two modes: throttled keys, and accessed and throttled keys",
+        "In throttled keys mode, a table with a sort key gets two rules (partition key, and partition and sort key), and only throttled requests generate billable events",
+        "Billing is a monthly charge per rule plus a charge per event"
+      ]
+    },
+    {
+      "id": "model-dynamodb-local-usage",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.UsageNotes.html",
+      "title": "DynamoDB local usage notes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DynamoDB Local does not throw TransactionConflictException for the transactional APIs"
+      ]
+    },
+    {
+      "id": "model-dynamodb-pricing-on-demand",
+      "url": "https://aws.amazon.com/dynamodb/pricing/on-demand/",
+      "title": "Amazon DynamoDB pricing for on-demand capacity",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A transactional write costs two write request units per 1 KB, and a transactional read two read request units per 4 KB",
+        "GetRecords calls made by DynamoDB triggers on AWS Lambda are not charged, except for functions on Lambda Managed Instances"
+      ]
+    },
+    {
+      "id": "model-price-list-dynamodb",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: DynamoDB, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DynamoDB Streams read requests: the first 2.5 million a month at USD 0, then USD 0.000000228 each (SKU 3AEMTFQBUFRVM2WF)",
+        "The on-demand read, write, and storage prices already in data/pricing/unit-prices.json were unchanged in the offer file published 2026-09-11"
+      ]
+    },
+    {
+      "id": "model-price-list-cloudwatch",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: CloudWatch, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Contributor Insights for DynamoDB: USD 0.50 per rule per month (SKU A3ZC429VGK3FDVEF) and USD 0.034 per million events (SKU DNYWRPGZFZ335GWV)"
+      ],
+      "note": "The rule SKU's unit field reads Rule-Hour while its description reads `$0.50 per rule per month`. The chapter follows the description and counts rule-months."
+    },
+    {
+      "id": "model-iam-service-reference-dynamodb",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/dynamodb/dynamodb.json",
+      "title": "Service reference for DynamoDB (machine-readable)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "dynamodb:ListStreams has no resource type, so it cannot be limited to one stream",
+        "dynamodb:Query lists both table and index as resource types; an index has its own ARN, table/<name>/index/<index>",
+        "dynamodb:DescribeStream, GetRecords, and GetShardIterator take a stream resource"
+      ]
+    },
+    {
+      "id": "model-cdkd-providers",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package, dist/)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for AWS::DynamoDB::Table, AWS::IAM::ManagedPolicy, AWS::IAM::Policy, AWS::IAM::Role, AWS::Lambda::EventSourceMapping, AWS::Lambda::Function, AWS::Logs::LogGroup, and AWS::SQS::Queue",
+        "The event source mapping provider lists FilterCriteria, DestinationConfig, BisectBatchOnFunctionError, MaximumRetryAttempts, FunctionResponseTypes, and StartingPosition among the properties it handles"
+      ],
+      "note": "Read from the installed package's dist/ files (the registration calls and the handledProperties set), not from the GitHub tag. AWS::SQS::QueuePolicy was not looked up separately; chapter 08's stack already uses it."
+    },
+    {
+      "id": "model-cloudflare-d1-limits",
+      "url": "https://developers.cloudflare.com/d1/platform/limits/",
+      "title": "Cloudflare D1: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A D1 database is at most 10 GB on the Workers Paid plan, and that limit cannot be raised",
+        "Each D1 database is single-threaded and processes queries one at a time",
+        "D1 is designed for scaling out across many smaller databases, such as one per user or tenant"
+      ]
+    },
+    {
+      "id": "model-cloudflare-d1-indexes",
+      "url": "https://developers.cloudflare.com/d1/best-practices/use-indexes/",
+      "title": "Cloudflare D1: Use indexes",
+      "checkedAt": "2026-10-13",
+      "supports": ["D1 indexes are created with SQL, and CREATE UNIQUE INDEX enforces uniqueness"]
+    },
+    {
+      "id": "model-cloudflare-d1-pricing",
+      "url": "https://developers.cloudflare.com/d1/platform/pricing/",
+      "title": "Cloudflare D1: Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "D1 bills rows read and rows written; a write to an indexed column adds at least one more row written"
+      ]
+    },
+    {
+      "id": "model-cloudflare-d1-batch",
+      "url": "https://developers.cloudflare.com/d1/worker-api/d1-database/",
+      "title": "Cloudflare D1: D1Database (batch)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Statements sent with batch() run as one SQL transaction: if one fails, the whole sequence is rolled back"
+      ]
+    },
+    {
+      "id": "model-cloudflare-do-sqlite",
+      "url": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/",
+      "title": "Cloudflare Durable Objects: SQLite-backed storage API",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A SQLite-backed Durable Object has a SQL API, transactionSync(), and point-in-time recovery over the last 30 days"
+      ]
+    },
+    {
+      "id": "model-cloudflare-do-limits",
+      "url": "https://developers.cloudflare.com/durable-objects/platform/limits/",
+      "title": "Cloudflare Durable Objects: Limits",
+      "checkedAt": "2026-10-13",
+      "supports": ["Storage per SQLite-backed Durable Object is 10 GB"]
+    },
+    {
+      "id": "model-cloudflare-do-what",
+      "url": "https://developers.cloudflare.com/durable-objects/concepts/what-are-durable-objects/",
+      "title": "Cloudflare: What are Durable Objects?",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each Durable Object is single-threaded and has its own transactional, strongly consistent storage, accessible only within that object"
+      ]
+    },
+    {
+      "id": "model-vercel-storage",
+      "url": "https://vercel.com/docs/storage",
+      "title": "Vercel Storage overview",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel's own storage products are Blob and Global Config; relational, key-value, NoSQL, and vector databases are provisioned from providers through the Vercel Marketplace"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "id": "access-pattern",
+      "ja": "アクセスパターン",
+      "en": "access pattern",
+      "firstUse": "30",
+      "definition": {
+        "ja": "アプリがデータをどう読み書きするかを 1 つずつ書いたもの。「ある持ち主のノートを更新の新しい順に 20 件」のように、条件と並び順まで含める。DynamoDB では、キーをこれに合わせて決める。",
+        "en": "One way the application reads or writes its data, stated with its condition and its order: \"an owner's 20 most recently updated notes\". In DynamoDB the keys are chosen to fit these."
+      }
+    },
+    {
+      "id": "single-table-design",
+      "ja": "single-table design",
+      "en": "single-table design",
+      "firstUse": "30",
+      "definition": {
+        "ja": "種類の違うデータを 1 つの DynamoDB テーブルに置き、キーの形で区別する設計。一緒に読むものを同じパーティションキーの下に並べて、1 回の Query で返せるようにする。",
+        "en": "Keeping several kinds of data in one DynamoDB table and telling them apart by the shape of their keys, so that things read together sit under one partition key and one Query returns them."
+      }
+    },
+    {
+      "id": "item-collection",
+      "ja": "アイテムコレクション",
+      "en": "item collection",
+      "firstUse": "30",
+      "definition": {
+        "ja": "パーティションキーが同じアイテムの集まり。ソートキーの順に並んでいて、その一部を Query で範囲として読める。",
+        "en": "The items that share a partition key. They are ordered by sort key, and a Query reads a range of them."
+      }
+    },
+    {
+      "id": "global-secondary-index",
+      "ja": "global secondary index（GSI）",
+      "en": "global secondary index (GSI)",
+      "firstUse": "30",
+      "definition": {
+        "ja": "テーブルのアイテムを、別のキーで引けるようにした写し。DynamoDB がテーブルへの書き込みのあとに非同期で更新するので、読み取りは結果整合だけになる。書き込みのたびにインデックスへの書き込みも料金になる。",
+        "en": "A copy of a table's items organized by another key. DynamoDB updates it asynchronously after each write to the table, so it can only be read with eventual consistency, and each of those index writes is billed."
+      }
+    },
+    {
+      "id": "sparse-index",
+      "ja": "sparse index",
+      "en": "sparse index",
+      "firstUse": "30",
+      "definition": {
+        "ja": "テーブルの一部のアイテムだけが載っているインデックス。インデックスのキーにした属性を持たないアイテムは、載らない。",
+        "en": "An index that holds only some of the table's items: an item without the attributes the index is keyed on is not in it."
+      }
+    },
+    {
+      "id": "index-projection",
+      "ja": "プロジェクション",
+      "en": "projection",
+      "firstUse": "30",
+      "definition": {
+        "ja": "テーブルのアイテムから、インデックスに写す属性の範囲。キーだけ、指定した属性、すべての 3 通り。写していない属性は、インデックスからは読めない。",
+        "en": "Which attributes of an item are copied into an index: the keys only, a chosen list, or all. An attribute that is not projected cannot be read from the index."
+      }
+    },
+    {
+      "id": "denormalization",
+      "ja": "非正規化",
+      "en": "denormalization",
+      "firstUse": "30",
+      "definition": {
+        "ja": "同じ値を複数のアイテムに持たせること。読むときに結合しなくて済むかわりに、値が変わったときにすべての写しを書き直す責任がアプリに移る。",
+        "en": "Keeping the same value in more than one item. Reads need no join, and in exchange the application must rewrite every copy when the value changes."
+      }
+    },
+    {
+      "id": "dynamodb-transaction",
+      "ja": "トランザクション（DynamoDB）",
+      "en": "transaction (DynamoDB)",
+      "firstUse": "30",
+      "definition": {
+        "ja": "TransactWriteItems で、最大 100 個のアイテムへの書き込みと条件を、すべて成功かすべて失敗かにまとめる操作。1 回のリクエストで完結し、途中で読んだ結果を見て続きを決めることはできない。料金は通常の書き込みの 2 倍。",
+        "en": "With TransactWriteItems, up to 100 item writes and conditions that all succeed or all fail. It is a single request: there is no reading in the middle and deciding what to do next. It costs twice an ordinary write."
+      }
+    },
+    {
+      "id": "dynamodb-stream",
+      "ja": "ストリーム（DynamoDB Streams）",
+      "en": "stream (DynamoDB Streams)",
+      "firstUse": "30",
+      "definition": {
+        "ja": "テーブルのアイテムの変更を、起きた順に 24 時間保持する記録。変更 1 件が 1 レコードになる。Lambda がこれを読んで関数を呼ぶと、同じレコードが 2 回以上届くことがある。",
+        "en": "A log of a table's item changes, kept for 24 hours, one record per change. When Lambda reads it and invokes a function, the same record can arrive more than once."
+      }
+    },
+    {
+      "id": "hot-partition",
+      "ja": "ホットパーティション",
+      "en": "hot partition",
+      "firstUse": "30",
+      "definition": {
+        "ja": "読み書きが集中して、パーティション 1 つの上限に当たっているパーティション。テーブル全体の容量が余っていても、そこへのリクエストだけがスロットリングされる。",
+        "en": "A partition that takes so much of the traffic that it reaches the limit of a single partition. Requests to it are throttled even while the table as a whole has capacity to spare."
+      }
+    },
+    {
+      "id": "backfill",
+      "ja": "バックフィル",
+      "en": "backfill",
+      "firstUse": "30",
+      "definition": {
+        "ja": "すでに保存されているデータに、あとから決めた形（新しい属性や新しいキー）を書き足していく作業。動いているアプリの書き込みと並行するので、何度実行しても同じ結果になり、途中から再開できるように作る。",
+        "en": "Writing a shape decided later (a new attribute, a new key) onto data that is already stored. It runs beside the live application's writes, so it is built to give the same result however often it runs and to resume where it stopped."
+      }
+    },
+    {
+      "id": "page-token",
+      "ja": "ページトークン",
+      "en": "page token",
+      "firstUse": "30",
+      "definition": {
+        "ja": "一覧の続きを読むために、API がクライアントに渡す値。クライアントから戻ってきたときは信用できない入力として扱い、形を確かめ、誰のデータを読むかはトークンではなく認証した利用者から決める。",
+        "en": "The value an API gives a client for reading the next page of a list. When it comes back it is untrusted input: its shape is checked, and whose data is read comes from the authenticated caller, never from the token."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "30.overview",
+      "sources": ["examples/30-data-modeling"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "30.access-patterns",
+      "sources": [
+        "examples/30-data-modeling/src/notebook.ts",
+        "examples/30-data-modeling/src/model.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "30.fit",
+      "sources": ["examples/30-data-modeling"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "30.keys",
+      "sources": [
+        "examples/30-data-modeling/src/keys.ts",
+        "examples/30-data-modeling/src/model.ts",
+        "examples/30-data-modeling/test/keys.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "30.collection",
+      "sources": [
+        "examples/30-data-modeling/src/notebook.ts",
+        "examples/30-data-modeling/src/table.ts",
+        "examples/30-data-modeling/src/dynamodb-table.ts",
+        "examples/30-data-modeling/test/notebook-contract.ts",
+        "examples/30-data-modeling/test/table-contract.ts"
+      ],
+      "tasks": ["test:unit", "modeling:test:local"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "30.transactions",
+      "sources": [
+        "examples/30-data-modeling/src/plan.ts",
+        "examples/30-data-modeling/src/notebook.ts",
+        "examples/30-data-modeling/src/dynamodb-table.ts",
+        "examples/30-data-modeling/test/plan.test.ts",
+        "examples/30-data-modeling/test/notebook.test.ts",
+        "examples/30-data-modeling/test/dynamodb-table.test.ts"
+      ],
+      "tasks": ["test:unit", "modeling:test:local"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "30.index",
+      "sources": [
+        "examples/30-data-modeling/src/plan.ts",
+        "examples/30-data-modeling/src/notebook.ts",
+        "examples/30-data-modeling/src/memory-table.ts",
+        "examples/30-data-modeling/infra/lib/modeling-stack.ts",
+        "examples/30-data-modeling/test/memory-table.test.ts",
+        "examples/30-data-modeling/test/notebook.test.ts"
+      ],
+      "tasks": ["test:unit", "modeling:test:local"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "30.tags",
+      "sources": [
+        "examples/30-data-modeling/src/plan.ts",
+        "examples/30-data-modeling/src/notebook.ts",
+        "examples/30-data-modeling/test/plan.test.ts",
+        "examples/30-data-modeling/test/notebook-contract.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "30.page-token",
+      "sources": [
+        "examples/30-data-modeling/src/page-token.ts",
+        "examples/30-data-modeling/src/notebook.ts",
+        "examples/30-data-modeling/test/page-token.test.ts",
+        "examples/30-data-modeling/test/notebook-contract.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "30.streams",
+      "sources": [
+        "examples/30-data-modeling/src/projector.ts",
+        "examples/30-data-modeling/src/stream-lambda.ts",
+        "examples/30-data-modeling/infra/lib/modeling-stack.ts",
+        "examples/30-data-modeling/test/projector.test.ts",
+        "examples/30-data-modeling/test/stream-lambda.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "30.hot-partitions",
+      "sources": [
+        "examples/30-data-modeling/infra/lib/modeling-stack.ts",
+        "examples/30-data-modeling/src/keys.ts"
+      ],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "30.migration",
+      "sources": [
+        "examples/30-data-modeling/src/layout.ts",
+        "examples/30-data-modeling/src/migration.ts",
+        "examples/30-data-modeling/scripts/modeling.ts",
+        "examples/30-data-modeling/test/migration.test.ts",
+        "examples/30-data-modeling/test/keys.test.ts"
+      ],
+      "tasks": ["test:unit", "modeling:backfill", "modeling:verify", "modeling:remove-legacy"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "30.local",
+      "sources": [
+        "examples/30-data-modeling/scripts/demo.ts",
+        "examples/30-data-modeling/src/memory-table.ts",
+        "examples/30-data-modeling/scripts/local-db.ts",
+        "examples/30-data-modeling/.env.example"
+      ],
+      "tasks": ["modeling:demo", "modeling:db:migrate:local", "modeling:db:reset:local"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "30.tests",
+      "sources": [
+        "examples/30-data-modeling/test",
+        "examples/30-data-modeling/infra/test/modeling-stack.test.ts",
+        "examples/30-data-modeling/scripts/test-local.ts"
+      ],
+      "tasks": ["test:unit", "modeling:test:local"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "30.infra",
+      "sources": [
+        "examples/30-data-modeling/infra/lib/modeling-stack.ts",
+        "examples/30-data-modeling/infra/bin/app.ts",
+        "examples/30-data-modeling/infra/test/modeling-stack.test.ts",
+        "examples/30-data-modeling/cdk.json"
+      ],
+      "tasks": ["modeling:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "30.deploy",
+      "sources": ["examples/30-data-modeling/scripts/modeling.ts"],
+      "tasks": [
+        "modeling:infra:diff",
+        "modeling:infra:deploy",
+        "modeling:smoke",
+        "modeling:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "30.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "30.cleanup",
+      "sources": ["examples/30-data-modeling"],
+      "tasks": ["modeling:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "dynamodb.streams.read",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "3AEMTFQBUFRVM2WF",
+      "usageType": "APN1-Streams-Requests",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 2500000,
+          "usd": "0.0000000000",
+          "description": "$0.00 for 2.5 million DynamoDB Streams read request units for a month (free tier) (Asia Pacific (Tokyo))"
+        },
+        {
+          "from": 2500000,
+          "to": null,
+          "usd": "0.0000002280",
+          "description": "$0.000000228 per DynamoDB Streams read request unit beyond free tier (Asia Pacific (Tokyo))"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "cloudwatch.contributor-insights.dynamodb.rule",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "A3ZC429VGK3FDVEF",
+      "usageType": "APN1-CW:ContributorRulesManaged",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Rule-Hour",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.5000000000",
+          "description": "$0.50 per rule per month for CW-Rule-DynamoDB in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "cloudwatch.contributor-insights.dynamodb.event",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "DNYWRPGZFZ335GWV",
+      "usageType": "APN1-CW:ContributorEventsManaged",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Events",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000000340",
+          "description": "$0.034 per million Events for CW:ContributorEventsManaged in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "cloudwatch.contributor-insights.dynamodb.rule",
+      "reason": "The price list has a global USD 0 tier for one Contributor Insights rule, but it is not labelled for the DynamoDB-managed rules; none is applied."
+    },
+    {
+      "priceId": "cloudwatch.contributor-insights.dynamodb.event",
+      "reason": "The price list has a global USD 0 tier for one million Contributor Insights events, but it is not labelled for the DynamoDB-managed events; none is applied."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "modeling-idle",
+      "chapter": "30",
+      "title": {
+        "ja": "Data Modeling: デプロイ済みで使われない月",
+        "en": "Data Modeling: deployed, but unused for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "既定のスタック。Contributor Insights は無効",
+          "テーブルとインデックスを合わせて 10 MB。読み書きなし",
+          "ストリームに変更がないので、関数は呼ばれない。Lambda によるストリームのポーリングは料金に含まれない"
+        ],
+        "en": [
+          "The default stack, Contributor Insights off",
+          "10 MB in the table and its index together; no reads or writes",
+          "No changes on the stream, so the function is never invoked. Lambda's polling of the stream is not charged"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.01,
+          "basis": "10 MB stored in the table and the index, in GB-month"
+        }
+      ]
+    },
+    {
+      "id": "modeling-month",
+      "chapter": "30",
+      "title": {
+        "ja": "Data Modeling: 月 100 万回の読み書き",
+        "en": "Data Modeling: one million reads and writes a month"
+      },
+      "assumptions": {
+        "ja": [
+          "月 100 万回の操作。最近の一覧 60%、タグの一覧 10%、ノートと添付の取得 20%、編集 5%（5 回に 1 回は題名も変える）、作成 3%、添付の追加 1%、削除 1%",
+          "アイテムはどれも 1 KB 以下、一覧の 1 ページは 8 KB 以下、ノートと添付は合わせて 4 KB 以下。ノート 1 件にタグ 3 つ、slug なし、削除するノートに添付 1 つ",
+          "トランザクションの中のアイテムは、条件だけのもの（ConditionCheck）も含めて 2 ユニットで数えた。ConditionCheck が書き込みと読み取りのどちらで課金されるかは確認していない",
+          "ストリームを読む関数は、タグのアイテムの変更 1 件につき 1 回、合わせて 15 万回呼ばれ、256 MB で 50 ミリ秒かかると仮定（計測値ではない）。ログは 1 回 200 バイト",
+          "テーブルとインデックスで 1 GB。Contributor Insights は無効。競合と再試行は 0 と仮定"
+        ],
+        "en": [
+          "One million operations a month: 60% recent list, 10% tag list, 20% note with attachments, 5% edits (one in five also changes the title), 3% creates, 1% attachments added, 1% deletes",
+          "Every item is 1 KB or less, a list page 8 KB or less, a note with its attachments 4 KB or less. Three tags a note, no slug, one attachment on a deleted note",
+          "Each item in a transaction is counted as 2 units, including one that is only a condition (ConditionCheck). Whether a ConditionCheck is billed as a write or a read was not confirmed",
+          "The stream function is assumed to be invoked once for each of the 150,000 changes to tag items, at 256 MB for 50 ms (not measured). 200 bytes of log per invocation",
+          "1 GB in the table and the index. Contributor Insights off. No conflicts and no retries"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 960000,
+          "basis": "600,000 recent lists and 100,000 tag lists at 1 unit (8 KB, eventually consistent), 200,000 collections at 1 unit (4 KB, strongly consistent), 60,000 reads before an edit or a delete at 1 unit"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 1190000,
+          "basis": "creates 30,000 x 11 (5 items x 2, index 1); plain edits 40,000 x 3 (1, index 2); renames 10,000 x 10 (4 items x 2, index 2); attachments 10,000 x 4; deletes 10,000 x 12 (5 items x 2, index 1, one attachment); stream consumer 120,000 x 4 (2 items x 2)"
+        },
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 1,
+          "basis": "1 GB in the table and the index, in GB-month"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 150000,
+          "basis": "one invocation per tag item change: 90,000 inserts, 30,000 removes, 30,000 rewrites after a rename"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 1875,
+          "basis": "150,000 x 0.05 s x 0.25 GB"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.03,
+          "basis": "150,000 x 200 bytes, in GB"
+        }
+      ]
+    },
+    {
+      "id": "modeling-insights",
+      "chapter": "30",
+      "title": {
+        "ja": "Data Modeling: Contributor Insights を有効にした月（-c insights=on）",
+        "en": "Data Modeling: a month with Contributor Insights on (-c insights=on)"
+      },
+      "assumptions": {
+        "ja": [
+          "テーブルだけに、スロットリングされたキーだけを数えるモードで有効にする。ソートキーがあるのでルールは 2 つ",
+          "スロットリングが 1 件も起きず、イベントは 0",
+          "インデックスにも付けるなら、ルールがさらに 2 つ増える"
+        ],
+        "en": [
+          "Enabled on the table only, in the mode that counts throttled keys only. The table has a sort key, so there are two rules",
+          "No request is throttled, so there are no events",
+          "Enabling it on the index too would add two more rules"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "cloudwatch.contributor-insights.dynamodb.rule",
+          "quantity": 2,
+          "basis": "2 rules for one month"
+        },
+        {
+          "priceId": "cloudwatch.contributor-insights.dynamodb.event",
+          "quantity": 0,
+          "basis": "no throttled requests"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "30",
+        "command": "vp test run examples/30-data-modeling",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "119 件が通り、1 件（DynamoDB Local 用）はスキップ。キーの範囲と並び、書き込みの計画、ページトークン、テーブルの規則とノートブックの規則（メモリ上のモデル）、インデックスの遅れと書き込みの回数、衝突したトランザクションの再試行、途中で止まった削除、重複して届いたストリームのバッチ、関数自身の書き込み、移行の各段階と再開と割り込み、DynamoDB へのリクエストの形、スタックのアサーション",
+          "en": "119 passed, 1 skipped (the one for DynamoDB Local). Key ranges and order, write plans, page tokens, the table rules and the notebook rules on the in-memory model, index lag and the number of index writes, retries of colliding transactions, a delete stopped half way, stream batches delivered twice, the function's own writes, the migration phases with resume and interleaving, the shape of requests to DynamoDB, and stack assertions"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "vp run modeling:db:reset:local && vp run modeling:test:local (DynamoDB Local 3.3.1)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "テーブルの操作の規則 16 件と、ノートブックの規則 19 件を、DynamoDB Local 3.3.1 に対して実行した。Docker ではなく、AWS が配布する jar を Java 21 で直接起動し（ポート 8030、-inMemory -sharedDb -disableTelemetry）、タスクには環境変数 `DYNAMODB_ENDPOINT=http://localhost:8030` を渡した。ストリームを読む処理と移行は、DynamoDB Local では実行していない",
+          "en": "Ran the 16 table rules and the 19 notebook rules against DynamoDB Local 3.3.1, started directly from the jar AWS distributes with Java 21 (port 8030, -inMemory -sharedDb -disableTelemetry) and not through Docker; the tasks were given `DYNAMODB_ENDPOINT=http://localhost:8030` in the environment. The stream consumer and the migration were not run on DynamoDB Local"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "vp run modeling:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "メモリ上のモデルで、すべての読み方と書き方を 1 回ずつ実行した。本文に載せた出力はこの実行のもの",
+          "en": "Ran every access pattern once on the in-memory model. The output quoted in the chapter is from this run"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "vp run modeling:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の構成を synth した（esbuild のバンドル込み、リソース 9 個）。`-c insights=on` はテストの中で synth した。バンドルは素の Node.js で import できることを確かめた",
+          "en": "Synthesized the default layout, including the esbuild bundle (9 resources). `-c insights=on` was synthesized inside the tests. The bundle was imported in plain Node.js"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "tsc --noEmit -p examples/30-data-modeling",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "vp run modeling:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS には一度もデプロイしていない",
+          "en": "Never deployed to AWS"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "vp run modeling:smoke",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実際のテーブル、インデックス、ストリーム、関数では動かしていない",
+          "en": "Not run against a real table, index, stream, or function"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "vp run modeling:backfill / modeling:verify / modeling:remove-legacy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "移行のタスクは実際のテーブルでは動かしていない",
+          "en": "The migration tasks were not run against a real table"
+        }
+      },
+      {
+        "scope": "30",
+        "command": "vp run modeling:infra:drift / modeling:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "未実行",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "30-aws",
+        "summary": {
+          "ja": "30章のスタックを AWS で一度も動かしていない。未確認: トランザクションが実際に衝突したときのキャンセル理由と再試行の効き方（DynamoDB Local は衝突を報告しない）、GSI が実際にどれだけ遅れるか、ストリームの関数に同じレコードが再配送される頻度、イベントソースマッピングのフィルターが関数自身の書き込みを止めること、再試行が尽きたバッチがデッドレターキューに届くこと、TTL による目印の削除、ConditionCheck の課金のされ方、別のパーティションを指す ExclusiveStartKey への応答、テーブルとインデックスの上限に当たったときのエラー、cdkd がインデックス・ストリーム・フィルターつきのイベントソースマッピング・マネージドポリシーを実際に作れること。",
+          "en": "The chapter 30 stack has never run on AWS. Unconfirmed: the cancellation reasons and the effect of retries when transactions really collide (DynamoDB Local reports no conflicts), how far the index actually lags, how often the stream function sees a record again, that the event source mapping's filter keeps the function's own writes away from it, that a batch out of retries reaches the dead-letter queue, TTL deletion of the markers, how a ConditionCheck is billed, the answer to an ExclusiveStartKey in another partition, the errors at the table's and the index's limits, and that cdkd can really create the index, the stream, the filtered event source mapping, and the managed policy."
+        },
+        "resume": {
+          "ja": "`vp run modeling:infra:diff`、`vp run modeling:infra:deploy`、`vp run modeling:smoke` の順に実行する。`modeling:smoke` は、一覧と件数が見えるまでの時間を表示する。関数のログは出力 `ProjectorLogGroupName` のロググループを見る。終わったら `vp run modeling:infra:destroy`。",
+          "en": "Run `vp run modeling:infra:diff`, `vp run modeling:infra:deploy`, then `vp run modeling:smoke`, which prints how long the list and the count took to appear. The function's logs are in the log group named by the `ProjectorLogGroupName` output. Finish with `vp run modeling:infra:destroy`."
+        }
+      },
+      {
+        "id": "30-migration",
+        "summary": {
+          "ja": "05〜08章のテーブルへの移行（GSI の追加、バックフィル、読み取りの切り替え、古いキーの削除）は、メモリ上のモデルでしか確かめていない。未確認: 既存のテーブルに GSI を足したときのバックフィルの時間と料金、アプリが動いている最中の `modeling:backfill` の挙動、05章の一覧の Query が新しいキーの添付を読んだときの実際の失敗の形。",
+          "en": "The migration of the table from chapters 05 to 08 (adding the index, the backfill, switching reads, removing old keys) was only exercised on the in-memory model. Unconfirmed: how long and how much the backfill of a new index on an existing table takes, how `modeling:backfill` behaves while the application is live, and exactly how chapter 05's list query fails when it reads an attachment under the new key."
+        },
+        "resume": {
+          "ja": "05章か 07章のスタックのテーブルに `gsi1` を足してデプロイし、`vp run modeling:backfill --table <テーブル名>`（計画だけ）、`--apply` を付けて実行、`vp run modeling:verify --table <テーブル名>` の順に実行する。",
+          "en": "Add `gsi1` to the table of the chapter 05 or 07 stack and deploy, then run `vp run modeling:backfill --table <table name>` (plan only), again with `--apply`, then `vp run modeling:verify --table <table name>`."
+        }
+      },
+      {
+        "id": "30-docker",
+        "summary": {
+          "ja": "DynamoDB Local を Docker で起動する手順（05章の `db:local:start`）は実行していない。この章のタスクは、jar から直接起動した DynamoDB Local（ポート 8030）に向けて実行した。",
+          "en": "Starting DynamoDB Local through Docker (chapter 05's `db:local:start`) was not run. This chapter's tasks were run against DynamoDB Local started directly from the jar, on port 8030."
+        },
+        "resume": {
+          "ja": "Docker のデーモンを起動し、`examples/30-data-modeling/.env.example` を `.env` にコピーして、`vp run db:local:start`、`vp run modeling:db:migrate:local`、`vp run modeling:test:local` の順に実行する。",
+          "en": "Start a Docker daemon, copy `examples/30-data-modeling/.env.example` to `.env`, then run `vp run db:local:start`, `vp run modeling:db:migrate:local`, and `vp run modeling:test:local`."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 30: data modeling ---------------------------------------\n      // Every access pattern on the in-memory model, with what each one sent and cost. No AWS.\n      \"modeling:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/30-data-modeling\" }),\n      // The table, its index and its stream in DynamoDB Local. Refuses any endpoint that is not on this machine.\n      \"modeling:db:migrate:local\": fresh(\"node --env-file-if-exists=.env scripts/local-db.ts migrate\", {\n        cwd: \"examples/30-data-modeling\",\n      }),\n      \"modeling:db:reset:local\": fresh(\"node --env-file-if-exists=.env scripts/local-db.ts reset\", {\n        cwd: \"examples/30-data-modeling\",\n      }),\n      \"modeling:test:local\": fresh(\"node --env-file-if-exists=.env scripts/test-local.ts\", {\n        cwd: \"examples/30-data-modeling\",\n      }),\n      ...infra(\"modeling\", \"examples/30-data-modeling\", \"AihModeling\"),\n      // Writes one note, waits for the index and the stream consumer, removes it.\n      \"modeling:smoke\": live(\"node --env-file-if-exists=../../.env scripts/modeling.ts smoke\", {\n        cwd: \"examples/30-data-modeling\",\n      }),\n      // These print their plan and change nothing unless --apply is given.\n      \"modeling:backfill\": live(\"node --env-file-if-exists=../../.env scripts/modeling.ts backfill\", {\n        cwd: \"examples/30-data-modeling\",\n      }),\n      \"modeling:verify\": live(\"node --env-file-if-exists=../../.env scripts/modeling.ts verify\", {\n        cwd: \"examples/30-data-modeling\",\n      }),\n      \"modeling:remove-legacy\": live(\"node --env-file-if-exists=../../.env scripts/modeling.ts remove-legacy\", {\n        cwd: \"examples/30-data-modeling\",\n      }),",
+    "synth": ["modeling:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/30-data-modeling"]
+  }
+}

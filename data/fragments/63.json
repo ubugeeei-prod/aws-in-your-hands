@@ -1,0 +1,1264 @@
+{
+  "chapterId": "63",
+  "manifest": {
+    "id": "63",
+    "slug": "agent-sandbox",
+    "title": {
+      "ja": "Agent Sandbox: コーディングエージェントを AWS の隔離環境で動かす",
+      "en": "Agent Sandbox: Running Coding Agents in an Isolated Environment on AWS"
+    },
+    "prerequisites": ["11", "21", "23", "41", "36", "19"],
+    "services": [
+      "Fargate",
+      "ECS",
+      "Bedrock",
+      "IAM",
+      "Lambda",
+      "EventBridge Scheduler",
+      "ECR",
+      "CloudWatch",
+      "VPC",
+      "Network Firewall"
+    ],
+    "samplePath": "examples/63-agent-sandbox",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "sbx-cc-secure-deployment",
+      "sbx-cc-sandbox-environments",
+      "sbx-cc-sandboxing",
+      "sbx-cc-headless",
+      "sbx-cc-cli",
+      "sbx-cc-permissions",
+      "sbx-cc-permission-modes",
+      "sbx-cc-settings-reference",
+      "sbx-cc-managed-settings",
+      "sbx-cc-setup",
+      "sbx-cc-bedrock",
+      "sbx-cc-network-config",
+      "sbx-cc-web",
+      "sbx-cc-self-hosted",
+      "sbx-cc-hosting",
+      "sbx-cc-cost-tracking",
+      "sbx-cc-monitoring",
+      "sbx-npm-claude-code",
+      "sbx-ecs-run-task",
+      "sbx-ecs-container-override",
+      "sbx-ecs-stop-task",
+      "sbx-ecs-iam-roles",
+      "sbx-ecs-fargate-security",
+      "sbx-ecs-exec",
+      "sbx-ecs-bind-mounts",
+      "sbx-bedrock-vpc-endpoints",
+      "sbx-bedrock-runtime-metrics",
+      "sbx-bedrock-cloudtrail",
+      "sbx-nfw-domain-list",
+      "sbx-nfw-rules-source-list",
+      "sbx-nfw-pricing",
+      "sbx-price-list-nfw",
+      "sbx-dns-firewall",
+      "sbx-agentcore-sessions",
+      "sbx-aws-service-reference",
+      "sbx-github-installation-token",
+      "sbx-github-jwt",
+      "sbx-github-installation-auth",
+      "sbx-github-pulls",
+      "sbx-github-rulesets",
+      "sbx-git-credentials",
+      "sbx-git-config",
+      "sbx-cloudflare-sandbox",
+      "sbx-vercel-sandbox",
+      "sbx-cdkd-installed",
+      "fg-fargate-architect",
+      "ecs-task-execution-role",
+      "br36-invocation-logging",
+      "br36-inference-profiles-prereq",
+      "privatelink-pricing",
+      "aws-budgets-managing-costs",
+      "cloudtrail-event-history",
+      "aws-price-list-vpc",
+      "aws-price-list-ec2",
+      "aws-price-list-lambda",
+      "fg-price-list-ecs",
+      "cdkd-introduction",
+      "iam-policy-evaluation-logic",
+      "organizations-scps"
+    ]
+  },
+  "sources": [
+    {
+      "id": "sbx-cc-secure-deployment",
+      "url": "https://code.claude.com/docs/en/agent-sdk/secure-deployment",
+      "title": "Securely deploying AI agents (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Agents can take unintended actions due to prompt injection (instructions embedded in content they process) or model error",
+        "Isolation technologies compared: sandbox runtime, containers (setup dependent), gVisor, VMs such as Firecracker",
+        "Cloud deployments: private subnet with no internet gateway, firewall rules that block all egress except to a proxy, a proxy that enforces domain allowlists, minimal IAM permissions, traffic logged at the proxy",
+        "The recommended credential pattern is a proxy outside the agent's boundary that injects credentials; the agent never sees them",
+        "With HTTP_PROXY/HTTPS_PROXY the proxy sees only an opaque CONNECT tunnel for HTTPS unless it terminates TLS",
+        "Not all programs respect HTTP_PROXY/HTTPS_PROXY"
+      ]
+    },
+    {
+      "id": "sbx-cc-sandbox-environments",
+      "url": "https://code.claude.com/docs/en/sandbox-environments",
+      "title": "Choose a sandbox environment (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Sandbox isolation reduces the impact of a breach but does not eliminate risk; any approach that allows network egress can still leak data the agent can read",
+        "A custom container can run Claude Code with your own network policies; unprivileged containers need enableWeakerNestedSandbox for the built-in Bash sandbox",
+        "A dedicated virtual machine provides the strongest separation, with its own kernel; options include microVMs such as Firecracker",
+        "A cloud session runs in an isolated, Anthropic-managed virtual machine; a proxy holds the GitHub token outside the sandbox"
+      ]
+    },
+    {
+      "id": "sbx-cc-sandboxing",
+      "url": "https://code.claude.com/docs/en/sandboxing",
+      "title": "Configure the sandboxed Bash tool (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The Bash sandbox covers shell commands only; Read, Edit, Write, WebFetch and WebSearch, MCP servers and hooks run outside it",
+        "Linux uses bubblewrap and socat; network connections go through a proxy that checks each host against the allowed domains",
+        "The proxy decides from the client-supplied hostname without inspecting TLS, so domain fronting can reach hosts outside the allowlist",
+        "sandbox.failIfUnavailable makes Claude Code exit when the sandbox cannot start; allowUnsandboxedCommands false disables the unsandboxed retry",
+        "In an unprivileged container bubblewrap cannot mount a fresh /proc; enableWeakerNestedSandbox bind-mounts the container's /proc, weakens security, and should be used only when the outer container is the boundary",
+        "A tool that ignores the proxy environment variables cannot connect from inside the sandbox"
+      ]
+    },
+    {
+      "id": "sbx-cc-headless",
+      "url": "https://code.claude.com/docs/en/headless",
+      "title": "Run Claude Code programmatically (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "claude -p runs non-interactively and exits 0 on success and non-zero on failure",
+        "Without --bare a -p session runs the hooks in a project's .claude/settings.json and connects the servers in its .mcp.json, even in a folder never trusted",
+        "--bare skips hooks, skills, plugins, MCP servers, auto memory and CLAUDE.md; Amazon Bedrock credentials are still read as usual",
+        "--output-format stream-json emits newline-delimited JSON; the last line is a result message with cost and session metadata",
+        "dontAsk denies every call that would otherwise prompt",
+        "On SIGTERM Claude Code terminates the process tree of a running Bash command and exits with code 143"
+      ]
+    },
+    {
+      "id": "sbx-cc-cli",
+      "url": "https://code.claude.com/docs/en/cli-reference",
+      "title": "CLI reference (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "--max-budget-usd stops the run once estimated spend reaches the amount (print mode only); the estimate is client-side, can differ from the bill, and spend can pass the cap",
+        "--max-turns limits the number of agentic turns (print mode only) and exits with an error when the limit is reached",
+        "--tools restricts which built-in tools Claude can use; --settings takes a settings JSON file; --no-session-persistence; --permission-mode accepts dontAsk"
+      ]
+    },
+    {
+      "id": "sbx-cc-permissions",
+      "url": "https://code.claude.com/docs/en/permissions",
+      "title": "Configure permissions (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Rules are evaluated in order: deny, then ask, then allow",
+        "A bare tool name in deny removes the tool from Claude's context",
+        "A Bash deny rule matches the command text Claude writes and is not a security boundary around the program"
+      ]
+    },
+    {
+      "id": "sbx-cc-permission-modes",
+      "url": "https://code.claude.com/docs/en/permission-modes",
+      "title": "Permission modes (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "bypassPermissions is for isolated containers and VMs only, without internet access",
+        "dontAsk auto-denies every tool call that would otherwise prompt; for CI and restricted environments"
+      ]
+    },
+    {
+      "id": "sbx-cc-settings-reference",
+      "url": "https://code.claude.com/docs/en/settings-reference",
+      "title": "Settings reference (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "sandbox.network.allowedDomains: wildcards such as *.example.com match subdomains; an optional :port suffix limits an entry to one port",
+        "sandbox.network.strictAllowlist denies hosts outside the allowlist instead of prompting; user, managed or --settings scope only; needs v2.1.219 or later"
+      ]
+    },
+    {
+      "id": "sbx-cc-managed-settings",
+      "url": "https://code.claude.com/docs/en/managed-settings",
+      "title": "Managed settings (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "File-based managed settings are read from /etc/claude-code/managed-settings.json on Linux"
+      ]
+    },
+    {
+      "id": "sbx-cc-setup",
+      "url": "https://code.claude.com/docs/en/setup",
+      "title": "Advanced setup (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Hardware: 4 GB+ RAM, x64 or ARM64",
+        "npm install -g @anthropic-ai/claude-code is a documented install method; linux-arm64 is a supported npm platform"
+      ]
+    },
+    {
+      "id": "sbx-cc-bedrock",
+      "url": "https://code.claude.com/docs/en/amazon-bedrock",
+      "title": "Claude Code on Amazon Bedrock (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "CLAUDE_CODE_USE_BEDROCK=1 and AWS_REGION enable Bedrock; Claude Code uses the default AWS SDK credential chain, including Amazon ECS task credentials",
+        "The documented IAM policy has bedrock:InvokeModel, InvokeModelWithResponseStream, ListInferenceProfiles and GetInferenceProfile",
+        "When profile discovery is unavailable, Claude Code applies the prefix without checking availability",
+        "Pin model versions with ANTHROPIC_MODEL and inference profile IDs; without pinning the primary model defaults to an Opus model",
+        "Claude Code uses the Bedrock Invoke API and does not support the Converse API",
+        "The WebSearch tool is not available on Amazon Bedrock",
+        "Create a dedicated AWS account for Claude Code to simplify cost tracking and access control"
+      ]
+    },
+    {
+      "id": "sbx-cc-network-config",
+      "url": "https://code.claude.com/docs/en/network-config",
+      "title": "Enterprise network configuration (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "With Amazon Bedrock, model traffic and authentication go to the provider instead of api.anthropic.com",
+        "npm installs need registry.npmjs.org",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC disables optional telemetry hosts"
+      ]
+    },
+    {
+      "id": "sbx-cc-web",
+      "url": "https://code.claude.com/docs/en/claude-code-on-the-web",
+      "title": "Use Claude Code on the web (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each cloud session runs in an isolated, Anthropic-managed VM; git credentials stay outside the sandbox behind a proxy"
+      ]
+    },
+    {
+      "id": "sbx-cc-self-hosted",
+      "url": "https://code.claude.com/docs/en/self-hosted-environments",
+      "title": "Self-hosted environments (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Self-hosted environments run Claude Code cloud sessions on infrastructure you operate; public beta on Team and Enterprise plans, off by default"
+      ]
+    },
+    {
+      "id": "sbx-cc-hosting",
+      "url": "https://code.claude.com/docs/en/agent-sdk/hosting",
+      "title": "Hosting the Agent SDK (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "For production, route outbound traffic through an egress proxy that enforces domain allowlists, injects credentials, and logs requests"
+      ]
+    },
+    {
+      "id": "sbx-cc-cost-tracking",
+      "url": "https://code.claude.com/docs/en/agent-sdk/cost-tracking",
+      "title": "Track cost and usage (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "total_cost_usd is a client-side estimate computed from a price table bundled at build time, not billing data"
+      ]
+    },
+    {
+      "id": "sbx-cc-monitoring",
+      "url": "https://code.claude.com/docs/en/monitoring-usage",
+      "title": "Monitoring (Claude Code docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Claude Code can export events over OpenTelemetry when CLAUDE_CODE_ENABLE_TELEMETRY=1 and an exporter are set",
+        "OTEL_LOG_TOOL_DETAILS adds tool parameters such as the Bash command string to tool events"
+      ]
+    },
+    {
+      "id": "sbx-npm-claude-code",
+      "url": "https://registry.npmjs.org/@anthropic-ai/claude-code",
+      "title": "@anthropic-ai/claude-code on the npm registry",
+      "checkedAt": "2026-10-13",
+      "supports": ["dist-tags on 2026-10-13: stable 2.1.287, latest 2.1.296"]
+    },
+    {
+      "id": "sbx-ecs-run-task",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_RunTask.html",
+      "title": "RunTask (Amazon ECS API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "clientToken ensures idempotency, up to 64 characters; a token already used with a different request gives ConflictException with the existing task ARNs",
+        "startedBy: up to 128 letters, numbers, hyphens, forward slashes and underscores",
+        "A total of 8192 characters are allowed for overrides, JSON formatting included"
+      ]
+    },
+    {
+      "id": "sbx-ecs-container-override",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerOverride.html",
+      "title": "ContainerOverride (Amazon ECS API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The fields are command, cpu, environment, environmentFiles, memory, memoryReservation, name, resourceRequirements; there is no secrets field",
+        "The page points to Secrets Manager or Parameter Store for sensitive data"
+      ]
+    },
+    {
+      "id": "sbx-ecs-stop-task",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_StopTask.html",
+      "title": "StopTask (Amazon ECS API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "StopTask sends the stop signal (SIGTERM by default) and SIGKILL after a 30-second timeout",
+        "reason is an optional message that appears in DescribeTasks"
+      ]
+    },
+    {
+      "id": "sbx-ecs-iam-roles",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-roles.html",
+      "title": "Best practices for IAM roles in Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The task role's credentials are available inside the container at 169.254.170.2 through AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+        "The task execution role is what the container agent and Fargate use to pull images and write logs",
+        "CloudTrail's userIdentity for a task shows the assumed role followed by the task ID"
+      ]
+    },
+    {
+      "id": "sbx-ecs-fargate-security",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-security-considerations.html",
+      "title": "Fargate security considerations for Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Fargate runs each workload on an isolated virtual environment; tasks do not share network interfaces, ephemeral storage, CPU, or memory",
+        "No privileged containers; CAP_SYS_ADMIN and CAP_NET_ADMIN are restricted; only CAP_SYS_PTRACE can be added",
+        "Neither customers nor AWS operators can connect to a host running customer workloads"
+      ]
+    },
+    {
+      "id": "sbx-ecs-exec",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html",
+      "title": "Monitor Amazon ECS containers with ECS Exec",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The ExecuteCommand event in CloudTrail shows who accessed a container; commands and output can be logged to S3 or CloudWatch Logs",
+        "A read-only root file system is not supported with ECS Exec"
+      ]
+    },
+    {
+      "id": "sbx-ecs-bind-mounts",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/bind-mounts.html",
+      "title": "Use bind mounts with Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default the volume's permissions are 0755 and its owner root; a VOLUME directive in the Dockerfile with the same path carries the directory's owner over"
+      ]
+    },
+    {
+      "id": "sbx-bedrock-vpc-endpoints",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/vpc-interface-endpoints.html",
+      "title": "Use interface VPC endpoints with Amazon Bedrock",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The service name com.amazonaws.region.bedrock-runtime serves the Runtime API; with private DNS the default Regional name resolves to the endpoint",
+        "An endpoint policy can restrict principals, actions and resources; the default allows full access"
+      ]
+    },
+    {
+      "id": "sbx-bedrock-runtime-metrics",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/monitoring-runtime-metrics.html",
+      "title": "Monitor bedrock-runtime inference using CloudWatch metrics",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Namespace AWS/Bedrock with InputTokenCount, OutputTokenCount, CacheReadInputTokenCount, CacheWriteInputTokenCount",
+        "The metrics are published both with and without the ModelId dimension"
+      ],
+      "note": "The page does not say what ModelId holds when an inference profile is called, nor whether InputTokenCount includes cached tokens."
+    },
+    {
+      "id": "sbx-bedrock-cloudtrail",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/logging-using-cloudtrail.html",
+      "title": "Monitor Amazon Bedrock API calls using CloudTrail",
+      "checkedAt": "2026-10-13",
+      "supports": ["InvokeModel and InvokeModelWithResponseStream are logged as management events"]
+    },
+    {
+      "id": "sbx-nfw-domain-list",
+      "url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/stateful-rule-groups-domain-names.html",
+      "title": "Stateful domain list rule groups in AWS Network Firewall",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A leading dot matches the domain and all its subdomains; an explicit name matches only itself",
+        "For HTTPS the firewall uses the SNI in the TLS handshake, not the IP address; separate rules are needed if the SNI may be manipulated",
+        "With an Allow list, traffic of that protocol that does not match is denied under default action order"
+      ]
+    },
+    {
+      "id": "sbx-nfw-rules-source-list",
+      "url": "https://docs.aws.amazon.com/network-firewall/latest/APIReference/API_RulesSourceList.html",
+      "title": "RulesSourceList (AWS Network Firewall API Reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "GeneratedRulesType: ALLOWLIST | DENYLIST | REJECTLIST | ALERTLIST; TargetTypes: TLS_SNI | HTTP_HOST"
+      ]
+    },
+    {
+      "id": "sbx-nfw-pricing",
+      "url": "https://aws.amazon.com/network-firewall/pricing/",
+      "title": "AWS Network Firewall Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An hourly rate for each firewall endpoint per Region and Availability Zone, plus a rate per GB processed",
+        "Standard NAT gateway per-hour and data processing charges are waived, one for one, for a NAT gateway in the same networking path as the firewall endpoint"
+      ]
+    },
+    {
+      "id": "sbx-price-list-nfw",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSNetworkFirewall/current/ap-northeast-1/index.json",
+      "title": "AWS Price List: AWSNetworkFirewall, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": ["Unit prices in data/pricing/unit-prices.json with offerCode AWSNetworkFirewall"]
+    },
+    {
+      "id": "sbx-dns-firewall",
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver-dns-firewall-overview.html",
+      "title": "How Resolver DNS Firewall works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DNS Firewall filters only on the domain name in DNS queries; it does not filter HTTPS, SSH, TLS or other application protocols"
+      ]
+    },
+    {
+      "id": "sbx-agentcore-sessions",
+      "url": "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-sessions.html",
+      "title": "Use isolated sessions for agents (Amazon Bedrock AgentCore)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each session in AgentCore Runtime receives its own dedicated microVM; after the session the microVM is terminated and memory is sanitized",
+        "Sessions last up to 8 hours on microVMs and stop after 15 minutes of inactivity by default"
+      ]
+    },
+    {
+      "id": "sbx-aws-service-reference",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/ecs/ecs.json",
+      "title": "AWS Service Reference: actions, resources and condition keys (ecs, cloudwatch, bedrock, secretsmanager)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "ecs:ListTasks takes the container-instance resource type and the ecs:cluster condition key; DescribeTasks and StopTask take the task resource; RunTask takes the task-definition resource and ecs:cluster",
+        "cloudwatch:GetMetricData has no resource type that names a metric",
+        "bedrock:InvokeModel and InvokeModelWithResponseStream accept inference-profile and foundation-model resources and the bedrock:InferenceProfileArn key"
+      ],
+      "note": "The files for the other three services sit beside this one: /v1/cloudwatch/cloudwatch.json, /v1/bedrock/bedrock.json, /v1/secretsmanager/secretsmanager.json."
+    },
+    {
+      "id": "sbx-github-installation-token",
+      "url": "https://docs.github.com/en/rest/apps/apps#create-an-installation-access-token-for-an-app",
+      "title": "Create an installation access token for an app (GitHub REST API)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Installation tokens expire one hour from the time they are created",
+        "The repositories and permissions body parameters narrow the token; without them it has every repository and permission of the installation",
+        "A stateless token format (ghs_APPID_JWT) has been rolling out since 2026-04-27, so a token is not always 40 characters"
+      ]
+    },
+    {
+      "id": "sbx-github-jwt",
+      "url": "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app",
+      "title": "Generating a JSON Web Token (JWT) for a GitHub App",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "RS256; iat 60 seconds in the past is recommended; exp no more than 10 minutes ahead; iss is the client ID or app ID"
+      ]
+    },
+    {
+      "id": "sbx-github-installation-auth",
+      "url": "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation",
+      "title": "Authenticating as a GitHub App installation",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An installation token works as the HTTP password for Git, with the user name x-access-token; the app needs the Contents permission"
+      ]
+    },
+    {
+      "id": "sbx-github-pulls",
+      "url": "https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request",
+      "title": "Create a pull request (GitHub REST API)",
+      "checkedAt": "2026-10-13",
+      "supports": ["POST /repos/{owner}/{repo}/pulls with title, head and base"]
+    },
+    {
+      "id": "sbx-github-rulesets",
+      "url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets",
+      "title": "Available rules for rulesets (GitHub Docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A ruleset can require a pull request before merging, a number of approving reviews, and can block force pushes and restrict updates"
+      ]
+    },
+    {
+      "id": "sbx-git-credentials",
+      "url": "https://git-scm.com/docs/gitcredentials",
+      "title": "gitcredentials (Git documentation)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A helper string that begins with ! is a shell snippet",
+        "An empty credential.helper resets the helper list"
+      ]
+    },
+    {
+      "id": "sbx-git-config",
+      "url": "https://git-scm.com/docs/git-config",
+      "title": "git-config (Git documentation)",
+      "checkedAt": "2026-10-13",
+      "supports": ["core.hooksPath replaces $GIT_DIR/hooks as the place Git looks for hooks"]
+    },
+    {
+      "id": "sbx-cloudflare-sandbox",
+      "url": "https://developers.cloudflare.com/sandbox/",
+      "title": "Sandboxes on Cloudflare (Cloudflare Docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "A sandbox container is a microVM with its own kernel and network, started by a Worker; whether it can reach the public Internet is the Worker's decision (enableInternet)",
+        "Available on the Workers Paid plan; the container scheduling policy it uses is in public beta (page updated 2026-09-30)"
+      ]
+    },
+    {
+      "id": "sbx-vercel-sandbox",
+      "url": "https://vercel.com/docs/sandbox",
+      "title": "Vercel Sandbox (Vercel Docs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Runs untrusted or agent-generated code in isolated Linux microVMs (page updated 2026-09-22)"
+      ]
+    },
+    {
+      "id": "sbx-cdkd-installed",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (the installed package)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Providers are registered for AWS::ECR::Repository, AWS::ECS::Cluster, AWS::ECS::TaskDefinition, AWS::EC2::SecurityGroup, AWS::EC2::SecurityGroupIngress, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, AWS::Logs::LogGroup, AWS::Scheduler::Schedule",
+        "The task definition provider's handledProperties include Volumes",
+        "No provider is registered for AWS::EC2::VPCEndpoint"
+      ],
+      "note": "Read from dist/ of the installed package, not from the repository at the tag."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "coding-agent",
+      "ja": "コーディングエージェント",
+      "en": "coding agent",
+      "firstUse": "63",
+      "definition": {
+        "ja": "モデルが自分で選んだコマンドを実行し、ファイルを読み書きしながら、頼まれた変更をリポジトリに加えるプログラム。Claude Code はその 1 つ。",
+        "en": "A program in which a model runs commands of its own choosing and reads and writes files to make a requested change to a repository. Claude Code is one."
+      }
+    },
+    {
+      "id": "egress-allowlist",
+      "ja": "出口の許可リスト",
+      "en": "egress allowlist",
+      "firstUse": "63",
+      "definition": {
+        "ja": "中から外へ出る通信の宛先を、列挙したものだけに限る決まり。載っていない宛先は、理由を問わず届かない。",
+        "en": "A rule that limits outbound connections to the destinations it lists. Anything not listed is out of reach, whatever the reason."
+      }
+    },
+    {
+      "id": "installation-access-token",
+      "ja": "installation access token",
+      "en": "installation access token",
+      "firstUse": "63",
+      "definition": {
+        "ja": "GitHub App が、インストール先のリポジトリを操作するために発行するトークン。作ってから 1 時間で失効し、発行のときにリポジトリと権限を絞れる。",
+        "en": "The token a GitHub App issues to act on the repositories it is installed on. It expires an hour after it is made, and can be narrowed to repositories and permissions when it is issued."
+      }
+    },
+    {
+      "id": "headless-mode",
+      "ja": "非対話モード（claude -p）",
+      "en": "non-interactive mode (claude -p)",
+      "firstUse": "63",
+      "definition": {
+        "ja": "Claude Code を、端末の画面なしで 1 回だけ実行するやり方。プロンプトを引数で受け取り、結果を標準出力に書いて、終了コードを返す。",
+        "en": "Running Claude Code once, without a terminal interface: it takes the prompt as an argument, writes the result to standard output, and returns an exit status."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "63.threats",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.architecture",
+      "sources": [
+        "examples/63-agent-sandbox/infra/lib/agent-sandbox-stack.ts",
+        "examples/63-agent-sandbox/src/config.ts"
+      ],
+      "tasks": ["sandbox:infra:synth", "sandbox:plan"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "63.isolation",
+      "sources": [
+        "examples/63-agent-sandbox/infra/lib/agent-sandbox-stack.ts",
+        "examples/63-agent-sandbox/Dockerfile"
+      ],
+      "tasks": ["sandbox:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.launch",
+      "sources": [
+        "examples/63-agent-sandbox/src/job.ts",
+        "examples/63-agent-sandbox/src/launcher.ts",
+        "examples/63-agent-sandbox/src/ports.ts",
+        "examples/63-agent-sandbox/test/job.test.ts",
+        "examples/63-agent-sandbox/test/launcher.test.ts"
+      ],
+      "tasks": ["test:unit", "sandbox:plan"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "63.repository",
+      "sources": [
+        "examples/63-agent-sandbox/src/github.ts",
+        "examples/63-agent-sandbox/src/run.ts",
+        "examples/63-agent-sandbox/test/github.test.ts",
+        "examples/63-agent-sandbox/test/run.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "63.agent",
+      "sources": [
+        "examples/63-agent-sandbox/src/agent.ts",
+        "examples/63-agent-sandbox/src/entry.ts",
+        "examples/63-agent-sandbox/scripts/bundle.ts",
+        "examples/63-agent-sandbox/Dockerfile",
+        "examples/63-agent-sandbox/test/agent.test.ts"
+      ],
+      "tasks": ["test:unit", "sandbox:bundle", "sandbox:plan"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "63.role",
+      "sources": [
+        "examples/63-agent-sandbox/infra/lib/agent-sandbox-stack.ts",
+        "examples/63-agent-sandbox/src/policy.ts",
+        "examples/63-agent-sandbox/scripts/policy.ts",
+        "examples/63-agent-sandbox/test/policy.test.ts",
+        "examples/63-agent-sandbox/infra/test/agent-sandbox-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "sandbox:policy"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "63.egress",
+      "sources": [
+        "examples/63-agent-sandbox/src/egress.ts",
+        "examples/63-agent-sandbox/test/egress.test.ts",
+        "examples/63-agent-sandbox/infra/lib/agent-sandbox-stack.ts",
+        "examples/11-network/src/config.ts"
+      ],
+      "tasks": ["test:unit", "sandbox:plan", "net:plan"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "63.limits",
+      "sources": [
+        "examples/63-agent-sandbox/src/limits.ts",
+        "examples/63-agent-sandbox/src/reaper.ts",
+        "examples/63-agent-sandbox/src/aws.ts",
+        "examples/63-agent-sandbox/test/limits.test.ts",
+        "examples/63-agent-sandbox/test/reaper.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "63.audit",
+      "sources": [
+        "examples/63-agent-sandbox/infra/lib/agent-sandbox-stack.ts",
+        "examples/63-agent-sandbox/infra/test/agent-sandbox-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "sandbox:logs"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.entry",
+      "sources": [
+        "examples/63-agent-sandbox/infra/lib/agent-sandbox-stack.ts",
+        "examples/63-agent-sandbox/src/commands.ts",
+        "examples/63-agent-sandbox/scripts/ops.ts"
+      ],
+      "tasks": ["sandbox:exec"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.local",
+      "sources": [
+        "examples/63-agent-sandbox/test",
+        "examples/63-agent-sandbox/infra/test/agent-sandbox-stack.test.ts",
+        "examples/63-agent-sandbox/scripts/plan.ts",
+        "examples/63-agent-sandbox/scripts/policy.ts"
+      ],
+      "tasks": [
+        "test:unit",
+        "sandbox:plan",
+        "sandbox:policy",
+        "sandbox:bundle",
+        "sandbox:infra:synth"
+      ],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "63.deploy",
+      "sources": [
+        "examples/63-agent-sandbox/infra/bin/app.ts",
+        "examples/63-agent-sandbox/cdk.json",
+        "examples/63-agent-sandbox/src/commands.ts",
+        "examples/63-agent-sandbox/scripts/ops.ts",
+        "examples/63-agent-sandbox/Dockerfile"
+      ],
+      "tasks": [
+        "sandbox:infra:diff",
+        "sandbox:infra:deploy",
+        "sandbox:image:build",
+        "sandbox:image:push",
+        "sandbox:launch",
+        "sandbox:logs",
+        "sandbox:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["type", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.cost",
+      "sources": ["examples/63-agent-sandbox/test/pricing.test.ts", "data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "63.pitfalls",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.production",
+      "sources": ["examples/63-agent-sandbox/infra/test/agent-sandbox-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "63.distributed",
+      "sources": [
+        "examples/63-agent-sandbox/test/launcher.test.ts",
+        "examples/63-agent-sandbox/test/reaper.test.ts",
+        "examples/63-agent-sandbox/test/run.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "63.cleanup",
+      "sources": [],
+      "tasks": ["sandbox:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "network-firewall.endpoint.hour",
+      "offerCode": "AWSNetworkFirewall",
+      "region": "ap-northeast-1",
+      "sku": "CWTZWA8K9VDUWMK7",
+      "usageType": "APN1-Endpoint-Hour",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hourly",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3950000000",
+          "description": "$0.395 per endpoint hour for AWS Network Firewall in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSNetworkFirewall/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:04Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "network-firewall.data.gb",
+      "offerCode": "AWSNetworkFirewall",
+      "region": "ap-northeast-1",
+      "sku": "DUNCV285YHHZX8SF",
+      "usageType": "APN1-Traffic-GB-Processed",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0650000000",
+          "description": "$0.065 per GB processed by AWS Network Firewall in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSNetworkFirewall/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:04Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "agent-sandbox-idle",
+      "chapter": "63",
+      "title": {
+        "ja": "Agent Sandbox: タスクを 1 つも動かさずに 1 か月",
+        "en": "Agent Sandbox: a month without a single task"
+      },
+      "assumptions": {
+        "ja": [
+          "リーパーの関数を 1 分ごとに 730 時間ぶん（43,800 回）、1 回 0.2 秒、256 MB（仮定）",
+          "EventBridge Scheduler の呼び出し 43,800 回",
+          "リポジトリにイメージ 0.5 GB（仮定。一度もビルドしていないので実測ではない）",
+          "ログ、11章の VPC の料金、タスクとモデルの料金は未算入"
+        ],
+        "en": [
+          "The reaper function once a minute for 730 hours (43,800 runs), 0.2 seconds each at 256 MB (assumption)",
+          "43,800 EventBridge Scheduler invocations",
+          "One image of 0.5 GB in the repository (assumption: the image was never built, so this is not a measurement)",
+          "Logs, chapter 11's VPC, tasks, and the model are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 43800,
+          "basis": "730 hours x 60 runs"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 2190,
+          "basis": "43,800 runs x 0.2 s x 0.25 GB"
+        },
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 43800,
+          "basis": "43,800 invocations"
+        },
+        {
+          "priceId": "ecr.storage",
+          "quantity": 0.5,
+          "basis": "one image, assumed 0.5 GB"
+        }
+      ]
+    },
+    {
+      "id": "agent-sandbox-job",
+      "chapter": "63",
+      "title": {
+        "ja": "Agent Sandbox: 30 分のタスク 1 つ",
+        "en": "Agent Sandbox: one task of 30 minutes"
+      },
+      "assumptions": {
+        "ja": [
+          "Fargate のタスク 1 つ（1 vCPU、4 GB、arm64、オンデマンド）を 30 分",
+          "モデルは Claude Haiku 4.5。入力 40 万、キャッシュ読み出し 200 万、キャッシュ書き込み 30 万、出力 6 万トークン（すべて仮定。エージェントを動かしていないので実測ではない）",
+          "ログ、データ転送、NAT や エンドポイントの料金は未算入"
+        ],
+        "en": [
+          "One Fargate task (1 vCPU, 4 GB, arm64, on demand) for 30 minutes",
+          "Claude Haiku 4.5: 400 thousand input, 2 million cache-read, 300 thousand cache-write, and 60 thousand output tokens (all assumptions: no agent was run, so none of this is measured)",
+          "Logs, data transfer, and the NAT gateway or endpoints are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "fargate.arm.vcpu.hour",
+          "quantity": 0.5,
+          "basis": "1 vCPU x 0.5 hours"
+        },
+        {
+          "priceId": "fargate.arm.memory.gb-hour",
+          "quantity": 2,
+          "basis": "4 GB x 0.5 hours"
+        },
+        {
+          "priceId": "bedrock.claude-haiku-4-5.input",
+          "quantity": 0.4,
+          "basis": "400,000 input tokens (assumed)"
+        },
+        {
+          "priceId": "bedrock.claude-haiku-4-5.cache-read",
+          "quantity": 2,
+          "basis": "2,000,000 cache-read tokens (assumed)"
+        },
+        {
+          "priceId": "bedrock.claude-haiku-4-5.cache-write",
+          "quantity": 0.3,
+          "basis": "300,000 cache-write tokens (assumed)"
+        },
+        {
+          "priceId": "bedrock.claude-haiku-4-5.output",
+          "quantity": 0.06,
+          "basis": "60,000 output tokens (assumed)"
+        }
+      ]
+    },
+    {
+      "id": "agent-sandbox-egress-endpoints",
+      "chapter": "63",
+      "title": {
+        "ja": "Agent Sandbox の出口: インターフェースエンドポイントだけ",
+        "en": "Agent Sandbox egress: interface endpoints only"
+      },
+      "assumptions": {
+        "ja": [
+          "bedrock-runtime、ecr.api、ecr.dkr、logs の 4 つを 2 つの AZ に 730 時間",
+          "データ処理料は未算入。Git ホストとパッケージレジストリには届かない"
+        ],
+        "en": [
+          "Four endpoints (bedrock-runtime, ecr.api, ecr.dkr, logs) in two Availability Zones for 730 hours",
+          "Data processing is not included. The Git host and the package registry are out of reach"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 5840,
+          "basis": "4 endpoints x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "agent-sandbox-egress-model-endpoint",
+      "chapter": "63",
+      "title": {
+        "ja": "Agent Sandbox の出口: このスタックの modelEndpoint だけ",
+        "en": "Agent Sandbox egress: this stack's modelEndpoint alone"
+      },
+      "assumptions": {
+        "ja": [
+          "bedrock-runtime のエンドポイント 1 つを 2 つの AZ に 730 時間。データ処理料は未算入"
+        ],
+        "en": [
+          "One bedrock-runtime endpoint in two Availability Zones for 730 hours. Data processing is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "vpc.endpoint.interface.hour",
+          "quantity": 1460,
+          "basis": "1 endpoint x 2 zones x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "agent-sandbox-egress-nat",
+      "chapter": "63",
+      "title": {
+        "ja": "Agent Sandbox の出口: NAT Gateway",
+        "en": "Agent Sandbox egress: a NAT gateway"
+      },
+      "assumptions": {
+        "ja": [
+          "NAT Gateway 1 つと、その Elastic IP アドレス 1 つを 730 時間",
+          "データ処理料は未算入。宛先はポート 443 であること以外、何も絞られない"
+        ],
+        "en": [
+          "One NAT gateway and its Elastic IP address for 730 hours",
+          "Data processing is not included. Nothing narrows the destination beyond port 443"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "nat.gateway.hour",
+          "quantity": 730,
+          "basis": "1 NAT gateway x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 Elastic IP address x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "agent-sandbox-egress-firewall",
+      "chapter": "63",
+      "title": {
+        "ja": "Agent Sandbox の出口: Network Firewall と NAT Gateway",
+        "en": "Agent Sandbox egress: Network Firewall with a NAT gateway"
+      },
+      "assumptions": {
+        "ja": [
+          "ファイアウォールのエンドポイント 1 つ（AZ 1 つ）を 730 時間",
+          "同じ経路に置いた NAT Gateway の時間料金とデータ処理料は、料金ページの記載どおり免除されるものとして未算入。Elastic IP アドレスは算入",
+          "ファイアウォールのデータ処理料（1 GB あたり USD 0.065）は未算入"
+        ],
+        "en": [
+          "One firewall endpoint (one Availability Zone) for 730 hours",
+          "The hourly and data processing charges of the NAT gateway in the same path are left out, as the pricing page says they are waived. Its Elastic IP address is included",
+          "The firewall's data processing (USD 0.065 per GB) is not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "network-firewall.endpoint.hour",
+          "quantity": 730,
+          "basis": "1 firewall endpoint x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 Elastic IP address x 730 hours"
+        }
+      ]
+    },
+    {
+      "id": "agent-sandbox-egress-proxy",
+      "chapter": "63",
+      "title": {
+        "ja": "Agent Sandbox の出口: 自分で動かすプロキシ",
+        "en": "Agent Sandbox egress: a proxy you run"
+      },
+      "assumptions": {
+        "ja": [
+          "t4g.micro のインスタンス 1 つとパブリック IPv4 アドレス 1 つを 730 時間",
+          "ボリューム、データ転送、プロキシを運用する手間は未算入"
+        ],
+        "en": [
+          "One t4g.micro instance and one public IPv4 address for 730 hours",
+          "The volume, data transfer, and the work of operating a proxy are not included"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "ec2.t4g-micro.linux.hour",
+          "quantity": 730,
+          "basis": "1 instance x 730 hours"
+        },
+        {
+          "priceId": "vpc.public-ipv4.in-use.hour",
+          "quantity": 730,
+          "basis": "1 public IPv4 address x 730 hours"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "63",
+        "command": "vp test run examples/63-agent-sandbox",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "12 ファイル 103 件。ランチャーの判断、許可リストの評価、上限とリーパー、GitHub App の JWT とトークンの検査、エージェントのコマンドと設定と環境変数、タスクの手順（偽のコマンド実行で）、ポリシーの評価器、コマンドの組み立て、料金、スタックのアサーション",
+          "en": "12 files, 103 tests: the launcher's decisions, the allowlist evaluator, the limits and the reaper, the GitHub App JWT and the token check, the agent's command, settings and environment, the task's steps (against a fake command runner), the policy evaluator, command assembly, cost, and the stack assertions"
+        }
+      },
+      {
+        "scope": "63",
+        "command": "tsc --noEmit -p examples/63-agent-sandbox",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "63",
+        "command": "vp run sandbox:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "タグなし、-c imageTag=a1 -c repositories=acme/notes、それに -c modelEndpoint=true、-c exec=true を足した構成で synth。-c exec=yes と -c model=jp.amazon.nova-2-lite-v1:0 が拒否されることも確認",
+          "en": "Synthesized with no tag, with -c imageTag=a1 -c repositories=acme/notes, and with -c modelEndpoint=true and -c exec=true added. -c exec=yes and -c model=jp.amazon.nova-2-lite-v1:0 are refused"
+        }
+      },
+      {
+        "scope": "63",
+        "command": "vp run sandbox:plan / sandbox:policy / sandbox:bundle",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "判断と RunTask の入力、エージェントのコマンドと設定、Network Firewall のルールの出力。各ロールのステートメントと、エージェントのロールへの問い合わせの出力。dist/entry.mjs と dist/settings.json の生成",
+          "en": "The decision and the RunTask input, the agent's command and settings, and the Network Firewall rule source; each role's statements and the probes against the agent's role; dist/entry.mjs and dist/settings.json written"
+        }
+      },
+      {
+        "scope": "63",
+        "command": "node scripts/ops.ts <image-build|image-push|launch|logs|exec> --dry-run",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "コマンドの表示だけ。docker も aws も呼んでいない",
+          "en": "Printed the commands only. Neither docker nor aws was called"
+        }
+      },
+      {
+        "scope": "63",
+        "command": "vp run sandbox:image:build / sandbox:image:push",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "Docker のデーモンが無く、イメージは一度もビルドしていない",
+          "en": "No Docker daemon: the image was never built"
+        }
+      },
+      {
+        "scope": "63",
+        "command": "vp run sandbox:infra:deploy / sandbox:launch / sandbox:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS には何も作っていない。エージェントは一度も起動しておらず、モデルも呼んでいない",
+          "en": "Nothing was created in AWS. No agent was started and no model was called"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "agent-sandbox-deploy",
+        "summary": {
+          "ja": "63章のスタックは一度もデプロイしていない。イメージもビルドしていない。タスクが起動すること、読み取り専用のルートと 3 つのボリュームで Claude Code が動くこと、Fargate の中で bubblewrap によるサンドボックスが（enableWeakerNestedSandbox を付けても）起動できることは確かめていない。起動できなければ、failIfUnavailable により Claude Code は始まらない。",
+          "en": "Chapter 63's stack was never deployed and its image never built. Not checked: that the task starts, that Claude Code runs with a read-only root and three volumes, and that the bubblewrap sandbox can start inside Fargate at all, even with enableWeakerNestedSandbox. If it cannot, failIfUnavailable keeps Claude Code from starting."
+        },
+        "resume": {
+          "ja": "Docker のある環境で sandbox:bundle、sandbox:image:build a1 を実行する。本番ではないアカウントに 11章の VPC を egress=nat でデプロイし、sandbox:infra:deploy、sandbox:image:push a1、sandbox:infra:deploy -c imageTag=a1 -c repositories=<owner/name> の順に実行する。GitHub App のシークレットを作り、sandbox:launch で 1 つ起動して sandbox:logs で system/init と結果の行を確かめる。終わったら destroy する。",
+          "en": "On a machine with Docker, run sandbox:bundle and sandbox:image:build a1. In an account that is not production, deploy chapter 11's VPC with egress=nat, then sandbox:infra:deploy, sandbox:image:push a1, and sandbox:infra:deploy -c imageTag=a1 -c repositories=<owner/name>. Create the GitHub App secret, start one task with sandbox:launch, and look for the system/init and result lines with sandbox:logs. Destroy afterwards."
+        }
+      },
+      {
+        "id": "agent-sandbox-bare-settings",
+        "summary": {
+          "ja": "--bare を付けた claude が /etc/claude-code/managed-settings.json を読むかどうかは、ドキュメントからは確認できなかった。そのため同じファイルを --settings でも渡している。strictAllowlist が --settings 経由で効くことは設定リファレンスに書かれているが、実行して確かめてはいない。",
+          "en": "Whether claude with --bare reads /etc/claude-code/managed-settings.json could not be confirmed from the documentation, which is why the same file is also passed with --settings. The settings reference says strictAllowlist takes effect from --settings; this was not run."
+        },
+        "resume": {
+          "ja": "イメージの中で claude --bare -p を、--settings を付けた場合と外した場合で実行し、許可していないホストへの curl が拒否されるかを比べる。",
+          "en": "Inside the image, run claude --bare -p with and without --settings, and compare whether a curl to a host that is not on the list is refused."
+        }
+      },
+      {
+        "id": "agent-sandbox-bedrock-permissions",
+        "summary": {
+          "ja": "タスクロールには bedrock:InvokeModel と InvokeModelWithResponseStream だけを付けた。Claude Code のドキュメントの IAM ポリシーには ListInferenceProfiles と GetInferenceProfile もある。プロファイルの検出ができないときは確認なしで進むと書かれているが、この 2 つが無い状態で起動できることは確かめていない。",
+          "en": "The task role has bedrock:InvokeModel and InvokeModelWithResponseStream only. The IAM policy in Claude Code's documentation also lists ListInferenceProfiles and GetInferenceProfile. The page says Claude Code goes on without checking when profile discovery is unavailable, but that it starts without these two was not checked."
+        },
+        "resume": {
+          "ja": "デプロイしたタスクのログで、起動時のモデル確認と最初の推論が通るかを見る。通らなければ、この 2 つを足した場合に限って通るかを確かめ、足すなら GetInferenceProfile はプロファイルの ARN に絞る。",
+          "en": "In a deployed task's log, see whether the startup model check and the first inference succeed. If not, check whether adding these two is what fixes it, and scope GetInferenceProfile to the profile's ARN if it is added."
+        }
+      },
+      {
+        "id": "agent-sandbox-token-metrics",
+        "summary": {
+          "ja": "1 日の支出の見積もりは、AWS/Bedrock のトークンのメトリクスをディメンションなしで合計している。InputTokenCount がキャッシュのトークンを含むかどうか、推論プロファイルを呼んだときの ModelId の値、メトリクスが届くまでの遅れは、ドキュメントからは確認できなかった。",
+          "en": "The day's spend estimate sums the AWS/Bedrock token metrics with no dimension. Whether InputTokenCount includes cached tokens, what ModelId holds for a call through an inference profile, and how late the metrics arrive could not be confirmed from the documentation."
+        },
+        "resume": {
+          "ja": "タスクを 1 つ動かしたあと、CloudWatch の 4 つのメトリクスの合計を、ログの結果行にある usage と、翌日の Cost Explorer の Bedrock の金額と比べる。",
+          "en": "After one task, compare the sums of the four CloudWatch metrics with the usage in the log's result line and with the next day's Bedrock amount in Cost Explorer."
+        }
+      },
+      {
+        "id": "agent-sandbox-overrides-visibility",
+        "summary": {
+          "ja": "Git のトークンは RunTask の環境変数の上書きで渡している。DescribeTasks の応答に上書きが含まれることは API リファレンスの応答の形から読み取れるが、CloudTrail の RunTask のイベントに環境変数の値が残るかどうかは確かめていない。",
+          "en": "The Git token is handed over in RunTask's environment overrides. That DescribeTasks returns the overrides is read from the response shape in the API reference; whether CloudTrail's RunTask event keeps the values was not checked."
+        },
+        "resume": {
+          "ja": "タスクを 1 つ起動し、CloudTrail の RunTask イベントの requestParameters を見る。値が残っていれば、タスクごとのシークレットに置き換えることを検討する。",
+          "en": "Start one task and read requestParameters of the RunTask event in CloudTrail. If the value is there, consider a per-task secret instead."
+        }
+      },
+      {
+        "id": "agent-sandbox-network-firewall",
+        "summary": {
+          "ja": "Network Firewall による許可リストは、ルールの形を出力するだけで、スタックには入れていない。ファイアウォール用のサブネットとルートの変更が 11章のスタックの持ち物だからである。",
+          "en": "The Network Firewall allowlist exists only as a printed rule source; it is not in the stack, because the firewall's subnets and the route changes belong to chapter 11's stack."
+        },
+        "resume": {
+          "ja": "11章のスタックに、ファイアウォール用のサブネット、ファイアウォール、プライベートサブネットからファイアウォールのエンドポイントへのルートを足すモードを作り、sandbox:plan の出力をルールグループに入れる。",
+          "en": "Give chapter 11's stack a mode that adds the firewall subnets, the firewall, and routes from the private subnets to the firewall endpoint, and put the output of sandbox:plan into a rule group."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 63: agent sandbox --------------------------------------\n      // What the launcher would decide for one request, and what the task would be started with. Calls nothing.\n      \"sandbox:plan\": fresh(\"node scripts/plan.ts\", { cwd: \"examples/63-agent-sandbox\" }),\n      // What each role of the stack could be allowed to do, by this chapter's own evaluator. Not IAM's answer.\n      \"sandbox:policy\": fresh(\"node scripts/policy.ts\", { cwd: \"examples/63-agent-sandbox\" }),\n      // The container's program and Claude Code's settings file: all the image copies.\n      \"sandbox:bundle\": fresh(\"node scripts/bundle.ts\", { cwd: \"examples/63-agent-sandbox\" }),\n      // Needs a running Docker daemon, which the Nix shell does not provide.\n      \"sandbox:image:build\": fresh(\"node scripts/ops.ts image-build\", {\n        cwd: \"examples/63-agent-sandbox\",\n        dependsOn: [\"sandbox:bundle\"],\n      }),\n      \"sandbox:image:push\": live(\"node --env-file-if-exists=../../.env scripts/ops.ts image-push\", {\n        cwd: \"examples/63-agent-sandbox\",\n      }),\n      // Deploy to an account that is not production. Nothing here is billed by the hour unless -c modelEndpoint=true.\n      ...infra(\"sandbox\", \"examples/63-agent-sandbox\", \"AihAgentSandbox\"),\n      // Starts one billed Fargate task that runs a coding agent and calls a model.\n      \"sandbox:launch\": live(\"node --env-file-if-exists=../../.env scripts/ops.ts launch\", {\n        cwd: \"examples/63-agent-sandbox\",\n      }),\n      \"sandbox:logs\": live(\"node --env-file-if-exists=../../.env scripts/ops.ts logs\", {\n        cwd: \"examples/63-agent-sandbox\",\n      }),\n      // A shell in a running task. Only works on a stack deployed with -c exec=true.\n      \"sandbox:exec\": live(\"node --env-file-if-exists=../../.env scripts/ops.ts exec\", {\n        cwd: \"examples/63-agent-sandbox\",\n      }),",
+    "synth": ["sandbox:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/63-agent-sandbox"]
+  }
+}

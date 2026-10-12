@@ -1,0 +1,1027 @@
+{
+  "chapterId": "53",
+  "manifest": {
+    "id": "53",
+    "slug": "efs",
+    "title": {
+      "ja": "EFS: いくつもの実行環境から同時にマウントするファイルシステム",
+      "en": "EFS: A File System Several Things Mount at Once"
+    },
+    "prerequisites": ["04", "07", "11", "12", "23"],
+    "services": ["EFS", "Lambda", "API Gateway", "VPC"],
+    "samplePath": "examples/53-efs",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "efs-how-it-works",
+      "efs-features",
+      "efs-performance",
+      "efs-limits",
+      "efs-access-points",
+      "efs-enforce-identity",
+      "efs-enforce-root",
+      "efs-iam-nfs",
+      "efs-lifecycle",
+      "efs-metered-sizes",
+      "efs-encryption-transit",
+      "efs-encryption-rest",
+      "efs-backup",
+      "efs-pricing",
+      "efs-price-list",
+      "efs-lambda-filesystem",
+      "efs-lambda-filesystem-efs",
+      "efs-lambda-vpc",
+      "efs-lambda-vpc-managed-policy",
+      "efs-lambda-launch-blog",
+      "efs-ecs-volumes",
+      "efs-ecs-config",
+      "efs-s3-files",
+      "efs-s3-consistency",
+      "efs-ebs-multi-attach",
+      "efs-man-open",
+      "efs-man-rename",
+      "efs-man-nfs",
+      "efs-cloudflare-workers-fs",
+      "efs-vercel-functions-runtimes",
+      "efs-cdkd-provider"
+    ]
+  },
+  "sources": [
+    {
+      "id": "efs-how-it-works",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/how-it-works.html",
+      "title": "How Amazon EFS works",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EFS is mounted in a VPC through NFS versions 4.0 and 4.1",
+        "A file system can be accessed concurrently from multiple NFS clients, in multiple Availability Zones of the same Region",
+        "A mount target provides an IP address for an NFSv4 endpoint; one mount target can be created in each Availability Zone, in one of its subnets",
+        "The file system's DNS name resolves to the mount target in the client's own Availability Zone",
+        "An EFS file system can have mount targets in only one VPC at a time",
+        "AWS recommends reaching the file system through a mount target in the same Availability Zone, for performance and cost",
+        "A One Zone file system can have only a single mount target"
+      ]
+    },
+    {
+      "id": "efs-features",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/features.html",
+      "title": "Features of Amazon EFS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "\"Amazon EFS provides the close-to-open consistency semantics that applications expect from NFS\"",
+        "Writes to a Regional file system are durably stored across Availability Zones when the application writes synchronously (O_DIRECT, fsync) or closes the file",
+        "Applications that perform synchronous data access and non-appending writes have read-after-write consistency",
+        "EFS supports only advisory locking; reads and writes do not check for conflicting locks",
+        "A single file can have up to 512 locks across all connected instances and users",
+        "Regional file systems store data across multiple Availability Zones; One Zone file systems store it in one and are not resilient to the loss of that zone",
+        "One Zone file systems are available in Tokyo only in apne1-az1 and apne1-az4",
+        "Storage classes: Standard, Infrequent Access, Archive; IA and Archive have a minimum billing charge of 128 KiB per file and first-byte latency of tens of milliseconds; Archive has a 90-day minimum storage duration and needs Elastic throughput",
+        "Replication keeps a destination file system in a Region of your choice in step, designed for an RPO and RTO of minutes"
+      ]
+    },
+    {
+      "id": "efs-performance",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "title": "Amazon EFS performance specifications",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Latency for General Purpose Regional file systems: about 1 ms for reads and about 2.7 ms for writes, stated as best case under optimal conditions; One Zone: about 1 ms and about 1.6 ms",
+        "General Purpose is the default performance mode and is recommended for all file systems; Max I/O is a previous generation and is not supported with Elastic throughput or One Zone",
+        "Throughput modes: Elastic (recommended, the default), Provisioned, Bursting",
+        "With Elastic throughput you pay only for the metadata and data read or written",
+        "Bursting: baseline 50 KiBps per GiB of Standard storage, bursts to 100 MiBps minimum while credits last, and a metered 1 MiBps for every file system",
+        "Every NFS request counts as 4 KB of throughput or its actual size, whichever is larger",
+        "After switching to Provisioned or changing its amount, switching away or lowering it is blocked for 24 hours"
+      ]
+    },
+    {
+      "id": "efs-limits",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/limits.html",
+      "title": "Amazon EFS quotas",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "1,000 file systems per account per Region and 10,000 access points per file system by default (both can be raised)",
+        "25,000 connections per file system; one mount target per file system per Availability Zone; one VPC per file system; 5 security groups per mount target",
+        "512 locks on a single file across all instances and users; 65,536 locks per mount per connection",
+        "File name up to 255 bytes; single file up to 47.9 TiB; 177 hard links",
+        "Unsupported NFSv4 features include mandatory locking, ACLs, extended attributes, and client delegations",
+        "EFS does not support NFSv2 or NFSv3, the nconnect mount option, or Microsoft Windows clients"
+      ]
+    },
+    {
+      "id": "efs-access-points",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/efs-access-points.html",
+      "title": "Working with access points",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "An access point is an application-specific entry point that can enforce a user identity and a root directory",
+        "Security groups apply at the mount target, not at the access point; an access point is available in every zone that has a mount target",
+        "Mounting through an access point on EC2 uses the EFS mount helper with the tls option: mount -t efs -o tls,iam,accesspoint=fsap-... fs-...: /mountpoint"
+      ]
+    },
+    {
+      "id": "efs-enforce-identity",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/enforce-identity-access-points.html",
+      "title": "Enforcing a user identity using an access point",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "EFS replaces the NFS client's user and group IDs with the access point's for all file system operations",
+        "New files and directories are owned by the access point's user ID and group ID",
+        "Setting the access point's UID or GID to 0 requires the ClientRootAccess permission"
+      ]
+    },
+    {
+      "id": "efs-enforce-root",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/enforce-root-directory-access-point.html",
+      "title": "Enforcing a root directory with an access point",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The access point's Path becomes the root directory for clients that mount through it",
+        "EFS creates the root directory only when owner UID, owner GID, and permissions are given; otherwise mounting fails if the directory does not exist",
+        "The path can be at most 100 characters and include up to four subdirectories"
+      ]
+    },
+    {
+      "id": "efs-iam-nfs",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/iam-access-control-nfs-efs.html",
+      "title": "Using IAM to control access to file systems",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The default file system policy grants full access to any anonymous client that can connect through a mount target, and is in effect whenever no user-configured policy is",
+        "An allow in either an identity policy or the file system policy grants access; it does not need to be in both",
+        "Client actions: elasticfilesystem:ClientMount (read-only access), ClientWrite, ClientRootAccess",
+        "Condition keys for NFS clients: aws:SecureTransport, aws:SourceIp, elasticfilesystem:AccessPointArn, elasticfilesystem:AccessedViaMountTarget",
+        "IAM authorization on EC2 requires the EFS mount helper"
+      ],
+      "note": "The page does not say in so many words that a policy made only of Deny statements is accepted. The chapter's stack uses one; this has not been deployed."
+    },
+    {
+      "id": "efs-lifecycle",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/lifecycle-management-efs.html",
+      "title": "Managing storage lifecycle",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lifecycle management moves files to Infrequent Access and Archive by time since last access in Standard, for the whole file system",
+        "The page gives the defaults as 30 days to IA, 90 days to Archive, and no transition back to Standard",
+        "File metadata always stays in Standard; listing a directory does not count as access"
+      ],
+      "note": "The defaults on this page are what the console applies. A file system created through CloudFormation without LifecyclePolicies was not checked against a real account."
+    },
+    {
+      "id": "efs-metered-sizes",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/metered-sizes.html",
+      "title": "How Amazon EFS reports file system and object sizes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Each file, directory, symlink is metered as 2 KiB of metadata plus data in 4 KiB increments",
+        "An empty file contributes 6 KiB; a new file system has an empty root directory and a metered size of 6 KiB",
+        "With Elastic throughput, metadata operations are metered in 1 KiB increments after the first 4 KiB, and data operations in 1 KiB increments after the first 32 KiB",
+        "IA and Archive are metered with a minimum of 128 KiB per file, and their data access in 128 KiB increments; their metadata (2 KiB per file) stays in Standard",
+        "Reads are metered at one third the rate of other operations for throughput accounting"
+      ]
+    },
+    {
+      "id": "efs-encryption-transit",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/encryption-in-transit.html",
+      "title": "Encrypting data in transit",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Encryption in transit is TLS, chosen as a mount option; the mount helper sets it up through efs-proxy or stunnel on a local port"
+      ]
+    },
+    {
+      "id": "efs-encryption-rest",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/encryption-at-rest.html",
+      "title": "Encrypting data at rest",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Encryption at rest is on by default in the console and must be asked for explicitly through the CLI, API, or SDKs",
+        "The encryption setting cannot be changed after the file system is created",
+        "The default key is the AWS owned key aws/elasticfilesystem, at no additional charge"
+      ]
+    },
+    {
+      "id": "efs-backup",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/awsbackup.html",
+      "title": "Backing up EFS file systems",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Automatic backups are on by default for file systems created in the console; through the CLI or API, only for One Zone file systems",
+        "The default plan takes daily backups and keeps them 35 days, in a default vault that cannot be deleted",
+        "Backups are incremental; a restore goes to a new or an existing file system, whole or item by item",
+        "The default EFS backup vault's access policy denies deleting recovery points until the policy is changed",
+        "Changes made while a backup runs can leave it inconsistent"
+      ]
+    },
+    {
+      "id": "efs-pricing",
+      "url": "https://aws.amazon.com/efs/pricing/",
+      "title": "Amazon EFS Pricing",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "There is no minimum fee or setup charge",
+        "There is no data transfer charge for reaching a mount target in the same Availability Zone; across zones the EC2 cross-AZ rate applies",
+        "New customers get 5 GB of EFS Standard storage on a Regional file system for 12 months; accounts created from July 15, 2025 get Free Tier credits instead"
+      ],
+      "note": "The page text read on this date showed no per-GB figures, and says nothing either way about a charge for mount targets or access points. Figures come from the Price List."
+    },
+    {
+      "id": "efs-price-list",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: AmazonEFS, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Standard storage USD 0.36 per GB-month; One Zone storage USD 0.192; Infrequent Access USD 0.0272, or USD 0.02 with Elastic throughput; Archive USD 0.01",
+        "Elastic throughput: USD 0.04 per GB read, USD 0.07 per GB written",
+        "Provisioned throughput: USD 7.20 per MiBps-month",
+        "Infrequent Access reads and writes: USD 0.012 per GB; Archive reads and tiering: USD 0.036 per GB",
+        "The offer file has no SKU for mount targets or access points"
+      ],
+      "note": "Publication date of the offer file: 2026-09-11T12:44:25Z."
+    },
+    {
+      "id": "efs-lambda-filesystem",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-filesystem.html",
+      "title": "Configuring file system access for Lambda functions",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Lambda can mount Amazon EFS or Amazon S3 Files to a local directory, and a function can use one of the two, not both"
+      ]
+    },
+    {
+      "id": "efs-lambda-filesystem-efs",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-filesystem-efs.html",
+      "title": "Configuring Amazon EFS file system access (Lambda)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The function connects to the file system over the local network in a VPC, through an access point, with a local mount path starting with /mnt/",
+        "With a user-configured file system policy, the execution role needs elasticfilesystem:ClientMount and, to write, ClientWrite",
+        "The file system needs a mount target in every Availability Zone the function connects to; NFS (port 2049) must be allowed by the security groups of the function and the mount targets",
+        "The guide advises an access point with a non-root path and a limited number of files per directory",
+        "EFS for Lambda is available in all commercial Regions except five, none of them Tokyo"
+      ]
+    },
+    {
+      "id": "efs-lambda-vpc",
+      "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html",
+      "title": "Giving Lambda functions access to resources in an Amazon VPC",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The execution role needs six ec2 actions, allowed on all resources, for Lambda to create its network interfaces; the managed policy AWSLambdaVPCAccessExecutionRole contains them",
+        "Those permissions are implicitly granted to the function's code as well; the guide shows a Deny keyed on lambda:SourceFunctionArn",
+        "A function attached to a VPC can reach only what the VPC can reach; a public subnet gives it no internet access",
+        "While Lambda creates a Hyperplane ENI a new function stays Pending, which can take several minutes; after 14 idle days the ENI is reclaimed and the function becomes Inactive"
+      ]
+    },
+    {
+      "id": "efs-lambda-vpc-managed-policy",
+      "url": "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSLambdaVPCAccessExecutionRole.html",
+      "title": "AWSLambdaVPCAccessExecutionRole (AWS managed policy reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Version v3 allows, on all resources, the six ec2 network interface actions and also logs:CreateLogGroup, logs:CreateLogStream, and logs:PutLogEvents"
+      ]
+    },
+    {
+      "id": "efs-lambda-launch-blog",
+      "url": "https://aws.amazon.com/blogs/aws/new-a-shared-file-system-for-your-lambda-functions/",
+      "title": "New – A Shared File System for Your Lambda Functions (AWS News Blog, 2020-06-16)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "\"The Lambda function execution environment and the EFS mount point uses industry standard Transport Layer Security (TLS) 1.2\""
+      ],
+      "note": "A launch post from 2020. The current Lambda guide pages read on this date do not repeat the statement."
+    },
+    {
+      "id": "efs-ecs-volumes",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/efs-volumes.html",
+      "title": "Use Amazon EFS volumes with Amazon ECS",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On Fargate, EFS volumes need platform version 1.4.0 or later (Linux)",
+        "Fargate runs a supervisor container that manages the volume and uses a small part of the task's CPU and memory"
+      ]
+    },
+    {
+      "id": "efs-ecs-config",
+      "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specify-efs-config.html",
+      "title": "Specify an Amazon EFS file system in an Amazon ECS task definition",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "transitEncryption defaults to DISABLED and must be ENABLED when an access point or IAM authorization is used",
+        "With an access point, rootDirectory must be omitted or \"/\"",
+        "authorizationConfig.iam ENABLED mounts with the task IAM role"
+      ]
+    },
+    {
+      "id": "efs-s3-files",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-files.html",
+      "title": "Working with Amazon S3 Files",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 Files is a shared file system, built using Amazon EFS, that presents an S3 bucket or prefix as files and synchronizes changes in both directions",
+        "It speaks NFS 4.1 and 4.2, has mount targets and access points, and can be mounted from EC2, Lambda, EKS, and ECS",
+        "The authoritative data stays in S3; writes go to the file system's storage first and are synchronized back to the bucket"
+      ],
+      "note": "Only this overview page was read. Prices, Region availability, and the synchronization delay were not checked."
+    },
+    {
+      "id": "efs-s3-consistency",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html",
+      "title": "What is Amazon S3? (data consistency model)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "S3 gives strong read-after-write consistency for PUT and DELETE",
+        "Updates to a single key are atomic: a concurrent GET returns the old data or the new data, never partial or corrupt data",
+        "S3 does not lock objects for concurrent writers; of two simultaneous PUTs the later timestamp wins"
+      ]
+    },
+    {
+      "id": "efs-ebs-multi-attach",
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes-multi.html",
+      "title": "Attach an EBS volume to multiple EC2 instances using Multi-Attach",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Multi-Attach exists only for io1 and io2 volumes, for up to 16 Nitro instances in the same Availability Zone",
+        "Standard file systems such as XFS and ext4 are not designed for simultaneous access by several servers; a clustered file system is needed"
+      ]
+    },
+    {
+      "id": "efs-man-open",
+      "url": "https://man7.org/linux/man-pages/man2/open.2.html",
+      "title": "open(2), Linux manual page",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "\"O_APPEND may lead to corrupted files on NFS filesystems if more than one process appends data to a file at once\"",
+        "A lock file can be taken atomically on NFS by creating a unique file and calling link(2)"
+      ]
+    },
+    {
+      "id": "efs-man-rename",
+      "url": "https://man7.org/linux/man-pages/man2/rename.2.html",
+      "title": "rename(2), Linux manual page",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "If newpath exists it is atomically replaced, and no other process finds it missing at any point",
+        "oldpath and newpath must be on the same mounted file system (EXDEV otherwise)",
+        "\"On NFS filesystems, you can not assume that if the operation failed, the file was not renamed\""
+      ]
+    },
+    {
+      "id": "efs-man-nfs",
+      "url": "https://man7.org/linux/man-pages/man5/nfs.5.html",
+      "title": "nfs(5), Linux manual page",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Close-to-open cache consistency: the client checks with the server when a file is opened and flushes changes when it is closed",
+        "Between those points a client's cache can hold stale data; attributes are revalidated every few seconds (acregmin 3 s, acregmax 60 s, acdirmin 30 s, acdirmax 60 s by default)",
+        "Written data may not reach the server until the application flushes (fsync) or closes the file"
+      ],
+      "note": "What mount options Lambda and Fargate use for their EFS mounts is not documented in the pages read."
+    },
+    {
+      "id": "efs-cloudflare-workers-fs",
+      "url": "https://developers.cloudflare.com/workers/runtime-apis/nodejs/fs/",
+      "title": "node:fs (Cloudflare Workers runtime APIs)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Workers provide a virtual, memory-based file system; /bundle is read-only and /tmp is writable",
+        "The contents of /tmp are not persistent and are unique to each request"
+      ]
+    },
+    {
+      "id": "efs-vercel-functions-runtimes",
+      "url": "https://vercel.com/docs/functions/runtimes",
+      "title": "Runtimes (Vercel Functions)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Vercel Functions have a read-only file system with a writable /tmp scratch space of up to 500 MB"
+      ]
+    },
+    {
+      "id": "efs-cdkd-provider",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (npm package, dist/)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS::EFS::FileSystem, AWS::EFS::MountTarget, and AWS::EFS::AccessPoint are registered to cdkd's own EFS provider",
+        "The provider handles FileSystemPolicy, BackupPolicy, LifecyclePolicies, ThroughputMode, PerformanceMode, Encrypted and tags on the file system; ReplicationConfiguration is left out by design",
+        "An access point has no in-place update: any property change needs --replace or destroy and redeploy",
+        "The Lambda provider passes FileSystemConfigs and VpcConfig through"
+      ],
+      "note": "Read in the installed package's bundled dist/, not in the GitHub source tree."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "efs-file-system",
+      "ja": "ファイルシステム（EFS）",
+      "en": "file system (EFS)",
+      "firstUse": "53",
+      "definition": {
+        "ja": "EFS で作る、NFS でマウントする共有のディスク。容量を決めずに作り、置いた量と読み書きした量に課金される。同じリージョンの複数の実行環境から同時にマウントできる。",
+        "en": "A shared disk created in EFS and mounted over NFS. It has no fixed size; you pay for what is stored and for what is read and written. Several things in the same Region can mount it at once."
+      }
+    },
+    {
+      "id": "nfs",
+      "ja": "NFS",
+      "en": "NFS",
+      "firstUse": "53",
+      "definition": {
+        "ja": "Network File System。ネットワークの向こうのファイルシステムを、手元のディレクトリとしてマウントするプロトコル。EFS が話すのは 4.0 と 4.1。",
+        "en": "Network File System: a protocol for mounting a file system on another machine as a local directory. EFS speaks versions 4.0 and 4.1."
+      }
+    },
+    {
+      "id": "mount-target",
+      "ja": "マウントターゲット",
+      "en": "mount target",
+      "firstUse": "53",
+      "definition": {
+        "ja": "EFS のファイルシステムが、VPC のサブネットに出す NFS の接続先。AZ ごとに 1 つ作り、セキュリティグループはここに付く。",
+        "en": "The NFS endpoint an EFS file system exposes in a subnet of the VPC. One per Availability Zone; security groups attach here."
+      }
+    },
+    {
+      "id": "efs-access-point",
+      "ja": "アクセスポイント（EFS）",
+      "en": "access point (EFS)",
+      "firstUse": "53",
+      "definition": {
+        "ja": "ファイルシステムへの、アプリケーションごとの入口。そこから入るクライアントに、決まったディレクトリをルートとして見せ、決まった POSIX のユーザーとして扱う。",
+        "en": "A per-application entry into a file system. Clients that come in through it see one directory as the root and act as one fixed POSIX user."
+      }
+    },
+    {
+      "id": "close-to-open-consistency",
+      "ja": "close-to-open の整合性",
+      "en": "close-to-open consistency",
+      "firstUse": "53",
+      "definition": {
+        "ja": "NFS の整合性の約束。あるクライアントがファイルを閉じたあとに別のクライアントが開けば、書いた内容が見える。開いたままのファイルについては約束しない。",
+        "en": "The consistency NFS promises: once one client closes a file, another client that opens it sees what was written. It promises nothing about files that are still open."
+      }
+    },
+    {
+      "id": "advisory-lock",
+      "ja": "アドバイザリロック",
+      "en": "advisory lock",
+      "firstUse": "53",
+      "definition": {
+        "ja": "ロックを確かめる側だけが従うロック。取っていないプロセスの読み書きは止まらない。EFS のロックはすべてこれ。",
+        "en": "A lock that binds only the programs that check for it. Reads and writes by a process that did not take it go through. Every lock on EFS is of this kind."
+      }
+    },
+    {
+      "id": "atomic-rename",
+      "ja": "rename による置き換え",
+      "en": "rename into place",
+      "firstUse": "53",
+      "definition": {
+        "ja": "新しい内容を別の名前のファイルに書き終えてから、rename で本来の名前に付け替える書き方。読む側には古い内容か新しい内容のどちらかだけが見える。",
+        "en": "Writing the new content to a file under another name, then renaming it over the real name. A reader sees the old content or the new, nothing in between."
+      }
+    },
+    {
+      "id": "elastic-throughput",
+      "ja": "Elastic スループット",
+      "en": "Elastic throughput",
+      "firstUse": "53",
+      "definition": {
+        "ja": "EFS のスループットの方式の 1 つ。前もって量を決めず、読み書きしたバイト数に課金される。",
+        "en": "One of EFS's throughput modes: nothing is provisioned, and you pay per byte read and written."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "53.choice",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "53.cost",
+      "sources": ["data/pricing"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "53.architecture",
+      "sources": ["examples/53-efs/infra/lib/efs-stack.ts", "examples/53-efs/src/config.ts"],
+      "tasks": ["efs:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["type"],
+      "verification": "local"
+    },
+    {
+      "id": "53.mount",
+      "sources": [
+        "examples/53-efs/infra/lib/efs-stack.ts",
+        "examples/53-efs/src/config.ts",
+        "examples/53-efs/infra/test/efs-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "efs:infra:synth"],
+      "boundary": "cloud",
+      "criteria": ["type", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "53.modes",
+      "sources": [
+        "examples/53-efs/infra/lib/efs-stack.ts",
+        "examples/53-efs/infra/test/efs-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["cost", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "53.semantics",
+      "sources": ["examples/53-efs/test/two-writers.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "53.write-path",
+      "sources": [
+        "examples/53-efs/src/note-files.ts",
+        "examples/53-efs/src/node-dir.ts",
+        "examples/53-efs/test/note-files.test.ts",
+        "examples/53-efs/test/two-writers.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "53.function",
+      "sources": [
+        "examples/53-efs/src/compose.ts",
+        "examples/53-efs/src/lambda.ts",
+        "examples/53-efs/infra/lib/efs-stack.ts",
+        "examples/53-efs/infra/bin/app.ts",
+        "examples/53-efs/infra/test/efs-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "efs:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "53.local",
+      "sources": ["examples/53-efs/src/dev.ts", "examples/53-efs/test"],
+      "tasks": ["dev:efs", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "53.deploy",
+      "sources": ["examples/53-efs/infra/bin/app.ts"],
+      "tasks": ["efs:infra:diff", "efs:infra:deploy", "efs:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "53.protect",
+      "sources": ["examples/53-efs/src/config.ts", "examples/53-efs/infra/lib/efs-stack.ts"],
+      "tasks": ["efs:infra:deploy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "53.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "53.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["efs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [
+    {
+      "id": "efs.standard.storage",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "6AKQKVK34TWYK2FQ",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3600000000",
+          "description": "USD $0.36 per GB-Mo for Standard storage (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.onezone.storage",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "5GYHT9JVZZPN5XPZ",
+      "usageType": "APN1-TimedStorage-Z-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1920000000",
+          "description": "$0.192 per GB-Mo for One Zone Storage in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.ia.storage",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "73QGTE3EKU27233F",
+      "usageType": "APN1-IATimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0272000000",
+          "description": "USD $0.0272 per GB-Mo for Standard-Infrequent Access storage (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.ia.storage.elastic",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "QFVEM5B8YBQAMC73",
+      "usageType": "APN1-IATimedStorage-ET-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0200000000",
+          "description": "USD $0.02 per GB-Mo for Infrequent Access storage with Elastic Throughput (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.archive.storage",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "KRC84SQGWGM9DC6M",
+      "usageType": "APN1-ArchiveTimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0100000000",
+          "description": "USD $0.01 per GB-Mo for Archive storage (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.elastic.read",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "SRDRS7TM5QAGC3H2",
+      "usageType": "APN1-ETDataAccess-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0400000000",
+          "description": "USD $0.04 per GB for Elastic Throughput reads (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.elastic.write",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "2HS4CTWRNUT7AB8H",
+      "usageType": "APN1-ETDataAccess-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0700000000",
+          "description": "USD $0.07 per GB for Elastic Throughput writes (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.ia.read",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "HJYFTP3EYGCH2NUJ",
+      "usageType": "APN1-IADataAccess-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0120000000",
+          "description": "USD $0.012 per GB for Infrequent Access reads (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "efs.provisioned.throughput",
+      "offerCode": "AmazonEFS",
+      "region": "ap-northeast-1",
+      "sku": "4TP3RTNWJ4WXKHNG",
+      "usageType": "APN1-ProvisionedTP-MiBpsHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "MiBps-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "7.2000000000",
+          "description": "USD $7.20 per MiBps-Mo for Provisioned Throughput (APN1)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEFS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-13"
+    }
+  ],
+  "allowances": [],
+  "unknownAllowances": [
+    {
+      "priceId": "efs.standard.storage",
+      "reason": "The EFS pricing page gives new customers 5 GB of Standard storage on a Regional file system for 12 months, and accounts created from July 15, 2025 Free Tier credits instead. Neither is an always-free allowance, and which applies to a given account was not confirmed; nothing is deducted."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "efs-idle",
+      "chapter": "53",
+      "title": {
+        "ja": "EFS: デプロイして何も書かずに 1 か月",
+        "en": "EFS: a month deployed with nothing written"
+      },
+      "assumptions": {
+        "ja": [
+          "既定の構成。Regional のファイルシステム、Elastic スループット、バックアップなし",
+          "ファイルシステムの計量サイズは、空のルートディレクトリ 1 つの 6 KiB（EFS のドキュメントの値）",
+          "マウントターゲット 2 つとアクセスポイントには、Price List に SKU がない。関数は 1 回も呼ばれない",
+          "11章のスタックは既定の構成（NAT ゲートウェイなし、インターフェースエンドポイントなし）"
+        ],
+        "en": [
+          "The default layout: a Regional file system, Elastic throughput, no backups",
+          "The metered size is the 6 KiB of one empty root directory (the figure in the EFS guide)",
+          "The two mount targets and the access point have no SKU in the Price List. The function is never invoked",
+          "The chapter 11 stack is in its default layout (no NAT gateway, no interface endpoints)"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "efs.standard.storage",
+          "quantity": 0.0000057220458984375,
+          "basis": "6 KiB metered for the empty root directory, the whole month"
+        }
+      ]
+    },
+    {
+      "id": "efs-practice-month",
+      "chapter": "53",
+      "title": {
+        "ja": "EFS: ノート 100 件を置き、1 か月使う",
+        "en": "EFS: 100 notes kept and used for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "ノート 100 件。どれも 4 KiB 以下なので、1 件はメタデータ 2 KiB とデータ 4 KiB の 6 KiB。ディレクトリ 4 つ（ルート、アクセスポイントのルート、notes、incoming）も 6 KiB ずつと仮定",
+          "書き込みは月 1,000 回。データの操作は最初の 32 KiB までが 1 単位として計量されるので、1 回 32 KiB",
+          "一覧は月 10,000 回。この章の実装は一覧のたびに 100 件のファイルをすべて読むので、1 回 100 × 32 KiB",
+          "メタデータの操作（ディレクトリの一覧、ファイルの作成、rename、属性の取得）は、回数を数えていないので未算入。0 ではない",
+          "関数は月 11,000 回、1 回 0.1 秒、256 MB と仮定（計測していない）。HTTP API のリクエストも同数",
+          "ログ、データ転送は未算入。無料枠は差し引いていない"
+        ],
+        "en": [
+          "100 notes of at most 4 KiB each, so 6 KiB per note (2 KiB of metadata, 4 KiB of data). Four directories (the root, the access point's root, notes, incoming) are assumed to be 6 KiB each",
+          "1,000 writes a month. A data operation is metered as one unit up to its first 32 KiB, so 32 KiB per write",
+          "10,000 list requests a month. This chapter's code reads all 100 files for every list, so 100 x 32 KiB each",
+          "Metadata operations (directory listings, file creation, rename, attribute lookups) were not counted and are not included. They are not zero",
+          "The function is assumed to run 11,000 times a month for 0.1 s at 256 MB (not measured), with as many HTTP API requests",
+          "Logs and data transfer are not included. No free allowance is deducted"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "efs.standard.storage",
+          "quantity": 0.0005950927734375,
+          "basis": "(100 notes + 4 directories) x 6 KiB"
+        },
+        {
+          "priceId": "efs.elastic.write",
+          "quantity": 0.030517578125,
+          "basis": "1,000 writes x 32 KiB metered"
+        },
+        {
+          "priceId": "efs.elastic.read",
+          "quantity": 30.517578125,
+          "basis": "10,000 lists x 100 files x 32 KiB metered"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 11000,
+          "basis": "11,000 invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 275,
+          "basis": "11,000 x 0.1 s x 0.25 GB (assumed)"
+        },
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 11000,
+          "basis": "11,000 requests"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "53",
+        "command": "vp test run examples/53-efs",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "53 件。ノートを 1 件 1 ファイルで置くリポジトリを、書き込みの各段階で中断するテスト。実際のファイルシステム（macOS、APFS）の上で、その場での上書きが半分の内容を見せること、rename による置き換えではどの段階でも古い内容か新しい内容だけが見えること、23章のリポジトリを 2 つ開くと確認済みのノートが消えること、追記のモデル。04章の API を載せたテスト、パスを抜け出す ID の拒否、スタックの assertion",
+          "en": "53 tests. The one-file-per-note repository interrupted at each step of a write. On a real file system (macOS, APFS): an in-place write shows half a note, rename into place shows only the old or the new content at every step, two copies of chapter 23's repository lose an acknowledged note, and a model of append. The chapter 04 API on top, IDs that climb out of the directory refused, and stack assertions"
+        }
+      },
+      {
+        "scope": "53",
+        "command": "tsc --noEmit -p examples/53-efs",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査",
+          "en": "Type check"
+        }
+      },
+      {
+        "scope": "53",
+        "command": "vp run efs:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "既定の構成と `-c dataOnDestroy=retain -c backup=true` で、AWS に問い合わせずにテンプレートを生成した（esbuild のバンドル込み）",
+          "en": "Synthesized the default layout and `-c dataOnDestroy=retain -c backup=true` without asking AWS anything (esbuild bundling included)"
+        }
+      },
+      {
+        "scope": "53",
+        "command": "vp run dev:efs (two processes, one directory)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "同じディレクトリを指す 2 つのサーバーを別のポートで起動し、片方に POST したノートがもう片方の一覧に出ること、`/notes/..%2F..%2Fetc%2Fpasswd` が 404 になることを curl で確かめた",
+          "en": "Started two servers on different ports over one directory; a note posted to one appeared in the other's list, and `/notes/..%2F..%2Fetc%2Fpasswd` answered 404 (curl)"
+        }
+      },
+      {
+        "scope": "53",
+        "command": "vp run efs:infra:deploy / efs:infra:drift / efs:infra:destroy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "AWS では何も実行していない",
+          "en": "Nothing was run against AWS"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "53-deploy",
+        "summary": {
+          "ja": "53章のスタックを一度もデプロイしていない。cdkd 0.296.28 の EFS プロバイダーでファイルシステム、マウントターゲット、アクセスポイントが作れること、関数が作成時にマウントターゲットを見つけられること、Deny だけのファイルシステムポリシーが受け付けられること、その下で Lambda がマウントできること（Lambda が TLS でマウントするという記述は 2020 年の公式ブログにしか見つけていない）、アクセスポイントのルートディレクトリが初回のマウントで作られることが未確認。",
+          "en": "The chapter 53 stack has never been deployed. Unverified: that cdkd 0.296.28's EFS provider creates the file system, mount targets, and access point; that the function finds the mount targets at creation; that a file system policy made only of a Deny statement is accepted; that Lambda can mount under it (the statement that Lambda mounts over TLS was found only in an official blog post from 2020); and that the access point's root directory is created on first mount."
+        },
+        "resume": {
+          "ja": "`vp run net:infra:deploy` の後に `vp run efs:infra:deploy`。出力の `ApiUrl` に POST と GET を送り、`aws efs describe-file-system-policy` と `aws efs describe-mount-targets` で設定を確かめ、`vp run efs:infra:drift` を通す。マウントに失敗したら、関数を呼んだときのエラーとログを読み、ポリシーの Deny を外して切り分ける。終わったら `vp run efs:infra:destroy`。",
+          "en": "After `vp run net:infra:deploy`, run `vp run efs:infra:deploy`. Send a POST and a GET to the `ApiUrl` output, check the settings with `aws efs describe-file-system-policy` and `aws efs describe-mount-targets`, and run `vp run efs:infra:drift`. If the mount fails, read the error the invocation returns and the function's log, and remove the Deny from the policy to narrow it down. Then `vp run efs:infra:destroy`."
+        }
+      },
+      {
+        "id": "53-nfs-behaviour",
+        "summary": {
+          "ja": "NFS の上での挙動を一度も観測していない。テストはすべて手元のファイルシステム（macOS の APFS）で動かした。2 つの実行環境のあいだで、rename した直後のファイルや一覧がどれだけ遅れて見えるか（クライアントの属性キャッシュ）、Lambda がどのマウントオプションを使うか、追記の競合が実際にどう壊れるかは、ドキュメントと man ページから読んだだけ。",
+          "en": "No behaviour was observed on NFS. Every test ran on a local file system (APFS on macOS). How late a renamed file or a directory listing appears to another execution environment (client attribute caching), which mount options Lambda uses, and how concurrent appends actually break were read from documentation and manual pages only."
+        },
+        "resume": {
+          "ja": "デプロイした関数の同時実行数を 2 以上にして、片方の環境で書いた直後にもう片方で読むリクエストを繰り返し、古い内容が返る割合と時間を記録する。EC2 に同じアクセスポイントをマウントして `mount` の出力でオプションを確かめ、`examples/53-efs/test/two-writers.test.ts` をそのマウント先を `TMPDIR` にして実行する。",
+          "en": "Give the deployed function a concurrency of two or more, repeat a write in one environment followed at once by a read in another, and record how often and for how long the old content comes back. Mount the same access point on an EC2 instance, read the options from `mount`, and run `examples/53-efs/test/two-writers.test.ts` with `TMPDIR` set to that mount."
+        }
+      },
+      {
+        "id": "53-metering",
+        "summary": {
+          "ja": "Elastic スループットの計量を実際の請求で確かめていない。「データの操作は最初の 32 KiB のあと 1 KiB 刻み」というドキュメントの文を、32 KiB 以下の読み書き 1 回は 32 KiB として計量される、と読んで計算した。メタデータの操作の回数は数えていない。",
+          "en": "Elastic throughput metering was not checked against a bill. The arithmetic reads the guide's sentence, that data operations are metered in 1 KiB increments after the first 32 KiB, as: one read or write of up to 32 KiB is metered as 32 KiB. Metadata operations were not counted."
+        },
+        "resume": {
+          "ja": "デプロイ後に決まった回数の書き込みと一覧を送り、CloudWatch の `MeteredIOBytes` と、翌日の Cost Explorer の使用量タイプ `APN1-ETDataAccess-Bytes` を、この章の仮定と比べる。",
+          "en": "After deploying, send a fixed number of writes and lists, then compare CloudWatch's `MeteredIOBytes` and the next day's Cost Explorer usage type `APN1-ETDataAccess-Bytes`, with this chapter's assumptions."
+        }
+      },
+      {
+        "id": "53-s3-files",
+        "summary": {
+          "ja": "Amazon S3 Files は概要のページを読んだだけ。料金、東京リージョンで使えるか、バケットとの同期の遅れ、cdkd と CloudFormation での扱いは確かめていない。",
+          "en": "Only the overview page of Amazon S3 Files was read. Its price, availability in Tokyo, the delay of synchronization with the bucket, and support in CloudFormation and cdkd were not checked."
+        },
+        "resume": {
+          "ja": "S3 のユーザーガイドの S3 Files の章（synchronization、metering、quotas）と S3 の料金ページを読み、Price List の AmazonS3 の offer で SKU を探す。",
+          "en": "Read the S3 Files chapters of the S3 user guide (synchronization, metering, quotas) and the S3 pricing page, and look for its SKUs in the AmazonS3 offer of the Price List."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 53: EFS ----------------------------------------------\n      // The chapter 04 API over a directory. Start it twice (PORT=8788) to have two writers. No AWS.\n      \"dev:efs\": fresh(\"node --watch src/dev.ts\", { cwd: \"examples/53-efs\" }),\n      ...infra(\"efs\", \"examples/53-efs\", \"AihEfs\"),",
+    "synth": ["efs:infra:synth"],
+    "checkAll": [],
+    "typecheck": ["examples/53-efs"]
+  }
+}

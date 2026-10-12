@@ -96,6 +96,46 @@ const chapterSynthTasks = [
   "sec:infra:synth",
   "recovery:infra:synth",
   "celld:infra:synth",
+  "ready:infra:synth",
+  "analytics:infra:synth",
+  "limits:infra:synth",
+  "search:infra:synth",
+  "mr:infra:synth",
+  "rollout:infra:synth",
+  "lmi:infra:synth",
+  "tune:infra:synth",
+  "events:infra:synth",
+  "eks:infra:synth",
+  "modeling:infra:synth",
+  "move:infra:synth",
+  "health:infra:synth",
+  "dbmig:infra:synth",
+  "dr:infra:synth",
+  "fwm:infra:synth:example",
+  "fargate:infra:synth",
+  "bedrock:infra:synth",
+  "shield:infra:synth",
+  "sfn:infra:synth",
+  "athena:infra:synth",
+  "efs:infra:synth",
+  "glue:infra:synth",
+  "agentcore:infra:synth",
+  "grafana:infra:synth",
+  "calls:infra:synth",
+  "kinesis:infra:synth",
+  "ecr:infra:synth",
+  "ledger:infra:synth",
+  "nova:infra:synth",
+  "aurora:infra:synth",
+  "runners:infra:synth",
+  "polly:infra:synth",
+  "rds:infra:synth",
+  "sandbox:infra:synth",
+  "sqs:infra:synth",
+  "isolates:infra:synth",
+  "firecracker:infra:synth",
+  "nitro:infra:synth",
+  "distsql:infra:synth",
 ];
 const chapterCheckTasks = [
   "lint:vue",
@@ -117,6 +157,27 @@ const chapterCheckTasks = [
   "ec2:app:build",
   "sec:iam:lint",
   "celld:render",
+  "ready:gate",
+  "flags:check",
+  "eks:render",
+  "cloudshell:build",
+  "health:replay",
+  "dr:demo",
+  "fargate:bundle:check",
+  "composer:graph",
+  "shield:origins:gate",
+  "agentcore:bundle:check",
+  "grafana:render",
+  "lint:calls:web",
+  "typecheck:calls:web",
+  "build:calls:web",
+  "kinesis:demo",
+  "ecr:lifecycle:preview",
+  "ledger:demo",
+  "runners:decide",
+  "firecracker:plan",
+  "nitro:demo",
+  "distsql:render",
 ];
 
 export default defineConfig({
@@ -825,6 +886,984 @@ export default defineConfig({
         },
       ),
       // <<< chapter 24
+
+      // >>> chapter 33
+      // ---- chapter 33: production readiness ---------------------------------
+      // The review as a list to go through. Reads only this checkout.
+      "ready:review": fresh("node examples/33-production-readiness/scripts/review.ts"),
+      // Local: writes examples/33-production-readiness/cdk.out. Two stacks that are read, never deployed.
+      "ready:infra:synth": fresh(
+        `${node} tools/src/infra/cdkd.ts synth examples/33-production-readiness AihReadyProduction`,
+      ),
+      // The practice twin is reported; the production twin has to pass.
+      "ready:gate": fresh(
+        "node examples/33-production-readiness/scripts/check.ts --gate AihReadyProduction examples/33-production-readiness/cdk.out",
+        { dependsOn: ["ready:infra:synth"] },
+      ),
+      // Every synthesized stack of the book, as a report. The practice stacks have findings on purpose.
+      "ready:check": fresh("node examples/33-production-readiness/scripts/check.ts", {
+        dependsOn: ["infra:synth"],
+      }),
+      // <<< chapter 33
+
+      // >>> chapter 26
+      // ---- chapter 26: analytics ------------------------------------------
+      // The notes API; each request becomes a record under dist/lake. No Docker, no AWS.
+      "dev:analytics": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/26-analytics",
+      }),
+      // Prints the SQL of a query. Runs nothing.
+      "analytics:query:print": fresh("node scripts/query.ts --print", {
+        cwd: "examples/26-analytics",
+      }),
+      // Evaluates a query over the files under dist/lake with the chapter's own model. No SQL engine.
+      "analytics:query:local": fresh("node --env-file-if-exists=.env scripts/query.ts --local", {
+        cwd: "examples/26-analytics",
+      }),
+      // Sample records as gzip JSON and as Parquet: bytes per column.
+      "analytics:sizes": fresh("node scripts/sizes.ts", { cwd: "examples/26-analytics" }),
+      ...infra("analytics", "examples/26-analytics", "AihAnalytics"),
+      // Creates, edits and deletes one note through the deployed API.
+      "analytics:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/26-analytics",
+      }),
+      // BILLED by the bytes Athena scans, 10 MB at least per query.
+      "analytics:query": live("node --env-file-if-exists=../../.env scripts/query.ts", {
+        cwd: "examples/26-analytics",
+      }),
+      // Counts the objects in the lake bucket; with --yes, deletes them all.
+      "analytics:empty": live("node --env-file-if-exists=../../.env scripts/empty-lake.ts", {
+        cwd: "examples/26-analytics",
+      }),
+      // <<< chapter 26
+
+      // >>> chapter 32
+      // ---- chapter 32: limits -----------------------------------------------
+      // The notes API behind a token bucket and a per-caller limit. No Docker, no AWS.
+      "dev:limits": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/32-limits",
+      }),
+      // Two seeded simulations of retries against a service that refuses. Local.
+      "limits:simulate": fresh("node scripts/simulate.ts", { cwd: "examples/32-limits" }),
+      // Sends load to the development server. Refuses any address that is not this machine.
+      "limits:load": fresh("node scripts/load.ts", { cwd: "examples/32-limits" }),
+      // The quota defaults the book's chapters lean on, with where each was read. Local.
+      "limits:quotas:book": fresh("node scripts/quotas.ts --book", { cwd: "examples/32-limits" }),
+      // Prints the Cost Explorer command. Runs nothing.
+      "limits:cost:print": fresh("node scripts/cost.ts --print", { cwd: "examples/32-limits" }),
+      ...infra("limits", "examples/32-limits", "AihLimits"),
+      // The quotas that apply to your account, for one service.
+      "limits:quotas": live("node --env-file-if-exists=../../.env scripts/quotas.ts", {
+        cwd: "examples/32-limits",
+      }),
+      // BILLED: USD 0.01 for every run.
+      "limits:cost": live("node --env-file-if-exists=../../.env scripts/cost.ts", {
+        cwd: "examples/32-limits",
+      }),
+      // <<< chapter 32
+
+      // >>> chapter 27
+      // ---- chapter 27: search ----------------------------------------------
+      // The search API on plain Node: seed notes, a hashing embedder, a canned answer. No AWS.
+      "dev:search": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/27-search",
+      }),
+      ...infra("search", "examples/27-search", "AihSearch"),
+      // Writes the seed notes to the deployed table. The indexer then embeds them (billed).
+      "search:seed": live("node --env-file-if-exists=../../.env scripts/seed.ts", {
+        cwd: "examples/27-search",
+      }),
+      // BILLED: three embeddings and one short answer through the deployed function URL.
+      "search:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/27-search",
+      }),
+      // Compares table and index. Changes nothing unless --apply is given (then embeddings are billed).
+      "search:reindex": live("node --env-file-if-exists=../../.env scripts/reindex.ts", {
+        cwd: "examples/27-search",
+      }),
+      "search:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/27-search",
+      }),
+      // <<< chapter 27
+
+      // >>> chapter 28
+      // ---- chapter 28: two Regions -----------------------------------------
+      // Local: two Regions as a model in memory. No AWS.
+      "mr:demo": fresh("node scripts/demo.ts", { cwd: "examples/28-multi-region" }),
+      // The primary stack, in Tokyo. `mr:infra:synth` writes the templates of both stacks.
+      ...infra("mr", "examples/28-multi-region", "AihMultiRegion"),
+      // The standby stack, in Osaka: deployed first, destroyed last.
+      "mr:standby:infra:diff": live(
+        `${node} tools/src/infra/cdkd.ts diff examples/28-multi-region AihMultiRegionStandby`,
+      ),
+      "mr:standby:infra:deploy": live(
+        `${node} tools/src/infra/cdkd.ts deploy examples/28-multi-region AihMultiRegionStandby`,
+      ),
+      "mr:standby:infra:destroy": live(
+        `${node} tools/src/infra/cdkd.ts destroy examples/28-multi-region AihMultiRegionStandby`,
+      ),
+      // Reads both Regions: replica status, replication rules, the health endpoints.
+      "mr:status": live("node --env-file-if-exists=../../.env scripts/mr.ts status", {
+        cwd: "examples/28-multi-region",
+      }),
+      // With --apply: edits one note in both Regions at once and reports which edit survived.
+      "mr:conflict": live("node --env-file-if-exists=../../.env scripts/mr.ts conflict", {
+        cwd: "examples/28-multi-region",
+      }),
+      // Counts the object versions in both buckets; --apply deletes them.
+      "mr:empty": live("node --env-file-if-exists=../../.env scripts/mr.ts empty", {
+        cwd: "examples/28-multi-region",
+      }),
+      // <<< chapter 28
+
+      // >>> chapter 31
+      // ---- chapter 31: progressive delivery --------------------------------
+      // The notes API with flags read from flags/flags.json on every request. Local.
+      "dev:rollout": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      // The steps of a shift, and how much a small share of requests sees. Arithmetic only.
+      "rollout:plan": fresh("node scripts/rollout.ts plan", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      // Reads flags/flags.json the way the application would. Local.
+      "flags:check": fresh("node scripts/flags.ts check", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      ...infra("rollout", "examples/31-progressive-delivery", "AihProgressive"),
+      // Reads the alias and the two alarms.
+      "rollout:status": live("node --env-file-if-exists=../../.env scripts/rollout.ts status", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      // Sends GET /health and counts which version answered. Creates nothing.
+      "rollout:probe": live("node --env-file-if-exists=../../.env scripts/probe.ts", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      // Everything below prints its plan and changes nothing unless --apply is given.
+      "rollout:start": live("node --env-file-if-exists=../../.env scripts/rollout.ts start", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      "rollout:rollback": live("node --env-file-if-exists=../../.env scripts/rollout.ts rollback", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      "flags:status": live("node --env-file-if-exists=../../.env scripts/flags.ts status", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      "flags:deploy": live("node --env-file-if-exists=../../.env scripts/flags.ts deploy", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      "flags:stop": live("node --env-file-if-exists=../../.env scripts/flags.ts stop", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      "flags:clear": live("node --env-file-if-exists=../../.env scripts/flags.ts clear", {
+        cwd: "examples/31-progressive-delivery",
+      }),
+      // <<< chapter 31
+
+      // >>> chapter 35
+      // ---- chapter 35: Lambda Managed Instances --------------------------
+      // The chapter 04 API in one Node.js process, which answers many requests at once. No AWS.
+      "dev:lmi": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/35-lambda-managed-instances",
+      }),
+      // What the stack would run, whether its logs could leave the VPC, the idle cost, and the break-even. Reads only this checkout.
+      "lmi:plan": fresh("node scripts/plan.ts", { cwd: "examples/35-lambda-managed-instances" }),
+      ...infra("lmi", "examples/35-lambda-managed-instances", "AihManagedInstances"),
+      "lmi:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/35-lambda-managed-instances",
+      }),
+      // <<< chapter 35
+
+      // >>> chapter 29
+      // ---- chapter 29: lambda tuning ------------------------------------
+      // Bundles the function five ways and times a fresh Node.js process importing each. No AWS.
+      "tune:bundle": fresh("node scripts/bundle.ts", { cwd: "examples/29-lambda-tuning" }),
+      // The timeout chain and what memory and provisioned concurrency cost. Reads only this checkout.
+      "tune:plan": fresh("node scripts/plan.ts", { cwd: "examples/29-lambda-tuning" }),
+      // Summarizes the REPORT lines copied from the Lambda documentation. No AWS.
+      "tune:report:sample": fresh("node scripts/report.ts --file fixtures/report-lines.txt", {
+        cwd: "examples/29-lambda-tuning",
+      }),
+      ...infra("tune", "examples/29-lambda-tuning", "AihLambdaTuning"),
+      // Creates one note, reads it a number of times, deletes it.
+      "tune:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/29-lambda-tuning",
+      }),
+      // Reads the function's log group and summarizes the invocation reports.
+      "tune:report": live("node --env-file-if-exists=../../.env scripts/report.ts", {
+        cwd: "examples/29-lambda-tuning",
+      }),
+      // <<< chapter 29
+
+      // >>> chapter 25
+      // ---- chapter 25: events --------------------------------------------
+      // A morning of changes through the in-memory bus, a duplicate, and a replay. No AWS.
+      "events:demo": fresh("node scripts/demo.ts", { cwd: "examples/25-events" }),
+      ...infra("events", "examples/25-events", "AihEvents"),
+      // Writes a note and a rejected upload with your credentials and waits for the consumers to hear of them.
+      "events:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/25-events",
+      }),
+      // The archive, the queues, and a look at the dead-letter queue.
+      "events:status": live("node --env-file-if-exists=../../.env scripts/status.ts", {
+        cwd: "examples/25-events",
+      }),
+      // Prints what a replay would cover. Starts it only with --yes.
+      "events:replay": live("node --env-file-if-exists=../../.env scripts/replay.ts", {
+        cwd: "examples/25-events",
+      }),
+      // Counts the uploaded images. Deletes them all only with --yes.
+      "events:empty": live("node --env-file-if-exists=../../.env scripts/empty-uploads.ts", {
+        cwd: "examples/25-events",
+      }),
+      // <<< chapter 25
+
+      // >>> chapter 34
+      // ---- chapter 34: Kubernetes on EKS ---------------------------------
+      // Fails when k8s/ is not what the generators produce; --write rewrites it. No cluster, no AWS.
+      "eks:render": fresh("node scripts/render.ts", { cwd: "examples/34-eks" }),
+      // BILLED BY THE HOUR once deployed: the EKS control plane, then nodes and a load balancer.
+      ...infra("eks", "examples/34-eks", "AihEks"),
+      // Prints the manifests with the stacks' outputs filled in, for `kubectl apply -f -`. Reads only.
+      "eks:manifests": live("node --env-file-if-exists=../../.env scripts/manifests.ts", {
+        cwd: "examples/34-eks",
+      }),
+      // <<< chapter 34
+
+      // >>> chapter 30
+      // ---- chapter 30: data modeling ---------------------------------------
+      // Every access pattern on the in-memory model, with what each one sent and cost. No AWS.
+      "modeling:demo": fresh("node scripts/demo.ts", { cwd: "examples/30-data-modeling" }),
+      // The table, its index and its stream in DynamoDB Local. Refuses any endpoint that is not on this machine.
+      "modeling:db:migrate:local": fresh(
+        "node --env-file-if-exists=.env scripts/local-db.ts migrate",
+        {
+          cwd: "examples/30-data-modeling",
+        },
+      ),
+      "modeling:db:reset:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts reset", {
+        cwd: "examples/30-data-modeling",
+      }),
+      "modeling:test:local": fresh("node --env-file-if-exists=.env scripts/test-local.ts", {
+        cwd: "examples/30-data-modeling",
+      }),
+      ...infra("modeling", "examples/30-data-modeling", "AihModeling"),
+      // Writes one note, waits for the index and the stream consumer, removes it.
+      "modeling:smoke": live("node --env-file-if-exists=../../.env scripts/modeling.ts smoke", {
+        cwd: "examples/30-data-modeling",
+      }),
+      // These print their plan and change nothing unless --apply is given.
+      "modeling:backfill": live(
+        "node --env-file-if-exists=../../.env scripts/modeling.ts backfill",
+        {
+          cwd: "examples/30-data-modeling",
+        },
+      ),
+      "modeling:verify": live("node --env-file-if-exists=../../.env scripts/modeling.ts verify", {
+        cwd: "examples/30-data-modeling",
+      }),
+      "modeling:remove-legacy": live(
+        "node --env-file-if-exists=../../.env scripts/modeling.ts remove-legacy",
+        {
+          cwd: "examples/30-data-modeling",
+        },
+      ),
+      // <<< chapter 30
+
+      // >>> chapter 38
+      // ---- chapter 38: data movement ---------------------------------------
+      // Local: four executions of the archive copy against two buckets in memory. No AWS.
+      "move:demo": fresh("node scripts/demo.ts", { cwd: "examples/38-data-movement" }),
+      // The source stack, in Tokyo. `move:infra:synth` writes the templates of both stacks.
+      ...infra("move", "examples/38-data-movement", "AihDataMovement"),
+      // The archive stack, in Osaka. `-c sourceLocation=<arn>` adds the scheduled task; each execution reads both buckets.
+      "move:archive:infra:diff": live(
+        `${node} tools/src/infra/cdkd.ts diff examples/38-data-movement AihDataMovementArchive`,
+      ),
+      "move:archive:infra:deploy": live(
+        `${node} tools/src/infra/cdkd.ts deploy examples/38-data-movement AihDataMovementArchive`,
+      ),
+      "move:archive:infra:destroy": live(
+        `${node} tools/src/infra/cdkd.ts destroy examples/38-data-movement AihDataMovementArchive`,
+      ),
+      // Counts the object versions in both buckets; --yes deletes them.
+      "move:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", {
+        cwd: "examples/38-data-movement",
+      }),
+      // <<< chapter 38
+
+      // >>> chapter 37
+      // ---- chapter 37: CloudShell --------------------------------------------
+      // One file for CloudShell: dist/aih-cloudshell.mjs. Local; nothing is uploaded.
+      "cloudshell:build": fresh("node scripts/build.ts", { cwd: "examples/37-cloudshell" }),
+      // The built file against a fake `aws`: fixture answers, no AWS.
+      "cloudshell:demo": fresh("node scripts/demo.ts", { cwd: "examples/37-cloudshell" }),
+      // Prints an IAM policy document: use, use-no-files, deny, or vpc-only. Creates nothing.
+      "cloudshell:policy": fresh("node scripts/policy.ts", { cwd: "examples/37-cloudshell" }),
+      // <<< chapter 37
+
+      // >>> chapter 44
+      // ---- chapter 44: AWS Health ------------------------------------------
+      // Sends the fixtures through the function's own code and prints what it would publish. No AWS.
+      "health:replay": fresh("node scripts/replay.ts", { cwd: "examples/44-health" }),
+      // The Region the book's stacks run in.
+      ...infra("health", "examples/44-health", "AihHealth"),
+      // us-east-1: global events arrive only there.
+      ...infra("health:global", "examples/44-health", "AihHealthGlobal"),
+      // <<< chapter 44
+
+      // >>> chapter 39
+      // ---- chapter 39: database migration ----------------------------------
+      // The cutover on two in-memory databases, with the chapter's model in place of AWS DMS. No AWS.
+      "dbmig:demo": fresh("node scripts/demo.ts", { cwd: "examples/39-database-migration" }),
+      // Deployed, the stack bills for two secrets. A started replication bills by the hour.
+      ...infra("dbmig", "examples/39-database-migration", "AihDatabaseMigration"),
+      // These connect to both databases (SOURCE_DATABASE_URL, TARGET_DATABASE_URL) and only read.
+      "dbmig:preflight": live("node --env-file-if-exists=../../.env scripts/db.ts preflight", {
+        cwd: "examples/39-database-migration",
+      }),
+      "dbmig:verify": live("node --env-file-if-exists=../../.env scripts/db.ts verify", {
+        cwd: "examples/39-database-migration",
+      }),
+      // Prints the plan. Moves the target's sequences only with --apply.
+      "dbmig:sequences": live("node --env-file-if-exists=../../.env scripts/db.ts sequences", {
+        cwd: "examples/39-database-migration",
+      }),
+      // <<< chapter 39
+
+      // >>> chapter 40
+      // ---- chapter 40: disaster recovery ----------------------------------
+      // Source checks, network paths, idle cost, and the setup commands. Reads only this checkout.
+      "dr:plan": fresh("node scripts/plan.ts", { cwd: "examples/40-disaster-recovery" }),
+      // A failover and a failback between two sites in memory. No AWS.
+      "dr:demo": fresh("node scripts/demo.ts", { cwd: "examples/40-disaster-recovery" }),
+      // The private layout adds two interface endpoints, billed by the hour.
+      ...infra("dr", "examples/40-disaster-recovery", "AihDr"),
+      // These read the DRS API.
+      "dr:status": live("node --env-file-if-exists=../../.env scripts/dr.ts status", {
+        cwd: "examples/40-disaster-recovery",
+      }),
+      "dr:job": live("node --env-file-if-exists=../../.env scripts/dr.ts job", {
+        cwd: "examples/40-disaster-recovery",
+      }),
+      "dr:billed": live("node --env-file-if-exists=../../.env scripts/dr.ts billed", {
+        cwd: "examples/40-disaster-recovery",
+      }),
+      // These print their plan and change nothing unless --apply is given.
+      "dr:drill": live("node --env-file-if-exists=../../.env scripts/dr.ts drill", {
+        cwd: "examples/40-disaster-recovery",
+      }),
+      "dr:terminate": live("node --env-file-if-exists=../../.env scripts/dr.ts terminate", {
+        cwd: "examples/40-disaster-recovery",
+      }),
+      // <<< chapter 40
+
+      // >>> chapter 42
+      // ---- chapter 42: Firewall Manager -----------------------------------
+      // The month the two policies would cost a small organization, from data/pricing. No AWS.
+      "fwm:cost": fresh("node scripts/cost.ts", { cwd: "examples/42-firewall-manager" }),
+      // This chapter's audit rule over the security groups in every synthesized template. Reads files only.
+      "fwm:audit:templates": fresh("node examples/42-firewall-manager/scripts/audit-templates.ts"),
+      // For the Firewall Manager administrator account only. Each policy is USD 100 a month.
+      // Every task below needs `-c adminAccountId=<12 digits> -c orgUnitIds=<ou-...>`: there is no default.
+      ...infra("fwm", "examples/42-firewall-manager", "AihFirewallManager"),
+      // The AWS WAF policy for CloudFront, in us-east-1 whatever AIH_AWS_REGION says.
+      ...infra("fwm:edge", "examples/42-firewall-manager", "AihFirewallManagerEdge"),
+      // Synth with the example IDs of AWS's documentation, so that check:all has a template to read.
+      "fwm:infra:synth:example": fresh(
+        `${node} tools/src/infra/cdkd.ts synth examples/42-firewall-manager AihFirewallManager -c adminAccountId=111122223333 -c orgUnitIds=ou-ex42-workload1`,
+      ),
+      // <<< chapter 42
+
+      // >>> chapter 41
+      // ---- chapter 41: Fargate --------------------------------------------
+      // The cheapest task size for a measured peak, from the documented table. Reads only this checkout.
+      "fargate:size": fresh("node scripts/size.ts", { cwd: "examples/41-fargate" }),
+      // This chapter's model of target tracking over a hand-written load curve. Not Application Auto Scaling.
+      "fargate:simulate": fresh("node scripts/simulate.ts", { cwd: "examples/41-fargate" }),
+      // The nightly job on plain Node. Ctrl-C interrupts it the way a Spot notice would.
+      "dev:fargate:job": fresh("node src/job-main.ts", { cwd: "examples/41-fargate" }),
+      // Chapter 12's server and this chapter's job, one file each: all the image copies.
+      "fargate:bundle": fresh("node scripts/bundle.ts", { cwd: "examples/41-fargate" }),
+      "fargate:bundle:check": fresh("node scripts/check-bundle.ts", {
+        cwd: "examples/41-fargate",
+        dependsOn: ["fargate:bundle"],
+      }),
+      // Needs a running Docker daemon, which the Nix shell does not provide.
+      "fargate:image:build": fresh("node scripts/image.ts build", {
+        cwd: "examples/41-fargate",
+        dependsOn: ["fargate:bundle"],
+      }),
+      "fargate:image:push": live("node --env-file-if-exists=../../.env scripts/image.ts push", {
+        cwd: "examples/41-fargate",
+      }),
+      // BILLED BY THE HOUR once deployed with -c imageTag=...: a load balancer and two Fargate tasks.
+      ...infra("fargate", "examples/41-fargate", "AihFargate"),
+      // Starts the job once, outside its schedule. Starts a billed task.
+      "fargate:job:run": live("node --env-file-if-exists=../../.env scripts/task.ts run", {
+        cwd: "examples/41-fargate",
+      }),
+      // A shell in a running task. Only works on a stack deployed with -c exec=true.
+      "fargate:exec": live("node --env-file-if-exists=../../.env scripts/task.ts exec", {
+        cwd: "examples/41-fargate",
+      }),
+      // <<< chapter 41
+
+      // >>> chapter 45
+      // ---- chapter 45: Infrastructure Composer -------------------------------
+      // A synthesized template as a graph, in text. Files only. With no argument: the fixture.
+      //   vp run composer:graph ../20-shipping AihShipCi [--figure] [--against other.template.json]
+      "composer:graph": fresh("node scripts/graph.ts", {
+        cwd: "examples/45-infrastructure-composer",
+      }),
+      "composer:graph:hello": fresh("node scripts/graph.ts ../02-toolchain AihHello", {
+        cwd: "examples/45-infrastructure-composer",
+        dependsOn: ["hello:infra:synth"],
+      }),
+      "composer:graph:ship": fresh("node scripts/graph.ts ../20-shipping AihShipApi", {
+        cwd: "examples/45-infrastructure-composer",
+        dependsOn: ["ship:cfn:synth"],
+      }),
+      // <<< chapter 45
+
+      // >>> chapter 36
+      // ---- chapter 36: Bedrock after the first call ----------------------
+      // The assistant API on plain Node. Plays a transcript unless .env says AI_BACKEND=bedrock.
+      "dev:bedrock": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/36-bedrock",
+      }),
+      // Local: the regression suite against the scripted model, and the shape of a batch input file.
+      "bedrock:eval": fresh("node scripts/eval.ts", { cwd: "examples/36-bedrock" }),
+      "bedrock:batch:plan": fresh("node scripts/batch-plan.ts", { cwd: "examples/36-bedrock" }),
+      ...infra("bedrock", "examples/36-bedrock", "AihBedrock"),
+      // BILLED: the next two call a real model. Neither is part of check:all.
+      "bedrock:eval:live": live(
+        "node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/eval.ts --live",
+        { cwd: "examples/36-bedrock" },
+      ),
+      "bedrock:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/36-bedrock",
+      }),
+      "bedrock:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/36-bedrock",
+      }),
+      // <<< chapter 36
+
+      // >>> chapter 46
+      // ---- chapter 46: Shield ----------------------------------------------
+      // Seeded floods against the rate rule, the cache and the brake, priced with data/pricing. Local.
+      "shield:flood": fresh("node scripts/flood.ts", { cwd: "examples/46-shield" }),
+      // Every function URL, load balancer and API in the book's synthesized stacks: reachable without CloudFront?
+      "shield:origins": fresh("node examples/46-shield/scripts/origins.ts", {
+        dependsOn: ["infra:synth"],
+      }),
+      // This chapter's own stack has to come out closed.
+      "shield:origins:gate": fresh(
+        "node examples/46-shield/scripts/origins.ts --gate AihShield examples/46-shield/cdk.out",
+        { dependsOn: ["shield:infra:synth"] },
+      ),
+      ...infra("shield", "examples/46-shield", "AihShield"),
+      // In us-east-1 whatever AIH_AWS_REGION says. BILLED by the month once deployed: a web ACL and a rule.
+      // `-c shieldAdvanced=on` adds a protection, for an account already subscribed (USD 3,000 a month, for a year).
+      ...infra("shield:edge", "examples/46-shield", "AihShieldEdge"),
+      // <<< chapter 46
+
+      // >>> chapter 47
+      // ---- chapter 47: Step Functions in depth -------------------------------
+      // The import's definition, walked in memory with injected failures. No AWS.
+      "sfn:local": fresh("node scripts/run-local.ts", { cwd: "examples/47-step-functions" }),
+      ...infra("sfn", "examples/47-step-functions", "AihStepFunctions"),
+      // Uploads a small file and starts one import.
+      "sfn:start": live("node --env-file-if-exists=../../.env scripts/start.ts", {
+        cwd: "examples/47-step-functions",
+      }),
+      // Plays the scanner: answers one waiting task token.
+      "sfn:callback": live("node --env-file-if-exists=../../.env scripts/callback.ts", {
+        cwd: "examples/47-step-functions",
+      }),
+      // Recent imports and where each stopped. --redrive <arn> resumes a failed one.
+      "sfn:status": live("node --env-file-if-exists=../../.env scripts/status.ts", {
+        cwd: "examples/47-step-functions",
+      }),
+      // Runs the Express workflow synchronously.
+      "sfn:digest": live("node --env-file-if-exists=../../.env scripts/digest.ts", {
+        cwd: "examples/47-step-functions",
+      }),
+      // Asks the TestState API, with mocks, what single states do. Needs credentials, no stack.
+      "sfn:test-state": live("node --env-file-if-exists=../../.env scripts/test-state.ts", {
+        cwd: "examples/47-step-functions",
+      }),
+      // Counts, and with --yes deletes, every object in the files bucket.
+      "sfn:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", {
+        cwd: "examples/47-step-functions",
+      }),
+      // <<< chapter 47
+
+      // >>> chapter 49
+      // ---- chapter 49: athena ---------------------------------------------
+      // Prints one of the chapter's statements and its parameters. Runs nothing.
+      "athena:sql": fresh("node scripts/query.ts", { cwd: "examples/49-athena" }),
+      // Prints the CREATE TABLE statement AWS documents for a log, filled in. Runs nothing.
+      "athena:logs:ddl": fresh("node scripts/log-table.ts", { cwd: "examples/49-athena" }),
+      ...infra("athena", "examples/49-athena", "AihAthena"),
+      // BILLED by the bytes Athena scans, 10 MB at least per query. Writes to S3.
+      "athena:run": live("node --env-file-if-exists=../../.env scripts/query.ts --run", {
+        cwd: "examples/49-athena",
+      }),
+      // Counts the objects in the output bucket; with --yes, deletes them all.
+      "athena:empty": live("node --env-file-if-exists=../../.env scripts/empty-output.ts", {
+        cwd: "examples/49-athena",
+      }),
+      // <<< chapter 49
+
+      // >>> chapter 48
+      // ---- chapter 48: the SDK ----------------------------------------------
+      // What the installed SDK does when nothing is configured, read from the SDK itself. Local.
+      "sdk:defaults": fresh("node scripts/defaults.ts", { cwd: "examples/48-sdk" }),
+      // One throttled call against a local endpoint, with a log line per attempt. Local.
+      "sdk:tour": fresh("node scripts/tour.ts", { cwd: "examples/48-sdk" }),
+      // Where this machine's default credentials come from. Some providers call AWS to refresh.
+      "sdk:credentials": live("node scripts/credentials.ts", { cwd: "examples/48-sdk" }),
+      // <<< chapter 48
+
+      // >>> chapter 53
+      // ---- chapter 53: EFS ----------------------------------------------
+      // The chapter 04 API over a directory. Start it twice (PORT=8788) to have two writers. No AWS.
+      "dev:efs": fresh("node --watch src/dev.ts", { cwd: "examples/53-efs" }),
+      ...infra("efs", "examples/53-efs", "AihEfs"),
+      // <<< chapter 53
+
+      // >>> chapter 43
+      // ---- chapter 43: glue ------------------------------------------------
+      // What the job has to write for the sample raw files. No Spark, no AWS.
+      "glue:spec": fresh("node scripts/spec.ts", { cwd: "examples/43-glue" }),
+      // Copies the columns and the data quality rules from TypeScript into glue/curate.py.
+      "glue:contract": fresh("node scripts/contract.ts", { cwd: "examples/43-glue" }),
+      ...infra("glue", "examples/43-glue", "AihGlue"),
+      // Uploads the sample raw files to the stack's bucket.
+      "glue:seed": live("node --env-file-if-exists=../../.env scripts/seed.ts", {
+        cwd: "examples/43-glue",
+      }),
+      // BILLED per DPU-second, for one minute at least. Replaces the days' curated folders.
+      "glue:run": live("node --env-file-if-exists=../../.env scripts/run.ts", {
+        cwd: "examples/43-glue",
+      }),
+      // Downloads what the job wrote for the sample days and compares it with the specification.
+      "glue:verify": live("node --env-file-if-exists=../../.env scripts/verify.ts", {
+        cwd: "examples/43-glue",
+      }),
+      // Counts the objects in the bucket; with --yes, deletes them all.
+      "glue:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", {
+        cwd: "examples/43-glue",
+      }),
+      // <<< chapter 43
+
+      // >>> chapter 50
+      // ---- chapter 50: AgentCore -------------------------------------------
+      // The agent behind AgentCore Runtime's HTTP contract, on this machine, playing chapter 36's transcripts. No AWS.
+      "dev:agentcore": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/50-agentcore",
+      }),
+      // Bundles the agent as the stack does, starts the one file, and asks it what needs no AWS call.
+      "agentcore:bundle:check": fresh("node scripts/check-bundle.ts", {
+        cwd: "examples/50-agentcore",
+      }),
+      ...infra("agentcore", "examples/50-agentcore", "AihAgentCore"),
+      // BILLED: two questions to the deployed runtime. Needs AIH_ACCESS_TOKEN.
+      "agentcore:invoke": live("node --env-file-if-exists=../../.env scripts/invoke.ts", {
+        cwd: "examples/50-agentcore",
+      }),
+      // <<< chapter 50
+
+      // >>> chapter 55
+      // ---- chapter 55: Amazon Managed Grafana ------------------------------
+      // Prints the Grafana dashboard generated from src/signals.ts. Local: reads and sends nothing.
+      "grafana:render": fresh("node scripts/render.ts", { cwd: "examples/55-grafana" }),
+      // By default a role only. With `-c authentication=AWS_SSO` (or SAML) a workspace, BILLED by the month.
+      ...infra("grafana", "examples/55-grafana", "AihGrafana"),
+      // CHANGES AWS: mints a 15-minute token, saves the data source and the dashboard, deletes the token.
+      "grafana:push": live("node --env-file-if-exists=../../.env scripts/push.ts", {
+        cwd: "examples/55-grafana",
+      }),
+      // <<< chapter 55
+
+      // >>> chapter 51
+      // ---- chapter 51: calls with the Chime SDK -------------------------
+      // The notes API with rooms: local sign-in and a model of the meetings API. No Docker, no AWS, no media.
+      "dev:calls:api": fresh("node --watch --env-file-if-exists=.env api/src/dev.ts", {
+        cwd: "examples/51-chime-sdk",
+      }),
+      "dev:calls:web": fresh("vp dev", { cwd: "examples/51-chime-sdk/web" }),
+      "build:calls:web": { command: "vp build", cwd: "examples/51-chime-sdk/web" },
+      // Serves web/dist as it is, so the config written by calls:config survives.
+      "preview:calls:web": fresh("vp preview", { cwd: "examples/51-chime-sdk/web" }),
+      "typecheck:calls:web": {
+        command: "../node_modules/.bin/vize check",
+        cwd: "examples/51-chime-sdk/web",
+      },
+      "lint:calls:web": {
+        command: "../node_modules/.bin/vize lint src --preset essential",
+        cwd: "examples/51-chime-sdk/web",
+      },
+      ...infra("calls", "examples/51-chime-sdk", "AihCalls"),
+      // Points the built page at the deployed API and user pool, with media on.
+      "calls:config": live("node --env-file-if-exists=../../.env scripts/write-config.ts", {
+        cwd: "examples/51-chime-sdk",
+        dependsOn: ["build:calls:web"],
+      }),
+      "calls:user:create": live("node --env-file-if-exists=../../.env scripts/user.ts create", {
+        cwd: "examples/51-chime-sdk",
+      }),
+      "calls:user:delete": live("node --env-file-if-exists=../../.env scripts/user.ts delete", {
+        cwd: "examples/51-chime-sdk",
+      }),
+      // BILLED per connected attendee until a meeting ends. Lists the meetings on record; ends them only with --yes.
+      "calls:end": live("node --env-file-if-exists=../../.env scripts/end-meetings.ts", {
+        cwd: "examples/51-chime-sdk",
+      }),
+      // <<< chapter 51
+
+      // >>> chapter 54
+      // ---- chapter 54: Kinesis Data Streams ---------------------------------
+      // The chapter's failures through the in-memory stream and the model of the event source mapping. No AWS.
+      "kinesis:demo": fresh("node scripts/demo.ts", { cwd: "examples/54-kinesis" }),
+      ...infra("kinesis", "examples/54-kinesis", "AihKinesis"),
+      // Writes revisions of one note to the deployed stream with your credentials.
+      "kinesis:put": live("node --env-file-if-exists=../../.env scripts/put.ts", {
+        cwd: "examples/54-kinesis",
+      }),
+      // What the function derived for one note.
+      "kinesis:history": live("node --env-file-if-exists=../../.env scripts/history.ts", {
+        cwd: "examples/54-kinesis",
+      }),
+      // Reads the stream from its oldest record on your machine and builds the histories in memory.
+      "kinesis:replay": live("node --env-file-if-exists=../../.env scripts/replay.ts", {
+        cwd: "examples/54-kinesis",
+      }),
+      // The batches Lambda gave up on, read back from the stream. Deletes the messages only with --delete.
+      "kinesis:failures": live("node --env-file-if-exists=../../.env scripts/failures.ts", {
+        cwd: "examples/54-kinesis",
+      }),
+      // <<< chapter 54
+
+      // >>> chapter 52
+      // ---- chapter 52: ECR in depth ----------------------------------------
+      // The chapter's lifecycle evaluator over a saved image list. No AWS, and not ECR's own preview.
+      "ecr:lifecycle:preview": fresh("node scripts/lifecycle-preview.ts", {
+        cwd: "examples/52-ecr",
+      }),
+      ...infra("ecr", "examples/52-ecr", "AihEcr"),
+      // Asks ECR to preview the same policy on the real repository and compares. Deletes nothing.
+      "ecr:lifecycle:compare": live(
+        "node --env-file-if-exists=../../.env scripts/lifecycle-compare.ts",
+        { cwd: "examples/52-ecr" },
+      ),
+      // Waits for one image's scan and fails unless it may be deployed.
+      "ecr:scan:gate": live("node --env-file-if-exists=../../.env scripts/scan-gate.ts", {
+        cwd: "examples/52-ecr",
+      }),
+      // <<< chapter 52
+
+      // >>> chapter 58
+      // ---- chapter 58: ledger ---------------------------------------------------
+      // Appends, locks a digest, rewrites history, and audits, on the in-memory models. No AWS.
+      "ledger:demo": fresh("node scripts/demo.ts", { cwd: "examples/58-ledger" }),
+      // The table in DynamoDB Local. Refuses any endpoint that is not on this machine.
+      "ledger:db:migrate:local": fresh(
+        "node --env-file-if-exists=.env scripts/local-db.ts migrate",
+        {
+          cwd: "examples/58-ledger",
+        },
+      ),
+      "ledger:db:reset:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts reset", {
+        cwd: "examples/58-ledger",
+      }),
+      "ledger:test:local": fresh("node --env-file-if-exists=.env scripts/test-local.ts", {
+        cwd: "examples/58-ledger",
+      }),
+      ...infra("ledger", "examples/58-ledger", "AihLedger"),
+      // One sample entry, then a digest, with your own credentials.
+      "ledger:append": live("node --env-file-if-exists=../../.env scripts/ledger.ts append", {
+        cwd: "examples/58-ledger",
+      }),
+      "ledger:digest": live("node --env-file-if-exists=../../.env scripts/ledger.ts digest", {
+        cwd: "examples/58-ledger",
+      }),
+      // Reads the whole ledger and every digest version. Exits 1 on any finding.
+      "ledger:verify": live("node --env-file-if-exists=../../.env scripts/ledger.ts verify", {
+        cwd: "examples/58-ledger",
+      }),
+      // Prints what it would delete from the digest bucket unless --apply is given. Never bypasses a lock.
+      "ledger:purge": live("node --env-file-if-exists=../../.env scripts/ledger.ts purge", {
+        cwd: "examples/58-ledger",
+      }),
+      // <<< chapter 58
+
+      // >>> chapter 56
+      // ---- chapter 56: the Amazon Nova family ------------------------------
+      // The description API on plain Node. Plays a script unless .env says NOVA_BACKEND=bedrock.
+      "dev:nova": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/56-nova",
+      }),
+      // Local: the family as src/catalog.ts has it, against today's date.
+      "nova:catalog": fresh("node scripts/catalog.ts", { cwd: "examples/56-nova" }),
+      ...infra("nova", "examples/56-nova", "AihNova"),
+      // Reads AWS and calls no model: what the account lists, against the catalog.
+      "nova:models": live("node --env-file-if-exists=../../.env scripts/models.ts", {
+        cwd: "examples/56-nova",
+      }),
+      // BILLED: the next two call a real model. Neither is part of check:all.
+      "nova:hello": live(
+        "node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/hello.ts",
+        { cwd: "examples/56-nova" },
+      ),
+      "nova:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/56-nova",
+      }),
+      "nova:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", {
+        cwd: "examples/56-nova",
+      }),
+      // <<< chapter 56
+
+      // >>> chapter 60
+      // ---- chapter 60: Aurora ------------------------------------------------
+      // Deployed, the cluster bills for storage and one secret, and for capacity whenever it is awake.
+      ...infra("aurora", "examples/60-aurora", "AihAurora"),
+      // These reach the deployed cluster through the RDS Data API and change it. They wake a paused instance.
+      "aurora:db:schema": live("node --env-file-if-exists=../../.env scripts/cloud.ts schema", {
+        cwd: "examples/60-aurora",
+      }),
+      "aurora:smoke": live("node --env-file-if-exists=../../.env scripts/cloud.ts smoke", {
+        cwd: "examples/60-aurora",
+      }),
+      // <<< chapter 60
+
+      // >>> chapter 62
+      // ---- chapter 62: CI runners ------------------------------------------
+      // Hand-written deliveries through the real receiver, with stand-ins for GitHub, ECS and DynamoDB.
+      "runners:decide": fresh("node scripts/decide.ts", { cwd: "examples/62-ci-runners" }),
+      // Nothing billed by the hour. Two secrets at USD 0.40 a month each; a Fargate task per job.
+      ...infra("runners", "examples/62-ci-runners", "AihCiRunners"),
+      // <<< chapter 62
+
+      // >>> chapter 57
+      // ---- chapter 57: a note read aloud by Polly --------------------------------
+      // The speech API on plain Node. A tone stands in for the voice unless .env says SPEECH_BACKEND=polly.
+      "dev:polly": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/57-polly",
+      }),
+      ...infra("polly", "examples/57-polly", "AihPolly"),
+      // BILLED: calls Polly through the deployed function. Not part of check:all.
+      "polly:listen": live("node --env-file-if-exists=../../.env scripts/listen.ts", {
+        cwd: "examples/57-polly",
+      }),
+      "polly:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", {
+        cwd: "examples/57-polly",
+      }),
+      // <<< chapter 57
+
+      // >>> chapter 59
+      // ---- chapter 59: RDS -----------------------------------------------
+      // The API on a model of a primary and a lagging replica (two PGlite). No Docker, no AWS.
+      "dev:rds": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/59-rds",
+      }),
+      ...infra("rds", "examples/59-rds", "AihRds"),
+      // These invoke the operations function in the VPC, which changes the database.
+      "rds:db:bootstrap": live("node --env-file-if-exists=../../.env scripts/ops.ts bootstrap", {
+        cwd: "examples/59-rds",
+      }),
+      "rds:db:migrate": live("node --env-file-if-exists=../../.env scripts/ops.ts migrate", {
+        cwd: "examples/59-rds",
+      }),
+      "rds:db:status": live("node --env-file-if-exists=../../.env scripts/ops.ts status", {
+        cwd: "examples/59-rds",
+      }),
+      "rds:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/59-rds",
+      }),
+      // <<< chapter 59
+
+      // >>> chapter 63
+      // ---- chapter 63: agent sandbox --------------------------------------
+      // What the launcher would decide for one request, and what the task would be started with. Calls nothing.
+      "sandbox:plan": fresh("node scripts/plan.ts", { cwd: "examples/63-agent-sandbox" }),
+      // What each role of the stack could be allowed to do, by this chapter's own evaluator. Not IAM's answer.
+      "sandbox:policy": fresh("node scripts/policy.ts", { cwd: "examples/63-agent-sandbox" }),
+      // The container's program and Claude Code's settings file: all the image copies.
+      "sandbox:bundle": fresh("node scripts/bundle.ts", { cwd: "examples/63-agent-sandbox" }),
+      // Needs a running Docker daemon, which the Nix shell does not provide.
+      "sandbox:image:build": fresh("node scripts/ops.ts image-build", {
+        cwd: "examples/63-agent-sandbox",
+        dependsOn: ["sandbox:bundle"],
+      }),
+      "sandbox:image:push": live("node --env-file-if-exists=../../.env scripts/ops.ts image-push", {
+        cwd: "examples/63-agent-sandbox",
+      }),
+      // Deploy to an account that is not production. Nothing here is billed by the hour unless -c modelEndpoint=true.
+      ...infra("sandbox", "examples/63-agent-sandbox", "AihAgentSandbox"),
+      // Starts one billed Fargate task that runs a coding agent and calls a model.
+      "sandbox:launch": live("node --env-file-if-exists=../../.env scripts/ops.ts launch", {
+        cwd: "examples/63-agent-sandbox",
+      }),
+      "sandbox:logs": live("node --env-file-if-exists=../../.env scripts/ops.ts logs", {
+        cwd: "examples/63-agent-sandbox",
+      }),
+      // A shell in a running task. Only works on a stack deployed with -c exec=true.
+      "sandbox:exec": live("node --env-file-if-exists=../../.env scripts/ops.ts exec", {
+        cwd: "examples/63-agent-sandbox",
+      }),
+      // <<< chapter 63
+
+      // >>> chapter 61
+      // ---- chapter 61: sqs -----------------------------------------------
+      // The model queue and the worker's code, with a ledger that remembers and one that does not. No AWS.
+      "sqs:demo": fresh("node scripts/demo.ts", { cwd: "examples/61-sqs" }),
+      ...infra("sqs", "examples/61-sqs", "AihSqs"),
+      // Sends a few commands for one note with your credentials, one of them twice.
+      "sqs:send": live("node --env-file-if-exists=../../.env scripts/send.ts", {
+        cwd: "examples/61-sqs",
+      }),
+      // Both queues, the dead letters, and one note. With --redrive it moves the dead letters back.
+      "sqs:status": live("node --env-file-if-exists=../../.env scripts/status.ts", {
+        cwd: "examples/61-sqs",
+      }),
+      // <<< chapter 61
+
+      // >>> chapter 64
+      // ---- chapter 64: isolates ------------------------------------------
+      // One bundle per worker, and the configuration the container runs. No AWS, no Docker.
+      "isolates:bundle": fresh("node scripts/bundle.ts", { cwd: "examples/64-isolates" }),
+      // Chapter 04's app in the real workerd on this machine. No AWS, no Docker.
+      "dev:isolates": fresh("node scripts/serve.ts", {
+        cwd: "examples/64-isolates",
+        dependsOn: ["isolates:bundle"],
+      }),
+      // Starts workerd and prints what it does under a busy worker and at SIGTERM. No AWS, no Docker.
+      "isolates:observe": fresh("node scripts/observe.ts", { cwd: "examples/64-isolates" }),
+      // Downloads the pinned Linux arm64 workerd from the npm registry and checks its digest. No AWS.
+      "isolates:fetch": live("node scripts/fetch.ts", { cwd: "examples/64-isolates" }),
+      // Needs a running Docker daemon, which the Nix shell does not provide.
+      "isolates:image:build": fresh("node scripts/image.ts build", {
+        cwd: "examples/64-isolates",
+        dependsOn: ["isolates:bundle"],
+      }),
+      // Logs Docker in to the stack's repository and pushes the image.
+      "isolates:image:push": live("node --env-file-if-exists=../../.env scripts/image.ts push", {
+        cwd: "examples/64-isolates",
+      }),
+      // BILLED BY THE HOUR once deployed with -c imageTag=...: a load balancer and one Fargate task.
+      ...infra("isolates", "examples/64-isolates", "AihIsolates"),
+      "isolates:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/64-isolates",
+      }),
+      // <<< chapter 64
+
+      // >>> chapter 67
+      // ---- chapter 67: Firecracker ----------------------------------------
+      // The requests a boot would send, as curl commands. Opens no socket; runs on any machine.
+      //   vp run firecracker:plan [config.json] [--socket path] [--snapshot]
+      "firecracker:plan": fresh("node scripts/plan.ts", { cwd: "examples/67-firecracker" }),
+      // dist/kit: the guest server, plan and boot as single files, with deploy/. Local.
+      "firecracker:kit:build": fresh("node scripts/build.ts", { cwd: "examples/67-firecracker" }),
+      // Reads GitHub, not AWS: the pinned API specification against spec/*.subset.json.
+      "firecracker:spec": live("node scripts/spec.ts", { cwd: "examples/67-firecracker" }),
+      // Linux with KVM only: sends the boot sequence to a listening Firecracker and times the guest.
+      "firecracker:boot": live("node scripts/boot.ts", { cwd: "examples/67-firecracker" }),
+      // A place to try it. `-c run=true` adds a c7i.large, BILLED by the hour until destroyed.
+      ...infra("firecracker", "examples/67-firecracker", "AihFirecracker"),
+      "firecracker:kit:publish": live(
+        "node --env-file-if-exists=../../.env scripts/kit.ts publish",
+        {
+          cwd: "examples/67-firecracker",
+          dependsOn: ["firecracker:kit:build"],
+        },
+      ),
+      "firecracker:kit:empty": live("node --env-file-if-exists=../../.env scripts/kit.ts empty", {
+        cwd: "examples/67-firecracker",
+      }),
+      // <<< chapter 67
+
+      // >>> chapter 68
+      // ---- chapter 68: the Nitro System, Nitro Enclaves, Graviton -----------
+      // Instance type names read part by part, from the naming page. No AWS.
+      "nitro:names": fresh("node scripts/names.ts", { cwd: "examples/68-nitro" }),
+      // arm64 against x86 unit prices, and what this stack costs idle. Reads data/pricing only.
+      "nitro:prices": fresh("node scripts/prices.ts", { cwd: "examples/68-nitro" }),
+      // A parent, an enclave, and KMS in one process: who can get the data key. No AWS.
+      "nitro:demo": fresh("node scripts/demo.ts", { cwd: "examples/68-nitro" }),
+      // One c6g.large, billed by the hour, and one KMS key, billed by the month.
+      ...infra("nitro", "examples/68-nitro", "AihNitro"),
+      // <<< chapter 68
+
+      // >>> chapter 66
+      // ---- chapter 66: distributed SQL ---------------------------------------
+      // Downloads the pinned YugabyteDB archive from software.yugabyte.com into .yugabyte/ and checks its SHA-256. No AWS. Starts nothing.
+      "distsql:fetch": fresh("node scripts/fetch.ts", { cwd: "examples/66-distributed-sql" }),
+      // A certificate authority and a certificate for 127.0.0.1 in .yugabyte/. Needs openssl on PATH.
+      "distsql:local:certs": fresh("node scripts/certs.ts", { cwd: "examples/66-distributed-sql" }),
+      // Three nodes on 127.0.0.1 (ports 23001-29103), as detached processes. `--tls` on a new cluster.
+      "distsql:local:start": fresh("node scripts/cluster.ts start", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      "distsql:local:status": fresh("node scripts/cluster.ts status", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // SIGKILL to both processes of one node: `vp run distsql:local:kill b`.
+      "distsql:local:kill": fresh("node scripts/cluster.ts kill", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      "distsql:local:stop": fresh("node scripts/cluster.ts stop", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // Stops every node and deletes .yugabyte/run.
+      "distsql:local:destroy": fresh("node scripts/cluster.ts destroy", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // Chapter 13's migrations and repository on the local cluster, a real conflict, one node killed, two nodes killed, a dump restored.
+      "distsql:local:verify": fresh("node scripts/verify.ts", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // Fails when deploy/ differs from what the generators produce. `--write` rewrites it.
+      "distsql:render": fresh("node scripts/render.ts", { cwd: "examples/66-distributed-sql" }),
+      // With `-c nodes=3`: three instances and their volumes, billed by the hour.
+      ...infra("distsql", "examples/66-distributed-sql", "AihDistSql"),
+      // Everything below goes through Systems Manager to the deployed nodes.
+      "distsql:status": live("node --env-file-if-exists=../../.env scripts/nodes.ts status", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      "distsql:logs": live("node --env-file-if-exists=../../.env scripts/nodes.ts logs", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      "distsql:health": live("node --env-file-if-exists=../../.env scripts/nodes.ts health", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // Uploads the archive that `distsql:fetch --nodes` downloaded.
+      "distsql:artifact": live("node --env-file-if-exists=../../.env scripts/nodes.ts artifact", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      "distsql:install": live("node --env-file-if-exists=../../.env scripts/nodes.ts install", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // Each node makes its key; the CA in .yugabyte/ca-aws signs the request. Needs openssl on PATH.
+      "distsql:certs": live("node --env-file-if-exists=../../.env scripts/nodes.ts certs", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      "distsql:configure": live("node --env-file-if-exists=../../.env scripts/nodes.ts configure", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      "distsql:start": live("node --env-file-if-exists=../../.env scripts/nodes.ts start", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // One node: `vp run distsql:stop b`.
+      "distsql:stop": live("node --env-file-if-exists=../../.env scripts/nodes.ts stop", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // An interactive shell on one node. Needs the Session Manager plugin.
+      "distsql:session": live("node --env-file-if-exists=../../.env scripts/nodes.ts session", {
+        cwd: "examples/66-distributed-sql",
+      }),
+      // <<< chapter 66
 
       // ---- chapter task blocks are inserted above this line ----
 

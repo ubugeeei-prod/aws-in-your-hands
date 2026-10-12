@@ -1,0 +1,29 @@
+{
+  "source": "Hand-written from the response syntax in https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html (read 2026-10-13). Not recorded from a real inference call.",
+  "description": "The model is cut off by maxTokens in the middle of a sentence.",
+  "steps": [
+    {
+      "response": {
+        "output": {
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "text": "木の机の上に、開いたノートと青いペンが置かれていて、その奥には"
+              }
+            ]
+          }
+        },
+        "stopReason": "max_tokens",
+        "usage": {
+          "inputTokens": 318,
+          "outputTokens": 300,
+          "totalTokens": 618
+        },
+        "metrics": {
+          "latencyMs": 1200
+        }
+      }
+    }
+  ]
+}

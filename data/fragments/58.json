@@ -1,0 +1,727 @@
+{
+  "chapterId": "58",
+  "manifest": {
+    "id": "58",
+    "slug": "ledger",
+    "title": {
+      "ja": "Ledger: QLDB のいまと、検証できる追記専用の台帳",
+      "en": "Ledger: QLDB Today, and an Append-Only Ledger You Can Verify"
+    },
+    "prerequisites": ["05", "07", "21", "22"],
+    "services": ["DynamoDB", "S3", "Lambda", "EventBridge", "IAM"],
+    "samplePath": "examples/58-ledger",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 1,
+    "translatedRevision": {
+      "en": 1
+    },
+    "checkedAt": "2026-10-13",
+    "sourceIds": [
+      "ledger-aws-lifecycle-shutdown",
+      "ledger-aws-lifecycle-sunset",
+      "ledger-qldb-pages",
+      "ledger-qldb-blog-audit",
+      "ledger-qldb-blog-migrate",
+      "ledger-dynamodb-partiql-insert",
+      "ledger-dynamodb-partiql-iam",
+      "ledger-iam-service-reference-dynamodb",
+      "ledger-iam-service-reference-s3",
+      "ledger-s3-object-lock",
+      "ledger-s3-object-lock-configure",
+      "ledger-s3-conditional-writes",
+      "ledger-s3-list-object-versions",
+      "ledger-dynamodb-cloudtrail",
+      "ledger-dynamodb-local-download",
+      "ledger-price-list-dynamodb",
+      "ledger-price-list-s3",
+      "ledger-price-list-events",
+      "ledger-cdkd-providers",
+      "ledger-cloudflare-r2-bucket-locks",
+      "ledger-vercel-blob"
+    ]
+  },
+  "sources": [
+    {
+      "id": "ledger-aws-lifecycle-shutdown",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/full_shutdown_services.html",
+      "title": "AWS General Reference: Services in Full Shutdown",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon Quantum Ledger Database (Amazon QLDB) is listed under Services in Full Shutdown with the end of support date July 31, 2025",
+        "Services in full shutdown are completely removed from the AWS portfolio and are no longer available or supported in any capacity"
+      ]
+    },
+    {
+      "id": "ledger-aws-lifecycle-sunset",
+      "url": "https://docs.aws.amazon.com/general/latest/gr/sunset_services.html",
+      "title": "AWS General Reference: Services in Sunset",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Amazon Managed Blockchain is listed under Services in Sunset: announced September 29, 2026, end of support September 29, 2027"
+      ]
+    },
+    {
+      "id": "ledger-qldb-pages",
+      "url": "https://aws.amazon.com/qldb/",
+      "title": "Amazon QLDB product page (now a redirect)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "On 2026-10-13 https://aws.amazon.com/qldb/ answered 301 to https://aws.amazon.com/rds/aurora/",
+        "On 2026-10-13 https://docs.aws.amazon.com/qldb/latest/developerguide/what-is.html answered 404"
+      ],
+      "note": "Checked with curl. The QLDB developer guide could therefore not be read; what QLDB offered is taken from the two AWS blog posts below."
+    },
+    {
+      "id": "ledger-qldb-blog-audit",
+      "url": "https://aws.amazon.com/jp/blogs/news/replace-qldb-with-amazon-aurora-postgresql/",
+      "title": "AWS ブログ: 監査のユースケースで Amazon QLDB を Amazon Aurora PostgreSQL に置き換える",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "QLDB's journal was an append-only structure holding a sequential, immutable record of transactions in blocks chained with cryptographic hashes; the post calls immutability and cryptographic verifiability the two properties unique to QLDB",
+        "Aurora PostgreSQL keeps no persistent, immutable record of changes; the history has to be produced as audit data and stored outside the database",
+        "The post's replacements are pgAudit with CloudWatch Logs, audit tables filled by triggers, AWS DMS, and Database Activity Streams; it names no replacement for the cryptographic verification"
+      ],
+      "note": "Japanese translation (2024-08-20) of the AWS Database Blog post of 2024-07-18. The English URL I tried answered with a redirect, so the Japanese page is the one that was read."
+    },
+    {
+      "id": "ledger-qldb-blog-migrate",
+      "url": "https://aws.amazon.com/jp/blogs/news/amazon-qldb-to-aurora-postgresql/",
+      "title": "AWS ブログ: Amazon QLDB の Amazon Aurora PostgreSQL への移行",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "AWS presents Aurora PostgreSQL as the migration target for a QLDB ledger, with a full load through export, AWS Glue and AWS DMS, and ongoing changes through QLDB streams, Kinesis and Lambda"
+      ],
+      "note": "Japanese translation (2024-08-20) of the AWS Database Blog post of 2024-07-18."
+    },
+    {
+      "id": "ledger-dynamodb-partiql-insert",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.insert.html",
+      "title": "PartiQL insert statements for DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "INSERT INTO table VALUE item inserts a single item",
+        "If the table already has an item with the same primary key, DuplicateItemException is returned"
+      ]
+    },
+    {
+      "id": "ledger-dynamodb-partiql-iam",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-iam.html",
+      "title": "IAM security policies with PartiQL for DynamoDB",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Inserting with PartiQL needs dynamodb:PartiQLInsert on the table; select, update and delete each have their own action (PartiQLSelect, PartiQLUpdate, PartiQLDelete)"
+      ]
+    },
+    {
+      "id": "ledger-iam-service-reference-dynamodb",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/dynamodb/dynamodb.json",
+      "title": "Service reference for DynamoDB (machine-readable)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "dynamodb:PartiQLInsert takes a table resource",
+        "DynamoDB's condition keys are tag keys, dynamodb:Attributes, EnclosingOperation, the partition key value keys, FullTableScan, LeadingKeys, ReturnConsumedCapacity, ReturnValues and Select: none describes a request's ConditionExpression, so IAM cannot require PutItem to be conditional"
+      ]
+    },
+    {
+      "id": "ledger-iam-service-reference-s3",
+      "url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "title": "Service reference for Amazon S3 (machine-readable)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "s3:ListBucketVersions takes a bucket resource and supports the s3:prefix condition key",
+        "s3:GetObjectVersion, s3:GetObjectRetention, s3:DeleteObjectVersion and s3:BypassGovernanceRetention are separate actions on object resources",
+        "s3:PutObject supports the s3:if-none-match condition key"
+      ]
+    },
+    {
+      "id": "ledger-s3-object-lock",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html",
+      "title": "Locking objects with Object Lock",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Object Lock works only in buckets that have S3 Versioning enabled, and a lock protects one object version",
+        "Retention periods and legal holds do not prevent new versions from being created or delete markers from being added on top",
+        "Putting an object under the key of a protected object creates a new version; the protected version stays locked",
+        "Compliance mode: a protected version cannot be overwritten or deleted by any user, including the root user; the mode cannot be changed and the period cannot be shortened; the only way to delete it early is to delete the AWS account",
+        "Governance mode: deleting or changing the lock needs s3:BypassGovernanceRetention and the x-amz-bypass-governance-retention:true header; the S3 console sends that header by default",
+        "A DELETE with a version ID on a protected version returns 403; a DELETE without one returns 200 and inserts a delete marker",
+        "The page notes that S3 Object Lock has been assessed by Cohasset Associates for use in environments subject to SEC 17a-4, CFTC, and FINRA regulations",
+        "A bucket default retention is a duration in days or years, added to each new version's creation time; a retention period can be extended by anyone with s3:PutObjectRetention"
+      ]
+    },
+    {
+      "id": "ledger-s3-object-lock-configure",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-configure.html",
+      "title": "Configuring S3 Object Lock",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Object Lock can be enabled when a bucket is created or on an existing bucket",
+        "After Object Lock is enabled on a bucket, it cannot be disabled and versioning cannot be suspended",
+        "A bucket with Object Lock cannot be a destination for server access logs"
+      ]
+    },
+    {
+      "id": "ledger-s3-conditional-writes",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html",
+      "title": "How to prevent object overwrites with conditional writes",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "PutObject with If-None-Match: * fails with 412 Precondition Failed when an object with that key exists, and needs only s3:PutObject",
+        "In a versioned bucket the header looks at the current version only: when there is none, or it is a delete marker, the write succeeds",
+        "A 409 Conflict is possible when a delete finishes first; a PutObject can be retried after it"
+      ]
+    },
+    {
+      "id": "ledger-s3-list-object-versions",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html",
+      "title": "ListObjectVersions (Amazon S3 API reference)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "By default the action returns up to 1,000 key names per response",
+        "The response lists Version and DeleteMarker entries, each with a key, a version ID and a LastModified time"
+      ]
+    },
+    {
+      "id": "ledger-dynamodb-cloudtrail",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/logging-using-cloudtrail.html",
+      "title": "Logging DynamoDB operations by using AWS CloudTrail",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Control plane calls such as CreateTable, DeleteTable and UpdateTable are logged by default",
+        "Item-level calls (PutItem, UpdateItem, DeleteItem, ExecuteStatement, Query and others) are data plane events and are logged only when data event logging is enabled for a trail"
+      ]
+    },
+    {
+      "id": "ledger-dynamodb-local-download",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html",
+      "title": "Deploying DynamoDB locally on your computer",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "DynamoDB local is distributed as a .tar.gz with a jar, started with java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar",
+        "Version 2.6.0 and later need JRE 17 or newer"
+      ]
+    },
+    {
+      "id": "ledger-price-list-dynamodb",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: DynamoDB, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In the offer file published 2026-09-11: on-demand write request units USD 0.000000715 each (SKU HBK75W4NW4DYPFAC), read request units USD 0.0000001425 each (SKU TX6BW4TWG2FZQMPQ), storage USD 0 for the first 25 GB-month and USD 0.285 per GB-month after (SKU 2HPSAWPXJ2JJJ6XY): unchanged from data/pricing/unit-prices.json"
+      ]
+    },
+    {
+      "id": "ledger-price-list-s3",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: Amazon S3, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "In the offer file published 2026-09-28: PUT, COPY, POST and LIST requests USD 0.0000047 each (SKU XAKHUSC46NWC9PPM), GET and other requests USD 0.00000037 each (SKU 9C7873KU3ZQBD6BJ), Standard storage USD 0.025 per GB-month for the first 50 TB (SKU CCBFTMENTDWZHXHX): unchanged from data/pricing/unit-prices.json"
+      ],
+      "note": "The file has no line named for Object Lock. Whether locking itself is billed was not looked up on the pricing page."
+    },
+    {
+      "id": "ledger-price-list-events",
+      "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "title": "AWS Price List bulk API: EventBridge, ap-northeast-1",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "The offer file published 2026-09-24 prices custom events, partner events, Pipes, API destinations, archives, and scheduled invocations (USD 0 for the first 14 million, then USD 0.00000125 each); it has no line for a scheduled rule on the default bus invoking a target"
+      ],
+      "note": "Which line, if any, an hourly rate() rule falls under was not confirmed."
+    },
+    {
+      "id": "ledger-cdkd-providers",
+      "url": "https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28",
+      "title": "@go-to-k/cdkd 0.296.28 (installed package, dist/)",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Dedicated providers are registered for AWS::DynamoDB::Table, AWS::Events::Rule, AWS::IAM::ManagedPolicy, AWS::IAM::Policy, AWS::IAM::Role, AWS::Lambda::Function, AWS::Lambda::Permission, AWS::Logs::LogGroup, AWS::S3::Bucket and AWS::S3::BucketPolicy",
+        "The S3 bucket provider sets ObjectLockEnabledForBucket on CreateBucket when the template declares Object Lock, and applies ObjectLockConfiguration.Rule.DefaultRetention (Mode, Days, Years)"
+      ],
+      "note": "Read from the installed package's dist/ files (the registry.register calls and the bucket provider), not from the GitHub tag. What `cdkd destroy` does with a retained bucket was not read."
+    },
+    {
+      "id": "ledger-cloudflare-r2-bucket-locks",
+      "url": "https://developers.cloudflare.com/r2/buckets/bucket-locks/",
+      "title": "Cloudflare R2: Bucket locks",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Bucket lock rules prevent the deletion and overwriting of objects for a number of days, until a date, or indefinitely",
+        "A rule can be removed from the dashboard, with wrangler r2 bucket lock remove, or by leaving it out of an updated configuration; the page describes no mode that the bucket's owner cannot remove"
+      ]
+    },
+    {
+      "id": "ledger-vercel-blob",
+      "url": "https://vercel.com/docs/vercel-blob",
+      "title": "Vercel Blob",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "put() refuses an existing pathname unless allowOverwrite is set; del() deletes; the overview page describes no retention lock",
+        "Vercel Blob stores its data in Amazon S3"
+      ],
+      "note": "Only the overview page (last updated 2026-08-26) was read."
+    }
+  ],
+  "glossary": [
+    {
+      "id": "hash-chain",
+      "ja": "ハッシュチェーン",
+      "en": "hash chain",
+      "firstUse": "58",
+      "definition": {
+        "ja": "記録の 1 件ごとに、その内容と、1 つ前の記録のハッシュとを合わせて計算したハッシュを持たせた列。途中の 1 件を書き換えると、それより後ろのハッシュがすべて合わなくなる。",
+        "en": "A sequence of records in which each one carries a hash computed over its own content and the hash of the record before it. Changing one record makes every hash after it wrong."
+      }
+    },
+    {
+      "id": "ledger-digest",
+      "ja": "ダイジェスト",
+      "en": "digest",
+      "firstUse": "58",
+      "definition": {
+        "ja": "ある時点での台帳の末尾の番号とハッシュを書き留めたもの。ハッシュチェーンでは、末尾のハッシュがそれまでの記録すべてを代表する。台帳とは別の、消せない場所に置く。",
+        "en": "A note of a ledger's last sequence number and hash at one moment. In a hash chain the last hash stands for every record before it. It is kept apart from the ledger, somewhere it cannot be deleted."
+      }
+    },
+    {
+      "id": "object-lock",
+      "ja": "Object Lock",
+      "en": "Object Lock",
+      "firstUse": "58",
+      "definition": {
+        "ja": "S3 のオブジェクトのバージョンを、決めた期間のあいだ削除も上書きもできなくする機能。governance モードは特別な権限で解除でき、compliance モードは root ユーザーにも解除できない。",
+        "en": "An S3 feature that keeps an object version from being deleted or overwritten for a set period. Governance mode can be lifted with a special permission; compliance mode cannot be lifted even by the root user."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "id": "58.qldb",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.overview",
+      "sources": ["examples/58-ledger"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.trust",
+      "sources": ["examples/58-ledger/test/verify.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.fit",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.journal",
+      "sources": [
+        "examples/58-ledger/src/entry.ts",
+        "examples/58-ledger/src/journal.ts",
+        "examples/58-ledger/test/entry.test.ts",
+        "examples/58-ledger/test/journal-contract.ts"
+      ],
+      "tasks": ["test:unit", "ledger:test:local"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.append",
+      "sources": ["examples/58-ledger/src/ledger.ts", "examples/58-ledger/test/ledger.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "58.writer",
+      "sources": [
+        "examples/58-ledger/src/dynamodb-journal.ts",
+        "examples/58-ledger/infra/lib/ledger-stack.ts",
+        "examples/58-ledger/test/adapters.test.ts",
+        "examples/58-ledger/test/dynamodb-local.test.ts"
+      ],
+      "tasks": ["test:unit", "ledger:test:local"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.digest",
+      "sources": [
+        "examples/58-ledger/src/digest.ts",
+        "examples/58-ledger/src/s3-digests.ts",
+        "examples/58-ledger/src/memory-digests.ts",
+        "examples/58-ledger/src/digest-lambda.ts",
+        "examples/58-ledger/test/digest.test.ts",
+        "examples/58-ledger/test/memory-digests.test.ts",
+        "examples/58-ledger/test/digest-lambda.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "58.verify",
+      "sources": [
+        "examples/58-ledger/src/verify.ts",
+        "examples/58-ledger/src/audit.ts",
+        "examples/58-ledger/test/verify.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "58.events",
+      "sources": ["examples/58-ledger/src/events.ts", "examples/58-ledger/test/events.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.local",
+      "sources": [
+        "examples/58-ledger/scripts/demo.ts",
+        "examples/58-ledger/scripts/local-db.ts",
+        "examples/58-ledger/.env.example"
+      ],
+      "tasks": ["ledger:demo", "ledger:db:migrate:local", "ledger:db:reset:local"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "58.tests",
+      "sources": [
+        "examples/58-ledger/test",
+        "examples/58-ledger/infra/test/ledger-stack.test.ts",
+        "examples/58-ledger/scripts/test-local.ts"
+      ],
+      "tasks": ["test:unit", "ledger:test:local"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.stack",
+      "sources": [
+        "examples/58-ledger/infra/lib/ledger-stack.ts",
+        "examples/58-ledger/infra/bin/app.ts",
+        "examples/58-ledger/infra/test/ledger-stack.test.ts",
+        "examples/58-ledger/cdk.json"
+      ],
+      "tasks": ["ledger:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.deploy",
+      "sources": ["examples/58-ledger/scripts/ledger.ts"],
+      "tasks": [
+        "ledger:infra:diff",
+        "ledger:infra:deploy",
+        "ledger:append",
+        "ledger:digest",
+        "ledger:verify",
+        "ledger:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.cleanup",
+      "sources": [
+        "examples/58-ledger/scripts/ledger.ts",
+        "examples/58-ledger/src/purge.ts",
+        "examples/58-ledger/test/purge.test.ts"
+      ],
+      "tasks": ["ledger:infra:destroy", "ledger:purge"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    }
+  ],
+  "unitPrices": [],
+  "allowances": [],
+  "unknownAllowances": [],
+  "scenarios": [
+    {
+      "id": "ledger-idle",
+      "chapter": "58",
+      "title": {
+        "ja": "Ledger: デプロイ済みで追記のない月",
+        "en": "Ledger: deployed, with nothing appended for a month"
+      },
+      "assumptions": {
+        "ja": [
+          "既定のスタック。台帳に 1,000 件、テーブルは 1 MB 未満。ダイジェストは 1 件だけあり、新しい追記はない",
+          "ダイジェストの関数は 1 時間に 1 回、月 730 回動く。1 回につき、バージョンの一覧 1 回、最新のダイジェストの取得 1 回、テーブルへの強整合の Query 1 回（4 KB 以下）。追記がないので PutObject はしない",
+          "関数は 256 MB で 0.5 秒かかると仮定（計測値ではない）。ログは 1 回 300 バイト",
+          "1 時間ごとのルールが関数を呼ぶこと自体の料金は、価格表のどの項目に当たるか確認できなかったので入れていない"
+        ],
+        "en": [
+          "The default stack. 1,000 entries in the ledger, under 1 MB in the table. One digest exists and nothing new is appended",
+          "The digest function runs once an hour, 730 times a month. Each run lists the versions once, fetches the newest digest once, and sends one strongly consistent Query to the table (4 KB or less). With nothing appended it sends no PutObject",
+          "The function is assumed to take 0.5 s at 256 MB (not measured). 300 bytes of log per run",
+          "The hourly rule's own invocations are left out: which line of the price list they fall under was not confirmed"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.001,
+          "basis": "1 MB in the table, in GB-month"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 730,
+          "basis": "730 runs, one strongly consistent Query of 4 KB or less each: 1 unit"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 730,
+          "basis": "730 ListObjectVersions requests"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 730,
+          "basis": "730 GetObject requests for the newest digest"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 1e-6,
+          "basis": "One digest of about 150 bytes, rounded up to 1 KB"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 730,
+          "basis": "730 scheduled invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 91.25,
+          "basis": "730 x 0.5 s x 0.25 GB"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.00022,
+          "basis": "730 x 300 bytes"
+        }
+      ]
+    },
+    {
+      "id": "ledger-month",
+      "chapter": "58",
+      "title": {
+        "ja": "Ledger: 月 10 万件の追記",
+        "en": "Ledger: 100,000 entries appended in a month"
+      },
+      "assumptions": {
+        "ja": [
+          "月 10 万件の追記。1 件は 300 バイト前後で 1 KB 以下。追記 1 回は、末尾を読む強整合の Query 1 回（1 ユニット）と、書き込み 1 回（1 ユニット）。PartiQL の INSERT が PutItem と同じユニットで課金されるかは確認していない。番号の取り合いによるやり直しは 0 と仮定",
+          "ダイジェストは 1 時間ごとに 730 回。1 回に新しい 137 件（約 41 KB）を強整合で読むので 11 ユニット。S3 へは、バージョンの一覧 1 回、最新のダイジェストの取得 1 回、PutObject 1 回。一覧は月のあいだ 1 ページに収まる",
+          "月に 1 回、全体を監査する。10 万件（30 MB）の読み取りで 7,500 ユニット、ダイジェスト 730 件の取得と一覧 1 回",
+          "関数は 256 MB で 0.5 秒かかると仮定（計測値ではない）。ログは 1 回 300 バイト。テーブルは 30 MB、ダイジェストは合わせて 1 MB 未満"
+        ],
+        "en": [
+          "100,000 appends a month. An entry is about 300 bytes, under 1 KB. One append is one strongly consistent Query for the tail (1 unit) and one write (1 unit). Whether a PartiQL INSERT is billed in the same units as PutItem was not confirmed. No retries from two writers taking the same number",
+          "730 hourly digests. Each reads the 137 new entries (about 41 KB) with strong consistency: 11 units. On S3: one version listing, one fetch of the newest digest, one PutObject. The listing fits in one page for the month",
+          "One full audit a month: 7,500 units to read 100,000 entries (30 MB), 730 digest fetches and one listing",
+          "The function is assumed to take 0.5 s at 256 MB (not measured). 300 bytes of log per run. 30 MB in the table, under 1 MB of digests"
+        ]
+      },
+      "items": [
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 100000,
+          "basis": "100,000 entries of 1 KB or less: 1 unit each"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 115530,
+          "basis": "100,000 tail reads at 1 unit, 730 digest runs at 11 units (8,030), one audit of 30 MB at 1 unit per 4 KB (7,500)"
+        },
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.03,
+          "basis": "30 MB in the table, in GB-month"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 1461,
+          "basis": "730 ListObjectVersions and 730 PutObject from the function, one listing by the audit"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 1460,
+          "basis": "730 GetObject from the function, 730 from the audit"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.001,
+          "basis": "730 digests of about 150 bytes, rounded up to 1 MB"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 730,
+          "basis": "730 scheduled invocations"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 91.25,
+          "basis": "730 x 0.5 s x 0.25 GB"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.00022,
+          "basis": "730 x 300 bytes"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "records": [
+      {
+        "scope": "58",
+        "command": "vp test run examples/58-ledger",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "83 件が通り、1 件（DynamoDB Local 用）はスキップ。ハッシュの固定値、行の読み戻し、追記の番号の取り合いと応答の喪失、ジャーナルの規則（メモリ上のモデル）、ダイジェストの作成と拒否、過去の記録の変更・削除・入れ替え・末尾の切り落としの検出、ダイジェストへの攻撃、Object Lock のモデル、DynamoDB と S3 へのリクエストの形、関数、片付けの計画、スタックのアサーション",
+          "en": "83 passed, 1 skipped (the one for DynamoDB Local). The pinned hash, reading rows back, a race for the next number and a lost response, the journal rules on the in-memory model, taking and refusing a digest, detection of changed, removed, swapped and cut-off entries, attacks on the digest, the Object Lock model, the shape of requests to DynamoDB and S3, the function, the purge plan, and stack assertions"
+        }
+      },
+      {
+        "scope": "58",
+        "command": "tsc --noEmit -p examples/58-ledger",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "型検査。エラーなし",
+          "en": "Type check, no errors"
+        }
+      },
+      {
+        "scope": "58",
+        "command": "vp run ledger:demo",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "メモリ上で、追記、ダイジェスト、履歴の書き換え、監査を実行。本文の出力はこの実行のもの",
+          "en": "Appends, a digest, a rewrite of history and an audit, in memory. The output in the page is from this run"
+        }
+      },
+      {
+        "scope": "58",
+        "command": "vp run ledger:db:reset:local && vp run ledger:test:local (DynamoDB Local 3.3.1)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "ジャーナルの規則 5 件を PartiQL の INSERT と条件付きの PutItem の両方で、加えて追記からダイジェスト、監査までの 1 件を、DynamoDB Local 3.3.1 に対して実行した（11 件）。Docker ではなく、AWS が配布する jar を Java 21 で直接起動し（ポート 8058、-inMemory -sharedDb -disableTelemetry）、タスクには環境変数 `DYNAMODB_ENDPOINT=http://localhost:8058` を渡した。重複した INSERT への応答の名前は `DuplicateItem` だった。ダイジェストの保存先はメモリ上のモデル",
+          "en": "Ran the 5 journal rules through both the PartiQL INSERT and the conditional PutItem, plus one run from append to digest to audit, against DynamoDB Local 3.3.1 (11 tests), started directly from the jar AWS distributes with Java 21 (port 8058, -inMemory -sharedDb -disableTelemetry) and not through Docker; the tasks were given `DYNAMODB_ENDPOINT=http://localhost:8058` in the environment. The duplicate INSERT was answered with the name `DuplicateItem`. The digest store was the in-memory model"
+        }
+      },
+      {
+        "scope": "58",
+        "command": "vp run ledger:infra:synth",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "テンプレートを生成。リソース 12 個、AWS SDK を含む関数のバンドル込み。AWS には問い合わせない",
+          "en": "Synthesized the template: 12 resources, with the function bundle including the AWS SDK. No AWS lookups"
+        }
+      },
+      {
+        "scope": "58",
+        "command": "vp run ledger:infra:deploy",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "デプロイしていない",
+          "en": "Not deployed"
+        }
+      },
+      {
+        "scope": "58",
+        "command": "vp run ledger:append / ledger:digest / ledger:verify",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      },
+      {
+        "scope": "58",
+        "command": "vp run ledger:infra:destroy / ledger:purge",
+        "kind": "aws",
+        "status": "not-run",
+        "ranAt": null,
+        "note": {
+          "ja": "実行していない",
+          "en": "Not run"
+        }
+      }
+    ],
+    "open": [
+      {
+        "id": "58-aws",
+        "summary": {
+          "ja": "58章のスタックを AWS で一度も動かしていない。未確認: 実際の DynamoDB が重複した PartiQL の INSERT に DuplicateItemException を返すこと（DynamoDB Local 3.3.1 は DuplicateItem という名前で返した）、dynamodb:PartiQLInsert と dynamodb:Query だけの権限で追記が通り上書きが通らないこと、PartiQL の INSERT の課金単位、既定の保持期間だけのバケットへの PutObject が s3:PutObject の権限だけで通りロックがかかること、SDK が付けるチェックサムで Object Lock の PutObject が受け付けられること、If-None-Match の 412、ListObjectVersions の応答の形、ロック中のバージョンの削除が 403 になること、governance の解除、GetObjectRetention がロックのないバージョンに返すエラーの名前、1 時間ごとのルールの料金、cdkd が Object Lock つきのバケットとルールと Lambda の権限を実際に作れること、cdkd destroy が RETAIN のバケットを残すこと。QLDB の開発者ガイドは 404 で読めなかったので、QLDB の説明は AWS のブログ 2 本だけに基づく。",
+          "en": "The chapter 58 stack has never run on AWS. Unconfirmed: that the real DynamoDB answers a duplicate PartiQL INSERT with DuplicateItemException (DynamoDB Local 3.3.1 used the name DuplicateItem), that a role with only dynamodb:PartiQLInsert and dynamodb:Query can append and cannot overwrite, the units a PartiQL INSERT is billed in, that PutObject into a bucket with only a default retention needs just s3:PutObject and comes out locked, that the checksum the SDK adds satisfies PutObject under Object Lock, the 412 for If-None-Match, the shape of the ListObjectVersions answer, the 403 for deleting a locked version, lifting governance mode, the error name GetObjectRetention gives for a version with no lock, the price of the hourly rule, that cdkd can really create the bucket with Object Lock, the rule and the Lambda permission, and that cdkd destroy leaves the retained bucket. The QLDB developer guide answered 404, so what QLDB offered rests on two AWS blog posts only."
+        },
+        "resume": {
+          "ja": "`vp run ledger:infra:diff`、`vp run ledger:infra:deploy`、`vp run ledger:append`（2 回）、`vp run ledger:digest`、`vp run ledger:verify` の順に実行する。関数のログは出力 `DigestLogGroupName` のロググループを見る。出力 `DigestBucketName` を控えてから `vp run ledger:infra:destroy`。保持期間（既定は 1 日）が過ぎたら `vp run ledger:purge --bucket <名前> --apply` でバケットを消す。",
+          "en": "Run `vp run ledger:infra:diff`, `vp run ledger:infra:deploy`, `vp run ledger:append` twice, `vp run ledger:digest`, then `vp run ledger:verify`. The function's logs are in the log group named by the `DigestLogGroupName` output. Note the `DigestBucketName` output, then run `vp run ledger:infra:destroy`. Once the retention period (one day by default) is over, delete the bucket with `vp run ledger:purge --bucket <name> --apply`."
+        }
+      }
+    ]
+  },
+  "toolchain": [],
+  "tasks": {
+    "snippet": "      // ---- chapter 58: ledger ---------------------------------------------------\n      // Appends, locks a digest, rewrites history, and audits, on the in-memory models. No AWS.\n      \"ledger:demo\": fresh(\"node scripts/demo.ts\", { cwd: \"examples/58-ledger\" }),\n      // The table in DynamoDB Local. Refuses any endpoint that is not on this machine.\n      \"ledger:db:migrate:local\": fresh(\"node --env-file-if-exists=.env scripts/local-db.ts migrate\", {\n        cwd: \"examples/58-ledger\",\n      }),\n      \"ledger:db:reset:local\": fresh(\"node --env-file-if-exists=.env scripts/local-db.ts reset\", {\n        cwd: \"examples/58-ledger\",\n      }),\n      \"ledger:test:local\": fresh(\"node --env-file-if-exists=.env scripts/test-local.ts\", {\n        cwd: \"examples/58-ledger\",\n      }),\n      ...infra(\"ledger\", \"examples/58-ledger\", \"AihLedger\"),\n      // One sample entry, then a digest, with your own credentials.\n      \"ledger:append\": live(\"node --env-file-if-exists=../../.env scripts/ledger.ts append\", {\n        cwd: \"examples/58-ledger\",\n      }),\n      \"ledger:digest\": live(\"node --env-file-if-exists=../../.env scripts/ledger.ts digest\", {\n        cwd: \"examples/58-ledger\",\n      }),\n      // Reads the whole ledger and every digest version. Exits 1 on any finding.\n      \"ledger:verify\": live(\"node --env-file-if-exists=../../.env scripts/ledger.ts verify\", {\n        cwd: \"examples/58-ledger\",\n      }),\n      // Prints what it would delete from the digest bucket unless --apply is given. Never bypasses a lock.\n      \"ledger:purge\": live(\"node --env-file-if-exists=../../.env scripts/ledger.ts purge\", {\n        cwd: \"examples/58-ledger\",\n      }),",
+    "synth": ["ledger:infra:synth"],
+    "checkAll": ["ledger:demo"],
+    "typecheck": ["examples/58-ledger"]
+  }
+}

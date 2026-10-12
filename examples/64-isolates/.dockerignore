@@ -1,0 +1,5 @@
+# The build context is this directory. Only the runtime, its configuration, and the bundle go to the daemon.
+*
+!.workerd/linux-arm64/workerd
+!dist/config.capnp
+!dist/notes.mjs

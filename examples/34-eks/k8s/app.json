@@ -1,0 +1,227 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "notes-api",
+        "namespace": "notes"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "notes-api",
+        "namespace": "notes",
+        "labels": {
+          "app.kubernetes.io/name": "notes-api"
+        }
+      },
+      "spec": {
+        "replicas": 2,
+        "minReadySeconds": 30,
+        "strategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "maxSurge": "100%",
+            "maxUnavailable": 0
+          }
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "notes-api"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "notes-api"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "notes-api",
+            "terminationGracePeriodSeconds": 45,
+            "nodeSelector": {
+              "kubernetes.io/arch": "arm64"
+            },
+            "topologySpreadConstraints": [
+              {
+                "maxSkew": 1,
+                "topologyKey": "topology.kubernetes.io/zone",
+                "whenUnsatisfiable": "DoNotSchedule",
+                "labelSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "notes-api"
+                  }
+                }
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "api",
+                "image": "123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/repository-name:v1",
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "PORT",
+                    "value": "8080"
+                  },
+                  {
+                    "name": "ALLOWED_ORIGIN",
+                    "value": "http://localhost:5173"
+                  },
+                  {
+                    "name": "LOG_LEVEL",
+                    "value": "info"
+                  },
+                  {
+                    "name": "STAGE",
+                    "value": "dev"
+                  },
+                  {
+                    "name": "APP_VERSION",
+                    "value": "v1"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "250m",
+                    "memory": "512Mi"
+                  },
+                  "limits": {
+                    "memory": "512Mi"
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/health",
+                    "port": "http"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 10,
+                  "failureThreshold": 3
+                },
+                "lifecycle": {
+                  "preStop": {
+                    "sleep": {
+                      "seconds": 15
+                    }
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "policy/v1",
+      "kind": "PodDisruptionBudget",
+      "metadata": {
+        "name": "notes-api",
+        "namespace": "notes"
+      },
+      "spec": {
+        "maxUnavailable": 1,
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "notes-api"
+          }
+        },
+        "unhealthyPodEvictionPolicy": "AlwaysAllow"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "notes-api",
+        "namespace": "notes"
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app.kubernetes.io/name": "notes-api"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": "http"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "notes-api",
+        "namespace": "notes",
+        "annotations": {
+          "alb.ingress.kubernetes.io/healthcheck-path": "/health",
+          "alb.ingress.kubernetes.io/success-codes": "200",
+          "alb.ingress.kubernetes.io/healthcheck-interval-seconds": "10",
+          "alb.ingress.kubernetes.io/healthcheck-timeout-seconds": "5",
+          "alb.ingress.kubernetes.io/healthy-threshold-count": "2",
+          "alb.ingress.kubernetes.io/unhealthy-threshold-count": "2",
+          "alb.ingress.kubernetes.io/target-group-attributes": "deregistration_delay.timeout_seconds=30"
+        }
+      },
+      "spec": {
+        "ingressClassName": "notes-alb",
+        "rules": [
+          {
+            "http": {
+              "paths": [
+                {
+                  "path": "/",
+                  "pathType": "Prefix",
+                  "backend": {
+                    "service": {
+                      "name": "notes-api",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
