@@ -755,6 +755,108 @@ body {
   margin-bottom: var(--aih-4);
 }
 
+/* ---- figures -------------------------------------------------------- */
+
+/* Drawn by theme/figure.ts. Thin navy lines on the page's own background;
+   the only colour is the orange square that marks what a chapter is about. */
+.content .aih-figure {
+  margin: var(--aih-12) 0;
+  padding: 0;
+}
+
+.aih-figure__canvas {
+  overflow-x: auto;
+  padding: var(--aih-8) var(--aih-6);
+  border-top: var(--aih-rule-strong);
+  border-bottom: var(--aih-rule);
+  text-align: center;
+}
+
+.aih-figure svg {
+  display: inline-block;
+  /* A figure wider than the column shrinks to fit, but not so far that its labels stop being readable. */
+  max-width: 100%;
+  min-width: min(100%, 520px);
+  height: auto;
+  color: var(--octc-color-text);
+  overflow: visible;
+}
+
+.content .aih-figure figcaption {
+  margin-top: var(--aih-3);
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--octc-color-text-muted);
+  text-align: left;
+}
+
+.aih-figure__node {
+  fill: var(--octc-color-bg);
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.aih-figure__mark {
+  fill: var(--aih-orange);
+}
+
+.aih-figure__label {
+  fill: currentColor;
+  font-family: var(--octc-font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.aih-figure__sub,
+.aih-figure__edge-label,
+.aih-figure__group-label {
+  fill: var(--octc-color-text-muted);
+  font-family: var(--octc-font-mono);
+  font-size: 11.5px;
+}
+
+.aih-figure__sub {
+  text-anchor: middle;
+}
+
+.aih-figure__edge-label {
+  fill: currentColor;
+}
+
+.aih-figure__edge,
+.aih-figure__head {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.aih-figure__edge--dashed {
+  stroke-dasharray: 4 4;
+}
+
+.aih-figure__lifeline {
+  stroke: var(--octc-color-border);
+  stroke-width: 1;
+}
+
+.aih-figure__clear {
+  fill: var(--octc-color-bg);
+}
+
+.aih-figure__group {
+  fill: var(--octc-color-bg-alt);
+  stroke: var(--octc-color-border);
+  stroke-width: 1;
+}
+
+.aih-figure__note {
+  fill: var(--octc-color-bg-alt);
+  stroke: var(--octc-color-border);
+  stroke-width: 1;
+}
+
 /* ---- the foot of the page ------------------------------------------- */
 
 .last-updated {

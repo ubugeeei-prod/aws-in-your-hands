@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 
 import type { MarkdownTransformer } from "@ox-content/vite-plugin";
 
+import { renderFigure } from "./figure.ts";
+
 type Node = {
   type: string;
   depth?: number;
@@ -126,6 +128,30 @@ export const codeTitles: MarkdownTransformer = {
         block.meta = `${block.meta ?? ""} [${origin}]`.trim();
       }
     });
+    return ast;
+  },
+};
+
+/** Draws every ```figure block. A figure that does not parse fails the build, with the page's name. */
+export const figures: MarkdownTransformer = {
+  name: "aih:figures",
+  transform(ast, context) {
+    const draw = (node: Node): void => {
+      if (node.type === "code" && node.lang === "figure") {
+        try {
+          node.value = renderFigure(node.value ?? "");
+        } catch (error) {
+          throw new Error(
+            `${context.filePath}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+        node.type = "html";
+        delete node.lang;
+        delete node.meta;
+      }
+      node.children?.forEach(draw);
+    };
+    draw(ast as Node);
     return ast;
   },
 };
