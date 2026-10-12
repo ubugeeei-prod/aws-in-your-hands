@@ -2,6 +2,7 @@
 // Loaded only on the page that has a cover.
 
 import { createFluidCloud } from "./fluid-cloud.ts";
+import { remember, stopped } from "./motion.ts";
 
 const cover = document.querySelector<HTMLElement>("[data-aih-cover]");
 const canvas = cover?.querySelector("canvas");
@@ -20,7 +21,10 @@ if (cover && canvas) {
         play: toggle.dataset["play"] ?? "Play motion",
       };
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-      let paused = false;
+      let paused = stopped();
+      if (paused) {
+        cloud.pause();
+      }
 
       const show = (): void => {
         // Nothing to pause for a reader whose system already holds the picture still.
@@ -30,6 +34,7 @@ if (cover && canvas) {
       };
       toggle.addEventListener("click", () => {
         paused = !paused;
+        remember(paused);
         if (paused) {
           cloud.pause();
         } else {

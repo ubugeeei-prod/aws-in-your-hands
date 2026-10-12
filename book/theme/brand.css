@@ -101,6 +101,15 @@ body {
   opacity: 0.22;
 }
 
+/* On paper the same cloud is turned over: the sky goes to white and the cloud becomes its shade. */
+:root[data-theme="light"] .aih-ground {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+:root[data-theme="light"] .aih-ground.is-live {
+  opacity: 0.16;
+}
+
 html {
   background: var(--octc-color-bg);
 }
@@ -117,14 +126,36 @@ body:has(.aih-ground) {
 
 /* ---- header --------------------------------------------------------- */
 
+/* One ground from edge to edge: the bars are not surfaces of their own, and nothing is ruled off.
+   What scrolls under a bar is blurred into the ground, and the bar's far edge fades out. */
 .header {
-  background: var(--octc-color-bg);
-  border-bottom: var(--aih-rule);
+  background: none;
+  border-bottom: 0;
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   padding-inline: var(--aih-6);
   gap: var(--aih-4);
+}
+
+.header::before,
+.mobile-footer::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 calc(var(--aih-6) * -1);
+  background: color-mix(in srgb, var(--octc-color-bg) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  -webkit-mask: linear-gradient(#000 62%, transparent);
+  mask: linear-gradient(#000 62%, transparent);
+  pointer-events: none;
+}
+
+.mobile-footer::before {
+  inset: calc(var(--aih-6) * -1) 0 0;
+  -webkit-mask: linear-gradient(transparent, #000 38%);
+  mask: linear-gradient(transparent, #000 38%);
 }
 
 .header-title {
@@ -152,6 +183,7 @@ body:has(.aih-ground) {
 
 .search-button,
 .theme-toggle,
+.aih-motion,
 .ox-header-select > button {
   border-radius: 0;
   box-shadow: none;
@@ -169,8 +201,22 @@ body:has(.aih-ground) {
 
 .search-button:hover,
 .theme-toggle:hover,
+.aih-motion:hover,
 .ox-header-select > button:hover {
   background: var(--octc-color-bg-alt);
+}
+
+/* Stops and starts the cloud behind the text (client/ground.ts). */
+.aih-motion {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.aih-motion svg,
+.aih-motion-mobile svg {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .search-button kbd,
@@ -214,10 +260,24 @@ body:has(.aih-ground) {
 /* ---- the contents of the book --------------------------------------- */
 
 .sidebar {
-  background: none;
-  border-right: var(--aih-rule);
   font-size: 15px;
-  padding: var(--aih-8) var(--aih-6) var(--aih-16);
+}
+
+@media (min-width: 769px) {
+  .sidebar {
+    background: none;
+    border-right: 0;
+    padding: var(--aih-8) var(--aih-6) var(--aih-16);
+  }
+}
+
+/* On a phone the contents come up as a sheet over the text, so there it is a surface. */
+@media (max-width: 768px) {
+  .sidebar,
+  [data-theme="dark"] .sidebar {
+    background: var(--octc-color-bg);
+    border-radius: 0;
+  }
 }
 
 .nav-section {
@@ -1038,8 +1098,8 @@ footer,
 
 /* The bar at the foot of a phone's screen sits on the page's own ground. */
 .mobile-footer {
-  background: var(--octc-color-bg);
-  border-top: var(--aih-rule);
+  background: none;
+  border-top: 0;
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;

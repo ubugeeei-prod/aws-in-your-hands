@@ -10,7 +10,7 @@ The book's look, applied to Ox Content. The source of truth is the brand guide
 | `transform.ts`, `title.ts`, `imports.ts`, `figure.ts`, `tasks.ts` | Build-time changes to a page: the chapter heading and its list of pages, file names and imports on code, drawn figures, the command behind each `vp run` |
 | `brand/*.svg` | The mark (32 px and up), the micro mark (16–24 px), and the outlined wordmark, cut from the guide's vectors |
 | `assets.ts` | Serves `brand/` and the cover's scripts under `/brand/` |
-| `client/` | The cover's cloud, and the thin one behind the reading pages (`ground.ts`) |
+| `client/` | The cover's cloud, the thin one behind the reading pages (`ground.ts`), and the reader's choice to stop both (`motion.ts`) |
 
 ## The cover's cloud
 
@@ -34,6 +34,10 @@ Three things happen each frame.
    with the cover's paper grain and a darker foot for the title to stand on.
 
 What it is not: a 3D fluid simulation. Depth and lighting are an optical approximation.
+
+Behind the reading pages the same cloud runs thin and slow. On paper it is turned over in CSS,
+so the sky goes to white and the cloud becomes its shade. A button in the header (and in the bar
+a phone shows) stops it, and the choice is kept across pages.
 
 It holds still for readers who ask for reduced motion, stops when the tab or the canvas is
 out of sight, and shrinks the ray-marched image when frames run slow (`quality.ts`). Without
