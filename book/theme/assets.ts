@@ -46,6 +46,15 @@ export function brandFiles(): Map<string, { type: string; body: string }> {
   return files;
 }
 
+/** The pictures under /brand/: a still of the cover's cloud, for the pages that carry it on. */
+export function brandImages(): Map<string, Uint8Array> {
+  return new Map(
+    readdirSync(here("./brand"))
+      .filter((file) => file.endsWith(".jpg"))
+      .map((name) => [name, readFileSync(here(`./brand/${name}`))]),
+  );
+}
+
 export function brandAssets(base: string): Plugin {
   return {
     name: "aih:brand-assets",
@@ -53,9 +62,14 @@ export function brandAssets(base: string): Plugin {
       server.middlewares.use((request, response, next) => {
         const prefix = `${base}brand/`;
         const path = request.url?.split("?")[0] ?? "";
-        const file = path.startsWith(prefix)
-          ? brandFiles().get(path.slice(prefix.length))
-          : undefined;
+        const name = path.startsWith(prefix) ? path.slice(prefix.length) : "";
+        const image = brandImages().get(name);
+        if (image !== undefined) {
+          response.setHeader("content-type", "image/jpeg");
+          response.end(image);
+          return;
+        }
+        const file = brandFiles().get(name);
         if (file === undefined) {
           next();
           return;
@@ -67,6 +81,9 @@ export function brandAssets(base: string): Plugin {
     generateBundle() {
       for (const [name, file] of brandFiles()) {
         this.emitFile({ type: "asset", fileName: `brand/${name}`, source: file.body });
+      }
+      for (const [name, image] of brandImages()) {
+        this.emitFile({ type: "asset", fileName: `brand/${name}`, source: image });
       }
     },
   };

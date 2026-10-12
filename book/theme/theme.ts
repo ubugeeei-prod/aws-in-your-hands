@@ -133,6 +133,8 @@ export function brandTheme(base: string) {
     css,
     // The cover's scripts are fetched only by the page that has a cover.
     js: [
+      // The chapter you are in shows its pages. The others stay folded.
+      `document.querySelector(".sidebar .nav-link.active")?.closest("details")?.setAttribute("open", "");`,
       `if (document.querySelector("[data-aih-cover]")) { import(${JSON.stringify(`${base}brand/cover.js`)}); }`,
       `if (document.querySelector(".toc-link")) { import(${JSON.stringify(`${base}brand/reading.js`)}); }`,
       `if (document.querySelector(".content .ox-code")) { import(${JSON.stringify(`${base}brand/fold.js`)}); }`,

@@ -292,31 +292,52 @@ body {
   color: var(--octc-color-text);
 }
 
-/* The chapter's number, its name, and what it is about, each on its own line.
-   The colons between them are for people who hear the page, not see it. */
+/* A chapter opens on the cover's own sky and type, so the book reads as one object.
+   The picture is a still of the cover's cloud under a flat navy wash that keeps white text above 4.5:1.
+   The colons between the parts are for people who hear the page, not see it. */
 .content h1:has(.aih-chapter__number) {
   display: grid;
+  align-content: end;
+  row-gap: var(--aih-2);
+  min-height: 15rem;
+  margin: 0 calc(var(--aih-12) * -1) var(--aih-6);
+  padding: var(--aih-8) var(--aih-12);
+  border: 0;
   font-size: 0;
-  row-gap: var(--aih-3);
+  color: #ffffff;
+  background:
+    linear-gradient(rgba(16, 27, 43, 0.5), rgba(16, 27, 43, 0.5)),
+    #101b2b url("/brand/atmosphere.jpg") center / cover;
 }
 
 .aih-chapter__number {
-  font-weight: 400;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--octc-color-text-muted);
+  font-family: var(--aih-display);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.4;
 }
 
 .aih-chapter__name {
-  font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.3rem);
-  line-height: 1.3;
+  font-family: var(--aih-display);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 1.4rem + 3.6vw, 4.2rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .aih-chapter__about {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   line-height: 1.6;
-  color: var(--octc-color-text-muted);
+  margin-top: var(--aih-2);
+}
+
+@media (max-width: 768px) {
+  .content h1:has(.aih-chapter__number) {
+    min-height: 11rem;
+    margin-inline: calc(var(--octc-mobile-gutter) * -1);
+    padding: var(--aih-6) var(--octc-mobile-gutter);
+  }
 }
 
 /* "Copy as Markdown" and "View as Markdown": quiet, under the rule. */
