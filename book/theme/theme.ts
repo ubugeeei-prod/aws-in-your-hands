@@ -110,7 +110,7 @@ export function brandTheme(base: string) {
         },
       },
     },
-    layout: { maxContentWidth: "720px", headerHeight: "56px", sidebarWidth: "22rem" },
+    layout: { maxContentWidth: "720px", headerHeight: "56px", sidebarWidth: "18rem" },
     footer: {
       message: "AWS in Your Hands: An open field guide",
     },
@@ -120,11 +120,11 @@ export function brandTheme(base: string) {
     darkTokens: { ...syntax, "syntax-background": colors.deep },
     toggleTransition: "circle",
     css,
-    // The cover's scripts are fetched only by the page that has a cover.
+    // The cover gets its cloud; every other page gets the thin one behind the text.
     js: [
       // The chapter you are in shows its pages. The others stay folded.
       `document.querySelector(".sidebar .nav-link.active")?.closest("details")?.setAttribute("open", "");`,
-      `if (document.querySelector("[data-aih-cover]")) { import(${JSON.stringify(`${base}brand/cover.js`)}); }`,
+      `import(${JSON.stringify(`${base}brand/`)} + (document.querySelector("[data-aih-cover]") ? "cover.js" : "ground.js"));`,
       `if (document.querySelector(".toc-link")) { import(${JSON.stringify(`${base}brand/reading.js`)}); }`,
       `if (document.querySelector(".content .ox-code")) { import(${JSON.stringify(`${base}brand/fold.js`)}); }`,
     ].join("\n"),

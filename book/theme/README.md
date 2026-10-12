@@ -6,11 +6,11 @@ The book's look, applied to Ox Content. The source of truth is the brand guide
 | File | What it is |
 | --- | --- |
 | `theme.ts` | Colours, typefaces, and layout as an Ox Content theme |
-| `brand.css` | Everything the theme's options cannot say: the page as one column on the cover's navy, the contents panel, a chapter's opening, code, figures, the cover |
-| `transform.ts`, `title.ts`, `imports.ts`, `figure.ts` | Build-time changes to a page: the chapter heading and its list of pages, file names and imports on code, drawn figures |
+| `brand.css` | Everything the theme's options cannot say: the page on the cover's navy, the sidebar and the outline, a chapter's opening, code, figures, the cover |
+| `transform.ts`, `title.ts`, `imports.ts`, `figure.ts`, `tasks.ts` | Build-time changes to a page: the chapter heading and its list of pages, file names and imports on code, drawn figures, the command behind each `vp run` |
 | `brand/*.svg` | The mark (32 px and up), the micro mark (16–24 px), and the outlined wordmark, cut from the guide's vectors |
 | `assets.ts` | Serves `brand/` and the cover's scripts under `/brand/` |
-| `client/` | The cover's cloud |
+| `client/` | The cover's cloud, and the thin one behind the reading pages (`ground.ts`) |
 
 ## The cover's cloud
 

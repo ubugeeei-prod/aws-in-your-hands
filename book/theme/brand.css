@@ -57,11 +57,9 @@ body {
   border-radius: 0;
 }
 
-/* One column of text, set like a book page. The contents of the whole book open
-   from the header; only this page's own outline stays beside the text. */
+/* The book's contents on the left, the text in the middle, this page's outline on the right. */
 .main,
 .main--with-toc {
-  margin-left: 0;
   padding: var(--aih-12) var(--aih-8) var(--aih-16);
 }
 
@@ -73,14 +71,9 @@ body {
   margin-inline: auto;
 }
 
-@media (min-width: 1100px) {
-  .toc {
-    display: block;
-  }
-
-  /* The outline takes the left margin; the text keeps its measure and sits just right of centre. */
+@media (min-width: 1480px) {
   .main--with-toc {
-    padding-left: calc(var(--octc-toc-width) + var(--aih-12));
+    padding-right: calc(var(--octc-toc-width) + var(--octc-toc-gap));
   }
 }
 
@@ -89,6 +82,36 @@ body {
   .main--with-toc {
     padding: var(--aih-6) var(--octc-mobile-gutter)
       calc(var(--octc-mobile-footer-height) + var(--aih-12));
+  }
+}
+
+/* The cover's cloud, thin, behind the text. It sits under everything and takes no input. */
+.aih-ground {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1200ms ease;
+}
+
+.aih-ground.is-live {
+  opacity: 0.22;
+}
+
+html {
+  background: var(--octc-color-bg);
+}
+
+body:has(.aih-ground) {
+  background: transparent;
+}
+
+@media print {
+  .aih-ground {
+    display: none;
   }
 }
 
@@ -123,40 +146,7 @@ body {
   mask: url("/brand/mark.svg") center / contain no-repeat;
 }
 
-/* "Contents" opens the whole book. It is a word, at every width. */
-.menu-toggle {
-  display: inline-flex;
-  align-items: center;
-  order: 2;
-  min-height: 44px;
-  margin: 0 0 0 auto;
-  padding: 0 var(--aih-3);
-  font: inherit;
-  font-size: 14px;
-  color: var(--octc-color-text);
-}
-
-.menu-toggle svg {
-  display: none;
-}
-
-.menu-toggle::after {
-  content: "目次";
-}
-
-:lang(en) .menu-toggle::after {
-  content: "Contents";
-}
-
-.menu-toggle:hover::after,
-.menu-toggle[aria-expanded="true"]::after {
-  text-decoration: underline;
-  text-underline-offset: 0.3em;
-}
-
 .header-actions {
-  order: 3;
-  margin-left: 0;
   gap: var(--aih-1);
 }
 
@@ -223,40 +213,11 @@ body {
 
 /* ---- the contents of the book --------------------------------------- */
 
-/* Closed until asked for. It slides over the page and the page dims behind it. */
 .sidebar {
-  z-index: 60;
-  width: min(var(--octc-sidebar-width), 92vw);
-  background: var(--octc-color-bg);
+  background: none;
   border-right: var(--aih-rule);
   font-size: 15px;
-  padding: var(--aih-8) var(--aih-8) var(--aih-16);
-  transform: translateX(-100%);
-  visibility: hidden;
-  transition:
-    transform 180ms ease,
-    visibility 0s linear 180ms;
-}
-
-.sidebar.open {
-  transform: none;
-  visibility: visible;
-  transition: transform 180ms ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sidebar,
-  .sidebar.open {
-    transition: none;
-  }
-}
-
-.overlay {
-  z-index: 55;
-  background: color-mix(in srgb, #0b1420 70%, transparent);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  bottom: 0;
+  padding: var(--aih-8) var(--aih-6) var(--aih-16);
 }
 
 .nav-section {
@@ -282,6 +243,11 @@ body {
   background: none;
   border: 0;
   margin: 0;
+}
+
+/* The arrow stays on the chapter's line, whatever height a touch target gives the link. */
+.nav-summary {
+  align-items: center;
 }
 
 /* A chapter's pages are indented under it. No guide line beside them. */
@@ -314,12 +280,9 @@ body {
 /* ---- this page's outline -------------------------------------------- */
 
 .toc {
-  left: 0;
-  right: auto;
-  width: var(--octc-toc-width);
   font-size: 13.5px;
   border: 0;
-  padding: var(--aih-12) var(--aih-4) var(--aih-12) var(--aih-8);
+  padding: var(--aih-12) var(--aih-6) var(--aih-12) var(--aih-4);
 }
 
 .toc-title {
@@ -679,6 +642,43 @@ body {
 /* A file that ends with a newline should not show an empty last line. */
 .content pre.ox-code-block .line:last-child:not(:has(span:not(:empty))) {
   display: none;
+}
+
+/* What a task runs, set directly under the block that names the task. */
+.content .aih-runs {
+  margin: calc(var(--aih-6) * -1 + var(--aih-2)) 0 var(--aih-6);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--octc-color-text-muted);
+}
+
+.content .aih-runs p,
+.content .aih-runs dd {
+  margin: 0;
+}
+
+.content .aih-runs dl {
+  margin: 0;
+}
+
+.content .aih-runs dt {
+  margin-top: var(--aih-2);
+  font-weight: 400;
+}
+
+.content .aih-runs code {
+  background: none;
+  padding: 0;
+  border: 0;
+  font-size: 12.5px;
+  color: inherit;
+}
+
+.content .aih-runs .aih-runs__command {
+  display: block;
+  color: var(--octc-color-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* The copy control is a word, not an icon. */

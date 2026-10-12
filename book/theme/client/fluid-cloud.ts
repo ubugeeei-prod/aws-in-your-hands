@@ -29,6 +29,8 @@ export type FluidCloudOptions = {
   reducedMotion?: "system" | "reduce" | "no-preference";
   /** Backing-store pixels per CSS pixel, at most. */
   maxPixelRatio?: number;
+  /** Pixels the ray-marched image may have, at most. Lower for a cloud that only sits behind text. */
+  maxPixels?: number;
   /** The element whose pointer moves push the fluid. Defaults to the canvas. False turns pushing off. */
   pointer?: HTMLElement | false;
 };
@@ -257,7 +259,8 @@ export function createFluidCloud(
   // A place in the noise for this seed. Kept small: the texture repeats every 8 cells.
   const offset = [0.618_034, 0.414_214, 0.732_051].map((step) => (seed * step) % NOISE_CELLS);
 
-  let pixels: number = budget.start;
+  const maxPixels = options.maxPixels ?? budget.max;
+  let pixels: number = Math.min(budget.start, maxPixels);
   let size: Size = { width: 0, height: 0 };
   let scene: Target | undefined;
   let velocity: Pair | undefined;
@@ -491,7 +494,7 @@ export function createFluidCloud(
     slowest = Math.max(slowest, elapsed);
     frames += 1;
     if (frames === 20) {
-      pixels = nextBudget(pixels, slowest);
+      pixels = Math.min(maxPixels, nextBudget(pixels, slowest));
       slowest = 0;
       frames = 0;
     }
