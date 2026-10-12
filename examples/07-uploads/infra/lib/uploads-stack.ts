@@ -1,17 +1,17 @@
 import { fileURLToPath } from "node:url";
 
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
-import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
-import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as authorizers from "aws-cdk-lib/aws-apigatewayv2-authorizers";
+import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
-import { OAuthScope, UserPool } from "aws-cdk-lib/aws-cognito";
-import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
-import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
 
@@ -102,7 +102,7 @@ export class UploadsStack extends Stack {
     });
     // #endregion uploads-bucket
 
-    const userPool = new UserPool(this, "Users", {
+    const userPool = new cognito.UserPool(this, "Users", {
       selfSignUpEnabled: false,
       signInAliases: { email: true },
       signInCaseSensitive: false,
@@ -123,7 +123,7 @@ export class UploadsStack extends Stack {
       generateSecret: false,
       oAuth: {
         flows: { authorizationCodeGrant: true, implicitCodeGrant: false },
-        scopes: [OAuthScope.OPENID],
+        scopes: [cognito.OAuthScope.OPENID],
         callbackUrls: [`${spaOrigin}/callback`, `${LOCAL_SPA}/callback`],
         logoutUrls: [`${spaOrigin}/`, `${LOCAL_SPA}/`],
       },
@@ -135,23 +135,23 @@ export class UploadsStack extends Stack {
       preventUserExistenceErrors: true,
     });
 
-    const table = new Table(this, "Notes", {
-      partitionKey: { name: "pk", type: AttributeType.STRING },
-      sortKey: { name: "sk", type: AttributeType.STRING },
-      billingMode: BillingMode.PAY_PER_REQUEST,
+    const table = new dynamodb.Table(this, "Notes", {
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    const logGroup = new LogGroup(this, "HandlerLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "HandlerLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const role = new Role(this, "HandlerRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const role = new iam.Role(this, "HandlerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     logGroup.grantWrite(role);
     role.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: [
           "dynamodb:GetItem",
           "dynamodb:PutItem",
@@ -166,7 +166,7 @@ export class UploadsStack extends Stack {
     // A presigned URL or form can do no more than the role that signed it.
     // So this statement is also the outer limit of every permit the API hands out.
     role.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: [
           // The browser's upload, which also sets a tag.
           "s3:PutObject",
@@ -183,15 +183,15 @@ export class UploadsStack extends Stack {
     // Not for listing: with this, HeadObject on a missing key answers 404
     // instead of 403, and the app can tell "not uploaded yet" from "not allowed".
     role.addToPolicy(
-      new PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
+      new iam.PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
     );
     // #endregion uploads-role
 
-    const handler = new NodejsFunction(this, "Handler", {
+    const handler = new nodejs.NodejsFunction(this, "Handler", {
       entry: fileURLToPath(new URL("../../api/src/lambda.ts", import.meta.url)),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       timeout: Duration.seconds(10),
       role,
@@ -208,7 +208,7 @@ export class UploadsStack extends Stack {
       },
       // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
       bundling: {
-        format: OutputFormat.ESM,
+        format: nodejs.OutputFormat.ESM,
         target: "node24",
         minify: false,
         sourceMap: false,
@@ -219,32 +219,36 @@ export class UploadsStack extends Stack {
     });
 
     const issuer = `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`;
-    const authorizer = new HttpJwtAuthorizer("CognitoJwt", issuer, {
+    const authorizer = new authorizers.HttpJwtAuthorizer("CognitoJwt", issuer, {
       jwtAudience: [client.userPoolClientId],
       identitySource: ["$request.header.Authorization"],
     });
-    const api = new HttpApi(this, "Api", {
+    const api = new apigwv2.HttpApi(this, "Api", {
       description: "Notes API with image uploads (signed-in users only)",
       corsPreflight: {
         allowOrigins: [spaOrigin, LOCAL_SPA],
         allowMethods: [
-          CorsHttpMethod.GET,
-          CorsHttpMethod.POST,
-          CorsHttpMethod.PUT,
-          CorsHttpMethod.DELETE,
+          apigwv2.CorsHttpMethod.GET,
+          apigwv2.CorsHttpMethod.POST,
+          apigwv2.CorsHttpMethod.PUT,
+          apigwv2.CorsHttpMethod.DELETE,
         ],
         allowHeaders: ["content-type", "authorization"],
         maxAge: Duration.hours(1),
       },
     });
-    const integration = new HttpLambdaIntegration("Notes", handler);
+    const integration = new integrations.HttpLambdaIntegration("Notes", handler);
     const signedIn = { integration, authorizer, authorizationScopes: ["openid"] };
-    api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
-    api.addRoutes({ path: "/me", methods: [HttpMethod.GET], ...signedIn });
-    api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], ...signedIn });
+    api.addRoutes({ path: "/health", methods: [apigwv2.HttpMethod.GET], integration });
+    api.addRoutes({ path: "/me", methods: [apigwv2.HttpMethod.GET], ...signedIn });
+    api.addRoutes({
+      path: "/notes",
+      methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
+      ...signedIn,
+    });
     api.addRoutes({
       path: "/notes/{id}",
-      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE],
       ...signedIn,
     });
     // #region routes
@@ -252,12 +256,12 @@ export class UploadsStack extends Stack {
     // goes to S3, not through here.
     api.addRoutes({
       path: "/notes/{id}/attachments",
-      methods: [HttpMethod.GET, HttpMethod.POST],
+      methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
       ...signedIn,
     });
     api.addRoutes({
       path: "/notes/{id}/attachments/{attachmentId}",
-      methods: [HttpMethod.PUT, HttpMethod.DELETE],
+      methods: [apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE],
       ...signedIn,
     });
     // #endregion routes

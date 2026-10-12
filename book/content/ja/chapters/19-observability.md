@@ -258,7 +258,7 @@ Lambda での入れ方は、段階が 2 つあります。
 
 <<< @/examples/19-observability/infra/lib/observability-stack.ts{function}
 
-`tracing: Tracing.ACTIVE` を付けると、Lambda 自身が呼び出しごとの記録（Lambda のサービスの区間と、関数の区間）を X-Ray に送ります。SDK も layer も要りません。cold start にどれだけかかったかは、これだけでわかります。
+`tracing: lambda.Tracing.ACTIVE` を付けると、Lambda 自身が呼び出しごとの記録（Lambda のサービスの区間と、関数の区間）を X-Ray に送ります。SDK も layer も要りません。cold start にどれだけかかったかは、これだけでわかります。
 
 実行 role には X-Ray へ書く 2 つの操作が足されます。この 2 つは対象を絞れない操作なので、リソースは `*` になります。これまでの章のテストは「`*` を使っていない」ことを見ていましたが、この章のテストは「`*` はこの 2 つの操作だけ」に変えてあります。
 

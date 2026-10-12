@@ -71,7 +71,7 @@ An internet gateway is the door you attach to a VPC, and it has no charge of its
 
 CDK has a high-level construct called `Vpc` that builds something similar in a few lines. This chapter doesn't use it. It lines up `CfnVPC`, `CfnSubnet`, and the other constructs that map one to one onto CloudFormation resources (L1).
 
-There are two reasons. One is that I didn't want to hide the point that one line in a route table decides what a subnet is. The other is a default of `Vpc`. The type definitions of the pinned version (aws-cdk-lib 2.273.0) say that `natGateways` defaults to "one per Availability Zone". Write `new Vpc(...)` without thinking, and for this chapter's layout you quietly get about USD 98 a month of NAT gateways.
+There are two reasons. One is that I didn't want to hide the point that one line in a route table decides what a subnet is. The other is a default of `Vpc`. The type definitions of the pinned version (aws-cdk-lib 2.273.0) say that `natGateways` defaults to "one per Availability Zone". Write `new ec2.Vpc(...)` without thinking, and for this chapter's layout you quietly get about USD 98 a month of NAT gateways.
 
 Once you know how the pieces work, production code is shorter with `Vpc`, given `natGateways: 0` and the subnet types.
 

@@ -1,10 +1,10 @@
 import { fileURLToPath } from "node:url";
 
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Architecture, FunctionUrlAuthType, InvokeMode, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
 
 import { modelArns, type VerifiedProfileId } from "./models.ts";
@@ -19,14 +19,14 @@ export class AiStack extends Stack {
   constructor(scope: Construct, id: string, props: AiStackProps) {
     super(scope, id, props);
 
-    const logGroup = new LogGroup(this, "HandlerLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "HandlerLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
     // #region role
-    const role = new Role(this, "HandlerRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const role = new iam.Role(this, "HandlerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     logGroup.grantWrite(role);
 
@@ -38,13 +38,13 @@ export class AiStack extends Stack {
     // ConverseStream is authorized as InvokeModelWithResponseStream. The
     // function never calls Converse, so it gets no bedrock:InvokeModel.
     role.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["bedrock:InvokeModelWithResponseStream"],
         resources: [arns.profileArn],
       }),
     );
     role.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["bedrock:InvokeModelWithResponseStream"],
         resources: arns.modelArns,
         // Only by way of the profile above: not the bare model, not another profile.
@@ -54,11 +54,11 @@ export class AiStack extends Stack {
     // #endregion role
 
     // #region function
-    const handler = new NodejsFunction(this, "Handler", {
+    const handler = new nodejs.NodejsFunction(this, "Handler", {
       entry: fileURLToPath(new URL("../../src/lambda.ts", import.meta.url)),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       // Lambda keeps running, and billing, after the caller hangs up. This is the hard stop.
       timeout: INFERENCE_TIMEOUT.plus(Duration.seconds(10)),
@@ -73,7 +73,7 @@ export class AiStack extends Stack {
         STAGE: "dev",
       },
       bundling: {
-        format: OutputFormat.ESM,
+        format: nodejs.OutputFormat.ESM,
         target: "node24",
         minify: false,
         sourceMap: false,
@@ -90,8 +90,8 @@ export class AiStack extends Stack {
     const url = handler.addFunctionUrl({
       // Lambda checks a SigV4 signature before the function runs. With NONE,
       // anyone holding the URL could spend this account's money on inference.
-      authType: FunctionUrlAuthType.AWS_IAM,
-      invokeMode: InvokeMode.RESPONSE_STREAM,
+      authType: lambda.FunctionUrlAuthType.AWS_IAM,
+      invokeMode: lambda.InvokeMode.RESPONSE_STREAM,
     });
     // #endregion url
 

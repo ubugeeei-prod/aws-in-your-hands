@@ -1,5 +1,5 @@
 import { CfnOutput, Stack, type StackProps, Token } from "aws-cdk-lib";
-import { CfnWebACL } from "aws-cdk-lib/aws-wafv2";
+import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import type { Construct } from "constructs";
 
 import { WAF_REGION } from "./config.ts";
@@ -30,7 +30,7 @@ export class WafStack extends Stack {
     });
 
     // #region web-acl
-    const webAcl = new CfnWebACL(this, "WebAcl", {
+    const webAcl = new wafv2.CfnWebACL(this, "WebAcl", {
       scope: "CLOUDFRONT",
       description:
         "AWS in Your Hands chapter 21: rate limit and AWS managed rules for the token API",

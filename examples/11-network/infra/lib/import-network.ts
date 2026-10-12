@@ -1,5 +1,5 @@
 import { Fn } from "aws-cdk-lib";
-import { type IVpc, Vpc } from "aws-cdk-lib/aws-ec2";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 import type { Construct } from "constructs";
 
 import { exportName, outputNames } from "../../src/exports.ts";
@@ -12,11 +12,11 @@ import { exportName, outputNames } from "../../src/exports.ts";
  * The private subnets come back as `isolatedSubnets`, which is what they are
  * unless the network was deployed with a NAT gateway.
  */
-export function importNetwork(scope: Construct, id: string, zoneCount = 2): IVpc {
+export function importNetwork(scope: Construct, id: string, zoneCount = 2): ec2.IVpc {
   const value = (name: string): string => Fn.importValue(exportName(name));
   const numbers = Array.from({ length: zoneCount }, (_, index) => index + 1);
 
-  return Vpc.fromVpcAttributes(scope, id, {
+  return ec2.Vpc.fromVpcAttributes(scope, id, {
     vpcId: value(outputNames.vpcId),
     vpcCidrBlock: value(outputNames.vpcCidr),
     availabilityZones: numbers.map((number) => value(outputNames.zone(number))),

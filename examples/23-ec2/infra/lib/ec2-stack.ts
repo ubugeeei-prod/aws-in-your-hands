@@ -1,21 +1,7 @@
 import { CfnOutput, Fn, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import {
-  AmazonLinux2023ImageSsmParameter,
-  AmazonLinux2023Kernel,
-  AmazonLinuxCpuType,
-  CfnInstance,
-  CfnSecurityGroup,
-  CfnVolume,
-  CfnVolumeAttachment,
-} from "aws-cdk-lib/aws-ec2";
-import {
-  CfnInstanceProfile,
-  ManagedPolicy,
-  PolicyStatement,
-  Role,
-  ServicePrincipal,
-} from "aws-cdk-lib/aws-iam";
-import { BlockPublicAccess, Bucket, BucketEncryption, ObjectOwnership } from "aws-cdk-lib/aws-s3";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
 
 import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
@@ -49,7 +35,7 @@ export class Ec2Stack extends Stack {
     }
 
     // No inbound rule at all: SSM Agent opens every connection from the inside.
-    const securityGroup = new CfnSecurityGroup(this, "InstanceSecurityGroup", {
+    const securityGroup = new ec2.CfnSecurityGroup(this, "InstanceSecurityGroup", {
       groupDescription: "Chapter 23 instance: nothing in, HTTPS out",
       vpcId: vpc.vpcId,
       // Listing one egress rule replaces the allow-everything rule a new group starts with.
@@ -68,31 +54,31 @@ export class Ec2Stack extends Stack {
 
     // #region releases
     // Build output only. The notes themselves never leave the data volume.
-    const releases = new Bucket(this, "Releases", {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      objectOwnership: ObjectOwnership.BUCKET_OWNER_ENFORCED,
-      encryption: BucketEncryption.S3_MANAGED,
+    const releases = new s3.Bucket(this, "Releases", {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
+      encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       removalPolicy: RemovalPolicy.DESTROY,
     });
     // #endregion releases
 
     // #region role
-    const role = new Role(this, "InstanceRole", {
-      assumedBy: new ServicePrincipal("ec2.amazonaws.com"),
+    const role = new iam.Role(this, "InstanceRole", {
+      assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
       description: "What the chapter 23 instance may do in AWS",
       // What SSM Agent needs to register, take commands, and open sessions.
-      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore")],
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore")],
     });
     // Read releases, and nothing else in S3: no listing, no writing, no other bucket.
     role.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["s3:GetObject"],
         resources: [releases.arnForObjects(`${RELEASE_PREFIX}*`)],
       }),
     );
     // EC2 does not take a role directly. It takes an instance profile, a wrapper around exactly one role.
-    const profile = new CfnInstanceProfile(this, "InstanceProfile", { roles: [role.roleName] });
+    const profile = new iam.CfnInstanceProfile(this, "InstanceProfile", { roles: [role.roleName] });
     // #endregion role
 
     // #region ami
@@ -100,16 +86,16 @@ export class Ec2Stack extends Stack {
     const imageId =
       config.amiId ??
       // Not MachineImage.latestAmazonLinux2023(): in this CDK version it always asks for the 6.1 kernel's image.
-      new AmazonLinux2023ImageSsmParameter({
-        cpuType: AmazonLinuxCpuType.ARM_64,
-        kernel: AmazonLinux2023Kernel.DEFAULT,
+      new ec2.AmazonLinux2023ImageSsmParameter({
+        cpuType: ec2.AmazonLinuxCpuType.ARM_64,
+        kernel: ec2.AmazonLinux2023Kernel.DEFAULT,
         // Left to its default, this class looks the AMI up during synth and wants an account for it.
         cachedInContext: false,
       }).getImage(this).imageId;
     // #endregion ami
 
     // #region instance
-    const instance = new CfnInstance(this, "Instance", {
+    const instance = new ec2.CfnInstance(this, "Instance", {
       imageId,
       instanceType: config.instanceType,
       iamInstanceProfile: profile.ref,
@@ -142,7 +128,7 @@ export class Ec2Stack extends Stack {
 
     // #region data-volume
     // Its own resource, not part of the instance: replacing the instance leaves it alone.
-    const dataVolume = new CfnVolume(this, "DataVolume", {
+    const dataVolume = new ec2.CfnVolume(this, "DataVolume", {
       // A volume attaches only to an instance in the same zone.
       availabilityZone: subnet.availabilityZone,
       size: config.dataVolumeGiB,
@@ -154,7 +140,7 @@ export class Ec2Stack extends Stack {
     });
     dataVolume.applyRemovalPolicy(REMOVAL[config.dataOnDestroy]);
 
-    new CfnVolumeAttachment(this, "DataVolumeAttachment", {
+    new ec2.CfnVolumeAttachment(this, "DataVolumeAttachment", {
       instanceId: instance.ref,
       volumeId: dataVolume.ref,
       device: machine.dataDevice,

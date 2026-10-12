@@ -71,7 +71,7 @@ internet gateway は VPC に取り付ける出入口で、それ自体に料金�
 
 CDK には `Vpc` という高水準の construct があって、数行で同じようなものが作れます。この章では使わず、`CfnVPC` や `CfnSubnet` といった、CloudFormation のリソースと 1 対 1 に対応する construct（L1）を並べました。
 
-理由は 2 つ。1 つは、route table の 1 行が subnet の性格を決める、というところを隠したくなかったから。もう 1 つは、`Vpc` の既定値です。固定した版（aws-cdk-lib 2.273.0）の型定義には、`natGateways` の既定は「AZ ごとに 1 つ」と書いてあります。何も考えずに `new Vpc(...)` と書くと、この章の構成なら月に USD 98 ほどの NAT Gateway が黙って付いてきます。
+理由は 2 つ。1 つは、route table の 1 行が subnet の性格を決める、というところを隠したくなかったから。もう 1 つは、`Vpc` の既定値です。固定した版（aws-cdk-lib 2.273.0）の型定義には、`natGateways` の既定は「AZ ごとに 1 つ」と書いてあります。何も考えずに `new ec2.Vpc(...)` と書くと、この章の構成なら月に USD 98 ほどの NAT Gateway が黙って付いてきます。
 
 仕組みがわかったら、本番では `Vpc` に `natGateways: 0` と subnet の種類を渡して書くほうが短くて済みます。
 

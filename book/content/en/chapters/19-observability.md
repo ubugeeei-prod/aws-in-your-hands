@@ -258,7 +258,7 @@ In Lambda there are two stages.
 
 <<< @/examples/19-observability/infra/lib/observability-stack.ts{function}
 
-With `tracing: Tracing.ACTIVE`, Lambda itself sends a record of each invocation to X-Ray: a segment for the Lambda service and one for the function. No SDK, no layer. How long a cold start took is visible with this alone.
+With `tracing: lambda.Tracing.ACTIVE`, Lambda itself sends a record of each invocation to X-Ray: a segment for the Lambda service and one for the function. No SDK, no layer. How long a cold start took is visible with this alone.
 
 The execution role gains two actions for writing to X-Ray. Those two cannot be narrowed to a resource, so the resource is `*`. The tests in earlier chapters checked that `*` is never used; this chapter's test checks that `*` appears for those two actions only.
 

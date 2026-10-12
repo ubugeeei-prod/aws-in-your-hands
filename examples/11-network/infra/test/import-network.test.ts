@@ -1,6 +1,6 @@
 import { App, Stack } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
-import { SecurityGroup } from "aws-cdk-lib/aws-ec2";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 import { describe, expect, it } from "vite-plus/test";
 
 import { parseNetworkConfig } from "../../src/config.ts";
@@ -26,7 +26,7 @@ describe("importNetwork", () => {
   const app = new App();
   const consumer = new Stack(app, "Consumer", { env: { region: "ap-northeast-1" } });
   const vpc = importNetwork(consumer, "Network");
-  new SecurityGroup(consumer, "Group", { vpc, description: "test", allowAllOutbound: false });
+  new ec2.SecurityGroup(consumer, "Group", { vpc, description: "test", allowAllOutbound: false });
 
   // Synthesized once, outside the tests: the first synthesis of a file is the slow one.
   const producer = Template.fromStack(

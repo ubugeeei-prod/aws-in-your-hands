@@ -1,11 +1,5 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import {
-  OidcProviderNative,
-  PolicyDocument,
-  PolicyStatement,
-  Role,
-  WebIdentityPrincipal,
-} from "aws-cdk-lib/aws-iam";
+import * as iam from "aws-cdk-lib/aws-iam";
 import type { Construct } from "constructs";
 
 import { API_STACK_PREFIX, type CiConfig } from "./config.ts";
@@ -40,7 +34,7 @@ export class CiStack extends Stack {
     // #region provider
     const providerArn =
       ci.existingOidcProviderArn ??
-      new OidcProviderNative(this, "GitHub", {
+      new iam.OidcProviderNative(this, "GitHub", {
         url: `https://${GITHUB_ISSUER}`,
         clientIds: ["sts.amazonaws.com"],
         removalPolicy: RemovalPolicy.DESTROY,
@@ -50,7 +44,7 @@ export class CiStack extends Stack {
     // #region trust
     // StringEquals on both claims: the token must be for STS, and from exactly this job kind.
     const github = (subject: string) =>
-      new WebIdentityPrincipal(providerArn, {
+      new iam.WebIdentityPrincipal(providerArn, {
         StringEquals: {
           [`${GITHUB_ISSUER}:aud`]: "sts.amazonaws.com",
           [`${GITHUB_ISSUER}:sub`]: subject,
@@ -68,13 +62,13 @@ export class CiStack extends Stack {
     const bootstrapRole = (kind: "deploy" | "file-publishing" | "lookup") =>
       `arn:${this.partition}:iam::${this.account}:role/cdk-${ci.bootstrapQualifier}-${kind}-role-${this.account}-${this.region}`;
     const assume = (...kinds: Parameters<typeof bootstrapRole>[0][]) =>
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "AssumeBootstrapRoles",
         actions: ["sts:AssumeRole"],
         resources: kinds.map(bootstrapRole),
       });
     // For the status and smoke tasks, which ask CloudFormation directly instead of going through the CDK CLI.
-    const readStatus = new PolicyStatement({
+    const readStatus = new iam.PolicyStatement({
       sid: "ReadShipStackStatus",
       actions: ["cloudformation:DescribeStacks"],
       resources: [shipStacks],
@@ -84,14 +78,14 @@ export class CiStack extends Stack {
       id: string,
       subject: string,
       description: string,
-      statements: PolicyStatement[],
+      statements: iam.PolicyStatement[],
     ) =>
-      new Role(this, id, {
+      new iam.Role(this, id, {
         assumedBy: github(subject),
         description,
         maxSessionDuration: Duration.hours(1),
         // Inline, so the role and its permissions are one resource that drift detection compares.
-        inlinePolicies: { [id]: new PolicyDocument({ statements }) },
+        inlinePolicies: { [id]: new iam.PolicyDocument({ statements }) },
       });
 
     // `cdk diff --method template` reads through the lookup role, which cannot change anything.
@@ -105,7 +99,7 @@ export class CiStack extends Stack {
     // #region drift-role
     const functions = inAccount("lambda", `function:${API_STACK_PREFIX}*`);
     const drift = role("DriftRole", subjects.drift, "Scheduled drift detection: reads only", [
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "DetectOnShipStacks",
         actions: [
           "cloudformation:DetectStackDrift",
@@ -118,7 +112,7 @@ export class CiStack extends Stack {
       }),
       // Detection reads each resource with the caller's permissions. These are the read
       // handler permissions each resource type publishes in its CloudFormation schema.
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "ReadFunctions",
         actions: [
           "lambda:GetFunction",
@@ -133,7 +127,7 @@ export class CiStack extends Stack {
         ],
         resources: [functions, `${functions}:*`],
       }),
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "ReadRoles",
         actions: [
           "iam:GetRole",
@@ -143,18 +137,18 @@ export class CiStack extends Stack {
         ],
         resources: [`arn:${this.partition}:iam::${this.account}:role/${API_STACK_PREFIX}*`],
       }),
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "ReadHttpApis",
         actions: ["apigateway:GET"],
         // API IDs are random, so this cannot be narrowed to the stacks' own APIs.
         resources: [`arn:${this.partition}:apigateway:${this.region}::/apis/*`],
       }),
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "ReadLogGroups",
         actions: ["logs:ListTagsForResource", "logs:GetDataProtectionPolicy"],
         resources: [inAccount("logs", `log-group:${API_STACK_PREFIX}*`)],
       }),
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "ActionsWithoutResourceLevelPermissions",
         actions: [
           "cloudformation:DescribeStackDriftDetectionStatus",

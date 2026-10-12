@@ -1,13 +1,13 @@
 import { fileURLToPath } from "node:url";
 
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { Rule } from "aws-cdk-lib/aws-events";
-import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
-import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { CfnChannel, CfnStreamKey } from "aws-cdk-lib/aws-ivs";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as ivs from "aws-cdk-lib/aws-ivs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
 
 import { channelSettings } from "../../src/channel.ts";
@@ -22,7 +22,7 @@ export class LiveStack extends Stack {
     super(scope, id, props);
 
     // #region channel
-    const channel = new CfnChannel(this, "Channel", {
+    const channel = new ivs.CfnChannel(this, "Channel", {
       name: channelSettings.name,
       type: channelSettings.type,
       latencyMode: channelSettings.latencyMode,
@@ -38,7 +38,7 @@ export class LiveStack extends Stack {
     // The API creates a key with every channel. CloudFormation does not, and a
     // channel holds one key at most, so this resource is the only way in.
     if (props.streamKey) {
-      const streamKey = new CfnStreamKey(this, "StreamKey", { channelArn: channel.attrArn });
+      const streamKey = new ivs.CfnStreamKey(this, "StreamKey", { channelArn: channel.attrArn });
       streamKey.applyRemovalPolicy(RemovalPolicy.DESTROY);
       // The ARN only. `attrValue` is the secret and never becomes an output.
       new CfnOutput(this, "StreamKeyArn", { value: streamKey.attrArn });
@@ -46,35 +46,40 @@ export class LiveStack extends Stack {
     // #endregion stream-key
 
     // #region events
-    const logGroup = new LogGroup(this, "EventLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "EventLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const role = new Role(this, "EventHandlerRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const role = new iam.Role(this, "EventHandlerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     logGroup.grantWrite(role);
 
-    const onEvent = new NodejsFunction(this, "EventHandler", {
+    const onEvent = new nodejs.NodejsFunction(this, "EventHandler", {
       entry: fileURLToPath(new URL("../../src/handler.ts", import.meta.url)),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 128,
       timeout: Duration.seconds(5),
       role,
       logGroup,
-      bundling: { format: OutputFormat.ESM, target: "node24", minify: false, sourceMap: false },
+      bundling: {
+        format: nodejs.OutputFormat.ESM,
+        target: "node24",
+        minify: false,
+        sourceMap: false,
+      },
     });
 
     // Only this channel. Account-wide limit breaches carry no resource and do not match.
-    new Rule(this, "ChannelEvents", {
+    new events.Rule(this, "ChannelEvents", {
       eventPattern: {
         source: ["aws.ivs"],
         detailType: ["IVS Stream State Change", "IVS Stream Health Change", "IVS Limit Breach"],
         resources: [channel.attrArn],
       },
-      targets: [new LambdaFunction(onEvent)],
+      targets: [new targets.LambdaFunction(onEvent)],
     });
     // #endregion events
 

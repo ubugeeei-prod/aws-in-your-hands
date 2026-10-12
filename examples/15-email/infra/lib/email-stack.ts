@@ -1,25 +1,17 @@
 import { fileURLToPath } from "node:url";
 
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
-import { HttpIamAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
-import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
-import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import {
-  ConfigurationSet,
-  EmailIdentity,
-  EmailSendingEvent,
-  EventDestination,
-  Identity,
-  MailFromBehaviorOnMxFailure,
-  SuppressionReasons,
-} from "aws-cdk-lib/aws-ses";
-import { Topic } from "aws-cdk-lib/aws-sns";
-import { LambdaSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
+import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as authorizers from "aws-cdk-lib/aws-apigatewayv2-authorizers";
+import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
+import * as ses from "aws-cdk-lib/aws-ses";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import type { Construct } from "constructs";
 
 export type EmailStackProps = StackProps & {
@@ -39,10 +31,10 @@ export class EmailStack extends Stack {
     const isDomain = !props.senderIdentity.includes("@");
 
     // #region table
-    const table = new Table(this, "Mail", {
+    const table = new dynamodb.Table(this, "Mail", {
       // NOTIFICATION#<id> and SUPPRESSION#<address>: every read is by exact key.
-      partitionKey: { name: "pk", type: AttributeType.STRING },
-      billingMode: BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       // Notification records carry expiresAt and are deleted after it. Suppressions carry none.
       timeToLiveAttribute: "expiresAt",
       // Exercise data. A real suppression list wants RETAIN and point-in-time recovery.
@@ -51,59 +43,63 @@ export class EmailStack extends Stack {
     // #endregion table
 
     // #region configuration-set
-    const configurationSet = new ConfigurationSet(this, "Notifications", {
+    const configurationSet = new ses.ConfigurationSet(this, "Notifications", {
       // Stated here, so SES's own suppression list applies whatever the account-level setting is.
-      suppressionReasons: SuppressionReasons.BOUNCES_AND_COMPLAINTS,
+      suppressionReasons: ses.SuppressionReasons.BOUNCES_AND_COMPLAINTS,
     });
 
-    const events = new Topic(this, "MailEvents", { enforceSSL: true });
+    const events = new sns.Topic(this, "MailEvents", { enforceSSL: true });
     // Also adds the topic policy that lets SES, for this configuration set only, publish.
     configurationSet.addEventDestination("ToSns", {
-      destination: EventDestination.snsTopic(events),
-      events: [EmailSendingEvent.BOUNCE, EmailSendingEvent.COMPLAINT, EmailSendingEvent.DELIVERY],
+      destination: ses.EventDestination.snsTopic(events),
+      events: [
+        ses.EmailSendingEvent.BOUNCE,
+        ses.EmailSendingEvent.COMPLAINT,
+        ses.EmailSendingEvent.DELIVERY,
+      ],
     });
     // #endregion configuration-set
 
     // #region identity
     // Creating this starts verification; it does not finish it. An address gets a
     // confirmation mail to click, a domain gets DKIM records to publish by hand.
-    const identity = new EmailIdentity(this, "Sender", {
+    const identity = new ses.EmailIdentity(this, "Sender", {
       identity: isDomain
-        ? Identity.domain(props.senderIdentity)
-        : Identity.email(props.senderIdentity),
+        ? ses.Identity.domain(props.senderIdentity)
+        : ses.Identity.email(props.senderIdentity),
       configurationSet,
       ...(isDomain && props.mailFromDomain !== undefined
         ? {
             mailFromDomain: props.mailFromDomain,
             // Until the MX record exists, fall back to amazonses.com rather than refuse to send.
-            mailFromBehaviorOnMxFailure: MailFromBehaviorOnMxFailure.USE_DEFAULT_VALUE,
+            mailFromBehaviorOnMxFailure: ses.MailFromBehaviorOnMxFailure.USE_DEFAULT_VALUE,
           }
         : {}),
     });
     // #endregion identity
 
-    const apiLogs = new LogGroup(this, "ApiLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const apiLogs = new logs.LogGroup(this, "ApiLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const eventLogs = new LogGroup(this, "EventLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const eventLogs = new logs.LogGroup(this, "EventLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
     // #region send-role
-    const apiRole = new Role(this, "ApiRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const apiRole = new iam.Role(this, "ApiRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     apiLogs.grantWrite(apiRole);
     apiRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem"],
         resources: [table.tableArn],
       }),
     );
     apiRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["ses:SendEmail"],
         // This identity, through this configuration set, and nothing else in the account.
         resources: [
@@ -122,12 +118,12 @@ export class EmailStack extends Stack {
 
     // #region events-role
     // Records what SES reports. It cannot send mail and cannot read the table.
-    const eventsRole = new Role(this, "EventsRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const eventsRole = new iam.Role(this, "EventsRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     eventLogs.grantWrite(eventsRole);
     eventsRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["dynamodb:PutItem", "dynamodb:UpdateItem"],
         resources: [table.tableArn],
       }),
@@ -136,13 +132,13 @@ export class EmailStack extends Stack {
 
     const functionDefaults = {
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       timeout: Duration.seconds(10),
       // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
       bundling: {
-        format: OutputFormat.ESM,
+        format: nodejs.OutputFormat.ESM,
         target: "node24",
         minify: false,
         sourceMap: false,
@@ -152,7 +148,7 @@ export class EmailStack extends Stack {
       },
     };
 
-    const apiHandler = new NodejsFunction(this, "ApiHandler", {
+    const apiHandler = new nodejs.NodejsFunction(this, "ApiHandler", {
       ...functionDefaults,
       entry: fileURLToPath(new URL("../../src/lambda.ts", import.meta.url)),
       role: apiRole,
@@ -168,31 +164,31 @@ export class EmailStack extends Stack {
       },
     });
 
-    const eventsHandler = new NodejsFunction(this, "EventsHandler", {
+    const eventsHandler = new nodejs.NodejsFunction(this, "EventsHandler", {
       ...functionDefaults,
       entry: fileURLToPath(new URL("../../src/events-lambda.ts", import.meta.url)),
       role: eventsRole,
       logGroup: eventLogs,
       environment: { LOG_LEVEL: "info", TABLE_NAME: table.tableName },
     });
-    events.addSubscription(new LambdaSubscription(eventsHandler));
+    events.addSubscription(new subscriptions.LambdaSubscription(eventsHandler));
 
     // #region api
     // An API that sends mail is not left open: every route wants a SigV4-signed
     // request from an IAM identity allowed to invoke it. No CORS, no browsers.
-    const api = new HttpApi(this, "Api", { description: "Share notification mail API" });
-    const integration = new HttpLambdaIntegration("Mail", apiHandler);
-    const authorizer = new HttpIamAuthorizer();
-    api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration, authorizer });
+    const api = new apigwv2.HttpApi(this, "Api", { description: "Share notification mail API" });
+    const integration = new integrations.HttpLambdaIntegration("Mail", apiHandler);
+    const authorizer = new authorizers.HttpIamAuthorizer();
+    api.addRoutes({ path: "/health", methods: [apigwv2.HttpMethod.GET], integration, authorizer });
     api.addRoutes({
       path: "/share-notifications",
-      methods: [HttpMethod.POST],
+      methods: [apigwv2.HttpMethod.POST],
       integration,
       authorizer,
     });
     api.addRoutes({
       path: "/share-notifications/{id}",
-      methods: [HttpMethod.GET],
+      methods: [apigwv2.HttpMethod.GET],
       integration,
       authorizer,
     });

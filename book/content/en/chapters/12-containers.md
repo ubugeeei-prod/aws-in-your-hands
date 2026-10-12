@@ -236,9 +236,9 @@ A service goes for its image as soon as it starts. Create the service while the 
 
 This shape comes with a bonus. Deploy without a tag again and the load balancer and the tasks disappear, while the repository and its images stay. You can stop the hourly charges and keep the images.
 
-### Why not `ContainerImage.fromAsset`
+### Why not `ecs.ContainerImage.fromAsset`
 
-CDK has `ContainerImage.fromAsset`: hand it a directory and it takes care of everything from build to push. Convenient, and I didn't use it.
+CDK has `ecs.ContainerImage.fromAsset`: hand it a directory and it takes care of everything from build to push. Convenient, and I didn't use it.
 
 Here is what I found. With the pinned version (aws-cdk-lib 2.273.0), synthesis succeeds without Docker even with `fromAsset`. All synthesis does is copy the directory into `cdk.out` and write a list saying "this image goes into this repository". Docker is needed at deploy time. Reading the source of cdkd (0.296.28): during a deploy it runs `docker build`, `docker tag`, and `docker push`, and the destination is a shared repository named `cdkd-container-assets-<account>-<region>`, created by `cdkd bootstrap`. The tag is a hash of the content.
 
@@ -299,7 +299,7 @@ Side by side with chapter 04:
 
 This app calls no AWS API at all, so the task role is empty. To connect it to the table from chapter 05 you would write `table.grantReadWriteData(taskRole)`. Granting it to the execution role would do nothing for the app. And putting the execution role's permissions on the task role would give the app permissions it has no use for.
 
-CDK assembles the execution role's contents. `ContainerImage.fromEcrRepository` adds the pull from this repository, and `LogDrivers.awsLogs` adds writing to this log group.
+CDK assembles the execution role's contents. `ecs.ContainerImage.fromEcrRepository` adds the pull from this repository, and `ecs.LogDrivers.awsLogs` adds writing to this log group.
 
 <<< @/examples/12-containers/infra/lib/containers-stack.ts{task}
 
@@ -723,7 +723,7 @@ The daemon on your machine keeps the images you built. `docker image rm aih-note
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The test that starts the server as a child process and sends SIGTERM in the middle of a request. The graceful shutdown tests (including that removing `sweep` turns `drained` into `forced` and fails them). The test that runs an old and a new version at the same time. Unit tests for the timing relations, settings, the `docker` command lines, pricing, and the stack assertions. Type checking. `ecs:infra:synth` (without a tag, with `-c imageTag=v1`, with `-c imageTag=v1 -c taskSubnets=private`, and that `-c imageTag=latest` is refused). `ecs:bundle` and `ecs:bundle:check`. `dev:ecs`, started, with the chapter's `curl` commands and the log lines on Ctrl-C. `ecs:image:build`, `ecs:image:run`, and `ecs:image:push` with `--dry-run`, and the message they print without a daemon. `ecs:watch`, pointed at a local server with `--url`. That a synthesis using `ContainerImage.fromAsset` succeeds with no `docker` command on the PATH (aws-cdk-lib 2.273.0). The `docker` flags were checked against the help of Docker CLI 29.7.2. The amounts in the text are what `tools/src/pricing/calc.ts` computes from Price List unit prices, and `examples/12-containers/test/pricing.test.ts` compares them.
+**Checked locally.** The test that starts the server as a child process and sends SIGTERM in the middle of a request. The graceful shutdown tests (including that removing `sweep` turns `drained` into `forced` and fails them). The test that runs an old and a new version at the same time. Unit tests for the timing relations, settings, the `docker` command lines, pricing, and the stack assertions. Type checking. `ecs:infra:synth` (without a tag, with `-c imageTag=v1`, with `-c imageTag=v1 -c taskSubnets=private`, and that `-c imageTag=latest` is refused). `ecs:bundle` and `ecs:bundle:check`. `dev:ecs`, started, with the chapter's `curl` commands and the log lines on Ctrl-C. `ecs:image:build`, `ecs:image:run`, and `ecs:image:push` with `--dry-run`, and the message they print without a daemon. `ecs:watch`, pointed at a local server with `--url`. That a synthesis using `ecs.ContainerImage.fromAsset` succeeds with no `docker` command on the PATH (aws-cdk-lib 2.273.0). The `docker` flags were checked against the help of Docker CLI 29.7.2. The amounts in the text are what `tools/src/pricing/calc.ts` computes from Price List unit prices, and `examples/12-containers/test/pricing.test.ts` compares them.
 
 **Not checked yet.** No Docker daemon was running, so the image has never been built. Unverified as a result: that the Dockerfile builds, that the `.dockerignore` exception works, that the image starts on the arm64 base image, that it runs with `--read-only`, and how large the image is (the 0.1 GB in the cost tables is an assumption). `ecs:infra:diff`, `ecs:infra:deploy`, `ecs:image:push`, `ecs:watch`, `ecs:logs`, `ecs:infra:drift`, and `ecs:infra:destroy` have not been run against real AWS. All of the following wait for a real environment. That cdkd 0.296.28 creates and deletes this stack. That the chapter 11 VPC can be read through `Fn::ImportValue` from a stack in another app. That the three types routed through Cloud Control API work. That tasks in public subnets can fetch the image, and that egress on port 443 alone is enough. Both routes for `-c taskSubnets=private`. The load balancer's health checks and fail-open behavior. That no request fails during a rolling update. That SIGTERM arrives after the target has been deregistered. The circuit breaker's rollback, and what cdkd prints then. Auto scaling in both directions. That redeploying without a tag removes only the load balancer and the tasks. The symptoms under "Where it goes wrong".
 
@@ -767,6 +767,6 @@ Resource types and cdkd. In `src/provisioning/register-providers.ts` at the `v0.
 - [What is Docker?](https://docs.docker.com/get-started/docker-overview/), [Dockerfile reference](https://docs.docker.com/reference/dockerfile/), [docker-node: Best Practices](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md), [Docker Hub: node:24-bookworm-slim](https://hub.docker.com/v2/repositories/library/node/tags/24-bookworm-slim), [Node.js v24: HTTP](https://nodejs.org/docs/latest-v24.x/api/http.html)
 - Cloudflare Containers: [Overview](https://developers.cloudflare.com/containers/), [Pricing](https://developers.cloudflare.com/containers/platform/pricing/), [Rollouts](https://developers.cloudflare.com/containers/configuration/rollouts/), [Lifecycle of a container](https://developers.cloudflare.com/containers/concepts/architecture/), [FAQ](https://developers.cloudflare.com/containers/faq/), [Local development](https://developers.cloudflare.com/containers/guides/local-dev/)
 - cdkd v0.296.28: [src/provisioning](https://github.com/go-to-k/cdkd/tree/v0.296.28/src/provisioning), [docs/cli-deploy.md](https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-deploy.md), [src/assets/docker-asset-publisher.ts](https://github.com/go-to-k/cdkd/blob/v0.296.28/src/assets/docker-asset-publisher.ts), [Introduction](https://cdkd.dev/introduction/) (checked on 2026-10-11)
-- [aws-cdk-lib 2.273.0](https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0) (observed by running a synthesis with `ContainerImage.fromAsset`)
+- [aws-cdk-lib 2.273.0](https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0) (observed by running a synthesis with `ecs.ContainerImage.fromAsset`)
 
 :::

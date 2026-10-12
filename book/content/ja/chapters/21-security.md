@@ -177,7 +177,7 @@ vp run sec:iam:lint examples/20-shipping/cdk.out examples/19-observability/cdk.o
 この本のすべての章の `cdk.out` を渡した結果は、21 個の template のうち 19 個が例外なしで合格でした（2026-10-12、手元で実行）。残りの 2 つが、例外を必要とします。
 
 - `AihShipCi`（20章の CI の role）: 5 つ。20章が「対象を ARN で絞る書き方を持たない」と書いていた action です
-- `AihObservability`（19章）: 2 つ。`xray:PutTraceSegments` と `xray:PutTelemetryRecords`。CDK が `Tracing.ACTIVE` のときに足す権限です
+- `AihObservability`（19章）: 2 つ。`xray:PutTraceSegments` と `xray:PutTelemetryRecords`。CDK が `lambda.Tracing.ACTIVE` のときに足す権限です
 
 どちらも、AWS が公開している service reference で、resource type が 1 つも定義されていないことを確かめてから、例外のファイルに入れました。
 

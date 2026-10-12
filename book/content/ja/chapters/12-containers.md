@@ -236,9 +236,9 @@ service は、起動するとすぐ image を取りに行きます。repository 
 
 この形には、おまけがあります。tag なしでもう一度 deploy すると、ALB と task が消えて、repository と image だけが残ります。「時間課金だけ止めて、image は取っておく」ができるわけです。
 
-### `ContainerImage.fromAsset` を使わなかった理由
+### `ecs.ContainerImage.fromAsset` を使わなかった理由
 
-CDK には、ディレクトリを渡すと build から push までやってくれる `ContainerImage.fromAsset` があります。便利ですが、使いませんでした。
+CDK には、ディレクトリを渡すと build から push までやってくれる `ecs.ContainerImage.fromAsset` があります。便利ですが、使いませんでした。
 
 調べたことを書いておきます。固定した版（aws-cdk-lib 2.273.0）で試したところ、`fromAsset` を使っても synth は Docker なしで通ります。synth がやるのは、ディレクトリを `cdk.out` にコピーして、「この image をこの repository に置く」という一覧を書くところまで。Docker が要るのは deploy のときです。cdkd（0.296.28）のソースを読むと、deploy の中で `docker build`、`docker tag`、`docker push` を実行し、置き場所は `cdkd bootstrap` が作る `cdkd-container-assets-<account>-<region>` という共用の repository になります。tag は内容の hash です。
 
@@ -299,7 +299,7 @@ vp run ecs:infra:deploy -c imageTag=v1 -c taskSubnets=private
 
 このアプリは AWS を 1 つも呼ばないので、task role は空です。05章の table につなぐなら、`table.grantReadWriteData(taskRole)` と書きます。execution role に付けても、アプリからは使えません。逆に、execution role の権限を task role に付けると、アプリが要らない権限を持つことになります。
 
-execution role の中身は、CDK が組み立てています。`ContainerImage.fromEcrRepository` がこの repository からの pull を、`LogDrivers.awsLogs` がこの log group への書き込みを足します。
+execution role の中身は、CDK が組み立てています。`ecs.ContainerImage.fromEcrRepository` がこの repository からの pull を、`ecs.LogDrivers.awsLogs` がこの log group への書き込みを足します。
 
 <<< @/examples/12-containers/infra/lib/containers-stack.ts{task}
 
@@ -723,7 +723,7 @@ aws ecr describe-repositories --region ap-northeast-1
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** サーバーを子プロセスとして起動し、リクエストの途中で SIGTERM を送るテスト。graceful shutdown のテスト（`sweep` を外すと `drained` が `forced` になって落ちることも確認）。新旧 2 つの版を同時に立てるテスト。時間の関係、設定、`docker` コマンドの組み立て、料金、stack の assertion のユニットテスト。型検査。`ecs:infra:synth`（tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`。`-c imageTag=latest` が拒否されることも）。`ecs:bundle` と `ecs:bundle:check`。`dev:ecs` を起動して、本文の `curl` と、Ctrl-C のときのログを確認。`ecs:image:build`、`ecs:image:run`、`ecs:image:push` の `--dry-run` と、daemon なしで実行したときのメッセージ。`ecs:watch` を `--url` で手元のサーバーに向けて実行。`ContainerImage.fromAsset` を使った synth が、`docker` コマンドの無い PATH で通ること（aws-cdk-lib 2.273.0）。`docker` の flag は、Docker CLI 29.7.2 の help で確かめました。本文の金額は、Price List の単価から `tools/src/pricing/calc.ts` が計算した値で、`examples/12-containers/test/pricing.test.ts` が照合しています。
+**手元で確かめたこと。** サーバーを子プロセスとして起動し、リクエストの途中で SIGTERM を送るテスト。graceful shutdown のテスト（`sweep` を外すと `drained` が `forced` になって落ちることも確認）。新旧 2 つの版を同時に立てるテスト。時間の関係、設定、`docker` コマンドの組み立て、料金、stack の assertion のユニットテスト。型検査。`ecs:infra:synth`（tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`。`-c imageTag=latest` が拒否されることも）。`ecs:bundle` と `ecs:bundle:check`。`dev:ecs` を起動して、本文の `curl` と、Ctrl-C のときのログを確認。`ecs:image:build`、`ecs:image:run`、`ecs:image:push` の `--dry-run` と、daemon なしで実行したときのメッセージ。`ecs:watch` を `--url` で手元のサーバーに向けて実行。`ecs.ContainerImage.fromAsset` を使った synth が、`docker` コマンドの無い PATH で通ること（aws-cdk-lib 2.273.0）。`docker` の flag は、Docker CLI 29.7.2 の help で確かめました。本文の金額は、Price List の単価から `tools/src/pricing/calc.ts` が計算した値で、`examples/12-containers/test/pricing.test.ts` が照合しています。
 
 **まだ確かめていないこと。** Docker の daemon が動いていなかったため、image を一度も build していません。したがって、Dockerfile が通ること、`.dockerignore` の例外指定が効くこと、arm64 の base image で起動すること、`--read-only` で動くこと、image の大きさ（料金の表の 0.1 GB は仮定）は未確認です。`ecs:infra:diff`、`ecs:infra:deploy`、`ecs:image:push`、`ecs:watch`、`ecs:logs`、`ecs:infra:drift`、`ecs:infra:destroy` は、実際の AWS では動かしていません。次はすべて実環境での確認待ちです。cdkd 0.296.28 がこの stack を作って消せること。別のアプリの stack から `Fn::ImportValue` で 11章の VPC を読めること。Cloud Control API 経由の 3 種類が通ること。public subnet の task が image を取得できること、443 番だけの egress で足りること。`-c taskSubnets=private` の 2 通りの経路。ALB の health check と fail open。rolling update の間にエラーが出ないこと。target の登録解除のあとに SIGTERM が届くという順序。circuit breaker の rollback と、そのときの cdkd の表示。auto scaling の増減。tag なしで deploy し直すと ALB と task だけが消えること。「ハマりどころ」の症状。
 
@@ -767,6 +767,6 @@ cdkd が扱うリソースの種類。`v0.296.28` タグの `src/provisioning/re
 - [What is Docker?](https://docs.docker.com/get-started/docker-overview/)、[Dockerfile reference](https://docs.docker.com/reference/dockerfile/)、[docker-node: Best Practices](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md)、[Docker Hub: node:24-bookworm-slim](https://hub.docker.com/v2/repositories/library/node/tags/24-bookworm-slim)、[Node.js v24: HTTP](https://nodejs.org/docs/latest-v24.x/api/http.html)
 - Cloudflare Containers: [Overview](https://developers.cloudflare.com/containers/)、[Pricing](https://developers.cloudflare.com/containers/platform/pricing/)、[Rollouts](https://developers.cloudflare.com/containers/configuration/rollouts/)、[Lifecycle of a container](https://developers.cloudflare.com/containers/concepts/architecture/)、[FAQ](https://developers.cloudflare.com/containers/faq/)、[Local development](https://developers.cloudflare.com/containers/guides/local-dev/)
 - cdkd v0.296.28: [src/provisioning](https://github.com/go-to-k/cdkd/tree/v0.296.28/src/provisioning)、[docs/cli-deploy.md](https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-deploy.md)、[src/assets/docker-asset-publisher.ts](https://github.com/go-to-k/cdkd/blob/v0.296.28/src/assets/docker-asset-publisher.ts)、[Introduction](https://cdkd.dev/introduction/)（2026-10-11 確認）
-- [aws-cdk-lib 2.273.0](https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0)（`ContainerImage.fromAsset` の synth を実行して観察）
+- [aws-cdk-lib 2.273.0](https://www.npmjs.com/package/aws-cdk-lib/v/2.273.0)（`ecs.ContainerImage.fromAsset` の synth を実行して観察）
 
 :::

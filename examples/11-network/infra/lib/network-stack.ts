@@ -1,17 +1,5 @@
 import { CfnOutput, Stack, type StackProps } from "aws-cdk-lib";
-import {
-  CfnEIP,
-  CfnInternetGateway,
-  CfnNatGateway,
-  CfnRoute,
-  CfnRouteTable,
-  CfnSecurityGroup,
-  CfnSubnet,
-  CfnSubnetRouteTableAssociation,
-  CfnVPC,
-  CfnVPCEndpoint,
-  CfnVPCGatewayAttachment,
-} from "aws-cdk-lib/aws-ec2";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 import type { Construct } from "constructs";
 
 import { exportName, outputNames } from "../../src/exports.ts";
@@ -32,7 +20,7 @@ export class NetworkStack extends Stack {
     const named = (name: string) => [{ key: "Name", value: `${id}/${name}` }];
 
     // #region vpc
-    const vpc = new CfnVPC(this, "Vpc", {
+    const vpc = new ec2.CfnVPC(this, "Vpc", {
       cidrBlock: plan.vpcCidr,
       // Both are needed before an interface endpoint can answer under the service's usual DNS name.
       enableDnsSupport: true,
@@ -40,17 +28,19 @@ export class NetworkStack extends Stack {
       tags: named("vpc"),
     });
 
-    const internetGateway = new CfnInternetGateway(this, "InternetGateway", { tags: named("igw") });
-    const attachment = new CfnVPCGatewayAttachment(this, "InternetGatewayAttachment", {
+    const internetGateway = new ec2.CfnInternetGateway(this, "InternetGateway", {
+      tags: named("igw"),
+    });
+    const attachment = new ec2.CfnVPCGatewayAttachment(this, "InternetGatewayAttachment", {
       vpcId: vpc.ref,
       internetGatewayId: internetGateway.ref,
     });
     // #endregion vpc
 
     // #region subnets
-    const built = new Map<string, { subnet: CfnSubnet; routeTable: CfnRouteTable }>();
+    const built = new Map<string, { subnet: ec2.CfnSubnet; routeTable: ec2.CfnRouteTable }>();
     for (const planned of plan.subnets) {
-      const subnet = new CfnSubnet(this, `${planned.id}Subnet`, {
+      const subnet = new ec2.CfnSubnet(this, `${planned.id}Subnet`, {
         vpcId: vpc.ref,
         cidrBlock: planned.cidr,
         availabilityZone: planned.availabilityZone,
@@ -59,17 +49,17 @@ export class NetworkStack extends Stack {
         tags: named(planned.id),
       });
       // One route table per subnet, so that no subnet falls back to the VPC's main route table.
-      const routeTable = new CfnRouteTable(this, `${planned.id}RouteTable`, {
+      const routeTable = new ec2.CfnRouteTable(this, `${planned.id}RouteTable`, {
         vpcId: vpc.ref,
         tags: named(planned.id),
       });
-      new CfnSubnetRouteTableAssociation(this, `${planned.id}RouteTableAssociation`, {
+      new ec2.CfnSubnetRouteTableAssociation(this, `${planned.id}RouteTableAssociation`, {
         subnetId: subnet.ref,
         routeTableId: routeTable.ref,
       });
       built.set(planned.id, { subnet, routeTable });
     }
-    const at = (subnetId: string): { subnet: CfnSubnet; routeTable: CfnRouteTable } => {
+    const at = (subnetId: string): { subnet: ec2.CfnSubnet; routeTable: ec2.CfnRouteTable } => {
       const found = built.get(subnetId);
       if (found === undefined) {
         throw new Error(`the plan refers to subnet "${subnetId}", which it does not define`);
@@ -80,13 +70,13 @@ export class NetworkStack extends Stack {
 
     // #region nat
     // Empty unless the plan asks for egress. Each one costs money from the moment it exists.
-    const natGateways = new Map<string, CfnNatGateway>();
+    const natGateways = new Map<string, ec2.CfnNatGateway>();
     for (const planned of plan.natGateways) {
-      const address = new CfnEIP(this, `${planned.subnetId}NatAddress`, {
+      const address = new ec2.CfnEIP(this, `${planned.subnetId}NatAddress`, {
         domain: "vpc",
         tags: named("nat"),
       });
-      const natGateway = new CfnNatGateway(this, `${planned.subnetId}NatGateway`, {
+      const natGateway = new ec2.CfnNatGateway(this, `${planned.subnetId}NatGateway`, {
         subnetId: at(planned.subnetId).subnet.ref,
         allocationId: address.attrAllocationId,
         tags: named(`nat-${planned.availabilityZone}`),
@@ -105,7 +95,7 @@ export class NetworkStack extends Stack {
       }
       const routeTableId = at(planned.id).routeTable.ref;
       if (route.via === "internet-gateway") {
-        new CfnRoute(this, `${planned.id}DefaultRoute`, {
+        new ec2.CfnRoute(this, `${planned.id}DefaultRoute`, {
           routeTableId,
           destinationCidrBlock: "0.0.0.0/0",
           gatewayId: internetGateway.ref,
@@ -118,7 +108,7 @@ export class NetworkStack extends Stack {
           `${planned.id} routes to a NAT gateway in ${route.availabilityZone}, which the plan lacks`,
         );
       }
-      new CfnRoute(this, `${planned.id}DefaultRoute`, {
+      new ec2.CfnRoute(this, `${planned.id}DefaultRoute`, {
         routeTableId,
         destinationCidrBlock: "0.0.0.0/0",
         natGatewayId: natGateway.ref,
@@ -129,7 +119,7 @@ export class NetworkStack extends Stack {
     // #region gateway-endpoints
     const privateSubnets = subnetsOf(plan, "private");
     for (const service of plan.gatewayEndpoints) {
-      new CfnVPCEndpoint(this, `${pascal(service)}GatewayEndpoint`, {
+      new ec2.CfnVPCEndpoint(this, `${pascal(service)}GatewayEndpoint`, {
         vpcEndpointType: "Gateway",
         serviceName: `com.amazonaws.${plan.region}.${service}`,
         vpcId: vpc.ref,
@@ -141,7 +131,7 @@ export class NetworkStack extends Stack {
 
     // #region interface-endpoints
     if (plan.interfaceEndpoints.length > 0) {
-      const securityGroup = new CfnSecurityGroup(this, "EndpointSecurityGroup", {
+      const securityGroup = new ec2.CfnSecurityGroup(this, "EndpointSecurityGroup", {
         groupDescription: "HTTPS from inside the VPC to the interface endpoints",
         vpcId: vpc.ref,
         securityGroupIngress: [
@@ -156,7 +146,7 @@ export class NetworkStack extends Stack {
         tags: named("endpoints"),
       });
       for (const service of plan.interfaceEndpoints) {
-        new CfnVPCEndpoint(this, `${pascal(service)}InterfaceEndpoint`, {
+        new ec2.CfnVPCEndpoint(this, `${pascal(service)}InterfaceEndpoint`, {
           vpcEndpointType: "Interface",
           serviceName: `com.amazonaws.${plan.region}.${service}`,
           vpcId: vpc.ref,

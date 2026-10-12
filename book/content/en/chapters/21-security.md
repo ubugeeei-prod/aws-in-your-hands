@@ -177,7 +177,7 @@ This stays on your machine. It never touches AWS.
 Given the `cdk.out` of every chapter in this book, 19 of the 21 templates passed with no exceptions (run locally on 2026-10-12). The other two need exceptions.
 
 - `AihShipCi` (chapter 20's CI roles): five. These are the actions chapter 20 described as having no way to narrow the resource by ARN
-- `AihObservability` (chapter 19): two, `xray:PutTraceSegments` and `xray:PutTelemetryRecords`. CDK adds them for `Tracing.ACTIVE`
+- `AihObservability` (chapter 19): two, `xray:PutTraceSegments` and `xray:PutTelemetryRecords`. CDK adds them for `lambda.Tracing.ACTIVE`
 
 For both, the exceptions went into the file only after checking, in the service reference AWS publishes, that the action defines no resource type at all.
 

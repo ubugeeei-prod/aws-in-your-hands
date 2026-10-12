@@ -144,7 +144,7 @@ vp run test:unit
 
 <<< @/examples/03-spa/infra/lib/spa-stack.ts{distribution}
 
-この章の主役は `S3BucketOrigin.withOriginAccessControl` です。origin access control（OAC）は、CloudFront が S3 へのリクエストに署名して、bucket がその distribution からの要求だけを許可する仕組み。CDK はこの 1 行から、OAC のリソースと、次のような bucket policy を作ります。
+この章の主役は `origins.S3BucketOrigin.withOriginAccessControl` です。origin access control（OAC）は、CloudFront が S3 へのリクエストに署名して、bucket がその distribution からの要求だけを許可する仕組み。CDK はこの 1 行から、OAC のリソースと、次のような bucket policy を作ります。
 
 - 許可する相手は CloudFront というサービス（`cloudfront.amazonaws.com`）
 - ただし、要求元がこの distribution であるときに限る（`AWS:SourceArn` の条件）

@@ -163,7 +163,7 @@ A function URL has an `AuthType`. Set it to `NONE` and anyone who knows the URL 
 
 Here it is `AWS_IAM`. Lambda turns away an unsigned request with a 403 before the function runs. And CloudFront's origin access control (OAC) signs the requests it sends to the origin. It's the Lambda version of what chapter 03 used for S3.
 
-CDK's `FunctionUrlOrigin.withOriginAccessControl` adds two permissions to the function's resource policy: `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`. Both name `cloudfront.amazonaws.com` as the principal and this distribution's ARN as the condition. A function URL created from October 2025 on needs both. The tests check that these two are the only permissions, and that none has `*` as its `Principal`.
+CDK's `origins.FunctionUrlOrigin.withOriginAccessControl` adds two permissions to the function's resource policy: `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction`. Both name `cloudfront.amazonaws.com` as the principal and this distribution's ARN as the condition. A function URL created from October 2025 on needs both. The tests check that these two are the only permissions, and that none has `*` as its `Principal`.
 
 One constraint here matters later. With OAC, the sender of a POST or PUT request has to put the SHA-256 of the body in an `x-amz-content-sha256` header. An ordinary HTML form sends no such header. So this stack lets only GET and HEAD through, and CloudFront turns POST away before it gets anywhere.
 

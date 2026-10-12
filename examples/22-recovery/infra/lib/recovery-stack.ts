@@ -1,13 +1,13 @@
 import { fileURLToPath } from "node:url";
 
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { BackupPlan, BackupPlanRule, BackupResource, BackupVault } from "aws-cdk-lib/aws-backup";
-import { AttributeType, BillingMode, type ITable, Table } from "aws-cdk-lib/aws-dynamodb";
-import { Schedule } from "aws-cdk-lib/aws-events";
-import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as backup from "aws-cdk-lib/aws-backup";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as events from "aws-cdk-lib/aws-events";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
 
@@ -31,10 +31,10 @@ export class RecoveryStack extends Stack {
     const removalPolicy = props.protect ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY;
 
     // #region table
-    const table = new Table(this, "Notes", {
-      partitionKey: { name: "pk", type: AttributeType.STRING },
-      sortKey: { name: "sk", type: AttributeType.STRING },
-      billingMode: BillingMode.PAY_PER_REQUEST,
+    const table = new dynamodb.Table(this, "Notes", {
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       // Continuous backups: any second of the last 35 days can become a new table.
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       // Stops DeleteTable. It does nothing for a deleted item: that is what the line above is for.
@@ -71,36 +71,36 @@ export class RecoveryStack extends Stack {
     // #region cutover
     // The function, its permissions, and the output all follow this one
     // variable. Pointing it at a restored table moves all three together.
-    const active: ITable =
+    const active: dynamodb.ITable =
       props.activeTableName === undefined
         ? table
-        : Table.fromTableName(this, "ActiveNotes", props.activeTableName);
+        : dynamodb.Table.fromTableName(this, "ActiveNotes", props.activeTableName);
     // #endregion cutover
 
-    const logGroup = new LogGroup(this, "AuditLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "AuditLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
     // #region role
-    const role = new Role(this, "AuditRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const role = new iam.Role(this, "AuditRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     logGroup.grantWrite(role);
     // Reads everything, changes nothing. Repairs run from a laptop, under a person's credentials.
     role.addToPolicy(
-      new PolicyStatement({ actions: ["dynamodb:Scan"], resources: [active.tableArn] }),
+      new iam.PolicyStatement({ actions: ["dynamodb:Scan"], resources: [active.tableArn] }),
     );
     role.addToPolicy(
-      new PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
+      new iam.PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
     );
     // #endregion role
 
-    const auditFunction = new NodejsFunction(this, "Audit", {
+    const auditFunction = new nodejs.NodejsFunction(this, "Audit", {
       entry: fileURLToPath(new URL("../../src/audit-lambda.ts", import.meta.url)),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       timeout: Duration.minutes(1),
       role,
@@ -108,7 +108,7 @@ export class RecoveryStack extends Stack {
       environment: { TABLE_NAME: active.tableName, UPLOADS_BUCKET: uploads.bucketName },
       // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
       bundling: {
-        format: OutputFormat.ESM,
+        format: nodejs.OutputFormat.ESM,
         target: "node24",
         minify: false,
         sourceMap: false,
@@ -121,18 +121,18 @@ export class RecoveryStack extends Stack {
     // #region backup
     if (props.backup) {
       // A second kind of copy: one snapshot a day, in a vault with its own access rules.
-      const vault = new BackupVault(this, "Vault", { removalPolicy });
-      const plan = new BackupPlan(this, "Plan", {
+      const vault = new backup.BackupVault(this, "Vault", { removalPolicy });
+      const plan = new backup.BackupPlan(this, "Plan", {
         backupVault: vault,
         backupPlanRules: [
-          new BackupPlanRule({
+          new backup.BackupPlanRule({
             ruleName: "daily",
-            scheduleExpression: Schedule.cron({ hour: "18", minute: "0" }),
+            scheduleExpression: events.Schedule.cron({ hour: "18", minute: "0" }),
             deleteAfter: Duration.days(7),
           }),
         ],
       });
-      plan.addSelection("Notes", { resources: [BackupResource.fromDynamoDbTable(table)] });
+      plan.addSelection("Notes", { resources: [backup.BackupResource.fromDynamoDbTable(table)] });
       new CfnOutput(this, "BackupVaultName", { value: vault.backupVaultName });
     }
     // #endregion backup

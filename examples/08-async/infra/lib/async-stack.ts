@@ -1,15 +1,15 @@
 import { fileURLToPath } from "node:url";
 
 import { CfnOutput, Duration, RemovalPolicy, type StackProps } from "aws-cdk-lib";
-import type { CfnUserPoolDomain } from "aws-cdk-lib/aws-cognito";
-import type { Table } from "aws-cdk-lib/aws-dynamodb";
-import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Architecture, EventSourceMapping, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import type { Bucket, CfnBucket } from "aws-cdk-lib/aws-s3";
-import { CfnSchedule } from "aws-cdk-lib/aws-scheduler";
-import { type CfnQueuePolicy, Queue, QueueEncryption } from "aws-cdk-lib/aws-sqs";
+import type * as cognito from "aws-cdk-lib/aws-cognito";
+import type * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
+import type * as s3 from "aws-cdk-lib/aws-s3";
+import * as scheduler from "aws-cdk-lib/aws-scheduler";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import type { Construct } from "constructs";
 
 import { KEY_PREFIX } from "@aih/example-07-uploads/api/src/keys.ts";
@@ -21,7 +21,7 @@ const source = (file: string): string =>
   fileURLToPath(new URL(`../../src/${file}`, import.meta.url));
 // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
 const bundling = {
-  format: OutputFormat.ESM,
+  format: nodejs.OutputFormat.ESM,
   target: "node24",
   minify: false,
   sourceMap: false,
@@ -37,14 +37,15 @@ export class AsyncStack extends UploadsStack {
     super(scope, id, props);
 
     // Chapter 07 keeps these to itself, so they are looked up by the IDs it gave them.
-    const uploads = this.node.findChild("Uploads") as Bucket;
-    const table = this.node.findChild("Notes") as Table;
-    const uploadsResource = uploads.node.defaultChild as CfnBucket;
+    const uploads = this.node.findChild("Uploads") as s3.Bucket;
+    const table = this.node.findChild("Notes") as dynamodb.Table;
+    const uploadsResource = uploads.node.defaultChild as s3.CfnBucket;
 
     // A sign-in domain of its own, so this stack and chapter 07's can exist at once.
     const domainPrefix = `aih-async-${this.account}`;
     (
-      this.node.findChild("Users").node.findChild("Domain").node.defaultChild as CfnUserPoolDomain
+      this.node.findChild("Users").node.findChild("Domain").node
+        .defaultChild as cognito.CfnUserPoolDomain
     ).domain = domainPrefix;
     (this.node.findChild("AuthDomain") as CfnOutput).value =
       `https://${domainPrefix}.auth.${this.region}.amazoncognito.com`;
@@ -60,21 +61,21 @@ export class AsyncStack extends UploadsStack {
     // #endregion bucket-name
 
     // #region queues
-    const deadLetters = new Queue(this, "DeadLetters", {
+    const deadLetters = new sqs.Queue(this, "DeadLetters", {
       // A message keeps the age it had in the source queue, so this must be the longer of the two.
       retentionPeriod: Duration.days(14),
-      encryption: QueueEncryption.SQS_MANAGED,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
       enforceSSL: true,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const events = new Queue(this, "UploadEvents", {
+    const events = new sqs.Queue(this, "UploadEvents", {
       // Six times the worker's timeout, as Lambda's documentation asks: room
       // for a batch to finish, and for Lambda to retry one that was throttled.
       visibilityTimeout: Duration.seconds(6 * WORKER_TIMEOUT_SECONDS),
       retentionPeriod: Duration.days(4),
       // Received five times and never deleted: set aside for a person to look at.
       deadLetterQueue: { queue: deadLetters, maxReceiveCount: 5 },
-      encryption: QueueEncryption.SQS_MANAGED,
+      encryption: sqs.QueueEncryption.SQS_MANAGED,
       enforceSSL: true,
       removalPolicy: RemovalPolicy.DESTROY,
     });
@@ -84,8 +85,8 @@ export class AsyncStack extends UploadsStack {
     // The only thing allowed to put messages here: S3, on behalf of this one
     // bucket in this one account.
     events.addToResourcePolicy(
-      new PolicyStatement({
-        principals: [new ServicePrincipal("s3.amazonaws.com")],
+      new iam.PolicyStatement({
+        principals: [new iam.ServicePrincipal("s3.amazonaws.com")],
         actions: ["sqs:SendMessage"],
         resources: [events.queueArn],
         conditions: {
@@ -111,47 +112,47 @@ export class AsyncStack extends UploadsStack {
       })),
     };
     uploadsResource.addDependency(
-      events.node.findChild("Policy").node.defaultChild as CfnQueuePolicy,
+      events.node.findChild("Policy").node.defaultChild as sqs.CfnQueuePolicy,
     );
     // #endregion notification
 
     // #region worker
-    const workerLogs = new LogGroup(this, "WorkerLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const workerLogs = new logs.LogGroup(this, "WorkerLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const workerRole = new Role(this, "WorkerRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const workerRole = new iam.Role(this, "WorkerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     workerLogs.grantWrite(workerRole);
     workerRole.addToPolicy(
       // Lambda polls the queue with the function's own role.
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"],
         resources: [events.queueArn],
       }),
     );
     workerRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["s3:GetObject", "s3:DeleteObjectTagging"],
         resources: [uploads.arnForObjects(`${KEY_PREFIX}*`)],
       }),
     );
     // As in chapter 07: with this, a missing key is a 404 and not a 403.
     workerRole.addToPolicy(
-      new PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
+      new iam.PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
     );
     workerRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
         resources: [table.tableArn],
       }),
     );
-    const worker = new NodejsFunction(this, "Worker", {
+    const worker = new nodejs.NodejsFunction(this, "Worker", {
       entry: source("worker-lambda.ts"),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       timeout: Duration.seconds(WORKER_TIMEOUT_SECONDS),
       role: workerRole,
@@ -166,7 +167,7 @@ export class AsyncStack extends UploadsStack {
     // #endregion worker
 
     // #region mapping
-    const mapping = new EventSourceMapping(this, "WorkerSource", {
+    const mapping = new lambda.EventSourceMapping(this, "WorkerSource", {
       target: worker,
       eventSourceArn: events.queueArn,
       batchSize: 10,
@@ -180,38 +181,38 @@ export class AsyncStack extends UploadsStack {
     // #endregion mapping
 
     // #region housekeeping
-    const housekeepingLogs = new LogGroup(this, "HousekeepingLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const housekeepingLogs = new logs.LogGroup(this, "HousekeepingLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const housekeepingRole = new Role(this, "HousekeepingRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const housekeepingRole = new iam.Role(this, "HousekeepingRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     housekeepingLogs.grantWrite(housekeepingRole);
     housekeepingRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["s3:DeleteObject", "s3:DeleteObjectTagging"],
         resources: [uploads.arnForObjects(`${KEY_PREFIX}*`)],
       }),
     );
     housekeepingRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["s3:ListBucket"],
         resources: [uploads.bucketArn],
         conditions: { StringLike: { "s3:prefix": `${KEY_PREFIX}*` } },
       }),
     );
     housekeepingRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["dynamodb:GetItem", "dynamodb:DeleteItem"],
         resources: [table.tableArn],
       }),
     );
-    const housekeeping = new NodejsFunction(this, "Housekeeping", {
+    const housekeeping = new nodejs.NodejsFunction(this, "Housekeeping", {
       entry: source("housekeeping-lambda.ts"),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       // Lambda's maximum. One run walks the whole bucket, one object after another.
       timeout: Duration.minutes(15),
@@ -232,8 +233,8 @@ export class AsyncStack extends UploadsStack {
     // #region schedule
     // The role EventBridge Scheduler assumes to call Lambda. It can be assumed
     // only for schedules in this account's default group, and can invoke only this function.
-    const scheduleRole = new Role(this, "ScheduleRole", {
-      assumedBy: new ServicePrincipal("scheduler.amazonaws.com").withConditions({
+    const scheduleRole = new iam.Role(this, "ScheduleRole", {
+      assumedBy: new iam.ServicePrincipal("scheduler.amazonaws.com").withConditions({
         StringEquals: {
           "aws:SourceAccount": this.account,
           "aws:SourceArn": `arn:${this.partition}:scheduler:${this.region}:${this.account}:schedule-group/default`,
@@ -241,12 +242,12 @@ export class AsyncStack extends UploadsStack {
       }),
     });
     scheduleRole.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: ["lambda:InvokeFunction"],
         resources: [housekeeping.functionArn],
       }),
     );
-    const schedule = new CfnSchedule(this, "HousekeepingSchedule", {
+    const schedule = new scheduler.CfnSchedule(this, "HousekeepingSchedule", {
       name: SCHEDULE_NAME,
       description: "Starts the housekeeping function of AWS in Your Hands chapter 08",
       scheduleExpression: "rate(1 hour)",

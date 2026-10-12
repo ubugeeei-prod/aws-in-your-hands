@@ -144,7 +144,7 @@ vp run test:unit
 
 <<< @/examples/03-spa/infra/lib/spa-stack.ts{distribution}
 
-The star of this chapter is `S3BucketOrigin.withOriginAccessControl`. Origin access control (OAC) is a mechanism in which CloudFront signs its requests to S3 and the bucket allows only requests from that distribution. From this one line, CDK creates the OAC resource and a bucket policy like this:
+The star of this chapter is `origins.S3BucketOrigin.withOriginAccessControl`. Origin access control (OAC) is a mechanism in which CloudFront signs its requests to S3 and the bucket allows only requests from that distribution. From this one line, CDK creates the OAC resource and a bucket policy like this:
 
 - The principal that is allowed is the CloudFront service (`cloudfront.amazonaws.com`)
 - But only when the request comes from this distribution (the `AWS:SourceArn` condition)

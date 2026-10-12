@@ -163,7 +163,7 @@ function URL には `AuthType` があって、`NONE` にすると、URL を知�
 
 ここでは `AWS_IAM` にしています。署名のないリクエストは、関数が動く前に Lambda が 403 で断ります。そして CloudFront の origin access control（OAC）が、origin へ送るリクエストに署名を付けます。03章で S3 に使った仕組みの Lambda 版です。
 
-CDK の `FunctionUrlOrigin.withOriginAccessControl` は、関数の resource policy に 2 つの許可を足します。`lambda:InvokeFunctionUrl` と `lambda:InvokeFunction` で、どちらも相手は `cloudfront.amazonaws.com`、条件はこの distribution の ARN です。2025年10月以降に作る function URL は、この両方が要ります。テストは、許可がこの 2 つだけであること、`Principal` が `*` の許可が 1 つもないことを見ています。
+CDK の `origins.FunctionUrlOrigin.withOriginAccessControl` は、関数の resource policy に 2 つの許可を足します。`lambda:InvokeFunctionUrl` と `lambda:InvokeFunction` で、どちらも相手は `cloudfront.amazonaws.com`、条件はこの distribution の ARN です。2025年10月以降に作る function URL は、この両方が要ります。テストは、許可がこの 2 つだけであること、`Principal` が `*` の許可が 1 つもないことを見ています。
 
 ここで 1 つ、あとに響く制約があります。OAC を使う場合、POST や PUT のリクエストは、送る側が本文の SHA-256 を `x-amz-content-sha256` ヘッダーに入れておく必要があります。ふつうの HTML の form はそんなヘッダーを付けません。なので、この stack は GET と HEAD だけを通す設定にして、POST は CloudFront の手前で断ります。
 

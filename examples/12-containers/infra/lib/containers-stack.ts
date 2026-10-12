@@ -1,21 +1,10 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { Peer, Port, SecurityGroup } from "aws-cdk-lib/aws-ec2";
-import { Repository, TagMutability } from "aws-cdk-lib/aws-ecr";
-import {
-  Cluster,
-  ContainerImage,
-  CpuArchitecture,
-  FargateService,
-  FargateTaskDefinition,
-  LogDrivers,
-  OperatingSystemFamily,
-} from "aws-cdk-lib/aws-ecs";
-import {
-  ApplicationLoadBalancer,
-  ApplicationProtocol,
-} from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as ecr from "aws-cdk-lib/aws-ecr";
+import * as ecs from "aws-cdk-lib/aws-ecs";
+import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
 
 import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
@@ -31,9 +20,9 @@ export class ContainersStack extends Stack {
     const { config } = props;
 
     // #region repository
-    const repository = new Repository(this, "Repository", {
+    const repository = new ecr.Repository(this, "Repository", {
       // A tag names one image forever. "v2 is running" then means one thing.
-      imageTagMutability: TagMutability.IMMUTABLE,
+      imageTagMutability: ecr.TagMutability.IMMUTABLE,
       lifecycleRules: [{ description: "keep the 10 newest images", maxImageCount: 10 }],
       // For practice: destroy takes the images with it.
       emptyOnDelete: true,
@@ -50,35 +39,35 @@ export class ContainersStack extends Stack {
     const vpc = importNetwork(this, "Network");
 
     // #region logs
-    const logGroup = new LogGroup(this, "TaskLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "TaskLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
     // #endregion logs
 
     // #region roles
-    const tasks = new ServicePrincipal("ecs-tasks.amazonaws.com");
+    const tasks = new iam.ServicePrincipal("ecs-tasks.amazonaws.com");
     // Used by ECS before your code runs: pull the image, open the log stream.
-    const executionRole = new Role(this, "ExecutionRole", { assumedBy: tasks });
+    const executionRole = new iam.Role(this, "ExecutionRole", { assumedBy: tasks });
     // Used by your code. This app calls no AWS API, so the role stays empty.
-    const taskRole = new Role(this, "TaskRole", { assumedBy: tasks });
+    const taskRole = new iam.Role(this, "TaskRole", { assumedBy: tasks });
     // #endregion roles
 
     // #region task
-    const taskDefinition = new FargateTaskDefinition(this, "Task", {
+    const taskDefinition = new ecs.FargateTaskDefinition(this, "Task", {
       cpu: TASK.cpuUnits,
       memoryLimitMiB: TASK.memoryMiB,
       // The image is built for arm64, which is also the cheaper Fargate rate.
       runtimePlatform: {
-        cpuArchitecture: CpuArchitecture.ARM64,
-        operatingSystemFamily: OperatingSystemFamily.LINUX,
+        cpuArchitecture: ecs.CpuArchitecture.ARM64,
+        operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
       },
       executionRole,
       taskRole,
     });
     taskDefinition.addContainer("api", {
       // Grants the execution role the pull on this repository, and no other.
-      image: ContainerImage.fromEcrRepository(repository, config.imageTag),
+      image: ecs.ContainerImage.fromEcrRepository(repository, config.imageTag),
       portMappings: [{ containerPort: TASK.containerPort }],
       environment: {
         PORT: String(TASK.containerPort),
@@ -87,7 +76,7 @@ export class ContainersStack extends Stack {
         STAGE: "dev",
         APP_VERSION: config.imageTag,
       },
-      logging: LogDrivers.awsLogs({ logGroup, streamPrefix: "api" }),
+      logging: ecs.LogDrivers.awsLogs({ logGroup, streamPrefix: "api" }),
       // The server gives up at timing.shutdownDeadline. SIGKILL has to come after that.
       stopTimeout: Duration.seconds(timing.stopTimeout),
       // The app writes nothing to disk. Now nothing else can either.
@@ -96,24 +85,28 @@ export class ContainersStack extends Stack {
     // #endregion task
 
     // #region firewall
-    const loadBalancerGroup = new SecurityGroup(this, "LoadBalancerGroup", {
+    const loadBalancerGroup = new ec2.SecurityGroup(this, "LoadBalancerGroup", {
       vpc,
       description: "HTTP from the internet to the load balancer",
       allowAllOutbound: false,
     });
-    const taskGroup = new SecurityGroup(this, "TaskGroup", {
+    const taskGroup = new ec2.SecurityGroup(this, "TaskGroup", {
       vpc,
       description: "The notes API tasks",
       allowAllOutbound: false,
     });
     // ECR, S3, and CloudWatch Logs are all reached over HTTPS.
-    taskGroup.addEgressRule(Peer.anyIpv4(), Port.tcp(443), "HTTPS out: image pull and logs");
+    taskGroup.addEgressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(443),
+      "HTTPS out: image pull and logs",
+    );
     // #endregion firewall
 
     // #region service
-    const cluster = new Cluster(this, "Cluster", { vpc });
+    const cluster = new ecs.Cluster(this, "Cluster", { vpc });
     const inPublic = config.taskSubnets === "public";
-    const service = new FargateService(this, "Service", {
+    const service = new ecs.FargateService(this, "Service", {
       cluster,
       taskDefinition,
       desiredCount: SERVICE.desiredCount,
@@ -131,7 +124,7 @@ export class ContainersStack extends Stack {
     // #endregion service
 
     // #region load-balancer
-    const loadBalancer = new ApplicationLoadBalancer(this, "LoadBalancer", {
+    const loadBalancer = new elbv2.ApplicationLoadBalancer(this, "LoadBalancer", {
       vpc,
       internetFacing: true,
       vpcSubnets: { subnets: vpc.publicSubnets },
@@ -142,12 +135,12 @@ export class ContainersStack extends Stack {
     // HTTP only: a certificate needs a domain name, and this chapter has none.
     const listener = loadBalancer.addListener("Http", {
       port: 80,
-      protocol: ApplicationProtocol.HTTP,
+      protocol: elbv2.ApplicationProtocol.HTTP,
       open: true,
     });
     listener.addTargets("Api", {
       port: TASK.containerPort,
-      protocol: ApplicationProtocol.HTTP,
+      protocol: elbv2.ApplicationProtocol.HTTP,
       // Also opens the task group to the load balancer group on this port, and to nothing else.
       targets: [service],
       healthCheck: {

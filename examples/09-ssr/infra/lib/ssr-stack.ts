@@ -1,16 +1,9 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
-import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import {
-  Architecture,
-  Code,
-  Function as LambdaFunction,
-  FunctionUrlAuthType,
-  InvokeMode,
-  Runtime,
-} from "aws-cdk-lib/aws-lambda";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
 
@@ -40,21 +33,21 @@ export class SsrStack extends Stack {
     // #endregion assets
 
     // #region function
-    const logGroup = new LogGroup(this, "ServerLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "ServerLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const role = new Role(this, "ServerRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const role = new iam.Role(this, "ServerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     logGroup.grantWrite(role);
 
-    const server = new LambdaFunction(this, "Server", {
+    const server = new lambda.Function(this, "Server", {
       // Already bundled by Nitro, node_modules included. CDK only zips it.
-      code: Code.fromAsset(props.serverDir),
+      code: lambda.Code.fromAsset(props.serverDir),
       handler: "index.handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 512,
       // CloudFront waits 30 seconds for an origin by default. Give up well before that.
       timeout: Duration.seconds(10),
@@ -67,9 +60,11 @@ export class SsrStack extends Stack {
     // #region url
     const url = server.addFunctionUrl({
       // Unsigned requests are refused by Lambda before the function runs.
-      authType: FunctionUrlAuthType.AWS_IAM,
+      authType: lambda.FunctionUrlAuthType.AWS_IAM,
       // Follows the handler that the build produced, so the two are never set apart by hand.
-      invokeMode: props.responseStreaming ? InvokeMode.RESPONSE_STREAM : InvokeMode.BUFFERED,
+      invokeMode: props.responseStreaming
+        ? lambda.InvokeMode.RESPONSE_STREAM
+        : lambda.InvokeMode.BUFFERED,
     });
     // CloudFront signs each origin request, and the function's policy admits this distribution only.
     const serverOrigin = origins.FunctionUrlOrigin.withOriginAccessControl(url);

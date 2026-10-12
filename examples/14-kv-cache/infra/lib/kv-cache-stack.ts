@@ -1,14 +1,14 @@
 import { fileURLToPath } from "node:url";
 
 import { ArnFormat, CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
-import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
-import { CfnServerlessCache } from "aws-cdk-lib/aws-elasticache";
-import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as elasticache from "aws-cdk-lib/aws-elasticache";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
 
 import { TTL_ATTRIBUTE } from "../../src/dynamodb-store.ts";
@@ -28,10 +28,10 @@ export class KvCacheStack extends Stack {
     super(scope, id, props);
 
     // #region table
-    const table = new Table(this, "Store", {
-      partitionKey: { name: "pk", type: AttributeType.STRING },
-      sortKey: { name: "sk", type: AttributeType.STRING },
-      billingMode: BillingMode.PAY_PER_REQUEST,
+    const table = new dynamodb.Table(this, "Store", {
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       // DynamoDB deletes items some time after this Unix-seconds attribute has passed.
       timeToLiveAttribute: TTL_ATTRIBUTE,
       // Counters and cached copies: nothing here is worth keeping.
@@ -39,19 +39,19 @@ export class KvCacheStack extends Stack {
     });
     // #endregion table
 
-    const logGroup = new LogGroup(this, "HandlerLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "HandlerLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
     // #region role
-    const role = new Role(this, "HandlerRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const role = new iam.Role(this, "HandlerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
     });
     logGroup.grantWrite(role);
     // The four calls the stores make. No Query, no Scan.
     role.addToPolicy(
-      new PolicyStatement({
+      new iam.PolicyStatement({
         actions: [
           "dynamodb:GetItem",
           "dynamodb:PutItem",
@@ -79,7 +79,7 @@ export class KvCacheStack extends Stack {
     // #region valkey
     if (props.store === "valkey") {
       // Billed from the moment it is available until it is deleted, requests or not.
-      const cache = new CfnServerlessCache(this, "Valkey", {
+      const cache = new elasticache.CfnServerlessCache(this, "Valkey", {
         serverlessCacheName: CACHE_NAME,
         description: "AWS in Your Hands chapter 14: rate limit counters and a list cache",
         engine: "valkey",
@@ -99,7 +99,7 @@ export class KvCacheStack extends Stack {
       cache.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
       role.addToPolicy(
-        new PolicyStatement({
+        new iam.PolicyStatement({
           actions: ["elasticache:Connect"],
           // Both are required: which cache, and as which ElastiCache user.
           resources: [
@@ -125,11 +125,11 @@ export class KvCacheStack extends Stack {
     }
     // #endregion valkey
 
-    const handler = new NodejsFunction(this, "Handler", {
+    const handler = new nodejs.NodejsFunction(this, "Handler", {
       entry: fileURLToPath(new URL("../../src/lambda.ts", import.meta.url)),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       timeout: Duration.seconds(10),
       role,
@@ -137,7 +137,7 @@ export class KvCacheStack extends Stack {
       environment,
       bundling: {
         // iovalkey is CommonJS and calls require() for Node's own modules.
-        format: OutputFormat.CJS,
+        format: nodejs.OutputFormat.CJS,
         target: "node24",
         minify: false,
         sourceMap: false,
@@ -146,12 +146,12 @@ export class KvCacheStack extends Stack {
       },
     });
 
-    const api = new HttpApi(this, "Api", {
+    const api = new apigwv2.HttpApi(this, "Api", {
       description: "Items API with a rate limit and a cache",
     });
-    const integration = new HttpLambdaIntegration("Items", handler);
-    api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
-    api.addRoutes({ path: "/items", methods: [HttpMethod.GET], integration });
+    const integration = new integrations.HttpLambdaIntegration("Items", handler);
+    api.addRoutes({ path: "/health", methods: [apigwv2.HttpMethod.GET], integration });
+    api.addRoutes({ path: "/items", methods: [apigwv2.HttpMethod.GET], integration });
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "TableName", { value: table.tableName });

@@ -2,13 +2,13 @@ import { fileURLToPath } from "node:url";
 
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
-import { FunctionUrlOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
-import { PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Key } from "aws-cdk-lib/aws-kms";
-import { Architecture, FunctionUrlAuthType, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { Secret } from "aws-cdk-lib/aws-secretsmanager";
+import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as kms from "aws-cdk-lib/aws-kms";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as logs from "aws-cdk-lib/aws-logs";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import type { Construct } from "constructs";
 
 export type SecurityStackProps = StackProps & {
@@ -25,7 +25,7 @@ export class SecurityStack extends Stack {
     // #region key
     // Off by default: aws/secretsmanager has no monthly fee. A key of your own does.
     const key = props.customerManagedKey
-      ? new Key(this, "SecretKey", {
+      ? new kms.Key(this, "SecretKey", {
           description: "AWS in Your Hands chapter 21: encrypts the token signing secret",
           enableKeyRotation: true,
           // The shortest wait KMS allows before a key is gone for good.
@@ -36,7 +36,7 @@ export class SecurityStack extends Stack {
     // #endregion key
 
     // #region secret
-    const secret = new Secret(this, "SigningKey", {
+    const secret = new secretsmanager.Secret(this, "SigningKey", {
       description: "AWS in Your Hands chapter 21: HMAC key for the token API",
       // The value is generated at deploy time. It is in no file, no template, and no environment variable.
       generateSecretString: {
@@ -51,20 +51,20 @@ export class SecurityStack extends Stack {
     });
     // #endregion secret
 
-    const logGroup = new LogGroup(this, "HandlerLogs", {
-      retention: RetentionDays.ONE_WEEK,
+    const logGroup = new logs.LogGroup(this, "HandlerLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
     // #region role
     const statements = [
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "WriteOwnLogs",
         actions: ["logs:CreateLogStream", "logs:PutLogEvents"],
         resources: [logGroup.logGroupArn],
       }),
       // One action on one secret. Not secretsmanager:*, and not every secret in the account.
-      new PolicyStatement({
+      new iam.PolicyStatement({
         sid: "ReadSigningKey",
         actions: ["secretsmanager:GetSecretValue"],
         resources: [secret.secretArn],
@@ -72,7 +72,7 @@ export class SecurityStack extends Stack {
     ];
     if (key !== undefined) {
       statements.push(
-        new PolicyStatement({
+        new iam.PolicyStatement({
           sid: "DecryptThroughSecretsManager",
           actions: ["kms:Decrypt"],
           resources: [key.keyArn],
@@ -83,19 +83,19 @@ export class SecurityStack extends Stack {
         }),
       );
     }
-    const role = new Role(this, "HandlerRole", {
-      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    const role = new iam.Role(this, "HandlerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
       // Inline, so the lint in src/iam-lint.ts reads the whole permission set off one resource.
-      inlinePolicies: { Handler: new PolicyDocument({ statements }) },
+      inlinePolicies: { Handler: new iam.PolicyDocument({ statements }) },
     });
     // #endregion role
 
     // #region function
-    const handler = new NodejsFunction(this, "Handler", {
+    const handler = new nodejs.NodejsFunction(this, "Handler", {
       entry: fileURLToPath(new URL("../../src/lambda.ts", import.meta.url)),
       handler: "handler",
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_24_X,
+      architecture: lambda.Architecture.ARM_64,
       memorySize: 256,
       timeout: Duration.seconds(10),
       role,
@@ -111,7 +111,7 @@ export class SecurityStack extends Stack {
         KEY_REFRESH_MIN_SECONDS: "30",
       },
       bundling: {
-        format: OutputFormat.ESM,
+        format: nodejs.OutputFormat.ESM,
         target: "node24",
         minify: false,
         sourceMap: false,
@@ -127,7 +127,7 @@ export class SecurityStack extends Stack {
     // #region entry
     const url = handler.addFunctionUrl({
       // Unsigned requests never reach the function, so nobody walks around CloudFront and its web ACL.
-      authType: FunctionUrlAuthType.AWS_IAM,
+      authType: lambda.FunctionUrlAuthType.AWS_IAM,
     });
     const distribution = new cloudfront.Distribution(this, "Distribution", {
       comment: "AWS in Your Hands chapter 21 token API",
@@ -136,7 +136,7 @@ export class SecurityStack extends Stack {
       // AWS WAF attaches here. A function URL has no place to attach one.
       ...(props.webAclArn === undefined ? {} : { webAclId: props.webAclArn }),
       defaultBehavior: {
-        origin: FunctionUrlOrigin.withOriginAccessControl(url),
+        origin: origins.FunctionUrlOrigin.withOriginAccessControl(url),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
         // GET and HEAD only: with origin access control, a body would need a hash the caller has to send.
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
