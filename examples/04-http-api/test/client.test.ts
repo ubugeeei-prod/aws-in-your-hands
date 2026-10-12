@@ -20,7 +20,7 @@ function setup() {
     newRequestId: () => "req-1",
     now: () => 0,
   });
-  const viaApp: typeof fetch = async (input, init) => app.fetch(new Request(input, init));
+  const viaApp: typeof fetch = async (input, init) => app(new Request(input, init));
   return createNotesClient("http://api.test", viaApp);
 }
 

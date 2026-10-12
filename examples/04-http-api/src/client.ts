@@ -1,7 +1,5 @@
-import { hc } from "hono/client";
-import type { z } from "zod";
+import * as v from "valibot";
 
-import type { App } from "./app.ts";
 import {
   type CreateNote,
   errorSchema,
@@ -25,19 +23,22 @@ export class ApiError extends Error {
   }
 }
 
-// hc<App> types the call. It cannot know which server actually answers, so
-// every response is checked against the schema before it is returned.
-async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
+// A type cannot know which server actually answers, so every response is
+// checked against the schema before it is returned.
+async function parse<Schema extends v.GenericSchema>(
+  response: Response,
+  schema: Schema,
+): Promise<v.InferOutput<Schema>> {
   const requestId = response.headers.get("x-request-id") ?? undefined;
   const json: unknown = await response.json().catch(() => undefined);
   if (!response.ok) {
-    const body = errorSchema.safeParse(json);
+    const body = v.safeParse(errorSchema, json);
     throw body.success
       ? new ApiError(
           response.status,
-          body.data.error.code,
-          body.data.error.message,
-          body.data.error.requestId,
+          body.output.error.code,
+          body.output.error.message,
+          body.output.error.requestId,
         )
       : new ApiError(
           response.status,
@@ -46,7 +47,7 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
           requestId,
         );
   }
-  const body = schema.safeParse(json);
+  const body = v.safeParse(schema, json);
   if (!body.success) {
     throw new ApiError(
       response.status,
@@ -55,18 +56,25 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
       requestId,
     );
   }
-  return body.data;
+  return body.output;
 }
 
 export function createNotesClient(baseUrl: string, fetchImpl: typeof fetch = fetch) {
-  const api = hc<App>(baseUrl, { fetch: fetchImpl });
+  const call = (method: string, path: string, json?: unknown): Promise<Response> =>
+    fetchImpl(`${baseUrl.replace(/\/$/, "")}${path}`, {
+      method,
+      ...(json === undefined
+        ? {}
+        : { headers: { "content-type": "application/json" }, body: JSON.stringify(json) }),
+    });
+  const note = (id: string): string => `/notes/${encodeURIComponent(id)}`;
   return {
-    health: async () => parse(await api.health.$get(), healthSchema),
-    list: async () => (await parse(await api.notes.$get(), noteListSchema)).notes,
-    create: async (input: CreateNote) => parse(await api.notes.$post({ json: input }), noteSchema),
-    get: async (id: string) => parse(await api.notes[":id"].$get({ param: { id } }), noteSchema),
+    health: async () => parse(await call("GET", "/health"), healthSchema),
+    list: async () => (await parse(await call("GET", "/notes"), noteListSchema)).notes,
+    create: async (input: CreateNote) => parse(await call("POST", "/notes", input), noteSchema),
+    get: async (id: string) => parse(await call("GET", note(id)), noteSchema),
     remove: async (id: string) => {
-      const response = await api.notes[":id"].$delete({ param: { id } });
+      const response = await call("DELETE", note(id));
       if (!response.ok) {
         await parse(response, noteSchema);
       }

@@ -12,6 +12,7 @@
     "@aws-sdk/lib-dynamodb": "3.1149.0",
     "aws-cdk-lib": "2.273.0",
     "constructs": "10.8.1",
+    "valibot": "1.5.0",
     "zod": "4.6.5"
   },
   "devDependencies": {

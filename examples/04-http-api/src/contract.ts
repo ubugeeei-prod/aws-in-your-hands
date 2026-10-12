@@ -1,40 +1,40 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region note
-export const noteSchema = z.object({
-  id: z.string().min(1),
-  title: z.string().min(1).max(120),
-  body: z.string().max(10_000),
-  createdAt: z.iso.datetime(),
+export const noteSchema = v.object({
+  id: v.pipe(v.string(), v.minLength(1)),
+  title: v.pipe(v.string(), v.minLength(1), v.maxLength(120)),
+  body: v.pipe(v.string(), v.maxLength(10_000)),
+  createdAt: v.pipe(v.string(), v.isoTimestamp()),
 });
-export type Note = z.infer<typeof noteSchema>;
+export type Note = v.InferOutput<typeof noteSchema>;
 
-export const createNoteSchema = z.object({
-  title: z.string().trim().min(1).max(120),
-  body: z.string().max(10_000).default(""),
+export const createNoteSchema = v.object({
+  title: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(120)),
+  body: v.optional(v.pipe(v.string(), v.maxLength(10_000)), ""),
 });
-export type CreateNote = z.infer<typeof createNoteSchema>;
+export type CreateNote = v.InferOutput<typeof createNoteSchema>;
 // #endregion note
 
 // #region list
 // What a list view shows. The body comes from GET /notes/:id.
-export const noteSummarySchema = z.strictObject({
-  id: z.string().min(1),
-  title: z.string().min(1).max(120),
-  createdAt: z.iso.datetime(),
+export const noteSummarySchema = v.strictObject({
+  id: v.pipe(v.string(), v.minLength(1)),
+  title: v.pipe(v.string(), v.minLength(1), v.maxLength(120)),
+  createdAt: v.pipe(v.string(), v.isoTimestamp()),
 });
-export type NoteSummary = z.infer<typeof noteSummarySchema>;
+export type NoteSummary = v.InferOutput<typeof noteSummarySchema>;
 
 // A list answers with the newest notes, up to this many. It bounds the response, not the store.
 export const MAX_LISTED_NOTES = 20;
 
 // Strict, so a body or a 21st note fails the check instead of passing through.
-export const noteListSchema = z.strictObject({
-  notes: z.array(noteSummarySchema).max(MAX_LISTED_NOTES),
+export const noteListSchema = v.strictObject({
+  notes: v.pipe(v.array(noteSummarySchema), v.maxLength(MAX_LISTED_NOTES)),
 });
 // #endregion list
 
-export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string() });
+export const healthSchema = v.object({ status: v.literal("ok"), stage: v.string() });
 
 // #region error
 export const errorCodes = [
@@ -46,14 +46,14 @@ export const errorCodes = [
   "internal",
 ] as const;
 
-export const errorSchema = z.object({
-  error: z.object({
-    code: z.enum(errorCodes),
-    message: z.string(),
+export const errorSchema = v.object({
+  error: v.object({
+    code: v.picklist(errorCodes),
+    message: v.string(),
     // Search the logs for this.
-    requestId: z.string(),
-    issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
+    requestId: v.string(),
+    issues: v.optional(v.array(v.object({ path: v.string(), message: v.string() }))),
   }),
 });
-export type ErrorBody = z.infer<typeof errorSchema>;
+export type ErrorBody = v.InferOutput<typeof errorSchema>;
 // #endregion error

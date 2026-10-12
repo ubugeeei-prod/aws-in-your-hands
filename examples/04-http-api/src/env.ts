@@ -1,23 +1,25 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region env
-const envSchema = z.object({
-  // z.url() alone would accept "localhost:5173" (scheme "localhost").
-  ALLOWED_ORIGIN: z.url({ protocol: /^https?$/ }),
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-  STAGE: z.string().min(1).default("local"),
+const envSchema = v.object({
+  // v.url() alone would accept "localhost:5173" (scheme "localhost").
+  ALLOWED_ORIGIN: v.pipe(
+    v.string(),
+    v.url(),
+    v.regex(/^https?:\/\//, "Must be an http or https URL."),
+  ),
+  LOG_LEVEL: v.optional(v.picklist(["debug", "info", "warn", "error"]), "info"),
+  STAGE: v.optional(v.pipe(v.string(), v.minLength(1)), "local"),
 });
 
-export type Env = z.infer<typeof envSchema>;
+export type Env = v.InferOutput<typeof envSchema>;
 
 export function parseEnv(source: Record<string, string | undefined>): Env {
-  const result = envSchema.safeParse(source);
+  const result = v.safeParse(envSchema, source);
   if (!result.success) {
-    const problems = result.error.issues.map(
-      (issue) => `${issue.path.join(".")}: ${issue.message}`,
-    );
+    const problems = result.issues.map((issue) => `${v.getDotPath(issue) ?? ""}: ${issue.message}`);
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
-  return result.data;
+  return result.output;
 }
 // #endregion env

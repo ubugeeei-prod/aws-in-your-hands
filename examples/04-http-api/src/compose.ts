@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 
-import { type App, createApp } from "./app.ts";
+import { createApp } from "./app.ts";
 import { parseEnv } from "./env.ts";
+import type { Fetch } from "./http/router.ts";
 import { createLogger } from "./log.ts";
 import { createNoteService, InMemoryNoteRepository } from "./notes.ts";
 
 // #region compose
 /** The one place that touches the real clock, real randomness, and the real environment. */
-export function composeApp(source: Record<string, string | undefined>): App {
+export function composeApp(source: Record<string, string | undefined>): Fetch {
   const env = parseEnv(source);
   return createApp({
     env,

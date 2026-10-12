@@ -1,11 +1,10 @@
-import { Hono } from "hono";
-import { bodyLimit } from "hono/body-limit";
-import { cors } from "hono/cors";
-import { HTTPException } from "hono/http-exception";
-import { validator } from "hono/validator";
+import * as v from "valibot";
 
 import { createNoteSchema, type ErrorBody } from "./contract.ts";
 import type { Env } from "./env.ts";
+import { readJson } from "./http/body.ts";
+import { cors } from "./http/cors.ts";
+import { type Fetch, route, router } from "./http/router.ts";
 import type { Logger } from "./log.ts";
 import { NoteLimitError, type NoteService } from "./notes.ts";
 
@@ -17,117 +16,113 @@ export type AppDeps = {
   now: () => number;
 };
 
-type Variables = { requestId: string };
+/** What every route sees besides the request. */
+type Context = { requestId: string };
 
 const failure = (
+  status: number,
   code: ErrorBody["error"]["code"],
   message: string,
-  requestId: string,
+  { requestId }: Context,
   issues?: { path: string; message: string }[],
 ) =>
-  ({
-    error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) },
-  }) satisfies ErrorBody;
+  Response.json(
+    {
+      error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) },
+    } satisfies ErrorBody,
+    { status },
+  );
 
 // #region app
-export function createApp(deps: AppDeps) {
-  const app = new Hono<{ Variables: Variables }>();
+export function createApp(deps: AppDeps): Fetch {
+  // #region routes
+  const routes = router<Context>(
+    [
+      route("GET", "/health", () => Response.json({ status: "ok", stage: deps.env.STAGE })),
+      route("GET", "/notes", async () => Response.json({ notes: await deps.notes.list() })),
+      route("POST", "/notes", async (request, context) => {
+        const body = await readJson(request, 64 * 1024);
+        if (!body.ok) {
+          return body.reason === "too_large"
+            ? failure(413, "payload_too_large", "The request body exceeds 64 KiB.", context)
+            : failure(400, "invalid_request", "The request body is not valid JSON.", context);
+        }
+        // The type says what the code expects. This line is what checks it.
+        const input = v.safeParse(createNoteSchema, body.value);
+        if (!input.success) {
+          const issues = input.issues.map((issue) => ({
+            path: v.getDotPath(issue) ?? "",
+            message: issue.message,
+          }));
+          return failure(400, "invalid_request", "The note is not valid.", context, issues);
+        }
+        return Response.json(await deps.notes.create(input.output), { status: 201 });
+      }),
+      route("GET", "/notes/:id", async (_request, context, { id = "" }) => {
+        const note = await deps.notes.get(id);
+        return note === undefined
+          ? failure(404, "not_found", "No such note.", context)
+          : Response.json(note);
+      }),
+      route("DELETE", "/notes/:id", async (_request, context, { id = "" }) =>
+        (await deps.notes.remove(id))
+          ? new Response(null, { status: 204 })
+          : failure(404, "not_found", "No such note.", context),
+      ),
+    ],
+    (_request, context) => failure(404, "not_found", "No such route.", context),
+  );
+  // #endregion routes
 
-  app.use(async (c, next) => {
-    const requestId = deps.newRequestId();
-    const startedAt = deps.now();
-    c.set("requestId", requestId);
-    await next();
-    c.header("x-request-id", requestId);
-    deps.log({
-      level: c.res.status >= 500 ? "error" : "info",
-      message: "request",
-      requestId,
-      method: c.req.method,
-      path: c.req.path,
-      status: c.res.status,
-      durationMs: deps.now() - startedAt,
-    });
-  });
-
-  app.use(
-    cors({
+  const answer = cors(
+    {
       origin: deps.env.ALLOWED_ORIGIN,
       allowMethods: ["GET", "POST", "DELETE"],
       allowHeaders: ["content-type"],
-    }),
+    },
+    routes,
   );
 
-  app.onError((error, c) => {
-    const requestId = c.get("requestId");
-    if (error instanceof HTTPException && error.status === 400) {
-      // The JSON validator throws this when the body does not parse.
-      return c.json(
-        failure("invalid_request", "The request body is not valid JSON.", requestId),
-        400,
-      );
+  // #region around
+  // Everything that happens to every request, in the order it happens.
+  return async (request) => {
+    const context = { requestId: deps.newRequestId() };
+    const startedAt = deps.now();
+    let response: Response;
+    try {
+      response = await answer(request, context);
+    } catch (error) {
+      if (error instanceof NoteLimitError) {
+        // 409, not 429: waiting does not help. Deleting a note does.
+        response = failure(
+          409,
+          "quota_exceeded",
+          "The store is full. Delete a note first.",
+          context,
+        );
+      } else {
+        // The stack trace goes to the log, never to the caller.
+        deps.log({
+          level: "error",
+          message: "unhandled error",
+          requestId: context.requestId,
+          error: error instanceof Error ? error.stack : String(error),
+        });
+        response = failure(500, "internal", "The request could not be completed.", context);
+      }
     }
-    if (error instanceof NoteLimitError) {
-      // 409, not 429: waiting does not help. Deleting a note does.
-      return c.json(
-        failure("quota_exceeded", "The store is full. Delete a note first.", requestId),
-        409,
-      );
-    }
-    // The stack trace goes to the log, never to the caller.
+    response.headers.set("x-request-id", context.requestId);
     deps.log({
-      level: "error",
-      message: "unhandled error",
-      requestId,
-      error: error instanceof Error ? error.stack : String(error),
+      level: response.status >= 500 ? "error" : "info",
+      message: "request",
+      requestId: context.requestId,
+      method: request.method,
+      path: new URL(request.url).pathname,
+      status: response.status,
+      durationMs: deps.now() - startedAt,
     });
-    return c.json(failure("internal", "The request could not be completed.", requestId), 500);
-  });
-
-  app.notFound((c) => c.json(failure("not_found", "No such route.", c.get("requestId")), 404));
-
-  return app
-    .get("/health", (c) => c.json({ status: "ok" as const, stage: deps.env.STAGE }))
-    .get("/notes", async (c) => c.json({ notes: await deps.notes.list() }))
-    .post(
-      "/notes",
-      bodyLimit({
-        maxSize: 64 * 1024,
-        onError: (c) =>
-          c.json(
-            failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")),
-            413,
-          ),
-      }),
-      // Runtime check, and the request type that hc<App> shows to callers.
-      validator("json", (value, c) => {
-        const input = createNoteSchema.safeParse(value);
-        if (!input.success) {
-          const issues = input.error.issues.map((issue) => ({
-            path: issue.path.join("."),
-            message: issue.message,
-          }));
-          return c.json(
-            failure("invalid_request", "The note is not valid.", c.get("requestId"), issues),
-            400,
-          );
-        }
-        return input.data;
-      }),
-      async (c) => c.json(await deps.notes.create(c.req.valid("json")), 201),
-    )
-    .get("/notes/:id", async (c) => {
-      const note = await deps.notes.get(c.req.param("id"));
-      return note === undefined
-        ? c.json(failure("not_found", "No such note.", c.get("requestId")), 404)
-        : c.json(note, 200);
-    })
-    .delete("/notes/:id", async (c) =>
-      (await deps.notes.remove(c.req.param("id")))
-        ? c.body(null, 204)
-        : c.json(failure("not_found", "No such note.", c.get("requestId")), 404),
-    );
+    return response;
+  };
+  // #endregion around
 }
-
-export type App = ReturnType<typeof createApp>;
 // #endregion app
