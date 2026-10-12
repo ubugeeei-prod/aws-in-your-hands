@@ -2746,6 +2746,17 @@
         "ja": "デプロイ後に `aws cloudwatch set-alarm-state` でアラームを ALARM にし、購読先に通知が届くことを見る。",
         "en": "After deploying, force the alarm with `aws cloudwatch set-alarm-state` and confirm the subscriber is notified."
       }
+    },
+    {
+      "id": "list-response-size",
+      "summary": {
+        "ja": "ノートの一覧は、本文を返さず、多くて 20 件の要約だけを返す。契約が受け付ける最大のノートで組んでも 20 KiB 以下になることをテストで確かめたが、デプロイした API のレスポンスでは確かめていない。06・07章の SPA は型検査と既存のテストを通しただけで、この変更のあとブラウザで操作していない。",
+        "en": "A list of notes returns at most 20 summaries and never a body. Tests confirm that it stays at or under 20 KiB with the largest notes the contract accepts; a deployed API's response has not been checked. The SPAs of chapters 06 and 07 were type-checked and passed their existing tests, but have not been driven in a browser since this change."
+      },
+      "resume": {
+        "ja": "デプロイした API に最大のノートを 20 件作り、`curl -s <url>/notes | wc -c` が 20,480 以下であることを見る。`vp run dev:app` で SPA を開き、一覧からノートを開けることを確かめる。",
+        "en": "Create 20 largest notes on a deployed API and confirm `curl -s <url>/notes | wc -c` is at most 20,480. Open the SPA with `vp run dev:app` and confirm a note opens from the list."
+      }
     }
   ]
 }

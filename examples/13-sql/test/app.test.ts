@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
-import { errorSchema, noteListSchema, noteSchema } from "../src/contract.ts";
+import { errorSchema, MAX_LISTED_NOTES, noteListSchema, noteSchema } from "../src/contract.ts";
 import type { Db } from "../src/db.ts";
 import type { LogEntry } from "../src/log.ts";
 import { SqlNoteRepository } from "../src/notes-repository.ts";
@@ -70,6 +70,47 @@ describe("notes API on SQL", () => {
       second,
     );
   });
+
+  // #region list-bound
+  it("lists summaries only: no body, the newest 20, under 20 KiB at the worst", async () => {
+    const { send } = await setup();
+    // The largest note the contract takes. A control character is six bytes of JSON.
+    const largest = { title: "\u0001".repeat(120), body: "\u0001".repeat(10_000) };
+    const created = [];
+    for (let count = 0; count <= MAX_LISTED_NOTES; count++) {
+      created.push(noteSchema.parse(await (await send("POST", "/notes", largest)).json()));
+    }
+
+    const text = await (await send("GET", "/notes")).text();
+    const list = noteListSchema.parse(JSON.parse(text));
+    expect(new TextEncoder().encode(text).byteLength).toBeLessThanOrEqual(20 * 1024);
+    expect(list.notes.map((item) => item.id)).toEqual(
+      created
+        .slice(1)
+        .map((item) => item.id)
+        .toReversed(),
+    );
+    expect(text).not.toContain('"body"');
+
+    // The whole note is one request away.
+    const oldest = await send("GET", `/notes/${created[0]?.id}`);
+    expect(noteSchema.parse(await oldest.json()).body).toHaveLength(10_000);
+  });
+
+  it("has a list contract that refuses a body and a 21st note", () => {
+    const summary = {
+      id: randomUUID(),
+      title: "t",
+      version: 1,
+      createdAt: "2026-10-11T00:00:00.000Z",
+      updatedAt: "2026-10-11T00:00:00.000Z",
+    };
+    const parses = (notes: unknown[]) => noteListSchema.safeParse({ notes }).success;
+    expect(parses([summary])).toBe(true);
+    expect(parses([{ ...summary, body: "" }])).toBe(false);
+    expect(parses(Array.from({ length: MAX_LISTED_NOTES + 1 }, () => summary))).toBe(false);
+  });
+  // #endregion list-bound
 
   it("answers 404 for an id that is not a UUID instead of passing it to the database", async () => {
     const { send, logs } = await setup();

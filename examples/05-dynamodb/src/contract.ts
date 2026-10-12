@@ -28,13 +28,36 @@ export const MAX_NOTES_PER_OWNER = 100;
 // #endregion note
 
 // #region list
+// What a list view shows. The body comes from GET /notes/:id.
+export const noteSummarySchema = z.strictObject({
+  id: z.string().min(1),
+  title: z.string().min(1).max(120),
+  // Enough to tell whether a note changed since it was listed.
+  version: z.number().int().positive(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+export type NoteSummary = z.infer<typeof noteSummarySchema>;
+
+export const toNoteSummary = ({ id, title, version, createdAt, updatedAt }: Note): NoteSummary => ({
+  id,
+  title,
+  version,
+  createdAt,
+  updatedAt,
+});
+
+// One page is what one screen shows. It also bounds the largest list response.
+export const MAX_PAGE_SIZE = 20;
+
 export const listQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(MAX_PAGE_SIZE),
   cursor: z.string().min(1).max(512).optional(),
 });
 
-export const noteListSchema = z.object({
-  notes: z.array(noteSchema),
+// Strict, so a body or a page past the maximum fails the check instead of passing through.
+export const noteListSchema = z.strictObject({
+  notes: z.array(noteSummarySchema).max(MAX_PAGE_SIZE),
   // Opaque to the caller. null means there is nothing after this page.
   nextCursor: z.string().nullable(),
 });

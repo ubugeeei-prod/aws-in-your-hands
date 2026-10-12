@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { MAX_NOTES_PER_OWNER } from "@aih/example-05-dynamodb/src/contract.ts";
+import {
+  MAX_NOTES_PER_OWNER,
+  MAX_PAGE_SIZE,
+  noteListSchema,
+} from "@aih/example-05-dynamodb/src/contract.ts";
 
 import { composeObservedApp } from "../src/compose.ts";
 
@@ -25,5 +29,11 @@ describe("the composed app", () => {
     // 409, not 5xx: a full store must not page whoever is on call.
     expect(refused.status).toBe(409);
     expect(await refused.json()).toMatchObject({ error: { code: "quota_exceeded" } });
+
+    // Chapter 05's list contract holds here too: one page of summaries, no bodies.
+    const text = await (await app.request("/notes")).text();
+    expect(noteListSchema.parse(JSON.parse(text)).notes).toHaveLength(MAX_PAGE_SIZE);
+    expect(text).not.toContain('"body"');
+    expect((await app.request(`/notes?limit=${MAX_PAGE_SIZE + 1}`)).status).toBe(400);
   });
 });

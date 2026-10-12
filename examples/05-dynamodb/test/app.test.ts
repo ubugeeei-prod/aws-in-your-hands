@@ -2,7 +2,13 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
-import { errorSchema, MAX_NOTES_PER_OWNER, noteListSchema, noteSchema } from "../src/contract.ts";
+import {
+  errorSchema,
+  MAX_NOTES_PER_OWNER,
+  MAX_PAGE_SIZE,
+  noteListSchema,
+  noteSchema,
+} from "../src/contract.ts";
 import { InMemoryNoteRepository } from "../src/memory-repository.ts";
 import { createNoteService } from "../src/notes.ts";
 
@@ -137,9 +143,52 @@ describe("notes API with versions", () => {
     expect(titles).toEqual(["five", "four", "three", "two", "one"]);
   });
 
+  // #region list-bound
+  it("lists summaries only: no body, 20 a page, under 20 KiB at the worst", async () => {
+    const { app, json } = setup();
+    // The largest note the contract takes. A control character is six bytes of JSON.
+    const largest = { title: "\u0001".repeat(120), body: "\u0001".repeat(10_000) };
+    for (let count = 0; count <= MAX_PAGE_SIZE; count++) {
+      expect((await json("POST", "/notes", largest)).status).toBe(201);
+    }
+
+    for (const path of ["/notes", `/notes?limit=${MAX_PAGE_SIZE}`]) {
+      const text = await (await app.request(path)).text();
+      const list = noteListSchema.parse(JSON.parse(text));
+      expect(new TextEncoder().encode(text).byteLength).toBeLessThanOrEqual(20 * 1024);
+      expect(list.notes).toHaveLength(MAX_PAGE_SIZE);
+      expect(list.nextCursor).not.toBeNull();
+      expect(text).not.toContain('"body"');
+
+      // The whole note is one request away.
+      const first = await app.request(`/notes/${list.notes[0]?.id}`);
+      expect(noteSchema.parse(await first.json()).body).toHaveLength(10_000);
+    }
+  });
+
+  it("has a list contract that refuses a body and a page past the maximum", () => {
+    const summary = {
+      id: "a",
+      title: "t",
+      version: 1,
+      createdAt: "2026-10-11T00:00:00.000Z",
+      updatedAt: "2026-10-11T00:00:00.000Z",
+    };
+    const parses = (notes: unknown[]) =>
+      noteListSchema.safeParse({ notes, nextCursor: null }).success;
+    expect(parses([summary])).toBe(true);
+    expect(parses([{ ...summary, body: "" }])).toBe(false);
+    expect(parses(Array.from({ length: MAX_PAGE_SIZE + 1 }, () => summary))).toBe(false);
+  });
+  // #endregion list-bound
+
   it("rejects a forged cursor and an out-of-range limit with 400", async () => {
     const { app } = setup();
-    for (const path of ["/notes?cursor=..%2F..%2Fetc", "/notes?limit=0", "/notes?limit=1000"]) {
+    for (const path of [
+      "/notes?cursor=..%2F..%2Fetc",
+      "/notes?limit=0",
+      `/notes?limit=${MAX_PAGE_SIZE + 1}`,
+    ]) {
       const response = await app.request(path);
       expect(response.status, path).toBe(400);
       expect(errorSchema.parse(await response.json()).error.code).toBe("invalid_request");
@@ -199,6 +248,21 @@ describe("typed client and the lost response", () => {
     await expect(client.create({ title: "once", body: "" })).rejects.toThrow("fetch failed");
     await client.create({ title: "once", body: "" });
     expect((await client.list()).notes.map((note) => note.title)).toEqual(["once", "once"]);
+  });
+
+  it("rejects a list that carries bodies, instead of handing them on", async () => {
+    const note = {
+      id: "a",
+      title: "t",
+      body: "x".repeat(10_000),
+      version: 1,
+      createdAt: "2026-10-11T00:00:00.000Z",
+      updatedAt: "2026-10-11T00:00:00.000Z",
+    };
+    const oldServer: typeof fetch = async () => Response.json({ notes: [note], nextCursor: null });
+    await expect(createNotesClient("http://api.test", oldServer).list()).rejects.toMatchObject({
+      code: "unexpected_response",
+    });
   });
 
   it("surfaces errors other than conflicts as ApiError", async () => {

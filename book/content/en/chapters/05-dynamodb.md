@@ -1,6 +1,6 @@
 ---
 title: "05 KV Store: DynamoDB"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 05 KV Store: DynamoDB
@@ -11,7 +11,7 @@ The notes go into a DynamoDB table, so a read from any execution environment ret
 
 This chapter builds on [chapter 04](/en/chapters/04-http-api.md). The code is in `examples/05-dynamodb/`. It carries over the chapter 04 API and extends it, and it runs on its own.
 
-There's still no authentication. Anyone who knows the URL can read and write, and delete too (authentication is [chapter 06](/en/chapters/06-auth.md)). There is a lid on volume: at most 10 requests a second, and at most 100 notes. Please don't put in data you'd mind other people seeing, or deleting.
+There's still no authentication. Anyone who knows the URL can read and write, and delete too (authentication is [chapter 06](/en/chapters/06-auth.md)). There is a lid on volume: at most 10 requests a second, at most 100 notes, and at most 20 summaries in a page of the list. Please don't put in data you'd mind other people seeing, or deleting.
 
 If your data is something you want to query with SQL, you can skip this chapter and go on to [chapter 13](/en/chapters/13-sql.md). The section "When DynamoDB doesn't fit", later on, gives some guidance for deciding.
 

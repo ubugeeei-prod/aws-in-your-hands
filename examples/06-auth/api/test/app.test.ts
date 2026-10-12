@@ -5,7 +5,7 @@ import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
-import { errorSchema, MAX_NOTES_PER_OWNER } from "../src/contract.ts";
+import { errorSchema, MAX_NOTES_PER_OWNER, MAX_PAGE_SIZE } from "../src/contract.ts";
 import { createLocalAuthenticator, signLocalToken } from "../src/local-auth.ts";
 
 const secret = "test-secret-that-is-at-least-32-chars";
@@ -56,6 +56,20 @@ const rejection = async (promise: Promise<unknown>) => {
   return error;
 };
 
+type Client = Awaited<ReturnType<typeof setup>>["alice"];
+
+// A page holds at most MAX_PAGE_SIZE notes, so counting them all means following the cursor.
+const listAll = async (client: Client) => {
+  const notes = [];
+  let cursor: string | undefined;
+  do {
+    const page = await client.list(cursor === undefined ? {} : { cursor });
+    notes.push(...page.notes);
+    cursor = page.nextCursor ?? undefined;
+  } while (cursor !== undefined);
+  return notes;
+};
+
 describe("how many notes one user may hold", () => {
   const fill = async (client: Awaited<ReturnType<typeof setup>>["alice"]) => {
     const notes = [];
@@ -72,7 +86,7 @@ describe("how many notes one user may hold", () => {
       status: 409,
       code: "quota_exceeded",
     });
-    expect((await alice.list({ limit: 100 })).notes).toHaveLength(MAX_NOTES_PER_OWNER);
+    expect(await listAll(alice)).toHaveLength(MAX_NOTES_PER_OWNER);
   });
 
   it("counts each user separately: one full account does not close the others", async () => {
@@ -99,6 +113,33 @@ describe("how many notes one user may hold", () => {
     });
     await alice.remove(first.id);
     expect((await alice.create({ title: "room again", body: "" })).title).toBe("room again");
+  });
+});
+
+describe("how much one list response may carry", () => {
+  it("lists summaries only: no body, 20 a page, under 20 KiB at the worst", async () => {
+    const { app, alice, tokens } = await setup();
+    // The largest note the contract takes. A control character is six bytes of JSON.
+    const largest = { title: "\u0001".repeat(120), body: "\u0001".repeat(10_000) };
+    for (let count = 0; count <= MAX_PAGE_SIZE; count++) {
+      await alice.create(largest);
+    }
+
+    const response = await app.request("/notes", {
+      headers: { authorization: `Bearer ${tokens.alice}` },
+    });
+    const text = await response.text();
+    expect(new TextEncoder().encode(text).byteLength).toBeLessThanOrEqual(20 * 1024);
+    expect(text).not.toContain('"body"');
+
+    // The client checks the same thing: its schema refuses a body or a 21st note.
+    const page = await alice.list();
+    expect(page.notes).toHaveLength(MAX_PAGE_SIZE);
+    expect(page.nextCursor).not.toBeNull();
+    expect(await rejection(alice.list({ limit: MAX_PAGE_SIZE + 1 }))).toMatchObject({
+      status: 400,
+    });
+    expect((await alice.get(page.notes[0]?.id ?? "")).body).toHaveLength(10_000);
   });
 });
 

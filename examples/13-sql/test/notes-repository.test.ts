@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 
-import type { Note } from "../src/contract.ts";
+import { MAX_LISTED_NOTES, type Note } from "../src/contract.ts";
 import { type Db, sqlStateOf } from "../src/db.ts";
 import { SqlNoteRepository } from "../src/notes-repository.ts";
 import { RetriesExhaustedError } from "../src/transaction.ts";
@@ -57,6 +57,25 @@ describe("SqlNoteRepository on PostgreSQL", () => {
     await repository.create(freshOwner(), note({ title: "someone else's" }));
 
     expect((await repository.list(owner)).map((item) => item.title)).toEqual(["newer", "older"]);
+  });
+
+  it("lists the newest 20 without reading a body, however many the owner holds", async () => {
+    const repository = new SqlNoteRepository(runnerFor(db).transaction, 100);
+    const owner = freshOwner();
+    const second = (index: number) => `2026-10-11T00:00:${String(index).padStart(2, "0")}.000Z`;
+    for (let index = 0; index <= MAX_LISTED_NOTES; index++) {
+      await repository.create(
+        owner,
+        note({ title: `note ${index}`, body: "kept out of the list", createdAt: second(index) }),
+      );
+    }
+
+    const listed = await repository.list(owner);
+
+    expect(listed.map((item) => item.title)).toEqual(
+      Array.from({ length: MAX_LISTED_NOTES }, (_, index) => `note ${MAX_LISTED_NOTES - index}`),
+    );
+    expect(listed.every((item) => !("body" in item))).toBe(true);
   });
 
   it("moves the version by one on update and refuses a stale one", async () => {
@@ -138,7 +157,7 @@ describe("SqlNoteRepository when a commit loses", () => {
     expect(await repository.create(owner, only)).toBe("created");
 
     expect(losing.commitsAttempted()).toBe(2);
-    expect(await repository.list(owner)).toEqual([only]);
+    expect((await repository.list(owner)).map((item) => item.id)).toEqual([only.id]);
     expect(await counts(db, owner)).toEqual({ counted: 1, stored: 1 });
   });
 

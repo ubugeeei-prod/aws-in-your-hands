@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { errorSchema } from "@aih/example-04-http-api/src/contract.ts";
+import {
+  errorSchema,
+  MAX_LISTED_NOTES,
+  noteListSchema,
+} from "@aih/example-04-http-api/src/contract.ts";
 import type { LogEntry } from "@aih/example-04-http-api/src/log.ts";
 import { MAX_NOTES } from "@aih/example-04-http-api/src/notes.ts";
 
@@ -50,11 +54,12 @@ describe("what the container adds around the chapter 04 app", () => {
     const refused = await post();
     expect(refused.status).toBe(409);
     expect(errorSchema.parse(await refused.json()).error.code).toBe("quota_exceeded");
-    // Reading still works, and deleting one makes room for one.
-    const list = (await (await fetch(new Request("http://task/notes"))).json()) as {
-      notes: { id: string }[];
-    };
-    expect(list.notes).toHaveLength(MAX_NOTES);
+    // Reading still works: the list answers with the newest 20, as summaries.
+    const text = await (await fetch(new Request("http://task/notes"))).text();
+    const list = noteListSchema.parse(JSON.parse(text));
+    expect(list.notes).toHaveLength(MAX_LISTED_NOTES);
+    expect(text).not.toContain('"body"');
+    // And deleting one makes room for one.
     await fetch(new Request(`http://task/notes/${list.notes[0]?.id}`, { method: "DELETE" }));
     expect((await post()).status).toBe(201);
   });

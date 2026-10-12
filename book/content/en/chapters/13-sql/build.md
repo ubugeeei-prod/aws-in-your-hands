@@ -16,7 +16,7 @@ There are two tables.
 
 A note's ID is a random UUID made by the application. On D1 you might reach for an `INTEGER PRIMARY KEY` counter, but the DSQL documentation advises against monotonically increasing primary keys on tables with many writes: every new row would land in the same place.
 
-`note_count` in `owners` becomes the star later. For now, it is the column that counts toward "an owner may hold at most 100 notes". Thanks to that cap, a list always fits in one page. As in chapter 04, there is no pagination.
+`note_count` in `owners` becomes the star later. For now, it is the column that counts toward "an owner may hold at most 100 notes". As in chapter 04, a list returns summaries of the newest 20 notes and nothing else. There is no pagination.
 
 Here is the index.
 
@@ -73,6 +73,12 @@ A database row is a value from outside the type system, just like an HTTP reques
 <<< @/examples/13-sql/src/notes-repository.ts{row}
 
 The row schema doubles as the conversion from snake_case columns to the API's `Note`. Both node-postgres and PGlite return `timestamptz` as a `Date`, which becomes an ISO 8601 string.
+
+A list is read in a different shape.
+
+<<< @/examples/13-sql/src/notes-repository.ts{list}
+
+There is no `body` column in the `SELECT`. SQL lets you choose the columns you get back, so a list takes the ID, the title, `version`, and the two timestamps. The value passed to `LIMIT` is 20. An owner can hold 100 notes, but a list returns the newest 20 at most, so that a single response stays under 20 KiB, as in chapter 04. `GET /notes/:id` returns the body, reading that one row.
 
 Here is the update.
 

@@ -16,7 +16,7 @@ title: "05 KV Store: Deploy"
 
 <<< @/examples/05-dynamodb/infra/lib/notes-stack.ts{limits}
 
-The API Gateway in front has the same throttling as chapter 04: 10 requests a second. The table's numbers sit just above the most this API can use in a single call. A list reads at most 1 MB at once, which is 128 units, and writing the largest note (a 10,000-character body) is about 31 units. Whether a smaller cap would keep a large note from ever getting through hasn't been checked, so the cap stays above it.
+The API Gateway in front has the same throttling as chapter 04: 10 requests a second. The table's numbers sit above the most this API can use in a single call. A list reads at most 20 notes at once. If every one of them is the largest note (a 10,000-character body), that is about 610 KB, or 77 units, and writing one such note is about 31 units. Whether a smaller cap would keep a large note from ever getting through hasn't been checked, so the cap stays above it.
 
 `removalPolicy` is `DESTROY`. Delete the stack and the table goes with it, along with every note in it. That's because this is for practice. A test goes out of its way to check this setting, since it's the first place to change once you start storing data that has to be protected.
 

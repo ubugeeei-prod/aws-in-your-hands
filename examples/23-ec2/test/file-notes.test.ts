@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "@aih/example-04-http-api/src/app.ts";
-import { noteListSchema, type Note } from "@aih/example-04-http-api/src/contract.ts";
+import {
+  MAX_LISTED_NOTES,
+  noteListSchema,
+  type Note,
+} from "@aih/example-04-http-api/src/contract.ts";
 import { createNoteService } from "@aih/example-04-http-api/src/notes.ts";
 
 import { type FileOps, FileNoteRepository } from "../src/file-notes.ts";
@@ -159,6 +163,17 @@ describe("the chapter 04 API on top of the file", () => {
     noteListSchema
       .parse(await (await app.request("/notes")).json())
       .notes.map((item) => item.title);
+
+  it("lists what chapter 04 lists: the newest 20, without their bodies", async () => {
+    const app = await api(disk());
+    for (let count = 0; count <= MAX_LISTED_NOTES; count++) {
+      await create(app, `note ${count}`);
+    }
+    const text = await (await app.request("/notes")).text();
+    // Strict: a body or a 21st note would fail the parse.
+    expect(noteListSchema.parse(JSON.parse(text)).notes).toHaveLength(MAX_LISTED_NOTES);
+    expect(text).not.toContain('"body"');
+  });
 
   it("answers 201 only for notes that survive a restart", async () => {
     const d = disk();

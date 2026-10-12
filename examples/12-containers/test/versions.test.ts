@@ -60,9 +60,8 @@ describe("two versions on the same records, as during a rolling update", () => {
         .notes.map((note) => note.title)
         .toSorted(),
     ).toEqual(titles.toSorted());
-    expect(await seenByV2.json()).toMatchObject({
-      notes: expect.arrayContaining([{ ...old, pinned: false }]),
-    });
+    // A list carries summaries, so the new field shows where v2 returns the whole note.
+    expect(await (await v2.get(`/notes/${old.id}`)).json()).toEqual({ ...old, pinned: false });
 
     // What v2 stored has the new field; what v1 stored does not, and v2 filled it in on read.
     expect(records.raw(fresh.id)).toMatchObject({ pinned: false });

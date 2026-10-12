@@ -1,6 +1,6 @@
 ---
 title: "06 Auth: Cognito と認可"
-revision: 3
+revision: 4
 ---
 
 # 06 Auth: Cognito と認可
@@ -84,7 +84,7 @@ access token と ID token は、どちらも JWT という形式で、同じ use
 
 <!-- section: 06.contract -->
 
-ノートの形は 05章のままです。足すのは 2 つ。
+ノートの形は 05章のままです。一覧が 1 ページ 20 件までの要約を返し、本文は `GET /notes/:id` で取るところも変わりません。SPA の一覧の画面は題名と更新時刻だけを出し、ノートを開いたときに本文を取りに行きます。足すのは 2 つ。
 
 <<< @/examples/06-auth/api/src/contract.ts{me}
 

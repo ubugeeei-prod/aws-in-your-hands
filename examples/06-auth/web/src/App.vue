@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 
 import { ApiError, createNotesClient, type NotesClient } from "../../api/src/client.ts";
-import type { Note } from "../../api/src/contract.ts";
+import type { Note, NoteSummary } from "../../api/src/contract.ts";
 import { createCognitoProvider } from "./auth/cognito.ts";
 import { createLocalProvider } from "./auth/local.ts";
 import type { AuthProvider, Session } from "./auth/provider.ts";
@@ -12,7 +12,8 @@ import { parseRoute, pathFor, type Route } from "./router/route.ts";
 const status = ref<"starting" | "signed-out" | "signed-in" | "failed">("starting");
 const problem = ref("");
 const route = ref<Route>(parseRoute(window.location.pathname));
-const notes = ref<Note[]>([]);
+// The list holds summaries. Opening a note fetches the whole of it.
+const notes = ref<NoteSummary[]>([]);
 const nextCursor = ref<string | null>(null);
 const editing = ref<Note>();
 const title = ref("");

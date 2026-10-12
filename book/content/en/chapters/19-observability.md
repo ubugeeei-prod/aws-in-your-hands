@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics

@@ -1,6 +1,6 @@
 ---
 title: "06 Auth: Cognito and Authorization"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 06 Auth: Cognito and Authorization
@@ -84,7 +84,7 @@ An access token and an ID token are both in a format called JWT, and both are si
 
 <!-- section: 06.contract -->
 
-The shape of a note is the same as in chapter 05. Two things are new.
+The shape of a note is the same as in chapter 05. So is the list: a page of at most 20 summaries, with the body fetched through `GET /notes/:id`. The SPA's list screen shows the title and the update time, and fetches the body when you open a note. Two things are new.
 
 <<< @/examples/06-auth/api/src/contract.ts{me}
 

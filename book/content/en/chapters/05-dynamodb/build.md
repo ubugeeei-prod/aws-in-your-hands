@@ -136,6 +136,10 @@ When there may be more, DynamoDB adds `LastEvaluatedKey` to the response. Pass i
 
 <<< @/examples/05-dynamodb/src/app.ts{list}
 
+A page holds at most 20 notes, and a larger `limit` is refused with a 400. A list carries the five fields of `noteSummarySchema` and leaves the body out. The reason is the one from chapter 04: no single response should go past 20 KiB. When you need the body, you fetch it with `GET /notes/:id`. `version` is in the summary so that a client can tell whether a note has changed since it fetched the list.
+
+The body is dropped in `app.ts`, where the response is put together. The repository still reads each item with its body, so the list reads as much from DynamoDB as it did when it returned bodies.
+
 The cursor goes out to the caller and comes back. By the time it comes back, it's an untrusted value like any other input. It isn't passed to DynamoDB as it is; it's decoded and its shape is checked.
 
 <<< @/examples/05-dynamodb/src/repository.ts{cursor}

@@ -71,7 +71,7 @@ vp run test:local:dynamodb
 | contract（メモリ） | `test/repository-contract.ts`、`test/memory-repository.test.ts` | repository の規則。上書きの禁止、version、ページ送り、持ち主の分離、件数の上限 | DynamoDB の挙動 |
 | リクエストの検査 | `test/dynamodb-repository.test.ts` | DynamoDB に送る条件式、key の形、整合性の指定。失敗した条件の扱い | DynamoDB がその依頼どおりに動くこと |
 | contract（DynamoDB Local） | `test/dynamodb-local.test.ts` | 同じ規則が、模擬実装の上で成り立つこと | IAM、流量の制限、実サービスの分散した挙動 |
-| アプリと client | `test/app.test.ts` | 409、ページ送り、偽の cursor の拒否、応答を失った後の再試行、101 件目の拒否 | Lambda と API Gateway を通ったときの挙動 |
+| アプリと client | `test/app.test.ts` | 409、ページ送り、偽の cursor の拒否、一覧の大きさの上限、応答を失った後の再試行、101 件目の拒否 | Lambda と API Gateway を通ったときの挙動 |
 | インフラ | `infra/test/notes-stack.test.ts` | 権限が 5 つの操作と 1 つの table に限られること、table の削除方針、table と stage の流量の上限 | AWS がその template どおりに動くこと |
 
 contract test は、規則を 1 回だけ書いて、実装ごとに実行します。

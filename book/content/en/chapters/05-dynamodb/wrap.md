@@ -51,7 +51,7 @@ Let's work it out for 1 million requests per month. The breakdown is 70% lists, 
 | DynamoDB storage | 1 GB | 0.00 | 0.00 |
 | Subtotal | | **2.41** | **1.64** |
 
-The part of this calculation that is easiest to move is the list reads. Out of the 1 million requests overall, lists use 90% of the DynamoDB read request units. Reducing the number of notes per page, or leaving the body out of the list, brings it down. Going the other way, making the list strongly consistent doubles this row.
+The part of this calculation that is easiest to move is the list reads. Out of the 1 million requests overall, lists use 90% of the DynamoDB read request units. Reducing the number of notes per page brings it down. Leaving the body out of the response does not, because the repository reads each item with its body. Going the other way, making the list strongly consistent doubles this row.
 
 An update that is rejected because of a conflict also consumes write request units. This calculation assumes no conflicts.
 
@@ -61,7 +61,7 @@ Two things are left out of this table: the data transfer charge for responses, a
 
 ### If it gets hammered
 
-Anyone who knows the URL can call it, as often as they like. Three things stand in the way: the stage's throttling (10 requests a second for the whole API), the table's caps (150 read units and 40 write units a second), and the number of notes (100).
+Anyone who knows the URL can call it, as often as they like. Four things stand in the way: the stage's throttling (10 requests a second for the whole API), the table's caps (150 read units and 40 write units a second), the number of notes (100), and the size of a response (20 KiB for a list, 64 KiB for one note).
 
 10 a second for 30 days is 25.92 million requests. With the same assumptions as the table above, the list price comes to this. The two DynamoDB request rows assume the table sits at its cap for the whole 30 days: the ceiling you'd reach if every read and write were of large notes.
 
@@ -77,7 +77,7 @@ Anyone who knows the URL can call it, as often as they like. Three things stand 
 
 About USD 183 a month. Even if the throttling turned out not to be in effect, the DynamoDB part stops at the bottom three rows, USD 129.53. The API Gateway and Lambda parts would not stop.
 
-What's left out is the same as in chapter 04. The big one is data transfer for the responses, and the ceiling the configuration allows is the same calculation as there (a response of 100 notes of 64 KiB, 10 times a second). In this chapter the table's read cap should bite first, since a 1 MB page can be read only about once a second, but what that comes to hasn't been measured. The 60-millisecond duration is an assumption as well. When the table's cap is hit, the SDK retries, and the duration grows by that much.
+What's left out is the same as in chapter 04. Data transfer for the responses is the same calculation as there: a list is at most 20 KiB, which is about USD 56 over 30 days, and if all 25.92 million responses were one 64 KiB note it would be about USD 180. A list of the largest notes reads about 77 units at once, so the table's read cap should bite first and let only about two of them through a second, but that hasn't been checked. The 60-millisecond duration is an assumption as well. When the table's cap is hit, the SDK retries, and the duration grows by that much.
 
 The limit on notes comes with two caveats. Right now everyone is the same owner (`anonymous`), so 100 means "100 for the whole API". If somebody fills it, nobody else can create a note. And anyone can delete. The volume is bounded, but whose note is whose still isn't told apart. That's chapter 06's job.
 
@@ -96,6 +96,7 @@ Delete the stack and the table is deleted with it. Nothing remains.
 | Every update is a 409 | Is the `expectedVersion` you send the `version` of the note you received most recently? Use the value from the response to the last update, not from the creation response |
 | A note you created doesn't appear in the list right afterwards | This can happen with eventually consistent reads, as "Choose the read consistency" explains |
 | The list ends partway through | Are you reading until `nextCursor` is `null`? |
+| `GET /notes?limit=100` answers 400, or the notes in a list have no `body` | A page holds at most 20 notes, and a list carries no bodies. Fetch the rest with `nextCursor`, and a body with `GET /notes/:id` |
 | The logs show errors that indicate throttling | This stack caps the table (150 read units and 40 write units a second). Reading and writing large notes in a row will hit it. Separately, a new on-demand table has an initial limit on the traffic it can accept |
 | A 429 like `{"message":"Too Many Requests"}` comes back | That's the stage's throttling. The whole API went past 10 requests a second. It happens on somebody else's traffic too, not only yours |
 | `POST /notes` answers 409 with `quota_exceeded` | There are 100 notes. Delete one and there's room. If deleting doesn't help, the `noteCount` in the item that holds the count (`sk` is `QUOTA`) has ended up higher than the real number |
@@ -105,7 +106,7 @@ Delete the stack and the table is deleted with it. Nothing remains.
 - **Add authentication and separation between owners.** Right now everyone reads and writes the same notes, and anyone can delete them (chapter 06)
 - **Protect the table.** Set `removalPolicy` to `RETAIN`, and enable deletion protection and point-in-time recovery. The procedure for restoring data deleted by accident is practiced in [chapter 22](/en/chapters/22-recovery.md)
 - **Fit the rate limits to your API.** The stage's 10 a second and the table's 150 and 40 are values for practice. When you raise them, redo the arithmetic in "If it gets hammered"
-- **Make the list smaller.** Fewer notes per page, or no bodies in the list. It helps the read charges and the response transfer alike
+- **Move the body into its own item.** The list response leaves the body out, but the list still reads it from DynamoDB. To bring the list's read charges down, store the body in a separate item
 - **Make creation idempotent.** This fixes the duplicates caused by retries. The caller sends a value such as an `Idempotency-Key`, and the server writes conditionally with that as the key. This book doesn't implement it. [Chapter 08](/en/chapters/08-async.md) uses the same idea in the worker that processes S3 events
 - **Watch throttling and failures.** Look at DynamoDB errors and the proportion of 409s ([chapter 19](/en/chapters/19-observability.md)). A high proportion of 409s is a signal to reconsider how the screen is built or how notes are divided up
 - **Deploy through the AWS CDK CLI and CloudFormation.** As discussed in chapter 02
@@ -127,7 +128,7 @@ All that remains is the storage locations created by the cdkd bootstrap (chapter
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The contract tests (in memory), the inspection of the requests sent to DynamoDB, the app and client tests, and the infrastructure assertions. Type checking. Synth (a bundle that includes the AWS SDK). Starting `dev:notes` in memory and running the `curl` commands from the text. After the limit on notes went in, the 15 tests in `test/dynamodb-local.test.ts` (10 for the repository's rules, 5 for the limit) were run against DynamoDB Local 3.3.1. Not in Docker: the jar AWS distributes was started directly with Java, and the table was created with `scripts/local-db.ts migrate`.
+**Checked locally.** The contract tests (in memory), the inspection of the requests sent to DynamoDB, the app and client tests, and the infrastructure assertions. Type checking. Synth (a bundle that includes the AWS SDK). Starting `dev:notes` in memory and running the `curl` commands from the text. Tests pin the list: it returns no body, a page stops at 20 notes, and it stays under 20 KiB with the largest titles. After the limit on notes went in, the 15 tests in `test/dynamodb-local.test.ts` (10 for the repository's rules, 5 for the limit) were run against DynamoDB Local 3.3.1. Not in Docker: the jar AWS distributes was started directly with Java, and the table was created with `scripts/local-db.ts migrate`.
 
 **Not checked yet.** The tasks that run DynamoDB Local in Docker (`db:local:start`, `db:local:stop`) were not run, because a Docker daemon was not available. `db:migrate:local`, `db:seed:local`, `db:reset:local`, and `test:local:dynamodb` were not run as tasks either. `notes:infra:diff`, `notes:infra:deploy`, `notes:smoke`, `notes:infra:drift`, and `notes:infra:destroy` have not been run against real AWS either.
 

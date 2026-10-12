@@ -724,3 +724,9 @@ To resume: Run `vp run stream:stop` while live and watch `vp run stream:status` 
 Chapter 19's alarm topic now requires TLS (`enforceSSL`) and carries an explicit statement that lets CloudWatch publish. That a CloudWatch alarm can publish under this policy is unchecked.
 
 To resume: After deploying, force the alarm with `aws cloudwatch set-alarm-state` and confirm the subscriber is notified.
+
+### list-response-size
+
+A list of notes returns at most 20 summaries and never a body. Tests confirm that it stays at or under 20 KiB with the largest notes the contract accepts; a deployed API's response has not been checked. The SPAs of chapters 06 and 07 were type-checked and passed their existing tests, but have not been driven in a browser since this change.
+
+To resume: Create 20 largest notes on a deployed API and confirm `curl -s <url>/notes | wc -c` is at most 20,480. Open the SPA with `vp run dev:app` and confirm a note opens from the list.

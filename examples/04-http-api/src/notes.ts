@@ -1,4 +1,4 @@
-import type { CreateNote, Note } from "./contract.ts";
+import { type CreateNote, MAX_LISTED_NOTES, type Note, type NoteSummary } from "./contract.ts";
 
 // #region repository
 export type NoteRepository = {
@@ -57,7 +57,11 @@ export type NoteServiceDeps = {
 
 export function createNoteService(deps: NoteServiceDeps) {
   return {
-    list: () => deps.repository.list(),
+    // Newest first, cut at the contract's maximum, and without the bodies.
+    async list(): Promise<NoteSummary[]> {
+      const newest = (await deps.repository.list()).slice(0, MAX_LISTED_NOTES);
+      return newest.map(({ id, title, createdAt }) => ({ id, title, createdAt }));
+    },
     get: (id: string) => deps.repository.get(id),
     async create(input: CreateNote): Promise<Note> {
       const note: Note = { id: deps.newId(), ...input, createdAt: deps.now().toISOString() };

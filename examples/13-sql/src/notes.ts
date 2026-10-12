@@ -1,4 +1,4 @@
-import type { CreateNote, Note, UpdateNote } from "./contract.ts";
+import type { CreateNote, Note, NoteSummary, UpdateNote } from "./contract.ts";
 import type { NoteRepository, UpdateResult } from "./notes-repository.ts";
 
 export type NoteServiceDeps = {
@@ -13,7 +13,7 @@ export const SHARED_OWNER = "anonymous";
 // #region service
 export function createNoteService(deps: NoteServiceDeps) {
   return {
-    list: (owner: string): Promise<Note[]> => deps.repository.list(owner),
+    list: (owner: string): Promise<NoteSummary[]> => deps.repository.list(owner),
 
     get: (owner: string, id: string): Promise<Note | undefined> => deps.repository.get(owner, id),
 

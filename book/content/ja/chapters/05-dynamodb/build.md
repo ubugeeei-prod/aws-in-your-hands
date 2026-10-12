@@ -136,6 +136,10 @@ DynamoDB は、続きがあるかもしれないとき、応答に `LastEvaluate
 
 <<< @/examples/05-dynamodb/src/app.ts{list}
 
+1 ページは 20 件までで、それより大きい `limit` は 400 で断ります。一覧に載せるのは `noteSummarySchema` の 5 項目だけで、本文は載せません。04章と同じ理由で、1 回のレスポンスが 20 KiB を超えないようにするためです。本文が要るときは `GET /notes/:id` で取ります。`version` を載せてあるのは、一覧を取ったあとでノートが変わったかどうかを、クライアントが見分けられるようにするためです。
+
+本文を外しているのは、レスポンスを組み立てる `app.ts` です。repository は item を本文ごと読むので、DynamoDB の読み取りの量は、本文を返していたときと変わりません。
+
 cursor は呼び出し側に渡って、また戻ってきます。戻ってきた時点では、ほかの入力と同じく信用できない値です。そのまま DynamoDB に渡さず、復号して形を確かめます。
 
 <<< @/examples/05-dynamodb/src/repository.ts{cursor}

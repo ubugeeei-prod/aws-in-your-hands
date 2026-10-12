@@ -79,6 +79,18 @@ describe("upload permit", () => {
     }
   });
 
+  it("lists notes as summaries, as chapter 06 does", async () => {
+    const { app, alice } = await setup();
+    const note = await alice.notes.create({ title: "trip", body: "x".repeat(10_000) });
+    const response = await app.request("/notes", {
+      headers: { authorization: `Bearer ${alice.token}` },
+    });
+    expect(await response.text()).not.toContain('"body"');
+    // The client's schema refuses a body or a page past the maximum.
+    expect((await alice.notes.list()).notes.map((item) => item.id)).toEqual([note.id]);
+    expect((await alice.notes.get(note.id)).body).toHaveLength(10_000);
+  });
+
   it("leaves no trace when it is never used", async () => {
     const { alice, objects, sweep } = await setup();
     const note = await alice.notes.create({ title: "trip", body: "" });

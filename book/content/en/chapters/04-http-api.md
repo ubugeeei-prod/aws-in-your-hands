@@ -1,6 +1,6 @@
 ---
 title: "04 HTTP API: Lambda and API Gateway HTTP API"
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 # 04 HTTP API: Lambda and API Gateway HTTP API
@@ -9,7 +9,7 @@ The SPA is live. Next up: an API.
 
 In this chapter you'll write a small HTTP API that creates, reads, and deletes notes. You'll run it on your machine first, then put the same code on Lambda. No Docker needed. And as long as you're only trying it locally, no AWS account either.
 
-Two things before we start. This chapter's API keeps notes in memory and doesn't save them (saving is [chapter 05](/en/chapters/05-dynamodb.md)). There's no authentication either, so anyone who knows the URL can call it (authentication is [chapter 06](/en/chapters/06-auth.md)). To make up for that, it accepts at most 10 requests a second and holds at most 100 notes. Please don't put in anything you'd mind losing, or anything you'd mind other people seeing.
+Two things before we start. This chapter's API keeps notes in memory and doesn't save them (saving is [chapter 05](/en/chapters/05-dynamodb.md)). There's no authentication either, so anyone who knows the URL can call it (authentication is [chapter 06](/en/chapters/06-auth.md)). To make up for that, it accepts at most 10 requests a second, holds at most 100 notes, and lists at most the newest 20 of them as summaries. Please don't put in anything you'd mind losing, or anything you'd mind other people seeing.
 
 The only prerequisite is [chapter 02](/en/chapters/02-toolchain.md). The code is in `examples/04-http-api/`.
 
@@ -86,6 +86,14 @@ Before writing any code, let's turn the shapes of the API's input and output int
 <<< @/examples/04-http-api/src/contract.ts{note}
 
 Both the server and the client use this definition. The server validates incoming requests with it, and the client validates the responses it gets back with it. The TypeScript types come from here too, through `z.infer`. Since there's only one definition, "I fixed the server and forgot the client" can't happen.
+
+The shape of a list is decided separately from the note.
+
+<<< @/examples/04-http-api/src/contract.ts{list}
+
+A list carries the ID, the title, and the creation time, and leaves the body out. When you need the body, you fetch one note with `GET /notes/:id`. The list also stops at the newest 20 notes. A body can hold 10,000 characters, so returning every note with its body would make a single response several MB. With summaries only, and 20 at most, the response stays under 20 KiB whatever the titles contain. `list` in `createNoteService` does the cutting, and because the schema is strict, a response that lets a body through fails the client's check.
+
+Notes older than the newest 20 no longer appear in the list, but you can still read or delete one if you know its ID. Chapter 05 adds a way to fetch the rest of a list.
 
 Let's settle the shape of errors as well.
 

@@ -36,7 +36,7 @@ What a preview stack costs depends on what is in it, as the section above said.
 
 A word on being hammered, too. This chapter's API, in dev, prod, and every preview, has no authentication and can be called by anyone. What holds it back is the stage throttle: 10 requests a second (burst 20) per stack, and a 429 beyond that. Pinned there for 30 days is at most 25.92 million requests, which by chapter 04's arithmetic is **52.43 a month per stack** (API Gateway 33.44, Lambda 9.50, logs 9.49). With dev, prod, and three open previews, that's five times over, about 262. One more reason to delete stacks you aren't using.
 
-Notes live in chapter 04's in-memory repository, so they stop at 100 per execution environment. The hole where response size inflates the bill is the one described under "If it gets hammered" in chapter 04, unchanged. What to add before real users arrive is the same too: authentication (chapter 06), and AWS WAF with CloudFront in front (chapter 21; the web ACL is 8.00 a month).
+Notes live in chapter 04's in-memory repository, so they stop at 100 per execution environment. Response size is chapter 04's too: a list is 20 summaries and at most 20 KiB, and one note is at most 64 KiB. How far data transfer can go is the calculation under "If it gets hammered" in chapter 04, unchanged (up to about USD 180 a month). What to add before real users arrive is the same too: authentication (chapter 06), and AWS WAF with CloudFront in front (chapter 21; the web ACL is 8.00 a month).
 
 ## Where you get stuck
 

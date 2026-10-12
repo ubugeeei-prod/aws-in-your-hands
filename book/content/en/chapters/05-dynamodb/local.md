@@ -71,7 +71,7 @@ The tests come in five layers. Each one looks at something different.
 | Contract (in memory) | `test/repository-contract.ts`, `test/memory-repository.test.ts` | The rules of the repository: no overwrites, the version, paging, separation between owners, the limit on the count | DynamoDB's behavior |
 | Request inspection | `test/dynamodb-repository.test.ts` | The condition expressions, key shapes, and consistency settings sent to DynamoDB. Handling of a failed condition | That DynamoDB behaves as those requests ask |
 | Contract (DynamoDB Local) | `test/dynamodb-local.test.ts` | That the same rules hold on the simulation | IAM, throttling, the distributed behavior of the real service |
-| App and client | `test/app.test.ts` | 409, paging, rejection of a forged cursor, a retry after a lost response, refusal of note 101 | Behavior when the request goes through Lambda and API Gateway |
+| App and client | `test/app.test.ts` | 409, paging, rejection of a forged cursor, the cap on the size of a list, a retry after a lost response, refusal of note 101 | Behavior when the request goes through Lambda and API Gateway |
 | Infrastructure | `infra/test/notes-stack.test.ts` | That the permissions are limited to five operations and one table, the table's removal policy, and the rate caps on the table and the stage | That AWS behaves as the template says |
 
 The contract tests state the rules once and run them for each implementation.

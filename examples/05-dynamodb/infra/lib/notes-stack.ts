@@ -15,7 +15,7 @@ import type { Construct } from "constructs";
 export const THROTTLE = { rate: 10, burst: 20 } as const;
 
 // Request units per second the table accepts. Past them DynamoDB throttles.
-// Just above the largest single request: a 1 MB list page (128 read), a full-size note (31 write).
+// Above the largest single request: a list page of 20 full-size notes (77 read), one such note (31 write).
 export const TABLE_LIMIT = { read: 150, write: 40 } as const;
 // #endregion limits
 

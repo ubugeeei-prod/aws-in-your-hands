@@ -10,6 +10,8 @@ import {
   type ErrorBody,
   listQuerySchema,
   type Note,
+  type NoteList,
+  toNoteSummary,
   updateNoteSchema,
 } from "./contract.ts";
 import type { Env } from "./env.ts";
@@ -120,7 +122,15 @@ export function createApp(deps: AppDeps) {
                 400,
               );
         }),
-        async (c) => c.json(await deps.notes.list(SHARED_OWNER, c.req.valid("query"))),
+        async (c) => {
+          const page = await deps.notes.list(SHARED_OWNER, c.req.valid("query"));
+          // The repository reads whole notes. The response leaves the bodies out.
+          const list: NoteList = {
+            notes: page.notes.map(toNoteSummary),
+            nextCursor: page.nextCursor,
+          };
+          return c.json(list);
+        },
       )
       // #endregion list
       .post(

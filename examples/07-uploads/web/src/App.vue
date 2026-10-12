@@ -6,7 +6,7 @@ import {
   createNotesClient,
   type NotesClient,
 } from "@aih/example-06-auth/api/src/client.ts";
-import type { Note } from "@aih/example-06-auth/api/src/contract.ts";
+import type { Note, NoteSummary } from "@aih/example-06-auth/api/src/contract.ts";
 import { createCognitoProvider } from "@aih/example-06-auth/web/src/auth/cognito.ts";
 import { createLocalProvider } from "@aih/example-06-auth/web/src/auth/local.ts";
 import type { AuthProvider, Session } from "@aih/example-06-auth/web/src/auth/provider.ts";
@@ -21,7 +21,7 @@ import NoteAttachments from "./NoteAttachments.vue";
 const status = ref<"starting" | "signed-out" | "signed-in" | "failed">("starting");
 const problem = ref("");
 const route = ref<Route>(parseRoute(window.location.pathname));
-const notes = ref<Note[]>([]);
+const notes = ref<NoteSummary[]>([]);
 const nextCursor = ref<string | null>(null);
 const editing = ref<Note>();
 const title = ref("");

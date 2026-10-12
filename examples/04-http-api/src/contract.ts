@@ -16,7 +16,23 @@ export const createNoteSchema = z.object({
 export type CreateNote = z.infer<typeof createNoteSchema>;
 // #endregion note
 
-export const noteListSchema = z.object({ notes: z.array(noteSchema) });
+// #region list
+// What a list view shows. The body comes from GET /notes/:id.
+export const noteSummarySchema = z.strictObject({
+  id: z.string().min(1),
+  title: z.string().min(1).max(120),
+  createdAt: z.iso.datetime(),
+});
+export type NoteSummary = z.infer<typeof noteSummarySchema>;
+
+// A list answers with the newest notes, up to this many. It bounds the response, not the store.
+export const MAX_LISTED_NOTES = 20;
+
+// Strict, so a body or a 21st note fails the check instead of passing through.
+export const noteListSchema = z.strictObject({
+  notes: z.array(noteSummarySchema).max(MAX_LISTED_NOTES),
+});
+// #endregion list
 
 export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string() });
 

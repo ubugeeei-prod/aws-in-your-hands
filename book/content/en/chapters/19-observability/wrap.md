@@ -59,7 +59,7 @@ The observing part, logs and traces together, is 37.77. Traces grow less than yo
 
 Whether API Gateway charges for requests it turns away with a 429 isn't something I've checked here. If it does, the first row of that table, and only that row, doesn't stop at 25.92 million.
 
-One more thing the table leaves out: data transfer for the responses. Here the table's read ceiling helps. At 150 units a second, eventually consistent reads return about 1.2 MB a second. That's just under 3,000 GB in 30 days, and at the unit price for transfer out to the internet (0.114 per GB) about 340. Whether that price applies as is to API Gateway responses hasn't been checked.
+One more thing the table leaves out: data transfer for the responses. Chapter 05's contract sets the response size: a list is one page of 20 summaries and at most 20 KiB, and one note is at most 64 KiB. At 10 requests a second for 30 days, if every response is a list, that's about 494 GB, and at the unit price for transfer out to the internet (0.114 per GB) about 56. If every response were one 64 KiB note, it would still stop at about 1,582 GB, or about 180. Whether that price applies as is to API Gateway responses hasn't been checked.
 
 So how does a flood look in what this chapter built?
 

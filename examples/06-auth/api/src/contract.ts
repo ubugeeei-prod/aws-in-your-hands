@@ -4,8 +4,11 @@ import {
   createNoteSchema,
   listQuerySchema,
   MAX_NOTES_PER_OWNER,
+  MAX_PAGE_SIZE,
   noteListSchema,
   noteSchema,
+  noteSummarySchema,
+  toNoteSummary,
   updateNoteSchema,
 } from "@aih/example-05-dynamodb/src/contract.ts";
 
@@ -14,14 +17,18 @@ export {
   createNoteSchema,
   listQuerySchema,
   MAX_NOTES_PER_OWNER,
+  MAX_PAGE_SIZE,
   noteListSchema,
   noteSchema,
+  noteSummarySchema,
+  toNoteSummary,
   updateNoteSchema,
 };
 export type {
   CreateNote,
   Note,
   NoteList,
+  NoteSummary,
   UpdateNote,
 } from "@aih/example-05-dynamodb/src/contract.ts";
 

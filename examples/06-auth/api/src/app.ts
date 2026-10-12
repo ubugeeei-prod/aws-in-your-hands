@@ -16,6 +16,8 @@ import {
   listQuerySchema,
   MAX_NOTES_PER_OWNER,
   type Note,
+  type NoteList,
+  toNoteSummary,
   updateNoteSchema,
 } from "./contract.ts";
 import type { Authenticate, Identity } from "./identity.ts";
@@ -152,7 +154,15 @@ export function createApp(deps: AppDeps) {
                 400,
               );
         }),
-        async (c) => c.json(await deps.notes.list(c.get("identity").sub, c.req.valid("query"))),
+        async (c) => {
+          const page = await deps.notes.list(c.get("identity").sub, c.req.valid("query"));
+          // As in chapter 05: summaries, no bodies.
+          const list: NoteList = {
+            notes: page.notes.map(toNoteSummary),
+            nextCursor: page.nextCursor,
+          };
+          return c.json(list);
+        },
       )
       .post(
         "/notes",

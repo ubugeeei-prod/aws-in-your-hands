@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
+import { MAX_LISTED_NOTES } from "../src/contract.ts";
 import { createNoteService, InMemoryNoteRepository } from "../src/notes.ts";
 
 // The client talks to the real application through its fetch handler. No
@@ -28,7 +29,9 @@ describe("typed client against the application", () => {
     const client = setup();
     const created = await client.create({ title: "typed", body: "end to end" });
     expect(await client.get(created.id)).toEqual(created);
-    expect(await client.list()).toEqual([created]);
+    // The list carries what a list view shows. The body came from `get`.
+    const { body: _body, ...summary } = created;
+    expect(await client.list()).toEqual([summary]);
     await client.remove(created.id);
     expect(await client.list()).toEqual([]);
   });
@@ -54,6 +57,17 @@ describe("typed client against a server that breaks the contract", () => {
   it("rejects a 200 whose body is not a note, instead of returning it as one", async () => {
     const client = createNotesClient("http://api.test", respond(200, JSON.stringify({ id: 42 })));
     await expect(client.get("x")).rejects.toMatchObject({ code: "unexpected_response" });
+  });
+
+  it("rejects a list that carries bodies, or more notes than a list may hold", async () => {
+    const summary = { id: "a", title: "t", createdAt: "2026-10-11T00:00:00.000Z" };
+    for (const notes of [
+      [{ ...summary, body: "x".repeat(10_000) }],
+      Array.from({ length: MAX_LISTED_NOTES + 1 }, () => summary),
+    ]) {
+      const client = createNotesClient("http://api.test", respond(200, JSON.stringify({ notes })));
+      await expect(client.list()).rejects.toMatchObject({ code: "unexpected_response" });
+    }
   });
 
   it("rejects an HTML error page from something in front of the API", async () => {

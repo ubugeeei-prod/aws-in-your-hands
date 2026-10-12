@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { Note } from "./contract.ts";
+import { MAX_LISTED_NOTES, type Note, type NoteSummary } from "./contract.ts";
 import { type Queryable, rows } from "./db.ts";
 import type { TransactionRunner } from "./transaction.ts";
 
@@ -16,8 +16,8 @@ export type NoteRepository = {
   /** Creating the same note (same id) twice leaves one note. */
   create(owner: string, note: Note): Promise<CreateResult>;
   get(owner: string, id: string): Promise<Note | undefined>;
-  /** Newest first. Bounded by the quota. */
-  list(owner: string): Promise<Note[]>;
+  /** Newest first, at most MAX_LISTED_NOTES, without the bodies. */
+  list(owner: string): Promise<NoteSummary[]>;
   /** Moves the version from `expectedVersion` to `expectedVersion + 1`. */
   update(
     owner: string,
@@ -50,6 +50,23 @@ const noteRowSchema = z
 
 const NOTE_COLUMNS = "id, title, body, version, created_at, updated_at";
 // #endregion row
+
+// A list row has no `body` column, so a list response cannot carry one.
+const summaryRowSchema = z
+  .object({
+    id: z.uuid(),
+    title: z.string(),
+    version: z.number().int().positive(),
+    created_at: z.date(),
+    updated_at: z.date(),
+  })
+  .transform((row): NoteSummary => ({
+    id: row.id,
+    title: row.title,
+    version: row.version,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  }));
 
 const idRowSchema = z.object({ id: z.uuid() });
 const countRowSchema = z.object({ note_count: z.number().int().nonnegative() });
@@ -110,16 +127,19 @@ export class SqlNoteRepository implements NoteRepository {
     return this.#transaction((tx) => selectNote(tx, owner, id));
   }
 
-  list(owner: string): Promise<Note[]> {
+  // #region list
+  list(owner: string): Promise<NoteSummary[]> {
     return this.#transaction((tx) =>
       rows(
         tx,
-        noteRowSchema,
-        `SELECT ${NOTE_COLUMNS} FROM app.notes WHERE owner = $1 ORDER BY created_at DESC, id DESC LIMIT $2`,
-        [owner, this.#maxNotesPerOwner],
+        summaryRowSchema,
+        `SELECT id, title, version, created_at, updated_at FROM app.notes
+         WHERE owner = $1 ORDER BY created_at DESC, id DESC LIMIT $2`,
+        [owner, MAX_LISTED_NOTES],
       ),
     );
   }
+  // #endregion list
 
   // #region update
   update(

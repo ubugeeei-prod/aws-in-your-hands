@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
-import { errorSchema, noteListSchema, noteSchema } from "../src/contract.ts";
+import { errorSchema, MAX_LISTED_NOTES, noteListSchema, noteSchema } from "../src/contract.ts";
 import type { LogEntry } from "../src/log.ts";
 import {
   createNoteService,
@@ -51,6 +51,43 @@ describe("notes API", () => {
     expect(second).toMatchObject({ id: "note-2", body: "hello" });
   });
 
+  // #region list-bound
+  it("lists summaries only: no body, the newest 20, under 20 KiB at the worst", async () => {
+    const { app, post } = setup();
+    // The largest note the contract takes. A control character is six bytes of JSON.
+    const largest = { title: "\u0001".repeat(120), body: "\u0001".repeat(10_000) };
+    for (let count = 1; count <= MAX_LISTED_NOTES + 1; count++) {
+      expect((await post(largest)).status).toBe(201);
+    }
+
+    const text = await (await app.request("/notes")).text();
+    const json: unknown = JSON.parse(text);
+    expect(new TextEncoder().encode(text).byteLength).toBeLessThanOrEqual(20 * 1024);
+    expect(noteListSchema.parse(json).notes.map((note) => note.id)).toEqual(
+      Array.from(
+        { length: MAX_LISTED_NOTES },
+        (_, index) => `note-${MAX_LISTED_NOTES + 1 - index}`,
+      ),
+    );
+    expect(text).not.toContain('"body"');
+
+    // The whole note is one request away.
+    const whole = noteSchema.parse(await (await app.request("/notes/note-1")).json());
+    expect(whole.body).toHaveLength(10_000);
+  });
+
+  it("has a list contract that refuses a body and a 21st note", () => {
+    const summary = { id: "a", title: "t", createdAt: "2026-10-11T00:00:00.000Z" };
+    expect(noteListSchema.safeParse({ notes: [summary] }).success).toBe(true);
+    expect(noteListSchema.safeParse({ notes: [{ ...summary, body: "" }] }).success).toBe(false);
+    expect(
+      noteListSchema.safeParse({
+        notes: Array.from({ length: MAX_LISTED_NOTES + 1 }, () => summary),
+      }).success,
+    ).toBe(false);
+  });
+  // #endregion list-bound
+
   it("rejects a note without a title and says which field is wrong", async () => {
     const { post } = setup();
     const response = await post({ title: "  ", body: "x" });
@@ -84,8 +121,7 @@ describe("notes API", () => {
     const full = await post({ title: "one too many" });
     expect(full.status).toBe(409);
     expect(errorSchema.parse(await full.json()).error.code).toBe("quota_exceeded");
-    const list = noteListSchema.parse(await (await app.request("/notes")).json());
-    expect(list.notes).toHaveLength(MAX_NOTES);
+    expect((await app.request("/notes/note-1")).status).toBe(200);
 
     expect((await app.request("/notes/note-1", { method: "DELETE" })).status).toBe(204);
     expect((await post({ title: "fits now" })).status).toBe(201);

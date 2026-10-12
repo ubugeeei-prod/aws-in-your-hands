@@ -8,6 +8,7 @@ import {
   type CreateNote,
   errorSchema,
   healthSchema,
+  MAX_PAGE_SIZE,
   meSchema,
   type Note,
   noteListSchema,
@@ -97,7 +98,7 @@ export function createNotesClient(
       parse(
         await api.notes.$get({
           query: {
-            limit: String(options.limit ?? 20),
+            limit: String(options.limit ?? MAX_PAGE_SIZE),
             ...(options.cursor === undefined ? {} : { cursor: options.cursor }),
           },
         }),
