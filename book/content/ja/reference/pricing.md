@@ -92,7 +92,7 @@ ID: `http-api-small` / 章: [04 HTTP API: Lambda と API Gateway HTTP API](/ja/c
 
 ## ノート API と table: デプロイ済みで呼ばれない月
 
-ID: `notes-idle` / 章: [05 NoSQL: DynamoDB](/ja/chapters/05-dynamodb.md)
+ID: `notes-idle` / 章: [05 KV Store: DynamoDB](/ja/chapters/05-dynamodb.md)
 
 前提:
 
@@ -108,7 +108,7 @@ ID: `notes-idle` / 章: [05 NoSQL: DynamoDB](/ja/chapters/05-dynamodb.md)
 
 ## ノート API と table: 月 100 万リクエスト
 
-ID: `notes-small` / 章: [05 NoSQL: DynamoDB](/ja/chapters/05-dynamodb.md)
+ID: `notes-small` / 章: [05 KV Store: DynamoDB](/ja/chapters/05-dynamodb.md)
 
 前提:
 
@@ -748,7 +748,7 @@ ID: `obs-rum-small` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM�
 
 ## KV と cache: 既定の stack（DynamoDB）を置いたまま、呼ばれない月
 
-ID: `kv-idle-dynamodb` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-idle-dynamodb` / 章: [14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -765,7 +765,7 @@ ID: `kv-idle-dynamodb` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valke
 
 ## KV と cache: ElastiCache Serverless（Valkey）を置いたまま、呼ばれない月
 
-ID: `kv-idle-valkey-serverless` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-serverless` / 章: [14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -782,7 +782,7 @@ ID: `kv-idle-valkey-serverless` / 章: [14 KV Store: cache、DynamoDB、ElastiCa
 
 ## 比較: node ベースの Valkey（cache.t4g.micro 1 台）を置いたままの月
 
-ID: `kv-idle-valkey-node` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-node` / 章: [14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -799,7 +799,7 @@ ID: `kv-idle-valkey-node` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Va
 
 ## KV と cache: DynamoDB 版で月 100 万リクエスト
 
-ID: `kv-used-dynamodb` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-used-dynamodb` / 章: [14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -827,7 +827,7 @@ ID: `kv-used-dynamodb` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valke
 
 ## KV と cache: ElastiCache Serverless（Valkey）版で月 100 万リクエスト
 
-ID: `kv-used-valkey` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-used-valkey` / 章: [14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 

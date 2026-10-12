@@ -167,8 +167,8 @@
       "id": "05",
       "slug": "dynamodb",
       "title": {
-        "ja": "NoSQL: DynamoDB",
-        "en": "NoSQL: DynamoDB"
+        "ja": "KV Store: DynamoDB",
+        "en": "KV Store: DynamoDB"
       },
       "prerequisites": ["04"],
       "services": ["DynamoDB", "Lambda", "API Gateway HTTP API", "IAM"],
@@ -689,8 +689,8 @@
       "id": "14",
       "slug": "kv-cache",
       "title": {
-        "ja": "KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定",
-        "en": "KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
+        "ja": "Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定",
+        "en": "Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
       },
       "prerequisites": ["05", "10", "11"],
       "services": [

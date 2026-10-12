@@ -92,7 +92,7 @@ Assumptions:
 
 ## Notes API and table: deployed, but never called for a month
 
-ID: `notes-idle` / chapter: [05 NoSQL: DynamoDB](/en/chapters/05-dynamodb.md)
+ID: `notes-idle` / chapter: [05 KV Store: DynamoDB](/en/chapters/05-dynamodb.md)
 
 Assumptions:
 
@@ -108,7 +108,7 @@ Assumptions:
 
 ## Notes API and table: 1,000,000 requests a month
 
-ID: `notes-small` / chapter: [05 NoSQL: DynamoDB](/en/chapters/05-dynamodb.md)
+ID: `notes-small` / chapter: [05 KV Store: DynamoDB](/en/chapters/05-dynamodb.md)
 
 Assumptions:
 
@@ -748,7 +748,7 @@ Assumptions:
 
 ## KV and cache: the default stack (DynamoDB), deployed but never called for a month
 
-ID: `kv-idle-dynamodb` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-idle-dynamodb` / chapter: [14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -765,7 +765,7 @@ Assumptions:
 
 ## KV and cache: ElastiCache Serverless (Valkey), deployed but never called for a month
 
-ID: `kv-idle-valkey-serverless` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-serverless` / chapter: [14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -782,7 +782,7 @@ Assumptions:
 
 ## For comparison: one node-based Valkey node (cache.t4g.micro) left running for a month
 
-ID: `kv-idle-valkey-node` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-node` / chapter: [14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -799,7 +799,7 @@ Assumptions:
 
 ## KV and cache: one million requests a month on DynamoDB
 
-ID: `kv-used-dynamodb` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-used-dynamodb` / chapter: [14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -827,7 +827,7 @@ Assumptions:
 
 ## KV and cache: one million requests a month on ElastiCache Serverless (Valkey)
 
-ID: `kv-used-valkey` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-used-valkey` / chapter: [14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 

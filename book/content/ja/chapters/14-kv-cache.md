@@ -1,9 +1,9 @@
 ---
-title: "14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定"
+title: "14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定"
 revision: 1
 ---
 
-# 14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定
+# 14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定
 
 Cloudflare で KV を使ってきた人が AWS に来ると、まずこう聞きます。「AWS の KV はどれ？」
 

@@ -1,9 +1,9 @@
 ---
-title: "14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
+title: "14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
 sourceRevision: 1
 ---
 
-# 14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration
+# 14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration
 
 People who have used KV on Cloudflare arrive at AWS with one question: "Which one is the AWS KV?"
 

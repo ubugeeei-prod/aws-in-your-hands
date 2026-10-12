@@ -1,9 +1,9 @@
 ---
-title: "05 NoSQL: DynamoDB"
+title: "05 KV Store: DynamoDB"
 sourceRevision: 2
 ---
 
-# 05 NoSQL: DynamoDB
+# 05 KV Store: DynamoDB
 
 The chapter 04 API kept its notes in memory. A different execution environment gave a different answer, and after a while the notes were gone. In this chapter, let's save them properly.
 

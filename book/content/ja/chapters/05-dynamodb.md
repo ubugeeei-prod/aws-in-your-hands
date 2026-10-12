@@ -1,9 +1,9 @@
 ---
-title: "05 NoSQL: DynamoDB"
+title: "05 KV Store: DynamoDB"
 revision: 2
 ---
 
-# 05 NoSQL: DynamoDB
+# 05 KV Store: DynamoDB
 
 04章の API は、ノートをメモリに置いていました。箱が変われば答えが変わるし、しばらくすると消えます。この章で、ちゃんと保存しましょう。
 
