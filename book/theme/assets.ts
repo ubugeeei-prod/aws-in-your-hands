@@ -32,11 +32,11 @@ export function brandFiles(): Map<string, { type: string; body: string }> {
     });
   }
 
-  const scripts = readdirSync(here("./motion")).filter(
+  const scripts = readdirSync(here("./client")).filter(
     (file) => file.endsWith(".ts") && !file.endsWith(".test.ts"),
   );
   for (const name of scripts) {
-    const source = stripTypeScriptTypes(readFileSync(here(`./motion/${name}`), "utf8"));
+    const source = stripTypeScriptTypes(readFileSync(here(`./client/${name}`), "utf8"));
     files.set(name.replace(/\.ts$/, ".js"), {
       type: "text/javascript",
       // The browser asks for the file it is told to: point imports at the emitted names.

@@ -7,6 +7,7 @@
   --aih-pink: #f300df;
   --aih-navy: #101b2b;
   --aih-display: var(--octc-font-display);
+  --aih-jp: var(--octc-font-jp);
   /* A 4 px rhythm. */
   --aih-1: 4px;
   --aih-2: 8px;
@@ -16,80 +17,20 @@
   --aih-8: 32px;
   --aih-12: 48px;
   --aih-16: 64px;
+  --aih-rule: 1px solid var(--octc-color-border);
+  --aih-rule-strong: 1px solid var(--octc-color-text);
   --octc-surface-noise-image: none;
+  --octc-toc-width: 16rem;
 }
 
-/* ---- reading -------------------------------------------------------- */
+/* ---- the page ------------------------------------------------------- */
 
 body {
   font-size: 18px;
   line-height: 1.85;
-  font-feature-settings: "palt" 0;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-}
-
-.content {
-  font-size: 1rem;
-}
-
-.content p,
-.content li {
-  line-height: 1.9;
-}
-
-:lang(en) .content p,
-:lang(en) .content li {
-  line-height: 1.7;
-}
-
-.content h1,
-.content h2,
-.content h3,
-.content h4 {
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.35;
-  color: var(--octc-color-text);
-}
-
-.content h1 {
-  font-size: clamp(2rem, 1.3rem + 2.6vw, 3rem);
-  line-height: 1.25;
-  margin: 0 0 var(--aih-8);
-  padding-bottom: var(--aih-8);
-  border-bottom: 1px solid var(--octc-color-text);
-}
-
-.content h2 {
-  font-size: 1.6rem;
-  margin: var(--aih-16) 0 var(--aih-4);
-  padding-top: var(--aih-6);
-  border-top: 1px solid var(--octc-color-border);
-  border-bottom: 0;
-}
-
-.content h3 {
-  font-size: 1.2rem;
-  margin: var(--aih-12) 0 var(--aih-3);
-}
-
-.content strong {
-  font-weight: 700;
-}
-
-/* Links are text: navy on white, underlined. The underline does the pointing. */
-.content a:not(.header-anchor):not(.pager-link) {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.22em;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-}
-
-.content a:not(.header-anchor):not(.pager-link):hover {
-  text-decoration-thickness: 2px;
-  text-decoration-color: currentColor;
+  background: var(--octc-color-bg);
 }
 
 ::selection {
@@ -103,89 +44,37 @@ body {
   border-radius: 0;
 }
 
-.content hr {
-  border: 0;
-  border-top: 1px solid var(--octc-color-border);
-  margin: var(--aih-12) 0;
+.main {
+  padding: var(--aih-12) var(--aih-12) var(--aih-16);
 }
 
-.content blockquote {
-  margin: var(--aih-6) 0;
-  padding: 0 0 0 var(--aih-6);
-  border-left: 1px solid var(--octc-color-text);
-  background: none;
-  color: var(--octc-color-text-muted);
-  border-radius: 0;
+/* The outline beside the text from a laptop's width up, not only on a wide monitor. */
+@media (min-width: 1180px) {
+  .toc {
+    display: block;
+  }
+
+  .main--with-toc {
+    padding-right: calc(var(--octc-toc-width) + var(--aih-12));
+  }
 }
 
-/* ---- code ----------------------------------------------------------- */
-
-.content code {
-  font-size: 0.86em;
-  border-radius: 0;
-  border: 1px solid var(--octc-color-border);
-  background: var(--octc-color-bg-alt);
-  padding: 0.1em 0.36em;
-}
-
-.content pre,
-.content pre.ox-code-block {
-  border-radius: 0;
-  border: 0;
-  box-shadow: none;
-  background: var(--octc-color-code-bg);
-  font-size: 14px;
-  line-height: 1.75;
-  margin: var(--aih-6) 0;
-}
-
-.content pre code {
-  font-size: 14px;
-  border: 0;
-  background: none;
-  padding: 0;
-}
-
-.content pre.ox-code-block[data-code-title]::before {
-  font-family: var(--octc-font-mono);
-  font-size: 13px;
-  background: var(--octc-color-code-bg);
-  color: #ffffff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-/* ---- tables --------------------------------------------------------- */
-
-.content table {
-  border: 0;
-  border-top: 1px solid var(--octc-color-text);
-  border-radius: 0;
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
-.content th,
-.content td {
-  border: 0;
-  border-bottom: 1px solid var(--octc-color-border);
-  background: none;
-  padding: var(--aih-3) var(--aih-4);
-  text-align: left;
-  vertical-align: top;
-}
-
-.content th {
-  font-weight: 700;
-  border-bottom-color: var(--octc-color-text);
+@media (max-width: 768px) {
+  .main {
+    padding: var(--aih-6) var(--octc-mobile-gutter)
+      calc(var(--octc-mobile-footer-height) + var(--aih-12));
+  }
 }
 
 /* ---- header --------------------------------------------------------- */
 
 .header {
   background: var(--octc-color-bg);
-  border-bottom: 1px solid var(--octc-color-border);
+  border-bottom: var(--aih-rule);
   box-shadow: none;
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding-inline: var(--aih-6);
 }
 
 .header-title {
@@ -201,6 +90,10 @@ body {
   border-radius: 0;
 }
 
+.header-actions {
+  gap: var(--aih-2);
+}
+
 .search-button,
 .theme-toggle,
 .ox-header-select > button,
@@ -208,27 +101,75 @@ body {
   border-radius: 0;
   box-shadow: none;
   min-height: 44px;
+  background: none;
+  color: var(--octc-color-text);
+  font-size: 14px;
 }
 
 .search-button {
-  border: 1px solid var(--octc-color-border);
-  background: var(--octc-color-bg);
-  font-size: 14px;
+  border: var(--aih-rule);
+  padding-inline: var(--aih-4);
+  min-width: 11rem;
+  justify-content: flex-start;
+}
+
+.search-button:hover,
+.theme-toggle:hover,
+.ox-header-select > button:hover {
+  background: var(--octc-color-bg-alt);
+  border-color: var(--octc-color-text);
+}
+
+.search-button kbd,
+.search-footer kbd {
+  font-family: var(--octc-font-mono);
+  font-size: 11px;
+  border-radius: 0;
+  border: var(--aih-rule);
+  background: none;
+  box-shadow: none;
+  margin-left: auto;
+}
+
+.search-modal-overlay {
+  background: color-mix(in srgb, var(--aih-navy) 72%, transparent);
+  backdrop-filter: none;
 }
 
 .search-modal,
 .ox-header-select-menu {
   border-radius: 0;
   box-shadow: none;
-  border: 1px solid var(--octc-color-text);
+  border: var(--aih-rule-strong);
+  background: var(--octc-color-bg);
 }
 
-/* ---- navigation ----------------------------------------------------- */
+.search-input {
+  font-size: 18px;
+}
+
+.search-result {
+  border-radius: 0;
+}
+
+.search-result:hover,
+.search-result.selected,
+.search-result[aria-selected="true"] {
+  background: var(--octc-color-text);
+  color: var(--octc-color-bg);
+}
+
+/* ---- sidebar -------------------------------------------------------- */
 
 .sidebar {
   background: var(--octc-color-bg);
-  border-right: 1px solid var(--octc-color-border);
+  border-right: var(--aih-rule);
   font-size: 14px;
+  padding: var(--aih-8) var(--aih-6) var(--aih-12);
+}
+
+.nav-section {
+  margin-bottom: var(--aih-8);
 }
 
 .nav-title {
@@ -238,14 +179,19 @@ body {
   letter-spacing: 0.02em;
   text-transform: none;
   color: var(--octc-color-text-muted);
+  padding: 0 0 var(--aih-2);
+  margin-bottom: var(--aih-2);
+  border-bottom: var(--aih-rule);
 }
 
 .nav-link {
   border-radius: 0;
   color: var(--octc-color-text-muted);
   line-height: 1.5;
-  padding-block: var(--aih-2);
+  padding: 7px 0 7px var(--aih-3);
   background: none;
+  border: 0;
+  margin: 0;
 }
 
 .nav-link:hover {
@@ -259,32 +205,74 @@ body {
   color: var(--octc-color-text);
   font-weight: 700;
   background: none;
-  box-shadow: inset 2px 0 0 var(--aih-orange);
+  box-shadow: inset 3px 0 0 var(--aih-orange);
 }
 
+/* ---- the outline ---------------------------------------------------- */
+
 .toc {
-  font-size: 14px;
-  border-left: 1px solid var(--octc-color-border);
+  font-size: 13.5px;
+  border-left: 0;
+  padding: var(--aih-12) var(--aih-6) var(--aih-12) 0;
+  counter-reset: aih-outline;
 }
 
 .toc-title {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 0;
   letter-spacing: 0;
   text-transform: none;
   color: var(--octc-color-text);
+  margin-bottom: var(--aih-4);
+}
+
+.toc-title::before {
+  content: "この章の中で";
+  font-size: 14px;
+  font-weight: 700;
+}
+
+:lang(en) .toc-title::before {
+  content: "In this chapter";
+}
+
+/* The page's own title is already above the text. */
+.toc-item:has(> .toc-link--depth-1) {
+  display: none;
 }
 
 .toc-link {
+  display: block;
   color: var(--octc-color-text-muted);
   border-radius: 0;
   line-height: 1.5;
+  padding: 6px 0 6px var(--aih-4);
+  border: 0;
+  background: none;
+}
+
+.toc-link--depth-2 {
+  counter-increment: aih-outline;
+  display: grid;
+  grid-template-columns: 1.9rem 1fr;
+}
+
+.toc-link--depth-2::before {
+  content: counter(aih-outline, decimal-leading-zero);
+  font-family: var(--octc-font-mono);
+  font-size: 11.5px;
+  line-height: 1.8;
+}
+
+.toc-link--depth-3 {
+  padding-left: calc(var(--aih-4) + 1.9rem);
+  font-size: 13px;
 }
 
 .toc-link:hover {
   color: var(--octc-color-text);
 }
 
+/* Where you are reading: the pink marker. */
 .toc-link.active,
 .toc-link[aria-current] {
   color: var(--octc-color-text);
@@ -293,35 +281,546 @@ body {
   background: none;
 }
 
+/* ---- the chapter's opening ------------------------------------------ */
+
+.ox-breadcrumbs {
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  margin-bottom: var(--aih-8);
+  color: var(--octc-color-text-muted);
+}
+
+.ox-breadcrumbs-link {
+  color: inherit;
+}
+
+.content {
+  font-size: 1rem;
+  counter-reset: aih-section;
+}
+
+.content h1 {
+  font-size: clamp(2rem, 1.2rem + 2.6vw, 3rem);
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: 0;
+  margin: 0;
+  padding: 0 0 var(--aih-8);
+  border-bottom: var(--aih-rule-strong);
+  color: var(--octc-color-text);
+}
+
+/* Number, name, and what the chapter is about, each on its own line.
+   The colons between them are for people who hear the page, not see it. */
+.content h1:has(.aih-chapter__number) {
+  display: grid;
+  font-size: 0;
+  row-gap: var(--aih-4);
+}
+
+.aih-chapter__number {
+  font-family: var(--aih-display);
+  font-weight: 700;
+  font-size: clamp(4.5rem, 3rem + 7vw, 8rem);
+  line-height: 0.78;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--aih-6);
+}
+
+.aih-chapter__name {
+  font-size: clamp(2rem, 1.2rem + 2.6vw, 3.1rem);
+  line-height: 1.28;
+}
+
+.aih-chapter__about {
+  font-family: var(--octc-font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--octc-color-text-muted);
+}
+
+/* "Copy as Markdown" and "View as Markdown": quiet, under the rule. */
+.content p.ox-markdown-source {
+  display: flex;
+  gap: var(--aih-6);
+  margin: var(--aih-3) 0 var(--aih-8);
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.content .ox-markdown-source :is(a, button) {
+  font: inherit;
+  color: var(--octc-color-text-muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: 32px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.content .ox-markdown-source :is(a, button):hover {
+  color: var(--octc-color-text);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+/* The first paragraph is the chapter's promise. */
+.content .ox-markdown-source + p,
+.content h1 + p:not(.ox-markdown-source) {
+  font-size: 1.2rem;
+  line-height: 1.8;
+}
+
+/* ---- reading -------------------------------------------------------- */
+
+.content p,
+.content li {
+  line-height: 1.95;
+}
+
+:lang(en) .content p,
+:lang(en) .content li {
+  line-height: 1.7;
+}
+
+.content p {
+  margin: 0 0 var(--aih-6);
+}
+
+.content h2,
+.content h3,
+.content h4 {
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.4;
+  color: var(--octc-color-text);
+}
+
+.content h2 {
+  font-size: 1.7rem;
+  margin: var(--aih-16) 0 var(--aih-6);
+  padding-top: var(--aih-6);
+  border-top: var(--aih-rule-strong);
+  border-bottom: 0;
+}
+
+/* Sections are numbered the way the outline numbers them. */
+.content:has(.aih-chapter__number) h2 {
+  counter-increment: aih-section;
+}
+
+.content:has(.aih-chapter__number) h2::before {
+  content: counter(aih-section, decimal-leading-zero);
+  display: block;
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--octc-color-text-muted);
+  margin-bottom: var(--aih-3);
+}
+
+.content h3 {
+  font-size: 1.25rem;
+  margin: var(--aih-12) 0 var(--aih-4);
+}
+
+.content h4 {
+  font-size: 1rem;
+  margin: var(--aih-8) 0 var(--aih-3);
+}
+
+.content strong {
+  font-weight: 700;
+}
+
+.content ul,
+.content ol {
+  padding-left: 1.4em;
+  margin: 0 0 var(--aih-6);
+}
+
+.content li {
+  margin: var(--aih-1) 0;
+}
+
+.content li::marker {
+  color: var(--octc-color-text-muted);
+  font-family: var(--octc-font-mono);
+  font-size: 0.85em;
+}
+
+/* Links are text: navy on white, underlined. The underline does the pointing. */
+.content a:not(.header-anchor):not(.pager-link) {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.content a:not(.header-anchor):not(.pager-link):hover {
+  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
+}
+
+.content .header-anchor {
+  color: var(--octc-color-text-muted);
+  font-family: var(--octc-font-mono);
+  font-weight: 400;
+}
+
+.content hr {
+  border: 0;
+  border-top: var(--aih-rule);
+  margin: var(--aih-12) 0;
+}
+
+.content blockquote {
+  margin: var(--aih-6) 0;
+  padding: 0 0 0 var(--aih-6);
+  border-left: var(--aih-rule-strong);
+  background: none;
+  color: var(--octc-color-text-muted);
+  border-radius: 0;
+}
+
+/* ---- code ----------------------------------------------------------- */
+
+.content :not(pre) > code {
+  font-size: 0.84em;
+  border-radius: 0;
+  border: 0;
+  background: var(--octc-color-bg-alt);
+  padding: 0.16em 0.4em;
+  overflow-wrap: anywhere;
+}
+
+.content .ox-code {
+  margin: var(--aih-8) 0;
+}
+
+.content pre,
+.content pre.ox-code-block {
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  background: var(--octc-syntax-background) !important;
+  font-size: 14px;
+  line-height: 1.8;
+  margin: var(--aih-8) 0;
+  padding: var(--aih-6) var(--aih-6);
+  font-feature-settings: "liga" 0;
+  tab-size: 2;
+}
+
+.content .ox-code > pre {
+  margin: 0;
+}
+
+.content pre code {
+  font-size: 14px;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+/* Line numbers step back; the code is what is read. */
+.content pre.line-numbers-mode .line {
+  position: relative;
+  padding-left: 3.2em;
+}
+
+.content pre.line-numbers-mode .line::before {
+  left: 0;
+  width: 2em;
+  text-align: right;
+  color: #6f7b8e;
+  font-size: 12px;
+}
+
+.content pre .ox-code-line--highlight {
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 3px 0 0 var(--aih-pink);
+}
+
+/* Every block has a bar: the file it came from, or failing that its language. Copy sits at its right. */
+.content pre.ox-code-block {
+  padding: 0 0 var(--aih-4);
+}
+
+.content pre.ox-code-block::before,
+.content pre.ox-code-block[data-code-title]::before {
+  content: attr(data-language);
+  display: block;
+  position: sticky;
+  left: 0;
+  margin: 0 0 var(--aih-4);
+  padding: 11px 96px 11px var(--aih-6);
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: #a9b1bd;
+  background: var(--octc-syntax-background);
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.content pre.ox-code-block[data-code-title]::before {
+  content: attr(data-code-title);
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.content pre.ox-code-block > code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding-inline: var(--aih-6);
+  box-sizing: border-box;
+}
+
+/* A file that ends with a newline should not show an empty last line. */
+.content pre.ox-code-block .line:last-child:not(:has(span:not(:empty))) {
+  display: none;
+}
+
+/* The copy control is a word, not an icon. */
+.content .ox-copy {
+  border-radius: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: #a9b1bd;
+  opacity: 1;
+  width: auto;
+  height: auto;
+  top: 0;
+  right: 0;
+  min-width: 44px;
+  min-height: 42px;
+  padding: 0 var(--aih-6);
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+}
+
+.content .ox-copy::before,
+.content .ox-copy::after {
+  display: none;
+}
+
+.content .ox-copy > * {
+  display: none;
+}
+
+.content .ox-copy:empty::after,
+.content .ox-copy::after {
+  content: "Copy";
+  display: inline;
+  position: static;
+  width: auto;
+  height: auto;
+  background: none;
+  mask: none;
+  -webkit-mask: none;
+}
+
+:lang(ja) .content .ox-copy::after {
+  content: "コピー";
+}
+
+.content .ox-copy:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---- tables --------------------------------------------------------- */
+
+.content table {
+  border: 0;
+  border-top: var(--aih-rule-strong);
+  border-radius: 0;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  margin: var(--aih-8) 0;
+  background: none;
+}
+
+.content th,
+.content td {
+  border: 0;
+  border-bottom: var(--aih-rule);
+  background: none !important;
+  padding: var(--aih-3) var(--aih-4) var(--aih-3) 0;
+  text-align: left;
+  vertical-align: top;
+}
+
+.content th {
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-bottom: var(--aih-rule-strong);
+  white-space: nowrap;
+}
+
+/* ---- notes ---------------------------------------------------------- */
+
+/* A note is a bordered box with a word that says what kind it is. No colour coding. */
+.content .ox-container {
+  border: var(--aih-rule);
+  border-left: var(--aih-rule-strong);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: var(--aih-4) var(--aih-6);
+  margin: var(--aih-8) 0;
+  font-size: 0.94rem;
+}
+
+.content .ox-container > :last-child {
+  margin-bottom: 0;
+}
+
+.content .ox-container-title,
+.content .ox-container > summary {
+  font-family: var(--octc-font-mono);
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--octc-color-text);
+  margin: 0 0 var(--aih-3);
+}
+
+.content .ox-container--warning,
+.content .ox-container--caution,
+.content .ox-container--danger {
+  border-left: 3px solid var(--octc-color-text);
+}
+
+.content .ox-container--details {
+  padding: 0;
+  border-left: var(--aih-rule);
+}
+
+.content .ox-container--details > summary {
+  cursor: pointer;
+  list-style: none;
+  margin: 0;
+  padding: var(--aih-4) var(--aih-6);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--aih-3);
+}
+
+.content .ox-container--details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.content .ox-container--details > summary::before {
+  content: "+";
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: var(--aih-rule-strong);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.content .ox-container--details[open] > summary::before {
+  content: "−";
+}
+
+.content .ox-container--details[open] > summary {
+  border-bottom: var(--aih-rule);
+}
+
+.content .ox-container--details > :not(summary) {
+  margin-inline: var(--aih-6);
+}
+
+.content .ox-container--details > summary + * {
+  margin-top: var(--aih-4);
+}
+
+.content .ox-container--details > :last-child {
+  margin-bottom: var(--aih-4);
+}
+
+/* ---- the foot of the page ------------------------------------------- */
+
+.last-updated {
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  border-top: 0;
+  margin-top: var(--aih-12);
+}
+
 .pager {
-  border-top: 1px solid var(--octc-color-text);
+  border-top: var(--aih-rule-strong);
+  margin-top: var(--aih-4);
+  padding-top: 0;
+  gap: 0;
 }
 
 .pager-link {
+  flex: 1;
   border-radius: 0;
   border: 0;
   background: none;
   box-shadow: none;
   min-height: 44px;
+  padding: var(--aih-6) 0;
   color: var(--octc-color-text);
+  text-decoration: none;
+}
+
+.pager-link--next {
+  border-left: var(--aih-rule);
+  padding-left: var(--aih-6);
+  text-align: right;
 }
 
 .pager-label {
+  display: block;
   font-family: var(--octc-font-mono);
   font-size: 12px;
   color: var(--octc-color-text-muted);
+  margin-bottom: var(--aih-2);
 }
 
 .pager-title {
   font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.22em;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
-.last-updated {
+.pager-link:hover .pager-title {
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+}
+
+.ox-back-to-top {
+  border-radius: 0;
+  box-shadow: none;
+  border: var(--aih-rule-strong);
+  background: var(--octc-color-bg);
+  color: var(--octc-color-text);
+}
+
+footer,
+.footer {
   font-family: var(--octc-font-mono);
   font-size: 12px;
+  color: var(--octc-color-text-muted);
 }
 
 /* ---- the cover ------------------------------------------------------ */

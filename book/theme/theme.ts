@@ -25,6 +25,20 @@ export const colors = {
   deep: "#0B1420",
 } as const;
 
+// Code is always set on navy, in the brand's own hues: pink for the words of the language,
+// orange for what is quoted, lavender for what is called. Every pair passes 4.5:1 on both navies.
+const syntax = {
+  "syntax-foreground": "#EEF1F6",
+  "syntax-token-comment": "#8793A5",
+  "syntax-token-keyword": "#FF8FE6",
+  "syntax-token-function": "#BBA8FF",
+  "syntax-token-string": "#FFB45C",
+  "syntax-token-string-expression": "#FFB45C",
+  "syntax-token-constant": "#FFD9A8",
+  "syntax-token-parameter": "#EEF1F6",
+  "syntax-token-punctuation": "#A9B1BD",
+} as const;
+
 const japanese =
   '"Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo';
 
@@ -103,20 +117,24 @@ export function brandTheme(base: string) {
         },
       },
     },
-    layout: { maxContentWidth: "760px", headerHeight: "64px" },
+    layout: { maxContentWidth: "760px", headerHeight: "64px", sidebarWidth: "280px" },
+    footer: {
+      message: "AWS in Your Hands: An open field guide",
+    },
     header: {
       logoLight: `${base}brand/mark-navy.svg`,
       logoDark: `${base}brand/mark-white.svg`,
       logoWidth: 34,
       logoHeight: 34,
     },
-    tokens: {
-      "brand-orange": colors.orange,
-      "brand-pink": colors.pink,
-      "brand-navy": colors.navy,
-    },
+    tokens: { ...syntax, "syntax-background": colors.navy },
+    darkTokens: { ...syntax, "syntax-background": colors.deep },
+    toggleTransition: "circle",
     css,
     // The cover's scripts are fetched only by the page that has a cover.
-    js: `if (document.querySelector("[data-aih-cover]")) { import(${JSON.stringify(`${base}brand/cover.js`)}); }`,
+    js: [
+      `if (document.querySelector("[data-aih-cover]")) { import(${JSON.stringify(`${base}brand/cover.js`)}); }`,
+      `if (document.querySelector(".toc-link")) { import(${JSON.stringify(`${base}brand/reading.js`)}); }`,
+    ].join("\n"),
   });
 }

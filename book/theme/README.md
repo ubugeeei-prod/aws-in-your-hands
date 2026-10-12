@@ -9,11 +9,11 @@ The book's look, applied to Ox Content. The source of truth is the brand guide
 | `brand.css` | Everything the theme's options cannot say: reading surfaces, navigation, the cover |
 | `brand/*.svg` | The mark (32 px and up), the micro mark (16–24 px), and the outlined wordmark, cut from the guide's vectors |
 | `assets.ts` | Serves `brand/` and the cover's scripts under `/brand/` |
-| `motion/` | The cover's cloud |
+| `client/` | The cover's cloud |
 
 ## The cover's cloud
 
-`motion/fluid-cloud.ts` draws a volume of cloud with WebGL2 and lets the reader push it.
+`client/fluid-cloud.ts` draws a volume of cloud with WebGL2 and lets the reader push it.
 
 ```ts
 const cloud = createFluidCloud(canvas, { seed: 17, reducedMotion: "system" });
