@@ -33,7 +33,7 @@ What was checked locally differs by chapter. Some chapters have tests only, and 
 
 - To read in order, start with [00 Introduction](/en/chapters/00-welcome.md)
 - If you know Cloudflare D1, Workers, and Workers AI, read [Coming from Cloudflare](/en/guides/cloudflare.md)
-- To follow distributed-systems topics such as idempotency and conflicts across chapters, read the [Distributed Systems Guide](/en/guides/distributed.md)
+- To follow distributed-systems topics such as idempotency and conflicts across chapters, read [State and Invariants by Chapter](/en/guides/distributed.md)
 - To rebuild this book's site with the same architecture, read [Reproduce This Site](/en/reference/book-site.md)
 
 ## Where the code is

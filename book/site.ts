@@ -55,10 +55,6 @@ export const sidebar: SidebarItem[] = [
         text: { ja: "Cloudflare から来た人へ", en: "Coming from Cloudflare" },
         link: "/ja/guides/cloudflare.md",
       },
-      {
-        text: { ja: "分散システムの案内", en: "Distributed Systems Guide" },
-        link: "/ja/guides/distributed.md",
-      },
     ],
   },
   // Grouped by what the reader is doing, in the order the book does it.
@@ -75,6 +71,10 @@ export const sidebar: SidebarItem[] = [
       {
         text: { ja: "本のサイトを再現する", en: "Reproduce This Site" },
         link: "/ja/reference/book-site.md",
+      },
+      {
+        text: { ja: "章ごとの状態と不変条件", en: "State and Invariants by Chapter" },
+        link: "/ja/guides/distributed.md",
       },
       { text: { ja: "料金の計算", en: "Pricing Worksheets" }, link: "/ja/reference/pricing.md" },
       { text: { ja: "出典台帳", en: "Source Registry" }, link: "/ja/reference/sources.md" },

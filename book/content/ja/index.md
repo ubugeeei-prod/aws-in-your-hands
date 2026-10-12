@@ -33,7 +33,7 @@ Cloudflare や Vercel からの乗り換えを勧める本ではありません�
 
 - 順番に読むなら [00 Introduction](/ja/chapters/00-welcome.md) から
 - Cloudflare の D1、Workers、Workers AI に慣れているなら [Cloudflare から来た人へ](/ja/guides/cloudflare.md)
-- 冪等性や競合など、分散システムの話題を章をまたいで追いたいなら [分散システムの案内](/ja/guides/distributed.md)
+- 冪等性や競合など、分散システムの話題を章をまたいで追いたいなら [章ごとの状態と不変条件](/ja/guides/distributed.md)
 - この本のサイトを同じ構成で作り直してみたいなら [本のサイトを再現する](/ja/reference/book-site.md)
 
 ## コードの置き場所

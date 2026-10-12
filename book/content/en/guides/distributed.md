@@ -1,9 +1,9 @@
 ---
-title: Distributed Systems Guide
+title: State and Invariants by Chapter
 sourceRevision: 3
 ---
 
-# Distributed Systems Guide
+# State and Invariants by Chapter
 
 The samples in this book are all small, but each one runs across several places. The browser, the CDN's edge locations, a function's execution environments, and a database each hold state from a different point in time, and each fails separately.
 
