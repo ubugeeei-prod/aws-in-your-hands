@@ -10,6 +10,7 @@ type SidebarItem = {
   link?: string;
   items?: SidebarItem[];
   collapsed?: boolean;
+  stickyCollapsed?: boolean;
 };
 
 const chapterLink = (id: string, slug: string): string => `/ja/chapters/${id}-${slug}.md`;
@@ -36,7 +37,12 @@ const chapterItems = (from: number, to: number): SidebarItem[] =>
       link: chapterLink(chapter.id, chapter.slug),
       ...(chapterParts(chapter.id, chapter.slug).length === 0
         ? {}
-        : { items: chapterParts(chapter.id, chapter.slug), collapsed: true }),
+        : // Folded until opened, and then as the reader left it, on every page.
+          {
+            items: chapterParts(chapter.id, chapter.slug),
+            collapsed: true,
+            stickyCollapsed: true,
+          }),
     }));
 
 // Links are ja source paths. Ox Content rewrites each to the locale being rendered.

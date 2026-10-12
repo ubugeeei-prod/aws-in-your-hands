@@ -122,8 +122,25 @@ export function brandTheme(base: string) {
     css,
     // The cover gets its cloud; every other page gets the thin one behind the text.
     js: [
-      // The chapter you are in shows its pages. The others stay folded.
-      `document.querySelector(".sidebar .nav-link.active")?.closest("details")?.setAttribute("open", "");`,
+      // The chapter you are in shows its pages, unless the reader folded it. Ox Content keeps what
+      // the reader opened and folded (stickyCollapsed in site.ts); opening one here is not theirs
+      // to remember, so the toggle it causes is kept from the listener that would record it.
+      `{
+        const here = document.querySelector(".sidebar .nav-link.active");
+        const chapter = here?.closest("details");
+        let left = null;
+        try { left = localStorage.getItem(${JSON.stringify(`ox-content:nav:${base}:`)} + chapter?.dataset.oxNavStateKey); } catch {}
+        if (chapter && !chapter.open && left !== "closed") {
+          const quiet = (event) => {
+            if (event.target !== chapter) return;
+            event.stopPropagation();
+            document.removeEventListener("toggle", quiet, true);
+          };
+          document.addEventListener("toggle", quiet, true);
+          chapter.open = true;
+          here.scrollIntoView({ block: "nearest" });
+        }
+      }`,
       `import(${JSON.stringify(`${base}brand/`)} + (document.querySelector("[data-aih-cover]") ? "cover.js" : "ground.js"));`,
       `if (document.querySelector(".toc-link")) { import(${JSON.stringify(`${base}brand/reading.js`)}); }`,
       `if (document.querySelector(".content .ox-code")) { import(${JSON.stringify(`${base}brand/fold.js`)}); }`,
