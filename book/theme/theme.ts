@@ -135,6 +135,7 @@ export function brandTheme(base: string) {
     js: [
       `if (document.querySelector("[data-aih-cover]")) { import(${JSON.stringify(`${base}brand/cover.js`)}); }`,
       `if (document.querySelector(".toc-link")) { import(${JSON.stringify(`${base}brand/reading.js`)}); }`,
+      `if (document.querySelector(".content .ox-code")) { import(${JSON.stringify(`${base}brand/fold.js`)}); }`,
     ].join("\n"),
   });
 }

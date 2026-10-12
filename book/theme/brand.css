@@ -614,6 +614,39 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* A long block shows its first lines; the bar under it opens the rest (client/fold.ts). */
+.content .ox-code.is-folded > pre {
+  /* The bar above the code, then the lines that stay in view. */
+  max-height: calc(3.2em + var(--aih-fold-lines, 18) * 1lh);
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.content .aih-fold {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--aih-4);
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0;
+  background: var(--octc-syntax-background);
+  color: #a9b1bd;
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.content .aih-fold:hover {
+  color: #ffffff;
+}
+
+.content .aih-fold:focus-visible {
+  outline: 2px solid var(--octc-color-text);
+  outline-offset: 2px;
+}
+
 /* ---- tables --------------------------------------------------------- */
 
 .content table {

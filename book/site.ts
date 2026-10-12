@@ -19,8 +19,8 @@ const chapterItems = (from: number, to: number): SidebarItem[] =>
     .map((chapter) => ({
       // The sidebar carries the chapter's name. What follows the colon is on the page itself.
       text: {
-        ja: `${chapter.id} ${short(chapter.id, chapter.title.ja)}`,
-        en: `${chapter.id} ${short(chapter.id, chapter.title.en)}`,
+        ja: short(chapter.id, chapter.title.ja),
+        en: short(chapter.id, chapter.title.en),
       },
       link: chapterLink(chapter.id, chapter.slug),
     }));
