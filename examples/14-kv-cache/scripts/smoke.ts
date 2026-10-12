@@ -5,6 +5,8 @@
 
 import { parseArgs } from "node:util";
 
+import * as v from "valibot";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
@@ -31,7 +33,7 @@ try {
   if (health.status !== 200) {
     throw new Error(`health: expected 200, got ${health.status}: ${await health.text()}`);
   }
-  const { store } = healthSchema.parse(await health.json());
+  const { store } = v.parse(healthSchema, await health.json());
   console.log(`ok   health (store ${store})`);
 
   // Counted by source address: a run within a minute of the last one starts with part of the budget spent.
@@ -48,7 +50,7 @@ try {
       );
     } else if (response.status === 200) {
       limit = Number(response.headers.get("ratelimit-limit"));
-      const list = itemListSchema.parse(await response.json());
+      const list = v.parse(itemListSchema, await response.json());
       console.log(
         `ok   request ${request}: 200, x-cache ${response.headers.get("x-cache")}, age ${response.headers.get("age")} s, ` +
           `${list.items.length} items, remaining ${response.headers.get("ratelimit-remaining")}`,

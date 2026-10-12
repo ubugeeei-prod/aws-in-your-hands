@@ -67,6 +67,8 @@ PITR があるのに別のバックアップを足すのは、置ける場所と
 
 <<< @/examples/22-recovery/src/drill.ts{record}
 
+時刻の欄は、[04章](/ja/chapters/04-http-api.md)の `utcTimestamp` で確かめます。集計は時刻どうしを引き算するので、UTC の 1 つの書き方だけを受け付け、オフセットの付いた時刻や存在しない日は断ります。
+
 すべての欄は空で始まります。空のまま残った欄は、その手順をやらなかったことを表し、集計はその欄を数字で埋めません。
 
 <<< @/examples/22-recovery/src/drill.ts{summary}

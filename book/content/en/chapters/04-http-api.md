@@ -1,6 +1,6 @@
 ---
 title: "04 HTTP API: Lambda and API Gateway HTTP API"
-sourceRevision: 6
+sourceRevision: 7
 ---
 
 # 04 HTTP API: Lambda and API Gateway HTTP API
@@ -36,14 +36,14 @@ group api: API Gateway HTTP API (ap-northeast-1) = health, notes, note, other
 ```
 
 ```figure
-caption: Inside the Lambda function, the Hono app calls NoteService, and NoteService keeps the notes in a repository held in memory.
+caption: Inside the Lambda function, the app calls NoteService, and NoteService keeps the notes in a repository held in memory.
 direction: right
-node hono: Hono app
+node app: App | Request in, Response out
 node service: NoteService
 node repo: InMemoryNoteRepository | per execution environment
-edge hono -> service
+edge app -> service
 edge service -> repo
-group fn: Lambda function = hono, service, repo
+group fn: Lambda function = app, service, repo
 ```
 
 Three services are involved. API Gateway is the entry point: it accepts HTTPS and passes on to Lambda only the requests that match a route you defined. Lambda is where your code runs. It starts when a request arrives and goes back to waiting when the request is done, so no server stays up. The logs Lambda writes collect in CloudWatch Logs.
@@ -81,13 +81,21 @@ Before writing any code, write the shapes of the API's input and output as schem
 
 <<< @/examples/04-http-api/src/contract.ts{note}
 
-The server and the client use this one definition. The server validates incoming requests against it, and the client validates the responses it gets back. The TypeScript types come from it too, through `z.infer`. With a single definition, you can't fix the server and forget the client.
+The schemas are written with Valibot, a library that builds a schema out of small functions such as `v.string()`. `v.pipe` runs the checks and transformations it is given in the order they are written. For `title` in `createNoteSchema`, that means checking that the value is a string, trimming the whitespace around it with `v.trim()`, and then checking that its length is between 1 and 120 characters. The second argument of `v.optional` is the value to use when the field is absent.
+
+The check on `createdAt` is the one written by hand.
+
+<<< @/examples/04-http-api/src/timestamp.ts{timestamp}
+
+Valibot's `v.isoTimestamp()` takes an offset such as `+09:00`, a space in place of the `T`, and February 30. A stored time is read back later, compared, and subtracted, so the book settles on one spelling. The check accepts the form that `toISOString()` of a `Date` writes (UTC, ending in `Z`), and the same form without the milliseconds. Nothing else. This is not the only built-in check that is looser than it looks, and later chapters add a check of their own wherever the difference matters.
+
+The server and the client use this one definition. The server validates incoming requests against it, and the client validates the responses it gets back. The TypeScript types come from it too, through `v.InferOutput`. With a single definition, you can't fix the server and forget the client.
 
 The shape of a list is decided separately from the shape of one note.
 
 <<< @/examples/04-http-api/src/contract.ts{list}
 
-A list carries the ID, the title, and the creation time, and leaves the body out. When you need the body, you fetch one note with `GET /notes/:id`. The list also stops at the newest 20 notes. A body can hold 10,000 characters, so returning every note with its body would make a single response several MB. With summaries only, and 20 at most, the response stays under 20 KiB whatever the titles contain. `list` in `createNoteService` does the cutting, and because the schema is strict, a response that lets a body through fails the client's validation.
+A list carries the ID, the title, and the creation time, and leaves the body out. When you need the body, you fetch one note with `GET /notes/:id`. The list also stops at the newest 20 notes. A body can hold 10,000 characters, so returning every note with its body would make a single response several MB. With summaries only, and 20 at most, the response stays under 20 KiB whatever the titles contain. `list` in `createNoteService` does the cutting. `v.object` silently drops fields the schema doesn't define, while `v.strictObject`, which the list schema uses, fails when it meets one. So a response that lets a body through fails the client's validation.
 
 Notes older than the newest 20 no longer appear in the list, but you can still read or delete one if you know its ID. Chapter 05 adds a way to fetch the rest of a list.
 
@@ -96,41 +104,3 @@ The shape of an error is fixed as well.
 <<< @/examples/04-http-api/src/contract.ts{error}
 
 The caller can branch on `code` without interpreting the wording of a message. `requestId` is what you search the logs for later.
-
-## Write the app
-
-<!-- section: 04.app -->
-
-HTTP handling uses Hono, a small framework built on the web-standard `Request` and `Response`, so the same app runs unchanged on Node.js and on Lambda. You may have used it on Workers.
-
-<<< @/examples/04-http-api/src/app.ts{app}
-
-The app receives everything it needs as arguments: the clock, the ID generator, where logs go, and where notes are stored. Nothing inside `createApp` touches `Date.now()` or `process.env` directly, so a test can pass fixed values and production can pass the real ones.
-
-Requests are checked at run time. TypeScript types are gone by the time the code runs, so a parameter typed `CreateNote` says nothing about the JSON that actually arrived. `validator` checks that JSON against the schema and, when it doesn't match, returns a 400 that names the fields at fault.
-
-An unexpected exception doesn't leak its cause. `onError` writes it to the log and gives the caller only the `requestId`, because a stack trace in the response would show outsiders how the app is built inside.
-
-The place notes are stored is an interface.
-
-<<< @/examples/04-http-api/src/notes.ts{repository}
-
-The implementation today is a plain `Map`. A `Map` lives in memory, and on an API anyone can `POST` to, it grows by whatever it is handed. So it stops at 100 notes, and the 101st throws `NoteLimitError`, which the app's `onError` turns into a 409 with `quota_exceeded`. The status is 409 and not 429 because waiting doesn't free a place and deleting a note does.
-
-Chapter 05 replaces the store with DynamoDB and keeps this interface as it is.
-
-The real clock, real random numbers, and real environment variables are touched in one place only.
-
-<<< @/examples/04-http-api/src/compose.ts{compose}
-
-## Check the configuration at startup
-
-<!-- section: 04.env -->
-
-Environment variables also come from outside the type system. The type of `process.env` says only that every variable is `string` or `undefined`, so it can't tell you whether a required one is set.
-
-<<< @/examples/04-http-api/src/env.ts{env}
-
-The variables are checked once, at startup. If one is missing, the first invocation fails with a message that names it. That leads you to the cause much sooner than code that reads `undefined` and breaks only under certain conditions.
-
-What is kept here is configuration, not secrets. Anyone who can see the function's configuration in the console can read a Lambda environment variable. Secrets such as API keys don't go into environment variables directly. You fetch them at run time from Secrets Manager or a similar service. This chapter's example has no secrets, so it has no code for that ([chapter 21](/en/chapters/21-security.md) covers it).

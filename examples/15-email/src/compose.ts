@@ -4,7 +4,9 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SESv2Client } from "@aws-sdk/client-sesv2";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-import { type App, createApp } from "./app.ts";
+import type { Fetch } from "@aih/example-04-http-api/src/http/router.ts";
+
+import { createApp } from "./app.ts";
 import { DynamoDbNotificationStore } from "./dynamodb-store.ts";
 import { type Env, parseEnv, parseEventsEnv } from "./env.ts";
 import { createEventsHandler } from "./events.ts";
@@ -36,7 +38,7 @@ export function createAdapters(env: Env): {
 // #endregion adapters
 
 export type Composed = {
-  app: App;
+  app: Fetch;
   env: Env;
   store: NotificationStore;
   log: Logger;

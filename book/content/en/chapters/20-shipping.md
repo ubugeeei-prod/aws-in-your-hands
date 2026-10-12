@@ -1,6 +1,6 @@
 ---
 title: "20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift

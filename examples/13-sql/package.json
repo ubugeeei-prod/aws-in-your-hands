@@ -8,16 +8,13 @@
     "@aws-sdk/dsql-signer": "3.1149.0",
     "aws-cdk-lib": "2.273.0",
     "constructs": "10.8.1",
-    "hono": "4.13.13",
     "pg": "8.23.1",
-    "valibot": "1.5.0",
-    "zod": "4.6.5"
+    "valibot": "1.5.0"
   },
   "devDependencies": {
     "@aih/tools": "workspace:*",
     "@electric-sql/pglite": "0.5.8",
     "@go-to-k/cdkd": "0.296.28",
-    "@hono/node-server": "2.1.4",
     "@types/aws-lambda": "8.10.164",
     "@types/pg": "8.23.1",
     "vite-plus": "1.1.0"

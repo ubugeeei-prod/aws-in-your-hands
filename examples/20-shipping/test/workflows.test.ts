@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 import { parse } from "yaml";
-import { z } from "zod";
 
 import viteConfig from "../../../vite.config.ts";
 import { PREVIEW_ENVIRONMENT } from "../infra/lib/ci-stack.ts";
@@ -11,29 +11,29 @@ import { PREVIEW_ENVIRONMENT } from "../infra/lib/ci-stack.ts";
 // hurt if they slipped: who gets credentials, which code runs with them, and
 // whether CI still runs what a person runs locally.
 
-const stepSchema = z.object({
-  name: z.string().optional(),
-  if: z.string().optional(),
-  uses: z.string().optional(),
-  run: z.string().optional(),
-  with: z.record(z.string(), z.union([z.string(), z.boolean(), z.number()])).optional(),
+const stepSchema = v.object({
+  name: v.optional(v.string()),
+  if: v.optional(v.string()),
+  uses: v.optional(v.string()),
+  run: v.optional(v.string()),
+  with: v.optional(v.record(v.string(), v.union([v.string(), v.boolean(), v.number()]))),
 });
-const jobSchema = z.object({
-  "runs-on": z.string(),
-  if: z.string().optional(),
-  needs: z.string().optional(),
-  environment: z.string().optional(),
-  permissions: z.record(z.string(), z.string()).optional(),
-  env: z.record(z.string(), z.string()).optional(),
-  strategy: z.unknown().optional(),
-  steps: z.array(stepSchema).min(1),
+const jobSchema = v.object({
+  "runs-on": v.string(),
+  if: v.optional(v.string()),
+  needs: v.optional(v.string()),
+  environment: v.optional(v.string()),
+  permissions: v.optional(v.record(v.string(), v.string())),
+  env: v.optional(v.record(v.string(), v.string())),
+  strategy: v.optional(v.unknown()),
+  steps: v.pipe(v.array(stepSchema), v.minLength(1)),
 });
-const workflowSchema = z.object({
-  name: z.string(),
-  on: z.record(z.string(), z.unknown()),
-  permissions: z.record(z.string(), z.string()),
-  concurrency: z.object({ group: z.string(), "cancel-in-progress": z.boolean() }).optional(),
-  jobs: z.record(z.string(), jobSchema),
+const workflowSchema = v.object({
+  name: v.string(),
+  on: v.record(v.string(), v.unknown()),
+  permissions: v.record(v.string(), v.string()),
+  concurrency: v.optional(v.object({ group: v.string(), "cancel-in-progress": v.boolean() })),
+  jobs: v.record(v.string(), jobSchema),
 });
 
 const directory = new URL("../workflows/", import.meta.url);
@@ -41,7 +41,7 @@ const workflows = readdirSync(directory)
   .filter((file) => file.endsWith(".yml"))
   .map((file) => {
     const text = readFileSync(new URL(file, directory), "utf8");
-    return { file, text, ...workflowSchema.parse(parse(text)) };
+    return { file, text, ...v.parse(workflowSchema, parse(text)) };
   });
 
 const jobs = workflows.flatMap((workflow) =>

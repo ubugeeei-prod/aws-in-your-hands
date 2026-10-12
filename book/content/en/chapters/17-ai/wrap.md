@@ -102,16 +102,16 @@ What remains is the storage created by cdkd's bootstrap (chapter 02) and the dep
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The unit tests for the relay, the app, the client, and the infrastructure (51 tests), type checking, and synth (including the esbuild bundle; 5 resources) were run. `dev:ai` was started with `AI_BACKEND=fixture` and the `curl` commands from the chapter were run against it. Disconnecting partway was confirmed to produce the `cancelled` log line, and `AI_FIXTURE=truncated` to end in an `error` event. Two points were confirmed from the published npm packages. The pinned hono has `streamHandle`. The pinned cdkd (0.296.28) has a dedicated implementation for all five resource types in this stack (`AWS::IAM::Policy`, `AWS::IAM::Role`, `AWS::Lambda::Function`, `AWS::Lambda::Url`, `AWS::Logs::LogGroup`) and handles `InvokeMode` and `AuthType` on `AWS::Lambda::Url`.
+**Checked locally.** The unit tests for the relay, the app, the client, and the infrastructure (59 tests), type checking, and synth (including the esbuild bundle; 5 resources) were run. `dev:ai` was started with `AI_BACKEND=fixture` and the `curl` commands from the chapter were run against it. Disconnecting partway was confirmed to produce the `cancelled` log line, and `AI_FIXTURE=truncated` to end in an `error` event. Two points were confirmed from the published npm packages. The pinned `@types/aws-lambda` (8.10.164) declares `awslambda.streamifyResponse` and `HttpResponseStream.from`. The pinned cdkd (0.296.28) has a dedicated implementation for all five resource types in this stack (`AWS::IAM::Policy`, `AWS::IAM::Role`, `AWS::Lambda::Function`, `AWS::Lambda::Url`, `AWS::Logs::LogGroup`) and handles `InvokeMode` and `AuthType` on `AWS::Lambda::Url`.
 
 **Not checked yet.** This chapter has never called the real Bedrock, and nothing was deployed to AWS. `ai:hello`, `ai:test:live`, `dev:ai` with `AI_BACKEND=bedrock`, `ai:infra:deploy`, `ai:smoke`, `ai:logs`, `ai:infra:drift`, and `ai:infra:destroy` have not been run. The following points in particular are waiting for a check in a real environment.
 
 - That the model IDs (such as `jp.amazon.nova-2-lite-v1:0`) can really be called from Tokyo. They were only read on the model cards
 - That real `ConverseStream` events fit this chapter's schema and the shape of the fixtures. The fixtures were written by hand from the official documentation, not captured from a real inference call
-- That a response from Hono's `streamHandle` and `streamSSE` arrives piece by piece through the Node.js 24 Lambda runtime and a function URL. Whether Lambda accepts the headers `streamSSE` sets, such as `Transfer-Encoding`, is also unconfirmed
+- That a response from this chapter's adapter (`streamFunctionUrl`) arrives piece by piece through the Node.js 24 Lambda runtime and a function URL. It was only tested with an object standing in for `awslambda`. The names of the keys passed to `HttpResponseStream.from` (`statusCode`, `headers`, `cookies`) and the empty write for a response with no body could not be confirmed from the Lambda documentation, and follow the source of the Lambda adapter in hono 4.13.13
 - That a function URL returns 403 to an unsigned request
 - That `ConverseStream` passes with the IAM policy narrowed to the inference profile (with the `bedrock:InferenceProfileArn` condition)
-- How the function and the model behave on Lambda after the caller disconnects. This is a conclusion from reading the documentation and Hono's source, not an observation
+- How the function and the model behave on Lambda after the caller disconnects. This is a conclusion from reading the documentation, not an observation. Whether a disconnect makes a write to the response stream fail is also unconfirmed
 - Billing for a call aborted partway, a free allowance for Bedrock, and the default quota values in the Tokyo Region
 - That a deploy with `-c reservedConcurrency=N` goes through, and what a function URL returns to a call past the limit. Only two things were checked: the template carries the value, and the source of cdkd 0.296.28 passes it to the Lambda API
 
@@ -125,11 +125,11 @@ What remains is the storage created by cdkd's bootstrap (chapter 02) and the dep
 | The input limit and the events you return | `examples/17-ai/src/contract.ts`, `src/prompt.ts` | `test:unit` |
 | Reading the stream | `examples/17-ai/src/converse-stream.ts`, `src/summarize.ts`, `src/bedrock.ts` | `test:unit` |
 | Stopping, waiting, retrying | `examples/17-ai/src/failure.ts`, `src/summarize.ts`, `test/failure.test.ts` | `test:unit` |
-| Making it an API | `examples/17-ai/src/app.ts`, `src/compose.ts`, `src/env.ts` | `test:unit` |
+| Making it an API | `examples/17-ai/src/app.ts`, `src/sse.ts`, `src/compose.ts`, `src/env.ts` | `test:unit` |
 | Running it locally | `examples/17-ai/src/dev.ts`, `src/fixture-gateway.ts`, `src/fixtures.ts`, `fixtures/converse-stream/`, `.env.example` | `dev:ai` |
 | Tests | `examples/17-ai/test/`, `infra/test/ai-stack.test.ts`, `scripts/live.ts` | `test:unit`, `ai:test:live` |
 | When the stream is cut | `examples/17-ai/src/client.ts`, `test/client.test.ts` | `test:unit` |
-| Getting ready for AWS | `examples/17-ai/infra/lib/ai-stack.ts`, `src/lambda.ts`, `infra/test/ai-stack.test.ts`, `cdk.json` | `ai:infra:synth`, `test:unit` |
+| Getting ready for AWS | `examples/17-ai/infra/lib/ai-stack.ts`, `src/lambda.ts`, `src/function-url.ts`, `test/function-url.test.ts`, `infra/test/ai-stack.test.ts`, `cdk.json` | `ai:infra:synth`, `test:unit` |
 | Deploying and calling | `examples/17-ai/scripts/smoke.ts`, `scripts/sign.ts`, `scripts/logs.ts`, `tools/src/infra/` | `ai:infra:diff`, `ai:infra:deploy`, `ai:smoke`, `ai:logs`, `ai:infra:drift` |
 | Cleaning up | `tools/src/infra/` | `ai:infra:destroy` |
 | Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
@@ -147,6 +147,6 @@ What remains is the storage created by cdkd's bootstrap (chapter 02) and the dep
 - [AWS Lambda pricing](https://aws.amazon.com/lambda/pricing/)
 - AWS Price List bulk API: [Bedrock](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json), [Bedrock models sold through Marketplace](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json). The Price List has no row specific to the `jp.` profile; it has a row for global and a row with no qualifier. Following the user guide's statement that the price is that of the Region you call from, this chapter applies the unqualified row to the `jp.` profile
 - Cloudflare Workers AI: [Get started](https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/), [Bindings](https://developers.cloudflare.com/workers-ai/configuration/bindings/), [Pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/), [Supported bindings per development mode](https://developers.cloudflare.com/workers/development-testing/bindings-per-env/)
-- [hono 4.13.13](https://www.npmjs.com/package/hono/v/4.13.13), [@aws-sdk/client-bedrock-runtime 3.1149.0](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0), [@go-to-k/cdkd 0.296.28](https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28) (for each, the type definitions and source of the installed package were read)
+- [@types/aws-lambda 8.10.164](https://www.npmjs.com/package/@types/aws-lambda/v/8.10.164), [hono 4.13.13](https://www.npmjs.com/package/hono/v/4.13.13) (not used by this chapter's code; only the source of its Lambda adapter was read), [@aws-sdk/client-bedrock-runtime 3.1149.0](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0), [@go-to-k/cdkd 0.296.28](https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28) (for each, the type definitions and source of the installed package were read)
 
 :::

@@ -1,7 +1,8 @@
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { serve } from "@hono/node-server";
-import { z } from "zod";
+import * as v from "valibot";
+
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
 
 import { createBedrockGateway } from "./bedrock.ts";
 import { composeApp } from "./compose.ts";
@@ -20,7 +21,7 @@ if (env.AI_BACKEND === "bedrock") {
   gateway = createBedrockGateway(env.AWS_REGION);
   console.log(`inference: REMOTE and BILLED. Bedrock ${env.BEDROCK_MODEL_ID} in ${env.AWS_REGION}`);
 } else {
-  const name = z.enum(fixtureNames).default("complete").parse(process.env["AI_FIXTURE"]);
+  const name = v.parse(v.optional(v.picklist(fixtureNames), "complete"), process.env["AI_FIXTURE"]);
   // 150 ms between events, so the stream is visible in curl.
   gateway = createFixtureGateway(fixtures[name], (abort) =>
     sleep(150, undefined, { signal: abort }).then(
@@ -34,7 +35,7 @@ if (env.AI_BACKEND === "bedrock") {
 }
 
 // Loopback only: with AI_BACKEND=bedrock, anyone who can reach this port spends your money.
-serve({ fetch: composeApp(env, gateway).fetch, port, hostname: "127.0.0.1" }, (info) => {
-  console.log(`summary API on http://localhost:${info.port}`);
+nodeServer(composeApp(env, gateway)).listen(port, "127.0.0.1", () => {
+  console.log(`summary API on http://localhost:${port}`);
 });
 // #endregion dev

@@ -4,8 +4,8 @@ import {
   NotFound,
   S3Client,
 } from "@aws-sdk/client-s3";
+import * as v from "valibot";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { z } from "zod";
 
 import { S3ObjectStore } from "../src/s3-object-store.ts";
 
@@ -21,7 +21,10 @@ const client = () =>
     },
   });
 
-const policySchema = z.object({ expiration: z.iso.datetime(), conditions: z.array(z.unknown()) });
+const policySchema = v.object({
+  expiration: v.pipe(v.string(), v.isoTimestamp()),
+  conditions: v.array(v.unknown()),
+});
 
 describe("the upload form", () => {
   it("asks S3 to enforce the key, the type, the size range, the tag, and an expiry", async () => {
@@ -32,7 +35,8 @@ describe("the upload form", () => {
       maxBytes: 5 * 1024 * 1024,
       expiresInSeconds: 300,
     });
-    const policy = policySchema.parse(
+    const policy = v.parse(
+      policySchema,
       JSON.parse(Buffer.from(form.fields["Policy"] ?? "", "base64").toString("utf8")),
     );
 

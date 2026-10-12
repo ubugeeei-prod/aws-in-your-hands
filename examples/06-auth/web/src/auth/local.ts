@@ -1,8 +1,8 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { AuthProvider } from "./provider.ts";
 
-const tokenSchema = z.object({ accessToken: z.string().min(1) });
+const tokenSchema = v.object({ accessToken: v.pipe(v.string(), v.minLength(1)) });
 
 /** Development sign-in: the local API hands out a token for any user name. No password. */
 export function createLocalProvider(apiUrl: string, fetchImpl: typeof fetch = fetch): AuthProvider {
@@ -17,7 +17,7 @@ export function createLocalProvider(apiUrl: string, fetchImpl: typeof fetch = fe
       if (!response.ok) {
         throw new Error(`local sign-in failed with ${response.status}`);
       }
-      const { accessToken } = tokenSchema.parse(await response.json());
+      const { accessToken } = v.parse(tokenSchema, await response.json());
       return { accessToken, expiresAt: Date.now() + 3600 * 1000 };
     },
     completeSignIn: async () => undefined,

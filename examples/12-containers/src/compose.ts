@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { createApp } from "@aih/example-04-http-api/src/app.ts";
+import type { Fetch } from "@aih/example-04-http-api/src/http/router.ts";
 import { createLogger, type Logger } from "@aih/example-04-http-api/src/log.ts";
 import {
   createNoteService,
@@ -9,8 +10,6 @@ import {
 } from "@aih/example-04-http-api/src/notes.ts";
 
 import { parseServerEnv, type ServerEnv } from "./env.ts";
-
-export type Fetch = (request: Request) => Response | Promise<Response>;
 
 // #region wrap
 /** The load balancer asks /health every few seconds, from every zone. Only failures are worth a line. */
@@ -50,6 +49,6 @@ export function composeServer(
     newRequestId: randomUUID,
     now: Date.now,
   });
-  return { fetch: withVersion((request) => app.fetch(request), env.APP_VERSION), env, log };
+  return { fetch: withVersion(app, env.APP_VERSION), env, log };
 }
 // #endregion compose

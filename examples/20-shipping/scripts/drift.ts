@@ -10,7 +10,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
 
 import { CloudFormationClient } from "@aws-sdk/client-cloudformation";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { buildCfnReport, detectStackDrift, summarizeCfn } from "@aih/tools/drift/cloudformation.ts";
@@ -20,7 +20,8 @@ import { stageFrom } from "../src/cdk-args.ts";
 import { cfnDriftApi } from "../src/drift-client.ts";
 import { ACKNOWLEDGED_UNCHECKED_TYPES } from "../src/drift-coverage.ts";
 
-const count = z.coerce.number().int().positive();
+// The option is a string. It must read as a whole number of at least 1.
+const count = v.pipe(v.string(), v.transform(Number), v.integer(), v.minValue(1));
 
 try {
   const { values } = parseArgs({
@@ -33,8 +34,8 @@ try {
   });
   const stack = apiStackName(stageFrom(values.context.flatMap((entry) => ["-c", entry])));
   const polling = {
-    intervalMs: count.parse(values["interval-ms"]),
-    maxAttempts: count.parse(values["max-attempts"]),
+    intervalMs: v.parse(count, values["interval-ms"]),
+    maxAttempts: v.parse(count, values["max-attempts"]),
   };
 
   const { target, identity } = await preflight({

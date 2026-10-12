@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "./preflight.ts";
 
@@ -14,14 +14,17 @@ if ((action !== "create" && action !== "delete") || directory === undefined) {
   process.exit(64);
 }
 
-const budgetSchema = z.looseObject({
-  BudgetName: z.string().min(1),
-  BudgetLimit: z.object({ Amount: z.string().regex(/^\d+(\.\d+)?$/), Unit: z.literal("USD") }),
+const budgetSchema = v.looseObject({
+  BudgetName: v.pipe(v.string(), v.minLength(1)),
+  BudgetLimit: v.object({
+    Amount: v.pipe(v.string(), v.regex(/^\d+(\.\d+)?$/)),
+    Unit: v.literal("USD"),
+  }),
 });
 
 try {
   const budgetPath = resolve(directory, "budget.json");
-  const budget = budgetSchema.parse(JSON.parse(readFileSync(budgetPath, "utf8")));
+  const budget = v.parse(budgetSchema, JSON.parse(readFileSync(budgetPath, "utf8")));
   const { identity } = await preflight({
     access: "mutate",
     action: `${action} budget ${budget.BudgetName}`,

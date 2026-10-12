@@ -48,7 +48,7 @@ AI_FIXTURE=truncated vp run dev:ai
 
 この状態で同じ `curl` を実行すると、`delta` が 3 つ届いたあと、`done` ではなく `error`（`interrupted`）で終わります。
 
-切断も試せます。`complete` のフィクスチャで `curl` を実行し、流れている途中で Ctrl+C を押すと、サーバーのログに、`outcome` が `cancelled` の行が出ます。接続が切れたことをサーバーが検知して、モデルへのリクエストを中止した記録です。
+切断も試せます。`complete` のフィクスチャで `curl` を実行し、流れている途中で Ctrl+C を押すと、サーバーのログに、`outcome` が `cancelled` の行が出ます。04章の `nodeServer` が接続の切れたことに気づいて本文を読むのをやめ、アプリがそれを受けてモデルへのリクエストを中止した記録です。
 
 ただし、切断でリクエストが中止されるのは、手元の開発サーバーでの動作です。Lambda の上では動作が違い、[デプロイのページ](/ja/chapters/17-ai/deploy.md)で説明します。
 

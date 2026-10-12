@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { noteSchema, type Note } from "@aih/example-04-http-api/src/contract.ts";
 import type { NoteRepository } from "@aih/example-04-http-api/src/notes.ts";
@@ -24,7 +24,7 @@ export async function replaceFile(ops: FileOps, path: string, content: string): 
 }
 // #endregion storage
 
-const fileSchema = z.object({ version: z.literal(1), notes: z.array(noteSchema) });
+const fileSchema = v.object({ version: v.literal(1), notes: v.array(noteSchema) });
 
 async function load(ops: FileOps, path: string): Promise<Map<string, Note>> {
   const text = await ops.read(path);
@@ -38,11 +38,11 @@ async function load(ops: FileOps, path: string): Promise<Map<string, Note>> {
     // Starting empty here would overwrite the damaged file with the next write.
     throw new Error(`${path} is not JSON; refusing to start over it`, { cause: error });
   }
-  const file = fileSchema.safeParse(json);
+  const file = v.safeParse(fileSchema, json);
   if (!file.success) {
     throw new Error(`${path} does not hold notes in the expected shape; refusing to start over it`);
   }
-  return new Map(file.data.notes.map((note) => [note.id, note]));
+  return new Map(file.output.notes.map((note) => [note.id, note]));
 }
 
 // #region repository

@@ -1,14 +1,14 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region pending
 // The page is unloaded during sign-in, so these two values wait in
 // sessionStorage: per tab, and cleared when the tab closes.
-const pendingSchema = z.object({
-  state: z.string().min(1),
-  codeVerifier: z.string().min(43),
-  createdAt: z.number(),
+const pendingSchema = v.object({
+  state: v.pipe(v.string(), v.minLength(1)),
+  codeVerifier: v.pipe(v.string(), v.minLength(43)),
+  createdAt: v.number(),
 });
-export type PendingSignIn = z.infer<typeof pendingSchema>;
+export type PendingSignIn = v.InferOutput<typeof pendingSchema>;
 
 const KEY = "aih.auth.pending";
 const MAX_AGE_MS = 10 * 60 * 1000;
@@ -36,14 +36,14 @@ export function takePending(
   } catch {
     return undefined;
   }
-  const pending = pendingSchema.safeParse(json);
+  const pending = v.safeParse(pendingSchema, json);
   if (
     !pending.success ||
-    pending.data.state !== returnedState ||
-    now - pending.data.createdAt > MAX_AGE_MS
+    pending.output.state !== returnedState ||
+    now - pending.output.createdAt > MAX_AGE_MS
   ) {
     return undefined;
   }
-  return pending.data;
+  return pending.output;
 }
 // #endregion pending

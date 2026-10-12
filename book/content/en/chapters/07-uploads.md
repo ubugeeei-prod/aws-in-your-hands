@@ -1,6 +1,6 @@
 ---
 title: "07 File Upload: Presigned URLs and S3"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 07 File Upload: Presigned URLs and S3
@@ -129,7 +129,11 @@ The approach is the same as in chapter 06. No if statement checks whether this n
 
 <<< @/examples/07-uploads/api/src/app.ts{routes}
 
-The routes are added directly to the chapter 06 app. Chapter 06's sign-in middleware is registered first, so the four added routes also return 401 without a token.
+The body of a permit request is read up to 1 KiB and no further. The image itself doesn't pass through here. Only a small JSON that names the type of the image does.
+
+<<< @/examples/07-uploads/api/src/app.ts{compose}
+
+The four routes are passed to chapter 06's `createApp` as its second argument. The chapter 06 app adds the routes it is given to its inner router. So the added routes also sit behind the sign-in guard and return 401 without a token. The error shape, the CORS headers, and the request ID are chapter 06's, unchanged.
 
 The tests try to break this in the following ways.
 

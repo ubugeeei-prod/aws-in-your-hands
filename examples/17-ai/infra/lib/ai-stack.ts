@@ -6,7 +6,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { modelArns, type VerifiedProfileId } from "./models.ts";
 
@@ -19,20 +19,26 @@ export type AiStackProps = StackProps & {
 // #region reserved
 // Off unless asked for. Reserving takes N out of the account's concurrency, and an account
 // with a low limit refuses the deploy.
-const reservedConcurrencySchema = z.coerce
-  .number("must be a whole number such as 2")
-  .int("must be a whole number such as 2")
-  .min(1, "must be 1 or more: 0 would stop every summary")
-  .max(1000)
-  .optional();
+const WHOLE = "must be a whole number such as 2";
+const reservedConcurrencySchema = v.optional(
+  v.pipe(
+    // `-c` hands over text. A value written in cdk.json may be a number already.
+    v.union([v.string(), v.number()], WHOLE),
+    v.transform(Number),
+    v.number(WHOLE),
+    v.integer(WHOLE),
+    v.minValue(1, "must be 1 or more: 0 would stop every summary"),
+    v.maxValue(1000),
+  ),
+);
 
 /** Reads `-c reservedConcurrency=N`. Absent means no reservation. */
 export function parseReservedConcurrency(value: unknown): number | undefined {
-  const result = reservedConcurrencySchema.safeParse(value);
+  const result = v.safeParse(reservedConcurrencySchema, value);
   if (!result.success) {
-    throw new Error(`reservedConcurrency ${result.error.issues[0]?.message ?? "is not valid"}`);
+    throw new Error(`reservedConcurrency ${result.issues[0]?.message ?? "is not valid"}`);
   }
-  return result.data;
+  return result.output;
 }
 // #endregion reserved
 

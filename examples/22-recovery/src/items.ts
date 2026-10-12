@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Note, noteSchema } from "@aih/example-05-dynamodb/src/contract.ts";
 import { type Attachment, attachmentSchema } from "@aih/example-07-uploads/api/src/contract.ts";
@@ -30,15 +30,15 @@ export type Classified =
   /** An item this app cannot read. Reported, never repaired. */
   | { kind: "unknown"; pk: string; sk: string; reason: string };
 
-const keysSchema = z.looseObject({ pk: z.string(), sk: z.string() });
+const keysSchema = v.looseObject({ pk: v.string(), sk: v.string() });
 
 /** A restored table is outside data: every item is checked before it is believed. */
 export function classify(item: unknown): Classified {
-  const keys = keysSchema.safeParse(item);
+  const keys = v.safeParse(keysSchema, item);
   if (!keys.success) {
     return { kind: "unknown", pk: "", sk: "", reason: "no pk or sk" };
   }
-  const { pk, sk, ...body } = keys.data;
+  const { pk, sk, ...body } = keys.output;
   const unknown = (reason: string): Classified => ({ kind: "unknown", pk, sk, reason });
   if (!pk.startsWith("OWNER#")) {
     return unknown("not an owner partition");
@@ -46,28 +46,31 @@ export function classify(item: unknown): Classified {
   const owner = pk.slice("OWNER#".length);
 
   if (sk.startsWith("NOTE#")) {
-    const note = noteSchema.safeParse(body);
-    if (!note.success || sk !== noteKey(note.data.id)) {
+    const note = v.safeParse(noteSchema, body);
+    if (!note.success || sk !== noteKey(note.output.id)) {
       return unknown("not a note this app wrote");
     }
-    return { kind: "note", owner, note: note.data };
+    return { kind: "note", owner, note: note.output };
   }
   if (sk.startsWith("ATTACHMENT#")) {
-    const attachment = attachmentSchema.safeParse(body);
-    if (!attachment.success || sk !== attachmentKey(attachment.data.noteId, attachment.data.id)) {
+    const attachment = v.safeParse(attachmentSchema, body);
+    if (
+      !attachment.success ||
+      sk !== attachmentKey(attachment.output.noteId, attachment.output.id)
+    ) {
       return unknown("not an attachment this app wrote");
     }
-    return { kind: "attachment", owner, attachment: attachment.data };
+    return { kind: "attachment", owner, attachment: attachment.output };
   }
   if (sk.startsWith("INSPECTION#")) {
-    const inspection = inspectionSchema.safeParse(body);
+    const inspection = v.safeParse(inspectionSchema, body);
     if (
       !inspection.success ||
-      sk !== inspectionKey(inspection.data.noteId, inspection.data.attachmentId)
+      sk !== inspectionKey(inspection.output.noteId, inspection.output.attachmentId)
     ) {
       return unknown("not an inspection this app wrote");
     }
-    return { kind: "inspection", owner, inspection: inspection.data };
+    return { kind: "inspection", owner, inspection: inspection.output };
   }
   // Counts are not data to recover: after a restore they may be off by a few, and the app only reads them as limits.
   if (sk === "QUOTA" || sk.startsWith("PERMITS#")) {

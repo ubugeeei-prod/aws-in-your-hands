@@ -1,4 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import * as v from "valibot";
 
 import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
 
@@ -12,7 +13,7 @@ const log = createLogger(env.LOG_LEVEL);
 const store = new S3ExportStore(new S3Client({}), env.EXPORT_BUCKET);
 
 export const handler = async (event: unknown): Promise<Finished> => {
-  const finished = await finishExport({ store }, progressSchema.parse(event));
+  const finished = await finishExport({ store }, v.parse(progressSchema, event));
   log({ level: "info", message: "export finished", ...finished });
   return finished;
 };

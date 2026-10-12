@@ -4,7 +4,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type App, createApp } from "./app.ts";
 import { createSlowCatalog } from "./catalog.ts";
@@ -87,7 +87,7 @@ export function composeApp(source: Record<string, string | undefined>): App {
     source: createSlowCatalog(env.SOURCE_DELAY_MS, (ms) => sleep(ms)),
     cache: createReadThrough({
       store: cache,
-      schema: z.array(itemSchema),
+      schema: v.array(itemSchema),
       ttlMs: env.CACHE_TTL_SECONDS * 1000,
       jitter: 0.2,
       random: Math.random,

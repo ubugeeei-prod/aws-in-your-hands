@@ -1,5 +1,5 @@
 import { App } from "aws-cdk-lib";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { RecoveryStack } from "../lib/recovery-stack.ts";
 
@@ -11,24 +11,22 @@ const app = new App();
 //   -c protect=on               RETAIN and deletion protection, as real data wants
 //   -c backup=on                an AWS Backup vault and a daily plan
 //   -c replica=on               a second bucket and S3 Replication into it
-const flag = z.enum(["on", "off"]).default("off");
-const context = z
-  .object({
+const flag = v.optional(v.picklist(["on", "off"]), "off");
+const context = v.parse(
+  v.object({
     // The names DynamoDB accepts. Anything else is a typo, not a table.
-    table: z
-      .string()
-      .regex(/^[A-Za-z0-9_.-]{3,255}$/)
-      .optional(),
+    table: v.optional(v.pipe(v.string(), v.regex(/^[A-Za-z0-9_.-]{3,255}$/))),
     protect: flag,
     backup: flag,
     replica: flag,
-  })
-  .parse({
+  }),
+  {
     table: app.node.tryGetContext("table"),
     protect: app.node.tryGetContext("protect"),
     backup: app.node.tryGetContext("backup"),
     replica: app.node.tryGetContext("replica"),
-  });
+  },
+);
 // #endregion context
 
 new RecoveryStack(app, "AihRecovery", {

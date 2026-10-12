@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { createError, useFetch, useHead } from "nuxt/app";
+import * as v from "valibot";
 
 import { viewerSchema } from "../../core/profile.ts";
 
 // During server rendering, Nuxt passes the incoming Cookie header on to this call.
 const { data, error } = await useFetch("/me/api/viewer", {
-  transform: (body: unknown) => viewerSchema.parse(body),
+  transform: (body: unknown) => v.parse(viewerSchema, body),
 });
 if (error.value !== undefined || data.value === undefined) {
   throw createError({ statusCode: 502, statusMessage: "Your page could not be loaded" });

@@ -1,12 +1,15 @@
 import { App } from "aws-cdk-lib";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { LiveStack } from "../lib/live-stack.ts";
 
 const app = new App();
 
 // `-c streamKey=off` deploys the channel without a stream key.
-const streamKey = z.enum(["on", "off"]).default("on").parse(app.node.tryGetContext("streamKey"));
+const streamKey = v.parse(
+  v.optional(v.picklist(["on", "off"]), "on"),
+  app.node.tryGetContext("streamKey"),
+);
 
 new LiveStack(app, "AihLive", {
   env: { region: "ap-northeast-1" },

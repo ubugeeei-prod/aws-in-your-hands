@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 export const REGION = "ap-northeast-1";
 export const CONTAINERS_STACK = "AihContainers";
@@ -19,29 +19,34 @@ export const MAX_CONNECTIONS = 512;
 export const TASK_SUBNETS = ["public", "private"] as const;
 export type TaskSubnets = (typeof TASK_SUBNETS)[number];
 
-export const containersConfigSchema = z.object({
+export const containersConfigSchema = v.object({
   // Absent: the stack is only the repository. Present: the service runs this image.
-  imageTag: z
-    .string()
-    .regex(/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/, "use letters, digits, '_', '.', and '-'")
-    // "latest" says nothing about what is running, and the repository refuses to move a tag anyway.
-    .refine((tag) => tag !== "latest", "name the build, for example a git commit hash")
-    .optional(),
-  taskSubnets: z.enum(TASK_SUBNETS).default("public"),
-  allowedOrigin: z.url({ protocol: /^https?$/ }).default("http://localhost:5173"),
+  imageTag: v.optional(
+    v.pipe(
+      v.string(),
+      v.regex(/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/, "use letters, digits, '_', '.', and '-'"),
+      // "latest" says nothing about what is running, and the repository refuses to move a tag anyway.
+      v.check((tag) => tag !== "latest", "name the build, for example a git commit hash"),
+    ),
+  ),
+  taskSubnets: v.optional(v.picklist(TASK_SUBNETS), "public"),
+  allowedOrigin: v.optional(
+    v.pipe(v.string(), v.url(), v.regex(/^https?:\/\//, "Must be an http or https URL.")),
+    "http://localhost:5173",
+  ),
 });
 
-export type ContainersConfig = z.infer<typeof containersConfigSchema>;
+export type ContainersConfig = v.InferOutput<typeof containersConfigSchema>;
 
 /** Parses CDK context (`-c imageTag=...`); the message names every bad field. */
 export function parseContainersConfig(input: unknown): ContainersConfig {
-  const result = containersConfigSchema.safeParse(input);
+  const result = v.safeParse(containersConfigSchema, input);
   if (!result.success) {
-    const problems = result.error.issues.map(
-      (item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`,
+    const problems = result.issues.map(
+      (item) => `  ${v.getDotPath(item) ?? "(root)"}: ${item.message}`,
     );
     throw new Error(`Invalid container settings:\n${problems.join("\n")}`);
   }
-  return result.data;
+  return result.output;
 }
 // #endregion schema

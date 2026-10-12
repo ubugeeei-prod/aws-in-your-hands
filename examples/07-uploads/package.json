@@ -14,16 +14,13 @@
     "@aws-sdk/s3-request-presigner": "3.1149.0",
     "aws-cdk-lib": "2.273.0",
     "constructs": "10.8.1",
-    "hono": "4.13.13",
     "oauth4webapi": "3.8.8",
     "valibot": "1.5.0",
-    "vue": "3.5.43",
-    "zod": "4.6.5"
+    "vue": "3.5.43"
   },
   "devDependencies": {
     "@aih/tools": "workspace:*",
     "@go-to-k/cdkd": "0.296.28",
-    "@hono/node-server": "2.1.4",
     "@types/aws-lambda": "8.10.164",
     "@vizejs/vite-plugin": "0.443.0",
     "jose": "6.2.12",

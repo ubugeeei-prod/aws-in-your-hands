@@ -7,17 +7,20 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { exceptionSchema, lintTemplate } from "../src/iam-lint.ts";
+import { jsonEntries } from "../src/json-object.ts";
 
-const exceptions = z
-  .record(z.string(), z.array(exceptionSchema))
-  .parse(
+// Stack name to its exceptions.
+const exceptions = new Map(
+  v.parse(
+    jsonEntries(v.array(exceptionSchema)),
     JSON.parse(
       readFileSync(new URL("../policies/iam-lint-exceptions.json", import.meta.url), "utf8"),
     ),
-  );
+  ),
+);
 
 const directories = process.argv.slice(2);
 if (directories.length === 0) {
@@ -37,7 +40,7 @@ for (const directory of directories) {
     .toSorted()) {
     templates += 1;
     const stack = basename(file, ".template.json");
-    const allowed = exceptions[stack] ?? [];
+    const allowed = exceptions.get(stack) ?? [];
     const { findings, unusedExceptions } = lintTemplate(
       JSON.parse(readFileSync(join(directory, file), "utf8")),
       allowed,

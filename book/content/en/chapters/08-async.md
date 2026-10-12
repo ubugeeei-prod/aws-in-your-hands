@@ -1,6 +1,6 @@
 ---
 title: "08 Queue: SQS, DLQs, Idempotency, and Scheduler"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 08 Queue: SQS, DLQs, Idempotency, and Scheduler
@@ -113,6 +113,8 @@ The verdict is recorded in this shape.
 <<< @/examples/08-async/src/inspection.ts{record}
 
 `sequencer` and `eTag` say which event, and which bytes, the worker looked at. The idempotency section uses these two values to tell order and duplicates apart.
+
+A record is read back long after it was written. [Chapter 22](/en/chapters/22-recovery.md) reads these out of a restored table. So the checks on numbers and times are a little stricter here. `v.integer()` takes `1e300` as an integer, so `size` uses `v.safeInteger()`. Times are checked with `utcTimestamp`, written in [chapter 04](/en/chapters/04-http-api.md).
 
 ## Delivery is guaranteed "at least once"
 

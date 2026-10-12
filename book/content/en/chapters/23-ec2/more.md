@@ -93,7 +93,7 @@ The server is assembled here.
 
 <<< @/examples/23-ec2/src/server.ts{server}
 
-`createApp` is imported from chapter 04 unchanged, and not one line of the application was modified. What changed is everything around it. The notes moved from a `Map` to a file, the function that ran per call became a process that keeps running, and signal handling was added.
+`createApp` is imported from chapter 04 unchanged, and not one line of the application was modified. The server is `nodeServer`, the one chapter 04 used to run the app on your machine. What changed is everything around it. The notes moved from a `Map` to a file, the function that ran per call became a process that keeps running, and signal handling was added.
 
 The test opens a real socket to check the order of events. It sends a request, holds it partway through, and calls the shutdown in that state. After seeing a new connection refused, it lets the held request continue. The test pins the sequence up to the end, in which the first request gets its 201, the writes are awaited, and the process ends with exit code 0.
 

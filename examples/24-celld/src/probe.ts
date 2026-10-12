@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { NodeSpec } from "./machine.ts";
 
@@ -6,38 +6,38 @@ import type { NodeSpec } from "./machine.ts";
 /** GetCommandInvocation returns the first 24,000 characters of stdout. A longer probe would lose its tail. */
 export const RUN_COMMAND_STDOUT_LIMIT = 24_000;
 
-export const probePlanSchema = z
-  .object({
+export const probePlanSchema = v.pipe(
+  v.object({
     /** Part of every cell name, so each run starts from counters nobody has touched. */
-    runId: z.string().regex(/^[a-z0-9]{4,16}$/),
-    cells: z.number().int().min(1).max(32),
-    rounds: z.number().int().min(1).max(600),
+    runId: v.pipe(v.string(), v.regex(/^[a-z0-9]{4,16}$/)),
+    cells: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(32)),
+    rounds: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(600)),
     /** Seconds between rounds. The fault has to land while the probe is still writing. */
-    pauseSeconds: z.number().int().min(0).max(10),
+    pauseSeconds: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(10)),
     /** curl's --max-time. Longer than CELLD_OPERATION_DEADLINE_MS would hide a stuck handoff. */
-    requestTimeoutSeconds: z.number().int().min(1).max(30),
-  })
-  .superRefine((plan, context) => {
-    const bytes = probeOutputBound(plan);
-    if (bytes > RUN_COMMAND_STDOUT_LIMIT) {
-      context.addIssue({
-        code: "custom",
-        path: ["rounds"],
-        message: `up to ${bytes} characters of output; Run Command keeps ${RUN_COMMAND_STDOUT_LIMIT}`,
-      });
-    }
-  });
-export type ProbePlan = z.infer<typeof probePlanSchema>;
+    requestTimeoutSeconds: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(30)),
+  }),
+  // A check on the whole plan, reported at `rounds`.
+  v.forward(
+    v.check(
+      (plan) => probeOutputBound(plan) <= RUN_COMMAND_STDOUT_LIMIT,
+      (issue) =>
+        `up to ${probeOutputBound(issue.input)} characters of output; Run Command keeps ${RUN_COMMAND_STDOUT_LIMIT}`,
+    ),
+    ["rounds"],
+  ),
+);
+export type ProbePlan = v.InferOutput<typeof probePlanSchema>;
 
 /** The longest output the script can print: every counter at its widest. */
-export function probeOutputBound(plan: Pick<ProbePlan, "cells" | "rounds">): number {
+export function probeOutputBound(plan: { cells: number; rounds: number }): number {
   const total = plan.cells * plan.rounds;
   const line = `P ${total} ${plan.cells} 000 ${total + 1}\n`.length;
   return total * line + `DONE ${total}\n`.length;
 }
 
 export const defaultProbePlan = (runId: string): ProbePlan =>
-  probePlanSchema.parse({
+  v.parse(probePlanSchema, {
     runId,
     cells: 8,
     rounds: 90,
@@ -67,7 +67,7 @@ export function lastSeqBefore(
  * so the order of the lines is the order the requests were made in.
  */
 export function renderProbeScript(spec: Pick<NodeSpec, "publicPort">, input: ProbePlan): string {
-  const plan = probePlanSchema.parse(input);
+  const plan = v.parse(probePlanSchema, input);
   return [
     "#!/bin/bash",
     "# No `set -e`: a failed request is a line of output, not the end of the probe.",

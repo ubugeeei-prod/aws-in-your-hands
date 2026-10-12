@@ -8,7 +8,7 @@
 import { randomBytes } from "node:crypto";
 import { parseArgs } from "node:util";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
@@ -17,7 +17,7 @@ import { formatTraceparent, toXRayTraceId } from "../src/trace-context.ts";
 
 const STACK = "AihObservability";
 const { values } = parseArgs({ options: { url: { type: "string" } } });
-const createdSchema = z.object({ id: z.string().min(1) });
+const createdSchema = v.object({ id: v.pipe(v.string(), v.minLength(1)) });
 
 try {
   let url = values.url;
@@ -53,7 +53,8 @@ try {
 
   console.log(`api: ${url}`);
   await call("GET", "/health");
-  const created = createdSchema.parse(
+  const created = v.parse(
+    createdSchema,
     await (await call("POST", "/notes", { title: "obs smoke" })).json(),
   );
   await call("GET", `/notes/${created.id}`);

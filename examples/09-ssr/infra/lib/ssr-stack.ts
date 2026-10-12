@@ -6,7 +6,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { SHARED_SECONDS } from "../../core/cache-control.ts";
 import { ASSET_PATH_PATTERN, PERSONAL_PATH_PATTERNS } from "../../core/routes.ts";
@@ -14,12 +14,18 @@ import { ASSET_PATH_PATTERN, PERSONAL_PATH_PATTERNS } from "../../core/routes.ts
 // #region reserved
 // Off unless asked for. Reserving takes N out of the account's concurrency, and an account
 // with a low limit refuses the deploy.
-export const reservedConcurrencySchema = z.coerce
-  .number("must be a whole number such as 5")
-  .int("must be a whole number such as 5")
-  .min(1, "must be 1 or more: 0 would stop the site")
-  .max(1000)
-  .optional();
+const WHOLE_NUMBER = "must be a whole number such as 5";
+
+export const reservedConcurrencySchema = v.optional(
+  v.pipe(
+    // Context given with `-c` arrives as text. Number() turns "many" into NaN, which v.number refuses.
+    v.union([v.number(), v.pipe(v.string(), v.transform(Number))], WHOLE_NUMBER),
+    v.number(WHOLE_NUMBER),
+    v.integer(WHOLE_NUMBER),
+    v.minValue(1, "must be 1 or more: 0 would stop the site"),
+    v.maxValue(1000),
+  ),
+);
 // #endregion reserved
 
 export type SsrStackProps = StackProps & {
@@ -34,7 +40,7 @@ export type SsrStackProps = StackProps & {
 export class SsrStack extends Stack {
   constructor(scope: Construct, id: string, props: SsrStackProps) {
     super(scope, id, props);
-    const reservedConcurrency = reservedConcurrencySchema.parse(props.reservedConcurrency);
+    const reservedConcurrency = v.parse(reservedConcurrencySchema, props.reservedConcurrency);
 
     // #region assets
     const assets = new s3.Bucket(this, "Assets", {

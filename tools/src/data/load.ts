@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import type { z } from "zod";
+import * as v from "valibot";
 
 import { allowancesSchema, scenariosSchema, unitPricesSchema } from "../pricing/schema.ts";
 import {
@@ -15,17 +15,18 @@ import {
 
 export const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
-function load<T>(path: string, schema: z.ZodType<T>): T {
-  const result = schema.safeParse(
+function load<T>(path: string, schema: v.GenericSchema<unknown, T>): T {
+  const result = v.safeParse(
+    schema,
     JSON.parse(readFileSync(new URL(path, `file://${repoRoot}`), "utf8")),
   );
   if (!result.success) {
-    const problems = result.error.issues
+    const problems = result.issues
       .slice(0, 10)
-      .map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+      .map((issue) => `${v.getDotPath(issue) ?? ""}: ${issue.message}`);
     throw new Error(`${path} is not valid:\n  ${problems.join("\n  ")}`);
   }
-  return result.data;
+  return result.output;
 }
 
 export const loadManifest = () => load("data/chapters.json", manifestSchema);

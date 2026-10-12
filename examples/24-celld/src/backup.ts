@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { bucketNameSchema } from "@aih/example-23-ec2/src/remote.ts";
 
@@ -10,45 +10,47 @@ import { NODE_NAMES, type NodeName } from "./config.ts";
 // acknowledged writes that the bucket does not hold yet.
 
 // #region manifest
-export const backupIdSchema = z.string().regex(/^[0-9]{8}T[0-9]{6}Z$/, "not a backup ID");
-const volumeId = z.string().regex(/^vol-[0-9a-f]{8,17}$/);
-const snapshotId = z.string().regex(/^snap-[0-9a-f]{8,17}$/);
+export const backupIdSchema = v.pipe(
+  v.string(),
+  v.regex(/^[0-9]{8}T[0-9]{6}Z$/, "not a backup ID"),
+);
+const volumeId = v.pipe(v.string(), v.regex(/^vol-[0-9a-f]{8,17}$/));
+const snapshotId = v.pipe(v.string(), v.regex(/^snap-[0-9a-f]{8,17}$/));
 
-export const manifestSchema = z.object({
+export const manifestSchema = v.object({
   id: backupIdSchema,
-  createdAt: z.iso.datetime(),
-  region: z.string(),
+  createdAt: v.pipe(v.string(), v.isoTimestamp()),
+  region: v.string(),
   /** Where the bucket copy came from, so a restore cannot be pointed at another fleet by accident. */
-  source: z.object({
+  source: v.object({
     bucket: bucketNameSchema,
-    prefix: z.string().regex(/^[a-z][a-z0-9-]{0,30}$/),
+    prefix: v.pipe(v.string(), v.regex(/^[a-z][a-z0-9-]{0,30}$/)),
   }),
-  nodes: z
-    .array(
-      z.object({
-        node: z.enum(NODE_NAMES),
+  nodes: v.pipe(
+    v.array(
+      v.object({
+        node: v.picklist(NODE_NAMES),
         volumeId,
         snapshotId,
         /** What `current` pointed at on that node. Restore the data under the same binary. */
-        celldVersion: z
-          .string()
-          .regex(/^v\d+\.\d+\.\d+$/)
-          .nullable(),
+        celldVersion: v.nullable(v.pipe(v.string(), v.regex(/^v\d+\.\d+\.\d+$/))),
       }),
-    )
-    .min(1),
+    ),
+    v.minLength(1),
+  ),
 });
-export type BackupManifest = z.infer<typeof manifestSchema>;
+export type BackupManifest = v.InferOutput<typeof manifestSchema>;
 
 export const backupIdFor = (now: Date): string =>
-  backupIdSchema.parse(
+  v.parse(
+    backupIdSchema,
     now
       .toISOString()
       .replace(/\.\d{3}Z$/, "Z")
       .replaceAll(/[-:]/g, ""),
   );
 
-export const backupPrefix = (id: string): string => `backups/${backupIdSchema.parse(id)}/`;
+export const backupPrefix = (id: string): string => `backups/${v.parse(backupIdSchema, id)}/`;
 export const manifestKey = (id: string): string => `${backupPrefix(id)}manifest.json`;
 // #endregion manifest
 
@@ -66,22 +68,22 @@ export const snapshotArgs = (input: {
   "ec2",
   "create-snapshot",
   "--volume-id",
-  volumeId.parse(input.volumeId),
+  v.parse(volumeId, input.volumeId),
   "--description",
-  `celld node ${input.node}, backup ${backupIdSchema.parse(input.id)}`,
+  `celld node ${input.node}, backup ${v.parse(backupIdSchema, input.id)}`,
   "--tag-specifications",
   `ResourceType=snapshot,Tags=[{Key=aih:backup,Value=${input.id}},{Key=aih:node,Value=${input.node}}]`,
   ...at(input.region),
 ];
 
-export const snapshotResultSchema = z.object({ SnapshotId: snapshotId });
+export const snapshotResultSchema = v.object({ SnapshotId: snapshotId });
 
 export const waitSnapshotsArgs = (input: { snapshotIds: string[]; region: string }): string[] => [
   "ec2",
   "wait",
   "snapshot-completed",
   "--snapshot-ids",
-  ...input.snapshotIds.map((id) => snapshotId.parse(id)),
+  ...input.snapshotIds.map((id) => v.parse(snapshotId, id)),
   "--region",
   input.region,
 ];
@@ -94,8 +96,8 @@ export function copyOutCall(input: {
   id: string;
   region: string;
 }): AwsCall {
-  const from = `s3://${bucketNameSchema.parse(input.bucket)}/${input.prefix}/`;
-  const to = `s3://${bucketNameSchema.parse(input.backupBucket)}/${backupPrefix(input.id)}${input.prefix}/`;
+  const from = `s3://${v.parse(bucketNameSchema, input.bucket)}/${input.prefix}/`;
+  const to = `s3://${v.parse(bucketNameSchema, input.backupBucket)}/${backupPrefix(input.id)}${input.prefix}/`;
   return {
     args: ["s3", "sync", from, to, "--region", input.region, "--only-show-errors"],
     describe: `copy ${from} to ${to}`,
@@ -121,7 +123,7 @@ export function restorePlan(input: {
   nodes: NodeName[];
   execute: boolean;
 }): RestoreStep[] {
-  const manifest = manifestSchema.parse(input.manifest);
+  const manifest = v.parse(manifestSchema, input.manifest);
   if (manifest.source.bucket !== input.bucket) {
     throw new Error(
       `backup ${manifest.id} was taken from ${manifest.source.bucket}, not from ${input.bucket}`,
@@ -133,7 +135,7 @@ export function restorePlan(input: {
       `backup ${manifest.id} holds node(s) ${backedUp.join(", ")}; the fleet has ${input.nodes.join(", ") || "none"}. Every node needs its own disk back.`,
     );
   }
-  const from = `s3://${bucketNameSchema.parse(input.backupBucket)}/${backupPrefix(manifest.id)}${manifest.source.prefix}/`;
+  const from = `s3://${v.parse(bucketNameSchema, input.backupBucket)}/${backupPrefix(manifest.id)}${manifest.source.prefix}/`;
   const to = `s3://${manifest.source.bucket}/${manifest.source.prefix}/`;
   const snapshots = manifest.nodes.map((entry) => `${entry.node}:${entry.snapshotId}`).join(",");
   return [

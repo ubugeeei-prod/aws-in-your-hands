@@ -1,11 +1,15 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
+import { handleApiGateway } from "@aih/example-04-http-api/src/http/api-gateway.ts";
+import { route } from "@aih/example-04-http-api/src/http/router.ts";
 import { InMemoryNoteRepository } from "@aih/example-05-dynamodb/src/memory-repository.ts";
 import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 
-import { createApp } from "../src/app.ts";
+import { type AppDeps, createApp, type SignedIn } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
 import { errorSchema, MAX_NOTES_PER_OWNER, MAX_PAGE_SIZE } from "../src/contract.ts";
+import { identityFromApiGateway } from "../src/identity.ts";
 import { createLocalAuthenticator, signLocalToken } from "../src/local-auth.ts";
 
 const secret = "test-secret-that-is-at-least-32-chars";
@@ -14,7 +18,7 @@ async function setup() {
   let clock = Date.UTC(2026, 9, 11);
   let suffix = 0;
   const logs: Record<string, unknown>[] = [];
-  const app = createApp({
+  const deps: AppDeps = {
     env: {
       ALLOWED_ORIGIN: "http://localhost:5173",
       LOG_LEVEL: "debug",
@@ -30,16 +34,22 @@ async function setup() {
     log: (entry) => logs.push(entry),
     newRequestId: () => "req-1",
     now: () => clock,
-  });
-  const viaApp: typeof fetch = async (input, init) => app.fetch(new Request(input, init));
+  };
+  const app = createApp(deps);
+  const viaApp: typeof fetch = async (input, init) => app(new Request(input, init));
   const tokens = {
     alice: await signLocalToken(secret, "alice"),
     bob: await signLocalToken(secret, "bob"),
   };
   const as = (token: string | undefined) =>
     createNotesClient("http://api.test", () => token, viaApp);
+  // No socket: a Request goes straight into the app, and a Response comes back.
+  const call = (path: string, init?: RequestInit) =>
+    app(new Request(`http://api.test${path}`, init));
   return {
     app,
+    deps,
+    call,
     logs,
     tokens,
     alice: as(tokens.alice),
@@ -118,14 +128,14 @@ describe("how many notes one user may hold", () => {
 
 describe("how much one list response may carry", () => {
   it("lists summaries only: no body, 20 a page, under 20 KiB at the worst", async () => {
-    const { app, alice, tokens } = await setup();
+    const { call, alice, tokens } = await setup();
     // The largest note the contract takes. A control character is six bytes of JSON.
     const largest = { title: "\u0001".repeat(120), body: "\u0001".repeat(10_000) };
     for (let count = 0; count <= MAX_PAGE_SIZE; count++) {
       await alice.create(largest);
     }
 
-    const response = await app.request("/notes", {
+    const response = await call("/notes", {
       headers: { authorization: `Bearer ${tokens.alice}` },
     });
     const text = await response.text();
@@ -145,7 +155,7 @@ describe("how much one list response may carry", () => {
 
 describe("authentication", () => {
   it("answers 401 without a token, on every route", async () => {
-    const { app } = await setup();
+    const { call } = await setup();
     for (const [method, path] of [
       ["GET", "/notes"],
       ["POST", "/notes"],
@@ -154,15 +164,15 @@ describe("authentication", () => {
       ["DELETE", "/notes/x"],
       ["GET", "/me"],
     ] as const) {
-      const response = await app.request(path, { method });
+      const response = await call(path, { method });
       expect(response.status, `${method} ${path}`).toBe(401);
-      expect(errorSchema.parse(await response.json()).error.code).toBe("unauthenticated");
+      expect(v.parse(errorSchema, await response.json()).error.code).toBe("unauthenticated");
     }
   });
 
   it("answers 401 to a token that does not verify", async () => {
-    const { app } = await setup();
-    const response = await app.request("/notes", {
+    const { call } = await setup();
+    const response = await call("/notes", {
       headers: { authorization: "Bearer not.a.token" },
     });
     expect(response.status).toBe(401);
@@ -217,9 +227,9 @@ describe("authorization: own notes only", () => {
   });
 
   it("takes the owner from the token only", async () => {
-    const { app, tokens, alice, bob } = await setup();
+    const { call, tokens, alice, bob } = await setup();
     // Bob names Alice everywhere a request can.
-    const response = await app.request("/notes?owner=alice&sub=alice", {
+    const response = await call("/notes?owner=alice&sub=alice", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -260,5 +270,137 @@ describe("audit trail", () => {
     await rejection(anonymous.list());
     expect(logs).toContainEqual(expect.objectContaining({ path: "/notes", status: 401 }));
     expect(logs.every((entry) => entry["sub"] === undefined)).toBe(true);
+  });
+});
+
+describe("around the routes", () => {
+  it("answers a preflight without a token, before the guard", async () => {
+    const { call } = await setup();
+    const response = await call("/notes", {
+      method: "OPTIONS",
+      headers: {
+        origin: "http://localhost:5173",
+        "access-control-request-method": "PUT",
+        "access-control-request-headers": "authorization,content-type",
+      },
+    });
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    expect(response.headers.get("access-control-allow-methods")).toBe("GET,POST,PUT,DELETE");
+    expect(response.headers.get("access-control-allow-headers")).toBe("content-type,authorization");
+  });
+
+  it("puts the CORS headers and the request ID on a 401 too, so the page can read it", async () => {
+    const { call } = await setup();
+    const response = await call("/notes");
+    expect(response.status).toBe(401);
+    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    expect(response.headers.get("x-request-id")).toBe("req-1");
+  });
+
+  it("answers a thrown error with 500 in the usual shape, with the CORS headers", async () => {
+    const { deps, tokens } = await setup();
+    const app = createApp({
+      ...deps,
+      notes: {
+        ...deps.notes,
+        list: async () => {
+          throw new Error("the table is gone");
+        },
+      },
+    });
+    const response = await app(
+      new Request("http://api.test/notes", {
+        headers: { authorization: `Bearer ${tokens.alice}` },
+      }),
+    );
+    expect(response.status).toBe(500);
+    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    const body = v.parse(errorSchema, await response.json());
+    expect(body.error).toEqual({
+      code: "internal",
+      message: "The request could not be completed.",
+      requestId: "req-1",
+    });
+  });
+
+  it("asks for a token before saying a path does not exist", async () => {
+    const { call, tokens } = await setup();
+    expect((await call("/nowhere")).status).toBe(401);
+    const response = await call("/nowhere", {
+      headers: { authorization: `Bearer ${tokens.alice}` },
+    });
+    expect(response.status).toBe(404);
+    expect(v.parse(errorSchema, await response.json()).error.code).toBe("not_found");
+  });
+
+  it("reads a JSON body whatever its content-type says, and bounds it at 64 KiB", async () => {
+    const { call, tokens } = await setup();
+    const post = (body: string) =>
+      call("/notes", {
+        method: "POST",
+        headers: { authorization: `Bearer ${tokens.alice}`, "content-type": "text/plain" },
+        body,
+      });
+    expect((await post(JSON.stringify({ title: "plain" }))).status).toBe(201);
+    expect((await post("{")).status).toBe(400);
+    const tooLarge = await post(JSON.stringify({ title: "big", body: "x".repeat(64 * 1024) }));
+    expect(tooLarge.status).toBe(413);
+    expect(v.parse(errorSchema, await tooLarge.json()).error.code).toBe("payload_too_large");
+    const invalid = await post(JSON.stringify({ title: "" }));
+    expect(invalid.status).toBe(400);
+    expect(v.parse(errorSchema, await invalid.json()).error.issues?.[0]?.path).toBe("title");
+  });
+
+  it("puts a later chapter's routes behind the same guard", async () => {
+    const { deps, tokens } = await setup();
+    const app = createApp(deps, [
+      route<SignedIn>("GET", "/whoami", (_request, { identity }) => Response.json(identity)),
+    ]);
+    expect((await app(new Request("http://api.test/whoami"))).status).toBe(401);
+    const response = await app(
+      new Request("http://api.test/whoami", { headers: { authorization: `Bearer ${tokens.bob}` } }),
+    );
+    expect(await response.json()).toEqual({ sub: "bob" });
+  });
+});
+
+describe("on Lambda", () => {
+  const event = (claims: unknown, headers: Record<string, string> = {}) =>
+    ({
+      version: "2.0",
+      routeKey: "GET /me",
+      rawPath: "/me",
+      rawQueryString: "",
+      headers,
+      isBase64Encoded: false,
+      requestContext: {
+        domainName: "api.test",
+        http: { method: "GET", path: "/me" },
+        ...(claims === undefined ? {} : { authorizer: { jwt: { claims, scopes: [] } } }),
+      },
+    }) as unknown as Parameters<ReturnType<typeof handleApiGateway>>[0];
+
+  const lambda = async () => {
+    const { deps, tokens } = await setup();
+    const authenticate: AppDeps["authenticate"] = async (request) =>
+      identityFromApiGateway(request.event, "client-a");
+    return { handler: handleApiGateway(createApp({ ...deps, authenticate })), tokens };
+  };
+
+  it("takes the identity from the claims API Gateway verified", async () => {
+    const { handler } = await lambda();
+    const result = await handler(
+      event({ sub: "user-1", token_use: "access", client_id: "client-a" }),
+    );
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body ?? "")).toEqual({ sub: "user-1" });
+  });
+
+  it("does not trust an Authorization header that API Gateway did not verify", async () => {
+    const { handler, tokens } = await lambda();
+    // A token that the local sign-in would accept, on a route with no authorizer in front.
+    const result = await handler(event(undefined, { authorization: `Bearer ${tokens.alice}` }));
+    expect(result.statusCode).toBe(401);
   });
 });

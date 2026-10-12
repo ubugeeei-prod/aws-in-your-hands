@@ -60,6 +60,8 @@ What you want is for the server to stop taking new requests, answer the ones in 
 
 <<< @/examples/12-containers/src/serve.ts{serve}
 
+`nodeServer` is the function chapter 04 used to run the app on your machine, and it returns a plain `node:http` `Server`. The keep-alive timeout, the connection limit, and the shutdown are all set on that `Server` directly.
+
 `server.close()` stops accepting new connections and waits for the responses in flight to finish. The Node.js example in the ECS documentation is this one line too.
 
 When I tried it, `server.close()` alone was not enough. The ALB reuses its connections to a task (keep-alive). `server.close()` closes the connections that are idle at the moment it is called, but a connection that was in the middle of a response stays open, idle, after that response ends. The server cannot exit until the other side closes it or the keep-alive timeout expires. This sample sets keep-alive to 65 seconds, so if nothing else is done, the 30 seconds of `stopTimeout` run out first.
@@ -72,7 +74,7 @@ The test starts a real process and sends it SIGTERM, without Docker.
 
 <<< @/examples/12-containers/test/shutdown.test.ts{sigterm}
 
-The test had to create the state "in the middle of a request" without relying on a delay. It does that by sending only the headers first, with `Expect: 100-continue`. Once the server answers `100 Continue`, the request has certainly arrived and the server is waiting for the body. The test sends SIGTERM in that state, checks for the `draining` log line, and then sends the body. The response is a 201 with the note, and after it the process exits with code 0. Because the order is fixed, the test gives the same result on every run.
+The test had to create the state "in the middle of a request" without relying on a delay. It does that by sending only the headers first, with `Expect: 100-continue`. Once the server answers `100 Continue`, the request has certainly arrived and the server is waiting for the body. The test sends SIGTERM in that state, checks for the `draining` log line, and then sends the body. The response is a 201 with the note. The body is sent in chunks, so the test reads up to the empty chunk that marks the end and knows the whole response arrived. After that the process exits with code 0. Because the order is fixed, the test gives the same result on every run.
 
 Run this test with `sweep` removed and it fails, because the result that should be `drained` becomes `forced`. That failure is how I found the problem with leftover keep-alive connections.
 
@@ -91,7 +93,7 @@ vp run ecs:bundle
 vp run ecs:bundle:check
 ```
 
-esbuild bundles the server and all its dependencies, such as Hono and Zod, into `dist/server.mjs` (about 860 KiB at the time of writing). In chapter 04 `NodejsFunction` did this during synth. Here you run it yourself.
+esbuild bundles the server and all its dependencies, such as Valibot, into `dist/server.mjs` (about 34 KiB at the time of writing). In chapter 04 `NodejsFunction` did this during synth. Here you run it yourself.
 
 `ecs:bundle:check` copies `dist/server.mjs` to a place with no `node_modules`, starts it, calls `/health`, and checks that SIGTERM ends it with exit code 0. This is the very file that goes into the image, so a dependency that cannot be found inside the container shows up in this check, before Docker is involved.
 

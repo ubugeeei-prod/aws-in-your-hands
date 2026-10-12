@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Note, type NoteDraft, noteDraftSchema, noteSchema } from "./note.ts";
 
@@ -35,13 +35,13 @@ function read(storage: KeyValueStorage): Note[] {
   } catch {
     return [];
   }
-  const items = z.array(z.unknown()).safeParse(json);
+  const items = v.safeParse(v.array(v.unknown()), json);
   if (!items.success) {
     return [];
   }
-  return items.data.flatMap((item) => {
-    const note = noteSchema.safeParse(item);
-    return note.success ? [note.data] : [];
+  return items.output.flatMap((item) => {
+    const note = v.safeParse(noteSchema, item);
+    return note.success ? [note.output] : [];
   });
 }
 // #endregion read
@@ -54,7 +54,7 @@ export function createLocalNoteStore(deps: StoreDeps): NoteStore {
     get: (id) => read(deps.storage).find((note) => note.id === id),
     save(draft, id) {
       const note: Note = {
-        ...noteDraftSchema.parse(draft),
+        ...v.parse(noteDraftSchema, draft),
         id: id ?? deps.newId(),
         updatedAt: deps.now().toISOString(),
       };

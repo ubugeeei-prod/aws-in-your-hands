@@ -1,7 +1,7 @@
-import { Hono } from "hono";
-import { bodyLimit } from "hono/body-limit";
-import { HTTPException } from "hono/http-exception";
-import { validator } from "hono/validator";
+import * as v from "valibot";
+
+import { readJson } from "@aih/example-04-http-api/src/http/body.ts";
+import { type Fetch, route, router } from "@aih/example-04-http-api/src/http/router.ts";
 
 import {
   type ErrorBody,
@@ -20,169 +20,131 @@ export type AppDeps = {
   now: () => number;
 };
 
-type Variables = { requestId: string };
+/** What every route sees besides the request. */
+type Context = { requestId: string };
 
 const failure = (
+  status: number,
   code: ErrorBody["error"]["code"],
   message: string,
-  requestId: string,
+  { requestId }: Context,
   issues?: { path: string; message: string }[],
 ) =>
-  ({
-    error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) },
-  }) satisfies ErrorBody;
+  Response.json(
+    {
+      error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) },
+    } satisfies ErrorBody,
+    { status },
+  );
+
+const result = (status: number, body: ShareNotificationResult) => Response.json(body, { status });
 
 // #region app
-export function createApp(deps: AppDeps) {
-  const app = new Hono<{ Variables: Variables }>();
-
-  app.use(async (c, next) => {
-    const requestId = deps.newRequestId();
-    const startedAt = deps.now();
-    c.set("requestId", requestId);
-    await next();
-    c.header("x-request-id", requestId);
-    deps.log({
-      level: c.res.status >= 500 ? "error" : "info",
-      message: "request",
-      requestId,
-      method: c.req.method,
-      path: c.req.path,
-      status: c.res.status,
-      durationMs: deps.now() - startedAt,
-    });
-  });
-
-  app.onError((error, c) => {
-    const requestId = c.get("requestId");
-    if (error instanceof HTTPException && error.status === 400) {
-      return c.json(
-        failure("invalid_request", "The request body is not valid JSON.", requestId),
-        400,
-      );
-    }
-    deps.log({
-      level: "error",
-      message: "unhandled error",
-      requestId,
-      error: error instanceof Error ? error.stack : String(error),
-    });
-    return c.json(failure("internal", "The request could not be completed.", requestId), 500);
-  });
-
-  app.notFound((c) => c.json(failure("not_found", "No such route.", c.get("requestId")), 404));
-
-  return app
-    .get("/health", (c) => c.json({ status: "ok" as const, stage: deps.stage, mode: deps.mode }))
-    .post(
-      "/share-notifications",
-      bodyLimit({
-        maxSize: 16 * 1024,
-        onError: (c) =>
-          c.json(
-            failure("payload_too_large", "The request body exceeds 16 KiB.", c.get("requestId")),
-            413,
-          ),
-      }),
-      validator("json", (value, c) => {
-        const input = shareNotificationSchema.safeParse(value);
+export function createApp(deps: AppDeps): Fetch {
+  const routes = router<Context>(
+    [
+      route("GET", "/health", () =>
+        Response.json({ status: "ok", stage: deps.stage, mode: deps.mode }),
+      ),
+      route("POST", "/share-notifications", async (request, context) => {
+        const body = await readJson(request, 16 * 1024);
+        if (!body.ok) {
+          return body.reason === "too_large"
+            ? failure(413, "payload_too_large", "The request body exceeds 16 KiB.", context)
+            : failure(400, "invalid_request", "The request body is not valid JSON.", context);
+        }
+        const input = v.safeParse(shareNotificationSchema, body.value);
         if (!input.success) {
-          const issues = input.error.issues.map((issue) => ({
-            path: issue.path.join("."),
+          const issues = input.issues.map((issue) => ({
+            path: v.getDotPath(issue) ?? "",
             message: issue.message,
           }));
-          return c.json(
-            failure(
-              "invalid_request",
-              "The notification is not valid.",
-              c.get("requestId"),
-              issues,
-            ),
-            400,
-          );
+          return failure(400, "invalid_request", "The notification is not valid.", context, issues);
         }
-        return input.data;
-      }),
-      async (c) => {
-        const input = c.req.valid("json");
-        const notificationId = input.notificationId;
-        const result = await sendShareNotification(deps.notify, input);
-        const requestId = c.get("requestId");
-        switch (result.outcome) {
+        const notificationId = input.output.notificationId;
+        const sent = await sendShareNotification(deps.notify, input.output);
+        switch (sent.outcome) {
           case "sent":
             // 202: accepted for delivery. Arrival is a later event, not this response.
-            return c.json(
-              {
-                status: "accepted",
-                notificationId,
-                messageId: result.messageId,
-              } satisfies ShareNotificationResult,
-              202,
-            );
+            return result(202, {
+              status: "accepted",
+              notificationId,
+              messageId: sent.messageId,
+            });
           case "duplicate":
-            return c.json(
-              {
-                status: "duplicate",
-                notificationId,
-                state: result.state,
-              } satisfies ShareNotificationResult,
-              200,
-            );
+            return result(200, { status: "duplicate", notificationId, state: sent.state });
           case "suppressed":
-            return c.json(
-              {
-                status: "suppressed",
-                notificationId,
-                reason: result.reason,
-              } satisfies ShareNotificationResult,
-              200,
-            );
+            return result(200, { status: "suppressed", notificationId, reason: sent.reason });
           case "conflict":
-            return c.json(
-              failure(
-                "idempotency_conflict",
-                "This notificationId was used for a different mail.",
-                requestId,
-              ),
+            return failure(
               409,
+              "idempotency_conflict",
+              "This notificationId was used for a different mail.",
+              context,
             );
           case "rejected":
             deps.log({
               level: "warn",
               message: "send rejected",
-              requestId,
+              requestId: context.requestId,
               notificationId,
-              reason: result.reason,
+              reason: sent.reason,
             });
-            return c.json(
-              failure(
-                "send_rejected",
-                "The mail was refused and not sent. The same request may be retried.",
-                requestId,
-              ),
+            return failure(
               502,
+              "send_rejected",
+              "The mail was refused and not sent. The same request may be retried.",
+              context,
             );
           case "unknown":
-            return c.json(
-              failure(
-                "send_unknown",
-                "It is not known whether the mail was sent. Retrying this notificationId will not send it again.",
-                requestId,
-              ),
+            return failure(
               502,
+              "send_unknown",
+              "It is not known whether the mail was sent. Retrying this notificationId will not send it again.",
+              context,
             );
         }
-      },
-    )
-    .get("/share-notifications/:id", async (c) => {
-      const record = await deps.notify.store.get(c.req.param("id"));
-      if (record === undefined) {
-        return c.json(failure("not_found", "No such notification.", c.get("requestId")), 404);
-      }
-      const { fingerprint: _fingerprint, expiresAt: _expiresAt, ...status } = record;
-      return c.json(status, 200);
-    });
-}
+      }),
+      route("GET", "/share-notifications/:id", async (_request, context, { id = "" }) => {
+        const record = await deps.notify.store.get(id);
+        if (record === undefined) {
+          return failure(404, "not_found", "No such notification.", context);
+        }
+        const { fingerprint: _fingerprint, expiresAt: _expiresAt, ...status } = record;
+        return Response.json(status);
+      }),
+    ],
+    (_request, context) => failure(404, "not_found", "No such route.", context),
+  );
 
-export type App = ReturnType<typeof createApp>;
+  // Everything that happens to every request, in the order it happens.
+  return async (request) => {
+    const context = { requestId: deps.newRequestId() };
+    const startedAt = deps.now();
+    let response: Response;
+    try {
+      response = await routes(request, context);
+    } catch (error) {
+      // The stack trace goes to the log, never to the caller.
+      deps.log({
+        level: "error",
+        message: "unhandled error",
+        requestId: context.requestId,
+        error: error instanceof Error ? error.stack : String(error),
+      });
+      response = failure(500, "internal", "The request could not be completed.", context);
+    }
+    response.headers.set("x-request-id", context.requestId);
+    deps.log({
+      level: response.status >= 500 ? "error" : "info",
+      message: "request",
+      requestId: context.requestId,
+      method: request.method,
+      path: new URL(request.url).pathname,
+      status: response.status,
+      durationMs: deps.now() - startedAt,
+    });
+    return response;
+  };
+}
 // #endregion app

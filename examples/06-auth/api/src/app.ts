@@ -1,10 +1,13 @@
-import { Hono } from "hono";
-import { bodyLimit } from "hono/body-limit";
-import { cors } from "hono/cors";
-import { HTTPException } from "hono/http-exception";
-import { validator } from "hono/validator";
-import type { z } from "zod";
+import * as v from "valibot";
 
+import { readJson } from "@aih/example-04-http-api/src/http/body.ts";
+import { cors } from "@aih/example-04-http-api/src/http/cors.ts";
+import {
+  type Handler,
+  type Route,
+  route,
+  router,
+} from "@aih/example-04-http-api/src/http/router.ts";
 import type { Env } from "@aih/example-05-dynamodb/src/env.ts";
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
 import { NoteQuotaError, type NoteService } from "@aih/example-05-dynamodb/src/notes.ts";
@@ -31,209 +34,196 @@ export type AppDeps = {
   now: () => number;
 };
 
-type Bindings = { event?: unknown };
-type Variables = { requestId: string; identity: Identity };
+// #region context
+/** What an entry point knows besides the request. On Lambda that is the event. Elsewhere, nothing. */
+export type Outside = { event?: unknown };
+
+/** A request in, a response out, as in chapter 05, plus what the entry point hands over. */
+export type App = (request: Request, outside?: Outside) => Promise<Response>;
+
+/** What a route behind the guard sees. `identity` is not optional there. */
+export type SignedIn = { requestId: string; identity: Identity };
+
+type Context = { requestId: string; event: unknown; identity?: Identity };
+// #endregion context
+
 type Extra = { issues?: { path: string; message: string }[]; current?: Note };
 
 const failure = (
+  status: number,
   code: ErrorBody["error"]["code"],
   message: string,
-  requestId: string,
+  { requestId }: { requestId: string },
   extra: Extra = {},
-) => ({ error: { code, message, requestId, ...extra } }) satisfies ErrorBody;
+) =>
+  Response.json({ error: { code, message, requestId, ...extra } } satisfies ErrorBody, { status });
 
-const issuesOf = (error: z.ZodError) =>
-  error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
+const issuesOf = (issues: readonly v.BaseIssue<unknown>[]) =>
+  issues.map((issue) => ({ path: v.getDotPath(issue) ?? "", message: issue.message }));
 
-export function createApp(deps: AppDeps) {
-  const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const MAX_BODY_BYTES = 64 * 1024;
 
-  app.use(async (c, next) => {
-    const requestId = deps.newRequestId();
-    const startedAt = deps.now();
-    c.set("requestId", requestId);
-    await next();
-    c.header("x-request-id", requestId);
-    deps.log({
-      level: c.res.status >= 500 ? "error" : "info",
-      message: "request",
-      requestId,
-      method: c.req.method,
-      path: c.req.path,
-      status: c.res.status,
-      // For the audit trail. Never the token itself.
-      sub: c.get("identity")?.sub,
-      durationMs: deps.now() - startedAt,
-    });
-  });
+const unreadable = (reason: "too_large" | "invalid_json", context: SignedIn) =>
+  reason === "too_large"
+    ? failure(413, "payload_too_large", "The request body exceeds 64 KiB.", context)
+    : failure(400, "invalid_request", "The request body is not valid JSON.", context);
 
-  app.use(
-    cors({
+/** `more` is for the chapters after this one: their routes go behind the same guard. */
+export function createApp(deps: AppDeps, more: Route<SignedIn>[] = []): App {
+  // #region routes
+  // The owner is always the caller's own `sub`, never the path, query, or
+  // body. Notes live under their owner, so there is no separate check to forget.
+  const signedIn = router<SignedIn>(
+    [
+      route("GET", "/me", (_request, { identity }) => Response.json({ sub: identity.sub })),
+      route("GET", "/notes", async (request, context) => {
+        const query = v.safeParse(
+          listQuerySchema,
+          Object.fromEntries(new URL(request.url).searchParams),
+        );
+        if (!query.success) {
+          return failure(400, "invalid_request", "The query is not valid.", context, {
+            issues: issuesOf(query.issues),
+          });
+        }
+        const page = await deps.notes.list(context.identity.sub, query.output);
+        // As in chapter 05: summaries, no bodies.
+        const list: NoteList = {
+          notes: page.notes.map(toNoteSummary),
+          nextCursor: page.nextCursor,
+        };
+        return Response.json(list);
+      }),
+      route("POST", "/notes", async (request, context) => {
+        const body = await readJson(request, MAX_BODY_BYTES);
+        if (!body.ok) {
+          return unreadable(body.reason, context);
+        }
+        const input = v.safeParse(createNoteSchema, body.value);
+        if (!input.success) {
+          return failure(400, "invalid_request", "The note is not valid.", context, {
+            issues: issuesOf(input.issues),
+          });
+        }
+        return Response.json(await deps.notes.create(context.identity.sub, input.output), {
+          status: 201,
+        });
+      }),
+      route("GET", "/notes/:id", async (_request, context, { id = "" }) => {
+        const note = await deps.notes.get(context.identity.sub, id);
+        return note === undefined
+          ? failure(404, "not_found", "No such note.", context)
+          : Response.json(note);
+      }),
+      route("PUT", "/notes/:id", async (request, context, { id = "" }) => {
+        const body = await readJson(request, MAX_BODY_BYTES);
+        if (!body.ok) {
+          return unreadable(body.reason, context);
+        }
+        const input = v.safeParse(updateNoteSchema, body.value);
+        if (!input.success) {
+          return failure(400, "invalid_request", "The update is not valid.", context, {
+            issues: issuesOf(input.issues),
+          });
+        }
+        const result = await deps.notes.update(context.identity.sub, id, input.output);
+        switch (result.status) {
+          case "updated":
+            return Response.json(result.note);
+          case "not_found":
+            return failure(404, "not_found", "No such note.", context);
+          case "conflict":
+            return failure(409, "conflict", "The note was changed since you loaded it.", context, {
+              current: result.current,
+            });
+        }
+      }),
+      route("DELETE", "/notes/:id", async (_request, context, { id = "" }) =>
+        (await deps.notes.remove(context.identity.sub, id))
+          ? new Response(null, { status: 204 })
+          : failure(404, "not_found", "No such note.", context),
+      ),
+      ...more,
+    ],
+    (_request, context) => failure(404, "not_found", "No such route.", context),
+  );
+  // #endregion routes
+
+  // #region guard
+  // /health is the one route in front of the guard and stays open. Anything else
+  // reaches a route only with an identity, an unknown path included.
+  const routes = router<Context>(
+    [route("GET", "/health", () => Response.json({ status: "ok", stage: deps.env.STAGE }))],
+    async (request, context) => {
+      const identity = await deps.authenticate({
+        event: context.event,
+        authorization: request.headers.get("authorization") ?? undefined,
+      });
+      if (identity === undefined) {
+        return failure(401, "unauthenticated", "Sign in to use this API.", context);
+      }
+      // Kept on the context for the log line below.
+      context.identity = identity;
+      return signedIn(request, { requestId: context.requestId, identity });
+    },
+  );
+  // #endregion guard
+
+  // A route that throws still owes the caller an answer in the usual shape.
+  const caught: Handler<Context> = async (request, context) => {
+    try {
+      return await routes(request, context);
+    } catch (error) {
+      if (error instanceof InvalidCursorError) {
+        return failure(400, "invalid_request", error.message, context);
+      }
+      if (error instanceof NoteQuotaError) {
+        // 409, not 429: waiting does not help. Deleting a note does.
+        return failure(
+          409,
+          "quota_exceeded",
+          `An account holds at most ${MAX_NOTES_PER_OWNER} notes. Delete one first.`,
+          context,
+        );
+      }
+      // The stack trace goes to the log, never to the caller.
+      deps.log({
+        level: "error",
+        message: "unhandled error",
+        requestId: context.requestId,
+        error: error instanceof Error ? error.stack : String(error),
+      });
+      return failure(500, "internal", "The request could not be completed.", context);
+    }
+  };
+
+  // Outside the catch and outside the guard: a 401 and a 500 carry the CORS headers too,
+  // and a preflight, which a browser sends without a token, is answered before the guard.
+  const answer = cors(
+    {
       origin: deps.env.ALLOWED_ORIGIN,
       allowMethods: ["GET", "POST", "PUT", "DELETE"],
       allowHeaders: ["content-type", "authorization"],
-    }),
+    },
+    caught,
   );
 
-  app.onError((error, c) => {
-    const requestId = c.get("requestId");
-    if (error instanceof HTTPException && error.status === 400) {
-      return c.json(
-        failure("invalid_request", "The request body is not valid JSON.", requestId),
-        400,
-      );
-    }
-    if (error instanceof InvalidCursorError) {
-      return c.json(failure("invalid_request", error.message, requestId), 400);
-    }
-    if (error instanceof NoteQuotaError) {
-      // 409, not 429: waiting does not help. Deleting a note does.
-      return c.json(
-        failure(
-          "quota_exceeded",
-          `An account holds at most ${MAX_NOTES_PER_OWNER} notes. Delete one first.`,
-          requestId,
-        ),
-        409,
-      );
-    }
+  return async (request, outside) => {
+    const context: Context = { requestId: deps.newRequestId(), event: outside?.event };
+    const startedAt = deps.now();
+    const response = await answer(request, context);
+    response.headers.set("x-request-id", context.requestId);
     deps.log({
-      level: "error",
-      message: "unhandled error",
-      requestId,
-      error: error instanceof Error ? error.stack : String(error),
+      level: response.status >= 500 ? "error" : "info",
+      message: "request",
+      requestId: context.requestId,
+      method: request.method,
+      path: new URL(request.url).pathname,
+      status: response.status,
+      // For the audit trail. Never the token itself.
+      sub: context.identity?.sub,
+      durationMs: deps.now() - startedAt,
     });
-    return c.json(failure("internal", "The request could not be completed.", requestId), 500);
-  });
-
-  app.notFound((c) => c.json(failure("not_found", "No such route.", c.get("requestId")), 404));
-
-  const limit = bodyLimit({
-    maxSize: 64 * 1024,
-    onError: (c) =>
-      c.json(
-        failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")),
-        413,
-      ),
-  });
-
-  return (
-    app
-      // #region guard
-      // /health is registered first and stays open. Every route below needs an identity.
-      .get("/health", (c) => c.json({ status: "ok" as const, stage: deps.env.STAGE }))
-      .use(async (c, next) => {
-        const identity = await deps.authenticate({
-          event: c.env?.event,
-          authorization: c.req.header("authorization"),
-        });
-        if (identity === undefined) {
-          return c.json(
-            failure("unauthenticated", "Sign in to use this API.", c.get("requestId")),
-            401,
-          );
-        }
-        c.set("identity", identity);
-        await next();
-      })
-      // #endregion guard
-      // #region routes
-      // The owner is always the caller's own `sub`, never the path, query, or
-      // body. Notes live under their owner, so there is no separate check to forget.
-      .get("/me", (c) => c.json({ sub: c.get("identity").sub }))
-      .get(
-        "/notes",
-        validator("query", (value, c) => {
-          const query = listQuerySchema.safeParse(value);
-          return query.success
-            ? query.data
-            : c.json(
-                failure("invalid_request", "The query is not valid.", c.get("requestId"), {
-                  issues: issuesOf(query.error),
-                }),
-                400,
-              );
-        }),
-        async (c) => {
-          const page = await deps.notes.list(c.get("identity").sub, c.req.valid("query"));
-          // As in chapter 05: summaries, no bodies.
-          const list: NoteList = {
-            notes: page.notes.map(toNoteSummary),
-            nextCursor: page.nextCursor,
-          };
-          return c.json(list);
-        },
-      )
-      .post(
-        "/notes",
-        limit,
-        validator("json", (value, c) => {
-          const input = createNoteSchema.safeParse(value);
-          return input.success
-            ? input.data
-            : c.json(
-                failure("invalid_request", "The note is not valid.", c.get("requestId"), {
-                  issues: issuesOf(input.error),
-                }),
-                400,
-              );
-        }),
-        async (c) =>
-          c.json(await deps.notes.create(c.get("identity").sub, c.req.valid("json")), 201),
-      )
-      .get("/notes/:id", async (c) => {
-        const note = await deps.notes.get(c.get("identity").sub, c.req.param("id"));
-        return note === undefined
-          ? c.json(failure("not_found", "No such note.", c.get("requestId")), 404)
-          : c.json(note, 200);
-      })
-      .put(
-        "/notes/:id",
-        limit,
-        validator("json", (value, c) => {
-          const input = updateNoteSchema.safeParse(value);
-          return input.success
-            ? input.data
-            : c.json(
-                failure("invalid_request", "The update is not valid.", c.get("requestId"), {
-                  issues: issuesOf(input.error),
-                }),
-                400,
-              );
-        }),
-        async (c) => {
-          const result = await deps.notes.update(
-            c.get("identity").sub,
-            c.req.param("id"),
-            c.req.valid("json"),
-          );
-          switch (result.status) {
-            case "updated":
-              return c.json(result.note, 200);
-            case "not_found":
-              return c.json(failure("not_found", "No such note.", c.get("requestId")), 404);
-            case "conflict":
-              return c.json(
-                failure(
-                  "conflict",
-                  "The note was changed since you loaded it.",
-                  c.get("requestId"),
-                  {
-                    current: result.current,
-                  },
-                ),
-                409,
-              );
-          }
-        },
-      )
-      .delete("/notes/:id", async (c) =>
-        (await deps.notes.remove(c.get("identity").sub, c.req.param("id")))
-          ? c.body(null, 204)
-          : c.json(failure("not_found", "No such note.", c.get("requestId")), 404),
-      )
-    // #endregion routes
-  );
+    return response;
+  };
 }
-
-export type App = ReturnType<typeof createApp>;

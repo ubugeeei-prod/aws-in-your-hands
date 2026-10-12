@@ -480,105 +480,6 @@
       }
     },
     {
-      "scope": "17",
-      "command": "vp run test:unit (examples/17-ai)",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-11",
-      "note": {
-        "ja": "51 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、CDK の assertion",
-        "en": "51 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, and the CDK assertions"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run typecheck (examples/17-ai)",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-11",
-      "note": {
-        "ja": "scripts/ と infra/ を含む",
-        "en": "Includes scripts/ and infra/"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run ai:infra:synth",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-11",
-      "note": {
-        "ja": "esbuild による bundle（Docker なし）を含む。5 リソース",
-        "en": "Includes the esbuild bundle (no Docker); 5 resources"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run dev:ai + curl",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-11",
-      "note": {
-        "ja": "AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log、AI_FIXTURE=truncated の error イベントを確認",
-        "en": "Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway, and the error event with AI_FIXTURE=truncated"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run check:all",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-11",
-      "note": {
-        "ja": "17章を加えた状態で通過",
-        "en": "Passed with chapter 17 added"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run dev:ai (AI_BACKEND=bedrock)",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "手元のサーバーから実際の Bedrock を呼ぶ。課金される",
-        "en": "The local server calling real Bedrock; billed"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run ai:hello / ai:test:live",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない",
-        "en": "Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run ai:infra:diff / deploy / drift / destroy",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "Lambda、function URL、IAM role、log group を作る",
-        "en": "Creates a Lambda function, a function URL, an IAM role, and a log group"
-      }
-    },
-    {
-      "scope": "17",
-      "command": "vp run ai:smoke / ai:logs",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "デプロイ済みの function URL が必要。課金される",
-        "en": "Needs the deployed function URL; billed"
-      }
-    },
-    {
       "scope": "15",
       "command": "vp run test:unit (examples/15-email)",
       "kind": "local",
@@ -1470,105 +1371,6 @@
       }
     },
     {
-      "scope": "21",
-      "command": "vp run test:unit (examples/21-security)",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-12",
-      "note": {
-        "ja": "token の署名と検証、rotation をまたぐ鍵の cache（古い cache の実行環境、2 回の rotation、でたらめな version id の連打、Secrets Manager の停止、同時リクエスト）、rotation の手順（応答の喪失後の再実行、早すぎる 2 回目、version id の使い回し）、SDK の client を差し替えた secret の読み取り、wildcard の lint と理由つきの例外、20章の CI role への適用、SCP の JSON と評価の model、IAM の伝播待ち、posture の判定、stack の assertion（既定で月額がかかるのは secret 1 つだけ、cmk と web ACL は opt-in）",
-        "en": "Token signing and verification; the key cache across a rotation (an environment with a stale cache, two rotations, a flood of made-up version ids, Secrets Manager down, concurrent requests); the rotation procedure (a rerun after a lost response, a second rotation too soon, a reused version id); reading the secret through a substituted SDK client; the wildcard lint and its reasoned exceptions; the lint applied to chapter 20's CI roles; the SCP JSON and the evaluation model; waiting for IAM propagation; the posture verdicts; stack assertions (by default only one secret has a monthly fee; the key and the web ACL are opt-in)"
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run sec:infra:synth",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-12",
-      "note": {
-        "ja": "固定した cdkd 0.296.28 で synth。認証情報なし。AihSecurity と AihSecurityWaf の template が cdk.out に出ること、-c cmk=on と -c webAclArn=... で template が変わること、形の違う webAclArn で synth が止まることを確認",
-        "en": "Synthesized with the pinned cdkd 0.296.28 and no credentials. Checked that cdk.out holds the AihSecurity and AihSecurityWaf templates, that -c cmk=on and -c webAclArn=... change the template, and that a malformed webAclArn stops the synth"
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-12",
-      "note": {
-        "ja": "この章の 2 つの template は例外なしで合格。`vp run infra:synth` のあとに全章の cdk.out を渡した結果は、本文の「本全体に当ててみる」に書いたとおり",
-        "en": "This chapter's two templates pass with no exceptions. The result of passing every chapter's cdk.out after `vp run infra:synth` is as written in the chapter's \"Running it over the whole book\""
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run dev:sec",
-      "kind": "local",
-      "status": "passed",
-      "ranAt": "2026-10-12",
-      "note": {
-        "ja": "手元の server で /health、/token、/verify を curl で確認。鍵はメモリの中だけで、AWS は呼ばない",
-        "en": "Checked /health, /token, and /verify on the local server with curl. The key exists only in memory; AWS is not called"
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "未実行。CloudFront、function URL、Secrets Manager を通した動作、デプロイ直後の 503 の有無、destroy 後に secret が残らないこと",
-        "en": "Not run. Behavior through CloudFront, the function URL, and Secrets Manager; whether a 503 appears right after a deploy; that no secret remains after destroy"
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run sec:secret:versions / sec:secret:rotate",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "未実行。PutSecretValue 後の staging label の動き、同じ version id での再実行、rotation 後に古い cache の実行環境が新しい token を受け入れること",
-        "en": "Not run. How the staging labels move after PutSecretValue, a rerun with the same version id, and an environment with a stale cache accepting new tokens after a rotation"
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "未実行。us-east-1 への web ACL の作成、distribution への関連付け、rate-based rule が実際に block を始めるまでの時間、count にした rule group の記録",
-        "en": "Not run. Creating the web ACL in us-east-1, associating it with the distribution, how long the rate-based rule takes to start blocking, and what the counted rule group records"
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run sec:infra:deploy -c cmk=on",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "未実行。customer managed key での secret の暗号化、kms:ViaService の条件つきで関数が読めること、destroy 後の鍵の状態",
-        "en": "Not run. Encrypting the secret with a customer managed key, the function reading it under the kms:ViaService condition, and the state of the key after destroy"
-      }
-    },
-    {
-      "scope": "21",
-      "command": "vp run sec:posture / sec:trail:iam",
-      "kind": "aws",
-      "status": "not-run",
-      "ranAt": null,
-      "note": {
-        "ja": "未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示",
-        "en": "Not run. The actual responses of the read APIs of six services, and the output when a permission is missing"
-      }
-    },
-    {
       "scope": "22",
       "command": "vp run test:unit (examples/22-recovery)",
       "kind": "local",
@@ -1731,6 +1533,204 @@
       "note": {
         "ja": "停止した fleet の backup と restore は未実行。bucket の copy と snapshot から戻した fleet が正しく起動するかは未確認",
         "en": "Backup and restore of a stopped fleet were not run. Whether a fleet restored from the bucket copy and the snapshots starts correctly is unconfirmed"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run test:unit (examples/17-ai)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "59 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、SSE の書式、awslambda の代役を渡した function URL のアダプター、CDK の assertion",
+        "en": "59 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, the SSE frame, the function URL adapter run with a stand-in for awslambda, and the CDK assertions"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run typecheck (examples/17-ai)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "scripts/ と infra/ を含む",
+        "en": "Includes scripts/ and infra/"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "esbuild による bundle（Docker なし）を含む。5 リソース",
+        "en": "Includes the esbuild bundle (no Docker); 5 resources"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run dev:ai + curl",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log（curl を 0.5 秒で打ち切り、durationMs は 501）、AI_FIXTURE=truncated の error イベントを確認",
+        "en": "Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway (curl cut off at 0.5 s; durationMs 501), and the error event with AI_FIXTURE=truncated"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run check:all",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-11",
+      "note": {
+        "ja": "17章を加えた状態で通過",
+        "en": "Passed with chapter 17 added"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run dev:ai (AI_BACKEND=bedrock)",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "手元のサーバーから実際の Bedrock を呼ぶ。課金される",
+        "en": "The local server calling real Bedrock; billed"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:hello / ai:test:live",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない",
+        "en": "Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:infra:diff / deploy / drift / destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "Lambda、function URL、IAM role、log group を作る",
+        "en": "Creates a Lambda function, a function URL, an IAM role, and a log group"
+      }
+    },
+    {
+      "scope": "17",
+      "command": "vp run ai:smoke / ai:logs",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "デプロイ済みの function URL が必要。課金される",
+        "en": "Needs the deployed function URL; billed"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run test:unit (examples/21-security)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "token の署名と検証、rotation をまたぐ鍵の cache（古い cache の実行環境、2 回の rotation、でたらめな version id の連打、Secrets Manager の停止、同時リクエスト）、rotation の手順（応答の喪失後の再実行、早すぎる 2 回目、version id の使い回し）、SDK の client を差し替えた secret の読み取り、wildcard の lint と理由つきの例外、20章の CI role への適用、SCP の JSON と評価の model、IAM の伝播待ち、posture の判定、stack の assertion（既定で月額がかかるのは secret 1 つだけ、cmk と web ACL は opt-in）",
+        "en": "Token signing and verification; the key cache across a rotation (an environment with a stale cache, two rotations, a flood of made-up version ids, Secrets Manager down, concurrent requests); the rotation procedure (a rerun after a lost response, a second rotation too soon, a reused version id); reading the secret through a substituted SDK client; the wildcard lint and its reasoned exceptions; the lint applied to chapter 20's CI roles; the SCP JSON and the evaluation model; waiting for IAM propagation; the posture verdicts; stack assertions (by default only one secret has a monthly fee; the key and the web ACL are opt-in)"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run sec:infra:synth",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "固定した cdkd 0.296.28 で synth。認証情報なし。AihSecurity と AihSecurityWaf の template が cdk.out に出ること、-c cmk=on と -c webAclArn=... で template が変わること、形の違う webAclArn で synth が止まることを確認",
+        "en": "Synthesized with the pinned cdkd 0.296.28 and no credentials. Checked that cdk.out holds the AihSecurity and AihSecurityWaf templates, that -c cmk=on and -c webAclArn=... change the template, and that a malformed webAclArn stops the synth"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "この章の 2 つの template は例外なしで合格。`vp run infra:synth` のあとに全章の cdk.out を渡した結果は、本文の「本全体に当ててみる」に書いたとおり",
+        "en": "This chapter's two templates pass with no exceptions. The result of passing every chapter's cdk.out after `vp run infra:synth` is as written in the chapter's \"Running it over the whole book\""
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run dev:sec",
+      "kind": "local",
+      "status": "passed",
+      "ranAt": "2026-10-12",
+      "note": {
+        "ja": "手元の server で /health、/token、/verify を curl で確認。鍵はメモリの中だけで、AWS は呼ばない",
+        "en": "Checked /health, /token, and /verify on the local server with curl. The key exists only in memory; AWS is not called"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "未実行。CloudFront、function URL、Secrets Manager を通した動作、デプロイ直後の 503 の有無、destroy 後に secret が残らないこと",
+        "en": "Not run. Behavior through CloudFront, the function URL, and Secrets Manager; whether a 503 appears right after a deploy; that no secret remains after destroy"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run sec:secret:versions / sec:secret:rotate",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "未実行。PutSecretValue 後の staging label の動き、同じ version id での再実行、rotation 後に古い cache の実行環境が新しい token を受け入れること",
+        "en": "Not run. How the staging labels move after PutSecretValue, a rerun with the same version id, and an environment with a stale cache accepting new tokens after a rotation"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "未実行。us-east-1 への web ACL の作成、distribution への関連付け、rate-based rule が実際に block を始めるまでの時間、count にした rule group の記録",
+        "en": "Not run. Creating the web ACL in us-east-1, associating it with the distribution, how long the rate-based rule takes to start blocking, and what the counted rule group records"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run sec:infra:deploy -c cmk=on",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "未実行。customer managed key での secret の暗号化、kms:ViaService の条件つきで関数が読めること、destroy 後の鍵の状態",
+        "en": "Not run. Encrypting the secret with a customer managed key, the function reading it under the kms:ViaService condition, and the state of the key after destroy"
+      }
+    },
+    {
+      "scope": "21",
+      "command": "vp run sec:posture / sec:trail:iam",
+      "kind": "aws",
+      "status": "not-run",
+      "ranAt": null,
+      "note": {
+        "ja": "未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示",
+        "en": "Not run. The actual responses of the read APIs of six services, and the output when a permission is missing"
       }
     }
   ],
@@ -1942,39 +1942,6 @@
       "resume": {
         "ja": "`aws ec2 describe-availability-zones --region ap-northeast-1` で自分のアカウントの AZ 名と AZ ID を確かめ、違っていれば `-c availabilityZones=...` で渡す。",
         "en": "Check your account's zone names and IDs with `aws ec2 describe-availability-zones --region ap-northeast-1` and pass `-c availabilityZones=...` if they differ."
-      }
-    },
-    {
-      "id": "17-live-inference",
-      "summary": {
-        "ja": "17章は実際の Bedrock を一度も呼んでいない。モデル ID（jp.amazon.nova-2-lite-v1:0 など）が東京から呼べること、実際の ConverseStream のイベントが src/converse-stream.ts の schema に合うこと、fixture の形が実物と一致することは未確認。",
-        "en": "Chapter 17 has never called real Bedrock. That the model IDs (such as jp.amazon.nova-2-lite-v1:0) can be called from Tokyo, that real ConverseStream events fit the schema in src/converse-stream.ts, and that the fixtures match the real shapes are all unconfirmed."
-      },
-      "resume": {
-        "ja": "examples/17-ai/.env を用意して vp run ai:hello、続けて vp run ai:test:live を実行する（課金される）。イベントの形が違えば schema と fixture を直す。",
-        "en": "Prepare examples/17-ai/.env, run vp run ai:hello and then vp run ai:test:live (billed). If the event shapes differ, fix the schema and the fixtures."
-      }
-    },
-    {
-      "id": "17-deployed-streaming",
-      "summary": {
-        "ja": "17章の stack はデプロイしていない。Hono の streamHandle と streamSSE が Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、streamSSE が付ける Transfer-Encoding などの header を Lambda が受け付けること、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。",
-        "en": "The chapter 17 stack has not been deployed. Unconfirmed: that Hono's streamHandle and streamSSE deliver the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda accepts the headers streamSSE sets, such as Transfer-Encoding; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url."
-      },
-      "resume": {
-        "ja": "vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。",
-        "en": "Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delta arrived), vp run ai:logs, vp run ai:infra:drift, and vp run ai:infra:destroy, in that order."
-      }
-    },
-    {
-      "id": "17-bedrock-billing-details",
-      "summary": {
-        "ja": "途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。",
-        "en": "How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region."
-      },
-      "resume": {
-        "ja": "Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。",
-        "en": "Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics."
       }
     },
     {
@@ -2539,72 +2506,6 @@
       }
     },
     {
-      "id": "21-deploy",
-      "summary": {
-        "ja": "既定の stack（CloudFront、function URL、Secrets Manager）を実環境で通していない",
-        "en": "The default stack (CloudFront, the function URL, Secrets Manager) has not been run in a real account"
-      },
-      "resume": {
-        "ja": "`vp run sec:infra:deploy` のあと、すぐに `vp run sec:smoke` を実行し、「after N refusals」の N を記録する。function URL を直接 curl して 403 になること、`vp run sec:infra:drift` の結果、`vp run sec:infra:destroy` のあとに Secrets Manager のコンソールで secret が「削除予定」としても残っていないことを確かめる",
-        "en": "After `vp run sec:infra:deploy`, run `vp run sec:smoke` immediately and record the N in \"after N refusals\". Check that a direct curl of the function URL gets 403, record the result of `vp run sec:infra:drift`, and after `vp run sec:infra:destroy` confirm in the Secrets Manager console that no secret remains, not even as scheduled for deletion"
-      }
-    },
-    {
-      "id": "21-rotation",
-      "summary": {
-        "ja": "secret の rotation を実環境で試していない",
-        "en": "Rotating the secret has not been tried in a real account"
-      },
-      "resume": {
-        "ja": "デプロイ後に `vp run sec:smoke`、`vp run sec:secret:rotate`、もう一度 `vp run sec:smoke` の順に実行する。rotation の直後に、古い key version で発行した token が検証を通ること、`sec:secret:versions` の表示が AWSCURRENT と AWSPREVIOUS になっていること、同じ `--version-id` での再実行が already-rotated になること、10 分以内の 2 回目が too-soon で止まることを記録する。AWSPREVIOUS が無い secret に GetSecretValue したときのエラー名が ResourceNotFoundException かどうかも確かめる",
-        "en": "After deploying, run `vp run sec:smoke`, `vp run sec:secret:rotate`, and `vp run sec:smoke` again. Record that a token issued with the old key version verifies right after the rotation, that `sec:secret:versions` shows AWSCURRENT and AWSPREVIOUS, that a rerun with the same `--version-id` reports already-rotated, and that a second rotation within ten minutes stops with too-soon. Also check whether GetSecretValue on a secret with no AWSPREVIOUS fails with ResourceNotFoundException"
-      }
-    },
-    {
-      "id": "21-waf",
-      "summary": {
-        "ja": "web ACL を作っていない。rate-based rule の動きも見ていない",
-        "en": "The web ACL has not been created, and the rate-based rule has not been observed"
-      },
-      "resume": {
-        "ja": "`vp run sec:waf:infra:deploy` の出力 WebAclArn を `vp run sec:infra:deploy -c webAclArn=<ARN>` に渡す。5 分間に 300 回を超えるリクエストを 1 つの IP から送り、403 が返り始めるまでの時間と回数を記録する。WAF のコンソールで AwsCommonRules が count として記録していることを確かめる。請求で usage type が Global-* か USE1-* かを確かめる。終わったら `sec:infra:deploy`（webAclArn なし）で外してから `vp run sec:waf:infra:destroy`",
-        "en": "Pass the WebAclArn output of `vp run sec:waf:infra:deploy` to `vp run sec:infra:deploy -c webAclArn=<ARN>`. Send more than 300 requests in five minutes from one IP address and record how long, and how many requests, it takes before 403s begin. Confirm in the WAF console that AwsCommonRules records matches as counts. Check on the bill whether the usage type is Global-* or USE1-*. Afterwards detach with `sec:infra:deploy` (no webAclArn), then `vp run sec:waf:infra:destroy`"
-      }
-    },
-    {
-      "id": "21-cmk",
-      "summary": {
-        "ja": "customer managed key を使う構成を実環境で試していない",
-        "en": "The customer managed key variant has not been tried in a real account"
-      },
-      "resume": {
-        "ja": "`vp run sec:infra:deploy -c cmk=on` のあと `vp run sec:smoke`。関数が kms:ViaService の条件つきの kms:Decrypt だけで secret を読めることを確かめる。`vp run sec:infra:destroy` のあと、KMS のコンソールで鍵が「削除保留中」で、7 日後に消える予定になっていること、その間の請求に鍵の料金が載るかどうかを記録する",
-        "en": "Run `vp run sec:infra:deploy -c cmk=on`, then `vp run sec:smoke`. Confirm the function reads the secret with only kms:Decrypt under the kms:ViaService condition. After `vp run sec:infra:destroy`, record that the key is pending deletion in the KMS console and due to disappear in 7 days, and whether the bill shows a key charge for that period"
-      }
-    },
-    {
-      "id": "21-iam-propagation",
-      "summary": {
-        "ja": "IAM の変更が伝わるまでの遅れを、実際には観測していない",
-        "en": "The delay before an IAM change takes effect has not been observed"
-      },
-      "resume": {
-        "ja": "デプロイ直後の `vp run sec:smoke` で refusals が 0 かどうかを数回記録する。次に、コンソールで HandlerRole の ReadSigningKey を消し、実行環境が新しくなるのを待ってから `/token` を繰り返し呼び、503 になるまでの時間と、一度 503 になったあとに 200 が混ざるかどうかを記録する。終わったら `vp run sec:infra:drift` で差を確かめ、revert する",
-        "en": "Record over several deploys whether `vp run sec:smoke` right after a deploy reports 0 refusals. Then delete ReadSigningKey from HandlerRole in the console, wait for a new execution environment, call `/token` repeatedly, and record how long it takes to get a 503 and whether a 200 appears again after the first 503. Afterwards check the difference with `vp run sec:infra:drift` and revert"
-      }
-    },
-    {
-      "id": "21-posture",
-      "summary": {
-        "ja": "`sec:posture` と `sec:trail:iam` を実アカウントで動かしていない。GuardDuty、Inspector、Config、trail、Organizations も有効にしていない",
-        "en": "`sec:posture` and `sec:trail:iam` have not been run against a real account, and GuardDuty, Inspector, Config, a trail, and Organizations have not been enabled"
-      },
-      "resume": {
-        "ja": "`vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す",
-        "en": "Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU"
-      }
-    },
-    {
       "id": "22-drill",
       "summary": {
         "ja": "22章の復旧 drill を AWS で一度も実行していない。未確認: PITR の復元にかかる時間、`LatestRestorableDateTime` の実際の遅れ、復元した table に引き継がれる設定と引き継がれない設定（削除保護と PITR を含む）、S3 で delete marker を消した後と version を上書きコピーした後の ETag・`LastModified`・通知、`ListObjectVersions` の時刻が同じ version の並び、RPO と RTO の実測値。",
@@ -2756,6 +2657,105 @@
       "resume": {
         "ja": "デプロイした API に最大のノートを 20 件作り、`curl -s <url>/notes | wc -c` が 20,480 以下であることを見る。`vp run dev:app` で SPA を開き、一覧からノートを開けることを確かめる。",
         "en": "Create 20 largest notes on a deployed API and confirm `curl -s <url>/notes | wc -c` is at most 20,480. Open the SPA with `vp run dev:app` and confirm a note opens from the list."
+      }
+    },
+    {
+      "id": "17-live-inference",
+      "summary": {
+        "ja": "17章は実際の Bedrock を一度も呼んでいない。モデル ID（jp.amazon.nova-2-lite-v1:0 など）が東京から呼べること、実際の ConverseStream のイベントが src/converse-stream.ts の schema に合うこと、fixture の形が実物と一致することは未確認。",
+        "en": "Chapter 17 has never called real Bedrock. That the model IDs (such as jp.amazon.nova-2-lite-v1:0) can be called from Tokyo, that real ConverseStream events fit the schema in src/converse-stream.ts, and that the fixtures match the real shapes are all unconfirmed."
+      },
+      "resume": {
+        "ja": "examples/17-ai/.env を用意して vp run ai:hello、続けて vp run ai:test:live を実行する（課金される）。イベントの形が違えば schema と fixture を直す。",
+        "en": "Prepare examples/17-ai/.env, run vp run ai:hello and then vp run ai:test:live (billed). If the event shapes differ, fix the schema and the fixtures."
+      }
+    },
+    {
+      "id": "17-deployed-streaming",
+      "summary": {
+        "ja": "17章の stack はデプロイしていない。この章のアダプター（src/function-url.ts）のレスポンスが Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、awslambda.HttpResponseStream.from に渡す key（statusCode、headers、cookies）を Lambda がそのとおりに読むこと、切断でレスポンスストリームへの書き込みが失敗するかどうか、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。",
+        "en": "The chapter 17 stack has not been deployed. Unconfirmed: that this chapter's adapter (src/function-url.ts) delivers the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda reads the keys passed to awslambda.HttpResponseStream.from (statusCode, headers, cookies) as written; whether a disconnect makes a write to the response stream fail; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url."
+      },
+      "resume": {
+        "ja": "vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。",
+        "en": "Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delta arrived), vp run ai:logs, vp run ai:infra:drift, and vp run ai:infra:destroy, in that order."
+      }
+    },
+    {
+      "id": "17-bedrock-billing-details",
+      "summary": {
+        "ja": "途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。",
+        "en": "How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region."
+      },
+      "resume": {
+        "ja": "Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。",
+        "en": "Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics."
+      }
+    },
+    {
+      "id": "21-deploy",
+      "summary": {
+        "ja": "既定の stack（CloudFront、function URL、Secrets Manager）を実環境で通していない",
+        "en": "The default stack (CloudFront, the function URL, Secrets Manager) has not been run in a real account"
+      },
+      "resume": {
+        "ja": "`vp run sec:infra:deploy` のあと、すぐに `vp run sec:smoke` を実行し、「after N refusals」の N を記録する。function URL を直接 curl して 403 になること、`vp run sec:infra:drift` の結果、`vp run sec:infra:destroy` のあとに Secrets Manager のコンソールで secret が「削除予定」としても残っていないことを確かめる",
+        "en": "After `vp run sec:infra:deploy`, run `vp run sec:smoke` immediately and record the N in \"after N refusals\". Check that a direct curl of the function URL gets 403, record the result of `vp run sec:infra:drift`, and after `vp run sec:infra:destroy` confirm in the Secrets Manager console that no secret remains, not even as scheduled for deletion"
+      }
+    },
+    {
+      "id": "21-rotation",
+      "summary": {
+        "ja": "secret の rotation を実環境で試していない",
+        "en": "Rotating the secret has not been tried in a real account"
+      },
+      "resume": {
+        "ja": "デプロイ後に `vp run sec:smoke`、`vp run sec:secret:rotate`、もう一度 `vp run sec:smoke` の順に実行する。rotation の直後に、古い key version で発行した token が検証を通ること、`sec:secret:versions` の表示が AWSCURRENT と AWSPREVIOUS になっていること、同じ `--version-id` での再実行が already-rotated になること、10 分以内の 2 回目が too-soon で止まることを記録する。AWSPREVIOUS が無い secret に GetSecretValue したときのエラー名が ResourceNotFoundException かどうかも確かめる",
+        "en": "After deploying, run `vp run sec:smoke`, `vp run sec:secret:rotate`, and `vp run sec:smoke` again. Record that a token issued with the old key version verifies right after the rotation, that `sec:secret:versions` shows AWSCURRENT and AWSPREVIOUS, that a rerun with the same `--version-id` reports already-rotated, and that a second rotation within ten minutes stops with too-soon. Also check whether GetSecretValue on a secret with no AWSPREVIOUS fails with ResourceNotFoundException"
+      }
+    },
+    {
+      "id": "21-waf",
+      "summary": {
+        "ja": "web ACL を作っていない。rate-based rule の動きも見ていない",
+        "en": "The web ACL has not been created, and the rate-based rule has not been observed"
+      },
+      "resume": {
+        "ja": "`vp run sec:waf:infra:deploy` の出力 WebAclArn を `vp run sec:infra:deploy -c webAclArn=<ARN>` に渡す。5 分間に 300 回を超えるリクエストを 1 つの IP から送り、403 が返り始めるまでの時間と回数を記録する。WAF のコンソールで AwsCommonRules が count として記録していることを確かめる。請求で usage type が Global-* か USE1-* かを確かめる。終わったら `sec:infra:deploy`（webAclArn なし）で外してから `vp run sec:waf:infra:destroy`",
+        "en": "Pass the WebAclArn output of `vp run sec:waf:infra:deploy` to `vp run sec:infra:deploy -c webAclArn=<ARN>`. Send more than 300 requests in five minutes from one IP address and record how long, and how many requests, it takes before 403s begin. Confirm in the WAF console that AwsCommonRules records matches as counts. Check on the bill whether the usage type is Global-* or USE1-*. Afterwards detach with `sec:infra:deploy` (no webAclArn), then `vp run sec:waf:infra:destroy`"
+      }
+    },
+    {
+      "id": "21-cmk",
+      "summary": {
+        "ja": "customer managed key を使う構成を実環境で試していない",
+        "en": "The customer managed key variant has not been tried in a real account"
+      },
+      "resume": {
+        "ja": "`vp run sec:infra:deploy -c cmk=on` のあと `vp run sec:smoke`。関数が kms:ViaService の条件つきの kms:Decrypt だけで secret を読めることを確かめる。`vp run sec:infra:destroy` のあと、KMS のコンソールで鍵が「削除保留中」で、7 日後に消える予定になっていること、その間の請求に鍵の料金が載るかどうかを記録する",
+        "en": "Run `vp run sec:infra:deploy -c cmk=on`, then `vp run sec:smoke`. Confirm the function reads the secret with only kms:Decrypt under the kms:ViaService condition. After `vp run sec:infra:destroy`, record that the key is pending deletion in the KMS console and due to disappear in 7 days, and whether the bill shows a key charge for that period"
+      }
+    },
+    {
+      "id": "21-iam-propagation",
+      "summary": {
+        "ja": "IAM の変更が伝わるまでの遅れを、実際には観測していない",
+        "en": "The delay before an IAM change takes effect has not been observed"
+      },
+      "resume": {
+        "ja": "デプロイ直後の `vp run sec:smoke` で refusals が 0 かどうかを数回記録する。次に、コンソールで HandlerRole の ReadSigningKey を消し、実行環境が新しくなるのを待ってから `/token` を繰り返し呼び、503 になるまでの時間と、一度 503 になったあとに 200 が混ざるかどうかを記録する。終わったら `vp run sec:infra:drift` で差を確かめ、revert する",
+        "en": "Record over several deploys whether `vp run sec:smoke` right after a deploy reports 0 refusals. Then delete ReadSigningKey from HandlerRole in the console, wait for a new execution environment, call `/token` repeatedly, and record how long it takes to get a 503 and whether a 200 appears again after the first 503. Afterwards check the difference with `vp run sec:infra:drift` and revert"
+      }
+    },
+    {
+      "id": "21-posture",
+      "summary": {
+        "ja": "`sec:posture` と `sec:trail:iam` を実アカウントで動かしていない。GuardDuty、Inspector、Config、trail、Organizations も有効にしていない",
+        "en": "`sec:posture` and `sec:trail:iam` have not been run against a real account, and GuardDuty, Inspector, Config, a trail, and Organizations have not been enabled"
+      },
+      "resume": {
+        "ja": "`vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す",
+        "en": "Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU"
       }
     }
   ]

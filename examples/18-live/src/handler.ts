@@ -1,4 +1,4 @@
-import { ZodError } from "zod";
+import * as v from "valibot";
 
 import { parseIvsEvent, toRecord } from "./events.ts";
 
@@ -11,12 +11,17 @@ export function handleEvent(event: unknown, now: Date, write: Output): boolean {
     write(JSON.stringify(toRecord(parseIvsEvent(event), now)));
     return true;
   } catch (error) {
-    if (!(error instanceof ZodError)) {
+    if (!v.isValiError(error)) {
       throw error;
     }
     // A retry cannot fix an unexpected shape, so log it and finish normally
     // instead of failing the invocation.
-    write(JSON.stringify({ kind: "ivs-event-unreadable", issues: error.issues, event }));
+    // Where and why, not Valibot's whole issue: each one carries a copy of the event.
+    const issues = error.issues.map((issue) => ({
+      path: v.getDotPath(issue) ?? "",
+      message: issue.message,
+    }));
+    write(JSON.stringify({ kind: "ivs-event-unreadable", issues, event }));
     return false;
   }
 }

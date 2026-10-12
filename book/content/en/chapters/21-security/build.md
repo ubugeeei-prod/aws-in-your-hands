@@ -27,6 +27,12 @@ It reports six things.
 
 In addition, a policy it could not read does not pass. It is reported as `unreadable`, so that a policy in an unknown shape is never judged to be fine.
 
+Reading the template follows the same idea.
+
+<<< @/examples/21-security/src/json-object.ts{json-object}
+
+Valibot's `v.object` and `v.record` take an array as an object. Left alone, that would let `[]` pass as a template with no resources. `v.record` also leaves the keys `__proto__`, `prototype`, and `constructor` out of its result without raising an error. `constructor` is a valid logical ID, so a role with that name would be the one role that passes unchecked. So the code refuses an array, and takes out every key with `Object.entries` before checking them.
+
 `Deny` statements are not checked, because a `*` in a `Deny` is usually intended.
 
 ### Exceptions, with reasons
@@ -103,9 +109,11 @@ This is the adapter that connects to Secrets Manager.
 
 The adapter takes care over three points.
 
-First, the response goes through a Zod schema, because the SDK's type says only `SecretString?: string` and guarantees neither that the content is JSON nor that it has a `key`.
+First, the response is checked against a schema, because the SDK's type says only `SecretString?: string` and guarantees neither that the content is JSON nor that it has a `key`.
 
 <<< @/examples/21-security/src/secret-source.ts{payload}
+
+The key's length is counted in characters. `v.minLength` counts UTF-16 units, so 16 emoji would pass as 32.
 
 The error messages leave the value out. A message like "value is not JSON: `<value>`" would put the value in your logs. The tests feed in malformed values and check that the error text does not contain them.
 

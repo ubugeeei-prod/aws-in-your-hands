@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { type Note, noteSchema } from "@aih/example-05-dynamodb/src/contract.ts";
 import {
   decodeCursor,
@@ -119,7 +121,7 @@ export class TableNoteRepository implements NoteRepository, NoteVersionStore {
   // No `await` between a read and the write that depends on it: one step, as a condition is in DynamoDB.
   #read(owner: string, id: string): Note | undefined {
     const item = this.#table.get(ownerKey(owner), noteKey(id));
-    return item === undefined ? undefined : noteSchema.parse(strip(item));
+    return item === undefined ? undefined : v.parse(noteSchema, strip(item));
   }
 
   async get(owner: string, id: string) {
@@ -130,7 +132,7 @@ export class TableNoteRepository implements NoteRepository, NoteVersionStore {
     const after = options.cursor === undefined ? undefined : decodeCursor(options.cursor);
     const mine = this.#table
       .query(ownerKey(owner), "NOTE#")
-      .map((item) => noteSchema.parse(strip(item)))
+      .map((item) => v.parse(noteSchema, strip(item)))
       .toReversed()
       .filter((note) => after === undefined || note.id < after);
     const notes = mine.slice(0, options.limit);
@@ -196,13 +198,13 @@ export class TableAttachmentRepository implements AttachmentRepository {
 
   async get(owner: string, noteId: string, id: string) {
     const item = this.#table.get(ownerKey(owner), attachmentKey(noteId, id));
-    return item === undefined ? undefined : attachmentSchema.parse(strip(item));
+    return item === undefined ? undefined : v.parse(attachmentSchema, strip(item));
   }
 
   async listByNote(owner: string, noteId: string) {
     return this.#table
       .query(ownerKey(owner), attachmentKey(noteId, ""))
-      .map((item) => attachmentSchema.parse(strip(item)));
+      .map((item) => v.parse(attachmentSchema, strip(item)));
   }
 
   async delete(owner: string, noteId: string, id: string) {
@@ -244,7 +246,7 @@ export class TableInspectionRepository implements InspectionRepository {
 
   #read(owner: string, noteId: string, attachmentId: string): Inspection | undefined {
     const item = this.#table.get(ownerKey(owner), inspectionKey(noteId, attachmentId));
-    return item === undefined ? undefined : inspectionSchema.parse(strip(item));
+    return item === undefined ? undefined : v.parse(inspectionSchema, strip(item));
   }
 
   async get(owner: string, noteId: string, attachmentId: string) {

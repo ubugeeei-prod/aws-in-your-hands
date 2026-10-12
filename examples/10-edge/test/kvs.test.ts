@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -15,16 +16,16 @@ const data = (overrides: Partial<EdgeData> = {}): unknown => ({
   ...overrides,
 });
 const issues = (input: unknown): string[] => {
-  const result = edgeDataSchema.safeParse(input);
+  const result = v.safeParse(edgeDataSchema, input);
   return result.success
     ? []
-    : result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    : result.issues.map((issue) => `${v.getDotPath(issue) ?? ""}: ${issue.message}`);
 };
 
 describe("edge data", () => {
   it("accepts the shape the function reads", () => {
     expect(issues(data())).toEqual([]);
-    expect([...toEntries(edgeDataSchema.parse(data()))]).toEqual([
+    expect([...toEntries(v.parse(edgeDataSchema, data()))]).toEqual([
       ["flag:maintenance", "off"],
       ["flag:new-home", "off"],
       ["redirect:/plans", '{"to":"/pricing/","status":301}'],

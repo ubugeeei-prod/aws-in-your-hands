@@ -1,28 +1,28 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type NotificationState, notificationStates, suppressionReasons } from "./contract.ts";
 
 // #region records
-export const notificationRecordSchema = z.object({
-  notificationId: z.string(),
-  to: z.string(),
-  fingerprint: z.string(),
-  state: z.enum(notificationStates),
-  claimedAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  messageId: z.string().optional(),
+export const notificationRecordSchema = v.object({
+  notificationId: v.string(),
+  to: v.string(),
+  fingerprint: v.string(),
+  state: v.picklist(notificationStates),
+  claimedAt: v.pipe(v.string(), v.isoTimestamp()),
+  updatedAt: v.pipe(v.string(), v.isoTimestamp()),
+  messageId: v.optional(v.string()),
   /** Unix seconds. DynamoDB deletes the record some time after this. */
-  expiresAt: z.number().int(),
+  expiresAt: v.pipe(v.number(), v.integer()),
 });
-export type NotificationRecord = z.infer<typeof notificationRecordSchema>;
+export type NotificationRecord = v.InferOutput<typeof notificationRecordSchema>;
 
-export const suppressionSchema = z.object({
-  address: z.string(),
-  reason: z.enum(suppressionReasons),
-  suppressedAt: z.iso.datetime(),
-  feedbackId: z.string(),
+export const suppressionSchema = v.object({
+  address: v.string(),
+  reason: v.picklist(suppressionReasons),
+  suppressedAt: v.pipe(v.string(), v.isoTimestamp()),
+  feedbackId: v.string(),
 });
-export type Suppression = z.infer<typeof suppressionSchema>;
+export type Suppression = v.InferOutput<typeof suppressionSchema>;
 // #endregion records
 
 /** Addresses compare without case here. Suppressing one address too many beats mailing one that bounced. */

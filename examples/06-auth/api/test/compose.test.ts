@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { composeApp } from "../src/compose.ts";
@@ -15,21 +16,23 @@ describe("composeApp", () => {
       createLocalAuthenticator(secret),
     );
     const create = async (user: string) =>
-      app.request("/notes", {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${await signLocalToken(secret, user)}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ title: "n", body: "" }),
-      });
+      app(
+        new Request("http://api.test/notes", {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${await signLocalToken(secret, user)}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ title: "n", body: "" }),
+        }),
+      );
 
     for (let count = 0; count < MAX_NOTES_PER_OWNER; count++) {
       expect((await create("alice")).status).toBe(201);
     }
     const refused = await create("alice");
     expect(refused.status).toBe(409);
-    expect(errorSchema.parse(await refused.json()).error.code).toBe("quota_exceeded");
+    expect(v.parse(errorSchema, await refused.json()).error.code).toBe("quota_exceeded");
     expect((await create("bob")).status).toBe(201);
   });
 });

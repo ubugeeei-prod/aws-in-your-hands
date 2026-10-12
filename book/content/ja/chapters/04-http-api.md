@@ -1,6 +1,6 @@
 ---
 title: "04 HTTP API: Lambda と API Gateway HTTP API"
-revision: 6
+revision: 7
 ---
 
 # 04 HTTP API: Lambda と API Gateway HTTP API
@@ -36,14 +36,14 @@ group api: API Gateway HTTP API (ap-northeast-1) = health, notes, note, other
 ```
 
 ```figure
-caption: Lambda 関数の中では、Hono のアプリが NoteService を呼び、NoteService がメモリ上のリポジトリにノートを置きます。
+caption: Lambda 関数の中では、アプリが NoteService を呼び、NoteService がメモリ上のリポジトリにノートを置きます。
 direction: right
-node hono: Hono app
+node app: アプリ | Request を受けて Response を返す関数
 node service: NoteService
 node repo: InMemoryNoteRepository | 実行環境ごと
-edge hono -> service
+edge app -> service
 edge service -> repo
-group fn: Lambda 関数 = hono, service, repo
+group fn: Lambda 関数 = app, service, repo
 ```
 
 使うサービスは 3 つです。API Gateway が入口で HTTPS を受け、定義しておいたルート（route）に合うリクエストだけを Lambda に渡します。Lambda はあなたのコードを動かす場所で、リクエストが来たときだけ起動し、終わると待機に戻ります。常に動いているサーバーはありません。Lambda が書き出したログは CloudWatch Logs に溜まります。
@@ -81,13 +81,21 @@ Lambda は使われていない間の料金が 0 で、ネットワークを設�
 
 <<< @/examples/04-http-api/src/contract.ts{note}
 
-サーバーとクライアントは、同じこの定義を使います。サーバーは届いたリクエストを、クライアントは返ってきたレスポンスを、このスキーマで検証します。TypeScript の型も、ここから `z.infer` で作ります。定義が 1 つしかないので、サーバーだけ直してクライアントを直し忘れることがありません。
+スキーマは Valibot で書きます。Valibot は、`v.string()` のような小さな関数を組み合わせてスキーマを作るライブラリです。`v.pipe` は、並べた検査と変換を書いた順に通します。`createNoteSchema` の `title` なら、文字列であることを確かめ、`v.trim()` で前後の空白を落としてから、長さが 1 文字以上 120 文字以下であることを確かめます。`v.optional` の 2 つ目の引数は、項目がなかったときに入れる値です。
+
+`createdAt` の検査だけは、自分で書いています。
+
+<<< @/examples/04-http-api/src/timestamp.ts{timestamp}
+
+Valibot の `v.isoTimestamp()` は、`+09:00` のようなオフセットも、`T` の代わりの空白も、2 月 30 日も通します。保存した時刻は、あとで読み直して比べたり引き算したりするものなので、書き方を 1 つに決めておきます。受け付けるのは、`Date` の `toISOString()` が書く形（UTC で、末尾が `Z`）と、そこからミリ秒を省いた形だけです。組み込みの検査が思ったより緩いことはほかにもあり、この先の章でも、差が効くところは同じように検査を足します。
+
+サーバーとクライアントは、同じこの定義を使います。サーバーは届いたリクエストを、クライアントは返ってきたレスポンスを、このスキーマで検証します。TypeScript の型も、ここから `v.InferOutput` で作ります。定義が 1 つしかないので、サーバーだけ直してクライアントを直し忘れることがありません。
 
 一覧の形は、ノート 1 件の形とは別に決めます。
 
 <<< @/examples/04-http-api/src/contract.ts{list}
 
-一覧に載せるのは ID と題名と作成時刻だけで、本文は載せません。本文が要るときは `GET /notes/:id` で 1 件を取ります。件数も、新しい順に 20 件までです。本文は 1 件で 10,000 文字まで入るので、持っているノートを本文ごと全部返すと、1 回のレスポンスが数 MB になります。要約だけを 20 件までにすれば、題名をどう書いても 20 KiB を超えません。この切り詰めは `createNoteService` の `list` がしていて、スキーマを strict にしてあるので、本文が紛れ込んだレスポンスはクライアントの検証で落ちます。
+一覧に載せるのは ID と題名と作成時刻だけで、本文は載せません。本文が要るときは `GET /notes/:id` で 1 件を取ります。件数も、新しい順に 20 件までです。本文は 1 件で 10,000 文字まで入るので、持っているノートを本文ごと全部返すと、1 回のレスポンスが数 MB になります。要約だけを 20 件までにすれば、題名をどう書いても 20 KiB を超えません。この切り詰めは `createNoteService` の `list` がしています。`v.object` は定義にない項目を黙って落としますが、一覧のスキーマに使った `v.strictObject` は、定義にない項目があると失敗にします。そのため、本文が紛れ込んだレスポンスはクライアントの検証で落ちます。
 
 21 件目より古いノートは一覧に出なくなりますが、ID がわかっていれば読めますし、消せます。一覧の続きを取る方法は、05章で足します。
 
@@ -96,41 +104,3 @@ Lambda は使われていない間の料金が 0 で、ネットワークを設�
 <<< @/examples/04-http-api/src/contract.ts{error}
 
 呼ぶ側は、メッセージの文章を読み解かなくても `code` で分岐できます。`requestId` は、あとでログを探すときの手がかりになります。
-
-## アプリを書く
-
-<!-- section: 04.app -->
-
-HTTP の処理には Hono を使います。Hono は Web 標準の `Request` と `Response` で動く小さなフレームワークで、同じアプリが Node.js でも Lambda でもそのまま動きます。Workers で使ったことがある人も多いと思います。
-
-<<< @/examples/04-http-api/src/app.ts{app}
-
-このアプリは、必要なものをすべて引数で受け取ります。時刻、ID の生成、ログの出力先、ノートの保存先がそうで、`createApp` の中では `Date.now()` にも `process.env` にも直接触りません。テストでは決まった値を、本番では本物を渡せます。
-
-リクエストは実行時に確かめます。TypeScript の型は実行時には残っていないので、型が `CreateNote` だからといって、届いた JSON がその形をしているとは限りません。届いた JSON は `validator` がスキーマと照合し、合わなければ、どの項目が合わないかを添えて 400 を返します。
-
-想定していない例外は、理由を外に出しません。`onError` がログに書き、呼んだ側には `requestId` だけを返します。スタックトレースをレスポンスに載せると、アプリの内部の作りを外に教えることになるからです。
-
-ノートの保存先はインターフェースにしてあります。
-
-<<< @/examples/04-http-api/src/notes.ts{repository}
-
-いまの実装はただの `Map` です。`Map` はメモリの上にあるので、誰でも `POST` できる API でそのままにしておくと、入れられただけ膨らみます。そこで 100 件で打ち切り、101 件目には `NoteLimitError` を投げます。アプリの `onError` は、この例外を 409 と `quota_exceeded` にして返します。429 ではなく 409 にしたのは、待っても空きはできず、1 件消せば空くからです。
-
-05章で保存先を DynamoDB に差し替えますが、このインターフェースはそのまま使います。
-
-本物の時刻、乱数、環境変数に触るのは、次の 1 か所だけです。
-
-<<< @/examples/04-http-api/src/compose.ts{compose}
-
-## 設定は起動時に確かめる
-
-<!-- section: 04.env -->
-
-環境変数も、型の外から来る値です。`process.env` の型は、どの変数も `string` か `undefined` だと言っているだけなので、必要な変数が入っているかどうかは型からはわかりません。
-
-<<< @/examples/04-http-api/src/env.ts{env}
-
-環境変数は、起動するときに一度だけ確かめます。足りなければ、最初の呼び出しが、変数の名前を含むメッセージで失敗します。特定の条件のときだけ `undefined` を読んで壊れるより、ずっと早く原因にたどり着けます。
-
-ここに置いているのは設定で、秘密の値ではありません。Lambda の環境変数は、コンソールで関数の設定を見られる人なら誰でも読めます。API キーのような秘密の値は環境変数に直接置かず、Secrets Manager などから実行時に取得します。この章のサンプルには秘密の値がないので、取得するコードもありません（[21章](/ja/chapters/21-security.md)で扱います）。

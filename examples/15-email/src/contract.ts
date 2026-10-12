@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region header-safe
 /** CR, LF and the other control characters end a mail header and start a new one. */
@@ -14,25 +14,26 @@ export function hasControlCharacter(value: string): boolean {
 
 // Checked before trim(), so a trailing line break is refused rather than quietly dropped.
 const headerText = (max: number) =>
-  z
-    .string()
-    .refine(
+  v.pipe(
+    v.string(),
+    v.check(
       (value) => !hasControlCharacter(value),
       "must not contain line breaks or control characters",
-    )
-    .trim()
-    .min(1)
-    .max(max);
+    ),
+    v.trim(),
+    v.minLength(1),
+    v.maxLength(max),
+  );
 
 // One bare address. "Name <a@example.com>", lists and line breaks do not parse as one.
-export const emailAddressSchema = z.email().max(254);
+export const emailAddressSchema = v.pipe(v.string(), v.email(), v.maxLength(254));
 // #endregion header-safe
 
 // #region request
 // Becomes an SES message tag: letters, digits, _ and - only.
-const idSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
+const idSchema = v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{1,64}$/));
 
-export const shareNotificationSchema = z.object({
+export const shareNotificationSchema = v.object({
   /** The caller's name for this one notification. Sending it twice sends one mail. */
   notificationId: idSchema,
   to: emailAddressSchema,
@@ -40,7 +41,7 @@ export const shareNotificationSchema = z.object({
   noteId: idSchema,
   noteTitle: headerText(120),
 });
-export type ShareNotification = z.infer<typeof shareNotificationSchema>;
+export type ShareNotification = v.InferOutput<typeof shareNotificationSchema>;
 // #endregion request
 
 // #region states
@@ -59,37 +60,37 @@ export type SuppressionReason = (typeof suppressionReasons)[number];
 // #endregion states
 
 // #region result
-export const shareNotificationResultSchema = z.discriminatedUnion("status", [
+export const shareNotificationResultSchema = v.variant("status", [
   // SES took the message. Whether it arrives is reported later, as an event.
-  z.object({ status: z.literal("accepted"), notificationId: idSchema, messageId: z.string() }),
+  v.object({ status: v.literal("accepted"), notificationId: idSchema, messageId: v.string() }),
   // Already claimed by an earlier request. Nothing was sent this time.
-  z.object({
-    status: z.literal("duplicate"),
+  v.object({
+    status: v.literal("duplicate"),
     notificationId: idSchema,
-    state: z.enum(notificationStates),
+    state: v.picklist(notificationStates),
   }),
-  z.object({
-    status: z.literal("suppressed"),
+  v.object({
+    status: v.literal("suppressed"),
     notificationId: idSchema,
-    reason: z.enum(suppressionReasons),
+    reason: v.picklist(suppressionReasons),
   }),
 ]);
-export type ShareNotificationResult = z.infer<typeof shareNotificationResultSchema>;
+export type ShareNotificationResult = v.InferOutput<typeof shareNotificationResultSchema>;
 // #endregion result
 
-export const notificationStatusSchema = z.object({
+export const notificationStatusSchema = v.object({
   notificationId: idSchema,
-  state: z.enum(notificationStates),
+  state: v.picklist(notificationStates),
   to: emailAddressSchema,
-  claimedAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  messageId: z.string().optional(),
+  claimedAt: v.pipe(v.string(), v.isoTimestamp()),
+  updatedAt: v.pipe(v.string(), v.isoTimestamp()),
+  messageId: v.optional(v.string()),
 });
 
-export const healthSchema = z.object({
-  status: z.literal("ok"),
-  stage: z.string(),
-  mode: z.enum(["local", "aws"]),
+export const healthSchema = v.object({
+  status: v.literal("ok"),
+  stage: v.string(),
+  mode: v.picklist(["local", "aws"]),
 });
 
 // #region error
@@ -106,13 +107,13 @@ export const errorCodes = [
   "internal",
 ] as const;
 
-export const errorSchema = z.object({
-  error: z.object({
-    code: z.enum(errorCodes),
-    message: z.string(),
-    requestId: z.string(),
-    issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
+export const errorSchema = v.object({
+  error: v.object({
+    code: v.picklist(errorCodes),
+    message: v.string(),
+    requestId: v.string(),
+    issues: v.optional(v.array(v.object({ path: v.string(), message: v.string() }))),
   }),
 });
-export type ErrorBody = z.infer<typeof errorSchema>;
+export type ErrorBody = v.InferOutput<typeof errorSchema>;
 // #endregion error

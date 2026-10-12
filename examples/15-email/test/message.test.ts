@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { emailAddressSchema, shareNotificationSchema } from "../src/contract.ts";
@@ -16,13 +17,17 @@ describe("header injection", () => {
 
   for (const value of injections) {
     it(`refuses ${JSON.stringify(value)} as a note title or a sender name`, () => {
-      expect(shareNotificationSchema.safeParse({ ...input, noteTitle: value }).success).toBe(false);
-      expect(shareNotificationSchema.safeParse({ ...input, sharedBy: value }).success).toBe(false);
+      expect(v.safeParse(shareNotificationSchema, { ...input, noteTitle: value }).success).toBe(
+        false,
+      );
+      expect(v.safeParse(shareNotificationSchema, { ...input, sharedBy: value }).success).toBe(
+        false,
+      );
     });
   }
 
   it("accepts one address and nothing that could carry a second", () => {
-    expect(emailAddressSchema.safeParse("recipient@example.com").success).toBe(true);
+    expect(v.safeParse(emailAddressSchema, "recipient@example.com").success).toBe(true);
     for (const value of [
       "recipient@example.com\r\nBcc: attacker@example.com",
       "recipient@example.com, attacker@example.com",
@@ -31,16 +36,16 @@ describe("header injection", () => {
       "recipient@example.com attacker@example.com",
       "recipient@example.com\n",
     ]) {
-      expect(emailAddressSchema.safeParse(value).success, value).toBe(false);
+      expect(v.safeParse(emailAddressSchema, value).success, value).toBe(false);
     }
   });
 
   it("refuses an ID that would not survive as an SES message tag", () => {
-    expect(shareNotificationSchema.safeParse({ ...input, notificationId: "share 1" }).success).toBe(
-      false,
-    );
     expect(
-      shareNotificationSchema.safeParse({ ...input, notificationId: "a".repeat(65) }).success,
+      v.safeParse(shareNotificationSchema, { ...input, notificationId: "share 1" }).success,
+    ).toBe(false);
+    expect(
+      v.safeParse(shareNotificationSchema, { ...input, notificationId: "a".repeat(65) }).success,
     ).toBe(false);
   });
 

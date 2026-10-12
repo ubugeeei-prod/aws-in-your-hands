@@ -3,11 +3,12 @@ import type { GetObjectCommand } from "@aws-sdk/client-s3";
 import { NoSuchKey, S3ServiceException } from "@aws-sdk/client-s3";
 import type { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { DynamoDbInspectionRepository } from "../src/dynamodb-inspection-repository.ts";
 import { parseFunctionEnv, parseLocalQueueEnv } from "../src/env.ts";
-import type { Inspection } from "../src/inspection.ts";
+import { type Inspection, inspectionSchema } from "../src/inspection.ts";
 import { S3ObjectReader } from "../src/s3-object-reader.ts";
 
 // These pin the requests the adapters send. Whether DynamoDB and S3 answer
@@ -145,6 +146,42 @@ describe("S3ObjectReader requests", () => {
   });
 });
 
+describe("a stored inspection", () => {
+  const reads = (change: Record<string, unknown>): boolean =>
+    v.safeParse(inspectionSchema, { ...inspection, ...change }).success;
+
+  it("is read back as it was written", () => {
+    expect(v.parse(inspectionSchema, inspection)).toEqual(inspection);
+    expect(reads({ inspectedAt: "2026-10-12T00:00:00Z" })).toBe(true);
+    expect(reads({ inspectedAt: "2024-02-29T00:00:00.000Z" })).toBe(true);
+  });
+
+  it.each([
+    ["an offset in place of Z", { inspectedAt: "2026-10-12T09:00:00+09:00" }],
+    ["a space in place of T", { inspectedAt: "2026-10-12 00:00:00Z" }],
+    ["no seconds", { inspectedAt: "2026-10-12T00:00Z" }],
+    ["a day that does not exist", { inspectedAt: "2026-02-30T00:00:00Z" }],
+    ["February 29 in a common year", { inspectedAt: "2026-02-29T00:00:00Z" }],
+    ["a size no object has", { size: 1e300 }],
+    ["an endless size", { size: Infinity }],
+    ["a negative size", { size: -1 }],
+    ["a fraction of a pixel", { width: 1.5 }],
+    ["no pixels", { height: 0 }],
+    ["a sequencer that was not normalized", { sequencer: "55AED6DCD90281E5" }],
+    ["a reason this worker never gives", { reason: "too_big" }],
+    ["null where a field is left out", { reason: null }],
+  ])("is refused with %s", (_name, change) => {
+    expect(reads(change)).toBe(false);
+  });
+
+  it("is refused by the repository too, not handed on", async () => {
+    const { repository } = table(() => ({
+      Item: { pk: "OWNER#u1", sk: "INSPECTION#n1#a1", ...inspection, size: 1e300 },
+    }));
+    await expect(repository.get("u1", "n1", "a1")).rejects.toThrow();
+  });
+});
+
 describe("environment", () => {
   it("names what a function is missing", () => {
     expect(() => parseFunctionEnv({ TABLE_NAME: "notes" })).toThrow("UPLOADS_BUCKET");
@@ -162,5 +199,13 @@ describe("environment", () => {
     expect(() => parseLocalQueueEnv({ LOCAL_QUEUE_MAX_RECEIVE_COUNT: "0" })).toThrow(
       "LOCAL_QUEUE_MAX_RECEIVE_COUNT",
     );
+    expect(parseLocalQueueEnv({ LOCAL_QUEUE_VISIBILITY_SECONDS: "30" })).toMatchObject({
+      LOCAL_QUEUE_VISIBILITY_SECONDS: 30,
+    });
+    for (const value of ["", "five", "1.5", "601", "Infinity"]) {
+      expect(() => parseLocalQueueEnv({ LOCAL_QUEUE_VISIBILITY_SECONDS: value })).toThrow(
+        "LOCAL_QUEUE_VISIBILITY_SECONDS",
+      );
+    }
   });
 });

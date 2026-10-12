@@ -1,23 +1,19 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region address
+/** Where the request came from, as the platform saw it. Never read from a header. */
+export type Caller = { sourceAddress: string | undefined };
+
 // On Lambda, API Gateway writes the address it saw into the event. No header can change it.
-const lambdaEnvSchema = z.object({
-  requestContext: z.object({ http: z.object({ sourceIp: z.string() }) }),
-});
-// On the development server, the other end of the socket.
-const nodeEnvSchema = z.object({
-  incoming: z.object({ socket: z.object({ remoteAddress: z.string() }) }),
+// On the development server it is the other end of the socket: see dev.ts.
+const eventSchema = v.object({
+  requestContext: v.object({ http: v.object({ sourceIp: v.string() }) }),
 });
 
-/** Where the request came from, as the platform saw it. Never read from a header. */
-export function sourceAddressOf(env: unknown): string | undefined {
-  const onLambda = lambdaEnvSchema.safeParse(env);
-  if (onLambda.success) {
-    return onLambda.data.requestContext.http.sourceIp;
-  }
-  const onNode = nodeEnvSchema.safeParse(env);
-  return onNode.success ? onNode.data.incoming.socket.remoteAddress : undefined;
+/** The address in an API Gateway event, or nothing when the event does not carry one. */
+export function sourceAddressOf(event: unknown): string | undefined {
+  const parsed = v.safeParse(eventSchema, event);
+  return parsed.success ? parsed.output.requestContext.http.sourceIp : undefined;
 }
 // #endregion address
 
@@ -25,8 +21,8 @@ export function sourceAddressOf(env: unknown): string | undefined {
 /** Everyone whose address is missing or unreadable shares this one counter: stricter, never looser. */
 export const UNKNOWN_CALLER = "unknown";
 
-const ipv4 = z.ipv4();
-const ipv6 = z.ipv6();
+const ipv4 = v.pipe(v.string(), v.ipv4());
+const ipv6 = v.pipe(v.string(), v.ipv6());
 const MAPPED_IPV4 = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i;
 
 /** The first 64 bits. One network hands a caller that many addresses, so they count as one. */
@@ -52,10 +48,10 @@ function ipv6Network(address: string): string {
 export function rateSubject(address: string | undefined): string {
   const mapped = address === undefined ? null : MAPPED_IPV4.exec(address);
   const plain = mapped?.[1] ?? address;
-  if (ipv4.safeParse(plain).success) {
+  if (v.is(ipv4, plain)) {
     return `ip4-${plain}`;
   }
-  if (ipv6.safeParse(plain).success && plain !== undefined) {
+  if (v.is(ipv6, plain)) {
     return `ip6-${ipv6Network(plain)}`;
   }
   return UNKNOWN_CALLER;

@@ -1,5 +1,6 @@
-import { z } from "zod";
+import * as v from "valibot";
 
+import { utcTimestamp } from "@aih/example-04-http-api/src/timestamp.ts";
 import { errorCodes as noteErrorCodes, noteSchema } from "@aih/example-06-auth/api/src/contract.ts";
 
 // #region limits
@@ -13,42 +14,53 @@ export const MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY = 100;
 // #endregion limits
 
 // #region upload
+// v.url() alone would accept "javascript:alert(1)". One of these ends up in an <img>.
+const httpUrl = v.pipe(
+  v.string(),
+  v.url(),
+  v.regex(/^https?:\/\//, "Must be an http or https URL."),
+);
+const timestamp = utcTimestamp;
+const positiveInteger = v.pipe(v.number(), v.safeInteger(), v.minValue(1));
+const id = v.pipe(v.string(), v.minLength(1));
+
 // The caller chooses the type of the image and nothing else. Not the key, not
 // the bucket, not the size limit.
-export const uploadRequestSchema = z.object({ contentType: z.enum(IMAGE_TYPES) });
-export type UploadRequest = z.infer<typeof uploadRequestSchema>;
+export const uploadRequestSchema = v.object({ contentType: v.picklist(IMAGE_TYPES) });
+export type UploadRequest = v.InferOutput<typeof uploadRequestSchema>;
 
-export const uploadPermitSchema = z.object({
-  attachmentId: z.string().min(1),
+export const uploadPermitSchema = v.object({
+  attachmentId: id,
   /** Sent as multipart/form-data: every field as given, then the file as the last field. */
-  upload: z.object({
-    url: z.url({ protocol: /^https?$/ }),
-    fields: z.record(z.string(), z.string()),
+  upload: v.object({
+    url: httpUrl,
+    fields: v.record(v.string(), v.string()),
   }),
-  maxBytes: z.number().int().positive(),
-  expiresAt: z.iso.datetime(),
+  maxBytes: positiveInteger,
+  expiresAt: timestamp,
 });
-export type UploadPermit = z.infer<typeof uploadPermitSchema>;
+export type UploadPermit = v.InferOutput<typeof uploadPermitSchema>;
 // #endregion upload
 
 // #region attachment
-export const attachmentSchema = z.object({
-  id: z.string().min(1),
-  noteId: z.string().min(1),
-  contentType: z.enum(IMAGE_TYPES),
-  size: z.number().int().positive(),
-  createdAt: z.iso.datetime(),
+export const attachmentSchema = v.object({
+  id,
+  noteId: id,
+  contentType: v.picklist(IMAGE_TYPES),
+  size: positiveInteger,
+  createdAt: timestamp,
 });
-export type Attachment = z.infer<typeof attachmentSchema>;
+export type Attachment = v.InferOutput<typeof attachmentSchema>;
 
-export const attachmentViewSchema = attachmentSchema.extend({
+export const attachmentViewSchema = v.object({
+  ...attachmentSchema.entries,
   /** Works for anyone who holds it, without signing in, until `urlExpiresAt`. */
-  url: z.url({ protocol: /^https?$/ }),
-  urlExpiresAt: z.iso.datetime(),
+  url: httpUrl,
+  urlExpiresAt: timestamp,
 });
-export type AttachmentView = z.infer<typeof attachmentViewSchema>;
+export type AttachmentView = v.InferOutput<typeof attachmentViewSchema>;
 
-export const attachmentListSchema = z.object({ attachments: z.array(attachmentViewSchema) });
+export const attachmentListSchema = v.object({ attachments: v.array(attachmentViewSchema) });
 // #endregion attachment
 
 // #region error
@@ -63,14 +75,14 @@ export const errorCodes = [
   "upload_quota_exceeded",
 ] as const;
 
-export const errorSchema = z.object({
-  error: z.object({
-    code: z.enum(errorCodes),
-    message: z.string(),
-    requestId: z.string(),
-    issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
-    current: noteSchema.optional(),
+export const errorSchema = v.object({
+  error: v.object({
+    code: v.picklist(errorCodes),
+    message: v.string(),
+    requestId: v.string(),
+    issues: v.optional(v.array(v.object({ path: v.string(), message: v.string() }))),
+    current: v.optional(noteSchema),
   }),
 });
-export type ErrorBody = z.infer<typeof errorSchema>;
+export type ErrorBody = v.InferOutput<typeof errorSchema>;
 // #endregion error

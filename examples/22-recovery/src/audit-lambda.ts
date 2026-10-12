@@ -1,7 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { S3Client } from "@aws-sdk/client-s3";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Audit, audit } from "./audit.ts";
 import { DynamoDbTable } from "./dynamodb-table.ts";
@@ -10,9 +10,13 @@ import { S3VersionedBucket } from "./s3-versioned-bucket.ts";
 // #region handler
 // Which table "the" table is comes from the environment, and from nowhere
 // else. After a restore, changing this one value is the cutover.
-const env = z
-  .object({ TABLE_NAME: z.string().min(3), UPLOADS_BUCKET: z.string().min(3) })
-  .parse(process.env);
+const env = v.parse(
+  v.object({
+    TABLE_NAME: v.pipe(v.string(), v.minLength(3)),
+    UPLOADS_BUCKET: v.pipe(v.string(), v.minLength(3)),
+  }),
+  process.env,
+);
 
 const table = new DynamoDbTable(
   DynamoDBDocumentClient.from(new DynamoDBClient({})),

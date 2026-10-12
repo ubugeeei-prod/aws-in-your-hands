@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { type EventRecord, eventRecordSchema } from "./events.ts";
 
 /**
@@ -19,9 +21,9 @@ export function parseLoggedEvents(messages: string[]): EventRecord[] {
     } catch {
       continue;
     }
-    const parsed = eventRecordSchema.safeParse(json);
-    if (parsed.success && !byId.has(parsed.data.eventId)) {
-      byId.set(parsed.data.eventId, parsed.data);
+    const parsed = v.safeParse(eventRecordSchema, json);
+    if (parsed.success && !byId.has(parsed.output.eventId)) {
+      byId.set(parsed.output.eventId, parsed.output);
     }
   }
   return [...byId.values()].toSorted((a, b) => a.eventTime.localeCompare(b.eventTime));

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Cidr, containsCidr, parseCidr } from "./cidr.ts";
 
@@ -34,28 +34,41 @@ const commaSeparated = (value: unknown): unknown =>
     : value;
 
 // #region schema
-export const networkConfigSchema = z
-  .object({
-    cidr: z.string().default("10.20.0.0/16"),
+// A number in cdk.json, a string after `-c subnetPrefix=20`. Number("abc") is NaN, which v.number() refuses.
+const numeric = v.pipe(v.union([v.number(), v.string()]), v.transform(Number), v.number());
+
+export const networkConfigSchema = v.pipe(
+  v.object({
+    cidr: v.optional(v.string(), "10.20.0.0/16"),
     // Zone names, not zone IDs: the same name can be a different building in another account.
-    availabilityZones: z
-      .preprocess(
-        commaSeparated,
-        z
-          .array(z.string().regex(/^ap-northeast-1[a-z]$/))
-          .min(2)
-          .max(4),
-      )
-      .default(["ap-northeast-1a", "ap-northeast-1c"]),
-    subnetPrefix: z.coerce.number().int().min(17).max(28).default(20),
-    egress: z.enum(EGRESS_MODES).default("none"),
-    interfaceEndpoints: z
-      .preprocess(commaSeparated, z.array(z.enum(INTERFACE_SERVICES)))
-      .default([]),
-  })
-  .superRefine((config, context) => {
-    const issue = (path: string, message: string): void =>
-      void context.addIssue({ code: "custom", path: [path], message });
+    availabilityZones: v.optional(
+      v.pipe(
+        v.unknown(),
+        v.transform(commaSeparated),
+        v.array(v.pipe(v.string(), v.regex(/^ap-northeast-1[a-z]$/))),
+        v.minLength(2),
+        v.maxLength(4),
+      ),
+      ["ap-northeast-1a", "ap-northeast-1c"],
+    ),
+    subnetPrefix: v.optional(v.pipe(numeric, v.integer(), v.minValue(17), v.maxValue(28)), 20),
+    egress: v.optional(v.picklist(EGRESS_MODES), "none"),
+    interfaceEndpoints: v.optional(
+      v.pipe(v.unknown(), v.transform(commaSeparated), v.array(v.picklist(INTERFACE_SERVICES))),
+      [],
+    ),
+  }),
+  // The checks that span fields. They wait until every field has the right type.
+  v.rawCheck(({ dataset, addIssue }) => {
+    if (!dataset.typed) {
+      return;
+    }
+    const config = dataset.value;
+    const issue = (key: keyof typeof config, message: string): void =>
+      addIssue({
+        message,
+        path: [{ type: "object", origin: "value", input: config, key, value: config[key] }],
+      });
 
     let vpc: Cidr;
     try {
@@ -84,19 +97,20 @@ export const networkConfigSchema = z
         `half of ${config.cidr} holds ${blocksPerTier < 1 ? 0 : blocksPerTier} subnets of /${config.subnetPrefix}, but ${config.availabilityZones.length} zones need one each`,
       );
     }
-  });
+  }),
+);
 
-export type NetworkConfig = z.infer<typeof networkConfigSchema>;
+export type NetworkConfig = v.InferOutput<typeof networkConfigSchema>;
 // #endregion schema
 
 /** Parses settings from CDK context or the command line; the message names every bad field. */
 export function parseNetworkConfig(input: unknown): NetworkConfig {
-  const result = networkConfigSchema.safeParse(input);
+  const result = v.safeParse(networkConfigSchema, input);
   if (!result.success) {
-    const problems = result.error.issues.map(
-      (item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`,
+    const problems = result.issues.map(
+      (item) => `  ${v.getDotPath(item) ?? "(root)"}: ${item.message}`,
     );
     throw new Error(`Invalid network settings:\n${problems.join("\n")}`);
   }
-  return result.data;
+  return result.output;
 }

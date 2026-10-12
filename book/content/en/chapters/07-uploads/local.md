@@ -37,6 +37,12 @@ The app receives the place where bytes are stored as this interface. On AWS it i
 
 The local implementation has an endpoint inside the development server that receives the form. Its permits carry a small policy signed with the development secret, and it refuses a different key, a different type, a file that is too large, and an expired permit.
 
+The development server doesn't hand the API a request whose path starts with `/local/`. `POST /local/token` is chapter 06's development sign-in, and the stand-in for the bucket receives everything else.
+
+<<< @/examples/07-uploads/api/src/local-store-http.ts{read-form}
+
+The form has an image in it, so how much is read has a limit. Chapter 04's `readJson` reads only JSON, so this chapter has a function of its own that counts the same way. The limit is 64 KiB above 5 MiB. A file that is only a little too large is read to the end and gets a 400 from the policy's size condition. Past the limit, the rest isn't read and the answer is 413. Both are what the local implementation does, not what S3 returns.
+
 The local implementation is not a simulation of S3. It is a stand-in that lets the app's ordering and authorization run. It doesn't reproduce the following.
 
 - The real evaluation of a POST policy. What S3 refuses, and with what response, isn't reproduced

@@ -1,4 +1,5 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { DynamoDbNoteRepository } from "@aih/example-05-dynamodb/src/dynamodb-repository.ts";
@@ -6,7 +7,7 @@ import { describeRepositoryContract } from "@aih/example-05-dynamodb/test/reposi
 import { DynamoDbAttachmentRepository } from "@aih/example-07-uploads/api/src/dynamodb-attachment-repository.ts";
 import { DynamoDbInspectionRepository } from "@aih/example-08-async/src/dynamodb-inspection-repository.ts";
 
-import { audit } from "../src/audit.ts";
+import { audit, auditSchema } from "../src/audit.ts";
 import { DynamoDbTable } from "../src/dynamodb-table.ts";
 import { check, takeSnapshot } from "../src/invariants.ts";
 import { classify, type TableItem } from "../src/items.ts";
@@ -83,6 +84,30 @@ describe("classify", () => {
     ["a note of an older shape", { pk: "OWNER#alice", sk: "NOTE#1", id: "1", title: "no version" }],
     ["a key that disagrees with its body", { pk: "OWNER#alice", sk: "NOTE#other", ...note }],
     ["an unknown kind", { pk: "OWNER#alice", sk: "DRAFT#1" }],
+    ["a list", [{ pk: "OWNER#alice", sk: "QUOTA" }]],
+    [
+      "an inspection dated with an offset",
+      {
+        pk: "OWNER#alice",
+        sk: "INSPECTION#n1#a1",
+        ...inspection,
+        inspectedAt: "2026-10-12T18:01:05+09:00",
+      },
+    ],
+    [
+      "an inspection dated on a day that does not exist",
+      {
+        pk: "OWNER#alice",
+        sk: "INSPECTION#n1#a1",
+        ...inspection,
+        inspectedAt: "2026-02-30T09:01:05Z",
+      },
+    ],
+    // DynamoDB stores numbers up to 1e125. No object is that large.
+    [
+      "an inspection of an impossible size",
+      { pk: "OWNER#alice", sk: "INSPECTION#n1#a1", ...inspection, size: 1e100 },
+    ],
   ])("does not pass %s off as data", (_name, item) => {
     expect(classify(item)).toMatchObject({ kind: "unknown" });
   });
@@ -277,6 +302,46 @@ describe("audit", () => {
       byKind: { attachment_without_object: 1, inspection_without_object: 1 },
     });
     expect((await takeSnapshot(world.table, world.bucket)).attachments).toHaveLength(1);
+  });
+
+  // The function's answer comes back over the network, as text.
+  const answer = {
+    tableName: "t",
+    checkedAt: "2026-10-12T09:30:00.000Z",
+    notes: 2,
+    attachments: 1,
+    inspections: 1,
+    objects: 1,
+    tooYoung: 0,
+    broken: 1,
+    leftover: 0,
+    byKind: { attachment_without_object: 1 },
+  };
+
+  it("reads its own answer back, every count included", () => {
+    expect(v.parse(auditSchema, JSON.parse(JSON.stringify(answer)))).toEqual(answer);
+    // v.record would have left these keys out and reported success.
+    const odd = JSON.parse('{"constructor":2,"prototype":1,"__proto__":3}') as unknown;
+    const read = v.parse(auditSchema, { ...answer, byKind: odd });
+    expect(Object.entries(read.byKind).toSorted()).toEqual([
+      ["__proto__", 3],
+      ["constructor", 2],
+      ["prototype", 1],
+    ]);
+  });
+
+  it.each([
+    ["a list of counts", { byKind: [1, 2] }],
+    ["an empty list", { byKind: [] }],
+    ["a count of zero", { byKind: { attachment_without_object: 0 } }],
+    ["a count that is text", { byKind: { attachment_without_object: "1" } }],
+    ["a bad count under a name v.record skips", { byKind: { constructor: "many" } }],
+    ["an endless count", { broken: Infinity }],
+    ["a count past what a number holds exactly", { notes: 1e300 }],
+    ["a negative count", { leftover: -1 }],
+    ["a time with an offset", { checkedAt: "2026-10-12T18:30:00+09:00" }],
+  ])("refuses an answer with %s", (_name, change) => {
+    expect(v.safeParse(auditSchema, { ...answer, ...change }).success).toBe(false);
   });
 });
 

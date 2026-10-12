@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { rateSubject, sourceAddressOf, UNKNOWN_CALLER } from "../src/caller.ts";
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
+
+import { type Caller, rateSubject, sourceAddressOf, UNKNOWN_CALLER } from "../src/caller.ts";
 
 describe("sourceAddressOf", () => {
   it("reads the address API Gateway recorded in the event", () => {
@@ -9,8 +11,23 @@ describe("sourceAddressOf", () => {
     );
   });
 
-  it("reads the socket's peer on the development server", () => {
-    expect(sourceAddressOf({ incoming: { socket: { remoteAddress: "::1" } } })).toBe("::1");
+  it("reads the socket's peer on the development server, whatever the headers claim", async () => {
+    const app = (_request: Request, caller: Caller) => Response.json(caller);
+    // Wired as src/dev.ts wires the real app.
+    const server = nodeServer((request, { remoteAddress }) =>
+      app(request, { sourceAddress: remoteAddress }),
+    );
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      const address = server.address();
+      const port = typeof address === "object" && address !== null ? address.port : 0;
+      const response = await fetch(`http://127.0.0.1:${port}/`, {
+        headers: { "x-forwarded-for": "198.51.100.1" },
+      });
+      expect(await response.json()).toEqual({ sourceAddress: "127.0.0.1" });
+    } finally {
+      server.close();
+    }
   });
 
   it("finds nothing where the platform put nothing", () => {

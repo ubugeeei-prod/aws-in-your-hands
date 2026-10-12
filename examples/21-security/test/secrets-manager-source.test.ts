@@ -65,6 +65,9 @@ describe("reading the secret", () => {
     ["not JSON", KEY],
     ["no key field", JSON.stringify({ password: KEY })],
     ["a key too short to be one", JSON.stringify({ key: "short" })],
+    ["31 characters", JSON.stringify({ key: "k".repeat(31) })],
+    ["16 characters that are 32 UTF-16 units", JSON.stringify({ key: "\u{1F511}".repeat(16) })],
+    ["a list holding a key", JSON.stringify([{ key: KEY }])],
   ])("refuses a value that is %s, without repeating it", async (_, secretString) => {
     const { client: sm } = client(() => ({ VersionId: "v1", SecretString: secretString }));
     const error = await createSecretsManagerSource(sm, SECRET)

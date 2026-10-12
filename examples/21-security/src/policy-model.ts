@@ -1,32 +1,40 @@
-import { z } from "zod";
+import * as v from "valibot";
+
+import { jsonEntries } from "./json-object.ts";
 
 // A small model of how identity policies and SCPs combine, for testing policy
 // files before anyone attaches them. It is not IAM: it knows two condition keys
 // and four operators, and it refuses anything else instead of guessing.
 
-const list = z.union([z.string(), z.array(z.string())]).transform((value) => [value].flat());
-const conditionSchema = z.record(z.string(), z.record(z.string(), list));
+const list = v.pipe(
+  v.union([v.string(), v.array(v.string())]),
+  v.transform((value) => [value].flat()),
+);
+// jsonEntries: `Condition: []` is not "no condition", and no operator or key is skipped.
+const conditionSchema = jsonEntries(jsonEntries(list));
 
-export const statementSchema = z
-  .strictObject({
-    Sid: z.string().optional(),
-    Effect: z.enum(["Allow", "Deny"]),
-    Action: list.optional(),
-    NotAction: list.optional(),
+export const statementSchema = v.pipe(
+  v.strictObject({
+    Sid: v.optional(v.string()),
+    Effect: v.picklist(["Allow", "Deny"]),
+    Action: v.optional(list),
+    NotAction: v.optional(list),
     Resource: list,
-    Condition: conditionSchema.optional(),
-  })
-  .refine((statement) => (statement.Action === undefined) !== (statement.NotAction === undefined), {
-    message: "exactly one of Action and NotAction",
-  });
-export type Statement = z.infer<typeof statementSchema>;
+    Condition: v.optional(conditionSchema),
+  }),
+  v.check(
+    (statement) => (statement.Action === undefined) !== (statement.NotAction === undefined),
+    "exactly one of Action and NotAction",
+  ),
+);
+export type Statement = v.InferOutput<typeof statementSchema>;
 
 // strictObject: a Principal or NotPrincipal element, which SCPs do not support, fails the parse.
-export const policySchema = z.strictObject({
-  Version: z.literal("2012-10-17"),
-  Statement: z.array(statementSchema),
+export const policySchema = v.strictObject({
+  Version: v.literal("2012-10-17"),
+  Statement: v.array(statementSchema),
 });
-export type Policy = z.infer<typeof policySchema>;
+export type Policy = v.InferOutput<typeof policySchema>;
 
 export type Request = { action: string; region: string; principalArn: string };
 export type Decision = "allow" | "explicit-deny" | "implicit-deny";
@@ -53,10 +61,11 @@ const OPERATORS: Record<string, (value: string, expected: string[]) => boolean> 
 };
 
 function conditionHolds(condition: Statement["Condition"], request: Request): boolean {
-  return Object.entries(condition ?? {}).every(([operator, keys]) =>
-    Object.entries(keys).every(([key, expected]) => {
-      const test = OPERATORS[operator];
-      const read = KEYS[key];
+  return (condition ?? []).every(([operator, keys]) =>
+    keys.every(([key, expected]) => {
+      // Object.hasOwn: `OPERATORS["constructor"]` would find Object's, and call it.
+      const test = Object.hasOwn(OPERATORS, operator) ? OPERATORS[operator] : undefined;
+      const read = Object.hasOwn(KEYS, key) ? KEYS[key] : undefined;
       if (test === undefined || read === undefined) {
         throw new Error(`the model does not know ${operator} on ${key}`);
       }

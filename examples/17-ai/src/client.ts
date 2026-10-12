@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { type Failure, type SummaryEvent, summaryEventSchema, type Usage } from "./contract.ts";
 
 // #region sse
@@ -48,13 +50,13 @@ export async function* summaryEvents(
         yield { type: "error", code: "bad_output", retryable: false };
         return;
       }
-      const event = summaryEventSchema.safeParse(json);
+      const event = v.safeParse(summaryEventSchema, json);
       if (!event.success) {
         yield { type: "error", code: "bad_output", retryable: false };
         return;
       }
-      yield event.data;
-      if (event.data.type !== "delta") {
+      yield event.output;
+      if (event.output.type !== "delta") {
         return;
       }
     }

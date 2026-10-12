@@ -8,7 +8,7 @@
 
 import { parseArgs } from "node:util";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { MemoryExportStore } from "../src/export-store.ts";
 import { manifestKey, manifestSchema, partKey } from "../src/job.ts";
@@ -26,16 +26,25 @@ const { values } = parseArgs({
     break: { type: "string", default: "0" },
   },
 });
-const count = z.coerce.number().int().min(0).max(100_000);
-const options = z
-  .object({
-    notes: count,
-    "page-size": count.min(1),
-    "pages-per-call": count.min(1),
-    lose: count,
-    break: count,
-  })
-  .parse(values);
+const count = (min: number) =>
+  v.pipe(
+    v.string(),
+    v.transform(Number),
+    v.number(),
+    v.integer(),
+    v.minValue(min),
+    v.maxValue(100_000),
+  );
+const options = v.parse(
+  v.object({
+    notes: count(0),
+    "page-size": count(1),
+    "pages-per-call": count(1),
+    lose: count(0),
+    break: count(0),
+  }),
+  values,
+);
 
 const source = new MemoryNoteSource();
 for (let number = 1; number <= options.notes; number++) {
@@ -106,12 +115,14 @@ if (manifest === undefined) {
   console.log("no manifest: the export is not readable");
   process.exit(1);
 }
-const { parts } = manifestSchema.parse(JSON.parse(manifest));
+const { parts } = v.parse(manifestSchema, JSON.parse(manifest));
 const lines = parts
   .flatMap((key) => (store.read(key) ?? "").trimEnd().split("\n"))
   .filter((line) => line !== "");
 const distinct = new Set(
-  lines.map((line) => z.object({ owner: z.string(), id: z.string() }).parse(JSON.parse(line)).id),
+  lines.map(
+    (line) => v.parse(v.object({ owner: v.string(), id: v.string() }), JSON.parse(line)).id,
+  ),
 );
 console.log(
   `manifest: ${parts.length} parts, ${lines.length} lines, ${distinct.size} distinct notes of ${options.notes}`,

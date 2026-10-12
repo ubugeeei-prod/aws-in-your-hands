@@ -21,11 +21,11 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 4,
     "translatedRevision": {
-      "en": 1
+      "en": 4
     },
-    "checkedAt": "2026-10-11",
+    "checkedAt": "2026-10-12",
     "sourceIds": [
       "s3-presigned-url",
       "s3-presigned-upload",

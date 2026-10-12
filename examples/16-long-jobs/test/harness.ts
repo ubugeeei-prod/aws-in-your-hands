@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { MemoryExportStore } from "../src/export-store.ts";
 import { manifestKey, manifestSchema, partsPrefix } from "../src/job.ts";
 import { type ExportedNote, exportedNoteSchema, MemoryNoteSource } from "../src/note-source.ts";
@@ -88,10 +90,10 @@ export function setup(count: number) {
       if (manifest === undefined) {
         return undefined;
       }
-      return manifestSchema
-        .parse(JSON.parse(manifest))
+      return v
+        .parse(manifestSchema, JSON.parse(manifest))
         .parts.flatMap((key) => (memory.read(key) ?? "").trimEnd().split("\n"))
-        .map((line) => exportedNoteSchema.parse(JSON.parse(line)));
+        .map((line) => v.parse(exportedNoteSchema, JSON.parse(line)));
     },
   };
 }

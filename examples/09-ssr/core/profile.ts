@@ -1,15 +1,18 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region viewer
-export const profileSchema = z.object({ name: z.string().min(1), signedInAt: z.iso.datetime() });
-export type Profile = z.infer<typeof profileSchema>;
+export const profileSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1)),
+  signedInAt: v.pipe(v.string(), v.isoTimestamp()),
+});
+export type Profile = v.InferOutput<typeof profileSchema>;
 
 /** What the browser is told about the person using it. No token is part of this shape. */
-export const viewerSchema = z.discriminatedUnion("signedIn", [
-  z.object({ signedIn: z.literal(true), profile: profileSchema }),
-  z.object({ signedIn: z.literal(false), signIn: z.enum(["dev", "off"]) }),
+export const viewerSchema = v.variant("signedIn", [
+  v.object({ signedIn: v.literal(true), profile: profileSchema }),
+  v.object({ signedIn: v.literal(false), signIn: v.picklist(["dev", "off"]) }),
 ]);
-export type Viewer = z.infer<typeof viewerSchema>;
+export type Viewer = v.InferOutput<typeof viewerSchema>;
 // #endregion viewer
 
 // #region upstream

@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { driftOutputSchema, type StackDrift } from "./schema.ts";
 
 // A zero exit code from `cdkd drift` is not "no drift" on its own: matching,
@@ -150,16 +152,16 @@ function reportStacks(requested: string[], run: RunResult): StackReport[] {
   } catch {
     return everyStack("failed", "cdkd printed output that is not JSON.");
   }
-  const parsed = driftOutputSchema.safeParse(json);
+  const parsed = v.safeParse(driftOutputSchema, json);
   if (!parsed.success) {
     return everyStack(
       "failed",
-      `The report does not match the expected schema: ${parsed.error.issues[0]?.message ?? "unknown"}`,
+      `The report does not match the expected schema: ${parsed.issues[0].message}`,
     );
   }
 
   const stacks = requested.map((stack) => {
-    const entry = parsed.data.find((candidate) => candidate.stack === stack);
+    const entry = parsed.output.find((candidate) => candidate.stack === stack);
     return entry === undefined
       ? placeholder(stack, "missing-target", "The report has no entry for this stack.")
       : reportStack(entry);

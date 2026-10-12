@@ -1,32 +1,33 @@
 import { createHash } from "node:crypto";
 
 import type { CloudFrontResultResponse } from "aws-lambda";
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region event
 // Only the fields this function reads. `body` is present because the trigger sets "include body".
-const eventSchema = z.object({
-  Records: z
-    .array(
-      z.object({
-        cf: z.object({
-          request: z.object({
-            method: z.string(),
-            body: z
-              .object({
-                inputTruncated: z.boolean(),
-                encoding: z.enum(["base64", "text"]),
-                data: z.string(),
-              })
-              .optional(),
+const eventSchema = v.object({
+  Records: v.pipe(
+    v.array(
+      v.object({
+        cf: v.object({
+          request: v.object({
+            method: v.string(),
+            body: v.optional(
+              v.object({
+                inputTruncated: v.boolean(),
+                encoding: v.picklist(["base64", "text"]),
+                data: v.string(),
+              }),
+            ),
           }),
         }),
       }),
-    )
-    .min(1),
+    ),
+    v.minLength(1),
+  ),
 });
 
-type EdgeRequest = z.infer<typeof eventSchema>["Records"][number]["cf"]["request"];
+type EdgeRequest = v.InferOutput<typeof eventSchema>["Records"][number]["cf"]["request"];
 // #endregion event
 
 const json = (status: number, description: string, body: unknown): CloudFrontResultResponse => ({
@@ -63,9 +64,9 @@ export function digestResponse(request: EdgeRequest): CloudFrontResultResponse {
 // #endregion digest
 
 export async function handler(event: unknown): Promise<CloudFrontResultResponse> {
-  const parsed = eventSchema.safeParse(event);
-  if (!parsed.success || parsed.data.Records[0] === undefined) {
+  const parsed = v.safeParse(eventSchema, event);
+  if (!parsed.success || parsed.output.Records[0] === undefined) {
     return json(400, "Bad Request", { error: "not a CloudFront request event" });
   }
-  return digestResponse(parsed.data.Records[0].cf.request);
+  return digestResponse(parsed.output.Records[0].cf.request);
 }

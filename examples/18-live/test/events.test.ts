@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { eventRecordSchema, parseIvsEvent, toRecord } from "../src/events.ts";
@@ -76,7 +77,7 @@ describe("event handler", () => {
       ),
     ).toBe(true);
     expect(lines).toHaveLength(1);
-    expect(eventRecordSchema.parse(JSON.parse(lines[0] ?? ""))).toMatchObject({
+    expect(v.parse(eventRecordSchema, JSON.parse(lines[0] ?? ""))).toMatchObject({
       name: "Stream Start",
     });
   });

@@ -1,12 +1,14 @@
-import { z } from "zod";
+import * as v from "valibot";
+
+import { jsonEntries, jsonObject } from "./json-object.ts";
 
 // #region exception
 /** One action that may keep `Resource: "*"`, and why. A reason is not optional. */
-export const exceptionSchema = z.object({
-  action: z.string().regex(/^[a-z0-9-]+:[A-Za-z0-9]+$/, "one exact action, no wildcard"),
-  reason: z.string().min(20),
+export const exceptionSchema = v.object({
+  action: v.pipe(v.string(), v.regex(/^[a-z0-9-]+:[A-Za-z0-9]+$/, "one exact action, no wildcard")),
+  reason: v.pipe(v.string(), v.minLength(20)),
 });
-export type LintException = z.infer<typeof exceptionSchema>;
+export type LintException = v.InferOutput<typeof exceptionSchema>;
 // #endregion exception
 
 export type FindingKind =
@@ -21,29 +23,36 @@ export type FindingKind =
 export type Finding = { resource: string; kind: FindingKind; detail: string };
 export type LintResult = { findings: Finding[]; unusedExceptions: LintException[] };
 
-const stringOrList = z
-  .union([z.string(), z.array(z.string())])
-  .transform((value) => [value].flat());
-const statementSchema = z.looseObject({
-  Effect: z.enum(["Allow", "Deny"]),
-  Action: stringOrList.optional(),
-  NotAction: z.unknown().optional(),
+const stringOrList = v.pipe(
+  v.union([v.string(), v.array(v.string())]),
+  v.transform((value) => [value].flat()),
+);
+const statementSchema = v.looseObject({
+  Effect: v.picklist(["Allow", "Deny"]),
+  Action: v.optional(stringOrList),
+  NotAction: v.optional(v.unknown()),
   // ARNs are often intrinsics (Fn::Join, Fn::GetAtt), so only the shape "one or many" is checked here.
-  Resource: z.unknown().optional(),
-  NotResource: z.unknown().optional(),
-  Principal: z.unknown().optional(),
-  Condition: z.unknown().optional(),
+  Resource: v.optional(v.unknown()),
+  NotResource: v.optional(v.unknown()),
+  Principal: v.optional(v.unknown()),
+  Condition: v.optional(v.unknown()),
 });
-const documentSchema = z.looseObject({
-  Statement: z
-    .union([statementSchema, z.array(statementSchema)])
-    .transform((value) => [value].flat()),
+const documentSchema = v.looseObject({
+  Statement: v.pipe(
+    v.union([statementSchema, v.array(statementSchema)]),
+    v.transform((value) => [value].flat()),
+  ),
 });
-const templateSchema = z.looseObject({
-  Resources: z
-    .record(z.string(), z.looseObject({ Type: z.string(), Properties: z.unknown().optional() }))
-    .default({}),
-});
+// jsonObject and jsonEntries: an array is not a template, and no logical ID is skipped.
+const templateSchema = v.pipe(
+  jsonObject,
+  v.looseObject({
+    Resources: v.optional(
+      jsonEntries(v.looseObject({ Type: v.string(), Properties: v.optional(v.unknown()) })),
+      {},
+    ),
+  }),
+);
 
 const BROAD_MANAGED =
   /:policy\/(AdministratorAccess|PowerUserAccess|IAMFullAccess|[A-Za-z0-9]*FullAccess)$/;
@@ -59,16 +68,13 @@ const isBareWildcard = (resource: unknown): boolean =>
 /** Reads a synthesized CloudFormation template and reports every Allow that is wider than a named action on a named resource. */
 export function lintTemplate(template: unknown, exceptions: LintException[] = []): LintResult {
   const allowed = new Map(
-    z
-      .array(exceptionSchema)
-      .parse(exceptions)
-      .map((entry) => [entry.action, entry]),
+    v.parse(v.array(exceptionSchema), exceptions).map((entry) => [entry.action, entry]),
   );
   const used = new Set<string>();
   const findings: Finding[] = [];
 
   const inspect = (resource: string, document: unknown): void => {
-    const parsed = documentSchema.safeParse(document);
+    const parsed = v.safeParse(documentSchema, document);
     if (!parsed.success) {
       // A policy this code cannot read is not a policy it can vouch for.
       findings.push({
@@ -78,7 +84,7 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
       });
       return;
     }
-    for (const statement of parsed.data.Statement) {
+    for (const statement of parsed.output.Statement) {
       // Deny statements narrow. A wildcard there is usually the point.
       if (statement.Effect === "Deny") {
         continue;
@@ -120,7 +126,7 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
   };
 
   const inspectTrust = (resource: string, document: unknown): void => {
-    const parsed = documentSchema.safeParse(document);
+    const parsed = v.safeParse(documentSchema, document);
     if (!parsed.success) {
       findings.push({
         resource,
@@ -129,7 +135,7 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
       });
       return;
     }
-    for (const statement of parsed.data.Statement) {
+    for (const statement of parsed.output.Statement) {
       const principal = statement.Principal;
       const anyone =
         principal === "*" ||
@@ -146,7 +152,7 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
     }
   };
 
-  for (const [logicalId, resource] of Object.entries(templateSchema.parse(template).Resources)) {
+  for (const [logicalId, resource] of v.parse(templateSchema, template).Resources) {
     const properties = (resource.Properties ?? {}) as Record<string, unknown>;
     if (ONE_DOCUMENT.includes(resource.Type)) {
       inspect(logicalId, properties["PolicyDocument"]);

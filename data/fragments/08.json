@@ -10,9 +10,14 @@
     "prerequisites": ["07"],
     "services": ["SQS", "Lambda", "EventBridge Scheduler", "S3 Event Notifications", "DynamoDB"],
     "samplePath": "examples/08-async",
-    "writing": { "ja": "complete", "en": "complete" },
-    "sourceRevision": 1,
-    "translatedRevision": { "en": 1 },
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 4,
+    "translatedRevision": {
+      "en": 4
+    },
     "checkedAt": "2026-10-12",
     "sourceIds": [
       "sqs-welcome",
@@ -905,7 +910,11 @@
         ]
       },
       "items": [
-        { "priceId": "scheduler.invocation", "quantity": 730, "basis": "one invocation an hour" },
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 730,
+          "basis": "one invocation an hour"
+        },
         {
           "priceId": "lambda.request.arm",
           "quantity": 730,
@@ -916,9 +925,21 @@
           "quantity": 91.25,
           "basis": "730 x 0.5 s x 0.25 GB, in GB-seconds"
         },
-        { "priceId": "s3.request.tier1", "quantity": 1460, "basis": "730 runs x 2 LIST requests" },
-        { "priceId": "logs.ingest.standard", "quantity": 0.0007, "basis": "730 x 1 KB, in GB" },
-        { "priceId": "logs.storage", "quantity": 0.0002, "basis": "0.0007 GB x 7/30, in GB-month" }
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 1460,
+          "basis": "730 runs x 2 LIST requests"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0007,
+          "basis": "730 x 1 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0002,
+          "basis": "0.0007 GB x 7/30, in GB-month"
+        }
       ]
     },
     {
@@ -986,7 +1007,11 @@
           "quantity": 0.0084,
           "basis": "11,000 x 0.8 KB, in GB"
         },
-        { "priceId": "logs.storage", "quantity": 0.002, "basis": "0.0084 GB x 7/30, in GB-month" }
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.002,
+          "basis": "0.0084 GB x 7/30, in GB-month"
+        }
       ]
     },
     {
@@ -1013,7 +1038,11 @@
         ]
       },
       "items": [
-        { "priceId": "scheduler.invocation", "quantity": 730, "basis": "one invocation an hour" },
+        {
+          "priceId": "scheduler.invocation",
+          "quantity": 730,
+          "basis": "one invocation an hour"
+        },
         {
           "priceId": "lambda.request.arm",
           "quantity": 730,
@@ -1034,8 +1063,16 @@
           "quantity": 29200000,
           "basis": "730 runs x 10,000 images x 4 reads"
         },
-        { "priceId": "logs.ingest.standard", "quantity": 0.0007, "basis": "730 x 1 KB, in GB" },
-        { "priceId": "logs.storage", "quantity": 0.0002, "basis": "0.0007 GB x 7/30, in GB-month" }
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0007,
+          "basis": "730 x 1 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0002,
+          "basis": "0.0007 GB x 7/30, in GB-month"
+        }
       ]
     }
   ],

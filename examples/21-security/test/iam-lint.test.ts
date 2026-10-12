@@ -2,13 +2,14 @@ import { readFileSync } from "node:fs";
 
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
-import { z } from "zod";
 
 import { CiStack } from "@aih/example-20-shipping/infra/lib/ci-stack.ts";
 import { ciConfigSchema } from "@aih/example-20-shipping/infra/lib/config.ts";
 
 import { assertNoWildcards, exceptionSchema, lintTemplate } from "../src/iam-lint.ts";
+import { jsonEntries } from "../src/json-object.ts";
 
 type Statement = Record<string, unknown>;
 const role = (statements: Statement[], extra: Record<string, unknown> = {}) => ({
@@ -167,12 +168,12 @@ describe("exceptions", () => {
   it("never excuses a wildcard in the action itself", () => {
     const template = role([{ Effect: "Allow", Action: "logs:Describe*", Resource: "*" }]);
     expect(kinds(template)).toContain("wildcard-action");
-    expect(exceptionSchema.safeParse({ action: "logs:Describe*", reason }).success).toBe(false);
+    expect(v.safeParse(exceptionSchema, { action: "logs:Describe*", reason }).success).toBe(false);
   });
 
   it("needs a reason someone can argue with", () => {
     expect(
-      exceptionSchema.safeParse({ action: "logs:DescribeLogGroups", reason: "needed" }).success,
+      v.safeParse(exceptionSchema, { action: "logs:DescribeLogGroups", reason: "needed" }).success,
     ).toBe(false);
     expect(() => lintTemplate(wide, [{ action: "logs:DescribeLogGroups", reason: "" }])).toThrow();
   });
@@ -185,24 +186,47 @@ describe("exceptions", () => {
   });
 });
 
+describe("input that is not a template", () => {
+  const wideRole = role([{ Effect: "Allow", Action: "s3:*", Resource: "*" }]).Resources.Role;
+
+  it("refuses an array instead of reading it as a template with no resources", () => {
+    expect(() => lintTemplate([])).toThrow();
+    expect(() => lintTemplate({ Resources: [wideRole] })).toThrow();
+    expect(() => lintTemplate(null)).toThrow();
+  });
+
+  it.each(["constructor", "prototype", "__proto__", "toString"])(
+    "reads a resource named %s like any other",
+    (logicalId) => {
+      // JSON.parse, as the script reads a file: an object literal would set the prototype instead.
+      const template = JSON.parse(`{"Resources":{"${logicalId}":${JSON.stringify(wideRole)}}}`);
+      expect(lintTemplate(template).findings).toEqual([
+        { resource: logicalId, kind: "wildcard-action", detail: "s3:*" },
+        { resource: logicalId, kind: "wildcard-resource", detail: 's3:* on Resource "*"' },
+      ]);
+    },
+  );
+});
+
 describe("chapter 20's CI roles", () => {
-  const exceptions = z
-    .record(z.string(), z.array(exceptionSchema))
-    .parse(
+  const exceptions = new Map(
+    v.parse(
+      jsonEntries(v.array(exceptionSchema)),
       JSON.parse(
         readFileSync(new URL("../policies/iam-lint-exceptions.json", import.meta.url), "utf8"),
       ),
-    );
+    ),
+  );
   const template = Template.fromStack(
     new CiStack(new App({ analyticsReporting: false }), "AihShipCi", {
       env: { region: "ap-northeast-1" },
-      ci: ciConfigSchema.parse({ githubRepository: "octo-org/octo-repo" }),
+      ci: v.parse(ciConfigSchema, { githubRepository: "octo-org/octo-repo" }),
     }),
   ).toJSON();
 
   it("pass with five exceptions, each with its reason on file", () => {
-    expect(exceptions["AihShipCi"]).toHaveLength(5);
-    expect(() => assertNoWildcards(template, exceptions["AihShipCi"])).not.toThrow();
+    expect(exceptions.get("AihShipCi")).toHaveLength(5);
+    expect(() => assertNoWildcards(template, exceptions.get("AihShipCi"))).not.toThrow();
   });
 
   it("fail without them, on exactly those five actions", () => {

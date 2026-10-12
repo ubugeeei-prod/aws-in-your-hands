@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
@@ -22,12 +23,15 @@ function setup(mailer?: Mailer) {
     now: () => (clock += 5),
   });
   const post = (body: unknown) =>
-    app.request("/share-notifications", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: typeof body === "string" ? body : JSON.stringify(body),
-    });
-  return { ...context, app, post };
+    app(
+      new Request("http://api.test/share-notifications", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: typeof body === "string" ? body : JSON.stringify(body),
+      }),
+    );
+  const get = (path: string) => app(new Request(`http://api.test${path}`));
+  return { ...context, app, post, get };
 }
 
 describe("share notification API", () => {
@@ -37,13 +41,13 @@ describe("share notification API", () => {
     const second = await post(input);
 
     expect(first.status).toBe(202);
-    expect(shareNotificationResultSchema.parse(await first.json())).toEqual({
+    expect(v.parse(shareNotificationResultSchema, await first.json())).toEqual({
       status: "accepted",
       notificationId: "share-1",
       messageId: "local-1",
     });
     expect(second.status).toBe(200);
-    expect(shareNotificationResultSchema.parse(await second.json())).toEqual({
+    expect(v.parse(shareNotificationResultSchema, await second.json())).toEqual({
       status: "duplicate",
       notificationId: "share-1",
       state: "sent",
@@ -54,7 +58,7 @@ describe("share notification API", () => {
   it("rejects a title carrying a second header and names the field", async () => {
     const { post, outbox } = setup();
     const response = await post({ ...input, noteTitle: "Trip plan\r\nBcc: attacker@example.com" });
-    const body = errorSchema.parse(await response.json());
+    const body = v.parse(errorSchema, await response.json());
 
     expect(response.status).toBe(400);
     expect(body.error.issues?.map((issue) => issue.path)).toEqual(["noteTitle"]);
@@ -84,7 +88,7 @@ describe("share notification API", () => {
     await post(input);
     const response = await post({ ...input, noteTitle: "Another note" });
     expect(response.status).toBe(409);
-    expect(errorSchema.parse(await response.json()).error.code).toBe("idempotency_conflict");
+    expect(v.parse(errorSchema, await response.json()).error.code).toBe("idempotency_conflict");
   });
 
   it("tells a refused send from an unanswered one", async () => {
@@ -93,13 +97,13 @@ describe("share notification API", () => {
     });
     const refusedResponse = await refused.post(input);
     expect(refusedResponse.status).toBe(502);
-    expect(errorSchema.parse(await refusedResponse.json()).error.code).toBe("send_rejected");
+    expect(v.parse(errorSchema, await refusedResponse.json()).error.code).toBe("send_rejected");
 
     const silent = setup({ send: () => Promise.reject(new Error("socket hang up")) });
     const silentResponse = await silent.post(input);
     const text = await silentResponse.text();
     expect(silentResponse.status).toBe(502);
-    expect(errorSchema.parse(JSON.parse(text)).error.code).toBe("send_unknown");
+    expect(v.parse(errorSchema, JSON.parse(text)).error.code).toBe("send_unknown");
     expect(text).not.toContain("socket hang up");
   });
 
@@ -113,7 +117,7 @@ describe("share notification API", () => {
     });
     const response = await post(input);
     expect(response.status).toBe(200);
-    expect(shareNotificationResultSchema.parse(await response.json())).toMatchObject({
+    expect(v.parse(shareNotificationResultSchema, await response.json())).toMatchObject({
       status: "suppressed",
       reason: "complaint",
     });
@@ -121,24 +125,24 @@ describe("share notification API", () => {
   });
 
   it("shows the state of a notification, without the fingerprint", async () => {
-    const { app, post } = setup();
+    const { get, post } = setup();
     await post(input);
-    const response = await app.request("/share-notifications/share-1");
+    const response = await get("/share-notifications/share-1");
     const body: unknown = await response.json();
 
-    expect(notificationStatusSchema.parse(body)).toMatchObject({
+    expect(v.parse(notificationStatusSchema, body)).toMatchObject({
       state: "sent",
       messageId: "local-1",
     });
     expect(body).not.toHaveProperty("fingerprint");
-    expect((await app.request("/share-notifications/unknown")).status).toBe(404);
+    expect((await get("/share-notifications/unknown")).status).toBe(404);
   });
 
   it("puts the same request ID in the response header, the error body, and the log", async () => {
-    const { app, logs } = setup();
-    const response = await app.request("/nope");
+    const { get, logs } = setup();
+    const response = await get("/nope");
     expect(response.headers.get("x-request-id")).toBe("req-1");
-    expect(errorSchema.parse(await response.json()).error.requestId).toBe("req-1");
+    expect(v.parse(errorSchema, await response.json()).error.requestId).toBe("req-1");
     expect(logs).toContainEqual(expect.objectContaining({ requestId: "req-1", status: 404 }));
   });
 

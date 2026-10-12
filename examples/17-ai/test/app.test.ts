@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import type { LogEntry } from "@aih/example-04-http-api/src/log.ts";
@@ -31,12 +32,14 @@ function setup(gateway: ModelGateway) {
     now: () => (clock += 5),
   });
   const post = (body: unknown, init: RequestInit = {}) =>
-    app.request("/summaries", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: typeof body === "string" ? body : JSON.stringify(body),
-      ...init,
-    });
+    app(
+      new Request("http://api.test/summaries", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: typeof body === "string" ? body : JSON.stringify(body),
+        ...init,
+      }),
+    );
   return { app, logs, post, ...summarizer };
 }
 
@@ -78,7 +81,7 @@ describe("POST /summaries", () => {
   });
 
   it("answers a failure before the first event as an ordinary HTTP error", async () => {
-    const throttled = fixtureSchema.parse({
+    const throttled = v.parse(fixtureSchema, {
       source: "test",
       description: "throttled on every attempt",
       openErrors: Array.from({ length: 3 }, () => ({
@@ -91,7 +94,7 @@ describe("POST /summaries", () => {
     const response = await post(NOTE);
 
     expect(response.status).toBe(429);
-    expect(errorSchema.parse(await response.json()).error).toMatchObject({
+    expect(v.parse(errorSchema, await response.json()).error).toMatchObject({
       code: "throttled",
       retryable: true,
     });
@@ -101,7 +104,7 @@ describe("POST /summaries", () => {
   });
 
   it("does not tell the caller why the model refused the function's role", async () => {
-    const denied = fixtureSchema.parse({
+    const denied = v.parse(fixtureSchema, {
       source: "test",
       description: "the role lacks permission",
       openErrors: [
@@ -117,7 +120,7 @@ describe("POST /summaries", () => {
 
     expect(response.status).toBe(500);
     expect(text).not.toContain("111122223333");
-    expect(errorSchema.parse(JSON.parse(text)).error.code).toBe("misconfigured");
+    expect(v.parse(errorSchema, JSON.parse(text)).error.code).toBe("misconfigured");
   });
 
   it("ends a stream that failed midway with an error event, after the text that did arrive", async () => {
@@ -146,7 +149,7 @@ describe("POST /summaries", () => {
     for (const invalid of cases) {
       const response = await post(invalid);
       expect(response.status).toBe(400);
-      expect(errorSchema.parse(await response.json()).error.code).toBe("invalid_request");
+      expect(v.parse(errorSchema, await response.json()).error.code).toBe("invalid_request");
     }
     expect((await post("{not json")).status).toBe(400);
     expect((await post({ title: "t", body: "x".repeat(70_000) })).status).toBe(413);
@@ -199,7 +202,9 @@ describe("POST /summaries", () => {
 describe("the rest of the API", () => {
   it("says which backend answers, so a billed one is never a surprise", async () => {
     const { app } = withFixture(fixtures.complete);
-    expect(healthSchema.parse(await (await app.request("/health")).json())).toEqual({
+    expect(
+      v.parse(healthSchema, await (await app(new Request("http://api.test/health"))).json()),
+    ).toEqual({
       status: "ok",
       stage: "test",
       backend: "fixture",
@@ -208,8 +213,8 @@ describe("the rest of the API", () => {
   });
 
   it("answers 404 with the error shape for an unknown route", async () => {
-    const response = await withFixture(fixtures.complete).app.request("/nope");
+    const response = await withFixture(fixtures.complete).app(new Request("http://api.test/nope"));
     expect(response.status).toBe(404);
-    expect(errorSchema.parse(await response.json()).error.code).toBe("not_found");
+    expect(v.parse(errorSchema, await response.json()).error.code).toBe("not_found");
   });
 });

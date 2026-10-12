@@ -6,27 +6,27 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { repoRoot } from "../data/load.ts";
 import { unitPricesSchema } from "./schema.ts";
 
-const offerSchema = z.object({
-  publicationDate: z.string(),
-  terms: z.object({
-    OnDemand: z.record(
-      z.string(),
-      z.record(
-        z.string(),
-        z.object({
-          priceDimensions: z.record(
-            z.string(),
-            z.object({
-              beginRange: z.string(),
-              endRange: z.string(),
-              unit: z.string(),
-              description: z.string(),
-              pricePerUnit: z.object({ USD: z.string() }),
+const offerSchema = v.object({
+  publicationDate: v.string(),
+  terms: v.object({
+    OnDemand: v.record(
+      v.string(),
+      v.record(
+        v.string(),
+        v.object({
+          priceDimensions: v.record(
+            v.string(),
+            v.object({
+              beginRange: v.string(),
+              endRange: v.string(),
+              unit: v.string(),
+              description: v.string(),
+              pricePerUnit: v.object({ USD: v.string() }),
             }),
           ),
         }),
@@ -36,11 +36,12 @@ const offerSchema = z.object({
 });
 
 const path = `${repoRoot}data/pricing/unit-prices.json`;
-const file = z
-  .looseObject({ prices: unitPricesSchema.shape.prices })
-  .parse(JSON.parse(readFileSync(path, "utf8")));
+const file = v.parse(
+  v.looseObject({ prices: unitPricesSchema.entries.prices }),
+  JSON.parse(readFileSync(path, "utf8")),
+);
 const today = new Date().toISOString().slice(0, 10);
-const offers = new Map<string, z.infer<typeof offerSchema>>();
+const offers = new Map<string, v.InferOutput<typeof offerSchema>>();
 
 for (const price of file.prices) {
   let offer = offers.get(price.sourceUrl);
@@ -50,7 +51,7 @@ for (const price of file.prices) {
     if (!response.ok) {
       throw new Error(`${price.sourceUrl} answered ${response.status}`);
     }
-    offer = offerSchema.parse(await response.json());
+    offer = v.parse(offerSchema, await response.json());
     offers.set(price.sourceUrl, offer);
   }
   const terms = offer.terms.OnDemand[price.sku];

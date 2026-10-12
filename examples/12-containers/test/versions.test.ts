@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { errorSchema, noteListSchema, noteSchema } from "@aih/example-04-http-api/src/contract.ts";
@@ -46,8 +47,8 @@ describe("two versions on the same records, as during a rolling update", () => {
     const v2 = await task(records, "v2", formats.v2);
 
     // The load balancer alternates between the old task and the new one.
-    const old = noteSchema.parse(await (await v1.create("written by v1")).json());
-    const fresh = noteSchema.parse(await (await v2.create("written by v2")).json());
+    const old = v.parse(noteSchema, await (await v1.create("written by v1")).json());
+    const fresh = v.parse(noteSchema, await (await v2.create("written by v2")).json());
 
     const seenByV1 = await v1.get("/notes");
     const seenByV2 = await v2.get("/notes");
@@ -55,8 +56,8 @@ describe("two versions on the same records, as during a rolling update", () => {
     expect([seenByV2.status, seenByV2.headers.get("x-app-version")]).toEqual([200, "v2"]);
     const titles = ["written by v2", "written by v1"];
     expect(
-      noteListSchema
-        .parse(await seenByV1.json())
+      v
+        .parse(noteListSchema, await seenByV1.json())
         .notes.map((note) => note.title)
         .toSorted(),
     ).toEqual(titles.toSorted());
@@ -79,7 +80,7 @@ describe("two versions on the same records, as during a rolling update", () => {
 
     const list = await v1.get("/notes");
     expect(list.status).toBe(200);
-    expect(noteListSchema.parse(await list.json()).notes).toHaveLength(1);
+    expect(v.parse(noteListSchema, await list.json()).notes).toHaveLength(1);
   });
 
   it("breaks when the new version requires a field the old one never wrote", async () => {
@@ -93,7 +94,7 @@ describe("two versions on the same records, as during a rolling update", () => {
 
     const list = await v2.get("/notes");
     expect(list.status).toBe(500);
-    expect(errorSchema.parse(await list.json()).error.code).toBe("internal");
+    expect(v.parse(errorSchema, await list.json()).error.code).toBe("internal");
     // Half of the requests fail: the ones that reach the new task.
     expect((await v1.get("/notes")).status).toBe(200);
   });

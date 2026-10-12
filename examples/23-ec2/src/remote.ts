@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type MachineSpec, pathsOf } from "./machine.ts";
 import { versionSchema } from "./release.ts";
@@ -7,14 +7,19 @@ import { versionSchema } from "./release.ts";
 // runs anything: scripts/remote.ts does, and tests read what it would run.
 
 // #region inputs
-export const instanceIdSchema = z.string().regex(/^i-[0-9a-f]{8,17}$/, "not an instance ID");
-export const bucketNameSchema = z
-  .string()
-  .regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "not a bucket name");
+export const instanceIdSchema = v.pipe(
+  v.string(),
+  v.regex(/^i-[0-9a-f]{8,17}$/, "not an instance ID"),
+);
+export const bucketNameSchema = v.pipe(
+  v.string(),
+  v.regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "not a bucket name"),
+);
 /** An Amazon Linux 2023 release, as `dnf check-release-update` prints it. Never "latest". */
-export const releaseverSchema = z
-  .string()
-  .regex(/^2023\.\d{1,2}\.\d{8}$/, "not an AL2023 release version");
+export const releaseverSchema = v.pipe(
+  v.string(),
+  v.regex(/^2023\.\d{1,2}\.\d{8}$/, "not an AL2023 release version"),
+);
 // #endregion inputs
 
 // #region commands
@@ -31,7 +36,7 @@ export function remoteCommands(spec: MachineSpec) {
       `readlink ${paths.current} || echo "no release yet"`,
     ],
     release: (bucket: string, version: string): string[] => [
-      `${paths.releaseScript} ${bucketNameSchema.parse(bucket)} ${versionSchema.parse(version)}`,
+      `${paths.releaseScript} ${v.parse(bucketNameSchema, bucket)} ${v.parse(versionSchema, version)}`,
     ],
     smoke: (): string[] => [
       "set -euo pipefail",
@@ -59,7 +64,7 @@ export function remoteCommands(spec: MachineSpec) {
     ],
     patchApply: (releasever: string): string[] => [
       "set -euo pipefail",
-      `dnf upgrade -y --releasever=${releaseverSchema.parse(releasever)}`,
+      `dnf upgrade -y --releasever=${v.parse(releaseverSchema, releasever)}`,
       "rpm -q system-release",
       'echo "running kernel: $(uname -r); reboot if a newer kernel was installed"',
     ],
@@ -80,7 +85,7 @@ export const sendCommandArgs = (input: {
   "ssm",
   "send-command",
   "--instance-ids",
-  instanceIdSchema.parse(input.instanceId),
+  v.parse(instanceIdSchema, input.instanceId),
   "--document-name",
   "AWS-RunShellScript",
   "--comment",
@@ -100,7 +105,7 @@ export const commandResultArgs = (input: {
   "--command-id",
   input.commandId,
   "--instance-id",
-  instanceIdSchema.parse(input.instanceId),
+  v.parse(instanceIdSchema, input.instanceId),
   ...at(input.region),
 ];
 
@@ -109,7 +114,7 @@ export const sessionArgs = (input: { instanceId: string; region: string }) => [
   "ssm",
   "start-session",
   "--target",
-  instanceIdSchema.parse(input.instanceId),
+  v.parse(instanceIdSchema, input.instanceId),
   "--region",
   input.region,
 ];
@@ -132,7 +137,7 @@ export const uploadArgs = (input: {
   "s3",
   "cp",
   input.file,
-  `s3://${bucketNameSchema.parse(input.bucket)}/${input.key}`,
+  `s3://${v.parse(bucketNameSchema, input.bucket)}/${input.key}`,
   "--region",
   input.region,
   "--only-show-errors",
@@ -140,29 +145,31 @@ export const uploadArgs = (input: {
 // #endregion cli
 
 // #region results
-export const sentCommandSchema = z.object({ Command: z.object({ CommandId: z.string().min(1) }) });
-
-export const invocationSchema = z.object({
-  Status: z.string(),
-  ResponseCode: z.number().optional(),
-  StandardOutputContent: z.string().default(""),
-  StandardErrorContent: z.string().default(""),
+export const sentCommandSchema = v.object({
+  Command: v.object({ CommandId: v.pipe(v.string(), v.minLength(1)) }),
 });
-export type Invocation = z.infer<typeof invocationSchema>;
+
+export const invocationSchema = v.object({
+  Status: v.string(),
+  ResponseCode: v.optional(v.number()),
+  StandardOutputContent: v.optional(v.string(), ""),
+  StandardErrorContent: v.optional(v.string(), ""),
+});
+export type Invocation = v.InferOutput<typeof invocationSchema>;
 
 const RUNNING = new Set(["Pending", "InProgress", "Delayed", "Cancelling"]);
 export const isFinished = (invocation: Invocation): boolean => !RUNNING.has(invocation.Status);
 export const succeeded = (invocation: Invocation): boolean =>
   invocation.Status === "Success" && invocation.ResponseCode === 0;
 
-export const instanceInformationSchema = z.object({
-  InstanceInformationList: z.array(
-    z.object({
-      InstanceId: z.string(),
-      PingStatus: z.string(),
-      AgentVersion: z.string().optional(),
-      PlatformName: z.string().optional(),
-      PlatformVersion: z.string().optional(),
+export const instanceInformationSchema = v.object({
+  InstanceInformationList: v.array(
+    v.object({
+      InstanceId: v.string(),
+      PingStatus: v.string(),
+      AgentVersion: v.optional(v.string()),
+      PlatformName: v.optional(v.string()),
+      PlatformVersion: v.optional(v.string()),
     }),
   ),
 });

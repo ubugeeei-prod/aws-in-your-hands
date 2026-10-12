@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { progressSchema, toProgress } from "./job.ts";
 import type { Invoke } from "./local-workflow.ts";
 import { type Budget, type Deps, discardExport, exportPages, finishExport } from "./steps.ts";
@@ -20,9 +22,9 @@ export function localInvoke(deps: Deps, budget: () => Budget): Invoke {
       case NAMES.exportPages:
         return exportPages(deps, toProgress(input), budget());
       case NAMES.finish:
-        return finishExport(deps, progressSchema.parse(input));
+        return finishExport(deps, v.parse(progressSchema, input));
       case NAMES.discard:
-        return discardExport(deps, progressSchema.pick({ exportId: true }).parse(input));
+        return discardExport(deps, v.parse(v.pick(progressSchema, ["exportId"]), input));
       default:
         throw new Error(`nothing is registered as ${resource}`);
     }

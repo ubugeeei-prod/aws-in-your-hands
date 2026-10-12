@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 
+import * as v from "valibot";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { judge } from "../src/ledger.ts";
@@ -74,7 +75,7 @@ function runProbe(port: number, plan: Parameters<typeof renderProbeScript>[1]): 
 }
 
 const plan = (overrides: object = {}) =>
-  probePlanSchema.parse({
+  v.parse(probePlanSchema, {
     runId: "test1",
     cells: 2,
     rounds: 3,
@@ -127,14 +128,17 @@ describe("the probe plan", () => {
   it("fits in what Run Command returns, by construction", () => {
     const standard = defaultProbePlan("abcd1234");
     expect(probeOutputBound(standard)).toBeLessThan(RUN_COMMAND_STDOUT_LIMIT);
-    expect(() => probePlanSchema.parse({ ...standard, cells: 32, rounds: 600 })).toThrow(
+    expect(() => v.parse(probePlanSchema, { ...standard, cells: 32, rounds: 600 })).toThrow(
       "Run Command keeps 24000",
     );
   });
 
   it("accepts nothing in the run ID that could leave the URL or the script", () => {
     for (const runId of ["a b", "x'y", "../etc", "ABC", ""]) {
-      expect(() => probePlanSchema.parse({ ...defaultProbePlan("abcd"), runId }), runId).toThrow();
+      expect(
+        () => v.parse(probePlanSchema, { ...defaultProbePlan("abcd"), runId }),
+        runId,
+      ).toThrow();
     }
   });
 

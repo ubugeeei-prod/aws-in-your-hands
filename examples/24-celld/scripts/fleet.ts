@@ -7,6 +7,8 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 
+import * as v from "valibot";
+
 import {
   commandResultArgs,
   invocationSchema,
@@ -146,7 +148,8 @@ try {
 
   function send(node: NodeName, lines: string[], comment: string): string {
     const instanceId = instanceOf(node);
-    const sent = sentCommandSchema.parse(
+    const sent = v.parse(
+      sentCommandSchema,
       JSON.parse(aws(sendCommandArgs({ instanceId, region, commands: lines, comment }))),
     );
     console.error(`[${node}] command ${sent.Command.CommandId} sent to ${instanceId}`);
@@ -169,7 +172,7 @@ try {
         // The invocation takes a moment to exist after the command is accepted.
         continue;
       }
-      const invocation = invocationSchema.parse(JSON.parse(result.stdout));
+      const invocation = v.parse(invocationSchema, JSON.parse(result.stdout));
       if (!isFinished(invocation)) {
         continue;
       }
@@ -252,7 +255,7 @@ try {
       break;
     case "artifacts": {
       // What `vp run celld:fetch` downloaded and checked, copied to where the nodes can read it.
-      const version = versionSchema.parse(words[0] ?? PINNED_VERSION);
+      const version = v.parse(versionSchema, words[0] ?? PINNED_VERSION);
       const asset = assetOf(version, ARTIFACT_TARGET);
       const file = `.celld/download/${version}/${asset.file}`;
       if (!existsSync(file)) {
@@ -265,7 +268,7 @@ try {
       break;
     }
     case "install": {
-      const version = versionSchema.parse(words[0] ?? PINNED_VERSION);
+      const version = v.parse(versionSchema, words[0] ?? PINNED_VERSION);
       const targets =
         words.length > 1 ? words.slice(1).map((word) => nodeArgument(word, nodes)) : nodes;
       await each(targets, commands.install(bucket, version), `aih celld:install ${version}`);
@@ -309,7 +312,7 @@ try {
       break;
     }
     case "rollout": {
-      const version = versionSchema.parse(words[0] ?? PINNED_VERSION);
+      const version = v.parse(versionSchema, words[0] ?? PINNED_VERSION);
       const running = new Set<string>();
       for (const node of nodes) {
         running.add((await ops.nodeHealth(node)).version ?? "unknown");
@@ -379,7 +382,7 @@ try {
       // 3. Read every counter once more through each node that is left: two owners would disagree here.
       const outputs: ProbeOutput[] = [ledger];
       for (const node of survivors) {
-        const sweep = probePlanSchema.parse({ ...plan, rounds: 2, pauseSeconds: 0 });
+        const sweep = v.parse(probePlanSchema, { ...plan, rounds: 2, pauseSeconds: 0 });
         const result = await run(
           node,
           commands.probe(sweep),
@@ -422,7 +425,8 @@ try {
       const snapshots = nodes.map((node) => ({
         node,
         volumeId: volumeOf(node),
-        snapshotId: snapshotResultSchema.parse(
+        snapshotId: v.parse(
+          snapshotResultSchema,
           JSON.parse(aws(snapshotArgs({ volumeId: volumeOf(node), node, id, region }))),
         ).SnapshotId,
         celldVersion: versions.get(node) ?? null,
@@ -431,7 +435,7 @@ try {
       console.error(copy.describe);
       aws(copy.args, { inherit: true });
       aws(waitSnapshotsArgs({ snapshotIds: snapshots.map((entry) => entry.snapshotId), region }));
-      const manifest: BackupManifest = manifestSchema.parse({
+      const manifest: BackupManifest = v.parse(manifestSchema, {
         id,
         createdAt: new Date().toISOString(),
         region,
@@ -456,7 +460,7 @@ try {
       break;
     }
     case "restore": {
-      const id = backupIdSchema.parse(words[0]);
+      const id = v.parse(backupIdSchema, words[0]);
       const execute = flags.has("--yes");
       for (const node of nodes) {
         if ((await ops.nodeHealth(node)).active) {
@@ -465,7 +469,8 @@ try {
           );
         }
       }
-      const manifest = manifestSchema.parse(
+      const manifest = v.parse(
+        manifestSchema,
         JSON.parse(
           aws(["s3", "cp", `s3://${backupBucket}/${manifestKey(id)}`, "-", "--region", region]),
         ),

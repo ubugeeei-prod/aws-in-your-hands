@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
 import type { AttachmentRepository } from "@aih/example-07-uploads/api/src/attachment-repository.ts";
@@ -96,16 +96,16 @@ export async function handleEvent(deps: WorkerDeps, event: ObjectEvent): Promise
 
 // #region batch
 // Lambda hands over what it read from the queue. Only these two fields are used.
-export const batchSchema = z.object({
-  Records: z.array(z.object({ messageId: z.string().min(1), body: z.string() })),
+export const batchSchema = v.object({
+  Records: v.array(v.object({ messageId: v.pipe(v.string(), v.minLength(1)), body: v.string() })),
 });
-export type Batch = z.infer<typeof batchSchema>;
+export type Batch = v.InferOutput<typeof batchSchema>;
 export type BatchResponse = { batchItemFailures: { itemIdentifier: string }[] };
 
 export function createBatchHandler(deps: WorkerDeps) {
   return async (input: unknown): Promise<BatchResponse> => {
     const batchItemFailures: BatchResponse["batchItemFailures"] = [];
-    for (const record of batchSchema.parse(input).Records) {
+    for (const record of v.parse(batchSchema, input).Records) {
       try {
         const notification = parseNotification(record.body);
         if (notification.kind === "test") {

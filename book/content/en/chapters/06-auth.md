@@ -1,6 +1,6 @@
 ---
 title: "06 Auth: Cognito and Authorization"
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 # 06 Auth: Cognito and Authorization
@@ -117,13 +117,17 @@ When the event has no authorizer information at all, the caller is treated as no
 
 <<< @/examples/06-auth/api/src/lambda.ts{handler}
 
-The Lambda entry point doesn't read the `Authorization` header. The claims API Gateway verified are its only source for who the caller is.
+The Lambda entry point doesn't read the `Authorization` header. The claims API Gateway verified are its only source for who the caller is. Chapter 04's `handleApiGateway` passes the event along with the `Request`, and the app hands that event to `authenticate` as it is.
 
-### Middleware that makes authentication mandatory
+### A guard that makes authentication mandatory
 
 <<< @/examples/06-auth/api/src/app.ts{guard}
 
-`/health` is the only route registered before this middleware. Every route after it returns 401 when the caller isn't known. A new route added below it requires authentication without any extra code.
+There are two routers, one inside the other. The outer one has a single route, `GET /health`, and every request that doesn't match it comes to this function. When the caller isn't known, it returns 401 here. Only a known caller is passed on to the inner router (`signedIn`, shown in the next section). The `context` an inner route receives always has an `identity`. A new route added to the inner router requires authentication without any extra code.
+
+A path that doesn't exist also returns 401, not 404, when there is no token. Only `GET` matches `/health`, so the same goes for `HEAD /health`.
+
+CORS is handled outside this guard. A browser sends its preflight (`OPTIONS`) without a token, so the preflight has to be answered before the guard. A 401 carries the CORS headers too, so the SPA can read it and ask the user to sign in again.
 
 Checking in both API Gateway and Lambda looks like duplication, but the two have different jobs. API Gateway does most of the work. It stops an invalid request at the entry point, so the function isn't invoked and there is no function charge. The app's check is one more layer for the case where the configuration at the entry point has gone wrong.
 

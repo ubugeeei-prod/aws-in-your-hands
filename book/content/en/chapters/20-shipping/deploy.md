@@ -125,7 +125,7 @@ In tests, the implementation of the interface is swapped for one that returns fi
 
 The wait interval and the attempt limit are passed as arguments. So is `sleep`, which means the tests do not actually wait. If the detection has not finished by the limit, the function returns `timeout` and stops there, without making the third call, `DescribeStackResourceDrifts`. That API remembers the results of the previous detection and returns them when called. Stopping without calling it prevents the mistake of reading last time's "in sync" and passing while this time's detection has not finished.
 
-Responses go through a Zod schema before they are used, because the SDK's types only say what shape a response should have. The schema drops the fields that are not used, so the resources' actual configuration values (`ActualProperties`) never enter the report. The report keeps only the names of the properties that drifted.
+Responses go through a Valibot schema before they are used, because the SDK's types only say what shape a response should have. The schema drops the fields that are not used, so the resources' actual configuration values (`ActualProperties`) never enter the report. The report keeps only the names of the properties that drifted.
 
 The result is one of the same seven statuses as in chapter 02.
 

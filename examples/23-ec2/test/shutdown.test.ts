@@ -1,9 +1,8 @@
-import { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import { serve } from "@hono/node-server";
-import { Hono } from "hono";
 import { describe, expect, it } from "vite-plus/test";
+
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
 
 import { parseEc2Config } from "../src/config.ts";
 import { machineFor, SHUTDOWN_GRACE_MS } from "../src/machine.ts";
@@ -21,21 +20,16 @@ describe("shutdown on SIGTERM", () => {
     const slow = gate();
     const arrived = gate();
     const events: string[] = [];
-    const app = new Hono().post("/notes", async (c) => {
+    const app = async (): Promise<Response> => {
       arrived.open();
       await slow.closed;
       events.push("response sent");
-      return c.json({ saved: true }, 201);
-    });
+      return Response.json({ saved: true }, { status: 201 });
+    };
     // A real socket on loopback: this is about what the operating system does with connections.
     const listening = gate();
-    const server = serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 0 }, () =>
-      listening.open(),
-    );
+    const server = nodeServer(app).listen(0, "127.0.0.1", () => listening.open());
     await listening.closed;
-    if (!(server instanceof Server)) {
-      throw new Error("expected an HTTP/1.1 server");
-    }
     const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/notes`;
 
     const shutdown = createShutdown({

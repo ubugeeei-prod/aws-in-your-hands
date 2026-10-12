@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { type MachineSpec, machineSpecSchema, pathsOf } from "./machine.ts";
 import { RELEASE_FILE, RELEASE_PREFIX, VERSION_SHELL_PATTERN } from "./release.ts";
 import { renderEnvFile, renderUnit } from "./unit.ts";
@@ -27,7 +29,7 @@ function writeFile(path: string, content: string): string[] {
 // #region data-volume
 /** Formats the data volume if, and only if, it is empty; then mounts it. Safe to run again. */
 export function renderDataVolumeScript(input: MachineSpec): string {
-  const spec = machineSpecSchema.parse(input);
+  const spec = v.parse(machineSpecSchema, input);
   return [
     "#!/bin/bash",
     "set -euo pipefail",
@@ -77,7 +79,7 @@ export function renderDataVolumeScript(input: MachineSpec): string {
 // #region release-script
 /** `<service>-release <bucket> <version>`: fetch one release, switch to it, restart, check /health. */
 export function renderReleaseScript(input: MachineSpec): string {
-  const spec = machineSpecSchema.parse(input);
+  const spec = v.parse(machineSpecSchema, input);
   const paths = pathsOf(spec);
   return [
     "#!/bin/bash",
@@ -130,7 +132,7 @@ export function renderReleaseScript(input: MachineSpec): string {
 // #region user-data
 /** The whole first boot. Depends on the spec alone, so the same settings always give the same script. */
 export function renderUserData(input: MachineSpec): string {
-  const spec = machineSpecSchema.parse(input);
+  const spec = v.parse(machineSpecSchema, input);
   const paths = pathsOf(spec);
   const envDir = spec.envFile.slice(0, spec.envFile.lastIndexOf("/"));
   const script = [

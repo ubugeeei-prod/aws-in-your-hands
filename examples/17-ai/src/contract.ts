@@ -1,23 +1,23 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region request
 // The same limits as a note in chapter 04. They bound what one request can cost.
 export const MAX_TITLE_CHARS = 120;
 export const MAX_BODY_CHARS = 10_000;
 
-export const summarizeRequestSchema = z.object({
-  title: z.string().trim().min(1).max(MAX_TITLE_CHARS),
-  body: z.string().trim().min(1).max(MAX_BODY_CHARS),
+export const summarizeRequestSchema = v.object({
+  title: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(MAX_TITLE_CHARS)),
+  body: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(MAX_BODY_CHARS)),
 });
-export type SummarizeRequest = z.infer<typeof summarizeRequestSchema>;
+export type SummarizeRequest = v.InferOutput<typeof summarizeRequestSchema>;
 // #endregion request
 
 // #region events
-export const usageSchema = z.object({
-  inputTokens: z.number().int().nonnegative(),
-  outputTokens: z.number().int().nonnegative(),
+export const usageSchema = v.object({
+  inputTokens: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  outputTokens: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
-export type Usage = z.infer<typeof usageSchema>;
+export type Usage = v.InferOutput<typeof usageSchema>;
 
 export const failureCodes = [
   "throttled",
@@ -31,44 +31,44 @@ export const failureCodes = [
   "internal",
 ] as const;
 
-export const failureSchema = z.object({
-  code: z.enum(failureCodes),
+export const failureSchema = v.object({
+  code: v.picklist(failureCodes),
   // True when sending the same request again may succeed.
-  retryable: z.boolean(),
+  retryable: v.boolean(),
 });
-export type Failure = z.infer<typeof failureSchema>;
+export type Failure = v.InferOutput<typeof failureSchema>;
 
-export const summaryEventSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("delta"), text: z.string() }),
+export const summaryEventSchema = v.variant("type", [
+  v.object({ type: v.literal("delta"), text: v.string() }),
   // Exactly one of the next two ends every stream that was not cut.
-  z.object({
-    type: z.literal("done"),
-    stopReason: z.string(),
+  v.object({
+    type: v.literal("done"),
+    stopReason: v.string(),
     // False when the model stopped for any reason other than finishing.
-    complete: z.boolean(),
-    usage: usageSchema.nullable(),
+    complete: v.boolean(),
+    usage: v.nullable(usageSchema),
   }),
-  failureSchema.extend({ type: z.literal("error") }),
+  v.object({ type: v.literal("error"), ...failureSchema.entries }),
 ]);
-export type SummaryEvent = z.infer<typeof summaryEventSchema>;
+export type SummaryEvent = v.InferOutput<typeof summaryEventSchema>;
 // #endregion events
 
-export const healthSchema = z.object({
-  status: z.literal("ok"),
-  stage: z.string(),
-  backend: z.enum(["fixture", "bedrock"]),
-  modelId: z.string(),
+export const healthSchema = v.object({
+  status: v.literal("ok"),
+  stage: v.string(),
+  backend: v.picklist(["fixture", "bedrock"]),
+  modelId: v.string(),
 });
 
 // #region error
-export const errorSchema = z.object({
-  error: z.object({
-    code: z.enum(["invalid_request", "not_found", "payload_too_large", ...failureCodes]),
-    message: z.string(),
-    requestId: z.string(),
-    retryable: z.boolean().optional(),
-    issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
+export const errorSchema = v.object({
+  error: v.object({
+    code: v.picklist(["invalid_request", "not_found", "payload_too_large", ...failureCodes]),
+    message: v.string(),
+    requestId: v.string(),
+    retryable: v.optional(v.boolean()),
+    issues: v.optional(v.array(v.object({ path: v.string(), message: v.string() }))),
   }),
 });
-export type ErrorBody = z.infer<typeof errorSchema>;
+export type ErrorBody = v.InferOutput<typeof errorSchema>;
 // #endregion error

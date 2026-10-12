@@ -1,4 +1,4 @@
-import { handle } from "hono/aws-lambda";
+import { handleApiGateway } from "@aih/example-04-http-api/src/http/api-gateway.ts";
 
 import { composeApp } from "./compose.ts";
 import { openDsql } from "./dsql.ts";
@@ -23,5 +23,5 @@ const db = openDsql({
     ),
 });
 
-export const handler = handle(composeApp(env, db));
+export const handler = handleApiGateway(composeApp(env, db));
 // #endregion handler

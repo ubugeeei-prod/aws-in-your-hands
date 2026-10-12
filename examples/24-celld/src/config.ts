@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 export const REGION = "ap-northeast-1";
 export const CELLD_STACK = "AihCelld";
@@ -17,7 +17,7 @@ export const STATE_ON_DESTROY = ["retain", "delete"] as const;
 export type StateOnDestroy = (typeof STATE_ON_DESTROY)[number];
 // #endregion options
 
-const snapshotId = z.string().regex(/^snap-[0-9a-f]{8,17}$/);
+const snapshotId = v.pipe(v.string(), v.regex(/^snap-[0-9a-f]{8,17}$/));
 
 // `-c dataSnapshots=a:snap-0123...,b:snap-4567...` arrives as one string.
 const snapshotMap = (value: unknown): unknown => {
@@ -37,37 +37,62 @@ const snapshotMap = (value: unknown): unknown => {
 };
 
 // #region schema
-export const fleetConfigSchema = z
-  .object({
+// A number in cdk.json, a string after `-c nodes=3`. Number("abc") is NaN, which v.number() refuses.
+const numeric = v.pipe(v.union([v.number(), v.string()]), v.transform(Number), v.number());
+
+export const fleetConfigSchema = v.pipe(
+  v.object({
     // Zero by default: the bucket, the role, and the security group cost nothing by the hour.
-    nodes: z.coerce.number().int().min(0).max(NODE_NAMES.length).default(0),
-    instanceType: z.enum(INSTANCE_TYPES).default("t4g.small"),
-    dataVolumeGiB: z.coerce.number().int().min(1).max(100).default(8),
+    nodes: v.optional(
+      v.pipe(numeric, v.integer(), v.minValue(0), v.maxValue(NODE_NAMES.length)),
+      0,
+    ),
+    instanceType: v.optional(v.picklist(INSTANCE_TYPES), "t4g.small"),
+    dataVolumeGiB: v.optional(v.pipe(numeric, v.integer(), v.minValue(1), v.maxValue(100)), 8),
     // The bucket is the fleet's long-term state, and a node disk can hold writes the bucket lacks.
-    stateOnDestroy: z.enum(STATE_ON_DESTROY).default("retain"),
+    stateOnDestroy: v.optional(v.picklist(STATE_ON_DESTROY), "retain"),
     // Restore only: a node listed here gets a data volume created from that snapshot.
-    dataSnapshots: z
-      .preprocess(snapshotMap, z.partialRecord(z.enum(NODE_NAMES), snapshotId))
-      .default({}),
+    dataSnapshots: v.optional(
+      v.pipe(v.unknown(), v.transform(snapshotMap), v.record(v.picklist(NODE_NAMES), snapshotId)),
+      {},
+    ),
     // Unset: the latest Amazon Linux 2023, looked up at deploy time. Set: this image, until you change it.
-    amiId: z
-      .string()
-      .regex(/^ami-[0-9a-f]{8,17}$/)
-      .optional(),
-  })
-  .superRefine((config, context) => {
-    for (const node of Object.keys(config.dataSnapshots)) {
+    amiId: v.optional(v.pipe(v.string(), v.regex(/^ami-[0-9a-f]{8,17}$/))),
+  }),
+  // A snapshot for a node the fleet does not have. Waits until every field has the right type.
+  v.rawCheck(({ dataset, addIssue }) => {
+    if (!dataset.typed) {
+      return;
+    }
+    const config = dataset.value;
+    const snapshots: Record<string, unknown> = config.dataSnapshots;
+    for (const node of Object.keys(snapshots)) {
       if (!nodeNames(config.nodes).includes(node as NodeName)) {
-        context.addIssue({
-          code: "custom",
-          path: ["dataSnapshots", node],
+        addIssue({
           message: `node ${node} is not part of a fleet of ${config.nodes}`,
+          path: [
+            {
+              type: "object",
+              origin: "value",
+              input: config,
+              key: "dataSnapshots",
+              value: snapshots,
+            },
+            {
+              type: "object",
+              origin: "value",
+              input: snapshots,
+              key: node,
+              value: snapshots[node],
+            },
+          ],
         });
       }
     }
-  });
+  }),
+);
 
-export type FleetConfig = z.infer<typeof fleetConfigSchema>;
+export type FleetConfig = v.InferOutput<typeof fleetConfigSchema>;
 // #endregion schema
 
 /** The first `count` names, in the order every script walks the fleet. */
@@ -77,12 +102,12 @@ export function nodeNames(count: number): NodeName[] {
 
 /** Parses settings from CDK context or the command line; the message names every bad field. */
 export function parseFleetConfig(input: unknown): FleetConfig {
-  const result = fleetConfigSchema.safeParse(input);
+  const result = v.safeParse(fleetConfigSchema, input);
   if (!result.success) {
-    const problems = result.error.issues.map(
-      (item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`,
+    const problems = result.issues.map(
+      (item) => `  ${v.getDotPath(item) ?? "(root)"}: ${item.message}`,
     );
     throw new Error(`Invalid fleet settings:\n${problems.join("\n")}`);
   }
-  return result.data;
+  return result.output;
 }

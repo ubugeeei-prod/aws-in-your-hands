@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { fixtureSchema } from "../src/fixture-gateway.ts";
@@ -58,7 +59,7 @@ describe("relaying a ConverseStream", () => {
     const whole = fixtures.complete.steps;
     for (let length = 0; length < whole.length; length += 1) {
       // The connection may drop after any event. Only a messageStop makes it done.
-      const cut = fixtureSchema.parse({ ...fixtures.complete, steps: whole.slice(0, length) });
+      const cut = v.parse(fixtureSchema, { ...fixtures.complete, steps: whole.slice(0, length) });
       const start = await fromFixture(cut).summarize(NOTE, never);
       const events = start.ok ? await drain(start.events) : [];
       const sawStop = whole
@@ -69,7 +70,7 @@ describe("relaying a ConverseStream", () => {
   });
 
   it("still completes when only the usage is lost, and says the usage is unknown", async () => {
-    const cut = fixtureSchema.parse({
+    const cut = v.parse(fixtureSchema, {
       ...fixtures.complete,
       steps: fixtures.complete.steps.slice(0, -1),
     });
@@ -84,7 +85,7 @@ describe("relaying a ConverseStream", () => {
   });
 
   it("stops relaying when an event has a known key with the wrong shape", async () => {
-    const bad = fixtureSchema.parse({
+    const bad = v.parse(fixtureSchema, {
       source: "test",
       description: "delta text is a number",
       steps: [
@@ -100,7 +101,7 @@ describe("relaying a ConverseStream", () => {
   });
 
   it("ignores event kinds it does not know, and deltas that carry no text", async () => {
-    const odd = fixtureSchema.parse({
+    const odd = v.parse(fixtureSchema, {
       source: "test",
       description: "a reasoning delta and a future event kind",
       steps: [
@@ -125,7 +126,7 @@ describe("relaying a ConverseStream", () => {
   });
 
   it("cuts off a model that writes far past any summary", async () => {
-    const flood = fixtureSchema.parse({
+    const flood = v.parse(fixtureSchema, {
       source: "test",
       description: "more text than MAX_SUMMARY_CHARS",
       steps: Array.from({ length: 5 }, () => ({
@@ -144,7 +145,7 @@ describe("relaying a ConverseStream", () => {
   });
 
   it("treats an exception delivered as an event like the same exception thrown", async () => {
-    const asEvent = fixtureSchema.parse({
+    const asEvent = v.parse(fixtureSchema, {
       source: "test",
       description: "the API reference lists exceptions as members of the stream",
       steps: [
@@ -170,7 +171,7 @@ describe("opening the stream", () => {
   });
 
   it("gives up after the last attempt and says the caller may retry", async () => {
-    const always = fixtureSchema.parse({
+    const always = v.parse(fixtureSchema, {
       source: "test",
       description: "throttled on every attempt",
       openErrors: Array.from({ length: 5 }, () => ({
@@ -194,7 +195,7 @@ describe("opening the stream", () => {
     ["ValidationException", "rejected"],
     ["TypeError", "internal"],
   ])("does not retry %s", async (name, code) => {
-    const denied = fixtureSchema.parse({
+    const denied = v.parse(fixtureSchema, {
       source: "test",
       description: name,
       openErrors: [{ name, message: "no" }],

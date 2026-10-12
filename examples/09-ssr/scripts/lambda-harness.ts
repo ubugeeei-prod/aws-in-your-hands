@@ -6,38 +6,39 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { CacheRequest, CacheResponse } from "../test/support/shared-cache.ts";
 
 // #region nitro-json
-const nitroJsonSchema = z.object({
-  preset: z.literal("aws-lambda"),
-  versions: z.object({ nitro: z.string() }),
-  config: z.object({ awsLambda: z.object({ streaming: z.boolean() }) }),
+const nitroJsonSchema = v.object({
+  preset: v.literal("aws-lambda"),
+  versions: v.object({ nitro: v.string() }),
+  config: v.object({ awsLambda: v.object({ streaming: v.boolean() }) }),
 });
 
 /** What the build says about itself. The stack reads the same file. */
 export function readBuildInfo(outputDir: string): { streaming: boolean; nitro: string } {
-  const info = nitroJsonSchema.parse(
+  const info = v.parse(
+    nitroJsonSchema,
     JSON.parse(readFileSync(join(outputDir, "nitro.json"), "utf8")),
   );
   return { streaming: info.config.awsLambda.streaming, nitro: info.versions.nitro };
 }
 // #endregion nitro-json
 
-const headersSchema = z.record(z.string(), z.string());
-const bufferedResultSchema = z.object({
-  statusCode: z.number().int(),
+const headersSchema = v.record(v.string(), v.string());
+const bufferedResultSchema = v.object({
+  statusCode: v.pipe(v.number(), v.integer()),
   headers: headersSchema,
-  cookies: z.array(z.string()).optional(),
-  body: z.string(),
-  isBase64Encoded: z.boolean(),
+  cookies: v.optional(v.array(v.string())),
+  body: v.string(),
+  isBase64Encoded: v.boolean(),
 });
-const streamMetadataSchema = z.object({
-  statusCode: z.number().int(),
+const streamMetadataSchema = v.object({
+  statusCode: v.pipe(v.number(), v.integer()),
   headers: headersSchema,
-  cookies: z.array(z.string()).optional(),
+  cookies: v.optional(v.array(v.string())),
 });
 
 export type Invocation = CacheResponse & {
@@ -88,17 +89,18 @@ export async function loadHandler(outputDir: string) {
     // #endregion fake-runtime
   }
   const module: unknown = await import(pathToFileURL(join(outputDir, "server/index.mjs")).href);
-  const { handler } = z
-    .object({
-      handler: z.custom<(...args: unknown[]) => unknown>((value) => typeof value === "function"),
-    })
-    .parse(module);
+  const { handler } = v.parse(
+    v.object({
+      handler: v.custom<(...args: unknown[]) => unknown>((value) => typeof value === "function"),
+    }),
+    module,
+  );
 
   return async (request: CacheRequest & { body?: string }): Promise<Invocation> => {
     const event = functionUrlEvent(request);
     const startedAt = performance.now();
     if (!streaming) {
-      const result = bufferedResultSchema.parse(await handler(event, {}));
+      const result = v.parse(bufferedResultSchema, await handler(event, {}));
       return {
         status: result.statusCode,
         headers: lowerCased(result.headers),
@@ -124,7 +126,7 @@ export async function loadHandler(outputDir: string) {
       end: () => {},
     };
     await handler(event, responseStream, {});
-    const metadata = streamMetadataSchema.parse(responseStream.metadata);
+    const metadata = v.parse(streamMetadataSchema, responseStream.metadata);
     return {
       status: metadata.statusCode,
       headers: lowerCased(metadata.headers),

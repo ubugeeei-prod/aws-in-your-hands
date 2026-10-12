@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import * as v from "valibot";
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
@@ -47,12 +48,14 @@ async function setup(options: { database?: Db; quota?: number } = {}) {
     now: () => (clock += 5),
   });
   const send = (method: string, path: string, body?: unknown) =>
-    app.request(path, {
-      method,
-      ...(body === undefined
-        ? {}
-        : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
-    });
+    app(
+      new Request(`http://api.test${path}`, {
+        method,
+        ...(body === undefined
+          ? {}
+          : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
+      }),
+    );
   return { app, logs, send };
 }
 
@@ -60,13 +63,14 @@ describe("notes API on SQL", () => {
   it("creates notes and lists them newest first", async () => {
     const { send } = await setup();
     expect((await send("POST", "/notes", { title: "first" })).status).toBe(201);
-    const second = noteSchema.parse(
+    const second = v.parse(
+      noteSchema,
       await (await send("POST", "/notes", { title: "second", body: "hello" })).json(),
     );
 
-    const list = noteListSchema.parse(await (await send("GET", "/notes")).json());
+    const list = v.parse(noteListSchema, await (await send("GET", "/notes")).json());
     expect(list.notes.map((item) => item.title)).toEqual(["second", "first"]);
-    expect(noteSchema.parse(await (await send("GET", `/notes/${second.id}`)).json())).toEqual(
+    expect(v.parse(noteSchema, await (await send("GET", `/notes/${second.id}`)).json())).toEqual(
       second,
     );
   });
@@ -78,11 +82,11 @@ describe("notes API on SQL", () => {
     const largest = { title: "\u0001".repeat(120), body: "\u0001".repeat(10_000) };
     const created = [];
     for (let count = 0; count <= MAX_LISTED_NOTES; count++) {
-      created.push(noteSchema.parse(await (await send("POST", "/notes", largest)).json()));
+      created.push(v.parse(noteSchema, await (await send("POST", "/notes", largest)).json()));
     }
 
     const text = await (await send("GET", "/notes")).text();
-    const list = noteListSchema.parse(JSON.parse(text));
+    const list = v.parse(noteListSchema, JSON.parse(text));
     expect(new TextEncoder().encode(text).byteLength).toBeLessThanOrEqual(20 * 1024);
     expect(list.notes.map((item) => item.id)).toEqual(
       created
@@ -94,7 +98,7 @@ describe("notes API on SQL", () => {
 
     // The whole note is one request away.
     const oldest = await send("GET", `/notes/${created[0]?.id}`);
-    expect(noteSchema.parse(await oldest.json()).body).toHaveLength(10_000);
+    expect(v.parse(noteSchema, await oldest.json()).body).toHaveLength(10_000);
   });
 
   it("has a list contract that refuses a body and a 21st note", () => {
@@ -105,7 +109,7 @@ describe("notes API on SQL", () => {
       createdAt: "2026-10-11T00:00:00.000Z",
       updatedAt: "2026-10-11T00:00:00.000Z",
     };
-    const parses = (notes: unknown[]) => noteListSchema.safeParse({ notes }).success;
+    const parses = (notes: unknown[]) => v.safeParse(noteListSchema, { notes }).success;
     expect(parses([summary])).toBe(true);
     expect(parses([{ ...summary, body: "" }])).toBe(false);
     expect(parses(Array.from({ length: MAX_LISTED_NOTES + 1 }, () => summary))).toBe(false);
@@ -121,14 +125,15 @@ describe("notes API on SQL", () => {
     ] as const) {
       const response = await send(method, "/notes/not-a-uuid", body);
       expect(response.status).toBe(404);
-      expect(errorSchema.parse(await response.json()).error.code).toBe("not_found");
+      expect(v.parse(errorSchema, await response.json()).error.code).toBe("not_found");
     }
     expect(logs.some((entry) => entry.level === "error")).toBe(false);
   });
 
   it("refuses a stale update with 409 and the note as it is stored", async () => {
     const { send } = await setup();
-    const created = noteSchema.parse(
+    const created = v.parse(
+      noteSchema,
       await (await send("POST", "/notes", { title: "draft" })).json(),
     );
     expect(
@@ -139,7 +144,7 @@ describe("notes API on SQL", () => {
       title: "theirs",
       expectedVersion: 1,
     });
-    const body = errorSchema.parse(await stale.json());
+    const body = v.parse(errorSchema, await stale.json());
 
     expect(stale.status).toBe(409);
     expect(body.error).toMatchObject({ code: "conflict", current: { title: "mine", version: 2 } });
@@ -152,7 +157,7 @@ describe("notes API on SQL", () => {
     const response = await send("POST", "/notes", { title: "does not" });
 
     expect(response.status).toBe(409);
-    expect(errorSchema.parse(await response.json()).error.code).toBe("quota_exceeded");
+    expect(v.parse(errorSchema, await response.json()).error.code).toBe("quota_exceeded");
   });
 
   it("answers 503 busy with retry-after when the conflicts do not stop, having written nothing", async () => {
@@ -162,8 +167,10 @@ describe("notes API on SQL", () => {
 
     expect(response.status).toBe(503);
     expect(response.headers.get("retry-after")).toBe("1");
-    expect(errorSchema.parse(await response.json()).error.code).toBe("busy");
-    const list = noteListSchema.parse(await (await send("GET", "/notes")).json());
+    // A page on the allowed origin has to be able to read this answer to retry.
+    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    expect(v.parse(errorSchema, await response.json()).error.code).toBe("busy");
+    const list = v.parse(noteListSchema, await (await send("GET", "/notes")).json());
     expect(list.notes).toEqual([]);
   });
 
@@ -179,7 +186,7 @@ describe("notes API on SQL", () => {
 
     expect(response.status).toBe(500);
     expect(text).not.toContain("app.notes");
-    expect(errorSchema.parse(JSON.parse(text)).error.code).toBe("internal");
+    expect(v.parse(errorSchema, JSON.parse(text)).error.code).toBe("internal");
     expect(
       logs.some((entry) => entry.level === "error" && String(entry["error"]).includes("app.notes")),
     ).toBe(true);

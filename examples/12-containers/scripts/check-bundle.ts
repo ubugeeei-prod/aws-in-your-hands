@@ -12,6 +12,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 
+import * as v from "valibot";
+
 import { healthSchema } from "@aih/example-04-http-api/src/contract.ts";
 
 const directory = mkdtempSync(join(tmpdir(), "aih-bundle-"));
@@ -38,7 +40,7 @@ try {
   const { port } = JSON.parse(first.value) as { port: number };
 
   const response = await fetch(`http://127.0.0.1:${port}/health`);
-  healthSchema.parse(await response.json());
+  v.parse(healthSchema, await response.json());
   if (response.status !== 200 || response.headers.get("x-app-version") !== "bundle") {
     throw new Error(`unexpected answer from the bundle: ${response.status}`);
   }

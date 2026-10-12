@@ -5,6 +5,7 @@
 // a few dozen tokens of the model named by BEDROCK_MODEL_ID.
 
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 
@@ -33,7 +34,7 @@ try {
 
   // #region validate
   // The SDK's types describe what the service promises. This checks what arrived.
-  const result = converseResponseSchema.parse(response);
+  const result = v.parse(converseResponseSchema, response);
   const text = result.output.message.content.map((block) => block.text ?? "").join("");
   console.log(text);
   console.log(

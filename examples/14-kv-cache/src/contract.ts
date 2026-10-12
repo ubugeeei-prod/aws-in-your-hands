@@ -1,34 +1,34 @@
-import { z } from "zod";
+import * as v from "valibot";
 
-export const itemSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  priceYen: z.number().int().nonnegative(),
+export const itemSchema = v.object({
+  id: v.pipe(v.string(), v.minLength(1)),
+  name: v.pipe(v.string(), v.minLength(1)),
+  priceYen: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
-export type Item = z.infer<typeof itemSchema>;
+export type Item = v.InferOutput<typeof itemSchema>;
 
 // #region list
-export const itemListSchema = z.object({
-  items: z.array(itemSchema),
+export const itemListSchema = v.object({
+  items: v.array(itemSchema),
   /** When the source of truth produced this list. Compare it with the clock to see how old the answer is. */
-  loadedAt: z.iso.datetime(),
+  loadedAt: v.pipe(v.string(), v.isoTimestamp()),
 });
-export type ItemList = z.infer<typeof itemListSchema>;
+export type ItemList = v.InferOutput<typeof itemListSchema>;
 // #endregion list
 
-export const healthSchema = z.object({
-  status: z.literal("ok"),
-  stage: z.string(),
-  store: z.enum(["memory", "dynamodb", "valkey", "elasticache"]),
+export const healthSchema = v.object({
+  status: v.literal("ok"),
+  stage: v.string(),
+  store: v.picklist(["memory", "dynamodb", "valkey", "elasticache"]),
 });
 
 export const errorCodes = ["rate_limited", "unavailable", "not_found", "internal"] as const;
 
-export const errorSchema = z.object({
-  error: z.object({
-    code: z.enum(errorCodes),
-    message: z.string(),
-    requestId: z.string(),
+export const errorSchema = v.object({
+  error: v.object({
+    code: v.picklist(errorCodes),
+    message: v.string(),
+    requestId: v.string(),
   }),
 });
-export type ErrorBody = z.infer<typeof errorSchema>;
+export type ErrorBody = v.InferOutput<typeof errorSchema>;

@@ -1,57 +1,73 @@
-import { z } from "zod";
+import * as v from "valibot";
 
-// `z.url()` alone accepts "localhost:8000", which parses as a URL whose scheme is "localhost".
-const httpUrl = z.url({ protocol: /^https?$/ });
-const valkeyUrl = z.url({ protocol: /^valkeys?$|^rediss?$/ });
+// `v.url()` alone accepts "localhost:8000", which parses as a URL whose scheme is "localhost".
+const httpUrl = v.pipe(
+  v.string(),
+  v.url(),
+  v.regex(/^https?:\/\//, "Must be an http or https URL."),
+);
+const valkeyUrl = v.pipe(
+  v.string(),
+  v.url(),
+  v.regex(/^(valkeys?|rediss?):\/\//, "Must be a valkey, valkeys, redis, or rediss URL."),
+);
 
-const base = z.object({
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-  STAGE: z.string().min(1).default("local"),
-  RATE_LIMIT: z.coerce.number().int().positive().default(5),
-  RATE_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
-  RATE_ALGORITHM: z.enum(["fixed", "sliding"]).default("fixed"),
+// An environment variable is a string. "5" becomes 5; "five" becomes NaN, which `v.number()` refuses.
+const integer = (min: number, fallback: number) =>
+  v.optional(
+    v.pipe(v.string(), v.transform(Number), v.number(), v.integer(), v.minValue(min)),
+    String(fallback),
+  );
+
+const base = {
+  LOG_LEVEL: v.optional(v.picklist(["debug", "info", "warn", "error"]), "info"),
+  STAGE: v.optional(v.pipe(v.string(), v.minLength(1)), "local"),
+  RATE_LIMIT: integer(1, 5),
+  RATE_WINDOW_SECONDS: integer(1, 60),
+  RATE_ALGORITHM: v.optional(v.picklist(["fixed", "sliding"]), "fixed"),
   /** What to do when the counter store fails: let the request through, or refuse it. */
-  RATE_ON_ERROR: z.enum(["allow", "deny"]).default("allow"),
-  CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(30),
-  SOURCE_DELAY_MS: z.coerce.number().int().nonnegative().default(300),
-});
+  RATE_ON_ERROR: v.optional(v.picklist(["allow", "deny"]), "allow"),
+  CACHE_TTL_SECONDS: integer(1, 30),
+  SOURCE_DELAY_MS: integer(0, 300),
+};
 
 // #region env
 // Each store brings its own required settings, so a missing one fails at startup.
-const envSchema = z.discriminatedUnion("KV_STORE", [
-  base.extend({ KV_STORE: z.literal("memory") }),
-  base.extend({
-    KV_STORE: z.literal("dynamodb"),
-    TABLE_NAME: z.string().min(3),
+const envSchema = v.variant("KV_STORE", [
+  v.object({ ...base, KV_STORE: v.literal("memory") }),
+  v.object({
+    ...base,
+    KV_STORE: v.literal("dynamodb"),
+    TABLE_NAME: v.pipe(v.string(), v.minLength(3)),
     // DynamoDB Local only. In AWS the SDK finds the regional endpoint itself.
-    DYNAMODB_ENDPOINT: httpUrl.optional(),
+    DYNAMODB_ENDPOINT: v.optional(httpUrl),
   }),
-  base.extend({
-    KV_STORE: z.literal("valkey"),
+  v.object({
+    ...base,
+    KV_STORE: v.literal("valkey"),
     // A Valkey on this machine: no TLS, no password.
     VALKEY_URL: valkeyUrl,
   }),
-  base.extend({
-    KV_STORE: z.literal("elasticache"),
-    VALKEY_ENDPOINT: z.string().min(1),
-    VALKEY_PORT: z.coerce.number().int().positive().default(6379),
-    VALKEY_CACHE_NAME: z.string().min(1),
-    VALKEY_USER: z.string().min(1),
+  v.object({
+    ...base,
+    KV_STORE: v.literal("elasticache"),
+    VALKEY_ENDPOINT: v.pipe(v.string(), v.minLength(1)),
+    VALKEY_PORT: integer(1, 6379),
+    VALKEY_CACHE_NAME: v.pipe(v.string(), v.minLength(1)),
+    VALKEY_USER: v.pipe(v.string(), v.minLength(1)),
     // Set by the Lambda runtime.
-    AWS_REGION: z.string().min(1),
+    AWS_REGION: v.pipe(v.string(), v.minLength(1)),
   }),
 ]);
 // #endregion env
 
-export type Env = z.infer<typeof envSchema>;
+export type Env = v.InferOutput<typeof envSchema>;
 
 export function parseEnv(source: Record<string, string | undefined>): Env {
-  const result = envSchema.safeParse(source);
+  const result = v.safeParse(envSchema, source);
   if (!result.success) {
-    const problems = result.error.issues.map(
-      (issue) => `${issue.path.join(".")}: ${issue.message}`,
-    );
+    const problems = result.issues.map((issue) => `${v.getDotPath(issue) ?? ""}: ${issue.message}`);
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
-  return result.data;
+  return result.output;
 }

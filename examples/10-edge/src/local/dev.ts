@@ -7,6 +7,8 @@ import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as v from "valibot";
+
 import { edgeDataSchema, toEntries } from "../kvs/config.ts";
 import {
   isGeneratedResponse,
@@ -29,7 +31,9 @@ const CONTENT_TYPES: Record<string, string> = {
 // #region dev
 // Read on every request: an edit to edge-data.json shows up at once. The real store takes its time.
 const kvs = mapKvs(() =>
-  toEntries(edgeDataSchema.parse(JSON.parse(readFileSync(join(root, "edge-data.json"), "utf8")))),
+  toEntries(
+    v.parse(edgeDataSchema, JSON.parse(readFileSync(join(root, "edge-data.json"), "utf8"))),
+  ),
 );
 const handler = loadViewerRequestFunction(
   new URL("../../infra/functions/edge-router.js", import.meta.url),

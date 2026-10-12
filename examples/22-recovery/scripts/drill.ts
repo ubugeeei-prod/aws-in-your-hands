@@ -8,6 +8,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 
+import * as v from "valibot";
+
 import {
   type DrillRecord,
   drillRecordSchema,
@@ -26,7 +28,7 @@ const [command, name, field, value] = positionals;
 const directory = new URL("../../../reports/drills/", import.meta.url);
 const template = new URL("../drill/record.template.json", import.meta.url);
 const read = (url: URL): DrillRecord =>
-  drillRecordSchema.parse(JSON.parse(readFileSync(url, "utf8")));
+  v.parse(drillRecordSchema, JSON.parse(readFileSync(url, "utf8")));
 
 try {
   if (command === undefined || name === undefined || !/^[A-Za-z0-9-]+$/.test(name)) {

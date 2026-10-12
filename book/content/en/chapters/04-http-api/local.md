@@ -33,8 +33,15 @@ The development server is nothing more than this code.
 
 <<< @/examples/04-http-api/src/dev.ts{dev}
 
-It puts the same app that runs on Lambda on an ordinary Node.js HTTP server. It starts quickly and costs nothing. It isn't Lambda, though, so it doesn't reproduce the following.
+It puts the same app that runs on Lambda on an ordinary Node.js HTTP server, using `nodeServer`.
 
+<<< @/examples/04-http-api/src/http/node-server.ts{node-server}
+
+`nodeServer` turns each request the `node:http` server receives into a `Request`, passes it to the app, and writes the status code, headers, and body of the `Response` back. The `context` it passes is the address of whoever connected, the local counterpart of the event `handleApiGateway` passes, and this chapter's app doesn't use it. The body is piped through without being collected first, so a response written piece by piece arrives piece by piece. If the app throws, this is where the exception becomes a 500. This chapter's app catches its own exceptions, so only one it failed to catch gets this far.
+
+The server starts quickly and costs nothing. It isn't Lambda, though, so it doesn't reproduce the following.
+
+- The translation to and from API Gateway's event. A local request doesn't pass through `toRequest` and `toResult` from [the previous page](/en/chapters/04-http-api.md)
 - API Gateway's routes. In production, API Gateway answers a request for a path you didn't define with a 404 before it reaches Lambda
 - Lambda's limits. Work that runs past 10 seconds is cut off, and memory has a ceiling
 - IAM. AWS operations you haven't allowed are denied
@@ -65,15 +72,16 @@ This task has not actually been run yet.
 vp run test:unit
 ```
 
-The tests are in three places, and each checks something different.
+The tests are in four places, and each checks something different.
 
 | Where | File | What it checks | What it doesn't check |
 | --- | --- | --- | --- |
 | App | `test/app.test.ts` | Input validation, the error shape, the request ID, CORS | How things behave through Lambda and API Gateway |
+| HTTP parts | `test/http.test.ts` | How a route is chosen, CORS, the body limit, the translation to and from API Gateway's event, the Node.js server | An event written by the real API Gateway |
 | Client | `test/client.test.ts` | The contract between client and server. Handling of responses that break the contract | A real network |
 | Infrastructure | `infra/test/http-api-stack.test.ts` | Permissions, log retention, timeout, routes | That AWS behaves as the template says |
 
-The app tests don't open a port. They pass a `Request` straight to the Hono app.
+The app is a function, so its tests open no port. They call it with a `Request`.
 
 The client tests have no hand-written mock. They give the client the real app as its transport, so if a change to the server breaks the contract, these tests fail.
 
@@ -81,9 +89,9 @@ This is the client.
 
 <<< @/examples/04-http-api/src/client.ts{client}
 
-`hc<App>` carries the server's routes and response types to the client at compile time, so a mistyped path is a type error.
+The client is a handful of small functions that call `fetch`. The methods and paths are written by hand, so a client that disagrees with the server's routes is not a type error. Deriving the client's types from the server's routes is something a framework provides, and this code doesn't have it. The client tests, which run against the real app, are what catch a disagreement.
 
-What the type describes, though, is **the code in this repository**. The server that actually answers may not be the same version. An old deployment may answer, or a proxy on the way may return an error page. So the client validates each response against the schema before returning it. The tests include a 200 with the wrong shape and a 502 that comes back as HTML.
+The return types are derived from the schemas. What a type describes, though, is **the code in this repository**. The server that actually answers may not be the same version. An old deployment may answer, or a proxy on the way may return an error page. So the client validates each response against the schema before returning it. The tests include a 200 with the wrong shape and a 502 that comes back as HTML.
 
 One more test creates two instances of the app and checks that a note written to one can't be seen from the other. It isn't there to find a bug. It fixes, as a specification, the behavior the next section explains.
 

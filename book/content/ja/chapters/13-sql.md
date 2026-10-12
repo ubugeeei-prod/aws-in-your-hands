@@ -1,6 +1,6 @@
 ---
 title: "13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2"
-revision: 4
+revision: 5
 ---
 
 # 13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2
@@ -32,7 +32,7 @@ mark db
 ```figure
 caption: Lambda 関数は自分でクラスターに接続する。データベースロールは notes_api で、関数の中で作った IAM 署名付きのトークンをパスワードにする
 node role: 実行ロール | このクラスターへの dsql:DbConnect, 自分のロググループ
-node app: Hono app
+node app: アプリ | src/app.ts
 node svc: NoteService
 node repo: SqlNoteRepository
 node tx: transaction runner | SQLSTATE 40001 でやり直す

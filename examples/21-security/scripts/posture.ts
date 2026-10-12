@@ -21,7 +21,7 @@ import {
 import { GetAccountSummaryCommand, IAMClient } from "@aws-sdk/client-iam";
 import { BatchGetAccountStatusCommand, Inspector2Client } from "@aws-sdk/client-inspector2";
 import { DescribeOrganizationCommand, OrganizationsClient } from "@aws-sdk/client-organizations";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 
@@ -46,11 +46,14 @@ try {
   const region = target.region;
 
   // #region collect
-  const snapshot: Snapshot = snapshotSchema.parse({
+  const snapshot: Snapshot = v.parse(snapshotSchema, {
     root: await probe(async () => {
-      const summary = z
-        .object({ AccountMFAEnabled: z.number(), AccountAccessKeysPresent: z.number() })
-        .parse((await new IAMClient({ region }).send(new GetAccountSummaryCommand({}))).SummaryMap);
+      // v.finite(): v.number() alone takes Infinity.
+      const count = v.pipe(v.number(), v.finite());
+      const summary = v.parse(
+        v.object({ AccountMFAEnabled: count, AccountAccessKeysPresent: count }),
+        (await new IAMClient({ region }).send(new GetAccountSummaryCommand({}))).SummaryMap,
+      );
       return {
         mfaEnabled: summary.AccountMFAEnabled === 1,
         accessKeysPresent: summary.AccountAccessKeysPresent > 0,
@@ -61,15 +64,16 @@ try {
       const { trailList } = await cloudtrail.send(
         new DescribeTrailsCommand({ includeShadowTrails: true }),
       );
-      const trails = z
-        .array(
-          z.object({
-            Name: z.string(),
-            TrailARN: z.string(),
-            IsMultiRegionTrail: z.boolean().default(false),
+      const trails = v.parse(
+        v.array(
+          v.object({
+            Name: v.string(),
+            TrailARN: v.string(),
+            IsMultiRegionTrail: v.optional(v.boolean(), false),
           }),
-        )
-        .parse(trailList ?? []);
+        ),
+        trailList ?? [],
+      );
       return Promise.all(
         trails.map(async (trail) => ({
           name: trail.Name,
@@ -82,15 +86,17 @@ try {
     }),
     guardDuty: await probe(async () => {
       const guardduty = new GuardDutyClient({ region });
-      const ids = z
-        .array(z.string())
-        .parse((await guardduty.send(new ListDetectorsCommand({}))).DetectorIds ?? []);
+      const ids = v.parse(
+        v.array(v.string()),
+        (await guardduty.send(new ListDetectorsCommand({}))).DetectorIds ?? [],
+      );
       return Promise.all(
         ids.map(async (id) => ({
           id,
-          status: z
-            .string()
-            .parse((await guardduty.send(new GetDetectorCommand({ DetectorId: id }))).Status),
+          status: v.parse(
+            v.string(),
+            (await guardduty.send(new GetDetectorCommand({ DetectorId: id }))).Status,
+          ),
         })),
       );
     }),
@@ -98,19 +104,21 @@ try {
       const response = await new Inspector2Client({ region }).send(
         new BatchGetAccountStatusCommand({}),
       );
-      const status = z.object({ status: z.string() });
-      const state = z
-        .object({ ec2: status, ecr: status, lambda: status.default({ status: "DISABLED" }) })
-        .parse(response.accounts?.[0]?.resourceState);
+      const status = v.object({ status: v.string() });
+      const state = v.parse(
+        v.object({ ec2: status, ecr: status, lambda: v.optional(status, { status: "DISABLED" }) }),
+        response.accounts?.[0]?.resourceState,
+      );
       return { lambda: state.lambda.status, ecr: state.ecr.status, ec2: state.ec2.status };
     }),
     config: await probe(async () => {
       const response = await new ConfigServiceClient({ region }).send(
         new DescribeConfigurationRecorderStatusCommand({}),
       );
-      return z
-        .array(z.object({ name: z.string(), recording: z.boolean() }))
-        .parse(response.ConfigurationRecordersStatus ?? []);
+      return v.parse(
+        v.array(v.object({ name: v.string(), recording: v.boolean() })),
+        response.ConfigurationRecordersStatus ?? [],
+      );
     }),
     organization: await probe(async () => {
       try {

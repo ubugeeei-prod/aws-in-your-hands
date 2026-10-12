@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { MAX_NOTES_PER_OWNER, noteSchema } from "../src/contract.ts";
 import type { Db } from "../src/db.ts";
@@ -30,9 +30,10 @@ export async function runMigrations(db: Db, dialect: Dialect): Promise<void> {
 }
 
 export async function runSeed(db: Db): Promise<void> {
-  const fixture = z
-    .array(noteSchema)
-    .parse(JSON.parse(readFileSync(here("../test/fixtures/seed-notes.json"), "utf8")));
+  const fixture = v.parse(
+    v.array(noteSchema),
+    JSON.parse(readFileSync(here("../test/fixtures/seed-notes.json"), "utf8")),
+  );
   const transaction = createTransactionRunner({
     db,
     policy: defaultRetryPolicy,

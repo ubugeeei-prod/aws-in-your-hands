@@ -1,23 +1,26 @@
-import { z } from "zod";
+import * as v from "valibot";
+
+import { utcTimestamp } from "@aih/example-04-http-api/src/timestamp.ts";
 
 // #region record
 // One record per object key: what the worker found in the bytes, and which
 // event it was looking at when it found it.
-export const inspectionSchema = z.object({
-  noteId: z.string().min(1),
-  attachmentId: z.string().min(1),
+export const inspectionSchema = v.object({
+  noteId: v.pipe(v.string(), v.minLength(1)),
+  attachmentId: v.pipe(v.string(), v.minLength(1)),
   /** Normalized (see sequencer.ts), so that two of them compare as strings. */
-  sequencer: z.string().regex(/^[0-9A-F]{32}$/),
-  eTag: z.string().min(1),
-  size: z.number().int().nonnegative(),
-  declaredType: z.string(),
-  verdict: z.enum(["ok", "rejected"]),
-  reason: z.enum(["not_an_image", "type_mismatch", "too_many_pixels"]).optional(),
-  width: z.number().int().positive().optional(),
-  height: z.number().int().positive().optional(),
-  inspectedAt: z.iso.datetime(),
+  sequencer: v.pipe(v.string(), v.regex(/^[0-9A-F]{32}$/)),
+  eTag: v.pipe(v.string(), v.minLength(1)),
+  // v.safeInteger(), not v.integer(): 1e300 is an integer too, and no object has that many bytes.
+  size: v.pipe(v.number(), v.safeInteger(), v.minValue(0)),
+  declaredType: v.string(),
+  verdict: v.picklist(["ok", "rejected"]),
+  reason: v.optional(v.picklist(["not_an_image", "type_mismatch", "too_many_pixels"])),
+  width: v.optional(v.pipe(v.number(), v.safeInteger(), v.minValue(1))),
+  height: v.optional(v.pipe(v.number(), v.safeInteger(), v.minValue(1))),
+  inspectedAt: utcTimestamp,
 });
-export type Inspection = z.infer<typeof inspectionSchema>;
+export type Inspection = v.InferOutput<typeof inspectionSchema>;
 // #endregion record
 
 // #region repository

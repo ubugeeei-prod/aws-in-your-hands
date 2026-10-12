@@ -1,7 +1,7 @@
-import { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import { serve } from "@hono/node-server";
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
+import type { Fetch } from "@aih/example-04-http-api/src/http/router.ts";
 
 export type ShutdownResult = "drained" | "forced";
 
@@ -12,7 +12,7 @@ export type RunningServer = {
 };
 
 export type ServeOptions = {
-  fetch: (request: Request) => Response | Promise<Response>;
+  fetch: Fetch;
   /** 0 asks the OS for a free port. */
   port: number;
   keepAliveTimeoutMs: number;
@@ -24,21 +24,16 @@ export type ServeOptions = {
 // #region serve
 export function startServer(options: ServeOptions): Promise<RunningServer> {
   return new Promise((resolve, reject) => {
-    const server = serve(
-      {
-        fetch: options.fetch,
-        port: options.port,
-        // Longer than the load balancer's idle timeout, so the load balancer is the side that hangs up.
-        serverOptions: { keepAliveTimeout: options.keepAliveTimeoutMs },
-      },
-      (info: AddressInfo) => resolve({ port: info.port, shutdown }),
-    );
-    if (!(server instanceof Server)) {
-      throw new Error("expected a plain HTTP/1.1 server");
-    }
-    server.once("error", reject);
+    // Chapter 04's Node.js server: a plain node:http Server, not listening yet.
+    const server = nodeServer(options.fetch);
+    // Longer than the load balancer's idle timeout, so the load balancer is the side that hangs up.
+    server.keepAliveTimeout = options.keepAliveTimeoutMs;
     // Without a number here, the only limit on open sockets is the task's memory.
     server.maxConnections = options.maxConnections;
+    server.once("error", reject);
+    server.listen(options.port, () =>
+      resolve({ port: (server.address() as AddressInfo).port, shutdown }),
+    );
 
     let closing: Promise<ShutdownResult> | undefined;
     const shutdown = (): Promise<ShutdownResult> => {

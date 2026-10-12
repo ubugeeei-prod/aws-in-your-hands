@@ -1,6 +1,6 @@
 ---
 title: "12 Containers: ECR, ECS/Fargate, and ALB"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 12 Containers: ECR, ECS/Fargate, and ALB
@@ -59,7 +59,7 @@ caption: Inside one task, the container keeps the notes in a Map, and the execut
 node srv: container "api" | node server.mjs
 node exec: execution role | pulls the image, writes the log stream
 node role: task role | nothing
-node app: Hono app
+node app: Chapter 04's app
 node svc: NoteService
 node map: Map | one per task
 edge srv -> app

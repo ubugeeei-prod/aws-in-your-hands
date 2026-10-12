@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { parseEnv } from "../core/env.ts";
@@ -26,7 +27,7 @@ describe("sessions", () => {
 
     expect(findSession(store, undefined, 0)).toBeUndefined();
     expect(findSession(store, "../../etc/passwd", 0)).toBeUndefined();
-    expect(sessionIdSchema.safeParse(id.slice(1)).success).toBe(false);
+    expect(v.safeParse(sessionIdSchema, id.slice(1)).success).toBe(false);
   });
 
   it("use a cookie that scripts cannot read and that stays under /me", () => {
@@ -56,7 +57,7 @@ describe("the BFF boundary", () => {
     const profile = await identity.profile(accessToken);
 
     // Extra keys are dropped by the schema, so a token added by mistake would not pass through.
-    const viewer = viewerSchema.parse({ signedIn: true, profile: { ...profile, accessToken } });
+    const viewer = v.parse(viewerSchema, { signedIn: true, profile: { ...profile, accessToken } });
     expect(JSON.stringify(viewer)).not.toContain("secret");
     expect(await identity.profile("another-token")).toBeUndefined();
   });

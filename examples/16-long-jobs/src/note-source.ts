@@ -1,10 +1,13 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { noteSchema } from "@aih/example-05-dynamodb/src/contract.ts";
 
 // #region port
-export const exportedNoteSchema = noteSchema.extend({ owner: z.string().min(1) });
-export type ExportedNote = z.infer<typeof exportedNoteSchema>;
+export const exportedNoteSchema = v.object({
+  ...noteSchema.entries,
+  owner: v.pipe(v.string(), v.minLength(1)),
+});
+export type ExportedNote = v.InferOutput<typeof exportedNoteSchema>;
 
 export type NotePage = { notes: ExportedNote[]; nextCursor: string | null };
 

@@ -31,7 +31,7 @@ The function URL's `AuthType` is `AWS_IAM`, and CloudFront's origin access contr
 
 This book has neither implemented nor verified an HTTP API behind CloudFront. If you try it, decide first how you will close the back entrance.
 
-Signing brings constraints as well. CloudFront puts its signature in the `Authorization` header, so this API takes its token in a separate header, `x-aih-token`. And as chapter 09 explained, for POST and PUT the caller has to put the SHA-256 of the body in a header. This API accepts only GET and HEAD.
+Signing brings constraints as well. CloudFront puts its signature in the `Authorization` header, so this API takes its token in a separate header, `x-aih-token`. And as chapter 09 explained, for POST and PUT the caller has to put the SHA-256 of the body in a header. So CloudFront lets through only GET and HEAD. The app answers only GET, and a HEAD gets a 404.
 
 ### The web ACL
 
@@ -84,7 +84,7 @@ A deploy creates a role and immediately runs a function with it, which is exactl
 
 It retries only denials. Other errors won't go away by waiting, so it raises them at once. The number of attempts is also capped. If the call is still denied at the cap, the cause is a mistake in the policy and not propagation delay. Somewhere you have to separate what waiting fixes from what it doesn't.
 
-The function, for its part, answers 503 with `retry-after` whenever handling a request throws, whatever the cause. Lacking permission to read the secret is one such case, and only the message in the response tells it apart.
+The function, for its part, wraps the call to the router in a `try`, and answers 503 with `retry-after` whenever handling a request throws, whatever the cause. Lacking permission to read the secret is one such case, and only the message in the response tells it apart.
 
 <<< @/examples/21-security/src/app.ts{unavailable}
 

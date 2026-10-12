@@ -1,16 +1,16 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region note
-export const publicNoteSchema = z.object({
-  id: z.string().regex(/^[a-z0-9-]{1,40}$/),
-  title: z.string().min(1).max(120),
-  body: z.string().max(4000),
-  updatedAt: z.iso.datetime(),
+export const publicNoteSchema = v.object({
+  id: v.pipe(v.string(), v.regex(/^[a-z0-9-]{1,40}$/)),
+  title: v.pipe(v.string(), v.minLength(1), v.maxLength(120)),
+  body: v.pipe(v.string(), v.maxLength(4000)),
+  updatedAt: v.pipe(v.string(), v.isoTimestamp()),
 });
-export type PublicNote = z.infer<typeof publicNoteSchema>;
+export type PublicNote = v.InferOutput<typeof publicNoteSchema>;
 
-export const noteListSchema = z.object({ notes: z.array(publicNoteSchema) });
-export type NoteList = z.infer<typeof noteListSchema>;
+export const noteListSchema = v.object({ notes: v.array(publicNoteSchema) });
+export type NoteList = v.InferOutput<typeof noteListSchema>;
 // #endregion note
 
 export type PublicNotes = {
@@ -20,7 +20,7 @@ export type PublicNotes = {
 
 /** Read-only notes that ship with the code, so every execution environment gives the same answer. */
 export function createStaticNotes(seed: unknown): PublicNotes {
-  const notes = z.array(publicNoteSchema).parse(seed);
+  const notes = v.parse(v.array(publicNoteSchema), seed);
   const byId = new Map(notes.map((note) => [note.id, note]));
   if (byId.size !== notes.length) {
     throw new Error("Seed notes contain a duplicate id");

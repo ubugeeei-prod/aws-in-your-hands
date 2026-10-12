@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Queryable, rows, sqlStateOf } from "./db.ts";
 
@@ -97,9 +97,9 @@ export function statementFor(dialect: Dialect, migration: Migration): string {
 }
 // #endregion dialect
 
-const appliedRowSchema = z.object({ name: z.string(), checksum: z.string() });
-const jobIdRowSchema = z.object({ job_id: z.string().min(1) });
-const jobRowSchema = z.object({ status: z.string(), details: z.string().nullable() });
+const appliedRowSchema = v.object({ name: v.string(), checksum: v.string() });
+const jobIdRowSchema = v.object({ job_id: v.pipe(v.string(), v.minLength(1)) });
+const jobRowSchema = v.object({ status: v.string(), details: v.nullable(v.string()) });
 
 export type MigrateDeps = {
   dialect: Dialect;
@@ -176,9 +176,9 @@ export async function migrate(
     // No BEGIN: each statement is its own transaction. The schema change and
     // the record of it cannot share one, because DDL and DML may not mix.
     const result = await connection.query(statementFor(deps.dialect, migration));
-    const job = jobIdRowSchema.safeParse(result.rows[0]);
+    const job = v.safeParse(jobIdRowSchema, result.rows[0]);
     if (deps.dialect === "dsql" && job.success) {
-      await waitForJob(connection, job.data.job_id, deps);
+      await waitForJob(connection, job.output.job_id, deps);
     }
     // A crash before this line leaves the migration applied but unrecorded.
     // The next run applies it again, which IF NOT EXISTS makes harmless.

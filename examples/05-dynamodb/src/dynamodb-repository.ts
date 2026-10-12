@@ -7,7 +7,7 @@ import {
   QueryCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Note, noteSchema } from "./contract.ts";
 import { decodeCursor, encodeCursor, type NoteRepository } from "./repository.ts";
@@ -23,10 +23,10 @@ const sk = (noteId: string): string => `NOTE#${noteId}`;
 const QUOTA = "QUOTA";
 
 // Stored items are outside data too: an old or hand-edited item must not pass as a `Note`.
-const itemSchema = noteSchema.extend({ pk: z.string(), sk: z.string() });
+const itemSchema = v.object({ ...noteSchema.entries, pk: v.string(), sk: v.string() });
 
 function toNote(item: unknown): Note {
-  const { pk: _pk, sk: _sk, ...note } = itemSchema.parse(item);
+  const { pk: _pk, sk: _sk, ...note } = v.parse(itemSchema, item);
   return note;
 }
 

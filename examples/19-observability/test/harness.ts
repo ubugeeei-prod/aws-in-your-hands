@@ -41,14 +41,16 @@ export function harness(options: { repository?: NoteRepository; msPerTick?: numb
     body?: unknown,
     headers: Record<string, string> = {},
   ) =>
-    app.request(path, {
-      method,
-      headers: {
-        ...(body === undefined ? {} : { "content-type": "application/json" }),
-        ...headers,
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
+    app(
+      new Request(`http://api.test${path}`, {
+        method,
+        headers: {
+          ...(body === undefined ? {} : { "content-type": "application/json" }),
+          ...headers,
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      }),
+    );
 
   return { app, send, raw, lines: (): LogLine[] => parseLogLines(raw) };
 }

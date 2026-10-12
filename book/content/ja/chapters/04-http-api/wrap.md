@@ -10,7 +10,7 @@ title: "04 HTTP API: 費用、注意点、片付け"
 
 <!-- section: 04.workers -->
 
-Cloudflare Workers で API を書いたことがあれば、ここまでの流れには見覚えがあると思います。違うところを表にしました。
+Cloudflare Workers で API を書いたことがあれば、ここまでの流れには見覚えがあると思います。アプリが `Request` を受け取って `Response` を返す関数であるところは、Workers の `fetch` ハンドラーと同じです。違うところを表にしました。
 
 | | Cloudflare Workers | この章（Lambda と API Gateway） |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Cloudflare Workers で API を書いたことがあれば、ここまでの流�
 | 他のサービスとの接続 | binding。設定に書くと `env` に現れる。手元では既定でローカルの模擬につながる | AWS SDK で呼ぶ。接続先は環境変数、権限は実行ロールで決まる。手元の模擬は付いてこない |
 | 権限 | binding を宣言したものに触れる | IAM。ロールに書いた操作だけが通る。手元とデプロイ後で権限が別 |
 | 実行場所 | Cloudflare のネットワーク上 | 1 つのリージョン（この本では東京） |
-| 入口 | Worker 自体が HTTP を受ける | API Gateway が受けて Lambda に渡す。別のリソースで、料金も別 |
+| 入口 | Worker 自体が HTTP を受け、`Request` を渡される | API Gateway が受けて Lambda に渡す。別のリソースで、料金も別。関数に届くのは JSON のイベントで、`Request` には自分で直す |
 | デプロイ | `wrangler deploy` | synth してテンプレートにし、cdkd（または CloudFormation）が反映する |
 
 AWS のほうが部品は多く、入口、関数、ロール、ロググループをそれぞれ自分で定義します。そのぶん、部品ごとに設定を選べます。どちらが合うかは作るもの次第で、この本は Workers をやめることを勧めません。
@@ -117,19 +117,19 @@ vp run api:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** アプリ、クライアント、インフラのユニットテストと、型検査、synth（esbuild のバンドルを含む）を実行しました。`dev:api` を起動して、本文の `curl` も実行しています。ノートの上限（101 件目が 409 になり、1 件消すと入ること）と、テンプレートのステージにスロットリングの値が入っていることは、テストで固定しました。一覧が本文を返さないこと、20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことも、テストで固定しています。
+**手元で確かめたこと。** アプリ、HTTP の部品（`src/http/`）、クライアント、インフラのユニットテストと、型検査、synth（esbuild のバンドルを含む）を実行しました。`dev:api` を起動して、本文の `curl` も実行しています。ノートの上限（101 件目が 409 になり、1 件消すと入ること）と、テンプレートのステージにスロットリングの値が入っていることは、テストで固定しました。一覧が本文を返さないこと、20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことも、テストで固定しています。
 
-**まだ確かめていないこと。** `dev:api:cdkd`、`api:infra:deploy`、`api:smoke`、`api:logs`、`api:infra:drift`、`api:infra:destroy` は、実際の AWS では動かしていません。とくに次の 4 点は、実環境での確認を待っています。Node.js 24 の Lambda ランタイムでバンドルが動くこと、API Gateway が返すエラーの状態コードと本文（「つまずきやすいところ」の `Not Found` など）、関数がタイムアウトしたときに呼び出し側へ返るレスポンス、実行環境が複数になったときの `api:smoke` の表示です。ステージのスロットリングも同じ状態です。固定した版の cdkd（0.296.28）のソースが `DefaultRouteSettings` を API Gateway に渡していることは読みましたが、実際に反映されること、429 の本文の形、429 に料金がかかるかどうかは確かめていません。「叩かれたら」の金額は、データ転送のぶんも含めて、単価と設定から計算しただけで、負荷をかけて測った値ではありません。
+**まだ確かめていないこと。** `dev:api:cdkd`、`api:infra:deploy`、`api:smoke`、`api:logs`、`api:infra:drift`、`api:infra:destroy` は、実際の AWS では動かしていません。とくに次の 4 点は、実環境での確認を待っています。Node.js 24 の Lambda ランタイムでバンドルが動くこと、API Gateway が返すエラーの状態コードと本文（「つまずきやすいところ」の `Not Found` など）、関数がタイムアウトしたときに呼び出し側へ返るレスポンス、実行環境が複数になったときの `api:smoke` の表示です。`toRequest` のテストに使ったイベントは、型定義をもとに手で書いたもので、実際の API Gateway が書いたものではありません。ステージのスロットリングも同じ状態です。固定した版の cdkd（0.296.28）のソースが `DefaultRouteSettings` を API Gateway に渡していることは読みましたが、実際に反映されること、429 の本文の形、429 に料金がかかるかどうかは確かめていません。「叩かれたら」の金額は、データ転送のぶんも含めて、単価と設定から計算しただけで、負荷をかけて測った値ではありません。
 
 **コードの場所。**
 
 | 節 | ファイル | タスク |
 | --- | --- | --- |
 | 契約を先に決める | `examples/04-http-api/src/contract.ts` | `test:unit` |
-| アプリを書く | `examples/04-http-api/src/app.ts`、`src/notes.ts`、`src/compose.ts`、`src/log.ts` | `test:unit` |
+| アプリを書く | `examples/04-http-api/src/app.ts`、`src/http/router.ts`、`src/http/body.ts`、`src/http/cors.ts`、`src/http/api-gateway.ts`、`src/notes.ts`、`src/compose.ts`、`src/log.ts`、`test/http.test.ts` | `test:unit` |
 | 設定は起動時に確かめる | `examples/04-http-api/src/env.ts`、`test/env.test.ts`、`.env.example` | `test:unit` |
-| 手元で動かす | `examples/04-http-api/src/dev.ts` | `dev:api`、`dev:api:cdkd` |
-| テスト | `examples/04-http-api/test/app.test.ts`、`test/client.test.ts`、`src/client.ts` | `test:unit` |
+| 手元で動かす | `examples/04-http-api/src/dev.ts`、`src/http/node-server.ts` | `dev:api`、`dev:api:cdkd` |
+| テスト | `examples/04-http-api/test/app.test.ts`、`test/http.test.ts`、`test/client.test.ts`、`src/client.ts` | `test:unit` |
 | ノートの置き場所 | `examples/04-http-api/src/lambda.ts`、`src/notes.ts`、`scripts/smoke.ts` | `api:smoke` |
 | AWS にのせる準備 | `examples/04-http-api/infra/lib/http-api-stack.ts`、`infra/bin/app.ts`、`infra/test/http-api-stack.test.ts`、`cdk.json` | `api:infra:synth`、`test:unit` |
 | デプロイして呼ぶ | `tools/src/infra/`、`examples/04-http-api/scripts/smoke.ts` | `api:infra:diff`、`api:infra:deploy`、`api:smoke` |

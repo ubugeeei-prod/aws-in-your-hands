@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "@aih/example-04-http-api/src/app.ts";
@@ -154,14 +155,16 @@ describe("the chapter 04 API on top of the file", () => {
     });
   }
   const create = (app: Awaited<ReturnType<typeof api>>, title: string) =>
-    app.request("/notes", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
+    app(
+      new Request("http://api.test/notes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title }),
+      }),
+    );
   const titles = async (app: Awaited<ReturnType<typeof api>>) =>
-    noteListSchema
-      .parse(await (await app.request("/notes")).json())
+    v
+      .parse(noteListSchema, await (await app(new Request("http://api.test/notes"))).json())
       .notes.map((item) => item.title);
 
   it("lists what chapter 04 lists: the newest 20, without their bodies", async () => {
@@ -169,9 +172,9 @@ describe("the chapter 04 API on top of the file", () => {
     for (let count = 0; count <= MAX_LISTED_NOTES; count++) {
       await create(app, `note ${count}`);
     }
-    const text = await (await app.request("/notes")).text();
+    const text = await (await app(new Request("http://api.test/notes"))).text();
     // Strict: a body or a 21st note would fail the parse.
-    expect(noteListSchema.parse(JSON.parse(text)).notes).toHaveLength(MAX_LISTED_NOTES);
+    expect(v.parse(noteListSchema, JSON.parse(text)).notes).toHaveLength(MAX_LISTED_NOTES);
     expect(text).not.toContain('"body"');
   });
 

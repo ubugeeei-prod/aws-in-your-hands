@@ -9,12 +9,9 @@
   "dependencies": {
     "@aih/example-04-http-api": "workspace:*",
     "@aih/example-11-network": "workspace:*",
-    "@hono/node-server": "2.1.4",
     "aws-cdk-lib": "2.273.0",
     "constructs": "10.8.1",
-    "hono": "4.13.13",
-    "valibot": "1.5.0",
-    "zod": "4.6.5"
+    "valibot": "1.5.0"
   },
   "devDependencies": {
     "@aih/tools": "workspace:*",

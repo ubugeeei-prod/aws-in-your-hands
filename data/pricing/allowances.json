@@ -199,22 +199,6 @@
       "reason": "The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted."
     },
     {
-      "priceId": "bedrock.nova-2-lite.input",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
-      "priceId": "bedrock.nova-2-lite.output",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
-      "priceId": "bedrock.claude-haiku-4-5.input",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
-      "priceId": "bedrock.claude-haiku-4-5.output",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
       "priceId": "ses.outbound.message",
       "reason": "The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied."
     },
@@ -287,6 +271,30 @@
       "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
     },
     {
+      "priceId": "dynamodb.restore",
+      "reason": "No free allowance for restores was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "backup.dynamodb.warm",
+      "reason": "No free allowance for AWS Backup storage was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
       "priceId": "secretsmanager.secret",
       "reason": "No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied."
     },
@@ -321,14 +329,6 @@
     {
       "priceId": "config.item.continuous",
       "reason": "No free allowance for configuration items was found on the pricing page; none is applied."
-    },
-    {
-      "priceId": "dynamodb.restore",
-      "reason": "No free allowance for restores was looked for or confirmed; none is applied."
-    },
-    {
-      "priceId": "backup.dynamodb.warm",
-      "reason": "No free allowance for AWS Backup storage was looked for or confirmed; none is applied."
     }
   ]
 }

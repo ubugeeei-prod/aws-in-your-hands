@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { parseEc2Config } from "@aih/example-23-ec2/src/config.ts";
 import { machineFor as notesMachine } from "@aih/example-23-ec2/src/machine.ts";
@@ -9,17 +9,18 @@ import { REGION } from "./config.ts";
 
 // Every value below ends up inside a shell script or a systemd file that runs
 // as root. The patterns leave no room for a quote, a space, or a newline.
-const name = z.string().regex(/^[a-z][a-z0-9-]{0,30}$/);
-const path = z
-  .string()
-  .regex(/^(\/[A-Za-z0-9._-]+)+$/)
-  .refine((value) => !value.split("/").includes(".."), "must not contain ..");
-const port = z.number().int().min(1024).max(65535);
+const name = v.pipe(v.string(), v.regex(/^[a-z][a-z0-9-]{0,30}$/));
+const path = v.pipe(
+  v.string(),
+  v.regex(/^(\/[A-Za-z0-9._-]+)+$/),
+  v.check((value) => !value.split("/").includes(".."), "must not contain .."),
+);
+const port = v.pipe(v.number(), v.integer(), v.minValue(1024), v.maxValue(65535));
 
 // #region spec
-export const nodeSpecSchema = z
-  .object({
-    region: z.string().regex(/^[a-z]{2}(-[a-z]+)+-\d$/),
+export const nodeSpecSchema = v.pipe(
+  v.object({
+    region: v.pipe(v.string(), v.regex(/^[a-z]{2}(-[a-z]+)+-\d$/)),
     service: name,
     user: name,
     /** Releases are unpacked under here; `current` points at the one in use. */
@@ -36,33 +37,32 @@ export const nodeSpecSchema = z
     /** Key prefix for the release archives the nodes download. */
     artifactPrefix: name,
     /** systemd's TimeoutStopSec. SIGKILL after this would cut a handoff short. */
-    stopTimeoutSeconds: z.number().int().min(5).max(600),
+    stopTimeoutSeconds: v.pipe(v.number(), v.integer(), v.minValue(5), v.maxValue(600)),
     /** systemd's RestartSec. */
-    restartDelaySeconds: z.number().int().min(1).max(600),
-  })
-  .superRefine((spec, context) => {
-    // Both rules are celld's, from "The supervisor" and "Shut down and roll out a node".
-    if (spec.stopTimeoutSeconds * 1000 <= DOCUMENTED.shutdownTotalMs) {
-      context.addIssue({
-        code: "custom",
-        path: ["stopTimeoutSeconds"],
-        message: `must be longer than CELLD_SHUTDOWN_TOTAL_MS (${DOCUMENTED.shutdownTotalMs} ms)`,
-      });
-    }
-    if (spec.restartDelaySeconds * 1000 < DOCUMENTED.leaseTtlMs) {
-      context.addIssue({
-        code: "custom",
-        path: ["restartDelaySeconds"],
-        message: `must be at least one lease lifetime (${DOCUMENTED.leaseTtlMs} ms)`,
-      });
-    }
-  });
-export type NodeSpec = z.infer<typeof nodeSpecSchema>;
+    restartDelaySeconds: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(600)),
+  }),
+  // Both rules are celld's, from "The supervisor" and "Shut down and roll out a node".
+  v.forward(
+    v.check(
+      (spec) => spec.stopTimeoutSeconds * 1000 > DOCUMENTED.shutdownTotalMs,
+      `must be longer than CELLD_SHUTDOWN_TOTAL_MS (${DOCUMENTED.shutdownTotalMs} ms)`,
+    ),
+    ["stopTimeoutSeconds"],
+  ),
+  v.forward(
+    v.check(
+      (spec) => spec.restartDelaySeconds * 1000 >= DOCUMENTED.leaseTtlMs,
+      `must be at least one lease lifetime (${DOCUMENTED.leaseTtlMs} ms)`,
+    ),
+    ["restartDelaySeconds"],
+  ),
+);
+export type NodeSpec = v.InferOutput<typeof nodeSpecSchema>;
 // #endregion spec
 
 // #region defaults
 export function nodeSpec(): NodeSpec {
-  return nodeSpecSchema.parse({
+  return v.parse(nodeSpecSchema, {
     region: REGION,
     service: "celld",
     user: "celld",
@@ -116,7 +116,7 @@ function writeFile(target: string, content: string): string[] {
 
 // #region unit
 export function renderUnit(input: NodeSpec): string {
-  const spec = nodeSpecSchema.parse(input);
+  const spec = v.parse(nodeSpecSchema, input);
   const paths = pathsOf(spec);
   return [
     "[Unit]",
@@ -166,7 +166,7 @@ export function renderUnit(input: NodeSpec): string {
  * It never starts or restarts the service: when a node goes down is the caller's decision.
  */
 export function renderInstallScript(input: NodeSpec): string {
-  const spec = nodeSpecSchema.parse(input);
+  const spec = v.parse(nodeSpecSchema, input);
   const paths = pathsOf(spec);
   const imds = "http://169.254.169.254/latest";
   return [
@@ -238,7 +238,7 @@ export const USER_DATA_LIMIT_BYTES = 16 * 1024;
 
 /** The data volume script is chapter 23's, with this chapter's device, mount point, and owner. */
 export function renderVolumeScript(input: NodeSpec): string {
-  const spec = nodeSpecSchema.parse(input);
+  const spec = v.parse(nodeSpecSchema, input);
   return renderDataVolumeScript({
     ...notesMachine(parseEc2Config({})),
     service: spec.service,
@@ -250,7 +250,7 @@ export function renderVolumeScript(input: NodeSpec): string {
 
 /** The first boot: an account, directories, the unit, two scripts, the volume. No celld, no bucket name. */
 export function renderUserData(input: NodeSpec): string {
-  const spec = nodeSpecSchema.parse(input);
+  const spec = v.parse(nodeSpecSchema, input);
   const paths = pathsOf(spec);
   const envDir = spec.envFile.slice(0, spec.envFile.lastIndexOf("/"));
   const script = [

@@ -1,4 +1,6 @@
-import { Hono } from "hono";
+import * as v from "valibot";
+
+import { type Fetch, route, router } from "@aih/example-04-http-api/src/http/router.ts";
 
 import { type ApiError, subjectSchema, TOKEN_HEADER } from "./contract.ts";
 import type { Keyring } from "./keyring.ts";
@@ -15,76 +17,90 @@ export type AppOptions = {
   log: Logger;
 };
 
-export type App = ReturnType<typeof createApp>;
+export type App = Fetch;
 
-export function createApp(options: AppOptions) {
-  const app = new Hono();
-  const failure = (code: ApiError["code"], message: string): ApiError => ({ code, message });
+const failure = (status: number, code: ApiError["code"], message: string): Response =>
+  Response.json({ code, message } satisfies ApiError, { status });
 
-  app.get("/health", (c) => c.json({ status: "ok" as const, stage: options.stage }));
+export function createApp(options: AppOptions): App {
+  const routes = router<void>(
+    [
+      route("GET", "/health", () => Response.json({ status: "ok", stage: options.stage })),
 
-  // #region issue
-  // Stands in for "something that needs a secret". A real service would authenticate the caller first.
-  app.get("/token", async (c) => {
-    const subject = subjectSchema.safeParse(c.req.query("sub"));
-    if (!subject.success) {
-      return c.json(
-        failure("bad-request", "sub must be 1 to 64 characters of A-Z a-z 0-9 _ . @ -"),
-        400,
-      );
-    }
-    const key = await options.keyring.current();
-    const expiresAt = options.now() + options.tokenTtlSeconds;
-    return c.json({
-      token: signToken(key, subject.data, expiresAt),
-      keyVersion: key.versionId,
-      expiresAt,
-    });
-  });
-  // #endregion issue
+      // #region issue
+      // Stands in for "something that needs a secret". A real service would authenticate the caller first.
+      route("GET", "/token", async (request) => {
+        // A missing `sub` is null, and null is not a string.
+        const subject = v.safeParse(subjectSchema, new URL(request.url).searchParams.get("sub"));
+        if (!subject.success) {
+          return failure(
+            400,
+            "bad-request",
+            "sub must be 1 to 64 characters of A-Z a-z 0-9 _ . @ -",
+          );
+        }
+        const key = await options.keyring.current();
+        const expiresAt = options.now() + options.tokenTtlSeconds;
+        return Response.json({
+          token: signToken(key, subject.output, expiresAt),
+          keyVersion: key.versionId,
+          expiresAt,
+        });
+      }),
+      // #endregion issue
 
-  // #region check
-  app.get("/verify", async (c) => {
-    const token = parseToken(c.req.header(TOKEN_HEADER) ?? "");
-    if (token === null) {
-      return c.json(failure("invalid-token", `send a token in the ${TOKEN_HEADER} header`), 401);
-    }
-    const key = await options.keyring.find(token.versionId);
-    // Same answer for "unknown key version" and "wrong signature": a caller learns nothing about which versions exist.
-    const verdict = key === null ? "bad-signature" : verifyToken(token, key, options.now());
-    if (verdict === "bad-signature") {
-      return c.json(
-        failure("invalid-token", "the token was not signed by a key this service accepts"),
-        401,
-      );
-    }
-    if (verdict === "expired") {
-      return c.json(failure("expired-token", "the token has expired"), 401);
-    }
-    return c.json({
-      subject: token.subject,
-      keyVersion: token.versionId,
-      expiresAt: token.expiresAt,
-    });
-  });
-  // #endregion check
+      // #region check
+      route("GET", "/verify", async (request) => {
+        const token = parseToken(request.headers.get(TOKEN_HEADER) ?? "");
+        if (token === null) {
+          return failure(401, "invalid-token", `send a token in the ${TOKEN_HEADER} header`);
+        }
+        const key = await options.keyring.find(token.versionId);
+        // Same answer for "unknown key version" and "wrong signature": a caller learns nothing about which versions exist.
+        const verdict = key === null ? "bad-signature" : verifyToken(token, key, options.now());
+        if (verdict === "bad-signature") {
+          return failure(
+            401,
+            "invalid-token",
+            "the token was not signed by a key this service accepts",
+          );
+        }
+        if (verdict === "expired") {
+          return failure(401, "expired-token", "the token has expired");
+        }
+        return Response.json({
+          subject: token.subject,
+          keyVersion: token.versionId,
+          expiresAt: token.expiresAt,
+        });
+      }),
+      // #endregion check
+    ],
+    () => new Response("404 Not Found", { status: 404 }),
+  );
 
   // #region unavailable
-  app.onError((error, c) => {
-    // The name only. An SDK error can carry request details that do not belong in a response.
-    options.log({ level: "error", message: "request failed", error: error.name });
-    c.header("retry-after", "5");
-    return c.json(
-      failure(
+  // A route throws when the signing key cannot be read. Nothing else in this API throws on purpose.
+  return async (request) => {
+    try {
+      return await routes(request);
+    } catch (error) {
+      // The name only. An SDK error can carry request details that do not belong in a response.
+      options.log({
+        level: "error",
+        message: "request failed",
+        error: error instanceof Error ? error.name : "?",
+      });
+      const response = failure(
+        503,
         "signing-key-unavailable",
         error instanceof SecretAccessDenied
           ? "the function is not allowed to read its signing secret (yet)"
           : "the signing secret could not be read",
-      ),
-      503,
-    );
-  });
+      );
+      response.headers.set("retry-after", "5");
+      return response;
+    }
+  };
   // #endregion unavailable
-
-  return app;
 }

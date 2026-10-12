@@ -7,7 +7,7 @@ import { parseArgs } from "node:util";
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { DynamoDbNoteRepository } from "@aih/example-05-dynamodb/src/dynamodb-repository.ts";
 import { newNoteId } from "@aih/example-05-dynamodb/src/id.ts";
@@ -16,7 +16,17 @@ import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
 const STACK = "AihLongJobs";
 const { values } = parseArgs({ options: { notes: { type: "string", default: "250" } } });
-const notes = z.coerce.number().int().min(1).max(10_000).parse(values.notes);
+const notes = v.parse(
+  v.pipe(
+    v.string(),
+    v.transform(Number),
+    v.number(),
+    v.integer(),
+    v.minValue(1),
+    v.maxValue(10_000),
+  ),
+  values.notes,
+);
 
 try {
   const { target } = await preflight({

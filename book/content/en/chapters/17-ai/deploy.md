@@ -14,7 +14,21 @@ The Lambda handler is as follows.
 
 <<< @/examples/17-ai/src/lambda.ts{handler}
 
-The `handle` from chapter 04 has become `streamHandle`. `streamHandle` is Hono's adapter for Lambda, and it writes the response body to Lambda's response stream. The type definitions and the source confirm that `streamHandle` is in hono 4.13.13, the version this book pins. The source also carries a deprecation notice saying that `hono/aws-lambda` goes away in v5 and moves to `@hono/aws-lambda`. Check it when you raise the version.
+The `handleApiGateway` from chapter 04 has become this chapter's `streamFunctionUrl`. The adapter in chapter 04 reads the body of the `Response` to the end and returns it as one object. That cannot send a response piece by piece.
+
+With response streaming, Lambda hands the function a stream to write to. The functions for it are on a global named `awslambda`. Lambda's Node.js runtime provides it: there is nothing to import, and it does not exist outside Lambda. This chapter uses two of its functions.
+
+<<< @/examples/17-ai/src/function-url.ts{awslambda}
+
+`streamifyResponse` tells the runtime that the handler writes to a stream instead of returning a result. `HttpResponseStream.from` hands over the status code and the headers ahead of the body. `@types/aws-lambda` has types for `awslambda` too, but it does not say what goes into the object handed over first, so the types for the part this chapter uses are written here.
+
+The adapter is as follows.
+
+<<< @/examples/17-ai/src/function-url.ts{stream-function-url}
+
+The event a function URL passes to the function has the same shape as the one from an HTTP API in chapter 04 (payload format 2.0). So the conversion to a `Request` is chapter 04's `toRequest`, unchanged. What differs is the way back. The status code and the headers are handed over first, and the body goes to the response stream through `pipeline`. `pipeline` is what the Lambda documentation recommends: it waits while the destination is full, and it ends the stream when the body is done.
+
+The test for this adapter (`test/function-url.test.ts`) runs it with an object that stands in for `awslambda`. It checks what the adapter hands over and what it writes, and no more. How the real runtime sends that on has not been checked, because nothing was deployed.
 
 ### Permissions
 
@@ -32,7 +46,7 @@ The resources are only the profile worked out in [The ARNs in the execution role
 
 The Lambda documentation says that a streamed response is not interrupted when the invoking client's connection is broken, and that you are billed for the full function duration.
 
-On the local development server, disconnecting produced `cancelled`. It follows that on Lambda it does not. The source of Hono's `streamHandle` has no code that connects a failed write to aborting the response body either. So on Lambda, assume that the model keeps writing to the end even after the caller is gone.
+On the local development server, disconnecting produced `cancelled`. The same is not certain to happen on Lambda. This chapter's adapter cancels the body when a write to the response stream fails, and the app answers that by aborting its request to the model. A test makes a write fail and checks this path. But whether a write fails on Lambda when the caller disconnects has not been checked. Since the documentation says the response is not interrupted, assume that on Lambda the model keeps writing to the end even after the caller is gone.
 
 Three things stop the model: `maxTokens` (the output limit), the app's deadline (30 seconds), and the function's `timeout` (40 seconds). The function's `timeout` is longer than the deadline to leave the app time to send its `error` event and finish, and a test guards that ordering.
 

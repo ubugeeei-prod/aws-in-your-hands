@@ -23,11 +23,13 @@ async function wireBytes(name: keyof typeof fixtures): Promise<Uint8Array> {
     newRequestId: () => "req-1",
     now: () => 0,
   });
-  const response = await app.request("/summaries", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(NOTE),
-  });
+  const response = await app(
+    new Request("http://api.test/summaries", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(NOTE),
+    }),
+  );
   return new Uint8Array(await response.arrayBuffer());
 }
 

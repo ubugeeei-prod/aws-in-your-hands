@@ -21,7 +21,7 @@ Import by path, as chapters already import each other:
 | `cors.ts` | `cors({ origin, allowMethods, allowHeaders }, next)` |
 | `body.ts` | `readJson(request, maxBytes)` → `{ ok: true, value } \| { ok: false, reason: "too_large" \| "invalid_json" }` |
 | `api-gateway.ts` | `handleApiGateway(handler)`; the handler's context is `{ event }` (HTTP API payload 2.0). `toRequest(event)`, `toResult(response)` |
-| `node-server.ts` | `nodeServer(fetch)` → a `node:http` `Server`, not listening. Call `.listen(port, cb)`; `.close()` stops it. Streams are piped as written |
+| `node-server.ts` | `nodeServer(handler)` → a `node:http` `Server`, not listening. The handler's context is `{ remoteAddress }` (the socket's peer); a plain `Fetch` fits too. Call `.listen(port, cb)`; `.close()` stops it. Streams are piped as written |
 
 If the kit lacks something your chapter needs (another CORS option, a different event type,
 response streaming on Lambda), write it **in your own chapter's `src/`**, small and visible, and
@@ -37,6 +37,12 @@ See `examples/04-http-api/src/app.ts`. In short:
 - Per-request values (request ID, identity) go in a `context` object passed to the routes.
 - What Hono middleware did is now ordinary code around the router, in the order it runs:
   make the context, call, catch, set headers, log.
+- Order matters and chapter 04 shows it: the `try`/`catch` that turns a thrown error into an
+  error answer sits **inside** `cors(...)`, so error answers carry the CORS headers (Hono did
+  this implicitly). The request ID header and the log line go outermost. Pin it with a test.
+- A JSON body is read whatever its `content-type` says (Hono's validator required
+  `application/json`). Routes match the method exactly: there is no implicit HEAD. Both are
+  deliberate; say so where a page describes them, and do not add them back quietly.
 - Answers are `Response.json(body, { status })` and `new Response(null, { status: 204 })`.
 - Query: `new URL(request.url).searchParams`. Headers: `request.headers.get(name)`.
 - Typed clients are plain `fetch` calls checked against the schema (`src/client.ts`). No `hc`.
@@ -70,6 +76,18 @@ See `examples/04-http-api/src/app.ts`. In short:
 | `s.safeParse(x)` → `.data` / `.error.issues` | `v.safeParse(s, x)` → `.output` / `.issues` |
 | `issue.path.join(".")` | `v.getDotPath(issue) ?? ""` |
 | `.extend`, `.pick`, `.omit`, `.partial` | `v.object({ ...s.entries, … })`, `v.pick(s, [...])`, `v.omit`, `v.partial` |
+
+Differences found while converting (decide each deliberately; add an explicit check where it matters):
+
+- `v.object` and `v.record` accept an array. An object whose fields are all optional, or a
+  record, therefore accepts `[]`. `v.record` also drops the keys `__proto__`, `prototype`
+  and `constructor`. Chapter 21's `src/json-object.ts` shows the strict versions.
+- `v.uuid()` checks the shape only, not the version and variant digits.
+- `v.isoTimestamp()` accepts an offset and a space for `T`, and requires seconds.
+- `v.isoDate()` does not check the calendar. `v.email()` uses a different pattern.
+- `v.number()` accepts `Infinity`; use `v.finite()` or `v.safeInteger()`.
+- `v.minLength` on a string counts UTF-16 units, where Zod 4 counted code points.
+- `z.coerce.number()` took any value; the pipe above takes a string only.
 
 The table is from memory of the two libraries, not a guarantee. The installed package is the
 authority: check `node_modules/valibot/dist/index.d.mts` when a name or behaviour is in doubt,

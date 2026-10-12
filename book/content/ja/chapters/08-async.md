@@ -1,6 +1,6 @@
 ---
 title: "08 Queue: SQS、DLQ、冪等性、Scheduler"
-revision: 3
+revision: 4
 ---
 
 # 08 Queue: SQS、DLQ、冪等性、Scheduler
@@ -113,6 +113,8 @@ JPEG だけは少し手間がかかります。大きさが書いてある場所
 <<< @/examples/08-async/src/inspection.ts{record}
 
 `sequencer` と `eTag` は、どのイベントの、どのバイト列を見たのかを表します。この 2 つの値は、冪等性の節で順序と重複を見分けるのに使います。
+
+記録は、書いてからずっとあとで読み直すものです。[22章](/ja/chapters/22-recovery.md)では、復元したテーブルから読みます。そこで、数と時刻の検査は少し厳しくしてあります。`v.integer()` は `1e300` も整数として通すので、`size` には `v.safeInteger()` を使いました。時刻は、[04章](/ja/chapters/04-http-api.md)で書いた `utcTimestamp` で確かめます。
 
 ## 配送の保証は「少なくとも 1 回」
 

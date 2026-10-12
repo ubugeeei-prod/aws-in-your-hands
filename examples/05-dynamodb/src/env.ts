@@ -1,37 +1,39 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region env
-// `z.url()` alone accepts "localhost:8000" (it parses as a URL whose scheme
-// is "localhost"), so the scheme is spelled out.
-const httpUrl = z.url({ protocol: /^https?$/ });
+// v.url() alone would accept "localhost:8000" (scheme "localhost").
+const httpUrl = v.pipe(
+  v.string(),
+  v.url(),
+  v.regex(/^https?:\/\//, "Must be an http or https URL."),
+);
 
-const base = z.object({
+const base = {
   ALLOWED_ORIGIN: httpUrl,
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-  STAGE: z.string().min(1).default("local"),
-});
+  LOG_LEVEL: v.optional(v.picklist(["debug", "info", "warn", "error"]), "info"),
+  STAGE: v.optional(v.pipe(v.string(), v.minLength(1)), "local"),
+};
 
 // Required variables depend on the store, so a missing TABLE_NAME fails at startup.
-const envSchema = z.discriminatedUnion("NOTES_STORE", [
-  base.extend({ NOTES_STORE: z.literal("memory") }),
-  base.extend({
-    NOTES_STORE: z.literal("dynamodb"),
-    TABLE_NAME: z.string().min(3),
+const envSchema = v.variant("NOTES_STORE", [
+  v.object({ ...base, NOTES_STORE: v.literal("memory") }),
+  v.object({
+    ...base,
+    NOTES_STORE: v.literal("dynamodb"),
+    TABLE_NAME: v.pipe(v.string(), v.minLength(3)),
     // DynamoDB Local only. In AWS the SDK finds the regional endpoint itself.
-    DYNAMODB_ENDPOINT: httpUrl.optional(),
+    DYNAMODB_ENDPOINT: v.optional(httpUrl),
   }),
 ]);
 
-export type Env = z.infer<typeof envSchema>;
+export type Env = v.InferOutput<typeof envSchema>;
 
 export function parseEnv(source: Record<string, string | undefined>): Env {
-  const result = envSchema.safeParse(source);
+  const result = v.safeParse(envSchema, source);
   if (!result.success) {
-    const problems = result.error.issues.map(
-      (issue) => `${issue.path.join(".")}: ${issue.message}`,
-    );
+    const problems = result.issues.map((issue) => `${v.getDotPath(issue) ?? ""}: ${issue.message}`);
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
-  return result.data;
+  return result.output;
 }
 // #endregion env

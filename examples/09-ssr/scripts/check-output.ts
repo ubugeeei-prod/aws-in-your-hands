@@ -6,6 +6,8 @@
 
 import { resolve } from "node:path";
 
+import * as v from "valibot";
+
 import { NO_STORE, SHARED } from "../core/cache-control.ts";
 import { noteListSchema } from "../core/notes.ts";
 import { SESSION_COOKIE } from "../core/session.ts";
@@ -61,7 +63,7 @@ try {
   const api = await get("/api/notes");
   check(
     "the public API matches its schema and may be shared",
-    noteListSchema.safeParse(JSON.parse(api.body)).success && cacheControl(api) === SHARED,
+    v.safeParse(noteListSchema, JSON.parse(api.body)).success && cacheControl(api) === SHARED,
     cacheControl(api),
   );
 

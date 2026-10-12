@@ -1,12 +1,13 @@
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { CiStack, GITHUB_ISSUER, githubSubjects } from "../lib/ci-stack.ts";
 import { ciConfigSchema, parseShipConfig } from "../lib/config.ts";
 
 const synth = (input: Record<string, string>) => {
-  const ci = ciConfigSchema.parse(input);
+  const ci = v.parse(ciConfigSchema, input);
   const stack = new CiStack(new App({ analyticsReporting: false }), "AihShipCi", {
     env: { region: "ap-northeast-1" },
     ci,
@@ -101,7 +102,7 @@ describe("trust policies", () => {
       existingOidcProviderArn: "arn:aws:iam::111111111111:oidc-provider/evil.example",
     },
   ])("refuses context that would widen or redirect trust: %j", (input) => {
-    expect(ciConfigSchema.safeParse(input).success).toBe(false);
+    expect(v.safeParse(ciConfigSchema, input).success).toBe(false);
   });
 
   it("fails synthesis when no repository is named", () => {

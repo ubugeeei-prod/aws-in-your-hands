@@ -9,8 +9,7 @@
     "h3": "1.15.11",
     "nuxt": "4.6.1",
     "valibot": "1.5.0",
-    "vue": "3.5.43",
-    "zod": "4.6.5"
+    "vue": "3.5.43"
   },
   "devDependencies": {
     "@aih/tools": "workspace:*",

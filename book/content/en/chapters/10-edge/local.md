@@ -102,6 +102,8 @@ A value does not change in the middle of a single function run. According to the
 
 The writing side enforces the same rule the function does, that a reader is never sent off the site. It also catches mistakes that can only be found on the writing side: the same `from` listed twice, a redirect whose target is itself redirected, and a `from` the function would never look up (one with an extension, or one that is too long). A table where a redirect leads to another redirect is one edit away from a loop.
 
+A duplicate or a chain can't be seen by looking at one rule. Those two checks are therefore written against the whole array, with `v.rawCheck`. `at` builds the location of a problem, so that it is reported as `redirects.1.from`.
+
 <<< @/examples/10-edge/src/kvs/config.ts{entries}
 
 When a flag is off, its key is not deleted. It is written as `"off"`. With the key present, the function's `get` doesn't reject and never takes the exception path.

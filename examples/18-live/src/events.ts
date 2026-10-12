@@ -1,73 +1,78 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region schema
 const envelope = {
-  id: z.string().min(1),
-  source: z.literal("aws.ivs"),
-  time: z.coerce.date(),
-  resources: z.array(z.string()),
+  id: v.pipe(v.string(), v.minLength(1)),
+  source: v.literal("aws.ivs"),
+  // EventBridge writes the time as text. The rest of the code wants a Date.
+  time: v.pipe(
+    v.string(),
+    v.isoTimestamp(),
+    v.transform((text) => new Date(text)),
+  ),
+  resources: v.array(v.string()),
 };
 
 // event_name stays a string: a name this code has never seen should be
 // recorded, not rejected.
-const ivsEventSchema = z.discriminatedUnion("detail-type", [
-  z.object({
+const ivsEventSchema = v.variant("detail-type", [
+  v.object({
     ...envelope,
-    "detail-type": z.literal("IVS Stream State Change"),
-    detail: z.object({
-      event_name: z.string().min(1),
-      stream_id: z.string().min(1),
-      channel_name: z.string(),
-      code: z.string().optional(),
-      reason: z.string().optional(),
+    "detail-type": v.literal("IVS Stream State Change"),
+    detail: v.object({
+      event_name: v.pipe(v.string(), v.minLength(1)),
+      stream_id: v.pipe(v.string(), v.minLength(1)),
+      channel_name: v.string(),
+      code: v.optional(v.string()),
+      reason: v.optional(v.string()),
     }),
   }),
-  z.object({
+  v.object({
     ...envelope,
-    "detail-type": z.literal("IVS Stream Health Change"),
-    detail: z.object({
-      event_name: z.string().min(1),
-      stream_id: z.string().min(1),
-      channel_name: z.string(),
+    "detail-type": v.literal("IVS Stream Health Change"),
+    detail: v.object({
+      event_name: v.pipe(v.string(), v.minLength(1)),
+      stream_id: v.pipe(v.string(), v.minLength(1)),
+      channel_name: v.string(),
     }),
   }),
-  z.object({
+  v.object({
     ...envelope,
-    "detail-type": z.literal("IVS Limit Breach"),
-    detail: z.object({
-      limit_name: z.string().min(1),
-      limit_value: z.number(),
-      exceeded_by: z.number(),
-      limit_unit: z.string(),
-      stream_id: z.string().optional(),
-      channel_name: z.string().optional(),
+    "detail-type": v.literal("IVS Limit Breach"),
+    detail: v.object({
+      limit_name: v.pipe(v.string(), v.minLength(1)),
+      limit_value: v.number(),
+      exceeded_by: v.number(),
+      limit_unit: v.string(),
+      stream_id: v.optional(v.string()),
+      channel_name: v.optional(v.string()),
     }),
   }),
 ]);
 
-export type IvsEvent = z.infer<typeof ivsEventSchema>;
+export type IvsEvent = v.InferOutput<typeof ivsEventSchema>;
 
 export function parseIvsEvent(event: unknown): IvsEvent {
-  return ivsEventSchema.parse(event);
+  return v.parse(ivsEventSchema, event);
 }
 // #endregion schema
 
 // #region record
 // One line per event in the function's log. `lagMs` is how late it arrived.
-export const eventRecordSchema = z.object({
-  kind: z.literal("ivs-event"),
-  eventId: z.string(),
-  type: z.string(),
-  name: z.string(),
-  streamId: z.string().nullable(),
-  channelArn: z.string().nullable(),
-  eventTime: z.iso.datetime(),
-  receivedAt: z.iso.datetime(),
-  lagMs: z.number(),
-  detail: z.string().nullable(),
+export const eventRecordSchema = v.object({
+  kind: v.literal("ivs-event"),
+  eventId: v.string(),
+  type: v.string(),
+  name: v.string(),
+  streamId: v.nullable(v.string()),
+  channelArn: v.nullable(v.string()),
+  eventTime: v.pipe(v.string(), v.isoTimestamp()),
+  receivedAt: v.pipe(v.string(), v.isoTimestamp()),
+  lagMs: v.number(),
+  detail: v.nullable(v.string()),
 });
 
-export type EventRecord = z.infer<typeof eventRecordSchema>;
+export type EventRecord = v.InferOutput<typeof eventRecordSchema>;
 
 export function toRecord(event: IvsEvent, receivedAt: Date): EventRecord {
   const common = {

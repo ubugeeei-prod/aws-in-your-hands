@@ -1,4 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import * as v from "valibot";
 
 import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
 
@@ -15,7 +16,7 @@ const store = new S3ExportStore(new S3Client({}), env.EXPORT_BUCKET);
 export const handler = async (event: unknown): Promise<Discarded> => {
   const discarded = await discardExport(
     { store },
-    progressSchema.pick({ exportId: true }).parse(event),
+    v.parse(v.pick(progressSchema, ["exportId"]), event),
   );
   log({ level: "warn", message: "export discarded", ...discarded });
   return discarded;

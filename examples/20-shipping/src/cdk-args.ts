@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import type { Access } from "@aih/tools/aws/target.ts";
 
 import { apiStackName, type Stage, stageSchema } from "../infra/lib/config.ts";
@@ -31,11 +33,11 @@ export function contextValue(extra: string[], key: string): string | undefined {
 }
 
 export function stageFrom(extra: string[]): Stage {
-  const result = stageSchema.safeParse(contextValue(extra, "stage") ?? "dev");
+  const result = v.safeParse(stageSchema, contextValue(extra, "stage") ?? "dev");
   if (!result.success) {
     throw new Error('stage must be "dev", "prod", or "pr-<number>"');
   }
-  return result.data;
+  return result.output;
 }
 
 // Checked against the help output of aws-cdk 2.1145.0.

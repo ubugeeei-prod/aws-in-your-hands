@@ -8,7 +8,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { repoRoot } from "../data/load.ts";
 import {
@@ -21,32 +21,33 @@ import {
 } from "../data/schemas.ts";
 import { allowancesSchema, scenariosSchema, unitPriceSchema } from "../pricing/schema.ts";
 
-const fragmentSchema = z.object({
-  chapterId: z.string().regex(/^\d{2}$/),
+const fragmentSchema = v.object({
+  chapterId: v.pipe(v.string(), v.regex(/^\d{2}$/)),
   manifest: chapterSchema,
-  sources: sourcesSchema.shape.sources.default([]),
-  glossary: glossarySchema.shape.terms.default([]),
-  sections: sectionMapSchema.shape.sections.default([]),
-  unitPrices: z.array(unitPriceSchema).default([]),
-  allowances: allowancesSchema.shape.allowances.default([]),
-  unknownAllowances: allowancesSchema.shape.unknown.default([]),
-  scenarios: scenariosSchema.shape.scenarios.default([]),
-  validation: z
-    .object({
-      records: validationSchema.shape.records.default([]),
-      open: validationSchema.shape.open.default([]),
-    })
-    .default({ records: [], open: [] }),
-  toolchain: toolchainSchema.shape.tools.default([]),
-  tasks: z.object({
+  sources: v.optional(sourcesSchema.entries.sources, []),
+  glossary: v.optional(glossarySchema.entries.terms, []),
+  sections: v.optional(sectionMapSchema.entries.sections, []),
+  unitPrices: v.optional(v.array(unitPriceSchema), []),
+  allowances: v.optional(allowancesSchema.entries.allowances, []),
+  unknownAllowances: v.optional(allowancesSchema.entries.unknown, []),
+  scenarios: v.optional(scenariosSchema.entries.scenarios, []),
+  validation: v.optional(
+    v.object({
+      records: v.optional(validationSchema.entries.records, []),
+      open: v.optional(validationSchema.entries.open, []),
+    }),
+    { records: [], open: [] },
+  ),
+  toolchain: v.optional(toolchainSchema.entries.tools, []),
+  tasks: v.object({
     /** Lines for run.tasks in vite.config.ts, indented with six spaces. May use fresh(), live(), infra(), node. */
-    snippet: z.string(),
+    snippet: v.string(),
     /** `<name>:infra:synth` tasks to add to infra:synth. */
-    synth: z.array(z.string()).default([]),
+    synth: v.optional(v.array(v.string()), []),
     /** Local-only tasks to add to check:all. */
-    checkAll: z.array(z.string()).default([]),
+    checkAll: v.optional(v.array(v.string()), []),
     /** Directories with a tsconfig.json for `vp run typecheck`. */
-    typecheck: z.array(z.string()).default([]),
+    typecheck: v.optional(v.array(v.string()), []),
   }),
 });
 
@@ -68,7 +69,7 @@ function upsert<T>(existing: T[], incoming: T[], key: (item: T) => string): T[] 
   return [...existing.filter((item) => !incomingKeys.has(key(item))), ...incoming];
 }
 
-const fragment = fragmentSchema.parse(readJson(`data/fragments/${id}.json`));
+const fragment = v.parse(fragmentSchema, readJson(`data/fragments/${id}.json`));
 if (fragment.chapterId !== id || fragment.manifest.id !== id) {
   throw new Error(
     `data/fragments/${id}.json describes chapter ${fragment.chapterId}/${fragment.manifest.id}`,

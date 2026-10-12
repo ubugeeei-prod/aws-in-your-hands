@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -86,7 +87,7 @@ describe("losing a node on purpose", () => {
 });
 
 describe("backup and restore", () => {
-  const manifest: BackupManifest = manifestSchema.parse({
+  const manifest: BackupManifest = v.parse(manifestSchema, {
     id: "20261012T010203Z",
     createdAt: "2026-10-12T01:02:03.000Z",
     region,

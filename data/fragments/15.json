@@ -3,7 +3,10 @@
   "manifest": {
     "id": "15",
     "slug": "email",
-    "title": { "ja": "メールを送る: SES", "en": "Send Email: SES" },
+    "title": {
+      "ja": "メールを送る: SES",
+      "en": "Send Email: SES"
+    },
     "prerequisites": ["04"],
     "services": [
       "SES",
@@ -15,10 +18,15 @@
       "IAM"
     ],
     "samplePath": "examples/15-email",
-    "writing": { "ja": "complete", "en": "complete" },
-    "sourceRevision": 1,
-    "translatedRevision": { "en": 1 },
-    "checkedAt": "2026-10-11",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 4,
+    "translatedRevision": {
+      "en": 4
+    },
+    "checkedAt": "2026-10-12",
     "sourceIds": [
       "ses-production-access",
       "ses-suppression-list",
@@ -753,7 +761,11 @@
         ]
       },
       "items": [
-        { "priceId": "dynamodb.storage", "quantity": 0.01, "basis": "10 MB stored, in GB-month" }
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.01,
+          "basis": "10 MB stored, in GB-month"
+        }
       ]
     },
     {
@@ -804,7 +816,11 @@
           "quantity": 950,
           "basis": "(11,000 x 0.3 s + 10,000 x 0.05 s) x 0.25 GB, in GB-seconds"
         },
-        { "priceId": "sns.request", "quantity": 10000, "basis": "one publish per SES event" },
+        {
+          "priceId": "sns.request",
+          "quantity": 10000,
+          "basis": "one publish per SES event"
+        },
         {
           "priceId": "sns.delivery.lambda",
           "quantity": 10000,
@@ -820,9 +836,21 @@
           "quantity": 6500,
           "basis": "11,000 suppression checks x 0.5 + 1,000 consistent reads of an existing record x 1"
         },
-        { "priceId": "dynamodb.storage", "quantity": 0.01, "basis": "10 MB stored, in GB-month" },
-        { "priceId": "logs.ingest.standard", "quantity": 0.01, "basis": "21,000 x 0.5 KB, in GB" },
-        { "priceId": "logs.storage", "quantity": 0.0023, "basis": "0.01 GB x 7/30, in GB-month" }
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.01,
+          "basis": "10 MB stored, in GB-month"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.01,
+          "basis": "21,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0023,
+          "basis": "0.01 GB x 7/30, in GB-month"
+        }
       ]
     }
   ],

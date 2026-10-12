@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { containsCidr, overlaps, parseCidr } from "../src/cidr.ts";
@@ -53,9 +54,9 @@ describe("network settings", () => {
     ],
     [{ cidr: "10.20.0.0/24", subnetPrefix: 24 }, "subnetPrefix", /holds 0 subnets/],
   ])("reject %j at %s", (input, path, message) => {
-    const result = networkConfigSchema.safeParse(input);
+    const result = v.safeParse(networkConfigSchema, input);
     expect(result.success).toBe(false);
-    const issue = result.error?.issues.find((item) => item.path.join(".") === path);
+    const issue = result.issues?.find((item) => v.getDotPath(item) === path);
     expect(issue?.message).toMatch(message);
   });
 

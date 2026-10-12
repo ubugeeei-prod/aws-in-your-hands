@@ -4,28 +4,28 @@ import {
   ListStacksCommand,
   StackStatus,
 } from "@aws-sdk/client-cloudformation";
-import { z } from "zod";
+import * as v from "valibot";
 
 type Sender = Pick<CloudFormationClient, "send">;
 
-const statuses = Object.values(StackStatus) as [StackStatus, ...StackStatus[]];
+const statuses = Object.values(StackStatus);
 
-const stackSchema = z.object({
-  StackName: z.string(),
-  StackStatus: z.enum(statuses),
-  StackStatusReason: z.string().optional(),
-  CreationTime: z.date(),
-  LastUpdatedTime: z.date().optional(),
-  EnableTerminationProtection: z.boolean().optional(),
-  Outputs: z.array(z.object({ OutputKey: z.string(), OutputValue: z.string() })).default([]),
+const stackSchema = v.object({
+  StackName: v.string(),
+  StackStatus: v.picklist(statuses),
+  StackStatusReason: v.optional(v.string()),
+  CreationTime: v.date(),
+  LastUpdatedTime: v.optional(v.date()),
+  EnableTerminationProtection: v.optional(v.boolean()),
+  Outputs: v.optional(v.array(v.object({ OutputKey: v.string(), OutputValue: v.string() })), []),
 });
-export type StackInfo = z.infer<typeof stackSchema>;
+export type StackInfo = v.InferOutput<typeof stackSchema>;
 
 /** null when CloudFormation has no stack of that name. */
 export async function describeStack(client: Sender, name: string): Promise<StackInfo | null> {
   try {
     const response = await client.send(new DescribeStacksCommand({ StackName: name }));
-    return stackSchema.parse(response.Stacks?.[0]);
+    return v.parse(stackSchema, response.Stacks?.[0]);
   } catch (error) {
     if (
       error instanceof Error &&
@@ -46,12 +46,12 @@ export function requireOutput(stack: StackInfo, key: string): string {
   return output.OutputValue;
 }
 
-const summarySchema = z.object({
-  StackName: z.string(),
-  StackStatus: z.enum(statuses),
-  CreationTime: z.date(),
+const summarySchema = v.object({
+  StackName: v.string(),
+  StackStatus: v.picklist(statuses),
+  CreationTime: v.date(),
 });
-export type StackSummary = z.infer<typeof summarySchema>;
+export type StackSummary = v.InferOutput<typeof summarySchema>;
 
 /** Every stack in the Region that has not finished deleting. */
 export async function listLiveStacks(client: Sender): Promise<StackSummary[]> {
@@ -62,7 +62,7 @@ export async function listLiveStacks(client: Sender): Promise<StackSummary[]> {
     const page = await client.send(
       new ListStacksCommand({ StackStatusFilter: live, NextToken: nextToken }),
     );
-    stacks.push(...z.array(summarySchema).parse(page.StackSummaries ?? []));
+    stacks.push(...v.parse(v.array(summarySchema), page.StackSummaries ?? []));
     nextToken = page.NextToken;
   } while (nextToken !== undefined);
   return stacks;

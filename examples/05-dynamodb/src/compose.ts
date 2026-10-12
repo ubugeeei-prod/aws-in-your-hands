@@ -3,7 +3,9 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-import { type App, createApp } from "./app.ts";
+import type { Fetch } from "@aih/example-04-http-api/src/http/router.ts";
+
+import { createApp } from "./app.ts";
 import { MAX_NOTES_PER_OWNER } from "./contract.ts";
 import { DynamoDbNoteRepository } from "./dynamodb-repository.ts";
 import { type Env, parseEnv } from "./env.ts";
@@ -37,7 +39,7 @@ export function createRepository(env: Env, maxNotesPerOwner?: number): NoteRepos
 }
 // #endregion repository
 
-export function composeApp(source: Record<string, string | undefined>): App {
+export function composeApp(source: Record<string, string | undefined>): Fetch {
   const env = parseEnv(source);
   return createApp({
     env,

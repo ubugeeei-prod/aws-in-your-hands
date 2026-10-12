@@ -4,6 +4,8 @@
 
 import { parseArgs } from "node:util";
 
+import * as v from "valibot";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
@@ -42,14 +44,14 @@ try {
 
   const health = await call("GET", "/health");
   expectStatus(health, 200, "health");
-  console.log(`ok   health (db ${healthSchema.parse(JSON.parse(health.text)).db})`);
+  console.log(`ok   health (db ${v.parse(healthSchema, JSON.parse(health.text)).db})`);
 
   const created = await call("POST", "/notes", {
     title: `smoke ${new Date().toISOString()}`,
     body: "sql:smoke",
   });
   expectStatus(created, 201, "create");
-  const note = noteSchema.parse(JSON.parse(created.text));
+  const note = v.parse(noteSchema, JSON.parse(created.text));
   console.log(`ok   created ${note.id}`);
 
   // Unlike chapter 04, the read must find it: the database owns the note,
@@ -67,7 +69,7 @@ try {
     expectedVersion: 1,
   });
   expectStatus(stale, 409, "stale update");
-  if (errorSchema.parse(JSON.parse(stale.text)).error.code !== "conflict") {
+  if (v.parse(errorSchema, JSON.parse(stale.text)).error.code !== "conflict") {
     throw new Error("a stale update did not answer with the conflict error");
   }
   console.log("ok   stale update refused with 409");

@@ -306,81 +306,6 @@ Assumptions:
 - List subtotal: **USD 61.42** / month
 - Subtotal after monthly free allowance: **USD 61.42** / month
 
-## Summary API: deployed, but never called for a month
-
-ID: `ai-idle` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
-
-Assumptions:
-
-- No requests
-- Logs expire after a week; nothing is stored
-
-- List subtotal: **USD 0.00** / month
-- Subtotal after monthly free allowance: **USD 0.00** / month
-
-## Summary API: 1,000 summaries a month (Nova 2 Lite, jp. profile)
-
-ID: `ai-summaries-nova-2-lite` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
-
-Assumptions:
-
-- 1,000 summaries a month
-- Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)
-- Assumed 150 output tokens each (the limit is 400)
-- Lambda at 256 MB on arm64, assumed 4 seconds each on average (waiting for the model is billed too)
-- Assumed 1 KB of logs each
-- Data transfer is not included
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
-| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
-| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
-| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
-
-- List subtotal: **USD 1.30** / month
-- Subtotal after monthly free allowance: **USD 1.29** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
-
-## Summary API: output cost if all 1,000 summaries hit the output limit
-
-ID: `ai-output-ceiling-nova-2-lite` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
-
-Assumptions:
-
-- All 1,000 summaries write up to the maxTokens of 400
-- Output tokens only; input and Lambda are not included
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
-
-- List subtotal: **USD 1.32** / month
-- Subtotal after monthly free allowance: **USD 1.32** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.nova-2-lite.output`
-
-## Summary API: the same token counts on Claude Haiku 4.5 (inference only)
-
-ID: `ai-summaries-claude-haiku-4-5` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
-
-Assumptions:
-
-- 1,000 summaries a month
-- Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)
-- Assumed 150 output tokens each (the limit is 400)
-- Tokenizers differ by model, so the same text does not give the same token count; this is for comparing unit prices
-- Inference only; Lambda is not included
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
-| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
-
-- List subtotal: **USD 3.03** / month
-- Subtotal after monthly free allowance: **USD 3.03** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
-
 ## Notification mail: deployed, but nothing sent for a month
 
 ID: `email-idle` / chapter: [15 Email: SES](/en/chapters/15-email.md)
@@ -1331,116 +1256,6 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 0.52** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
 
-## Security: the default stack, deployed but never called for a month
-
-ID: `sec-idle-default` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
-
-Assumptions:
-
-- Neither `-c cmk=on` nor `-c webAclArn=...`; the web ACL stack (AihSecurityWaf) does not exist
-- No requests. The function never runs, so no Secrets Manager API call is made
-- One secret for 730 hours, encrypted with aws/secretsmanager (no monthly fee)
-- The CloudFront distribution, Lambda, and the IAM role cost nothing uncalled; logs have expired and nothing is stored
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-
-- List subtotal: **USD 0.40** / month
-- Subtotal after monthly free allowance: **USD 0.40** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`
-
-## Security: with `-c cmk=on`, deployed but never called for a month
-
-ID: `sec-idle-cmk` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
-
-Assumptions:
-
-- The default stack plus one customer managed key
-- The key is less than a year old and has not rotated yet. Each of the first two rotations adds USD 1 a month
-- No requests
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
-
-- List subtotal: **USD 1.40** / month
-- Subtotal after monthly free allowance: **USD 1.40** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`, `kms.key`
-
-## Security: the web ACL (AihSecurityWaf) for a month, inspecting one million requests
-
-ID: `sec-waf-month` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
-
-Assumptions:
-
-- One web ACL and three rules (one rate-based rule, two AWS managed rule groups; a managed rule group counts as one rule)
-- 727 WCUs in total, inside the 1,500 WCUs the base price includes
-- One million requests inspected in the month. With none, USD 8.00 a month
-- That a web ACL for CloudFront is metered under the Global-* usage types was not confirmed on a bill. The ap-northeast-1 and us-east-1 prices are the same numbers
-- This subtotal excludes the default stack. No WAF logging, no Bot Control or other add-ons
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
-| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
-| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
-
-- List subtotal: **USD 8.60** / month
-- Subtotal after monthly free allowance: **USD 8.60** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
-
-## Security: the default stack, 100,000 tokens issued and 100,000 verified a month
-
-ID: `sec-small` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
-
-Assumptions:
-
-- 200,000 requests to CloudFront (HTTPS, Japan edge locations). Nothing is cached, so all of them reach Lambda
-- 0.5 KB per response, assumed
-- Lambda averages 50 ms at 256 MB, arm64. The 50 ms is an assumption, not a measurement
-- One execution environment running all month and reloading its keys every five minutes (730 hours x 12 x 2 GetSecretValue calls). More environments mean proportionally more
-- 0.3 KB of logs per invocation (only the lines Lambda writes). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest
-- No customer managed key and no web ACL. Data transfer from Lambda to CloudFront is not included
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
-| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
-| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
-| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
-| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
-| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
-
-- List subtotal: **USD 0.86** / month
-- Subtotal after monthly free allowance: **USD 0.49** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`, `secretsmanager.api`
-
-## Security: GuardDuty, Inspector, and AWS Config on a small account for a month (an order-of-magnitude example)
-
-ID: `sec-detect-example` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
-
-Assumptions:
-
-- A month after the free trials have ended
-- 100,000 CloudTrail management events analyzed by GuardDuty, assumed. The real count depends on what the account does; this is not a measurement
-- GuardDuty's other charges (VPC flow log and DNS log volume, and protection plans such as S3, Lambda, and Malware Protection) are not included. Enabling GuardDuty for the first time turns every protection plan on by default
-- Inspector with Lambda standard scanning only, one function for 730 hours. ECR image and EC2 instance scanning are not included
-- AWS Config with continuous recording and 500 configuration items in the month, assumed. Rule evaluations and the S3 storage for the records are not included
-
-| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
-| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
-| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
-
-- List subtotal: **USD 2.34** / month
-- Subtotal after monthly free allowance: **USD 2.34** / month
-- Prices whose free allowance could not be confirmed (nothing deducted): `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
-
 ## Recovery: what staying restorable adds for a month (1 GB table, 10 GB of images)
 
 ID: `recovery-keep` / chapter: [22 Backup: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
@@ -1609,6 +1424,191 @@ Assumptions:
 - Subtotal after monthly free allowance: **USD 2.30** / month
 - Prices whose free allowance could not be confirmed (nothing deducted): `ebs.gp3.storage`
 
+## Summary API: deployed, but never called for a month
+
+ID: `ai-idle` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- No requests
+- Logs expire after a week; nothing is stored
+
+- List subtotal: **USD 0.00** / month
+- Subtotal after monthly free allowance: **USD 0.00** / month
+
+## Summary API: 1,000 summaries a month (Nova 2 Lite, jp. profile)
+
+ID: `ai-summaries-nova-2-lite` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- 1,000 summaries a month
+- Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)
+- Assumed 150 output tokens each (the limit is 400)
+- Lambda at 256 MB on arm64, assumed 4 seconds each on average (waiting for the model is billed too)
+- Assumed 1 KB of logs each
+- Data transfer is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
+| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
+| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
+
+- List subtotal: **USD 1.30** / month
+- Subtotal after monthly free allowance: **USD 1.29** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
+
+## Summary API: output cost if all 1,000 summaries hit the output limit
+
+ID: `ai-output-ceiling-nova-2-lite` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- All 1,000 summaries write up to the maxTokens of 400
+- Output tokens only; input and Lambda are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
+
+- List subtotal: **USD 1.32** / month
+- Subtotal after monthly free allowance: **USD 1.32** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.nova-2-lite.output`
+
+## Summary API: the same token counts on Claude Haiku 4.5 (inference only)
+
+ID: `ai-summaries-claude-haiku-4-5` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+
+Assumptions:
+
+- 1,000 summaries a month
+- Assumed 2,000 input tokens each (system prompt plus note; the real number is in the response's usage)
+- Assumed 150 output tokens each (the limit is 400)
+- Tokenizers differ by model, so the same text does not give the same token count; this is for comparing unit prices
+- Inference only; Lambda is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
+| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
+
+- List subtotal: **USD 3.03** / month
+- Subtotal after monthly free allowance: **USD 3.03** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
+
+## Security: the default stack, deployed but never called for a month
+
+ID: `sec-idle-default` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- Neither `-c cmk=on` nor `-c webAclArn=...`; the web ACL stack (AihSecurityWaf) does not exist
+- No requests. The function never runs, so no Secrets Manager API call is made
+- One secret for 730 hours, encrypted with aws/secretsmanager (no monthly fee)
+- The CloudFront distribution, Lambda, and the IAM role cost nothing uncalled; logs have expired and nothing is stored
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+
+- List subtotal: **USD 0.40** / month
+- Subtotal after monthly free allowance: **USD 0.40** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`
+
+## Security: with `-c cmk=on`, deployed but never called for a month
+
+ID: `sec-idle-cmk` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- The default stack plus one customer managed key
+- The key is less than a year old and has not rotated yet. Each of the first two rotations adds USD 1 a month
+- No requests
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
+
+- List subtotal: **USD 1.40** / month
+- Subtotal after monthly free allowance: **USD 1.40** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`, `kms.key`
+
+## Security: the web ACL (AihSecurityWaf) for a month, inspecting one million requests
+
+ID: `sec-waf-month` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- One web ACL and three rules (one rate-based rule, two AWS managed rule groups; a managed rule group counts as one rule)
+- 727 WCUs in total, inside the 1,500 WCUs the base price includes
+- One million requests inspected in the month. With none, USD 8.00 a month
+- That a web ACL for CloudFront is metered under the Global-* usage types was not confirmed on a bill. The ap-northeast-1 and us-east-1 prices are the same numbers
+- This subtotal excludes the default stack. No WAF logging, no Bot Control or other add-ons
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
+| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
+| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
+
+- List subtotal: **USD 8.60** / month
+- Subtotal after monthly free allowance: **USD 8.60** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
+
+## Security: the default stack, 100,000 tokens issued and 100,000 verified a month
+
+ID: `sec-small` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- 200,000 requests to CloudFront (HTTPS, Japan edge locations). Nothing is cached, so all of them reach Lambda
+- 0.5 KB per response, assumed
+- Lambda averages 50 ms at 256 MB, arm64. The 50 ms is an assumption, not a measurement
+- One execution environment running all month and reloading its keys every five minutes (730 hours x 12 x 2 GetSecretValue calls). More environments mean proportionally more
+- 0.3 KB of logs per invocation (only the lines Lambda writes). 7-day retention; average stored volume assumed to be 7/30 of the monthly ingest
+- No customer managed key and no web ACL. Data transfer from Lambda to CloudFront is not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
+| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
+| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
+| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
+
+- List subtotal: **USD 0.86** / month
+- Subtotal after monthly free allowance: **USD 0.49** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `secretsmanager.secret`, `secretsmanager.api`
+
+## Security: GuardDuty, Inspector, and AWS Config on a small account for a month (an order-of-magnitude example)
+
+ID: `sec-detect-example` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+
+Assumptions:
+
+- A month after the free trials have ended
+- 100,000 CloudTrail management events analyzed by GuardDuty, assumed. The real count depends on what the account does; this is not a measurement
+- GuardDuty's other charges (VPC flow log and DNS log volume, and protection plans such as S3, Lambda, and Malware Protection) are not included. Enabling GuardDuty for the first time turns every protection plan on by default
+- Inspector with Lambda standard scanning only, one function for 730 hours. ECR image and EC2 instance scanning are not included
+- AWS Config with continuous recording and 500 configuration items in the month, assumed. Rule evaluations and the S3 storage for the records are not included
+
+| Price ID | Quantity | Unit | Basis | List | Free allowance | After allowance |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
+| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
+| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
+
+- List subtotal: **USD 2.34** / month
+- Subtotal after monthly free allowance: **USD 2.34** / month
+- Prices whose free allowance could not be confirmed (nothing deducted): `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
+
 ## Unit prices
 
 | ID | Region | usageType | Unit | Tiers (from - to: USD) | Offer published | Checked |
@@ -1645,10 +1645,6 @@ Assumptions:
 | `vpc.endpoint.interface.hour` | ap-northeast-1 | APN1-VpcEndpoint-Hours | Hrs | 0 - ∞: 0.0140000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.endpoint.interface.data` | ap-northeast-1 | APN1-VpcEndpoint-Bytes | GB | 0 - 1,048,576: 0.0100000000<br>1,048,576 - 5,242,880: 0.0060000000<br>5,242,880 - ∞: 0.0040000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.public-ipv4.in-use.hour` | ap-northeast-1 | APN1-PublicIPv4:InUseAddress | Hrs | 0 - ∞: 0.0050000000 | 2026-09-17 | 2026-10-11 |
-| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
-| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
-| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
-| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
 | `ses.outbound.message` | ap-northeast-1 | APN1-Recipients | Count | 0 - ∞: 0.0001000000 | 2026-09-11 | 2026-10-11 |
 | `sns.request` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 1,000,000: 0.0000000000<br>1,000,000 - ∞: 0.0000005000 | 2026-09-15 | 2026-10-11 |
 | `sns.delivery.lambda` | ap-northeast-1 | APN1-DeliveryAttempts-LAMBDA | Notifications | 0 - ∞: 0.0000000000 | 2026-09-15 | 2026-10-11 |
@@ -1692,6 +1688,12 @@ Assumptions:
 | `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
+| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
+| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
+| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
 | `secretsmanager.secret` | ap-northeast-1 | APN1-AWSSecretsManager-Secrets | Secrets | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-12 |
 | `secretsmanager.api` | ap-northeast-1 | APN1-AWSSecretsManagerAPIRequest | API Requests | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
 | `kms.key` | ap-northeast-1 | ap-northeast-1-KMS-Keys | Keys | 0 - ∞: 1.0000000000 | 2026-09-11 | 2026-10-12 |
@@ -1702,8 +1704,6 @@ Assumptions:
 | `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
 | `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
 | `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
-| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
-| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
 
 Every unit price comes from the AWS Price List bulk API (each `sourceUrl` is recorded in `data/pricing/unit-prices.json`). CloudFront prices are those for Japan edge locations.
 
@@ -1741,10 +1741,6 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.
 - `vpc.public-ipv4.in-use.hour`: The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted.
-- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `ses.outbound.message`: The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied.
 - `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.
 - `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
@@ -1763,6 +1759,12 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
+- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.
+- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `secretsmanager.secret`: No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied.
 - `secretsmanager.api`: No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied.
 - `kms.key`: The KMS free tier covers requests, not keys; none is applied.
@@ -1772,5 +1774,3 @@ Allowances that could not be confirmed (treated as unknown, not as zero; nothing
 - `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
 - `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
 - `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.
-- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
-- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.

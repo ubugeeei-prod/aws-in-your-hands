@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import { bucketNameSchema, instanceIdSchema } from "@aih/example-23-ec2/src/remote.ts";
 
 import { assetOf, type CelldVersion, DOCUMENTED, versionSchema } from "./celld.ts";
@@ -24,7 +26,7 @@ export function nodeCommands(spec: NodeSpec) {
       `readlink ${paths.current} || echo "celld is not installed"`,
     ],
     install: (bucket: string, version: CelldVersion): string[] => [
-      `${paths.installScript} ${bucketNameSchema.parse(bucket)} ${versionSchema.parse(version)} ${assetOf(version, ARTIFACT_TARGET).sha256}`,
+      `${paths.installScript} ${v.parse(bucketNameSchema, bucket)} ${v.parse(versionSchema, version)} ${assetOf(version, ARTIFACT_TARGET).sha256}`,
     ],
     start: (): string[] => [
       "set -euo pipefail",
@@ -77,7 +79,7 @@ export const killArgs = (input: { instanceId: string; region: string }) => [
   "ec2",
   "stop-instances",
   "--instance-ids",
-  instanceIdSchema.parse(input.instanceId),
+  v.parse(instanceIdSchema, input.instanceId),
   "--skip-os-shutdown",
   ...at(input.region),
 ];
@@ -86,7 +88,7 @@ export const startInstanceArgs = (input: { instanceId: string; region: string })
   "ec2",
   "start-instances",
   "--instance-ids",
-  instanceIdSchema.parse(input.instanceId),
+  v.parse(instanceIdSchema, input.instanceId),
   ...at(input.region),
 ];
 
@@ -99,7 +101,7 @@ export const waitInstanceArgs = (input: {
   "wait",
   input.state === "stopped" ? "instance-stopped" : "instance-running",
   "--instance-ids",
-  instanceIdSchema.parse(input.instanceId),
+  v.parse(instanceIdSchema, input.instanceId),
   "--region",
   input.region,
 ];
@@ -113,7 +115,7 @@ export const uploadArtifactArgs = (input: {
   "s3",
   "cp",
   input.file,
-  `s3://${bucketNameSchema.parse(input.bucket)}/${input.key}`,
+  `s3://${v.parse(bucketNameSchema, input.bucket)}/${input.key}`,
   "--region",
   input.region,
   "--only-show-errors",

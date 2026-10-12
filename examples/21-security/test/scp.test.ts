@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -11,7 +12,7 @@ import {
 } from "../src/policy-model.ts";
 
 const raw = readFileSync(new URL("../policies/scp-guardrails.json", import.meta.url), "utf8");
-const guardrails = policySchema.parse(JSON.parse(raw));
+const guardrails = v.parse(policySchema, JSON.parse(raw));
 
 const ADMIN: Policy = FULL_AWS_ACCESS;
 const developer = "arn:aws:iam::111111111111:role/Developer";
@@ -104,7 +105,7 @@ describe("what the guardrails stop, even for an administrator", () => {
 
 describe("the model", () => {
   it("refuses a condition it does not implement instead of treating it as true", () => {
-    const unknown = policySchema.parse({
+    const unknown = v.parse(policySchema, {
       Version: "2012-10-17",
       Statement: [
         {
@@ -120,10 +121,45 @@ describe("the model", () => {
     );
   });
 
+  // JSON.parse, as the file is read: an object literal would set the prototype instead of a key.
+  const conditioned = (condition: string): unknown =>
+    JSON.parse(
+      `{"Version":"2012-10-17","Statement":[{"Effect":"Deny","Action":"*","Resource":"*","Condition":${condition}}]}`,
+    );
+
+  it("refuses a Condition that is a list instead of reading it as no condition", () => {
+    for (const condition of ["[]", '{"StringEquals":[]}', '{"StringEquals":["eu-west-1"]}']) {
+      expect(v.safeParse(policySchema, conditioned(condition)).success, condition).toBe(false);
+    }
+  });
+
+  it.each([
+    '{"constructor":{"aws:RequestedRegion":"eu-west-1"}}',
+    '{"__proto__":{"aws:RequestedRegion":"eu-west-1"}}',
+    '{"toString":{"aws:RequestedRegion":"eu-west-1"}}',
+    '{"StringEquals":{"constructor":"eu-west-1"}}',
+    '{"StringEquals":{"aws:RequestedRegion":"ap-northeast-1","__proto__":"x"}}',
+  ])("refuses the operator or key in %s instead of skipping it", (condition) => {
+    const policy = v.parse(policySchema, conditioned(condition));
+    expect(() => decide(request("s3:GetObject"), [ADMIN], [[FULL_AWS_ACCESS, policy]])).toThrow(
+      "does not know",
+    );
+  });
+
+  it("refuses a statement with both Action and NotAction, or with neither", () => {
+    const both = { Effect: "Deny", Action: "*", NotAction: "iam:*", Resource: "*" };
+    const neither = { Effect: "Deny", Resource: "*" };
+    for (const statement of [both, neither]) {
+      expect(
+        v.safeParse(policySchema, { Version: "2012-10-17", Statement: [statement] }).success,
+      ).toBe(false);
+    }
+  });
+
   it("refuses a statement with a Principal", () => {
     const withPrincipal = { Effect: "Deny", Action: "*", Resource: "*", Principal: "*" };
     expect(
-      policySchema.safeParse({ Version: "2012-10-17", Statement: [withPrincipal] }).success,
+      v.safeParse(policySchema, { Version: "2012-10-17", Statement: [withPrincipal] }).success,
     ).toBe(false);
   });
 });

@@ -17,10 +17,15 @@
       "IAM"
     ],
     "samplePath": "examples/13-sql",
-    "writing": { "ja": "complete", "en": "complete" },
-    "sourceRevision": 1,
-    "translatedRevision": { "en": 1 },
-    "checkedAt": "2026-10-11",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 5,
+    "translatedRevision": {
+      "en": 5
+    },
+    "checkedAt": "2026-10-12",
     "sourceIds": [
       "dsql-what-is",
       "dsql-pg-compat",
@@ -1066,8 +1071,16 @@
         "en": ["No queries, so no DPUs", "1 GB of data", "No backups"]
       },
       "items": [
-        { "priceId": "dsql.dpu", "quantity": 0, "basis": "no database activity" },
-        { "priceId": "dsql.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+        {
+          "priceId": "dsql.dpu",
+          "quantity": 0,
+          "basis": "no database activity"
+        },
+        {
+          "priceId": "dsql.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
       ]
     },
     {
@@ -1101,7 +1114,11 @@
           "quantity": 24600,
           "basis": "900,000 x 0.00675 DPU + 100,000 x 0.18525 DPU"
         },
-        { "priceId": "dsql.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+        {
+          "priceId": "dsql.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
       ]
     },
     {

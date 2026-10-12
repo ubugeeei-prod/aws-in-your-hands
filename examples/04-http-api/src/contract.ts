@@ -1,11 +1,13 @@
 import * as v from "valibot";
 
+import { utcTimestamp } from "./timestamp.ts";
+
 // #region note
 export const noteSchema = v.object({
   id: v.pipe(v.string(), v.minLength(1)),
   title: v.pipe(v.string(), v.minLength(1), v.maxLength(120)),
   body: v.pipe(v.string(), v.maxLength(10_000)),
-  createdAt: v.pipe(v.string(), v.isoTimestamp()),
+  createdAt: utcTimestamp,
 });
 export type Note = v.InferOutput<typeof noteSchema>;
 
@@ -21,7 +23,7 @@ export type CreateNote = v.InferOutput<typeof createNoteSchema>;
 export const noteSummarySchema = v.strictObject({
   id: v.pipe(v.string(), v.minLength(1)),
   title: v.pipe(v.string(), v.minLength(1), v.maxLength(120)),
-  createdAt: v.pipe(v.string(), v.isoTimestamp()),
+  createdAt: utcTimestamp,
 });
 export type NoteSummary = v.InferOutput<typeof noteSummarySchema>;
 

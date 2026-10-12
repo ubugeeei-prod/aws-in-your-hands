@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -91,10 +92,10 @@ describe("the systemd unit", () => {
   });
 
   it("cannot be configured to break either of celld's two supervisor rules", () => {
-    expect(() => nodeSpecSchema.parse({ ...spec, stopTimeoutSeconds: 40 })).toThrow(
+    expect(() => v.parse(nodeSpecSchema, { ...spec, stopTimeoutSeconds: 40 })).toThrow(
       "CELLD_SHUTDOWN_TOTAL_MS",
     );
-    expect(() => nodeSpecSchema.parse({ ...spec, restartDelaySeconds: 9 })).toThrow(
+    expect(() => v.parse(nodeSpecSchema, { ...spec, restartDelaySeconds: 9 })).toThrow(
       "lease lifetime",
     );
   });

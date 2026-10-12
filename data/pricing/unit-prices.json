@@ -872,90 +872,6 @@
       "checkedAt": "2026-10-11"
     },
     {
-      "id": "bedrock.nova-2-lite.input",
-      "offerCode": "AmazonBedrock",
-      "region": "ap-northeast-1",
-      "sku": "6F8ZM9MBQZNJNGFN",
-      "usageType": "APN1-Nova2.0Lite-input-tokens",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1K tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0003960000",
-          "description": "$0.000396 per 1K tokens for APN1-Nova2.0Lite-input-tokens in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-10T18:22:42Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "bedrock.nova-2-lite.output",
-      "offerCode": "AmazonBedrock",
-      "region": "ap-northeast-1",
-      "sku": "9Z5KZBA2AANN9UQS",
-      "usageType": "APN1-Nova2.0Lite-output-tokens",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1K tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0033110000",
-          "description": "$0.003311 per 1K tokens for APN1-Nova2.0Lite-output-tokens in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-10T18:22:42Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "bedrock.claude-haiku-4-5.input",
-      "offerCode": "AmazonBedrockFoundationModels",
-      "region": "ap-northeast-1",
-      "sku": "CUDWXBGUTQHMHKJX",
-      "usageType": "APN1-MP:APN1_InputTokenCount-Units",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1M tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "1.1000000000",
-          "description": "AWS Marketplace software usage|ap-northeast-1|Million Input Tokens Regional"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-08T23:56:37Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "bedrock.claude-haiku-4-5.output",
-      "offerCode": "AmazonBedrockFoundationModels",
-      "region": "ap-northeast-1",
-      "sku": "TEKBTVMTEVXXBRTZ",
-      "usageType": "APN1-MP:APN1_OutputTokenCount-Units",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1M tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "5.5000000000",
-          "description": "AWS Marketplace software usage|ap-northeast-1|Million Response Tokens Regional"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-08T23:56:37Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
       "id": "ses.outbound.message",
       "offerCode": "AmazonSES",
       "region": "ap-northeast-1",
@@ -1925,6 +1841,132 @@
       "checkedAt": "2026-10-12"
     },
     {
+      "id": "dynamodb.restore",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "T6RK6THJVQUFJ4M5",
+      "usageType": "APN1-RestoreDataSize-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1710000000",
+          "description": "$0.171 per GB of data restored"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "backup.dynamodb.warm",
+      "offerCode": "AWSBackup",
+      "region": "ap-northeast-1",
+      "sku": "C3P55YRKVN5AZQMC",
+      "usageType": "APN1-WarmStorage-ByteHrs-DynamoDB",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1140000000",
+          "description": "$0.114 per GB-month for warm backup storage for DynamoDB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T17:01:20Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "bedrock.nova-2-lite.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "6F8ZM9MBQZNJNGFN",
+      "usageType": "APN1-Nova2.0Lite-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0003960000",
+          "description": "$0.000396 per 1K tokens for APN1-Nova2.0Lite-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.nova-2-lite.output",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "9Z5KZBA2AANN9UQS",
+      "usageType": "APN1-Nova2.0Lite-output-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0033110000",
+          "description": "$0.003311 per 1K tokens for APN1-Nova2.0Lite-output-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.claude-haiku-4-5.input",
+      "offerCode": "AmazonBedrockFoundationModels",
+      "region": "ap-northeast-1",
+      "sku": "CUDWXBGUTQHMHKJX",
+      "usageType": "APN1-MP:APN1_InputTokenCount-Units",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1M tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.1000000000",
+          "description": "AWS Marketplace software usage|ap-northeast-1|Million Input Tokens Regional"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:56:37Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.claude-haiku-4-5.output",
+      "offerCode": "AmazonBedrockFoundationModels",
+      "region": "ap-northeast-1",
+      "sku": "TEKBTVMTEVXXBRTZ",
+      "usageType": "APN1-MP:APN1_OutputTokenCount-Units",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1M tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.5000000000",
+          "description": "AWS Marketplace software usage|ap-northeast-1|Million Response Tokens Regional"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:56:37Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
       "id": "secretsmanager.secret",
       "offerCode": "AWSSecretsManager",
       "region": "ap-northeast-1",
@@ -2132,48 +2174,6 @@
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:45:34Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "dynamodb.restore",
-      "offerCode": "AmazonDynamoDB",
-      "region": "ap-northeast-1",
-      "sku": "T6RK6THJVQUFJ4M5",
-      "usageType": "APN1-RestoreDataSize-Bytes",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1710000000",
-          "description": "$0.171 per GB of data restored"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:22Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "backup.dynamodb.warm",
-      "offerCode": "AWSBackup",
-      "region": "ap-northeast-1",
-      "sku": "C3P55YRKVN5AZQMC",
-      "usageType": "APN1-WarmStorage-ByteHrs-DynamoDB",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-month",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1140000000",
-          "description": "$0.114 per GB-month for warm backup storage for DynamoDB"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-28T17:01:20Z",
       "checkedAt": "2026-10-12"
     }
   ]

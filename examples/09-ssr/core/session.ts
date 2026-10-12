@@ -1,11 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region cookie
 export const SESSION_COOKIE = "aih_session";
 export const SESSION_TTL_SECONDS = 60 * 60;
 
 /** 32 random bytes in base64url. The cookie carries this and nothing else. */
-export const sessionIdSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+export const sessionIdSchema = v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{43}$/));
 
 export const sessionCookieAttributes = (secure: boolean) =>
   ({
@@ -56,8 +56,8 @@ export function findSession(
   cookieValue: string | undefined,
   nowMs: number,
 ): Session | undefined {
-  const id = sessionIdSchema.safeParse(cookieValue);
-  return id.success ? store.get(id.data, nowMs) : undefined;
+  const id = v.safeParse(sessionIdSchema, cookieValue);
+  return id.success ? store.get(id.output, nowMs) : undefined;
 }
 
 // #region same-origin
@@ -70,4 +70,6 @@ export function isSameOrigin(origin: string | undefined, host: string | undefine
 }
 // #endregion same-origin
 
-export const signInSchema = z.object({ name: z.string().trim().min(1).max(40) });
+export const signInSchema = v.object({
+  name: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(40)),
+});

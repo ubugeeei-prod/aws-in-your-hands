@@ -113,9 +113,17 @@ Left at its defaults, the SDK retries too, up to 3 attempts. This chapter turns 
 
 <!-- section: 17.app -->
 
-The parts built so far now go into a Hono app.
+The parts built so far now go into an app shaped like the one in chapter 04: a function that takes a `Request` and returns a `Response`. The difference from chapter 04 is that the body of a successful `Response` is a stream, sent piece by piece as it is produced. The code below is the part that runs after the input has been validated.
 
 <<< @/examples/17-ai/src/app.ts{route}
+
+The body is a `ReadableStream`. Returning the `Response` sends only the status code and the headers. The body grows by one `enqueue` each time the relay produces an event. When the reader goes away, `cancel` is called, and that is where the request to the model is aborted.
+
+The next function decides what string one event becomes on the wire.
+
+<<< @/examples/17-ai/src/sse.ts{frame}
+
+This is the SSE format: a line with the event's name, the `data:` lines, and then a blank line. The blank line marks the end of one event. The `text/event-stream` in `content-type` tells the reader that the body is in this format.
 
 A failure before the stream starts is returned as an ordinary HTTP error: 429 for throttling, 504 for the deadline. Nothing has been sent yet, so the status code can report the failure.
 

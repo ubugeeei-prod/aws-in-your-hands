@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { ExportStore } from "./export-store.ts";
 import {
@@ -30,9 +30,10 @@ export function atMostPages(pages: number): () => boolean {
 // #endregion budget
 
 // What a part says about itself. Stored as S3 metadata, read back when the part was already there.
-const partMetadataSchema = z.object({
-  count: z.coerce.number().int().positive(),
-  next: z.string().min(1).optional(),
+// S3 metadata is text, so the count is a string here and a number after the check.
+const partMetadataSchema = v.object({
+  count: v.pipe(v.string(), v.transform(Number), v.number(), v.integer(), v.minValue(1)),
+  next: v.optional(v.pipe(v.string(), v.minLength(1))),
 });
 
 // #region export-pages
@@ -62,7 +63,8 @@ export async function exportPages(
       const result = await deps.store.putIfAbsent(key, body, mine);
       // If the part was already there, an earlier attempt wrote it, and what it
       // wrote is what counts: where it stopped is where the next part starts.
-      const kept = partMetadataSchema.parse(
+      const kept = v.parse(
+        partMetadataSchema,
         result === "written" ? mine : await deps.store.head(key),
       );
       cursor = kept.next ?? null;

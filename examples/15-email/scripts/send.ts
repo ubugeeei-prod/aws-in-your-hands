@@ -5,6 +5,8 @@
 
 import { parseArgs } from "node:util";
 
+import * as v from "valibot";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
@@ -30,7 +32,7 @@ try {
       "--to is required. In the SES sandbox it must be an address you verified, or a mailbox simulator address.",
     );
   }
-  const body = shareNotificationSchema.parse({
+  const body = v.parse(shareNotificationSchema, {
     notificationId: values.id,
     to: values.to,
     sharedBy: values.by,
@@ -57,14 +59,14 @@ try {
     const response = await post();
     const json: unknown = await response.json();
     if (!response.ok) {
-      const failure = errorSchema.safeParse(json);
+      const failure = v.safeParse(errorSchema, json);
       throw new Error(
         failure.success
-          ? `${response.status} ${failure.data.error.code}: ${failure.data.error.message} (request ${failure.data.error.requestId})`
+          ? `${response.status} ${failure.output.error.code}: ${failure.output.error.message} (request ${failure.output.error.requestId})`
           : `${response.status} ${JSON.stringify(json)}`,
       );
     }
-    const result = shareNotificationResultSchema.parse(json);
+    const result = v.parse(shareNotificationResultSchema, json);
     console.log(`${attempt} request: ${response.status} ${JSON.stringify(result)}`);
     if (attempt === "second" && result.status === "accepted") {
       throw new Error("the second request with the same notificationId was sent again");

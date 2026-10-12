@@ -1,27 +1,35 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region config
 // Read from /config.json at start-up, so one build fits any deployment.
 // Nothing in it is secret: a public client's settings are visible to anyone.
-const configSchema = z.object({
-  apiUrl: z.url({ protocol: /^https?$/ }),
-  auth: z.discriminatedUnion("mode", [
-    z.object({ mode: z.literal("local") }),
-    z.object({
-      mode: z.literal("cognito"),
+// A URL, and one of the named schemes. "javascript:" is a URL too.
+const url = (...protocols: string[]) =>
+  v.pipe(
+    v.string(),
+    v.url(),
+    v.check((value) => protocols.includes(new URL(value).protocol), "unexpected URL scheme"),
+  );
+
+const configSchema = v.object({
+  apiUrl: url("http:", "https:"),
+  auth: v.variant("mode", [
+    v.object({ mode: v.literal("local") }),
+    v.object({
+      mode: v.literal("cognito"),
       /** https://cognito-idp.<region>.amazonaws.com/<user pool ID> */
-      issuer: z.url({ protocol: /^https$/ }),
+      issuer: url("https:"),
       /** https://<prefix>.auth.<region>.amazoncognito.com */
-      domain: z.url({ protocol: /^https$/ }),
-      clientId: z.string().min(1),
+      domain: url("https:"),
+      clientId: v.pipe(v.string(), v.minLength(1)),
     }),
   ]),
 });
 
-export type AppConfig = z.infer<typeof configSchema>;
+export type AppConfig = v.InferOutput<typeof configSchema>;
 
 export function parseConfig(json: unknown): AppConfig {
-  return configSchema.parse(json);
+  return v.parse(configSchema, json);
 }
 // #endregion config
 

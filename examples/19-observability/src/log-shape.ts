@@ -1,42 +1,36 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region shape
 const common = {
-  level: z.enum(["debug", "info", "warn", "error"]),
-  requestId: z.string().min(1),
+  level: v.picklist(["debug", "info", "warn", "error"]),
+  requestId: v.pipe(v.string(), v.minLength(1)),
   // Absent when no tracer is running.
-  traceId: z
-    .string()
-    .regex(/^[0-9a-f]{32}$/)
-    .optional(),
-  spanId: z
-    .string()
-    .regex(/^[0-9a-f]{16}$/)
-    .optional(),
-  sampled: z.boolean().optional(),
+  traceId: v.optional(v.pipe(v.string(), v.regex(/^[0-9a-f]{32}$/))),
+  spanId: v.optional(v.pipe(v.string(), v.regex(/^[0-9a-f]{16}$/))),
+  sampled: v.optional(v.boolean()),
 };
 
 // Strict on purpose: a field nobody listed here (a header, a body, a token)
 // fails the test instead of reaching CloudWatch Logs.
-export const requestLineSchema = z.strictObject({
+export const requestLineSchema = v.strictObject({
   ...common,
-  message: z.literal("request"),
-  method: z.string(),
-  path: z.string().startsWith("/"),
-  status: z.number().int(),
-  durationMs: z.number().nonnegative(),
+  message: v.literal("request"),
+  method: v.string(),
+  path: v.pipe(v.string(), v.startsWith("/")),
+  status: v.pipe(v.number(), v.integer()),
+  durationMs: v.pipe(v.number(), v.minValue(0)),
 });
 
-export const errorLineSchema = z.strictObject({
+export const errorLineSchema = v.strictObject({
   ...common,
-  message: z.literal("unhandled error"),
-  error: z.string(),
+  message: v.literal("unhandled error"),
+  error: v.string(),
 });
 
-export const logLineSchema = z.discriminatedUnion("message", [requestLineSchema, errorLineSchema]);
-export type LogLine = z.infer<typeof logLineSchema>;
+export const logLineSchema = v.variant("message", [requestLineSchema, errorLineSchema]);
+export type LogLine = v.InferOutput<typeof logLineSchema>;
 // #endregion shape
 
 export function parseLogLines(lines: readonly string[]): LogLine[] {
-  return lines.map((line) => logLineSchema.parse(JSON.parse(line)));
+  return lines.map((line) => v.parse(logLineSchema, JSON.parse(line)));
 }

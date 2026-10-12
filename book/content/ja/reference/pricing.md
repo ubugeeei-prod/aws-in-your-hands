@@ -306,81 +306,6 @@ ID: `network-interface-endpoints` / 章: [11 Network: VPC、subnet、NAT、endpo
 - 定価の小計: **USD 61.42** / 月
 - 毎月の無料枠適用後の小計: **USD 61.42** / 月
 
-## 要約 API: デプロイ済みで呼ばれない月
-
-ID: `ai-idle` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- リクエストゼロ
-- log は 1 週間で失効し、保存量ゼロ
-
-- 定価の小計: **USD 0.00** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## 要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）
-
-ID: `ai-summaries-nova-2-lite` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- 月 1,000 件の要約
-- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
-- 出力は 1 件あたり 150 token と仮定（上限は 400）
-- Lambda は 256 MB、arm64、1 件あたり平均 4 秒と仮定（推論を待つ時間も課金される）
-- 1 件あたり log 1 KB と仮定
-- データ転送は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
-| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
-| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
-| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
-
-- 定価の小計: **USD 1.30** / 月
-- 毎月の無料枠適用後の小計: **USD 1.29** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
-
-## 要約 API: 1,000 件すべてが出力の上限に達した場合の出力分
-
-ID: `ai-output-ceiling-nova-2-lite` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- 1,000 件すべてが maxTokens の 400 token まで出力
-- 出力 token の分だけ。入力と Lambda は含まない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
-
-- 定価の小計: **USD 1.32** / 月
-- 毎月の無料枠適用後の小計: **USD 1.32** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.output`
-
-## 要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）
-
-ID: `ai-summaries-claude-haiku-4-5` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- 月 1,000 件の要約
-- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
-- 出力は 1 件あたり 150 token と仮定（上限は 400）
-- token の数え方はモデルごとに違うので、同じ文章でも token 数は同じにならない。単価の比較のための仮定
-- 推論の分だけ。Lambda は含まない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
-| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
-
-- 定価の小計: **USD 3.03** / 月
-- 毎月の無料枠適用後の小計: **USD 3.03** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
-
 ## 通知メール: デプロイ済みで 1 通も送らない月
 
 ID: `email-idle` / 章: [15 Email: SES](/ja/chapters/15-email.md)
@@ -1331,116 +1256,6 @@ ID: `export-step-fargate-1h` / 章: [16 Workflow: ECS task、Step Functions、La
 - 毎月の無料枠適用後の小計: **USD 0.52** / 月
 - 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
 
-## 守り: 既定の stack を置いたまま、誰も呼ばない月
-
-ID: `sec-idle-default` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- `-c cmk=on` も `-c webAclArn=...` も付けていない。web ACL の stack（AihSecurityWaf）も作っていない
-- リクエストゼロ。関数が動かないので、Secrets Manager の API も呼ばれない
-- secret は 1 つを 730 時間。暗号化は aws/secretsmanager（月額なし）
-- CloudFront の distribution、Lambda、IAM の role は、呼ばれなければ料金がかからない。log は失効して保存量ゼロ
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-
-- 定価の小計: **USD 0.40** / 月
-- 毎月の無料枠適用後の小計: **USD 0.40** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`
-
-## 守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月
-
-ID: `sec-idle-cmk` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- 既定の stack に、customer managed key を 1 つ足したもの
-- 鍵は作ってから 1 年未満で、まだ一度も自動 rotation していない。rotation のたびに、2 回目まで月 USD 1 ずつ増える
-- リクエストゼロ
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
-
-- 定価の小計: **USD 1.40** / 月
-- 毎月の無料枠適用後の小計: **USD 1.40** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `kms.key`
-
-## 守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査
-
-ID: `sec-waf-month` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- web ACL 1 つと rule 3 つ（rate-based rule 1 つ、AWS managed rule group 2 つ。managed rule group は 1 つの rule として数える）
-- 合計 727 WCU で、基本料金に含まれる 1,500 WCU の内側
-- 検査するリクエストは月 100 万。0 なら月 USD 8.00
-- CloudFront 用の web ACL が Global-* の usage type で課金されるという対応は、請求では確かめていない。ap-northeast-1 と us-east-1 の単価も同じ値
-- この小計に、既定の stack の料金は含まない。WAF のログ、Bot Control などの追加機能は使っていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
-| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
-| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
-
-- 定価の小計: **USD 8.60** / 月
-- 毎月の無料枠適用後の小計: **USD 8.60** / 月
-- 無料枠を確認できず、何も引いていない単価: `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
-
-## 守り: 既定の stack で、token の発行と検証を月 10 万回ずつ
-
-ID: `sec-small` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- CloudFront へ 20 万リクエスト（HTTPS、日本の edge）。cache しないので、すべて Lambda に届く
-- 応答は 1 回あたり 0.5 KB と仮定
-- Lambda は平均 50 ms、256 MB、arm64。50 ms は仮定で、計測値ではない
-- 実行環境 1 つが 1 か月動き続け、5 分ごとに鍵を読み直すと仮定（730 時間 x 12 回 x GetSecretValue 2 回）。実行環境が増えれば、そのぶん増える
-- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
-- customer managed key、web ACL は無し。Lambda から CloudFront へのデータ転送は含めていない（未算入）
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
-| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
-| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
-| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
-| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
-| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
-
-- 定価の小計: **USD 0.86** / 月
-- 毎月の無料枠適用後の小計: **USD 0.49** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `secretsmanager.api`
-
-## 守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）
-
-ID: `sec-detect-example` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- 無料の試用期間が終わったあとの月
-- GuardDuty が分析する CloudTrail の management event を月 10 万件と仮定。実際の件数は、アカウントで何をしているかで決まる。この数字は計測値ではない
-- GuardDuty のほかの課金対象（VPC flow log と DNS log の分析量、S3、Lambda、Malware Protection などの protection plan）は含めていない。初めて有効にすると、既定ですべての protection plan が有効になる
-- Inspector は Lambda standard scanning だけで、関数 1 つを 730 時間。ECR の image と EC2 instance の検査は含めていない
-- AWS Config は連続記録で、月 500 件の configuration item と仮定。rule の評価と、記録を置く S3 の料金は含めていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
-| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
-| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
-
-- 定価の小計: **USD 2.34** / 月
-- 毎月の無料枠適用後の小計: **USD 2.34** / 月
-- 無料枠を確認できず、何も引いていない単価: `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
-
 ## 復旧: 戻せる状態を 1 か月保つための上乗せ（table 1 GB、画像 10 GB）
 
 ID: `recovery-keep` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
@@ -1609,6 +1424,191 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 - 毎月の無料枠適用後の小計: **USD 2.30** / 月
 - 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
 
+## 要約 API: デプロイ済みで呼ばれない月
+
+ID: `ai-idle` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- リクエストゼロ
+- log は 1 週間で失効し、保存量ゼロ
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）
+
+ID: `ai-summaries-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 月 1,000 件の要約
+- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
+- 出力は 1 件あたり 150 token と仮定（上限は 400）
+- Lambda は 256 MB、arm64、1 件あたり平均 4 秒と仮定（推論を待つ時間も課金される）
+- 1 件あたり log 1 KB と仮定
+- データ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
+| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
+| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
+
+- 定価の小計: **USD 1.30** / 月
+- 毎月の無料枠適用後の小計: **USD 1.29** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
+
+## 要約 API: 1,000 件すべてが出力の上限に達した場合の出力分
+
+ID: `ai-output-ceiling-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 1,000 件すべてが maxTokens の 400 token まで出力
+- 出力 token の分だけ。入力と Lambda は含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
+
+- 定価の小計: **USD 1.32** / 月
+- 毎月の無料枠適用後の小計: **USD 1.32** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.output`
+
+## 要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）
+
+ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 月 1,000 件の要約
+- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
+- 出力は 1 件あたり 150 token と仮定（上限は 400）
+- token の数え方はモデルごとに違うので、同じ文章でも token 数は同じにならない。単価の比較のための仮定
+- 推論の分だけ。Lambda は含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
+| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
+
+- 定価の小計: **USD 3.03** / 月
+- 毎月の無料枠適用後の小計: **USD 3.03** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
+
+## 守り: 既定の stack を置いたまま、誰も呼ばない月
+
+ID: `sec-idle-default` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- `-c cmk=on` も `-c webAclArn=...` も付けていない。web ACL の stack（AihSecurityWaf）も作っていない
+- リクエストゼロ。関数が動かないので、Secrets Manager の API も呼ばれない
+- secret は 1 つを 730 時間。暗号化は aws/secretsmanager（月額なし）
+- CloudFront の distribution、Lambda、IAM の role は、呼ばれなければ料金がかからない。log は失効して保存量ゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+
+- 定価の小計: **USD 0.40** / 月
+- 毎月の無料枠適用後の小計: **USD 0.40** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`
+
+## 守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月
+
+ID: `sec-idle-cmk` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- 既定の stack に、customer managed key を 1 つ足したもの
+- 鍵は作ってから 1 年未満で、まだ一度も自動 rotation していない。rotation のたびに、2 回目まで月 USD 1 ずつ増える
+- リクエストゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
+
+- 定価の小計: **USD 1.40** / 月
+- 毎月の無料枠適用後の小計: **USD 1.40** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `kms.key`
+
+## 守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査
+
+ID: `sec-waf-month` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- web ACL 1 つと rule 3 つ（rate-based rule 1 つ、AWS managed rule group 2 つ。managed rule group は 1 つの rule として数える）
+- 合計 727 WCU で、基本料金に含まれる 1,500 WCU の内側
+- 検査するリクエストは月 100 万。0 なら月 USD 8.00
+- CloudFront 用の web ACL が Global-* の usage type で課金されるという対応は、請求では確かめていない。ap-northeast-1 と us-east-1 の単価も同じ値
+- この小計に、既定の stack の料金は含まない。WAF のログ、Bot Control などの追加機能は使っていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
+| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
+| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
+
+- 定価の小計: **USD 8.60** / 月
+- 毎月の無料枠適用後の小計: **USD 8.60** / 月
+- 無料枠を確認できず、何も引いていない単価: `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
+
+## 守り: 既定の stack で、token の発行と検証を月 10 万回ずつ
+
+ID: `sec-small` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- CloudFront へ 20 万リクエスト（HTTPS、日本の edge）。cache しないので、すべて Lambda に届く
+- 応答は 1 回あたり 0.5 KB と仮定
+- Lambda は平均 50 ms、256 MB、arm64。50 ms は仮定で、計測値ではない
+- 実行環境 1 つが 1 か月動き続け、5 分ごとに鍵を読み直すと仮定（730 時間 x 12 回 x GetSecretValue 2 回）。実行環境が増えれば、そのぶん増える
+- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
+- customer managed key、web ACL は無し。Lambda から CloudFront へのデータ転送は含めていない（未算入）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
+| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
+| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
+| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
+
+- 定価の小計: **USD 0.86** / 月
+- 毎月の無料枠適用後の小計: **USD 0.49** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `secretsmanager.api`
+
+## 守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）
+
+ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- 無料の試用期間が終わったあとの月
+- GuardDuty が分析する CloudTrail の management event を月 10 万件と仮定。実際の件数は、アカウントで何をしているかで決まる。この数字は計測値ではない
+- GuardDuty のほかの課金対象（VPC flow log と DNS log の分析量、S3、Lambda、Malware Protection などの protection plan）は含めていない。初めて有効にすると、既定ですべての protection plan が有効になる
+- Inspector は Lambda standard scanning だけで、関数 1 つを 730 時間。ECR の image と EC2 instance の検査は含めていない
+- AWS Config は連続記録で、月 500 件の configuration item と仮定。rule の評価と、記録を置く S3 の料金は含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
+| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
+| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
+
+- 定価の小計: **USD 2.34** / 月
+- 毎月の無料枠適用後の小計: **USD 2.34** / 月
+- 無料枠を確認できず、何も引いていない単価: `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
+
 ## 単価
 
 | ID | リージョン | usageType | 単位 | 段階（開始 - 終了: USD） | 出典の公開日 | 確認日 |
@@ -1645,10 +1645,6 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 | `vpc.endpoint.interface.hour` | ap-northeast-1 | APN1-VpcEndpoint-Hours | Hrs | 0 - ∞: 0.0140000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.endpoint.interface.data` | ap-northeast-1 | APN1-VpcEndpoint-Bytes | GB | 0 - 1,048,576: 0.0100000000<br>1,048,576 - 5,242,880: 0.0060000000<br>5,242,880 - ∞: 0.0040000000 | 2026-09-17 | 2026-10-11 |
 | `vpc.public-ipv4.in-use.hour` | ap-northeast-1 | APN1-PublicIPv4:InUseAddress | Hrs | 0 - ∞: 0.0050000000 | 2026-09-17 | 2026-10-11 |
-| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
-| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
-| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
-| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
 | `ses.outbound.message` | ap-northeast-1 | APN1-Recipients | Count | 0 - ∞: 0.0001000000 | 2026-09-11 | 2026-10-11 |
 | `sns.request` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 1,000,000: 0.0000000000<br>1,000,000 - ∞: 0.0000005000 | 2026-09-15 | 2026-10-11 |
 | `sns.delivery.lambda` | ap-northeast-1 | APN1-DeliveryAttempts-LAMBDA | Notifications | 0 - ∞: 0.0000000000 | 2026-09-15 | 2026-10-11 |
@@ -1692,6 +1688,12 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 | `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
 | `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
+| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
+| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
+| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
 | `secretsmanager.secret` | ap-northeast-1 | APN1-AWSSecretsManager-Secrets | Secrets | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-12 |
 | `secretsmanager.api` | ap-northeast-1 | APN1-AWSSecretsManagerAPIRequest | API Requests | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
 | `kms.key` | ap-northeast-1 | ap-northeast-1-KMS-Keys | Keys | 0 - ∞: 1.0000000000 | 2026-09-11 | 2026-10-12 |
@@ -1702,8 +1704,6 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 | `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
 | `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
 | `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
-| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
-| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -1741,10 +1741,6 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 - `ivs.input.basic`: The pricing page gives new customers 5 hours of basic input a month for their first 12 months. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
 - `ivs.output.sd.ap`: The pricing page gives new customers 100 hours of SD or audio-only output a month for their first 12 months. Not always-free, so nothing is deducted.
 - `vpc.public-ipv4.in-use.hour`: The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted.
-- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `ses.outbound.message`: The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied.
 - `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.
 - `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
@@ -1763,6 +1759,12 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 - `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
 - `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
+- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.
+- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
 - `secretsmanager.secret`: No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied.
 - `secretsmanager.api`: No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied.
 - `kms.key`: The KMS free tier covers requests, not keys; none is applied.
@@ -1772,5 +1774,3 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 - `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
 - `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
 - `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.
-- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
-- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.

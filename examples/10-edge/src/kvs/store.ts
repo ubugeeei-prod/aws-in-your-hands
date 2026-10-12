@@ -9,24 +9,25 @@ import {
   ListKeysCommand,
   UpdateKeysCommand,
 } from "@aws-sdk/client-cloudfront-keyvaluestore";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { LIMITS } from "./config.ts";
 import type { Batch } from "./plan.ts";
 import { KvsConflictError, type KvsPort, KvsUnavailableError, type Snapshot } from "./sync.ts";
 
-const describeSchema = z.object({ ETag: z.string().min(1), Status: z.string().optional() });
-const listSchema = z.object({
-  Items: z.array(z.object({ Key: z.string(), Value: z.string() })).default([]),
-  NextToken: z.string().optional(),
+const etag = v.pipe(v.string(), v.minLength(1));
+const describeSchema = v.object({ ETag: etag, Status: v.optional(v.string()) });
+const listSchema = v.object({
+  Items: v.optional(v.array(v.object({ Key: v.string(), Value: v.string() })), []),
+  NextToken: v.optional(v.string()),
 });
-const updateSchema = z.object({ ETag: z.string().min(1) });
+const updateSchema = v.object({ ETag: etag });
 
 // #region errors
 function translate(error: unknown): unknown {
   // The API reference lists ConflictException but not which error a stale If-Match gets.
   // Anything not recognized here is rethrown, so an unknown answer stops the sync instead of retrying it.
-  if (error instanceof z.ZodError) {
+  if (error instanceof v.ValiError) {
     return error;
   }
   if (error instanceof ConflictException) {
@@ -54,7 +55,8 @@ export function createKvsStore(
       try {
         // ETag first. Pairs listed after it can only be newer, and a newer store rejects this ETag.
         // The other order could pair a new ETag with old pairs and overwrite a change unseen.
-        const store = describeSchema.parse(
+        const store = v.parse(
+          describeSchema,
           await client.send(new DescribeKeyValueStoreCommand({ KvsARN: kvsArn })),
         );
         if (store.Status !== undefined && store.Status !== "READY") {
@@ -63,7 +65,8 @@ export function createKvsStore(
         const entries = new Map<string, string>();
         let token: string | undefined;
         do {
-          const page = listSchema.parse(
+          const page = v.parse(
+            listSchema,
             await client.send(
               new ListKeysCommand({
                 KvsARN: kvsArn,
@@ -93,7 +96,7 @@ export function createKvsStore(
             Deletes: batch.deletes.map((key) => ({ Key: key })),
           }),
         );
-        return updateSchema.parse(response).ETag;
+        return v.parse(updateSchema, response).ETag;
       } catch (error) {
         throw translate(error);
       }

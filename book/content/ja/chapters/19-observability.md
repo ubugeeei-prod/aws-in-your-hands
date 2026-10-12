@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics"
-revision: 4
+revision: 5
 ---
 
 # 19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics
@@ -21,7 +21,7 @@ revision: 4
 caption: リクエストの通り道からメトリクスが出て、アラームは SNS を通してメールで知らせる
 node client: Browser / curl
 node api: API Gateway HTTP API
-node fn: Lambda | 05章で作った Hono app
+node fn: Lambda | 05章で作ったアプリ
 node metrics: CloudWatch Metrics | Count, 4xx, 5xx, Latency
 node table: DynamoDB テーブル
 node alarms: Alarms | 5xx rate, p95 latency

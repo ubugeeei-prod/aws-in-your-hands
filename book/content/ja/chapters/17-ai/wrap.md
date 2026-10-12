@@ -102,16 +102,16 @@ vp run ai:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** 中継、アプリ、クライアント、インフラのユニットテスト（51 件）、型検査、synth（esbuild のバンドル込み、5 リソース）を実行しました。`dev:ai` を `AI_BACKEND=fixture` で起動し、本文の `curl` も実行しています。途中で切断したときに `cancelled` のログが出ることと、`AI_FIXTURE=truncated` で `error` イベントで終わることも確認しました。npm の配布物では、次の 2 点を確かめました。固定した版の hono に `streamHandle` があること。固定した版の cdkd（0.296.28）が、このスタックの 5 種類のリソース（`AWS::IAM::Policy`、`AWS::IAM::Role`、`AWS::Lambda::Function`、`AWS::Lambda::Url`、`AWS::Logs::LogGroup`）すべてに専用の実装を持ち、`AWS::Lambda::Url` の `InvokeMode` と `AuthType` を扱うこと。
+**手元で確かめたこと。** 中継、アプリ、クライアント、インフラのユニットテスト（59 件）、型検査、synth（esbuild のバンドル込み、5 リソース）を実行しました。`dev:ai` を `AI_BACKEND=fixture` で起動し、本文の `curl` も実行しています。途中で切断したときに `cancelled` のログが出ることと、`AI_FIXTURE=truncated` で `error` イベントで終わることも確認しました。npm の配布物では、次の 2 点を確かめました。固定した版の `@types/aws-lambda`（8.10.164）が `awslambda.streamifyResponse` と `HttpResponseStream.from` を宣言していること。固定した版の cdkd（0.296.28）が、このスタックの 5 種類のリソース（`AWS::IAM::Policy`、`AWS::IAM::Role`、`AWS::Lambda::Function`、`AWS::Lambda::Url`、`AWS::Logs::LogGroup`）すべてに専用の実装を持ち、`AWS::Lambda::Url` の `InvokeMode` と `AuthType` を扱うこと。
 
 **まだ確かめていないこと。** この章は、実際の Bedrock を一度も呼んでいません。AWS へのデプロイもしていません。`ai:hello`、`ai:test:live`、`AI_BACKEND=bedrock` での `dev:ai`、`ai:infra:deploy`、`ai:smoke`、`ai:logs`、`ai:infra:drift`、`ai:infra:destroy` は未実行です。とくに次の点は、実環境での確認を待っています。
 
 - モデル ID（`jp.amazon.nova-2-lite-v1:0` など）が東京から実際に呼べること。モデルカードで読んだだけです
 - 実際の `ConverseStream` のイベントが、この章のスキーマとフィクスチャの形に合うこと。フィクスチャは公式ドキュメントから手で書いたもので、実際の推論から採取したものではありません
-- Hono の `streamHandle` と `streamSSE` のレスポンスが、Node.js 24 の Lambda と function URL を通して、少しずつ届くこと。`streamSSE` が付ける `Transfer-Encoding` などのヘッダーを Lambda が受け付けるかも未確認です
+- この章のアダプター（`streamFunctionUrl`）のレスポンスが、Node.js 24 の Lambda と function URL を通して、少しずつ届くこと。`awslambda` の代わりのオブジェクトでテストしただけです。`HttpResponseStream.from` に渡すキーの名前（`statusCode`、`headers`、`cookies`）と、本文のないレスポンスで空の書き込みをすることは、Lambda のドキュメントでは確認できず、hono 4.13.13 の Lambda 用アダプターのソースに合わせました
 - 署名なしのリクエストに function URL が 403 を返すこと
 - inference profile に絞った IAM ポリシー（`bedrock:InferenceProfileArn` の条件つき）で `ConverseStream` が通ること
-- Lambda の上で、呼び出し元が切断したあとの関数とモデルの振る舞い。ドキュメントと Hono のソースを読んだ結論で、観察はしていません
+- Lambda の上で、呼び出し元が切断したあとの関数とモデルの振る舞い。ドキュメントを読んだ結論で、観察はしていません。切断でレスポンスストリームへの書き込みが失敗するかどうかも未確認です
 - 途中で中止した呼び出しの課金、Bedrock の無料枠、東京リージョンでのクォータの既定値
 - `-c reservedConcurrency=N` を付けたデプロイが通ること、上限を超えた呼び出しに function URL が返すレスポンス。確かめたのは、テンプレートに値が入ることと、cdkd 0.296.28 のソースがそれを Lambda の API に渡していることだけです
 
@@ -125,11 +125,11 @@ vp run ai:infra:destroy
 | 入力の上限と、返すイベントの形 | `examples/17-ai/src/contract.ts`、`src/prompt.ts` | `test:unit` |
 | ストリームを読む | `examples/17-ai/src/converse-stream.ts`、`src/summarize.ts`、`src/bedrock.ts` | `test:unit` |
 | 止める、待つ、やり直す | `examples/17-ai/src/failure.ts`、`src/summarize.ts`、`test/failure.test.ts` | `test:unit` |
-| API にする | `examples/17-ai/src/app.ts`、`src/compose.ts`、`src/env.ts` | `test:unit` |
+| API にする | `examples/17-ai/src/app.ts`、`src/sse.ts`、`src/compose.ts`、`src/env.ts` | `test:unit` |
 | 手元で動かす | `examples/17-ai/src/dev.ts`、`src/fixture-gateway.ts`、`src/fixtures.ts`、`fixtures/converse-stream/`、`.env.example` | `dev:ai` |
 | テスト | `examples/17-ai/test/`、`infra/test/ai-stack.test.ts`、`scripts/live.ts` | `test:unit`、`ai:test:live` |
 | 途中で切れたとき | `examples/17-ai/src/client.ts`、`test/client.test.ts` | `test:unit` |
-| AWS にのせる準備 | `examples/17-ai/infra/lib/ai-stack.ts`、`src/lambda.ts`、`infra/test/ai-stack.test.ts`、`cdk.json` | `ai:infra:synth`、`test:unit` |
+| AWS にのせる準備 | `examples/17-ai/infra/lib/ai-stack.ts`、`src/lambda.ts`、`src/function-url.ts`、`test/function-url.test.ts`、`infra/test/ai-stack.test.ts`、`cdk.json` | `ai:infra:synth`、`test:unit` |
 | デプロイして呼ぶ | `examples/17-ai/scripts/smoke.ts`、`scripts/sign.ts`、`scripts/logs.ts`、`tools/src/infra/` | `ai:infra:diff`、`ai:infra:deploy`、`ai:smoke`、`ai:logs`、`ai:infra:drift` |
 | 片付け | `tools/src/infra/` | `ai:infra:destroy` |
 | 料金 | `data/pricing/`、`tools/src/pricing/calc.test.ts` | `test:unit` |
@@ -147,6 +147,6 @@ vp run ai:infra:destroy
 - [AWS Lambda pricing](https://aws.amazon.com/lambda/pricing/)
 - AWS Price List bulk API: [Bedrock](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json)、[Bedrock の Marketplace 経由のモデル](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json)。Price List には `jp.` の profile 専用の行がなく、global 用の行と、何も付かない行の 2 つがあります。この章は、「料金は呼び出したリージョンのもの」というユーザーガイドの記述に従って、何も付かない行を `jp.` の profile に当てはめています
 - Cloudflare Workers AI: [Get started](https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/)、[Bindings](https://developers.cloudflare.com/workers-ai/configuration/bindings/)、[Pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/)、[Supported bindings per development mode](https://developers.cloudflare.com/workers/development-testing/bindings-per-env/)
-- [hono 4.13.13](https://www.npmjs.com/package/hono/v/4.13.13)、[@aws-sdk/client-bedrock-runtime 3.1149.0](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0)、[@go-to-k/cdkd 0.296.28](https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28)（いずれも導入した配布物の型定義とソースを読んだ）
+- [@types/aws-lambda 8.10.164](https://www.npmjs.com/package/@types/aws-lambda/v/8.10.164)、[hono 4.13.13](https://www.npmjs.com/package/hono/v/4.13.13)（この章のコードは使っていない。Lambda 用アダプターのソースだけを読んだ）、[@aws-sdk/client-bedrock-runtime 3.1149.0](https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0)、[@go-to-k/cdkd 0.296.28](https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28)（いずれも導入した配布物の型定義とソースを読んだ）
 
 :::

@@ -1,6 +1,6 @@
 ---
 title: "21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
-sourceRevision: 3
+sourceRevision: 2
 ---
 
 # 21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations

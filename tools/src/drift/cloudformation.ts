@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import {
   type DetectionStatus,
   detectionStatusSchema,
@@ -86,7 +88,10 @@ export async function detectStackDrift(input: {
 
   let detectionId: string;
   try {
-    detectionId = detectStartSchema.parse(await api.detectStackDrift(stack)).StackDriftDetectionId;
+    detectionId = v.parse(
+      detectStartSchema,
+      await api.detectStackDrift(stack),
+    ).StackDriftDetectionId;
   } catch (error) {
     return isMissingStack(error)
       ? { kind: "missing-stack", message: messageOf(error) }
@@ -96,7 +101,7 @@ export async function detectStackDrift(input: {
   let detection: DetectionStatus | undefined;
   for (let attempt = 1; attempt <= polling.maxAttempts && detection === undefined; attempt += 1) {
     try {
-      const status = detectionStatusSchema.parse(await api.describeDetectionStatus(detectionId));
+      const status = v.parse(detectionStatusSchema, await api.describeDetectionStatus(detectionId));
       if (status.DetectionStatus !== "DETECTION_IN_PROGRESS") {
         detection = status;
       }
@@ -115,7 +120,8 @@ export async function detectStackDrift(input: {
   let drifts: ResourceDrift[];
   try {
     drifts = await allPages(async (nextToken) => {
-      const page = resourceDriftPageSchema.parse(
+      const page = v.parse(
+        resourceDriftPageSchema,
         await api.describeResourceDrifts(stack, nextToken),
       );
       return { items: page.StackResourceDrifts, nextToken: page.NextToken };
@@ -128,7 +134,7 @@ export async function detectStackDrift(input: {
   let resources: StackResource[];
   try {
     resources = await allPages(async (nextToken) => {
-      const page = stackResourcePageSchema.parse(await api.listStackResources(stack, nextToken));
+      const page = v.parse(stackResourcePageSchema, await api.listStackResources(stack, nextToken));
       return { items: page.StackResourceSummaries, nextToken: page.NextToken };
     });
   } catch (error) {

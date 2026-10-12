@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { type App, createApp } from "./app.ts";
+import type { Fetch } from "@aih/example-04-http-api/src/http/router.ts";
+
+import { createApp } from "./app.ts";
 import { MAX_NOTES_PER_OWNER } from "./contract.ts";
 import type { Db } from "./db.ts";
 import type { Env } from "./env.ts";
@@ -12,7 +14,7 @@ import { createTransactionRunner, defaultRetryPolicy } from "./transaction.ts";
 
 // #region compose
 /** The database is passed in: PGlite on a laptop, Aurora DSQL on Lambda. Everything else is the same. */
-export function composeApp(env: Env, db: Db): App {
+export function composeApp(env: Env, db: Db): Fetch {
   const log = createLogger(env.LOG_LEVEL);
   const transaction = createTransactionRunner({
     db,

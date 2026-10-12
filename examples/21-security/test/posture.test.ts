@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { assess, failing, type Snapshot, snapshotSchema } from "../src/posture.ts";
@@ -19,7 +20,7 @@ const stateOf = (snapshot: Snapshot) =>
 
 describe("posture", () => {
   it("passes a personal account that did chapter 01 and nothing more", () => {
-    expect(snapshotSchema.safeParse(personal).success).toBe(true);
+    expect(v.safeParse(snapshotSchema, personal).success).toBe(true);
     expect(stateOf(personal)).toEqual({
       "root-mfa": "on",
       "root-access-keys": "on",

@@ -4,7 +4,7 @@ import {
   PutSecretValueCommand,
   type SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { RotationApi } from "./rotation.ts";
 import {
@@ -16,12 +16,13 @@ import {
 
 type Sender = Pick<SecretsManagerClient, "send">;
 
-const valueSchema = z.object({ VersionId: z.string().min(1), SecretString: z.string().min(1) });
-const versionsSchema = z.array(
-  z.object({
-    VersionId: z.string(),
-    VersionStages: z.array(z.string()).default([]),
-    CreatedDate: z.date(),
+const present = v.pipe(v.string(), v.minLength(1));
+const valueSchema = v.object({ VersionId: present, SecretString: present });
+const versionsSchema = v.array(
+  v.object({
+    VersionId: v.string(),
+    VersionStages: v.optional(v.array(v.string()), []),
+    CreatedDate: v.date(),
   }),
 );
 
@@ -37,11 +38,14 @@ export function createSecretsManagerSource(client: Sender, secretId: string): Se
         const response = await client.send(
           new GetSecretValueCommand({ SecretId: secretId, VersionStage: stage }),
         );
-        const value = valueSchema.safeParse(response);
+        const value = v.safeParse(valueSchema, response);
         if (!value.success) {
           throw new Error(`GetSecretValue(${stage}) returned no VersionId or SecretString`);
         }
-        return { versionId: value.data.VersionId, key: parseSecretString(value.data.SecretString) };
+        return {
+          versionId: value.output.VersionId,
+          key: parseSecretString(value.output.SecretString),
+        };
       } catch (error) {
         // A secret that was never rotated has no version labeled AWSPREVIOUS.
         if (stage === "AWSPREVIOUS" && named(error, "ResourceNotFoundException")) {
@@ -67,7 +71,7 @@ export function createRotationApi(client: Sender, secretId: string): RotationApi
   return {
     async versions() {
       const response = await client.send(new ListSecretVersionIdsCommand({ SecretId: secretId }));
-      return versionsSchema.parse(response.Versions ?? []).map((version) => ({
+      return v.parse(versionsSchema, response.Versions ?? []).map((version) => ({
         versionId: version.VersionId,
         stages: version.VersionStages,
         createdAt: version.CreatedDate,

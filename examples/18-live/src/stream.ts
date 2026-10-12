@@ -1,15 +1,23 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region schema
 // The `stream` object of a GetStream response. Every field is optional in the
 // API reference, so the ones this code depends on are required here.
-const liveStreamSchema = z.object({
-  channelArn: z.string().min(1),
-  streamId: z.string().regex(/^st-[a-zA-Z0-9]+$/),
-  state: z.enum(["LIVE", "OFFLINE"]),
-  health: z.enum(["HEALTHY", "STARVING", "UNKNOWN"]),
-  startTime: z.coerce.date(),
-  viewerCount: z.number().int(),
+const liveStreamSchema = v.object({
+  channelArn: v.pipe(v.string(), v.minLength(1)),
+  streamId: v.pipe(v.string(), v.regex(/^st-[a-zA-Z0-9]+$/)),
+  state: v.picklist(["LIVE", "OFFLINE"]),
+  health: v.picklist(["HEALTHY", "STARVING", "UNKNOWN"]),
+  // The SDK hands over a Date. The same response as JSON carries text.
+  startTime: v.union([
+    v.date(),
+    v.pipe(
+      v.string(),
+      v.isoTimestamp(),
+      v.transform((text) => new Date(text)),
+    ),
+  ]),
+  viewerCount: v.pipe(v.number(), v.integer()),
 });
 // #endregion schema
 
@@ -41,7 +49,7 @@ export function interpretGetStream(outcome: GetStreamOutcome): StreamStatus {
       `GetStream failed with ${outcome.name}: the stream state is unknown, not offline`,
     );
   }
-  const stream = liveStreamSchema.parse(outcome.stream);
+  const stream = v.parse(liveStreamSchema, outcome.stream);
   if (stream.state === "OFFLINE") {
     return { state: "offline" };
   }

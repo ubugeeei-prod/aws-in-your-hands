@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // Everything this chapter takes from celld itself, in one file. Each value was
 // read from the release, the documentation, or the source at the pinned tag.
@@ -60,7 +60,7 @@ export const RELEASES = {
 export type CelldVersion = keyof typeof RELEASES;
 export const CELLD_VERSIONS = Object.keys(RELEASES) as [CelldVersion, ...CelldVersion[]];
 export const PINNED_VERSION: CelldVersion = "v0.6.2";
-export const versionSchema = z.enum(CELLD_VERSIONS);
+export const versionSchema = v.picklist(CELLD_VERSIONS);
 
 export const RELEASE_BASE_URL = "https://github.com/denoland/celld/releases/download";
 export const assetOf = (version: CelldVersion, target: CelldTarget): Asset =>

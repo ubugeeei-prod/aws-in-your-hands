@@ -6,17 +6,19 @@ import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region props
 // Lambda@Edge takes a numbered version in us-east-1. $LATEST and aliases are refused, so they are refused here first.
-export const bodyDigestVersionArnSchema = z
-  .string()
-  .regex(
-    /^arn:aws:lambda:us-east-1:\d{12}:function:[A-Za-z0-9-_]+:\d+$/,
-    "must be a numbered function version in us-east-1, such as arn:aws:lambda:us-east-1:123456789012:function:name:1",
-  )
-  .optional();
+export const bodyDigestVersionArnSchema = v.optional(
+  v.pipe(
+    v.string(),
+    v.regex(
+      /^arn:aws:lambda:us-east-1:\d{12}:function:[A-Za-z0-9-_]+:\d+$/,
+      "must be a numbered function version in us-east-1, such as arn:aws:lambda:us-east-1:123456789012:function:name:1",
+    ),
+  ),
+);
 
 export type EdgeStackProps = StackProps & { bodyDigestVersionArn?: string | undefined };
 // #endregion props
@@ -24,7 +26,7 @@ export type EdgeStackProps = StackProps & { bodyDigestVersionArn?: string | unde
 export class EdgeStack extends Stack {
   constructor(scope: Construct, id: string, props: EdgeStackProps) {
     super(scope, id, props);
-    const bodyDigestVersionArn = bodyDigestVersionArnSchema.parse(props.bodyDigestVersionArn);
+    const bodyDigestVersionArn = v.parse(bodyDigestVersionArnSchema, props.bodyDigestVersionArn);
 
     const content = new s3.Bucket(this, "Content", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,

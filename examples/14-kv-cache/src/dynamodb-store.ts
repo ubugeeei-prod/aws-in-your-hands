@@ -6,7 +6,7 @@ import {
   PutCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { CacheEntry, CacheStore, CounterStore, IncrementResult, WindowRef } from "./stores.ts";
 
@@ -17,8 +17,8 @@ export const TTL_ATTRIBUTE = "expiresAt";
 const toTtl = (ms: number): number => Math.ceil(ms / 1000);
 
 // Items are outside data: an item written by an older version must not pass as valid.
-const counterItem = z.object({ hits: z.number().int().nonnegative() });
-const cacheItem = z.object({ payload: z.string(), expiresAtMs: z.number() });
+const counterItem = v.object({ hits: v.pipe(v.number(), v.integer(), v.minValue(0)) });
+const cacheItem = v.object({ payload: v.string(), expiresAtMs: v.number() });
 
 const isConditionFailure = (error: unknown): boolean =>
   error instanceof ConditionalCheckFailedException;
@@ -53,7 +53,7 @@ export class DynamoDbCounterStore implements CounterStore {
           ReturnValues: "UPDATED_NEW",
         }),
       );
-      return { accepted: true, count: counterItem.parse(result.Attributes).hits };
+      return { accepted: true, count: v.parse(counterItem, result.Attributes).hits };
     } catch (error) {
       if (isConditionFailure(error)) {
         return { accepted: false };
@@ -72,7 +72,7 @@ export class DynamoDbCounterStore implements CounterStore {
         ConsistentRead: true,
       }),
     );
-    return result.Item === undefined ? 0 : counterItem.parse(result.Item).hits;
+    return result.Item === undefined ? 0 : v.parse(counterItem, result.Item).hits;
   }
 }
 
@@ -90,13 +90,13 @@ export class DynamoDbCacheStore implements CacheStore {
     const result = await this.#client.send(
       new GetCommand({ TableName: this.#tableName, Key: { pk: `CACHE#${key}`, sk: "VALUE" } }),
     );
-    const item = cacheItem.safeParse(result.Item);
+    const item = v.safeParse(cacheItem, result.Item);
     // TTL deletes expired items days later, not at the second they expire.
     // Until then GetItem returns them, so the check has to be made here.
-    if (!item.success || item.data.expiresAtMs <= now) {
+    if (!item.success || item.output.expiresAtMs <= now) {
       return undefined;
     }
-    return item.data.payload;
+    return item.output.payload;
   }
   // #endregion cache-get
 

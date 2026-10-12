@@ -1,15 +1,15 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region schema
-export const noteSchema = z.object({
-  id: z.string().min(1),
-  title: z.string().trim().min(1).max(120),
-  body: z.string().max(10_000),
-  updatedAt: z.iso.datetime(),
+export const noteSchema = v.object({
+  id: v.pipe(v.string(), v.minLength(1)),
+  title: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(120)),
+  body: v.pipe(v.string(), v.maxLength(10_000)),
+  updatedAt: v.pipe(v.string(), v.isoTimestamp()),
 });
 
-export type Note = z.infer<typeof noteSchema>;
+export type Note = v.InferOutput<typeof noteSchema>;
 
-export const noteDraftSchema = noteSchema.pick({ title: true, body: true });
-export type NoteDraft = z.infer<typeof noteDraftSchema>;
+export const noteDraftSchema = v.pick(noteSchema, ["title", "body"]);
+export type NoteDraft = v.InferOutput<typeof noteDraftSchema>;
 // #endregion schema

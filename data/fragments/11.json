@@ -14,11 +14,11 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 3,
     "translatedRevision": {
-      "en": 1
+      "en": 3
     },
-    "checkedAt": "2026-10-11",
+    "checkedAt": "2026-10-12",
     "sourceIds": [
       "vpc-pricing",
       "vpc-what-is",

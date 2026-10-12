@@ -7,7 +7,7 @@
 - **AWS を変更しない。** deploy、destroy、bootstrap、publish、その他リソースを作る・変える・消す操作は実行しない。手順とタスクを用意するだけ。読み取りも、認証情報が要るものは実行しない
 - **実行していないことを、実行したように書かない。** 架空の実行結果、料金、URL、仕様で埋めない。確かめられなければ「確認していません」と書き、検証メモと断片の `validation.open` に再開手順を残す
 - **API、flag、設定キー、リソースの property を想像しない。** 一次情報（公式ドキュメント、API リファレンス、公式の料金ページ、AWS Price List、固定した版の型定義・ソース）で確かめる。確かめた URL と、それが支える主張を断片の `sources` に書く
-- **固定している道具を替えない。** Nix、`vp`、pnpm、TypeScript の CDK、cdkd、Ox Content、Vue と Vize、Hono、Zod。Amplify は使わない
+- **固定している道具を替えない。** Nix、`vp`、pnpm、TypeScript の CDK、cdkd、Ox Content、Vue と Vize、Valibot。Amplify は使わない。HTTP のフレームワークも使わない（`Request` を受けて `Response` を返す関数と、`examples/04-http-api/src/http/` の部品で書く。`docs/WINTERTC_BRIEF.md`）
 - **共有ファイルを手で編集しない。** `vite.config.ts`、`data/*.json`、`data/pricing/*.json`、`tools/src/checks/typecheck-projects.json` は、断片を書いて `node tools/src/fragments/apply.ts <章 ID>` で反映する。他の章のファイル、`tools/`、`book/infra/`、`README.md`、`docs/` には触らない
 
 ## 作るもの
@@ -19,7 +19,7 @@
 - `package.json` は `@aih/example-NN-slug`、`"private": true`、`"type": "module"`。依存は**完全一致の版**で書く（`^` を使わない）。既存のサンプルと同じパッケージは同じ版にする。新しいパッケージは npm レジストリで現行版を確かめる
 - 既存のサンプルのコードは、workspace 依存（`"@aih/example-05-dynamodb": "workspace:*"`）で import して再利用してよい。export を変える必要があれば、変えずに自分の側で包む
 - TypeScript は Node.js が型を取り除くだけで動く構文に限る（`enum`、parameter property、`namespace` を使わない）。import に `.ts` を書く。`tsconfig.json` は `../../tsconfig.base.json` を継承
-- 外から来る値（環境変数、HTTP、イベント、DB の行、キューのメッセージ、外部 API の応答）は Zod で検証し、型は `z.infer` で導く
+- 外から来る値（環境変数、HTTP、イベント、DB の行、キューのメッセージ、外部 API の応答）は Valibot で検証し、型は `v.InferOutput` で導く。Valibot の組み込みの検査が緩いところ（`docs/WINTERTC_BRIEF.md` の一覧）は、明示の検査で補う
 - 判断（純粋関数）と、AWS を呼ぶ処理（adapter）を分ける。時刻、乱数、外部の応答は引数で渡す
 - CDK の service は namespace で import する（`import * as s3 from "aws-cdk-lib/aws-s3"`、`s3.Bucket`）。別名の一覧は `CONTRIBUTING.md`。本文で CDK の API を呼ぶときも `ecs.ContainerImage.fromAsset` のように namespace を付ける
 - テストは `vite-plus/test` から import。件数は目的にしない。権限、公開設定、保持と削除、認可、冪等性、競合、再試行、部分的な失敗など、実害に結びつく条件を選ぶ。失敗を**決まった順序で再現する**テスト（重複配送、応答の喪失、途中での中断など）を、その章の invariant に対して書く

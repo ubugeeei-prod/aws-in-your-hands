@@ -166,6 +166,8 @@ After losing all four attempts, the API gives up and returns a 503.
 
 Every attempt was rolled back, so nothing was written. The caller can send the same request again as it is.
 
+Unlike chapter 04, the code that catches errors sits inside the CORS step. The 503 carries the CORS headers too, so a page in a browser can read this response and decide whether to send the request again.
+
 Reads go through the same runner, because right after a schema change a connection that still remembers the old schema can receive `40001` (OC001). The cost is one more `BEGIN` and `COMMIT` round trip for each read.
 
 The `version` check and this retry catch different things. `version` catches someone else changing the note in the seconds or minutes between opening the screen and saving. OCC catches two commits that arrive within milliseconds of each other. You need both.

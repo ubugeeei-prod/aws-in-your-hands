@@ -20,11 +20,11 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 2,
     "translatedRevision": {
-      "en": 1
+      "en": 2
     },
-    "checkedAt": "2026-10-11",
+    "checkedAt": "2026-10-12",
     "sourceIds": [
       "bedrock-converse",
       "bedrock-converse-stream-api",
@@ -50,6 +50,7 @@
       "cloudflare-bindings-per-env",
       "cloudflare-workers-ai-pricing",
       "hono-npm",
+      "types-aws-lambda-npm",
       "aws-sdk-bedrock-runtime-npm",
       "lambda-pricing",
       "aws-price-list-lambda",
@@ -199,9 +200,11 @@
       "id": "lambda-response-streaming-write",
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/config-rs-write-functions.html",
       "title": "Writing response streaming-enabled Lambda functions",
-      "checkedAt": "2026-10-11",
+      "checkedAt": "2026-10-12",
       "supports": [
-        "A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides"
+        "A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides",
+        "The response stream is a Node.js writable stream; pipeline() is recommended for writing to it, and it ends the stream",
+        "The page does not describe awslambda.HttpResponseStream.from or the keys of the object passed to it"
       ]
     },
     {
@@ -311,14 +314,23 @@
       "id": "hono-npm",
       "url": "https://www.npmjs.com/package/hono/v/4.13.13",
       "title": "hono 4.13.13 (published package)",
-      "checkedAt": "2026-10-11",
+      "checkedAt": "2026-10-12",
       "supports": [
-        "hono/aws-lambda exports streamHandle, which wraps the app in awslambda.streamifyResponse",
-        "streamHandle does not cancel the response body when writing to the Lambda response stream fails, so stream.onAbort does not fire there",
-        "hono/aws-lambda is marked deprecated in favor of @hono/aws-lambda for v5",
-        "streamSSE calls stream.onAbort listeners when the response body is cancelled"
+        "streamHandle in hono/aws-lambda passes { statusCode, headers, cookies } to awslambda.HttpResponseStream.from, then pipes the response body into the stream it returns",
+        "streamHandle writes an empty string to the stream when the response has no body"
       ],
-      "note": "Read from dist/adapter/aws-lambda/handler.js, dist/helper/streaming/sse.js, and dist/utils/stream.js of the installed package. Not run on Lambda."
+      "note": "No longer a dependency of the example. Read from dist/adapter/aws-lambda/handler.js of the package as it was installed, as the only available evidence for the keys of the prelude: the Lambda documentation pages checked do not describe them. Not run on Lambda."
+    },
+    {
+      "id": "types-aws-lambda-npm",
+      "url": "https://www.npmjs.com/package/@types/aws-lambda/v/8.10.164",
+      "title": "@types/aws-lambda 8.10.164 (published package)",
+      "checkedAt": "2026-10-12",
+      "supports": [
+        "Declares the global namespace awslambda with streamifyResponse(handler) and HttpResponseStream.from(writable, metadata)",
+        "LambdaFunctionURLEvent is an alias of APIGatewayProxyEventV2"
+      ],
+      "note": "Read from handler.d.ts and trigger/lambda-function-url.d.ts of the installed package. The metadata parameter is typed Record<string, unknown>, so the types do not say which keys Lambda reads."
     },
     {
       "id": "aws-sdk-bedrock-runtime-npm",
@@ -482,6 +494,7 @@
       "id": "17.app",
       "sources": [
         "examples/17-ai/src/app.ts",
+        "examples/17-ai/src/sse.ts",
         "examples/17-ai/src/compose.ts",
         "examples/17-ai/src/env.ts",
         "examples/17-ai/test/app.test.ts"
@@ -531,6 +544,8 @@
         "examples/17-ai/infra/lib/ai-stack.ts",
         "examples/17-ai/infra/lib/models.ts",
         "examples/17-ai/src/lambda.ts",
+        "examples/17-ai/src/function-url.ts",
+        "examples/17-ai/test/function-url.test.ts",
         "examples/17-ai/infra/test/ai-stack.test.ts",
         "examples/17-ai/cdk.json"
       ],
@@ -810,10 +825,10 @@
         "command": "vp run test:unit (examples/17-ai)",
         "kind": "local",
         "status": "passed",
-        "ranAt": "2026-10-11",
+        "ranAt": "2026-10-12",
         "note": {
-          "ja": "51 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、CDK の assertion",
-          "en": "51 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, and the CDK assertions"
+          "ja": "59 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、SSE の書式、awslambda の代役を渡した function URL のアダプター、CDK の assertion",
+          "en": "59 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, the SSE frame, the function URL adapter run with a stand-in for awslambda, and the CDK assertions"
         }
       },
       {
@@ -821,7 +836,7 @@
         "command": "vp run typecheck (examples/17-ai)",
         "kind": "local",
         "status": "passed",
-        "ranAt": "2026-10-11",
+        "ranAt": "2026-10-12",
         "note": {
           "ja": "scripts/ と infra/ を含む",
           "en": "Includes scripts/ and infra/"
@@ -832,7 +847,7 @@
         "command": "vp run ai:infra:synth",
         "kind": "local",
         "status": "passed",
-        "ranAt": "2026-10-11",
+        "ranAt": "2026-10-12",
         "note": {
           "ja": "esbuild による bundle（Docker なし）を含む。5 リソース",
           "en": "Includes the esbuild bundle (no Docker); 5 resources"
@@ -843,10 +858,10 @@
         "command": "vp run dev:ai + curl",
         "kind": "local",
         "status": "passed",
-        "ranAt": "2026-10-11",
+        "ranAt": "2026-10-12",
         "note": {
-          "ja": "AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log、AI_FIXTURE=truncated の error イベントを確認",
-          "en": "Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway, and the error event with AI_FIXTURE=truncated"
+          "ja": "AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log（curl を 0.5 秒で打ち切り、durationMs は 501）、AI_FIXTURE=truncated の error イベントを確認",
+          "en": "Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway (curl cut off at 0.5 s; durationMs 501), and the error event with AI_FIXTURE=truncated"
         }
       },
       {
@@ -920,8 +935,8 @@
       {
         "id": "17-deployed-streaming",
         "summary": {
-          "ja": "17章の stack はデプロイしていない。Hono の streamHandle と streamSSE が Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、streamSSE が付ける Transfer-Encoding などの header を Lambda が受け付けること、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。",
-          "en": "The chapter 17 stack has not been deployed. Unconfirmed: that Hono's streamHandle and streamSSE deliver the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda accepts the headers streamSSE sets, such as Transfer-Encoding; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url."
+          "ja": "17章の stack はデプロイしていない。この章のアダプター（src/function-url.ts）のレスポンスが Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、awslambda.HttpResponseStream.from に渡す key（statusCode、headers、cookies）を Lambda がそのとおりに読むこと、切断でレスポンスストリームへの書き込みが失敗するかどうか、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。",
+          "en": "The chapter 17 stack has not been deployed. Unconfirmed: that this chapter's adapter (src/function-url.ts) delivers the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda reads the keys passed to awslambda.HttpResponseStream.from (statusCode, headers, cookies) as written; whether a disconnect makes a write to the response stream fail; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url."
         },
         "resume": {
           "ja": "vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。",

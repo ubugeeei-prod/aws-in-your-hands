@@ -1,10 +1,10 @@
-import { serve } from "@hono/node-server";
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
 
 import { composeApp } from "./compose.ts";
 
 const app = composeApp(process.env);
 const port = Number(process.env["PORT"] ?? 8796);
 
-serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`token API listening on http://localhost:${info.port} (secret source: memory)`);
+nodeServer(app).listen(port, () => {
+  console.log(`token API listening on http://localhost:${port} (secret source: memory)`);
 });

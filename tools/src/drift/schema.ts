@@ -1,9 +1,9 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // StackDriftJson in src/cli/commands/drift.ts of @go-to-k/cdkd 0.296.28.
 // The published docs omit `skipped`; the source always emits it.
 
-const resourceRef = z.object({ logicalId: z.string(), type: z.string() });
+const resourceRef = v.object({ logicalId: v.string(), type: v.string() });
 
 export const notComparedCauses = [
   "refused",
@@ -17,25 +17,26 @@ export const notComparedCauses = [
   "unreadableMap",
 ] as const;
 
-export const stackDriftSchema = z.object({
-  stack: z.string(),
-  region: z.string(),
-  drifted: z.array(
-    resourceRef.extend({
-      changes: z.array(
-        z.object({ path: z.string(), stateValue: z.unknown(), awsValue: z.unknown() }),
+export const stackDriftSchema = v.object({
+  stack: v.string(),
+  region: v.string(),
+  drifted: v.array(
+    v.object({
+      ...resourceRef.entries,
+      changes: v.array(
+        v.object({ path: v.string(), stateValue: v.unknown(), awsValue: v.unknown() }),
       ),
-      referencesUnresolved: z.boolean(),
+      referencesUnresolved: v.boolean(),
     }),
   ),
-  clean: z.array(resourceRef),
-  deleted: z.array(resourceRef),
-  notSupported: z.array(resourceRef),
-  skipped: z.array(resourceRef),
-  notCompared: z.array(resourceRef.extend({ cause: z.enum(notComparedCauses) })),
-  warnings: z.array(z.string()).optional(),
+  clean: v.array(resourceRef),
+  deleted: v.array(resourceRef),
+  notSupported: v.array(resourceRef),
+  skipped: v.array(resourceRef),
+  notCompared: v.array(v.object({ ...resourceRef.entries, cause: v.picklist(notComparedCauses) })),
+  warnings: v.optional(v.array(v.string())),
 });
 
-export const driftOutputSchema = z.array(stackDriftSchema);
+export const driftOutputSchema = v.array(stackDriftSchema);
 
-export type StackDrift = z.infer<typeof stackDriftSchema>;
+export type StackDrift = v.InferOutput<typeof stackDriftSchema>;

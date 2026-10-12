@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
@@ -22,25 +22,27 @@ import {
 
 const STACK = "AihObservability";
 
-const argsSchema = z.object({
-  name: z.enum(["request", "trace", "errors", "slow"]),
-  id: z.string().optional(),
-  "slow-ms": z.coerce.number().positive().default(1000),
-  minutes: z.coerce.number().int().positive().max(10_080).default(60),
-  print: z.boolean().default(false),
+// A flag's value is text. "1000" becomes 1000; "fast" becomes NaN, which v.number() refuses.
+const numberFlag = v.pipe(v.string(), v.transform(Number), v.number(), v.gtValue(0));
+
+const argsSchema = v.object({
+  name: v.picklist(["request", "trace", "errors", "slow"]),
+  id: v.optional(v.string()),
+  "slow-ms": v.optional(numberFlag, "1000"),
+  minutes: v.optional(v.pipe(numberFlag, v.integer(), v.maxValue(10_080)), "60"),
+  print: v.optional(v.boolean(), false),
 });
 
-const startedSchema = z.object({ queryId: z.string() });
-const resultsSchema = z.object({
-  status: z.string(),
-  results: z.array(z.array(z.object({ field: z.string(), value: z.string() }))).default([]),
-  statistics: z
-    .object({ recordsScanned: z.number(), bytesScanned: z.number() })
-    .partial()
-    .optional(),
+const startedSchema = v.object({ queryId: v.string() });
+const resultsSchema = v.object({
+  status: v.string(),
+  results: v.optional(v.array(v.array(v.object({ field: v.string(), value: v.string() }))), []),
+  statistics: v.optional(
+    v.partial(v.object({ recordsScanned: v.number(), bytesScanned: v.number() })),
+  ),
 });
 
-function pick(args: z.infer<typeof argsSchema>): Query {
+function pick(args: v.InferOutput<typeof argsSchema>): Query {
   switch (args.name) {
     case "request":
       return byRequestId(args.id ?? "");
@@ -71,7 +73,7 @@ try {
       print: { type: "boolean" },
     },
   });
-  const args = argsSchema.parse(values);
+  const args = v.parse(argsSchema, values);
   const text = renderInsights(pick(args));
   console.log(text);
   if (args.print) {
@@ -90,7 +92,8 @@ try {
   const end = Math.floor(Date.now() / 1000);
   // The time range is what you pay for: every byte in it is scanned.
   const start = end - args.minutes * 60;
-  const { queryId } = startedSchema.parse(
+  const { queryId } = v.parse(
+    startedSchema,
     aws([
       "logs",
       "start-query",
@@ -109,7 +112,8 @@ try {
 
   for (let attempt = 0; attempt < 30; attempt++) {
     await sleep(1000);
-    const response = resultsSchema.parse(
+    const response = v.parse(
+      resultsSchema,
       aws(["logs", "get-query-results", "--region", target.region, "--query-id", queryId]),
     );
     if (response.status === "Running" || response.status === "Scheduled") {

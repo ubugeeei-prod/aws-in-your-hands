@@ -7,17 +7,20 @@
 import { parseArgs } from "node:util";
 
 import { CloudFormationClient } from "@aws-sdk/client-cloudformation";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 
 import { listPreviews } from "../src/previews.ts";
 import { listLiveStacks } from "../src/stack-info.ts";
 
-const numbers = z
-  .string()
-  .regex(/^\d+(,\d+)*$/)
-  .transform((value) => value.split(",").map(Number));
+const numbers = v.pipe(
+  v.string(),
+  v.regex(/^\d+(,\d+)*$/),
+  v.transform((value) => value.split(",").map(Number)),
+);
+// The option is a string. It must read as a whole number; 0 is allowed.
+const days = v.pipe(v.string(), v.transform(Number), v.integer(), v.minValue(0));
 
 try {
   const { values } = parseArgs({
@@ -27,8 +30,8 @@ try {
   const previews = listPreviews({
     stacks: await listLiveStacks(new CloudFormationClient({ region: target.region })),
     now: new Date(),
-    maxAgeDays: z.coerce.number().int().nonnegative().parse(values["max-age-days"]),
-    ...(values.open === undefined ? {} : { openPullRequests: numbers.parse(values.open) }),
+    maxAgeDays: v.parse(days, values["max-age-days"]),
+    ...(values.open === undefined ? {} : { openPullRequests: v.parse(numbers, values.open) }),
   });
 
   if (previews.length === 0) {

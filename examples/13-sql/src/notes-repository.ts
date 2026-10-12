@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { MAX_LISTED_NOTES, type Note, type NoteSummary } from "./contract.ts";
 import { type Queryable, rows } from "./db.ts";
@@ -30,46 +30,48 @@ export type NoteRepository = {
 
 // #region row
 // node-postgres and PGlite both hand back timestamptz as a Date and integer as a number.
-const noteRowSchema = z
-  .object({
-    id: z.uuid(),
-    title: z.string(),
-    body: z.string(),
-    version: z.number().int().positive(),
-    created_at: z.date(),
-    updated_at: z.date(),
-  })
-  .transform((row): Note => ({
+const noteRowSchema = v.pipe(
+  v.object({
+    id: v.pipe(v.string(), v.uuid()),
+    title: v.string(),
+    body: v.string(),
+    version: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+    created_at: v.date(),
+    updated_at: v.date(),
+  }),
+  v.transform((row): Note => ({
     id: row.id,
     title: row.title,
     body: row.body,
     version: row.version,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
-  }));
+  })),
+);
 
 const NOTE_COLUMNS = "id, title, body, version, created_at, updated_at";
 // #endregion row
 
 // A list row has no `body` column, so a list response cannot carry one.
-const summaryRowSchema = z
-  .object({
-    id: z.uuid(),
-    title: z.string(),
-    version: z.number().int().positive(),
-    created_at: z.date(),
-    updated_at: z.date(),
-  })
-  .transform((row): NoteSummary => ({
+const summaryRowSchema = v.pipe(
+  v.object({
+    id: v.pipe(v.string(), v.uuid()),
+    title: v.string(),
+    version: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+    created_at: v.date(),
+    updated_at: v.date(),
+  }),
+  v.transform((row): NoteSummary => ({
     id: row.id,
     title: row.title,
     version: row.version,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
-  }));
+  })),
+);
 
-const idRowSchema = z.object({ id: z.uuid() });
-const countRowSchema = z.object({ note_count: z.number().int().nonnegative() });
+const idRowSchema = v.object({ id: v.pipe(v.string(), v.uuid()) });
+const countRowSchema = v.object({ note_count: v.pipe(v.number(), v.safeInteger(), v.minValue(0)) });
 
 async function selectNote(tx: Queryable, owner: string, id: string): Promise<Note | undefined> {
   const [note] = await rows(

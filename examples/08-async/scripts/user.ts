@@ -6,14 +6,14 @@
 
 import { spawnSync } from "node:child_process";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
 const STACK = "AihAsync";
 const [action, emailArg] = process.argv.slice(2);
-const email = z.email().safeParse(emailArg);
+const email = v.safeParse(v.pipe(v.string(), v.email()), emailArg);
 if ((action !== "create" && action !== "delete") || !email.success) {
   console.error("usage: user.ts <create|delete> <email>");
   process.exit(64);
@@ -22,7 +22,7 @@ if ((action !== "create" && action !== "delete") || !email.success) {
 try {
   const { target } = await preflight({
     access: "mutate",
-    action: `${action} user ${email.data}`,
+    action: `${action} user ${email.output}`,
     stack: STACK,
   });
   const userPoolId = requireOutput(
@@ -35,7 +35,7 @@ try {
     "--user-pool-id",
     userPoolId,
     "--username",
-    email.data,
+    email.output,
   ];
   const args =
     action === "create"
@@ -44,7 +44,7 @@ try {
           "admin-create-user",
           ...common,
           "--user-attributes",
-          `Name=email,Value=${email.data}`,
+          `Name=email,Value=${email.output}`,
           "Name=email_verified,Value=true",
           "--desired-delivery-mediums",
           "EMAIL",

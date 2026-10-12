@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { type DrillRecord, drillRecordSchema, mark, summarize } from "../src/drill.ts";
@@ -64,7 +65,8 @@ describe("planTableRestore", () => {
 });
 
 const template = (): DrillRecord =>
-  drillRecordSchema.parse(
+  v.parse(
+    drillRecordSchema,
     JSON.parse(readFileSync(new URL("../drill/record.template.json", import.meta.url), "utf8")),
   );
 
@@ -114,5 +116,26 @@ describe("the drill record", () => {
   it("does not let a recorded moment be rewritten", () => {
     const record = mark(template(), "accidentAt", now);
     expect(() => mark(record, "accidentAt", new Date())).toThrow("already recorded");
+  });
+
+  it("is refused when a moment or a count was edited into something else", () => {
+    const edited = (part: "timeline" | "counts", name: string, value: unknown): boolean => {
+      const record = template();
+      return v.safeParse(drillRecordSchema, {
+        ...record,
+        [part]: { ...record[part], [name]: value },
+      }).success;
+    };
+    expect(edited("timeline", "accidentAt", "2026-10-12T09:04:00Z")).toBe(true);
+    // The summary subtracts moments. One spelling, in UTC, on a day that exists.
+    expect(edited("timeline", "accidentAt", "2026-10-12T18:04:00+09:00")).toBe(false);
+    expect(edited("timeline", "accidentAt", "2026-10-12 09:04:00Z")).toBe(false);
+    expect(edited("timeline", "accidentAt", "2026-02-30T09:04:00Z")).toBe(false);
+    expect(edited("timeline", "accidentAt", undefined)).toBe(false);
+    expect(edited("counts", "notesLost", 3)).toBe(true);
+    expect(edited("counts", "notesLost", Infinity)).toBe(false);
+    expect(edited("counts", "notesLost", 1e300)).toBe(false);
+    expect(edited("counts", "notesLost", -1)).toBe(false);
+    expect(v.safeParse(drillRecordSchema, []).success).toBe(false);
   });
 });

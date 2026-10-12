@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // What the nodes print, turned into values. Every parser fails closed: output
 // it cannot read is "not healthy", never "probably fine".
@@ -22,10 +22,10 @@ export function parseNodeHealth(stdout: string): NodeHealth {
 
 // #region diagnose
 /** One line of `celld diagnose --json`, as fleet.rs prints it at the pinned tag. */
-const checkSchema = z.object({
-  verdict: z.string(),
-  check: z.string(),
-  detail: z.string().default(""),
+const checkSchema = v.object({
+  verdict: v.string(),
+  check: v.string(),
+  detail: v.optional(v.string(), ""),
 });
 
 export type PeerView = { node: string; address: string; restoring: number | null };
@@ -52,12 +52,12 @@ export function parseDiagnose(stdout: string): FleetView {
       view.unreadable.push(line);
       continue;
     }
-    const parsed = checkSchema.safeParse(json);
+    const parsed = v.safeParse(checkSchema, json);
     if (!parsed.success) {
       view.unreadable.push(line);
       continue;
     }
-    const { verdict, check, detail } = parsed.data;
+    const { verdict, check, detail } = parsed.output;
     if (verdict === "fail") {
       view.failures.push(`${check}: ${detail}`);
       continue;

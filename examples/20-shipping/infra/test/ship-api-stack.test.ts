@@ -1,5 +1,6 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { ACKNOWLEDGED_UNCHECKED_TYPES, DRIFT_CHECKED_TYPES } from "../../src/drift-coverage.ts";
@@ -28,14 +29,14 @@ const idOf = (template: Template, type: string) => Object.keys(template.findReso
 describe("stages", () => {
   it("gives every stage its own stack name", () => {
     expect(
-      ["dev", "prod", "pr-7", "pr-123"].map((stage) => apiStackName(stageSchema.parse(stage))),
+      ["dev", "prod", "pr-7", "pr-123"].map((stage) => apiStackName(v.parse(stageSchema, stage))),
     ).toEqual(["AihShipApi", "AihShipApiProd", "AihShipApiPr7", "AihShipApiPr123"]);
   });
 
   it.each(["staging", "pr-", "pr-0", "pr-12a", "pr-1; rm -rf", "PROD", ""])(
     "refuses the stage %j",
     (stage) => {
-      expect(stageSchema.safeParse(stage).success).toBe(false);
+      expect(v.safeParse(stageSchema, stage).success).toBe(false);
     },
   );
 

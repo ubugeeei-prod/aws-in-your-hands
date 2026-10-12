@@ -5,7 +5,7 @@ import {
   GetCommand,
   PutCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Inspection, type InspectionRepository, inspectionSchema } from "./inspection.ts";
 
@@ -16,7 +16,7 @@ const pk = (owner: string): string => `OWNER#${owner}`;
 const sk = (noteId: string, attachmentId: string): string => `INSPECTION#${noteId}#${attachmentId}`;
 // #endregion keys
 
-const itemSchema = inspectionSchema.extend({ pk: z.string(), sk: z.string() });
+const itemSchema = v.object({ ...inspectionSchema.entries, pk: v.string(), sk: v.string() });
 
 export class DynamoDbInspectionRepository implements InspectionRepository {
   readonly #client: Pick<DynamoDBDocumentClient, "send">;
@@ -84,7 +84,7 @@ export class DynamoDbInspectionRepository implements InspectionRepository {
     if (result.Item === undefined) {
       return undefined;
     }
-    const { pk: _pk, sk: _sk, ...inspection } = itemSchema.parse(result.Item);
+    const { pk: _pk, sk: _sk, ...inspection } = v.parse(itemSchema, result.Item);
     return inspection;
   }
 }

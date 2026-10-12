@@ -1,24 +1,24 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region snapshot
 /** "Could not read" is its own answer. It must never be shown as "off", and never as "on". */
-const probe = <T extends z.ZodType>(value: T) =>
-  z.discriminatedUnion("read", [
-    z.object({ read: z.literal(true), value }),
-    z.object({ read: z.literal(false), reason: z.string() }),
+const probe = <Value extends v.GenericSchema>(value: Value) =>
+  v.variant("read", [
+    v.object({ read: v.literal(true), value }),
+    v.object({ read: v.literal(false), reason: v.string() }),
   ]);
 
-export const snapshotSchema = z.object({
-  root: probe(z.object({ mfaEnabled: z.boolean(), accessKeysPresent: z.boolean() })),
+export const snapshotSchema = v.object({
+  root: probe(v.object({ mfaEnabled: v.boolean(), accessKeysPresent: v.boolean() })),
   trails: probe(
-    z.array(z.object({ name: z.string(), multiRegion: z.boolean(), logging: z.boolean() })),
+    v.array(v.object({ name: v.string(), multiRegion: v.boolean(), logging: v.boolean() })),
   ),
-  guardDuty: probe(z.array(z.object({ id: z.string(), status: z.string() }))),
-  inspector: probe(z.object({ lambda: z.string(), ecr: z.string(), ec2: z.string() })),
-  config: probe(z.array(z.object({ name: z.string(), recording: z.boolean() }))),
-  organization: probe(z.object({ member: z.boolean(), allFeatures: z.boolean() })),
+  guardDuty: probe(v.array(v.object({ id: v.string(), status: v.string() }))),
+  inspector: probe(v.object({ lambda: v.string(), ecr: v.string(), ec2: v.string() })),
+  config: probe(v.array(v.object({ name: v.string(), recording: v.boolean() }))),
+  organization: probe(v.object({ member: v.boolean(), allFeatures: v.boolean() })),
 });
-export type Snapshot = z.infer<typeof snapshotSchema>;
+export type Snapshot = v.InferOutput<typeof snapshotSchema>;
 // #endregion snapshot
 
 /** When a control starts to earn its cost. */

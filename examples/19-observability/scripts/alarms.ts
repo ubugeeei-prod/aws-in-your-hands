@@ -5,21 +5,21 @@
 
 import { spawnSync } from "node:child_process";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
 const STACK = "AihObservability";
 
-const alarmsSchema = z.object({
-  MetricAlarms: z.array(
-    z.object({
-      AlarmName: z.string(),
-      StateValue: z.enum(["OK", "ALARM", "INSUFFICIENT_DATA"]),
-      StateReason: z.string().optional(),
-      StateUpdatedTimestamp: z.string().optional(),
-      AlarmActions: z.array(z.string()).default([]),
+const alarmsSchema = v.object({
+  MetricAlarms: v.array(
+    v.object({
+      AlarmName: v.string(),
+      StateValue: v.picklist(["OK", "ALARM", "INSUFFICIENT_DATA"]),
+      StateReason: v.optional(v.string()),
+      StateUpdatedTimestamp: v.optional(v.string()),
+      AlarmActions: v.optional(v.array(v.string()), []),
     }),
   ),
 });
@@ -44,8 +44,8 @@ try {
   if (result.status !== 0) {
     throw new Error(`aws cloudwatch describe-alarms failed:\n${result.stderr}`);
   }
-  const alarms = alarmsSchema
-    .parse(JSON.parse(result.stdout))
+  const alarms = v
+    .parse(alarmsSchema, JSON.parse(result.stdout))
     .MetricAlarms.filter((alarm) => alarm.AlarmActions.includes(topicArn));
   if (alarms.length === 0) {
     throw new Error(`no alarm notifies ${topicArn}`);

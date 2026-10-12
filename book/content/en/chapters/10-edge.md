@@ -1,6 +1,6 @@
 ---
 title: "10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge

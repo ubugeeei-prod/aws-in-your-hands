@@ -1,6 +1,6 @@
 ---
 title: "05 KV Store: DynamoDB"
-revision: 5
+revision: 6
 ---
 
 # 05 KV Store: DynamoDB

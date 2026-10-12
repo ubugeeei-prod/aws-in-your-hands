@@ -1,9 +1,7 @@
-import { hc } from "hono/client";
-import type { z } from "zod";
+import * as v from "valibot";
 
 import { ApiError } from "@aih/example-06-auth/api/src/client.ts";
 
-import type { App } from "./app.ts";
 import {
   attachmentListSchema,
   attachmentSchema,
@@ -13,17 +11,21 @@ import {
   type UploadRequest,
 } from "./contract.ts";
 
-async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
+// As in chapter 06, with this chapter's error codes.
+async function parse<Schema extends v.GenericSchema>(
+  response: Response,
+  schema: Schema,
+): Promise<v.InferOutput<Schema>> {
   const requestId = response.headers.get("x-request-id") ?? undefined;
   const json: unknown = await response.json().catch(() => undefined);
   if (!response.ok) {
-    const body = errorSchema.safeParse(json);
+    const body = v.safeParse(errorSchema, json);
     throw body.success
       ? new ApiError(
           response.status,
-          body.data.error.code,
-          body.data.error.message,
-          body.data.error.requestId,
+          body.output.error.code,
+          body.output.error.message,
+          body.output.error.requestId,
         )
       : new ApiError(
           response.status,
@@ -34,7 +36,7 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
           requestId,
         );
   }
-  const body = schema.safeParse(json);
+  const body = v.safeParse(schema, json);
   if (!body.success) {
     throw new ApiError(
       response.status,
@@ -43,7 +45,7 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
       requestId,
     );
   }
-  return body.data;
+  return body.output;
 }
 
 export class UploadError extends Error {
@@ -83,34 +85,34 @@ export function createAttachmentsClient(
   getToken: () => string | undefined,
   fetchImpl: typeof fetch = fetch,
 ) {
-  const withToken: typeof fetch = (input, init) => {
+  const call = (method: string, path: string, json?: unknown): Promise<Response> => {
     const token = getToken();
-    const headers = new Headers(init?.headers);
+    const headers = new Headers();
     if (token !== undefined) {
       headers.set("authorization", `Bearer ${token}`);
     }
-    return fetchImpl(input, { ...init, headers });
+    if (json !== undefined) {
+      headers.set("content-type", "application/json");
+    }
+    return fetchImpl(`${baseUrl.replace(/\/$/, "")}${path}`, {
+      method,
+      headers,
+      ...(json === undefined ? {} : { body: JSON.stringify(json) }),
+    });
   };
-  const api = hc<App>(baseUrl, { fetch: withToken });
-  const one = api.notes[":id"].attachments[":attachmentId"];
+  const all = (noteId: string): string => `/notes/${encodeURIComponent(noteId)}/attachments`;
+  const one = (noteId: string, attachmentId: string): string =>
+    `${all(noteId)}/${encodeURIComponent(attachmentId)}`;
 
   const client = {
     requestUpload: async (noteId: string, input: UploadRequest) =>
-      parse(
-        await api.notes[":id"].attachments.$post({ param: { id: noteId }, json: input }),
-        uploadPermitSchema,
-      ),
+      parse(await call("POST", all(noteId), input), uploadPermitSchema),
     finish: async (noteId: string, attachmentId: string) =>
-      parse(await one.$put({ param: { id: noteId, attachmentId } }), attachmentSchema),
+      parse(await call("PUT", one(noteId, attachmentId)), attachmentSchema),
     list: async (noteId: string) =>
-      (
-        await parse(
-          await api.notes[":id"].attachments.$get({ param: { id: noteId } }),
-          attachmentListSchema,
-        )
-      ).attachments,
+      (await parse(await call("GET", all(noteId)), attachmentListSchema)).attachments,
     remove: async (noteId: string, attachmentId: string) => {
-      const response = await one.$delete({ param: { id: noteId, attachmentId } });
+      const response = await call("DELETE", one(noteId, attachmentId));
       if (!response.ok) {
         await parse(response, attachmentSchema);
       }

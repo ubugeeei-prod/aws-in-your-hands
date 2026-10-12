@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import type { Failure, SummarizeRequest, SummaryEvent, Usage } from "./contract.ts";
 import { converseStreamEventSchema, exceptionNameIn } from "./converse-stream.ts";
 import { classifyError, failureByName, nextDelayMs, type RetryPolicy } from "./failure.ts";
@@ -85,12 +87,12 @@ async function* relay(
   let chars = 0;
   try {
     for await (const raw of stream) {
-      const parsed = converseStreamEventSchema.safeParse(raw);
+      const parsed = v.safeParse(converseStreamEventSchema, raw);
       if (!parsed.success) {
         yield { type: "error", code: "bad_output", retryable: false };
         return;
       }
-      const event = parsed.data;
+      const event = parsed.output;
       const exception = exceptionNameIn(event);
       if (exception !== undefined) {
         yield { type: "error", ...(failureByName(exception) ?? interrupted) };

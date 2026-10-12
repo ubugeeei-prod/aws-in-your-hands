@@ -10,9 +10,14 @@
     "prerequisites": ["05", "07"],
     "services": ["DynamoDB PITR", "S3 Versioning", "S3 Replication", "AWS Backup"],
     "samplePath": "examples/22-recovery",
-    "writing": { "ja": "complete", "en": "complete" },
-    "sourceRevision": 1,
-    "translatedRevision": { "en": 1 },
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 3,
+    "translatedRevision": {
+      "en": 3
+    },
     "checkedAt": "2026-10-12",
     "sourceIds": [
       "dynamodb-pitr",
@@ -634,7 +639,11 @@
         ]
       },
       "items": [
-        { "priceId": "dynamodb.restore", "quantity": 1, "basis": "1 GB restored" },
+        {
+          "priceId": "dynamodb.restore",
+          "quantity": 1,
+          "basis": "1 GB restored"
+        },
         {
           "priceId": "dynamodb.read.on-demand",
           "quantity": 1048576,

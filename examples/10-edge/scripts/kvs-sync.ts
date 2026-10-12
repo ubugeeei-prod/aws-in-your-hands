@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 
 import { CloudFrontKeyValueStoreClient } from "@aws-sdk/client-cloudfront-keyvaluestore";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
@@ -20,9 +21,12 @@ const { values } = parseArgs({
 });
 
 try {
-  const desired = toEntries(
-    edgeDataSchema.parse(JSON.parse(readFileSync("edge-data.json", "utf8"))),
-  );
+  const data = v.safeParse(edgeDataSchema, JSON.parse(readFileSync("edge-data.json", "utf8")));
+  if (!data.success) {
+    const issues = data.issues.map((issue) => `${v.getDotPath(issue) ?? ""}: ${issue.message}`);
+    throw new Error(`edge-data.json is not valid:\n  ${issues.join("\n  ")}`);
+  }
+  const desired = toEntries(data.output);
   const problems = checkLimits(desired);
   if (problems.length > 0) {
     throw new Error(

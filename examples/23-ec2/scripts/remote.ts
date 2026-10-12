@@ -8,6 +8,8 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
+import * as v from "valibot";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
@@ -74,7 +76,8 @@ async function run(
   lines: string[],
   comment: string,
 ): Promise<boolean> {
-  const sent = sentCommandSchema.parse(
+  const sent = v.parse(
+    sentCommandSchema,
     JSON.parse(aws(sendCommandArgs({ instanceId, region, commands: lines, comment }))),
   );
   const commandId = sent.Command.CommandId;
@@ -88,7 +91,7 @@ async function run(
       // The invocation takes a moment to exist after the command is accepted.
       continue;
     }
-    const invocation = invocationSchema.parse(JSON.parse(poll.stdout));
+    const invocation = v.parse(invocationSchema, JSON.parse(poll.stdout));
     if (!isFinished(invocation)) {
       continue;
     }
@@ -114,7 +117,8 @@ try {
 
   switch (action) {
     case "status": {
-      const info = instanceInformationSchema.parse(
+      const info = v.parse(
+        instanceInformationSchema,
         JSON.parse(
           aws([
             "ssm",

@@ -57,8 +57,8 @@ describe("Logs Insights queries against real log lines", () => {
 
   it("refers only to fields the log lines have", () => {
     const known = new Set([
-      ...Object.keys(requestLineSchema.shape),
-      ...Object.keys(errorLineSchema.shape),
+      ...Object.keys(requestLineSchema.entries),
+      ...Object.keys(errorLineSchema.entries),
     ]);
     const queries: Query[] = [
       byRequestId(requestIdOf(1)),

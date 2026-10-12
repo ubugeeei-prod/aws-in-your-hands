@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { ObjectStore } from "./object-store.ts";
 
@@ -9,11 +9,11 @@ import type { ObjectStore } from "./object-store.ts";
 // late) so that the app's own logic can be exercised. It says nothing about
 // how S3 words its errors, about CORS, IAM, or lifecycle rules.
 
-const policySchema = z.object({
-  key: z.string(),
-  contentType: z.string(),
-  maxBytes: z.number(),
-  expiresAt: z.number(),
+const policySchema = v.object({
+  key: v.string(),
+  contentType: v.string(),
+  maxBytes: v.number(),
+  expiresAt: v.number(),
 });
 
 type State = "pending" | "attached";
@@ -75,7 +75,8 @@ export class InMemoryObjectStore implements ObjectStore {
     if (fields["policy"] === undefined || !this.#signed(fields["policy"], fields["signature"])) {
       return { ok: false, reason: "forged" };
     }
-    const policy = policySchema.parse(
+    const policy = v.parse(
+      policySchema,
       JSON.parse(Buffer.from(fields["policy"], "base64url").toString("utf8")),
     );
     if (this.#now().getTime() > policy.expiresAt) {

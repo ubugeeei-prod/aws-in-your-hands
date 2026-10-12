@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { createError, useFetch, useHead } from "nuxt/app";
+import * as v from "valibot";
 
 import { noteListSchema } from "../../core/notes.ts";
 
 // On the server this calls the route in the same process. In the browser it is
 // an HTTP request, so the answer is checked against the schema either way.
 const { data, error } = await useFetch("/api/notes", {
-  transform: (body: unknown) => noteListSchema.parse(body),
+  transform: (body: unknown) => v.parse(noteListSchema, body),
 });
 if (error.value !== undefined || data.value === undefined) {
   throw createError({ statusCode: 502, statusMessage: "The notes could not be loaded" });

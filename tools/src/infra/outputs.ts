@@ -1,12 +1,12 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { runCdkd } from "./run-cdkd.ts";
 
 // `cdkd state show <stack> --json` prints { state, lock }. Only outputs are read.
-const stateShowSchema = z.object({
-  state: z.object({
-    stackName: z.string(),
-    outputs: z.record(z.string(), z.string()),
+const stateShowSchema = v.object({
+  state: v.object({
+    stackName: v.string(),
+    outputs: v.record(v.string(), v.string()),
   }),
 });
 
@@ -17,7 +17,7 @@ export function parseOutputs(stdout: string): Record<string, string> {
   } catch (error) {
     throw new Error("`cdkd state show --json` did not print JSON", { cause: error });
   }
-  return stateShowSchema.parse(json).state.outputs;
+  return v.parse(stateShowSchema, json).state.outputs;
 }
 
 export function requireOutput(outputs: Record<string, string>, name: string): string {

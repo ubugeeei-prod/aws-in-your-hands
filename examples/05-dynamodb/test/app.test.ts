@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
@@ -33,27 +34,34 @@ function setup(maxNotesPerOwner?: number) {
     newRequestId: () => `req-${++requestId}`,
     now: () => clock,
   });
+  // No socket: a Request goes straight into the handler, and a Response comes back.
+  const call = (path: string, init?: RequestInit) =>
+    Promise.resolve(app(new Request(`http://api.test${path}`, init)));
   const json = (method: string, path: string, body: unknown) =>
-    app.request(path, {
+    call(path, {
       method,
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
-  const viaApp: typeof fetch = async (input, init) => app.fetch(new Request(input, init));
-  return { app, json, client: createNotesClient("http://api.test", viaApp), viaApp };
+  const viaApp: typeof fetch = async (input, init) => app(new Request(input, init));
+  return { call, json, client: createNotesClient("http://api.test", viaApp), viaApp };
 }
 
 describe("notes API with versions", () => {
   it("creates a note at version 1", async () => {
     const { json } = setup();
-    const note = noteSchema.parse(await (await json("POST", "/notes", { title: "first" })).json());
+    const note = v.parse(
+      noteSchema,
+      await (await json("POST", "/notes", { title: "first" })).json(),
+    );
     expect(note).toMatchObject({ version: 1, title: "first", body: "" });
     expect(note.createdAt).toBe(note.updatedAt);
   });
 
   it("updates a note when the caller holds the current version", async () => {
     const { json } = setup();
-    const created = noteSchema.parse(
+    const created = v.parse(
+      noteSchema,
       await (await json("POST", "/notes", { title: "draft" })).json(),
     );
     const response = await json("PUT", `/notes/${created.id}`, {
@@ -62,7 +70,7 @@ describe("notes API with versions", () => {
       expectedVersion: 1,
     });
     expect(response.status).toBe(200);
-    expect(noteSchema.parse(await response.json())).toMatchObject({
+    expect(v.parse(noteSchema, await response.json())).toMatchObject({
       version: 2,
       title: "final",
       createdAt: created.createdAt,
@@ -71,7 +79,8 @@ describe("notes API with versions", () => {
 
   it("answers 409 with the stored note for a stale version", async () => {
     const { json } = setup();
-    const created = noteSchema.parse(
+    const created = v.parse(
+      noteSchema,
       await (await json("POST", "/notes", { title: "shared" })).json(),
     );
     await json("PUT", `/notes/${created.id}`, {
@@ -85,36 +94,39 @@ describe("notes API with versions", () => {
       body: "",
       expectedVersion: 1,
     });
-    const body = errorSchema.parse(await response.json());
+    const body = v.parse(errorSchema, await response.json());
     expect(response.status).toBe(409);
     expect(body.error.code).toBe("conflict");
     expect(body.error.current).toMatchObject({ version: 2, title: "from tab A" });
   });
 
   it("answers 409 quota_exceeded for note 101, and takes one again after a delete", async () => {
-    const { app, json } = setup(MAX_NOTES_PER_OWNER);
+    const { call, json } = setup(MAX_NOTES_PER_OWNER);
     let first = "";
     for (let count = 1; count <= MAX_NOTES_PER_OWNER; count++) {
       const response = await json("POST", "/notes", { title: `note ${count}` });
       expect(response.status).toBe(201);
-      first ||= noteSchema.parse(await response.json()).id;
+      first ||= v.parse(noteSchema, await response.json()).id;
     }
 
     const full = await json("POST", "/notes", { title: "one too many" });
     expect(full.status).toBe(409);
-    expect(errorSchema.parse(await full.json()).error.code).toBe("quota_exceeded");
+    expect(v.parse(errorSchema, await full.json()).error.code).toBe("quota_exceeded");
 
-    expect((await app.request(`/notes/${first}`, { method: "DELETE" })).status).toBe(204);
+    expect((await call(`/notes/${first}`, { method: "DELETE" })).status).toBe(204);
     expect((await json("POST", "/notes", { title: "fits now" })).status).toBe(201);
   });
 
   it("requires expectedVersion", async () => {
     const { json } = setup();
-    const created = noteSchema.parse(await (await json("POST", "/notes", { title: "x" })).json());
+    const created = v.parse(
+      noteSchema,
+      await (await json("POST", "/notes", { title: "x" })).json(),
+    );
     const response = await json("PUT", `/notes/${created.id}`, { title: "y", body: "" });
     expect(response.status).toBe(400);
     expect(
-      errorSchema.parse(await response.json()).error.issues?.map((issue) => issue.path),
+      v.parse(errorSchema, await response.json()).error.issues?.map((issue) => issue.path),
     ).toEqual(["expectedVersion"]);
   });
 
@@ -126,14 +138,14 @@ describe("notes API with versions", () => {
   });
 
   it("pages newest first, every note exactly once", async () => {
-    const { app, json } = setup();
+    const { call, json } = setup();
     for (const title of ["one", "two", "three", "four", "five"]) {
       await json("POST", "/notes", { title });
     }
     const titles: string[] = [];
     let path = "/notes?limit=2";
     for (let page = 0; page < 10; page++) {
-      const list = noteListSchema.parse(await (await app.request(path)).json());
+      const list = v.parse(noteListSchema, await (await call(path)).json());
       titles.push(...list.notes.map((note) => note.title));
       if (list.nextCursor === null) {
         break;
@@ -145,7 +157,7 @@ describe("notes API with versions", () => {
 
   // #region list-bound
   it("lists summaries only: no body, 20 a page, under 20 KiB at the worst", async () => {
-    const { app, json } = setup();
+    const { call, json } = setup();
     // The largest note the contract takes. A control character is six bytes of JSON.
     const largest = { title: "\u0001".repeat(120), body: "\u0001".repeat(10_000) };
     for (let count = 0; count <= MAX_PAGE_SIZE; count++) {
@@ -153,16 +165,16 @@ describe("notes API with versions", () => {
     }
 
     for (const path of ["/notes", `/notes?limit=${MAX_PAGE_SIZE}`]) {
-      const text = await (await app.request(path)).text();
-      const list = noteListSchema.parse(JSON.parse(text));
+      const text = await (await call(path)).text();
+      const list = v.parse(noteListSchema, JSON.parse(text));
       expect(new TextEncoder().encode(text).byteLength).toBeLessThanOrEqual(20 * 1024);
       expect(list.notes).toHaveLength(MAX_PAGE_SIZE);
       expect(list.nextCursor).not.toBeNull();
       expect(text).not.toContain('"body"');
 
       // The whole note is one request away.
-      const first = await app.request(`/notes/${list.notes[0]?.id}`);
-      expect(noteSchema.parse(await first.json()).body).toHaveLength(10_000);
+      const first = await call(`/notes/${list.notes[0]?.id}`);
+      expect(v.parse(noteSchema, await first.json()).body).toHaveLength(10_000);
     }
   });
 
@@ -175,23 +187,33 @@ describe("notes API with versions", () => {
       updatedAt: "2026-10-11T00:00:00.000Z",
     };
     const parses = (notes: unknown[]) =>
-      noteListSchema.safeParse({ notes, nextCursor: null }).success;
+      v.safeParse(noteListSchema, { notes, nextCursor: null }).success;
     expect(parses([summary])).toBe(true);
     expect(parses([{ ...summary, body: "" }])).toBe(false);
     expect(parses(Array.from({ length: MAX_PAGE_SIZE + 1 }, () => summary))).toBe(false);
   });
   // #endregion list-bound
 
+  it("lets the allowed origin read an error the routes threw", async () => {
+    const { call } = setup();
+    const response = await call("/notes?cursor=..%2F..%2Fetc", {
+      headers: { origin: "http://localhost:5173" },
+    });
+    expect(response.status).toBe(400);
+    expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    expect(response.headers.get("x-request-id")).toBe("req-1");
+  });
+
   it("rejects a forged cursor and an out-of-range limit with 400", async () => {
-    const { app } = setup();
+    const { call } = setup();
     for (const path of [
       "/notes?cursor=..%2F..%2Fetc",
       "/notes?limit=0",
       `/notes?limit=${MAX_PAGE_SIZE + 1}`,
     ]) {
-      const response = await app.request(path);
+      const response = await call(path);
       expect(response.status, path).toBe(400);
-      expect(errorSchema.parse(await response.json()).error.code).toBe("invalid_request");
+      expect(v.parse(errorSchema, await response.json()).error.code).toBe("invalid_request");
     }
   });
 });

@@ -10,7 +10,7 @@ This is the last page of the chapter. It covers how this setup differs from Clou
 
 <!-- section: 04.workers -->
 
-If you have written an API on Cloudflare Workers, the steps so far will look familiar. The table lists what differs.
+If you have written an API on Cloudflare Workers, the steps so far will look familiar. The app is a function that takes a `Request` and returns a `Response`, just as a Worker's `fetch` handler is. The table lists what differs.
 
 | | Cloudflare Workers | This chapter (Lambda and API Gateway) |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ If you have written an API on Cloudflare Workers, the steps so far will look fam
 | Connecting to other services | Bindings. Write one in the configuration and it shows up on `env`. Locally it connects to a local simulation by default | You call them with the AWS SDK. Environment variables set the target and the execution role sets the permissions. No local simulation comes with it |
 | Permissions | You can touch what you declared bindings for | IAM. Only the actions written in the role go through. Your local permissions and the permissions after deployment are separate |
 | Where it runs | On Cloudflare's network | In one Region (Tokyo in this book) |
-| Entry point | The Worker itself receives HTTP | API Gateway receives the request and passes it to Lambda. They are separate resources with separate charges |
+| Entry point | The Worker itself receives HTTP and is handed a `Request` | API Gateway receives the request and passes it to Lambda. They are separate resources with separate charges. The function gets a JSON event and turns it into a `Request` itself |
 | Deployment | `wrangler deploy` | Synth produces a template, and cdkd (or CloudFormation) applies it |
 
 AWS has more parts. You define the entry point, the function, the role, and the log group separately, and in return you choose the settings of each part. Which one fits depends on what you are building, and this book doesn't recommend giving up Workers.
@@ -117,19 +117,19 @@ What remains is the storage created by the cdkd bootstrap (chapter 02) and the d
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The unit tests for the app, the client, and the infrastructure were run, along with type checking and synth (including the esbuild bundle). `dev:api` was started and the `curl` commands in the text were run. Tests pin the cap on notes (the 101st gets a 409, and one fits again after a delete) and the throttling values on the stage in the template. Tests also pin the list: it returns no body, it stops at 20 notes, and it stays under 20 KiB with the largest titles.
+**Checked locally.** The unit tests for the app, the HTTP parts (`src/http/`), the client, and the infrastructure were run, along with type checking and synth (including the esbuild bundle). `dev:api` was started and the `curl` commands in the text were run. Tests pin the cap on notes (the 101st gets a 409, and one fits again after a delete) and the throttling values on the stage in the template. Tests also pin the list: it returns no body, it stops at 20 notes, and it stays under 20 KiB with the largest titles.
 
-**Not checked yet.** `dev:api:cdkd`, `api:infra:deploy`, `api:smoke`, `api:logs`, `api:infra:drift`, and `api:infra:destroy` have not been run against real AWS. Four things in particular are waiting to be confirmed in a real environment: that the bundle runs on the Node.js 24 Lambda runtime, the status codes and bodies of the errors API Gateway returns (such as the `Not Found` in "Where people get stuck"), the response the caller gets when the function times out, and what `api:smoke` prints when there is more than one execution environment. The stage's throttling is in the same state. The source of the pinned cdkd (0.296.28) passes `DefaultRouteSettings` on to API Gateway, and that much was read. That the setting takes effect, the shape of the 429 body, and whether a 429 is charged for were not checked. The amounts in "When it gets hammered", data transfer included, are computed from unit prices and settings, not measured under load.
+**Not checked yet.** `dev:api:cdkd`, `api:infra:deploy`, `api:smoke`, `api:logs`, `api:infra:drift`, and `api:infra:destroy` have not been run against real AWS. Four things in particular are waiting to be confirmed in a real environment: that the bundle runs on the Node.js 24 Lambda runtime, the status codes and bodies of the errors API Gateway returns (such as the `Not Found` in "Where people get stuck"), the response the caller gets when the function times out, and what `api:smoke` prints when there is more than one execution environment. The event used to test `toRequest` was written by hand from the type definitions and is not one the real API Gateway wrote. The stage's throttling is in the same state. The source of the pinned cdkd (0.296.28) passes `DefaultRouteSettings` on to API Gateway, and that much was read. That the setting takes effect, the shape of the 429 body, and whether a 429 is charged for were not checked. The amounts in "When it gets hammered", data transfer included, are computed from unit prices and settings, not measured under load.
 
 **Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
 | Decide the contract first | `examples/04-http-api/src/contract.ts` | `test:unit` |
-| Write the app | `examples/04-http-api/src/app.ts`, `src/notes.ts`, `src/compose.ts`, `src/log.ts` | `test:unit` |
+| Write the app | `examples/04-http-api/src/app.ts`, `src/http/router.ts`, `src/http/body.ts`, `src/http/cors.ts`, `src/http/api-gateway.ts`, `src/notes.ts`, `src/compose.ts`, `src/log.ts`, `test/http.test.ts` | `test:unit` |
 | Check the configuration at startup | `examples/04-http-api/src/env.ts`, `test/env.test.ts`, `.env.example` | `test:unit` |
-| Running it locally | `examples/04-http-api/src/dev.ts` | `dev:api`, `dev:api:cdkd` |
-| Tests | `examples/04-http-api/test/app.test.ts`, `test/client.test.ts`, `src/client.ts` | `test:unit` |
+| Running it locally | `examples/04-http-api/src/dev.ts`, `src/http/node-server.ts` | `dev:api`, `dev:api:cdkd` |
+| Tests | `examples/04-http-api/test/app.test.ts`, `test/http.test.ts`, `test/client.test.ts`, `src/client.ts` | `test:unit` |
 | Where the notes live | `examples/04-http-api/src/lambda.ts`, `src/notes.ts`, `scripts/smoke.ts` | `api:smoke` |
 | Getting ready for AWS | `examples/04-http-api/infra/lib/http-api-stack.ts`, `infra/bin/app.ts`, `infra/test/http-api-stack.test.ts`, `cdk.json` | `api:infra:synth`, `test:unit` |
 | Deploying and calling | `tools/src/infra/`, `examples/04-http-api/scripts/smoke.ts` | `api:infra:diff`, `api:infra:deploy`, `api:smoke` |

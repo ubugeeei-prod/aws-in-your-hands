@@ -65,6 +65,27 @@ describe("parseNotification", () => {
     expect(() => parseNotification("not json")).toThrow();
     expect(() => parseNotification(JSON.stringify({ Records: [] }))).toThrow();
     expect(() => parseNotification(JSON.stringify({ hello: "world" }))).toThrow();
+    // v.object takes an array where it expects an object. The required fields are what stop these.
+    expect(() => parseNotification("[]")).toThrow();
+    expect(() => parseNotification(JSON.stringify({ Records: [[]] }))).toThrow();
+    expect(() =>
+      parseNotification(JSON.stringify({ Records: [{ eventName: "ObjectCreated:Put", s3: [] }] })),
+    ).toThrow();
+    expect(() =>
+      parseNotification(
+        JSON.stringify({ Records: [{ eventName: "ObjectRemoved:Delete", s3: { object: [] } }] }),
+      ),
+    ).toThrow();
+    // null is not "left out".
+    expect(() =>
+      parseNotification(
+        JSON.stringify({
+          Records: [
+            { eventName: "ObjectRemoved:Delete", s3: { object: { key: "k", sequencer: null } } },
+          ],
+        }),
+      ),
+    ).toThrow();
     // A create that cannot be ordered is not guessed at.
     const unordered = {
       Records: [{ eventName: "ObjectCreated:Post", s3: { object: { key: "u/a/n/x", eTag: "e" } } }],

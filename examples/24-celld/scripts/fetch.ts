@@ -12,6 +12,8 @@ import { createHash } from "node:crypto";
 import { chmodSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 
+import * as v from "valibot";
+
 import {
   assetOf,
   assetUrl,
@@ -24,7 +26,8 @@ import { ARTIFACT_TARGET } from "../src/machine.ts";
 
 const args = process.argv.slice(2);
 const host = args.includes("--host");
-const version = versionSchema.parse(
+const version = v.parse(
+  versionSchema,
   args.find((argument) => !argument.startsWith("--")) ?? PINNED_VERSION,
 );
 

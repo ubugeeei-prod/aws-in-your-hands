@@ -1,6 +1,6 @@
 ---
 title: "22 Backup: PITR、snapshot、S3 versioning、AWS Backup"
-revision: 2
+revision: 3
 ---
 
 # 22 Backup: PITR、snapshot、S3 versioning、AWS Backup

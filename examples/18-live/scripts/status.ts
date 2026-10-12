@@ -9,7 +9,7 @@ import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
 import { IvsClient } from "@aws-sdk/client-ivs";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
@@ -35,7 +35,9 @@ const sinceMs = (since: string): number => {
   return Number(match[1]) * (match[2] === "h" ? 3_600_000 : 60_000);
 };
 
-const logsOutputSchema = z.object({ events: z.array(z.object({ message: z.string() })) });
+const logsOutputSchema = v.object({
+  events: v.array(v.object({ message: v.string() })),
+});
 
 try {
   const { target } = await preflight({
@@ -59,7 +61,7 @@ try {
       throw new Error(`aws logs filter-log-events exited with ${result.status}: ${result.stderr}`);
     }
     const records = parseLoggedEvents(
-      logsOutputSchema.parse(JSON.parse(result.stdout)).events.map((e) => e.message),
+      v.parse(logsOutputSchema, JSON.parse(result.stdout)).events.map((e) => e.message),
     );
     for (const record of records) {
       console.log(

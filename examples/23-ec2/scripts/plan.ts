@@ -26,7 +26,7 @@ const settings = Object.fromEntries(
     return [argument.slice(0, separator), argument.slice(separator + 1)];
   }),
 );
-const ec2Keys = new Set(Object.keys(ec2ConfigSchema.shape));
+const ec2Keys = new Set(Object.keys(ec2ConfigSchema.entries));
 const pick = (mine: boolean) =>
   Object.fromEntries(Object.entries(settings).filter(([key]) => ec2Keys.has(key) === mine));
 

@@ -1,10 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { Server } from "node:http";
+import type { AddressInfo } from "node:net";
 import { resolve } from "node:path";
 
-import { serve } from "@hono/node-server";
-
 import { createApp } from "@aih/example-04-http-api/src/app.ts";
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
 import { createLogger } from "@aih/example-04-http-api/src/log.ts";
 import { createNoteService } from "@aih/example-04-http-api/src/notes.ts";
 
@@ -29,20 +28,12 @@ const app = createApp({
   now: Date.now,
 });
 
-const server = serve({ fetch: app.fetch, hostname: env.HOST, port: env.PORT }, (info) => {
-  log({
-    level: "info",
-    message: "listening",
-    host: info.address,
-    port: info.port,
-    notesFile: env.NOTES_FILE,
-  });
+// Chapter 04's Node.js server: a node:http Server that hands each request to the app.
+const server = nodeServer(app);
+server.listen(env.PORT, env.HOST, () => {
+  const { address, port } = server.address() as AddressInfo;
+  log({ level: "info", message: "listening", host: address, port, notesFile: env.NOTES_FILE });
 });
-
-if (!(server instanceof Server)) {
-  // serve() can also return an HTTP/2 server, which has no closeAllConnections().
-  throw new Error("expected an HTTP/1.1 server");
-}
 
 const shutdown = createShutdown({
   server,

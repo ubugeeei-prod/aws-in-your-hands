@@ -219,6 +219,19 @@ generated: true
   - Payload size is 10 MB
   - 300 routes per API by default
 
+### Create AWS Lambda proxy integrations for HTTP APIs in API Gateway
+
+- ID: `apigw-http-lambda-payload`
+- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html>
+- 確認日: 2026-10-12
+- 参照する章: 04
+- この出典が支える主張:
+  - In payload format 2.0, duplicate headers are combined with commas and included in the headers field; there is no multiValueHeaders field
+  - Format 2.0 has a cookies field for the request's cookies, and in the response each entry of cookies becomes a set-cookie header
+  - All header names in the event are lowercased
+  - The 2.0 event carries rawPath, rawQueryString, requestContext.domainName, requestContext.http.method, body, and isBase64Encoded
+  - A customized 2.0 response has cookies, isBase64Encoded, statusCode, headers, and body
+
 ### Lambda quotas
 
 - ID: `lambda-quotas`
@@ -1023,256 +1036,6 @@ generated: true
 - 参照する章: 11, 14
 - この出典が支える主張:
   - All node-based ElastiCache clusters are launched in a VPC; ElastiCache Serverless caches can also be configured with a public endpoint that needs no VPC configuration
-
-### Inference using Converse API
-
-- ID: `bedrock-converse`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Converse needs bedrock:InvokeModel; ConverseStream needs bedrock:InvokeModelWithResponseStream
-  - Order of ConverseStream events: messageStart, content block events, messageStop (with stopReason), metadata (usage and metrics)
-  - contentBlockStart is sent for tool use only; a text delta is {contentBlockDelta: {delta: {text}, contentBlockIndex}}
-  - Shape of a Converse response: output.message.content[].text, stopReason, usage, metrics
-
-### ConverseStream (API reference)
-
-- ID: `bedrock-converse-stream-api`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Request fields modelId, messages, system, inferenceConfig.maxTokens
-  - modelId accepts a base model ID or an inference profile ID
-  - Stream members include internalServerException (500), modelStreamErrorException (424), serviceUnavailableException (503), throttlingException (429), validationException (400)
-  - Errors: AccessDeniedException 403, ModelErrorException 424, ModelNotReadyException 429, ModelTimeoutException 408, ResourceNotFoundException 404, ServiceUnavailableException 503, ThrottlingException 429, ValidationException 400
-  - The AWS CLI does not support ConverseStream
-
-### MessageStopEvent (API reference)
-
-- ID: `bedrock-message-stop-event`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_MessageStopEvent.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - stopReason values: end_turn, tool_use, max_tokens, stop_sequence, guardrail_intervened, content_filtered, malformed_model_output, malformed_tool_use, model_context_window_exceeded
-
-### Request access to models
-
-- ID: `bedrock-model-access`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Access to many foundation models is enabled by default; there is no per-model request step in commercial Regions
-  - The first invocation of a third-party model starts an AWS Marketplace subscription, which needs aws-marketplace:Subscribe, Unsubscribe, and ViewSubscriptions and can take up to 15 minutes
-  - Anthropic models need a one-time use case form per account or organization before the first call
-  - Amazon models are not sold through AWS Marketplace
-  - After a model is enabled, callers no longer need the Marketplace permissions
-
-### Route model inference requests across AWS Regions with cross-Region inference
-
-- ID: `bedrock-cross-region-inference`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - A geographic profile routes within a geography; a global profile routes to any commercial Region
-  - No additional routing cost; the price is that of the Region the profile is called from
-  - CloudTrail logs the request in the source Region with additionalEventData.inferenceRegion
-
-### Supported Regions and models for inference profiles
-
-- ID: `bedrock-inference-profiles-support`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Profile IDs and destination Regions are documented on each model's card
-  - GetInferenceProfile lists the destination Regions of a profile as seen from one source Region
-  - Do not infer the destinations from the geographic prefix of the profile ID alone
-
-### Prerequisites for inference profiles
-
-- ID: `bedrock-inference-profiles-prereq`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - A policy that names an inference profile must also name the foundation model in each Region associated with it
-  - The bedrock:InferenceProfileArn condition key limits a foundation-model statement to calls made through one profile
-  - The example for a global profile names the model in the source Region and with an empty Region
-
-### Model card: Amazon Nova 2 Lite
-
-- ID: `bedrock-model-card-nova-2-lite`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-2-lite.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Model ID amazon.nova-2-lite-v1:0; profiles jp.amazon.nova-2-lite-v1:0 and global.amazon.nova-2-lite-v1:0
-  - From ap-northeast-1 the model is offered through Geo and Global profiles, not In-Region
-  - jp.amazon.nova-2-lite-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3
-  - Supports Converse and response streaming; max output 64K tokens
-
-### Model card: Anthropic Claude Haiku 4.5
-
-- ID: `bedrock-model-card-claude-haiku-4-5`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-4-5.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - On bedrock-runtime the model needs a geo or global inference profile ID; the bare model ID is not supported for on-demand use
-  - jp.anthropic.claude-haiku-4-5-20251001-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3
-  - Billed through AWS Marketplace; EOL no sooner than 2026-10-16
-
-### Troubleshooting Amazon Bedrock API Error Codes
-
-- ID: `bedrock-troubleshooting-errors`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/troubleshooting-api-error-codes.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - ThrottlingException (429) means the account quota was exceeded; retry with exponential backoff and jitter, or request a quota increase
-  - ServiceUnavailable (503) is capacity, not the account quota
-  - A missing Anthropic use case form answers 404
-
-### Quotas for Amazon Bedrock
-
-- ID: `bedrock-quotas`
-- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/quotas.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Model inference is controlled by per-model quotas on token usage
-  - The quotas that apply to an account can be lower than the published defaults; Service Quotas shows the applied values
-
-### Writing response streaming-enabled Lambda functions
-
-- ID: `lambda-response-streaming-write`
-- URL: <https://docs.aws.amazon.com/lambda/latest/dg/config-rs-write-functions.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides
-
-### Stream the integration response for your proxy integrations in API Gateway
-
-- ID: `apigw-response-streaming`
-- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/response-transfer-mode.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Response streaming is supported for REST APIs only, with responseTransferMode STREAM on proxy integrations
-  - Streams run up to 15 minutes; idle timeout is 5 minutes for Regional endpoints
-  - The Lambda function may keep running after the connection closes
-
-### Restrict access to an AWS Lambda function URL origin
-
-- ID: `cloudfront-oac-lambda-url`
-- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - CloudFront origin access control signs requests to a function URL whose AuthType is AWS_IAM
-  - For POST and PUT the client must send the SHA-256 of the body in x-amz-content-sha256
-
-### AWS Lambda pricing (response streaming)
-
-- ID: `lambda-pricing-streaming`
-- URL: <https://aws.amazon.com/lambda/pricing/>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - The first 6 MB streamed per request is free
-  - The page lists no separate charge for function URLs
-- 注記: Same page as lambda-pricing, re-read for chapter 17.
-
-### AWS Price List: Amazon Bedrock, ap-northeast-1
-
-- ID: `aws-price-list-bedrock`
-- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Nova 2.0 Lite in Tokyo: USD 0.000396 per 1K input tokens, USD 0.003311 per 1K output tokens
-  - Nova 2.0 Lite through the global profile from Tokyo: USD 0.00036 and USD 0.00301 per 1K tokens
-- 注記: The offer has a plain row and a `cross-region-global` row. It has no row named for the jp. profile; the chapter applies the plain row to it, following the user guide's statement that the price is that of the calling Region.
-
-### AWS Price List: Amazon Bedrock foundation models (Marketplace), ap-northeast-1
-
-- ID: `aws-price-list-bedrock-fm`
-- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens
-
-### Cloudflare Workers AI: Get started
-
-- ID: `cloudflare-workers-ai-quickstart`
-- URL: <https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Workers AI always accesses your Cloudflare account to run models and incurs usage charges even in local development
-  - A Worker calls a model as env.AI.run("@cf/...", {...})
-
-### Cloudflare Workers AI: Bindings
-
-- ID: `cloudflare-workers-ai-bindings`
-- URL: <https://developers.cloudflare.com/workers-ai/configuration/bindings/>
-- 確認日: 2026-10-11
-- 参照する章: 00, 17
-- この出典が支える主張:
-  - The AI binding is declared in the wrangler configuration and called as env.AI.run(model, options)
-  - `stream: true` returns results as a text/event-stream
-- 注記: This page says nothing about local development or charges; that claim rests on cloudflare-workers-ai-quickstart and cloudflare-bindings-per-env.
-
-### Cloudflare Workers: Supported bindings per development mode
-
-- ID: `cloudflare-bindings-per-env`
-- URL: <https://developers.cloudflare.com/workers/development-testing/bindings-per-env/>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - The AI binding has no local simulation; it connects to the remote service during local development
-
-### Cloudflare Workers AI: Pricing
-
-- ID: `cloudflare-workers-ai-pricing`
-- URL: <https://developers.cloudflare.com/workers-ai/platform/pricing/>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - Billing unit is Neurons: 10,000 per day free, then USD 0.011 per 1,000 Neurons on the Workers Paid plan
-  - LLM prices are also listed per million input and output tokens for each model
-
-### hono 4.13.13 (published package)
-
-- ID: `hono-npm`
-- URL: <https://www.npmjs.com/package/hono/v/4.13.13>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - hono/aws-lambda exports streamHandle, which wraps the app in awslambda.streamifyResponse
-  - streamHandle does not cancel the response body when writing to the Lambda response stream fails, so stream.onAbort does not fire there
-  - hono/aws-lambda is marked deprecated in favor of @hono/aws-lambda for v5
-  - streamSSE calls stream.onAbort listeners when the response body is cancelled
-- 注記: Read from dist/adapter/aws-lambda/handler.js, dist/helper/streaming/sse.js, and dist/utils/stream.js of the installed package. Not run on Lambda.
-
-### @aws-sdk/client-bedrock-runtime 3.1149.0 (published package)
-
-- ID: `aws-sdk-bedrock-runtime-npm`
-- URL: <https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0>
-- 確認日: 2026-10-11
-- 参照する章: 17
-- この出典が支える主張:
-  - ConverseStreamCommand returns `stream`, an async iterable of ConverseStreamOutput
-  - An exception message in the event stream is thrown by the iterator as an error named after the exception
-  - The default retry strategy makes up to 3 attempts
-- 注記: Read from the type definitions and from @smithy/core 3.35.2 (event-streams getUnmarshalledStream.js, DEFAULT_MAX_ATTEMPTS) in the installed packages. No request was sent.
 
 ### Request production access (Moving out of the Amazon SES sandbox)
 
@@ -2719,17 +2482,6 @@ generated: true
   - For PUT or POST, the viewer must send the SHA256 of the body in x-amz-content-sha256; Lambda does not support unsigned payloads
   - With signing behavior `always`, CloudFront signs every origin request; `no-override` passes a viewer Authorization header through instead
 
-### Control access to Lambda function URLs
-
-- ID: `lambda-urls-auth`
-- URL: <https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html>
-- 確認日: 2026-10-11
-- 参照する章: 09, 17
-- この出典が支える主張:
-  - AuthType AWS_IAM authenticates and authorizes requests with IAM; NONE performs no authentication
-  - Starting in October 2025, new function URLs require both lambda:InvokeFunctionUrl and lambda:InvokeFunction
-  - Without those permissions in the resource-based policy, callers get 403 Forbidden
-
 ### Invoking Lambda function URLs
 
 - ID: `lambda-urls-invocation`
@@ -2761,20 +2513,6 @@ generated: true
   - Function URLs have no charge beyond Lambda's own; authentication is IAM or none
   - API Gateway adds authorizers, throttling, request validation, custom domain names, and WAF integration
   - A function URL answers HTTP 429 once the function's concurrency limit is reached
-
-### Response streaming for Lambda functions
-
-- ID: `lambda-response-streaming`
-- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html>
-- 確認日: 2026-10-11
-- 参照する章: 09, 17
-- この出典が支える主張:
-  - Streaming is available through function URLs, InvokeWithResponseStream, and the API Gateway proxy integration
-  - Streamed responses can be up to 200 MB; buffered ones up to 6 MB
-  - The first 6 MB is uncapped; the rest is limited to 2 MBps
-  - Managed Node.js runtimes support streaming
-  - A streamed response is not stopped when the client disconnects; the full duration is billed
-  - Function URLs do not support response streaming inside a VPC
 
 ### Manage how long content stays in the cache (expiration)
 
@@ -6429,6 +6167,826 @@ generated: true
   - CfnStateMachine accepts definitionString, roleArn, and stateMachineType
 - 注記: Read from aws-lambda/lib/durable-config.d.ts, function.js, and aws-stepfunctions in the installed package.
 
+### Point-in-time backups for DynamoDB
+
+- ID: `dynamodb-pitr`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - Point-in-time recovery gives continuous backups with up to 35 days of recovery points at per-second granularity
+  - RecoveryPeriodInDays can be set between 1 and 35 (default 35), and shortening it does not change the price
+  - Disabling and re-enabling point-in-time recovery resets the start of the restorable window
+  - A table can be restored into a different Region
+
+### Enable point-in-time recovery in DynamoDB
+
+- ID: `dynamodb-pitr-enable`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery_Howitworks.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - PITR is charged on the size of the table, including local secondary indexes, until it is turned off; the recovery period does not affect the price
+  - A restore is possible to any point between EarliestRestorableDateTime and LatestRestorableDateTime, and LatestRestorableDateTime is typically five minutes before the current time
+  - The point-in-time recovery process always restores to a new table
+  - ContinuousBackupsStatus is always ENABLED; whether a table can be restored is PointInTimeRecoveryStatus, which is DISABLED by default
+  - Deleting a table that has PITR enabled creates a system backup that is kept for 35 days at no additional cost
+
+### Restoring a DynamoDB table to a point in time
+
+- ID: `dynamodb-pitr-restore`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.Tutorial.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - The source table stays available for reads and writes while the restore runs
+  - Restore duration depends on the amount of data and the number of secondary indexes, and no fixed completion time is guaranteed
+  - A restore recreates the data, secondary indexes, provisioned capacity, and encryption settings; auto scaling policies, IAM policies, CloudWatch metrics and alarms, tags, stream settings, TTL settings, and point-in-time recovery settings must be set up again by hand
+  - While a restore is in progress the table shows as being created with restore in progress, and becomes ACTIVE when it is finished
+
+### RestoreTableToPointInTime
+
+- ID: `dynamodb-api-restore-table-to-point-in-time`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_RestoreTableToPointInTime.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - The request takes SourceTableName, TargetTableName, and either RestoreDateTime or UseLatestRestorableTime
+  - Up to 50 restores can run concurrently in an account
+  - The settings that are restored come from the current settings of the source table at the time of the restore
+
+### Basic operations on DynamoDB tables
+
+- ID: `dynamodb-table-basics`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.Basics.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - Deletion protection keeps a table from being deleted by anyone while it is enabled
+  - Deletion protection is off by default for every table, including global replicas and tables restored from backups
+
+### How DynamoDB global tables work
+
+- ID: `dynamodb-global-tables-how`
+- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - In the default consistency mode, item changes are replicated asynchronously to all other replicas, typically within a second or less
+  - Conflicting writes are resolved by last writer wins
+  - A TTL delete in one replica is replicated to all other replicas
+- 注記: The page states delete replication explicitly only for TTL deletes; that a user's DeleteItem replicates is read from 'item changes ... are replicated'.
+
+### Retaining multiple versions of objects with S3 Versioning
+
+- ID: `s3-versioning`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - Each version of an object is the entire object, and normal rates apply for every version stored: three versions are charged as three objects
+  - Versioning is disabled by default and must be enabled per bucket
+
+### Working with delete markers
+
+- ID: `s3-delete-markers`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - A DELETE without a version ID in a versioning-enabled bucket does not delete the object: a delete marker becomes the current version
+  - A GET without a version ID on a key whose current version is a delete marker returns 404
+  - Delete markers are listed only by ListObjectVersions; ListObjectsV2 does not return keys whose current version is a delete marker
+  - A delete marker is billed for the size of its key name
+
+### Managing delete markers
+
+- ID: `s3-managing-delete-markers`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/ManagingDelMarkers.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - To undelete an object, delete its delete marker with a DeleteObject request that names the marker's version ID
+  - A DeleteObject without a version ID on a key whose current version is a delete marker removes nothing and adds another delete marker
+  - An expired object delete marker is one with no versions left under it, and a lifecycle rule can remove it
+
+### Restoring previous versions
+
+- ID: `s3-restoring-previous-versions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/RestoringPreviousVersions.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - A previous version is restored either by copying it into the same bucket, which makes the copy the current version and preserves all versions, or by permanently deleting the current version
+
+### ListObjectVersions
+
+- ID: `s3-api-list-object-versions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - The response lists versions and delete markers as separate elements, each with Key, VersionId, IsLatest, and LastModified
+  - A truncated response continues with NextKeyMarker and NextVersionIdMarker
+
+### Lifecycle configuration elements
+
+- ID: `s3-lifecycle-rules`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - NoncurrentVersionExpiration permanently deletes noncurrent versions a number of days after they became noncurrent; they cannot be recovered
+  - In a versioning-enabled bucket the Expiration action applies only to the current version and adds a delete marker instead of removing the object
+  - ExpiredObjectDeleteMarker removes delete markers that have no versions left
+
+### What does Amazon S3 replicate?
+
+- ID: `s3-replication-what`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-what-is-isnot-replicated.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - By default only objects created after the replication configuration was added are replicated
+  - With the latest configuration version (a rule with a Filter), delete markers are not replicated by default
+  - A DELETE that names a version ID is not replicated to the destination
+  - Actions performed by a lifecycle configuration are not replicated
+
+### Replicating delete markers between buckets
+
+- ID: `s3-delete-marker-replication`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/delete-marker-replication.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - By default a delete in the source bucket adds a delete marker in the source only
+  - With delete marker replication enabled, markers are copied and S3 behaves as if the object was deleted in both buckets
+
+### Event notification types and destinations
+
+- ID: `s3-event-types-versioned`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - s3:ObjectRemoved:Delete is sent when an object is deleted or a versioned object is permanently deleted; s3:ObjectRemoved:DeleteMarkerCreated is sent when a delete marker is created for a versioned object
+  - There is a separate s3:LifecycleExpiration:DeleteMarkerCreated event for versioned buckets
+- 注記: Chapter 08 cites the same page for the event types of an unversioned bucket; this entry records the ones a versioned bucket adds.
+
+### Emptying a general purpose bucket
+
+- ID: `s3-empty-bucket`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - Emptying a bucket with versioning enabled or suspended means deleting all versions of all objects, delete markers included
+
+### Advanced DynamoDB backup
+
+- ID: `backup-advanced-dynamodb`
+- URL: <https://docs.aws.amazon.com/aws-backup/latest/devguide/advanced-ddb-backup.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - AWS Backup takes periodic snapshot-based backups of DynamoDB tables; they do not replace or duplicate point-in-time recovery, and using both incurs charges for both
+  - A custom role needs AWSBackupServiceRolePolicyForBackup to back up and AWSBackupServiceRolePolicyForRestores to restore
+  - Charges for these backups appear under Backup in the bill
+
+### Restore a Amazon DynamoDB table
+
+- ID: `backup-restore-dynamodb`
+- URL: <https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-dynamodb.html>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - Restoring a DynamoDB recovery point from AWS Backup asks for a new table name
+
+### AWS Price List: Amazon DynamoDB, ap-northeast-1 (backup and restore SKUs)
+
+- ID: `aws-price-list-dynamodb-backup`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - APN1-TimedPITRStorage-ByteHrs: USD 0.228 per GB-month of PITR backup storage
+  - APN1-RestoreDataSize-Bytes: USD 0.171 per GB of data restored
+  - APN1-TimedBackupStorage-ByteHrs: USD 0.114 per GB-month of on-demand backup storage
+- 注記: Offer publication date 2026-09-11T12:44:22Z.
+
+### AWS Price List: AWS Backup, ap-northeast-1
+
+- ID: `aws-price-list-backup`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - APN1-WarmStorage-ByteHrs-DynamoDB: USD 0.114 per GB-month of warm backup storage for DynamoDB
+  - APN1-Restore-WarmBytes-DynamoDB: USD 0.171 per GB restored from warm storage for DynamoDB
+- 注記: Offer publication date 2026-09-28T17:01:20Z.
+
+### Amazon S3 pricing (Replication)
+
+- ID: `s3-pricing-replication`
+- URL: <https://aws.amazon.com/s3/pricing/>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - For replication you pay for storage in the destination storage class and for replication PUT requests
+  - Inter-region data transfer is charged for Cross-Region Replication; the page lists no data transfer charge for Same-Region Replication
+- 注記: Read through a fetch tool that returned excerpts, not the full page text.
+
+### @go-to-k/cdkd 0.296.28: help output and bundled dist (import, orphan, DynamoDB provider)
+
+- ID: `cdkd-recovery`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - `cdkd import --resource <logicalId>=<physicalId>` adopts an already-deployed resource into cdkd state; with at least one --resource only the listed resources are imported, and --dry-run shows the plan without writing state
+  - `cdkd orphan <construct path>` removes a resource from cdkd state without deleting the AWS resource
+  - The DynamoDB table provider applies PointInTimeRecoverySpecification through UpdateContinuousBackups and reads it back with DescribeContinuousBackups, and reads DeletionProtectionEnabled from DescribeTable
+  - Deleting a table with deletion protection needs `--remove-protection`; without it the provider does not turn protection off
+  - Dedicated providers are registered for AWS::DynamoDB::Table, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, and AWS::Logs::LogGroup; none is registered for the AWS::Backup types
+- 注記: Read from the installed package: `cdkd import --help`, `cdkd orphan --help`, `cdkd --help`, and the bundled dist/provider-classes and dist/program files. Nothing was run against AWS.
+
+### Cloudflare D1: Time Travel and backups
+
+- ID: `cloudflare-d1-time-travel`
+- URL: <https://developers.cloudflare.com/d1/reference/time-travel/>
+- 確認日: 2026-10-12
+- 参照する章: 13, 22
+- この出典が支える主張:
+  - Time Travel is always on and restores a database to any minute within the last 30 days (7 days on the Workers Free plan)
+  - Database history and restoring incur no additional cost
+  - A restore is destructive and overwrites the database in place; in-flight queries are cancelled; the restore returns a bookmark that undoes it
+  - Time Travel cannot yet clone or fork a database into a new copy
+
+### Cloudflare R2: S3 API compatibility
+
+- ID: `cloudflare-r2-s3-api`
+- URL: <https://developers.cloudflare.com/r2/api/s3/api/>
+- 確認日: 2026-10-12
+- 参照する章: 22
+- この出典が支える主張:
+  - The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented
+
+### celld source
+
+- ID: `celld-source`
+- URL: <https://github.com/denoland/celld>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - The repository describes celld as self-hosted, distributed Durable Objects, under Apache-2.0, owned by denoland
+  - On 2026-10-12 the default branch pointed at commit 90b43017241f81189453d326d05948f388b34652, the same commit as the v0.6.2 tag
+  - Pull requests are disabled; patches go by email
+- 注記: Read through the GitHub API (repository, tags, releases, tree) and the raw files of the default branch.
+
+### celld limitations
+
+- ID: `celld-limitations`
+- URL: <https://github.com/denoland/celld/blob/main/docs/limitations.md>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - celld v0.6.2 is a beta release
+  - A fleet runs one application; there is no account service, multi-tenant scheduler, or managed ingress
+  - celld does not terminate TLS; peer traffic is plaintext HTTP, and the fleet HMAC does not encrypt
+  - The installer supplies binaries for Linux x86-64, Linux ARM64, and Apple Silicon
+
+### celld security
+
+- ID: `celld-security`
+- URL: <https://github.com/denoland/celld/blob/main/docs/security.md>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - v0.6.2 is a beta release, not safe for hostile multi-tenant use; only the latest release receives security fixes
+  - celld opens two HTTP listeners and terminates TLS on neither; --internal-listen serves the peer protocol and the operator API
+  - Most operator routes on the internal listener have no request authentication, including POST /shutdown and /state
+  - The public listener reserves only /.well-known/celld/health: 200 with {"ok":true} when healthy, 503 otherwise
+  - The fleet bucket is the root of authority; a holder of the bucket credentials controls the fleet
+  - The operator API is an alpha interface; a release can change its paths or response formats
+
+### celld guarantees
+
+- ID: `celld-guarantees`
+- URL: <https://celld.dev/docs/guarantees/>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - The page exists and carries the same guarantees text as docs/guarantees.md in the repository
+- 注記: Read through a summarizing fetch; the claims this chapter relies on are taken from the repository file at the v0.6.2 tag (celld-guarantees-v062).
+
+### celld documentation
+
+- ID: `celld-docs`
+- URL: <https://celld.dev/docs/>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - The documentation site lists pages for limitations, security, guarantees, testing, telemetry, Cloudflare compatibility, and one page per service
+- 注記: Read through a summarizing fetch; the claims this chapter relies on are taken from the repository files at the v0.6.2 tag.
+
+### celld v0.6.2: README
+
+- ID: `celld-readme-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/README.md>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - celld runs a Cloudflare Workers application on your own machines and stores long-term state in an S3-compatible, Google Cloud Storage, or Azure Blob Storage bucket
+  - A node is one celld process; nodes that share one bucket are a fleet; a conditional bucket write gives a node the ownership of a cell
+  - celld uses the standard AWS credential chain; a node is started with --bucket, --listen, --internal-listen, and --advertise
+  - The container example sets CELLD_WATCH to a directory on a persistent volume
+  - One node proves each write through the bucket; with a second node the write finishes once that node holds it on disk
+  - Put every advertised address on a trusted private network or an encrypted overlay; celld rejects a literal public IP unless --unsafe-public-advertise is given
+  - Treat access to the bucket and its credentials as fleet administrator access
+  - The installer downloads the binary from GitHub releases; provenance is verifiable with gh attestation verify
+
+### celld v0.6.2: documentation (operate, shut down, upgrade notes, environment variables)
+
+- ID: `celld-docs-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/README.md>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - CELLD_DURABILITY defaults to fleet; a one-node fleet waits for the bucket on every write; a fleet that loses all but one node falls back to the bucket and stays correct
+  - celld shuts down gracefully on SIGTERM or SIGINT: health reports 503, accepted requests finish, and the node hands its cells off to a peer; POST /shutdown on the internal listener starts the same handoff
+  - CELLD_SHUTDOWN_TOTAL_MS defaults to 40000; the orchestrator stop grace (systemd TimeoutStopSec) must be above it or SIGKILL can interrupt the handoff
+  - To roll out a new version: stop each node with SIGTERM, wait for its replacement to report healthy, then move to the next node
+  - During a rolling update, wait for restoring=0 on every node (celld diagnose) before restarting the next
+  - A new process does not report healthy until the fleet settles; CELLD_READY_FLEET_GATE_MS defaults to 120000
+  - Upgrade notes: v0.1.0 to v0.2.0 stop all; v0.2.1 to v0.3.0 rolling; v0.3.0 to v0.4.0 stop all; v0.4.0 to v0.4.1 rolling; v0.5.1 to v0.6.0 stop all with fleet durability; v0.6.0 to v0.6.1 rolling; v0.6.1 to v0.6.2 rolling
+  - The node lease lives CELLD_TTL_MS (default 10000) and renews at one third of that; the fleet sample is read every CELLD_REBALANCE_INTERVAL_MS (default 5000); deploy/current.json is read every CELLD_DEPLOY_POLL_S (default 30)
+  - CELLD_BUCKET, AWS_REGION, CELLD_ADDR, CELLD_INTERNAL_ADDR, CELLD_ADVERTISE, and CELLD_WATCH are the environment forms of the node settings; CELLD_NODE is an explicit node-session ID
+  - A bucket value can add a key prefix (s3://BUCKET/PREFIX)
+  - celld deploy needs esbuild on PATH for Worker code; CELLD_ESBUILD overrides the path; a running node adopts a new deployment without a restart
+  - celld diagnose reads the node leases and probes each live peer without taking a lease; celld cell list prints one Class:ID scope per line
+  - One 8 GB node holds 1,000 resident cells
+  - celld does not scale itself; an external system starts and stops the nodes
+
+### celld v0.6.2: what celld guarantees
+
+- ID: `celld-guarantees-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/guarantees.md>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - Two promises: exactly one node serves a cell at a time, and an acknowledged write is never lost; both require a bucket with working conditional writes and ranged reads, and a supervisor that restarts the process
+  - The qualified stores are Amazon S3, Cloudflare R2, Tigris, Google Cloud Storage, and Azure Blob Storage; the release tests run against R2, and the S3 path uses the same client and headers
+  - The supervisor must restart without an attempt limit and wait at least one lease lifetime between attempts
+  - Each cell has one ownership record in the bucket, naming the owner's session and a fencing epoch, acquired by conditional create or compare-and-swap
+  - In fleet mode the owner sends each write to one or two followers and every follower must fsync it; a fleet needs two running nodes for a fleet proof; a fleet of three or more holds three copies of an acknowledged write
+  - In fleet mode celld can acknowledge a write before its bucket upload completes; a follower disk can hold acknowledged writes that the bucket does not yet hold
+  - Recovery limits: a follower's HTTP error can block recovery and startup; a deleted final batch is undetectable if nothing later records its range; a mixed-version tail can stall recovery
+  - A node whose lease expires fences itself, logs a line starting with SELF-FENCE:, and exits with code 3; only a restart returns it
+  - celld reserves the key prefixes probe/, cells/, nodes/, node-cells/, fleet/, deploy/, deploy-blobs/, log/, wake/, and telemetry/
+  - The v0.4.1 upgrade procedure: stop every node and wait for every lease to expire, back up the bucket and node data keeping node names, peer addresses, and data directories; to roll back, restore the full stopped-fleet backup, which loses writes made after it
+  - Each node runs the storage test (four conditional writes and a ranged read) before it serves, and cannot disable it
+
+### celld v0.6.2: testing
+
+- ID: `celld-testing-v062`
+- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/testing.md>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - The coordination protocol is specified in TLA+ and exercised by deterministic simulation; the model grants a linearizable object store
+  - Live-fleet fault scenarios include SIGKILL mid-write-stream, freezing an owner, cutting a node off from the bucket, and stopping a host; a verification pass fetches each cell through different nodes
+  - A cell can be briefly unavailable while ownership moves
+  - A fleet at its resident limit has no space for a lost node's cells
+
+### celld releases (GitHub API)
+
+- ID: `celld-releases`
+- URL: <https://api.github.com/repos/denoland/celld/releases>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - v0.6.2 was published 2026-10-07 and is the latest of 11 releases; none is marked prerelease
+  - Each release carries celld-aarch64-unknown-linux-gnu.gz, celld-x86_64-unknown-linux-gnu.gz, and celld-aarch64-apple-darwin.gz with a sha256 digest
+  - v0.6.2 release notes: upgrading from v0.6.1 can use a rolling update
+- 注記: The six archives of v0.6.2 and v0.6.1 were downloaded on 2026-10-12 and their SHA-256 matched the published digests. None was unpacked or run.
+
+### celld installer script
+
+- ID: `celld-install-script`
+- URL: <https://celld.dev/install.sh>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - The installer downloads celld-<target>.gz from the GitHub release named by CELLD_VERSION, decompresses it, and switches one symlink
+  - It relies on gzip's CRC for corruption and on the release attestation for provenance; it carries no checksum of its own
+- 注記: Read as text, not run.
+
+### celld v0.6.2: source (cli, fleet diagnostics, bucket client)
+
+- ID: `celld-source-v062`
+- URL: <https://github.com/denoland/celld/tree/v0.6.2/crates/celld>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - main/cli.rs: with no arguments and CELLD_BUCKET set, celld runs a node from the environment; the help text lists the flags and variables
+  - main/cli.rs: celld diagnose accepts --json, --read-only, and --peer
+  - fleet.rs: a diagnose row is {verdict, check, detail}; a live peer is 'peer <node> at <addr>' with restoring=<n> in the detail; an expired lease is a skip row
+  - main.rs: without CELLD_WATCH the data directory is a celld-<pid> directory under the system temporary directory; without CELLD_NODE the node-session ID is random
+  - bucket.rs: large writes go through multipart upload
+  - protocol.rs documents the deployment objects only; the ownership record format is not a documented interface
+- 注記: Read as text at the tag. Nothing was compiled or run.
+
+### celld v0.6.2: counter example
+
+- ID: `celld-example-counter`
+- URL: <https://github.com/denoland/celld/tree/v0.6.2/examples/counter>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - One Durable Object class, Counter; the Worker picks the instance from the ?name= query parameter
+  - Every request reads n, adds 1, stores it, and answers JSON {n, url}
+
+### StopInstances (Amazon EC2 API reference)
+
+- ID: `ec2-api-stop-instances`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_StopInstances.html>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - By default a stop includes a graceful OS shutdown; SkipOsShutdown bypasses it and might result in data loss or skipped shutdown scripts
+  - Force first attempts a graceful shutdown
+  - A stopped instance retains its root volume and data volumes, and volume usage is still charged
+
+### Data protection in Amazon EC2
+
+- ID: `ec2-data-protection-transit`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/data-protection.html>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - Some instance types automatically encrypt in-transit traffic between instances in the same VPC; the list includes M7g, C7g, and R7g and does not include T4g
+  - All traffic between Availability Zones is encrypted at the physical layer
+  - It is the customer's responsibility to use an encryption protocol such as TLS for sensitive data in transit
+
+### Use instance metadata to manage your EC2 instance
+
+- ID: `ec2-instance-metadata-categories`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - local-ipv4 is the private IPv4 address of the instance (the device with device number 0)
+
+### Access instance metadata for an EC2 instance
+
+- ID: `ec2-imds-retrieval`
+- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - IMDSv2: a PUT to /latest/api/token with X-aws-ec2-metadata-token-ttl-seconds returns a token; requests then send X-aws-ec2-metadata-token
+  - User data is limited to 16 KB before base64 encoding
+  - With curl -f, an IMDS error becomes a non-zero exit
+
+### Uploading and copying objects using multipart upload in Amazon S3
+
+- ID: `s3-mpu-permissions`
+- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - Creating, uploading parts of, and completing a multipart upload need s3:PutObject; stopping one needs s3:AbortMultipartUpload
+  - Parts of an upload that was never completed or stopped are billed; a lifecycle rule with AbortIncompleteMultipartUpload removes them
+
+### aws s3 sync (AWS CLI reference)
+
+- ID: `aws-cli-s3-sync`
+- URL: <https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - sync recursively copies new and updated files from the source to the destination
+  - --delete removes files that exist in the destination but not in the source; --dryrun displays the operations without running them
+
+### systemd v252: systemd.service(5), Restart= and RestartSec=
+
+- ID: `systemd-service-restart-always`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.service.xml>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - Restart=always restarts the service whether it exited cleanly, was terminated by a signal, or hit a timeout
+  - RestartSec= is the time to sleep before restarting; it defaults to 100ms
+- 注記: The systemd version on Amazon Linux 2023 was not checked on an instance.
+
+### systemd v252: systemd.unit(5), StartLimitIntervalSec=
+
+- ID: `systemd-unit-start-limit-off`
+- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - StartLimitIntervalSec= may be set to 0 to disable any kind of rate limiting
+  - A unit configured for Restart= that reaches the start limit is not restarted any more
+- 注記: The systemd version on Amazon Linux 2023 was not checked on an instance.
+
+### @go-to-k/cdkd 0.296.28 (npm package, dist)
+
+- ID: `cdkd-package-0-296-28`
+- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
+- 確認日: 2026-10-12
+- 参照する章: 24
+- この出典が支える主張:
+  - AWS::EC2::SecurityGroupIngress is registered with the EC2 provider; its handled properties include GroupId, IpProtocol, FromPort, ToPort, Description, and SourceSecurityGroupId
+  - AWS::EC2::SecurityGroupEgress is not registered
+  - The S3 bucket provider handles LifecycleConfiguration, OwnershipControls, PublicAccessBlockConfiguration, and BucketEncryption
+- 注記: Read from the installed package's dist directory. Nothing was run against AWS.
+
+### Inference using Converse API
+
+- ID: `bedrock-converse`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Converse needs bedrock:InvokeModel; ConverseStream needs bedrock:InvokeModelWithResponseStream
+  - Order of ConverseStream events: messageStart, content block events, messageStop (with stopReason), metadata (usage and metrics)
+  - contentBlockStart is sent for tool use only; a text delta is {contentBlockDelta: {delta: {text}, contentBlockIndex}}
+  - Shape of a Converse response: output.message.content[].text, stopReason, usage, metrics
+
+### ConverseStream (API reference)
+
+- ID: `bedrock-converse-stream-api`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Request fields modelId, messages, system, inferenceConfig.maxTokens
+  - modelId accepts a base model ID or an inference profile ID
+  - Stream members include internalServerException (500), modelStreamErrorException (424), serviceUnavailableException (503), throttlingException (429), validationException (400)
+  - Errors: AccessDeniedException 403, ModelErrorException 424, ModelNotReadyException 429, ModelTimeoutException 408, ResourceNotFoundException 404, ServiceUnavailableException 503, ThrottlingException 429, ValidationException 400
+  - The AWS CLI does not support ConverseStream
+
+### MessageStopEvent (API reference)
+
+- ID: `bedrock-message-stop-event`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_MessageStopEvent.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - stopReason values: end_turn, tool_use, max_tokens, stop_sequence, guardrail_intervened, content_filtered, malformed_model_output, malformed_tool_use, model_context_window_exceeded
+
+### Request access to models
+
+- ID: `bedrock-model-access`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Access to many foundation models is enabled by default; there is no per-model request step in commercial Regions
+  - The first invocation of a third-party model starts an AWS Marketplace subscription, which needs aws-marketplace:Subscribe, Unsubscribe, and ViewSubscriptions and can take up to 15 minutes
+  - Anthropic models need a one-time use case form per account or organization before the first call
+  - Amazon models are not sold through AWS Marketplace
+  - After a model is enabled, callers no longer need the Marketplace permissions
+
+### Route model inference requests across AWS Regions with cross-Region inference
+
+- ID: `bedrock-cross-region-inference`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - A geographic profile routes within a geography; a global profile routes to any commercial Region
+  - No additional routing cost; the price is that of the Region the profile is called from
+  - CloudTrail logs the request in the source Region with additionalEventData.inferenceRegion
+
+### Supported Regions and models for inference profiles
+
+- ID: `bedrock-inference-profiles-support`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-support.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Profile IDs and destination Regions are documented on each model's card
+  - GetInferenceProfile lists the destination Regions of a profile as seen from one source Region
+  - Do not infer the destinations from the geographic prefix of the profile ID alone
+
+### Prerequisites for inference profiles
+
+- ID: `bedrock-inference-profiles-prereq`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - A policy that names an inference profile must also name the foundation model in each Region associated with it
+  - The bedrock:InferenceProfileArn condition key limits a foundation-model statement to calls made through one profile
+  - The example for a global profile names the model in the source Region and with an empty Region
+
+### Model card: Amazon Nova 2 Lite
+
+- ID: `bedrock-model-card-nova-2-lite`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-2-lite.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Model ID amazon.nova-2-lite-v1:0; profiles jp.amazon.nova-2-lite-v1:0 and global.amazon.nova-2-lite-v1:0
+  - From ap-northeast-1 the model is offered through Geo and Global profiles, not In-Region
+  - jp.amazon.nova-2-lite-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3
+  - Supports Converse and response streaming; max output 64K tokens
+
+### Model card: Anthropic Claude Haiku 4.5
+
+- ID: `bedrock-model-card-claude-haiku-4-5`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-4-5.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - On bedrock-runtime the model needs a geo or global inference profile ID; the bare model ID is not supported for on-demand use
+  - jp.anthropic.claude-haiku-4-5-20251001-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3
+  - Billed through AWS Marketplace; EOL no sooner than 2026-10-16
+
+### Troubleshooting Amazon Bedrock API Error Codes
+
+- ID: `bedrock-troubleshooting-errors`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/troubleshooting-api-error-codes.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - ThrottlingException (429) means the account quota was exceeded; retry with exponential backoff and jitter, or request a quota increase
+  - ServiceUnavailable (503) is capacity, not the account quota
+  - A missing Anthropic use case form answers 404
+
+### Quotas for Amazon Bedrock
+
+- ID: `bedrock-quotas`
+- URL: <https://docs.aws.amazon.com/bedrock/latest/userguide/quotas.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Model inference is controlled by per-model quotas on token usage
+  - The quotas that apply to an account can be lower than the published defaults; Service Quotas shows the applied values
+
+### Response streaming for Lambda functions
+
+- ID: `lambda-response-streaming`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/configuration-response-streaming.html>
+- 確認日: 2026-10-11
+- 参照する章: 09, 17
+- この出典が支える主張:
+  - Streaming is available through function URLs, InvokeWithResponseStream, and API Gateway proxy integrations
+  - A streamed response is not interrupted when the client disconnects, and the full function duration is billed
+  - Node.js managed runtimes support response streaming natively
+  - Streamed payloads can be up to 200 MB; the first 6 MB is not rate limited
+  - Function URLs do not support response streaming for a function in a VPC
+
+### Writing response streaming-enabled Lambda functions
+
+- ID: `lambda-response-streaming-write`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/config-rs-write-functions.html>
+- 確認日: 2026-10-12
+- 参照する章: 17
+- この出典が支える主張:
+  - A streaming handler is wrapped in awslambda.streamifyResponse, a global the Node.js runtime on Lambda provides
+  - The response stream is a Node.js writable stream; pipeline() is recommended for writing to it, and it ends the stream
+  - The page does not describe awslambda.HttpResponseStream.from or the keys of the object passed to it
+
+### Control access to Lambda function URLs
+
+- ID: `lambda-urls-auth`
+- URL: <https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html>
+- 確認日: 2026-10-11
+- 参照する章: 09, 17
+- この出典が支える主張:
+  - AuthType is AWS_IAM or NONE
+  - With AWS_IAM, a caller in the same account needs lambda:InvokeFunctionUrl and lambda:InvokeFunction in an identity policy or in the function's resource-based policy
+  - With NONE, anyone with the URL can invoke the function once the resource-based policy grants public access
+
+### Stream the integration response for your proxy integrations in API Gateway
+
+- ID: `apigw-response-streaming`
+- URL: <https://docs.aws.amazon.com/apigateway/latest/developerguide/response-transfer-mode.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Response streaming is supported for REST APIs only, with responseTransferMode STREAM on proxy integrations
+  - Streams run up to 15 minutes; idle timeout is 5 minutes for Regional endpoints
+  - The Lambda function may keep running after the connection closes
+
+### Restrict access to an AWS Lambda function URL origin
+
+- ID: `cloudfront-oac-lambda-url`
+- URL: <https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - CloudFront origin access control signs requests to a function URL whose AuthType is AWS_IAM
+  - For POST and PUT the client must send the SHA-256 of the body in x-amz-content-sha256
+
+### AWS Lambda pricing (response streaming)
+
+- ID: `lambda-pricing-streaming`
+- URL: <https://aws.amazon.com/lambda/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - The first 6 MB streamed per request is free
+  - The page lists no separate charge for function URLs
+- 注記: Same page as lambda-pricing, re-read for chapter 17.
+
+### AWS Price List: Amazon Bedrock, ap-northeast-1
+
+- ID: `aws-price-list-bedrock`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Nova 2.0 Lite in Tokyo: USD 0.000396 per 1K input tokens, USD 0.003311 per 1K output tokens
+  - Nova 2.0 Lite through the global profile from Tokyo: USD 0.00036 and USD 0.00301 per 1K tokens
+- 注記: The offer has a plain row and a `cross-region-global` row. It has no row named for the jp. profile; the chapter applies the plain row to it, following the user guide's statement that the price is that of the calling Region.
+
+### AWS Price List: Amazon Bedrock foundation models (Marketplace), ap-northeast-1
+
+- ID: `aws-price-list-bedrock-fm`
+- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens
+
+### Cloudflare Workers AI: Get started
+
+- ID: `cloudflare-workers-ai-quickstart`
+- URL: <https://developers.cloudflare.com/workers-ai/get-started/workers-wrangler/>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Workers AI always accesses your Cloudflare account to run models and incurs usage charges even in local development
+  - A Worker calls a model as env.AI.run("@cf/...", {...})
+
+### Cloudflare Workers AI: Bindings
+
+- ID: `cloudflare-workers-ai-bindings`
+- URL: <https://developers.cloudflare.com/workers-ai/configuration/bindings/>
+- 確認日: 2026-10-11
+- 参照する章: 00, 17
+- この出典が支える主張:
+  - The AI binding is declared in the wrangler configuration and called as env.AI.run(model, options)
+  - `stream: true` returns results as a text/event-stream
+- 注記: This page says nothing about local development or charges; that claim rests on cloudflare-workers-ai-quickstart and cloudflare-bindings-per-env.
+
+### Cloudflare Workers: Supported bindings per development mode
+
+- ID: `cloudflare-bindings-per-env`
+- URL: <https://developers.cloudflare.com/workers/development-testing/bindings-per-env/>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - The AI binding has no local simulation; it connects to the remote service during local development
+
+### Cloudflare Workers AI: Pricing
+
+- ID: `cloudflare-workers-ai-pricing`
+- URL: <https://developers.cloudflare.com/workers-ai/platform/pricing/>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - Billing unit is Neurons: 10,000 per day free, then USD 0.011 per 1,000 Neurons on the Workers Paid plan
+  - LLM prices are also listed per million input and output tokens for each model
+
+### hono 4.13.13 (published package)
+
+- ID: `hono-npm`
+- URL: <https://www.npmjs.com/package/hono/v/4.13.13>
+- 確認日: 2026-10-12
+- 参照する章: 17
+- この出典が支える主張:
+  - streamHandle in hono/aws-lambda passes { statusCode, headers, cookies } to awslambda.HttpResponseStream.from, then pipes the response body into the stream it returns
+  - streamHandle writes an empty string to the stream when the response has no body
+- 注記: No longer a dependency of the example. Read from dist/adapter/aws-lambda/handler.js of the package as it was installed, as the only available evidence for the keys of the prelude: the Lambda documentation pages checked do not describe them. Not run on Lambda.
+
+### @types/aws-lambda 8.10.164 (published package)
+
+- ID: `types-aws-lambda-npm`
+- URL: <https://www.npmjs.com/package/@types/aws-lambda/v/8.10.164>
+- 確認日: 2026-10-12
+- 参照する章: 17
+- この出典が支える主張:
+  - Declares the global namespace awslambda with streamifyResponse(handler) and HttpResponseStream.from(writable, metadata)
+  - LambdaFunctionURLEvent is an alias of APIGatewayProxyEventV2
+- 注記: Read from handler.d.ts and trigger/lambda-function-url.d.ts of the installed package. The metadata parameter is typed Record<string, unknown>, so the types do not say which keys Lambda reads.
+
+### @aws-sdk/client-bedrock-runtime 3.1149.0 (published package)
+
+- ID: `aws-sdk-bedrock-runtime-npm`
+- URL: <https://www.npmjs.com/package/@aws-sdk/client-bedrock-runtime/v/3.1149.0>
+- 確認日: 2026-10-11
+- 参照する章: 17
+- この出典が支える主張:
+  - ConverseStreamCommand returns `stream`, an async iterable of ConverseStreamOutput
+  - An exception message in the event stream is thrown by the iterator as an error named after the exception
+  - The default retry strategy makes up to 3 attempts
+- 注記: Read from the type definitions and from @smithy/core 3.35.2 (event-streams getUnmarshalledStream.js, DEFAULT_MAX_ATTEMPTS) in the installed packages. No request was sent.
+
 ### Troubleshoot IAM: Changes that I make are not always immediately visible
 
 - ID: `iam-eventual-consistency`
@@ -7059,541 +7617,6 @@ generated: true
 - 参照する章: 21
 - この出典が支える主張:
   - Rate limiting rules are available on the Free plan, with features that depend on the plan
-
-### Point-in-time backups for DynamoDB
-
-- ID: `dynamodb-pitr`
-- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - Point-in-time recovery gives continuous backups with up to 35 days of recovery points at per-second granularity
-  - RecoveryPeriodInDays can be set between 1 and 35 (default 35), and shortening it does not change the price
-  - Disabling and re-enabling point-in-time recovery resets the start of the restorable window
-  - A table can be restored into a different Region
-
-### Enable point-in-time recovery in DynamoDB
-
-- ID: `dynamodb-pitr-enable`
-- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery_Howitworks.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - PITR is charged on the size of the table, including local secondary indexes, until it is turned off; the recovery period does not affect the price
-  - A restore is possible to any point between EarliestRestorableDateTime and LatestRestorableDateTime, and LatestRestorableDateTime is typically five minutes before the current time
-  - The point-in-time recovery process always restores to a new table
-  - ContinuousBackupsStatus is always ENABLED; whether a table can be restored is PointInTimeRecoveryStatus, which is DISABLED by default
-  - Deleting a table that has PITR enabled creates a system backup that is kept for 35 days at no additional cost
-
-### Restoring a DynamoDB table to a point in time
-
-- ID: `dynamodb-pitr-restore`
-- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.Tutorial.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - The source table stays available for reads and writes while the restore runs
-  - Restore duration depends on the amount of data and the number of secondary indexes, and no fixed completion time is guaranteed
-  - A restore recreates the data, secondary indexes, provisioned capacity, and encryption settings; auto scaling policies, IAM policies, CloudWatch metrics and alarms, tags, stream settings, TTL settings, and point-in-time recovery settings must be set up again by hand
-  - While a restore is in progress the table shows as being created with restore in progress, and becomes ACTIVE when it is finished
-
-### RestoreTableToPointInTime
-
-- ID: `dynamodb-api-restore-table-to-point-in-time`
-- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_RestoreTableToPointInTime.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - The request takes SourceTableName, TargetTableName, and either RestoreDateTime or UseLatestRestorableTime
-  - Up to 50 restores can run concurrently in an account
-  - The settings that are restored come from the current settings of the source table at the time of the restore
-
-### Basic operations on DynamoDB tables
-
-- ID: `dynamodb-table-basics`
-- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithTables.Basics.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - Deletion protection keeps a table from being deleted by anyone while it is enabled
-  - Deletion protection is off by default for every table, including global replicas and tables restored from backups
-
-### How DynamoDB global tables work
-
-- ID: `dynamodb-global-tables-how`
-- URL: <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/V2globaltables_HowItWorks.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - In the default consistency mode, item changes are replicated asynchronously to all other replicas, typically within a second or less
-  - Conflicting writes are resolved by last writer wins
-  - A TTL delete in one replica is replicated to all other replicas
-- 注記: The page states delete replication explicitly only for TTL deletes; that a user's DeleteItem replicates is read from 'item changes ... are replicated'.
-
-### Retaining multiple versions of objects with S3 Versioning
-
-- ID: `s3-versioning`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - Each version of an object is the entire object, and normal rates apply for every version stored: three versions are charged as three objects
-  - Versioning is disabled by default and must be enabled per bucket
-
-### Working with delete markers
-
-- ID: `s3-delete-markers`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/DeleteMarker.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - A DELETE without a version ID in a versioning-enabled bucket does not delete the object: a delete marker becomes the current version
-  - A GET without a version ID on a key whose current version is a delete marker returns 404
-  - Delete markers are listed only by ListObjectVersions; ListObjectsV2 does not return keys whose current version is a delete marker
-  - A delete marker is billed for the size of its key name
-
-### Managing delete markers
-
-- ID: `s3-managing-delete-markers`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/ManagingDelMarkers.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - To undelete an object, delete its delete marker with a DeleteObject request that names the marker's version ID
-  - A DeleteObject without a version ID on a key whose current version is a delete marker removes nothing and adds another delete marker
-  - An expired object delete marker is one with no versions left under it, and a lifecycle rule can remove it
-
-### Restoring previous versions
-
-- ID: `s3-restoring-previous-versions`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/RestoringPreviousVersions.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - A previous version is restored either by copying it into the same bucket, which makes the copy the current version and preserves all versions, or by permanently deleting the current version
-
-### ListObjectVersions
-
-- ID: `s3-api-list-object-versions`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectVersions.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - The response lists versions and delete markers as separate elements, each with Key, VersionId, IsLatest, and LastModified
-  - A truncated response continues with NextKeyMarker and NextVersionIdMarker
-
-### Lifecycle configuration elements
-
-- ID: `s3-lifecycle-rules`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - NoncurrentVersionExpiration permanently deletes noncurrent versions a number of days after they became noncurrent; they cannot be recovered
-  - In a versioning-enabled bucket the Expiration action applies only to the current version and adds a delete marker instead of removing the object
-  - ExpiredObjectDeleteMarker removes delete markers that have no versions left
-
-### What does Amazon S3 replicate?
-
-- ID: `s3-replication-what`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication-what-is-isnot-replicated.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - By default only objects created after the replication configuration was added are replicated
-  - With the latest configuration version (a rule with a Filter), delete markers are not replicated by default
-  - A DELETE that names a version ID is not replicated to the destination
-  - Actions performed by a lifecycle configuration are not replicated
-
-### Replicating delete markers between buckets
-
-- ID: `s3-delete-marker-replication`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/delete-marker-replication.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - By default a delete in the source bucket adds a delete marker in the source only
-  - With delete marker replication enabled, markers are copied and S3 behaves as if the object was deleted in both buckets
-
-### Event notification types and destinations
-
-- ID: `s3-event-types-versioned`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-how-to-event-types-and-destinations.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - s3:ObjectRemoved:Delete is sent when an object is deleted or a versioned object is permanently deleted; s3:ObjectRemoved:DeleteMarkerCreated is sent when a delete marker is created for a versioned object
-  - There is a separate s3:LifecycleExpiration:DeleteMarkerCreated event for versioned buckets
-- 注記: Chapter 08 cites the same page for the event types of an unversioned bucket; this entry records the ones a versioned bucket adds.
-
-### Emptying a general purpose bucket
-
-- ID: `s3-empty-bucket`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - Emptying a bucket with versioning enabled or suspended means deleting all versions of all objects, delete markers included
-
-### Advanced DynamoDB backup
-
-- ID: `backup-advanced-dynamodb`
-- URL: <https://docs.aws.amazon.com/aws-backup/latest/devguide/advanced-ddb-backup.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - AWS Backup takes periodic snapshot-based backups of DynamoDB tables; they do not replace or duplicate point-in-time recovery, and using both incurs charges for both
-  - A custom role needs AWSBackupServiceRolePolicyForBackup to back up and AWSBackupServiceRolePolicyForRestores to restore
-  - Charges for these backups appear under Backup in the bill
-
-### Restore a Amazon DynamoDB table
-
-- ID: `backup-restore-dynamodb`
-- URL: <https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-dynamodb.html>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - Restoring a DynamoDB recovery point from AWS Backup asks for a new table name
-
-### AWS Price List: Amazon DynamoDB, ap-northeast-1 (backup and restore SKUs)
-
-- ID: `aws-price-list-dynamodb-backup`
-- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - APN1-TimedPITRStorage-ByteHrs: USD 0.228 per GB-month of PITR backup storage
-  - APN1-RestoreDataSize-Bytes: USD 0.171 per GB of data restored
-  - APN1-TimedBackupStorage-ByteHrs: USD 0.114 per GB-month of on-demand backup storage
-- 注記: Offer publication date 2026-09-11T12:44:22Z.
-
-### AWS Price List: AWS Backup, ap-northeast-1
-
-- ID: `aws-price-list-backup`
-- URL: <https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - APN1-WarmStorage-ByteHrs-DynamoDB: USD 0.114 per GB-month of warm backup storage for DynamoDB
-  - APN1-Restore-WarmBytes-DynamoDB: USD 0.171 per GB restored from warm storage for DynamoDB
-- 注記: Offer publication date 2026-09-28T17:01:20Z.
-
-### Amazon S3 pricing (Replication)
-
-- ID: `s3-pricing-replication`
-- URL: <https://aws.amazon.com/s3/pricing/>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - For replication you pay for storage in the destination storage class and for replication PUT requests
-  - Inter-region data transfer is charged for Cross-Region Replication; the page lists no data transfer charge for Same-Region Replication
-- 注記: Read through a fetch tool that returned excerpts, not the full page text.
-
-### @go-to-k/cdkd 0.296.28: help output and bundled dist (import, orphan, DynamoDB provider)
-
-- ID: `cdkd-recovery`
-- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - `cdkd import --resource <logicalId>=<physicalId>` adopts an already-deployed resource into cdkd state; with at least one --resource only the listed resources are imported, and --dry-run shows the plan without writing state
-  - `cdkd orphan <construct path>` removes a resource from cdkd state without deleting the AWS resource
-  - The DynamoDB table provider applies PointInTimeRecoverySpecification through UpdateContinuousBackups and reads it back with DescribeContinuousBackups, and reads DeletionProtectionEnabled from DescribeTable
-  - Deleting a table with deletion protection needs `--remove-protection`; without it the provider does not turn protection off
-  - Dedicated providers are registered for AWS::DynamoDB::Table, AWS::S3::Bucket, AWS::S3::BucketPolicy, AWS::IAM::Role, AWS::IAM::Policy, AWS::Lambda::Function, and AWS::Logs::LogGroup; none is registered for the AWS::Backup types
-- 注記: Read from the installed package: `cdkd import --help`, `cdkd orphan --help`, `cdkd --help`, and the bundled dist/provider-classes and dist/program files. Nothing was run against AWS.
-
-### Cloudflare D1: Time Travel and backups
-
-- ID: `cloudflare-d1-time-travel`
-- URL: <https://developers.cloudflare.com/d1/reference/time-travel/>
-- 確認日: 2026-10-12
-- 参照する章: 13, 22
-- この出典が支える主張:
-  - Time Travel is always on and restores a database to any minute within the last 30 days (7 days on the Workers Free plan)
-  - Database history and restoring incur no additional cost
-  - A restore is destructive and overwrites the database in place; in-flight queries are cancelled; the restore returns a bookmark that undoes it
-  - Time Travel cannot yet clone or fork a database into a new copy
-
-### Cloudflare R2: S3 API compatibility
-
-- ID: `cloudflare-r2-s3-api`
-- URL: <https://developers.cloudflare.com/r2/api/s3/api/>
-- 確認日: 2026-10-12
-- 参照する章: 22
-- この出典が支える主張:
-  - The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented
-
-### celld source
-
-- ID: `celld-source`
-- URL: <https://github.com/denoland/celld>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - The repository describes celld as self-hosted, distributed Durable Objects, under Apache-2.0, owned by denoland
-  - On 2026-10-12 the default branch pointed at commit 90b43017241f81189453d326d05948f388b34652, the same commit as the v0.6.2 tag
-  - Pull requests are disabled; patches go by email
-- 注記: Read through the GitHub API (repository, tags, releases, tree) and the raw files of the default branch.
-
-### celld limitations
-
-- ID: `celld-limitations`
-- URL: <https://github.com/denoland/celld/blob/main/docs/limitations.md>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - celld v0.6.2 is a beta release
-  - A fleet runs one application; there is no account service, multi-tenant scheduler, or managed ingress
-  - celld does not terminate TLS; peer traffic is plaintext HTTP, and the fleet HMAC does not encrypt
-  - The installer supplies binaries for Linux x86-64, Linux ARM64, and Apple Silicon
-
-### celld security
-
-- ID: `celld-security`
-- URL: <https://github.com/denoland/celld/blob/main/docs/security.md>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - v0.6.2 is a beta release, not safe for hostile multi-tenant use; only the latest release receives security fixes
-  - celld opens two HTTP listeners and terminates TLS on neither; --internal-listen serves the peer protocol and the operator API
-  - Most operator routes on the internal listener have no request authentication, including POST /shutdown and /state
-  - The public listener reserves only /.well-known/celld/health: 200 with {"ok":true} when healthy, 503 otherwise
-  - The fleet bucket is the root of authority; a holder of the bucket credentials controls the fleet
-  - The operator API is an alpha interface; a release can change its paths or response formats
-
-### celld guarantees
-
-- ID: `celld-guarantees`
-- URL: <https://celld.dev/docs/guarantees/>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - The page exists and carries the same guarantees text as docs/guarantees.md in the repository
-- 注記: Read through a summarizing fetch; the claims this chapter relies on are taken from the repository file at the v0.6.2 tag (celld-guarantees-v062).
-
-### celld documentation
-
-- ID: `celld-docs`
-- URL: <https://celld.dev/docs/>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - The documentation site lists pages for limitations, security, guarantees, testing, telemetry, Cloudflare compatibility, and one page per service
-- 注記: Read through a summarizing fetch; the claims this chapter relies on are taken from the repository files at the v0.6.2 tag.
-
-### celld v0.6.2: README
-
-- ID: `celld-readme-v062`
-- URL: <https://github.com/denoland/celld/blob/v0.6.2/README.md>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - celld runs a Cloudflare Workers application on your own machines and stores long-term state in an S3-compatible, Google Cloud Storage, or Azure Blob Storage bucket
-  - A node is one celld process; nodes that share one bucket are a fleet; a conditional bucket write gives a node the ownership of a cell
-  - celld uses the standard AWS credential chain; a node is started with --bucket, --listen, --internal-listen, and --advertise
-  - The container example sets CELLD_WATCH to a directory on a persistent volume
-  - One node proves each write through the bucket; with a second node the write finishes once that node holds it on disk
-  - Put every advertised address on a trusted private network or an encrypted overlay; celld rejects a literal public IP unless --unsafe-public-advertise is given
-  - Treat access to the bucket and its credentials as fleet administrator access
-  - The installer downloads the binary from GitHub releases; provenance is verifiable with gh attestation verify
-
-### celld v0.6.2: documentation (operate, shut down, upgrade notes, environment variables)
-
-- ID: `celld-docs-v062`
-- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/README.md>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - CELLD_DURABILITY defaults to fleet; a one-node fleet waits for the bucket on every write; a fleet that loses all but one node falls back to the bucket and stays correct
-  - celld shuts down gracefully on SIGTERM or SIGINT: health reports 503, accepted requests finish, and the node hands its cells off to a peer; POST /shutdown on the internal listener starts the same handoff
-  - CELLD_SHUTDOWN_TOTAL_MS defaults to 40000; the orchestrator stop grace (systemd TimeoutStopSec) must be above it or SIGKILL can interrupt the handoff
-  - To roll out a new version: stop each node with SIGTERM, wait for its replacement to report healthy, then move to the next node
-  - During a rolling update, wait for restoring=0 on every node (celld diagnose) before restarting the next
-  - A new process does not report healthy until the fleet settles; CELLD_READY_FLEET_GATE_MS defaults to 120000
-  - Upgrade notes: v0.1.0 to v0.2.0 stop all; v0.2.1 to v0.3.0 rolling; v0.3.0 to v0.4.0 stop all; v0.4.0 to v0.4.1 rolling; v0.5.1 to v0.6.0 stop all with fleet durability; v0.6.0 to v0.6.1 rolling; v0.6.1 to v0.6.2 rolling
-  - The node lease lives CELLD_TTL_MS (default 10000) and renews at one third of that; the fleet sample is read every CELLD_REBALANCE_INTERVAL_MS (default 5000); deploy/current.json is read every CELLD_DEPLOY_POLL_S (default 30)
-  - CELLD_BUCKET, AWS_REGION, CELLD_ADDR, CELLD_INTERNAL_ADDR, CELLD_ADVERTISE, and CELLD_WATCH are the environment forms of the node settings; CELLD_NODE is an explicit node-session ID
-  - A bucket value can add a key prefix (s3://BUCKET/PREFIX)
-  - celld deploy needs esbuild on PATH for Worker code; CELLD_ESBUILD overrides the path; a running node adopts a new deployment without a restart
-  - celld diagnose reads the node leases and probes each live peer without taking a lease; celld cell list prints one Class:ID scope per line
-  - One 8 GB node holds 1,000 resident cells
-  - celld does not scale itself; an external system starts and stops the nodes
-
-### celld v0.6.2: what celld guarantees
-
-- ID: `celld-guarantees-v062`
-- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/guarantees.md>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - Two promises: exactly one node serves a cell at a time, and an acknowledged write is never lost; both require a bucket with working conditional writes and ranged reads, and a supervisor that restarts the process
-  - The qualified stores are Amazon S3, Cloudflare R2, Tigris, Google Cloud Storage, and Azure Blob Storage; the release tests run against R2, and the S3 path uses the same client and headers
-  - The supervisor must restart without an attempt limit and wait at least one lease lifetime between attempts
-  - Each cell has one ownership record in the bucket, naming the owner's session and a fencing epoch, acquired by conditional create or compare-and-swap
-  - In fleet mode the owner sends each write to one or two followers and every follower must fsync it; a fleet needs two running nodes for a fleet proof; a fleet of three or more holds three copies of an acknowledged write
-  - In fleet mode celld can acknowledge a write before its bucket upload completes; a follower disk can hold acknowledged writes that the bucket does not yet hold
-  - Recovery limits: a follower's HTTP error can block recovery and startup; a deleted final batch is undetectable if nothing later records its range; a mixed-version tail can stall recovery
-  - A node whose lease expires fences itself, logs a line starting with SELF-FENCE:, and exits with code 3; only a restart returns it
-  - celld reserves the key prefixes probe/, cells/, nodes/, node-cells/, fleet/, deploy/, deploy-blobs/, log/, wake/, and telemetry/
-  - The v0.4.1 upgrade procedure: stop every node and wait for every lease to expire, back up the bucket and node data keeping node names, peer addresses, and data directories; to roll back, restore the full stopped-fleet backup, which loses writes made after it
-  - Each node runs the storage test (four conditional writes and a ranged read) before it serves, and cannot disable it
-
-### celld v0.6.2: testing
-
-- ID: `celld-testing-v062`
-- URL: <https://github.com/denoland/celld/blob/v0.6.2/docs/testing.md>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - The coordination protocol is specified in TLA+ and exercised by deterministic simulation; the model grants a linearizable object store
-  - Live-fleet fault scenarios include SIGKILL mid-write-stream, freezing an owner, cutting a node off from the bucket, and stopping a host; a verification pass fetches each cell through different nodes
-  - A cell can be briefly unavailable while ownership moves
-  - A fleet at its resident limit has no space for a lost node's cells
-
-### celld releases (GitHub API)
-
-- ID: `celld-releases`
-- URL: <https://api.github.com/repos/denoland/celld/releases>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - v0.6.2 was published 2026-10-07 and is the latest of 11 releases; none is marked prerelease
-  - Each release carries celld-aarch64-unknown-linux-gnu.gz, celld-x86_64-unknown-linux-gnu.gz, and celld-aarch64-apple-darwin.gz with a sha256 digest
-  - v0.6.2 release notes: upgrading from v0.6.1 can use a rolling update
-- 注記: The six archives of v0.6.2 and v0.6.1 were downloaded on 2026-10-12 and their SHA-256 matched the published digests. None was unpacked or run.
-
-### celld installer script
-
-- ID: `celld-install-script`
-- URL: <https://celld.dev/install.sh>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - The installer downloads celld-<target>.gz from the GitHub release named by CELLD_VERSION, decompresses it, and switches one symlink
-  - It relies on gzip's CRC for corruption and on the release attestation for provenance; it carries no checksum of its own
-- 注記: Read as text, not run.
-
-### celld v0.6.2: source (cli, fleet diagnostics, bucket client)
-
-- ID: `celld-source-v062`
-- URL: <https://github.com/denoland/celld/tree/v0.6.2/crates/celld>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - main/cli.rs: with no arguments and CELLD_BUCKET set, celld runs a node from the environment; the help text lists the flags and variables
-  - main/cli.rs: celld diagnose accepts --json, --read-only, and --peer
-  - fleet.rs: a diagnose row is {verdict, check, detail}; a live peer is 'peer <node> at <addr>' with restoring=<n> in the detail; an expired lease is a skip row
-  - main.rs: without CELLD_WATCH the data directory is a celld-<pid> directory under the system temporary directory; without CELLD_NODE the node-session ID is random
-  - bucket.rs: large writes go through multipart upload
-  - protocol.rs documents the deployment objects only; the ownership record format is not a documented interface
-- 注記: Read as text at the tag. Nothing was compiled or run.
-
-### celld v0.6.2: counter example
-
-- ID: `celld-example-counter`
-- URL: <https://github.com/denoland/celld/tree/v0.6.2/examples/counter>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - One Durable Object class, Counter; the Worker picks the instance from the ?name= query parameter
-  - Every request reads n, adds 1, stores it, and answers JSON {n, url}
-
-### StopInstances (Amazon EC2 API reference)
-
-- ID: `ec2-api-stop-instances`
-- URL: <https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_StopInstances.html>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - By default a stop includes a graceful OS shutdown; SkipOsShutdown bypasses it and might result in data loss or skipped shutdown scripts
-  - Force first attempts a graceful shutdown
-  - A stopped instance retains its root volume and data volumes, and volume usage is still charged
-
-### Data protection in Amazon EC2
-
-- ID: `ec2-data-protection-transit`
-- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/data-protection.html>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - Some instance types automatically encrypt in-transit traffic between instances in the same VPC; the list includes M7g, C7g, and R7g and does not include T4g
-  - All traffic between Availability Zones is encrypted at the physical layer
-  - It is the customer's responsibility to use an encryption protocol such as TLS for sensitive data in transit
-
-### Use instance metadata to manage your EC2 instance
-
-- ID: `ec2-instance-metadata-categories`
-- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - local-ipv4 is the private IPv4 address of the instance (the device with device number 0)
-
-### Access instance metadata for an EC2 instance
-
-- ID: `ec2-imds-retrieval`
-- URL: <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - IMDSv2: a PUT to /latest/api/token with X-aws-ec2-metadata-token-ttl-seconds returns a token; requests then send X-aws-ec2-metadata-token
-  - User data is limited to 16 KB before base64 encoding
-  - With curl -f, an IMDS error becomes a non-zero exit
-
-### Uploading and copying objects using multipart upload in Amazon S3
-
-- ID: `s3-mpu-permissions`
-- URL: <https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - Creating, uploading parts of, and completing a multipart upload need s3:PutObject; stopping one needs s3:AbortMultipartUpload
-  - Parts of an upload that was never completed or stopped are billed; a lifecycle rule with AbortIncompleteMultipartUpload removes them
-
-### aws s3 sync (AWS CLI reference)
-
-- ID: `aws-cli-s3-sync`
-- URL: <https://docs.aws.amazon.com/cli/latest/reference/s3/sync.html>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - sync recursively copies new and updated files from the source to the destination
-  - --delete removes files that exist in the destination but not in the source; --dryrun displays the operations without running them
-
-### systemd v252: systemd.service(5), Restart= and RestartSec=
-
-- ID: `systemd-service-restart-always`
-- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.service.xml>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - Restart=always restarts the service whether it exited cleanly, was terminated by a signal, or hit a timeout
-  - RestartSec= is the time to sleep before restarting; it defaults to 100ms
-- 注記: The systemd version on Amazon Linux 2023 was not checked on an instance.
-
-### systemd v252: systemd.unit(5), StartLimitIntervalSec=
-
-- ID: `systemd-unit-start-limit-off`
-- URL: <https://github.com/systemd/systemd/blob/v252/man/systemd.unit.xml>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - StartLimitIntervalSec= may be set to 0 to disable any kind of rate limiting
-  - A unit configured for Restart= that reaches the start limit is not restarted any more
-- 注記: The systemd version on Amazon Linux 2023 was not checked on an instance.
-
-### @go-to-k/cdkd 0.296.28 (npm package, dist)
-
-- ID: `cdkd-package-0-296-28`
-- URL: <https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28>
-- 確認日: 2026-10-12
-- 参照する章: 24
-- この出典が支える主張:
-  - AWS::EC2::SecurityGroupIngress is registered with the EC2 provider; its handled properties include GroupId, IpProtocol, FromPort, ToPort, Description, and SourceSecurityGroupId
-  - AWS::EC2::SecurityGroupEgress is not registered
-  - The S3 bucket provider handles LifecycleConfiguration, OwnershipControls, PublicAccessBlockConfiguration, and BucketEncryption
-- 注記: Read from the installed package's dist directory. Nothing was run against AWS.
 
 ## 未再確認の出典（後続章の調査の出発点）
 

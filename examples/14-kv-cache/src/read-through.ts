@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { CacheStore } from "./stores.ts";
 
@@ -13,7 +13,7 @@ export type Loaded<T> = {
 export type ReadThroughOptions<T> = {
   store: CacheStore;
   /** What a cached value must look like. Anything else in the store is a miss. */
-  schema: z.ZodType<T>;
+  schema: v.GenericSchema<unknown, T>;
   ttlMs: number;
   /** 0.2 stretches each TTL by up to 20 %, so entries written together do not expire together. */
   jitter: number;
@@ -45,7 +45,7 @@ export function jitteredTtl(ttlMs: number, jitter: number, random: () => number)
 
 export function createReadThrough<T>(options: ReadThroughOptions<T>): ReadThrough<T> {
   const { store, now } = options;
-  const envelope = z.object({ loadedAt: z.number(), value: options.schema });
+  const envelope = v.object({ loadedAt: v.number(), value: options.schema });
   const inFlight = new Map<string, Promise<Loaded<T>>>();
   const report = (error: unknown): void => options.onStoreError?.(error);
 
@@ -58,9 +58,9 @@ export function createReadThrough<T>(options: ReadThroughOptions<T>): ReadThroug
       if (raw === undefined) {
         return undefined;
       }
-      const parsed = envelope.safeParse(JSON.parse(raw));
+      const parsed = v.safeParse(envelope, JSON.parse(raw));
       return parsed.success
-        ? { value: parsed.data.value, source: "cache", loadedAt: parsed.data.loadedAt }
+        ? { value: parsed.output.value, source: "cache", loadedAt: parsed.output.loadedAt }
         : undefined;
     } catch (error) {
       report(error);

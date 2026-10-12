@@ -22,9 +22,14 @@
       "Lambda"
     ],
     "samplePath": "examples/21-security",
-    "writing": { "ja": "complete", "en": "complete" },
-    "sourceRevision": 1,
-    "translatedRevision": { "en": 1 },
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 2,
+    "translatedRevision": {
+      "en": 2
+    },
     "checkedAt": "2026-10-12",
     "sourceIds": [
       "iam-eventual-consistency",
@@ -849,6 +854,7 @@
       "id": "21.iam-lint",
       "sources": [
         "examples/21-security/src/iam-lint.ts",
+        "examples/21-security/src/json-object.ts",
         "examples/21-security/test/iam-lint.test.ts",
         "examples/21-security/scripts/iam-lint.ts",
         "examples/21-security/policies/iam-lint-exceptions.json"
@@ -1005,7 +1011,12 @@
       "currency": "USD",
       "unit": "Secrets",
       "tiers": [
-        { "from": 0, "to": null, "usd": "0.4000000000", "description": "$0.40 per Secret" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4000000000",
+          "description": "$0.40 per Secret"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:46:10Z",
@@ -1304,7 +1315,11 @@
           "quantity": 1,
           "basis": "1 secret for the whole month"
         },
-        { "priceId": "kms.key", "quantity": 1, "basis": "1 customer managed key, one key version" }
+        {
+          "priceId": "kms.key",
+          "quantity": 1,
+          "basis": "1 customer managed key, one key version"
+        }
       ]
     },
     {
@@ -1331,8 +1346,16 @@
         ]
       },
       "items": [
-        { "priceId": "waf.global.webacl", "quantity": 1, "basis": "1 web ACL for the whole month" },
-        { "priceId": "waf.global.rule", "quantity": 3, "basis": "3 rules for the whole month" },
+        {
+          "priceId": "waf.global.webacl",
+          "quantity": 1,
+          "basis": "1 web ACL for the whole month"
+        },
+        {
+          "priceId": "waf.global.rule",
+          "quantity": 3,
+          "basis": "3 rules for the whole month"
+        },
         {
           "priceId": "waf.global.request",
           "quantity": 1000000,

@@ -1,6 +1,6 @@
 ---
 title: "13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 # 13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2
@@ -32,7 +32,7 @@ mark db
 ```figure
 caption: The Lambda function opens the connection to the cluster itself. Its database role is notes_api, and the password is an IAM-signed token made inside the function
 node role: execution role | dsql:DbConnect on this one cluster, its own log group
-node app: Hono app
+node app: app | src/app.ts
 node svc: NoteService
 node repo: SqlNoteRepository
 node tx: transaction runner | retries on SQLSTATE 40001

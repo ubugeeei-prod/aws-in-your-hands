@@ -7,6 +7,7 @@ import {
   sendRedirect,
   setCookie,
 } from "h3";
+import * as v from "valibot";
 
 import {
   isSameOrigin,
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
   if (!isSameOrigin(getRequestHeader(event, "origin"), getRequestHeader(event, "host"))) {
     throw createError({ statusCode: 403, statusMessage: "Cross-site form post" });
   }
-  const form = signInSchema.safeParse(await readBody(event));
+  const form = v.safeParse(signInSchema, await readBody(event));
   if (!form.success) {
     throw createError({
       statusCode: 400,
@@ -34,10 +35,10 @@ export default defineEventHandler(async (event) => {
   }
 
   // A real BFF exchanges an authorization code for tokens here (chapter 06's token endpoint).
-  const { accessToken } = context.identity.signIn(form.data.name);
+  const { accessToken } = context.identity.signIn(form.output.name);
   const sessionId = context.newSecret();
   context.sessions.put(sessionId, {
-    userName: form.data.name,
+    userName: form.output.name,
     accessToken,
     expiresAt: context.now().getTime() + SESSION_TTL_SECONDS * 1000,
   });

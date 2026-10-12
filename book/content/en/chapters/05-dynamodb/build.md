@@ -138,7 +138,7 @@ When there may be more, DynamoDB adds `LastEvaluatedKey` to the response. Pass t
 
 <<< @/examples/05-dynamodb/src/app.ts{list}
 
-A page holds at most 20 notes, and a larger `limit` is refused with a 400. A list carries only the five fields of `noteSummarySchema` and leaves the body out. As in chapter 04, this keeps a single response under 20 KiB. When you need the body, you fetch it with `GET /notes/:id`. `version` is in the summary so that a client can tell whether a note has changed since it fetched the list.
+A value in a query string arrives as text, so `limit` is turned into a number before it is checked for being an integer and for its range. A page holds at most 20 notes, and a larger `limit` is refused with a 400. A list carries only the five fields of `noteSummarySchema` and leaves the body out. As in chapter 04, this keeps a single response under 20 KiB. When you need the body, you fetch it with `GET /notes/:id`. `version` is in the summary so that a client can tell whether a note has changed since it fetched the list.
 
 The body is dropped in `app.ts`, where the response is assembled. The repository still reads each item with its body, so the list reads as much from DynamoDB as it did when it returned bodies.
 

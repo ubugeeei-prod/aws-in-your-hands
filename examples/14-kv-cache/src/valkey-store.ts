@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { CacheEntry, CacheStore, CounterStore, IncrementResult, WindowRef } from "./stores.ts";
 
@@ -49,16 +49,19 @@ export class ValkeyCounterStore implements CounterStore {
 
   async incrementBelow(window: WindowRef, cap: number): Promise<IncrementResult> {
     const valkey = await this.#valkey();
-    const reply = z
-      .number()
-      .parse(await valkey.eval(INCREMENT_BELOW, 1, counterKey(window), cap, window.expiresAt));
+    const reply = v.parse(
+      v.number(),
+      await valkey.eval(INCREMENT_BELOW, 1, counterKey(window), cap, window.expiresAt),
+    );
     return reply < 0 ? { accepted: false } : { accepted: true, count: reply };
   }
 
   async read(window: Pick<WindowRef, "subject" | "windowStart">): Promise<number> {
     const valkey = await this.#valkey();
     const reply = await valkey.get(counterKey(window));
-    return reply === null ? 0 : z.coerce.number().int().parse(reply);
+    return reply === null
+      ? 0
+      : v.parse(v.pipe(v.string(), v.transform(Number), v.integer()), reply);
   }
 }
 

@@ -1,6 +1,6 @@
 ---
 title: "11 Network: VPC, Subnets, NAT, and Endpoints"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 11 Network: VPC, Subnets, NAT, and Endpoints
@@ -83,11 +83,11 @@ Once you know how the parts work, production code is shorter with `Vpc`, given `
 
 The first thing you decide for a VPC is its address range, written like `10.20.0.0/16` (CIDR notation). `/16` means "the first 16 bits are shared", so the range holds 65,536 addresses.
 
-The settings come in through a Zod schema.
+The settings come in through a Valibot schema.
 
 <<< @/examples/11-network/src/config.ts{schema}
 
-The schema holds several conditions that types alone can't guard. The type of `cidr` is `string`, but so is `"10.20.1.0/16"`, which isn't the first address of its range, and so is `"8.8.0.0/16"`, which isn't a private range. The schema rejects both. It also checks that the subnets are small enough for the number of zones.
+The schema holds several conditions that types alone can't guard. The type of `cidr` is `string`, but so is `"10.20.1.0/16"`, which isn't the first address of its range, and so is `"8.8.0.0/16"`, which isn't a private range. The schema rejects both. It also checks that the subnets are small enough for the number of zones. The conditions that compare several fields sit together in `v.rawCheck`, which runs after each field has passed its own checks and reports a problem under the name of the field it belongs to.
 
 You give zones by name (`ap-northeast-1a`). In the Tokyo Region, though, for accounts created before November 2025, the same name points to a different location in each account. This command shows the names your account can use (it needs credentials).
 

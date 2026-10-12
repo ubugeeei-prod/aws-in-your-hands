@@ -1,5 +1,5 @@
-import { serve } from "@hono/node-server";
-import { Hono } from "hono";
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
+import { route, router } from "@aih/example-04-http-api/src/http/router.ts";
 
 import { composeApp } from "./compose.ts";
 import { handleSesMessage } from "./events.ts";
@@ -12,18 +12,22 @@ if (outbox === undefined) {
 }
 
 // Stand-ins for what only exists in AWS: the inbox, and SES reporting back.
-const dev = new Hono()
-  .get("/dev/outbox", (c) => c.json({ sent: outbox.sent }))
-  // The body is one SES event, as it appears in the SNS notification's Message.
-  .post("/dev/ses-events", async (c) =>
-    c.json(await handleSesMessage({ store, log }, await c.req.text())),
-  )
-  .route("/", app);
+// Every other request goes to the app, the same one that runs on Lambda.
+const dev = router<void>(
+  [
+    route("GET", "/dev/outbox", () => Response.json({ sent: outbox.sent })),
+    // The body is one SES event, as it appears in the SNS notification's Message.
+    route("POST", "/dev/ses-events", async (request) =>
+      Response.json(await handleSesMessage({ store, log }, await request.text())),
+    ),
+  ],
+  (request) => app(request),
+);
 
 const port = Number(process.env["PORT"] ?? 8787);
-serve({ fetch: dev.fetch, port }, (info) => {
+nodeServer((request) => dev(request)).listen(port, () => {
   console.log(
-    `mail API on http://localhost:${info.port} (from ${env.FROM_ADDRESS}, nothing is really sent)`,
+    `mail API on http://localhost:${port} (from ${env.FROM_ADDRESS}, nothing is really sent)`,
   );
 });
 // #endregion dev

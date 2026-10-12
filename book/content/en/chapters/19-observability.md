@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 # 19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics
@@ -21,7 +21,7 @@ You need [chapter 04](/en/chapters/04-http-api.md) first. The code is in `exampl
 caption: Metrics come off the path a request takes, and an alarm tells you by email through SNS
 node client: Browser / curl
 node api: API Gateway HTTP API
-node fn: Lambda | Hono app from chapter 05
+node fn: Lambda | The app from chapter 05
 node metrics: CloudWatch Metrics | Count, 4xx, 5xx, Latency
 node table: DynamoDB table
 node alarms: Alarms | 5xx rate, p95 latency

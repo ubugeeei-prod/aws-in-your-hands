@@ -1,37 +1,46 @@
-import { z } from "zod";
+import * as v from "valibot";
 
-const localized = z.object({ ja: z.string().min(1), en: z.string().min(1) });
-const localizedList = z.object({
-  ja: z.array(z.string().min(1)).min(1),
-  en: z.array(z.string().min(1)).min(1),
+const text = v.pipe(v.string(), v.minLength(1));
+const isoDate = v.pipe(v.string(), v.isoDate());
+const positiveInteger = v.pipe(v.number(), v.integer(), v.minValue(1));
+
+const localized = v.object({ ja: text, en: text });
+const localizedList = v.object({
+  ja: v.pipe(v.array(text), v.minLength(1)),
+  en: v.pipe(v.array(text), v.minLength(1)),
 });
-const chapterId = z.string().regex(/^\d{2}$/);
+const chapterId = v.pipe(v.string(), v.regex(/^\d{2}$/));
 
 /** How far the prose has come. Says nothing about whether the code was run. */
 export const writingStates = ["planned", "draft", "complete"] as const;
 
-const base = z.object({
+const base = v.object({
   id: chapterId,
-  slug: z.string().regex(/^[a-z0-9-]+$/),
+  slug: v.pipe(v.string(), v.regex(/^[a-z0-9-]+$/)),
   title: localized,
-  prerequisites: z.array(chapterId),
-  services: z.array(z.string()),
-  samplePath: z.string().nullable(),
-  sourceIds: z.array(z.string()),
+  prerequisites: v.array(chapterId),
+  services: v.array(v.string()),
+  samplePath: v.nullable(v.string()),
+  sourceIds: v.array(v.string()),
 });
 
-const written = base.extend({
-  writing: z.object({ ja: z.enum(["draft", "complete"]), en: z.enum(["draft", "complete"]) }),
+const written = v.object({
+  ...base.entries,
+  writing: v.object({
+    ja: v.picklist(["draft", "complete"]),
+    en: v.picklist(["draft", "complete"]),
+  }),
   /** Bumped whenever the Japanese source text changes in meaning. */
-  sourceRevision: z.number().int().positive(),
+  sourceRevision: positiveInteger,
   /** The source revision each translation was made from. */
-  translatedRevision: z.object({ en: z.number().int().positive() }),
-  checkedAt: z.iso.date(),
+  translatedRevision: v.object({ en: positiveInteger }),
+  checkedAt: isoDate,
 });
 
-const planned = base.extend({
-  writing: z.object({ ja: z.literal("planned"), en: z.literal("planned") }),
-  outline: z.object({
+const planned = v.object({
+  ...base.entries,
+  writing: v.object({ ja: v.literal("planned"), en: v.literal("planned") }),
+  outline: v.object({
     outcome: localized,
     architecture: localized,
     topics: localizedList,
@@ -40,38 +49,38 @@ const planned = base.extend({
   }),
 });
 
-export const chapterSchema = z.union([written, planned]);
-export type Chapter = z.infer<typeof chapterSchema>;
-export type PlannedChapter = z.infer<typeof planned>;
-export type WrittenChapter = z.infer<typeof written>;
+export const chapterSchema = v.union([written, planned]);
+export type Chapter = v.InferOutput<typeof chapterSchema>;
+export type PlannedChapter = v.InferOutput<typeof planned>;
+export type WrittenChapter = v.InferOutput<typeof written>;
 
-export const manifestSchema = z.object({
-  bookRevision: z.string(),
-  paths: z.record(z.string(), z.array(chapterId)),
-  chapters: z.array(chapterSchema),
+export const manifestSchema = v.object({
+  bookRevision: v.string(),
+  paths: v.record(v.string(), v.array(chapterId)),
+  chapters: v.array(chapterSchema),
 });
-export type Manifest = z.infer<typeof manifestSchema>;
+export type Manifest = v.InferOutput<typeof manifestSchema>;
 
-export const sourcesSchema = z.object({
-  sources: z.array(
-    z.object({
-      id: z.string(),
-      url: z.url(),
-      title: z.string(),
+export const sourcesSchema = v.object({
+  sources: v.array(
+    v.object({
+      id: v.string(),
+      url: v.pipe(v.string(), v.url()),
+      title: v.string(),
       /** null: listed for later use, not re-read while writing. */
-      checkedAt: z.iso.date().nullable(),
-      supports: z.array(z.string()).min(1),
-      note: z.string().optional(),
+      checkedAt: v.nullable(isoDate),
+      supports: v.pipe(v.array(v.string()), v.minLength(1)),
+      note: v.optional(v.string()),
     }),
   ),
 });
 
-export const glossarySchema = z.object({
-  terms: z.array(
-    z.object({
-      id: z.string(),
-      ja: z.string(),
-      en: z.string(),
+export const glossarySchema = v.object({
+  terms: v.array(
+    v.object({
+      id: v.string(),
+      ja: v.string(),
+      en: v.string(),
       firstUse: chapterId,
       definition: localized,
     }),
@@ -81,53 +90,53 @@ export const glossarySchema = z.object({
 /** Whether the code was run, and where. Independent of the writing state. */
 export const verificationStates = ["unverified", "local", "aws"] as const;
 
-export const sectionMapSchema = z.looseObject({
-  sections: z.array(
-    z.object({
+export const sectionMapSchema = v.looseObject({
+  sections: v.array(
+    v.object({
       /** Matches a `<!-- section: ID -->` marker present in both locales. */
-      id: z.string().regex(/^[a-z0-9]+\.[a-z0-9-]+$/),
+      id: v.pipe(v.string(), v.regex(/^[a-z0-9]+\.[a-z0-9-]+$/)),
       /** Repository paths that the section explains, each at the book revision. */
-      sources: z.array(z.string()),
+      sources: v.array(v.string()),
       /** `vp run` tasks that start or check what the section explains. */
-      tasks: z.array(z.string()),
-      boundary: z.enum(["none", "local", "cloud", "local+cloud"]),
-      criteria: z.array(z.enum(["type", "test", "local-dx", "drift", "distributed", "cost"])),
-      verification: z.enum(verificationStates),
+      tasks: v.array(v.string()),
+      boundary: v.picklist(["none", "local", "cloud", "local+cloud"]),
+      criteria: v.array(v.picklist(["type", "test", "local-dx", "drift", "distributed", "cost"])),
+      verification: v.picklist(verificationStates),
     }),
   ),
 });
-export type SectionMap = z.infer<typeof sectionMapSchema>;
+export type SectionMap = v.InferOutput<typeof sectionMapSchema>;
 
-export const validationSchema = z.object({
-  environment: z.object({
-    os: z.string(),
-    cpu: z.string(),
-    nix: z.string(),
-    recordedAt: z.iso.date(),
+export const validationSchema = v.object({
+  environment: v.object({
+    os: v.string(),
+    cpu: v.string(),
+    nix: v.string(),
+    recordedAt: isoDate,
   }),
-  records: z.array(
-    z.object({
-      scope: z.string(),
-      command: z.string(),
-      kind: z.enum(["local", "aws"]),
-      status: z.enum(["passed", "failed", "not-run"]),
-      ranAt: z.iso.date().nullable(),
+  records: v.array(
+    v.object({
+      scope: v.string(),
+      command: v.string(),
+      kind: v.picklist(["local", "aws"]),
+      status: v.picklist(["passed", "failed", "not-run"]),
+      ranAt: v.nullable(isoDate),
       note: localized,
     }),
   ),
-  open: z.array(z.object({ id: z.string(), summary: localized, resume: localized })),
+  open: v.array(v.object({ id: v.string(), summary: localized, resume: localized })),
 });
 
-export const toolchainSchema = z.object({
-  recordedAt: z.iso.date(),
-  verifiedPlatforms: z.array(z.string()),
-  unverifiedPlatforms: z.array(z.string()),
-  tools: z.array(
-    z.object({
-      name: z.string(),
-      version: z.string(),
-      providedBy: z.string(),
-      pinnedIn: z.string(),
+export const toolchainSchema = v.object({
+  recordedAt: isoDate,
+  verifiedPlatforms: v.array(v.string()),
+  unverifiedPlatforms: v.array(v.string()),
+  tools: v.array(
+    v.object({
+      name: v.string(),
+      version: v.string(),
+      providedBy: v.string(),
+      pinnedIn: v.string(),
     }),
   ),
 });

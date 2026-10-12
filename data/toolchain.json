@@ -100,14 +100,8 @@
       "pinnedIn": "examples/03-spa/package.json, pnpm-lock.yaml"
     },
     {
-      "name": "Hono",
-      "version": "4.13.13",
-      "providedBy": "pnpm",
-      "pinnedIn": "examples/04-http-api/package.json, pnpm-lock.yaml"
-    },
-    {
-      "name": "Zod",
-      "version": "4.6.5",
+      "name": "Valibot",
+      "version": "1.5.0",
       "providedBy": "pnpm",
       "pinnedIn": "package.json files, pnpm-lock.yaml"
     },

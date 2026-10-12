@@ -1,18 +1,21 @@
-import { z } from "zod";
+import * as v from "valibot";
+
+import { utcTimestamp } from "@aih/example-04-http-api/src/timestamp.ts";
 
 // #region record
-const moment = z.iso.datetime().nullable();
-const count = z.number().int().nonnegative().nullable();
+// Chapter 08's check: UTC only, and a day that exists. The summary subtracts these.
+const moment = v.nullable(utcTimestamp);
+const count = v.nullable(v.pipe(v.number(), v.safeInteger(), v.minValue(0)));
 
 // Every field starts as null and is filled in during the drill. A field that
 // stays null is a step that did not happen, and the summary says so.
-export const drillRecordSchema = z.object({
-  name: z.string().min(1),
-  region: z.string().min(1),
-  tableName: z.string().nullable(),
-  restoredTableName: z.string().nullable(),
-  bucketName: z.string().nullable(),
-  timeline: z.object({
+export const drillRecordSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1)),
+  region: v.pipe(v.string(), v.minLength(1)),
+  tableName: v.nullable(v.string()),
+  restoredTableName: v.nullable(v.string()),
+  bucketName: v.nullable(v.string()),
+  timeline: v.object({
     /** The last write you know was good. Restoring to before this loses it. */
     lastGoodWriteAt: moment,
     accidentAt: moment,
@@ -29,7 +32,7 @@ export const drillRecordSchema = z.object({
     /** The deployed function read the restored data and found nothing broken. */
     serviceConfirmedAt: moment,
   }),
-  counts: z.object({
+  counts: v.object({
     notesReturning: count,
     notesLost: count,
     notesRolledBack: count,
@@ -37,9 +40,9 @@ export const drillRecordSchema = z.object({
     findingsLeftover: count,
     repaired: count,
   }),
-  notes: z.string(),
+  notes: v.string(),
 });
-export type DrillRecord = z.infer<typeof drillRecordSchema>;
+export type DrillRecord = v.InferOutput<typeof drillRecordSchema>;
 export type Moment = keyof DrillRecord["timeline"];
 export type Count = keyof DrillRecord["counts"];
 // #endregion record
@@ -70,7 +73,7 @@ export function summarize(record: DrillRecord): DrillSummary {
     detectionSeconds: seconds(t.accidentAt, t.detectedAt),
     tableRestoreSeconds: seconds(t.restoreRequestedAt, t.tableActiveAt),
     skewSeconds: skew === null ? null : Math.abs(skew),
-    missing: drillRecordSchema.shape.timeline.keyof().options.filter((name) => t[name] === null),
+    missing: v.keyof(drillRecordSchema.entries.timeline).options.filter((name) => t[name] === null),
   };
 }
 // #endregion summary

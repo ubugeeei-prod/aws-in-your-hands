@@ -4,7 +4,7 @@ import {
   type IvsClient,
   StopStreamCommand,
 } from "@aws-sdk/client-ivs";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type GetStreamOutcome, interpretGetStream, type StreamStatus } from "./stream.ts";
 
@@ -29,12 +29,12 @@ export async function getStreamStatus(
 }
 // #endregion get-stream
 
-const streamKeySchema = z.object({ value: z.string().regex(/^sk_/) });
+const streamKeySchema = v.object({ value: v.pipe(v.string(), v.regex(/^sk_/)) });
 
 /** The secret itself. Callers decide whether it may reach a terminal. */
 export async function getStreamKeyValue(client: IvsClient, streamKeyArn: string): Promise<string> {
   const response = await client.send(new GetStreamKeyCommand({ arn: streamKeyArn }));
-  return streamKeySchema.parse(response.streamKey).value;
+  return v.parse(streamKeySchema, response.streamKey).value;
 }
 
 /** Disconnects the encoder. Returns false when nothing was live. */

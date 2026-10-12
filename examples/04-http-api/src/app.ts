@@ -4,7 +4,7 @@ import { createNoteSchema, type ErrorBody } from "./contract.ts";
 import type { Env } from "./env.ts";
 import { readJson } from "./http/body.ts";
 import { cors } from "./http/cors.ts";
-import { type Fetch, route, router } from "./http/router.ts";
+import { type Fetch, type Handler, route, router } from "./http/router.ts";
 import type { Logger } from "./log.ts";
 import { NoteLimitError, type NoteService } from "./notes.ts";
 
@@ -74,43 +74,43 @@ export function createApp(deps: AppDeps): Fetch {
   );
   // #endregion routes
 
+  // #region around
+  // A route that throws still owes the caller an answer in the usual shape.
+  const caught: Handler<Context> = async (request, context) => {
+    try {
+      return await routes(request, context);
+    } catch (error) {
+      if (error instanceof NoteLimitError) {
+        // 409, not 429: waiting does not help. Deleting a note does.
+        return failure(409, "quota_exceeded", "The store is full. Delete a note first.", context);
+      }
+      // The stack trace goes to the log, never to the caller.
+      deps.log({
+        level: "error",
+        message: "unhandled error",
+        requestId: context.requestId,
+        error: error instanceof Error ? error.stack : String(error),
+      });
+      return failure(500, "internal", "The request could not be completed.", context);
+    }
+  };
+
+  // Outside the catch, so an error answer carries the CORS headers too.
+  // Without them a browser hides the error from the page that needs to show it.
   const answer = cors(
     {
       origin: deps.env.ALLOWED_ORIGIN,
       allowMethods: ["GET", "POST", "DELETE"],
       allowHeaders: ["content-type"],
     },
-    routes,
+    caught,
   );
 
-  // #region around
-  // Everything that happens to every request, in the order it happens.
+  // What happens to every request: an ID on the way in, a header and a log line on the way out.
   return async (request) => {
     const context = { requestId: deps.newRequestId() };
     const startedAt = deps.now();
-    let response: Response;
-    try {
-      response = await answer(request, context);
-    } catch (error) {
-      if (error instanceof NoteLimitError) {
-        // 409, not 429: waiting does not help. Deleting a note does.
-        response = failure(
-          409,
-          "quota_exceeded",
-          "The store is full. Delete a note first.",
-          context,
-        );
-      } else {
-        // The stack trace goes to the log, never to the caller.
-        deps.log({
-          level: "error",
-          message: "unhandled error",
-          requestId: context.requestId,
-          error: error instanceof Error ? error.stack : String(error),
-        });
-        response = failure(500, "internal", "The request could not be completed.", context);
-      }
-    }
+    const response = await answer(request, context);
     response.headers.set("x-request-id", context.requestId);
     deps.log({
       level: response.status >= 500 ? "error" : "info",

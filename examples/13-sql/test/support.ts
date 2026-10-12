@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Db, type Queryable, rows } from "../src/db.ts";
 import { loadMigrations, migrate } from "../src/migrate.ts";
@@ -90,7 +90,7 @@ export function losingCommits(
 }
 // #endregion inject
 
-const countSchema = z.object({ n: z.number().int() });
+const countSchema = v.object({ n: v.pipe(v.number(), v.integer()) });
 
 /** What the owner row says, and what the table says. The invariant is that they agree. */
 export async function counts(db: Db, owner: string): Promise<{ counted: number; stored: number }> {

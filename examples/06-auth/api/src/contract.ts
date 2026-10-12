@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import {
   createNoteSchema,
@@ -32,14 +32,14 @@ export type {
   UpdateNote,
 } from "@aih/example-05-dynamodb/src/contract.ts";
 
-export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string() });
+export const healthSchema = v.object({ status: v.literal("ok"), stage: v.string() });
 
 // #region me
-export const meSchema = z.object({
+export const meSchema = v.object({
   /** Stable. Not an email address or a name. */
-  sub: z.string().min(1),
+  sub: v.pipe(v.string(), v.minLength(1)),
 });
-export type Me = z.infer<typeof meSchema>;
+export type Me = v.InferOutput<typeof meSchema>;
 // #endregion me
 
 // #region error
@@ -56,14 +56,14 @@ export const errorCodes = [
   "internal",
 ] as const;
 
-export const errorSchema = z.object({
-  error: z.object({
-    code: z.enum(errorCodes),
-    message: z.string(),
-    requestId: z.string(),
-    issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
-    current: noteSchema.optional(),
+export const errorSchema = v.object({
+  error: v.object({
+    code: v.picklist(errorCodes),
+    message: v.string(),
+    requestId: v.string(),
+    issues: v.optional(v.array(v.object({ path: v.string(), message: v.string() }))),
+    current: v.optional(noteSchema),
   }),
 });
-export type ErrorBody = z.infer<typeof errorSchema>;
+export type ErrorBody = v.InferOutput<typeof errorSchema>;
 // #endregion error

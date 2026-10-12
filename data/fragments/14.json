@@ -17,9 +17,14 @@
       "IAM"
     ],
     "samplePath": "examples/14-kv-cache",
-    "writing": { "ja": "complete", "en": "complete" },
-    "sourceRevision": 1,
-    "translatedRevision": { "en": 1 },
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 4,
+    "translatedRevision": {
+      "en": 4
+    },
     "checkedAt": "2026-10-12",
     "sourceIds": [
       "dynamodb-ttl",
@@ -824,7 +829,11 @@
         ]
       },
       "items": [
-        { "priceId": "dynamodb.storage", "quantity": 0.001, "basis": "1 MB stored, in GB-month" }
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.001,
+          "basis": "1 MB stored, in GB-month"
+        }
       ]
     },
     {
@@ -907,8 +916,16 @@
         ]
       },
       "items": [
-        { "priceId": "apigw.http.request", "quantity": 1000000, "basis": "1,000,000 requests" },
-        { "priceId": "lambda.request.arm", "quantity": 1000000, "basis": "1,000,000 invocations" },
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 invocations"
+        },
         {
           "priceId": "lambda.duration.arm",
           "quantity": 7500,
@@ -924,7 +941,11 @@
           "quantity": 543800,
           "basis": "(1,000,000 + 87,600) eventually consistent reads x 0.5"
         },
-        { "priceId": "dynamodb.storage", "quantity": 0.001, "basis": "1 MB stored, in GB-month" },
+        {
+          "priceId": "dynamodb.storage",
+          "quantity": 0.001,
+          "basis": "1 MB stored, in GB-month"
+        },
         {
           "priceId": "logs.ingest.standard",
           "quantity": 0.476837,
@@ -963,8 +984,16 @@
         ]
       },
       "items": [
-        { "priceId": "apigw.http.request", "quantity": 1000000, "basis": "1,000,000 requests" },
-        { "priceId": "lambda.request.arm", "quantity": 1000000, "basis": "1,000,000 invocations" },
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 1000000,
+          "basis": "1,000,000 invocations"
+        },
         {
           "priceId": "lambda.duration.arm",
           "quantity": 7500,

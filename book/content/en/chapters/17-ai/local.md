@@ -48,7 +48,7 @@ AI_FIXTURE=truncated vp run dev:ai
 
 Run the same `curl` in this state and three `delta` events arrive, after which the stream ends with `error` (`interrupted`), not `done`.
 
-You can try disconnecting too. With the `complete` fixture, run the `curl` and press Ctrl+C while the events are still arriving. The server's log shows a line whose `outcome` is `cancelled`. It records that the server detected the closed connection and aborted its request to the model.
+You can try disconnecting too. With the `complete` fixture, run the `curl` and press Ctrl+C while the events are still arriving. The server's log shows a line whose `outcome` is `cancelled`. It records that the `nodeServer` from chapter 04 noticed the closed connection and stopped reading the body, and that the app answered by aborting its request to the model.
 
 Aborting the request on a disconnect is how the local development server behaves, though. Lambda behaves differently, and [the Deploy page](/en/chapters/17-ai/deploy.md) explains how.
 

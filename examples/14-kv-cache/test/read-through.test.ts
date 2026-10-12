@@ -1,5 +1,5 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
-import { z } from "zod";
 
 import { MemoryCacheStore } from "../src/memory-store.ts";
 import { createReadThrough, jitteredTtl, type ReadThroughOptions } from "../src/read-through.ts";
@@ -39,7 +39,7 @@ function setup(overrides: Partial<ReadThroughOptions<string>> = {}) {
   const store = new MemoryCacheStore();
   const options: ReadThroughOptions<string> = {
     store,
-    schema: z.string(),
+    schema: v.string(),
     ttlMs: TTL,
     jitter: 0,
     random: () => 0,

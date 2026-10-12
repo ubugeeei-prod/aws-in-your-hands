@@ -1,9 +1,11 @@
+import * as v from "valibot";
+
 import { type MachineSpec, machineSpecSchema, pathsOf } from "./machine.ts";
 
 // #region env-file
 /** Configuration only. Nothing secret belongs in a file baked into user data. */
 export function renderEnvFile(input: MachineSpec): string {
-  const spec = machineSpecSchema.parse(input);
+  const spec = v.parse(machineSpecSchema, input);
   return [
     `ALLOWED_ORIGIN=${spec.allowedOrigin}`,
     "LOG_LEVEL=info",
@@ -19,7 +21,7 @@ export function renderEnvFile(input: MachineSpec): string {
 
 // #region unit
 export function renderUnit(input: MachineSpec): string {
-  const spec = machineSpecSchema.parse(input);
+  const spec = v.parse(machineSpecSchema, input);
   const paths = pathsOf(spec);
   return [
     "[Unit]",

@@ -1,6 +1,6 @@
 import { context, SpanKind, SpanStatusCode } from "@opentelemetry/api";
-import { Hono } from "hono";
 
+import type { Fetch } from "@aih/example-04-http-api/src/http/router.ts";
 import { createApp } from "@aih/example-05-dynamodb/src/app.ts";
 import type { Env } from "@aih/example-05-dynamodb/src/env.ts";
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
@@ -22,7 +22,7 @@ export type ObservedDeps = {
 // #region app
 // The chapter 05 app, unchanged, with three things around it: a span per
 // request, a span per call to the table, and trace IDs on every log line.
-export function createObservedApp(deps: ObservedDeps) {
+export function createObservedApp(deps: ObservedDeps): Fetch {
   const notes = createApp({
     env: deps.env,
     notes: createNoteService({
@@ -35,14 +35,14 @@ export function createObservedApp(deps: ObservedDeps) {
     now: deps.now,
   });
 
-  return new Hono().all("*", (c) => {
-    const request = c.req.raw;
+  // An app is a function, so wrapping one is writing another function around it.
+  return (request) => {
     // In Lambda a layer has already opened a span for the invocation; this one
     // goes under it. Otherwise the caller's `traceparent` header decides.
     const underPlatformSpan = hasActiveSpan();
     const parent = underPlatformSpan
       ? context.active()
-      : contextFromHeaders(Object.fromEntries(request.headers.entries()));
+      : contextFromHeaders(Object.fromEntries(request.headers));
 
     return withSpan(
       // Low cardinality on purpose: the path with its note ID is an attribute.
@@ -57,7 +57,7 @@ export function createObservedApp(deps: ObservedDeps) {
         },
       },
       async (span) => {
-        const response = await notes.fetch(request);
+        const response = await notes(request);
         span.setAttribute("http.response.status_code", response.status);
         const requestId = response.headers.get("x-request-id");
         if (requestId !== null) {
@@ -70,8 +70,6 @@ export function createObservedApp(deps: ObservedDeps) {
         return response;
       },
     );
-  });
+  };
 }
 // #endregion app
-
-export type ObservedApp = ReturnType<typeof createObservedApp>;

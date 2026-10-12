@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { NotificationState } from "./contract.ts";
 import type { Logger } from "./log.ts";
@@ -7,43 +7,44 @@ import { normalizeAddress, type NotificationStore, type Suppression } from "./st
 
 // #region schema
 // Only the fields this code acts on. SES sends many more, and may add new ones.
-const mailSchema = z.object({
-  messageId: z.string(),
-  tags: z.record(z.string(), z.array(z.string())).default({}),
+const mailSchema = v.object({
+  messageId: v.string(),
+  tags: v.optional(v.record(v.string(), v.array(v.string())), {}),
 });
-const recipientSchema = z.object({ emailAddress: z.string().min(1) });
+const recipientSchema = v.object({ emailAddress: v.pipe(v.string(), v.minLength(1)) });
+const timestamp = v.pipe(v.string(), v.isoTimestamp());
 
-export const sesEventSchema = z.discriminatedUnion("eventType", [
-  z.object({
-    eventType: z.literal("Bounce"),
+export const sesEventSchema = v.variant("eventType", [
+  v.object({
+    eventType: v.literal("Bounce"),
     mail: mailSchema,
-    bounce: z.object({
-      bounceType: z.enum(["Permanent", "Transient", "Undetermined"]),
-      bounceSubType: z.string(),
-      bouncedRecipients: z.array(recipientSchema).min(1),
-      timestamp: z.iso.datetime(),
-      feedbackId: z.string(),
+    bounce: v.object({
+      bounceType: v.picklist(["Permanent", "Transient", "Undetermined"]),
+      bounceSubType: v.string(),
+      bouncedRecipients: v.pipe(v.array(recipientSchema), v.minLength(1)),
+      timestamp,
+      feedbackId: v.string(),
     }),
   }),
-  z.object({
-    eventType: z.literal("Complaint"),
+  v.object({
+    eventType: v.literal("Complaint"),
     mail: mailSchema,
-    complaint: z.object({
-      complainedRecipients: z.array(recipientSchema).min(1),
-      timestamp: z.iso.datetime(),
-      feedbackId: z.string(),
+    complaint: v.object({
+      complainedRecipients: v.pipe(v.array(recipientSchema), v.minLength(1)),
+      timestamp,
+      feedbackId: v.string(),
     }),
   }),
-  z.object({
-    eventType: z.literal("Delivery"),
+  v.object({
+    eventType: v.literal("Delivery"),
     mail: mailSchema,
-    delivery: z.object({ timestamp: z.iso.datetime() }),
+    delivery: v.object({ timestamp }),
   }),
 ]);
-export type SesEvent = z.infer<typeof sesEventSchema>;
+export type SesEvent = v.InferOutput<typeof sesEventSchema>;
 
-const HANDLED = new Set(
-  sesEventSchema.options.map((option) => option.shape.eventType.value as string),
+const HANDLED = new Set<string>(
+  sesEventSchema.options.map((option) => option.entries.eventType.literal),
 );
 // #endregion schema
 
@@ -60,20 +61,20 @@ export function parseSesMessage(message: string): ParsedSesMessage {
   } catch {
     return { kind: "invalid", problem: "not JSON" };
   }
-  const type = z.object({ eventType: z.string() }).safeParse(json);
+  const type = v.safeParse(v.object({ eventType: v.string() }), json);
   if (!type.success) {
     return { kind: "invalid", problem: "no eventType" };
   }
-  if (!HANDLED.has(type.data.eventType)) {
-    return { kind: "ignored", eventType: type.data.eventType };
+  if (!HANDLED.has(type.output.eventType)) {
+    return { kind: "ignored", eventType: type.output.eventType };
   }
-  const event = sesEventSchema.safeParse(json);
+  const event = v.safeParse(sesEventSchema, json);
   return event.success
-    ? { kind: "event", event: event.data }
+    ? { kind: "event", event: event.output }
     : {
         kind: "invalid",
-        problem: event.error.issues
-          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+        problem: event.issues
+          .map((issue) => `${v.getDotPath(issue) ?? ""}: ${issue.message}`)
           .join("; "),
       };
 }
@@ -182,14 +183,14 @@ export async function handleSesMessage(
   return parsed;
 }
 
-const snsEventSchema = z.object({
-  Records: z.array(z.object({ Sns: z.object({ MessageId: z.string(), Message: z.string() }) })),
+const snsEventSchema = v.object({
+  Records: v.array(v.object({ Sns: v.object({ MessageId: v.string(), Message: v.string() }) })),
 });
 
 /** The Lambda handler behind the SNS topic. A storage failure throws, and Lambda runs the event again. */
 export function createEventsHandler(deps: EventDeps) {
   return async (event: unknown): Promise<void> => {
-    for (const record of snsEventSchema.parse(event).Records) {
+    for (const record of v.parse(snsEventSchema, event).Records) {
       await handleSesMessage(deps, record.Sns.Message);
     }
   };

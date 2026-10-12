@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { createError, useFetch, useHead, useRoute } from "nuxt/app";
+import * as v from "valibot";
 
 import { publicNoteSchema } from "../../../core/notes.ts";
 
@@ -7,7 +8,7 @@ const route = useRoute();
 const id = String(route.params["id"]);
 
 const { data, error } = await useFetch(`/api/notes/${encodeURIComponent(id)}`, {
-  transform: (body: unknown) => publicNoteSchema.parse(body),
+  transform: (body: unknown) => v.parse(publicNoteSchema, body),
 });
 if (error.value !== undefined || data.value === undefined) {
   // A real 404 status, so that neither a browser nor a cache takes this for the note.

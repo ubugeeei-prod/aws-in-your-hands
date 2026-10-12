@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { parseEc2Config } from "../src/config.ts";
@@ -53,7 +54,7 @@ describe("release versions", () => {
   });
 
   it("is checked on the instance with the same pattern as on your machine", () => {
-    expect(versionSchema.safeParse(VERSION).success).toBe(true);
+    expect(v.safeParse(versionSchema, VERSION).success).toBe(true);
     expect(renderReleaseScript(machine)).toContain(
       `[[ ! "$version" =~ ${VERSION_SHELL_PATTERN} ]]`,
     );
@@ -148,7 +149,7 @@ describe("what is sent to the instance", () => {
 });
 
 describe("reading the result of a command", () => {
-  const parse = (value: unknown) => invocationSchema.parse(value);
+  const parse = (value: unknown) => v.parse(invocationSchema, value);
 
   it("waits while the command runs and treats only exit code 0 as success", () => {
     expect(isFinished(parse({ Status: "InProgress" }))).toBe(false);

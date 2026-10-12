@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -53,10 +54,10 @@ describe("what the container adds around the chapter 04 app", () => {
     }
     const refused = await post();
     expect(refused.status).toBe(409);
-    expect(errorSchema.parse(await refused.json()).error.code).toBe("quota_exceeded");
+    expect(v.parse(errorSchema, await refused.json()).error.code).toBe("quota_exceeded");
     // Reading still works: the list answers with the newest 20, as summaries.
     const text = await (await fetch(new Request("http://task/notes"))).text();
-    const list = noteListSchema.parse(JSON.parse(text));
+    const list = v.parse(noteListSchema, JSON.parse(text));
     expect(list.notes).toHaveLength(MAX_LISTED_NOTES);
     expect(text).not.toContain('"body"');
     // And deleting one makes room for one.

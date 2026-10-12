@@ -219,6 +219,15 @@ describe("node server", () => {
     await close();
   });
 
+  it("tells the handler who is on the other end of the socket, whatever the headers claim", async () => {
+    const { url, close } = await listen(
+      (_request, { remoteAddress }) => new Response(remoteAddress),
+    );
+    const response = await fetch(url, { headers: { "x-forwarded-for": "203.0.113.9" } });
+    expect(await response.text()).toBe("127.0.0.1");
+    await close();
+  });
+
   it("sends a streamed response as it is written, not when it ends", async () => {
     let finish = (): void => {};
     const { url, close } = await listen(
@@ -237,6 +246,35 @@ describe("node server", () => {
     expect(new TextDecoder().decode(first?.value)).toBe("first\n");
     finish();
     expect((await reader?.read())?.done).toBe(true);
+    await close();
+  });
+
+  it("aborts the request's signal and cancels the body when the caller goes away mid-answer", async () => {
+    const seen = { aborted: false, cancelled: false };
+    let settle = (): void => {};
+    const both = new Promise<void>((resolve) => (settle = resolve));
+    const { url, close } = await listen((request) => {
+      request.signal.addEventListener("abort", () => {
+        seen.aborted = true;
+      });
+      return new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode("first\n"));
+          },
+          cancel() {
+            seen.cancelled = true;
+            settle();
+          },
+        }),
+      );
+    });
+    const caller = new AbortController();
+    const reader = (await fetch(url, { signal: caller.signal })).body?.getReader();
+    await reader?.read();
+    caller.abort();
+    await both;
+    expect(seen).toEqual({ aborted: true, cancelled: true });
     await close();
   });
 

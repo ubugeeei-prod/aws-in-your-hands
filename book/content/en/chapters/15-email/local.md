@@ -46,7 +46,7 @@ This is the dev server's code.
 
 <<< @/examples/15-email/src/dev.ts{dev}
 
-The two routes under `/dev/` exist only on the dev server. They stand in for the two things only AWS has, the inbox and the reports from SES. The app that goes onto Lambda does not include them.
+The two routes under `/dev/` exist only on the dev server. They stand in for the two things only AWS has, the inbox and the reports from SES. The app that goes onto Lambda does not include them. A request that matches neither route is passed as it is to the app, the same one that runs on Lambda.
 
 The dev server refuses to start with `MAIL_MODE=aws`. If it started, a server on your machine would send real mail with your own credentials.
 

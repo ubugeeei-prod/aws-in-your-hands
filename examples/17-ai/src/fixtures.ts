@@ -1,3 +1,5 @@
+import * as v from "valibot";
+
 import complete from "../fixtures/converse-stream/complete.json" with { type: "json" };
 import maxTokens from "../fixtures/converse-stream/max-tokens.json" with { type: "json" };
 import throttledMidstream from "../fixtures/converse-stream/throttled-midstream.json" with { type: "json" };
@@ -15,9 +17,9 @@ export const fixtureNames = [
 export type FixtureName = (typeof fixtureNames)[number];
 
 export const fixtures: Record<FixtureName, Fixture> = {
-  complete: fixtureSchema.parse(complete),
-  "max-tokens": fixtureSchema.parse(maxTokens),
-  truncated: fixtureSchema.parse(truncated),
-  "throttled-midstream": fixtureSchema.parse(throttledMidstream),
-  "throttled-then-complete": fixtureSchema.parse(throttledThenComplete),
+  complete: v.parse(fixtureSchema, complete),
+  "max-tokens": v.parse(fixtureSchema, maxTokens),
+  truncated: v.parse(fixtureSchema, truncated),
+  "throttled-midstream": v.parse(fixtureSchema, throttledMidstream),
+  "throttled-then-complete": v.parse(fixtureSchema, throttledThenComplete),
 };

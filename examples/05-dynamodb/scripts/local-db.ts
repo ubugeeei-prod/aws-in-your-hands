@@ -16,7 +16,7 @@ import {
   waitUntilTableNotExists,
 } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { noteSchema } from "../src/contract.ts";
 import { DynamoDbNoteRepository } from "../src/dynamodb-repository.ts";
@@ -92,13 +92,10 @@ async function drop(): Promise<void> {
 }
 
 async function seed(): Promise<void> {
-  const fixture = z
-    .array(noteSchema)
-    .parse(
-      JSON.parse(
-        readFileSync(new URL("../test/fixtures/seed-notes.json", import.meta.url), "utf8"),
-      ),
-    );
+  const fixture = v.parse(
+    v.array(noteSchema),
+    JSON.parse(readFileSync(new URL("../test/fixtures/seed-notes.json", import.meta.url), "utf8")),
+  );
   const repository = new DynamoDbNoteRepository(DynamoDBDocumentClient.from(client), tableName);
   let created = 0;
   for (const note of fixture) {

@@ -44,9 +44,9 @@ At synth time, `NodejsFunction` bundles the TypeScript into a single JavaScript 
 
 The routes are listed one by one. You could pass every path to Lambda instead, but then a request for a path that doesn't exist would still start the function and cost money. With the routes listed, API Gateway answers every other path with a 404.
 
-The cost is that the routes are written in two places, the Hono app and this stack. To keep the two from drifting apart, a test checks that the stack has exactly these five routes.
+The cost is that the routes are written in two places, `createApp` in the app and this stack. To keep the two from drifting apart, a test checks that the stack has exactly these five routes.
 
-CORS is the setting that lets a browser call the API from a different origin. One origin is allowed, and by default it is the SPA's development server.
+CORS is the setting that lets a browser call the API from a different origin. API Gateway answers the preflight, so the same methods and headers the app gives `cors` are written here as well. One origin is allowed, and by default it is the SPA's development server.
 
 ### Limit what it accepts
 

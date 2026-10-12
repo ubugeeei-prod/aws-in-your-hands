@@ -85,9 +85,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@go-to-k/cdkd':
         specifier: 0.296.28
@@ -110,9 +107,6 @@ importers:
       vue:
         specifier: 3.5.43
         version: 3.5.43(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@go-to-k/cdkd':
         specifier: 0.296.28
@@ -138,15 +132,9 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -154,9 +142,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -181,15 +166,9 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -197,9 +176,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -227,9 +203,6 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       oauth4webapi:
         specifier: 3.8.8
         version: 3.8.8
@@ -239,9 +212,6 @@ importers:
       vue:
         specifier: 3.5.43
         version: 3.5.43(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -249,9 +219,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -303,9 +270,6 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       oauth4webapi:
         specifier: 3.8.8
         version: 3.8.8
@@ -315,9 +279,6 @@ importers:
       vue:
         specifier: 3.5.43
         version: 3.5.43(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -325,9 +286,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -376,15 +334,9 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -395,9 +347,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -425,9 +374,6 @@ importers:
       vue:
         specifier: 3.5.43
         version: 3.5.43(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -477,9 +423,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -505,9 +448,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -527,24 +467,15 @@ importers:
       '@aih/example-11-network':
         specifier: workspace:*
         version: link:../11-network
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       aws-cdk-lib:
         specifier: 2.273.0
         version: 2.273.0(constructs@10.8.1)
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -573,18 +504,12 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       pg:
         specifier: 8.23.1
         version: 8.23.1
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -595,9 +520,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -634,18 +556,12 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       iovalkey:
         specifier: 0.4.0
         version: 0.4.0
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -653,9 +569,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -683,15 +596,9 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -705,9 +612,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@smithy/signature-v4':
         specifier: 5.7.4
         version: 5.7.4
@@ -744,9 +648,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -784,15 +685,9 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -806,9 +701,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@smithy/signature-v4':
         specifier: 5.7.4
         version: 5.7.4
@@ -839,9 +731,6 @@ importers:
       vue:
         specifier: 3.5.43
         version: 3.5.43(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -882,15 +771,9 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -898,9 +781,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@opentelemetry/sdk-trace-node':
         specifier: 2.12.0
         version: 2.12.0(@opentelemetry/api@1.9.1)
@@ -928,9 +808,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -977,15 +854,9 @@ importers:
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/example-20-shipping':
         specifier: workspace:*
@@ -996,9 +867,6 @@ importers:
       '@go-to-k/cdkd':
         specifier: 0.296.28
         version: 0.296.28(@aws-cdk/cli-plugin-contract@2.182.2)(@aws-cdk/cloud-assembly-schema@55.0.0)(aws-cdk-lib@2.273.0(constructs@10.8.1))(constructs@10.8.1)
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       '@types/aws-lambda':
         specifier: 8.10.164
         version: 8.10.164
@@ -1008,6 +876,9 @@ importers:
 
   examples/22-recovery:
     dependencies:
+      '@aih/example-04-http-api':
+        specifier: workspace:*
+        version: link:../04-http-api
       '@aih/example-05-dynamodb':
         specifier: workspace:*
         version: link:../05-dynamodb
@@ -1035,9 +906,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -1063,24 +931,15 @@ importers:
       '@aih/example-11-network':
         specifier: workspace:*
         version: link:../11-network
-      '@hono/node-server':
-        specifier: 2.1.4
-        version: 2.1.4(hono@4.13.13)
       aws-cdk-lib:
         specifier: 2.273.0
         version: 2.273.0(constructs@10.8.1)
       constructs:
         specifier: 10.8.1
         version: 10.8.1
-      hono:
-        specifier: 4.13.13
-        version: 4.13.13
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -1112,9 +971,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@aih/tools':
         specifier: workspace:*
@@ -1143,9 +999,6 @@ importers:
       valibot:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
-      zod:
-        specifier: 4.6.5
-        version: 4.6.5
     devDependencies:
       '@go-to-k/cdkd':
         specifier: 0.296.28
@@ -2288,12 +2141,6 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       tailwindcss: ^3.0 || ^4.0
-
-  '@hono/node-server@2.1.4':
-    resolution: {integrity: sha512-2g1qeHl4BduwDn6L8nkAvDrPUWPMlkQ//a5NhP/zIyaXKMjZNRV+cG9Csu+BiJFf6+68pqzjf4Hi5sJGKHuS1g==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      hono: ^4 || ^5.0.0-0
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -5958,10 +5805,6 @@ packages:
   highlight.js@11.12.0:
     resolution: {integrity: sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg==}
     engines: {node: '>=12.0.0'}
-
-  hono@4.13.13:
-    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
-    engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
     resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
@@ -10183,10 +10026,6 @@ snapshots:
     dependencies:
       tailwindcss: 4.3.3
 
-  '@hono/node-server@2.1.4(hono@4.13.13)':
-    dependencies:
-      hono: 4.13.13
-
   '@iconify/types@2.0.0': {}
 
   '@iconify/utils@3.1.7':
@@ -13733,8 +13572,6 @@ snapshots:
   hex-rgb@4.3.0: {}
 
   highlight.js@11.12.0: {}
-
-  hono@4.13.13: {}
 
   hookable@5.5.3: {}
 

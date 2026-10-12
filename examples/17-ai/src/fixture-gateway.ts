@@ -1,21 +1,21 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { ModelGateway } from "./summarize.ts";
 
 // #region fixture
-const thrownSchema = z.object({ name: z.string(), message: z.string() });
+const thrownSchema = v.object({ name: v.string(), message: v.string() });
 
-export const fixtureSchema = z.object({
+export const fixtureSchema = v.object({
   // Where the shapes come from. These files are written by hand, not recorded.
-  source: z.string(),
-  description: z.string(),
+  source: v.string(),
+  description: v.string(),
   // Errors for the first calls to open the stream, one per attempt.
-  openErrors: z.array(thrownSchema).default([]),
+  openErrors: v.optional(v.array(thrownSchema), []),
   // Then the stream: events in order. A `throw` step ends it with an error;
   // running out of steps ends it silently, as a dropped connection would.
-  steps: z.array(z.union([z.object({ event: z.unknown() }), z.object({ throw: thrownSchema })])),
+  steps: v.array(v.union([v.object({ event: v.unknown() }), v.object({ throw: thrownSchema })])),
 });
-export type Fixture = z.infer<typeof fixtureSchema>;
+export type Fixture = v.InferOutput<typeof fixtureSchema>;
 
 function toError(thrown: { name: string; message: string }): Error {
   const error = new Error(thrown.message);

@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { MAX_NOTES_PER_OWNER } from "@aih/example-06-auth/api/src/contract.ts";
@@ -22,11 +23,13 @@ async function setup() {
   );
   const token = await signLocalToken(secret, "alice");
   const post = (path: string, body: unknown) =>
-    app.request(path, {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    app(
+      new Request(`http://api.test${path}`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    );
   return { post };
 }
 
@@ -38,7 +41,7 @@ describe("composeApp", () => {
     }
     const refused = await post("/notes", { title: "n", body: "" });
     expect(refused.status).toBe(409);
-    expect(errorSchema.parse(await refused.json()).error.code).toBe("quota_exceeded");
+    expect(v.parse(errorSchema, await refused.json()).error.code).toBe("quota_exceeded");
   });
 
   it("limits the upload permits one user may ask for in a day", async () => {
@@ -50,6 +53,6 @@ describe("composeApp", () => {
     }
     const refused = await ask();
     expect(refused.status).toBe(429);
-    expect(errorSchema.parse(await refused.json()).error.code).toBe("upload_quota_exceeded");
+    expect(v.parse(errorSchema, await refused.json()).error.code).toBe("upload_quota_exceeded");
   });
 });

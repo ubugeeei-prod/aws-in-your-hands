@@ -3,10 +3,11 @@
 import type {} from "@nuxt/nitro-server";
 import type {} from "@vizejs/nuxt";
 import { defineNuxtConfig } from "nuxt/config";
+import * as v from "valibot";
 
 import { buildEnvSchema } from "./core/env.ts";
 
-const streaming = buildEnvSchema.parse(process.env).AIH_SSR_STREAMING === "true";
+const streaming = v.parse(buildEnvSchema, process.env).AIH_SSR_STREAMING === "true";
 
 // #region config
 export default defineNuxtConfig({

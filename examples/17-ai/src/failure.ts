@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { Failure } from "./contract.ts";
 
@@ -24,7 +24,7 @@ const BY_NAME: Record<string, Failure> = {
   ModelErrorException: rejected,
 };
 
-const namedSchema = z.looseObject({ name: z.string() });
+const namedSchema = v.looseObject({ name: v.string() });
 
 export function failureByName(name: string): Failure | undefined {
   return BY_NAME[name];
@@ -32,8 +32,8 @@ export function failureByName(name: string): Failure | undefined {
 
 /** What a thrown value means, or undefined when its name says nothing. */
 export function classifyError(error: unknown): Failure | undefined {
-  const named = namedSchema.safeParse(error);
-  return named.success ? failureByName(named.data.name) : undefined;
+  const named = v.safeParse(namedSchema, error);
+  return named.success ? failureByName(named.output.name) : undefined;
 }
 // #endregion classify
 

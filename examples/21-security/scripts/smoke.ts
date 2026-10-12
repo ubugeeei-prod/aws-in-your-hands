@@ -6,6 +6,8 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
 
+import * as v from "valibot";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
@@ -38,7 +40,7 @@ try {
   if (health.status !== 200) {
     throw new Error(`health: expected 200, got ${health.status}: ${await health.text()}`);
   }
-  console.log(`ok   health (stage ${healthSchema.parse(await health.json()).stage})`);
+  console.log(`ok   health (stage ${v.parse(healthSchema, await health.json()).stage})`);
 
   // #region wait-for-iam
   // Right after a deploy, the role's permission to read the secret may not have reached
@@ -47,12 +49,12 @@ try {
     async () => {
       const response = await fetch(`${url}/token?sub=smoke`);
       if (response.status === 503) {
-        throw new KeyUnavailable(errorSchema.parse(await response.json()).message);
+        throw new KeyUnavailable(v.parse(errorSchema, await response.json()).message);
       }
       if (response.status !== 200) {
         throw new Error(`token: expected 200, got ${response.status}: ${await response.text()}`);
       }
-      return issuedSchema.parse(await response.json());
+      return v.parse(issuedSchema, await response.json());
     },
     (error) => error instanceof KeyUnavailable,
     { attempts: 10, delayMs: 3_000, sleep },
@@ -64,7 +66,9 @@ try {
   if (verified.status !== 200) {
     throw new Error(`verify: expected 200, got ${verified.status}: ${await verified.text()}`);
   }
-  console.log(`ok   verified for subject ${verifiedSchema.parse(await verified.json()).subject}`);
+  console.log(
+    `ok   verified for subject ${v.parse(verifiedSchema, await verified.json()).subject}`,
+  );
 
   const forged = await fetch(`${url}/verify`, {
     headers: { [TOKEN_HEADER]: `${issued.token.slice(0, -4)}AAAA` },

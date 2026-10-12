@@ -3,7 +3,7 @@
 // Connects to the deployed cluster as `admin`, with your own AWS credentials
 // (they need dsql:DbConnectAdmin on the cluster). Changes the database. Billed.
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
@@ -34,7 +34,7 @@ async function retrying<T>(what: string, run: () => Promise<T>): Promise<T> {
   }
 }
 
-const present = z.object({ present: z.literal(1) });
+const present = v.object({ present: v.literal(1) });
 const exists = async (connection: Queryable, text: string, params: string[]): Promise<boolean> =>
   (await rows(connection, present, text, params)).length > 0;
 

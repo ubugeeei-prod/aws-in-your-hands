@@ -6,7 +6,7 @@
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
@@ -25,7 +25,7 @@ const { values } = parseArgs({
     since: { type: "string", default: "15m" },
   },
 });
-const which = z.enum(["pages", "finish", "discard", "durable"]).safeParse(values.function);
+const which = v.safeParse(v.picklist(["pages", "finish", "discard", "durable"]), values.function);
 if (!which.success) {
   console.error("--function must be pages, finish, discard, or durable");
   process.exit(64);
@@ -34,12 +34,12 @@ if (!which.success) {
 try {
   const { target } = await preflight({
     access: "observe",
-    action: `read the ${which.data} logs`,
+    action: `read the ${which.output} logs`,
     stack: STACK,
   });
   const logGroup = requireOutput(
     await readStackOutputs(process.cwd(), STACK, target.region),
-    OUTPUTS[which.data],
+    OUTPUTS[which.output],
   );
   const args = [
     "logs",

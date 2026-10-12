@@ -30,7 +30,7 @@ There are four queries.
 
 `byRequestId` is the reason chapter 04 put `x-request-id` on every response. When a user reports an error, ask for the `x-request-id` of the response and pass it to this query. It returns only the lines that request wrote: the request line and, if there is one, the line with the stack trace.
 
-Zod checks that the ID is a UUID, because a value from outside is being placed into a query string and that needs the same care as SQL.
+Valibot checks that the ID has the form of a UUID, because a value from outside is being placed into a query string and that needs the same care as SQL.
 
 The tests run the real application, have it write log lines, and apply the queries to those lines.
 
@@ -118,7 +118,7 @@ The code wraps chapter 05's repository and creates one span for each call to the
 
 Chapter 05 made the repository an interface, so neither the DynamoDB implementation nor the in-memory one needs to change. Wrapping them from outside is enough.
 
-The whole application is wrapped the same way.
+The whole application is wrapped the same way. The chapter 05 app is a function that takes a `Request` and returns a `Response`, so the wrapper is one more function of the same shape.
 
 <<< @/examples/19-observability/src/app.ts{app}
 

@@ -200,6 +200,19 @@ describe("notes API", () => {
     expect(other.headers.get("access-control-allow-origin")).not.toBe("https://example.com");
   });
 
+  it("puts the CORS headers on an error answer too, so a browser lets the page read it", async () => {
+    const broken: NoteRepository = {
+      list: () => Promise.reject(new Error("down")),
+      get: () => Promise.resolve(undefined),
+      put: () => Promise.resolve(),
+      delete: () => Promise.resolve(false),
+    };
+    for (const response of [await setup(broken).call("/notes"), await setup().call("/nope")]) {
+      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(response.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    }
+  });
+
   it("does not share notes between two application instances", async () => {
     // Two instances stand in for two Lambda execution environments. A note
     // written through one is invisible through the other, which is why this

@@ -5,6 +5,7 @@ import {
   PutCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
+import * as v from "valibot";
 
 import type { NotificationState } from "./contract.ts";
 import {
@@ -120,7 +121,7 @@ export class DynamoDbNotificationStore implements NotificationStore {
       }),
     );
     // A stored item is outside data too.
-    return result.Item === undefined ? undefined : notificationRecordSchema.parse(result.Item);
+    return result.Item === undefined ? undefined : v.parse(notificationRecordSchema, result.Item);
   }
 
   async findSuppression(address: string) {
@@ -128,7 +129,7 @@ export class DynamoDbNotificationStore implements NotificationStore {
       // Eventually consistent: a bounce from a moment ago may not show yet. SES's own list covers that gap.
       new GetCommand({ TableName: this.#tableName, Key: suppressionKey(address) }),
     );
-    return result.Item === undefined ? undefined : suppressionSchema.parse(result.Item);
+    return result.Item === undefined ? undefined : v.parse(suppressionSchema, result.Item);
   }
 
   async suppress(suppression: Suppression) {

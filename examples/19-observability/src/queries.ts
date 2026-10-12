@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { type Condition, insightsFilter, matches } from "./conditions.ts";
 
@@ -30,8 +30,8 @@ export function renderInsights(query: Query): string {
 // #endregion model
 
 // #region queries
-const requestIdSchema = z.uuid();
-const traceIdSchema = z.string().regex(/^[0-9a-f]{32}$/);
+const requestIdSchema = v.pipe(v.string(), v.uuid());
+const traceIdSchema = v.pipe(v.string(), v.regex(/^[0-9a-f]{32}$/));
 const requestFields = [
   "level",
   "message",
@@ -47,7 +47,7 @@ const requestFields = [
 /** Everything one request wrote, oldest first. The ID is the `x-request-id` response header. */
 export function byRequestId(requestId: string): Query {
   return {
-    where: [{ field: "requestId", op: "=", value: requestIdSchema.parse(requestId) }],
+    where: [{ field: "requestId", op: "=", value: v.parse(requestIdSchema, requestId) }],
     show: { kind: "fields", fields: requestFields },
     sort: { field: "@timestamp", order: "asc" },
     limit: 100,
@@ -57,7 +57,7 @@ export function byRequestId(requestId: string): Query {
 /** From a trace to its log lines. Takes the 32-character form, not X-Ray's `1-…-…`. */
 export function byTraceId(traceId: string): Query {
   return {
-    where: [{ field: "traceId", op: "=", value: traceIdSchema.parse(traceId) }],
+    where: [{ field: "traceId", op: "=", value: v.parse(traceIdSchema, traceId) }],
     show: { kind: "fields", fields: ["requestId", ...requestFields] },
     sort: { field: "@timestamp", order: "asc" },
     limit: 100,

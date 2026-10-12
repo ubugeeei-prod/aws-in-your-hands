@@ -89,7 +89,7 @@ export async function setup(options: { duplicate?: boolean } = {}) {
   const store = createLocalStoreHandler(local.bucket);
   const network: typeof fetch = async (input, init) => {
     const request = new Request(input, init);
-    return request.url.startsWith(STORE) ? store(request) : local.app.fetch(request);
+    return request.url.startsWith(STORE) ? store(request) : local.app(request);
   };
   const token = await signLocalToken(secret, "alice");
   const notes = createNotesClient("http://api.test", () => token, network);

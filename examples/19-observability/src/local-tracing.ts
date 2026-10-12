@@ -6,16 +6,20 @@ import {
   type SpanExporter,
   TraceIdRatioBasedSampler,
 } from "@opentelemetry/sdk-trace-node";
-import { z } from "zod";
+import * as v from "valibot";
 
-const ratioSchema = z.coerce.number().min(0).max(1).default(1);
+// An environment variable is text. "0.1" becomes 0.1; "half" becomes NaN, which v.number() refuses.
+const ratioSchema = v.optional(
+  v.pipe(v.string(), v.transform(Number), v.number(), v.minValue(0), v.maxValue(1)),
+  "1",
+);
 
 export function parseSampleRatio(value: string | undefined): number {
-  const result = ratioSchema.safeParse(value);
+  const result = v.safeParse(ratioSchema, value);
   if (!result.success) {
     throw new Error("Invalid environment:\n  TRACE_SAMPLE_RATIO: expected a number from 0 to 1");
   }
-  return result.data;
+  return result.output;
 }
 
 // #region local

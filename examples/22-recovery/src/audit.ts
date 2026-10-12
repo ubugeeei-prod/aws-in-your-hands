@@ -1,4 +1,6 @@
-import { z } from "zod";
+import * as v from "valibot";
+
+import { utcTimestamp } from "@aih/example-04-http-api/src/timestamp.ts";
 
 import { check, type Report, SEVERITY, takeSnapshot } from "./invariants.ts";
 import type { TableReader } from "./items.ts";
@@ -6,19 +8,32 @@ import type { VersionedBucket } from "./versioned-bucket.ts";
 
 // #region audit
 // Also what the function returns, so the caller checks it like any outside data.
-export const auditSchema = z.object({
-  tableName: z.string(),
-  checkedAt: z.iso.datetime(),
-  notes: z.number().int().nonnegative(),
-  attachments: z.number().int().nonnegative(),
-  inspections: z.number().int().nonnegative(),
-  objects: z.number().int().nonnegative(),
-  tooYoung: z.number().int().nonnegative(),
-  broken: z.number().int().nonnegative(),
-  leftover: z.number().int().nonnegative(),
-  byKind: z.record(z.string(), z.number().int().positive()),
+const count = v.pipe(v.number(), v.safeInteger(), v.minValue(0));
+
+// v.record would take an array, and would leave out a key named "constructor" without
+// saying so. A count that goes missing is what this report exists to prevent.
+const countsByKind = v.custom<Record<string, number>>(
+  (input) =>
+    typeof input === "object" &&
+    input !== null &&
+    !Array.isArray(input) &&
+    Object.values(input).every((value) => Number.isSafeInteger(value) && value >= 1),
+  "expected an object of positive counts",
+);
+
+export const auditSchema = v.object({
+  tableName: v.string(),
+  checkedAt: utcTimestamp,
+  notes: count,
+  attachments: count,
+  inspections: count,
+  objects: count,
+  tooYoung: count,
+  broken: count,
+  leftover: count,
+  byKind: countsByKind,
 });
-export type Audit = z.infer<typeof auditSchema>;
+export type Audit = v.InferOutput<typeof auditSchema>;
 
 export type AuditDeps = {
   tableName: string;

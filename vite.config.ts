@@ -218,15 +218,11 @@ export default defineConfig({
       // BILLED: the next three call a real model. None of them is part of check:all.
       "ai:hello": live(
         "node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/hello.ts",
-        {
-          cwd: "examples/17-ai",
-        },
+        { cwd: "examples/17-ai" },
       ),
       "ai:test:live": live(
         "node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/live.ts",
-        {
-          cwd: "examples/17-ai",
-        },
+        { cwd: "examples/17-ai" },
       ),
       "ai:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
         cwd: "examples/17-ai",

@@ -5,6 +5,8 @@
 
 import { parseArgs } from "node:util";
 
+import * as v from "valibot";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
@@ -36,7 +38,7 @@ try {
   if (!response.ok) {
     throw new Error(`${response.status} ${await response.text()}`);
   }
-  console.log(JSON.stringify(notificationStatusSchema.parse(await response.json()), null, 2));
+  console.log(JSON.stringify(v.parse(notificationStatusSchema, await response.json()), null, 2));
 } catch (error) {
   console.error("FAIL", error instanceof Error ? error.message : error);
   process.exit(1);

@@ -1,17 +1,17 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region config
 // Read from /config.json at start-up, so one build fits any channel. The
 // playback URL is not a secret, but it does contain the AWS account ID.
-const configSchema = z.object({
+const configSchema = v.object({
   /** null until a channel has been deployed and `vp run stream:config` has run. */
-  playbackUrl: z.url({ protocol: /^https$/ }).nullable(),
+  playbackUrl: v.nullable(v.pipe(v.string(), v.url(), v.startsWith("https://"))),
 });
 
-export type PlayerPageConfig = z.infer<typeof configSchema>;
+export type PlayerPageConfig = v.InferOutput<typeof configSchema>;
 
 export function parseConfig(json: unknown): PlayerPageConfig {
-  return configSchema.parse(json);
+  return v.parse(configSchema, json);
 }
 // #endregion config
 

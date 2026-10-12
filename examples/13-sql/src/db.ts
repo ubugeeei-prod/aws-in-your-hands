@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region db
 export type QueryResult = { rows: unknown[] };
@@ -20,19 +20,19 @@ export type Db = {
 // renamed by a migration fails here, by name, and not somewhere downstream.
 export async function rows<Row>(
   connection: Queryable,
-  schema: z.ZodType<Row>,
+  schema: v.GenericSchema<unknown, Row>,
   text: string,
   params: readonly unknown[] = [],
 ): Promise<Row[]> {
   const result = await connection.query(text, params);
-  return z.array(schema).parse(result.rows);
+  return v.parse(v.array(schema), result.rows);
 }
 // #endregion rows
 
-const sqlStateSchema = z.object({ code: z.string().length(5) });
+const sqlStateSchema = v.object({ code: v.pipe(v.string(), v.length(5)) });
 
 /** The five-character SQLSTATE of a database error, if `error` is one. */
 export function sqlStateOf(error: unknown): string | undefined {
-  const parsed = sqlStateSchema.safeParse(error);
-  return parsed.success ? parsed.data.code : undefined;
+  const parsed = v.safeParse(sqlStateSchema, error);
+  return parsed.success ? parsed.output.code : undefined;
 }

@@ -1,67 +1,72 @@
-import { z } from "zod";
+import * as v from "valibot";
 
-const decimal = z.string().regex(/^\d+(\.\d+)?$/);
+const decimal = v.pipe(v.string(), v.regex(/^\d+(\.\d+)?$/));
 
-export const unitPriceSchema = z.object({
-  id: z.string(),
-  offerCode: z.string(),
-  region: z.string(),
-  sku: z.string(),
-  usageType: z.string(),
-  plan: z.literal("on-demand"),
-  currency: z.literal("USD"),
-  unit: z.string(),
+export const unitPriceSchema = v.object({
+  id: v.string(),
+  offerCode: v.string(),
+  region: v.string(),
+  sku: v.string(),
+  usageType: v.string(),
+  plan: v.literal("on-demand"),
+  currency: v.literal("USD"),
+  unit: v.string(),
   // `usd` stays the string AWS publishes, comparable byte for byte.
   // `to: null` is the open-ended last tier.
-  tiers: z
-    .array(
-      z.object({
-        from: z.number(),
-        to: z.number().nullable(),
+  tiers: v.pipe(
+    v.array(
+      v.object({
+        from: v.number(),
+        to: v.nullable(v.number()),
         usd: decimal,
-        description: z.string(),
+        description: v.string(),
       }),
-    )
-    .min(1),
-  sourceUrl: z.url(),
-  offerPublicationDate: z.string(),
-  checkedAt: z.iso.date(),
+    ),
+    v.minLength(1),
+  ),
+  sourceUrl: v.pipe(v.string(), v.url()),
+  offerPublicationDate: v.string(),
+  checkedAt: v.pipe(v.string(), v.isoDate()),
 });
-export type UnitPrice = z.infer<typeof unitPriceSchema>;
+export type UnitPrice = v.InferOutput<typeof unitPriceSchema>;
 
-export const unitPricesSchema = z.object({ prices: z.array(unitPriceSchema) });
+export const unitPricesSchema = v.object({ prices: v.array(unitPriceSchema) });
 
-export const allowancesSchema = z.object({
-  allowances: z.array(
-    z.object({
-      priceId: z.string(),
-      quantity: z.number().positive(),
-      period: z.literal("month"),
-      kind: z.literal("always-free"),
-      sourceId: z.string(),
-      note: z.string(),
+export const allowancesSchema = v.object({
+  allowances: v.array(
+    v.object({
+      priceId: v.string(),
+      quantity: v.pipe(v.number(), v.gtValue(0)),
+      period: v.literal("month"),
+      kind: v.literal("always-free"),
+      sourceId: v.string(),
+      note: v.string(),
     }),
   ),
   // Could not be confirmed: applied as nothing, never as a guessed number.
-  unknown: z.array(z.object({ priceId: z.string(), reason: z.string() })),
+  unknown: v.array(v.object({ priceId: v.string(), reason: v.string() })),
 });
-export type Allowances = z.infer<typeof allowancesSchema>;
+export type Allowances = v.InferOutput<typeof allowancesSchema>;
 
-const localized = z.object({ ja: z.string(), en: z.string() });
+const localized = v.object({ ja: v.string(), en: v.string() });
 
-export const scenariosSchema = z.object({
-  monthHours: z.literal(730),
-  currency: z.literal("USD"),
-  scenarios: z.array(
-    z.object({
-      id: z.string(),
-      chapter: z.string(),
+export const scenariosSchema = v.object({
+  monthHours: v.literal(730),
+  currency: v.literal("USD"),
+  scenarios: v.array(
+    v.object({
+      id: v.string(),
+      chapter: v.string(),
       title: localized,
-      assumptions: z.object({ ja: z.array(z.string()), en: z.array(z.string()) }),
-      items: z.array(
-        z.object({ priceId: z.string(), quantity: z.number().nonnegative(), basis: z.string() }),
+      assumptions: v.object({ ja: v.array(v.string()), en: v.array(v.string()) }),
+      items: v.array(
+        v.object({
+          priceId: v.string(),
+          quantity: v.pipe(v.number(), v.minValue(0)),
+          basis: v.string(),
+        }),
       ),
     }),
   ),
 });
-export type Scenario = z.infer<typeof scenariosSchema>["scenarios"][number];
+export type Scenario = v.InferOutput<typeof scenariosSchema>["scenarios"][number];

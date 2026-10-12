@@ -27,8 +27,7 @@ The combination of versions this book's code was checked with (recorded 2026-10-
 | AWS SDK for JavaScript v3 | 3.1149.0 | pnpm | `tools/package.json, pnpm-lock.yaml` |
 | Ox Content (@ox-content/vite-plugin) | 3.2.14 | pnpm | `book/package.json, pnpm-lock.yaml` |
 | Vue | 3.5.43 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
-| Hono | 4.13.13 | pnpm | `examples/04-http-api/package.json, pnpm-lock.yaml` |
-| Zod | 4.6.5 | pnpm | `package.json files, pnpm-lock.yaml` |
+| Valibot | 1.5.0 | pnpm | `package.json files, pnpm-lock.yaml` |
 | esbuild | 0.28.2 | pnpm | `package.json, pnpm-lock.yaml` |
 | Vize (vize, @vizejs/vite-plugin) | 0.443.0 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
 | DynamoDB Local (container image, not run yet) | amazon/dynamodb-local:3.3.1 | Docker, outside the Nix shell | `examples/05-dynamodb/scripts/local-db.ts` |

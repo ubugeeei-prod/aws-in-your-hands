@@ -6,7 +6,7 @@ import {
   PutCommand,
   QueryCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { z } from "zod";
+import * as v from "valibot";
 
 import type { AttachmentRepository } from "./attachment-repository.ts";
 import { type Attachment, attachmentSchema } from "./contract.ts";
@@ -18,10 +18,10 @@ const pk = (owner: string): string => `OWNER#${owner}`;
 const sk = (noteId: string, id: string): string => `ATTACHMENT#${noteId}#${id}`;
 // #endregion keys
 
-const itemSchema = attachmentSchema.extend({ pk: z.string(), sk: z.string() });
+const itemSchema = v.object({ ...attachmentSchema.entries, pk: v.string(), sk: v.string() });
 
 function toAttachment(item: unknown): Attachment {
-  const { pk: _pk, sk: _sk, ...attachment } = itemSchema.parse(item);
+  const { pk: _pk, sk: _sk, ...attachment } = v.parse(itemSchema, item);
   return attachment;
 }
 

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 // #region limits
 // Quotas on key value stores, CloudFront Developer Guide.
@@ -15,53 +15,73 @@ export const LIMITS = {
 const MAX_PATH = 256;
 
 // Starts with one slash, printable ASCII, no backslash: a path on this site and nowhere else.
-const sitePath = z
-  .string()
-  .max(MAX_PATH)
-  .regex(/^\/(?!\/)[\x21-\x5b\x5d-\x7e]*$/, "must be a same-site path such as /pricing/");
+const sitePath = v.pipe(
+  v.string(),
+  v.maxLength(MAX_PATH),
+  v.regex(/^\/(?!\/)[\x21-\x5b\x5d-\x7e]*$/, "must be a same-site path such as /pricing/"),
+);
 
-const redirectSchema = z.strictObject({
+const redirectSchema = v.strictObject({
   // The function never looks up files, queries, or fragments.
-  from: sitePath.refine(
-    (path) => !/[?#]/.test(path) && !path.slice(path.lastIndexOf("/") + 1).includes("."),
-    {
-      message: "must be a page path without an extension, a query, or a fragment",
-    },
+  from: v.pipe(
+    sitePath,
+    v.check(
+      (path) => !/[?#]/.test(path) && !path.slice(path.lastIndexOf("/") + 1).includes("."),
+      "must be a page path without an extension, a query, or a fragment",
+    ),
   ),
   to: sitePath,
-  status: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]),
+  status: v.union([v.literal(301), v.literal(302), v.literal(307), v.literal(308)]),
+});
+type Redirect = v.InferOutput<typeof redirectSchema>;
+
+/** Where in the list a problem is, so that it is reported as `redirects.1.from`. */
+const at = (
+  rules: Redirect[],
+  index: number,
+  field: "from" | "to",
+): [v.IssuePathItem, v.IssuePathItem] => [
+  { type: "array", origin: "value", input: rules, key: index, value: rules[index] },
+  {
+    type: "object",
+    origin: "value",
+    input: rules[index] ?? {},
+    key: field,
+    value: rules[index]?.[field],
+  },
+];
+
+export const edgeDataSchema = v.strictObject({
+  flags: v.strictObject({ maintenance: v.boolean(), newHome: v.boolean() }),
+  redirects: v.pipe(
+    v.array(redirectSchema),
+    // Rules are compared with each other here, which a check on one rule cannot do.
+    v.rawCheck(({ dataset, addIssue }) => {
+      if (!dataset.typed) {
+        return;
+      }
+      const rules = dataset.value;
+      const sources = new Set<string>();
+      for (const [index, rule] of rules.entries()) {
+        if (sources.has(rule.from)) {
+          addIssue({ path: at(rules, index, "from"), message: `${rule.from} is listed twice` });
+        }
+        sources.add(rule.from);
+      }
+      for (const [index, rule] of rules.entries()) {
+        // A redirect that lands on another redirect can become a loop one edit later.
+        if (sources.has(rule.to.split(/[?#]/)[0] ?? rule.to)) {
+          addIssue({
+            path: at(rules, index, "to"),
+            message: `${rule.to} is itself redirected; point ${rule.from} at the final page`,
+          });
+        }
+      }
+    }),
+  ),
 });
 
-export const edgeDataSchema = z
-  .strictObject({
-    flags: z.strictObject({ maintenance: z.boolean(), newHome: z.boolean() }),
-    redirects: z.array(redirectSchema),
-  })
-  .superRefine((data, context) => {
-    const sources = new Set<string>();
-    for (const [index, rule] of data.redirects.entries()) {
-      if (sources.has(rule.from)) {
-        context.addIssue({
-          code: "custom",
-          path: ["redirects", index, "from"],
-          message: `${rule.from} is listed twice`,
-        });
-      }
-      sources.add(rule.from);
-    }
-    for (const [index, rule] of data.redirects.entries()) {
-      // A redirect that lands on another redirect can become a loop one edit later.
-      if (sources.has(rule.to.split(/[?#]/)[0] ?? rule.to)) {
-        context.addIssue({
-          code: "custom",
-          path: ["redirects", index, "to"],
-          message: `${rule.to} is itself redirected; point ${rule.from} at the final page`,
-        });
-      }
-    }
-  });
-
-export type EdgeData = z.infer<typeof edgeDataSchema>;
+export type EdgeData = v.InferOutput<typeof edgeDataSchema>;
 // #endregion schema
 
 // #region entries

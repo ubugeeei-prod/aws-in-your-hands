@@ -5,6 +5,7 @@ import { connect, type Socket } from "node:net";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
+import * as v from "valibot";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { noteSchema } from "@aih/example-04-http-api/src/contract.ts";
@@ -84,11 +85,15 @@ describe("the server as a process", () => {
     expect(["ECONNREFUSED", "ECONNRESET"]).toContain(turnedAway.code);
 
     // 4. The request that was in flight still gets its whole answer.
+    // The server streams its body, so the answer is chunked, and the empty chunk is its end.
     socket.write(body);
-    const response = await readUntil(socket, "}");
+    const response = await readUntil(socket, "\r\n0\r\n\r\n");
     expect(response).toContain("HTTP/1.1 201 Created");
     expect(response).toContain("x-app-version: test");
-    const note = noteSchema.parse(JSON.parse(response.slice(response.lastIndexOf("\r\n\r\n") + 4)));
+    const note = v.parse(
+      noteSchema,
+      JSON.parse(response.slice(response.indexOf("{"), response.lastIndexOf("}") + 1)),
+    );
     expect(note.title).toBe("written while the task was stopping");
 
     // 5. Only then does the process stop, and it says it lost nothing.

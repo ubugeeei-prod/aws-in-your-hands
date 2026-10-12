@@ -9,7 +9,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
 
 import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
@@ -24,13 +24,23 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: { "version-id": { type: "string" }, force: { type: "boolean", default: false } },
 });
-const action = z.enum(["versions", "rotate"]).safeParse(positionals[0]);
+const action = v.safeParse(v.picklist(["versions", "rotate"]), positionals[0]);
+
+// v.uuid() checks only the 8-4-4-4-12 shape. This also checks the version (1 to 8) and variant
+// digits, so what becomes the secret's version ID is a UUID some generator could have made.
+const versionIdSchema = v.pipe(
+  v.string(),
+  v.regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    "--version-id must be a UUID, as printed by a failed run",
+  ),
+);
 
 try {
   if (!action.success) {
     throw new Error("usage: rotate.ts <versions|rotate> [--version-id <uuid>] [--force]");
   }
-  const rotating = action.data === "rotate";
+  const rotating = action.output === "rotate";
   const { target } = await preflight({
     access: rotating ? "mutate" : "observe",
     action: rotating ? "rotate the signing secret" : "list the signing secret's versions",
@@ -43,7 +53,7 @@ try {
   const api = createRotationApi(new SecretsManagerClient({ region: target.region }), secretArn);
 
   if (rotating) {
-    const versionId = z.uuid().parse(values["version-id"] ?? randomUUID());
+    const versionId = v.parse(versionIdSchema, values["version-id"] ?? randomUUID());
     // Printed before the call: if the call's answer is lost, this is what a retry needs.
     console.log(`version id for this run: ${versionId}`);
     const result = await rotate(api, {

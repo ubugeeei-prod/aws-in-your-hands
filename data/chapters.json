@@ -144,9 +144,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 6,
+      "sourceRevision": 7,
       "translatedRevision": {
-        "en": 6
+        "en": 7
       },
       "checkedAt": "2026-10-12",
       "sourceIds": [
@@ -160,7 +160,8 @@
         "cdkd-npm",
         "viteplus-npm",
         "apigw-http-quotas",
-        "lambda-quotas"
+        "lambda-quotas",
+        "apigw-http-lambda-payload"
       ]
     },
     {
@@ -177,9 +178,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 5,
+      "sourceRevision": 6,
       "translatedRevision": {
-        "en": 5
+        "en": 6
       },
       "checkedAt": "2026-10-12",
       "sourceIds": [
@@ -217,9 +218,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 5,
+      "sourceRevision": 6,
       "translatedRevision": {
-        "en": 5
+        "en": 6
       },
       "checkedAt": "2026-10-12",
       "sourceIds": [
@@ -279,9 +280,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -358,9 +359,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -457,9 +458,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -513,11 +514,11 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
-      "checkedAt": "2026-10-11"
+      "checkedAt": "2026-10-12"
     },
     {
       "id": "12",
@@ -595,9 +596,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -679,9 +680,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 4,
+      "sourceRevision": 5,
       "translatedRevision": {
-        "en": 4
+        "en": 5
       },
       "checkedAt": "2026-10-12"
     },
@@ -762,9 +763,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -822,9 +823,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -932,8 +933,8 @@
       "id": "17",
       "slug": "ai",
       "title": {
-        "ja": "AI: Bedrock",
-        "en": "AI: Bedrock"
+        "ja": "Workers AI に親しんだ人の AI 開発: Bedrock",
+        "en": "AI Development for Workers AI Users: Bedrock"
       },
       "prerequisites": ["04"],
       "services": [
@@ -969,6 +970,7 @@
         "cloudflare-bindings-per-env",
         "cloudflare-workers-ai-pricing",
         "hono-npm",
+        "types-aws-lambda-npm",
         "aws-sdk-bedrock-runtime-npm",
         "lambda-pricing",
         "aws-price-list-lambda",
@@ -1104,9 +1106,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 4,
+      "sourceRevision": 5,
       "translatedRevision": {
-        "en": 4
+        "en": 5
       },
       "checkedAt": "2026-10-12"
     },
@@ -1180,9 +1182,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -1190,8 +1192,8 @@
       "id": "21",
       "slug": "security",
       "title": {
-        "ja": "Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations",
-        "en": "Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
+        "ja": "守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations",
+        "en": "Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
       },
       "prerequisites": ["06", "20"],
       "services": [
@@ -1275,9 +1277,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 3
+        "en": 2
       },
       "checkedAt": "2026-10-12"
     },
@@ -1321,9 +1323,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-12"
     },
@@ -1417,9 +1419,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-12"
     },

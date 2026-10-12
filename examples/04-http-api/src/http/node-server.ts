@@ -4,9 +4,12 @@
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import { Readable } from "node:stream";
 
-import type { Fetch } from "./router.ts";
+import type { Handler } from "./router.ts";
 
-function toRequest(incoming: IncomingMessage): Request {
+/** What a Request cannot carry here: who is on the other end of the socket. */
+export type NodeContext = { remoteAddress: string | undefined };
+
+function toRequest(incoming: IncomingMessage, signal: AbortSignal): Request {
   const headers = new Headers();
   for (const [name, value] of Object.entries(incoming.headers)) {
     for (const one of [value].flat()) {
@@ -15,18 +18,11 @@ function toRequest(incoming: IncomingMessage): Request {
       }
     }
   }
-  // The connection going away ends whatever the handler is still waiting for.
-  const gone = new AbortController();
-  incoming.once("close", () => {
-    if (!incoming.complete) {
-      gone.abort();
-    }
-  });
   const hasBody = incoming.method !== "GET" && incoming.method !== "HEAD";
   return new Request(`http://${incoming.headers.host ?? "localhost"}${incoming.url ?? "/"}`, {
     method: incoming.method ?? "GET",
     headers,
-    signal: gone.signal,
+    signal,
     ...(hasBody
       ? { body: Readable.toWeb(incoming) as ReadableStream<Uint8Array>, duplex: "half" as const }
       : {}),
@@ -35,12 +31,22 @@ function toRequest(incoming: IncomingMessage): Request {
 
 // #region node-server
 /** Not listening yet: call `.listen(port)` on what comes back, and `.close()` to stop. */
-export function nodeServer(handler: Fetch): Server {
+export function nodeServer(handler: Handler<NodeContext>): Server {
   return createServer((incoming, outgoing) => {
+    // The caller going away, before the answer is all written, ends whatever the handler
+    // is still waiting for: `request.signal` aborts, and a body still streaming is cancelled.
+    const gone = new AbortController();
+    outgoing.once("close", () => {
+      if (!outgoing.writableFinished) {
+        gone.abort();
+      }
+    });
     void (async () => {
       let response: Response;
       try {
-        response = await handler(toRequest(incoming));
+        response = await handler(toRequest(incoming, gone.signal), {
+          remoteAddress: incoming.socket.remoteAddress,
+        });
       } catch (error) {
         // A handler is expected to answer its own failures. This is the net under it.
         console.error(error);
@@ -61,9 +67,9 @@ export function nodeServer(handler: Fetch): Server {
         return;
       }
       // Piped, not buffered, so a response that streams reaches the caller as it is written.
-      Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0])
-        .on("error", () => outgoing.destroy())
-        .pipe(outgoing);
+      const body = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
+      gone.signal.addEventListener("abort", () => body.destroy());
+      body.on("error", () => outgoing.destroy()).pipe(outgoing);
     })();
   });
 }

@@ -1,6 +1,6 @@
 ---
 title: "12 Containers: ECR、ECS/Fargate、ALB"
-revision: 3
+revision: 4
 ---
 
 # 12 Containers: ECR、ECS/Fargate、ALB
@@ -59,7 +59,7 @@ caption: タスク 1 つの中では、コンテナが Map にノートを持ち
 node srv: コンテナ "api" | node server.mjs
 node exec: タスク実行ロール | イメージを取得, ログを書く
 node role: タスクロール | 権限なし
-node app: Hono app
+node app: 04章のアプリ
 node svc: NoteService
 node map: Map | タスクごとに 1 つ
 edge srv -> app

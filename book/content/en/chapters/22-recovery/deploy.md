@@ -67,6 +67,8 @@ The record is kept in a file.
 
 <<< @/examples/22-recovery/src/drill.ts{record}
 
+The time fields are checked with `utcTimestamp` from [chapter 04](/en/chapters/04-http-api.md). The summary subtracts one time from another, so the record accepts one spelling, in UTC, and refuses a time with an offset or a day that does not exist.
+
 Every field starts empty. A field that stays empty means that the step was not done, and the summary does not fill it with a number.
 
 <<< @/examples/22-recovery/src/drill.ts{summary}

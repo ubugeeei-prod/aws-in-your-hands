@@ -14,6 +14,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { GetBucketVersioningCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import * as v from "valibot";
 
 import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 import {
@@ -419,7 +420,7 @@ async function auditCommand(): Promise<void> {
   if (response.FunctionError !== undefined) {
     throw new Error(`The audit function failed: ${payload}`);
   }
-  const summary = auditSchema.parse(JSON.parse(payload));
+  const summary = v.parse(auditSchema, JSON.parse(payload));
   console.log(JSON.stringify(summary, null, 2));
   console.log(`confirmed at ${new Date().toISOString()}: the function reads ${summary.tableName}`);
   if (summary.broken > 0) {

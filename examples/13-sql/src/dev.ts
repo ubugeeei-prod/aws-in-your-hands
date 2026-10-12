@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { serve } from "@hono/node-server";
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
 
 import { composeApp } from "./compose.ts";
 import type { Db } from "./db.ts";
@@ -37,7 +37,7 @@ if (env.NOTES_DB === "pglite") {
 }
 
 const port = Number(process.env["PORT"] ?? 8787);
-serve({ fetch: composeApp(env, db).fetch, port }, (info) => {
-  console.log(`notes API on http://localhost:${info.port} (db: ${env.NOTES_DB})`);
+nodeServer(composeApp(env, db)).listen(port, () => {
+  console.log(`notes API on http://localhost:${port} (db: ${env.NOTES_DB})`);
 });
 // #endregion dev

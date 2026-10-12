@@ -1,14 +1,22 @@
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { FINISH_WITHIN_MS, UPLOAD_PERMIT_SECONDS, VIEW_URL_SECONDS } from "../src/attachments.ts";
 import { sendUpload } from "../src/client.ts";
 import {
+  errorSchema,
   MAX_ATTACHMENTS_PER_NOTE,
   MAX_UPLOAD_BYTES,
   MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY,
   uploadPermitSchema,
 } from "../src/contract.ts";
 import { png, rejection, setup } from "./harness.ts";
+
+const call = (
+  app: Awaited<ReturnType<typeof setup>>["app"],
+  path: string,
+  init?: RequestInit,
+): Promise<Response> => app(new Request(`http://api.test${path}`, init));
 
 describe("upload permit", () => {
   it("answers 404 for another user's note, as for a missing one", async () => {
@@ -33,7 +41,7 @@ describe("upload permit", () => {
     const aliceNote = await alice.notes.create({ title: "alice's", body: "" });
     const bobNote = await bob.notes.create({ title: "bob's", body: "" });
     // Bob names Alice, and a key under her prefix, everywhere a request can.
-    const response = await app.request(`/notes/${bobNote.id}/attachments?owner=alice`, {
+    const response = await call(app, `/notes/${bobNote.id}/attachments?owner=alice`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -49,7 +57,7 @@ describe("upload permit", () => {
       }),
     });
     expect(response.status).toBe(201);
-    const permit = uploadPermitSchema.parse(await response.json());
+    const permit = v.parse(uploadPermitSchema, await response.json());
     expect(permit.upload.fields["key"]).toBe(`u/bob/${bobNote.id}/${permit.attachmentId}`);
     expect(permit.maxBytes).toBe(MAX_UPLOAD_BYTES);
   });
@@ -58,13 +66,34 @@ describe("upload permit", () => {
     const { app, alice } = await setup();
     const note = await alice.notes.create({ title: "trip", body: "" });
     for (const contentType of ["image/svg+xml", "text/html", "application/octet-stream"]) {
-      const response = await app.request(`/notes/${note.id}/attachments`, {
+      const response = await call(app, `/notes/${note.id}/attachments`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${alice.token}` },
         body: JSON.stringify({ contentType }),
       });
       expect(response.status, contentType).toBe(400);
     }
+  });
+
+  it("refuses a request body over 1 KiB, and one that is not JSON", async () => {
+    const { app, alice } = await setup();
+    const note = await alice.notes.create({ title: "trip", body: "" });
+    const post = (body: string) =>
+      call(app, `/notes/${note.id}/attachments`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${alice.token}` },
+        body,
+      });
+    const large = await post(JSON.stringify({ contentType: "image/png", pad: "x".repeat(1024) }));
+    expect(large.status).toBe(413);
+    expect(v.parse(errorSchema, await large.json()).error.code).toBe("payload_too_large");
+    const broken = await post("{");
+    expect(broken.status).toBe(400);
+    // Chapter 06's wrapping reaches the routes added here: its CORS header and its request ID.
+    expect(broken.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    expect(broken.headers.get("x-request-id")).toBe("req-1");
+    // The content-type header is not what decides: a JSON body is read as JSON.
+    expect((await post(JSON.stringify({ contentType: "image/png" }))).status).toBe(201);
   });
 
   it("needs a token, like every other route", async () => {
@@ -75,14 +104,14 @@ describe("upload permit", () => {
       ["PUT", "/notes/x/attachments/y"],
       ["DELETE", "/notes/x/attachments/y"],
     ] as const) {
-      expect((await app.request(path, { method })).status, `${method} ${path}`).toBe(401);
+      expect((await call(app, path, { method })).status, `${method} ${path}`).toBe(401);
     }
   });
 
   it("lists notes as summaries, as chapter 06 does", async () => {
     const { app, alice } = await setup();
     const note = await alice.notes.create({ title: "trip", body: "x".repeat(10_000) });
-    const response = await app.request("/notes", {
+    const response = await call(app, "/notes", {
       headers: { authorization: `Bearer ${alice.token}` },
     });
     expect(await response.text()).not.toContain('"body"');
@@ -127,6 +156,24 @@ describe("what the upload form allows", () => {
         sendUpload(tampered({ key: `u/bob/${note.id}/${permit.attachmentId}` }), png(), network),
       ),
     ).toMatchObject({ status: 403 });
+
+    // Far past the limit, the stand-in stops reading. This body never ends,
+    // and declares no length, so only counting can refuse it.
+    let sent = 0;
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        sent += 64 * 1024;
+        controller.enqueue(new Uint8Array(64 * 1024));
+      },
+    });
+    const flooded = await network(permit.upload.url, {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=x" },
+      body: endless,
+      duplex: "half",
+    } as RequestInit);
+    expect(flooded.status).toBe(413);
+    expect(sent).toBeLessThan(MAX_UPLOAD_BYTES + 1024 * 1024);
 
     advance(UPLOAD_PERMIT_SECONDS * 1000 + 1000);
     expect(await rejection(sendUpload(permit, png(), network))).toMatchObject({ status: 403 });

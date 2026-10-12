@@ -1,5 +1,6 @@
-import { serve } from "@hono/node-server";
 import { ConsoleSpanExporter } from "@opentelemetry/sdk-trace-node";
+
+import { nodeServer } from "@aih/example-04-http-api/src/http/node-server.ts";
 
 import { composeObservedApp } from "./compose.ts";
 import { parseSampleRatio, ratioSampler, startLocalTracing } from "./local-tracing.ts";
@@ -12,9 +13,9 @@ startLocalTracing({ exporter: new ConsoleSpanExporter(), sampler: ratioSampler(r
 const app = composeObservedApp(process.env);
 const port = Number(process.env["PORT"] ?? 8787);
 
-serve({ fetch: app.fetch, port }, (info) => {
+nodeServer(app).listen(port, () => {
   console.log(
-    `observed notes API on http://localhost:${info.port} (spans to the console, sample ratio ${ratio})`,
+    `observed notes API on http://localhost:${port} (spans to the console, sample ratio ${ratio})`,
   );
 });
 // #endregion dev

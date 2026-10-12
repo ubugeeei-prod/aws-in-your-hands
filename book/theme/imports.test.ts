@@ -8,7 +8,7 @@ import { CfnOutput, Duration, Stack, type StackProps } from "aws-cdk-lib";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
-import { z } from "zod";
+import * as v from "valibot";
 
 import handler, { type Options, retry as again } from "./handler.ts";
 `;
@@ -37,18 +37,18 @@ new CfnOutput(this, "BucketName", { value: bucket.bucketName });`;
     ]);
   });
 
-  // `iam` in "iam:PassRole", `Stack` in a comment, `z` in `x.z`: none of these is a use.
+  // `iam` in "iam:PassRole", `Stack` in a comment, `v` in `x.v`: none of these is a use.
   it("is not fooled by a name inside a string, a comment, or after a dot", () => {
     const snippet = `// The Stack owns it.
 const action = "iam:PassRole";
-const depth = point.z;
+const speed = point.v;
 const options = { Duration: 3 };`;
     expect(importsFor(file, snippet)).toEqual([]);
   });
 
   it("leaves a module alone when the region imports it itself", () => {
-    const snippet = `import { z } from "zod";
-export const schema = z.object({ ttl: z.number() });
+    const snippet = `import * as v from "valibot";
+export const schema = v.object({ ttl: v.number() });
 export const wait = Duration.seconds(3);`;
     expect(importsFor(file, snippet)).toEqual(['import { Duration } from "aws-cdk-lib";']);
   });

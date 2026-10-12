@@ -85,7 +85,7 @@ export async function setup() {
   const store = createLocalStoreHandler(realObjects);
   const network: typeof fetch = async (input, init) => {
     const request = new Request(input, init);
-    return request.url.startsWith(STORE) ? store(request) : app.fetch(request);
+    return request.url.startsWith(STORE) ? store(request) : app(request);
   };
   const tokens = {
     alice: await signLocalToken(secret, "alice"),

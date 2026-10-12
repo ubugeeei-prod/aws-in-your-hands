@@ -1,26 +1,26 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 import { normalizeSequencer } from "./sequencer.ts";
 
 // #region schema
 // What S3 puts in the body of each SQS message. Only the fields the worker
-// uses are listed; S3 adds fields in minor versions, and Zod drops the rest.
-const recordSchema = z.object({
-  eventName: z.string(),
-  s3: z.object({
-    object: z.object({
-      key: z.string().min(1),
-      eTag: z.string().optional(),
+// uses are listed; S3 adds fields in minor versions, and v.object drops the rest.
+const recordSchema = v.object({
+  eventName: v.string(),
+  s3: v.object({
+    object: v.object({
+      key: v.pipe(v.string(), v.minLength(1)),
+      eTag: v.optional(v.string()),
       // Present on create and delete events. Without it an event cannot be ordered.
-      sequencer: z.string().optional(),
+      sequencer: v.optional(v.string()),
     }),
   }),
 });
 
-const notificationSchema = z.object({ Records: z.array(recordSchema).min(1) });
+const notificationSchema = v.object({ Records: v.pipe(v.array(recordSchema), v.minLength(1)) });
 
 // S3 sends this once when the notification is configured. It has no Records.
-const testEventSchema = z.object({ Event: z.literal("s3:TestEvent") });
+const testEventSchema = v.object({ Event: v.literal("s3:TestEvent") });
 // #endregion schema
 
 // #region parse
@@ -34,12 +34,12 @@ export type Notification = { kind: "test" } | { kind: "events"; events: ObjectEv
 /** Throws on anything that is not a message S3 would send: such a message belongs in the DLQ. */
 export function parseNotification(body: string): Notification {
   const json: unknown = JSON.parse(body);
-  if (testEventSchema.safeParse(json).success) {
+  if (v.safeParse(testEventSchema, json).success) {
     return { kind: "test" };
   }
   return {
     kind: "events",
-    events: notificationSchema.parse(json).Records.map((record): ObjectEvent => {
+    events: v.parse(notificationSchema, json).Records.map((record): ObjectEvent => {
       // Keys arrive form-encoded: a space is "+", and other characters are percent-encoded.
       const key = decodeURIComponent(record.s3.object.key.replaceAll("+", " "));
       const { eTag, sequencer } = record.s3.object;

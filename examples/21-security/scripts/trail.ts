@@ -6,24 +6,33 @@
 import { parseArgs } from "node:util";
 
 import { CloudTrailClient, LookupEventsCommand } from "@aws-sdk/client-cloudtrail";
-import { z } from "zod";
+import * as v from "valibot";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
 
 // IAM is a global service: its events are recorded in us-east-1, whatever Region you work in.
 const IAM_EVENTS_REGION = "us-east-1";
 
-const eventSchema = z.object({
-  EventTime: z.date(),
-  EventName: z.string(),
-  Username: z.string().default("(unknown)"),
-  Resources: z.array(z.object({ ResourceName: z.string().optional() })).default([]),
+const eventSchema = v.object({
+  EventTime: v.date(),
+  EventName: v.string(),
+  Username: v.optional(v.string(), "(unknown)"),
+  Resources: v.optional(v.array(v.object({ ResourceName: v.optional(v.string()) })), []),
 });
+
+// Number() reads the option, then: a whole number of hours, 1 to 2160 (the 90 days event history keeps).
+const hoursSchema = v.pipe(
+  v.string(),
+  v.transform(Number),
+  v.safeInteger(),
+  v.minValue(1),
+  v.maxValue(2160),
+);
 
 const { values } = parseArgs({ options: { hours: { type: "string", default: "24" } } });
 
 try {
-  const hours = z.coerce.number().int().min(1).max(2160).parse(values.hours);
+  const hours = v.parse(hoursSchema, values.hours);
   await preflight({ access: "observe", action: "look up IAM events in CloudTrail event history" });
 
   const response = await new CloudTrailClient({ region: IAM_EVENTS_REGION }).send(
@@ -34,9 +43,8 @@ try {
       MaxResults: 50,
     }),
   );
-  const changes = z
-    .array(eventSchema)
-    .parse(response.Events ?? [])
+  const changes = v
+    .parse(v.array(eventSchema), response.Events ?? [])
     .filter((event) => !/^(Get|List|Generate|Simulate)/.test(event.EventName));
 
   for (const event of changes) {

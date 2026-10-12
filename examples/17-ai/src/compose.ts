@@ -1,15 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import type { Fetch } from "@aih/example-04-http-api/src/http/router.ts";
 import { createLogger } from "@aih/example-04-http-api/src/log.ts";
 
-import { type App, createApp } from "./app.ts";
+import { createApp } from "./app.ts";
 import type { Env } from "./env.ts";
 import { createSummarizer, type ModelGateway } from "./summarize.ts";
 
 // #region compose
 /** The one place that touches the real clock, real randomness, and real timers. */
-export function composeApp(env: Env, gateway: ModelGateway): App {
+export function composeApp(env: Env, gateway: ModelGateway): Fetch {
   return createApp({
     env,
     log: createLogger(env.LOG_LEVEL),

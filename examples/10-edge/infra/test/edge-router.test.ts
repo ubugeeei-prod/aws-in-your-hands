@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 
+import * as v from "valibot";
 import { describe, expect, it } from "vite-plus/test";
 
 import { edgeDataSchema, toEntries } from "../../src/kvs/config.ts";
@@ -17,7 +18,8 @@ const file = new URL("../functions/edge-router.js", import.meta.url);
 const source = readFileSync(file, "utf8");
 
 const shipped = toEntries(
-  edgeDataSchema.parse(
+  v.parse(
+    edgeDataSchema,
     JSON.parse(readFileSync(new URL("../../edge-data.json", import.meta.url), "utf8")),
   ),
 );
