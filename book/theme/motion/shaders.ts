@@ -71,7 +71,7 @@ vec4 detail(vec3 cell) {
 
 // World position to the space the cloud lives in: drawn out a little along the wind.
 vec3 wind(vec3 p) {
-  vec3 q = vec3(dot(p, ALONG) * 0.95, dot(p, ACROSS) * 1.3, dot(p, INTO) * 1.15);
+  vec3 q = vec3(dot(p, ALONG) * 0.34, dot(p, ACROSS) * 1.2, dot(p, INTO) * 1.05);
   q += uSeed;
   q.x -= uTime * 0.016;
   // Slow turbulence, so the shapes churn as they travel and never just slide.
@@ -81,7 +81,7 @@ vec3 wind(vec3 p) {
 
 // How much of the sky has cloud at all, over long distances.
 float cover(vec3 q) {
-  return mix(0.42, 0.78, smoothstep(0.40, 0.60, noise(q * 0.22 + 1.9).r));
+  return mix(0.58, 0.96, smoothstep(0.38, 0.62, noise(q * 0.22 + 1.9).r));
 }
 
 // The body of the cloud: gradient noise for the large forms, cellular noise for the billows.
@@ -91,7 +91,7 @@ float body(vec3 q, float amount) {
   // Gradient noise keeps close to its middle. Spread it out to use the whole range.
   float soft = clamp((a.r * 0.62 + b.g * 0.38 - 0.5) * 2.4 + 0.5, 0.0, 1.0);
   float billow = a.b * 0.62 + b.a * 0.38;
-  float form = remap(soft, (1.0 - billow) * 0.42, 1.0);
+  float form = remap(soft, (1.0 - billow) * 0.2, 1.0);
   return remap(form, 1.0 - amount, 1.0);
 }
 
@@ -106,15 +106,15 @@ float cloud(vec3 p) {
   vec4 fine = detail(q * 4.3 + 2.1);
   vec4 finer = detail(q * 9.1 + 4.7);
   float wisps = fine.a * 0.6 + finer.b * 0.25 + finer.a * 0.15;
-  d = remap(d, (1.0 - wisps) * 0.55 * (1.0 - d * 0.5), 1.0);
-  return d * amount * 1.8;
+  d = remap(d, (1.0 - wisps) * 0.3 * (1.0 - d * 0.5), 1.0);
+  return d * amount * 2.3;
 }
 
 // The same cloud without the eaten edges, for the rays towards the sun.
 float cloudCoarse(vec3 p) {
   vec3 q = wind(p);
   float amount = cover(q);
-  return body(q, amount) * amount * 1.8;
+  return body(q, amount) * amount * 2.3;
 }
 
 // Henyey-Greenstein: how much light a droplet sends on at this angle.
@@ -147,9 +147,9 @@ void main() {
 
   // Sunlight is white where it comes straight through and turns pink across the frame.
   float across = smoothstep(-1.2, 1.2, uv.x * 0.7 + uv.y * 0.6);
-  vec3 sun = mix(mix(pink, blush, 0.5), linear(vec3(0.86, 0.83, 0.92)), across) * 2.5;
-  vec3 above = mix(violet, indigo, 0.4) * 0.22;
-  vec3 below = navy * 0.22 + pink * 0.02;
+  vec3 sun = mix(mix(pink, violet, 0.25), linear(vec3(0.86, 0.83, 0.92)), across * across) * 3.0;
+  vec3 above = mix(violet, indigo, 0.5) * 0.2;
+  vec3 below = navy * 0.12 + indigo * 0.05;
 
   vec4 flow = texture(uFlow, gl_FragCoord.xy / uResolution);
   float glow = min(flow.z, 2.0);
@@ -182,7 +182,7 @@ void main() {
       }
       // Beer's law, plus a second, gentler falloff for the light that scatters
       // many times inside the cloud. Without it the thick parts go black.
-      float beer = max(exp(-thickness * 16.0), 0.34 * exp(-thickness * 3.4));
+      float beer = max(exp(-thickness * 24.0), 0.2 * exp(-thickness * 4.5));
       // Thin edges facing away from the sun are darker than their thickness alone says.
       float powder = 1.0 - exp(-density * 3.2);
 
