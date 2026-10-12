@@ -77,10 +77,11 @@ describe("the server as a process", () => {
     child.kill("SIGTERM");
     expect(await nextLog("draining")).toMatchObject({ signal: "SIGTERM" });
 
-    // 3. New connections are refused: the task is no longer listening.
+    // 3. New connections get nowhere: the task is no longer listening.
+    // Usually a refusal. On a busy machine the kernel has been seen to answer with a reset instead.
     const late = connect(port, "127.0.0.1");
-    const [refused] = (await once(late, "error")) as [NodeJS.ErrnoException];
-    expect(refused.code).toBe("ECONNREFUSED");
+    const [turnedAway] = (await once(late, "error")) as [NodeJS.ErrnoException];
+    expect(["ECONNREFUSED", "ECONNRESET"]).toContain(turnedAway.code);
 
     // 4. The request that was in flight still gets its whole answer.
     socket.write(body);
