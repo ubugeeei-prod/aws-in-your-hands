@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { chapterTitle } from "./title.ts";
-import { codeOrigins } from "./transform.ts";
+import { codeOrigins, dedent } from "./transform.ts";
 
 describe("a chapter's opening heading", () => {
   it("separates the number, the name, and what the chapter is about", () => {
@@ -49,5 +49,26 @@ describe("where a page's code blocks came from", () => {
   it("does not count an import written inside a fence", () => {
     const page = ["````md", "```ts", "<<< @/not/an/import.ts", "```", "````", "<<< @/real.ts"];
     expect(codeOrigins(page.join("\n"))).toEqual([undefined, { path: "real.ts" }]);
+  });
+});
+
+describe("a region shown on its own", () => {
+  it("starts at the margin, keeping the shape of what was inside it", () => {
+    const region = [
+      '    const bucket = new s3.Bucket(this, "Content", {',
+      "      enforceSSL: true,",
+      "",
+      "    });",
+    ];
+    expect(dedent(region.join("\n")).split("\n")).toEqual([
+      'const bucket = new s3.Bucket(this, "Content", {',
+      "  enforceSSL: true,",
+      "",
+      "});",
+    ]);
+  });
+
+  it("leaves code that already starts at the margin as it is", () => {
+    expect(dedent("export const a = 1;\n  b();")).toBe("export const a = 1;\n  b();");
   });
 });

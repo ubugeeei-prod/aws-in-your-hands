@@ -90,6 +90,16 @@ export function codeOrigins(markdown: string): (Origin | undefined)[] {
   return origins;
 }
 
+/** Removes the indentation every line shares. Blank lines do not count towards it. */
+export function dedent(code: string): string {
+  const lines = code.split("\n");
+  const depths = lines
+    .filter((line) => line.trim() !== "")
+    .map((line) => /^[ \t]*/.exec(line)?.[0].length ?? 0);
+  const shared = depths.length === 0 ? 0 : Math.min(...depths);
+  return shared === 0 ? code : lines.map((line) => line.slice(shared)).join("\n");
+}
+
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
 /**
@@ -122,6 +132,10 @@ export const codeTitles: MarkdownTransformer = {
       }
       if (!/\[.+\]/.test(block.meta ?? "")) {
         block.meta = `${block.meta ?? ""} [${origin.path}]`.trim();
+      }
+      // A region cut from inside a class or a function keeps that depth. Shown alone, it starts at the margin.
+      if (origin.region !== undefined && block.value !== undefined) {
+        block.value = dedent(block.value);
       }
       // A whole file already has its imports. Only TypeScript and JavaScript regions get them back.
       if (
