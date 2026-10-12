@@ -1,13 +1,13 @@
 // Build-time changes to a page's Markdown tree, so the browser gets finished HTML.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { MarkdownTransformer } from "@ox-content/vite-plugin";
 
 import { renderFigure } from "./figure.ts";
 import { importsFor } from "./imports.ts";
-import { chapterTitle } from "./title.ts";
+import { chapterParts, chapterTitle, openingPage } from "./title.ts";
 
 type Node = {
   type: string;
@@ -21,15 +21,54 @@ type Node = {
 const escape = (text: string): string =>
   text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
+type Place = { locale: "ja" | "en"; chapter: string; key?: string; directory: string };
+
+/** Which chapter a file belongs to, and which of its pages it is. Undefined for pages that are not chapters. */
+export function chapterPage(filePath: string): Place | undefined {
+  const match = /^(.*\/content\/(ja|en)\/chapters\/)(\d{2}-[a-z0-9-]+)(?:\/([a-z]+))?\.md$/.exec(
+    filePath,
+  );
+  if (match === null) {
+    return undefined;
+  }
+  const [, directory = "", locale, chapter = "", key] = match;
+  return {
+    locale: locale === "en" ? "en" : "ja",
+    chapter,
+    directory,
+    ...(key === undefined ? {} : { key }),
+  };
+}
+
+/** The list of a chapter's pages, with the one being read marked. Nothing for a chapter of one page. */
+function pagesOf(place: Place): string | undefined {
+  const later = chapterParts.filter(([key]) =>
+    existsSync(`${place.directory}${place.chapter}/${key}.md`),
+  );
+  if (later.length === 0) {
+    return undefined;
+  }
+  const link = (key: string | undefined, label: string): string => {
+    const href = `/${place.locale}/chapters/${place.chapter}${key === undefined ? "" : `/${key}`}.md`;
+    return `<a href="${href}"${key === place.key ? ' aria-current="page"' : ""}>${escape(label)}</a>`;
+  };
+  const label = place.locale === "ja" ? "この章のページ" : "Pages of this chapter";
+  return `<nav class="aih-pages" aria-label="${label}">${link(undefined, openingPage[place.locale])}${later
+    .map(([key, name]) => link(key, name[place.locale]))
+    .join("")}</nav>`;
+}
+
 /**
- * Sets a chapter's opening heading as the brand guide does: the number large and
- * apart, the name as the title, and the rest of the line as a quieter note.
+ * Sets a chapter's heading the way the cover sets the book's name: the chapter's
+ * number, its name in the display face, and what it is about, then the list of the
+ * chapter's pages. On a later page the page's own name leads and the chapter's steps back.
  * The heading stays one <h1> with the same text, for search and screen readers.
  */
 export const chapterHead: MarkdownTransformer = {
   name: "aih:chapter-head",
-  transform(ast) {
-    const heading = (ast.children as Node[] | undefined)?.find((node) => node.type === "heading");
+  transform(ast, context) {
+    const children = ast.children as Node[] | undefined;
+    const heading = children?.find((node) => node.type === "heading");
     const only = heading?.children?.length === 1 ? heading.children[0] : undefined;
     if (heading?.depth !== 1 || only?.type !== "text" || only.value === undefined) {
       return ast;
@@ -38,9 +77,11 @@ export const chapterHead: MarkdownTransformer = {
     if (title === undefined) {
       return ast;
     }
+    const place = chapterPage(context.filePath);
+    const later = place?.key === undefined ? "" : " aih-chapter__part";
     const part = (name: string, text: string): Node => ({
       type: "html",
-      value: `<span class="aih-chapter__${name}">${escape(text)}</span>`,
+      value: `<span class="aih-chapter__${name}${later}">${escape(text)}</span>`,
     });
     heading.children = [
       part("number", title.number),
@@ -50,6 +91,10 @@ export const chapterHead: MarkdownTransformer = {
         ? []
         : [{ type: "text", value: ": " }, part("about", title.about)]),
     ];
+    const pages = place === undefined ? undefined : pagesOf(place);
+    if (pages !== undefined && children !== undefined) {
+      children.splice(children.indexOf(heading) + 1, 0, { type: "html", value: pages });
+    }
     return ast;
   },
 };

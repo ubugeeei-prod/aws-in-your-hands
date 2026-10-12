@@ -24,12 +24,26 @@
 
 /* ---- the page ------------------------------------------------------- */
 
+/* Paper, for a reader who asks for it. Code stays on navy on either ground. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --octc-color-bg: #ffffff;
+  --octc-color-bg-alt: #f4f5f7;
+  --octc-color-text: #101b2b;
+  --octc-color-text-muted: #55606f;
+  --octc-color-border: #d5d9df;
+  --octc-color-primary: #101b2b;
+  --octc-color-primary-hover: #101b2b;
+  --octc-syntax-background: #101b2b;
+}
+
 body {
   font-size: 16.5px;
   line-height: 1.8;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background: var(--octc-color-bg);
+  color: var(--octc-color-text);
 }
 
 ::selection {
@@ -43,23 +57,36 @@ body {
   border-radius: 0;
 }
 
-.main {
-  padding: var(--aih-8) var(--aih-12) var(--aih-12);
+/* One column of text, set like a book page. The contents of the whole book open
+   from the header; only this page's own outline stays beside the text. */
+.main,
+.main--with-toc {
+  margin-left: 0;
+  padding: var(--aih-12) var(--aih-8) var(--aih-16);
 }
 
-/* The outline beside the text from a laptop's width up, not only on a wide monitor. */
-@media (min-width: 1180px) {
+.content,
+.last-updated,
+.pager,
+.ox-breadcrumbs {
+  max-width: var(--octc-max-content-width);
+  margin-inline: auto;
+}
+
+@media (min-width: 1100px) {
   .toc {
     display: block;
   }
 
+  /* The outline takes the left margin; the text keeps its measure and sits just right of centre. */
   .main--with-toc {
-    padding-right: calc(var(--octc-toc-width) + var(--aih-12));
+    padding-left: calc(var(--octc-toc-width) + var(--aih-12));
   }
 }
 
 @media (max-width: 768px) {
-  .main {
+  .main,
+  .main--with-toc {
     padding: var(--aih-6) var(--octc-mobile-gutter)
       calc(var(--octc-mobile-footer-height) + var(--aih-12));
   }
@@ -74,49 +101,86 @@ body {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   padding-inline: var(--aih-6);
+  gap: var(--aih-4);
 }
 
 .header-title {
   font-family: var(--aih-display);
   font-weight: 600;
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: 0;
   color: var(--octc-color-text);
   gap: var(--aih-3);
 }
 
-.header-logo {
-  border-radius: 0;
+/* The mark, in whatever colour the text has. */
+.header-title::before {
+  content: "";
+  width: 30px;
+  height: 30px;
+  background: currentColor;
+  -webkit-mask: url("/brand/mark.svg") center / contain no-repeat;
+  mask: url("/brand/mark.svg") center / contain no-repeat;
+}
+
+/* "Contents" opens the whole book. It is a word, at every width. */
+.menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  order: 2;
+  min-height: 44px;
+  margin: 0 0 0 auto;
+  padding: 0 var(--aih-3);
+  font: inherit;
+  font-size: 14px;
+  color: var(--octc-color-text);
+}
+
+.menu-toggle svg {
+  display: none;
+}
+
+.menu-toggle::after {
+  content: "目次";
+}
+
+:lang(en) .menu-toggle::after {
+  content: "Contents";
+}
+
+.menu-toggle:hover::after,
+.menu-toggle[aria-expanded="true"]::after {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
 }
 
 .header-actions {
-  gap: var(--aih-2);
+  order: 3;
+  margin-left: 0;
+  gap: var(--aih-1);
 }
 
 .search-button,
 .theme-toggle,
-.ox-header-select > button,
-.menu-toggle {
+.ox-header-select > button {
   border-radius: 0;
   box-shadow: none;
   min-height: 44px;
   background: none;
+  border: 0;
   color: var(--octc-color-text);
   font-size: 14px;
 }
 
 .search-button {
-  border: var(--aih-rule);
-  padding-inline: var(--aih-4);
-  min-width: 11rem;
-  justify-content: flex-start;
+  padding-inline: var(--aih-3);
+  min-width: 0;
 }
 
 .search-button:hover,
 .theme-toggle:hover,
 .ox-header-select > button:hover {
   background: var(--octc-color-bg-alt);
-  border-color: var(--octc-color-text);
 }
 
 .search-button kbd,
@@ -127,11 +191,10 @@ body {
   border: var(--aih-rule);
   background: none;
   box-shadow: none;
-  margin-left: auto;
 }
 
 .search-modal-overlay {
-  background: color-mix(in srgb, var(--aih-navy) 72%, transparent);
+  background: color-mix(in srgb, #0b1420 78%, transparent);
   backdrop-filter: none;
 }
 
@@ -158,46 +221,88 @@ body {
   color: var(--octc-color-bg);
 }
 
-/* ---- sidebar -------------------------------------------------------- */
+/* ---- the contents of the book --------------------------------------- */
 
+/* Closed until asked for. It slides over the page and the page dims behind it. */
 .sidebar {
+  z-index: 60;
+  width: min(var(--octc-sidebar-width), 92vw);
   background: var(--octc-color-bg);
   border-right: var(--aih-rule);
-  font-size: 13.5px;
-  padding: var(--aih-6) var(--aih-6) var(--aih-12);
+  font-size: 15px;
+  padding: var(--aih-8) var(--aih-8) var(--aih-16);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition:
+    transform 180ms ease,
+    visibility 0s linear 180ms;
+}
+
+.sidebar.open {
+  transform: none;
+  visibility: visible;
+  transition: transform 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar.open {
+    transition: none;
+  }
+}
+
+.overlay {
+  z-index: 55;
+  background: color-mix(in srgb, #0b1420 70%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  bottom: 0;
 }
 
 .nav-section {
-  margin-bottom: var(--aih-6);
+  margin-bottom: var(--aih-8);
 }
 
 .nav-title {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
   color: var(--octc-color-text-muted);
-  padding: 0 0 var(--aih-2);
+  padding: 0;
   margin-bottom: var(--aih-2);
-  border-bottom: var(--aih-rule);
+  border: 0;
 }
 
 .nav-link {
   border-radius: 0;
-  color: var(--octc-color-text-muted);
+  color: var(--octc-color-text);
   line-height: 1.5;
-  padding: 4px 0;
+  padding: 5px 0;
   background: none;
   border: 0;
   margin: 0;
 }
 
-.nav-link:hover {
-  color: var(--octc-color-text);
-  background: none;
+/* A chapter's pages are indented under it. No guide line beside them. */
+.nav-list--nested {
+  border: 0;
+  margin-left: var(--aih-6);
+  padding-left: 0;
 }
 
-/* The page you are on is set in the text colour and in bold. Nothing is drawn beside it. */
+.nav-list--nested .nav-link {
+  color: var(--octc-color-text-muted);
+  font-size: 14px;
+}
+
+.nav-link:hover {
+  background: none;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+/* The page you are on is set in bold. Nothing is drawn beside it. */
 .nav-link.active,
 .nav-link[aria-current="page"] {
   color: var(--octc-color-text);
@@ -206,30 +311,33 @@ body {
   box-shadow: none;
 }
 
-/* ---- the outline ---------------------------------------------------- */
+/* ---- this page's outline -------------------------------------------- */
 
 .toc {
+  left: 0;
+  right: auto;
+  width: var(--octc-toc-width);
   font-size: 13.5px;
-  border-left: 0;
-  padding: var(--aih-8) var(--aih-6) var(--aih-12) 0;
+  border: 0;
+  padding: var(--aih-12) var(--aih-4) var(--aih-12) var(--aih-8);
 }
 
 .toc-title {
   font-size: 0;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--octc-color-text);
-  margin-bottom: var(--aih-4);
+  color: var(--octc-color-text-muted);
+  margin-bottom: var(--aih-3);
 }
 
 .toc-title::before {
-  content: "この章の中で";
-  font-size: 14px;
-  font-weight: 700;
+  content: "このページ";
+  font-size: 13px;
+  font-weight: 400;
 }
 
 :lang(en) .toc-title::before {
-  content: "In this chapter";
+  content: "On this page";
 }
 
 /* The page's own title is already above the text. */
@@ -265,16 +373,10 @@ body {
   background: none;
 }
 
-/* ---- the chapter's opening ------------------------------------------ */
+/* ---- a chapter's opening -------------------------------------------- */
 
 .ox-breadcrumbs {
-  font-size: 12px;
-  margin-bottom: var(--aih-6);
-  color: var(--octc-color-text-muted);
-}
-
-.ox-breadcrumbs-link {
-  color: inherit;
+  display: none;
 }
 
 .content {
@@ -282,32 +384,24 @@ body {
 }
 
 .content h1 {
-  font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.3rem);
+  font-size: clamp(1.9rem, 1.3rem + 2vw, 2.6rem);
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
   letter-spacing: 0;
-  margin: 0;
-  padding: 0 0 var(--aih-6);
-  border-bottom: var(--aih-rule);
+  margin: 0 auto var(--aih-6);
+  padding: 0;
+  border: 0;
   color: var(--octc-color-text);
 }
 
-/* A chapter opens on the cover's own sky and type, so the book reads as one object.
-   The picture is a still of the cover's cloud under a flat navy wash that keeps white text above 4.5:1.
+/* The chapter's number, its name in the cover's face, and what it is about.
+   Type on the page's own ground: no picture, no band.
    The colons between the parts are for people who hear the page, not see it. */
 .content h1:has(.aih-chapter__number) {
   display: grid;
-  align-content: end;
   row-gap: var(--aih-2);
-  min-height: 15rem;
-  margin: 0 calc(var(--aih-12) * -1) var(--aih-6);
-  padding: var(--aih-8) var(--aih-12);
-  border: 0;
   font-size: 0;
-  color: #ffffff;
-  background:
-    linear-gradient(rgba(16, 27, 43, 0.5), rgba(16, 27, 43, 0.5)),
-    #101b2b url("/brand/atmosphere.jpg") center / cover;
+  margin-bottom: var(--aih-6);
 }
 
 .aih-chapter__number {
@@ -315,59 +409,84 @@ body {
   font-weight: 600;
   font-size: 15px;
   line-height: 1.4;
+  color: var(--octc-color-text-muted);
 }
 
 .aih-chapter__name {
   font-family: var(--aih-display);
   font-weight: 700;
-  font-size: clamp(2.4rem, 1.4rem + 3.6vw, 4.2rem);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-size: clamp(2.6rem, 1.4rem + 4.4vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
 }
 
 .aih-chapter__about {
-  font-size: 15px;
+  font-size: 1.05rem;
   font-weight: 400;
   line-height: 1.6;
-  margin-top: var(--aih-2);
-}
-
-@media (max-width: 768px) {
-  .content h1:has(.aih-chapter__number) {
-    min-height: 11rem;
-    margin-inline: calc(var(--octc-mobile-gutter) * -1);
-    padding: var(--aih-6) var(--octc-mobile-gutter);
-  }
-}
-
-/* "Copy as Markdown" and "View as Markdown": quiet, under the rule. */
-.content p.ox-markdown-source {
-  display: flex;
-  gap: var(--aih-6);
-  margin: var(--aih-2) 0 var(--aih-6);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.content .ox-markdown-source :is(a, button) {
-  font: inherit;
   color: var(--octc-color-text-muted);
-  background: none;
-  border: 0;
-  padding: 0;
+  margin-top: var(--aih-3);
+}
+
+/* A later page of a chapter: the chapter's name steps back and the page's own name leads. */
+.aih-chapter__name.aih-chapter__part {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--octc-color-text-muted);
+}
+
+.aih-chapter__number.aih-chapter__part {
+  display: none;
+}
+
+.aih-chapter__about.aih-chapter__part {
+  font-family: var(--octc-font-sans);
+  font-size: clamp(1.9rem, 1.3rem + 2vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--octc-color-text);
+  margin-top: 0;
+}
+
+/* The pages of the chapter, in order. The one being read is in the text colour. */
+.content .aih-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aih-1) var(--aih-6);
+  margin: 0 0 var(--aih-8);
+  padding: var(--aih-3) 0;
+  border-top: var(--aih-rule);
+  border-bottom: var(--aih-rule);
+  font-size: 14px;
+}
+
+.content .aih-pages a:not(.header-anchor):not(.pager-link) {
+  display: inline-flex;
+  align-items: center;
   min-height: 32px;
-  cursor: pointer;
+  color: var(--octc-color-text-muted);
   text-decoration: none;
 }
 
-.content .ox-markdown-source :is(a, button):hover {
+.content .aih-pages a:not(.header-anchor):not(.pager-link):hover {
   color: var(--octc-color-text);
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }
 
+.content .aih-pages a[aria-current="page"]:not(.header-anchor):not(.pager-link) {
+  color: var(--octc-color-text);
+  font-weight: 700;
+}
+
+.content p.ox-markdown-source {
+  display: none;
+}
+
 /* The first paragraph is the chapter's promise. */
-.content .ox-markdown-source + p,
+.content .aih-pages + p,
 .content h1 + p:not(.ox-markdown-source) {
   font-size: 1.08rem;
   line-height: 1.8;

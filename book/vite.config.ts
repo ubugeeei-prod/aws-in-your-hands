@@ -52,8 +52,8 @@ export default defineConfig({
         breadcrumbs: true,
         lastUpdated: true,
         jsonLd: true,
-        // Each page's Markdown is published beside it, with a button that copies it.
-        markdownSource: { alternate: true, copy: true },
+        // Each page's Markdown is published beside it and linked from the page's head, for tools that read it.
+        markdownSource: { alternate: true, copy: false },
         // The cover turns the sidebar and the outline off for itself.
         pageChrome: true,
         minifyHtml: true,

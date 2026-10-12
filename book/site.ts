@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import manifest from "../data/chapters.json" with { type: "json" };
-import { chapterTitle } from "./theme/title.ts";
+import { chapterParts as parts, chapterTitle } from "./theme/title.ts";
 
 type LocalizedText = { ja: string; en: string };
 type SidebarItem = {
@@ -15,15 +15,6 @@ type SidebarItem = {
 const chapterLink = (id: string, slug: string): string => `/ja/chapters/${id}-${slug}.md`;
 
 const short = (id: string, title: string): string => chapterTitle(`${id} ${title}`)?.name ?? title;
-
-// A chapter is several pages: its opening page, then these, in this order, where they exist.
-const parts = [
-  ["build", { ja: "しくみと実装", en: "Design and Build" }],
-  ["more", { ja: "実装のつづき", en: "Build, Continued" }],
-  ["local", { ja: "手元で動かす", en: "Run It Locally" }],
-  ["deploy", { ja: "デプロイ", en: "Deploy" }],
-  ["wrap", { ja: "費用、注意点、片付け", en: "Costs, Pitfalls, and Cleanup" }],
-] as const;
 
 const hasPage = (path: string): boolean =>
   existsSync(fileURLToPath(new URL(`./content${path}`, import.meta.url)));

@@ -15,3 +15,15 @@ export function chapterTitle(
     ? { number, name: rest }
     : { number, name: rest.slice(0, colon), about: rest.slice(colon + 1).trim() };
 }
+
+/** The pages a chapter can have after its opening page, in reading order, with their names. */
+export const chapterParts = [
+  ["build", { ja: "しくみと実装", en: "Design and Build" }],
+  ["more", { ja: "実装のつづき", en: "Build, Continued" }],
+  ["local", { ja: "手元で動かす", en: "Run It Locally" }],
+  ["deploy", { ja: "デプロイ", en: "Deploy" }],
+  ["wrap", { ja: "費用、注意点、片付け", en: "Costs, Pitfalls, and Cleanup" }],
+] as const;
+
+/** What a chapter's opening page is called in the list of its pages. */
+export const openingPage = { ja: "概要", en: "Overview" } as const;

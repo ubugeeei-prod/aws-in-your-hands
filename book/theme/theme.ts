@@ -44,36 +44,29 @@ const japanese =
 
 const css = readFileSync(fileURLToPath(new URL("./brand.css", import.meta.url)), "utf8");
 
+const night = {
+  primary: colors.white,
+  primaryHover: colors.white,
+  background: colors.navy,
+  backgroundAlt: colors.deep,
+  text: colors.white,
+  textMuted: colors.haze,
+  border: colors.seam,
+  codeBackground: colors.deep,
+  codeBackgroundTop: colors.deep,
+  codeText: colors.white,
+} as const;
+
 export function brandTheme(base: string) {
   return defineTheme({
     extends: defaultTheme,
     name: "open-current",
     aside: true,
     sidebar,
-    colors: {
-      primary: colors.navy,
-      primaryHover: colors.navy,
-      background: colors.white,
-      backgroundAlt: colors.paper,
-      text: colors.navy,
-      textMuted: colors.slate,
-      border: colors.line,
-      codeBackground: colors.navy,
-      codeBackgroundTop: colors.navy,
-      codeText: colors.white,
-    },
-    darkColors: {
-      primary: colors.white,
-      primaryHover: colors.white,
-      background: colors.navy,
-      backgroundAlt: colors.deep,
-      text: colors.white,
-      textMuted: colors.haze,
-      border: colors.seam,
-      codeBackground: colors.deep,
-      codeBackgroundTop: colors.deep,
-      codeText: colors.white,
-    },
+    // Navy is the book's ground, as on the cover, whatever the system asks for.
+    // Paper is there for a reader who chooses it; brand.css holds those colours.
+    colors: night,
+    darkColors: night,
     fonts: {
       sans: {
         family: "Hubot Sans",
@@ -117,17 +110,13 @@ export function brandTheme(base: string) {
         },
       },
     },
-    layout: { maxContentWidth: "720px", headerHeight: "56px", sidebarWidth: "256px" },
+    layout: { maxContentWidth: "720px", headerHeight: "56px", sidebarWidth: "22rem" },
     footer: {
       message: "AWS in Your Hands: An open field guide",
     },
-    header: {
-      logoLight: `${base}brand/mark-navy.svg`,
-      logoDark: `${base}brand/mark-white.svg`,
-      logoWidth: 34,
-      logoHeight: 34,
-    },
-    tokens: { ...syntax, "syntax-background": colors.navy },
+    // The mark is drawn in CSS from brand/mark.svg, so it takes the text colour of either ground.
+    header: { showLogo: false },
+    tokens: { ...syntax, "syntax-background": colors.deep },
     darkTokens: { ...syntax, "syntax-background": colors.deep },
     toggleTransition: "circle",
     css,
