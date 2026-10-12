@@ -1,10 +1,12 @@
 // Build-time changes to a page's Markdown tree, so the browser gets finished HTML.
 
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 import type { MarkdownTransformer } from "@ox-content/vite-plugin";
 
 import { renderFigure } from "./figure.ts";
+import { importsFor } from "./imports.ts";
 import { chapterTitle } from "./title.ts";
 
 type Node = {
@@ -52,12 +54,14 @@ export const chapterHead: MarkdownTransformer = {
   },
 };
 
+export type Origin = { path: string; region?: string };
+
 /**
  * Where each code block of a page came from, in the order the blocks appear:
- * the imported file's path for a `<<< @/path{region}` line, undefined for a fence.
+ * the file and the region for a `<<< @/path{region}` line, undefined for a fence.
  */
-export function codeOrigins(markdown: string): (string | undefined)[] {
-  const origins: (string | undefined)[] = [];
+export function codeOrigins(markdown: string): (Origin | undefined)[] {
+  const origins: (Origin | undefined)[] = [];
   let fence: string | undefined;
   for (const line of markdown.split("\n")) {
     const trimmed = line.trim();
@@ -73,9 +77,10 @@ export function codeOrigins(markdown: string): (string | undefined)[] {
         fence = undefined;
       }
     } else if (marker === undefined) {
-      const imported = /^<<<\s+@\/([^\s{#]+)/.exec(trimmed)?.[1];
-      if (imported !== undefined) {
-        origins.push(imported);
+      const imported = /^<<<\s+@\/([^\s{#]+)(?:\{([^}]+)\}|#(\S+))?/.exec(trimmed);
+      if (imported !== null) {
+        const region = imported[2] ?? imported[3];
+        origins.push({ path: imported[1] ?? "", ...(region === undefined ? {} : { region }) });
       }
     } else {
       fence = marker;
@@ -85,9 +90,12 @@ export function codeOrigins(markdown: string): (string | undefined)[] {
   return origins;
 }
 
+const root = fileURLToPath(new URL("../../", import.meta.url));
+
 /**
- * Names the file above every block of code that was imported from the repository,
- * so a reader always knows which file they are looking at.
+ * For every block of code that was imported from the repository: names the file above it,
+ * and puts back the imports the shown region uses. A reader should never have to guess
+ * which file they are looking at, or where a name came from.
  */
 export const codeTitles: MarkdownTransformer = {
   name: "aih:code-titles",
@@ -109,8 +117,22 @@ export const codeTitles: MarkdownTransformer = {
     blocks.forEach((block, index) => {
       const origin = origins[index];
       // Ox Content reads a title from `[name]` in the fence's info, as VitePress does.
-      if (origin !== undefined && !/\[.+\]/.test(block.meta ?? "")) {
-        block.meta = `${block.meta ?? ""} [${origin}]`.trim();
+      if (origin === undefined) {
+        return;
+      }
+      if (!/\[.+\]/.test(block.meta ?? "")) {
+        block.meta = `${block.meta ?? ""} [${origin.path}]`.trim();
+      }
+      // A whole file already has its imports. Only TypeScript and JavaScript regions get them back.
+      if (
+        origin.region !== undefined &&
+        /^(ts|js|mts|mjs)$/.test(block.lang ?? "") &&
+        block.value !== undefined
+      ) {
+        const imports = importsFor(readFileSync(`${root}${origin.path}`, "utf8"), block.value);
+        if (imports.length > 0) {
+          block.value = `${imports.join("\n")}\n\n${block.value}`;
+        }
       }
     });
     return ast;

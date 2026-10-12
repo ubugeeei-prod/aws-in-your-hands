@@ -26,8 +26,8 @@
 /* ---- the page ------------------------------------------------------- */
 
 body {
-  font-size: 18px;
-  line-height: 1.85;
+  font-size: 16.5px;
+  line-height: 1.8;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background: var(--octc-color-bg);
@@ -45,7 +45,7 @@ body {
 }
 
 .main {
-  padding: var(--aih-12) var(--aih-12) var(--aih-16);
+  padding: var(--aih-8) var(--aih-12) var(--aih-12);
 }
 
 /* The outline beside the text from a laptop's width up, not only on a wide monitor. */
@@ -164,12 +164,12 @@ body {
 .sidebar {
   background: var(--octc-color-bg);
   border-right: var(--aih-rule);
-  font-size: 14px;
-  padding: var(--aih-8) var(--aih-6) var(--aih-12);
+  font-size: 13.5px;
+  padding: var(--aih-6) var(--aih-6) var(--aih-12);
 }
 
 .nav-section {
-  margin-bottom: var(--aih-8);
+  margin-bottom: var(--aih-6);
 }
 
 .nav-title {
@@ -187,7 +187,7 @@ body {
   border-radius: 0;
   color: var(--octc-color-text-muted);
   line-height: 1.5;
-  padding: 7px 0 7px var(--aih-4);
+  padding: 4px 0 4px var(--aih-4);
   background: none;
   border: 0;
   margin: 0;
@@ -224,7 +224,7 @@ body {
 .toc {
   font-size: 13.5px;
   border-left: 0;
-  padding: var(--aih-12) var(--aih-6) var(--aih-12) 0;
+  padding: var(--aih-8) var(--aih-6) var(--aih-12) 0;
 }
 
 .toc-title {
@@ -255,7 +255,7 @@ body {
   color: var(--octc-color-text-muted);
   border-radius: 0;
   line-height: 1.5;
-  padding: 6px 0 6px var(--aih-4);
+  padding: 4px 0 4px var(--aih-4);
   border: 0;
   background: none;
 }
@@ -294,7 +294,7 @@ body {
 
 .ox-breadcrumbs {
   font-size: 12px;
-  margin-bottom: var(--aih-8);
+  margin-bottom: var(--aih-6);
   color: var(--octc-color-text-muted);
 }
 
@@ -307,12 +307,12 @@ body {
 }
 
 .content h1 {
-  font-size: clamp(2rem, 1.2rem + 2.6vw, 3rem);
+  font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.3rem);
   font-weight: 700;
-  line-height: 1.28;
+  line-height: 1.3;
   letter-spacing: 0;
   margin: 0;
-  padding: 0 0 var(--aih-8);
+  padding: 0 0 var(--aih-6);
   border-bottom: var(--aih-rule-strong);
   color: var(--octc-color-text);
 }
@@ -333,8 +333,8 @@ body {
 }
 
 .aih-chapter__name {
-  font-size: clamp(2rem, 1.2rem + 2.6vw, 3.1rem);
-  line-height: 1.28;
+  font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.3rem);
+  line-height: 1.3;
 }
 
 .aih-chapter__about {
@@ -348,7 +348,7 @@ body {
 .content p.ox-markdown-source {
   display: flex;
   gap: var(--aih-6);
-  margin: var(--aih-3) 0 var(--aih-8);
+  margin: var(--aih-2) 0 var(--aih-6);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -373,7 +373,7 @@ body {
 /* The first paragraph is the chapter's promise. */
 .content .ox-markdown-source + p,
 .content h1 + p:not(.ox-markdown-source) {
-  font-size: 1.2rem;
+  font-size: 1.08rem;
   line-height: 1.8;
 }
 
@@ -381,7 +381,7 @@ body {
 
 .content p,
 .content li {
-  line-height: 1.95;
+  line-height: 1.85;
 }
 
 :lang(en) .content p,
@@ -390,7 +390,7 @@ body {
 }
 
 .content p {
-  margin: 0 0 var(--aih-6);
+  margin: 0 0 var(--aih-4);
 }
 
 .content h2,
@@ -403,16 +403,16 @@ body {
 }
 
 .content h2 {
-  font-size: 1.7rem;
-  margin: var(--aih-16) 0 var(--aih-6);
-  padding-top: var(--aih-6);
+  font-size: 1.45rem;
+  margin: var(--aih-12) 0 var(--aih-4);
+  padding-top: var(--aih-4);
   border-top: var(--aih-rule-strong);
   border-bottom: 0;
 }
 
 .content h3 {
-  font-size: 1.25rem;
-  margin: var(--aih-12) 0 var(--aih-4);
+  font-size: 1.12rem;
+  margin: var(--aih-8) 0 var(--aih-3);
 }
 
 .content h4 {
@@ -427,11 +427,11 @@ body {
 .content ul,
 .content ol {
   padding-left: 1.4em;
-  margin: 0 0 var(--aih-6);
+  margin: 0 0 var(--aih-4);
 }
 
 .content li {
-  margin: var(--aih-1) 0;
+  margin: 2px 0;
 }
 
 .content li::marker {
@@ -485,7 +485,7 @@ body {
 }
 
 .content .ox-code {
-  margin: var(--aih-6) 0;
+  margin: var(--aih-4) 0 var(--aih-6);
 }
 
 .content pre,
@@ -494,9 +494,9 @@ body {
   border: 0;
   box-shadow: none;
   background: var(--octc-syntax-background) !important;
-  font-size: 14px;
-  line-height: 1.7;
-  margin: var(--aih-6) 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+  margin: var(--aih-4) 0;
   padding: var(--aih-3) var(--aih-4);
   font-feature-settings: "liga" 0;
   tab-size: 2;
@@ -507,7 +507,7 @@ body {
 }
 
 .content pre code {
-  font-size: 14px;
+  font-size: 13.5px;
   border: 0;
   background: none;
   padding: 0;
@@ -618,8 +618,8 @@ body {
   border-top: var(--aih-rule-strong);
   border-radius: 0;
   font-size: 0.875rem;
-  line-height: 1.65;
-  margin: var(--aih-8) 0;
+  line-height: 1.6;
+  margin: var(--aih-6) 0;
   background: none;
 }
 
@@ -628,7 +628,7 @@ body {
   border: 0;
   border-bottom: var(--aih-rule);
   background: none !important;
-  padding: var(--aih-3) var(--aih-4) var(--aih-3) 0;
+  padding: var(--aih-2) var(--aih-4) var(--aih-2) 0;
   text-align: left;
   vertical-align: top;
 }
@@ -727,14 +727,14 @@ body {
 /* Drawn by theme/figure.ts. Thin navy lines on the page's own background;
    the only colour is the orange square that marks what a chapter is about. */
 .content .aih-figure {
-  margin: var(--aih-12) 0;
+  margin: var(--aih-8) 0;
   padding: 0;
 }
 
 .aih-figure__canvas {
   overflow-x: auto;
-  padding: var(--aih-8) var(--aih-6);
-  border-top: var(--aih-rule-strong);
+  padding: var(--aih-6) var(--aih-4);
+  border-top: var(--aih-rule);
   border-bottom: var(--aih-rule);
   text-align: center;
 }
@@ -815,6 +815,10 @@ body {
   fill: var(--octc-color-bg-alt);
   stroke: var(--octc-color-border);
   stroke-width: 1;
+}
+
+.aih-figure__group-clear {
+  fill: var(--octc-color-bg-alt);
 }
 
 .aih-figure__note {

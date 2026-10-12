@@ -117,7 +117,7 @@ export function brandTheme(base: string) {
         },
       },
     },
-    layout: { maxContentWidth: "760px", headerHeight: "64px", sidebarWidth: "280px" },
+    layout: { maxContentWidth: "720px", headerHeight: "56px", sidebarWidth: "256px" },
     footer: {
       message: "AWS in Your Hands: An open field guide",
     },

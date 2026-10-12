@@ -41,18 +41,14 @@ export const sidebar: SidebarItem[] = [
       },
     ],
   },
-  { text: { ja: "土台", en: "Foundations" }, items: chapterItems(0, 2) },
-  { text: { ja: "ノートアプリを作る", en: "Build the Notes App" }, items: chapterItems(3, 8) },
-  {
-    text: { ja: "SSR、edge、ネットワーク、コンテナ", en: "SSR, Edge, Network, Containers" },
-    items: chapterItems(9, 12),
-  },
-  {
-    text: { ja: "データと独立レシピ", en: "Data and Standalone Recipes" },
-    items: chapterItems(13, 18),
-  },
-  { text: { ja: "運用", en: "Operations" }, items: chapterItems(19, 22) },
-  { text: { ja: "自分で動かす", en: "Run It Yourself" }, items: chapterItems(23, 24) },
+  // Grouped by what the reader is doing, in the order the book does it.
+  { text: { ja: "準備する", en: "Get Ready" }, items: chapterItems(0, 2) },
+  { text: { ja: "アプリを作る", en: "Build the App" }, items: chapterItems(3, 8) },
+  { text: { ja: "動かす場所を選ぶ", en: "Choose Where It Runs" }, items: chapterItems(9, 12) },
+  { text: { ja: "データを置く", en: "Store Data" }, items: chapterItems(13, 14) },
+  { text: { ja: "機能を足す", en: "Add Features" }, items: chapterItems(15, 18) },
+  { text: { ja: "運用する", en: "Operate It" }, items: chapterItems(19, 22) },
+  { text: { ja: "サーバーを持つ", en: "Run Your Own Servers" }, items: chapterItems(23, 24) },
   {
     text: { ja: "リファレンス", en: "Reference" },
     items: [

@@ -40,14 +40,14 @@ describe("where a page's code blocks came from", () => {
     ];
     expect(codeOrigins(page.join("\n"))).toEqual([
       undefined,
-      "examples/05-dynamodb/src/id.ts",
-      ".env.example",
+      { path: "examples/05-dynamodb/src/id.ts", region: "id" },
+      { path: ".env.example" },
     ]);
   });
 
   // A page that shows how to write an import must not have its example taken for one.
   it("does not count an import written inside a fence", () => {
     const page = ["````md", "```ts", "<<< @/not/an/import.ts", "```", "````", "<<< @/real.ts"];
-    expect(codeOrigins(page.join("\n"))).toEqual([undefined, "real.ts"]);
+    expect(codeOrigins(page.join("\n"))).toEqual([undefined, { path: "real.ts" }]);
   });
 });

@@ -79,7 +79,8 @@ export function parseFigure(source: string): Figure {
       figure.direction = rest as Figure["direction"];
     } else if (keyword === "node" || keyword === "actor") {
       const match = /^(\S+?):\s*(.+)$/.exec(rest) ?? fail(at, `expected "${keyword} id: label"`);
-      const [label = "", sub] = (match[2] ?? "").split("|").map((part) => part.trim());
+      // Only a bar with a space on each side starts the note: "GET|POST /notes" is one label.
+      const [label = "", sub] = (match[2] ?? "").split(/\s\|\s/).map((part) => part.trim());
       figure.nodes.push({ id: match[1] ?? "", label, ...(sub ? { sub } : {}), marked: false });
     } else if (keyword === "edge" || keyword === "step") {
       const match = ARROW.exec(rest) ?? fail(at, `expected "${keyword} a -> b: label"`);
@@ -335,6 +336,7 @@ function renderFlow(figure: Figure): string {
   const boxes: Box[] = [...placed.values()];
   // Labels of edges that run inside a group belong inside its border.
   const inside = new Map<string, Box[]>(figure.groups.map((group) => [group.id, []]));
+  const groupLabels: string[] = [];
 
   const drawGroup = (group: FigureGroup): string => {
     const members = group.members.map((id) => placed.get(id)).filter((node) => node !== undefined);
@@ -347,10 +349,14 @@ function renderFlow(figure: Figure): string {
     };
     box.width = Math.max(box.width, textWidth(group.label, true) * FONT.sub + 28);
     boxes.push(box);
-    return (
-      `<rect class="aih-figure__group" x="${round(box.x)}" y="${round(box.y)}" width="${round(box.width)}" height="${round(box.height)}"/>` +
-      `<text class="aih-figure__group-label" x="${round(box.x + 12)}" y="${round(box.y + 18)}">${escape(group.label)}</text>`
+    // The name goes on last, over a patch of the group's own fill: an arrow coming in from
+    // above passes behind it.
+    const width = textWidth(group.label, true) * FONT.sub + 12;
+    groupLabels.push(
+      `<rect class="aih-figure__group-clear" x="${round(box.x + 6)}" y="${round(box.y + 6)}" width="${round(width)}" height="17"/>` +
+        `<text class="aih-figure__group-label" x="${round(box.x + 12)}" y="${round(box.y + 18)}">${escape(group.label)}</text>`,
     );
+    return `<rect class="aih-figure__group" x="${round(box.x)}" y="${round(box.y)}" width="${round(box.width)}" height="${round(box.height)}"/>`;
   };
 
   const outer = extentOf([...placed.values()]);
@@ -443,7 +449,12 @@ function renderFlow(figure: Figure): string {
     }
   }
 
-  parts.push(...figure.groups.map(drawGroup), ...edges, ...[...placed.values()].map(drawNode));
+  parts.push(
+    ...figure.groups.map(drawGroup),
+    ...edges,
+    ...groupLabels,
+    ...[...placed.values()].map(drawNode),
+  );
   return frame(figure, parts.join(""), extentOf(boxes));
 }
 
