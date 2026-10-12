@@ -18,7 +18,6 @@
   --aih-12: 48px;
   --aih-16: 64px;
   --aih-rule: 1px solid var(--octc-color-border);
-  --aih-rule-strong: 1px solid var(--octc-color-text);
   --octc-surface-noise-image: none;
   --octc-toc-width: 16rem;
 }
@@ -140,7 +139,7 @@ body {
 .ox-header-select-menu {
   border-radius: 0;
   box-shadow: none;
-  border: var(--aih-rule-strong);
+  border: var(--aih-rule);
   background: var(--octc-color-bg);
 }
 
@@ -313,7 +312,7 @@ body {
   letter-spacing: 0;
   margin: 0;
   padding: 0 0 var(--aih-6);
-  border-bottom: var(--aih-rule-strong);
+  border-bottom: var(--aih-rule);
   color: var(--octc-color-text);
 }
 
@@ -405,9 +404,8 @@ body {
 .content h2 {
   font-size: 1.45rem;
   margin: var(--aih-12) 0 var(--aih-4);
-  padding-top: var(--aih-4);
-  border-top: var(--aih-rule-strong);
-  border-bottom: 0;
+  padding-top: 0;
+  border: 0;
 }
 
 .content h3 {
@@ -557,6 +555,11 @@ body {
   box-sizing: border-box;
 }
 
+/* Each line is a block, so an empty one needs its height said. */
+.content pre.ox-code-block .line {
+  min-height: 1lh;
+}
+
 /* A file that ends with a newline should not show an empty last line. */
 .content pre.ox-code-block .line:last-child:not(:has(span:not(:empty))) {
   display: none;
@@ -615,7 +618,7 @@ body {
 
 .content table {
   border: 0;
-  border-top: var(--aih-rule-strong);
+  border-top: var(--aih-rule);
   border-radius: 0;
   font-size: 0.875rem;
   line-height: 1.6;
@@ -636,7 +639,7 @@ body {
 .content th {
   font-weight: 700;
   font-size: 0.8rem;
-  border-bottom: var(--aih-rule-strong);
+  border-bottom: var(--aih-rule);
   white-space: nowrap;
 }
 
@@ -666,12 +669,6 @@ body {
   margin: 0 0 var(--aih-3);
 }
 
-.content .ox-container--warning,
-.content .ox-container--caution,
-.content .ox-container--danger {
-  border-color: var(--octc-color-text);
-}
-
 .content .ox-container--details {
   padding: 0;
 }
@@ -697,7 +694,7 @@ body {
   place-items: center;
   width: 20px;
   height: 20px;
-  border: var(--aih-rule-strong);
+  border: var(--aih-rule);
   font-size: 14px;
   line-height: 1;
 }
@@ -836,7 +833,7 @@ body {
 }
 
 .pager {
-  border-top: var(--aih-rule-strong);
+  border-top: var(--aih-rule);
   margin-top: var(--aih-4);
   padding-top: 0;
   gap: 0;
@@ -879,7 +876,7 @@ body {
 .ox-back-to-top {
   border-radius: 0;
   box-shadow: none;
-  border: var(--aih-rule-strong);
+  border: var(--aih-rule);
   background: var(--octc-color-bg);
   color: var(--octc-color-text);
 }
