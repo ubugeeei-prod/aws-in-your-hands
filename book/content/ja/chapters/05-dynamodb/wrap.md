@@ -130,7 +130,7 @@ vp run db:local:stop
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** コントラクトテスト（メモリ）、DynamoDB へのリクエストの検査、アプリとクライアントのテスト、インフラのアサーションを実行しました。型検査と、AWS SDK を含むバンドルの synth も通しています。`dev:notes` をメモリで起動して、本文の `curl` を実行しました。一覧が本文を返さないこと、1 ページが 20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことは、テストで固定しました。件数の上限を入れたあと、`test/dynamodb-local.test.ts` の 15 件（リポジトリの規則 10 件と、件数の上限 5 件）を DynamoDB Local 3.3.1 に対して実行しました。このときは Docker を使わず、AWS が配布する jar を Java で直接起動し、テーブルは `scripts/local-db.ts migrate` で作っています。この実行は、保存されたアイテムと入力の検査を Valibot に替える前のものです。替えたあとは、DynamoDB Local に対するテストを実行していません。
+**手元で確かめたこと。** コントラクトテスト（メモリ）、DynamoDB へのリクエストの検査、アプリとクライアントのテスト、インフラのアサーションを実行しました。型検査と、AWS SDK を含むバンドルの synth も通しています。`dev:notes` をメモリで起動して、本文の `curl` を実行しました。一覧が本文を返さないこと、1 ページが 20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことは、テストで固定しました。件数の上限を入れたあと、`test/dynamodb-local.test.ts` の 15 件（リポジトリの規則 10 件と、件数の上限 5 件）を DynamoDB Local 3.3.1 に対して実行しました。このときは Docker を使わず、AWS が配布する jar を Java で直接起動し、テーブルは `scripts/local-db.ts migrate` で作っています。
 
 **まだ確かめていないこと。** DynamoDB Local を Docker で動かすタスク（`db:local:start`、`db:local:stop`）は、Docker のデーモンが使えなかったため、実行していません。`db:migrate:local`、`db:seed:local`、`db:reset:local`、`test:local:dynamodb` も、タスクとしては実行していません。`notes:infra:diff`、`notes:infra:deploy`、`notes:smoke`、`notes:infra:drift`、`notes:infra:destroy` も、実際の AWS では動かしていません。
 
