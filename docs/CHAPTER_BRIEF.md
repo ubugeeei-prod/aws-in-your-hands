@@ -21,6 +21,7 @@
 - TypeScript は Node.js が型を取り除くだけで動く構文に限る（`enum`、parameter property、`namespace` を使わない）。import に `.ts` を書く。`tsconfig.json` は `../../tsconfig.base.json` を継承
 - 外から来る値（環境変数、HTTP、イベント、DB の行、キューのメッセージ、外部 API の応答）は Zod で検証し、型は `z.infer` で導く
 - 判断（純粋関数）と、AWS を呼ぶ処理（adapter）を分ける。時刻、乱数、外部の応答は引数で渡す
+- CDK の service は namespace で import する（`import * as s3 from "aws-cdk-lib/aws-s3"`、`s3.Bucket`）。別名の一覧は `CONTRIBUTING.md`。本文で CDK の API を呼ぶときも `ecs.ContainerImage.fromAsset` のように namespace を付ける
 - テストは `vite-plus/test` から import。件数は目的にしない。権限、公開設定、保持と削除、認可、冪等性、競合、再試行、部分的な失敗など、実害に結びつく条件を選ぶ。失敗を**決まった順序で再現する**テスト（重複配送、応答の喪失、途中での中断など）を、その章の invariant に対して書く
 - CDK の stack には assertion のテストを付ける。最小権限（`*` を使わない）、公開されていないこと、`removalPolicy`、そして「使っているリソースの種類の一覧」を固定するテスト。種類ごとに、固定した版の cdkd（0.296.28）が専用の実装を持つか、Cloud Control API 経由かを、npm の tarball か GitHub の `v0.296.28` タグの `src/provisioning/register-providers.ts` で確かめ、検証メモに書く
 - stack の `env` はリージョンだけ（`ap-northeast-1`）。アカウントは書かない。synth が AWS に問い合わせないこと

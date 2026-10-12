@@ -44,6 +44,8 @@
 - TypeScript は Node.js が型を取り除くだけで実行できる構文に限る（`enum`、parameter property、`namespace` を使わない）。import には `.ts` の拡張子を書く
 - 外から来る値は Zod で検証する。型は schema から `z.infer` で導く
 - 純粋な判断（計画、判定、引数の組み立て）と、AWS を呼ぶ処理を別のファイルに分ける。前者にテストを書く
+- CDK の service は namespace で import する（`import * as s3 from "aws-cdk-lib/aws-s3"` と書いて `s3.Bucket`）。別名は module 名から `aws-` を取ったもの。例外は `apigwv2`、`integrations`、`authorizers`、`origins`、`nodejs`、`targets`、`subscriptions`、`sfn`、`elbv2`、`cwActions`。`aws-cdk-lib` 本体（`Stack`、`Duration` など）と `aws-cdk-lib/assertions` は名前で import する
+- import の並びと行幅（100 桁）は `vp fmt` が決める。手で並べない。ファイル先頭のコメントと最初の import のあいだは 1 行空ける
 - テストは `vite-plus/test` から import する。テスト名は「何を守っているか」を書く
 - CloudFront Functions の `.js` は、デプロイするファイルそのものをテストで読み込む
 - コメントは「なぜ」だけを 1〜2 行で。背景の説明は本文に書く。文体の基準は `docs/EDITORIAL.md` の「文体: やわらかく、シュッと」
