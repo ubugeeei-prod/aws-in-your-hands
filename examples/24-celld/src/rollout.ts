@@ -28,7 +28,8 @@ export type SettlePolicy = { attempts: number; intervalMs: number };
 export const DEFAULT_SETTLE: SettlePolicy = { attempts: 30, intervalMs: 5_000 };
 // #endregion ops
 
-const message = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+const message = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
 class Halt extends Error {
   readonly step: Step;
@@ -38,7 +39,11 @@ class Halt extends Error {
   }
 }
 
-async function attempt<T>(node: NodeName | "fleet", phase: Phase, work: () => Promise<T>): Promise<T> {
+async function attempt<T>(
+  node: NodeName | "fleet",
+  phase: Phase,
+  work: () => Promise<T>,
+): Promise<T> {
   try {
     return await work();
   } catch (error) {
@@ -80,7 +85,11 @@ async function settle(
     }
     last = settled.reasons.join("; ");
   }
-  throw new Halt({ node, phase: "settle", detail: `not settled after ${policy.attempts} checks: ${last}` });
+  throw new Halt({
+    node,
+    phase: "settle",
+    detail: `not settled after ${policy.attempts} checks: ${last}`,
+  });
 }
 
 // #region rolling
@@ -103,27 +112,46 @@ export async function rollingUpdate(input: RollingInput): Promise<RolloutResult>
   try {
     if (nodes.length < 2) {
       // The handoff releases each cell to a peer. With one node there is none.
-      throw new Halt({ node: "fleet", phase: "plan", detail: "a rolling update needs at least two nodes" });
+      throw new Halt({
+        node: "fleet",
+        phase: "plan",
+        detail: "a rolling update needs at least two nodes",
+      });
     }
     // Every node must be up, and every version in the fleet must be one the notes allow to roll.
     await attempt("fleet", "precheck", async () => {
       for (const node of nodes) {
         const health = await ops.nodeHealth(node);
         if (!health.active || !health.healthy || health.version === null) {
-          throw new Halt({ node, phase: "precheck", detail: "not healthy before the update started" });
+          throw new Halt({
+            node,
+            phase: "precheck",
+            detail: "not healthy before the update started",
+          });
         }
         const decision = upgradeModeFor(health.version, target);
         if (decision.mode !== "rolling") {
-          throw new Halt({ node, phase: "plan", detail: `${decision.reason}; a rolling update is not allowed` });
+          throw new Halt({
+            node,
+            phase: "plan",
+            detail: `${decision.reason}; a rolling update is not allowed`,
+          });
         }
       }
       const first = nodes[0];
-      const settled = fleetSettled(first === undefined ? emptyView() : await ops.fleetView(first), nodes.length);
+      const settled = fleetSettled(
+        first === undefined ? emptyView() : await ops.fleetView(first),
+        nodes.length,
+      );
       if (!settled.settled) {
         throw new Halt({ node: "fleet", phase: "precheck", detail: settled.reasons.join("; ") });
       }
     });
-    steps.push({ node: "fleet", phase: "precheck", detail: `${nodes.length} nodes healthy, nothing restoring` });
+    steps.push({
+      node: "fleet",
+      phase: "precheck",
+      detail: `${nodes.length} nodes healthy, nothing restoring`,
+    });
 
     for (const node of nodes) {
       await attempt(node, "drain", () => ops.drain(node));
@@ -142,7 +170,12 @@ export async function rollingUpdate(input: RollingInput): Promise<RolloutResult>
     if (!(error instanceof Halt)) {
       throw error;
     }
-    return { ok: false, steps, failed: error.step, untouched: nodes.filter((node) => !done.has(node)) };
+    return {
+      ok: false,
+      steps,
+      failed: error.step,
+      untouched: nodes.filter((node) => !done.has(node)),
+    };
   }
 }
 // #endregion rolling
@@ -167,13 +200,22 @@ export async function drainFleet(nodes: NodeName[], ops: FleetOps): Promise<Roll
         throw new Halt({ node, phase: "settle", detail: "the service is active again" });
       }
     }
-    steps.push({ node: "fleet", phase: "settle", detail: "every node stopped, one lease lifetime waited" });
+    steps.push({
+      node: "fleet",
+      phase: "settle",
+      detail: "every node stopped, one lease lifetime waited",
+    });
     return { ok: true, steps };
   } catch (error) {
     if (!(error instanceof Halt)) {
       throw error;
     }
-    return { ok: false, steps, failed: error.step, untouched: nodes.filter((node) => !done.has(node)) };
+    return {
+      ok: false,
+      steps,
+      failed: error.step,
+      untouched: nodes.filter((node) => !done.has(node)),
+    };
   }
 }
 
@@ -190,10 +232,18 @@ export async function stoppedFleetUpdate(input: RollingInput): Promise<RolloutRe
     for (const node of nodes) {
       const health = await attempt(node, "precheck", () => ops.nodeHealth(node));
       if (health.active) {
-        throw new Halt({ node, phase: "precheck", detail: "still running; stop the whole fleet first" });
+        throw new Halt({
+          node,
+          phase: "precheck",
+          detail: "still running; stop the whole fleet first",
+        });
       }
       if (health.version !== null && upgradeModeFor(health.version, target).mode === "unknown") {
-        throw new Halt({ node, phase: "plan", detail: upgradeModeFor(health.version, target).reason });
+        throw new Halt({
+          node,
+          phase: "plan",
+          detail: upgradeModeFor(health.version, target).reason,
+        });
       }
     }
     steps.push({ node: "fleet", phase: "precheck", detail: "every node is stopped" });
@@ -216,20 +266,29 @@ export async function stoppedFleetUpdate(input: RollingInput): Promise<RolloutRe
     if (!(error instanceof Halt)) {
       throw error;
     }
-    return { ok: false, steps, failed: error.step, untouched: nodes.filter((node) => !done.has(node)) };
+    return {
+      ok: false,
+      steps,
+      failed: error.step,
+      untouched: nodes.filter((node) => !done.has(node)),
+    };
   }
 }
 // #endregion stop-all
 
 export function describeRollout(result: RolloutResult): string[] {
-  const lines = result.steps.map((step) => `  ${step.node.padEnd(5)} ${step.phase.padEnd(8)} ${step.detail}`);
+  const lines = result.steps.map(
+    (step) => `  ${step.node.padEnd(5)} ${step.phase.padEnd(8)} ${step.detail}`,
+  );
   if (result.ok) {
     return [...lines, "done"];
   }
   return [
     ...lines,
     `STOPPED at ${result.failed.node} (${result.failed.phase}): ${result.failed.detail}`,
-    result.untouched.length > 0 ? `not touched: ${result.untouched.join(", ")}` : "every node was touched",
+    result.untouched.length > 0
+      ? `not touched: ${result.untouched.join(", ")}`
+      : "every node was touched",
     "Nothing is rolled back automatically. Look at the node first: vp run celld:status, vp run celld:logs.",
   ];
 }

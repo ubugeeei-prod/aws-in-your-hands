@@ -1,16 +1,28 @@
 import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vite-plus/test";
-import { createEventsHandler, handleSesMessage, parseSesMessage, planEventActions } from "../src/events.ts";
+
+import {
+  createEventsHandler,
+  handleSesMessage,
+  parseSesMessage,
+  planEventActions,
+} from "../src/events.ts";
 import type { LogEntry } from "../src/log.ts";
 import { sendShareNotification } from "../src/notify.ts";
 import type { NotificationStore } from "../src/store.ts";
 import { input, setup } from "./setup.ts";
 
-const fixture = (name: string): string => readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8");
+const fixture = (name: string): string =>
+  readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8");
 // The parts of a fixture that tests change. A test edits a copy, never the file.
 type Editable = {
   mail: { tags: Record<string, string[]> };
-  bounce: { bounceType: string; bounceSubType: string; bouncedRecipients?: { emailAddress: string }[] };
+  bounce: {
+    bounceType: string;
+    bounceSubType: string;
+    bouncedRecipients?: { emailAddress: string }[];
+  };
   complaint: { timestamp: string };
 };
 const edited = (name: string, edit: (event: Editable) => void): string => {
@@ -19,7 +31,10 @@ const edited = (name: string, edit: (event: Editable) => void): string => {
   return JSON.stringify(event);
 };
 const sns = (...messages: string[]) => ({
-  Records: messages.map((Message, index) => ({ EventSource: "aws:sns", Sns: { MessageId: `m-${index}`, Message } })),
+  Records: messages.map((Message, index) => ({
+    EventSource: "aws:sns",
+    Sns: { MessageId: `m-${index}`, Message },
+  })),
 });
 
 /** A notification that was sent, and the event dependencies sharing its store. */
@@ -27,7 +42,11 @@ async function sent() {
   const context = setup();
   await sendShareNotification(context.deps, input);
   const logs: LogEntry[] = [];
-  return { ...context, logs, events: { store: context.store, log: (entry: LogEntry) => logs.push(entry) } };
+  return {
+    ...context,
+    logs,
+    events: { store: context.store, log: (entry: LogEntry) => logs.push(entry) },
+  };
 }
 
 describe("bounces and complaints", () => {
@@ -35,7 +54,9 @@ describe("bounces and complaints", () => {
     const { events, store, deps, outbox } = await sent();
     await handleSesMessage(events, fixture("bounce"));
 
-    expect(await store.findSuppression("recipient@example.com")).toMatchObject({ reason: "bounce" });
+    expect(await store.findSuppression("recipient@example.com")).toMatchObject({
+      reason: "bounce",
+    });
     expect(await store.get("share-1")).toMatchObject({ state: "bounced" });
     expect(await sendShareNotification(deps, { ...input, notificationId: "share-2" })).toEqual({
       outcome: "suppressed",
@@ -60,7 +81,9 @@ describe("bounces and complaints", () => {
   it("suppresses the address after a complaint", async () => {
     const { events, store } = await sent();
     await handleSesMessage(events, fixture("complaint"));
-    expect(await store.findSuppression("recipient@example.com")).toMatchObject({ reason: "complaint" });
+    expect(await store.findSuppression("recipient@example.com")).toMatchObject({
+      reason: "complaint",
+    });
     expect(await store.get("share-1")).toMatchObject({ state: "complained" });
   });
 
@@ -69,7 +92,9 @@ describe("bounces and complaints", () => {
     await handleSesMessage(
       events,
       edited("bounce", (event) => {
-        event.bounce.bouncedRecipients = [{ emailAddress: "Recipient Name <Recipient@Example.COM>" }];
+        event.bounce.bouncedRecipients = [
+          { emailAddress: "Recipient Name <Recipient@Example.COM>" },
+        ];
       }),
     );
     expect(await store.findSuppression("recipient@example.com")).toBeDefined();
@@ -95,7 +120,10 @@ describe("events arrive late, twice, and out of order", () => {
     await handleSesMessage(events, fixture("bounce"));
     const once = [await store.get("share-1"), await store.findSuppression("recipient@example.com")];
     await handleSesMessage(events, fixture("bounce"));
-    expect([await store.get("share-1"), await store.findSuppression("recipient@example.com")]).toEqual(once);
+    expect([
+      await store.get("share-1"),
+      await store.findSuppression("recipient@example.com"),
+    ]).toEqual(once);
   });
 
   it("keeps 'delivered' when the delivery event beats the 'sent' write", async () => {
@@ -111,7 +139,9 @@ describe("events arrive late, twice, and out of order", () => {
     });
     await handleSesMessage(events, fixture("delivery"));
 
-    expect(await store.advance("share-1", "sent", { at: deps.now().toISOString(), messageId: "late" })).toBe(false);
+    expect(
+      await store.advance("share-1", "sent", { at: deps.now().toISOString(), messageId: "late" }),
+    ).toBe(false);
     expect(await store.get("share-1")).toMatchObject({ state: "delivered" });
   });
 
@@ -133,15 +163,17 @@ describe("events arrive late, twice, and out of order", () => {
 describe("events are outside data", () => {
   it("plans from the documented example records", () => {
     const bounce = parseSesMessage(fixture("bounce"));
-    expect(bounce.kind === "event" && planEventActions(bounce.event).map((action) => action.kind)).toEqual([
-      "suppress",
-      "advance",
-    ]);
+    expect(
+      bounce.kind === "event" && planEventActions(bounce.event).map((action) => action.kind),
+    ).toEqual(["suppress", "advance"]);
   });
 
   it("ignores event types it has no use for", async () => {
     const { events, store } = await sent();
-    const result = await handleSesMessage(events, JSON.stringify({ eventType: "Open", mail: {}, open: {} }));
+    const result = await handleSesMessage(
+      events,
+      JSON.stringify({ eventType: "Open", mail: {}, open: {} }),
+    );
     expect(result).toEqual({ kind: "ignored", eventType: "Open" });
     expect(await store.get("share-1")).toMatchObject({ state: "sent" });
   });
@@ -163,7 +195,9 @@ describe("events are outside data", () => {
   });
 
   it("ignores a tag that is not one of our IDs", () => {
-    const parsed = parseSesMessage(edited("delivery", (event) => (event.mail.tags["notification_id"] = ["../../x"])));
+    const parsed = parseSesMessage(
+      edited("delivery", (event) => (event.mail.tags["notification_id"] = ["../../x"])),
+    );
     expect(parsed.kind === "event" && planEventActions(parsed.event)).toEqual([]);
   });
 });
@@ -191,6 +225,8 @@ describe("the SNS handler", () => {
 
   it("fails on an invocation that is not an SNS event", async () => {
     const { events } = await sent();
-    await expect(createEventsHandler(events)({ Records: [{ body: "from a queue" }] })).rejects.toThrow();
+    await expect(
+      createEventsHandler(events)({ Records: [{ body: "from a queue" }] }),
+    ).rejects.toThrow();
   });
 });

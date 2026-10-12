@@ -1,5 +1,6 @@
 import { StackStatus } from "@aws-sdk/client-cloudformation";
 import { describe, expect, it } from "vite-plus/test";
+
 import { nextStep } from "../src/stack-status.ts";
 
 const all = Object.values(StackStatus);
@@ -34,13 +35,24 @@ describe("what to do after a deploy stops", () => {
       "in-progress",
       "rolled-back",
     ]);
-    expect(timeline.map((status) => nextStep(status).deployable)).toEqual([false, false, false, true]);
+    expect(timeline.map((status) => nextStep(status).deployable)).toEqual([
+      false,
+      false,
+      false,
+      true,
+    ]);
     // Rolled back is not "nothing happened": requests were served meanwhile.
-    expect(nextStep("UPDATE_ROLLBACK_COMPLETE").advice).toContain("Data written meanwhile was not put back");
+    expect(nextStep("UPDATE_ROLLBACK_COMPLETE").advice).toContain(
+      "Data written meanwhile was not put back",
+    );
   });
 
   it("a rollback that fails too is not deployable until it is continued", () => {
-    const timeline: StackStatus[] = ["UPDATE_IN_PROGRESS", "UPDATE_ROLLBACK_IN_PROGRESS", "UPDATE_ROLLBACK_FAILED"];
+    const timeline: StackStatus[] = [
+      "UPDATE_IN_PROGRESS",
+      "UPDATE_ROLLBACK_IN_PROGRESS",
+      "UPDATE_ROLLBACK_FAILED",
+    ];
     const last = nextStep(timeline.at(-1) ?? "UPDATE_ROLLBACK_FAILED");
     expect(last).toMatchObject({ state: "needs-repair", deployable: false });
     expect(last.advice).toContain("cdk rollback");

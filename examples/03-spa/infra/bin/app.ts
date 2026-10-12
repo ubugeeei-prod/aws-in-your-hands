@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { SpaStack } from "../lib/spa-stack.ts";
 
 const app = new App();

@@ -1,6 +1,12 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, type DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DeleteCommand,
+  type DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { z } from "zod";
+
 import { type Inspection, type InspectionRepository, inspectionSchema } from "./inspection.ts";
 
 // #region keys
@@ -24,7 +30,9 @@ export class DynamoDbInspectionRepository implements InspectionRepository {
   // #region put-if-newer
   async putIfNewer(owner: string, inspection: Inspection) {
     // Optional fields are left out, not written as undefined.
-    const item = Object.fromEntries(Object.entries(inspection).filter(([, value]) => value !== undefined));
+    const item = Object.fromEntries(
+      Object.entries(inspection).filter(([, value]) => value !== undefined),
+    );
     try {
       await this.#client.send(
         new PutCommand({

@@ -1,6 +1,8 @@
-import { isOwnWrite, type UpdateOutcome } from "@aih/example-05-dynamodb/src/client.ts";
 import { hc } from "hono/client";
 import type { z } from "zod";
+
+import { isOwnWrite, type UpdateOutcome } from "@aih/example-05-dynamodb/src/client.ts";
+
 import type { App } from "./app.ts";
 import {
   type CreateNote,
@@ -19,7 +21,13 @@ export class ApiError extends Error {
   readonly requestId: string | undefined;
   readonly current: Note | undefined;
 
-  constructor(status: number, code: string, message: string, requestId: string | undefined, current?: Note) {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    requestId: string | undefined,
+    current?: Note,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -46,14 +54,21 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
     // API Gateway rejects a bad token itself, with its own body, not this API's error shape.
     throw new ApiError(
       response.status,
-      response.status === 401 || response.status === 403 ? "unauthenticated" : "unexpected_response",
+      response.status === 401 || response.status === 403
+        ? "unauthenticated"
+        : "unexpected_response",
       `HTTP ${response.status} without an error body`,
       requestId,
     );
   }
   const body = schema.safeParse(json);
   if (!body.success) {
-    throw new ApiError(response.status, "unexpected_response", "The response does not match the contract.", requestId);
+    throw new ApiError(
+      response.status,
+      "unexpected_response",
+      "The response does not match the contract.",
+      requestId,
+    );
   }
   return body.data;
 }
@@ -94,7 +109,10 @@ export function createNotesClient(
       try {
         return {
           status: "updated",
-          note: await parse(await api.notes[":id"].$put({ param: { id }, json: input }), noteSchema),
+          note: await parse(
+            await api.notes[":id"].$put({ param: { id }, json: input }),
+            noteSchema,
+          ),
         };
       } catch (error) {
         if (error instanceof ApiError && error.code === "conflict" && error.current !== undefined) {

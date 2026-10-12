@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
 import { errorSchema, noteListSchema, noteSchema } from "../src/contract.ts";
 import type { LogEntry } from "../src/log.ts";
@@ -13,13 +14,24 @@ function setup(repository: NoteRepository = new InMemoryNoteRepository()) {
   const logs: LogEntry[] = [];
   const app = createApp({
     env: { ALLOWED_ORIGIN: "http://localhost:5173", LOG_LEVEL: "debug", STAGE: "test" },
-    notes: createNoteService({ repository, now: () => new Date((clock += 1000)), newId: () => `note-${++noteId}` }),
+    notes: createNoteService({
+      repository,
+      now: () => new Date((clock += 1000)),
+      newId: () => `note-${++noteId}`,
+    }),
     log: (entry) => logs.push(entry),
     newRequestId: () => `req-${++requestId}`,
     now: () => (clock += 5),
   });
-  const post = (body: unknown, headers: Record<string, string> = { "content-type": "application/json" }) =>
-    app.request("/notes", { method: "POST", headers, body: typeof body === "string" ? body : JSON.stringify(body) });
+  const post = (
+    body: unknown,
+    headers: Record<string, string> = { "content-type": "application/json" },
+  ) =>
+    app.request("/notes", {
+      method: "POST",
+      headers,
+      body: typeof body === "string" ? body : JSON.stringify(body),
+    });
   return { app, logs, post };
 }
 
@@ -81,7 +93,9 @@ describe("notes API", () => {
 
     expect(response.headers.get("x-request-id")).toBe("req-1");
     expect(body.error.requestId).toBe("req-1");
-    expect(logs).toContainEqual(expect.objectContaining({ requestId: "req-1", path: "/notes/nope", status: 404 }));
+    expect(logs).toContainEqual(
+      expect.objectContaining({ requestId: "req-1", path: "/notes/nope", status: 404 }),
+    );
   });
 
   it("hides the cause of an internal failure from the caller and logs it", async () => {
@@ -98,9 +112,11 @@ describe("notes API", () => {
     expect(response.status).toBe(500);
     expect(text).not.toContain("connection reset");
     expect(errorSchema.parse(JSON.parse(text)).error.code).toBe("internal");
-    expect(logs.some((entry) => entry.level === "error" && String(entry["error"]).includes("connection reset"))).toBe(
-      true,
-    );
+    expect(
+      logs.some(
+        (entry) => entry.level === "error" && String(entry["error"]).includes("connection reset"),
+      ),
+    ).toBe(true);
   });
 
   it("allows the configured browser origin and no other", async () => {

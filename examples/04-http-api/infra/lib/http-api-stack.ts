@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -25,7 +26,9 @@ export class HttpApiStack extends Stack {
     // #region role
     // CDK's default role may write to any log group in the account.
     // This one may write to the group above, and that is all.
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     // #endregion role
 
@@ -66,7 +69,11 @@ export class HttpApiStack extends Stack {
     const integration = new HttpLambdaIntegration("Notes", handler);
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], integration });
-    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.DELETE], integration });
+    api.addRoutes({
+      path: "/notes/{id}",
+      methods: [HttpMethod.GET, HttpMethod.DELETE],
+      integration,
+    });
     // #endregion api
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });

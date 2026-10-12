@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
+
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { z } from "zod";
+
 import { type App, createApp } from "./app.ts";
 import { createSlowCatalog } from "./catalog.ts";
 import { itemSchema } from "./contract.ts";
@@ -58,7 +60,8 @@ export function createStores(env: Env, log: Logger): { counters: CounterStore; c
           credentials: defaultProvider(),
           timeoutMs: VALKEY_TIMEOUT_MS,
           now: () => new Date(),
-          onError: (error) => log({ level: "warn", message: "valkey connection error", error: error.message }),
+          onError: (error) =>
+            log({ level: "warn", message: "valkey connection error", error: error.message }),
         }),
       // The token lasts 15 minutes; replace the connection well before a reconnect could need a new one.
       maxAgeMs: 10 * 60_000,
@@ -93,9 +96,16 @@ export function composeApp(source: Record<string, string | undefined>): App {
       ...(env.KV_STORE === "memory"
         ? {}
         : {
-            lock: { ttlMs: 5_000, waitMs: 100, maxWaits: 20, newOwner: randomUUID, sleep: (ms: number) => sleep(ms) },
+            lock: {
+              ttlMs: 5_000,
+              waitMs: 100,
+              maxWaits: 20,
+              newOwner: randomUUID,
+              sleep: (ms: number) => sleep(ms),
+            },
           }),
-      onStoreError: (error) => log({ level: "warn", message: "cache store failed", error: String(error) }),
+      onStoreError: (error) =>
+        log({ level: "warn", message: "cache store failed", error: String(error) }),
     }),
     newRequestId: randomUUID,
     now: Date.now,

@@ -1,7 +1,9 @@
+import { z } from "zod";
+
 import { parseEc2Config } from "@aih/example-23-ec2/src/config.ts";
 import { machineFor as notesMachine } from "@aih/example-23-ec2/src/machine.ts";
 import { renderDataVolumeScript } from "@aih/example-23-ec2/src/user-data.ts";
-import { z } from "zod";
+
 import { DOCUMENTED } from "./celld.ts";
 import { REGION } from "./config.ts";
 
@@ -276,7 +278,9 @@ export function renderUserData(input: NodeSpec): string {
     "",
   ].join("\n");
   if (Buffer.byteLength(script) > USER_DATA_LIMIT_BYTES) {
-    throw new Error(`user data is ${Buffer.byteLength(script)} bytes; the limit is ${USER_DATA_LIMIT_BYTES}`);
+    throw new Error(
+      `user data is ${Buffer.byteLength(script)} bytes; the limit is ${USER_DATA_LIMIT_BYTES}`,
+    );
   }
   return script;
 }

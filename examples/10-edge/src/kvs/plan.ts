@@ -14,9 +14,13 @@ export type Plan = {
   foreign: string[];
 };
 
-const isManaged = (key: string): boolean => MANAGED_PREFIXES.some((prefix) => key.startsWith(prefix));
+const isManaged = (key: string): boolean =>
+  MANAGED_PREFIXES.some((prefix) => key.startsWith(prefix));
 
-export function planSync(desired: ReadonlyMap<string, string>, current: ReadonlyMap<string, string>): Plan {
+export function planSync(
+  desired: ReadonlyMap<string, string>,
+  current: ReadonlyMap<string, string>,
+): Plan {
   const unmanaged = [...desired.keys()].filter((key) => !isManaged(key));
   if (unmanaged.length > 0) {
     throw new Error(`desired keys outside ${MANAGED_PREFIXES.join(", ")}: ${unmanaged.join(", ")}`);
@@ -25,7 +29,9 @@ export function planSync(desired: ReadonlyMap<string, string>, current: Readonly
     .filter(([key, value]) => current.get(key) !== value)
     .map(([key, value]) => ({ key, value }))
     .toSorted((a, b) => a.key.localeCompare(b.key));
-  const deletes = [...current.keys()].filter((key) => isManaged(key) && !desired.has(key)).toSorted();
+  const deletes = [...current.keys()]
+    .filter((key) => isManaged(key) && !desired.has(key))
+    .toSorted();
   return {
     puts,
     deletes,
@@ -34,7 +40,8 @@ export function planSync(desired: ReadonlyMap<string, string>, current: Readonly
   };
 }
 
-export const isInSync = (plan: Plan): boolean => plan.puts.length === 0 && plan.deletes.length === 0;
+export const isInSync = (plan: Plan): boolean =>
+  plan.puts.length === 0 && plan.deletes.length === 0;
 // #endregion plan
 
 // #region batches
@@ -65,7 +72,8 @@ export function describePlan(plan: Plan): string {
     ...plan.deletes.map((key) => `  delete ${key}`),
     ...plan.foreign.map((key) => `  keep   ${key} (not managed here)`),
   ];
-  return [`${plan.puts.length} to put, ${plan.deletes.length} to delete, ${plan.unchanged} unchanged`, ...lines].join(
-    "\n",
-  );
+  return [
+    `${plan.puts.length} to put, ${plan.deletes.length} to delete, ${plan.unchanged} unchanged`,
+    ...lines,
+  ].join("\n");
 }

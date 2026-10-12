@@ -1,5 +1,11 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { type DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  type DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+} from "@aws-sdk/lib-dynamodb";
+
 import type { NotificationState } from "./contract.ts";
 import {
   type Advance,
@@ -43,7 +49,8 @@ export class DynamoDbNotificationStore implements NotificationStore {
           TableName: this.#tableName,
           Item: { ...notificationKey(claim.notificationId), ...record },
           // Checked and written as one step: of two requests arriving together, one passes.
-          ConditionExpression: "attribute_not_exists(pk) OR (#state = :rejected AND fingerprint = :fingerprint)",
+          ConditionExpression:
+            "attribute_not_exists(pk) OR (#state = :rejected AND fingerprint = :fingerprint)",
           ExpressionAttributeNames: { "#state": "state" },
           ExpressionAttributeValues: { ":rejected": "rejected", ":fingerprint": claim.fingerprint },
         }),
@@ -56,9 +63,12 @@ export class DynamoDbNotificationStore implements NotificationStore {
       const existing = await this.get(claim.notificationId);
       if (existing === undefined) {
         // Expired between the two calls. The caller's retry starts clean.
-        throw new Error(`notification ${claim.notificationId} disappeared while it was being claimed`, {
-          cause: error,
-        });
+        throw new Error(
+          `notification ${claim.notificationId} disappeared while it was being claimed`,
+          {
+            cause: error,
+          },
+        );
       }
       return { claimed: false, existing };
     }
@@ -66,8 +76,14 @@ export class DynamoDbNotificationStore implements NotificationStore {
   // #endregion claim
 
   // #region advance
-  async advance(notificationId: string, next: Exclude<NotificationState, "claimed">, change: Advance) {
-    const from = Object.fromEntries(allowedFrom[next].map((state, index) => [`:from${index}`, state]));
+  async advance(
+    notificationId: string,
+    next: Exclude<NotificationState, "claimed">,
+    change: Advance,
+  ) {
+    const from = Object.fromEntries(
+      allowedFrom[next].map((state, index) => [`:from${index}`, state]),
+    );
     try {
       await this.#client.send(
         new UpdateCommand({
@@ -97,7 +113,11 @@ export class DynamoDbNotificationStore implements NotificationStore {
 
   async get(notificationId: string) {
     const result = await this.#client.send(
-      new GetCommand({ TableName: this.#tableName, Key: notificationKey(notificationId), ConsistentRead: true }),
+      new GetCommand({
+        TableName: this.#tableName,
+        Key: notificationKey(notificationId),
+        ConsistentRead: true,
+      }),
     );
     // A stored item is outside data too.
     return result.Item === undefined ? undefined : notificationRecordSchema.parse(result.Item);

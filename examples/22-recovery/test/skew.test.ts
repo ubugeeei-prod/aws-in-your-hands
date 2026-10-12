@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { broken } from "../src/invariants.ts";
 import { restoreObjects } from "../src/object-restore.ts";
 import { repair } from "../src/repair.ts";
 import { createWorld, eTagOf, failingOn, HTML, OWNER, PNG } from "./world.ts";
 
-const kinds = (findings: { kind: string }[]): string[] => findings.map((finding) => finding.kind).toSorted();
+const kinds = (findings: { kind: string }[]): string[] =>
+  findings.map((finding) => finding.kind).toSorted();
 
 /** Two notes with one inspected image each; then the first note is deleted by mistake. */
 async function accident() {
@@ -43,8 +45,13 @@ describe("only the table restored: records from before, a bucket from now", () =
     const restored = world.open(world.table.restoreTo(beforeAccident), world.bucket);
 
     const report = await restored.report();
-    expect(kinds(report.findings)).toEqual(["attachment_without_object", "inspection_without_object"]);
-    expect(broken(report)).toMatchObject([{ kind: "attachment_without_object", key: tripImage.key }]);
+    expect(kinds(report.findings)).toEqual([
+      "attachment_without_object",
+      "inspection_without_object",
+    ]);
+    expect(broken(report)).toMatchObject([
+      { kind: "attachment_without_object", key: tripImage.key },
+    ]);
   });
 
   it("repairs by making the bucket follow the table, and keeps the inspection that is valid again", async () => {
@@ -158,10 +165,16 @@ describe("the table restored to before an upload that the bucket still holds", (
     const restored = world.open(world.table.restoreTo(beforeUpload), world.bucket);
 
     const beforeSweep = world.tick();
-    expect((await restored.sweep({ dryRun: false })).removed).toEqual([{ key: image.key, reason: "no_record" }]);
+    expect((await restored.sweep({ dryRun: false })).removed).toEqual([
+      { key: image.key, reason: "no_record" },
+    ]);
     expect(await world.bucket.head(image.key)).toBeUndefined();
 
-    const plan = await restoreObjects(world.bucket, { prefix: "u/", point: beforeSweep, dryRun: false });
+    const plan = await restoreObjects(world.bucket, {
+      prefix: "u/",
+      point: beforeSweep,
+      dryRun: false,
+    });
     expect(plan.steps).toMatchObject([{ type: "remove_delete_marker", key: image.key }]);
     expect(await world.bucket.head(image.key)).toMatchObject({ size: PNG.byteLength });
   });
@@ -181,9 +194,16 @@ describe("the bytes under a key changed after the restore point", () => {
   it("finds a verdict that is about bytes no longer there", async () => {
     const { restored, image } = await overwritten();
     const report = await restored.report();
-    expect(kinds(report.findings)).toEqual(["attachment_size_mismatch", "inspection_for_other_bytes"]);
+    expect(kinds(report.findings)).toEqual([
+      "attachment_size_mismatch",
+      "inspection_for_other_bytes",
+    ]);
     expect(report.findings).toContainEqual(
-      expect.objectContaining({ key: image.key, recordedETag: eTagOf(PNG), storedETag: eTagOf(HTML) }),
+      expect.objectContaining({
+        key: image.key,
+        recordedETag: eTagOf(PNG),
+        storedETag: eTagOf(HTML),
+      }),
     );
   });
 
@@ -192,11 +212,17 @@ describe("the bytes under a key changed after the restore point", () => {
     const stale = await restored.inspections.get(OWNER, note.id, image.attachmentId);
 
     const report = await restored.repairAll();
-    expect(report.repaired).toEqual([{ finding: "inspection_for_other_bytes", key: image.key, action: "reinspected" }]);
+    expect(report.repaired).toEqual([
+      { finding: "inspection_for_other_bytes", key: image.key, action: "reinspected" },
+    ]);
     expect(report.left).toMatchObject([{ kind: "attachment_size_mismatch" }]);
 
     const fresh = await restored.inspections.get(OWNER, note.id, image.attachmentId);
-    expect(fresh).toMatchObject({ verdict: "rejected", reason: "not_an_image", eTag: eTagOf(HTML) });
+    expect(fresh).toMatchObject({
+      verdict: "rejected",
+      reason: "not_an_image",
+      eTag: eTagOf(HTML),
+    });
     expect((fresh?.sequencer ?? "") > (stale?.sequencer ?? "z")).toBe(true);
     expect(kinds((await restored.report()).findings)).toEqual(["attachment_size_mismatch"]);
   });
@@ -218,7 +244,11 @@ describe("the bytes under a key changed after the restore point", () => {
   it("is also undone by restoring the bucket to the same point", async () => {
     const { world, restored, image, beforeOverwrite } = await overwritten();
 
-    const plan = await restoreObjects(world.bucket, { prefix: "u/", point: beforeOverwrite, dryRun: false });
+    const plan = await restoreObjects(world.bucket, {
+      prefix: "u/",
+      point: beforeOverwrite,
+      dryRun: false,
+    });
     expect(plan.steps).toMatchObject([{ type: "copy_version", key: image.key }]);
     expect((await restored.report()).findings).toEqual([]);
   });

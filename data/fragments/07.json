@@ -8,7 +8,14 @@
       "en": "Upload Images: Presigned URLs and S3"
     },
     "prerequisites": ["06"],
-    "services": ["S3", "Lambda", "API Gateway HTTP API JWT authorizer", "DynamoDB", "Cognito user pools", "CloudFront"],
+    "services": [
+      "S3",
+      "Lambda",
+      "API Gateway HTTP API JWT authorizer",
+      "DynamoDB",
+      "Cognito user pools",
+      "CloudFront"
+    ],
     "samplePath": "examples/07-uploads",
     "writing": {
       "ja": "complete",
@@ -184,7 +191,9 @@
       "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
       "title": "Blocking public access to your Amazon S3 storage",
       "checkedAt": "2026-10-11",
-      "supports": ["The four settings BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets"]
+      "supports": [
+        "The four settings BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets"
+      ]
     },
     {
       "id": "s3-consistency",
@@ -465,7 +474,12 @@
         "examples/07-uploads/scripts/user.ts",
         "tools/src/site/unpublish.ts"
       ],
-      "tasks": ["uploads:empty", "uploads:unpublish", "uploads:infra:destroy", "uploads:user:delete"],
+      "tasks": [
+        "uploads:empty",
+        "uploads:unpublish",
+        "uploads:infra:destroy",
+        "uploads:user:delete"
+      ],
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"

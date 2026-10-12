@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { BackupPlan, BackupPlanRule, BackupResource, BackupVault } from "aws-cdk-lib/aws-backup";
 import { AttributeType, BillingMode, type ITable, Table } from "aws-cdk-lib/aws-dynamodb";
@@ -71,7 +72,9 @@ export class RecoveryStack extends Stack {
     // The function, its permissions, and the output all follow this one
     // variable. Pointing it at a restored table moves all three together.
     const active: ITable =
-      props.activeTableName === undefined ? table : Table.fromTableName(this, "ActiveNotes", props.activeTableName);
+      props.activeTableName === undefined
+        ? table
+        : Table.fromTableName(this, "ActiveNotes", props.activeTableName);
     // #endregion cutover
 
     const logGroup = new LogGroup(this, "AuditLogs", {
@@ -80,11 +83,17 @@ export class RecoveryStack extends Stack {
     });
 
     // #region role
-    const role = new Role(this, "AuditRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "AuditRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     // Reads everything, changes nothing. Repairs run from a laptop, under a person's credentials.
-    role.addToPolicy(new PolicyStatement({ actions: ["dynamodb:Scan"], resources: [active.tableArn] }));
-    role.addToPolicy(new PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }));
+    role.addToPolicy(
+      new PolicyStatement({ actions: ["dynamodb:Scan"], resources: [active.tableArn] }),
+    );
+    role.addToPolicy(
+      new PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
+    );
     // #endregion role
 
     const auditFunction = new NodejsFunction(this, "Audit", {
@@ -104,7 +113,8 @@ export class RecoveryStack extends Stack {
         minify: false,
         sourceMap: false,
         externalModules: [],
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
 
@@ -145,7 +155,12 @@ function replicaBucket(scope: Construct, removalPolicy: RemovalPolicy): s3.Bucke
     encryption: s3.BucketEncryption.S3_MANAGED,
     enforceSSL: true,
     versioned: true,
-    lifecycleRules: [{ id: "expire-noncurrent-versions", noncurrentVersionExpiration: Duration.days(NONCURRENT_DAYS) }],
+    lifecycleRules: [
+      {
+        id: "expire-noncurrent-versions",
+        noncurrentVersionExpiration: Duration.days(NONCURRENT_DAYS),
+      },
+    ],
     removalPolicy,
   });
 }

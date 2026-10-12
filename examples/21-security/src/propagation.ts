@@ -30,9 +30,12 @@ export async function untilAllowed<T>(
       denials += 1;
       if (denials >= wait.attempts) {
         // After this long it is not propagation any more. Go read the policy.
-        throw new StillDenied(`still denied after ${denials} attempts over ${(denials - 1) * wait.delayMs} ms`, {
-          cause: error,
-        });
+        throw new StillDenied(
+          `still denied after ${denials} attempts over ${(denials - 1) * wait.delayMs} ms`,
+          {
+            cause: error,
+          },
+        );
       }
       await wait.sleep(wait.delayMs);
     }

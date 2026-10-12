@@ -228,7 +228,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html",
       "title": "Using the Lambda context object to retrieve Node.js function information",
       "checkedAt": "2026-10-12",
-      "supports": ["context.getRemainingTimeInMillis() returns the milliseconds left before the execution times out"]
+      "supports": [
+        "context.getRemainingTimeInMillis() returns the milliseconds left before the execution times out"
+      ]
     },
     {
       "id": "durable-sdk-key-concepts",
@@ -328,7 +330,9 @@
       "url": "https://docs.aws.amazon.com/step-functions/latest/dg/input-output-resultpath.html",
       "title": "Specifying state output using ResultPath in Step Functions",
       "checkedAt": "2026-10-12",
-      "supports": ["ResultPath in a Catch keeps the state's input and adds the error under the given field"]
+      "supports": [
+        "ResultPath in a Catch keeps the state's input and adds the error under the given field"
+      ]
     },
     {
       "id": "sfn-redrive",
@@ -745,7 +749,10 @@
   "sections": [
     {
       "id": "16.architecture",
-      "sources": ["examples/16-long-jobs/infra/lib/long-jobs-stack.ts", "examples/16-long-jobs/src/workflow.ts"],
+      "sources": [
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
+        "examples/16-long-jobs/src/workflow.ts"
+      ],
       "tasks": [],
       "boundary": "none",
       "criteria": ["distributed", "cost"],
@@ -793,7 +800,10 @@
     },
     {
       "id": "16.workflow",
-      "sources": ["examples/16-long-jobs/src/workflow.ts", "examples/16-long-jobs/test/workflow.test.ts"],
+      "sources": [
+        "examples/16-long-jobs/src/workflow.ts",
+        "examples/16-long-jobs/test/workflow.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local+cloud",
       "criteria": ["type", "test", "distributed"],

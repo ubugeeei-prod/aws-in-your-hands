@@ -9,6 +9,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
 import { type ObjectStore, PENDING, STATE_TAG } from "./object-store.ts";
 
 const pendingTagging = `<Tagging><TagSet><Tag><Key>${STATE_TAG}</Key><Value>${PENDING}</Value></Tag></TagSet></Tagging>`;
@@ -23,7 +24,12 @@ export class S3ObjectStore implements ObjectStore {
   }
 
   // #region presign-upload
-  presignUpload(input: { key: string; contentType: string; maxBytes: number; expiresInSeconds: number }) {
+  presignUpload(input: {
+    key: string;
+    contentType: string;
+    maxBytes: number;
+    expiresInSeconds: number;
+  }) {
     // Signing happens in this process: no request goes to S3. S3 checks the
     // policy later, when the browser's POST arrives.
     return createPresignedPost(this.#client, {
@@ -41,7 +47,9 @@ export class S3ObjectStore implements ObjectStore {
   // #region head
   async head(key: string) {
     try {
-      const object = await this.#client.send(new HeadObjectCommand({ Bucket: this.#bucket, Key: key }));
+      const object = await this.#client.send(
+        new HeadObjectCommand({ Bucket: this.#bucket, Key: key }),
+      );
       if (object.ContentLength === undefined || object.LastModified === undefined) {
         throw new Error(`HeadObject for ${key} returned no size or date`);
       }
@@ -85,7 +93,11 @@ export class S3ObjectStore implements ObjectStore {
     let token: string | undefined;
     do {
       const page = await this.#client.send(
-        new ListObjectsV2Command({ Bucket: this.#bucket, Prefix: prefix, ContinuationToken: token }),
+        new ListObjectsV2Command({
+          Bucket: this.#bucket,
+          Prefix: prefix,
+          ContinuationToken: token,
+        }),
       );
       for (const object of page.Contents ?? []) {
         if (object.Key !== undefined && object.LastModified !== undefined) {

@@ -1,6 +1,14 @@
 import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vite-plus/test";
-import { decide, FULL_AWS_ACCESS, type Policy, policySchema, type Request } from "../src/policy-model.ts";
+
+import {
+  decide,
+  FULL_AWS_ACCESS,
+  type Policy,
+  policySchema,
+  type Request,
+} from "../src/policy-model.ts";
 
 const raw = readFileSync(new URL("../policies/scp-guardrails.json", import.meta.url), "utf8");
 const guardrails = policySchema.parse(JSON.parse(raw));
@@ -24,7 +32,9 @@ describe("the guardrail file", () => {
   });
 
   it("only denies", () => {
-    expect(guardrails.Statement.map((statement) => statement.Effect)).toEqual(guardrails.Statement.map(() => "Deny"));
+    expect(guardrails.Statement.map((statement) => statement.Effect)).toEqual(
+      guardrails.Statement.map(() => "Deny"),
+    );
   });
 
   it("names every statement, so a denial in CloudTrail can be traced to a line here", () => {
@@ -45,9 +55,13 @@ describe("an SCP grants nothing", () => {
   });
 
   it("blocks everything once FullAWSAccess is detached and only Deny statements remain", () => {
-    expect(decide(request("s3:GetObject"), [ADMIN], [[guardrails], [FULL_AWS_ACCESS]])).toBe("implicit-deny");
+    expect(decide(request("s3:GetObject"), [ADMIN], [[guardrails], [FULL_AWS_ACCESS]])).toBe(
+      "implicit-deny",
+    );
     // Missing at any one level is enough.
-    expect(decide(request("s3:GetObject"), [ADMIN], [[FULL_AWS_ACCESS, guardrails], []])).toBe("implicit-deny");
+    expect(decide(request("s3:GetObject"), [ADMIN], [[FULL_AWS_ACCESS, guardrails], []])).toBe(
+      "implicit-deny",
+    );
   });
 });
 
@@ -63,18 +77,24 @@ describe("what the guardrails stop, even for an administrator", () => {
   });
 
   it("anything in a Region the book does not use", () => {
-    expect(decide(request("ec2:RunInstances", "eu-west-1"), [ADMIN], ATTACHED)).toBe("explicit-deny");
+    expect(decide(request("ec2:RunInstances", "eu-west-1"), [ADMIN], ATTACHED)).toBe(
+      "explicit-deny",
+    );
     expect(decide(request("ec2:RunInstances", "ap-northeast-1"), [ADMIN], ATTACHED)).toBe("allow");
   });
 
   it("but not the services exempted by NotAction, whichever Region their requests are counted in", () => {
     expect(decide(request("iam:CreateRole", "eu-west-1"), [ADMIN], ATTACHED)).toBe("allow");
-    expect(decide(request("cloudfront:CreateDistribution", "eu-west-1"), [ADMIN], ATTACHED)).toBe("allow");
+    expect(decide(request("cloudfront:CreateDistribution", "eu-west-1"), [ADMIN], ATTACHED)).toBe(
+      "allow",
+    );
   });
 
   it("the root user of a member account", () => {
     const root = "arn:aws:iam::111111111111:root";
-    expect(decide(request("s3:GetObject", "ap-northeast-1", root), [ADMIN], ATTACHED)).toBe("explicit-deny");
+    expect(decide(request("s3:GetObject", "ap-northeast-1", root), [ADMIN], ATTACHED)).toBe(
+      "explicit-deny",
+    );
   });
 
   it("reading the audit trail stays allowed", () => {
@@ -87,14 +107,23 @@ describe("the model", () => {
     const unknown = policySchema.parse({
       Version: "2012-10-17",
       Statement: [
-        { Effect: "Deny", Action: "*", Resource: "*", Condition: { Bool: { "aws:MultiFactorAuthPresent": "false" } } },
+        {
+          Effect: "Deny",
+          Action: "*",
+          Resource: "*",
+          Condition: { Bool: { "aws:MultiFactorAuthPresent": "false" } },
+        },
       ],
     });
-    expect(() => decide(request("s3:GetObject"), [ADMIN], [[FULL_AWS_ACCESS, unknown]])).toThrow("does not know");
+    expect(() => decide(request("s3:GetObject"), [ADMIN], [[FULL_AWS_ACCESS, unknown]])).toThrow(
+      "does not know",
+    );
   });
 
   it("refuses a statement with a Principal", () => {
     const withPrincipal = { Effect: "Deny", Action: "*", Resource: "*", Principal: "*" };
-    expect(policySchema.safeParse({ Version: "2012-10-17", Statement: [withPrincipal] }).success).toBe(false);
+    expect(
+      policySchema.safeParse({ Version: "2012-10-17", Statement: [withPrincipal] }).success,
+    ).toBe(false);
   });
 });

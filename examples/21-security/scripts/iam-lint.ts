@@ -2,15 +2,22 @@
 //   node examples/21-security/scripts/iam-lint.ts [dir ...]
 // Lints the IAM policies in synthesized templates. Local only: it reads the
 // *.template.json files that `vp run infra:synth` wrote, and nothing in AWS.
+
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
 import { z } from "zod";
+
 import { exceptionSchema, lintTemplate } from "../src/iam-lint.ts";
 
 const exceptions = z
   .record(z.string(), z.array(exceptionSchema))
-  .parse(JSON.parse(readFileSync(new URL("../policies/iam-lint-exceptions.json", import.meta.url), "utf8")));
+  .parse(
+    JSON.parse(
+      readFileSync(new URL("../policies/iam-lint-exceptions.json", import.meta.url), "utf8"),
+    ),
+  );
 
 const directories = process.argv.slice(2);
 if (directories.length === 0) {
@@ -37,8 +44,7 @@ for (const directory of directories) {
     );
     const used = allowed.length - unusedExceptions.length;
     console.log(
-      `${findings.length + unusedExceptions.length === 0 ? "ok  " : "FAIL"} ${stack}` +
-        (used > 0 ? ` (${used} reasoned exceptions)` : ""),
+      `${findings.length + unusedExceptions.length === 0 ? "ok  " : "FAIL"} ${stack}${used > 0 ? ` (${used} reasoned exceptions)` : ""}`,
     );
     for (const finding of findings) {
       console.log(`       ${finding.resource}: ${finding.kind}: ${finding.detail}`);

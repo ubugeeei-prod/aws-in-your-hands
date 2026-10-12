@@ -3,9 +3,12 @@
 //
 // Calls the deployed function URL: once unsigned, which must be refused, and
 // once signed, which streams a summary. BILLED: one short summary.
+
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { collectSummary, summaryEvents } from "../src/client.ts";
 import { signedPost } from "./sign.ts";
 
@@ -23,15 +26,22 @@ try {
     stack: "AihAi",
   });
   const base =
-    values.url ?? requireOutput(await readStackOutputs(process.cwd(), "AihAi", target.region), "FunctionUrl");
+    values.url ??
+    requireOutput(await readStackOutputs(process.cwd(), "AihAi", target.region), "FunctionUrl");
   const url = new URL("/summaries", base);
   const body = JSON.stringify(NOTE);
   console.log(`url: ${url.href}`);
 
-  const unsigned = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body });
+  const unsigned = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body,
+  });
   await unsigned.body?.cancel();
   if (unsigned.status !== 403) {
-    throw new Error(`an unsigned request answered ${unsigned.status}, expected 403. Is the URL public?`);
+    throw new Error(
+      `an unsigned request answered ${unsigned.status}, expected 403. Is the URL public?`,
+    );
   }
   console.log("ok   an unsigned request is refused (403)");
 

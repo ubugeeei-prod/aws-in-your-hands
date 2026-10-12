@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { CELLD_STACK, parseFleetConfig, REGION } from "../../src/config.ts";
 import { CelldStack } from "../lib/celld-stack.ts";
 

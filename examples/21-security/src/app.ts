@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+
 import { type ApiError, subjectSchema, TOKEN_HEADER } from "./contract.ts";
 import type { Keyring } from "./keyring.ts";
 import type { Logger } from "./log.ts";
@@ -27,11 +28,18 @@ export function createApp(options: AppOptions) {
   app.get("/token", async (c) => {
     const subject = subjectSchema.safeParse(c.req.query("sub"));
     if (!subject.success) {
-      return c.json(failure("bad-request", "sub must be 1 to 64 characters of A-Z a-z 0-9 _ . @ -"), 400);
+      return c.json(
+        failure("bad-request", "sub must be 1 to 64 characters of A-Z a-z 0-9 _ . @ -"),
+        400,
+      );
     }
     const key = await options.keyring.current();
     const expiresAt = options.now() + options.tokenTtlSeconds;
-    return c.json({ token: signToken(key, subject.data, expiresAt), keyVersion: key.versionId, expiresAt });
+    return c.json({
+      token: signToken(key, subject.data, expiresAt),
+      keyVersion: key.versionId,
+      expiresAt,
+    });
   });
   // #endregion issue
 
@@ -45,12 +53,19 @@ export function createApp(options: AppOptions) {
     // Same answer for "unknown key version" and "wrong signature": a caller learns nothing about which versions exist.
     const verdict = key === null ? "bad-signature" : verifyToken(token, key, options.now());
     if (verdict === "bad-signature") {
-      return c.json(failure("invalid-token", "the token was not signed by a key this service accepts"), 401);
+      return c.json(
+        failure("invalid-token", "the token was not signed by a key this service accepts"),
+        401,
+      );
     }
     if (verdict === "expired") {
       return c.json(failure("expired-token", "the token has expired"), 401);
     }
-    return c.json({ subject: token.subject, keyVersion: token.versionId, expiresAt: token.expiresAt });
+    return c.json({
+      subject: token.subject,
+      keyVersion: token.versionId,
+      expiresAt: token.expiresAt,
+    });
   });
   // #endregion check
 

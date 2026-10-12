@@ -3,14 +3,14 @@ import type { Attachment } from "./contract.ts";
 // #region interface
 // A record exists only for an upload that was checked and accepted. There is
 // no "pending" row: an upload that never finishes leaves nothing here.
-export interface AttachmentRepository {
+export type AttachmentRepository = {
   /** Never overwrites. Finishing the same upload twice finds the first record. */
   create(owner: string, attachment: Attachment): Promise<"created" | "already_exists">;
   get(owner: string, noteId: string, id: string): Promise<Attachment | undefined>;
   /** Oldest first. */
   listByNote(owner: string, noteId: string): Promise<Attachment[]>;
   delete(owner: string, noteId: string, id: string): Promise<boolean>;
-}
+};
 // #endregion interface
 
 export class InMemoryAttachmentRepository implements AttachmentRepository {

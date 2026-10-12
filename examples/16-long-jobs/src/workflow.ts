@@ -23,7 +23,12 @@ export type ChoiceState = {
 export type SucceedState = { Type: "Succeed" };
 export type FailState = { Type: "Fail"; Error: string; Cause: string };
 export type State = TaskState | ChoiceState | SucceedState | FailState;
-export type StateMachine = { Comment: string; StartAt: string; TimeoutSeconds: number; States: Record<string, State> };
+export type StateMachine = {
+  Comment: string;
+  StartAt: string;
+  TimeoutSeconds: number;
+  States: Record<string, State>;
+};
 
 export const EXPORT_PAGES_TIMEOUT_SECONDS = 300;
 
@@ -39,7 +44,11 @@ const retryAnything: Retrier = {
 };
 
 /** `functions` are Lambda function ARNs on AWS, and plain names in the local run. */
-export function exportWorkflow(functions: { exportPages: string; finish: string; discard: string }): StateMachine {
+export function exportWorkflow(functions: {
+  exportPages: string;
+  finish: string;
+  discard: string;
+}): StateMachine {
   return {
     Comment: "Exports every note to S3 in part files, resumable after any step",
     StartAt: "ExportPages",
@@ -79,7 +88,8 @@ export function exportWorkflow(functions: { exportPages: string; finish: string;
       Discarded: {
         Type: "Fail",
         Error: "ExportDiscarded",
-        Cause: "Parts were missing when the export was about to finish. What was left has been deleted.",
+        Cause:
+          "Parts were missing when the export was about to finish. What was left has been deleted.",
       },
     },
   };

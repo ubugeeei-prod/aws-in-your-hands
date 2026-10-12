@@ -7,7 +7,10 @@ import type { NetworkPlan } from "./plan.ts";
 export type Destination = { kind: "internet" } | { kind: "aws-service"; service: string };
 
 export type Path =
-  | { reachable: true; via: "internet-gateway" | "nat-gateway" | "gateway-endpoint" | "interface-endpoint" }
+  | {
+      reachable: true;
+      via: "internet-gateway" | "nat-gateway" | "gateway-endpoint" | "interface-endpoint";
+    }
   | { reachable: false; reason: "zone-down" | "no-route" | "nat-zone-down" };
 
 /** Can something in `subnetId` open a connection to `destination`, with `downZones` out of service? */

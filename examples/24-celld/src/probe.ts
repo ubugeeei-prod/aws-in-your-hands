@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { NodeSpec } from "./machine.ts";
 
 // #region plan
@@ -36,15 +37,26 @@ export function probeOutputBound(plan: Pick<ProbePlan, "cells" | "rounds">): num
 }
 
 export const defaultProbePlan = (runId: string): ProbePlan =>
-  probePlanSchema.parse({ runId, cells: 8, rounds: 90, pauseSeconds: 1, requestTimeoutSeconds: 20 });
+  probePlanSchema.parse({
+    runId,
+    cells: 8,
+    rounds: 90,
+    pauseSeconds: 1,
+    requestTimeoutSeconds: 20,
+  });
 /**
  * The most requests the probe can have made `seconds` after it started: it pauses
  * between rounds, so it cannot be faster than one round per pause. Anything later
  * in the ledger was certainly sent after that moment.
  */
-export function lastSeqBefore(plan: Pick<ProbePlan, "cells" | "rounds" | "pauseSeconds">, seconds: number): number {
+export function lastSeqBefore(
+  plan: Pick<ProbePlan, "cells" | "rounds" | "pauseSeconds">,
+  seconds: number,
+): number {
   const rounds =
-    plan.pauseSeconds === 0 ? plan.rounds : Math.min(plan.rounds, Math.floor(seconds / plan.pauseSeconds) + 1);
+    plan.pauseSeconds === 0
+      ? plan.rounds
+      : Math.min(plan.rounds, Math.floor(seconds / plan.pauseSeconds) + 1);
   return rounds * plan.cells;
 }
 // #endregion plan

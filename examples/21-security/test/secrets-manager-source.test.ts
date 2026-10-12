@@ -1,5 +1,6 @@
 import type { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { describe, expect, it } from "vite-plus/test";
+
 import { SecretAccessDenied } from "../src/secret-source.ts";
 import { createRotationApi, createSecretsManagerSource } from "../src/secrets-manager-source.ts";
 
@@ -11,7 +12,10 @@ type Call = { name: string; input: Record<string, unknown> };
 /** Stands in for the SDK client: records each command and answers from `respond`. */
 function client(respond: (call: Call) => unknown) {
   const calls: Call[] = [];
-  const send = async (command: { constructor: { name: string }; input: Record<string, unknown> }) => {
+  const send = async (command: {
+    constructor: { name: string };
+    input: Record<string, unknown>;
+  }) => {
     const call = { name: command.constructor.name, input: command.input };
     calls.push(call);
     const answer = respond(call);
@@ -22,13 +26,22 @@ function client(respond: (call: Call) => unknown) {
   };
   return { calls, client: { send } as unknown as Pick<SecretsManagerClient, "send"> };
 }
-const serviceError = (name: string) => Object.assign(new Error(`${name}: details from the service`), { name });
+const serviceError = (name: string) =>
+  Object.assign(new Error(`${name}: details from the service`), { name });
 
 describe("reading the secret", () => {
   it("asks for one staging label of one secret and returns the key with its version id", async () => {
-    const { calls, client: sm } = client(() => ({ VersionId: "v2", SecretString: JSON.stringify({ key: KEY }) }));
-    expect(await createSecretsManagerSource(sm, SECRET).read("AWSCURRENT")).toEqual({ versionId: "v2", key: KEY });
-    expect(calls).toEqual([{ name: "GetSecretValueCommand", input: { SecretId: SECRET, VersionStage: "AWSCURRENT" } }]);
+    const { calls, client: sm } = client(() => ({
+      VersionId: "v2",
+      SecretString: JSON.stringify({ key: KEY }),
+    }));
+    expect(await createSecretsManagerSource(sm, SECRET).read("AWSCURRENT")).toEqual({
+      versionId: "v2",
+      key: KEY,
+    });
+    expect(calls).toEqual([
+      { name: "GetSecretValueCommand", input: { SecretId: SECRET, VersionStage: "AWSCURRENT" } },
+    ]);
   });
 
   it("treats a missing AWSPREVIOUS as a secret that was never rotated", async () => {
@@ -36,12 +49,16 @@ describe("reading the secret", () => {
     const source = createSecretsManagerSource(sm, SECRET);
     expect(await source.read("AWSPREVIOUS")).toBeNull();
     // The same answer for AWSCURRENT means the secret itself is gone. That is not "no key".
-    await expect(source.read("AWSCURRENT")).rejects.toMatchObject({ name: "ResourceNotFoundException" });
+    await expect(source.read("AWSCURRENT")).rejects.toMatchObject({
+      name: "ResourceNotFoundException",
+    });
   });
 
   it("names a denial as a denial, so callers can tell it from an outage", async () => {
     const { client: sm } = client(() => serviceError("AccessDeniedException"));
-    await expect(createSecretsManagerSource(sm, SECRET).read("AWSCURRENT")).rejects.toBeInstanceOf(SecretAccessDenied);
+    await expect(createSecretsManagerSource(sm, SECRET).read("AWSCURRENT")).rejects.toBeInstanceOf(
+      SecretAccessDenied,
+    );
   });
 
   it.each([

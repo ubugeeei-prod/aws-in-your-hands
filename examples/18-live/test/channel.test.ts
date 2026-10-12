@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { encoderProblems, maxVideoKbps, rtmpsServer } from "../src/channel.ts";
 
 const hd = { width: 1280, height: 720, videoKbps: 3000, keyframeSeconds: 2 };
@@ -26,7 +27,14 @@ describe("encoder settings against the channel type", () => {
   });
 
   it("accepts portrait 1080p", () => {
-    expect(encoderProblems("STANDARD", { width: 1080, height: 1920, videoKbps: 6000, keyframeSeconds: 2 })).toEqual([]);
+    expect(
+      encoderProblems("STANDARD", {
+        width: 1080,
+        height: 1920,
+        videoKbps: 6000,
+        keyframeSeconds: 2,
+      }),
+    ).toEqual([]);
   });
 
   it("catches a long keyframe interval", () => {

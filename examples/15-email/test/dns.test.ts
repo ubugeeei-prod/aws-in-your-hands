@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { dnsRecords } from "../src/dns.ts";
 
 const dkim = [1, 2, 3].map((n) => ({

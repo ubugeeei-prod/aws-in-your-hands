@@ -2,10 +2,13 @@
 //   node scripts/user.ts <create|delete> <email>
 //
 // Cognito emails the temporary password. This script never sees or prints one.
+
 import { spawnSync } from "node:child_process";
+
+import { z } from "zod";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { z } from "zod";
 
 const [action, emailArg] = process.argv.slice(2);
 const email = z.email().safeParse(emailArg);
@@ -20,7 +23,10 @@ try {
     action: `${action} user ${email.data}`,
     stack: "AihNotesApp",
   });
-  const userPoolId = requireOutput(await readStackOutputs(process.cwd(), "AihNotesApp", target.region), "UserPoolId");
+  const userPoolId = requireOutput(
+    await readStackOutputs(process.cwd(), "AihNotesApp", target.region),
+    "UserPoolId",
+  );
   const args =
     action === "create"
       ? [
@@ -50,7 +56,9 @@ try {
         ];
   console.error(`$ aws ${args.join(" ")}`);
   process.exit(
-    spawnSync("aws", args, { stdio: ["ignore", action === "create" ? "ignore" : "inherit", "inherit"] }).status ?? 1,
+    spawnSync("aws", args, {
+      stdio: ["ignore", action === "create" ? "ignore" : "inherit", "inherit"],
+    }).status ?? 1,
   );
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);

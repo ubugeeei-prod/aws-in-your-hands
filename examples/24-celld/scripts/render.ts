@@ -4,7 +4,9 @@
 //
 // deploy/ holds the files exactly as the default settings produce them, so
 // they can be read (and reviewed in a diff) without running anything.
+
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+
 import { renderedFiles } from "../src/machine.ts";
 
 const write = process.argv.includes("--write");

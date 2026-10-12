@@ -1,6 +1,11 @@
-import { type AppDeps as NotesAppDeps, createApp as createNotesApp } from "@aih/example-06-auth/api/src/app.ts";
 import { bodyLimit } from "hono/body-limit";
 import { validator } from "hono/validator";
+
+import {
+  type AppDeps as NotesAppDeps,
+  createApp as createNotesApp,
+} from "@aih/example-06-auth/api/src/app.ts";
+
 import { type AttachmentService, withAttachmentCleanup } from "./attachments.ts";
 import { type ErrorBody, MAX_ATTACHMENTS_PER_NOTE, uploadRequestSchema } from "./contract.ts";
 
@@ -11,17 +16,27 @@ const failure = (
   message: string,
   requestId: string,
   issues?: { path: string; message: string }[],
-) => ({ error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) } }) satisfies ErrorBody;
+) =>
+  ({
+    error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) },
+  }) satisfies ErrorBody;
 
 export function createApp(deps: AppDeps) {
   // Chapter 06's app, unchanged, with four routes added behind its sign-in
   // guard. Its DELETE /notes/:id now reaches the wrapped note service.
-  const app = createNotesApp({ ...deps, notes: withAttachmentCleanup(deps.notes, deps.attachments, deps.log) });
+  const app = createNotesApp({
+    ...deps,
+    notes: withAttachmentCleanup(deps.notes, deps.attachments, deps.log),
+  });
 
   // The image itself never passes through here; only this small JSON does.
   const limit = bodyLimit({
     maxSize: 1024,
-    onError: (c) => c.json(failure("payload_too_large", "The request body exceeds 1 KiB.", c.get("requestId")), 413),
+    onError: (c) =>
+      c.json(
+        failure("payload_too_large", "The request body exceeds 1 KiB.", c.get("requestId")),
+        413,
+      ),
   });
   const noNote = "No such note.";
 
@@ -41,7 +56,10 @@ export function createApp(deps: AppDeps) {
                   "invalid_request",
                   "The upload request is not valid.",
                   c.get("requestId"),
-                  input.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })),
+                  input.error.issues.map((issue) => ({
+                    path: issue.path.join("."),
+                    message: issue.message,
+                  })),
                 ),
                 400,
               );
@@ -88,7 +106,10 @@ export function createApp(deps: AppDeps) {
           case "note_not_found":
             return c.json(failure("not_found", noNote, c.get("requestId")), 404);
           case "upload_missing":
-            return c.json(failure("upload_missing", "No upload has arrived for this ID.", c.get("requestId")), 409);
+            return c.json(
+              failure("upload_missing", "No upload has arrived for this ID.", c.get("requestId")),
+              409,
+            );
           case "upload_rejected":
             return c.json(failure("upload_rejected", result.reason, c.get("requestId")), 409);
           case "limit":
@@ -103,7 +124,11 @@ export function createApp(deps: AppDeps) {
         }
       })
       .delete("/notes/:id/attachments/:attachmentId", async (c) =>
-        (await deps.attachments.remove(c.get("identity").sub, c.req.param("id"), c.req.param("attachmentId")))
+        (await deps.attachments.remove(
+          c.get("identity").sub,
+          c.req.param("id"),
+          c.req.param("attachmentId"),
+        ))
           ? c.body(null, 204)
           : c.json(failure("not_found", "No such attachment.", c.get("requestId")), 404),
       )

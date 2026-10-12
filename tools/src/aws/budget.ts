@@ -1,8 +1,11 @@
 // vp run account:budget:create / account:budget:delete
+
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+
 import { z } from "zod";
+
 import { preflight } from "./preflight.ts";
 
 const [action, directory] = process.argv.slice(2);
@@ -19,15 +22,27 @@ const budgetSchema = z.looseObject({
 try {
   const budgetPath = resolve(directory, "budget.json");
   const budget = budgetSchema.parse(JSON.parse(readFileSync(budgetPath, "utf8")));
-  const { identity } = await preflight({ access: "mutate", action: `${action} budget ${budget.BudgetName}` });
+  const { identity } = await preflight({
+    access: "mutate",
+    action: `${action} budget ${budget.BudgetName}`,
+  });
 
   // Budgets is account-wide; its API endpoint is in us-east-1.
-  const base = ["budgets", `${action}-budget`, "--region", "us-east-1", "--account-id", identity.accountId];
+  const base = [
+    "budgets",
+    `${action}-budget`,
+    "--region",
+    "us-east-1",
+    "--account-id",
+    identity.accountId,
+  ];
   let args: string[];
   if (action === "create") {
     const notificationsPath = resolve(directory, "notifications.json");
     if (!existsSync(notificationsPath)) {
-      throw new Error(`${notificationsPath} does not exist. Copy notifications.example.json and set your address.`);
+      throw new Error(
+        `${notificationsPath} does not exist. Copy notifications.example.json and set your address.`,
+      );
     }
     if (readFileSync(notificationsPath, "utf8").includes("you@example.com")) {
       throw new Error(

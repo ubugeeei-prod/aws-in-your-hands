@@ -1,4 +1,12 @@
-import { createError, defineEventHandler, deleteCookie, getCookie, getRequestHeader, sendRedirect } from "h3";
+import {
+  createError,
+  defineEventHandler,
+  deleteCookie,
+  getCookie,
+  getRequestHeader,
+  sendRedirect,
+} from "h3";
+
 import { isSameOrigin, SESSION_COOKIE, sessionIdSchema } from "../../../core/session.ts";
 import { context } from "../../context.ts";
 

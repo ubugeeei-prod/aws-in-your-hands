@@ -154,7 +154,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-tracing.html",
       "title": "Instrumenting Node.js code in AWS Lambda",
       "checkedAt": "2026-10-12",
-      "supports": ["Lambda's Node.js guide offers ADOT layers or the X-Ray SDK for Node.js to send trace data to X-Ray"]
+      "supports": [
+        "Lambda's Node.js guide offers ADOT layers or the X-Ray SDK for Node.js to send trace data to X-Ray"
+      ]
     },
     {
       "id": "lambda-nodejs-logging",
@@ -255,7 +257,9 @@
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html",
       "title": "Notifying users on alarm changes",
       "checkedAt": "2026-10-12",
-      "supports": ["An email subscription to the SNS topic stays pending until the recipient confirms it"]
+      "supports": [
+        "An email subscription to the SNS topic stays pending until the recipient confirms it"
+      ]
     },
     {
       "id": "logs-insights-syntax",
@@ -794,7 +798,14 @@
         "examples/19-observability/scripts/query.ts",
         "examples/19-observability/scripts/alarms.ts"
       ],
-      "tasks": ["obs:infra:diff", "obs:infra:deploy", "obs:smoke", "obs:query", "obs:alarms", "obs:infra:drift"],
+      "tasks": [
+        "obs:infra:diff",
+        "obs:infra:deploy",
+        "obs:smoke",
+        "obs:query",
+        "obs:alarms",
+        "obs:infra:drift"
+      ],
       "boundary": "cloud",
       "criteria": ["drift"],
       "verification": "unverified"
@@ -809,7 +820,10 @@
     },
     {
       "id": "19.cost",
-      "sources": ["examples/19-observability/src/cost-inputs.ts", "examples/19-observability/test/cost-inputs.test.ts"],
+      "sources": [
+        "examples/19-observability/src/cost-inputs.ts",
+        "examples/19-observability/test/cost-inputs.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "none",
       "criteria": ["cost", "test"],
@@ -1213,7 +1227,10 @@
         "en": "Synthetics: one canary every 5 minutes"
       },
       "assumptions": {
-        "ja": ["730 時間 x 毎時 12 回 = 8,760 回の実行", "canary が使う Lambda、S3、ログ、メトリクスの料金は未算入"],
+        "ja": [
+          "730 時間 x 毎時 12 回 = 8,760 回の実行",
+          "canary が使う Lambda、S3、ログ、メトリクスの料金は未算入"
+        ],
         "en": [
           "730 hours x 12 runs an hour = 8,760 runs",
           "The Lambda, S3, log and metric charges a canary incurs are not included"

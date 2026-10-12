@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+
 import { parseEnv } from "../core/env.ts";
 import { createStaticNotes } from "../core/notes.ts";
 import { createDevIdentity } from "../core/profile.ts";

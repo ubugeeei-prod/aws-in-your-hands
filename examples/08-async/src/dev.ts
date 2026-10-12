@@ -1,15 +1,21 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { parseEnv } from "@aih/example-05-dynamodb/src/env.ts";
-import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
-import { signLocalToken } from "@aih/example-06-auth/api/src/local-auth.ts";
-import { MAX_UPLOAD_BYTES } from "@aih/example-07-uploads/api/src/contract.ts";
-import { parseUploadsEnv } from "@aih/example-07-uploads/api/src/env.ts";
-import { createLocalStoreHandler, LOCAL_STORE_PATH } from "@aih/example-07-uploads/api/src/local-store-http.ts";
+
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { z } from "zod";
+
+import { parseEnv } from "@aih/example-05-dynamodb/src/env.ts";
+import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
+import { signLocalToken } from "@aih/example-06-auth/api/src/local-auth.ts";
+import { MAX_UPLOAD_BYTES } from "@aih/example-07-uploads/api/src/contract.ts";
+import { parseUploadsEnv } from "@aih/example-07-uploads/api/src/env.ts";
+import {
+  createLocalStoreHandler,
+  LOCAL_STORE_PATH,
+} from "@aih/example-07-uploads/api/src/local-store-http.ts";
+
 import { parseLocalQueueEnv } from "./env.ts";
 import { createLocal } from "./local.ts";
 
@@ -45,13 +51,21 @@ const local = createLocal({
 
 // Stands in for the event source mapping: twice a second, one batch.
 setInterval(() => {
-  local.deliver().catch((error: unknown) => log({ level: "error", message: "batch failed", error: String(error) }));
+  local
+    .deliver()
+    .catch((error: unknown) =>
+      log({ level: "error", message: "batch failed", error: String(error) }),
+    );
 }, 500);
 
 const server = new Hono();
 // What the AWS console and CLI would show: queue depth, the dead-letter queue, the records.
 server.get("/local/queue", (c) =>
-  c.json({ ...local.queue.stats(), deadLetters: local.queue.dead(), inspections: local.inspections.all() }),
+  c.json({
+    ...local.queue.stats(),
+    deadLetters: local.queue.dead(),
+    inspections: local.inspections.all(),
+  }),
 );
 server.post("/local/queue/redrive", (c) => c.json({ moved: local.queue.redrive() }));
 // What the schedule would start. Nothing younger than an hour is touched.
@@ -63,8 +77,13 @@ server.post("/local/housekeeping", async (c) =>
 // From here on it is chapter 07's development server: the form's destination,
 // the view URLs, and the local sign-in of chapter 06.
 const store = createLocalStoreHandler(local.bucket);
-server.use("/local/*", cors({ origin: env.ALLOWED_ORIGIN, allowMethods: ["POST"], allowHeaders: ["content-type"] }));
-server.post(LOCAL_STORE_PATH, bodyLimit({ maxSize: MAX_UPLOAD_BYTES + 64 * 1024 }), (c) => store(c.req.raw));
+server.use(
+  "/local/*",
+  cors({ origin: env.ALLOWED_ORIGIN, allowMethods: ["POST"], allowHeaders: ["content-type"] }),
+);
+server.post(LOCAL_STORE_PATH, bodyLimit({ maxSize: MAX_UPLOAD_BYTES + 64 * 1024 }), (c) =>
+  store(c.req.raw),
+);
 server.get(`${LOCAL_STORE_PATH}/*`, (c) => store(c.req.raw));
 server.post("/local/token", async (c) => {
   const body = z

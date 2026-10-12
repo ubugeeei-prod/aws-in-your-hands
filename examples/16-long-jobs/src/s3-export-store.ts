@@ -7,6 +7,7 @@ import {
   type S3Client,
   S3ServiceException,
 } from "@aws-sdk/client-s3";
+
 import type { ExportStore, Metadata } from "./export-store.ts";
 
 export class S3ExportStore implements ExportStore {
@@ -46,7 +47,9 @@ export class S3ExportStore implements ExportStore {
 
   async head(key: string) {
     try {
-      const object = await this.#client.send(new HeadObjectCommand({ Bucket: this.#bucket, Key: key }));
+      const object = await this.#client.send(
+        new HeadObjectCommand({ Bucket: this.#bucket, Key: key }),
+      );
       return object.Metadata ?? {};
     } catch (error) {
       // S3 answers 404 only to a role with s3:ListBucket. Without it a missing key is a 403, and this throws.
@@ -62,7 +65,11 @@ export class S3ExportStore implements ExportStore {
     let token: string | undefined;
     do {
       const page = await this.#client.send(
-        new ListObjectsV2Command({ Bucket: this.#bucket, Prefix: prefix, ContinuationToken: token }),
+        new ListObjectsV2Command({
+          Bucket: this.#bucket,
+          Prefix: prefix,
+          ContinuationToken: token,
+        }),
       );
       keys.push(...(page.Contents ?? []).flatMap((object) => object.Key ?? []));
       token = page.IsTruncated === true ? page.NextContinuationToken : undefined;

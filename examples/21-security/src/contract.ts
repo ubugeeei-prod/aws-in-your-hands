@@ -4,8 +4,16 @@ import { z } from "zod";
 export const TOKEN_HEADER = "x-aih-token";
 
 export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string() });
-export const issuedSchema = z.object({ token: z.string(), keyVersion: z.string(), expiresAt: z.number().int() });
-export const verifiedSchema = z.object({ subject: z.string(), keyVersion: z.string(), expiresAt: z.number().int() });
+export const issuedSchema = z.object({
+  token: z.string(),
+  keyVersion: z.string(),
+  expiresAt: z.number().int(),
+});
+export const verifiedSchema = z.object({
+  subject: z.string(),
+  keyVersion: z.string(),
+  expiresAt: z.number().int(),
+});
 export const errorSchema = z.object({
   code: z.enum(["bad-request", "invalid-token", "expired-token", "signing-key-unavailable"]),
   message: z.string(),

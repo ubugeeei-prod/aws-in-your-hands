@@ -58,11 +58,16 @@ export function pushSteps(tag: string, repositoryUri: string, region: string): S
       input: ["aws", "ecr", "get-login-password", "--region", region],
       command: ["docker", "login", "--username", "AWS", "--password-stdin", registry],
     },
-    { title: "name the image after the repository", command: ["docker", "tag", `${LOCAL_IMAGE}:${tag}`, remote] },
+    {
+      title: "name the image after the repository",
+      command: ["docker", "tag", `${LOCAL_IMAGE}:${tag}`, remote],
+    },
     { title: "push it", command: ["docker", "push", remote] },
   ];
 }
 // #endregion steps
 
 export const render = (step: Step): string =>
-  step.input === undefined ? step.command.join(" ") : `${step.input.join(" ")} | ${step.command.join(" ")}`;
+  step.input === undefined
+    ? step.command.join(" ")
+    : `${step.input.join(" ")} | ${step.command.join(" ")}`;

@@ -18,7 +18,9 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
   }
   if (parsed.data.AIH_SSR_SIGN_IN === "dev" && parsed.data.AWS_LAMBDA_FUNCTION_NAME !== undefined) {
     // Sessions live in memory here; chapter 04 showed why that cannot work on Lambda.
-    throw new Error("Invalid environment: AIH_SSR_SIGN_IN=dev is for local development and must not run on Lambda");
+    throw new Error(
+      "Invalid environment: AIH_SSR_SIGN_IN=dev is for local development and must not run on Lambda",
+    );
   }
   return { stage: parsed.data.STAGE, signIn: parsed.data.AIH_SSR_SIGN_IN };
 }

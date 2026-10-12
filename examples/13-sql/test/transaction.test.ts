@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Db } from "../src/db.ts";
 import {
   backoffMs,
@@ -81,7 +82,9 @@ describe("transaction runner", () => {
     const { db, log } = scriptedDb({ COMMIT: conflicts });
     const { transaction, sleeps } = runner(db, 3);
 
-    await expect(transaction((tx) => tx.query("UPDATE something"))).rejects.toBeInstanceOf(RetriesExhaustedError);
+    await expect(transaction((tx) => tx.query("UPDATE something"))).rejects.toBeInstanceOf(
+      RetriesExhaustedError,
+    );
 
     expect(log.filter((text) => text === "COMMIT")).toHaveLength(3);
     expect(log.filter((text) => text === "ROLLBACK")).toHaveLength(3);
@@ -90,7 +93,9 @@ describe("transaction runner", () => {
   });
 
   it("does not retry an error that is not a serialization failure", async () => {
-    const duplicate = Object.assign(new Error("duplicate key value violates unique constraint"), { code: "23505" });
+    const duplicate = Object.assign(new Error("duplicate key value violates unique constraint"), {
+      code: "23505",
+    });
     const { db, log } = scriptedDb({ "INSERT something": [duplicate] });
     const { transaction, sleeps } = runner(db);
 
@@ -115,14 +120,20 @@ describe("transaction runner", () => {
 
   it("recognises SQLSTATE 40001 and nothing else as a conflict", () => {
     expect(isSerializationFailure(serializationFailure())).toBe(true);
-    expect(isSerializationFailure(Object.assign(new Error("deadlock detected"), { code: "40P01" }))).toBe(false);
-    expect(isSerializationFailure(new Error("change conflicts with another transaction (OC000)"))).toBe(false);
+    expect(
+      isSerializationFailure(Object.assign(new Error("deadlock detected"), { code: "40P01" })),
+    ).toBe(false);
+    expect(
+      isSerializationFailure(new Error("change conflicts with another transaction (OC000)")),
+    ).toBe(false);
     expect(isSerializationFailure(undefined)).toBe(false);
   });
 
   it("waits a random time under a cap that doubles and then stops growing", () => {
     const policy = { maxAttempts: 9, baseDelayMs: 20, maxDelayMs: 100 };
-    expect([1, 2, 3, 4, 5].map((attempt) => backoffMs(attempt, policy, () => 0.5))).toEqual([10, 20, 40, 50, 50]);
+    expect([1, 2, 3, 4, 5].map((attempt) => backoffMs(attempt, policy, () => 0.5))).toEqual([
+      10, 20, 40, 50, 50,
+    ]);
     expect(backoffMs(3, policy, () => 0)).toBe(0);
     expect(backoffMs(3, policy, () => 0.999)).toBeLessThan(80);
   });

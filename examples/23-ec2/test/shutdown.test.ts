@@ -1,8 +1,10 @@
 import { Server } from "node:http";
 import type { AddressInfo } from "node:net";
+
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEc2Config } from "../src/config.ts";
 import { machineFor, SHUTDOWN_GRACE_MS } from "../src/machine.ts";
 import { type Closable, createShutdown } from "../src/shutdown.ts";
@@ -27,7 +29,9 @@ describe("shutdown on SIGTERM", () => {
     });
     // A real socket on loopback: this is about what the operating system does with connections.
     const listening = gate();
-    const server = serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 0 }, () => listening.open());
+    const server = serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 0 }, () =>
+      listening.open(),
+    );
     await listening.closed;
     if (!(server instanceof Server)) {
       throw new Error("expected an HTTP/1.1 server");
@@ -108,6 +112,8 @@ describe("shutdown on SIGTERM", () => {
 
   it("gives up before systemd does", () => {
     // systemd sends SIGKILL after TimeoutStopSec. The process must have decided by then.
-    expect(SHUTDOWN_GRACE_MS).toBeLessThan(machineFor(parseEc2Config({})).stopTimeoutSeconds * 1000);
+    expect(SHUTDOWN_GRACE_MS).toBeLessThan(
+      machineFor(parseEc2Config({})).stopTimeoutSeconds * 1000,
+    );
   });
 });

@@ -7,6 +7,7 @@ import {
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { z } from "zod";
+
 import type { CacheEntry, CacheStore, CounterStore, IncrementResult, WindowRef } from "./stores.ts";
 
 type Client = Pick<DynamoDBDocumentClient, "send">;
@@ -19,7 +20,8 @@ const toTtl = (ms: number): number => Math.ceil(ms / 1000);
 const counterItem = z.object({ hits: z.number().int().nonnegative() });
 const cacheItem = z.object({ payload: z.string(), expiresAtMs: z.number() });
 
-const isConditionFailure = (error: unknown): boolean => error instanceof ConditionalCheckFailedException;
+const isConditionFailure = (error: unknown): boolean =>
+  error instanceof ConditionalCheckFailedException;
 
 export class DynamoDbCounterStore implements CounterStore {
   readonly #client: Client;
@@ -126,7 +128,13 @@ export class DynamoDbCacheStore implements CacheStore {
       await this.#client.send(
         new PutCommand({
           TableName: this.#tableName,
-          Item: { pk: `CACHE#${key}`, sk: "LOCK", owner, expiresAtMs: expiresAt, [TTL_ATTRIBUTE]: toTtl(expiresAt) },
+          Item: {
+            pk: `CACHE#${key}`,
+            sk: "LOCK",
+            owner,
+            expiresAtMs: expiresAt,
+            [TTL_ATTRIBUTE]: toTtl(expiresAt),
+          },
           // An expired lock is still in the table, so "free" has to include "expired".
           ConditionExpression: "attribute_not_exists(pk) OR #expiresAtMs <= :now",
           ExpressionAttributeNames: { "#expiresAtMs": "expiresAtMs" },

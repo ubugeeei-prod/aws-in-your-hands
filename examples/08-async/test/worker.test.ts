@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { HTML, GIF_3X2, PNG_1X1, PNG_3X2, pngDeclaring } from "./fixtures.ts";
 import { type Context, setup, VISIBILITY_MS } from "./harness.ts";
 
@@ -21,7 +22,12 @@ describe("one event, delivered more than once", () => {
     const context = await setup();
     const upload = await context.upload(PNG_3X2);
     await context.deliver();
-    expect(await record(context, upload)).toMatchObject({ verdict: "ok", width: 3, height: 2, size: 170 });
+    expect(await record(context, upload)).toMatchObject({
+      verdict: "ok",
+      width: 3,
+      height: 2,
+      size: 170,
+    });
     expect(context.queue.stats()).toEqual({ visible: 0, inFlight: 0, dead: 0 });
   });
 
@@ -229,6 +235,10 @@ describe("what the bytes say", () => {
     const context = await setup();
     const upload = await context.upload(bytes);
     await context.deliver();
-    expect(await record(context, upload)).toMatchObject({ verdict: "rejected", reason, declaredType: "image/png" });
+    expect(await record(context, upload)).toMatchObject({
+      verdict: "rejected",
+      reason,
+      declaredType: "image/png",
+    });
   });
 });

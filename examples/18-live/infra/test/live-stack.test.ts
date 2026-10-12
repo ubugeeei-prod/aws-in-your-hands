@@ -1,10 +1,13 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { LiveStack } from "../lib/live-stack.ts";
 
 const synth = (streamKey: boolean) =>
-  Template.fromStack(new LiveStack(new App(), "AihLive", { env: { region: "ap-northeast-1" }, streamKey }));
+  Template.fromStack(
+    new LiveStack(new App(), "AihLive", { env: { region: "ap-northeast-1" }, streamKey }),
+  );
 
 const template = synth(true);
 const json = JSON.stringify(template.toJSON());
@@ -30,7 +33,9 @@ describe("LiveStack: the stream key", () => {
 
   it("has exactly one key, tied to this channel", () => {
     template.resourceCountIs("AWS::IVS::StreamKey", 1);
-    template.hasResourceProperties("AWS::IVS::StreamKey", { ChannelArn: { "Fn::GetAtt": ["Channel", "Arn"] } });
+    template.hasResourceProperties("AWS::IVS::StreamKey", {
+      ChannelArn: { "Fn::GetAtt": ["Channel", "Arn"] },
+    });
   });
 
   it("has no key at all when deployed with streamKey=off", () => {
@@ -56,7 +61,9 @@ describe("LiveStack: the channel", () => {
   });
 
   it("does not record to S3", () => {
-    const channel = Object.values(template.findResources("AWS::IVS::Channel"))[0]?.["Properties"] as object;
+    const channel = Object.values(template.findResources("AWS::IVS::Channel"))[0]?.[
+      "Properties"
+    ] as object;
     expect(Object.keys(channel)).not.toContain("RecordingConfigurationArn");
     template.resourceCountIs("AWS::IVS::RecordingConfiguration", 0);
     template.resourceCountIs("AWS::S3::Bucket", 0);
@@ -100,7 +107,9 @@ describe("LiveStack: events", () => {
     const statements = properties?.PolicyDocument.Statement ?? [];
     expect(statements).toHaveLength(1);
     expect(statements[0]?.Action.toSorted()).toEqual(["logs:CreateLogStream", "logs:PutLogEvents"]);
-    expect(JSON.stringify(statements[0]?.Resource)).toMatch(/^\{"Fn::GetAtt":\["EventLogs[0-9A-F]+","Arn"\]\}$/);
+    expect(JSON.stringify(statements[0]?.Resource)).toMatch(
+      /^\{"Fn::GetAtt":\["EventLogs[0-9A-F]+","Arn"\]\}$/,
+    );
     expect(json).not.toContain("AWSLambdaBasicExecutionRole");
   });
 
@@ -112,7 +121,9 @@ describe("LiveStack: events", () => {
 describe("LiveStack: resources", () => {
   it("uses only resource types looked up in the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::Events::Rule",
       "AWS::IAM::Policy",
       "AWS::IAM::Role",

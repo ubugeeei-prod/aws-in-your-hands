@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { NotesStack } from "../lib/notes-stack.ts";
 
 const template = Template.fromStack(
@@ -25,7 +26,10 @@ describe("NotesStack", () => {
 
   it("deletes the practice table with the stack", () => {
     // The first thing to change once the table holds data worth keeping.
-    template.hasResource("AWS::DynamoDB::Table", { DeletionPolicy: "Delete", UpdateReplacePolicy: "Delete" });
+    template.hasResource("AWS::DynamoDB::Table", {
+      DeletionPolicy: "Delete",
+      UpdateReplacePolicy: "Delete",
+    });
   });
 
   it("grants five item operations on this table and nothing else", () => {
@@ -45,7 +49,9 @@ describe("NotesStack", () => {
       "dynamodb:UpdateItem",
     ]);
     // The table's ARN and only that: no "*", and no index ARNs.
-    expect(dynamodb[0]?.Resource).toEqual({ "Fn::GetAtt": [expect.stringMatching(/^Notes/), "Arn"] });
+    expect(dynamodb[0]?.Resource).toEqual({
+      "Fn::GetAtt": [expect.stringMatching(/^Notes/), "Arn"],
+    });
     for (const statement of statements) {
       expect(JSON.stringify(statement.Resource)).not.toBe('"*"');
     }
@@ -54,7 +60,12 @@ describe("NotesStack", () => {
 
   it("tells the function which table to use through its environment", () => {
     template.hasResourceProperties("AWS::Lambda::Function", {
-      Environment: { Variables: { NOTES_STORE: "dynamodb", TABLE_NAME: { Ref: Match.stringLikeRegexp("^Notes") } } },
+      Environment: {
+        Variables: {
+          NOTES_STORE: "dynamodb",
+          TABLE_NAME: { Ref: Match.stringLikeRegexp("^Notes") },
+        },
+      },
     });
   });
 
@@ -74,7 +85,9 @@ describe("NotesStack", () => {
 
   it("uses only resource types that were checked against the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::ApiGatewayV2::Api",
       "AWS::ApiGatewayV2::Integration",
       "AWS::ApiGatewayV2::Route",

@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vite-plus/test";
-import { cacheControlFor, type Exchange, NO_STORE, SHARED, SHARED_SECONDS } from "../core/cache-control.ts";
+
+import {
+  cacheControlFor,
+  type Exchange,
+  NO_STORE,
+  SHARED,
+  SHARED_SECONDS,
+} from "../core/cache-control.ts";
 import { isPersonalPath, PERSONAL_PATH_PATTERNS } from "../core/routes.ts";
-import { type CacheRequest, type CacheResponse, createSharedCache, sharedLifetime } from "./support/shared-cache.ts";
+import {
+  type CacheRequest,
+  type CacheResponse,
+  createSharedCache,
+  sharedLifetime,
+} from "./support/shared-cache.ts";
 
 const anonymousPage: Exchange = {
   method: "GET",
@@ -48,7 +60,8 @@ describe("cacheControlFor", () => {
 });
 
 // An origin that renders the reader's name into every page it is asked for.
-const nameOf = (request: CacheRequest): string => /user=(\w+)/.exec(request.headers["cookie"] ?? "")?.[1] ?? "nobody";
+const nameOf = (request: CacheRequest): string =>
+  /user=(\w+)/.exec(request.headers["cookie"] ?? "")?.[1] ?? "nobody";
 
 const originWith =
   (label: (exchange: Exchange) => string) =>

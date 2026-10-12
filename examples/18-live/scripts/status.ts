@@ -4,12 +4,16 @@
 // Read-only. Asks IVS whether the channel is live (GetStream). With --events it
 // also reads the events the function logged and says whether they tell the
 // same story. --expect-offline exits 1 while the channel is live.
+
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
-import { preflight } from "@aih/tools/aws/preflight.ts";
-import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { IvsClient } from "@aws-sdk/client-ivs";
 import { z } from "zod";
+
+import { preflight } from "@aih/tools/aws/preflight.ts";
+import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { getStreamStatus } from "../src/ivs.ts";
 import { parseLoggedEvents } from "../src/logged-events.ts";
 import { describeStatus } from "../src/stream.ts";
@@ -34,7 +38,11 @@ const sinceMs = (since: string): number => {
 const logsOutputSchema = z.object({ events: z.array(z.object({ message: z.string() })) });
 
 try {
-  const { target } = await preflight({ access: "observe", action: "read the stream state", stack: "AihLive" });
+  const { target } = await preflight({
+    access: "observe",
+    action: "read the stream state",
+    stack: "AihLive",
+  });
   const outputs = await readStackOutputs(process.cwd(), "AihLive", target.region);
   const channelArn = requireOutput(outputs, "ChannelArn");
   const now = new Date();
@@ -50,9 +58,13 @@ try {
     if (result.status !== 0) {
       throw new Error(`aws logs filter-log-events exited with ${result.status}: ${result.stderr}`);
     }
-    const records = parseLoggedEvents(logsOutputSchema.parse(JSON.parse(result.stdout)).events.map((e) => e.message));
+    const records = parseLoggedEvents(
+      logsOutputSchema.parse(JSON.parse(result.stdout)).events.map((e) => e.message),
+    );
     for (const record of records) {
-      console.log(`event    ${record.eventTime}  +${record.lagMs} ms  ${record.name}  ${record.streamId ?? "-"}`);
+      console.log(
+        `event    ${record.eventTime}  +${record.lagMs} ms  ${record.name}  ${record.streamId ?? "-"}`,
+      );
     }
     const verdict = reconcile(believe(records), status);
     console.log(

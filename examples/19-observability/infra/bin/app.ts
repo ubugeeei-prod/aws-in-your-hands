@@ -1,5 +1,6 @@
 import { App } from "aws-cdk-lib";
 import { z } from "zod";
+
 import { ObservabilityStack } from "../lib/observability-stack.ts";
 
 const REGION = "ap-northeast-1";

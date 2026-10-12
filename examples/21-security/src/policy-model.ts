@@ -22,7 +22,10 @@ export const statementSchema = z
 export type Statement = z.infer<typeof statementSchema>;
 
 // strictObject: a Principal or NotPrincipal element, which SCPs do not support, fails the parse.
-export const policySchema = z.strictObject({ Version: z.literal("2012-10-17"), Statement: z.array(statementSchema) });
+export const policySchema = z.strictObject({
+  Version: z.literal("2012-10-17"),
+  Statement: z.array(statementSchema),
+});
 export type Policy = z.infer<typeof policySchema>;
 
 export type Request = { action: string; region: string; principalArn: string };
@@ -31,9 +34,9 @@ export type Decision = "allow" | "explicit-deny" | "implicit-deny";
 /** IAM's `*` and `?` wildcards. Actions compare case-insensitively. */
 export function wildcardMatch(pattern: string, value: string, caseInsensitive = false): boolean {
   const body = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-    .replace(/\*/g, ".*")
-    .replace(/\?/g, ".");
+    .replaceAll(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replaceAll("*", ".*")
+    .replaceAll("?", ".");
   return new RegExp(`^${body}$`, caseInsensitive ? "i" : "").test(value);
 }
 
@@ -72,7 +75,9 @@ function applies(statement: Statement, request: Request): boolean {
 
 const has = (policies: Policy[], effect: Statement["Effect"], request: Request): boolean =>
   policies.some((policy) =>
-    policy.Statement.some((statement) => statement.Effect === effect && applies(statement, request)),
+    policy.Statement.some(
+      (statement) => statement.Effect === effect && applies(statement, request),
+    ),
   );
 
 // #region decide

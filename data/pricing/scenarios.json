@@ -364,7 +364,9 @@
       },
       "assumptions": {
         "ja": ["視聴者は 0 人。1 本の stream の上限である 48 時間、配信ソフトが送り続けた"],
-        "en": ["No viewers. The encoder kept sending for 48 hours, the longest a single stream lasts"]
+        "en": [
+          "No viewers. The encoder kept sending for 48 hours, the longest a single stream lasts"
+        ]
       },
       "items": [
         {
@@ -600,7 +602,10 @@
         "en": "Summary API: output cost if all 1,000 summaries hit the output limit"
       },
       "assumptions": {
-        "ja": ["1,000 件すべてが maxTokens の 400 token まで出力", "出力 token の分だけ。入力と Lambda は含まない"],
+        "ja": [
+          "1,000 件すべてが maxTokens の 400 token まで出力",
+          "出力 token の分だけ。入力と Lambda は含まない"
+        ],
         "en": [
           "All 1,000 summaries write up to the maxTokens of 400",
           "Output tokens only; input and Lambda are not included"
@@ -658,7 +663,10 @@
         "en": "Notification mail: deployed, but nothing sent for a month"
       },
       "assumptions": {
-        "ja": ["送信ゼロ、イベントゼロ", "table に 10 MB の記録（送信停止の一覧と、期限前の通知の記録）"],
+        "ja": [
+          "送信ゼロ、イベントゼロ",
+          "table に 10 MB の記録（送信停止の一覧と、期限前の通知の記録）"
+        ],
         "en": [
           "No mail sent, no events",
           "10 MB of records in the table (suppressions and unexpired notification records)"
@@ -1082,7 +1090,11 @@
         "en": "SSR: deployed, but nobody visits for a month"
       },
       "assumptions": {
-        "ja": ["リクエストゼロ、publish ゼロ", "bucket に 5 MB の静的 asset", "log は 1 週間で失効し、保存量ゼロ"],
+        "ja": [
+          "リクエストゼロ、publish ゼロ",
+          "bucket に 5 MB の静的 asset",
+          "log は 1 週間で失効し、保存量ゼロ"
+        ],
         "en": [
           "No requests and no publishes",
           "5 MB of static assets in the bucket",
@@ -1331,7 +1343,10 @@
         "en": "Synthetics: one canary every 5 minutes"
       },
       "assumptions": {
-        "ja": ["730 時間 x 毎時 12 回 = 8,760 回の実行", "canary が使う Lambda、S3、ログ、メトリクスの料金は未算入"],
+        "ja": [
+          "730 時間 x 毎時 12 回 = 8,760 回の実行",
+          "canary が使う Lambda、S3、ログ、メトリクスの料金は未算入"
+        ],
         "en": [
           "730 hours x 12 runs an hour = 8,760 runs",
           "The Lambda, S3, log and metric charges a canary incurs are not included"
@@ -1716,7 +1731,10 @@
         "en": "Containers: the default layout for one day"
       },
       "assumptions": {
-        "ja": ["`containers-idle` と同じ構成を 24 時間", "repository の保存料金、ログ、データ転送、LCU は未算入"],
+        "ja": [
+          "`containers-idle` と同じ構成を 24 時間",
+          "repository の保存料金、ログ、データ転送、LCU は未算入"
+        ],
         "en": [
           "The layout of `containers-idle` for 24 hours",
           "Repository storage, logs, data transfer, and LCUs are not included"

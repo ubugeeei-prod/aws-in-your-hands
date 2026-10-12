@@ -31,7 +31,9 @@ export function describePlan(plan: NetworkPlan): string[] {
     ];
     for (const { label, destination } of destinations) {
       const path = pathFrom(plan, firstPrivate.id, destination);
-      lines.push(`  ${label.padEnd(13)} ${path.reachable ? `via ${path.via}` : `unreachable (${path.reason})`}`);
+      lines.push(
+        `  ${label.padEnd(13)} ${path.reachable ? `via ${path.via}` : `unreachable (${path.reason})`}`,
+      );
     }
   }
 
@@ -41,7 +43,9 @@ export function describePlan(plan: NetworkPlan): string[] {
     lines.push("  nothing");
   }
   for (const item of items) {
-    lines.push(`  ${item.priceId.padEnd(28)} ${String(item.quantity).padStart(5)} hours  (${item.basis})`);
+    lines.push(
+      `  ${item.priceId.padEnd(28)} ${String(item.quantity).padStart(5)} hours  (${item.basis})`,
+    );
   }
   return lines;
 }

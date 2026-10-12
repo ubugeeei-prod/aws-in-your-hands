@@ -3,7 +3,12 @@ export const channelArn = "arn:aws:ivs:ap-northeast-1:123456789012:channel/abcdA
 
 let counter = 0;
 
-export function stateChange(eventName: string, streamId: string, time: string, extra: Record<string, string> = {}) {
+export function stateChange(
+  eventName: string,
+  streamId: string,
+  time: string,
+  extra: Record<string, string> = {},
+) {
   counter += 1;
   return {
     version: "0",

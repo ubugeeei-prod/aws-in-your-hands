@@ -7,7 +7,14 @@ import {
   type StackResource,
   stackResourcePageSchema,
 } from "./cloudformation-schema.ts";
-import { type DriftReport, GATE_EXIT, gateFor, type StackReport, type Status, type Uninspected } from "./report.ts";
+import {
+  type DriftReport,
+  GATE_EXIT,
+  gateFor,
+  type StackReport,
+  type Status,
+  type Uninspected,
+} from "./report.ts";
 
 // CloudFormation's own drift detection, turned into the report and gate that
 // the cdkd check uses. IN_SYNC from CloudFormation covers only the resources it
@@ -28,19 +35,29 @@ export type Outcome =
   | { kind: "missing-stack"; message: string }
   | { kind: "error"; step: "start" | "poll" | "results" | "inventory"; message: string }
   | { kind: "timeout"; detectionId: string; attempts: number }
-  | { kind: "finished"; detection: DetectionStatus; drifts: ResourceDrift[]; resources: StackResource[] };
+  | {
+      kind: "finished";
+      detection: DetectionStatus;
+      drifts: ResourceDrift[];
+      resources: StackResource[];
+    };
 // #endregion api
 
 const MAX_PAGES = 200;
 
-const messageOf = (error: unknown): string => (error instanceof Error ? `${error.name}: ${error.message}` : `${error}`);
+const messageOf = (error: unknown): string =>
+  error instanceof Error ? `${error.name}: ${error.message}` : `${error}`;
 
 // CloudFormation answers a missing stack with a ValidationError, not a dedicated error type.
 const isMissingStack = (error: unknown): boolean =>
-  error instanceof Error && error.name === "ValidationError" && /does not exist/i.test(error.message);
+  error instanceof Error &&
+  error.name === "ValidationError" &&
+  /does not exist/i.test(error.message);
 
 async function allPages<Item>(
-  fetchPage: (nextToken: string | undefined) => Promise<{ items: Item[]; nextToken: string | undefined }>,
+  fetchPage: (
+    nextToken: string | undefined,
+  ) => Promise<{ items: Item[]; nextToken: string | undefined }>,
 ): Promise<Item[]> {
   const items: Item[] = [];
   let nextToken: string | undefined;
@@ -98,7 +115,9 @@ export async function detectStackDrift(input: {
   let drifts: ResourceDrift[];
   try {
     drifts = await allPages(async (nextToken) => {
-      const page = resourceDriftPageSchema.parse(await api.describeResourceDrifts(stack, nextToken));
+      const page = resourceDriftPageSchema.parse(
+        await api.describeResourceDrifts(stack, nextToken),
+      );
       return { items: page.StackResourceDrifts, nextToken: page.NextToken };
     });
   } catch (error) {
@@ -124,7 +143,12 @@ const NESTED_STACK = "AWS::CloudFormation::Stack";
 
 type Gap = Uninspected & { kind: "incomplete" | "unsupported" };
 
-const placeholder = (stack: string, region: string, status: Status, detail: string): StackReport => ({
+const placeholder = (
+  stack: string,
+  region: string,
+  status: Status,
+  detail: string,
+): StackReport => ({
   stack,
   region,
   status,
@@ -140,9 +164,19 @@ const placeholder = (stack: string, region: string, status: Status, detail: stri
 export function reportStack(stack: string, region: string, outcome: Outcome): StackReport {
   switch (outcome.kind) {
     case "missing-stack":
-      return placeholder(stack, region, "missing-target", `CloudFormation has no such stack. ${outcome.message}`);
+      return placeholder(
+        stack,
+        region,
+        "missing-target",
+        `CloudFormation has no such stack. ${outcome.message}`,
+      );
     case "error":
-      return placeholder(stack, region, "failed", `The ${outcome.step} step failed. ${outcome.message}`);
+      return placeholder(
+        stack,
+        region,
+        "failed",
+        `The ${outcome.step} step failed. ${outcome.message}`,
+      );
     case "timeout":
       return placeholder(
         stack,
@@ -170,14 +204,26 @@ export function reportStack(stack: string, region: string, outcome: Outcome): St
     if (drift === undefined) {
       gaps.push(
         resource.ResourceType === NESTED_STACK
-          ? { ...ref, kind: "incomplete", reason: "nested stack: detection does not descend into it" }
-          : { ...ref, kind: "unsupported", reason: "no drift result: the type is not supported, or it was skipped" },
+          ? {
+              ...ref,
+              kind: "incomplete",
+              reason: "nested stack: detection does not descend into it",
+            }
+          : {
+              ...ref,
+              kind: "unsupported",
+              reason: "no drift result: the type is not supported, or it was skipped",
+            },
       );
       continue;
     }
     if (drift.Timestamp.getTime() < startedAt) {
       const checked = drift.Timestamp.toISOString();
-      gaps.push({ ...ref, kind: "incomplete", reason: `stale result from ${checked}, before this detection started` });
+      gaps.push({
+        ...ref,
+        kind: "incomplete",
+        reason: `stale result from ${checked}, before this detection started`,
+      });
       continue;
     }
     switch (drift.StackResourceDriftStatus) {
@@ -185,7 +231,10 @@ export function reportStack(stack: string, region: string, outcome: Outcome): St
         clean += 1;
         break;
       case "MODIFIED":
-        drifted.push({ ...ref, paths: (drift.PropertyDifferences ?? []).map((difference) => difference.PropertyPath) });
+        drifted.push({
+          ...ref,
+          paths: (drift.PropertyDifferences ?? []).map((difference) => difference.PropertyPath),
+        });
         break;
       case "DELETED":
         deleted.push(ref);
@@ -199,7 +248,11 @@ export function reportStack(stack: string, region: string, outcome: Outcome): St
         break;
       case "NOT_CHECKED":
       case "UNSUPPORTED":
-        gaps.push({ ...ref, kind: "unsupported", reason: `reported as ${drift.StackResourceDriftStatus}` });
+        gaps.push({
+          ...ref,
+          kind: "unsupported",
+          reason: `reported as ${drift.StackResourceDriftStatus}`,
+        });
         break;
     }
   }
@@ -207,11 +260,15 @@ export function reportStack(stack: string, region: string, outcome: Outcome): St
   const liveIds = new Set(live.map((resource) => resource.LogicalResourceId));
   const warnings = drifts
     .filter((drift) => !liveIds.has(drift.LogicalResourceId))
-    .map((drift) => `drift result for ${drift.LogicalResourceId}, which is not in the stack's resource list`);
+    .map(
+      (drift) =>
+        `drift result for ${drift.LogicalResourceId}, which is not in the stack's resource list`,
+    );
 
   const differs = drifted.length + deleted.length > 0;
   const stackStatus = detection.StackDriftStatus ?? "(none)";
-  const reason = detection.DetectionStatusReason === undefined ? "" : ` ${detection.DetectionStatusReason}`;
+  const reason =
+    detection.DetectionStatusReason === undefined ? "" : ` ${detection.DetectionStatusReason}`;
 
   let status: Status;
   let detail: string;
@@ -268,9 +325,15 @@ export function acknowledge(stack: StackReport, types: string[]): Acknowledgemen
   if (stack.status !== "unsupported") {
     return { types, exitCode: gateExit, note: null };
   }
-  const unexpected = [...new Set(stack.uninspected.map((r) => r.type).filter((type) => !types.includes(type)))];
+  const unexpected = [
+    ...new Set(stack.uninspected.map((r) => r.type).filter((type) => !types.includes(type))),
+  ];
   if (unexpected.length > 0) {
-    return { types, exitCode: gateExit, note: `Not compared and not acknowledged: ${unexpected.join(", ")}.` };
+    return {
+      types,
+      exitCode: gateExit,
+      note: `Not compared and not acknowledged: ${unexpected.join(", ")}.`,
+    };
   }
   return {
     types,
@@ -326,7 +389,9 @@ export function summarizeCfn(report: CfnDriftReport): string {
       ...stack.warnings.map((warning) => `    ! ${warning}`),
     );
   }
-  lines.push(`gate: ${report.gate.passed ? "PASS" : "FAIL"} (exit ${report.gate.exitCode}): ${report.gate.reason}`);
+  lines.push(
+    `gate: ${report.gate.passed ? "PASS" : "FAIL"} (exit ${report.gate.exitCode}): ${report.gate.reason}`,
+  );
   if (report.acknowledged.note !== null) {
     lines.push(`acknowledged: exit ${report.acknowledged.exitCode}. ${report.acknowledged.note}`);
   }

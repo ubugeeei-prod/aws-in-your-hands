@@ -1,8 +1,10 @@
-import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { S3Client } from "@aws-sdk/client-s3";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import type { Context } from "aws-lambda";
+
+import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
+
 import { DynamoDbNoteSource } from "./dynamodb-note-source.ts";
 import { parsePagesEnv } from "./env.ts";
 import { type Progress, toProgress } from "./job.ts";
@@ -13,7 +15,10 @@ import { exportPages } from "./steps.ts";
 const env = parsePagesEnv(process.env);
 const log = createLogger(env.LOG_LEVEL);
 const deps = {
-  source: new DynamoDbNoteSource(DynamoDBDocumentClient.from(new DynamoDBClient({})), env.TABLE_NAME),
+  source: new DynamoDbNoteSource(
+    DynamoDBDocumentClient.from(new DynamoDBClient({})),
+    env.TABLE_NAME,
+  ),
   store: new S3ExportStore(new S3Client({}), env.EXPORT_BUCKET),
 };
 

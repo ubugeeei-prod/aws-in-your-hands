@@ -272,7 +272,9 @@
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html",
       "title": "Working with a DB instance in a VPC",
       "checkedAt": "2026-10-11",
-      "supports": ["A VPC for an RDS DB instance needs at least two subnets in two different Availability Zones"]
+      "supports": [
+        "A VPC for an RDS DB instance needs at least two subnets in two different Availability Zones"
+      ]
     },
     {
       "id": "aws-availability-zones",
@@ -388,7 +390,9 @@
       "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-subnet.html",
       "title": "AWS::EC2::Subnet",
       "checkedAt": "2026-10-11",
-      "supports": ["Updating a subnet's CidrBlock replaces the subnet: a new one is created and the old one deleted"]
+      "supports": [
+        "Updating a subnet's CidrBlock replaces the subnet: a new one is created and the old one deleted"
+      ]
     },
     {
       "id": "elasticache-vpc",
@@ -523,7 +527,10 @@
     },
     {
       "id": "11.architecture",
-      "sources": ["examples/11-network/infra/lib/network-stack.ts", "examples/11-network/infra/bin/app.ts"],
+      "sources": [
+        "examples/11-network/infra/lib/network-stack.ts",
+        "examples/11-network/infra/bin/app.ts"
+      ],
       "tasks": ["net:infra:synth"],
       "boundary": "local",
       "criteria": ["cost"],
@@ -631,7 +638,11 @@
     },
     {
       "id": "11.deploy",
-      "sources": ["examples/11-network/infra/bin/app.ts", "examples/11-network/cdk.json", "tools/src/infra"],
+      "sources": [
+        "examples/11-network/infra/bin/app.ts",
+        "examples/11-network/cdk.json",
+        "tools/src/infra"
+      ],
       "tasks": ["net:infra:diff", "net:infra:deploy", "net:infra:drift"],
       "boundary": "cloud",
       "criteria": ["drift", "cost"],

@@ -1,7 +1,9 @@
 import { spawn } from "node:child_process";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
+
 import { afterEach, describe, expect, it } from "vite-plus/test";
+
 import { judge } from "../src/ledger.ts";
 import {
   defaultProbePlan,
@@ -24,13 +26,16 @@ afterEach(() => {
   server = undefined;
 });
 
-async function counter(behaviourFor: (request: number) => Behaviour): Promise<{ port: number; names: Set<string> }> {
+async function counter(
+  behaviourFor: (request: number) => Behaviour,
+): Promise<{ port: number; names: Set<string> }> {
   const counters = new Map<string, number>();
   const names = new Set<string>();
   let requests = 0;
   server = createServer((request, response) => {
     requests += 1;
-    const name = new URL(request.url ?? "/", "http://localhost").searchParams.get("name") ?? "default";
+    const name =
+      new URL(request.url ?? "/", "http://localhost").searchParams.get("name") ?? "default";
     names.add(name);
     const behaviour = behaviourFor(requests);
     if (behaviour === "hang") {
@@ -45,7 +50,11 @@ async function counter(behaviourFor: (request: number) => Behaviour): Promise<{ 
     const n = (counters.get(name) ?? 0) + 1;
     counters.set(name, n);
     response.writeHead(200, { "content-type": "application/json" });
-    response.end(behaviour === "garbage" ? "<html>proxy error</html>" : JSON.stringify({ n, url: request.url }));
+    response.end(
+      behaviour === "garbage"
+        ? "<html>proxy error</html>"
+        : JSON.stringify({ n, url: request.url }),
+    );
   });
   await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
   return { port: (server.address() as AddressInfo).port, names };
@@ -78,7 +87,9 @@ describe("the probe script", () => {
   it("writes to each cell in turn and prints one line per request, then DONE", async () => {
     const { port, names } = await counter(() => "ok");
     const stdout = await runProbe(port, plan());
-    expect(stdout).toBe("P 1 1 200 1\nP 2 2 200 1\nP 3 1 200 2\nP 4 2 200 2\nP 5 1 200 3\nP 6 2 200 3\nDONE 6\n");
+    expect(stdout).toBe(
+      "P 1 1 200 1\nP 2 2 200 1\nP 3 1 200 2\nP 4 2 200 2\nP 5 1 200 3\nP 6 2 200 3\nDONE 6\n",
+    );
     expect([...names]).toEqual(["test1-1", "test1-2"]);
     const output = parseProbeOutput(stdout);
     expect(output.complete).toBe(true);
@@ -116,7 +127,9 @@ describe("the probe plan", () => {
   it("fits in what Run Command returns, by construction", () => {
     const standard = defaultProbePlan("abcd1234");
     expect(probeOutputBound(standard)).toBeLessThan(RUN_COMMAND_STDOUT_LIMIT);
-    expect(() => probePlanSchema.parse({ ...standard, cells: 32, rounds: 600 })).toThrow("Run Command keeps 24000");
+    expect(() => probePlanSchema.parse({ ...standard, cells: 32, rounds: 600 })).toThrow(
+      "Run Command keeps 24000",
+    );
   });
 
   it("accepts nothing in the run ID that could leave the URL or the script", () => {

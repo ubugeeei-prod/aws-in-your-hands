@@ -19,5 +19,11 @@ export function parseRoute(path: string): Route {
   return { name: "not-found", path };
 }
 
-export const pathFor = (route: { name: "list" } | { name: "new" } | { name: "note"; id: string }): string =>
-  route.name === "list" ? "/" : route.name === "new" ? "/notes/new" : `/notes/${encodeURIComponent(route.id)}`;
+export const pathFor = (
+  route: { name: "list" } | { name: "new" } | { name: "note"; id: string },
+): string =>
+  route.name === "list"
+    ? "/"
+    : route.name === "new"
+      ? "/notes/new"
+      : `/notes/${encodeURIComponent(route.id)}`;

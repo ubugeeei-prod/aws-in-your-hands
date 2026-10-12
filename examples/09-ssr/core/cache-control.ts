@@ -24,7 +24,14 @@ export type Exchange = {
 
 export type CacheDecision = {
   value: typeof NO_STORE | typeof SHARED;
-  reason: "method" | "internal" | "personal-path" | "credentials" | "set-cookie" | "status" | "public";
+  reason:
+    | "method"
+    | "internal"
+    | "personal-path"
+    | "credentials"
+    | "set-cookie"
+    | "status"
+    | "public";
 };
 
 export function cacheControlFor(exchange: Exchange): CacheDecision {

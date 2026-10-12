@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue";
+
 import { loadConfig } from "./config.ts";
 import { type Playback, playerSupported, startPlayback } from "./player.ts";
 import { type PlayerSignal, type View, viewFor } from "./viewer.ts";
@@ -82,7 +83,9 @@ onBeforeUnmount(() => {
       No channel is configured. Deploy the stack, then run <code>vp run stream:config</code> and
       <code>vp run preview:stream:web</code>.
     </p>
-    <p v-else-if="setup === 'unsupported'" role="alert">This browser cannot run the IVS player (no WebAssembly).</p>
+    <p v-else-if="setup === 'unsupported'" role="alert">
+      This browser cannot run the IVS player (no WebAssembly).
+    </p>
     <p v-else-if="setup === 'failed'" role="alert">The page could not start: {{ problem }}</p>
 
     <!-- playsinline: without it iOS Safari opens the video full screen. -->

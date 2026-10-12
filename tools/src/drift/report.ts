@@ -43,13 +43,26 @@ export type DriftReport = {
 
 export type RunResult = { exitCode: number; stdout: string; stderr: string };
 
-const worst = (statuses: Status[]): Status => STATUSES.find((status) => statuses.includes(status)) ?? "failed";
+const worst = (statuses: Status[]): Status =>
+  STATUSES.find((status) => statuses.includes(status)) ?? "failed";
 
 function reportStack(entry: StackDrift): StackReport {
   const uninspected: Uninspected[] = [
-    ...entry.notCompared.map((r) => ({ logicalId: r.logicalId, type: r.type, reason: `not compared: ${r.cause}` })),
-    ...entry.notSupported.map((r) => ({ logicalId: r.logicalId, type: r.type, reason: "no read-back for this type" })),
-    ...entry.skipped.map((r) => ({ logicalId: r.logicalId, type: r.type, reason: "skipped by cdkd" })),
+    ...entry.notCompared.map((r) => ({
+      logicalId: r.logicalId,
+      type: r.type,
+      reason: `not compared: ${r.cause}`,
+    })),
+    ...entry.notSupported.map((r) => ({
+      logicalId: r.logicalId,
+      type: r.type,
+      reason: "no read-back for this type",
+    })),
+    ...entry.skipped.map((r) => ({
+      logicalId: r.logicalId,
+      type: r.type,
+      reason: "skipped by cdkd",
+    })),
   ];
   const counts = {
     clean: entry.clean.length,
@@ -88,7 +101,11 @@ function reportStack(entry: StackDrift): StackReport {
     status,
     detail,
     counts,
-    drifted: entry.drifted.map((r) => ({ logicalId: r.logicalId, type: r.type, paths: r.changes.map((c) => c.path) })),
+    drifted: entry.drifted.map((r) => ({
+      logicalId: r.logicalId,
+      type: r.type,
+      paths: r.changes.map((c) => c.path),
+    })),
     deleted: entry.deleted.map((r) => ({ logicalId: r.logicalId, type: r.type })),
     uninspected,
     warnings: entry.warnings ?? [],
@@ -108,12 +125,16 @@ const placeholder = (stack: string, status: Status, detail: string): StackReport
 });
 
 function reportStacks(requested: string[], run: RunResult): StackReport[] {
-  const everyStack = (status: Status, detail: string) => requested.map((stack) => placeholder(stack, status, detail));
+  const everyStack = (status: Status, detail: string) =>
+    requested.map((stack) => placeholder(stack, status, detail));
 
   // cdkd documents 0 (no drift), 1 (drift, or the command failed) and
   // 2 (no drift found, but some resources were not compared).
   if (![0, 1, 2].includes(run.exitCode)) {
-    return everyStack("failed", `cdkd exited with ${run.exitCode}, which is not a documented drift result.`);
+    return everyStack(
+      "failed",
+      `cdkd exited with ${run.exitCode}, which is not a documented drift result.`,
+    );
   }
 
   if (run.stdout.trim() === "") {
@@ -148,13 +169,19 @@ function reportStacks(requested: string[], run: RunResult): StackReport[] {
   const status = worst(stacks.map((stack) => stack.status));
   const differs = status === "deleted" || status === "drifted";
   if (run.exitCode === 1 && !differs && status !== "missing-target") {
-    return everyStack("failed", "cdkd exited with 1 but the report shows no drift: the command failed part-way.");
+    return everyStack(
+      "failed",
+      "cdkd exited with 1 but the report shows no drift: the command failed part-way.",
+    );
   }
   if (run.exitCode !== 1 && differs) {
     return everyStack("failed", `The report shows drift but cdkd exited with ${run.exitCode}.`);
   }
   if (run.exitCode === 2 && status === "clean") {
-    return everyStack("failed", "cdkd exited with 2 (resources not compared) but the report lists none.");
+    return everyStack(
+      "failed",
+      "cdkd exited with 2 (resources not compared) but the report lists none.",
+    );
   }
   return stacks;
 }
@@ -166,7 +193,11 @@ export const GATE_EXIT = { clean: 0, differs: 10, unverified: 11, failed: 12 } a
 export function gateFor(status: Status): DriftReport["gate"] {
   switch (status) {
     case "clean":
-      return { passed: true, exitCode: GATE_EXIT.clean, reason: "Every resource was compared and matches." };
+      return {
+        passed: true,
+        exitCode: GATE_EXIT.clean,
+        reason: "Every resource was compared and matches.",
+      };
     case "drifted":
     case "deleted":
       return {
@@ -184,7 +215,11 @@ export function gateFor(status: Status): DriftReport["gate"] {
       };
     case "failed":
     case "missing-target":
-      return { passed: false, exitCode: GATE_EXIT.failed, reason: "Detection did not produce a usable result." };
+      return {
+        passed: false,
+        exitCode: GATE_EXIT.failed,
+        reason: "Detection did not produce a usable result.",
+      };
   }
 }
 // #endregion gate
@@ -233,6 +268,8 @@ export function summarize(report: DriftReport): string {
       ...stack.warnings.map((warning) => `    ! ${warning}`),
     );
   }
-  lines.push(`gate: ${report.gate.passed ? "PASS" : "FAIL"} (exit ${report.gate.exitCode}): ${report.gate.reason}`);
+  lines.push(
+    `gate: ${report.gate.passed ? "PASS" : "FAIL"} (exit ${report.gate.exitCode}): ${report.gate.reason}`,
+  );
   return lines.join("\n");
 }

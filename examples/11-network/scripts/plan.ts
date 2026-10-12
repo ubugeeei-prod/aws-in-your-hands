@@ -2,8 +2,10 @@
 //
 // Prints the subnets, routes, and fixed monthly cost of a layout. Reads only
 // this checkout: no AWS, no credentials.
+
 import { loadPricing } from "@aih/tools/data/load.ts";
 import { calculate } from "@aih/tools/pricing/calc.ts";
+
 import { parseNetworkConfig } from "../src/config.ts";
 import { fixedMonthlyItems, MONTH_HOURS } from "../src/cost.ts";
 import { planNetwork } from "../src/plan.ts";

@@ -2,14 +2,17 @@
 //   node scripts/cloud-db.ts <migrate|grant|seed>
 // Connects to the deployed cluster as `admin`, with your own AWS credentials
 // (they need dsql:DbConnectAdmin on the cluster). Changes the database. Billed.
+
+import { z } from "zod";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { type Db, type Queryable, rows } from "../src/db.ts";
 import { openDsql } from "../src/dsql.ts";
 import { regionOfEndpoint } from "../src/env.ts";
 import { grantStatements } from "../src/grant.ts";
 import { isSerializationFailure } from "../src/transaction.ts";
-import { z } from "zod";
 import { runMigrations, runSeed } from "./db-tasks.ts";
 
 const STACK = "AihSql";
@@ -38,7 +41,11 @@ const exists = async (connection: Queryable, text: string, params: string[]): Pr
 async function grant(db: Db, iamRoleArn: string): Promise<void> {
   const statements = grantStatements(DATABASE_ROLE, iamRoleArn);
   await db.withConnection(async (connection) => {
-    if (!(await exists(connection, "SELECT 1 AS present FROM pg_roles WHERE rolname = $1", [DATABASE_ROLE]))) {
+    if (
+      !(await exists(connection, "SELECT 1 AS present FROM pg_roles WHERE rolname = $1", [
+        DATABASE_ROLE,
+      ]))
+    ) {
       await retrying("create role", () => connection.query(statements.createRole));
       console.log(`created database role ${DATABASE_ROLE}`);
     }
@@ -63,7 +70,11 @@ try {
     console.error("usage: cloud-db.ts <migrate|grant|seed>");
     process.exit(64);
   }
-  const { target } = await preflight({ access: "mutate", action: `${command} the notes database`, stack: STACK });
+  const { target } = await preflight({
+    access: "mutate",
+    action: `${command} the notes database`,
+    stack: STACK,
+  });
   const outputs = await readStackOutputs(process.cwd(), STACK, target.region);
   const endpoint = requireOutput(outputs, "ClusterEndpoint");
   if (regionOfEndpoint(endpoint) !== target.region) {

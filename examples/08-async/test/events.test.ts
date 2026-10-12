@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseNotification } from "../src/events.ts";
 import { isLater, normalizeSequencer } from "../src/sequencer.ts";
 
@@ -38,13 +39,20 @@ describe("parseNotification", () => {
   });
 
   it("tells the test event apart from a notification", () => {
-    const test = { Service: "Amazon S3", Event: "s3:TestEvent", Time: "2014-10-13T15:57:02.089Z", Bucket: "b" };
+    const test = {
+      Service: "Amazon S3",
+      Event: "s3:TestEvent",
+      Time: "2014-10-13T15:57:02.089Z",
+      Bucket: "b",
+    };
     expect(parseNotification(JSON.stringify(test))).toEqual({ kind: "test" });
   });
 
   it("reads deletes, with or without a sequencer", () => {
     const removed = (eventName: string, sequencer?: string) =>
-      parseNotification(JSON.stringify({ Records: [{ eventName, s3: { object: { key: "u/a/n/x", sequencer } } }] }));
+      parseNotification(
+        JSON.stringify({ Records: [{ eventName, s3: { object: { key: "u/a/n/x", sequencer } } }] }),
+      );
     expect(removed("ObjectRemoved:Delete", "1F")).toMatchObject({
       events: [{ type: "removed", sequencer: normalizeSequencer("1F") }],
     });
@@ -58,7 +66,9 @@ describe("parseNotification", () => {
     expect(() => parseNotification(JSON.stringify({ Records: [] }))).toThrow();
     expect(() => parseNotification(JSON.stringify({ hello: "world" }))).toThrow();
     // A create that cannot be ordered is not guessed at.
-    const unordered = { Records: [{ eventName: "ObjectCreated:Post", s3: { object: { key: "u/a/n/x", eTag: "e" } } }] };
+    const unordered = {
+      Records: [{ eventName: "ObjectCreated:Post", s3: { object: { key: "u/a/n/x", eTag: "e" } } }],
+    };
     expect(() => parseNotification(JSON.stringify(unordered))).toThrow("no sequencer");
   });
 });

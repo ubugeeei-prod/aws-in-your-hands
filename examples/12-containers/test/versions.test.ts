@@ -1,11 +1,15 @@
-import { errorSchema, noteListSchema, noteSchema } from "@aih/example-04-http-api/src/contract.ts";
 import { afterEach, describe, expect, it } from "vite-plus/test";
+
+import { errorSchema, noteListSchema, noteSchema } from "@aih/example-04-http-api/src/contract.ts";
+
 import { formats, type RecordFormat, SharedRecords } from "../src/compat.ts";
 import { composeServer } from "../src/compose.ts";
 import { type RunningServer, startServer } from "../src/serve.ts";
 
 const running: RunningServer[] = [];
-afterEach(async () => void (await Promise.all(running.splice(0).map((server) => server.shutdown()))));
+afterEach(
+  async () => void (await Promise.all(running.splice(0).map((server) => server.shutdown()))),
+);
 
 /** One task: a real HTTP server running one build, on the records every task shares. */
 async function task(records: SharedRecords, version: string, format: RecordFormat) {
@@ -13,7 +17,12 @@ async function task(records: SharedRecords, version: string, format: RecordForma
     { ALLOWED_ORIGIN: "http://localhost:5173", LOG_LEVEL: "error", APP_VERSION: version },
     records.repository(format),
   );
-  const server = await startServer({ fetch: handle, port: 0, keepAliveTimeoutMs: 1_000, shutdownDeadlineMs: 1_000 });
+  const server = await startServer({
+    fetch: handle,
+    port: 0,
+    keepAliveTimeoutMs: 1_000,
+    shutdownDeadlineMs: 1_000,
+  });
   running.push(server);
   const url = `http://127.0.0.1:${server.port}`;
   return {
@@ -50,7 +59,9 @@ describe("two versions on the same records, as during a rolling update", () => {
         .notes.map((note) => note.title)
         .toSorted(),
     ).toEqual(titles.toSorted());
-    expect(await seenByV2.json()).toMatchObject({ notes: expect.arrayContaining([{ ...old, pinned: false }]) });
+    expect(await seenByV2.json()).toMatchObject({
+      notes: expect.arrayContaining([{ ...old, pinned: false }]),
+    });
 
     // What v2 stored has the new field; what v1 stored does not, and v2 filled it in on read.
     expect(records.raw(fresh.id)).toMatchObject({ pinned: false });

@@ -146,7 +146,9 @@
       "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-create-s3-kvp.html",
       "title": "File format for key-value pairs",
       "checkedAt": "2026-10-11",
-      "supports": ["Import file limits: 5 MB, 512-character keys, 1024-character values, no duplicate keys"]
+      "supports": [
+        "Import file limits: 5 MB, 512-character keys, 1024-character values, no duplicate keys"
+      ]
     },
     {
       "id": "cloudfront-kvs-api-updatekeys",
@@ -246,7 +248,9 @@
       "url": "https://aws.amazon.com/blogs/aws/introducing-amazon-cloudfront-keyvaluestore-a-low-latency-datastore-for-cloudfront-functions/",
       "title": "AWS News Blog: Introducing Amazon CloudFront KeyValueStore",
       "checkedAt": "2026-10-11",
-      "supports": ["Updates to a store are described as propagating to all edge locations in a few seconds"],
+      "supports": [
+        "Updates to a store are described as propagating to all edge locations in a few seconds"
+      ],
       "note": "A launch post, not a specification. The Developer Guide pages read for this chapter give no propagation time and no guarantee."
     },
     {
@@ -416,7 +420,10 @@
     },
     {
       "id": "10.router",
-      "sources": ["examples/10-edge/infra/functions/edge-router.js", "examples/10-edge/edge-data.json"],
+      "sources": [
+        "examples/10-edge/infra/functions/edge-router.js",
+        "examples/10-edge/edge-data.json"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local+cloud",
       "criteria": ["test"],
@@ -424,7 +431,10 @@
     },
     {
       "id": "10.tests",
-      "sources": ["examples/10-edge/src/local/load-function.ts", "examples/10-edge/infra/test/edge-router.test.ts"],
+      "sources": [
+        "examples/10-edge/src/local/load-function.ts",
+        "examples/10-edge/infra/test/edge-router.test.ts"
+      ],
       "tasks": ["test:unit", "typecheck"],
       "boundary": "local",
       "criteria": ["type", "test"],
@@ -432,7 +442,11 @@
     },
     {
       "id": "10.local",
-      "sources": ["examples/10-edge/src/local/dev.ts", "examples/10-edge/site", "examples/10-edge/scripts/kvs-file.ts"],
+      "sources": [
+        "examples/10-edge/src/local/dev.ts",
+        "examples/10-edge/site",
+        "examples/10-edge/scripts/kvs-file.ts"
+      ],
       "tasks": ["dev:edge", "dev:edge:cdkd"],
       "boundary": "local",
       "criteria": ["local-dx"],
@@ -475,7 +489,11 @@
     },
     {
       "id": "10.deploy",
-      "sources": ["tools/src/infra/cdkd.ts", "tools/src/site/publish.ts", "examples/10-edge/scripts/kvs-sync.ts"],
+      "sources": [
+        "tools/src/infra/cdkd.ts",
+        "tools/src/site/publish.ts",
+        "examples/10-edge/scripts/kvs-sync.ts"
+      ],
       "tasks": [
         "edge:infra:diff",
         "edge:infra:deploy",
@@ -496,7 +514,12 @@
         "examples/10-edge/infra/test/body-digest-stack.test.ts",
         "examples/10-edge/test/body-digest.test.ts"
       ],
-      "tasks": ["edge:body:infra:synth", "edge:body:infra:deploy", "edge:body:infra:destroy", "test:unit"],
+      "tasks": [
+        "edge:body:infra:synth",
+        "edge:body:infra:deploy",
+        "edge:body:infra:destroy",
+        "test:unit"
+      ],
       "boundary": "local+cloud",
       "criteria": ["test"],
       "verification": "local"

@@ -21,19 +21,34 @@ export function diffTables(
 ): TableDiff {
   const key = (owner: string, ...rest: string[]): string => [owner, ...rest].join("/");
   const liveNotes = new Map(live.notes.map(({ owner, note }) => [key(owner, note.id), note]));
-  const restoredNotes = new Map(restored.notes.map(({ owner, note }) => [key(owner, note.id), note]));
+  const restoredNotes = new Map(
+    restored.notes.map(({ owner, note }) => [key(owner, note.id), note]),
+  );
   const attachmentKeys = (side: Pick<Snapshot, "attachments">): Set<string> =>
-    new Set(side.attachments.map(({ owner, attachment }) => key(owner, attachment.noteId, attachment.id)));
+    new Set(
+      side.attachments.map(({ owner, attachment }) => key(owner, attachment.noteId, attachment.id)),
+    );
   const liveAttachments = attachmentKeys(live);
   const restoredAttachments = attachmentKeys(restored);
 
-  const diff: TableDiff = { returning: [], lost: [], rolledBack: [], attachmentsReturning: 0, attachmentsLost: 0 };
+  const diff: TableDiff = {
+    returning: [],
+    lost: [],
+    rolledBack: [],
+    attachmentsReturning: 0,
+    attachmentsLost: 0,
+  };
   for (const { owner, note } of restored.notes) {
     const current = liveNotes.get(key(owner, note.id));
     if (current === undefined) {
       diff.returning.push({ owner, noteId: note.id });
     } else if (current.version > note.version) {
-      diff.rolledBack.push({ owner, noteId: note.id, restoredVersion: note.version, liveVersion: current.version });
+      diff.rolledBack.push({
+        owner,
+        noteId: note.id,
+        restoredVersion: note.version,
+        liveVersion: current.version,
+      });
     }
   }
   for (const { owner, note } of live.notes) {
@@ -41,17 +56,19 @@ export function diffTables(
       diff.lost.push({ owner, noteId: note.id });
     }
   }
-  diff.attachmentsReturning = [...restoredAttachments].filter((id) => !liveAttachments.has(id)).length;
+  diff.attachmentsReturning = [...restoredAttachments].filter(
+    (id) => !liveAttachments.has(id),
+  ).length;
   diff.attachmentsLost = [...liveAttachments].filter((id) => !restoredAttachments.has(id)).length;
   return diff;
 }
 // #endregion diff
 
 // #region fence
-export interface NoteVersionStore {
+export type NoteVersionStore = {
   /** Sets the version to `to` unless it is already there or beyond. One step in the store. */
   raiseVersion(owner: string, id: string, to: number): Promise<"raised" | "unchanged">;
-}
+};
 
 /**
  * A restore brings old version numbers back. Chapter 05's lock compares
@@ -64,7 +81,11 @@ export async function fenceVersions(
   diff: Pick<TableDiff, "rolledBack">,
   options: { dryRun: boolean },
 ): Promise<(NoteRef & { to: number })[]> {
-  const fences = diff.rolledBack.map(({ owner, noteId, liveVersion }) => ({ owner, noteId, to: liveVersion + 1 }));
+  const fences = diff.rolledBack.map(({ owner, noteId, liveVersion }) => ({
+    owner,
+    noteId,
+    to: liveVersion + 1,
+  }));
   if (!options.dryRun) {
     for (const fence of fences) {
       await restored.raiseVersion(fence.owner, fence.noteId, fence.to);

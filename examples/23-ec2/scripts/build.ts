@@ -2,8 +2,11 @@
 //   node scripts/build.ts
 //
 // One file that Node.js on the instance can run with nothing installed beside it.
+
 import { readFileSync } from "node:fs";
+
 import { build } from "esbuild";
+
 import { releaseVersion } from "../src/release.ts";
 
 const outfile = "dist/server.mjs";

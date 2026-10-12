@@ -5,7 +5,15 @@
     "slug": "email",
     "title": { "ja": "メールを送る: SES", "en": "Send Email: SES" },
     "prerequisites": ["04"],
-    "services": ["SES", "SNS", "Lambda", "API Gateway HTTP API", "DynamoDB", "CloudWatch Logs", "IAM"],
+    "services": [
+      "SES",
+      "SNS",
+      "Lambda",
+      "API Gateway HTTP API",
+      "DynamoDB",
+      "CloudWatch Logs",
+      "IAM"
+    ],
     "samplePath": "examples/15-email",
     "writing": { "ja": "complete", "en": "complete" },
     "sourceRevision": 1,
@@ -107,7 +115,9 @@
       "url": "https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_MessageTag.html",
       "title": "SES API v2: MessageTag",
       "checkedAt": "2026-10-11",
-      "supports": ["Tag names and values: ASCII letters, digits, underscore and dash only, at most 256 characters"]
+      "supports": [
+        "Tag names and values: ASCII letters, digits, underscore and dash only, at most 256 characters"
+      ]
     },
     {
       "id": "ses-event-publishing",
@@ -139,7 +149,9 @@
       "url": "https://docs.aws.amazon.com/ses/latest/dg/event-publishing-retrieving-sns-examples.html",
       "title": "Examples of event data that Amazon SES publishes to Amazon SNS",
       "checkedAt": "2026-10-11",
-      "supports": ["The Bounce, Complaint and Delivery example records that examples/15-email/test/fixtures/ follow"],
+      "supports": [
+        "The Bounce, Complaint and Delivery example records that examples/15-email/test/fixtures/ follow"
+      ],
       "note": "The fixtures are edited copies of the documented examples. No event was captured from a real account."
     },
     {
@@ -583,7 +595,10 @@
     },
     {
       "id": "15.identity",
-      "sources": ["examples/15-email/infra/lib/email-stack.ts", "examples/15-email/infra/bin/app.ts"],
+      "sources": [
+        "examples/15-email/infra/lib/email-stack.ts",
+        "examples/15-email/infra/bin/app.ts"
+      ],
       "tasks": ["mail:infra:diff", "mail:infra:deploy"],
       "boundary": "cloud",
       "criteria": ["cost"],
@@ -700,7 +715,12 @@
       "currency": "USD",
       "unit": "Notifications",
       "tiers": [
-        { "from": 0, "to": null, "usd": "0.0000000000", "description": "There is no charge for Lambda Notifications" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000000000",
+          "description": "There is no charge for Lambda Notifications"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonSNS/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-15T15:19:44Z",
@@ -723,13 +743,18 @@
         "en": "Notification mail: deployed, but nothing sent for a month"
       },
       "assumptions": {
-        "ja": ["送信ゼロ、イベントゼロ", "table に 10 MB の記録（送信停止の一覧と、期限前の通知の記録）"],
+        "ja": [
+          "送信ゼロ、イベントゼロ",
+          "table に 10 MB の記録（送信停止の一覧と、期限前の通知の記録）"
+        ],
         "en": [
           "No mail sent, no events",
           "10 MB of records in the table (suppressions and unexpired notification records)"
         ]
       },
-      "items": [{ "priceId": "dynamodb.storage", "quantity": 0.01, "basis": "10 MB stored, in GB-month" }]
+      "items": [
+        { "priceId": "dynamodb.storage", "quantity": 0.01, "basis": "10 MB stored, in GB-month" }
+      ]
     },
     {
       "id": "email-small",
@@ -759,8 +784,16 @@
         ]
       },
       "items": [
-        { "priceId": "ses.outbound.message", "quantity": 10000, "basis": "10,000 messages x 1 recipient" },
-        { "priceId": "apigw.http.request", "quantity": 11000, "basis": "10,000 requests + 1,000 repeats" },
+        {
+          "priceId": "ses.outbound.message",
+          "quantity": 10000,
+          "basis": "10,000 messages x 1 recipient"
+        },
+        {
+          "priceId": "apigw.http.request",
+          "quantity": 11000,
+          "basis": "10,000 requests + 1,000 repeats"
+        },
         {
           "priceId": "lambda.request.arm",
           "quantity": 21000,
@@ -772,7 +805,11 @@
           "basis": "(11,000 x 0.3 s + 10,000 x 0.05 s) x 0.25 GB, in GB-seconds"
         },
         { "priceId": "sns.request", "quantity": 10000, "basis": "one publish per SES event" },
-        { "priceId": "sns.delivery.lambda", "quantity": 10000, "basis": "one delivery to the function per event" },
+        {
+          "priceId": "sns.delivery.lambda",
+          "quantity": 10000,
+          "basis": "one delivery to the function per event"
+        },
         {
           "priceId": "dynamodb.write.on-demand",
           "quantity": 31000,

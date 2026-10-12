@@ -1,5 +1,6 @@
 import { fixedMonthlyItems } from "@aih/example-11-network/src/cost.ts";
 import type { NetworkPlan } from "@aih/example-11-network/src/plan.ts";
+
 import { checkAccess, subnetFor } from "./access.ts";
 import type { Ec2Config } from "./config.ts";
 import { type FixedItem, fixedItems, type InstanceState } from "./cost.ts";
@@ -28,7 +29,9 @@ export function describePlan(config: Ec2Config, network: NetworkPlan): string[] 
     `From ${subnetId}, on port 443:`,
   ];
   for (const check of checkAccess(config.placement, network)) {
-    const result = check.path.reachable ? `via ${check.path.via}` : `UNREACHABLE (${check.path.reason})`;
+    const result = check.path.reachable
+      ? `via ${check.path.via}`
+      : `UNREACHABLE (${check.path.reason})`;
     lines.push(`  ${check.service.padEnd(12)} ${result}`);
   }
   return lines;

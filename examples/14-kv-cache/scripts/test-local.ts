@@ -1,5 +1,6 @@
 // vp run kv:test:local
 // A skipped test looks like a pass at a glance, so a store that is not there fails here.
+
 import { spawnSync } from "node:child_process";
 import { connect } from "node:net";
 
@@ -14,7 +15,11 @@ if (valkeyUrl === undefined || dynamoDbEndpoint === undefined) {
 
 const answers = (url: URL, defaultPort: number): Promise<boolean> =>
   new Promise((resolve) => {
-    const socket = connect({ host: url.hostname, port: Number(url.port || defaultPort), timeout: 2_000 });
+    const socket = connect({
+      host: url.hostname,
+      port: Number(url.port || defaultPort),
+      timeout: 2_000,
+    });
     socket.once("connect", () => resolve(true)).once("error", () => resolve(false));
     socket.once("timeout", () => resolve(false)).once("close", () => socket.destroy());
     socket.once("connect", () => socket.end());
@@ -25,7 +30,9 @@ for (const [name, url, port] of [
   ["DynamoDB Local", new URL(dynamoDbEndpoint), 8000],
 ] as const) {
   if (!(await answers(url, port))) {
-    console.error(`${name} does not answer at ${url.href}. Start it with \`vp run kv:local:start\`.`);
+    console.error(
+      `${name} does not answer at ${url.href}. Start it with \`vp run kv:local:start\`.`,
+    );
     process.exit(1);
   }
 }

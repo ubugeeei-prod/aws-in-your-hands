@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
@@ -51,7 +52,9 @@ export class NotesAppStack extends Stack {
         compress: true,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
-        functionAssociations: [{ function: spaFallback, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
+        functionAssociations: [
+          { function: spaFallback, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
+        ],
       },
     });
     const spaOrigin = `https://${distribution.distributionDomainName}`;
@@ -114,7 +117,9 @@ export class NotesAppStack extends Stack {
       retention: RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     role.addToPolicy(
       new PolicyStatement({
@@ -153,7 +158,8 @@ export class NotesAppStack extends Stack {
         minify: false,
         sourceMap: false,
         externalModules: [],
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
 
@@ -171,7 +177,12 @@ export class NotesAppStack extends Stack {
       corsPreflight: {
         // Two fixed origins, never "*".
         allowOrigins: [spaOrigin, LOCAL_SPA],
-        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
+        allowMethods: [
+          CorsHttpMethod.GET,
+          CorsHttpMethod.POST,
+          CorsHttpMethod.PUT,
+          CorsHttpMethod.DELETE,
+        ],
         allowHeaders: ["content-type", "authorization"],
         maxAge: Duration.hours(1),
       },
@@ -182,7 +193,11 @@ export class NotesAppStack extends Stack {
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/me", methods: [HttpMethod.GET], ...signedIn });
     api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], ...signedIn });
-    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE], ...signedIn });
+    api.addRoutes({
+      path: "/notes/{id}",
+      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      ...signedIn,
+    });
     // #endregion authorizer
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });

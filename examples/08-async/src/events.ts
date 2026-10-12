@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { normalizeSequencer } from "./sequencer.ts";
 
 // #region schema
@@ -48,8 +49,15 @@ export function parseNotification(body: string): Notification {
         }
         return { type: "created", key, eTag, sequencer: normalizeSequencer(sequencer) };
       }
-      if (record.eventName.startsWith("ObjectRemoved:") || record.eventName.startsWith("LifecycleExpiration:")) {
-        return { type: "removed", key, sequencer: sequencer === undefined ? undefined : normalizeSequencer(sequencer) };
+      if (
+        record.eventName.startsWith("ObjectRemoved:") ||
+        record.eventName.startsWith("LifecycleExpiration:")
+      ) {
+        return {
+          type: "removed",
+          key,
+          sequencer: sequencer === undefined ? undefined : normalizeSequencer(sequencer),
+        };
       }
       return { type: "other", key, eventName: record.eventName };
     }),

@@ -1,10 +1,12 @@
+import { context, SpanKind, SpanStatusCode } from "@opentelemetry/api";
+import { Hono } from "hono";
+
 import { createApp } from "@aih/example-05-dynamodb/src/app.ts";
 import type { Env } from "@aih/example-05-dynamodb/src/env.ts";
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
 import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 import type { NoteRepository } from "@aih/example-05-dynamodb/src/repository.ts";
-import { context, SpanKind, SpanStatusCode } from "@opentelemetry/api";
-import { Hono } from "hono";
+
 import { contextFromHeaders, hasActiveSpan, withSpan, withTraceFields } from "./telemetry.ts";
 import { traceRepository } from "./traced-repository.ts";
 
@@ -49,7 +51,10 @@ export function createObservedApp(deps: ObservedDeps) {
         kind: underPlatformSpan ? SpanKind.INTERNAL : SpanKind.SERVER,
         parent,
         // The path without the query string. Query strings carry tokens.
-        attributes: { "http.request.method": request.method, "url.path": new URL(request.url).pathname },
+        attributes: {
+          "http.request.method": request.method,
+          "url.path": new URL(request.url).pathname,
+        },
       },
       async (span) => {
         const response = await notes.fetch(request);

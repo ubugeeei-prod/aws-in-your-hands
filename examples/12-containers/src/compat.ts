@@ -1,6 +1,7 @@
+import { z } from "zod";
+
 import { type Note, noteSchema } from "@aih/example-04-http-api/src/contract.ts";
 import type { NoteRepository } from "@aih/example-04-http-api/src/notes.ts";
-import { z } from "zod";
 
 // #region formats
 /** How one version of the app reads and writes a stored note. */
@@ -31,7 +32,9 @@ export class SharedRecords {
     const read = (text: string): Note => format.parse(JSON.parse(text));
     return {
       list: async () =>
-        [...this.#records.values()].map(read).toSorted((a, b) => b.createdAt.localeCompare(a.createdAt)),
+        [...this.#records.values()]
+          .map(read)
+          .toSorted((a, b) => b.createdAt.localeCompare(a.createdAt)),
       get: async (id) => {
         const text = this.#records.get(id);
         return text === undefined ? undefined : read(text);

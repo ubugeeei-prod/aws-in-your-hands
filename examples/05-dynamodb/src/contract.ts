@@ -38,10 +38,20 @@ export const noteListSchema = z.object({
 export type NoteList = z.infer<typeof noteListSchema>;
 // #endregion list
 
-export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string(), store: z.string() });
+export const healthSchema = z.object({
+  status: z.literal("ok"),
+  stage: z.string(),
+  store: z.string(),
+});
 
 // #region error
-export const errorCodes = ["invalid_request", "not_found", "conflict", "payload_too_large", "internal"] as const;
+export const errorCodes = [
+  "invalid_request",
+  "not_found",
+  "conflict",
+  "payload_too_large",
+  "internal",
+] as const;
 
 export const errorSchema = z.object({
   error: z.object({

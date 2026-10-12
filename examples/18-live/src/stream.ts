@@ -26,7 +26,9 @@ export type StreamStatus =
     };
 
 /** What a GetStream call produced: a response body, or the name of the error it threw. */
-export type GetStreamOutcome = { kind: "response"; stream: unknown } | { kind: "error"; name: string };
+export type GetStreamOutcome =
+  | { kind: "response"; stream: unknown }
+  | { kind: "error"; name: string };
 
 export function interpretGetStream(outcome: GetStreamOutcome): StreamStatus {
   if (outcome.kind === "error") {
@@ -35,7 +37,9 @@ export function interpretGetStream(outcome: GetStreamOutcome): StreamStatus {
     if (outcome.name === "ChannelNotBroadcasting") {
       return { state: "offline" };
     }
-    throw new Error(`GetStream failed with ${outcome.name}: the stream state is unknown, not offline`);
+    throw new Error(
+      `GetStream failed with ${outcome.name}: the stream state is unknown, not offline`,
+    );
   }
   const stream = liveStreamSchema.parse(outcome.stream);
   if (stream.state === "OFFLINE") {
@@ -61,7 +65,10 @@ export function describeStatus(status: StreamStatus, now: Date): string {
   if (status.state === "offline") {
     return "OFFLINE  nothing is being ingested, so no input time is accruing";
   }
-  const viewers = status.viewerCount === null ? "viewer count timed out" : `${status.viewerCount} concurrent views`;
+  const viewers =
+    status.viewerCount === null
+      ? "viewer count timed out"
+      : `${status.viewerCount} concurrent views`;
   return [
     `LIVE     ${status.streamId}, started ${status.startedAt.toISOString()}`,
     `         input is billed for every minute it stays live: ${inputMinutesSoFar(status.startedAt, now)} so far`,

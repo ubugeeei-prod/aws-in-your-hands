@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpJwtAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
@@ -13,6 +14,7 @@ import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
+
 import { KEY_PREFIX } from "../../api/src/keys.ts";
 import { PENDING, STATE_TAG } from "../../api/src/object-store.ts";
 
@@ -36,7 +38,9 @@ export class UploadsStack extends Stack {
       runtime: cloudfront.FunctionRuntime.JS_2_0,
       // The very file chapter 06 deploys and tests.
       code: cloudfront.FunctionCode.fromFile({
-        filePath: fileURLToPath(import.meta.resolve("@aih/example-06-auth/infra/functions/spa-fallback.js")),
+        filePath: fileURLToPath(
+          import.meta.resolve("@aih/example-06-auth/infra/functions/spa-fallback.js"),
+        ),
       }),
       comment: "Answers client-side routes with the SPA's index.html",
     });
@@ -55,7 +59,9 @@ export class UploadsStack extends Stack {
         compress: true,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
-        functionAssociations: [{ function: spaFallback, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
+        functionAssociations: [
+          { function: spaFallback, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
+        ],
       },
     });
     const spaOrigin = `https://${distribution.distributionDomainName}`;
@@ -140,7 +146,9 @@ export class UploadsStack extends Stack {
       retention: RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     role.addToPolicy(
       new PolicyStatement({
@@ -174,7 +182,9 @@ export class UploadsStack extends Stack {
     );
     // Not for listing: with this, HeadObject on a missing key answers 404
     // instead of 403, and the app can tell "not uploaded yet" from "not allowed".
-    role.addToPolicy(new PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }));
+    role.addToPolicy(
+      new PolicyStatement({ actions: ["s3:ListBucket"], resources: [uploads.bucketArn] }),
+    );
     // #endregion uploads-role
 
     const handler = new NodejsFunction(this, "Handler", {
@@ -203,7 +213,8 @@ export class UploadsStack extends Stack {
         minify: false,
         sourceMap: false,
         externalModules: [],
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
 
@@ -216,7 +227,12 @@ export class UploadsStack extends Stack {
       description: "Notes API with image uploads (signed-in users only)",
       corsPreflight: {
         allowOrigins: [spaOrigin, LOCAL_SPA],
-        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
+        allowMethods: [
+          CorsHttpMethod.GET,
+          CorsHttpMethod.POST,
+          CorsHttpMethod.PUT,
+          CorsHttpMethod.DELETE,
+        ],
         allowHeaders: ["content-type", "authorization"],
         maxAge: Duration.hours(1),
       },
@@ -226,11 +242,19 @@ export class UploadsStack extends Stack {
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/me", methods: [HttpMethod.GET], ...signedIn });
     api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], ...signedIn });
-    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE], ...signedIn });
+    api.addRoutes({
+      path: "/notes/{id}",
+      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      ...signedIn,
+    });
     // #region routes
     // Asking for a permit needs a token. Using one does not: that request
     // goes to S3, not through here.
-    api.addRoutes({ path: "/notes/{id}/attachments", methods: [HttpMethod.GET, HttpMethod.POST], ...signedIn });
+    api.addRoutes({
+      path: "/notes/{id}/attachments",
+      methods: [HttpMethod.GET, HttpMethod.POST],
+      ...signedIn,
+    });
     api.addRoutes({
       path: "/notes/{id}/attachments/{attachmentId}",
       methods: [HttpMethod.PUT, HttpMethod.DELETE],

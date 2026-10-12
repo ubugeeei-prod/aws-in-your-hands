@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
@@ -52,7 +53,9 @@ export class EdgeStack extends Stack {
       keyValueStore: edgeData,
       comment: "Maintenance switch, redirects, and a feature flag from KeyValueStore",
     });
-    const viewerRequest = [{ function: router, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }];
+    const viewerRequest = [
+      { function: router, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
+    ];
     // #endregion router
 
     const origin = origins.S3BucketOrigin.withOriginAccessControl(content, {
@@ -88,7 +91,11 @@ export class EdgeStack extends Stack {
         functionAssociations: viewerRequest,
         edgeLambdas: [
           {
-            functionVersion: lambda.Version.fromVersionArn(this, "BodyDigestVersion", bodyDigestVersionArn),
+            functionVersion: lambda.Version.fromVersionArn(
+              this,
+              "BodyDigestVersion",
+              bodyDigestVersionArn,
+            ),
             eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
             includeBody: true,
           },

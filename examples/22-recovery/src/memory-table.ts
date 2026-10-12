@@ -1,9 +1,25 @@
 import { type Note, noteSchema } from "@aih/example-05-dynamodb/src/contract.ts";
-import { decodeCursor, encodeCursor, type NoteRepository } from "@aih/example-05-dynamodb/src/repository.ts";
+import {
+  decodeCursor,
+  encodeCursor,
+  type NoteRepository,
+} from "@aih/example-05-dynamodb/src/repository.ts";
 import type { AttachmentRepository } from "@aih/example-07-uploads/api/src/attachment-repository.ts";
 import { type Attachment, attachmentSchema } from "@aih/example-07-uploads/api/src/contract.ts";
-import { type Inspection, type InspectionRepository, inspectionSchema } from "@aih/example-08-async/src/inspection.ts";
-import { attachmentKey, inspectionKey, noteKey, ownerKey, type TableItem, type TableReader } from "./items.ts";
+import {
+  type Inspection,
+  type InspectionRepository,
+  inspectionSchema,
+} from "@aih/example-08-async/src/inspection.ts";
+
+import {
+  attachmentKey,
+  inspectionKey,
+  noteKey,
+  ownerKey,
+  type TableItem,
+  type TableReader,
+} from "./items.ts";
 import type { NoteVersionStore } from "./table-diff.ts";
 
 type Change = { at: number; key: string; item: TableItem | undefined };
@@ -119,7 +135,10 @@ export class TableNoteRepository implements NoteRepository, NoteVersionStore {
       .filter((note) => after === undefined || note.id < after);
     const notes = mine.slice(0, options.limit);
     const last = notes.at(-1);
-    return { notes, nextCursor: mine.length > options.limit && last !== undefined ? encodeCursor(last.id) : null };
+    return {
+      notes,
+      nextCursor: mine.length > options.limit && last !== undefined ? encodeCursor(last.id) : null,
+    };
   }
 
   async update(
@@ -203,7 +222,9 @@ export class TableInspectionRepository implements InspectionRepository {
     if (existing !== undefined && existing.sequencer >= inspection.sequencer) {
       return "not_newer" as const;
     }
-    const item = Object.fromEntries(Object.entries(inspection).filter(([, value]) => value !== undefined));
+    const item = Object.fromEntries(
+      Object.entries(inspection).filter(([, value]) => value !== undefined),
+    );
     this.#table.put({
       ...item,
       pk: ownerKey(owner),

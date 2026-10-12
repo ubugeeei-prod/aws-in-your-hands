@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
 import { errorSchema, noteListSchema, noteSchema } from "../src/contract.ts";
@@ -10,7 +11,12 @@ function setup() {
   let suffix = 0;
   let requestId = 0;
   const app = createApp({
-    env: { ALLOWED_ORIGIN: "http://localhost:5173", LOG_LEVEL: "error", STAGE: "test", NOTES_STORE: "memory" },
+    env: {
+      ALLOWED_ORIGIN: "http://localhost:5173",
+      LOG_LEVEL: "error",
+      STAGE: "test",
+      NOTES_STORE: "memory",
+    },
     notes: createNoteService({
       repository: new InMemoryNoteRepository(),
       // One second per call, so creation order and ID order agree.
@@ -22,7 +28,11 @@ function setup() {
     now: () => clock,
   });
   const json = (method: string, path: string, body: unknown) =>
-    app.request(path, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    app.request(path, {
+      method,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
   const viaApp: typeof fetch = async (input, init) => app.fetch(new Request(input, init));
   return { app, json, client: createNotesClient("http://api.test", viaApp), viaApp };
 }
@@ -37,8 +47,14 @@ describe("notes API with versions", () => {
 
   it("updates a note when the caller holds the current version", async () => {
     const { json } = setup();
-    const created = noteSchema.parse(await (await json("POST", "/notes", { title: "draft" })).json());
-    const response = await json("PUT", `/notes/${created.id}`, { title: "final", body: "done", expectedVersion: 1 });
+    const created = noteSchema.parse(
+      await (await json("POST", "/notes", { title: "draft" })).json(),
+    );
+    const response = await json("PUT", `/notes/${created.id}`, {
+      title: "final",
+      body: "done",
+      expectedVersion: 1,
+    });
     expect(response.status).toBe(200);
     expect(noteSchema.parse(await response.json())).toMatchObject({
       version: 2,
@@ -49,10 +65,20 @@ describe("notes API with versions", () => {
 
   it("answers 409 with the stored note for a stale version", async () => {
     const { json } = setup();
-    const created = noteSchema.parse(await (await json("POST", "/notes", { title: "shared" })).json());
-    await json("PUT", `/notes/${created.id}`, { title: "from tab A", body: "", expectedVersion: 1 });
+    const created = noteSchema.parse(
+      await (await json("POST", "/notes", { title: "shared" })).json(),
+    );
+    await json("PUT", `/notes/${created.id}`, {
+      title: "from tab A",
+      body: "",
+      expectedVersion: 1,
+    });
 
-    const response = await json("PUT", `/notes/${created.id}`, { title: "from tab B", body: "", expectedVersion: 1 });
+    const response = await json("PUT", `/notes/${created.id}`, {
+      title: "from tab B",
+      body: "",
+      expectedVersion: 1,
+    });
     const body = errorSchema.parse(await response.json());
     expect(response.status).toBe(409);
     expect(body.error.code).toBe("conflict");
@@ -64,14 +90,16 @@ describe("notes API with versions", () => {
     const created = noteSchema.parse(await (await json("POST", "/notes", { title: "x" })).json());
     const response = await json("PUT", `/notes/${created.id}`, { title: "y", body: "" });
     expect(response.status).toBe(400);
-    expect(errorSchema.parse(await response.json()).error.issues?.map((issue) => issue.path)).toEqual([
-      "expectedVersion",
-    ]);
+    expect(
+      errorSchema.parse(await response.json()).error.issues?.map((issue) => issue.path),
+    ).toEqual(["expectedVersion"]);
   });
 
   it("answers 404 for an update to a note that does not exist", async () => {
     const { json } = setup();
-    expect((await json("PUT", "/notes/missing", { title: "y", body: "", expectedVersion: 1 })).status).toBe(404);
+    expect(
+      (await json("PUT", "/notes/missing", { title: "y", body: "", expectedVersion: 1 })).status,
+    ).toBe(404);
   });
 
   it("pages newest first, every note exactly once", async () => {
@@ -158,8 +186,8 @@ describe("typed client and the lost response", () => {
 
   it("surfaces errors other than conflicts as ApiError", async () => {
     const { client } = setup();
-    await expect(client.update("missing", { title: "x", body: "", expectedVersion: 1 })).rejects.toBeInstanceOf(
-      ApiError,
-    );
+    await expect(
+      client.update("missing", { title: "x", body: "", expectedVersion: 1 }),
+    ).rejects.toBeInstanceOf(ApiError);
   });
 });

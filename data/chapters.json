@@ -29,7 +29,11 @@
         "en": 2
       },
       "checkedAt": "2026-10-11",
-      "sourceIds": ["cloudflare-workers-local-dev", "cloudflare-d1-local-dev", "cloudflare-workers-ai-bindings"]
+      "sourceIds": [
+        "cloudflare-workers-local-dev",
+        "cloudflare-d1-local-dev",
+        "cloudflare-workers-ai-bindings"
+      ]
     },
     {
       "id": "01",
@@ -50,7 +54,12 @@
         "en": 2
       },
       "checkedAt": "2026-10-11",
-      "sourceIds": ["aws-cli-login", "aws-budgets-managing-costs", "aws-free-tier", "iam-best-practices"]
+      "sourceIds": [
+        "aws-cli-login",
+        "aws-budgets-managing-costs",
+        "aws-free-tier",
+        "iam-best-practices"
+      ]
     },
     {
       "id": "02",
@@ -684,7 +693,14 @@
         "en": "Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration"
       },
       "prerequisites": ["05", "10", "11"],
-      "services": ["DynamoDB", "ElastiCache", "CloudFront KeyValueStore", "Lambda", "API Gateway HTTP API", "IAM"],
+      "services": [
+        "DynamoDB",
+        "ElastiCache",
+        "CloudFront KeyValueStore",
+        "Lambda",
+        "API Gateway HTTP API",
+        "IAM"
+      ],
       "samplePath": "examples/14-kv-cache",
       "sourceIds": [
         "dynamodb-ttl",
@@ -760,7 +776,15 @@
         "en": "Send Email: SES"
       },
       "prerequisites": ["04"],
-      "services": ["SES", "SNS", "Lambda", "API Gateway HTTP API", "DynamoDB", "CloudWatch Logs", "IAM"],
+      "services": [
+        "SES",
+        "SNS",
+        "Lambda",
+        "API Gateway HTTP API",
+        "DynamoDB",
+        "CloudWatch Logs",
+        "IAM"
+      ],
       "samplePath": "examples/15-email",
       "sourceIds": [
         "ses-production-access",
@@ -912,7 +936,13 @@
         "en": "AI Development for Workers AI Users: Bedrock"
       },
       "prerequisites": ["04"],
-      "services": ["Bedrock", "Lambda response streaming", "Lambda function URL", "IAM", "CloudWatch Logs"],
+      "services": [
+        "Bedrock",
+        "Lambda response streaming",
+        "Lambda function URL",
+        "IAM",
+        "CloudWatch Logs"
+      ],
       "samplePath": "examples/17-ai",
       "sourceIds": [
         "bedrock-converse",

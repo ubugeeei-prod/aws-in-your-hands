@@ -1,5 +1,7 @@
-import { SWEEP_GRACE_MS } from "@aih/example-07-uploads/api/src/sweep.ts";
 import { describe, expect, it } from "vite-plus/test";
+
+import { SWEEP_GRACE_MS } from "@aih/example-07-uploads/api/src/sweep.ts";
+
 import { UNTAG_WINDOW_MS } from "../src/housekeeping.ts";
 import { HTML, PNG_3X2 } from "./fixtures.ts";
 import { type Context, setup } from "./harness.ts";
@@ -54,7 +56,9 @@ describe("an attached image that failed the inspection", () => {
     await context.deliver();
     context.advance(SWEEP_GRACE_MS);
 
-    expect(await context.housekeep({ dryRun: true })).toMatchObject({ rejected: [{ key: upload.key }] });
+    expect(await context.housekeep({ dryRun: true })).toMatchObject({
+      rejected: [{ key: upload.key }],
+    });
     expect(await context.attachments.list(upload.note.id)).toHaveLength(1);
   });
 });
@@ -77,7 +81,10 @@ describe("the pending tag on an attached image", () => {
     const context = await setup();
     await attached(context);
     context.advance(UNTAG_WINDOW_MS);
-    expect(await context.housekeep({ dryRun: false })).toMatchObject({ untagged: 0, orphans: { kept: 1 } });
+    expect(await context.housekeep({ dryRun: false })).toMatchObject({
+      untagged: 0,
+      orphans: { kept: 1 },
+    });
   });
 });
 
@@ -105,7 +112,10 @@ describe("housekeeping that runs twice, or stops halfway", () => {
     expect(context.bucket.stateOf(orphan.key)).toBeUndefined();
     expect(context.bucket.stateOf(good.key)).toBe("attached");
     expect(await context.attachments.list(good.note.id)).toHaveLength(1);
-    expect(await context.housekeep({ dryRun: false })).toMatchObject({ rejected: [], orphans: { removed: [] } });
+    expect(await context.housekeep({ dryRun: false })).toMatchObject({
+      rejected: [],
+      orphans: { removed: [] },
+    });
   });
 
   it("stopped between the record and the object: the next run finishes the job", async () => {

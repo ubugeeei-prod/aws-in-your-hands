@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { describeStatus, inputMinutesSoFar, interpretGetStream } from "../src/stream.ts";
 
 const live = {
@@ -13,12 +14,21 @@ const live = {
 
 describe("GetStream", () => {
   it("reads ChannelNotBroadcasting as offline", () => {
-    expect(interpretGetStream({ kind: "error", name: "ChannelNotBroadcasting" })).toEqual({ state: "offline" });
+    expect(interpretGetStream({ kind: "error", name: "ChannelNotBroadcasting" })).toEqual({
+      state: "offline",
+    });
   });
 
   it("never reports another error as offline", () => {
-    for (const name of ["AccessDeniedException", "ResourceNotFoundException", "ThrottlingException", "TimeoutError"]) {
-      expect(() => interpretGetStream({ kind: "error", name }), name).toThrow(/unknown, not offline/);
+    for (const name of [
+      "AccessDeniedException",
+      "ResourceNotFoundException",
+      "ThrottlingException",
+      "TimeoutError",
+    ]) {
+      expect(() => interpretGetStream({ kind: "error", name }), name).toThrow(
+        /unknown, not offline/,
+      );
     }
   });
 
@@ -39,7 +49,9 @@ describe("GetStream", () => {
 
   it("rejects a response without a stream instead of guessing offline", () => {
     expect(() => interpretGetStream({ kind: "response", stream: undefined })).toThrow();
-    expect(() => interpretGetStream({ kind: "response", stream: { ...live, state: "PAUSED" } })).toThrow();
+    expect(() =>
+      interpretGetStream({ kind: "response", stream: { ...live, state: "PAUSED" } }),
+    ).toThrow();
   });
 });
 

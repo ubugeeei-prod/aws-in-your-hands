@@ -20,7 +20,10 @@ export function parseSampleRatio(value: string | undefined): number {
 
 // #region local
 // For a laptop and for tests. In Lambda the layer does this part.
-export function startLocalTracing(options: { exporter: SpanExporter; sampler: Sampler }): NodeTracerProvider {
+export function startLocalTracing(options: {
+  exporter: SpanExporter;
+  sampler: Sampler;
+}): NodeTracerProvider {
   const provider = new NodeTracerProvider({
     sampler: options.sampler,
     // Simple, not batching: a span is handed to the exporter the moment it ends.

@@ -2,9 +2,11 @@
 //
 // Do both languages, the manifest, the section map, and the examples still
 // describe the same book? Reads only this checkout.
+
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+
 import config from "../../../vite.config.ts";
 import { loadManifest, loadSectionMap, loadSources, repoRoot } from "../data/load.ts";
 import { hasRegion, type Page, parsePage } from "./markdown.ts";
@@ -17,18 +19,27 @@ const content = join(repoRoot, "book/content");
 const walk = (directory: string, base = directory): string[] =>
   readdirSync(directory).flatMap((name) => {
     const path = join(directory, name);
-    return statSync(path).isDirectory() ? walk(path, base) : path.endsWith(".md") ? [relative(base, path)] : [];
+    return statSync(path).isDirectory()
+      ? walk(path, base)
+      : path.endsWith(".md")
+        ? [relative(base, path)]
+        : [];
   });
 const read = (path: string): Page => parsePage(readFileSync(join(content, path), "utf8"));
 
 const manifest = loadManifest();
 const sectionMap = loadSectionMap();
 const sourceIds = new Set(loadSources().sources.map((source) => source.id));
-const tasks = new Set(Object.keys((config as { run?: { tasks?: Record<string, unknown> } }).run?.tasks ?? {}));
+const tasks = new Set(
+  Object.keys((config as { run?: { tasks?: Record<string, unknown> } }).run?.tasks ?? {}),
+);
 
 // Files the reader would receive: tracked, or new and not ignored.
 const distributed = new Set(
-  execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { cwd: repoRoot, encoding: "utf8" })
+  execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  })
     .split("\n")
     .filter((line) => line !== ""),
 );
@@ -73,8 +84,13 @@ for (const path of jaPages.filter((page) => enPages.includes(page))) {
     if (!existsSync(file)) {
       fail(`${path}: imports ${snippet.path}, which does not exist`);
     } else if (!distributed.has(snippet.path)) {
-      fail(`${path}: imports ${snippet.path}, which is ignored by git and would not be distributed`);
-    } else if (snippet.region !== undefined && !hasRegion(readFileSync(file, "utf8"), snippet.region)) {
+      fail(
+        `${path}: imports ${snippet.path}, which is ignored by git and would not be distributed`,
+      );
+    } else if (
+      snippet.region !== undefined &&
+      !hasRegion(readFileSync(file, "utf8"), snippet.region)
+    ) {
       fail(`${path}: imports region "${snippet.region}" that ${snippet.path} does not declare`);
     }
   }
@@ -125,7 +141,10 @@ for (const chapter of manifest.chapters) {
       `chapter ${chapter.id}: ja revision is ${ja.frontmatter["revision"]}, manifest sourceRevision is ${chapter.sourceRevision}`,
     );
   }
-  if (en !== undefined && en.frontmatter["sourceRevision"] !== String(chapter.translatedRevision.en)) {
+  if (
+    en !== undefined &&
+    en.frontmatter["sourceRevision"] !== String(chapter.translatedRevision.en)
+  ) {
     fail(
       `chapter ${chapter.id}: en sourceRevision is ${en.frontmatter["sourceRevision"]}, manifest translatedRevision.en is ${chapter.translatedRevision.en}`,
     );
@@ -139,7 +158,9 @@ for (const chapter of manifest.chapters) {
     fail(`chapter ${chapter.id}: samplePath ${chapter.samplePath} does not exist`);
   }
   if (ja.sections.filter((section) => section.startsWith(`${chapter.id}.`)).length === 0) {
-    fail(`chapter ${chapter.id}: has no section markers, so nothing maps its explanations to source`);
+    fail(
+      `chapter ${chapter.id}: has no section markers, so nothing maps its explanations to source`,
+    );
   }
 }
 
@@ -158,7 +179,9 @@ for (const section of sectionMap.sections) {
     if (!existsSync(join(repoRoot, source))) {
       fail(`section ${section.id}: source ${source} does not exist`);
     } else if (!statSync(join(repoRoot, source)).isDirectory() && !distributed.has(source)) {
-      fail(`section ${section.id}: source ${source} is ignored by git and would not be distributed`);
+      fail(
+        `section ${section.id}: source ${source} is ignored by git and would not be distributed`,
+      );
     }
   }
   for (const task of section.tasks) {
@@ -175,7 +198,10 @@ for (const section of sectionMap.sections) {
 
 // 6. Distributed code is finished code.
 for (const path of distributed) {
-  if (/^(examples|tools|book\/infra)\/.*\.(ts|js|vue)$/.test(path) && !path.startsWith("tools/src/checks/")) {
+  if (
+    /^(examples|tools|book\/infra)\/.*\.(ts|js|vue)$/.test(path) &&
+    !path.startsWith("tools/src/checks/")
+  ) {
     const source = readFileSync(join(repoRoot, path), "utf8");
     if (/\b(TODO|FIXME|XXX)\b/.test(source)) {
       fail(`${path}: contains an unfinished-work marker`);
@@ -184,7 +210,9 @@ for (const path of distributed) {
 }
 
 if (problems.length > 0) {
-  console.error(`content check found ${problems.length} problem(s):\n  - ${problems.join("\n  - ")}`);
+  console.error(
+    `content check found ${problems.length} problem(s):\n  - ${problems.join("\n  - ")}`,
+  );
   process.exit(1);
 }
 console.log(

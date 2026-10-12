@@ -1,7 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vite-plus/test";
 import { parse } from "yaml";
 import { z } from "zod";
+
 import viteConfig from "../../../vite.config.ts";
 import { PREVIEW_ENVIRONMENT } from "../infra/lib/ci-stack.ts";
 
@@ -43,13 +45,19 @@ const workflows = readdirSync(directory)
   });
 
 const jobs = workflows.flatMap((workflow) =>
-  Object.entries(workflow.jobs).map(([id, job]) => ({ id: `${workflow.file}#${id}`, workflow, ...job })),
+  Object.entries(workflow.jobs).map(([id, job]) => ({
+    id: `${workflow.file}#${id}`,
+    workflow,
+    ...job,
+  })),
 );
 const steps = jobs.flatMap((job) => job.steps.map((step) => ({ job, ...step })));
 const CREDENTIALS = "aws-actions/configure-aws-credentials";
 const credentialSteps = (job: (typeof jobs)[number]) =>
   job.steps.filter((step) => step.uses?.startsWith(`${CREDENTIALS}@`));
-const tasks = Object.keys((viteConfig as { run?: { tasks?: Record<string, unknown> } }).run?.tasks ?? {});
+const tasks = Object.keys(
+  (viteConfig as { run?: { tasks?: Record<string, unknown> } }).run?.tasks ?? {},
+);
 
 describe("workflows", () => {
   it("covers pull requests, deploys, previews, and scheduled drift", () => {
@@ -103,7 +111,9 @@ describe("workflows", () => {
           "aws-region",
           "role-to-assume",
         ]);
-        expect(step.with?.["role-to-assume"]).toMatch(/^\$\{\{ vars\.AIH_(PLAN|DEPLOY|PREVIEW|DRIFT)_ROLE_ARN \}\}$/);
+        expect(step.with?.["role-to-assume"]).toMatch(
+          /^\$\{\{ vars\.AIH_(PLAN|DEPLOY|PREVIEW|DRIFT)_ROLE_ARN \}\}$/,
+        );
         expect(step.with?.["allowed-account-ids"]).toBe("${{ vars.AIH_AWS_ACCOUNT_ID }}");
         expect(job.env?.["AIH_AWS_ACCOUNT_ID"]).toBe("${{ vars.AIH_AWS_ACCOUNT_ID }}");
       }
@@ -152,7 +162,9 @@ describe("workflows", () => {
   it("gives credentials to pull request code only from this repository", () => {
     for (const job of jobs) {
       if (credentialSteps(job).length > 0 && "pull_request" in job.workflow.on) {
-        expect(job.if, job.id).toContain("github.event.pull_request.head.repo.full_name == github.repository");
+        expect(job.if, job.id).toContain(
+          "github.event.pull_request.head.repo.full_name == github.repository",
+        );
       }
     }
     // The job that runs on every pull request, forks included, has no way to reach AWS.
@@ -165,7 +177,10 @@ describe("workflows", () => {
     const runs = steps.filter((step) => step.run !== undefined);
     expect(runs.length).toBeGreaterThan(0);
     for (const step of runs) {
-      const match = /^nix develop --command vp (install --frozen-lockfile|run ([a-z:]+)( .+)?)$/.exec(step.run ?? "");
+      const match =
+        /^nix develop --command vp (install --frozen-lockfile|run ([a-z:]+)( .+)?)$/.exec(
+          step.run ?? "",
+        );
       expect(match, `${step.job.id}: ${step.run}`).not.toBeNull();
       if (match?.[2] !== undefined) {
         expect(tasks, step.run).toContain(match[2]);

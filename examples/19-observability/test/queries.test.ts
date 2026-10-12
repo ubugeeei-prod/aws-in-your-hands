@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { matches, metricFilterPattern } from "../src/conditions.ts";
 import { errorLineSchema, requestLineSchema } from "../src/log-shape.ts";
 import {
@@ -15,7 +16,9 @@ import { brokenList, harness, requestIdOf } from "./harness.ts";
 
 async function traffic() {
   const h = harness({ repository: brokenList("table unavailable"), msPerTick: 40 });
-  const created = (await (await h.send("POST", "/notes", { title: "first" })).json()) as { id: string };
+  const created = (await (await h.send("POST", "/notes", { title: "first" })).json()) as {
+    id: string;
+  };
   await h.send("GET", "/notes"); // 500
   await h.send("GET", "/notes"); // 500
   await h.send("GET", "/notes/missing"); // 404
@@ -35,7 +38,9 @@ describe("Logs Insights queries against real log lines", () => {
 
   it("counts server errors per route and leaves 4xx out", async () => {
     const h = await traffic();
-    expect(runLocally(serverErrorsByRoute(), h.lines())).toEqual([{ method: "GET", path: "/notes", requests: 2 }]);
+    expect(runLocally(serverErrorsByRoute(), h.lines())).toEqual([
+      { method: "GET", path: "/notes", requests: 2 },
+    ]);
   });
 
   it("lists slow requests, slowest first", async () => {
@@ -51,7 +56,10 @@ describe("Logs Insights queries against real log lines", () => {
   });
 
   it("refers only to fields the log lines have", () => {
-    const known = new Set([...Object.keys(requestLineSchema.shape), ...Object.keys(errorLineSchema.shape)]);
+    const known = new Set([
+      ...Object.keys(requestLineSchema.shape),
+      ...Object.keys(errorLineSchema.shape),
+    ]);
     const queries: Query[] = [
       byRequestId(requestIdOf(1)),
       byTraceId("0af7651916cd43dd8448eb211c80319c"),
@@ -60,8 +68,14 @@ describe("Logs Insights queries against real log lines", () => {
     ];
     for (const query of queries) {
       const shown = query.show.kind === "fields" ? query.show.fields : query.show.by;
-      const sorted = ["@timestamp", "requests"].includes(query.sort.field) ? [] : [query.sort.field];
-      for (const field of [...query.where.map((condition) => condition.field), ...shown, ...sorted]) {
+      const sorted = ["@timestamp", "requests"].includes(query.sort.field)
+        ? []
+        : [query.sort.field];
+      for (const field of [
+        ...query.where.map((condition) => condition.field),
+        ...shown,
+        ...sorted,
+      ]) {
         expect(known, `field ${field}`).toContain(field);
       }
     }
@@ -101,8 +115,12 @@ describe("the metric filter for conflicts", () => {
   });
 
   it("renders as a JSON filter pattern", () => {
-    expect(metricFilterPattern(conflictLines)).toBe('{ ($.message = "request") && ($.status = 409) }');
-    expect(metricFilterPattern([{ field: "level", op: "=", value: "error" }])).toBe('{ $.level = "error" }');
+    expect(metricFilterPattern(conflictLines)).toBe(
+      '{ ($.message = "request") && ($.status = 409) }',
+    );
+    expect(metricFilterPattern([{ field: "level", op: "=", value: "error" }])).toBe(
+      '{ $.level = "error" }',
+    );
   });
 
   it("refuses a value that could close the quotes", () => {

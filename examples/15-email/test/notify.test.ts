@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Mailer } from "../src/mailer.ts";
 import { buildShareEmail } from "../src/message.ts";
 import { type NotifyDeps, sendShareNotification } from "../src/notify.ts";
@@ -9,7 +10,10 @@ import { type Fault, input, settings, setup, withFault } from "./setup.ts";
 describe("one notification, one mail", () => {
   it("sends once and records the message ID", async () => {
     const { deps, store, outbox } = setup();
-    expect(await sendShareNotification(deps, input)).toEqual({ outcome: "sent", messageId: "local-1" });
+    expect(await sendShareNotification(deps, input)).toEqual({
+      outcome: "sent",
+      messageId: "local-1",
+    });
     expect(outbox.sent).toHaveLength(1);
     expect(await store.get("share-1")).toMatchObject({ state: "sent", messageId: "local-1" });
   });
@@ -17,13 +21,18 @@ describe("one notification, one mail", () => {
   it("answers a repeated request without sending again", async () => {
     const { deps, outbox } = setup();
     await sendShareNotification(deps, input);
-    expect(await sendShareNotification(deps, input)).toEqual({ outcome: "duplicate", state: "sent" });
+    expect(await sendShareNotification(deps, input)).toEqual({
+      outcome: "duplicate",
+      state: "sent",
+    });
     expect(outbox.sent).toHaveLength(1);
   });
 
   it("lets one of several simultaneous requests send", async () => {
     const { deps, outbox } = setup();
-    const outcomes = await Promise.all(Array.from({ length: 5 }, () => sendShareNotification(deps, input)));
+    const outcomes = await Promise.all(
+      Array.from({ length: 5 }, () => sendShareNotification(deps, input)),
+    );
     expect(outcomes.filter((result) => result.outcome === "sent")).toHaveLength(1);
     expect(outcomes.filter((result) => result.outcome === "duplicate")).toHaveLength(4);
     expect(outbox.sent).toHaveLength(1);
@@ -32,10 +41,14 @@ describe("one notification, one mail", () => {
   it("refuses the same ID for a different mail", async () => {
     const { deps, outbox } = setup();
     await sendShareNotification(deps, input);
-    expect(await sendShareNotification(deps, { ...input, noteTitle: "Another note" })).toEqual({ outcome: "conflict" });
-    expect(await sendShareNotification(deps, { ...input, to: "someone-else@example.com" })).toEqual({
+    expect(await sendShareNotification(deps, { ...input, noteTitle: "Another note" })).toEqual({
       outcome: "conflict",
     });
+    expect(await sendShareNotification(deps, { ...input, to: "someone-else@example.com" })).toEqual(
+      {
+        outcome: "conflict",
+      },
+    );
     expect(outbox.sent).toHaveLength(1);
   });
 
@@ -78,17 +91,28 @@ describe("a failure at any step", () => {
 
   it("reports an unanswered send as unknown and leaves the claim in place", async () => {
     const { deps, store, outbox, logs } = setup();
-    const broken: NotifyDeps = { ...deps, ...withFault(store, outbox, { step: "send", when: "after" }) };
+    const broken: NotifyDeps = {
+      ...deps,
+      ...withFault(store, outbox, { step: "send", when: "after" }),
+    };
 
     expect(await sendShareNotification(broken, input)).toEqual({ outcome: "unknown" });
     expect(await store.get("share-1")).toMatchObject({ state: "claimed" });
-    expect(await sendShareNotification(deps, input)).toEqual({ outcome: "duplicate", state: "claimed" });
-    expect(logs).toContainEqual(expect.objectContaining({ level: "error", notificationId: "share-1" }));
+    expect(await sendShareNotification(deps, input)).toEqual({
+      outcome: "duplicate",
+      state: "claimed",
+    });
+    expect(logs).toContainEqual(
+      expect.objectContaining({ level: "error", notificationId: "share-1" }),
+    );
   });
 
   it("still reports sent when only the record update fails", async () => {
     const { deps, store, outbox } = setup();
-    const broken: NotifyDeps = { ...deps, ...withFault(store, outbox, { step: "advance", when: "before" }) };
+    const broken: NotifyDeps = {
+      ...deps,
+      ...withFault(store, outbox, { step: "advance", when: "before" }),
+    };
     expect(await sendShareNotification(broken, input)).toMatchObject({ outcome: "sent" });
   });
 });
@@ -117,7 +141,10 @@ describe("a send that the provider refuses", () => {
     });
     expect(await store.get("share-1")).toMatchObject({ state: "rejected" });
     expect(await sendShareNotification(throttled, input)).toMatchObject({ outcome: "sent" });
-    expect(await sendShareNotification(throttled, input)).toEqual({ outcome: "duplicate", state: "sent" });
+    expect(await sendShareNotification(throttled, input)).toEqual({
+      outcome: "duplicate",
+      state: "sent",
+    });
     expect(outbox.sent).toHaveLength(1);
   });
 
@@ -128,7 +155,10 @@ describe("a send that the provider refuses", () => {
     await sendShareNotification(throttled, input);
     await store.advance("share-1", "delivered", { at: "2026-10-11T00:01:00.000Z" });
 
-    expect(await sendShareNotification(throttled, input)).toEqual({ outcome: "duplicate", state: "delivered" });
+    expect(await sendShareNotification(throttled, input)).toEqual({
+      outcome: "duplicate",
+      state: "delivered",
+    });
     expect(outbox.sent).toHaveLength(0);
   });
 });
@@ -142,7 +172,10 @@ describe("a suppressed address", () => {
       suppressedAt: "2026-10-10T00:00:00.000Z",
       feedbackId: "f-1",
     });
-    expect(await sendShareNotification(deps, input)).toEqual({ outcome: "suppressed", reason: "bounce" });
+    expect(await sendShareNotification(deps, input)).toEqual({
+      outcome: "suppressed",
+      reason: "bounce",
+    });
     expect(outbox.sent).toHaveLength(0);
     expect(await store.get("share-1")).toBeUndefined();
   });

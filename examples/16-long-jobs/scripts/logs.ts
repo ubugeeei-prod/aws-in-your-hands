@@ -2,11 +2,14 @@
 //   node scripts/logs.ts [--function pages] [--follow] [--since 15m]
 //
 // Each function writes one JSON line per call, with the export's ID.
+
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
+
+import { z } from "zod";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { z } from "zod";
 
 const STACK = "AihLongJobs";
 const OUTPUTS = {
@@ -29,9 +32,26 @@ if (!which.success) {
 }
 
 try {
-  const { target } = await preflight({ access: "observe", action: `read the ${which.data} logs`, stack: STACK });
-  const logGroup = requireOutput(await readStackOutputs(process.cwd(), STACK, target.region), OUTPUTS[which.data]);
-  const args = ["logs", "tail", logGroup, "--region", target.region, "--since", values.since, "--format", "short"];
+  const { target } = await preflight({
+    access: "observe",
+    action: `read the ${which.data} logs`,
+    stack: STACK,
+  });
+  const logGroup = requireOutput(
+    await readStackOutputs(process.cwd(), STACK, target.region),
+    OUTPUTS[which.data],
+  );
+  const args = [
+    "logs",
+    "tail",
+    logGroup,
+    "--region",
+    target.region,
+    "--since",
+    values.since,
+    "--format",
+    "short",
+  ];
   if (values.follow) {
     args.push("--follow");
   }

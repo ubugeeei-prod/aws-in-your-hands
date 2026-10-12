@@ -7,7 +7,9 @@ export type CdkdResult = { exitCode: number; stdout: string; stderr: string };
 export function cdkdBinary(appDir: string): string {
   const binary = resolve(appDir, "node_modules/.bin/cdkd");
   if (!existsSync(binary)) {
-    throw new Error(`cdkd is not installed in ${appDir}. Run \`vp install\` from the repository root.`);
+    throw new Error(
+      `cdkd is not installed in ${appDir}. Run \`vp install\` from the repository root.`,
+    );
   }
   return binary;
 }
@@ -20,7 +22,9 @@ export function runCdkd(options: {
   capture: boolean;
 }): Promise<CdkdResult> {
   const binary = cdkdBinary(options.appDir);
-  console.error(`$ (cd ${options.appDir} && AWS_REGION=${options.region} cdkd ${options.args.join(" ")})`);
+  console.error(
+    `$ (cd ${options.appDir} && AWS_REGION=${options.region} cdkd ${options.args.join(" ")})`,
+  );
 
   return new Promise((resolvePromise, reject) => {
     const child = spawn(binary, options.args, {

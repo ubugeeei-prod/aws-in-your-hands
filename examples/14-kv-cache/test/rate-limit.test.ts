@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { MemoryCounterStore } from "../src/memory-store.ts";
-import { createRateLimiter, slidingCap, slidingRetryAfterMs, windowStartOf } from "../src/rate-limit.ts";
+import {
+  createRateLimiter,
+  slidingCap,
+  slidingRetryAfterMs,
+  windowStartOf,
+} from "../src/rate-limit.ts";
 import type { CounterStore, IncrementResult, WindowRef } from "../src/stores.ts";
 
 const MINUTE = 60_000;
@@ -12,7 +18,11 @@ const fixed = (limit: number, store: CounterStore = new MemoryCounterStore()) =>
 const sliding = (limit: number, store: CounterStore = new MemoryCounterStore()) =>
   createRateLimiter(store, { limit, windowMs: MINUTE, algorithm: "sliding" });
 
-async function hits(limiter: ReturnType<typeof fixed>, count: number, at: number): Promise<boolean[]> {
+async function hits(
+  limiter: ReturnType<typeof fixed>,
+  count: number,
+  at: number,
+): Promise<boolean[]> {
   const allowed = [];
   for (let index = 0; index < count; index++) {
     allowed.push((await limiter.hit("client-1", at)).allowed);
@@ -23,7 +33,12 @@ async function hits(limiter: ReturnType<typeof fixed>, count: number, at: number
 describe("fixed window", () => {
   it("allows exactly `limit` requests, counting down what is left", async () => {
     const limiter = fixed(3);
-    expect(await limiter.hit("client-1", T0)).toEqual({ allowed: true, limit: 3, remaining: 2, retryAfterSeconds: 0 });
+    expect(await limiter.hit("client-1", T0)).toEqual({
+      allowed: true,
+      limit: 3,
+      remaining: 2,
+      retryAfterSeconds: 0,
+    });
     expect((await limiter.hit("client-1", T0 + 1)).remaining).toBe(1);
     expect((await limiter.hit("client-1", T0 + 2)).remaining).toBe(0);
     expect(await limiter.hit("client-1", T0 + 3)).toMatchObject({ allowed: false, remaining: 0 });
@@ -32,7 +47,10 @@ describe("fixed window", () => {
   it("refuses until the last millisecond of the window and allows again at the next one", async () => {
     const limiter = fixed(1);
     await limiter.hit("client-1", T0);
-    expect(await limiter.hit("client-1", T0 + MINUTE - 1)).toMatchObject({ allowed: false, retryAfterSeconds: 1 });
+    expect(await limiter.hit("client-1", T0 + MINUTE - 1)).toMatchObject({
+      allowed: false,
+      retryAfterSeconds: 1,
+    });
     expect(await limiter.hit("client-1", T0 + MINUTE)).toMatchObject({ allowed: true });
   });
 
@@ -109,7 +127,9 @@ describe("window alignment", () => {
 describe("concurrent requests", () => {
   it("admits exactly `limit` of 20 simultaneous requests", async () => {
     const limiter = fixed(5);
-    const decisions = await Promise.all(Array.from({ length: 20 }, () => limiter.hit("client-1", T0)));
+    const decisions = await Promise.all(
+      Array.from({ length: 20 }, () => limiter.hit("client-1", T0)),
+    );
     expect(decisions.filter((decision) => decision.allowed)).toHaveLength(5);
   });
 
@@ -143,7 +163,10 @@ describe("concurrent requests", () => {
   it("is broken by a store that reads and then writes: two pass a limit of one", async () => {
     const store = new ReadThenWriteStore();
     const limiter = fixed(1, store);
-    const [first, second] = await Promise.all([limiter.hit("client-1", T0), limiter.hit("client-1", T0)]);
+    const [first, second] = await Promise.all([
+      limiter.hit("client-1", T0),
+      limiter.hit("client-1", T0),
+    ]);
     expect([first.allowed, second.allowed]).toEqual([true, true]);
     // And one of the two increments is gone.
     expect(await store.read({ windowStart: T0 })).toBe(1);

@@ -5,8 +5,11 @@
 // machine, with your own credentials. BILLED: one short summary. Never part of
 // check:all. It checks what fixtures cannot: that the model ID resolves, that
 // your account may call it, and that the real events fit the schema.
+
 import { setTimeout as sleep } from "node:timers/promises";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
+
 import { createBedrockGateway } from "../src/bedrock.ts";
 import { collectSummary } from "../src/client.ts";
 import { parseEnv } from "../src/env.ts";
@@ -55,7 +58,9 @@ try {
   if (result.usage === null) {
     throw new Error("the stream ended without a metadata event, so the billed tokens are unknown");
   }
-  console.log(`ok   ${deltas} delta(s), tokens in/out: ${result.usage.inputTokens}/${result.usage.outputTokens}`);
+  console.log(
+    `ok   ${deltas} delta(s), tokens in/out: ${result.usage.inputTokens}/${result.usage.outputTokens}`,
+  );
   console.log(`checked at ${new Date().toISOString()}`);
 } catch (error) {
   console.error("FAIL", error instanceof Error ? `${error.name}: ${error.message}` : error);

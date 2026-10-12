@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { EGRESS_MODES, parseNetworkConfig } from "../src/config.ts";
 import { planNetwork } from "../src/plan.ts";
 import { type Destination, pathFrom } from "../src/reach.ts";
@@ -14,19 +15,43 @@ const ZONE_C = "ap-northeast-1c";
 describe("reachability from the route tables", () => {
   it("lets a private subnet reach S3 and DynamoDB, and nothing else outside the VPC", () => {
     const planned = plan();
-    expect(pathFrom(planned, "Private1", service("s3"))).toEqual({ reachable: true, via: "gateway-endpoint" });
-    expect(pathFrom(planned, "Private1", service("dynamodb"))).toEqual({ reachable: true, via: "gateway-endpoint" });
-    expect(pathFrom(planned, "Private1", internet)).toEqual({ reachable: false, reason: "no-route" });
+    expect(pathFrom(planned, "Private1", service("s3"))).toEqual({
+      reachable: true,
+      via: "gateway-endpoint",
+    });
+    expect(pathFrom(planned, "Private1", service("dynamodb"))).toEqual({
+      reachable: true,
+      via: "gateway-endpoint",
+    });
+    expect(pathFrom(planned, "Private1", internet)).toEqual({
+      reachable: false,
+      reason: "no-route",
+    });
     // ECR is an AWS service too, but its API lives on the internet side of the route table.
-    expect(pathFrom(planned, "Private1", service("ecr.api"))).toEqual({ reachable: false, reason: "no-route" });
-    expect(pathFrom(planned, "Public1", internet)).toEqual({ reachable: true, via: "internet-gateway" });
+    expect(pathFrom(planned, "Private1", service("ecr.api"))).toEqual({
+      reachable: false,
+      reason: "no-route",
+    });
+    expect(pathFrom(planned, "Public1", internet)).toEqual({
+      reachable: true,
+      via: "internet-gateway",
+    });
   });
 
   it("opens one service per interface endpoint without opening the internet", () => {
     const planned = plan({ interfaceEndpoints: "ecr.api,ecr.dkr,logs" });
-    expect(pathFrom(planned, "Private2", service("ecr.api"))).toEqual({ reachable: true, via: "interface-endpoint" });
-    expect(pathFrom(planned, "Private2", service("ssm"))).toEqual({ reachable: false, reason: "no-route" });
-    expect(pathFrom(planned, "Private2", internet)).toEqual({ reachable: false, reason: "no-route" });
+    expect(pathFrom(planned, "Private2", service("ecr.api"))).toEqual({
+      reachable: true,
+      via: "interface-endpoint",
+    });
+    expect(pathFrom(planned, "Private2", service("ssm"))).toEqual({
+      reachable: false,
+      reason: "no-route",
+    });
+    expect(pathFrom(planned, "Private2", internet)).toEqual({
+      reachable: false,
+      reason: "no-route",
+    });
   });
 
   it("rejects a subnet the plan does not have", () => {
@@ -40,11 +65,20 @@ describe("one zone going down, step by step", () => {
     const planned = plan({ egress: "nat" });
 
     // 1. Both zones up: the subnet in zone C leaves through the NAT gateway in zone A.
-    expect(pathFrom(planned, "Private2", internet)).toEqual({ reachable: true, via: "nat-gateway" });
+    expect(pathFrom(planned, "Private2", internet)).toEqual({
+      reachable: true,
+      via: "nat-gateway",
+    });
 
     // 2. Zone A goes down. Zone C itself is fine, and still loses its way out.
-    expect(pathFrom(planned, "Private1", internet, [ZONE_A])).toEqual({ reachable: false, reason: "zone-down" });
-    expect(pathFrom(planned, "Private2", internet, [ZONE_A])).toEqual({ reachable: false, reason: "nat-zone-down" });
+    expect(pathFrom(planned, "Private1", internet, [ZONE_A])).toEqual({
+      reachable: false,
+      reason: "zone-down",
+    });
+    expect(pathFrom(planned, "Private2", internet, [ZONE_A])).toEqual({
+      reachable: false,
+      reason: "nat-zone-down",
+    });
 
     // 3. What does not pass through the NAT gateway keeps working from zone C.
     expect(pathFrom(planned, "Private2", service("s3"), [ZONE_A])).toEqual({
@@ -53,14 +87,23 @@ describe("one zone going down, step by step", () => {
     });
 
     // 4. Had zone C failed instead, zone A would not have noticed.
-    expect(pathFrom(planned, "Private1", internet, [ZONE_C])).toEqual({ reachable: true, via: "nat-gateway" });
+    expect(pathFrom(planned, "Private1", internet, [ZONE_C])).toEqual({
+      reachable: true,
+      via: "nat-gateway",
+    });
   });
   // #endregion zone-failure
 
   it("keeps the healthy zone connected when every zone has its own NAT gateway", () => {
     const planned = plan({ egress: "nat-per-az" });
-    expect(pathFrom(planned, "Private2", internet, [ZONE_A])).toEqual({ reachable: true, via: "nat-gateway" });
-    expect(pathFrom(planned, "Private1", internet, [ZONE_C])).toEqual({ reachable: true, via: "nat-gateway" });
+    expect(pathFrom(planned, "Private2", internet, [ZONE_A])).toEqual({
+      reachable: true,
+      via: "nat-gateway",
+    });
+    expect(pathFrom(planned, "Private1", internet, [ZONE_C])).toEqual({
+      reachable: true,
+      via: "nat-gateway",
+    });
   });
 
   it("leaves nothing reachable in any layout once every zone of the region is down", () => {

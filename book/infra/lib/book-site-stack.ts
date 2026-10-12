@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
@@ -47,7 +48,9 @@ export class BookSiteStack extends Stack {
         // Per-object lifetime comes from the Cache-Control header set at publish time.
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
-        functionAssociations: [{ function: urlRewrite, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
+        functionAssociations: [
+          { function: urlRewrite, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
+        ],
       },
       // GetObject only, so S3 answers 403 for a missing key. Both codes become a real 404,
       // not a SPA fallback.

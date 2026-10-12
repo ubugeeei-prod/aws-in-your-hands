@@ -3,8 +3,10 @@
 //
 // Both locales are rendered from the same data/*.json record, so they cannot
 // disagree about a price, a source, or a validation status.
+
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+
 import {
   loadGlossary,
   loadManifest,
@@ -36,7 +38,8 @@ const header = (locale: Locale, title: string, from: string) =>
     "",
   ].join("\n");
 
-const chapterPath = (locale: Locale, chapter: Chapter) => `/${locale}/chapters/${chapter.id}-${chapter.slug}.md`;
+const chapterPath = (locale: Locale, chapter: Chapter) =>
+  `/${locale}/chapters/${chapter.id}-${chapter.slug}.md`;
 const chapterRef = (locale: Locale, id: string): string => {
   const chapter = manifest.chapters.find((candidate) => candidate.id === id);
   if (chapter === undefined) {
@@ -70,12 +73,12 @@ function plannedChapter(locale: Locale, chapter: PlannedChapter): string {
     "",
     t(
       locale,
-      "> [!NOTE]\n> この章は **planned（未執筆）** です。以下は執筆前のアウトラインで、本文でも動くサンプルでもありません。`" +
-        (chapter.samplePath ?? "") +
-        "` はまだ存在しません。",
-      "> [!NOTE]\n> This chapter is **planned (not written)**. What follows is the outline it will be written from, not prose and not a working example. `" +
-        (chapter.samplePath ?? "") +
-        "` does not exist yet.",
+      `> [!NOTE]\n> この章は **planned（未執筆）** です。以下は執筆前のアウトラインで、本文でも動くサンプルでもありません。\`${
+        chapter.samplePath ?? ""
+      }\` はまだ存在しません。`,
+      `> [!NOTE]\n> This chapter is **planned (not written)**. What follows is the outline it will be written from, not prose and not a working example. \`${
+        chapter.samplePath ?? ""
+      }\` does not exist yet.`,
     ),
     "",
     `## ${t(locale, "この章の成果", "Outcome")}`,
@@ -134,8 +137,12 @@ function sourcesPage(locale: Locale): string {
       "",
       `- ID: \`${source.id}\``,
       `- URL: <${source.url}>`,
-      ...(source.checkedAt === null ? [] : [`- ${t(locale, "確認日", "Checked")}: ${source.checkedAt}`]),
-      ...(usedBy(source.id) === "" ? [] : [`- ${t(locale, "参照する章", "Chapters")}: ${usedBy(source.id)}`]),
+      ...(source.checkedAt === null
+        ? []
+        : [`- ${t(locale, "確認日", "Checked")}: ${source.checkedAt}`]),
+      ...(usedBy(source.id) === ""
+        ? []
+        : [`- ${t(locale, "参照する章", "Chapters")}: ${usedBy(source.id)}`]),
       `- ${t(locale, "この出典が支える主張", "Claims this source supports")}:`,
       ...source.supports.map((claim) => `  - ${claim}`),
       ...(source.note === undefined ? [] : [`- ${t(locale, "注記", "Note")}: ${source.note}`]),
@@ -182,13 +189,15 @@ function glossaryPage(locale: Locale): string {
     `| ${t(locale, "日本語", "Japanese")} | ${t(locale, "英語", "English")} | ${t(locale, "初出", "First used")} | ${t(locale, "意味", "Meaning")} |`,
     "| --- | --- | --- | --- |",
     ...terms.map(
-      (term) => `| ${cell(term.ja)} | ${cell(term.en)} | ${term.firstUse} | ${cell(term.definition[locale])} |`,
+      (term) =>
+        `| ${cell(term.ja)} | ${cell(term.en)} | ${term.firstUse} | ${cell(term.definition[locale])} |`,
     ),
     "",
   ].join("\n");
 }
 
-const usd = (value: number): string => (value === 0 ? "0" : value < 0.005 ? value.toFixed(6) : value.toFixed(2));
+const usd = (value: number): string =>
+  value === 0 ? "0" : value < 0.005 ? value.toFixed(6) : value.toFixed(2);
 
 function pricingPage(locale: Locale): string {
   const { prices, allowances, scenarios } = loadPricing();
@@ -333,7 +342,8 @@ function toolchainPage(locale: Locale): string {
     `| ${t(locale, "ツール", "Tool")} | ${t(locale, "版", "Version")} | ${t(locale, "供給元", "Provided by")} | ${t(locale, "固定している場所", "Pinned in")} |`,
     "| --- | --- | --- | --- |",
     ...toolchain.tools.map(
-      (tool) => `| ${tool.name} | ${tool.version} | ${cell(tool.providedBy)} | \`${tool.pinnedIn}\` |`,
+      (tool) =>
+        `| ${tool.name} | ${tool.version} | ${cell(tool.providedBy)} | \`${tool.pinnedIn}\` |`,
     ),
     "",
     `- ${t(locale, "検証済みの OS/CPU", "Verified platforms")}: ${toolchain.verifiedPlatforms.join(", ")}`,
@@ -347,7 +357,10 @@ export function generateAll(): Map<string, string> {
   for (const locale of LOCALES) {
     for (const chapter of manifest.chapters) {
       if (chapter.writing.ja === "planned") {
-        files.set(`book/content${chapterPath(locale, chapter)}`, plannedChapter(locale, chapter as PlannedChapter));
+        files.set(
+          `book/content${chapterPath(locale, chapter)}`,
+          plannedChapter(locale, chapter as PlannedChapter),
+        );
       }
     }
     files.set(`book/content/${locale}/reference/sources.md`, sourcesPage(locale));

@@ -159,7 +159,9 @@ export function renderUserData(input: MachineSpec): string {
     "",
   ].join("\n");
   if (Buffer.byteLength(script) > USER_DATA_LIMIT_BYTES) {
-    throw new Error(`user data is ${Buffer.byteLength(script)} bytes; the limit is ${USER_DATA_LIMIT_BYTES}`);
+    throw new Error(
+      `user data is ${Buffer.byteLength(script)} bytes; the limit is ${USER_DATA_LIMIT_BYTES}`,
+    );
   }
   return script;
 }

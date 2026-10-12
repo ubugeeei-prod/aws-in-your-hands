@@ -4,15 +4,15 @@ import { z } from "zod";
 export type QueryResult = { rows: unknown[] };
 
 /** One database session. `$1`-style parameters only: values never go into the SQL text. */
-export interface Queryable {
+export type Queryable = {
   query(text: string, params?: readonly unknown[]): Promise<QueryResult>;
-}
+};
 
-export interface Db {
+export type Db = {
   /** Holds one session for the whole callback, so BEGIN and COMMIT reach the same one. */
   withConnection<T>(use: (connection: Queryable) => Promise<T>): Promise<T>;
   close(): Promise<void>;
-}
+};
 // #endregion db
 
 // #region rows

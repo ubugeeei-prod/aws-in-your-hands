@@ -234,7 +234,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
       "title": "Working with Lambda environment variables",
       "checkedAt": "2026-10-11",
-      "supports": ["AWS_LAMBDA_FUNCTION_NAME is a defined runtime environment variable holding the function's name"]
+      "supports": [
+        "AWS_LAMBDA_FUNCTION_NAME is a defined runtime environment variable holding the function's name"
+      ]
     },
     {
       "id": "mdn-set-cookie",
@@ -452,7 +454,14 @@
         "examples/09-ssr/tsconfig.json",
         "examples/09-ssr/app/tsconfig.json"
       ],
-      "tasks": ["dev:ssr", "test:unit", "typecheck", "typecheck:ssr", "lint:ssr", "ssr:check:output"],
+      "tasks": [
+        "dev:ssr",
+        "test:unit",
+        "typecheck",
+        "typecheck:ssr",
+        "lint:ssr",
+        "ssr:check:output"
+      ],
       "boundary": "local",
       "criteria": ["test", "local-dx"],
       "verification": "local"
@@ -551,7 +560,11 @@
         "en": "SSR: deployed, but nobody visits for a month"
       },
       "assumptions": {
-        "ja": ["リクエストゼロ、publish ゼロ", "bucket に 5 MB の静的 asset", "log は 1 週間で失効し、保存量ゼロ"],
+        "ja": [
+          "リクエストゼロ、publish ゼロ",
+          "bucket に 5 MB の静的 asset",
+          "log は 1 週間で失効し、保存量ゼロ"
+        ],
         "en": [
           "No requests and no publishes",
           "5 MB of static assets in the bucket",
@@ -559,7 +572,11 @@
         ]
       },
       "items": [
-        { "priceId": "s3.standard.storage", "quantity": 0.005, "basis": "5 MB stored for the month, in GB-month" }
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.005,
+          "basis": "5 MB stored for the month, in GB-month"
+        }
       ]
     },
     {
@@ -592,11 +609,31 @@
         ]
       },
       "items": [
-        { "priceId": "cloudfront.jp.request.https", "quantity": 400000, "basis": "100,000 page views x 4 requests" },
-        { "priceId": "cloudfront.jp.transfer", "quantity": 9.537, "basis": "100,000 page views x 100 KB, in GB" },
-        { "priceId": "lambda.request.arm", "quantity": 50000, "basis": "half of 100,000 HTML and API requests" },
-        { "priceId": "lambda.duration.arm", "quantity": 5000, "basis": "50,000 x 0.2 s x 0.5 GB, in GB-seconds" },
-        { "priceId": "logs.ingest.standard", "quantity": 0.0143, "basis": "50,000 x 0.3 KB, in GB" },
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 400000,
+          "basis": "100,000 page views x 4 requests"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 9.537,
+          "basis": "100,000 page views x 100 KB, in GB"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 50000,
+          "basis": "half of 100,000 HTML and API requests"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 5000,
+          "basis": "50,000 x 0.2 s x 0.5 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0143,
+          "basis": "50,000 x 0.3 KB, in GB"
+        },
         { "priceId": "logs.storage", "quantity": 0.0033, "basis": "0.0143 GB x 7/30, in GB-month" },
         {
           "priceId": "s3.request.tier2",

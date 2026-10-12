@@ -2,7 +2,12 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
 import { validator } from "hono/validator";
-import { type ErrorBody, type ShareNotificationResult, shareNotificationSchema } from "./contract.ts";
+
+import {
+  type ErrorBody,
+  type ShareNotificationResult,
+  shareNotificationSchema,
+} from "./contract.ts";
 import type { Logger } from "./log.ts";
 import { type NotifyDeps, sendShareNotification } from "./notify.ts";
 
@@ -22,7 +27,10 @@ const failure = (
   message: string,
   requestId: string,
   issues?: { path: string; message: string }[],
-) => ({ error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) } }) satisfies ErrorBody;
+) =>
+  ({
+    error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) },
+  }) satisfies ErrorBody;
 
 // #region app
 export function createApp(deps: AppDeps) {
@@ -48,7 +56,10 @@ export function createApp(deps: AppDeps) {
   app.onError((error, c) => {
     const requestId = c.get("requestId");
     if (error instanceof HTTPException && error.status === 400) {
-      return c.json(failure("invalid_request", "The request body is not valid JSON.", requestId), 400);
+      return c.json(
+        failure("invalid_request", "The request body is not valid JSON.", requestId),
+        400,
+      );
     }
     deps.log({
       level: "error",
@@ -68,13 +79,27 @@ export function createApp(deps: AppDeps) {
       bodyLimit({
         maxSize: 16 * 1024,
         onError: (c) =>
-          c.json(failure("payload_too_large", "The request body exceeds 16 KiB.", c.get("requestId")), 413),
+          c.json(
+            failure("payload_too_large", "The request body exceeds 16 KiB.", c.get("requestId")),
+            413,
+          ),
       }),
       validator("json", (value, c) => {
         const input = shareNotificationSchema.safeParse(value);
         if (!input.success) {
-          const issues = input.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
-          return c.json(failure("invalid_request", "The notification is not valid.", c.get("requestId"), issues), 400);
+          const issues = input.error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            message: issue.message,
+          }));
+          return c.json(
+            failure(
+              "invalid_request",
+              "The notification is not valid.",
+              c.get("requestId"),
+              issues,
+            ),
+            400,
+          );
         }
         return input.data;
       }),
@@ -87,26 +112,48 @@ export function createApp(deps: AppDeps) {
           case "sent":
             // 202: accepted for delivery. Arrival is a later event, not this response.
             return c.json(
-              { status: "accepted", notificationId, messageId: result.messageId } satisfies ShareNotificationResult,
+              {
+                status: "accepted",
+                notificationId,
+                messageId: result.messageId,
+              } satisfies ShareNotificationResult,
               202,
             );
           case "duplicate":
             return c.json(
-              { status: "duplicate", notificationId, state: result.state } satisfies ShareNotificationResult,
+              {
+                status: "duplicate",
+                notificationId,
+                state: result.state,
+              } satisfies ShareNotificationResult,
               200,
             );
           case "suppressed":
             return c.json(
-              { status: "suppressed", notificationId, reason: result.reason } satisfies ShareNotificationResult,
+              {
+                status: "suppressed",
+                notificationId,
+                reason: result.reason,
+              } satisfies ShareNotificationResult,
               200,
             );
           case "conflict":
             return c.json(
-              failure("idempotency_conflict", "This notificationId was used for a different mail.", requestId),
+              failure(
+                "idempotency_conflict",
+                "This notificationId was used for a different mail.",
+                requestId,
+              ),
               409,
             );
           case "rejected":
-            deps.log({ level: "warn", message: "send rejected", requestId, notificationId, reason: result.reason });
+            deps.log({
+              level: "warn",
+              message: "send rejected",
+              requestId,
+              notificationId,
+              reason: result.reason,
+            });
             return c.json(
               failure(
                 "send_rejected",

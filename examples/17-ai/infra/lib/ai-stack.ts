@@ -1,10 +1,12 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Architecture, FunctionUrlAuthType, InvokeMode, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
+
 import { modelArns, type VerifiedProfileId } from "./models.ts";
 
 export type AiStackProps = StackProps & { profileId: VerifiedProfileId };
@@ -23,7 +25,9 @@ export class AiStack extends Stack {
     });
 
     // #region role
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
 
     const arns = modelArns(props.profileId, {
@@ -76,7 +80,8 @@ export class AiStack extends Stack {
         // Bundle the AWS SDK too, so the function runs the version in pnpm-lock.yaml.
         externalModules: [],
         // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
     // #endregion function

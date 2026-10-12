@@ -1,4 +1,5 @@
 import { handle } from "hono/aws-lambda";
+
 import { composeObservedApp } from "./compose.ts";
 
 // #region handler

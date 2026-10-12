@@ -2,7 +2,9 @@
 //   node scripts/local-stores.ts <start|migrate|stop>
 // `start` and `stop` need a Docker daemon, which the Nix shell does not provide.
 // Every command refuses to run unless both endpoints are on this machine.
+
 import { spawnSync } from "node:child_process";
+
 import {
   CreateTableCommand,
   DynamoDBClient,
@@ -23,7 +25,9 @@ const dynamoDbUrl = new URL(dynamoDbEndpoint);
 
 for (const url of [valkeyUrl, dynamoDbUrl]) {
   if (url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
-    console.error(`${url.href} is not on this machine. These tasks only ever touch local containers.`);
+    console.error(
+      `${url.href} is not on this machine. These tasks only ever touch local containers.`,
+    );
     process.exit(1);
   }
 }
@@ -113,6 +117,8 @@ try {
   }
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  console.error(`Is DynamoDB Local running at ${dynamoDbEndpoint}? Start it with \`vp run kv:local:start\`.`);
+  console.error(
+    `Is DynamoDB Local running at ${dynamoDbEndpoint}? Start it with \`vp run kv:local:start\`.`,
+  );
   process.exitCode = 1;
 }

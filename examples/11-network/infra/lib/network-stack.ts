@@ -13,6 +13,7 @@ import {
   CfnVPCGatewayAttachment,
 } from "aws-cdk-lib/aws-ec2";
 import type { Construct } from "constructs";
+
 import { exportName, outputNames } from "../../src/exports.ts";
 import { type NetworkPlan, subnetsOf } from "../../src/plan.ts";
 
@@ -81,7 +82,10 @@ export class NetworkStack extends Stack {
     // Empty unless the plan asks for egress. Each one costs money from the moment it exists.
     const natGateways = new Map<string, CfnNatGateway>();
     for (const planned of plan.natGateways) {
-      const address = new CfnEIP(this, `${planned.subnetId}NatAddress`, { domain: "vpc", tags: named("nat") });
+      const address = new CfnEIP(this, `${planned.subnetId}NatAddress`, {
+        domain: "vpc",
+        tags: named("nat"),
+      });
       const natGateway = new CfnNatGateway(this, `${planned.subnetId}NatGateway`, {
         subnetId: at(planned.subnetId).subnet.ref,
         allocationId: address.attrAllocationId,
@@ -110,7 +114,9 @@ export class NetworkStack extends Stack {
       }
       const natGateway = natGateways.get(route.availabilityZone);
       if (natGateway === undefined) {
-        throw new Error(`${planned.id} routes to a NAT gateway in ${route.availabilityZone}, which the plan lacks`);
+        throw new Error(
+          `${planned.id} routes to a NAT gateway in ${route.availabilityZone}, which the plan lacks`,
+        );
       }
       new CfnRoute(this, `${planned.id}DefaultRoute`, {
         routeTableId,
@@ -139,7 +145,13 @@ export class NetworkStack extends Stack {
         groupDescription: "HTTPS from inside the VPC to the interface endpoints",
         vpcId: vpc.ref,
         securityGroupIngress: [
-          { ipProtocol: "tcp", fromPort: 443, toPort: 443, cidrIp: plan.vpcCidr, description: "HTTPS from the VPC" },
+          {
+            ipProtocol: "tcp",
+            fromPort: 443,
+            toPort: 443,
+            cidrIp: plan.vpcCidr,
+            description: "HTTPS from the VPC",
+          },
         ],
         tags: named("endpoints"),
       });
@@ -163,7 +175,9 @@ export class NetworkStack extends Stack {
 
     output(outputNames.vpcId, vpc.ref);
     output(outputNames.vpcCidr, plan.vpcCidr);
-    privateSubnets.forEach((subnet, index) => output(outputNames.zone(index + 1), subnet.availabilityZone));
+    privateSubnets.forEach((subnet, index) =>
+      output(outputNames.zone(index + 1), subnet.availabilityZone),
+    );
     for (const planned of plan.subnets) {
       output(outputNames.subnetId(planned.id), at(planned.id).subnet.ref);
       output(outputNames.routeTableId(planned.id), at(planned.id).routeTable.ref);

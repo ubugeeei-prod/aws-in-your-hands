@@ -16,7 +16,10 @@ export function hasControlCharacter(value: string): boolean {
 const headerText = (max: number) =>
   z
     .string()
-    .refine((value) => !hasControlCharacter(value), "must not contain line breaks or control characters")
+    .refine(
+      (value) => !hasControlCharacter(value),
+      "must not contain line breaks or control characters",
+    )
     .trim()
     .min(1)
     .max(max);
@@ -41,7 +44,14 @@ export type ShareNotification = z.infer<typeof shareNotificationSchema>;
 // #endregion request
 
 // #region states
-export const notificationStates = ["claimed", "rejected", "sent", "delivered", "bounced", "complained"] as const;
+export const notificationStates = [
+  "claimed",
+  "rejected",
+  "sent",
+  "delivered",
+  "bounced",
+  "complained",
+] as const;
 export type NotificationState = (typeof notificationStates)[number];
 
 export const suppressionReasons = ["bounce", "complaint"] as const;
@@ -53,8 +63,16 @@ export const shareNotificationResultSchema = z.discriminatedUnion("status", [
   // SES took the message. Whether it arrives is reported later, as an event.
   z.object({ status: z.literal("accepted"), notificationId: idSchema, messageId: z.string() }),
   // Already claimed by an earlier request. Nothing was sent this time.
-  z.object({ status: z.literal("duplicate"), notificationId: idSchema, state: z.enum(notificationStates) }),
-  z.object({ status: z.literal("suppressed"), notificationId: idSchema, reason: z.enum(suppressionReasons) }),
+  z.object({
+    status: z.literal("duplicate"),
+    notificationId: idSchema,
+    state: z.enum(notificationStates),
+  }),
+  z.object({
+    status: z.literal("suppressed"),
+    notificationId: idSchema,
+    reason: z.enum(suppressionReasons),
+  }),
 ]);
 export type ShareNotificationResult = z.infer<typeof shareNotificationResultSchema>;
 // #endregion result
@@ -68,7 +86,11 @@ export const notificationStatusSchema = z.object({
   messageId: z.string().optional(),
 });
 
-export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string(), mode: z.enum(["local", "aws"]) });
+export const healthSchema = z.object({
+  status: z.literal("ok"),
+  stage: z.string(),
+  mode: z.enum(["local", "aws"]),
+});
 
 // #region error
 export const errorCodes = [

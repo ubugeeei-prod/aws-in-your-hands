@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import {
   acknowledge,
   buildCfnReport,
@@ -19,7 +21,9 @@ type Fixture = {
 };
 
 const fixture = (name: string): Fixture =>
-  JSON.parse(readFileSync(new URL(`./fixtures/cloudformation/${name}.json`, import.meta.url), "utf8")) as Fixture;
+  JSON.parse(
+    readFileSync(new URL(`./fixtures/cloudformation/${name}.json`, import.meta.url), "utf8"),
+  ) as Fixture;
 
 /** Answers the four calls from a fixture and records the order they were made in. */
 function scripted(data: Fixture, overrides: Partial<CfnDriftApi> = {}) {
@@ -57,9 +61,17 @@ function scripted(data: Fixture, overrides: Partial<CfnDriftApi> = {}) {
 
 const POLLING: Polling = { intervalMs: 5000, maxAttempts: 5 };
 
-async function check(name: string, options: { acknowledgedTypes?: string[]; overrides?: Partial<CfnDriftApi> } = {}) {
+async function check(
+  name: string,
+  options: { acknowledgedTypes?: string[]; overrides?: Partial<CfnDriftApi> } = {},
+) {
   const run = scripted(fixture(name), options.overrides);
-  const outcome = await detectStackDrift({ stack: "AihShipApi", api: run.api, polling: POLLING, sleep: run.sleep });
+  const outcome = await detectStackDrift({
+    stack: "AihShipApi",
+    api: run.api,
+    polling: POLLING,
+    sleep: run.sleep,
+  });
   const report = buildCfnReport({
     stack: "AihShipApi",
     outcome,
@@ -87,7 +99,9 @@ describe("CloudFormation drift report", () => {
     const { report, stack } = await check("drifted");
     expect(report.status).toBe("drifted");
     expect(report.gate.exitCode).toBe(GATE_EXIT.differs);
-    expect(stack?.drifted).toEqual([{ logicalId: "Handler", type: "AWS::Lambda::Function", paths: ["/MemorySize"] }]);
+    expect(stack?.drifted).toEqual([
+      { logicalId: "Handler", type: "AWS::Lambda::Function", paths: ["/MemorySize"] },
+    ]);
     expect(JSON.stringify(report)).not.toContain("1024");
   });
 
@@ -95,7 +109,9 @@ describe("CloudFormation drift report", () => {
     const { report, stack } = await check("deleted");
     expect(report.status).toBe("deleted");
     expect(report.gate.exitCode).toBe(GATE_EXIT.differs);
-    expect(stack?.deleted).toEqual([{ logicalId: "ApiDefaultStage", type: "AWS::ApiGatewayV2::Stage" }]);
+    expect(stack?.deleted).toEqual([
+      { logicalId: "ApiDefaultStage", type: "AWS::ApiGatewayV2::Stage" },
+    ]);
   });
 
   it("IN_SYNC with an unchecked resource is not clean", async () => {
@@ -111,7 +127,10 @@ describe("CloudFormation drift report", () => {
     const { report, stack } = await check("nested-stack");
     expect(report.status).toBe("incomplete");
     expect(report.gate.exitCode).toBe(GATE_EXIT.unverified);
-    expect(stack?.uninspected[0]).toMatchObject({ logicalId: "Storage", type: "AWS::CloudFormation::Stack" });
+    expect(stack?.uninspected[0]).toMatchObject({
+      logicalId: "Storage",
+      type: "AWS::CloudFormation::Stack",
+    });
   });
 
   it("DETECTION_FAILED is failed even when the other resources match", async () => {
@@ -204,7 +223,9 @@ describe("CloudFormation drift report", () => {
 
 describe("acknowledged gaps", () => {
   it("exit 0 only when every unchecked resource is of an acknowledged type", async () => {
-    const { report } = await check("not-checked", { acknowledgedTypes: ["AWS::ApiGatewayV2::Integration"] });
+    const { report } = await check("not-checked", {
+      acknowledgedTypes: ["AWS::ApiGatewayV2::Integration"],
+    });
     // The status and the gate do not change. Only the exit code the task returns does.
     expect(report.status).toBe("unsupported");
     expect(report.gate.exitCode).toBe(GATE_EXIT.unverified);
@@ -218,15 +239,23 @@ describe("acknowledged gaps", () => {
     expect(report.acknowledged.note).toContain("AWS::ApiGatewayV2::Integration");
   });
 
-  it.each(["drifted", "deleted", "nested-stack", "stale-result", "detection-failed", "in-progress"])(
-    "never excuses %s",
-    async (name) => {
-      const { report, stack } = await check(name, {
-        acknowledgedTypes: ["AWS::ApiGatewayV2::Stage", "AWS::CloudFormation::Stack", "AWS::Lambda::Function"],
-      });
-      expect(report.acknowledged.exitCode).toBe(report.gate.exitCode);
-      expect(report.acknowledged.exitCode).not.toBe(0);
-      expect(stack === undefined ? null : acknowledge(stack, []).exitCode).toBe(report.gate.exitCode);
-    },
-  );
+  it.each([
+    "drifted",
+    "deleted",
+    "nested-stack",
+    "stale-result",
+    "detection-failed",
+    "in-progress",
+  ])("never excuses %s", async (name) => {
+    const { report, stack } = await check(name, {
+      acknowledgedTypes: [
+        "AWS::ApiGatewayV2::Stage",
+        "AWS::CloudFormation::Stack",
+        "AWS::Lambda::Function",
+      ],
+    });
+    expect(report.acknowledged.exitCode).toBe(report.gate.exitCode);
+    expect(report.acknowledged.exitCode).not.toBe(0);
+    expect(stack === undefined ? null : acknowledge(stack, []).exitCode).toBe(report.gate.exitCode);
+  });
 });

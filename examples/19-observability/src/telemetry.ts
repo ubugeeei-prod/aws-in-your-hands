@@ -1,4 +1,3 @@
-import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
 import {
   type Attributes,
   type Context,
@@ -12,6 +11,8 @@ import {
   trace,
 } from "@opentelemetry/api";
 
+import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
+
 // Only the API is imported here. Whoever starts the process decides whether
 // an SDK is behind it: src/local-tracing.ts on a laptop, a Lambda layer in AWS.
 // With nothing registered every call below is a no-op.
@@ -20,7 +21,11 @@ const tracer = () => trace.getTracer("aih-observability");
 // #region span
 export type SpanOptions = { attributes?: Attributes; kind?: SpanKind; parent?: Context };
 
-export function withSpan<T>(name: string, options: SpanOptions, run: (span: Span) => Promise<T>): Promise<T> {
+export function withSpan<T>(
+  name: string,
+  options: SpanOptions,
+  run: (span: Span) => Promise<T>,
+): Promise<T> {
   const { attributes = {}, kind = SpanKind.INTERNAL, parent = context.active() } = options;
   return tracer().startActiveSpan(name, { attributes, kind }, parent, async (span) => {
     try {

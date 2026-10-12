@@ -29,7 +29,12 @@ export type CellSummary = {
 };
 
 export type Verdict = "held" | "violated" | "inconclusive";
-export type LedgerReport = { verdict: Verdict; violations: Violation[]; cells: CellSummary[]; notes: string[] };
+export type LedgerReport = {
+  verdict: Verdict;
+  violations: Violation[];
+  cells: CellSummary[];
+  notes: string[];
+};
 
 /** 200 with a number is the only acknowledgement. A timeout, a 503, or a broken body proves nothing either way. */
 export const isAcknowledged = (attempt: Attempt): attempt is Attempt & { n: number } =>
@@ -40,7 +45,10 @@ export const isAcknowledged = (attempt: Attempt): attempt is Attempt & { n: numb
  *   prev < n            an acknowledged write is still there (the counter never goes back)
  *   n <= prev + 1 + u   every extra step is explained by a request that might have been applied
  */
-export function judgeCell(cell: number, attempts: Attempt[]): { summary: CellSummary; violations: Violation[] } {
+export function judgeCell(
+  cell: number,
+  attempts: Attempt[],
+): { summary: CellSummary; violations: Violation[] } {
   const violations: Violation[] = [];
   let previous = 0;
   let unknownSince = 0;
@@ -102,7 +110,9 @@ export function judge(output: ProbeOutput, options: JudgeOptions): LedgerReport 
 
   if (!output.complete) {
     inconclusive = true;
-    notes.push("the probe output is incomplete (no matching DONE line): the ledger may be missing requests");
+    notes.push(
+      "the probe output is incomplete (no matching DONE line): the ledger may be missing requests",
+    );
   }
   if (output.malformed.length > 0) {
     inconclusive = true;
@@ -115,15 +125,23 @@ export function judge(output: ProbeOutput, options: JudgeOptions): LedgerReport 
     cells.push(judged.summary);
     violations.push(...judged.violations);
 
-    const before = attempts.filter((attempt) => options.faultAtSeq === undefined || attempt.seq < options.faultAtSeq);
-    const after = attempts.filter((attempt) => options.faultAtSeq !== undefined && attempt.seq >= options.faultAtSeq);
+    const before = attempts.filter(
+      (attempt) => options.faultAtSeq === undefined || attempt.seq < options.faultAtSeq,
+    );
+    const after = attempts.filter(
+      (attempt) => options.faultAtSeq !== undefined && attempt.seq >= options.faultAtSeq,
+    );
     if (!before.some(isAcknowledged)) {
       inconclusive = true;
-      notes.push(`cell ${cell}: nothing was acknowledged before the fault, so there was nothing to lose`);
+      notes.push(
+        `cell ${cell}: nothing was acknowledged before the fault, so there was nothing to lose`,
+      );
     }
     if (options.faultAtSeq !== undefined && !after.some(isAcknowledged)) {
       inconclusive = true;
-      notes.push(`cell ${cell}: no acknowledgement after the fault, so its earlier writes were never read back`);
+      notes.push(
+        `cell ${cell}: no acknowledgement after the fault, so its earlier writes were never read back`,
+      );
     }
   }
   for (const cell of byCell.keys()) {
@@ -133,7 +151,8 @@ export function judge(output: ProbeOutput, options: JudgeOptions): LedgerReport 
     }
   }
 
-  const verdict: Verdict = violations.length > 0 ? "violated" : inconclusive ? "inconclusive" : "held";
+  const verdict: Verdict =
+    violations.length > 0 ? "violated" : inconclusive ? "inconclusive" : "held";
   return { verdict, violations, cells, notes };
 }
 
@@ -165,8 +184,12 @@ export function describeReport(report: LedgerReport): string[] {
     ...report.notes.map((note) => `  note: ${note}`),
   ];
   if (report.verdict === "held") {
-    lines.push("  Every acknowledged increment was still there afterwards, and no counter moved without a request.");
-    lines.push("  This says so for these requests and this one fault. It is not a proof about celld.");
+    lines.push(
+      "  Every acknowledged increment was still there afterwards, and no counter moved without a request.",
+    );
+    lines.push(
+      "  This says so for these requests and this one fault. It is not a proof about celld.",
+    );
   }
   return lines;
 }

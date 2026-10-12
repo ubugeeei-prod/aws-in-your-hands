@@ -1,12 +1,14 @@
+import { z } from "zod";
+
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
 import type { AttachmentRepository } from "@aih/example-07-uploads/api/src/attachment-repository.ts";
 import { MAX_UPLOAD_BYTES } from "@aih/example-07-uploads/api/src/contract.ts";
 import { parseObjectKey } from "@aih/example-07-uploads/api/src/keys.ts";
 import type { ObjectStore } from "@aih/example-07-uploads/api/src/object-store.ts";
-import { z } from "zod";
+
 import { type ObjectEvent, parseNotification } from "./events.ts";
-import type { InspectionRepository } from "./inspection.ts";
 import { judge } from "./inspect.ts";
+import type { InspectionRepository } from "./inspection.ts";
 import type { ObjectReader } from "./object-reader.ts";
 
 export type WorkerDeps = {
@@ -44,7 +46,12 @@ export async function handleEvent(deps: WorkerDeps, event: ObjectEvent): Promise
     if (event.sequencer === undefined) {
       return { status: "ignored", reason: "unordered_removal" };
     }
-    const result = await deps.inspections.deleteIfOlder(parts.owner, parts.noteId, parts.attachmentId, event.sequencer);
+    const result = await deps.inspections.deleteIfOlder(
+      parts.owner,
+      parts.noteId,
+      parts.attachmentId,
+      event.sequencer,
+    );
     return { status: result === "deleted" ? "forgotten" : "kept" };
   }
 
@@ -67,7 +74,9 @@ export async function handleEvent(deps: WorkerDeps, event: ObjectEvent): Promise
     size: object.size,
     declaredType: object.contentType,
     verdict: verdict.verdict,
-    ...(verdict.verdict === "ok" ? { width: verdict.width, height: verdict.height } : { reason: verdict.reason }),
+    ...(verdict.verdict === "ok"
+      ? { width: verdict.width, height: verdict.height }
+      : { reason: verdict.reason }),
     inspectedAt: deps.now().toISOString(),
   });
 
@@ -79,7 +88,9 @@ export async function handleEvent(deps: WorkerDeps, event: ObjectEvent): Promise
     await deps.objects.markAttached(event.key);
   }
 
-  return written === "written" ? { status: "recorded", verdict: verdict.verdict } : { status: "duplicate" };
+  return written === "written"
+    ? { status: "recorded", verdict: verdict.verdict }
+    : { status: "duplicate" };
 }
 // #endregion handle-event
 
@@ -98,7 +109,11 @@ export function createBatchHandler(deps: WorkerDeps) {
       try {
         const notification = parseNotification(record.body);
         if (notification.kind === "test") {
-          deps.log({ level: "info", message: "S3 test event acknowledged", messageId: record.messageId });
+          deps.log({
+            level: "info",
+            message: "S3 test event acknowledged",
+            messageId: record.messageId,
+          });
           continue;
         }
         for (const event of notification.events) {

@@ -1,11 +1,15 @@
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { RATE_LIMIT, WafStack } from "../lib/waf-stack.ts";
 
 const build = (region: string, commonRules: "count" | "block" = "count") =>
   Template.fromStack(
-    new WafStack(new App({ analyticsReporting: false }), "AihSecurityWaf", { env: { region }, commonRules }),
+    new WafStack(new App({ analyticsReporting: false }), "AihSecurityWaf", {
+      env: { region },
+      commonRules,
+    }),
   );
 
 type Rule = {
@@ -16,7 +20,9 @@ type Rule = {
   OverrideAction?: unknown;
 };
 const rulesOf = (template: Template): Rule[] =>
-  Object.values(template.findResources("AWS::WAFv2::WebACL")).flatMap((acl) => acl["Properties"].Rules as Rule[]);
+  Object.values(template.findResources("AWS::WAFv2::WebACL")).flatMap(
+    (acl) => acl["Properties"].Rules as Rule[],
+  );
 
 const template = build("us-east-1");
 
@@ -28,13 +34,22 @@ describe("AihSecurityWaf", () => {
   it("is one web ACL for CloudFront and nothing else", () => {
     // cdkd 0.296.28 registers a dedicated provider for AWS::WAFv2::WebACL.
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect(Object.values(resources).map((resource) => resource.Type)).toEqual(["AWS::WAFv2::WebACL"]);
-    template.hasResourceProperties("AWS::WAFv2::WebACL", { Scope: "CLOUDFRONT", DefaultAction: { Allow: {} } });
+    expect(Object.values(resources).map((resource) => resource.Type)).toEqual([
+      "AWS::WAFv2::WebACL",
+    ]);
+    template.hasResourceProperties("AWS::WAFv2::WebACL", {
+      Scope: "CLOUDFRONT",
+      DefaultAction: { Allow: {} },
+    });
   });
 
   it("has three rules, which is what the monthly fee is counted from", () => {
     const rules = rulesOf(template);
-    expect(rules.map((rule) => rule.Name)).toEqual(["RateLimitPerIp", "AwsIpReputation", "AwsCommonRules"]);
+    expect(rules.map((rule) => rule.Name)).toEqual([
+      "RateLimitPerIp",
+      "AwsIpReputation",
+      "AwsCommonRules",
+    ]);
     expect(rules.map((rule) => rule.Priority)).toEqual([0, 1, 2]);
   });
 
@@ -55,7 +70,9 @@ describe("AihSecurityWaf", () => {
       { VendorName: "AWS", Name: "AWSManagedRulesCommonRuleSet" },
     ]);
     // Bot Control, ATP and the like carry their own monthly and per-request fees.
-    expect(JSON.stringify(rulesOf(template))).not.toMatch(/BotControl|ATPRuleSet|ACFPRuleSet|AntiDDoS/);
+    expect(JSON.stringify(rulesOf(template))).not.toMatch(
+      /BotControl|ATPRuleSet|ACFPRuleSet|AntiDDoS/,
+    );
   });
 
   it("only counts the core rule set until asked to block", () => {

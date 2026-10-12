@@ -1,17 +1,27 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { NotesAppStack } from "../lib/notes-app-stack.ts";
 
-const template = Template.fromStack(new NotesAppStack(new App(), "AihNotesApp", { env: { region: "ap-northeast-1" } }));
+const template = Template.fromStack(
+  new NotesAppStack(new App(), "AihNotesApp", { env: { region: "ap-northeast-1" } }),
+);
 
 const routes = Object.values(template.findResources("AWS::ApiGatewayV2::Route")).map(
-  (route) => route["Properties"] as { RouteKey: string; AuthorizationType?: string; AuthorizationScopes?: string[] },
+  (route) =>
+    route["Properties"] as {
+      RouteKey: string;
+      AuthorizationType?: string;
+      AuthorizationScopes?: string[];
+    },
 );
 
 describe("NotesAppStack: who can call the API", () => {
   it("protects every route except /health", () => {
-    const open = routes.filter((route) => route.AuthorizationType !== "JWT").map((route) => route.RouteKey);
+    const open = routes
+      .filter((route) => route.AuthorizationType !== "JWT")
+      .map((route) => route.RouteKey);
     expect(open).toEqual(["GET /health"]);
     expect(routes).toHaveLength(7);
   });
@@ -31,7 +41,10 @@ describe("NotesAppStack: who can call the API", () => {
         Issuer: {
           "Fn::Join": [
             "",
-            ["https://cognito-idp.ap-northeast-1.amazonaws.com/", { Ref: Match.stringLikeRegexp("^Users") }],
+            [
+              "https://cognito-idp.ap-northeast-1.amazonaws.com/",
+              { Ref: Match.stringLikeRegexp("^Users") },
+            ],
           ],
         },
       },
@@ -39,7 +52,9 @@ describe("NotesAppStack: who can call the API", () => {
   });
 
   it("allows two CORS origins, never *", () => {
-    const api = Object.values(template.findResources("AWS::ApiGatewayV2::Api"))[0]?.["Properties"] as {
+    const api = Object.values(template.findResources("AWS::ApiGatewayV2::Api"))[0]?.[
+      "Properties"
+    ] as {
       CorsConfiguration: { AllowOrigins: unknown[]; AllowHeaders: string[] };
     };
     expect(api.CorsConfiguration.AllowOrigins).toHaveLength(2);
@@ -66,14 +81,20 @@ describe("NotesAppStack: how users sign in", () => {
   });
 
   it("offers no direct password flow", () => {
-    const client = Object.values(template.findResources("AWS::Cognito::UserPoolClient"))[0]?.["Properties"] as {
+    const client = Object.values(template.findResources("AWS::Cognito::UserPoolClient"))[0]?.[
+      "Properties"
+    ] as {
       ExplicitAuthFlows?: string[];
     };
-    expect((client.ExplicitAuthFlows ?? []).filter((flow) => flow !== "ALLOW_REFRESH_TOKEN_AUTH")).toEqual([]);
+    expect(
+      (client.ExplicitAuthFlows ?? []).filter((flow) => flow !== "ALLOW_REFRESH_TOKEN_AUTH"),
+    ).toEqual([]);
   });
 
   it("has exactly two callback URLs", () => {
-    const client = Object.values(template.findResources("AWS::Cognito::UserPoolClient"))[0]?.["Properties"] as {
+    const client = Object.values(template.findResources("AWS::Cognito::UserPoolClient"))[0]?.[
+      "Properties"
+    ] as {
       CallbackURLs: unknown[];
     };
     expect(client.CallbackURLs).toHaveLength(2);
@@ -94,14 +115,18 @@ describe("NotesAppStack: resources", () => {
   it("passes the client ID to the function", () => {
     template.hasResourceProperties("AWS::Lambda::Function", {
       Environment: {
-        Variables: Match.objectLike({ USER_POOL_CLIENT_ID: { Ref: Match.stringLikeRegexp("^UsersSpa") } }),
+        Variables: Match.objectLike({
+          USER_POOL_CLIENT_ID: { Ref: Match.stringLikeRegexp("^UsersSpa") },
+        }),
       },
     });
   });
 
   it("uses only resource types looked up in the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::ApiGatewayV2::Api",
       "AWS::ApiGatewayV2::Authorizer",
       "AWS::ApiGatewayV2::Integration",

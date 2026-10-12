@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
+
 import { type AppDeps, createApp } from "../src/app.ts";
 import { errorSchema, itemListSchema, itemSchema } from "../src/contract.ts";
 import type { LogEntry } from "../src/log.ts";
@@ -16,7 +17,11 @@ function setup(overrides: Partial<AppDeps> = {}) {
   let requests = 0;
   const app = createApp({
     env: { STAGE: "test", KV_STORE: "memory", RATE_ON_ERROR: "allow" },
-    limiter: createRateLimiter(new MemoryCounterStore(), { limit: 2, windowMs: 60_000, algorithm: "fixed" }),
+    limiter: createRateLimiter(new MemoryCounterStore(), {
+      limit: 2,
+      windowMs: 60_000,
+      algorithm: "fixed",
+    }),
     source: {
       list: async () => {
         loads++;
@@ -119,7 +124,11 @@ describe("the rest of the API", () => {
     for (let request = 0; request < 5; request++) {
       expect((await app.request("/health")).status).toBe(200);
     }
-    expect(await (await app.request("/health")).json()).toEqual({ status: "ok", stage: "test", store: "memory" });
+    expect(await (await app.request("/health")).json()).toEqual({
+      status: "ok",
+      stage: "test",
+      store: "memory",
+    });
   });
 
   it("puts the same request ID in the header, the error body, and the log", async () => {

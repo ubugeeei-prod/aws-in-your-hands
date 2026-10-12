@@ -1,5 +1,7 @@
 import { setTimeout as pause } from "node:timers/promises";
+
 import { defineEventHandler, setResponseHeader } from "h3";
+
 import { feedLines } from "../../core/notes.ts";
 import { context } from "../context.ts";
 

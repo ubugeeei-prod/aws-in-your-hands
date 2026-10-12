@@ -5,13 +5,17 @@
 // Compares the uploads bucket with the table and removes objects that no
 // attachment record, or no note, points at. Runs with your credentials, not
 // the function's.
+
 import { parseArgs } from "node:util";
+
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { S3Client } from "@aws-sdk/client-s3";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { DynamoDbNoteRepository } from "@aih/example-05-dynamodb/src/dynamodb-repository.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { S3Client } from "@aws-sdk/client-s3";
+
 import { DynamoDbAttachmentRepository } from "../api/src/dynamodb-attachment-repository.ts";
 import { S3ObjectStore } from "../api/src/s3-object-store.ts";
 import { sweep } from "../api/src/sweep.ts";
@@ -31,7 +35,10 @@ try {
 
   const report = await sweep(
     {
-      objects: new S3ObjectStore(new S3Client({ region: target.region }), requireOutput(outputs, "UploadsBucketName")),
+      objects: new S3ObjectStore(
+        new S3Client({ region: target.region }),
+        requireOutput(outputs, "UploadsBucketName"),
+      ),
       attachments: new DynamoDbAttachmentRepository(documents, table),
       notes: new DynamoDbNoteRepository(documents, table),
       now: () => new Date(),

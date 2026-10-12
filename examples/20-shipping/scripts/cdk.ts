@@ -1,10 +1,13 @@
 // vp run ship:cfn:<action> and ship:ci:<action> end up here.
 //   node examples/20-shipping/scripts/cdk.ts <action> <api|ci> [cdk flags...]
+
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { resolveTarget } from "@aih/tools/aws/target.ts";
+
 import { ACTIONS, buildCdkInvocation, isAction, isTarget, TARGETS } from "../src/cdk-args.ts";
 
 const [action, target, ...extra] = process.argv.slice(2);
@@ -24,7 +27,14 @@ try {
   const { region } = resolveTarget(process.env);
   const unattended = process.env["CI"] === "true";
   // Built once before any AWS call, so a bad stage or a missing flag stops here.
-  const planned = buildCdkInvocation({ action, target, extra, unattended, accountId: "000000000000", region });
+  const planned = buildCdkInvocation({
+    action,
+    target,
+    extra,
+    unattended,
+    accountId: "000000000000",
+    region,
+  });
 
   let accountId: string | undefined;
   if (planned.access !== "local") {

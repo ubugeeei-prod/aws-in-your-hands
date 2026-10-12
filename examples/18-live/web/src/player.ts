@@ -3,6 +3,7 @@ import { create, isPlayerSupported, PlayerEventType, PlayerState } from "amazon-
 // files into the build and hands back their URLs.
 import wasmWorker from "amazon-ivs-player/dist/assets/amazon-ivs-wasmworker.min.js?url";
 import wasmBinary from "amazon-ivs-player/dist/assets/amazon-ivs-wasmworker.min.wasm?url";
+
 import type { PlayerSignal } from "./viewer.ts";
 
 export type Playback = {

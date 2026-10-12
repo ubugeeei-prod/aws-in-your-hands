@@ -33,7 +33,9 @@ export type Env = z.infer<typeof envSchema>;
 export function parseEnv(source: Record<string, string | undefined>): Env {
   const result = envSchema.safeParse(source);
   if (!result.success) {
-    const problems = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = result.error.issues.map(
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
+    );
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
   return result.data;

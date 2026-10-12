@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { parseSecurityConfig, WAF_REGION } from "../lib/config.ts";
 import { SecurityStack } from "../lib/security-stack.ts";
 import { WafStack } from "../lib/waf-stack.ts";
@@ -10,7 +11,8 @@ const config = parseSecurityConfig((key) => app.node.tryGetContext(key));
 // The default deploy: CloudFront, a function, one secret. `-c cmk=on` and `-c webAclArn=...` add the monthly fees.
 new SecurityStack(app, "AihSecurity", {
   env: { region: "ap-northeast-1" },
-  description: "AWS in Your Hands chapter 21: a token API that reads its signing key from Secrets Manager",
+  description:
+    "AWS in Your Hands chapter 21: a token API that reads its signing key from Secrets Manager",
   webAclArn: config.webAclArn,
   customerManagedKey: config.cmk === "on",
 });

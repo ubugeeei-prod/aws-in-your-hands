@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
+
 import { MemoryCacheStore } from "../src/memory-store.ts";
 import { createReadThrough, jitteredTtl, type ReadThroughOptions } from "../src/read-through.ts";
 import type { CacheStore } from "../src/stores.ts";
@@ -52,7 +53,11 @@ describe("read-through cache", () => {
   it("asks the source once, then answers from the cache until the TTL passes", async () => {
     const { cache, clock } = setup();
     const origin = source("v1");
-    expect(await cache.get("list", origin.load)).toEqual({ value: "v1", source: "origin", loadedAt: clock.now });
+    expect(await cache.get("list", origin.load)).toEqual({
+      value: "v1",
+      source: "origin",
+      loadedAt: clock.now,
+    });
     clock.now += TTL - 1;
     expect(await cache.get("list", origin.load)).toMatchObject({ value: "v1", source: "cache" });
     expect(origin.state.loads).toBe(1);
@@ -130,7 +135,9 @@ describe("cache stampede", () => {
       loads++;
       return gate.promise;
     };
-    const environments = Array.from({ length: CALLERS }, () => createReadThrough({ ...options, store }));
+    const environments = Array.from({ length: CALLERS }, () =>
+      createReadThrough({ ...options, store }),
+    );
 
     const pending = environments.map((environment) => environment.get("list", load));
     await settle();
@@ -153,7 +160,9 @@ describe("cache stampede", () => {
     await settle();
     expect(loads).toBe(1);
     gate.resolve("v1");
-    expect((await Promise.all(pending)).map((loaded) => loaded.value)).toEqual(Array(CALLERS).fill("v1"));
+    expect((await Promise.all(pending)).map((loaded) => loaded.value)).toEqual(
+      Array(CALLERS).fill("v1"),
+    );
   });
   // #endregion single-flight-test
 
@@ -227,7 +236,13 @@ describe("cache stampede", () => {
     const origin = source("v1");
     const cache = createReadThrough({
       ...options,
-      lock: { ttlMs: 5_000, waitMs: 100, maxWaits: 2, newOwner: () => "impatient", sleep: async () => {} },
+      lock: {
+        ttlMs: 5_000,
+        waitMs: 100,
+        maxWaits: 2,
+        newOwner: () => "impatient",
+        sleep: async () => {},
+      },
     });
     expect(await cache.get("list", origin.load)).toMatchObject({ value: "v1", source: "origin" });
   });
@@ -287,7 +302,10 @@ describe("a cache that fails", () => {
 
   it("answers from the source when the store cannot be read or written", async () => {
     const errors: unknown[] = [];
-    const { cache } = setup({ store: broken({ get: down, set: down }), onStoreError: (error) => errors.push(error) });
+    const { cache } = setup({
+      store: broken({ get: down, set: down }),
+      onStoreError: (error) => errors.push(error),
+    });
     const origin = source("v1");
     expect(await cache.get("list", origin.load)).toMatchObject({ value: "v1", source: "origin" });
     expect(await cache.get("list", origin.load)).toMatchObject({ value: "v1", source: "origin" });
@@ -299,7 +317,10 @@ describe("a cache that fails", () => {
       store: broken({ tryLock: down }),
       lock: { ttlMs: 5_000, waitMs: 100, maxWaits: 3, newOwner: () => "a", sleep: async () => {} },
     });
-    expect(await cache.get("list", source("v1").load)).toMatchObject({ value: "v1", source: "origin" });
+    expect(await cache.get("list", source("v1").load)).toMatchObject({
+      value: "v1",
+      source: "origin",
+    });
   });
 
   it("treats a value it cannot read as a miss", async () => {
@@ -308,9 +329,15 @@ describe("a cache that fails", () => {
       value: JSON.stringify({ loadedAt: "yesterday", value: 42 }),
       expiresAt: clock.now + TTL,
     });
-    expect(await cache.get("list", source("v1").load)).toMatchObject({ value: "v1", source: "origin" });
+    expect(await cache.get("list", source("v1").load)).toMatchObject({
+      value: "v1",
+      source: "origin",
+    });
     await store.set("list", { value: "not json", expiresAt: clock.now + TTL });
-    expect(await cache.get("list", source("v1").load)).toMatchObject({ value: "v1", source: "origin" });
+    expect(await cache.get("list", source("v1").load)).toMatchObject({
+      value: "v1",
+      source: "origin",
+    });
   });
 
   it("tells the writer when an invalidation did not happen", async () => {
@@ -320,7 +347,9 @@ describe("a cache that fails", () => {
 
   it("does not hide a failing source behind the cache", async () => {
     const { cache } = setup();
-    await expect(cache.get("list", () => Promise.reject(new Error("source down")))).rejects.toThrow("source down");
+    await expect(cache.get("list", () => Promise.reject(new Error("source down")))).rejects.toThrow(
+      "source down",
+    );
     // And the failure is not remembered.
     expect(await cache.get("list", source("v1").load)).toMatchObject({ value: "v1" });
   });

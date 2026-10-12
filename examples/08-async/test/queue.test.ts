@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { deliverOnce } from "../src/local-queue.ts";
 import { MAX_RECEIVES, setup, VISIBILITY_MS } from "./harness.ts";
 
@@ -20,7 +21,9 @@ describe("a batch with one bad message", () => {
 
     expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: poison }] });
     expect(await context.inspections.get("alice", first.note.id, first.attachmentId)).toBeDefined();
-    expect(await context.inspections.get("alice", second.note.id, second.attachmentId)).toBeDefined();
+    expect(
+      await context.inspections.get("alice", second.note.id, second.attachmentId),
+    ).toBeDefined();
   });
 
   it("a message that never succeeds ends in the dead-letter queue, not in a loop", async () => {
@@ -73,7 +76,10 @@ describe("messages the worker has no work for", () => {
     context.queue.send(
       JSON.stringify({
         Records: [
-          { eventName: "ObjectCreated:Put", s3: { object: { key: "logs/2026.txt", eTag: "abc", sequencer: "0A" } } },
+          {
+            eventName: "ObjectCreated:Put",
+            s3: { object: { key: "logs/2026.txt", eTag: "abc", sequencer: "0A" } },
+          },
         ],
       }),
     );
@@ -95,7 +101,9 @@ describe("the dead-letter queue", () => {
       context.advance(VISIBILITY_MS);
     }
     expect(context.queue.stats()).toEqual({ visible: 0, inFlight: 0, dead: 1 });
-    expect(await context.inspections.get("alice", upload.note.id, upload.attachmentId)).toBeUndefined();
+    expect(
+      await context.inspections.get("alice", upload.note.id, upload.attachmentId),
+    ).toBeUndefined();
     const parked = context.queue.dead()[0]?.messageId;
 
     expect(context.queue.redrive()).toBe(1);
@@ -106,7 +114,9 @@ describe("the dead-letter queue", () => {
 
     context.advance(VISIBILITY_MS);
     await context.deliver();
-    expect(await context.inspections.get("alice", upload.note.id, upload.attachmentId)).toMatchObject({
+    expect(
+      await context.inspections.get("alice", upload.note.id, upload.attachmentId),
+    ).toMatchObject({
       verdict: "ok",
     });
     expect(context.queue.stats()).toEqual({ visible: 0, inFlight: 0, dead: 0 });

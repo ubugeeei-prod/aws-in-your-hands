@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { planObjectRestore, restoreObjects } from "../src/object-restore.ts";
 import { MemoryVersionedBucket, type ObjectVersion } from "../src/versioned-bucket.ts";
 import { failingOn } from "./world.ts";
@@ -89,7 +90,12 @@ describe("planObjectRestore", () => {
   });
 
   it("orders versions by time, whatever order the listing gave them in", () => {
-    const version = (versionId: string, minute: number, deleteMarker: boolean, isLatest = false): ObjectVersion => ({
+    const version = (
+      versionId: string,
+      minute: number,
+      deleteMarker: boolean,
+      isLatest = false,
+    ): ObjectVersion => ({
       key: "u/a/n/1",
       versionId,
       deleteMarker,
@@ -98,7 +104,11 @@ describe("planObjectRestore", () => {
       ...(deleteMarker ? {} : { eTag: versionId }),
     });
     // S3 returns versions and delete markers as two lists.
-    const listing = [version("old", 1, false), version("mid", 3, false), version("marker", 10, true, true)];
+    const listing = [
+      version("old", 1, false),
+      version("mid", 3, false),
+      version("marker", 10, true, true),
+    ];
 
     expect(planObjectRestore(listing, at(5)).steps).toEqual([
       { type: "remove_delete_marker", key: "u/a/n/1", versionId: "marker" },
@@ -137,9 +147,9 @@ describe("restoreObjects", () => {
     const { bucket, before } = await damaged();
     const flaky = failingOn(bucket, "copyVersion", 1);
 
-    await expect(restoreObjects(flaky, { prefix: "u/", point: at(5), dryRun: false })).rejects.toThrow(
-      "injected failure",
-    );
+    await expect(
+      restoreObjects(flaky, { prefix: "u/", point: at(5), dryRun: false }),
+    ).rejects.toThrow("injected failure");
     expect(await current(bucket)).not.toEqual(before);
 
     await restoreObjects(bucket, { prefix: "u/", point: at(5), dryRun: false });

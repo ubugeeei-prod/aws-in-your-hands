@@ -12,7 +12,7 @@ export type UpdateResult =
 
 // "Someone else saved first" is a return value, not an exception, so the
 // type checker makes every caller handle it.
-export interface NoteRepository {
+export type NoteRepository = {
   /** Never overwrites an existing note. */
   create(owner: string, note: Note): Promise<CreateResult>;
   get(owner: string, id: string): Promise<Note | undefined>;
@@ -25,7 +25,7 @@ export interface NoteRepository {
     change: { title: string; body: string; expectedVersion: number; updatedAt: string },
   ): Promise<UpdateResult>;
   delete(owner: string, id: string): Promise<boolean>;
-}
+};
 
 export class InvalidCursorError extends Error {
   constructor() {

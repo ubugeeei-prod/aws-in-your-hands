@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseUploadsEnv } from "../src/env.ts";
 
 describe("uploads environment", () => {

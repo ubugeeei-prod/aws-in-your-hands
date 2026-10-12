@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { emailAddressSchema, shareNotificationSchema } from "../src/contract.ts";
 import { buildShareEmail, escapeHtml, fingerprint } from "../src/message.ts";
 import { input, settings } from "./setup.ts";
@@ -35,18 +36,22 @@ describe("header injection", () => {
   });
 
   it("refuses an ID that would not survive as an SES message tag", () => {
-    expect(shareNotificationSchema.safeParse({ ...input, notificationId: "share 1" }).success).toBe(false);
-    expect(shareNotificationSchema.safeParse({ ...input, notificationId: "a".repeat(65) }).success).toBe(false);
+    expect(shareNotificationSchema.safeParse({ ...input, notificationId: "share 1" }).success).toBe(
+      false,
+    );
+    expect(
+      shareNotificationSchema.safeParse({ ...input, notificationId: "a".repeat(65) }).success,
+    ).toBe(false);
   });
 
   it("is checked again where the headers are assembled", () => {
     // Callers that skip the schema still cannot get a line break into a header.
-    expect(() => buildShareEmail({ ...input, noteTitle: "x\r\nBcc: attacker@example.com" }, settings)).toThrow(
-      /noteTitle/,
-    );
-    expect(() => buildShareEmail({ ...input, to: "recipient@example.com\nBcc: a@example.com" }, settings)).toThrow(
-      /to /,
-    );
+    expect(() =>
+      buildShareEmail({ ...input, noteTitle: "x\r\nBcc: attacker@example.com" }, settings),
+    ).toThrow(/noteTitle/);
+    expect(() =>
+      buildShareEmail({ ...input, to: "recipient@example.com\nBcc: a@example.com" }, settings),
+    ).toThrow(/to /);
   });
 });
 
@@ -74,7 +79,10 @@ describe("share email", () => {
   });
 
   it("links only to the configured origin", () => {
-    const email = buildShareEmail(input, { ...settings, appOrigin: "https://notes.example.com/app" });
+    const email = buildShareEmail(input, {
+      ...settings,
+      appOrigin: "https://notes.example.com/app",
+    });
     expect(email.text).toContain("Open the note: https://notes.example.com/notes/note-1");
   });
 
@@ -82,6 +90,8 @@ describe("share email", () => {
     const same = fingerprint(buildShareEmail(input, settings));
     expect(fingerprint(buildShareEmail({ ...input }, settings))).toBe(same);
     expect(fingerprint(buildShareEmail({ ...input, noteTitle: "Other" }, settings))).not.toBe(same);
-    expect(fingerprint(buildShareEmail({ ...input, to: "other@example.com" }, settings))).not.toBe(same);
+    expect(fingerprint(buildShareEmail({ ...input, to: "other@example.com" }, settings))).not.toBe(
+      same,
+    );
   });
 });

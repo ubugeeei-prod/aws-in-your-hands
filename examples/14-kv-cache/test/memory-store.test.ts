@@ -1,10 +1,15 @@
 import { randomUUID } from "node:crypto";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { MemoryCacheStore, MemoryCounterStore } from "../src/memory-store.ts";
 import { createRateLimiter } from "../src/rate-limit.ts";
 import { describeCacheContract, describeCounterContract, fakeClock } from "./store-contracts.ts";
 
-describeCounterContract("memory", async () => ({ store: new MemoryCounterStore(), subject: randomUUID() }));
+describeCounterContract("memory", async () => ({
+  store: new MemoryCounterStore(),
+  subject: randomUUID(),
+}));
 describeCacheContract("memory", async () => ({
   store: new MemoryCacheStore(),
   prefix: randomUUID(),

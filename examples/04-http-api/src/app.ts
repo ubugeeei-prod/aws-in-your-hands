@@ -3,6 +3,7 @@ import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { validator } from "hono/validator";
+
 import { createNoteSchema, type ErrorBody } from "./contract.ts";
 import type { Env } from "./env.ts";
 import type { Logger } from "./log.ts";
@@ -23,7 +24,10 @@ const failure = (
   message: string,
   requestId: string,
   issues?: { path: string; message: string }[],
-) => ({ error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) } }) satisfies ErrorBody;
+) =>
+  ({
+    error: { code, message, requestId, ...(issues === undefined ? {} : { issues }) },
+  }) satisfies ErrorBody;
 
 // #region app
 export function createApp(deps: AppDeps) {
@@ -47,14 +51,21 @@ export function createApp(deps: AppDeps) {
   });
 
   app.use(
-    cors({ origin: deps.env.ALLOWED_ORIGIN, allowMethods: ["GET", "POST", "DELETE"], allowHeaders: ["content-type"] }),
+    cors({
+      origin: deps.env.ALLOWED_ORIGIN,
+      allowMethods: ["GET", "POST", "DELETE"],
+      allowHeaders: ["content-type"],
+    }),
   );
 
   app.onError((error, c) => {
     const requestId = c.get("requestId");
     if (error instanceof HTTPException && error.status === 400) {
       // The JSON validator throws this when the body does not parse.
-      return c.json(failure("invalid_request", "The request body is not valid JSON.", requestId), 400);
+      return c.json(
+        failure("invalid_request", "The request body is not valid JSON.", requestId),
+        400,
+      );
     }
     // The stack trace goes to the log, never to the caller.
     deps.log({
@@ -76,14 +87,23 @@ export function createApp(deps: AppDeps) {
       bodyLimit({
         maxSize: 64 * 1024,
         onError: (c) =>
-          c.json(failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")), 413),
+          c.json(
+            failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")),
+            413,
+          ),
       }),
       // Runtime check, and the request type that hc<App> shows to callers.
       validator("json", (value, c) => {
         const input = createNoteSchema.safeParse(value);
         if (!input.success) {
-          const issues = input.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
-          return c.json(failure("invalid_request", "The note is not valid.", c.get("requestId"), issues), 400);
+          const issues = input.error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            message: issue.message,
+          }));
+          return c.json(
+            failure("invalid_request", "The note is not valid.", c.get("requestId"), issues),
+            400,
+          );
         }
         return input.data;
       }),

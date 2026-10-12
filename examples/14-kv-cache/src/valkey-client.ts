@@ -1,4 +1,5 @@
 import { Cluster, Redis } from "iovalkey";
+
 import { type AwsCredentials, elastiCacheAuthToken } from "./elasticache-token.ts";
 import type { ValkeyCommands, ValkeyProvider } from "./valkey-store.ts";
 
@@ -13,7 +14,10 @@ export function withDeadline(client: Redis | Cluster, timeoutMs: number): Valkey
   const within = async <T>(command: Promise<T>): Promise<T> => {
     let timer: NodeJS.Timeout | undefined;
     const deadline = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`Valkey did not answer within ${timeoutMs} ms`)), timeoutMs);
+      timer = setTimeout(
+        () => reject(new Error(`Valkey did not answer within ${timeoutMs} ms`)),
+        timeoutMs,
+      );
     });
     try {
       return await Promise.race([command, deadline]);
@@ -24,7 +28,11 @@ export function withDeadline(client: Redis | Cluster, timeoutMs: number): Valkey
   return {
     get: (key) => within(client.get(key)),
     set: (key: string, value: string, token: "PXAT", at: number, nx?: "NX") =>
-      within(nx === undefined ? client.set(key, value, token, at) : client.set(key, value, token, at, nx)),
+      within(
+        nx === undefined
+          ? client.set(key, value, token, at)
+          : client.set(key, value, token, at, nx),
+      ),
     del: (key) => within(client.del(key)),
     eval: (script, numberOfKeys, ...args) => within(client.eval(script, numberOfKeys, ...args)),
   };

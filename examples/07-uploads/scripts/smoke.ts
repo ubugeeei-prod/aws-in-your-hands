@@ -4,10 +4,13 @@
 // Without AIH_ACCESS_TOKEN it checks only that the routes turn strangers away.
 // With one, it uploads a tiny PNG to the real bucket, tries three uploads
 // S3 should refuse, and deletes what it created. The token is never printed.
+
 import { parseArgs } from "node:util";
+
 import { ApiError, createNotesClient } from "@aih/example-06-auth/api/src/client.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { createAttachmentsClient, sendUpload, UploadError } from "../api/src/client.ts";
 import { MAX_UPLOAD_BYTES, type UploadPermit } from "../api/src/contract.ts";
 
@@ -51,7 +54,10 @@ try {
   console.log(`api: ${url}`);
 
   const anonymous = createAttachmentsClient(url, () => undefined);
-  await expectRejected("a permit request without a token", anonymous.requestUpload("x", { contentType: "image/png" }));
+  await expectRejected(
+    "a permit request without a token",
+    anonymous.requestUpload("x", { contentType: "image/png" }),
+  );
   await expectRejected("a list without a token", anonymous.list("x"));
 
   if (token === undefined) {
@@ -59,7 +65,10 @@ try {
   } else {
     const notes = createNotesClient(url, () => token);
     const attachments = createAttachmentsClient(url, () => token);
-    const note = await notes.create({ title: `upload smoke ${new Date().toISOString()}`, body: "" });
+    const note = await notes.create({
+      title: `upload smoke ${new Date().toISOString()}`,
+      body: "",
+    });
     try {
       const tampered = (permit: UploadPermit, change: Record<string, string>): UploadPermit => ({
         ...permit,
@@ -89,7 +98,11 @@ try {
       // No Authorization header: the URL alone must be enough, and must return the bytes.
       const image = await fetch(listed.url);
       const body = new Uint8Array(await image.arrayBuffer());
-      if (!image.ok || image.headers.get("content-type") !== "image/png" || body.byteLength !== pixel.byteLength) {
+      if (
+        !image.ok ||
+        image.headers.get("content-type") !== "image/png" ||
+        body.byteLength !== pixel.byteLength
+      ) {
         throw new Error(`the view URL answered ${image.status} with ${body.byteLength} bytes`);
       }
       console.log("ok   the view URL returns the image without a token");
@@ -105,7 +118,9 @@ try {
 } catch (error) {
   console.error(
     "FAIL",
-    error instanceof ApiError ? `${error.status} ${error.code} (request ${error.requestId})` : error,
+    error instanceof ApiError
+      ? `${error.status} ${error.code} (request ${error.requestId})`
+      : error,
   );
   process.exit(1);
 }

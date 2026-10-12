@@ -3,6 +3,7 @@ import { createNotesClient } from "@aih/example-06-auth/api/src/client.ts";
 import { signLocalToken } from "@aih/example-06-auth/api/src/local-auth.ts";
 import { createAttachmentsClient, sendUpload } from "@aih/example-07-uploads/api/src/client.ts";
 import { createLocalStoreHandler } from "@aih/example-07-uploads/api/src/local-store-http.ts";
+
 import { createLocal } from "../src/local.ts";
 import { PNG_3X2 } from "./fixtures.ts";
 
@@ -61,14 +62,23 @@ export async function setup(options: { duplicate?: boolean } = {}) {
   const controls = new Map<StoreName, ReturnType<typeof controllable>>();
 
   const local = createLocal({
-    env: { ALLOWED_ORIGIN: "http://localhost:5173", LOG_LEVEL: "debug", STAGE: "test", NOTES_STORE: "memory" },
+    env: {
+      ALLOWED_ORIGIN: "http://localhost:5173",
+      LOG_LEVEL: "debug",
+      STAGE: "test",
+      NOTES_STORE: "memory",
+    },
     secret,
     baseUrl: STORE,
     now: () => new Date(clock),
     randomSuffix: () => String(++counter).padStart(4, "0"),
     newId: () => `id-${++counter}`,
     log: (entry) => void logs.push(entry),
-    queue: { visibilityTimeoutMs: VISIBILITY_MS, maxReceiveCount: MAX_RECEIVES, duplicate: options.duplicate ?? false },
+    queue: {
+      visibilityTimeoutMs: VISIBILITY_MS,
+      maxReceiveCount: MAX_RECEIVES,
+      duplicate: options.duplicate ?? false,
+    },
     wrap: (name, target) => {
       const control = controllable(target);
       controls.set(name, control);
@@ -101,9 +111,13 @@ export async function setup(options: { duplicate?: boolean } = {}) {
     failNext: (name: StoreName, method: string, times = 1) => control(name).failNext(method, times),
     holdNext: (name: StoreName, method: string) => control(name).holdNext(method),
     /** What the worker logged for each event, in order. */
-    outcomes: () => logs.filter((entry) => entry.message === "event handled").map((entry) => entry["status"]),
+    outcomes: () =>
+      logs.filter((entry) => entry.message === "event handled").map((entry) => entry["status"]),
     /** Permit, then the browser's POST. Not finished: the object is still pending. */
-    async upload(bytes: Uint8Array = PNG_3X2, contentType: "image/png" | "image/gif" = "image/png") {
+    async upload(
+      bytes: Uint8Array = PNG_3X2,
+      contentType: "image/png" | "image/gif" = "image/png",
+    ) {
       const note = await notes.create({ title: "trip", body: "" });
       const permit = await attachments.requestUpload(note.id, { contentType });
       const send = (body: Uint8Array) =>

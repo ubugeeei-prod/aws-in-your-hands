@@ -1,5 +1,6 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { type DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+
 import { noteKey, ownerKey, type TableItem, type TableReader } from "./items.ts";
 import type { NoteVersionStore } from "./table-diff.ts";
 
@@ -19,7 +20,11 @@ export class DynamoDbTable implements TableReader, NoteVersionStore {
     let startKey: Record<string, unknown> | undefined;
     do {
       const page = await this.#client.send(
-        new ScanCommand({ TableName: this.#tableName, ConsistentRead: true, ExclusiveStartKey: startKey }),
+        new ScanCommand({
+          TableName: this.#tableName,
+          ConsistentRead: true,
+          ExclusiveStartKey: startKey,
+        }),
       );
       yield* page.Items ?? [];
       startKey = page.LastEvaluatedKey;

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { hasRegion, parsePage } from "./markdown.ts";
 
 const page = parsePage(

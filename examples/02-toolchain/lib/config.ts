@@ -15,7 +15,9 @@ export type HelloConfig = z.infer<typeof helloConfigSchema>;
 export function parseHelloConfig(context: Record<string, unknown>): HelloConfig {
   const result = helloConfigSchema.safeParse(context);
   if (!result.success) {
-    const problems = result.error.issues.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`);
+    const problems = result.error.issues.map(
+      (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
+    );
     throw new Error(`Invalid context for the hello stack:\n  ${problems.join("\n  ")}`);
   }
   return result.data;

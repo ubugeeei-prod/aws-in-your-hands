@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+
 import { type App, createApp } from "./app.ts";
 import { parseEnv } from "./env.ts";
 import { createLogger } from "./log.ts";
@@ -11,7 +12,11 @@ export function composeApp(source: Record<string, string | undefined>): App {
   return createApp({
     env,
     log: createLogger(env.LOG_LEVEL),
-    notes: createNoteService({ repository: new InMemoryNoteRepository(), now: () => new Date(), newId: randomUUID }),
+    notes: createNoteService({
+      repository: new InMemoryNoteRepository(),
+      now: () => new Date(),
+      newId: randomUUID,
+    }),
     newRequestId: randomUUID,
     now: Date.now,
   });

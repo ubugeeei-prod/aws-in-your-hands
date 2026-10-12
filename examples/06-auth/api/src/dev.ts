@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { z } from "zod";
+
 import { composeApp } from "./compose.ts";
 import { createLocalAuthenticator, signLocalToken } from "./local-auth.ts";
 
@@ -36,6 +37,8 @@ server.post("/local/token", async (c) => {
 server.route("/", api);
 
 serve({ fetch: server.fetch, port }, (info) => {
-  console.log(`notes API listening on http://localhost:${info.port} with LOCAL sign-in (POST /local/token)`);
+  console.log(
+    `notes API listening on http://localhost:${info.port} with LOCAL sign-in (POST /local/token)`,
+  );
 });
 // #endregion dev

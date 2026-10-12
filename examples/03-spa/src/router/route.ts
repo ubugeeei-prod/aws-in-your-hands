@@ -19,5 +19,9 @@ export function parseRoute(path: string): Route {
 }
 
 export const pathFor = (route: Exclude<Route, { name: "not-found" }>): string =>
-  route.name === "list" ? "/" : route.name === "new" ? "/notes/new" : `/notes/${encodeURIComponent(route.id)}`;
+  route.name === "list"
+    ? "/"
+    : route.name === "new"
+      ? "/notes/new"
+      : `/notes/${encodeURIComponent(route.id)}`;
 // #endregion route

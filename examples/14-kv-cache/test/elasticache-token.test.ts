@@ -1,5 +1,7 @@
 import { createHash, createHmac } from "node:crypto";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { elastiCacheAuthToken } from "../src/elasticache-token.ts";
 
 // Documentation example keys, not real ones.
@@ -17,7 +19,8 @@ const request = {
 };
 
 const sha256 = (text: string): string => createHash("sha256").update(text).digest("hex");
-const hmac = (key: string | Buffer, text: string): Buffer => createHmac("sha256", key).update(text).digest();
+const hmac = (key: string | Buffer, text: string): Buffer =>
+  createHmac("sha256", key).update(text).digest();
 
 describe("ElastiCache IAM auth token", () => {
   it("is the presigned connect request for the lowercased cache name, without a scheme", async () => {
@@ -48,13 +51,25 @@ describe("ElastiCache IAM auth token", () => {
       .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
       .toSorted()
       .join("&");
-    const canonicalRequest = ["GET", "/", canonicalQuery, "host:aih-kv-cache", "", "host", sha256("")].join("\n");
+    const canonicalRequest = [
+      "GET",
+      "/",
+      canonicalQuery,
+      "host:aih-kv-cache",
+      "",
+      "host",
+      sha256(""),
+    ].join("\n");
     const scope = "20261012/ap-northeast-1/elasticache/aws4_request";
-    const stringToSign = ["AWS4-HMAC-SHA256", "20261012T030405Z", scope, sha256(canonicalRequest)].join("\n");
-    const key = ["20261012", "ap-northeast-1", "elasticache", "aws4_request"].reduce<string | Buffer>(
-      (secret, part) => hmac(secret, part),
-      `AWS4${credentials.secretAccessKey}`,
-    );
+    const stringToSign = [
+      "AWS4-HMAC-SHA256",
+      "20261012T030405Z",
+      scope,
+      sha256(canonicalRequest),
+    ].join("\n");
+    const key = ["20261012", "ap-northeast-1", "elasticache", "aws4_request"].reduce<
+      string | Buffer
+    >((secret, part) => hmac(secret, part), `AWS4${credentials.secretAccessKey}`);
 
     expect(signature).toBe(hmac(key, stringToSign).toString("hex"));
   });

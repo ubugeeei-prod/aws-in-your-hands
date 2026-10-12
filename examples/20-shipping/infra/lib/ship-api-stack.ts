@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -7,6 +8,7 @@ import { Alias, Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
+
 import type { Stage } from "./config.ts";
 
 export type ShipApiStackProps = StackProps & { stage: Stage; allowedOrigin: string };
@@ -77,7 +79,11 @@ export class ShipApiStack extends Stack {
     const integration = new HttpLambdaIntegration("Notes", live);
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], integration });
-    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.DELETE], integration });
+    api.addRoutes({
+      path: "/notes/{id}",
+      methods: [HttpMethod.GET, HttpMethod.DELETE],
+      integration,
+    });
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "HandlerLogGroupName", { value: logGroup.logGroupName });

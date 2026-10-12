@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, Fn, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -27,7 +28,11 @@ export class SqlStack extends Stack {
     // `Ref` is the cluster identifier. The host name and the ARN are built
     // from it, in the formats the Aurora DSQL user guide gives.
     const endpoint = Fn.join("", [cluster.ref, ".dsql.", this.region, ".on.aws"]);
-    const clusterArn = this.formatArn({ service: "dsql", resource: "cluster", resourceName: cluster.ref });
+    const clusterArn = this.formatArn({
+      service: "dsql",
+      resource: "cluster",
+      resourceName: cluster.ref,
+    });
     // #endregion cluster
 
     const logGroup = new LogGroup(this, "HandlerLogs", {
@@ -36,7 +41,9 @@ export class SqlStack extends Stack {
     });
 
     // #region role
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     // May open a connection as a custom database role, on this one cluster.
     // Not dsql:DbConnectAdmin: the function never becomes `admin`. What it may
@@ -80,7 +87,12 @@ export class SqlStack extends Stack {
       description: "Notes API on Aurora DSQL",
       corsPreflight: {
         allowOrigins: [props.allowedOrigin],
-        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
+        allowMethods: [
+          CorsHttpMethod.GET,
+          CorsHttpMethod.POST,
+          CorsHttpMethod.PUT,
+          CorsHttpMethod.DELETE,
+        ],
         allowHeaders: ["content-type"],
         maxAge: Duration.hours(1),
       },
@@ -88,7 +100,11 @@ export class SqlStack extends Stack {
     const integration = new HttpLambdaIntegration("Notes", handler);
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], integration });
-    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE], integration });
+    api.addRoutes({
+      path: "/notes/{id}",
+      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      integration,
+    });
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "ClusterEndpoint", { value: endpoint });

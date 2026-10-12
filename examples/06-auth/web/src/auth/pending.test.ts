@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { savePending, type TabStorage, takePending } from "./pending.ts";
 
 function fakeStorage(): TabStorage {

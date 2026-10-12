@@ -6,17 +6,26 @@
 // replaces the object, deletes it, and checks that the record follows. With
 // AIH_ACCESS_TOKEN it also goes through the API, the way a browser does, and
 // checks that sending a form again leaves no pending tag behind.
+
 import { randomBytes } from "node:crypto";
+
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DeleteObjectCommand,
+  GetObjectTaggingCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { GetQueueAttributesCommand, SQSClient } from "@aws-sdk/client-sqs";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { createNotesClient } from "@aih/example-06-auth/api/src/client.ts";
 import { createAttachmentsClient, sendUpload } from "@aih/example-07-uploads/api/src/client.ts";
 import { objectKey } from "@aih/example-07-uploads/api/src/keys.ts";
 import { PENDING, STATE_TAG } from "@aih/example-07-uploads/api/src/object-store.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DeleteObjectCommand, GetObjectTaggingCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { GetQueueAttributesCommand, SQSClient } from "@aws-sdk/client-sqs";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { DynamoDbInspectionRepository } from "../src/dynamodb-inspection-repository.ts";
 import type { Inspection } from "../src/inspection.ts";
 
@@ -32,7 +41,11 @@ const pixel = Buffer.from(
 const notAnImage = Buffer.from("<!doctype html><title>not an image</title>");
 
 /** S3 says its events usually arrive in seconds and can take a minute or longer. */
-async function waitFor<T>(label: string, read: () => Promise<T>, done: (value: T) => boolean): Promise<T> {
+async function waitFor<T>(
+  label: string,
+  read: () => Promise<T>,
+  done: (value: T) => boolean,
+): Promise<T> {
   const started = Date.now();
   for (;;) {
     const value = await read();
@@ -50,7 +63,11 @@ async function waitFor<T>(label: string, read: () => Promise<T>, done: (value: T
 }
 
 try {
-  const { target } = await preflight({ access: "mutate", action: "smoke test the upload pipeline", stack: STACK });
+  const { target } = await preflight({
+    access: "mutate",
+    action: "smoke test the upload pipeline",
+    stack: STACK,
+  });
   const outputs = await readStackOutputs(process.cwd(), STACK, target.region);
   const bucket = requireOutput(outputs, "UploadsBucketName");
   const s3 = new S3Client({ region: target.region });
@@ -60,7 +77,11 @@ try {
   );
 
   // An owner no user has, so nothing here can be mistaken for someone's image.
-  const parts = { owner: `smoke-${randomBytes(4).toString("hex")}`, noteId: "note", attachmentId: "image" };
+  const parts = {
+    owner: `smoke-${randomBytes(4).toString("hex")}`,
+    noteId: "note",
+    attachmentId: "image",
+  };
   const key = objectKey(parts);
   const record = () => inspections.get(parts.owner, parts.noteId, parts.attachmentId);
   const put = (body: Buffer) =>
@@ -77,7 +98,11 @@ try {
 
   try {
     await put(pixel);
-    const first = await waitFor("a record for the uploaded image", record, (value) => value?.verdict === "ok");
+    const first = await waitFor(
+      "a record for the uploaded image",
+      record,
+      (value) => value?.verdict === "ok",
+    );
     if (first?.width !== 1 || first.height !== 1) {
       throw new Error(`expected a 1x1 image, the record says ${first?.width}x${first?.height}`);
     }
@@ -120,7 +145,9 @@ try {
       const formKey = objectKey({ owner: sub, noteId: note.id, attachmentId: permit.attachmentId });
       await waitFor(
         "the pending tag is taken off again after the form is sent twice",
-        async () => (await s3.send(new GetObjectTaggingCommand({ Bucket: bucket, Key: formKey }))).TagSet ?? [],
+        async () =>
+          (await s3.send(new GetObjectTaggingCommand({ Bucket: bucket, Key: formKey }))).TagSet ??
+          [],
         (tags) => tags.length === 0,
       );
     } finally {
@@ -134,7 +161,9 @@ try {
       AttributeNames: ["ApproximateNumberOfMessages"],
     }),
   );
-  console.log(`dead-letter queue: about ${depth.Attributes?.["ApproximateNumberOfMessages"] ?? "?"} messages`);
+  console.log(
+    `dead-letter queue: about ${depth.Attributes?.["ApproximateNumberOfMessages"] ?? "?"} messages`,
+  );
   console.log(`checked at ${new Date().toISOString()}`);
 } catch (error) {
   console.error("FAIL", error instanceof Error ? error.message : error);

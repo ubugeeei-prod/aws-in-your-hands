@@ -1,5 +1,6 @@
 import { DsqlSigner } from "@aws-sdk/dsql-signer";
 import pg from "pg";
+
 import type { Db } from "./db.ts";
 
 export type DsqlOptions = {
@@ -25,7 +26,10 @@ export function openDsql(options: DsqlOptions): Db {
     user: options.user,
     // There is no password to store. Each new connection signs a fresh token;
     // `admin` needs the token of the other IAM action.
-    password: () => (options.user === "admin" ? signer.getDbConnectAdminAuthToken() : signer.getDbConnectAuthToken()),
+    password: () =>
+      options.user === "admin"
+        ? signer.getDbConnectAdminAuthToken()
+        : signer.getDbConnectAuthToken(),
     // Checks the certificate chain and the host name against Node's CA store.
     ssl: { rejectUnauthorized: true },
     // A Lambda execution environment serves one request at a time.
@@ -44,7 +48,9 @@ export function openDsql(options: DsqlOptions): Db {
       let broken = false;
       try {
         return await use({
-          query: async (text, params) => ({ rows: (await client.query(text, [...(params ?? [])])).rows }),
+          query: async (text, params) => ({
+            rows: (await client.query(text, [...(params ?? [])])).rows,
+          }),
         });
       } catch (error) {
         // An error the database answered with leaves the session usable.

@@ -2,6 +2,7 @@ import { App, Stack } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { SecurityGroup } from "aws-cdk-lib/aws-ec2";
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseNetworkConfig } from "../../src/config.ts";
 import { planNetwork } from "../../src/plan.ts";
 import { importNetwork } from "../lib/import-network.ts";

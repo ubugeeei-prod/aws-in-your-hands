@@ -60,7 +60,8 @@ export function createSummarizer(deps: SummarizeDeps): Summarize {
         return { ok: true, attempts: attempt, events: relay(stream, stopped, finished) };
       } catch (error) {
         const failure = stopped() ?? classifyError(error) ?? { code: "internal", retryable: false };
-        const delay = stopped() === undefined ? nextDelayMs(failure, attempt, deps.retry, deps.random) : null;
+        const delay =
+          stopped() === undefined ? nextDelayMs(failure, attempt, deps.retry, deps.random) : null;
         if (delay === null) {
           finished.abort();
           return { ok: false, attempts: attempt, failure };
@@ -106,7 +107,10 @@ async function* relay(
       }
       stopReason = event.messageStop?.stopReason ?? stopReason;
       if (event.metadata !== undefined) {
-        usage = { inputTokens: event.metadata.usage.inputTokens, outputTokens: event.metadata.usage.outputTokens };
+        usage = {
+          inputTokens: event.metadata.usage.inputTokens,
+          outputTokens: event.metadata.usage.outputTokens,
+        };
       }
     }
   } catch (error) {

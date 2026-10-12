@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import {
   createNoteSchema,
   listQuerySchema,
@@ -5,11 +7,15 @@ import {
   noteSchema,
   updateNoteSchema,
 } from "@aih/example-05-dynamodb/src/contract.ts";
-import { z } from "zod";
 
 // The note shapes are chapter 05's, unchanged.
 export { createNoteSchema, listQuerySchema, noteListSchema, noteSchema, updateNoteSchema };
-export type { CreateNote, Note, NoteList, UpdateNote } from "@aih/example-05-dynamodb/src/contract.ts";
+export type {
+  CreateNote,
+  Note,
+  NoteList,
+  UpdateNote,
+} from "@aih/example-05-dynamodb/src/contract.ts";
 
 export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string() });
 

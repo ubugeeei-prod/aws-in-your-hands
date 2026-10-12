@@ -1,7 +1,9 @@
 import { fileURLToPath } from "node:url";
+
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { SHARED_SECONDS } from "../../core/cache-control.ts";
 import { SsrStack } from "../lib/ssr-stack.ts";
 
@@ -24,11 +26,17 @@ type Behavior = {
   AllowedMethods: string[];
   ViewerProtocolPolicy: string;
 };
-const distributionConfig = Object.values(template.findResources("AWS::CloudFront::Distribution"))[0]?.["Properties"]
-  .DistributionConfig as { DefaultCacheBehavior: Behavior; CacheBehaviors: Behavior[] };
+const distributionConfig = Object.values(
+  template.findResources("AWS::CloudFront::Distribution"),
+)[0]?.["Properties"].DistributionConfig as {
+  DefaultCacheBehavior: Behavior;
+  CacheBehaviors: Behavior[];
+};
 const behaviors = [distributionConfig.DefaultCacheBehavior, ...distributionConfig.CacheBehaviors];
 const behaviorFor = (pattern: string): Behavior => {
-  const behavior = distributionConfig.CacheBehaviors.find((candidate) => candidate.PathPattern === pattern);
+  const behavior = distributionConfig.CacheBehaviors.find(
+    (candidate) => candidate.PathPattern === pattern,
+  );
   if (behavior === undefined) {
     throw new Error(`no behavior for ${pattern}`);
   }
@@ -76,11 +84,9 @@ describe("SsrStack: what may be cached", () => {
         TargetOriginId: distributionConfig.DefaultCacheBehavior.TargetOriginId,
       });
     }
-    expect(distributionConfig.CacheBehaviors.map((behavior) => behavior.PathPattern).toSorted()).toEqual([
-      "/_nuxt/*",
-      "/me",
-      "/me/*",
-    ]);
+    expect(
+      distributionConfig.CacheBehaviors.map((behavior) => behavior.PathPattern).toSorted(),
+    ).toEqual(["/_nuxt/*", "/me", "/me/*"]);
     expect(behaviorFor("/_nuxt/*").OriginRequestPolicyId).toBeUndefined();
   });
 
@@ -94,7 +100,10 @@ describe("SsrStack: what may be cached", () => {
 
 describe("SsrStack: who may reach the function", () => {
   it("requires signed requests at the function URL", () => {
-    template.hasResourceProperties("AWS::Lambda::Url", { AuthType: "AWS_IAM", InvokeMode: "BUFFERED" });
+    template.hasResourceProperties("AWS::Lambda::Url", {
+      AuthType: "AWS_IAM",
+      InvokeMode: "BUFFERED",
+    });
     template.hasResourceProperties("AWS::CloudFront::OriginAccessControl", {
       OriginAccessControlConfig: {
         OriginAccessControlOriginType: "lambda",
@@ -117,17 +126,28 @@ describe("SsrStack: who may reach the function", () => {
       expect(JSON.stringify(permission["SourceArn"])).toContain(":distribution/");
     }
     // The form a public function URL would need.
-    template.resourcePropertiesCountIs("AWS::Lambda::Permission", { FunctionUrlAuthType: "NONE" }, 0);
+    template.resourcePropertiesCountIs(
+      "AWS::Lambda::Permission",
+      { FunctionUrlAuthType: "NONE" },
+      0,
+    );
     template.resourcePropertiesCountIs("AWS::Lambda::Permission", { Principal: "*" }, 0);
   });
 
   it("switches the invoke mode together with the handler", () => {
-    synth(true).hasResourceProperties("AWS::Lambda::Url", { AuthType: "AWS_IAM", InvokeMode: "RESPONSE_STREAM" });
+    synth(true).hasResourceProperties("AWS::Lambda::Url", {
+      AuthType: "AWS_IAM",
+      InvokeMode: "RESPONSE_STREAM",
+    });
   });
 
   it("gives the function no permission beyond writing its own log group", () => {
     const statements = Object.values(template.findResources("AWS::IAM::Policy")).flatMap(
-      (policy) => policy["Properties"].PolicyDocument.Statement as { Action: string | string[]; Resource: unknown }[],
+      (policy) =>
+        policy["Properties"].PolicyDocument.Statement as {
+          Action: string | string[];
+          Resource: unknown;
+        }[],
     );
     expect(statements.flatMap((statement) => statement.Action).toSorted()).toEqual([
       "logs:CreateLogStream",
@@ -163,7 +183,9 @@ describe("SsrStack: storage and cleanup", () => {
       WebsiteConfiguration: Match.absent(),
     });
     const allows = Object.values(template.findResources("AWS::S3::BucketPolicy"))
-      .flatMap((policy) => policy["Properties"].PolicyDocument.Statement as Record<string, unknown>[])
+      .flatMap(
+        (policy) => policy["Properties"].PolicyDocument.Statement as Record<string, unknown>[],
+      )
       .filter((statement) => statement["Effect"] === "Allow");
     expect(
       allows
@@ -181,12 +203,17 @@ describe("SsrStack: storage and cleanup", () => {
 
   it("deletes the bucket and the logs with the stack", () => {
     template.hasResource("AWS::S3::Bucket", { DeletionPolicy: "Delete" });
-    template.hasResource("AWS::Logs::LogGroup", { Properties: { RetentionInDays: 7 }, DeletionPolicy: "Delete" });
+    template.hasResource("AWS::Logs::LogGroup", {
+      Properties: { RetentionInDays: 7 },
+      DeletionPolicy: "Delete",
+    });
   });
 
   it("uses only resource types checked against cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::CloudFront::CachePolicy",
       "AWS::CloudFront::Distribution",
       "AWS::CloudFront::OriginAccessControl",

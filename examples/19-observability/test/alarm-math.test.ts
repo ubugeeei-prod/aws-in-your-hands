@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { alarmState, errorRatePoint, errorRateRule, type MinuteCounts } from "../src/alarm-math.ts";
 
 const minutes = (counts: MinuteCounts[]) => counts.map((minute) => errorRatePoint(minute));
@@ -27,16 +28,25 @@ describe("the 5xx rate alarm", () => {
   const healthy: MinuteCounts = { requests: 100, errors: 1 };
 
   it("fires after three bad minutes out of five, not after one", () => {
-    expect(alarmState(minutes([healthy, healthy, healthy, healthy, failing]), errorRateRule)).toBe("OK");
-    expect(alarmState(minutes([healthy, failing, healthy, failing, healthy]), errorRateRule)).toBe("OK");
-    expect(alarmState(minutes([failing, healthy, failing, healthy, failing]), errorRateRule)).toBe("ALARM");
+    expect(alarmState(minutes([healthy, healthy, healthy, healthy, failing]), errorRateRule)).toBe(
+      "OK",
+    );
+    expect(alarmState(minutes([healthy, failing, healthy, failing, healthy]), errorRateRule)).toBe(
+      "OK",
+    );
+    expect(alarmState(minutes([failing, healthy, failing, healthy, failing]), errorRateRule)).toBe(
+      "ALARM",
+    );
   });
 
   it("does not fire at exactly the threshold", () => {
     const atThreshold: MinuteCounts = { requests: 100, errors: errorRateRule.threshold };
-    expect(alarmState(minutes([atThreshold, atThreshold, atThreshold, atThreshold, atThreshold]), errorRateRule)).toBe(
-      "OK",
-    );
+    expect(
+      alarmState(
+        minutes([atThreshold, atThreshold, atThreshold, atThreshold, atThreshold]),
+        errorRateRule,
+      ),
+    ).toBe("OK");
   });
 
   it("would page every quiet night if missing data counted as breaching", () => {

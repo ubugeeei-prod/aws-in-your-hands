@@ -1,14 +1,22 @@
-import type { Env } from "@aih/example-05-dynamodb/src/env.ts";
-import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
-import type { NoteService } from "@aih/example-05-dynamodb/src/notes.ts";
-import { InvalidCursorError } from "@aih/example-05-dynamodb/src/repository.ts";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { validator } from "hono/validator";
 import type { z } from "zod";
-import { createNoteSchema, type ErrorBody, listQuerySchema, type Note, updateNoteSchema } from "./contract.ts";
+
+import type { Env } from "@aih/example-05-dynamodb/src/env.ts";
+import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
+import type { NoteService } from "@aih/example-05-dynamodb/src/notes.ts";
+import { InvalidCursorError } from "@aih/example-05-dynamodb/src/repository.ts";
+
+import {
+  createNoteSchema,
+  type ErrorBody,
+  listQuerySchema,
+  type Note,
+  updateNoteSchema,
+} from "./contract.ts";
 import type { Authenticate, Identity } from "./identity.ts";
 
 export type AppDeps = {
@@ -24,8 +32,12 @@ type Bindings = { event?: unknown };
 type Variables = { requestId: string; identity: Identity };
 type Extra = { issues?: { path: string; message: string }[]; current?: Note };
 
-const failure = (code: ErrorBody["error"]["code"], message: string, requestId: string, extra: Extra = {}) =>
-  ({ error: { code, message, requestId, ...extra } }) satisfies ErrorBody;
+const failure = (
+  code: ErrorBody["error"]["code"],
+  message: string,
+  requestId: string,
+  extra: Extra = {},
+) => ({ error: { code, message, requestId, ...extra } }) satisfies ErrorBody;
 
 const issuesOf = (error: z.ZodError) =>
   error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
@@ -63,7 +75,10 @@ export function createApp(deps: AppDeps) {
   app.onError((error, c) => {
     const requestId = c.get("requestId");
     if (error instanceof HTTPException && error.status === 400) {
-      return c.json(failure("invalid_request", "The request body is not valid JSON.", requestId), 400);
+      return c.json(
+        failure("invalid_request", "The request body is not valid JSON.", requestId),
+        400,
+      );
     }
     if (error instanceof InvalidCursorError) {
       return c.json(failure("invalid_request", error.message, requestId), 400);
@@ -81,7 +96,11 @@ export function createApp(deps: AppDeps) {
 
   const limit = bodyLimit({
     maxSize: 64 * 1024,
-    onError: (c) => c.json(failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")), 413),
+    onError: (c) =>
+      c.json(
+        failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")),
+        413,
+      ),
   });
 
   return (
@@ -90,9 +109,15 @@ export function createApp(deps: AppDeps) {
       // /health is registered first and stays open. Every route below needs an identity.
       .get("/health", (c) => c.json({ status: "ok" as const, stage: deps.env.STAGE }))
       .use(async (c, next) => {
-        const identity = await deps.authenticate({ event: c.env?.event, authorization: c.req.header("authorization") });
+        const identity = await deps.authenticate({
+          event: c.env?.event,
+          authorization: c.req.header("authorization"),
+        });
         if (identity === undefined) {
-          return c.json(failure("unauthenticated", "Sign in to use this API.", c.get("requestId")), 401);
+          return c.json(
+            failure("unauthenticated", "Sign in to use this API.", c.get("requestId")),
+            401,
+          );
         }
         c.set("identity", identity);
         await next();
@@ -131,7 +156,8 @@ export function createApp(deps: AppDeps) {
                 400,
               );
         }),
-        async (c) => c.json(await deps.notes.create(c.get("identity").sub, c.req.valid("json")), 201),
+        async (c) =>
+          c.json(await deps.notes.create(c.get("identity").sub, c.req.valid("json")), 201),
       )
       .get("/notes/:id", async (c) => {
         const note = await deps.notes.get(c.get("identity").sub, c.req.param("id"));
@@ -154,7 +180,11 @@ export function createApp(deps: AppDeps) {
               );
         }),
         async (c) => {
-          const result = await deps.notes.update(c.get("identity").sub, c.req.param("id"), c.req.valid("json"));
+          const result = await deps.notes.update(
+            c.get("identity").sub,
+            c.req.param("id"),
+            c.req.valid("json"),
+          );
           switch (result.status) {
             case "updated":
               return c.json(result.note, 200);
@@ -162,9 +192,14 @@ export function createApp(deps: AppDeps) {
               return c.json(failure("not_found", "No such note.", c.get("requestId")), 404);
             case "conflict":
               return c.json(
-                failure("conflict", "The note was changed since you loaded it.", c.get("requestId"), {
-                  current: result.current,
-                }),
+                failure(
+                  "conflict",
+                  "The note was changed since you loaded it.",
+                  c.get("requestId"),
+                  {
+                    current: result.current,
+                  },
+                ),
                 409,
               );
           }

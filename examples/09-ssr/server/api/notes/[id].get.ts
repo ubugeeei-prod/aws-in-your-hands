@@ -1,4 +1,5 @@
 import { createError, defineEventHandler, getRouterParam } from "h3";
+
 import type { PublicNote } from "../../../core/notes.ts";
 import { context } from "../../context.ts";
 

@@ -1,4 +1,5 @@
 import { bucketNameSchema, instanceIdSchema } from "@aih/example-23-ec2/src/remote.ts";
+
 import { assetOf, type CelldVersion, DOCUMENTED, versionSchema } from "./celld.ts";
 import { ARTIFACT_TARGET, type NodeSpec, pathsOf } from "./machine.ts";
 import { type ProbePlan, renderProbeScript } from "./probe.ts";
@@ -25,7 +26,11 @@ export function nodeCommands(spec: NodeSpec) {
     install: (bucket: string, version: CelldVersion): string[] => [
       `${paths.installScript} ${bucketNameSchema.parse(bucket)} ${versionSchema.parse(version)} ${assetOf(version, ARTIFACT_TARGET).sha256}`,
     ],
-    start: (): string[] => ["set -euo pipefail", `systemctl start ${unit}`, `systemctl is-active ${unit}`],
+    start: (): string[] => [
+      "set -euo pipefail",
+      `systemctl start ${unit}`,
+      `systemctl is-active ${unit}`,
+    ],
     // SIGTERM: celld hands its cells to a peer before it exits. systemd waits TimeoutStopSec for that.
     drain: (): string[] => [
       "set -euo pipefail",
@@ -85,7 +90,11 @@ export const startInstanceArgs = (input: { instanceId: string; region: string })
   ...at(input.region),
 ];
 
-export const waitInstanceArgs = (input: { instanceId: string; region: string; state: "stopped" | "running" }) => [
+export const waitInstanceArgs = (input: {
+  instanceId: string;
+  region: string;
+  state: "stopped" | "running";
+}) => [
   "ec2",
   "wait",
   input.state === "stopped" ? "instance-stopped" : "instance-running",
@@ -95,7 +104,12 @@ export const waitInstanceArgs = (input: { instanceId: string; region: string; st
   input.region,
 ];
 
-export const uploadArtifactArgs = (input: { file: string; bucket: string; key: string; region: string }) => [
+export const uploadArtifactArgs = (input: {
+  file: string;
+  bucket: string;
+  key: string;
+  region: string;
+}) => [
   "s3",
   "cp",
   input.file,

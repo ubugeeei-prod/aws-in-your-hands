@@ -5,8 +5,10 @@
 // Reads only this checkout: no AWS, no credentials.
 //
 // Settings: nodes, instanceType, dataVolumeGiB, stateOnDestroy, dataSnapshots, amiId.
+
 import { loadPricing } from "@aih/tools/data/load.ts";
 import { calculate } from "@aih/tools/pricing/calc.ts";
+
 import { parseFleetConfig } from "../src/config.ts";
 import { allFixedItems, type FleetState, MONTH_HOURS } from "../src/cost.ts";
 import { describePlan } from "../src/report.ts";
@@ -43,7 +45,9 @@ try {
       allowances,
     ).listUsd.toFixed(2);
   if (config.nodes === 0) {
-    console.log("\nNothing billed by the hour. Objects in the two buckets are billed by size and by request.");
+    console.log(
+      "\nNothing billed by the hour. Objects in the two buckets are billed by size and by request.",
+    );
   } else {
     console.log("\nFixed cost, list price, fleet and network endpoints together (USD):");
     for (const state of ["running", "stopped"] as const) {

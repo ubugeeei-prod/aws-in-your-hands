@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createLocalNoteStore, type KeyValueStorage } from "./store.ts";
 
-function fakeStorage(initial: Record<string, string> = {}): KeyValueStorage & { dump: () => Record<string, string> } {
+function fakeStorage(
+  initial: Record<string, string> = {},
+): KeyValueStorage & { dump: () => Record<string, string> } {
   const data = new Map(Object.entries(initial));
   return {
     getItem: (key) => data.get(key) ?? null,
@@ -46,7 +49,9 @@ describe("local note store", () => {
 
   it("drops stored entries that are not notes", () => {
     const valid = { id: "a", title: "kept", body: "", updatedAt: "2026-10-11T00:00:00.000Z" };
-    const { store } = setup({ "aih.notes.v1": JSON.stringify([valid, { id: 1, title: null }, "junk"]) });
+    const { store } = setup({
+      "aih.notes.v1": JSON.stringify([valid, { id: 1, title: null }, "junk"]),
+    });
     expect(store.list()).toEqual([valid]);
   });
 

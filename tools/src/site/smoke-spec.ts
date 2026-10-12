@@ -1,4 +1,5 @@
 // A finished CLI command says the API accepted the change. These checks say it arrived.
+
 import { IMMUTABLE, REVALIDATE } from "./plan.ts";
 import { REVISION_KEY } from "./revision.ts";
 
@@ -43,7 +44,8 @@ const html = (observed: Observed) =>
 const contains = (text: string) => (observed: Observed) =>
   observed.body.includes(text) ? null : `body does not contain ${JSON.stringify(text)}`;
 
-const page = (...extra: Check["verify"][]) => all(status(200), html, header("cache-control", REVALIDATE), ...extra);
+const page = (...extra: Check["verify"][]) =>
+  all(status(200), html, header("cache-control", REVALIDATE), ...extra);
 
 export function revisionCheck(expectedRevision: string): Check {
   return {
@@ -65,7 +67,8 @@ export function httpsRedirectCheck(host: string): Check {
     name: "redirects plain HTTP to HTTPS",
     path: `http://${host}/`,
     verify: (observed) =>
-      [301, 308].includes(observed.status) && (observed.headers["location"] ?? "").startsWith("https://")
+      [301, 308].includes(observed.status) &&
+      (observed.headers["location"] ?? "").startsWith("https://")
         ? null
         : `expected a redirect to https, got ${observed.status} ${observed.headers["location"] ?? ""}`,
   };
@@ -92,8 +95,16 @@ export function checksFor(profile: Profile): { checks: Check[]; assetSourcePath:
         { name: "language chooser at the root", path: "/", verify: page() },
         { name: "Japanese home", path: "/ja/", verify: page(contains('<html lang="ja"')) },
         { name: "English home", path: "/en/", verify: page(contains('<html lang="en"')) },
-        { name: "Japanese deep link", path: "/ja/chapters/00-welcome/", verify: page(contains('<html lang="ja"')) },
-        { name: "English deep link", path: "/en/chapters/00-welcome/", verify: page(contains('<html lang="en"')) },
+        {
+          name: "Japanese deep link",
+          path: "/ja/chapters/00-welcome/",
+          verify: page(contains('<html lang="ja"')),
+        },
+        {
+          name: "English deep link",
+          path: "/en/chapters/00-welcome/",
+          verify: page(contains('<html lang="en"')),
+        },
         {
           name: "adds the trailing slash with a redirect",
           path: "/ja/chapters/00-welcome",

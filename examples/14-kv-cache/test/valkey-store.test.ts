@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { type Opened, rotating, withDeadline } from "../src/valkey-client.ts";
 import {
   INCREMENT_BELOW,
@@ -33,18 +34,29 @@ function fakeValkey(replies: { get?: string | null; set?: unknown; eval?: unknow
   return { provider: async () => commands, sent };
 }
 
-const window = { subject: "client-1", windowStart: 1_760_000_040_000, expiresAt: 1_760_000_160_500 };
+const window = {
+  subject: "client-1",
+  windowStart: 1_760_000_040_000,
+  expiresAt: 1_760_000_160_500,
+};
 
 describe("ValkeyCounterStore commands", () => {
   it("runs check, increment, and expiry as one script on one key", async () => {
     const { provider, sent } = fakeValkey({ eval: 3 });
-    expect(await new ValkeyCounterStore(provider).incrementBelow(window, 5)).toEqual({ accepted: true, count: 3 });
-    expect(sent).toEqual([["EVAL", INCREMENT_BELOW, 1, "rate:client-1:1760000040000", 5, 1_760_000_160_500]]);
+    expect(await new ValkeyCounterStore(provider).incrementBelow(window, 5)).toEqual({
+      accepted: true,
+      count: 3,
+    });
+    expect(sent).toEqual([
+      ["EVAL", INCREMENT_BELOW, 1, "rate:client-1:1760000040000", 5, 1_760_000_160_500],
+    ]);
   });
 
   it("reads the script's -1 as a refusal", async () => {
     const { provider } = fakeValkey({ eval: -1 });
-    expect(await new ValkeyCounterStore(provider).incrementBelow(window, 5)).toEqual({ accepted: false });
+    expect(await new ValkeyCounterStore(provider).incrementBelow(window, 5)).toEqual({
+      accepted: false,
+    });
   });
 
   it("reads a missing key as zero", async () => {
@@ -69,11 +81,15 @@ describe("ValkeyCacheStore commands", () => {
 
   it("takes the lock with NX and reports a nil reply as taken by someone else", async () => {
     const free = fakeValkey({ set: "OK" });
-    expect(await new ValkeyCacheStore(free.provider).tryLock("list", "a", 1_760_000_105_000, 0)).toBe(true);
+    expect(
+      await new ValkeyCacheStore(free.provider).tryLock("list", "a", 1_760_000_105_000, 0),
+    ).toBe(true);
     expect(free.sent).toEqual([["SET", "lock:list", "a", "PXAT", 1_760_000_105_000, "NX"]]);
 
     const held = fakeValkey({ set: null });
-    expect(await new ValkeyCacheStore(held.provider).tryLock("list", "b", 1_760_000_105_000, 0)).toBe(false);
+    expect(
+      await new ValkeyCacheStore(held.provider).tryLock("list", "b", 1_760_000_105_000, 0),
+    ).toBe(false);
   });
 
   it("releases the lock with a compare-and-delete script", async () => {
@@ -135,7 +151,9 @@ describe("connection rotation", () => {
 describe("command deadline", () => {
   it("gives up on a server that does not answer", async () => {
     const silent = { get: () => new Promise<string | null>(() => {}) };
-    await expect(withDeadline(silent as never, 20).get("k")).rejects.toThrow("did not answer within 20 ms");
+    await expect(withDeadline(silent as never, 20).get("k")).rejects.toThrow(
+      "did not answer within 20 ms",
+    );
   });
 
   it("passes an answer through", async () => {

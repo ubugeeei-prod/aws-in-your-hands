@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { EmailStack, type EmailStackProps } from "../lib/email-stack.ts";
 
 const synth = (props: Partial<EmailStackProps> = {}) =>
@@ -16,16 +17,27 @@ const synth = (props: Partial<EmailStackProps> = {}) =>
 
 // Synthesis bundles two handlers with esbuild, so each variant runs once for the file.
 const template = synth();
-const domainTemplate = synth({ senderIdentity: "example.com", mailFromDomain: "bounce.example.com" });
+const domainTemplate = synth({
+  senderIdentity: "example.com",
+  mailFromDomain: "bounce.example.com",
+});
 
-type Statement = { Effect: string; Action: string | string[]; Resource: unknown; Condition?: unknown };
-type Policy = { Properties: { PolicyDocument: { Statement: Statement[] }; Roles: { Ref: string }[] } };
+type Statement = {
+  Effect: string;
+  Action: string | string[];
+  Resource: unknown;
+  Condition?: unknown;
+};
+type Policy = {
+  Properties: { PolicyDocument: { Statement: Statement[] }; Roles: { Ref: string }[] };
+};
 
 const statementsOf = (rolePrefix: string): Statement[] =>
   (Object.values(template.findResources("AWS::IAM::Policy")) as Policy[])
     .filter((policy) => policy.Properties.Roles.some((role) => role.Ref.startsWith(rolePrefix)))
     .flatMap((policy) => policy.Properties.PolicyDocument.Statement);
-const actionsOf = (statements: Statement[]) => statements.flatMap((statement) => statement.Action).toSorted();
+const actionsOf = (statements: Statement[]) =>
+  statements.flatMap((statement) => statement.Action).toSorted();
 
 describe("EmailStack", () => {
   it("lets the sending function send from one address, through one identity and one configuration set", () => {
@@ -93,11 +105,15 @@ describe("EmailStack", () => {
   it("lets only SES, for this configuration set, publish to the topic", () => {
     const policies = Object.values(template.findResources("AWS::SNS::TopicPolicy"));
     const statements = policies.flatMap(
-      (policy) => policy["Properties"].PolicyDocument.Statement as (Statement & { Principal: unknown })[],
+      (policy) =>
+        policy["Properties"].PolicyDocument.Statement as (Statement & { Principal: unknown })[],
     );
     const allows = statements.filter((statement) => statement.Effect === "Allow");
     expect(allows).toHaveLength(1);
-    expect(allows[0]).toMatchObject({ Action: "sns:Publish", Principal: { Service: "ses.amazonaws.com" } });
+    expect(allows[0]).toMatchObject({
+      Action: "sns:Publish",
+      Principal: { Service: "ses.amazonaws.com" },
+    });
     expect(JSON.stringify(allows[0]?.Condition)).toContain(":configuration-set/");
     // enforceSSL adds a Deny for plain HTTP; that is the only other statement.
     expect(statements.filter((statement) => statement.Effect === "Deny")).toHaveLength(1);
@@ -112,7 +128,9 @@ describe("EmailStack", () => {
   it("makes the configuration set the identity's default", () => {
     template.hasResourceProperties("AWS::SES::EmailIdentity", {
       EmailIdentity: "notes@example.com",
-      ConfigurationSetAttributes: { ConfigurationSetName: { Ref: Match.stringLikeRegexp("^Notifications") } },
+      ConfigurationSetAttributes: {
+        ConfigurationSetName: { Ref: Match.stringLikeRegexp("^Notifications") },
+      },
     });
   });
 
@@ -139,12 +157,20 @@ describe("EmailStack", () => {
   it("tells each function only the settings it uses", () => {
     template.hasResourceProperties("AWS::Lambda::Function", {
       Environment: {
-        Variables: { MAIL_MODE: "aws", FROM_ADDRESS: "notes@example.com", CONFIGURATION_SET_NAME: Match.anyValue() },
+        Variables: {
+          MAIL_MODE: "aws",
+          FROM_ADDRESS: "notes@example.com",
+          CONFIGURATION_SET_NAME: Match.anyValue(),
+        },
       },
     });
     template.hasResourceProperties("AWS::Lambda::Function", {
       Environment: {
-        Variables: { MAIL_MODE: Match.absent(), FROM_ADDRESS: Match.absent(), TABLE_NAME: Match.anyValue() },
+        Variables: {
+          MAIL_MODE: Match.absent(),
+          FROM_ADDRESS: Match.absent(),
+          TABLE_NAME: Match.anyValue(),
+        },
       },
     });
   });
@@ -152,17 +178,24 @@ describe("EmailStack", () => {
   it("verifies a domain with DKIM outputs and an optional MAIL FROM domain", () => {
     domainTemplate.hasResourceProperties("AWS::SES::EmailIdentity", {
       EmailIdentity: "example.com",
-      MailFromAttributes: { MailFromDomain: "bounce.example.com", BehaviorOnMxFailure: "USE_DEFAULT_VALUE" },
+      MailFromAttributes: {
+        MailFromDomain: "bounce.example.com",
+        BehaviorOnMxFailure: "USE_DEFAULT_VALUE",
+      },
     });
     const outputs = Object.keys(domainTemplate.toJSON()["Outputs"] as Record<string, unknown>);
     expect(outputs).toEqual(expect.arrayContaining(["DkimName1", "DkimValue3", "MailFromDomain"]));
     // An address identity has no DNS records of its own to publish.
-    expect(Object.keys(template.toJSON()["Outputs"] as Record<string, unknown>)).not.toContain("DkimName1");
+    expect(Object.keys(template.toJSON()["Outputs"] as Record<string, unknown>)).not.toContain(
+      "DkimName1",
+    );
   });
 
   it("uses only resource types that were checked against the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::ApiGatewayV2::Api",
       "AWS::ApiGatewayV2::Integration",
       "AWS::ApiGatewayV2::Route",

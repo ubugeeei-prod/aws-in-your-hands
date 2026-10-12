@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { type MachineSpec, pathsOf } from "./machine.ts";
 import { versionSchema } from "./release.ts";
 
@@ -7,9 +8,13 @@ import { versionSchema } from "./release.ts";
 
 // #region inputs
 export const instanceIdSchema = z.string().regex(/^i-[0-9a-f]{8,17}$/, "not an instance ID");
-export const bucketNameSchema = z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "not a bucket name");
+export const bucketNameSchema = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "not a bucket name");
 /** An Amazon Linux 2023 release, as `dnf check-release-update` prints it. Never "latest". */
-export const releaseverSchema = z.string().regex(/^2023\.\d{1,2}\.\d{8}$/, "not an AL2023 release version");
+export const releaseverSchema = z
+  .string()
+  .regex(/^2023\.\d{1,2}\.\d{8}$/, "not an AL2023 release version");
 // #endregion inputs
 
 // #region commands
@@ -39,10 +44,19 @@ export function remoteCommands(spec: MachineSpec) {
     ],
     logs: (): string[] => [`journalctl --unit ${unit} --no-pager --lines 50`],
     // Before the stack is destroyed or the volume is detached: a mounted volume does not detach cleanly.
-    unmount: (): string[] => ["set -euo pipefail", `systemctl stop ${unit}`, "sync", `umount ${spec.dataMount}`],
+    unmount: (): string[] => [
+      "set -euo pipefail",
+      `systemctl stop ${unit}`,
+      "sync",
+      `umount ${spec.dataMount}`,
+    ],
     // The same script as on the first boot: it never formats a volume that holds a file system.
     mount: (): string[] => ["set -euo pipefail", paths.volumeScript, `systemctl start ${unit}`],
-    patchCheck: (): string[] => ["rpm -q system-release", "dnf check-release-update || true", "uname -r"],
+    patchCheck: (): string[] => [
+      "rpm -q system-release",
+      "dnf check-release-update || true",
+      "uname -r",
+    ],
     patchApply: (releasever: string): string[] => [
       "set -euo pipefail",
       `dnf upgrade -y --releasever=${releaseverSchema.parse(releasever)}`,
@@ -57,7 +71,12 @@ export function remoteCommands(spec: MachineSpec) {
 const at = (region: string) => ["--region", region, "--output", "json"];
 
 /** `aws ssm send-command` with AWS-RunShellScript. The command lines travel as JSON, not through a shell. */
-export const sendCommandArgs = (input: { instanceId: string; region: string; commands: string[]; comment: string }) => [
+export const sendCommandArgs = (input: {
+  instanceId: string;
+  region: string;
+  commands: string[];
+  comment: string;
+}) => [
   "ssm",
   "send-command",
   "--instance-ids",
@@ -71,7 +90,11 @@ export const sendCommandArgs = (input: { instanceId: string; region: string; com
   ...at(input.region),
 ];
 
-export const commandResultArgs = (input: { commandId: string; instanceId: string; region: string }) => [
+export const commandResultArgs = (input: {
+  commandId: string;
+  instanceId: string;
+  region: string;
+}) => [
   "ssm",
   "get-command-invocation",
   "--command-id",
@@ -100,7 +123,12 @@ export const forwardArgs = (input: { instanceId: string; region: string; port: n
   JSON.stringify({ portNumber: [String(input.port)], localPortNumber: [String(input.port)] }),
 ];
 
-export const uploadArgs = (input: { file: string; bucket: string; key: string; region: string }) => [
+export const uploadArgs = (input: {
+  file: string;
+  bucket: string;
+  key: string;
+  region: string;
+}) => [
   "s3",
   "cp",
   input.file,

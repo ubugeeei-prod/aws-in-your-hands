@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { HttpApiStack } from "../lib/http-api-stack.ts";
 
 // Synthesis bundles the handler with esbuild, so it runs once for the file.
@@ -40,14 +41,23 @@ describe("HttpApiStack", () => {
     const functions = Object.values(template.findResources("AWS::Lambda::Function"));
     expect(functions).toHaveLength(1);
     expect(functions[0]?.["Properties"].Timeout).toBeLessThan(30);
-    expect(functions[0]?.["Properties"]).toMatchObject({ Runtime: "nodejs24.x", Architectures: ["arm64"] });
+    expect(functions[0]?.["Properties"]).toMatchObject({
+      Runtime: "nodejs24.x",
+      Architectures: ["arm64"],
+    });
   });
 
   it("exposes exactly the routes the application implements", () => {
     const routes = Object.values(template.findResources("AWS::ApiGatewayV2::Route"))
       .map((route) => route["Properties"].RouteKey as string)
       .toSorted();
-    expect(routes).toEqual(["DELETE /notes/{id}", "GET /health", "GET /notes", "GET /notes/{id}", "POST /notes"]);
+    expect(routes).toEqual([
+      "DELETE /notes/{id}",
+      "GET /health",
+      "GET /notes",
+      "GET /notes/{id}",
+      "POST /notes",
+    ]);
   });
 
   it("allows browser calls from the configured origin only", () => {
@@ -58,7 +68,9 @@ describe("HttpApiStack", () => {
 
   it("uses only resource types that were checked against the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::ApiGatewayV2::Api",
       "AWS::ApiGatewayV2::Integration",
       "AWS::ApiGatewayV2::Route",

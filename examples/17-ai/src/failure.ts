@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { Failure } from "./contract.ts";
 
 // #region classify

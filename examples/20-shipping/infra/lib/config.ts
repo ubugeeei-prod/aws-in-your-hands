@@ -4,7 +4,11 @@ import { z } from "zod";
 
 // #region stage
 /** `dev`, `prod`, or one preview per pull request: `pr-123`. */
-export const stageSchema = z.union([z.literal("dev"), z.literal("prod"), z.string().regex(/^pr-[1-9]\d{0,5}$/)]);
+export const stageSchema = z.union([
+  z.literal("dev"),
+  z.literal("prod"),
+  z.string().regex(/^pr-[1-9]\d{0,5}$/),
+]);
 export type Stage = z.infer<typeof stageSchema>;
 
 export const API_STACK_PREFIX = "AihShipApi";
@@ -14,7 +18,9 @@ export function apiStackName(stage: Stage): string {
   if (stage === "dev") {
     return API_STACK_PREFIX;
   }
-  return stage === "prod" ? `${API_STACK_PREFIX}Prod` : `${API_STACK_PREFIX}Pr${stage.slice("pr-".length)}`;
+  return stage === "prod"
+    ? `${API_STACK_PREFIX}Prod`
+    : `${API_STACK_PREFIX}Pr${stage.slice("pr-".length)}`;
 }
 // #endregion stage
 
@@ -22,10 +28,15 @@ export function apiStackName(stage: Stage): string {
 // `owner/repo`, or `owner@123/repo@456` for repositories that use immutable subject claims.
 const repository = z
   .string()
-  .regex(/^[A-Za-z0-9][A-Za-z0-9-]*(@\d+)?\/[A-Za-z0-9._-]+(@\d+)?$/, "expected owner/repo or owner@id/repo@id");
+  .regex(
+    /^[A-Za-z0-9][A-Za-z0-9-]*(@\d+)?\/[A-Za-z0-9._-]+(@\d+)?$/,
+    "expected owner/repo or owner@id/repo@id",
+  );
 
 // No wildcard may reach a trust policy: `*` or `?` here would widen who can assume the role.
-const exactName = z.string().regex(/^[A-Za-z0-9._/-]+$/, "letters, digits, '.', '_', '/', '-' only");
+const exactName = z
+  .string()
+  .regex(/^[A-Za-z0-9._/-]+$/, "letters, digits, '.', '_', '/', '-' only");
 
 export const ciConfigSchema = z.object({
   githubRepository: repository,
@@ -65,7 +76,9 @@ export function parseShipConfig(context: (key: string) => unknown): ShipConfig {
     },
   });
   if (!result.success) {
-    const problems = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = result.error.issues.map(
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
+    );
     throw new Error(`Invalid CDK context:\n  ${problems.join("\n  ")}`);
   }
   return result.data;

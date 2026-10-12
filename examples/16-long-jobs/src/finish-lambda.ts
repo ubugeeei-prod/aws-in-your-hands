@@ -1,5 +1,7 @@
-import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
 import { S3Client } from "@aws-sdk/client-s3";
+
+import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
+
 import { parseFunctionEnv } from "./env.ts";
 import { progressSchema } from "./job.ts";
 import { S3ExportStore } from "./s3-export-store.ts";

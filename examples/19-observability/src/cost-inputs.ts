@@ -11,7 +11,10 @@ export function logGbPerMonth(input: { requests: number; bytesPerRequest: number
 }
 
 /** Average GB kept, once a log group has been filling for longer than its retention. */
-export function storedGbMonths(input: { ingestedGbPerMonth: number; retentionDays: number }): number {
+export function storedGbMonths(input: {
+  ingestedGbPerMonth: number;
+  retentionDays: number;
+}): number {
   return (input.ingestedGbPerMonth * input.retentionDays) / 30;
 }
 // #endregion logs

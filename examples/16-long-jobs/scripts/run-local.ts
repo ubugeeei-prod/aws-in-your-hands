@@ -5,12 +5,15 @@
 // memory. --lose N drops the answer of the Nth call of the page step, as a
 // timeout would. --break N refuses to write part N until the retries run out,
 // then resumes the run the way a redrive would. No AWS, no credentials.
+
 import { parseArgs } from "node:util";
+
 import { z } from "zod";
+
 import { MemoryExportStore } from "../src/export-store.ts";
 import { manifestKey, manifestSchema, partKey } from "../src/job.ts";
-import { localDefinition, localInvoke } from "../src/local.ts";
 import { type Invoke, type Outcome, runWorkflow, TaskError } from "../src/local-workflow.ts";
+import { localDefinition, localInvoke } from "../src/local.ts";
 import { MemoryNoteSource } from "../src/note-source.ts";
 import { atMostPages } from "../src/steps.ts";
 
@@ -25,7 +28,13 @@ const { values } = parseArgs({
 });
 const count = z.coerce.number().int().min(0).max(100_000);
 const options = z
-  .object({ notes: count, "page-size": count.min(1), "pages-per-call": count.min(1), lose: count, break: count })
+  .object({
+    notes: count,
+    "page-size": count.min(1),
+    "pages-per-call": count.min(1),
+    lose: count,
+    break: count,
+  })
   .parse(values);
 
 const source = new MemoryNoteSource();
@@ -75,7 +84,9 @@ const invoke: Invoke = async (resource, input) => {
 function report(label: string, outcome: Outcome): void {
   console.log(`${label}: ${outcome.status}`);
   for (const step of outcome.steps) {
-    console.log(`  ${step.state} attempt ${step.attempt}${step.error === undefined ? "" : ` -> ${step.error}`}`);
+    console.log(
+      `  ${step.state} attempt ${step.attempt}${step.error === undefined ? "" : ` -> ${step.error}`}`,
+    );
   }
   if (outcome.status === "FAILED") {
     console.log(`  error: ${outcome.error} (${outcome.cause})`);
@@ -96,7 +107,9 @@ if (manifest === undefined) {
   process.exit(1);
 }
 const { parts } = manifestSchema.parse(JSON.parse(manifest));
-const lines = parts.flatMap((key) => (store.read(key) ?? "").trimEnd().split("\n")).filter((line) => line !== "");
+const lines = parts
+  .flatMap((key) => (store.read(key) ?? "").trimEnd().split("\n"))
+  .filter((line) => line !== "");
 const distinct = new Set(
   lines.map((line) => z.object({ owner: z.string(), id: z.string() }).parse(JSON.parse(line)).id),
 );

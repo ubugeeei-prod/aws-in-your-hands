@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { createError, useFetch, useHead } from "nuxt/app";
+
 import { noteListSchema } from "../../core/notes.ts";
 
 // On the server this calls the route in the same process. In the browser it is

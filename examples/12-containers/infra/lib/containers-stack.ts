@@ -1,4 +1,3 @@
-import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { Peer, Port, SecurityGroup } from "aws-cdk-lib/aws-ec2";
 import { Repository, TagMutability } from "aws-cdk-lib/aws-ecr";
@@ -11,10 +10,16 @@ import {
   LogDrivers,
   OperatingSystemFamily,
 } from "aws-cdk-lib/aws-ecs";
-import { ApplicationLoadBalancer, ApplicationProtocol } from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import {
+  ApplicationLoadBalancer,
+  ApplicationProtocol,
+} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
+
+import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
+
 import { type ContainersConfig, SERVICE, TASK } from "../../src/config.ts";
 import { timing } from "../../src/timing.ts";
 
@@ -135,7 +140,11 @@ export class ContainersStack extends Stack {
       dropInvalidHeaderFields: true,
     });
     // HTTP only: a certificate needs a domain name, and this chapter has none.
-    const listener = loadBalancer.addListener("Http", { port: 80, protocol: ApplicationProtocol.HTTP, open: true });
+    const listener = loadBalancer.addListener("Http", {
+      port: 80,
+      protocol: ApplicationProtocol.HTTP,
+      open: true,
+    });
     listener.addTargets("Api", {
       port: TASK.containerPort,
       protocol: ApplicationProtocol.HTTP,

@@ -21,22 +21,28 @@ export type Inspection = z.infer<typeof inspectionSchema>;
 // #endregion record
 
 // #region repository
-export interface InspectionRepository {
+export type InspectionRepository = {
   /**
    * Writes the record unless one from the same event, or a later one, is
    * already there. Check and write are one step in the store.
    */
   putIfNewer(owner: string, inspection: Inspection): Promise<"written" | "not_newer">;
   /** Deletes the record unless it comes from an event later than `sequencer`. */
-  deleteIfOlder(owner: string, noteId: string, attachmentId: string, sequencer: string): Promise<"deleted" | "kept">;
+  deleteIfOlder(
+    owner: string,
+    noteId: string,
+    attachmentId: string,
+    sequencer: string,
+  ): Promise<"deleted" | "kept">;
   get(owner: string, noteId: string, attachmentId: string): Promise<Inspection | undefined>;
-}
+};
 // #endregion repository
 
 export class InMemoryInspectionRepository implements InspectionRepository {
   readonly #records = new Map<string, Inspection>();
 
-  #key = (owner: string, noteId: string, attachmentId: string): string => `${owner}/${noteId}/${attachmentId}`;
+  #key = (owner: string, noteId: string, attachmentId: string): string =>
+    `${owner}/${noteId}/${attachmentId}`;
 
   async putIfNewer(owner: string, inspection: Inspection) {
     const key = this.#key(owner, inspection.noteId, inspection.attachmentId);

@@ -1,8 +1,18 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEc2Config } from "../src/config.ts";
 import { machineFor } from "../src/machine.ts";
 import { renderDataVolumeScript } from "../src/user-data.ts";
@@ -52,7 +62,11 @@ function machineWithVolume(volume: "empty" | "formatted" | "unreadable" | "detac
       input: script,
       encoding: "utf8",
       // One "mounted" marker per fstab: a new instance starts with nothing mounted.
-      env: { ...process.env, PATH: `${bin}:${process.env["PATH"] ?? ""}`, AIH_MOUNTED: `${fstab}.mounted` },
+      env: {
+        ...process.env,
+        PATH: `${bin}:${process.env["PATH"] ?? ""}`,
+        AIH_MOUNTED: `${fstab}.mounted`,
+      },
     });
     return { status: result.status, stderr: result.stderr, fstab: readFileSync(fstab, "utf8") };
   };

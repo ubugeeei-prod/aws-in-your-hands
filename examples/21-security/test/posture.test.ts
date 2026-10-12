@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { assess, failing, type Snapshot, snapshotSchema } from "../src/posture.ts";
 
 const read = <T>(value: T) => ({ read: true as const, value });
@@ -13,7 +14,8 @@ const personal: Snapshot = {
   config: read([]),
   organization: read({ member: false, allFeatures: false }),
 };
-const stateOf = (snapshot: Snapshot) => Object.fromEntries(assess(snapshot).map((entry) => [entry.id, entry.state]));
+const stateOf = (snapshot: Snapshot) =>
+  Object.fromEntries(assess(snapshot).map((entry) => [entry.id, entry.state]));
 
 describe("posture", () => {
   it("passes a personal account that did chapter 01 and nothing more", () => {
@@ -32,18 +34,31 @@ describe("posture", () => {
   });
 
   it("fails on a root user without MFA or with access keys, whatever else is on", () => {
-    const careless: Snapshot = { ...personal, root: read({ mfaEnabled: false, accessKeysPresent: true }) };
-    expect(failing(assess(careless)).map((entry) => entry.id)).toEqual(["root-mfa", "root-access-keys"]);
+    const careless: Snapshot = {
+      ...personal,
+      root: read({ mfaEnabled: false, accessKeysPresent: true }),
+    };
+    expect(failing(assess(careless)).map((entry) => entry.id)).toEqual([
+      "root-mfa",
+      "root-access-keys",
+    ]);
   });
 
   it("does not report a check it could not make as passed, or as off", () => {
-    const blind: Snapshot = { ...personal, root: unread("AccessDenied"), guardDuty: unread("AccessDenied") };
+    const blind: Snapshot = {
+      ...personal,
+      root: unread("AccessDenied"),
+      guardDuty: unread("AccessDenied"),
+    };
     expect(stateOf(blind)).toMatchObject({
       "root-mfa": "unknown",
       "root-access-keys": "unknown",
       guardduty: "unknown",
     });
-    expect(failing(assess(blind)).map((entry) => entry.id)).toEqual(["root-mfa", "root-access-keys"]);
+    expect(failing(assess(blind)).map((entry) => entry.id)).toEqual([
+      "root-mfa",
+      "root-access-keys",
+    ]);
   });
 
   it("counts only what is actually running", () => {
@@ -67,7 +82,12 @@ describe("posture", () => {
 
   it("puts every paid control outside the tier that fails the task", () => {
     const paid = assess(personal).filter((entry) => entry.charge !== "free");
-    expect(paid.map((entry) => entry.id)).toEqual(["guardduty", "inspector", "cloudtrail-trail", "config-recorder"]);
+    expect(paid.map((entry) => entry.id)).toEqual([
+      "guardduty",
+      "inspector",
+      "cloudtrail-trail",
+      "config-recorder",
+    ]);
     expect(paid.every((entry) => entry.tier !== "everyone")).toBe(true);
   });
 });

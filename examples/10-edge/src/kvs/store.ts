@@ -1,4 +1,5 @@
 // The KeyValueStore API is global and signs with SigV4A. This import registers the signer the SDK looks for.
+
 import "@aws-sdk/signature-v4a";
 import {
   type CloudFrontKeyValueStoreClient,
@@ -9,6 +10,7 @@ import {
   UpdateKeysCommand,
 } from "@aws-sdk/client-cloudfront-keyvaluestore";
 import { z } from "zod";
+
 import { LIMITS } from "./config.ts";
 import type { Batch } from "./plan.ts";
 import { KvsConflictError, type KvsPort, KvsUnavailableError, type Snapshot } from "./sync.ts";
@@ -30,23 +32,31 @@ function translate(error: unknown): unknown {
   if (error instanceof ConflictException) {
     return new KvsConflictError(error.message, { cause: error });
   }
-  const status = (error as { $metadata?: { httpStatusCode?: number } } | null)?.$metadata?.httpStatusCode;
+  const status = (error as { $metadata?: { httpStatusCode?: number } } | null)?.$metadata
+    ?.httpStatusCode;
   // No status at all means the request died on the way: the write may have landed.
   if (error instanceof InternalServerException || status === undefined || status >= 500) {
-    return new KvsUnavailableError(error instanceof Error ? error.message : String(error), { cause: error });
+    return new KvsUnavailableError(error instanceof Error ? error.message : String(error), {
+      cause: error,
+    });
   }
   return error;
 }
 // #endregion errors
 
 // #region adapter
-export function createKvsStore(client: Pick<CloudFrontKeyValueStoreClient, "send">, kvsArn: string): KvsPort {
+export function createKvsStore(
+  client: Pick<CloudFrontKeyValueStoreClient, "send">,
+  kvsArn: string,
+): KvsPort {
   return {
     async read(): Promise<Snapshot> {
       try {
         // ETag first. Pairs listed after it can only be newer, and a newer store rejects this ETag.
         // The other order could pair a new ETag with old pairs and overwrite a change unseen.
-        const store = describeSchema.parse(await client.send(new DescribeKeyValueStoreCommand({ KvsARN: kvsArn })));
+        const store = describeSchema.parse(
+          await client.send(new DescribeKeyValueStoreCommand({ KvsARN: kvsArn })),
+        );
         if (store.Status !== undefined && store.Status !== "READY") {
           throw new KvsUnavailableError(`the store is ${store.Status}, not READY`);
         }
@@ -55,7 +65,11 @@ export function createKvsStore(client: Pick<CloudFrontKeyValueStoreClient, "send
         do {
           const page = listSchema.parse(
             await client.send(
-              new ListKeysCommand({ KvsARN: kvsArn, MaxResults: LIMITS.keysPerUpdate, NextToken: token }),
+              new ListKeysCommand({
+                KvsARN: kvsArn,
+                MaxResults: LIMITS.keysPerUpdate,
+                NextToken: token,
+              }),
             ),
           );
           for (const item of page.Items) {

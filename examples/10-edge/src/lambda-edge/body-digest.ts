@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+
 import type { CloudFrontResultResponse } from "aws-lambda";
 import { z } from "zod";
 
@@ -12,7 +13,11 @@ const eventSchema = z.object({
           request: z.object({
             method: z.string(),
             body: z
-              .object({ inputTruncated: z.boolean(), encoding: z.enum(["base64", "text"]), data: z.string() })
+              .object({
+                inputTruncated: z.boolean(),
+                encoding: z.enum(["base64", "text"]),
+                data: z.string(),
+              })
               .optional(),
           }),
         }),
@@ -39,9 +44,15 @@ const json = (status: number, description: string, body: unknown): CloudFrontRes
 export function digestResponse(request: EdgeRequest): CloudFrontResultResponse {
   if (request.method !== "POST") {
     const response = json(405, "Method Not Allowed", { error: "send a POST with a body" });
-    return { ...response, headers: { ...response.headers, allow: [{ key: "Allow", value: "POST" }] } };
+    return {
+      ...response,
+      headers: { ...response.headers, allow: [{ key: "Allow", value: "POST" }] },
+    };
   }
-  const body = Buffer.from(request.body?.data ?? "", request.body?.encoding === "text" ? "utf8" : "base64");
+  const body = Buffer.from(
+    request.body?.data ?? "",
+    request.body?.encoding === "text" ? "utf8" : "base64",
+  );
   return json(200, "OK", {
     bytes: body.byteLength,
     sha256: createHash("sha256").update(body).digest("hex"),

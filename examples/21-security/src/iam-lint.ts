@@ -21,7 +21,9 @@ export type FindingKind =
 export type Finding = { resource: string; kind: FindingKind; detail: string };
 export type LintResult = { findings: Finding[]; unusedExceptions: LintException[] };
 
-const stringOrList = z.union([z.string(), z.array(z.string())]).transform((value) => [value].flat());
+const stringOrList = z
+  .union([z.string(), z.array(z.string())])
+  .transform((value) => [value].flat());
 const statementSchema = z.looseObject({
   Effect: z.enum(["Allow", "Deny"]),
   Action: stringOrList.optional(),
@@ -33,19 +35,25 @@ const statementSchema = z.looseObject({
   Condition: z.unknown().optional(),
 });
 const documentSchema = z.looseObject({
-  Statement: z.union([statementSchema, z.array(statementSchema)]).transform((value) => [value].flat()),
+  Statement: z
+    .union([statementSchema, z.array(statementSchema)])
+    .transform((value) => [value].flat()),
 });
 const templateSchema = z.looseObject({
-  Resources: z.record(z.string(), z.looseObject({ Type: z.string(), Properties: z.unknown().optional() })).default({}),
+  Resources: z
+    .record(z.string(), z.looseObject({ Type: z.string(), Properties: z.unknown().optional() }))
+    .default({}),
 });
 
-const BROAD_MANAGED = /:policy\/(AdministratorAccess|PowerUserAccess|IAMFullAccess|[A-Za-z0-9]*FullAccess)$/;
+const BROAD_MANAGED =
+  /:policy\/(AdministratorAccess|PowerUserAccess|IAMFullAccess|[A-Za-z0-9]*FullAccess)$/;
 
 /** Types whose `Policies` are inline identity policies, and types that are one policy document. */
 const WITH_INLINE = ["AWS::IAM::Role", "AWS::IAM::User", "AWS::IAM::Group"];
 const ONE_DOCUMENT = ["AWS::IAM::Policy", "AWS::IAM::ManagedPolicy"];
 
-const isBareWildcard = (resource: unknown): boolean => [resource].flat().some((entry) => entry === "*");
+const isBareWildcard = (resource: unknown): boolean =>
+  [resource].flat().some((entry) => entry === "*");
 
 // #region lint
 /** Reads a synthesized CloudFormation template and reports every Allow that is wider than a named action on a named resource. */
@@ -63,7 +71,11 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
     const parsed = documentSchema.safeParse(document);
     if (!parsed.success) {
       // A policy this code cannot read is not a policy it can vouch for.
-      findings.push({ resource, kind: "unreadable", detail: "the policy document did not have the expected shape" });
+      findings.push({
+        resource,
+        kind: "unreadable",
+        detail: "the policy document did not have the expected shape",
+      });
       return;
     }
     for (const statement of parsed.data.Statement) {
@@ -72,7 +84,11 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
         continue;
       }
       if (statement.NotAction !== undefined) {
-        findings.push({ resource, kind: "not-action", detail: "Allow with NotAction allows everything not listed" });
+        findings.push({
+          resource,
+          kind: "not-action",
+          detail: "Allow with NotAction allows everything not listed",
+        });
       }
       if (statement.NotResource !== undefined) {
         findings.push({
@@ -92,7 +108,11 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
           if (allowed.has(action)) {
             used.add(action);
           } else {
-            findings.push({ resource, kind: "wildcard-resource", detail: `${action} on Resource "*"` });
+            findings.push({
+              resource,
+              kind: "wildcard-resource",
+              detail: `${action} on Resource "*"`,
+            });
           }
         }
       }
@@ -102,16 +122,26 @@ export function lintTemplate(template: unknown, exceptions: LintException[] = []
   const inspectTrust = (resource: string, document: unknown): void => {
     const parsed = documentSchema.safeParse(document);
     if (!parsed.success) {
-      findings.push({ resource, kind: "unreadable", detail: "the trust policy did not have the expected shape" });
+      findings.push({
+        resource,
+        kind: "unreadable",
+        detail: "the trust policy did not have the expected shape",
+      });
       return;
     }
     for (const statement of parsed.data.Statement) {
       const principal = statement.Principal;
       const anyone =
         principal === "*" ||
-        (typeof principal === "object" && principal !== null && isBareWildcard((principal as { AWS?: unknown }).AWS));
+        (typeof principal === "object" &&
+          principal !== null &&
+          isBareWildcard((principal as { AWS?: unknown }).AWS));
       if (statement.Effect === "Allow" && anyone && statement.Condition === undefined) {
-        findings.push({ resource, kind: "open-trust", detail: "any AWS principal may assume this role" });
+        findings.push({
+          resource,
+          kind: "open-trust",
+          detail: "any AWS principal may assume this role",
+        });
       }
     }
   };

@@ -25,7 +25,13 @@ export const healthSchema = z.object({
   store: z.enum(["memory", "dynamodb", "valkey", "elasticache"]),
 });
 
-export const errorCodes = ["invalid_request", "rate_limited", "unavailable", "not_found", "internal"] as const;
+export const errorCodes = [
+  "invalid_request",
+  "rate_limited",
+  "unavailable",
+  "not_found",
+  "internal",
+] as const;
 
 export const errorSchema = z.object({
   error: z.object({

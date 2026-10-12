@@ -1,6 +1,12 @@
-import { DeleteObjectTaggingCommand, HeadObjectCommand, NotFound, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectTaggingCommand,
+  HeadObjectCommand,
+  NotFound,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { z } from "zod";
+
 import { S3ObjectStore } from "../src/s3-object-store.ts";
 
 // Signing is arithmetic on made-up credentials: nothing here reaches AWS. So
@@ -8,7 +14,11 @@ import { S3ObjectStore } from "../src/s3-object-store.ts";
 const client = () =>
   new S3Client({
     region: "ap-northeast-1",
-    credentials: { accessKeyId: "AKIDEXAMPLE", secretAccessKey: "not-a-real-secret", sessionToken: "session-token" },
+    credentials: {
+      accessKeyId: "AKIDEXAMPLE",
+      secretAccessKey: "not-a-real-secret",
+      sessionToken: "session-token",
+    },
   });
 
 const policySchema = z.object({ expiration: z.iso.datetime(), conditions: z.array(z.unknown()) });
@@ -22,14 +32,17 @@ describe("the upload form", () => {
       maxBytes: 5 * 1024 * 1024,
       expiresInSeconds: 300,
     });
-    const policy = policySchema.parse(JSON.parse(Buffer.from(form.fields["Policy"] ?? "", "base64").toString("utf8")));
+    const policy = policySchema.parse(
+      JSON.parse(Buffer.from(form.fields["Policy"] ?? "", "base64").toString("utf8")),
+    );
 
     expect(policy.conditions).toContainEqual({ bucket: "uploads-bucket" });
     expect(policy.conditions).toContainEqual({ key: "u/alice/n1/a1" });
     expect(policy.conditions).toContainEqual({ "Content-Type": "image/png" });
     expect(policy.conditions).toContainEqual(["content-length-range", 1, 5 * 1024 * 1024]);
     expect(policy.conditions).toContainEqual({
-      tagging: "<Tagging><TagSet><Tag><Key>upload-state</Key><Value>pending</Value></Tag></TagSet></Tagging>",
+      tagging:
+        "<Tagging><TagSet><Tag><Key>upload-state</Key><Value>pending</Value></Tag></TagSet></Tagging>",
     });
     // No "starts-with": nothing is left for the browser to choose.
     expect(JSON.stringify(policy.conditions)).not.toContain("starts-with");
@@ -58,8 +71,12 @@ describe("the upload form", () => {
 
 describe("the view URL", () => {
   it("is a GET for one key that lasts five minutes", async () => {
-    const url = new URL(await new S3ObjectStore(client(), "uploads-bucket").presignView("u/alice/n1/a1", 300));
-    expect(url.origin + url.pathname).toBe("https://uploads-bucket.s3.ap-northeast-1.amazonaws.com/u/alice/n1/a1");
+    const url = new URL(
+      await new S3ObjectStore(client(), "uploads-bucket").presignView("u/alice/n1/a1", 300),
+    );
+    expect(url.origin + url.pathname).toBe(
+      "https://uploads-bucket.s3.ap-northeast-1.amazonaws.com/u/alice/n1/a1",
+    );
     expect(url.searchParams.get("X-Amz-Expires")).toBe("300");
     expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe("host");
     expect(url.searchParams.get("X-Amz-Security-Token")).toBe("session-token");
@@ -79,7 +96,10 @@ describe("calls to S3", () => {
 
     // Without s3:ListBucket, S3 answers 403 for a missing key. That must not read as "missing".
     send.mockImplementationOnce(async () => {
-      throw Object.assign(new Error("Forbidden"), { name: "403", $metadata: { httpStatusCode: 403 } });
+      throw Object.assign(new Error("Forbidden"), {
+        name: "403",
+        $metadata: { httpStatusCode: 403 },
+      });
     });
     await expect(store.head("u/alice/n1/a1")).rejects.toThrow("Forbidden");
     expect(send.mock.calls[0]?.[0]).toBeInstanceOf(HeadObjectCommand);

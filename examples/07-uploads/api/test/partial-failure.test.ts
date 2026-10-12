@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { sendUpload } from "../src/client.ts";
 import { SWEEP_GRACE_MS } from "../src/sweep.ts";
 import { png, rejection, setup } from "./harness.ts";
@@ -12,7 +13,9 @@ import { png, rejection, setup } from "./harness.ts";
 async function uploaded() {
   const context = await setup();
   const note = await context.alice.notes.create({ title: "trip", body: "" });
-  const permit = await context.alice.attachments.requestUpload(note.id, { contentType: "image/png" });
+  const permit = await context.alice.attachments.requestUpload(note.id, {
+    contentType: "image/png",
+  });
   await sendUpload(permit, png(), context.network);
   return { ...context, note, permit, key: `u/alice/${note.id}/${permit.attachmentId}` };
 }
@@ -28,7 +31,9 @@ describe("an upload that stops halfway", () => {
     const { alice, objects, failNextRecordCall, note, permit, key } = await uploaded();
 
     failNextRecordCall("create");
-    expect(await rejection(alice.attachments.finish(note.id, permit.attachmentId))).toMatchObject({ status: 500 });
+    expect(await rejection(alice.attachments.finish(note.id, permit.attachmentId))).toMatchObject({
+      status: 500,
+    });
     // The gap: the object is out of the lifecycle rule's reach, and nothing points at it.
     expect(objects.stateOf(key)).toBe("attached");
     expect(await alice.attachments.list(note.id)).toEqual([]);
@@ -38,7 +43,8 @@ describe("an upload that stops halfway", () => {
   });
 
   it("tag removed, record not written, no retry: the sweep removes the object", async () => {
-    const { alice, objects, failNextRecordCall, advance, sweep, note, permit, key } = await uploaded();
+    const { alice, objects, failNextRecordCall, advance, sweep, note, permit, key } =
+      await uploaded();
     failNextRecordCall("create");
     await rejection(alice.attachments.finish(note.id, permit.attachmentId));
 
@@ -54,7 +60,9 @@ describe("an upload that stops halfway", () => {
   it("removing the tag fails: nothing is recorded, and a retry succeeds", async () => {
     const { alice, objects, failNextObjectCall, note, permit, key } = await uploaded();
     failNextObjectCall("markAttached");
-    expect(await rejection(alice.attachments.finish(note.id, permit.attachmentId))).toMatchObject({ status: 500 });
+    expect(await rejection(alice.attachments.finish(note.id, permit.attachmentId))).toMatchObject({
+      status: 500,
+    });
     expect(objects.stateOf(key)).toBe("pending");
     expect(await alice.attachments.list(note.id)).toEqual([]);
 
@@ -74,14 +82,17 @@ describe("an upload that stops halfway", () => {
 
 describe("a delete that stops halfway", () => {
   it("record deleted, object delete fails: nothing dangles, and the sweep collects the object", async () => {
-    const { alice, objects, logs, failNextObjectCall, advance, sweep, note, permit, key } = await uploaded();
+    const { alice, objects, logs, failNextObjectCall, advance, sweep, note, permit, key } =
+      await uploaded();
     await alice.attachments.finish(note.id, permit.attachmentId);
 
     failNextObjectCall("delete");
     await alice.attachments.remove(note.id, permit.attachmentId);
     expect(await alice.attachments.list(note.id)).toEqual([]);
     expect(objects.stateOf(key)).toBe("attached");
-    expect(logs).toContainEqual(expect.objectContaining({ level: "warn", attachmentId: permit.attachmentId }));
+    expect(logs).toContainEqual(
+      expect.objectContaining({ level: "warn", attachmentId: permit.attachmentId }),
+    );
 
     advance(SWEEP_GRACE_MS);
     expect(await sweep()).toMatchObject({ removed: [{ key, reason: "no_record" }] });
@@ -98,7 +109,8 @@ describe("a delete that stops halfway", () => {
   });
 
   it("note deleted, cleanup fails: the leftovers are unreachable, then swept", async () => {
-    const { alice, objects, failNextRecordCall, advance, sweep, note, permit, key } = await uploaded();
+    const { alice, objects, failNextRecordCall, advance, sweep, note, permit, key } =
+      await uploaded();
     await alice.attachments.finish(note.id, permit.attachmentId);
 
     failNextRecordCall("listByNote");
@@ -107,7 +119,9 @@ describe("a delete that stops halfway", () => {
     expect(objects.stateOf(key)).toBe("attached");
     // ...but no request can reach them: the note check comes first.
     expect(await rejection(alice.attachments.list(note.id))).toMatchObject({ status: 404 });
-    expect(await rejection(alice.attachments.finish(note.id, permit.attachmentId))).toMatchObject({ status: 404 });
+    expect(await rejection(alice.attachments.finish(note.id, permit.attachmentId))).toMatchObject({
+      status: 404,
+    });
 
     advance(SWEEP_GRACE_MS);
     expect(await sweep()).toMatchObject({ removed: [{ key, reason: "no_note" }] });
@@ -129,7 +143,9 @@ describe("the sweep", () => {
   it("deletes nothing in a dry run", async () => {
     const { objects, advance, sweep, key } = await uploaded();
     advance(SWEEP_GRACE_MS);
-    expect(await sweep({ dryRun: true })).toMatchObject({ removed: [{ key, reason: "no_record" }] });
+    expect(await sweep({ dryRun: true })).toMatchObject({
+      removed: [{ key, reason: "no_record" }],
+    });
     expect(objects.stateOf(key)).toBe("pending");
   });
 });

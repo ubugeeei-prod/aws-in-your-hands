@@ -2,10 +2,13 @@
 //   node scripts/smoke.ts [--url https://xxxx.execute-api.ap-northeast-1.amazonaws.com]
 // Goes through API Gateway, Lambda, IAM, and the store. Writes a few counter
 // and cache entries, all of which expire on their own.
+
 import { randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { healthSchema, itemListSchema } from "../src/contract.ts";
 
 const { values } = parseArgs({ options: { url: { type: "string" } } });
@@ -18,7 +21,10 @@ try {
       action: "smoke test the deployed API",
       stack: "AihKvCache",
     });
-    url = requireOutput(await readStackOutputs(process.cwd(), "AihKvCache", target.region), "ApiUrl");
+    url = requireOutput(
+      await readStackOutputs(process.cwd(), "AihKvCache", target.region),
+      "ApiUrl",
+    );
   }
   console.log(`api: ${url}`);
 
@@ -39,7 +45,9 @@ try {
     const requestId = response.headers.get("x-request-id");
     if (response.status === 429) {
       refusedAt = request;
-      console.log(`ok   request ${request}: 429, retry-after ${response.headers.get("retry-after")} s`);
+      console.log(
+        `ok   request ${request}: 429, retry-after ${response.headers.get("retry-after")} s`,
+      );
     } else if (response.status === 200) {
       limit = Number(response.headers.get("ratelimit-limit"));
       const list = itemListSchema.parse(await response.json());
@@ -56,7 +64,9 @@ try {
 
   if (refusedAt === undefined) {
     // Expected with KV_STORE=memory once Lambda runs more than one execution environment.
-    console.log(`note no request was refused. With store "memory" each execution environment counts on its own.`);
+    console.log(
+      `note no request was refused. With store "memory" each execution environment counts on its own.`,
+    );
     if (store !== "memory") {
       throw new Error("a shared store never refused a request");
     }

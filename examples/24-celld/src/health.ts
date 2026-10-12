@@ -8,7 +8,8 @@ export type NodeHealth = { active: boolean; healthy: boolean; version: string | 
 
 /** Reads the three lines of `nodeCommands().health()`. */
 export function parseNodeHealth(stdout: string): NodeHealth {
-  const field = (name: string): string | null => new RegExp(`^${name} (.*)$`, "m").exec(stdout)?.[1]?.trim() ?? null;
+  const field = (name: string): string | null =>
+    new RegExp(`^${name} (.*)$`, "m").exec(stdout)?.[1]?.trim() ?? null;
   const version = field("VERSION");
   return {
     active: field("ACTIVE") === "active",

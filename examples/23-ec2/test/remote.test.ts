@@ -1,8 +1,15 @@
 import { spawnSync } from "node:child_process";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEc2Config } from "../src/config.ts";
 import { machineFor } from "../src/machine.ts";
-import { releaseKey, releaseVersion, VERSION_SHELL_PATTERN, versionSchema } from "../src/release.ts";
+import {
+  releaseKey,
+  releaseVersion,
+  VERSION_SHELL_PATTERN,
+  versionSchema,
+} from "../src/release.ts";
 import {
   forwardArgs,
   invocationSchema,
@@ -20,7 +27,17 @@ const VERSION = "20261012T010203Z-0123456789abcdef";
 const BUCKET = "aihec2-releases-abc123";
 const INSTANCE = "i-0123456789abcdef0";
 
-const HOSTILE = ["v1; reboot", "$(reboot)", "`reboot`", "../../etc", "a b", "x'y", "x\ny", "", "latest"];
+const HOSTILE = [
+  "v1; reboot",
+  "$(reboot)",
+  "`reboot`",
+  "../../etc",
+  "a b",
+  "x'y",
+  "x\ny",
+  "",
+  "latest",
+];
 
 describe("release versions", () => {
   it("names a release by build time and content", () => {
@@ -29,21 +46,25 @@ describe("release versions", () => {
 
     expect(version).toMatch(/^20261012T010203Z-[0-9a-f]{16}$/);
     expect(releaseVersion(bundle, new Date("2026-10-12T01:02:03.999Z"))).toBe(version);
-    expect(releaseVersion(new TextEncoder().encode("console.log(2)"), new Date("2026-10-12T01:02:03Z"))).not.toBe(
-      version,
-    );
+    expect(
+      releaseVersion(new TextEncoder().encode("console.log(2)"), new Date("2026-10-12T01:02:03Z")),
+    ).not.toBe(version);
     expect(releaseKey(version)).toBe(`releases/${version}/server.mjs`);
   });
 
   it("is checked on the instance with the same pattern as on your machine", () => {
     expect(versionSchema.safeParse(VERSION).success).toBe(true);
-    expect(renderReleaseScript(machine)).toContain(`[[ ! "$version" =~ ${VERSION_SHELL_PATTERN} ]]`);
+    expect(renderReleaseScript(machine)).toContain(
+      `[[ ! "$version" =~ ${VERSION_SHELL_PATTERN} ]]`,
+    );
   });
 });
 
 describe("what is sent to the instance", () => {
   it("builds the release command from a validated bucket and version only", () => {
-    expect(commands.release(BUCKET, VERSION)).toEqual([`/usr/local/sbin/notes-release ${BUCKET} ${VERSION}`]);
+    expect(commands.release(BUCKET, VERSION)).toEqual([
+      `/usr/local/sbin/notes-release ${BUCKET} ${VERSION}`,
+    ]);
     for (const value of HOSTILE) {
       expect(() => commands.release(BUCKET, value), JSON.stringify(value)).toThrow();
       expect(() => releaseKey(value), JSON.stringify(value)).toThrow();
@@ -54,7 +75,9 @@ describe("what is sent to the instance", () => {
   });
 
   it("upgrades to a named Amazon Linux release, never to whatever is latest", () => {
-    expect(commands.patchApply("2023.12.20260930")).toContain("dnf upgrade -y --releasever=2023.12.20260930");
+    expect(commands.patchApply("2023.12.20260930")).toContain(
+      "dnf upgrade -y --releasever=2023.12.20260930",
+    );
     for (const value of [...HOSTILE, "2023.12.20260930 --nogpgcheck", "2024.1.20260101"]) {
       expect(() => commands.patchApply(value), JSON.stringify(value)).toThrow();
     }
@@ -62,7 +85,12 @@ describe("what is sent to the instance", () => {
 
   it("hands the command lines to the AWS CLI as one JSON argument, with no local shell in between", () => {
     const lines = commands.smoke();
-    const args = sendCommandArgs({ instanceId: INSTANCE, region: "ap-northeast-1", commands: lines, comment: "test" });
+    const args = sendCommandArgs({
+      instanceId: INSTANCE,
+      region: "ap-northeast-1",
+      commands: lines,
+      comment: "test",
+    });
 
     expect(args.slice(0, 6)).toEqual([
       "ssm",
@@ -73,17 +101,31 @@ describe("what is sent to the instance", () => {
       "AWS-RunShellScript",
     ]);
     expect(JSON.parse(args[args.indexOf("--parameters") + 1] ?? "")).toEqual({ commands: lines });
-    expect(() => sendCommandArgs({ instanceId: "i-123; id", region: "r", commands: [], comment: "" })).toThrow();
+    expect(() =>
+      sendCommandArgs({ instanceId: "i-123; id", region: "r", commands: [], comment: "" }),
+    ).toThrow();
   });
 
   it("forwards the API port over a session instead of opening it in the security group", () => {
-    const args = forwardArgs({ instanceId: INSTANCE, region: "ap-northeast-1", port: machine.port });
+    const args = forwardArgs({
+      instanceId: INSTANCE,
+      region: "ap-northeast-1",
+      port: machine.port,
+    });
     expect(args).toContain("AWS-StartPortForwardingSession");
-    expect(JSON.parse(args.at(-1) ?? "")).toEqual({ portNumber: ["8787"], localPortNumber: ["8787"] });
+    expect(JSON.parse(args.at(-1) ?? "")).toEqual({
+      portNumber: ["8787"],
+      localPortNumber: ["8787"],
+    });
   });
 
   it("uploads under the prefix the instance role may read", () => {
-    const args = uploadArgs({ file: "dist/server.mjs", bucket: BUCKET, key: releaseKey(VERSION), region: "r" });
+    const args = uploadArgs({
+      file: "dist/server.mjs",
+      bucket: BUCKET,
+      key: releaseKey(VERSION),
+      region: "r",
+    });
     expect(args[3]).toBe(`s3://${BUCKET}/releases/${VERSION}/server.mjs`);
   });
 
@@ -111,7 +153,9 @@ describe("reading the result of a command", () => {
   it("waits while the command runs and treats only exit code 0 as success", () => {
     expect(isFinished(parse({ Status: "InProgress" }))).toBe(false);
     expect(isFinished(parse({ Status: "Pending", ResponseCode: -1 }))).toBe(false);
-    expect(succeeded(parse({ Status: "Success", ResponseCode: 0, StandardOutputContent: "ok" }))).toBe(true);
+    expect(
+      succeeded(parse({ Status: "Success", ResponseCode: 0, StandardOutputContent: "ok" })),
+    ).toBe(true);
     for (const result of [
       { Status: "Failed", ResponseCode: 1 },
       { Status: "TimedOut" },
@@ -127,7 +171,10 @@ describe("reading the result of a command", () => {
 describe("the release script, run with bad arguments", () => {
   // It exits before touching anything, so it is safe to run here as it is.
   const run = (...args: string[]) =>
-    spawnSync("bash", ["-s", "--", ...args], { input: renderReleaseScript(machine), encoding: "utf8" });
+    spawnSync("bash", ["-s", "--", ...args], {
+      input: renderReleaseScript(machine),
+      encoding: "utf8",
+    });
 
   it.each([
     ["no arguments", []],

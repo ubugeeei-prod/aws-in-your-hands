@@ -171,7 +171,9 @@
       "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_GetStream.html",
       "title": "IVS API: GetStream",
       "checkedAt": "2026-10-11",
-      "supports": ["An offline channel is reported as the ChannelNotBroadcasting error (HTTP 404), not as a response"]
+      "supports": [
+        "An offline channel is reported as the ChannelNotBroadcasting error (HTTP 404), not as a response"
+      ]
     },
     {
       "id": "ivs-api-stream",
@@ -426,7 +428,13 @@
         "examples/18-live/web/src/App.vue",
         "examples/18-live/web/src/viewer.test.ts"
       ],
-      "tasks": ["dev:stream:web", "build:stream:web", "typecheck:stream:web", "lint:stream:web", "test:unit"],
+      "tasks": [
+        "dev:stream:web",
+        "build:stream:web",
+        "typecheck:stream:web",
+        "lint:stream:web",
+        "test:unit"
+      ],
       "boundary": "local",
       "criteria": ["type", "test", "local-dx"],
       "verification": "local"
@@ -446,7 +454,13 @@
         "examples/18-live/scripts/write-config.ts",
         "examples/18-live/src/channel.ts"
       ],
-      "tasks": ["stream:infra:diff", "stream:infra:deploy", "stream:key", "stream:config", "preview:stream:web"],
+      "tasks": [
+        "stream:infra:diff",
+        "stream:infra:deploy",
+        "stream:key",
+        "stream:config",
+        "preview:stream:web"
+      ],
       "boundary": "cloud",
       "criteria": ["local-dx"],
       "verification": "unverified"
@@ -763,7 +777,9 @@
       },
       "assumptions": {
         "ja": ["視聴者は 0 人。1 本の stream の上限である 48 時間、配信ソフトが送り続けた"],
-        "en": ["No viewers. The encoder kept sending for 48 hours, the longest a single stream lasts"]
+        "en": [
+          "No viewers. The encoder kept sending for 48 hours, the longest a single stream lasts"
+        ]
       },
       "items": [
         {

@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { parseHelloConfig } from "../lib/config.ts";
 import { HelloStack } from "../lib/hello-stack.ts";
 

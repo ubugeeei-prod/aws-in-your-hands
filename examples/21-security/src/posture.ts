@@ -10,7 +10,9 @@ const probe = <T extends z.ZodType>(value: T) =>
 
 export const snapshotSchema = z.object({
   root: probe(z.object({ mfaEnabled: z.boolean(), accessKeysPresent: z.boolean() })),
-  trails: probe(z.array(z.object({ name: z.string(), multiRegion: z.boolean(), logging: z.boolean() }))),
+  trails: probe(
+    z.array(z.object({ name: z.string(), multiRegion: z.boolean(), logging: z.boolean() })),
+  ),
   guardDuty: probe(z.array(z.object({ id: z.string(), status: z.string() }))),
   inspector: probe(z.object({ lambda: z.string(), ecr: z.string(), ec2: z.string() })),
   config: probe(z.array(z.object({ name: z.string(), recording: z.boolean() }))),
@@ -45,11 +47,15 @@ export function assess(snapshot: Snapshot): Item[] {
   return [
     item("root-mfa", "everyone", "free", snapshot.root, (root) => ({
       on: root.mfaEnabled,
-      note: root.mfaEnabled ? "the root user has MFA" : "the root user signs in with a password alone",
+      note: root.mfaEnabled
+        ? "the root user has MFA"
+        : "the root user signs in with a password alone",
     })),
     item("root-access-keys", "everyone", "free", snapshot.root, (root) => ({
       on: !root.accessKeysPresent,
-      note: root.accessKeysPresent ? "the root user has access keys; delete them" : "the root user has no access keys",
+      note: root.accessKeysPresent
+        ? "the root user has access keys; delete them"
+        : "the root user has no access keys",
     })),
     {
       id: "cloudtrail-event-history",
@@ -67,19 +73,31 @@ export function assess(snapshot: Snapshot): Item[] {
         const enabled = detectors.filter((detector) => detector.status === "ENABLED");
         return {
           on: enabled.length > 0,
-          note: enabled.length > 0 ? "a detector is enabled in this Region" : "no enabled detector in this Region",
+          note:
+            enabled.length > 0
+              ? "a detector is enabled in this Region"
+              : "no enabled detector in this Region",
         };
       },
     ),
-    item("inspector", "with-data", "per function, image, and instance scanned", snapshot.inspector, (inspector) => {
-      const scanning = Object.entries(inspector)
-        .filter(([, status]) => status === "ENABLED")
-        .map(([kind]) => kind);
-      return {
-        on: scanning.length > 0,
-        note: scanning.length > 0 ? `scanning: ${scanning.join(", ")}` : "no scan type is enabled in this Region",
-      };
-    }),
+    item(
+      "inspector",
+      "with-data",
+      "per function, image, and instance scanned",
+      snapshot.inspector,
+      (inspector) => {
+        const scanning = Object.entries(inspector)
+          .filter(([, status]) => status === "ENABLED")
+          .map(([kind]) => kind);
+        return {
+          on: scanning.length > 0,
+          note:
+            scanning.length > 0
+              ? `scanning: ${scanning.join(", ")}`
+              : "no scan type is enabled in this Region",
+        };
+      },
+    ),
     item(
       "cloudtrail-trail",
       "organization",
@@ -96,19 +114,25 @@ export function assess(snapshot: Snapshot): Item[] {
         };
       },
     ),
-    item("config-recorder", "organization", "per configuration item recorded", snapshot.config, (recorders) => ({
-      on: recorders.some((recorder) => recorder.recording),
-      note: recorders.some((recorder) => recorder.recording)
-        ? "a configuration recorder is recording in this Region"
-        : "no configuration recorder is recording in this Region",
-    })),
+    item(
+      "config-recorder",
+      "organization",
+      "per configuration item recorded",
+      snapshot.config,
+      (recorders) => ({
+        on: recorders.some((recorder) => recorder.recording),
+        note: recorders.some((recorder) => recorder.recording)
+          ? "a configuration recorder is recording in this Region"
+          : "no configuration recorder is recording in this Region",
+      }),
+    ),
     item("organization-scps", "organization", "free", snapshot.organization, (organization) => ({
       on: organization.member && organization.allFeatures,
-      note: !organization.member
-        ? "a standalone account: no organization, so no SCPs"
-        : organization.allFeatures
+      note: organization.member
+        ? organization.allFeatures
           ? "in an organization with all features, so SCPs can be attached"
-          : "in an organization with consolidated billing only; SCPs need all features",
+          : "in an organization with consolidated billing only; SCPs need all features"
+        : "a standalone account: no organization, so no SCPs",
     })),
   ];
 }

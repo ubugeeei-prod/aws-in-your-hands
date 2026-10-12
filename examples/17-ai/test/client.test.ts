@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
 import { collectSummary, sseData, summaryEvents } from "../src/client.ts";
 import { createFixtureGateway } from "../src/fixture-gateway.ts";
@@ -31,7 +32,11 @@ async function wireBytes(name: keyof typeof fixtures): Promise<Uint8Array> {
 }
 
 /** A body that delivers `bytes` in chunks of `size`, then ends or fails. */
-function chunked(bytes: Uint8Array, size: number, ending: "close" | "error" = "close"): ReadableStream<Uint8Array> {
+function chunked(
+  bytes: Uint8Array,
+  size: number,
+  ending: "close" | "error" = "close",
+): ReadableStream<Uint8Array> {
   let offset = 0;
   return new ReadableStream({
     pull(controller) {
@@ -63,8 +68,12 @@ describe("reading the stream", () => {
     const bytes = await wireBytes("complete");
     for (let length = 0; length < bytes.length; length += 1) {
       for (const ending of ["close", "error"] as const) {
-        const result = await collectSummary(summaryEvents(chunked(bytes.slice(0, length), 16, ending)));
-        expect(result.status, `${length} of ${bytes.length} bytes, then ${ending}`).toBe("incomplete");
+        const result = await collectSummary(
+          summaryEvents(chunked(bytes.slice(0, length), 16, ending)),
+        );
+        expect(result.status, `${length} of ${bytes.length} bytes, then ${ending}`).toBe(
+          "incomplete",
+        );
         if (result.status === "incomplete") {
           // What did arrive is a prefix of the real text, never something else.
           expect(SUMMARY.startsWith(result.partial)).toBe(true);
@@ -99,8 +108,12 @@ describe("reading the stream", () => {
 
   it("ignores anything after the terminal event", async () => {
     const bytes = await wireBytes("complete");
-    const extra = new TextEncoder().encode('event: delta\ndata: {"type":"delta","text":"late"}\n\n');
-    const result = await collectSummary(summaryEvents(chunked(new Uint8Array([...bytes, ...extra]), 64)));
+    const extra = new TextEncoder().encode(
+      'event: delta\ndata: {"type":"delta","text":"late"}\n\n',
+    );
+    const result = await collectSummary(
+      summaryEvents(chunked(new Uint8Array([...bytes, ...extra]), 64)),
+    );
     expect(result).toMatchObject({ status: "complete", text: SUMMARY });
   });
 

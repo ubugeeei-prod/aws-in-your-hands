@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { FINISH_WITHIN_MS, UPLOAD_PERMIT_SECONDS, VIEW_URL_SECONDS } from "../src/attachments.ts";
 import { sendUpload } from "../src/client.ts";
 import { MAX_ATTACHMENTS_PER_NOTE, MAX_UPLOAD_BYTES, uploadPermitSchema } from "../src/contract.ts";
@@ -8,11 +9,15 @@ describe("upload permit", () => {
   it("answers 404 for another user's note, as for a missing one", async () => {
     const { alice, bob } = await setup();
     const note = await alice.notes.create({ title: "trip", body: "" });
-    expect(await rejection(bob.attachments.requestUpload(note.id, { contentType: "image/png" }))).toMatchObject({
+    expect(
+      await rejection(bob.attachments.requestUpload(note.id, { contentType: "image/png" })),
+    ).toMatchObject({
       status: 404,
       code: "not_found",
     });
-    expect(await rejection(bob.attachments.requestUpload("no-such-note", { contentType: "image/png" }))).toMatchObject({
+    expect(
+      await rejection(bob.attachments.requestUpload("no-such-note", { contentType: "image/png" })),
+    ).toMatchObject({
       status: 404,
       code: "not_found",
     });
@@ -25,7 +30,11 @@ describe("upload permit", () => {
     // Bob names Alice, and a key under her prefix, everywhere a request can.
     const response = await app.request(`/notes/${bobNote.id}/attachments?owner=alice`, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${bob.token}`, "x-owner": "alice" },
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${bob.token}`,
+        "x-owner": "alice",
+      },
       body: JSON.stringify({
         contentType: "image/png",
         key: `u/alice/${aliceNote.id}/planted`,
@@ -88,12 +97,18 @@ describe("what the upload form allows", () => {
       upload: { ...permit.upload, fields: { ...fields, ...change } },
     });
 
-    expect(await rejection(sendUpload(permit, png(MAX_UPLOAD_BYTES + 1), network))).toMatchObject({ status: 400 });
-    expect(await rejection(sendUpload(tampered({ "Content-Type": "text/html" }), png(), network))).toMatchObject({
+    expect(await rejection(sendUpload(permit, png(MAX_UPLOAD_BYTES + 1), network))).toMatchObject({
+      status: 400,
+    });
+    expect(
+      await rejection(sendUpload(tampered({ "Content-Type": "text/html" }), png(), network)),
+    ).toMatchObject({
       status: 403,
     });
     expect(
-      await rejection(sendUpload(tampered({ key: `u/bob/${note.id}/${permit.attachmentId}` }), png(), network)),
+      await rejection(
+        sendUpload(tampered({ key: `u/bob/${note.id}/${permit.attachmentId}` }), png(), network),
+      ),
     ).toMatchObject({ status: 403 });
 
     advance(UPLOAD_PERMIT_SECONDS * 1000 + 1000);
@@ -137,10 +152,14 @@ describe("attaching an image", () => {
     const permit = await alice.attachments.requestUpload(note.id, { contentType: "image/png" });
     await sendUpload(permit, png(), network);
 
-    expect(await rejection(bob.attachments.finish(note.id, permit.attachmentId))).toMatchObject({ status: 404 });
+    expect(await rejection(bob.attachments.finish(note.id, permit.attachmentId))).toMatchObject({
+      status: 404,
+    });
     expect(await rejection(bob.attachments.list(note.id))).toMatchObject({ status: 404 });
     await alice.attachments.finish(note.id, permit.attachmentId);
-    expect(await rejection(bob.attachments.remove(note.id, permit.attachmentId))).toMatchObject({ status: 404 });
+    expect(await rejection(bob.attachments.remove(note.id, permit.attachmentId))).toMatchObject({
+      status: 404,
+    });
     expect(objects.stateOf(`u/alice/${note.id}/${permit.attachmentId}`)).toBe("attached");
     expect(await alice.attachments.list(note.id)).toHaveLength(1);
   });
@@ -167,7 +186,9 @@ describe("attaching an image", () => {
     for (let count = 0; count < MAX_ATTACHMENTS_PER_NOTE; count++) {
       await alice.attachments.attach(note.id, png(), "image/png");
     }
-    expect(await rejection(alice.attachments.requestUpload(note.id, { contentType: "image/png" }))).toMatchObject({
+    expect(
+      await rejection(alice.attachments.requestUpload(note.id, { contentType: "image/png" })),
+    ).toMatchObject({
       status: 409,
       code: "attachment_limit",
     });

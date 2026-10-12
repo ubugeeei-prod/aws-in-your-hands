@@ -23,7 +23,9 @@ export function buildSummaryRequest(
   return {
     modelId: options.modelId,
     system: [{ text: SYSTEM_PROMPT }],
-    messages: [{ role: "user", content: [{ text: `Title: ${note.title}\n\nNote:\n${note.body}` }] }],
+    messages: [
+      { role: "user", content: [{ text: `Title: ${note.title}\n\nNote:\n${note.body}` }] },
+    ],
     // The most this request can bill for output, whatever the model would like to write.
     inferenceConfig: { maxTokens: options.maxOutputTokens, temperature: 0.2 },
   };

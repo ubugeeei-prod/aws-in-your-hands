@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { describe, it } from "vite-plus/test";
+
 import { DynamoDbNoteRepository } from "../src/dynamodb-repository.ts";
 import { describeRepositoryContract } from "./repository-contract.ts";
 

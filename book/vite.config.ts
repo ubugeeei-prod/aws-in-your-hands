@@ -1,5 +1,6 @@
 import { defaultTheme, defineTheme, oxContent } from "@ox-content/vite-plugin";
 import { defineConfig } from "vite-plus";
+
 import { sidebar } from "./site.ts";
 
 const base = "/";

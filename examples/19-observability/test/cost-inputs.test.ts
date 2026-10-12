@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
-import { logGbPerMonth, sampledPerSecond, storedGbMonths, tracesPerMonth } from "../src/cost-inputs.ts";
+
+import {
+  logGbPerMonth,
+  sampledPerSecond,
+  storedGbMonths,
+  tracesPerMonth,
+} from "../src/cost-inputs.ts";
 
 // The quantities in data/fragments/19.json come from these calls.
 

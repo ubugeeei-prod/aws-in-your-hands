@@ -1,4 +1,5 @@
 // Pure, so the order and the retention rule are testable without AWS.
+
 import {
   contentTypeFor,
   IMMUTABLE,
@@ -51,14 +52,20 @@ export function planAssets(input: {
 
   const hashed = input.local.filter((file) => file.key !== BUILD_POINTER);
   // A hashed name never changes content, so an existing object is left alone.
-  const upload = hashed.filter((file) => !remoteByKey.has(file.key)).map((file) => toUpload(file.key, IMMUTABLE));
+  const upload = hashed
+    .filter((file) => !remoteByKey.has(file.key))
+    .map((file) => toUpload(file.key, IMMUTABLE));
   const pointer = input.local.find((file) => file.key === BUILD_POINTER);
   const pointerChanged =
-    pointer !== undefined && remoteByKey.get(BUILD_POINTER)?.etag.replaceAll('"', "") !== pointer.md5;
+    pointer !== undefined &&
+    remoteByKey.get(BUILD_POINTER)?.etag.replaceAll('"', "") !== pointer.md5;
 
   const orphans = input.remote.filter((object) => !localKeys.has(object.key));
   const remove = orphans
-    .filter((object) => input.now.getTime() - object.lastModified.getTime() > input.retentionDays * DAY_MS)
+    .filter(
+      (object) =>
+        input.now.getTime() - object.lastModified.getTime() > input.retentionDays * DAY_MS,
+    )
     .map((object) => object.key);
 
   return {

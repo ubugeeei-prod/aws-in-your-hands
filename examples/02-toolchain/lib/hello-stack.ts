@@ -1,6 +1,7 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
+
 import type { HelloConfig } from "./config.ts";
 
 export type HelloStackProps = StackProps & { config: HelloConfig };
@@ -15,7 +16,9 @@ export class HelloStack extends Stack {
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
       versioned: true,
-      lifecycleRules: [{ noncurrentVersionExpiration: Duration.days(props.config.noncurrentVersionDays) }],
+      lifecycleRules: [
+        { noncurrentVersionExpiration: Duration.days(props.config.noncurrentVersionDays) },
+      ],
       // prod keeps its data when the stack goes. The practice stage is disposable.
       removalPolicy: props.config.stage === "prod" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     });

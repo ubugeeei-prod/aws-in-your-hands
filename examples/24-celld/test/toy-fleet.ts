@@ -82,7 +82,12 @@ export class ToyFleet {
       const first = this.serve(record.node, cell);
       return this.flaw === "replays-requests" ? this.serve(record.node, cell) : first;
     }
-    if (record === undefined || record.node !== via || mine === undefined || mine.epoch !== record.epoch) {
+    if (
+      record === undefined ||
+      record.node !== via ||
+      mine === undefined ||
+      mine.epoch !== record.epoch
+    ) {
       // Take over: a new epoch, and the state the bucket holds.
       const epoch = (record?.epoch ?? 0) + 1;
       this.owners.set(cell, { node: via, epoch });

@@ -1,7 +1,9 @@
 // node scripts/kvs-file.ts <out.json>
 // Writes edge-data.json as the flat { "key": "value" } map that `cdkd local start-cloudfront --kvs-file` reads.
+
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+
 import { edgeDataSchema, toEntries } from "../src/kvs/config.ts";
 
 const out = process.argv[2];

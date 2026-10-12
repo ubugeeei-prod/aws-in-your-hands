@@ -8,7 +8,12 @@ import type { BatchResponse } from "./worker.ts";
 
 type Stored = { messageId: string; body: string; receiveCount: number; invisibleUntil: number };
 
-export type Received = { messageId: string; receiptHandle: string; body: string; receiveCount: number };
+export type Received = {
+  messageId: string;
+  receiptHandle: string;
+  body: string;
+  receiveCount: number;
+};
 
 export type LocalQueueOptions = {
   now: () => Date;
@@ -39,7 +44,8 @@ export class LocalQueue {
     // Received this many times and never deleted: out of the worker's way,
     // kept for a person to look at.
     const spent = this.#messages.filter(
-      (message) => message.invisibleUntil <= now && message.receiveCount >= this.#options.maxReceiveCount,
+      (message) =>
+        message.invisibleUntil <= now && message.receiveCount >= this.#options.maxReceiveCount,
     );
     for (const message of spent) {
       this.#messages.splice(this.#messages.indexOf(message), 1);
@@ -84,7 +90,11 @@ export class LocalQueue {
   }
 
   dead(): { messageId: string; body: string; receiveCount: number }[] {
-    return this.#dead.map(({ messageId, body, receiveCount }) => ({ messageId, body, receiveCount }));
+    return this.#dead.map(({ messageId, body, receiveCount }) => ({
+      messageId,
+      body,
+      receiveCount,
+    }));
   }
 
   stats(): { visible: number; inFlight: number; dead: number } {
@@ -96,19 +106,27 @@ export class LocalQueue {
 // #endregion queue
 
 // #region deliver
-type Handler = (batch: { Records: { messageId: string; body: string }[] }) => Promise<BatchResponse>;
+type Handler = (batch: {
+  Records: { messageId: string; body: string }[];
+}) => Promise<BatchResponse>;
 
 /**
  * One round of what Lambda's event source mapping does: receive a batch,
  * invoke the handler, delete what it did not report as failed. If the handler
  * throws, nothing is deleted and the whole batch comes back later.
  */
-export async function deliverOnce(queue: LocalQueue, handler: Handler, batchSize: number): Promise<number> {
+export async function deliverOnce(
+  queue: LocalQueue,
+  handler: Handler,
+  batchSize: number,
+): Promise<number> {
   const batch = queue.receive(batchSize);
   if (batch.length === 0) {
     return 0;
   }
-  const response = await handler({ Records: batch.map(({ messageId, body }) => ({ messageId, body })) });
+  const response = await handler({
+    Records: batch.map(({ messageId, body }) => ({ messageId, body })),
+  });
   const failed = new Set(response.batchItemFailures.map((failure) => failure.itemIdentifier));
   for (const message of batch) {
     if (!failed.has(message.messageId)) {

@@ -29,7 +29,11 @@ export const MAX_NOTES_PER_OWNER = 100;
 
 export const noteListSchema = z.object({ notes: z.array(noteSchema) });
 
-export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string(), db: z.string() });
+export const healthSchema = z.object({
+  status: z.literal("ok"),
+  stage: z.string(),
+  db: z.string(),
+});
 
 // #region error
 export const errorCodes = [

@@ -5,7 +5,10 @@ import { z } from "zod";
 // Nothing here was observed on a running node.
 
 // #region releases
-export type CelldTarget = "aarch64-unknown-linux-gnu" | "x86_64-unknown-linux-gnu" | "aarch64-apple-darwin";
+export type CelldTarget =
+  | "aarch64-unknown-linux-gnu"
+  | "x86_64-unknown-linux-gnu"
+  | "aarch64-apple-darwin";
 type Asset = { file: string; sha256: string; bytes: number };
 type Release = { commit: string; assets: Record<CelldTarget, Asset> };
 
@@ -60,7 +63,8 @@ export const PINNED_VERSION: CelldVersion = "v0.6.2";
 export const versionSchema = z.enum(CELLD_VERSIONS);
 
 export const RELEASE_BASE_URL = "https://github.com/denoland/celld/releases/download";
-export const assetOf = (version: CelldVersion, target: CelldTarget): Asset => RELEASES[version].assets[target];
+export const assetOf = (version: CelldVersion, target: CelldTarget): Asset =>
+  RELEASES[version].assets[target];
 export const assetUrl = (version: CelldVersion, target: CelldTarget): string =>
   `${RELEASE_BASE_URL}/${version}/${assetOf(version, target).file}`;
 // #endregion releases
@@ -115,21 +119,34 @@ export const UPGRADE_NOTES: readonly UpgradeNote[] = [
   { from: "v0.2.1", to: "v0.3.0", mode: "rolling" },
   { from: "v0.3.0", to: "v0.4.0", mode: "stop-all" },
   { from: "v0.4.0", to: "v0.4.1", mode: "rolling" },
-  { from: "v0.5.1", to: "v0.6.0", mode: "stop-all", condition: "with fleet durability, which is the default" },
+  {
+    from: "v0.5.1",
+    to: "v0.6.0",
+    mode: "stop-all",
+    condition: "with fleet durability, which is the default",
+  },
   { from: "v0.6.0", to: "v0.6.1", mode: "rolling" },
   { from: "v0.6.1", to: "v0.6.2", mode: "rolling" },
 ];
 
-export type UpgradeDecision = { mode: UpgradeMode; reason: string } | { mode: "unknown"; reason: string };
+export type UpgradeDecision =
+  | { mode: UpgradeMode; reason: string }
+  | { mode: "unknown"; reason: string };
 
 /** Never guesses: a pair the notes do not list is "unknown", and the caller must stop. */
 export function upgradeModeFor(from: string, to: string): UpgradeDecision {
   if (from === to) {
-    return { mode: "rolling", reason: `${to} to itself: a restart, not a format or protocol change` };
+    return {
+      mode: "rolling",
+      reason: `${to} to itself: a restart, not a format or protocol change`,
+    };
   }
   const note = UPGRADE_NOTES.find((candidate) => candidate.from === from && candidate.to === to);
   if (note === undefined) {
-    return { mode: "unknown", reason: `the upgrade notes copied into this chapter do not list ${from} to ${to}` };
+    return {
+      mode: "unknown",
+      reason: `the upgrade notes copied into this chapter do not list ${from} to ${to}`,
+    };
   }
   return {
     mode: note.mode,

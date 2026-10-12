@@ -1,8 +1,10 @@
 // vp run sql:db:migrate:local | sql:db:seed:local | sql:db:reset:local
 //   node scripts/local-db.ts <migrate|seed|reset>
 // Works on the PGlite directory only. Never opens a network connection.
+
 import { rmSync } from "node:fs";
 import { resolve } from "node:path";
+
 import { openPglite } from "../src/pglite.ts";
 import { runMigrations, runSeed } from "./db-tasks.ts";
 

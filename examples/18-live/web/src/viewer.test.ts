@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseConfig } from "./config.ts";
 import { retryDelayMs, viewFor } from "./viewer.ts";
 
@@ -16,7 +17,9 @@ describe("what the page shows", () => {
   });
 
   it("says the channel is full on 429 and does not retry", () => {
-    expect(viewFor({ kind: "error", type: "ErrorNotAvailable", code: 429, message: "" }, 0)).toEqual({ name: "full" });
+    expect(
+      viewFor({ kind: "error", type: "ErrorNotAvailable", code: 429, message: "" }, 0),
+    ).toEqual({ name: "full" });
   });
 
   it("shows any other error with its type and code", () => {
@@ -27,7 +30,9 @@ describe("what the page shows", () => {
 
 describe("retrying while offline", () => {
   it("backs off and never waits longer than a minute", () => {
-    expect([0, 1, 2, 3, 4, 20].map(retryDelayMs)).toEqual([5_000, 10_000, 20_000, 40_000, 60_000, 60_000]);
+    expect([0, 1, 2, 3, 4, 20].map(retryDelayMs)).toEqual([
+      5_000, 10_000, 20_000, 40_000, 60_000, 60_000,
+    ]);
   });
 });
 

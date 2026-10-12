@@ -1,7 +1,11 @@
 import { InMemoryNoteRepository } from "@aih/example-05-dynamodb/src/memory-repository.ts";
 import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 import { ApiError, createNotesClient } from "@aih/example-06-auth/api/src/client.ts";
-import { createLocalAuthenticator, signLocalToken } from "@aih/example-06-auth/api/src/local-auth.ts";
+import {
+  createLocalAuthenticator,
+  signLocalToken,
+} from "@aih/example-06-auth/api/src/local-auth.ts";
+
 import { createApp } from "../src/app.ts";
 import { InMemoryAttachmentRepository } from "../src/attachment-repository.ts";
 import { createAttachmentService } from "../src/attachments.ts";
@@ -48,10 +52,19 @@ export async function setup() {
   const realObjects = new InMemoryObjectStore({ baseUrl: STORE, secret, now });
   const objects = faulty(realObjects);
   // Each note and attachment gets its own millisecond, as IDs sort by time.
-  const notes = createNoteService({ repository: noteRepository, now: () => new Date(++clock), randomSuffix });
+  const notes = createNoteService({
+    repository: noteRepository,
+    now: () => new Date(++clock),
+    randomSuffix,
+  });
 
   const app = createApp({
-    env: { ALLOWED_ORIGIN: "http://localhost:5173", LOG_LEVEL: "debug", STAGE: "test", NOTES_STORE: "memory" },
+    env: {
+      ALLOWED_ORIGIN: "http://localhost:5173",
+      LOG_LEVEL: "debug",
+      STAGE: "test",
+      NOTES_STORE: "memory",
+    },
     notes,
     attachments: createAttachmentService({
       notes,
@@ -72,7 +85,10 @@ export async function setup() {
     const request = new Request(input, init);
     return request.url.startsWith(STORE) ? store(request) : app.fetch(request);
   };
-  const tokens = { alice: await signLocalToken(secret, "alice"), bob: await signLocalToken(secret, "bob") };
+  const tokens = {
+    alice: await signLocalToken(secret, "alice"),
+    bob: await signLocalToken(secret, "bob"),
+  };
   const as = (token: string) => ({
     token,
     notes: createNotesClient("http://api.test", () => token, network),
@@ -90,7 +106,10 @@ export async function setup() {
     failNextRecordCall: records.failNext,
     advance: (ms: number) => void (clock += ms),
     sweep: (options: { dryRun: boolean } = { dryRun: false }) =>
-      sweep({ objects: realObjects, attachments: records.proxy, notes: noteRepository, now }, options),
+      sweep(
+        { objects: realObjects, attachments: records.proxy, notes: noteRepository, now },
+        options,
+      ),
   };
 }
 

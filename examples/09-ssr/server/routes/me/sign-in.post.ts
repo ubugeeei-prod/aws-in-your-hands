@@ -7,6 +7,7 @@ import {
   sendRedirect,
   setCookie,
 } from "h3";
+
 import {
   isSameOrigin,
   SESSION_COOKIE,
@@ -26,7 +27,10 @@ export default defineEventHandler(async (event) => {
   }
   const form = signInSchema.safeParse(await readBody(event));
   if (!form.success) {
-    throw createError({ statusCode: 400, statusMessage: "A name of 1 to 40 characters is required" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "A name of 1 to 40 characters is required",
+    });
   }
 
   // A real BFF exchanges an authorization code for tokens here (chapter 06's token endpoint).
@@ -38,7 +42,12 @@ export default defineEventHandler(async (event) => {
     expiresAt: context.now().getTime() + SESSION_TTL_SECONDS * 1000,
   });
   // The browser gets the session id. The token stays in the store.
-  setCookie(event, SESSION_COOKIE, sessionId, sessionCookieAttributes(getRequestProtocol(event) === "https"));
+  setCookie(
+    event,
+    SESSION_COOKIE,
+    sessionId,
+    sessionCookieAttributes(getRequestProtocol(event) === "https"),
+  );
   return sendRedirect(event, "/me", 303);
 });
 // #endregion sign-in

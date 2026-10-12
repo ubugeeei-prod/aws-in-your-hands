@@ -1,7 +1,7 @@
 // #region port
 export type Metadata = Record<string, string>;
 
-export interface ExportStore {
+export type ExportStore = {
   /** Writes only if nothing is stored under the key yet. The first writer wins. */
   putIfAbsent(key: string, body: string, metadata: Metadata): Promise<"written" | "exists">;
   /** The metadata stored with the object, or undefined if there is none. */
@@ -9,7 +9,7 @@ export interface ExportStore {
   list(prefix: string): Promise<string[]>;
   /** Deleting what is already gone is not an error. */
   delete(key: string): Promise<void>;
-}
+};
 // #endregion port
 
 export class MemoryExportStore implements ExportStore {

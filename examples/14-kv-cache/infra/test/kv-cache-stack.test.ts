@@ -1,11 +1,14 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { KvCacheStack } from "../lib/kv-cache-stack.ts";
 
 // Synthesized once each: every synth bundles the function with esbuild.
 const synth = (store: "dynamodb" | "valkey") =>
-  Template.fromStack(new KvCacheStack(new App(), "AihKvCache", { env: { region: "ap-northeast-1" }, store }));
+  Template.fromStack(
+    new KvCacheStack(new App(), "AihKvCache", { env: { region: "ap-northeast-1" }, store }),
+  );
 const withDynamoDb = synth("dynamodb");
 const withValkey = synth("valkey");
 
@@ -51,7 +54,10 @@ describe("KvCacheStack, default", () => {
   });
 
   it("deletes the table and the logs with the stack", () => {
-    withDynamoDb.hasResource("AWS::DynamoDB::Table", { DeletionPolicy: "Delete", UpdateReplacePolicy: "Delete" });
+    withDynamoDb.hasResource("AWS::DynamoDB::Table", {
+      DeletionPolicy: "Delete",
+      UpdateReplacePolicy: "Delete",
+    });
     withDynamoDb.hasResource("AWS::Logs::LogGroup", { DeletionPolicy: "Delete" });
     withDynamoDb.hasResourceProperties("AWS::Logs::LogGroup", { RetentionInDays: 7 });
   });
@@ -67,7 +73,9 @@ describe("KvCacheStack, default", () => {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]);
-    const dynamodb = statements.find((statement) => [statement.Action].flat().includes("dynamodb:GetItem"));
+    const dynamodb = statements.find((statement) =>
+      [statement.Action].flat().includes("dynamodb:GetItem"),
+    );
     expect(dynamodb?.Resource).toEqual({ "Fn::GetAtt": [expect.stringMatching(/^Store/), "Arn"] });
     for (const statement of statements) {
       expect(JSON.stringify(statement.Resource)).not.toContain('"*"');
@@ -82,7 +90,11 @@ describe("KvCacheStack, default", () => {
       Timeout: 10,
       VpcConfig: Match.absent(),
       Environment: {
-        Variables: { KV_STORE: "dynamodb", TABLE_NAME: { Ref: Match.stringLikeRegexp("^Store") }, RATE_LIMIT: "5" },
+        Variables: {
+          KV_STORE: "dynamodb",
+          TABLE_NAME: { Ref: Match.stringLikeRegexp("^Store") },
+          RATE_LIMIT: "5",
+        },
       },
     });
   });
@@ -98,7 +110,9 @@ describe("KvCacheStack, default", () => {
 describe("KvCacheStack with -c store=valkey", () => {
   it("adds one serverless cache and no other kind of resource", () => {
     // No dedicated provider in cdkd 0.296.28: goes through Cloud Control API.
-    expect(typesOf(withValkey)).toEqual([...BASE_TYPES, "AWS::ElastiCache::ServerlessCache"].toSorted());
+    expect(typesOf(withValkey)).toEqual(
+      [...BASE_TYPES, "AWS::ElastiCache::ServerlessCache"].toSorted(),
+    );
     withValkey.resourceCountIs("AWS::ElastiCache::ServerlessCache", 1);
   });
 
@@ -117,7 +131,10 @@ describe("KvCacheStack with -c store=valkey", () => {
 
   it("caps what the cache can grow to", () => {
     withValkey.hasResourceProperties("AWS::ElastiCache::ServerlessCache", {
-      CacheUsageLimits: { DataStorage: { Maximum: 1, Unit: "GB" }, ECPUPerSecond: { Maximum: 1000 } },
+      CacheUsageLimits: {
+        DataStorage: { Maximum: 1, Unit: "GB" },
+        ECPUPerSecond: { Maximum: 1000 },
+      },
     });
   });
 
@@ -165,7 +182,9 @@ describe("KvCacheStack with -c store=valkey", () => {
       Environment: {
         Variables: {
           KV_STORE: "elasticache",
-          VALKEY_ENDPOINT: { "Fn::GetAtt": [Match.stringLikeRegexp("^Valkey"), "Endpoint.Address"] },
+          VALKEY_ENDPOINT: {
+            "Fn::GetAtt": [Match.stringLikeRegexp("^Valkey"), "Endpoint.Address"],
+          },
           VALKEY_PORT: { "Fn::GetAtt": [Match.stringLikeRegexp("^Valkey"), "Endpoint.Port"] },
           VALKEY_CACHE_NAME: "aih-kv-cache",
           VALKEY_USER: "default.iam-user",

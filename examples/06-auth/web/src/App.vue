@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+
 import { ApiError, createNotesClient, type NotesClient } from "../../api/src/client.ts";
 import type { Note } from "../../api/src/contract.ts";
 import { createCognitoProvider } from "./auth/cognito.ts";
@@ -47,7 +48,9 @@ function fail(error: unknown): void {
     return;
   }
   problem.value =
-    error instanceof ApiError ? `${error.message} (request ${error.requestId ?? "unknown"})` : String(error);
+    error instanceof ApiError
+      ? `${error.message} (request ${error.requestId ?? "unknown"})`
+      : String(error);
 }
 
 async function show(): Promise<void> {
@@ -233,7 +236,9 @@ onMounted(async () => {
         </label>
         <button type="submit">Sign in</button>
       </form>
-      <p v-if="authMode === 'local'">Local sign-in asks for no password. It is not available in a deployment.</p>
+      <p v-if="authMode === 'local'">
+        Local sign-in asks for no password. It is not available in a deployment.
+      </p>
     </section>
 
     <section v-else-if="route.name === 'list'">
@@ -241,9 +246,11 @@ onMounted(async () => {
       <p v-if="notes.length === 0">No notes yet.</p>
       <ul>
         <li v-for="note in notes" :key="note.id">
-          <a :href="pathFor({ name: 'note', id: note.id })" @click.prevent="go({ name: 'note', id: note.id })">{{
-            note.title
-          }}</a>
+          <a
+            :href="pathFor({ name: 'note', id: note.id })"
+            @click.prevent="go({ name: 'note', id: note.id })"
+            >{{ note.title }}</a
+          >
           <time :datetime="note.updatedAt">{{ new Date(note.updatedAt).toLocaleString() }}</time>
         </li>
       </ul>
@@ -260,7 +267,9 @@ onMounted(async () => {
 
       <aside v-if="theirs !== undefined" role="alert">
         <h2>This note was changed somewhere else</h2>
-        <p>Your text is still in the form above and has not been saved. The saved note now reads:</p>
+        <p>
+          Your text is still in the form above and has not been saved. The saved note now reads:
+        </p>
         <blockquote>
           <strong>{{ theirs.title }}</strong>
           <pre>{{ theirs.body }}</pre>

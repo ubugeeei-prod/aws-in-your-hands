@@ -14,14 +14,14 @@ export type Viewer = z.infer<typeof viewerSchema>;
 
 // #region upstream
 /** The API behind the BFF. It is called with the user's token, from the server only. */
-export interface ProfileApi {
+export type ProfileApi = {
   profile(accessToken: string): Promise<Profile | undefined>;
-}
+};
 
-export interface DevIdentity extends ProfileApi {
+export type DevIdentity = {
   /** Stands in for an identity provider: believes any name and hands out a token for it. */
   signIn(name: string): { accessToken: string };
-}
+} & ProfileApi;
 
 export function createDevIdentity(deps: { now: () => Date; newToken: () => string }): DevIdentity {
   const profiles = new Map<string, Profile>();

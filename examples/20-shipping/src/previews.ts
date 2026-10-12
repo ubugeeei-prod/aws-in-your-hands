@@ -4,7 +4,12 @@ import { API_STACK_PREFIX } from "../infra/lib/config.ts";
 // Nothing in AWS knows that its pull request was closed.
 
 // #region previews
-export type Preview = { stack: string; pullRequest: number; ageDays: number; verdict: "recent" | "old" | "leftover" };
+export type Preview = {
+  stack: string;
+  pullRequest: number;
+  ageDays: number;
+  verdict: "recent" | "old" | "leftover";
+};
 
 const PREVIEW_NAME = new RegExp(`^${API_STACK_PREFIX}Pr([1-9]\\d{0,5})$`);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -24,7 +29,8 @@ export function listPreviews(input: {
     }
     const pullRequest = Number(match[1]);
     const ageDays = Math.floor((input.now.getTime() - stack.CreationTime.getTime()) / DAY_MS);
-    const closed = input.openPullRequests !== undefined && !input.openPullRequests.includes(pullRequest);
+    const closed =
+      input.openPullRequests !== undefined && !input.openPullRequests.includes(pullRequest);
     previews.push({
       stack: stack.StackName,
       pullRequest,

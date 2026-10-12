@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { ArnFormat, CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
@@ -9,6 +10,7 @@ import { BlockPublicAccess, Bucket, BucketEncryption, ObjectOwnership } from "aw
 import { CfnSchedule } from "aws-cdk-lib/aws-scheduler";
 import { CfnStateMachine } from "aws-cdk-lib/aws-stepfunctions";
 import type { Construct } from "constructs";
+
 import { EXPORT_PREFIX } from "../../src/job.ts";
 import { EXPORT_PAGES_TIMEOUT_SECONDS, exportWorkflow } from "../../src/workflow.ts";
 
@@ -19,7 +21,8 @@ export type LongJobsStackProps = StackProps & {
 
 const SCHEDULE_NAME = "aih-long-jobs-export";
 const DURABLE_FUNCTION_NAME = "aih-long-jobs-durable-export";
-const source = (file: string): string => fileURLToPath(new URL(`../../src/${file}`, import.meta.url));
+const source = (file: string): string =>
+  fileURLToPath(new URL(`../../src/${file}`, import.meta.url));
 // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
 const bundling = {
   format: OutputFormat.ESM,
@@ -27,7 +30,8 @@ const bundling = {
   minify: false,
   sourceMap: false,
   externalModules: [],
-  banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+  banner:
+    "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
 };
 
 export class LongJobsStack extends Stack {
@@ -62,12 +66,19 @@ export class LongJobsStack extends Stack {
     });
     // #endregion bucket
 
-    const step = (name: string, entry: string, timeout: Duration, environment: Record<string, string>) => {
+    const step = (
+      name: string,
+      entry: string,
+      timeout: Duration,
+      environment: Record<string, string>,
+    ) => {
       const logGroup = new LogGroup(this, `${name}Logs`, {
         retention: RetentionDays.ONE_WEEK,
         removalPolicy: RemovalPolicy.DESTROY,
       });
-      const role = new Role(this, `${name}Role`, { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+      const role = new Role(this, `${name}Role`, {
+        assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+      });
       logGroup.grantWrite(role);
       const fn = new NodejsFunction(this, name, {
         entry: source(entry),
@@ -87,23 +98,37 @@ export class LongJobsStack extends Stack {
 
     // #region steps
     // Three functions, three roles. Only one of them can read the notes, and only one can delete.
-    const pages = step("ExportPages", "export-pages-lambda.ts", Duration.seconds(EXPORT_PAGES_TIMEOUT_SECONDS), {
-      TABLE_NAME: table.tableName,
-      PAGE_SIZE: "100",
-      RESERVE_SECONDS: "60",
-    });
-    pages.role.addToPolicy(new PolicyStatement({ actions: ["dynamodb:Scan"], resources: [table.tableArn] }));
+    const pages = step(
+      "ExportPages",
+      "export-pages-lambda.ts",
+      Duration.seconds(EXPORT_PAGES_TIMEOUT_SECONDS),
+      {
+        TABLE_NAME: table.tableName,
+        PAGE_SIZE: "100",
+        RESERVE_SECONDS: "60",
+      },
+    );
+    pages.role.addToPolicy(
+      new PolicyStatement({ actions: ["dynamodb:Scan"], resources: [table.tableArn] }),
+    );
     // PutObject covers the If-None-Match check. HeadObject is authorized as GetObject.
     pages.role.addToPolicy(
-      new PolicyStatement({ actions: ["s3:PutObject", "s3:GetObject"], resources: [exportObjects] }),
+      new PolicyStatement({
+        actions: ["s3:PutObject", "s3:GetObject"],
+        resources: [exportObjects],
+      }),
     );
 
     const finish = step("Finish", "finish-lambda.ts", Duration.seconds(60), {});
-    finish.role.addToPolicy(new PolicyStatement({ actions: ["s3:PutObject"], resources: [exportObjects] }));
+    finish.role.addToPolicy(
+      new PolicyStatement({ actions: ["s3:PutObject"], resources: [exportObjects] }),
+    );
     finish.role.addToPolicy(listExports);
 
     const discard = step("Discard", "discard-lambda.ts", Duration.seconds(300), {});
-    discard.role.addToPolicy(new PolicyStatement({ actions: ["s3:DeleteObject"], resources: [exportObjects] }));
+    discard.role.addToPolicy(
+      new PolicyStatement({ actions: ["s3:DeleteObject"], resources: [exportObjects] }),
+    );
     discard.role.addToPolicy(listExports);
     // #endregion steps
 
@@ -185,7 +210,9 @@ export class LongJobsStack extends Stack {
         assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
       });
       durableLogs.grantWrite(durableRole);
-      durableRole.addToPolicy(new PolicyStatement({ actions: ["dynamodb:Scan"], resources: [table.tableArn] }));
+      durableRole.addToPolicy(
+        new PolicyStatement({ actions: ["dynamodb:Scan"], resources: [table.tableArn] }),
+      );
       // One function does all three steps, so one role holds all three sets of permissions.
       durableRole.addToPolicy(
         new PolicyStatement({
@@ -231,7 +258,10 @@ export class LongJobsStack extends Stack {
         currentVersionOptions: { removalPolicy: RemovalPolicy.DESTROY },
       });
       // A run stays on the version that started it, so it is always invoked through a version or an alias.
-      const live = new Alias(this, "DurableExportLive", { aliasName: "live", version: durableExport.currentVersion });
+      const live = new Alias(this, "DurableExportLive", {
+        aliasName: "live",
+        version: durableExport.currentVersion,
+      });
       new CfnOutput(this, "DurableExportAliasArn", { value: live.functionArn });
       new CfnOutput(this, "DurableExportLogGroupName", { value: durableLogs.logGroupName });
     }

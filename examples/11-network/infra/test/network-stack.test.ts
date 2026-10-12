@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseNetworkConfig } from "../../src/config.ts";
 import { planNetwork } from "../../src/plan.ts";
 import { NetworkStack } from "../lib/network-stack.ts";
@@ -20,7 +21,9 @@ function synth(input: unknown = {}) {
   };
   const ofType = (type: string): [string, Resource][] =>
     Object.entries(json.Resources).filter(([, resource]) => resource.Type === type);
-  const types = [...new Set(Object.values(json.Resources).map((resource) => resource.Type))].toSorted();
+  const types = [
+    ...new Set(Object.values(json.Resources).map((resource) => resource.Type)),
+  ].toSorted();
   return { app, template, json, ofType, types };
 }
 
@@ -149,9 +152,9 @@ describe("NetworkStack, with the hourly parts switched on", () => {
   it("adds one NAT gateway in the first public subnet with `nat`", () => {
     const { template, ofType } = synth({ egress: "nat" });
     template.resourceCountIs("AWS::EC2::EIP", 1);
-    expect(ofType("AWS::EC2::NatGateway").map(([id, nat]) => [id, nat.Properties?.["SubnetId"]])).toEqual([
-      ["Public1NatGateway", { Ref: "Public1Subnet" }],
-    ]);
+    expect(
+      ofType("AWS::EC2::NatGateway").map(([id, nat]) => [id, nat.Properties?.["SubnetId"]]),
+    ).toEqual([["Public1NatGateway", { Ref: "Public1Subnet" }]]);
     for (const name of ["Private1", "Private2"]) {
       template.hasResourceProperties("AWS::EC2::Route", {
         RouteTableId: { Ref: `${name}RouteTable` },
@@ -193,13 +196,28 @@ describe("NetworkStack, with the hourly parts switched on", () => {
         },
       ]),
     );
-    expect(ofType("AWS::EC2::SecurityGroup").map(([, group]) => group.Properties?.["SecurityGroupIngress"])).toEqual([
-      [{ IpProtocol: "tcp", FromPort: 443, ToPort: 443, CidrIp: "10.20.0.0/16", Description: "HTTPS from the VPC" }],
+    expect(
+      ofType("AWS::EC2::SecurityGroup").map(
+        ([, group]) => group.Properties?.["SecurityGroupIngress"],
+      ),
+    ).toEqual([
+      [
+        {
+          IpProtocol: "tcp",
+          FromPort: 443,
+          ToPort: 443,
+          CidrIp: "10.20.0.0/16",
+          Description: "HTTPS from the VPC",
+        },
+      ],
     ]);
   });
 
   it("stays within the types and properties the pinned cdkd handles itself, except VPCEndpoint", () => {
-    const { json, types } = synth({ egress: "nat-per-az", interfaceEndpoints: "ecr.api,ecr.dkr,logs" });
+    const { json, types } = synth({
+      egress: "nat-per-az",
+      interfaceEndpoints: "ecr.api,ecr.dkr,logs",
+    });
     // From src/provisioning/property-coverage.generated.ts at v0.296.28: the properties
     // cdkd's own EC2 provider writes. Anything else would be routed through Cloud Control.
     const handled: Record<string, string[]> = {

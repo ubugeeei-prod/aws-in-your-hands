@@ -4,10 +4,14 @@
 // The execution is named after the export. Starting the same ID again while
 // it runs returns the same execution; after it has closed, Step Functions
 // answers ExecutionAlreadyExists.
+
 import { parseArgs } from "node:util";
+
+import { DescribeExecutionCommand, SFNClient, StartExecutionCommand } from "@aws-sdk/client-sfn";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { DescribeExecutionCommand, SFNClient, StartExecutionCommand } from "@aws-sdk/client-sfn";
+
 import { toProgress } from "../src/job.ts";
 
 const STACK = "AihLongJobs";
@@ -20,14 +24,22 @@ try {
   const { exportId } = toProgress({
     exportId: values.id ?? `manual-${new Date().toISOString().replace(/\.\d+Z$/, "Z")}`,
   });
-  const { target } = await preflight({ access: "mutate", action: `start export ${exportId}`, stack: STACK });
+  const { target } = await preflight({
+    access: "mutate",
+    action: `start export ${exportId}`,
+    stack: STACK,
+  });
   const stateMachineArn = requireOutput(
     await readStackOutputs(process.cwd(), STACK, target.region),
     "ExportWorkflowArn",
   );
   const sfn = new SFNClient({ region: target.region });
   const started = await sfn.send(
-    new StartExecutionCommand({ stateMachineArn, name: `export-${exportId}`, input: JSON.stringify({ exportId }) }),
+    new StartExecutionCommand({
+      stateMachineArn,
+      name: `export-${exportId}`,
+      input: JSON.stringify({ exportId }),
+    }),
   );
   console.log(`execution: ${started.executionArn}`);
   if (!values.wait) {
@@ -36,7 +48,9 @@ try {
   }
   // Up to ten minutes. A longer export keeps running; only this script stops watching.
   for (let attempt = 0; attempt < 120; attempt++) {
-    const execution = await sfn.send(new DescribeExecutionCommand({ executionArn: started.executionArn }));
+    const execution = await sfn.send(
+      new DescribeExecutionCommand({ executionArn: started.executionArn }),
+    );
     if (execution.status !== "RUNNING") {
       console.log(`status: ${execution.status}`);
       console.log(execution.output ?? `${execution.error ?? ""} ${execution.cause ?? ""}`.trim());

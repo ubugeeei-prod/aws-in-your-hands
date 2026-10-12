@@ -1,6 +1,8 @@
-import { ApiError } from "@aih/example-06-auth/api/src/client.ts";
 import { hc } from "hono/client";
 import type { z } from "zod";
+
+import { ApiError } from "@aih/example-06-auth/api/src/client.ts";
+
 import type { App } from "./app.ts";
 import {
   attachmentListSchema,
@@ -17,17 +19,29 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
   if (!response.ok) {
     const body = errorSchema.safeParse(json);
     throw body.success
-      ? new ApiError(response.status, body.data.error.code, body.data.error.message, body.data.error.requestId)
+      ? new ApiError(
+          response.status,
+          body.data.error.code,
+          body.data.error.message,
+          body.data.error.requestId,
+        )
       : new ApiError(
           response.status,
-          response.status === 401 || response.status === 403 ? "unauthenticated" : "unexpected_response",
+          response.status === 401 || response.status === 403
+            ? "unauthenticated"
+            : "unexpected_response",
           `HTTP ${response.status} without an error body`,
           requestId,
         );
   }
   const body = schema.safeParse(json);
   if (!body.success) {
-    throw new ApiError(response.status, "unexpected_response", "The response does not match the contract.", requestId);
+    throw new ApiError(
+      response.status,
+      "unexpected_response",
+      "The response does not match the contract.",
+      requestId,
+    );
   }
   return body.data;
 }
@@ -44,7 +58,11 @@ export class UploadError extends Error {
 
 // #region send
 /** The one request that does not go to the API, and carries no access token. */
-export async function sendUpload(permit: UploadPermit, file: Blob, fetchImpl: typeof fetch = fetch): Promise<void> {
+export async function sendUpload(
+  permit: UploadPermit,
+  file: Blob,
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
   const form = new FormData();
   for (const [name, value] of Object.entries(permit.upload.fields)) {
     form.append(name, value);
@@ -78,12 +96,19 @@ export function createAttachmentsClient(
 
   const client = {
     requestUpload: async (noteId: string, input: UploadRequest) =>
-      parse(await api.notes[":id"].attachments.$post({ param: { id: noteId }, json: input }), uploadPermitSchema),
+      parse(
+        await api.notes[":id"].attachments.$post({ param: { id: noteId }, json: input }),
+        uploadPermitSchema,
+      ),
     finish: async (noteId: string, attachmentId: string) =>
       parse(await one.$put({ param: { id: noteId, attachmentId } }), attachmentSchema),
     list: async (noteId: string) =>
-      (await parse(await api.notes[":id"].attachments.$get({ param: { id: noteId } }), attachmentListSchema))
-        .attachments,
+      (
+        await parse(
+          await api.notes[":id"].attachments.$get({ param: { id: noteId } }),
+          attachmentListSchema,
+        )
+      ).attachments,
     remove: async (noteId: string, attachmentId: string) => {
       const response = await one.$delete({ param: { id: noteId, attachmentId } });
       if (!response.ok) {

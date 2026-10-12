@@ -1,5 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
+
 import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+
 import { type App, createApp } from "./app.ts";
 import { parseEnv } from "./env.ts";
 import { createKeyring } from "./keyring.ts";
@@ -33,7 +35,11 @@ export function composeApp(source: Record<string, string | undefined>): App {
       ttlMs: env.KEY_CACHE_SECONDS * 1000,
       minRefreshMs: env.KEY_REFRESH_MIN_SECONDS * 1000,
       onError: (error) =>
-        log({ level: "warn", message: "signing keys not refreshed", error: error instanceof Error ? error.name : "?" }),
+        log({
+          level: "warn",
+          message: "signing keys not refreshed",
+          error: error instanceof Error ? error.name : "?",
+        }),
     }),
   });
 }

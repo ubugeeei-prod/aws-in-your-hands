@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { errorRateRule, latencyRule } from "../../src/alarm-math.ts";
 import { ObservabilityStack, type ObservabilityStackProps } from "../lib/observability-stack.ts";
 
@@ -20,7 +21,12 @@ const template = synth();
 const withLayer = synth({ otelLayerArn: LAYER, alarmEmail: "oncall@example.com" });
 
 type Statement = { Effect: string; Action: string | string[]; Resource: unknown };
-type MetricQuery = { Id: string; Expression?: string; ReturnData?: boolean; MetricStat?: { Metric: unknown } };
+type MetricQuery = {
+  Id: string;
+  Expression?: string;
+  ReturnData?: boolean;
+  MetricStat?: { Metric: unknown };
+};
 
 const alarm = (description: string) => {
   const found = Object.values(template.findResources("AWS::CloudWatch::Alarm")).find((resource) =>
@@ -42,8 +48,12 @@ describe("alarms", () => {
       DatapointsToAlarm: errorRateRule.datapointsToAlarm,
       TreatMissingData: errorRateRule.treatMissingData,
     });
-    const expressions = (properties.Metrics ?? []).filter((query) => query.Expression !== undefined);
-    expect(expressions.map((query) => [query.Id, query.Expression, query.ReturnData ?? true])).toEqual([
+    const expressions = (properties.Metrics ?? []).filter(
+      (query) => query.Expression !== undefined,
+    );
+    expect(
+      expressions.map((query) => [query.Id, query.Expression, query.ReturnData ?? true]),
+    ).toEqual([
       ["expr_1", "IF(requests >= 20, errorRate, 0)", true],
       ["errorRate", "100 * errors / requests", false],
     ]);
@@ -69,7 +79,10 @@ describe("alarms", () => {
   it("notifies the topic when an alarm fires and when it recovers", () => {
     const topic = { Ref: Match.stringLikeRegexp("^MonitoringAlarms") };
     template.resourceCountIs("AWS::CloudWatch::Alarm", 2);
-    template.allResourcesProperties("AWS::CloudWatch::Alarm", { AlarmActions: [topic], OKActions: [topic] });
+    template.allResourcesProperties("AWS::CloudWatch::Alarm", {
+      AlarmActions: [topic],
+      OKActions: [topic],
+    });
   });
 });
 
@@ -81,7 +94,10 @@ describe("notification topic", () => {
 
   it("subscribes an address only when one is given", () => {
     template.resourceCountIs("AWS::SNS::Subscription", 0);
-    withLayer.hasResourceProperties("AWS::SNS::Subscription", { Protocol: "email", Endpoint: "oncall@example.com" });
+    withLayer.hasResourceProperties("AWS::SNS::Subscription", {
+      Protocol: "email",
+      Endpoint: "oncall@example.com",
+    });
   });
 });
 
@@ -99,14 +115,22 @@ describe("logs", () => {
       FilterPattern: '{ ($.message = "request") && ($.status = 409) }',
       LogGroupName: { Ref: Match.stringLikeRegexp("^HandlerLogs") },
       MetricTransformations: [
-        { MetricNamespace: "AihObservability", MetricName: "NoteConflicts", MetricValue: "1", DefaultValue: 0 },
+        {
+          MetricNamespace: "AihObservability",
+          MetricName: "NoteConflicts",
+          MetricValue: "1",
+          DefaultValue: 0,
+        },
       ],
     });
   });
 
   it("makes each log event a JSON object, which that pattern needs", () => {
     template.hasResourceProperties("AWS::Lambda::Function", {
-      LoggingConfig: { LogFormat: "JSON", LogGroup: { Ref: Match.stringLikeRegexp("^HandlerLogs") } },
+      LoggingConfig: {
+        LogFormat: "JSON",
+        LogGroup: { Ref: Match.stringLikeRegexp("^HandlerLogs") },
+      },
     });
   });
 });
@@ -124,7 +148,10 @@ describe("tracing", () => {
     withLayer.hasResourceProperties("AWS::Lambda::Function", {
       Layers: [LAYER],
       Environment: {
-        Variables: { AWS_LAMBDA_EXEC_WRAPPER: "/opt/otel-instrument", OTEL_AWS_APPLICATION_SIGNALS_ENABLED: "false" },
+        Variables: {
+          AWS_LAMBDA_EXEC_WRAPPER: "/opt/otel-instrument",
+          OTEL_AWS_APPLICATION_SIGNALS_ENABLED: "false",
+        },
       },
     });
   });
@@ -139,10 +166,15 @@ describe("permissions", () => {
       const statements = Object.values(subject.findResources("AWS::IAM::Policy")).flatMap(
         (policy) => policy["Properties"].PolicyDocument.Statement as Statement[],
       );
-      const wildcard = statements.filter((statement) => JSON.stringify(statement.Resource) === '"*"');
+      const wildcard = statements.filter(
+        (statement) => JSON.stringify(statement.Resource) === '"*"',
+      );
 
       expect(wildcard).toHaveLength(1);
-      expect([wildcard[0]?.Action].flat().toSorted()).toEqual(["xray:PutTelemetryRecords", "xray:PutTraceSegments"]);
+      expect([wildcard[0]?.Action].flat().toSorted()).toEqual([
+        "xray:PutTelemetryRecords",
+        "xray:PutTraceSegments",
+      ]);
       for (const statement of statements) {
         for (const action of [statement.Action].flat()) {
           expect(action).not.toContain("*");
@@ -167,7 +199,10 @@ describe("dashboard", () => {
 
 describe("the stack as a whole", () => {
   it("deletes the practice table with the stack", () => {
-    template.hasResource("AWS::DynamoDB::Table", { DeletionPolicy: "Delete", UpdateReplacePolicy: "Delete" });
+    template.hasResource("AWS::DynamoDB::Table", {
+      DeletionPolicy: "Delete",
+      UpdateReplacePolicy: "Delete",
+    });
   });
 
   it("uses only resource types that were checked against the pinned cdkd", () => {

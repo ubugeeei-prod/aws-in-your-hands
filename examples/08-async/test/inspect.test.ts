@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { judge, MAX_PIXELS, sniffImage } from "../src/inspect.ts";
 import {
   GIF_3X2,
@@ -47,7 +48,13 @@ describe("judge", () => {
   it("rejects a size no decoder should be asked to allocate", () => {
     expect(judge(pngDeclaring(8000, 5000), "image/png")).toMatchObject({ verdict: "ok" });
     expect(8000 * 5000).toBe(MAX_PIXELS);
-    expect(judge(pngDeclaring(8001, 5000), "image/png")).toEqual({ verdict: "rejected", reason: "too_many_pixels" });
-    expect(judge(pngDeclaring(0, 10), "image/png")).toEqual({ verdict: "rejected", reason: "not_an_image" });
+    expect(judge(pngDeclaring(8001, 5000), "image/png")).toEqual({
+      verdict: "rejected",
+      reason: "too_many_pixels",
+    });
+    expect(judge(pngDeclaring(0, 10), "image/png")).toEqual({
+      verdict: "rejected",
+      reason: "not_an_image",
+    });
   });
 });

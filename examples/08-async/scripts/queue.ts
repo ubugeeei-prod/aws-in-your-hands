@@ -4,9 +4,9 @@
 //
 // Looking uses ReceiveMessage with a visibility timeout of 0: the messages
 // stay where they are and stay visible, and only their receive count goes up.
+
 import { parseArgs } from "node:util";
-import { preflight } from "@aih/tools/aws/preflight.ts";
-import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import {
   GetQueueAttributesCommand,
   ListMessageMoveTasksCommand,
@@ -14,6 +14,10 @@ import {
   SQSClient,
   StartMessageMoveTaskCommand,
 } from "@aws-sdk/client-sqs";
+
+import { preflight } from "@aih/tools/aws/preflight.ts";
+import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { parseNotification } from "../src/events.ts";
 
 const STACK = "AihAsync";
@@ -34,7 +38,9 @@ function describe(body: string): string {
 try {
   const { target } = await preflight({
     access: values.redrive ? "mutate" : "observe",
-    action: values.redrive ? "move dead-letter messages back to the source queue" : "read queue depth",
+    action: values.redrive
+      ? "move dead-letter messages back to the source queue"
+      : "read queue depth",
     stack: STACK,
   });
   const outputs = await readStackOutputs(process.cwd(), STACK, target.region);
@@ -46,7 +52,9 @@ try {
     // No destination: each message goes back to the queue it came from.
     const task = await sqs.send(new StartMessageMoveTaskCommand({ SourceArn: deadLetterArn }));
     console.log(`started: ${task.TaskHandle ?? "(no handle returned)"}`);
-    console.log("The moved messages get new message IDs. Run `vp run async:queue` to follow the task.");
+    console.log(
+      "The moved messages get new message IDs. Run `vp run async:queue` to follow the task.",
+    );
     process.exit(0);
   }
 
@@ -83,10 +91,14 @@ try {
     );
   }
   if (Messages.length > 0) {
-    console.log("Read the worker's log for these keys (`vp run async:logs`) before moving anything back.");
+    console.log(
+      "Read the worker's log for these keys (`vp run async:logs`) before moving anything back.",
+    );
   }
 
-  const { Results = [] } = await sqs.send(new ListMessageMoveTasksCommand({ SourceArn: deadLetterArn }));
+  const { Results = [] } = await sqs.send(
+    new ListMessageMoveTasksCommand({ SourceArn: deadLetterArn }),
+  );
   for (const task of Results) {
     console.log(`move task: ${task.Status}, moved ${task.ApproximateNumberOfMessagesMoved ?? 0}`);
   }

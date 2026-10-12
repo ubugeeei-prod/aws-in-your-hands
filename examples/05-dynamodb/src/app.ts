@@ -4,7 +4,14 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { validator } from "hono/validator";
 import type { z } from "zod";
-import { createNoteSchema, type ErrorBody, listQuerySchema, type Note, updateNoteSchema } from "./contract.ts";
+
+import {
+  createNoteSchema,
+  type ErrorBody,
+  listQuerySchema,
+  type Note,
+  updateNoteSchema,
+} from "./contract.ts";
 import type { Env } from "./env.ts";
 import type { Logger } from "./log.ts";
 import { type NoteService, SHARED_OWNER } from "./notes.ts";
@@ -21,8 +28,12 @@ export type AppDeps = {
 type Variables = { requestId: string };
 type Extra = { issues?: { path: string; message: string }[]; current?: Note };
 
-const failure = (code: ErrorBody["error"]["code"], message: string, requestId: string, extra: Extra = {}) =>
-  ({ error: { code, message, requestId, ...extra } }) satisfies ErrorBody;
+const failure = (
+  code: ErrorBody["error"]["code"],
+  message: string,
+  requestId: string,
+  extra: Extra = {},
+) => ({ error: { code, message, requestId, ...extra } }) satisfies ErrorBody;
 
 const issuesOf = (error: z.ZodError) =>
   error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
@@ -58,7 +69,10 @@ export function createApp(deps: AppDeps) {
   app.onError((error, c) => {
     const requestId = c.get("requestId");
     if (error instanceof HTTPException && error.status === 400) {
-      return c.json(failure("invalid_request", "The request body is not valid JSON.", requestId), 400);
+      return c.json(
+        failure("invalid_request", "The request body is not valid JSON.", requestId),
+        400,
+      );
     }
     if (error instanceof InvalidCursorError) {
       return c.json(failure("invalid_request", error.message, requestId), 400);
@@ -76,12 +90,18 @@ export function createApp(deps: AppDeps) {
 
   const limit = bodyLimit({
     maxSize: 64 * 1024,
-    onError: (c) => c.json(failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")), 413),
+    onError: (c) =>
+      c.json(
+        failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")),
+        413,
+      ),
   });
 
   return (
     app
-      .get("/health", (c) => c.json({ status: "ok" as const, stage: deps.env.STAGE, store: deps.env.NOTES_STORE }))
+      .get("/health", (c) =>
+        c.json({ status: "ok" as const, stage: deps.env.STAGE, store: deps.env.NOTES_STORE }),
+      )
       // #region list
       .get(
         "/notes",
@@ -137,7 +157,11 @@ export function createApp(deps: AppDeps) {
               );
         }),
         async (c) => {
-          const result = await deps.notes.update(SHARED_OWNER, c.req.param("id"), c.req.valid("json"));
+          const result = await deps.notes.update(
+            SHARED_OWNER,
+            c.req.param("id"),
+            c.req.valid("json"),
+          );
           switch (result.status) {
             case "updated":
               return c.json(result.note, 200);
@@ -146,9 +170,14 @@ export function createApp(deps: AppDeps) {
             case "conflict":
               // 409: well-formed, but based on a version that is no longer stored.
               return c.json(
-                failure("conflict", "The note was changed since you loaded it.", c.get("requestId"), {
-                  current: result.current,
-                }),
+                failure(
+                  "conflict",
+                  "The note was changed since you loaded it.",
+                  c.get("requestId"),
+                  {
+                    current: result.current,
+                  },
+                ),
                 409,
               );
           }

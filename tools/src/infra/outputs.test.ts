@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseOutputs, requireOutput } from "./outputs.ts";
 
 describe("stack outputs", () => {
   it("reads outputs from the state document", () => {
     const stdout = JSON.stringify({
-      state: { stackName: "AihBookSite", version: 11, resources: {}, outputs: { DistributionId: "E123" } },
+      state: {
+        stackName: "AihBookSite",
+        version: 11,
+        resources: {},
+        outputs: { DistributionId: "E123" },
+      },
       lock: null,
     });
     expect(parseOutputs(stdout)).toEqual({ DistributionId: "E123" });
@@ -22,8 +28,8 @@ describe("stack outputs", () => {
 
   it("refuses a missing or ambiguous output", () => {
     expect(() => requireOutput({}, "DistributionId")).toThrow(/found 0/);
-    expect(() => requireOutput({ "A.DistributionId": "E1", "B.DistributionId": "E2" }, "DistributionId")).toThrow(
-      /found 2/,
-    );
+    expect(() =>
+      requireOutput({ "A.DistributionId": "E1", "B.DistributionId": "E2" }, "DistributionId"),
+    ).toThrow(/found 2/);
   });
 });

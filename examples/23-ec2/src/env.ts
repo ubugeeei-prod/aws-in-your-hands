@@ -1,5 +1,6 @@
-import { parseEnv } from "@aih/example-04-http-api/src/env.ts";
 import { z } from "zod";
+
+import { parseEnv } from "@aih/example-04-http-api/src/env.ts";
 
 // #region env
 const serverEnvSchema = z.object({
@@ -13,7 +14,9 @@ const serverEnvSchema = z.object({
 export function parseServerEnv(source: Record<string, string | undefined>) {
   const server = serverEnvSchema.safeParse(source);
   if (!server.success) {
-    const problems = server.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = server.error.issues.map(
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
+    );
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
   return { ...parseEnv(source), ...server.data };

@@ -1,6 +1,7 @@
+import { z } from "zod";
+
 import { noteSchema, type Note } from "@aih/example-04-http-api/src/contract.ts";
 import type { NoteRepository } from "@aih/example-04-http-api/src/notes.ts";
-import { z } from "zod";
 
 // #region storage
 /** The four file operations the repository needs. Tests replace them to fail at a chosen step. */
@@ -93,7 +94,11 @@ export class FileNoteRepository implements NoteRepository {
       const next = new Map(this.#notes);
       const result = change(next);
       try {
-        await replaceFile(this.#ops, this.#path, `${JSON.stringify({ version: 1, notes: [...next.values()] })}\n`);
+        await replaceFile(
+          this.#ops,
+          this.#path,
+          `${JSON.stringify({ version: 1, notes: [...next.values()] })}\n`,
+        );
       } catch (error) {
         // The rename may or may not have happened. The file decides; memory follows it.
         this.#notes = await load(this.#ops, this.#path).catch(() => this.#notes);

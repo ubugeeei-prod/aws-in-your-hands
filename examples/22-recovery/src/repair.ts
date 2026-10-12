@@ -3,6 +3,7 @@ import { MAX_UPLOAD_BYTES } from "@aih/example-07-uploads/api/src/contract.ts";
 import { judge } from "@aih/example-08-async/src/inspect.ts";
 import type { InspectionRepository } from "@aih/example-08-async/src/inspection.ts";
 import type { ObjectReader } from "@aih/example-08-async/src/object-reader.ts";
+
 import type { Finding } from "./invariants.ts";
 import type { ObjectVersion, VersionedBucket } from "./versioned-bucket.ts";
 
@@ -29,7 +30,12 @@ export type RepairDeps = {
 export type Repaired = {
   finding: Finding["kind"];
   key: string;
-  action: "object_undeleted" | "record_deleted" | "inspection_deleted" | "reinspected" | "nothing_to_do";
+  action:
+    | "object_undeleted"
+    | "record_deleted"
+    | "inspection_deleted"
+    | "reinspected"
+    | "nothing_to_do";
 };
 
 export type RepairReport = {
@@ -60,21 +66,33 @@ export async function repair(
         const markers = await deleteMarkersOnTop(deps.bucket, finding.key);
         if (markers !== undefined && markers.length === 0) {
           // The object is back already: an earlier run, or someone else, got here first.
-          report.repaired.push({ finding: finding.kind, key: finding.key, action: "nothing_to_do" });
-        } else if (markers !== undefined) {
+          report.repaired.push({
+            finding: finding.kind,
+            key: finding.key,
+            action: "nothing_to_do",
+          });
+        } else if (markers === undefined) {
+          // No version is left to bring back. The record goes, as chapter 07's delete would have left it.
+          if (!options.dryRun) {
+            await deps.attachments.delete(finding.owner, finding.noteId, finding.attachmentId);
+          }
+          report.repaired.push({
+            finding: finding.kind,
+            key: finding.key,
+            action: "record_deleted",
+          });
+        } else {
           if (!options.dryRun) {
             for (const marker of markers) {
               await deps.bucket.removeVersion(finding.key, marker.versionId);
             }
           }
           undeleted.add(finding.key);
-          report.repaired.push({ finding: finding.kind, key: finding.key, action: "object_undeleted" });
-        } else {
-          // No version is left to bring back. The record goes, as chapter 07's delete would have left it.
-          if (!options.dryRun) {
-            await deps.attachments.delete(finding.owner, finding.noteId, finding.attachmentId);
-          }
-          report.repaired.push({ finding: finding.kind, key: finding.key, action: "record_deleted" });
+          report.repaired.push({
+            finding: finding.kind,
+            key: finding.key,
+            action: "object_undeleted",
+          });
         }
         break;
       }
@@ -84,7 +102,11 @@ export async function repair(
           undeleted.has(finding.key) ||
           (await deps.reader.readExact(finding.key, finding.recordedETag, 1)).status !== "gone";
         if (back) {
-          report.repaired.push({ finding: finding.kind, key: finding.key, action: "nothing_to_do" });
+          report.repaired.push({
+            finding: finding.kind,
+            key: finding.key,
+            action: "nothing_to_do",
+          });
           break;
         }
         if (!options.dryRun) {
@@ -96,15 +118,27 @@ export async function repair(
             nextSequencer(finding.sequencer),
           );
         }
-        report.repaired.push({ finding: finding.kind, key: finding.key, action: "inspection_deleted" });
+        report.repaired.push({
+          finding: finding.kind,
+          key: finding.key,
+          action: "inspection_deleted",
+        });
         break;
       }
       case "inspection_for_other_bytes": {
         // Chapter 08's steps 1 to 3, for the bytes that are under the key now.
-        const object = await deps.reader.readExact(finding.key, finding.storedETag, MAX_UPLOAD_BYTES);
+        const object = await deps.reader.readExact(
+          finding.key,
+          finding.storedETag,
+          MAX_UPLOAD_BYTES,
+        );
         if (object.status !== "found") {
           // Changed again since the snapshot. The next check sees what is there then.
-          report.repaired.push({ finding: finding.kind, key: finding.key, action: "nothing_to_do" });
+          report.repaired.push({
+            finding: finding.kind,
+            key: finding.key,
+            action: "nothing_to_do",
+          });
           break;
         }
         if (!options.dryRun) {
@@ -147,7 +181,9 @@ async function deleteMarkersOnTop(
     }
   }
   history.sort(
-    (a, b) => b.lastModified.getTime() - a.lastModified.getTime() || Number(b.isLatest) - Number(a.isLatest),
+    (a, b) =>
+      b.lastModified.getTime() - a.lastModified.getTime() ||
+      Number(b.isLatest) - Number(a.isLatest),
   );
   const firstWithBytes = history.findIndex((version) => !version.deleteMarker);
   return firstWithBytes === -1 ? undefined : history.slice(0, firstWithBytes);

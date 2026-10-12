@@ -6,10 +6,12 @@
 //
 // EC2 settings: placement, instanceType, dataVolumeGiB, dataOnDestroy, amiId.
 // Network settings (the ones you deploy chapter 11 with): egress, interfaceEndpoints.
+
 import { parseNetworkConfig } from "@aih/example-11-network/src/config.ts";
 import { planNetwork } from "@aih/example-11-network/src/plan.ts";
 import { loadPricing } from "@aih/tools/data/load.ts";
 import { calculate } from "@aih/tools/pricing/calc.ts";
+
 import { checkAccess, unreachable } from "../src/access.ts";
 import { ec2ConfigSchema, parseEc2Config } from "../src/config.ts";
 import { type InstanceState, MONTH_HOURS, networkSettingsFor } from "../src/cost.ts";
@@ -32,7 +34,8 @@ try {
   const config = parseEc2Config(pick(true));
   const given = pick(false);
   // With no network settings given, assume the ones this placement needs.
-  const networkSettings = Object.keys(given).length > 0 ? given : networkSettingsFor(config.placement);
+  const networkSettings =
+    Object.keys(given).length > 0 ? given : networkSettingsFor(config.placement);
   const network = planNetwork(parseNetworkConfig(networkSettings));
   const flags = Object.entries(networkSettings).map(([key, value]) => ` -c ${key}=${value}`);
   console.log(`Network   vp run net:infra:deploy${flags.join("")}`);

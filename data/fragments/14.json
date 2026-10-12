@@ -8,7 +8,14 @@
       "en": "Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration"
     },
     "prerequisites": ["05", "10", "11"],
-    "services": ["DynamoDB", "ElastiCache", "CloudFront KeyValueStore", "Lambda", "API Gateway HTTP API", "IAM"],
+    "services": [
+      "DynamoDB",
+      "ElastiCache",
+      "CloudFront KeyValueStore",
+      "Lambda",
+      "API Gateway HTTP API",
+      "IAM"
+    ],
     "samplePath": "examples/14-kv-cache",
     "writing": { "ja": "complete", "en": "complete" },
     "sourceRevision": 1,
@@ -328,7 +335,9 @@
       "url": "https://valkey.io/commands/incr/",
       "title": "Valkey command: INCR",
       "checkedAt": "2026-10-12",
-      "supports": ["INCR is an atomic increment; the page describes the counter and rate limiter patterns built on it"]
+      "supports": [
+        "INCR is an atomic increment; the page describes the counter and rate limiter patterns built on it"
+      ]
     },
     {
       "id": "valkey-container-image",
@@ -540,7 +549,10 @@
     },
     {
       "id": "14.interface",
-      "sources": ["examples/14-kv-cache/src/stores.ts", "examples/14-kv-cache/test/store-contracts.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/stores.ts",
+        "examples/14-kv-cache/test/store-contracts.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["type", "test"],
@@ -548,7 +560,10 @@
     },
     {
       "id": "14.rate-limit",
-      "sources": ["examples/14-kv-cache/src/rate-limit.ts", "examples/14-kv-cache/test/rate-limit.test.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/rate-limit.ts",
+        "examples/14-kv-cache/test/rate-limit.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["test", "distributed"],
@@ -568,7 +583,10 @@
     },
     {
       "id": "14.ttl",
-      "sources": ["examples/14-kv-cache/src/dynamodb-store.ts", "examples/14-kv-cache/test/dynamodb-store.test.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/dynamodb-store.ts",
+        "examples/14-kv-cache/test/dynamodb-store.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local+cloud",
       "criteria": ["test", "distributed"],
@@ -612,7 +630,10 @@
     },
     {
       "id": "14.stampede",
-      "sources": ["examples/14-kv-cache/src/read-through.ts", "examples/14-kv-cache/test/read-through.test.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/read-through.ts",
+        "examples/14-kv-cache/test/read-through.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["test", "distributed"],
@@ -649,7 +670,14 @@
         "examples/14-kv-cache/scripts/test-local.ts",
         "examples/14-kv-cache/.env.example"
       ],
-      "tasks": ["dev:kv", "kv:local:start", "kv:local:migrate", "kv:test:local", "kv:local:stop", "test:unit"],
+      "tasks": [
+        "dev:kv",
+        "kv:local:start",
+        "kv:local:migrate",
+        "kv:test:local",
+        "kv:local:stop",
+        "test:unit"
+      ],
       "boundary": "local",
       "criteria": ["local-dx", "test"],
       "verification": "local"
@@ -719,7 +747,12 @@
       "currency": "USD",
       "unit": "GB-Hours",
       "tiers": [
-        { "from": 0, "to": null, "usd": "0.1010000000", "description": "$0.101 per GB-hour for Valkey data storage" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1010000000",
+          "description": "$0.101 per GB-hour for Valkey data storage"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-14T06:37:14Z",
@@ -734,7 +767,14 @@
       "plan": "on-demand",
       "currency": "USD",
       "unit": "ElastiCacheProcessingUnit",
-      "tiers": [{ "from": 0, "to": null, "usd": "0.0000000027", "description": "$0.0027 per million Valkey ECPUs" }],
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000000027",
+          "description": "$0.0027 per million Valkey ECPUs"
+        }
+      ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-14T06:37:14Z",
       "checkedAt": "2026-10-12"
@@ -783,7 +823,9 @@
           "No ElastiCache cache exists"
         ]
       },
-      "items": [{ "priceId": "dynamodb.storage", "quantity": 0.001, "basis": "1 MB stored, in GB-month" }]
+      "items": [
+        { "priceId": "dynamodb.storage", "quantity": 0.001, "basis": "1 MB stored, in GB-month" }
+      ]
     },
     {
       "id": "kv-idle-valkey-serverless",
@@ -831,7 +873,13 @@
           "Backups and data transfer are not included"
         ]
       },
-      "items": [{ "priceId": "elasticache.node.valkey.t4g-micro", "quantity": 730, "basis": "1 node x 730 hours" }]
+      "items": [
+        {
+          "priceId": "elasticache.node.valkey.t4g-micro",
+          "quantity": 730,
+          "basis": "1 node x 730 hours"
+        }
+      ]
     },
     {
       "id": "kv-used-dynamodb",
@@ -861,7 +909,11 @@
       "items": [
         { "priceId": "apigw.http.request", "quantity": 1000000, "basis": "1,000,000 requests" },
         { "priceId": "lambda.request.arm", "quantity": 1000000, "basis": "1,000,000 invocations" },
-        { "priceId": "lambda.duration.arm", "quantity": 7500, "basis": "1,000,000 x 0.03 s x 0.25 GB" },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 7500,
+          "basis": "1,000,000 x 0.03 s x 0.25 GB"
+        },
         {
           "priceId": "dynamodb.write.on-demand",
           "quantity": 1262800,
@@ -873,8 +925,16 @@
           "basis": "(1,000,000 + 87,600) eventually consistent reads x 0.5"
         },
         { "priceId": "dynamodb.storage", "quantity": 0.001, "basis": "1 MB stored, in GB-month" },
-        { "priceId": "logs.ingest.standard", "quantity": 0.476837, "basis": "1,000,000 x 0.5 KB, in GB" },
-        { "priceId": "logs.storage", "quantity": 0.111, "basis": "about 7 days of logs kept, in GB-month" }
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.476837,
+          "basis": "1,000,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.111,
+          "basis": "about 7 days of logs kept, in GB-month"
+        }
       ]
     },
     {
@@ -905,7 +965,11 @@
       "items": [
         { "priceId": "apigw.http.request", "quantity": 1000000, "basis": "1,000,000 requests" },
         { "priceId": "lambda.request.arm", "quantity": 1000000, "basis": "1,000,000 invocations" },
-        { "priceId": "lambda.duration.arm", "quantity": 7500, "basis": "1,000,000 x 0.03 s x 0.25 GB" },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 7500,
+          "basis": "1,000,000 x 0.03 s x 0.25 GB"
+        },
         {
           "priceId": "elasticache.serverless.valkey.storage",
           "quantity": 73,
@@ -916,8 +980,16 @@
           "quantity": 10000000,
           "basis": "1,000,000 requests x 10 ECPUs (assumption)"
         },
-        { "priceId": "logs.ingest.standard", "quantity": 0.476837, "basis": "1,000,000 x 0.5 KB, in GB" },
-        { "priceId": "logs.storage", "quantity": 0.111, "basis": "about 7 days of logs kept, in GB-month" }
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.476837,
+          "basis": "1,000,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.111,
+          "basis": "about 7 days of logs kept, in GB-month"
+        }
       ]
     }
   ],

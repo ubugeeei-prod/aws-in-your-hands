@@ -13,6 +13,7 @@ import {
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
+
 import { SHARED_SECONDS } from "../../core/cache-control.ts";
 import { ASSET_PATH_PATTERN, PERSONAL_PATH_PATTERNS } from "../../core/routes.ts";
 
@@ -43,7 +44,9 @@ export class SsrStack extends Stack {
       retention: RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const role = new Role(this, "ServerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "ServerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
 
     const server = new LambdaFunction(this, "Server", {
@@ -74,7 +77,8 @@ export class SsrStack extends Stack {
 
     // #region public-policy
     const publicPages = new cloudfront.CachePolicy(this, "PublicPages", {
-      comment: "Public SSR pages: cached only when the origin says so, never keyed or varied by cookie",
+      comment:
+        "Public SSR pages: cached only when the origin says so, never keyed or varied by cookie",
       // 0, so that `private, no-store` from the origin is obeyed. Above 0, CloudFront caches anyway.
       minTtl: Duration.seconds(0),
       // 0, so that a response with no Cache-Control at all is not cached.

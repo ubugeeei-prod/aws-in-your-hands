@@ -1,5 +1,6 @@
-import { type Env, parseEnv } from "@aih/example-04-http-api/src/env.ts";
 import { z } from "zod";
+
+import { type Env, parseEnv } from "@aih/example-04-http-api/src/env.ts";
 
 // #region env
 // What the container adds to chapter 04's settings.
@@ -15,7 +16,9 @@ export function parseServerEnv(source: Record<string, string | undefined>): Serv
   const app = parseEnv(source);
   const server = serverEnvSchema.safeParse(source);
   if (!server.success) {
-    const problems = server.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = server.error.issues.map(
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
+    );
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
   return { ...app, ...server.data };

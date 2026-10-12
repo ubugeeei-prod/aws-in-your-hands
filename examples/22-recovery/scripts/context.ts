@@ -1,4 +1,9 @@
 import { parseArgs } from "node:util";
+
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { S3Client } from "@aws-sdk/client-s3";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { DynamoDbNoteRepository } from "@aih/example-05-dynamodb/src/dynamodb-repository.ts";
 import { DynamoDbAttachmentRepository } from "@aih/example-07-uploads/api/src/dynamodb-attachment-repository.ts";
 import { S3ObjectStore } from "@aih/example-07-uploads/api/src/s3-object-store.ts";
@@ -6,9 +11,7 @@ import { DynamoDbInspectionRepository } from "@aih/example-08-async/src/dynamodb
 import { S3ObjectReader } from "@aih/example-08-async/src/s3-object-reader.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { S3Client } from "@aws-sdk/client-s3";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { DynamoDbTable } from "../src/dynamodb-table.ts";
 import { S3VersionedBucket } from "../src/s3-versioned-bucket.ts";
 
@@ -45,7 +48,11 @@ export function pointInTime(): Date | undefined {
 /** Preflight, the stack's outputs, and clients. `change` is honoured only together with --apply. */
 export async function connect(action: string, options: { change: boolean }) {
   const mutate = options.change && flags.apply;
-  const { target } = await preflight({ access: mutate ? "mutate" : "observe", action, stack: STACK });
+  const { target } = await preflight({
+    access: mutate ? "mutate" : "observe",
+    action,
+    stack: STACK,
+  });
   const outputs = await readStackOutputs(process.cwd(), STACK, target.region);
   const dynamodb = new DynamoDBClient({ region: target.region });
   const documents = DynamoDBDocumentClient.from(dynamodb);
@@ -83,7 +90,8 @@ export async function connect(action: string, options: { change: boolean }) {
 
 export type Context = Awaited<ReturnType<typeof connect>>;
 
-export const verb = (dryRun: boolean, done: string, planned: string): string => (dryRun ? planned : done);
+export const verb = (dryRun: boolean, done: string, planned: string): string =>
+  dryRun ? planned : done;
 
 export function remindToApply(dryRun: boolean): void {
   if (dryRun) {

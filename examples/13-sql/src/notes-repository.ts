@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { Note } from "./contract.ts";
 import { type Queryable, rows } from "./db.ts";
 import type { TransactionRunner } from "./transaction.ts";
@@ -11,7 +12,7 @@ export type UpdateResult =
   | { status: "conflict"; current: Note }
   | { status: "not_found" };
 
-export interface NoteRepository {
+export type NoteRepository = {
   /** Creating the same note (same id) twice leaves one note. */
   create(owner: string, note: Note): Promise<CreateResult>;
   get(owner: string, id: string): Promise<Note | undefined>;
@@ -24,7 +25,7 @@ export interface NoteRepository {
     change: { title: string; body: string; expectedVersion: number; updatedAt: string },
   ): Promise<UpdateResult>;
   delete(owner: string, id: string): Promise<boolean>;
-}
+};
 // #endregion interface
 
 // #region row
@@ -54,10 +55,12 @@ const idRowSchema = z.object({ id: z.uuid() });
 const countRowSchema = z.object({ note_count: z.number().int().nonnegative() });
 
 async function selectNote(tx: Queryable, owner: string, id: string): Promise<Note | undefined> {
-  const [note] = await rows(tx, noteRowSchema, `SELECT ${NOTE_COLUMNS} FROM app.notes WHERE owner = $1 AND id = $2`, [
-    owner,
-    id,
-  ]);
+  const [note] = await rows(
+    tx,
+    noteRowSchema,
+    `SELECT ${NOTE_COLUMNS} FROM app.notes WHERE owner = $1 AND id = $2`,
+    [owner, id],
+  );
   return note;
 }
 
@@ -79,9 +82,10 @@ export class SqlNoteRepository implements NoteRepository {
       if ((await selectNote(tx, owner, note.id)) !== undefined) {
         return "created";
       }
-      await tx.query("INSERT INTO app.owners (owner, note_count) VALUES ($1, 0) ON CONFLICT (owner) DO NOTHING", [
-        owner,
-      ]);
+      await tx.query(
+        "INSERT INTO app.owners (owner, note_count) VALUES ($1, 0) ON CONFLICT (owner) DO NOTHING",
+        [owner],
+      );
       // Two creates by one owner both write this row, so the database lets only
       // one of them commit. Counting app.notes instead would let both pass.
       const counted = await rows(
@@ -144,10 +148,12 @@ export class SqlNoteRepository implements NoteRepository {
   // #region delete
   delete(owner: string, id: string): Promise<boolean> {
     return this.#transaction(async (tx) => {
-      const deleted = await rows(tx, idRowSchema, "DELETE FROM app.notes WHERE owner = $1 AND id = $2 RETURNING id", [
-        owner,
-        id,
-      ]);
+      const deleted = await rows(
+        tx,
+        idRowSchema,
+        "DELETE FROM app.notes WHERE owner = $1 AND id = $2 RETURNING id",
+        [owner, id],
+      );
       if (deleted.length === 0) {
         return false;
       }

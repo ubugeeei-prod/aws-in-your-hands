@@ -1,9 +1,11 @@
-import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
-import { DynamoDbAttachmentRepository } from "@aih/example-07-uploads/api/src/dynamodb-attachment-repository.ts";
-import { S3ObjectStore } from "@aih/example-07-uploads/api/src/s3-object-store.ts";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { S3Client } from "@aws-sdk/client-s3";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
+import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
+import { DynamoDbAttachmentRepository } from "@aih/example-07-uploads/api/src/dynamodb-attachment-repository.ts";
+import { S3ObjectStore } from "@aih/example-07-uploads/api/src/s3-object-store.ts";
+
 import { DynamoDbInspectionRepository } from "./dynamodb-inspection-repository.ts";
 import { parseFunctionEnv } from "./env.ts";
 import { S3ObjectReader } from "./s3-object-reader.ts";

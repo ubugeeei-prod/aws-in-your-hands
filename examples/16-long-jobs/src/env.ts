@@ -20,11 +20,15 @@ export type PagesEnv = z.infer<typeof pagesEnvSchema>;
 function parse<T>(schema: z.ZodType<T>, source: Record<string, string | undefined>): T {
   const result = schema.safeParse(source);
   if (!result.success) {
-    const problems = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = result.error.issues.map(
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
+    );
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
   return result.data;
 }
 
-export const parseFunctionEnv = (source: Record<string, string | undefined>): FunctionEnv => parse(envSchema, source);
-export const parsePagesEnv = (source: Record<string, string | undefined>): PagesEnv => parse(pagesEnvSchema, source);
+export const parseFunctionEnv = (source: Record<string, string | undefined>): FunctionEnv =>
+  parse(envSchema, source);
+export const parsePagesEnv = (source: Record<string, string | undefined>): PagesEnv =>
+  parse(pagesEnvSchema, source);

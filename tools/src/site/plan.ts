@@ -61,7 +61,8 @@ export const IMMUTABLE = "public, max-age=31536000, immutable";
 // Checked with the origin before each reuse, so a publish shows up without an invalidation.
 export const REVALIDATE = "public, max-age=0, must-revalidate";
 
-export const cacheControlFor = (key: string): string => (isHashedAsset(key) ? IMMUTABLE : REVALIDATE);
+export const cacheControlFor = (key: string): string =>
+  isHashedAsset(key) ? IMMUTABLE : REVALIDATE;
 // #endregion cache
 
 const normalizeEtag = (etag: string): string => etag.replaceAll('"', "");
@@ -86,8 +87,14 @@ export function planPublish(input: {
   const localKeys = new Set(input.local.map((file) => file.key));
 
   const uploads = input.local
-    .filter((file) => input.force || normalizeEtag(remoteByKey.get(file.key)?.etag ?? "") !== file.md5)
-    .map((file) => ({ key: file.key, contentType: contentTypeFor(file.key), cacheControl: cacheControlFor(file.key) }))
+    .filter(
+      (file) => input.force || normalizeEtag(remoteByKey.get(file.key)?.etag ?? "") !== file.md5,
+    )
+    .map((file) => ({
+      key: file.key,
+      contentType: contentTypeFor(file.key),
+      cacheControl: cacheControlFor(file.key),
+    }))
     .toSorted((a, b) => a.key.localeCompare(b.key));
 
   const orphans = input.remote.filter((object) => !localKeys.has(object.key));

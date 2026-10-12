@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { type Ec2Config, REGION } from "./config.ts";
 
 // Every value below ends up inside a shell script or a systemd file that runs

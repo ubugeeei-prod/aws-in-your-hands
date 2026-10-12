@@ -59,7 +59,8 @@ export async function runWorkflow(
     if (state.Type === "Choice") {
       const record = data as Record<string, unknown>;
       name =
-        state.Choices.find((choice) => record[field(choice.Variable)] === choice.BooleanEquals)?.Next ?? state.Default;
+        state.Choices.find((choice) => record[field(choice.Variable)] === choice.BooleanEquals)
+          ?.Next ?? state.Default;
       continue;
     }
     const result = await runTask(name, state, data, invoke, steps);
@@ -103,12 +104,17 @@ async function runTask(
         used.set(index, (used.get(index) ?? 0) + 1);
         continue;
       }
-      const catcher = (state.Catch ?? []).find((candidate) => matches(candidate.ErrorEquals, error));
+      const catcher = (state.Catch ?? []).find((candidate) =>
+        matches(candidate.ErrorEquals, error),
+      );
       if (catcher === undefined) {
         return { kind: "failed", failure: { error, cause } };
       }
       // ResultPath keeps the state's input and adds the error beside it.
-      const output = { ...(input as object), [field(catcher.ResultPath)]: { Error: error, Cause: cause } };
+      const output = {
+        ...(input as object),
+        [field(catcher.ResultPath)]: { Error: error, Cause: cause },
+      };
       return { kind: "next", next: catcher.Next, output };
     }
   }

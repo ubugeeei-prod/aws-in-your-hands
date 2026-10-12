@@ -3,9 +3,12 @@
 //
 // The signed-in path runs only when AIH_ACCESS_TOKEN holds an access token.
 // The token is never printed.
+
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { ApiError, createNotesClient } from "../api/src/client.ts";
 
 const { values } = parseArgs({ options: { url: { type: "string" } } });
@@ -29,14 +32,20 @@ try {
       action: "smoke test the deployed notes API",
       stack: "AihNotesApp",
     });
-    url = requireOutput(await readStackOutputs(process.cwd(), "AihNotesApp", target.region), "ApiUrl");
+    url = requireOutput(
+      await readStackOutputs(process.cwd(), "AihNotesApp", target.region),
+      "ApiUrl",
+    );
   }
   console.log(`api: ${url}`);
 
   const anonymous = createNotesClient(url, () => undefined);
   console.log(`ok   health (stage ${(await anonymous.health()).stage})`);
   await expectRejected("a request without a token", anonymous.list());
-  await expectRejected("a request with a made-up token", createNotesClient(url, () => "not.a.token").list());
+  await expectRejected(
+    "a request with a made-up token",
+    createNotesClient(url, () => "not.a.token").list(),
+  );
 
   if (token === undefined) {
     console.log("AIH_ACCESS_TOKEN is not set: the signed-in path was NOT checked.");
@@ -47,13 +56,17 @@ try {
     const note = await user.create({ title: `smoke ${new Date().toISOString()}`, body: "" });
     const listed = (await user.list()).notes.some((item) => item.id === note.id);
     await user.remove(note.id);
-    console.log(`ok   created and deleted ${note.id}${listed ? "" : " (not yet in the eventually consistent list)"}`);
+    console.log(
+      `ok   created and deleted ${note.id}${listed ? "" : " (not yet in the eventually consistent list)"}`,
+    );
   }
   console.log(`checked at ${new Date().toISOString()}`);
 } catch (error) {
   console.error(
     "FAIL",
-    error instanceof ApiError ? `${error.status} ${error.code} (request ${error.requestId})` : error,
+    error instanceof ApiError
+      ? `${error.status} ${error.code} (request ${error.requestId})`
+      : error,
   );
   process.exit(1);
 }

@@ -33,7 +33,10 @@ export const errorRateExpressions = {
 export type MinuteCounts = { requests: number | null; errors: number | null };
 
 /** What the guarded expression yields for one minute. `null` is "no data point". */
-export function errorRatePoint(counts: MinuteCounts, minRequests: number = errorRateRule.minRequests): number | null {
+export function errorRatePoint(
+  counts: MinuteCounts,
+  minRequests: number = errorRateRule.minRequests,
+): number | null {
   if (counts.requests === null) {
     // No requests, no data point: nothing was measured, good or bad.
     return null;

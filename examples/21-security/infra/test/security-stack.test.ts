@@ -2,9 +2,11 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { assertNoWildcards, lintTemplate } from "../../src/iam-lint.ts";
 import { parseSecurityConfig } from "../lib/config.ts";
 import { SecurityStack, type SecurityStackProps } from "../lib/security-stack.ts";
@@ -29,11 +31,19 @@ const typesOf = (template: Template): string[] => {
   return [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted();
 };
 
-type Statement = { Sid: string; Effect: string; Action: string | string[]; Resource: unknown; Condition?: unknown };
+type Statement = {
+  Sid: string;
+  Effect: string;
+  Action: string | string[];
+  Resource: unknown;
+  Condition?: unknown;
+};
 const handlerStatements = (template: Template): Statement[] =>
   Object.entries(template.findResources("AWS::IAM::Role"))
     .filter(([logicalId]) => logicalId.startsWith("HandlerRole"))
-    .flatMap(([, role]) => role["Properties"].Policies as { PolicyDocument: { Statement: Statement[] } }[])
+    .flatMap(
+      ([, role]) => role["Properties"].Policies as { PolicyDocument: { Statement: Statement[] } }[],
+    )
     .flatMap((policy) => policy.PolicyDocument.Statement);
 
 // cdkd 0.296.28 registers a dedicated provider for each of these.
@@ -64,21 +74,31 @@ describe("AihSecurity, default", () => {
   it("keeps the secret's value out of the template and out of the function's configuration", () => {
     plain.hasResourceProperties("AWS::SecretsManager::Secret", {
       SecretString: Match.absent(),
-      GenerateSecretString: { GenerateStringKey: "key", PasswordLength: 64, ExcludePunctuation: true },
+      GenerateSecretString: {
+        GenerateStringKey: "key",
+        PasswordLength: 64,
+        ExcludePunctuation: true,
+      },
     });
     const text = JSON.stringify(plain.toJSON());
     // A dynamic reference would be resolved into the function's configuration, where lambda:GetFunction shows it.
     expect(text).not.toContain("{{resolve:");
     plain.hasResourceProperties("AWS::Lambda::Function", {
       Environment: {
-        Variables: { SECRET_SOURCE: "secretsmanager", SECRET_ID: { Ref: Match.stringLikeRegexp("^SigningKey") } },
+        Variables: {
+          SECRET_SOURCE: "secretsmanager",
+          SECRET_ID: { Ref: Match.stringLikeRegexp("^SigningKey") },
+        },
       },
     });
   });
 
   it("lets the function read this one secret, write its own logs, and nothing else", () => {
     const statements = handlerStatements(plain);
-    expect(statements.map((statement) => statement.Sid)).toEqual(["WriteOwnLogs", "ReadSigningKey"]);
+    expect(statements.map((statement) => statement.Sid)).toEqual([
+      "WriteOwnLogs",
+      "ReadSigningKey",
+    ]);
     expect(statements.flatMap((statement) => statement.Action)).toEqual([
       "logs:CreateLogStream",
       "logs:PutLogEvents",
@@ -97,7 +117,8 @@ describe("AihSecurity, default", () => {
   it("refuses unsigned calls to the function URL and admits only this distribution", () => {
     plain.hasResourceProperties("AWS::Lambda::Url", { AuthType: "AWS_IAM" });
     const permissions = Object.values(plain.findResources("AWS::Lambda::Permission")).map(
-      (permission) => permission["Properties"] as { Action: string; Principal: string; SourceArn?: unknown },
+      (permission) =>
+        permission["Properties"] as { Action: string; Principal: string; SourceArn?: unknown },
     );
     expect(permissions.map((permission) => permission.Action).toSorted()).toEqual([
       "lambda:InvokeFunction",
@@ -123,7 +144,10 @@ describe("AihSecurity, default", () => {
   });
 
   it("leaves nothing behind when the stack is deleted", () => {
-    plain.hasResource("AWS::SecretsManager::Secret", { DeletionPolicy: "Delete", UpdateReplacePolicy: "Delete" });
+    plain.hasResource("AWS::SecretsManager::Secret", {
+      DeletionPolicy: "Delete",
+      UpdateReplacePolicy: "Delete",
+    });
     plain.hasResource("AWS::Logs::LogGroup", { DeletionPolicy: "Delete" });
     plain.hasResourceProperties("AWS::Logs::LogGroup", { RetentionInDays: 7 });
   });
@@ -132,9 +156,14 @@ describe("AihSecurity, default", () => {
 describe("the bundle that would be deployed", () => {
   it("loads as an ES module and answers, with the AWS SDK bundled in", async () => {
     const app = new App({ analyticsReporting: false });
-    new SecurityStack(app, "AihSecurity", { env: { region: "ap-northeast-1" }, customerManagedKey: false });
+    new SecurityStack(app, "AihSecurity", {
+      env: { region: "ap-northeast-1" },
+      customerManagedKey: false,
+    });
     const directory = app.synth().directory;
-    const asset = readdirSync(directory).find((name) => existsSync(join(directory, name, "index.mjs")));
+    const asset = readdirSync(directory).find((name) =>
+      existsSync(join(directory, name, "index.mjs")),
+    );
     expect(asset).toBeDefined();
 
     const event = {
@@ -143,7 +172,10 @@ describe("the bundle that would be deployed", () => {
       rawPath: "/health",
       rawQueryString: "",
       headers: {},
-      requestContext: { http: { method: "GET", path: "/health" }, domainName: "example.lambda-url.on.aws" },
+      requestContext: {
+        http: { method: "GET", path: "/health" },
+        domainName: "example.lambda-url.on.aws",
+      },
       isBase64Encoded: false,
     };
     // A plain Node process, as Lambda runs it. The test runner supplies a require() that Lambda does not.
@@ -184,9 +216,13 @@ describe("AihSecurity with -c cmk=on", () => {
   });
 
   it("lets the function decrypt only through Secrets Manager", () => {
-    const decrypt = handlerStatements(withKey).find((statement) => statement.Sid === "DecryptThroughSecretsManager");
+    const decrypt = handlerStatements(withKey).find(
+      (statement) => statement.Sid === "DecryptThroughSecretsManager",
+    );
     expect(decrypt?.Action).toBe("kms:Decrypt");
-    expect(decrypt?.Resource).toEqual({ "Fn::GetAtt": [expect.stringMatching(/^SecretKey/), "Arn"] });
+    expect(decrypt?.Resource).toEqual({
+      "Fn::GetAtt": [expect.stringMatching(/^SecretKey/), "Arn"],
+    });
     expect(decrypt?.Condition).toEqual({
       StringEquals: { "kms:ViaService": "secretsmanager.ap-northeast-1.amazonaws.com" },
     });
@@ -196,7 +232,9 @@ describe("AihSecurity with -c cmk=on", () => {
 describe("AihSecurity with -c webAclArn=...", () => {
   it("attaches the web ACL to the distribution and creates none itself", () => {
     expect(typesOf(withWaf)).toEqual(DEFAULT_TYPES);
-    withWaf.hasResourceProperties("AWS::CloudFront::Distribution", { DistributionConfig: { WebACLId: WEB_ACL } });
+    withWaf.hasResourceProperties("AWS::CloudFront::Distribution", {
+      DistributionConfig: { WebACLId: WEB_ACL },
+    });
   });
 });
 

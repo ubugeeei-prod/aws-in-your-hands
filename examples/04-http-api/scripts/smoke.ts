@@ -4,9 +4,12 @@
 // Exercises the deployed API through the same typed client the tests use.
 // Unlike the tests, this goes through API Gateway, IAM, and Lambda, and it
 // creates (then deletes) a real note.
+
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { ApiError, createNotesClient } from "../src/client.ts";
 
 const { values } = parseArgs({ options: { url: { type: "string" } } });
@@ -19,7 +22,10 @@ try {
       action: "smoke test the deployed API",
       stack: "AihHttpApi",
     });
-    url = requireOutput(await readStackOutputs(process.cwd(), "AihHttpApi", target.region), "ApiUrl");
+    url = requireOutput(
+      await readStackOutputs(process.cwd(), "AihHttpApi", target.region),
+      "ApiUrl",
+    );
   }
   const client = createNotesClient(url);
   console.log(`api: ${url}`);
@@ -27,7 +33,10 @@ try {
   const health = await client.health();
   console.log(`ok   health (stage ${health.stage})`);
 
-  const note = await client.create({ title: `smoke ${new Date().toISOString()}`, body: "created by api:smoke" });
+  const note = await client.create({
+    title: `smoke ${new Date().toISOString()}`,
+    body: "created by api:smoke",
+  });
   console.log(`ok   created ${note.id}`);
 
   // The read may be served by a different execution environment than the
@@ -41,7 +50,9 @@ try {
     console.log("ok   deleted it");
   } catch (error) {
     if (error instanceof ApiError && error.code === "not_found") {
-      console.log(`note read-back returned 404 (request ${error.requestId}): another execution environment answered.`);
+      console.log(
+        `note read-back returned 404 (request ${error.requestId}): another execution environment answered.`,
+      );
     } else {
       throw error;
     }
@@ -56,7 +67,9 @@ try {
 } catch (error) {
   console.error(
     "FAIL",
-    error instanceof ApiError ? `${error.status} ${error.code} (request ${error.requestId})` : error,
+    error instanceof ApiError
+      ? `${error.status} ${error.code} (request ${error.requestId})`
+      : error,
   );
   process.exit(1);
 }

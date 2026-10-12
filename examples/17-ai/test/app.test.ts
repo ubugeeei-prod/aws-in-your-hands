@@ -1,5 +1,7 @@
-import type { LogEntry } from "@aih/example-04-http-api/src/log.ts";
 import { describe, expect, it } from "vite-plus/test";
+
+import type { LogEntry } from "@aih/example-04-http-api/src/log.ts";
+
 import { createApp } from "../src/app.ts";
 import { collectSummary, summaryEvents } from "../src/client.ts";
 import { errorSchema, healthSchema, MAX_BODY_CHARS } from "../src/contract.ts";
@@ -60,7 +62,10 @@ describe("POST /summaries", () => {
     expect(response.headers.get("x-request-id")).toBe("req-1");
 
     const result = await collectSummary(summaryEvents(await body(response)));
-    expect(result).toMatchObject({ status: "complete", usage: { inputTokens: 212, outputTokens: 58 } });
+    expect(result).toMatchObject({
+      status: "complete",
+      usage: { inputTokens: 212, outputTokens: 58 },
+    });
     expect(logs).toContainEqual(
       expect.objectContaining({
         message: "summary",
@@ -76,15 +81,23 @@ describe("POST /summaries", () => {
     const throttled = fixtureSchema.parse({
       source: "test",
       description: "throttled on every attempt",
-      openErrors: Array.from({ length: 3 }, () => ({ name: "ThrottlingException", message: "slow down" })),
+      openErrors: Array.from({ length: 3 }, () => ({
+        name: "ThrottlingException",
+        message: "slow down",
+      })),
       steps: [],
     });
     const { post, logs } = withFixture(throttled);
     const response = await post(NOTE);
 
     expect(response.status).toBe(429);
-    expect(errorSchema.parse(await response.json()).error).toMatchObject({ code: "throttled", retryable: true });
-    expect(logs).toContainEqual(expect.objectContaining({ message: "summary", outcome: "throttled", attempts: 3 }));
+    expect(errorSchema.parse(await response.json()).error).toMatchObject({
+      code: "throttled",
+      retryable: true,
+    });
+    expect(logs).toContainEqual(
+      expect.objectContaining({ message: "summary", outcome: "throttled", attempts: 3 }),
+    );
   });
 
   it("does not tell the caller why the model refused the function's role", async () => {
@@ -92,7 +105,10 @@ describe("POST /summaries", () => {
       source: "test",
       description: "the role lacks permission",
       openErrors: [
-        { name: "AccessDeniedException", message: "role arn:aws:iam::111122223333:role/x is not authorized" },
+        {
+          name: "AccessDeniedException",
+          message: "role arn:aws:iam::111122223333:role/x is not authorized",
+        },
       ],
       steps: [],
     });
@@ -114,7 +130,9 @@ describe("POST /summaries", () => {
       reason: "throttled",
       retryable: true,
     });
-    expect(logs).toContainEqual(expect.objectContaining({ message: "summary", outcome: "throttled", usage: null }));
+    expect(logs).toContainEqual(
+      expect.objectContaining({ message: "summary", outcome: "throttled", usage: null }),
+    );
   });
 
   it("never calls the model for a note that breaks the limits", async () => {
@@ -155,7 +173,9 @@ describe("POST /summaries", () => {
 
     await reader.cancel();
     await expect.poll(() => seen.signal?.aborted).toBe(true);
-    await expect.poll(() => logs).toContainEqual(expect.objectContaining({ message: "summary", outcome: "cancelled" }));
+    await expect
+      .poll(() => logs)
+      .toContainEqual(expect.objectContaining({ message: "summary", outcome: "cancelled" }));
   });
 
   it("aborts the model when the request itself is aborted", async () => {

@@ -1,5 +1,6 @@
 import { NotFound, S3ServiceException } from "@aws-sdk/client-s3";
 import { describe, expect, it } from "vite-plus/test";
+
 import { DynamoDbNoteSource } from "../src/dynamodb-note-source.ts";
 import { S3ExportStore } from "../src/s3-export-store.ts";
 import { note } from "./harness.ts";
@@ -25,14 +26,23 @@ function fakeClient(answers: (unknown | Error)[]) {
 }
 
 const s3Error = (status: number, name: string) =>
-  new S3ServiceException({ name, $fault: "client", $metadata: { httpStatusCode: status }, message: name });
+  new S3ServiceException({
+    name,
+    $fault: "client",
+    $metadata: { httpStatusCode: status },
+    message: name,
+  });
 
 describe("S3ExportStore", () => {
   it("asks S3 to write only if the key is free", async () => {
     const { client, sent } = fakeClient([{}]);
-    const result = await new S3ExportStore(client, "bucket").putIfAbsent("exports/x/parts/00001.ndjson", "{}\n", {
-      count: "1",
-    });
+    const result = await new S3ExportStore(client, "bucket").putIfAbsent(
+      "exports/x/parts/00001.ndjson",
+      "{}\n",
+      {
+        count: "1",
+      },
+    );
     expect(result).toBe("written");
     expect(sent).toEqual([
       {
@@ -54,16 +64,21 @@ describe("S3ExportStore", () => {
     expect(await new S3ExportStore(taken.client, "bucket").putIfAbsent("k", "", {})).toBe("exists");
 
     const conflict = fakeClient([s3Error(409, "ConditionalRequestConflict")]);
-    await expect(new S3ExportStore(conflict.client, "bucket").putIfAbsent("k", "", {})).rejects.toThrow(
-      "ConditionalRequestConflict",
-    );
+    await expect(
+      new S3ExportStore(conflict.client, "bucket").putIfAbsent("k", "", {}),
+    ).rejects.toThrow("ConditionalRequestConflict");
   });
 
   it("reads the metadata back, and tells a missing object from a failure", async () => {
     const found = fakeClient([{ Metadata: { count: "10", next: "abc" } }]);
-    expect(await new S3ExportStore(found.client, "bucket").head("k")).toEqual({ count: "10", next: "abc" });
+    expect(await new S3ExportStore(found.client, "bucket").head("k")).toEqual({
+      count: "10",
+      next: "abc",
+    });
 
-    const missing = fakeClient([new NotFound({ $metadata: { httpStatusCode: 404 }, message: "Not Found" })]);
+    const missing = fakeClient([
+      new NotFound({ $metadata: { httpStatusCode: 404 }, message: "Not Found" }),
+    ]);
     expect(await new S3ExportStore(missing.client, "bucket").head("k")).toBeUndefined();
 
     const denied = fakeClient([s3Error(403, "Forbidden")]);
@@ -109,7 +124,10 @@ describe("DynamoDbNoteSource", () => {
   });
 
   it("rejects a cursor it did not issue, and an item that is not a note", async () => {
-    const source = new DynamoDbNoteSource(fakeClient([{ Items: [{ ...item, version: 0 }] }]).client, "table");
+    const source = new DynamoDbNoteSource(
+      fakeClient([{ Items: [{ ...item, version: 0 }] }]).client,
+      "table",
+    );
     await expect(source.page(Buffer.from('{"pk":1}').toString("base64url"), 50)).rejects.toThrow();
     await expect(source.page(null, 50)).rejects.toThrow();
   });

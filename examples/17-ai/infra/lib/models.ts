@@ -39,7 +39,8 @@ export function modelArns(
   scope: { partition: string; region: string; account: string },
 ): ModelArns {
   const profile = verifiedProfiles[profileId];
-  const model = (region: string) => `arn:${scope.partition}:bedrock:${region}::foundation-model/${profile.model}`;
+  const model = (region: string) =>
+    `arn:${scope.partition}:bedrock:${region}::foundation-model/${profile.model}`;
   return {
     profileArn: `arn:${scope.partition}:bedrock:${scope.region}:${scope.account}:inference-profile/${profileId}`,
     modelArns:

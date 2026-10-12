@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { Server } from "node:http";
 import { resolve } from "node:path";
+
+import { serve } from "@hono/node-server";
+
 import { createApp } from "@aih/example-04-http-api/src/app.ts";
 import { createLogger } from "@aih/example-04-http-api/src/log.ts";
 import { createNoteService } from "@aih/example-04-http-api/src/notes.ts";
-import { serve } from "@hono/node-server";
+
 import { parseServerEnv } from "./env.ts";
 import { FileNoteRepository } from "./file-notes.ts";
 import { SHUTDOWN_GRACE_MS } from "./machine.ts";
@@ -27,7 +30,13 @@ const app = createApp({
 });
 
 const server = serve({ fetch: app.fetch, hostname: env.HOST, port: env.PORT }, (info) => {
-  log({ level: "info", message: "listening", host: info.address, port: info.port, notesFile: env.NOTES_FILE });
+  log({
+    level: "info",
+    message: "listening",
+    host: info.address,
+    port: info.port,
+    notesFile: env.NOTES_FILE,
+  });
 });
 
 if (!(server instanceof Server)) {

@@ -13,10 +13,10 @@ export const noteListSchema = z.object({ notes: z.array(publicNoteSchema) });
 export type NoteList = z.infer<typeof noteListSchema>;
 // #endregion note
 
-export interface PublicNotes {
+export type PublicNotes = {
   list(): PublicNote[];
   find(id: string): PublicNote | undefined;
-}
+};
 
 /** Read-only notes that ship with the code, so every execution environment gives the same answer. */
 export function createStaticNotes(seed: unknown): PublicNotes {

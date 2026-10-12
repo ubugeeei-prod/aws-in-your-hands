@@ -3,18 +3,34 @@
 // Reads which account-level protections are on. Changes nothing. Exits 1 when
 // a control that costs nothing (the root user's MFA and access keys) is off or
 // could not be read.
-import { preflight } from "@aih/tools/aws/preflight.ts";
-import { CloudTrailClient, DescribeTrailsCommand, GetTrailStatusCommand } from "@aws-sdk/client-cloudtrail";
-import { ConfigServiceClient, DescribeConfigurationRecorderStatusCommand } from "@aws-sdk/client-config-service";
-import { GetDetectorCommand, GuardDutyClient, ListDetectorsCommand } from "@aws-sdk/client-guardduty";
+
+import {
+  CloudTrailClient,
+  DescribeTrailsCommand,
+  GetTrailStatusCommand,
+} from "@aws-sdk/client-cloudtrail";
+import {
+  ConfigServiceClient,
+  DescribeConfigurationRecorderStatusCommand,
+} from "@aws-sdk/client-config-service";
+import {
+  GetDetectorCommand,
+  GuardDutyClient,
+  ListDetectorsCommand,
+} from "@aws-sdk/client-guardduty";
 import { GetAccountSummaryCommand, IAMClient } from "@aws-sdk/client-iam";
 import { BatchGetAccountStatusCommand, Inspector2Client } from "@aws-sdk/client-inspector2";
 import { DescribeOrganizationCommand, OrganizationsClient } from "@aws-sdk/client-organizations";
 import { z } from "zod";
+
+import { preflight } from "@aih/tools/aws/preflight.ts";
+
 import { assess, failing, type Snapshot, snapshotSchema, type Tier } from "../src/posture.ts";
 
 /** One failed read must not hide the others, and must not be reported as "off". */
-async function probe<T>(read: () => Promise<T>): Promise<{ read: true; value: T } | { read: false; reason: string }> {
+async function probe<T>(
+  read: () => Promise<T>,
+): Promise<{ read: true; value: T } | { read: false; reason: string }> {
   try {
     return { read: true, value: await read() };
   } catch (error) {
@@ -23,7 +39,10 @@ async function probe<T>(read: () => Promise<T>): Promise<{ read: true; value: T 
 }
 
 try {
-  const { target } = await preflight({ access: "observe", action: "read account-level security settings" });
+  const { target } = await preflight({
+    access: "observe",
+    action: "read account-level security settings",
+  });
   const region = target.region;
 
   // #region collect
@@ -32,34 +51,53 @@ try {
       const summary = z
         .object({ AccountMFAEnabled: z.number(), AccountAccessKeysPresent: z.number() })
         .parse((await new IAMClient({ region }).send(new GetAccountSummaryCommand({}))).SummaryMap);
-      return { mfaEnabled: summary.AccountMFAEnabled === 1, accessKeysPresent: summary.AccountAccessKeysPresent > 0 };
+      return {
+        mfaEnabled: summary.AccountMFAEnabled === 1,
+        accessKeysPresent: summary.AccountAccessKeysPresent > 0,
+      };
     }),
     trails: await probe(async () => {
       const cloudtrail = new CloudTrailClient({ region });
-      const { trailList } = await cloudtrail.send(new DescribeTrailsCommand({ includeShadowTrails: true }));
+      const { trailList } = await cloudtrail.send(
+        new DescribeTrailsCommand({ includeShadowTrails: true }),
+      );
       const trails = z
-        .array(z.object({ Name: z.string(), TrailARN: z.string(), IsMultiRegionTrail: z.boolean().default(false) }))
+        .array(
+          z.object({
+            Name: z.string(),
+            TrailARN: z.string(),
+            IsMultiRegionTrail: z.boolean().default(false),
+          }),
+        )
         .parse(trailList ?? []);
       return Promise.all(
         trails.map(async (trail) => ({
           name: trail.Name,
           multiRegion: trail.IsMultiRegionTrail,
-          logging: (await cloudtrail.send(new GetTrailStatusCommand({ Name: trail.TrailARN }))).IsLogging === true,
+          logging:
+            (await cloudtrail.send(new GetTrailStatusCommand({ Name: trail.TrailARN })))
+              .IsLogging === true,
         })),
       );
     }),
     guardDuty: await probe(async () => {
       const guardduty = new GuardDutyClient({ region });
-      const ids = z.array(z.string()).parse((await guardduty.send(new ListDetectorsCommand({}))).DetectorIds ?? []);
+      const ids = z
+        .array(z.string())
+        .parse((await guardduty.send(new ListDetectorsCommand({}))).DetectorIds ?? []);
       return Promise.all(
         ids.map(async (id) => ({
           id,
-          status: z.string().parse((await guardduty.send(new GetDetectorCommand({ DetectorId: id }))).Status),
+          status: z
+            .string()
+            .parse((await guardduty.send(new GetDetectorCommand({ DetectorId: id }))).Status),
         })),
       );
     }),
     inspector: await probe(async () => {
-      const response = await new Inspector2Client({ region }).send(new BatchGetAccountStatusCommand({}));
+      const response = await new Inspector2Client({ region }).send(
+        new BatchGetAccountStatusCommand({}),
+      );
       const status = z.object({ status: z.string() });
       const state = z
         .object({ ec2: status, ecr: status, lambda: status.default({ status: "DISABLED" }) })
@@ -100,10 +138,14 @@ try {
   for (const [tier, title] of Object.entries(titles)) {
     console.log(`\n${title}`);
     for (const entry of items.filter((candidate) => candidate.tier === tier)) {
-      console.log(`  ${entry.state.padEnd(7)} ${entry.id.padEnd(26)} ${entry.note} [${entry.charge}]`);
+      console.log(
+        `  ${entry.state.padEnd(7)} ${entry.id.padEnd(26)} ${entry.note} [${entry.charge}]`,
+      );
     }
   }
-  console.log(`\nregion ${region}; GuardDuty, Inspector, and AWS Config are switched on per Region`);
+  console.log(
+    `\nregion ${region}; GuardDuty, Inspector, and AWS Config are switched on per Region`,
+  );
 
   const problems = failing(items);
   if (problems.length > 0) {

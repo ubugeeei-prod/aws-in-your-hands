@@ -1,5 +1,7 @@
-import type { LogEntry } from "@aih/example-04-http-api/src/log.ts";
 import { describe, expect, it } from "vite-plus/test";
+
+import type { LogEntry } from "@aih/example-04-http-api/src/log.ts";
+
 import { composeServer, quietHealth, withVersion } from "../src/compose.ts";
 import { parseServerEnv } from "../src/env.ts";
 import { summarize } from "../src/watch.ts";
@@ -43,9 +45,16 @@ describe("what the container adds around the chapter 04 app", () => {
   });
 
   it("leaves the response of the wrapped handler otherwise alone", async () => {
-    const wrapped = withVersion(() => new Response("body", { status: 418, headers: { "x-kept": "yes" } }), "v1");
+    const wrapped = withVersion(
+      () => new Response("body", { status: 418, headers: { "x-kept": "yes" } }),
+      "v1",
+    );
     const response = await wrapped(new Request("http://task/"));
-    expect([response.status, response.headers.get("x-kept"), await response.text()]).toEqual([418, "yes", "body"]);
+    expect([response.status, response.headers.get("x-kept"), await response.text()]).toEqual([
+      418,
+      "yes",
+      "body",
+    ]);
   });
 });
 

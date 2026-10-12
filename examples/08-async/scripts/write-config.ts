@@ -3,8 +3,10 @@
 //
 // This chapter adds no screen: it publishes chapter 07's SPA, built once,
 // with a config.json that points at this chapter's stack.
+
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+
 import { parseConfig } from "@aih/example-06-auth/web/src/config.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";

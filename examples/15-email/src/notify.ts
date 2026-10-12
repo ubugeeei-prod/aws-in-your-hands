@@ -21,7 +21,10 @@ export type NotifyOutcome =
   | { outcome: "unknown" };
 
 // #region notify
-export async function sendShareNotification(deps: NotifyDeps, input: ShareNotification): Promise<NotifyOutcome> {
+export async function sendShareNotification(
+  deps: NotifyDeps,
+  input: ShareNotification,
+): Promise<NotifyOutcome> {
   const email = buildShareEmail(input, deps.settings);
   const id = input.notificationId;
 
@@ -52,7 +55,12 @@ export async function sendShareNotification(deps: NotifyDeps, input: ShareNotifi
     result = await deps.mailer.send(email);
   } catch (error) {
     // Sent or not? Nobody knows. The claim stays, so no retry can send a second copy.
-    deps.log({ level: "error", message: "send outcome unknown", notificationId: id, error: String(error) });
+    deps.log({
+      level: "error",
+      message: "send outcome unknown",
+      notificationId: id,
+      error: String(error),
+    });
     return { outcome: "unknown" };
   }
 
@@ -64,7 +72,10 @@ export async function sendShareNotification(deps: NotifyDeps, input: ShareNotifi
 
   // 3. Note the message ID. The mail is already out; failing here must not look like a failed send.
   try {
-    await deps.store.advance(id, "sent", { at: deps.now().toISOString(), messageId: result.messageId });
+    await deps.store.advance(id, "sent", {
+      at: deps.now().toISOString(),
+      messageId: result.messageId,
+    });
   } catch (error) {
     deps.log({
       level: "warn",

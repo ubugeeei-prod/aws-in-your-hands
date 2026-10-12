@@ -1,9 +1,12 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { UploadsStack } from "../lib/uploads-stack.ts";
 
-const template = Template.fromStack(new UploadsStack(new App(), "AihUploads", { env: { region: "ap-northeast-1" } }));
+const template = Template.fromStack(
+  new UploadsStack(new App(), "AihUploads", { env: { region: "ap-northeast-1" } }),
+);
 
 type Statement = { Effect: string; Action: string | string[]; Resource: unknown };
 type Bucket = { Properties: Record<string, unknown>; DeletionPolicy: string };
@@ -27,13 +30,15 @@ describe("UploadsStack: the uploads bucket", () => {
         IgnorePublicAcls: true,
         RestrictPublicBuckets: true,
       });
-      expect(bucket.Properties["OwnershipControls"]).toEqual({ Rules: [{ ObjectOwnership: "BucketOwnerEnforced" }] });
+      expect(bucket.Properties["OwnershipControls"]).toEqual({
+        Rules: [{ ObjectOwnership: "BucketOwnerEnforced" }],
+      });
     }
   });
 
   it("has no bucket policy that lets anyone read uploads", () => {
-    const policies = Object.values(template.findResources("AWS::S3::BucketPolicy")).filter((policy) =>
-      JSON.stringify(policy["Properties"].Bucket).includes("Uploads"),
+    const policies = Object.values(template.findResources("AWS::S3::BucketPolicy")).filter(
+      (policy) => JSON.stringify(policy["Properties"].Bucket).includes("Uploads"),
     );
     // One policy: the TLS-only deny that `enforceSSL` adds. No Allow at all.
     expect(policies).toHaveLength(1);
@@ -82,7 +87,9 @@ describe("UploadsStack: the uploads bucket", () => {
 
 describe("UploadsStack: what the function may do", () => {
   it("reads, writes, tags, and deletes objects under u/ only", () => {
-    const objects = s3Statements.find((statement) => [statement.Action].flat().includes("s3:PutObject"));
+    const objects = s3Statements.find((statement) =>
+      [statement.Action].flat().includes("s3:PutObject"),
+    );
     expect([objects?.Action].flat().toSorted()).toEqual([
       "s3:DeleteObject",
       "s3:DeleteObjectTagging",
@@ -125,13 +132,18 @@ describe("UploadsStack: what the function may do", () => {
 
 describe("UploadsStack: routes", () => {
   const routes = Object.values(template.findResources("AWS::ApiGatewayV2::Route")).map(
-    (route) => route["Properties"] as { RouteKey: string; AuthorizationType?: string; AuthorizationScopes?: string[] },
+    (route) =>
+      route["Properties"] as {
+        RouteKey: string;
+        AuthorizationType?: string;
+        AuthorizationScopes?: string[];
+      },
   );
 
   it("protects every route except /health, the new ones included", () => {
-    expect(routes.filter((route) => route.AuthorizationType !== "JWT").map((route) => route.RouteKey)).toEqual([
-      "GET /health",
-    ]);
+    expect(
+      routes.filter((route) => route.AuthorizationType !== "JWT").map((route) => route.RouteKey),
+    ).toEqual(["GET /health"]);
     expect(
       routes
         .map((route) => route.RouteKey)
@@ -159,7 +171,9 @@ describe("UploadsStack: resources", () => {
   it("uses only resource types looked up in the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
     // The same nineteen types as chapter 06: the uploads bucket adds no new type.
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::ApiGatewayV2::Api",
       "AWS::ApiGatewayV2::Authorizer",
       "AWS::ApiGatewayV2::Integration",

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { createError, useFetch, useHead } from "nuxt/app";
+
 import { viewerSchema } from "../../core/profile.ts";
 
 // During server rendering, Nuxt passes the incoming Cookie header on to this call.

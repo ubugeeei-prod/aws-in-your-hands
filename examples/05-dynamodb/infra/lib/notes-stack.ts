@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -33,7 +34,9 @@ export class NotesStack extends Stack {
     });
 
     // #region role
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     // Only what the repository calls. `table.grantReadWriteData(role)` would
     // also allow Scan and the batch operations.
@@ -78,7 +81,8 @@ export class NotesStack extends Stack {
         // pnpm-lock.yaml and not whatever ships with the Lambda runtime.
         externalModules: [],
         // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
     // #endregion function
@@ -87,7 +91,12 @@ export class NotesStack extends Stack {
       description: "Notes API",
       corsPreflight: {
         allowOrigins: [props.allowedOrigin],
-        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
+        allowMethods: [
+          CorsHttpMethod.GET,
+          CorsHttpMethod.POST,
+          CorsHttpMethod.PUT,
+          CorsHttpMethod.DELETE,
+        ],
         allowHeaders: ["content-type"],
         maxAge: Duration.hours(1),
       },
@@ -95,7 +104,11 @@ export class NotesStack extends Stack {
     const integration = new HttpLambdaIntegration("Notes", handler);
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], integration });
-    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE], integration });
+    api.addRoutes({
+      path: "/notes/{id}",
+      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      integration,
+    });
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "TableName", { value: table.tableName });

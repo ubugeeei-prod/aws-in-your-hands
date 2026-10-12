@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Db, Queryable } from "../src/db.ts";
 import {
   lintMigration,
@@ -42,7 +43,10 @@ describe("migration files", () => {
   });
 
   it.each([
-    ["CREATE TABLE IF NOT EXISTS a (id uuid PRIMARY KEY); INSERT INTO a VALUES (gen_random_uuid());", "2 statements"],
+    [
+      "CREATE TABLE IF NOT EXISTS a (id uuid PRIMARY KEY); INSERT INTO a VALUES (gen_random_uuid());",
+      "2 statements",
+    ],
     ["CREATE TABLE IF NOT EXISTS a (id uuid PRIMARY KEY)", "ending in a semicolon"],
     ["BEGIN;", "transaction control"],
     ["CREATE INDEX IF NOT EXISTS a_idx ON a (id);", "without ASYNC"],
@@ -58,7 +62,8 @@ describe("migration files", () => {
   });
 
   it("is not fooled by a semicolon or a keyword inside a string or a comment", () => {
-    const sql = "-- TRUNCATE; would be wrong\nUPDATE app.notes SET body = 'BEGIN; TRUNCATE' WHERE body = '';\n";
+    const sql =
+      "-- TRUNCATE; would be wrong\nUPDATE app.notes SET body = 'BEGIN; TRUNCATE' WHERE body = '';\n";
     expect(lintMigration(migration(sql))).toEqual([]);
   });
 
@@ -76,14 +81,22 @@ describe("migrate on PostgreSQL", { timeout: 60_000 }, () => {
       const migrations = loadMigrations(migrationsDirectory);
       const names = migrations.map((item) => item.name);
 
-      expect(await db.withConnection((connection) => pendingMigrations(connection, migrations))).toEqual(names);
-      expect(await db.withConnection((connection) => migrate(connection, migrations, deps("postgres")))).toEqual({
+      expect(
+        await db.withConnection((connection) => pendingMigrations(connection, migrations)),
+      ).toEqual(names);
+      expect(
+        await db.withConnection((connection) => migrate(connection, migrations, deps("postgres"))),
+      ).toEqual({
         applied: names,
       });
-      expect(await db.withConnection((connection) => migrate(connection, migrations, deps("postgres")))).toEqual({
+      expect(
+        await db.withConnection((connection) => migrate(connection, migrations, deps("postgres"))),
+      ).toEqual({
         applied: [],
       });
-      expect(await db.withConnection((connection) => pendingMigrations(connection, migrations))).toEqual([]);
+      expect(
+        await db.withConnection((connection) => pendingMigrations(connection, migrations)),
+      ).toEqual([]);
     });
   });
 
@@ -96,7 +109,11 @@ describe("migrate on PostgreSQL", { timeout: 60_000 }, () => {
       // The process dies after the third schema change, before writing it down.
       const crashing = (connection: Queryable): Queryable => ({
         query(text, params) {
-          if (!crashed && text.startsWith("INSERT INTO public.aih_migrations") && params?.[0] === interrupted) {
+          if (
+            !crashed &&
+            text.startsWith("INSERT INTO public.aih_migrations") &&
+            params?.[0] === interrupted
+          ) {
             crashed = true;
             throw new Error("process killed");
           }
@@ -105,13 +122,19 @@ describe("migrate on PostgreSQL", { timeout: 60_000 }, () => {
       });
 
       await expect(
-        db.withConnection((connection) => migrate(crashing(connection), migrations, deps("postgres"))),
+        db.withConnection((connection) =>
+          migrate(crashing(connection), migrations, deps("postgres")),
+        ),
       ).rejects.toThrow("process killed");
 
       // The table exists but is unrecorded. Applying it again must not fail.
-      const second = await db.withConnection((connection) => migrate(connection, migrations, deps("postgres")));
+      const second = await db.withConnection((connection) =>
+        migrate(connection, migrations, deps("postgres")),
+      );
       expect(second.applied).toEqual(migrations.slice(2).map((item) => item.name));
-      expect(await db.withConnection((connection) => pendingMigrations(connection, migrations))).toEqual([]);
+      expect(
+        await db.withConnection((connection) => pendingMigrations(connection, migrations)),
+      ).toEqual([]);
     });
   });
   // #endregion interrupted
@@ -125,22 +148,29 @@ describe("migrate on PostgreSQL", { timeout: 60_000 }, () => {
       await db.withConnection((connection) => migrate(connection, original, deps("postgres")));
 
       const edited = [migration("CREATE SCHEMA IF NOT EXISTS uno;"), original[1] as Migration];
-      await expect(db.withConnection((connection) => migrate(connection, edited, deps("postgres")))).rejects.toThrow(
-        "0001_test.sql was edited",
-      );
       await expect(
-        db.withConnection((connection) => migrate(connection, original.slice(0, 1), deps("postgres"))),
+        db.withConnection((connection) => migrate(connection, edited, deps("postgres"))),
+      ).rejects.toThrow("0001_test.sql was edited");
+      await expect(
+        db.withConnection((connection) =>
+          migrate(connection, original.slice(0, 1), deps("postgres")),
+        ),
       ).rejects.toThrow("0002_two.sql is recorded as applied but its file is gone");
     });
   });
 
   it("applies nothing at all when any file fails the lint", async () => {
     await withDb(async (db) => {
-      const migrations = [migration("CREATE SCHEMA IF NOT EXISTS fine;"), migration("TRUNCATE a;", "0002_bad.sql")];
+      const migrations = [
+        migration("CREATE SCHEMA IF NOT EXISTS fine;"),
+        migration("TRUNCATE a;", "0002_bad.sql"),
+      ];
       await expect(
         db.withConnection((connection) => migrate(connection, migrations, deps("postgres"))),
       ).rejects.toThrow("Refusing to migrate");
-      expect(await db.withConnection((connection) => pendingMigrations(connection, migrations))).toHaveLength(2);
+      expect(
+        await db.withConnection((connection) => pendingMigrations(connection, migrations)),
+      ).toHaveLength(2);
     });
   });
 });

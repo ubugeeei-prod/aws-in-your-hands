@@ -25,7 +25,11 @@ const ivsEventSchema = z.discriminatedUnion("detail-type", [
   z.object({
     ...envelope,
     "detail-type": z.literal("IVS Stream Health Change"),
-    detail: z.object({ event_name: z.string().min(1), stream_id: z.string().min(1), channel_name: z.string() }),
+    detail: z.object({
+      event_name: z.string().min(1),
+      stream_id: z.string().min(1),
+      channel_name: z.string(),
+    }),
   }),
   z.object({
     ...envelope,
@@ -84,7 +88,12 @@ export function toRecord(event: IvsEvent, receivedAt: Date): EventRecord {
         detail: event.detail.code ?? event.detail.reason ?? null,
       };
     case "IVS Stream Health Change":
-      return { ...common, name: event.detail.event_name, streamId: event.detail.stream_id, detail: null };
+      return {
+        ...common,
+        name: event.detail.event_name,
+        streamId: event.detail.stream_id,
+        detail: null,
+      };
     case "IVS Limit Breach":
       return {
         ...common,

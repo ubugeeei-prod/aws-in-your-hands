@@ -1,4 +1,5 @@
 import { SendEmailCommand, type SESv2Client, SESv2ServiceException } from "@aws-sdk/client-sesv2";
+
 import type { Mailer, SendResult } from "./mailer.ts";
 import type { Email } from "./message.ts";
 

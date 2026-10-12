@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { MAX_UPLOAD_BYTES } from "../../api/src/contract.ts";
 import { checkFile } from "./check-file.ts";
 
 describe("file check in the browser", () => {
   it("passes the four image types up to the size limit", () => {
-    expect(checkFile({ type: "image/webp", size: MAX_UPLOAD_BYTES })).toEqual({ ok: true, contentType: "image/webp" });
+    expect(checkFile({ type: "image/webp", size: MAX_UPLOAD_BYTES })).toEqual({
+      ok: true,
+      contentType: "image/webp",
+    });
   });
 
   it("stops other types, SVG included, and files outside the size range", () => {

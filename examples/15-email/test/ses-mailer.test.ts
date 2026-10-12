@@ -1,5 +1,7 @@
-import { SendEmailCommand, SESv2ServiceException } from "@aws-sdk/client-sesv2";
+import type { SendEmailCommand } from "@aws-sdk/client-sesv2";
+import { SESv2ServiceException } from "@aws-sdk/client-sesv2";
 import { describe, expect, it } from "vite-plus/test";
+
 import { buildShareEmail } from "../src/message.ts";
 import { SesMailer } from "../src/ses-mailer.ts";
 import { input, settings } from "./setup.ts";
@@ -29,14 +31,20 @@ describe("SesMailer", () => {
       Destination: { ToAddresses: ["recipient@example.com"] },
       ConfigurationSetName: "notifications",
       EmailTags: [{ Name: "notification_id", Value: "share-1" }],
-      Content: { Simple: { Subject: { Data: "Aiko shared a note with you: Trip plan", Charset: "UTF-8" } } },
+      Content: {
+        Simple: { Subject: { Data: "Aiko shared a note with you: Trip plan", Charset: "UTF-8" } },
+      },
     });
     expect(sent[0]?.input.Destination).toEqual({ ToAddresses: ["recipient@example.com"] });
     expect(sent[0]?.input.Content?.Raw).toBeUndefined();
   });
 
   it("reports a 4xx from SES as rejected", async () => {
-    for (const name of ["MessageRejected", "TooManyRequestsException", "AccountSuspendedException"]) {
+    for (const name of [
+      "MessageRejected",
+      "TooManyRequestsException",
+      "AccountSuspendedException",
+    ]) {
       const { mailer } = setup(() => {
         throw serviceError(name, "client");
       });

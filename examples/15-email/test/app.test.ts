@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
-import { errorSchema, notificationStatusSchema, shareNotificationResultSchema } from "../src/contract.ts";
+import {
+  errorSchema,
+  notificationStatusSchema,
+  shareNotificationResultSchema,
+} from "../src/contract.ts";
 import type { Mailer } from "../src/mailer.ts";
 import { input, setup as setupNotify } from "./setup.ts";
 
@@ -65,7 +70,11 @@ describe("share notification API", () => {
 
   it("does not let the caller choose where the link points", async () => {
     const { post, outbox } = setup();
-    await post({ ...input, noteUrl: "https://attacker.example.com", appOrigin: "https://attacker.example.com" });
+    await post({
+      ...input,
+      noteUrl: "https://attacker.example.com",
+      appOrigin: "https://attacker.example.com",
+    });
     expect(outbox.sent[0]?.text).toContain("https://notes.example.com/notes/note-1");
     expect(outbox.sent[0]?.text).not.toContain("attacker");
   });
@@ -79,7 +88,9 @@ describe("share notification API", () => {
   });
 
   it("tells a refused send from an unanswered one", async () => {
-    const refused = setup({ send: () => Promise.resolve({ kind: "rejected", reason: "MessageRejected" }) });
+    const refused = setup({
+      send: () => Promise.resolve({ kind: "rejected", reason: "MessageRejected" }),
+    });
     const refusedResponse = await refused.post(input);
     expect(refusedResponse.status).toBe(502);
     expect(errorSchema.parse(await refusedResponse.json()).error.code).toBe("send_rejected");
@@ -115,7 +126,10 @@ describe("share notification API", () => {
     const response = await app.request("/share-notifications/share-1");
     const body: unknown = await response.json();
 
-    expect(notificationStatusSchema.parse(body)).toMatchObject({ state: "sent", messageId: "local-1" });
+    expect(notificationStatusSchema.parse(body)).toMatchObject({
+      state: "sent",
+      messageId: "local-1",
+    });
     expect(body).not.toHaveProperty("fingerprint");
     expect((await app.request("/share-notifications/unknown")).status).toBe(404);
   });

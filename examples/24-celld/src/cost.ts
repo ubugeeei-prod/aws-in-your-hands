@@ -2,6 +2,7 @@ import { parseNetworkConfig } from "@aih/example-11-network/src/config.ts";
 import { fixedMonthlyItems } from "@aih/example-11-network/src/cost.ts";
 import { planNetwork } from "@aih/example-11-network/src/plan.ts";
 import { networkSettingsFor } from "@aih/example-23-ec2/src/cost.ts";
+
 import { DOCUMENTED } from "./celld.ts";
 import type { FleetConfig, InstanceType } from "./config.ts";
 
@@ -38,7 +39,9 @@ export function idleRequestsPerNode(hours: number): { writes: number; reads: num
   const seconds = hours * 3600;
   return {
     writes: round(seconds / (DOCUMENTED.leaseTtlMs / 3 / 1000)),
-    reads: round(seconds / (DOCUMENTED.fleetSampleMs / 1000) + seconds / DOCUMENTED.deployPollSeconds),
+    reads: round(
+      seconds / (DOCUMENTED.fleetSampleMs / 1000) + seconds / DOCUMENTED.deployPollSeconds,
+    ),
   };
 }
 
@@ -104,7 +107,9 @@ export function allFixedItems(
   hours: number = MONTH_HOURS,
   endpointsDeployed: boolean = config.nodes > 0,
 ): FixedItem[] {
-  const network = planNetwork(parseNetworkConfig(endpointsDeployed ? networkSettingsFor("private") : {}));
+  const network = planNetwork(
+    parseNetworkConfig(endpointsDeployed ? networkSettingsFor("private") : {}),
+  );
   return [...fleetItems(config, state, hours), ...fixedMonthlyItems(network, hours)];
 }
 // #endregion billable

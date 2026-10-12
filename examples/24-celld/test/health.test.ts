@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { fleetSettled, parseDiagnose, parseNodeHealth } from "../src/health.ts";
 
 // The sample lines are built from the format strings in crates/celld/fleet.rs at
 // v0.6.2. No real `celld diagnose` output was available to copy from.
-const row = (verdict: string, check: string, detail = ""): string => JSON.stringify({ verdict, check, detail });
+const row = (verdict: string, check: string, detail = ""): string =>
+  JSON.stringify({ verdict, check, detail });
 const peer = (node: string, address: string, restoring: number): string =>
   row(
     "ok",
@@ -55,8 +57,13 @@ describe("what `celld diagnose --json` says about the fleet", () => {
   });
 
   it("is not settled while any node restores", () => {
-    const view = parseDiagnose([peer("n1", "10.20.128.11:8081", 0), peer("n2", "10.20.144.12:8081", 3)].join("\n"));
-    expect(fleetSettled(view, 2)).toEqual({ settled: false, reasons: ["peer n2 is still restoring 3 cell(s)"] });
+    const view = parseDiagnose(
+      [peer("n1", "10.20.128.11:8081", 0), peer("n2", "10.20.144.12:8081", 3)].join("\n"),
+    );
+    expect(fleetSettled(view, 2)).toEqual({
+      settled: false,
+      reasons: ["peer n2 is still restoring 3 cell(s)"],
+    });
   });
 
   it("is not settled when a node is missing, even if every answer is fine", () => {
@@ -64,14 +71,18 @@ describe("what `celld diagnose --json` says about the fleet", () => {
       [peer("n1", "10.20.128.11:8081", 0), row("skip", "peer n2", "lease is expired")].join("\n"),
     );
     expect(view.expired).toBe(1);
-    expect(fleetSettled(view, 2)).toEqual({ settled: false, reasons: ["1 live peer(s) answered, expected 2"] });
+    expect(fleetSettled(view, 2)).toEqual({
+      settled: false,
+      reasons: ["1 live peer(s) answered, expected 2"],
+    });
   });
 
   it("is not settled on any failed check", () => {
     const view = parseDiagnose(
-      [peer("n1", "10.20.128.11:8081", 0), row("fail", "peer n2 at 10.20.144.12:8081", "connection refused")].join(
-        "\n",
-      ),
+      [
+        peer("n1", "10.20.128.11:8081", 0),
+        row("fail", "peer n2 at 10.20.144.12:8081", "connection refused"),
+      ].join("\n"),
     );
     expect(fleetSettled(view, 2)).toMatchObject({ settled: false });
     expect(view.failures).toEqual(["peer n2 at 10.20.144.12:8081: connection refused"]);
@@ -79,12 +90,21 @@ describe("what `celld diagnose --json` says about the fleet", () => {
 
   it("fails closed on output it cannot read", () => {
     // The text form, a changed JSON shape, a detail without the field: none of them count as healthy.
-    const text = parseDiagnose("ok peer n1 at 10.20.128.11:8081: (signed direct probe) restoring=0\n");
+    const text = parseDiagnose(
+      "ok peer n1 at 10.20.128.11:8081: (signed direct probe) restoring=0\n",
+    );
     expect(fleetSettled(text, 1)).toMatchObject({ settled: false });
-    const reshaped = parseDiagnose(JSON.stringify({ status: "ok", name: "peer n1 at 10.20.128.11:8081" }));
+    const reshaped = parseDiagnose(
+      JSON.stringify({ status: "ok", name: "peer n1 at 10.20.128.11:8081" }),
+    );
     expect(fleetSettled(reshaped, 1)).toMatchObject({ settled: false });
-    const noField = parseDiagnose(row("ok", "peer n1 at 10.20.128.11:8081", "(signed direct probe) protocol=9"));
-    expect(fleetSettled(noField, 1)).toEqual({ settled: false, reasons: ["peer n1 did not report restoring"] });
+    const noField = parseDiagnose(
+      row("ok", "peer n1 at 10.20.128.11:8081", "(signed direct probe) protocol=9"),
+    );
+    expect(fleetSettled(noField, 1)).toEqual({
+      settled: false,
+      reasons: ["peer n1 did not report restoring"],
+    });
     expect(fleetSettled(parseDiagnose(""), 1)).toMatchObject({ settled: false });
   });
 });

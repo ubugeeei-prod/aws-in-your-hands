@@ -1,9 +1,14 @@
-import { createLocalAuthenticator, signLocalToken } from "@aih/example-06-auth/api/src/local-auth.ts";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { z } from "zod";
+
+import {
+  createLocalAuthenticator,
+  signLocalToken,
+} from "@aih/example-06-auth/api/src/local-auth.ts";
+
 import { composeApp } from "./compose.ts";
 import { MAX_UPLOAD_BYTES } from "./contract.ts";
 import { parseUploadsEnv } from "./env.ts";
@@ -22,14 +27,20 @@ if (parseUploadsEnv(process.env).UPLOADS_STORE !== "memory") {
 
 // #region dev
 // Stands in for the bucket. Images live in this process and vanish on restart.
-const objects = new InMemoryObjectStore({ baseUrl: `http://localhost:${port}`, secret, now: () => new Date() });
+const objects = new InMemoryObjectStore({
+  baseUrl: `http://localhost:${port}`,
+  secret,
+  now: () => new Date(),
+});
 const store = createLocalStoreHandler(objects);
 const api = composeApp(process.env, createLocalAuthenticator(secret), objects);
 
 const server = new Hono();
 server.use("/local/*", cors({ origin, allowMethods: ["POST"], allowHeaders: ["content-type"] }));
 // A little above the limit, so that an oversized image reaches the store's own check.
-server.post(LOCAL_STORE_PATH, bodyLimit({ maxSize: MAX_UPLOAD_BYTES + 64 * 1024 }), (c) => store(c.req.raw));
+server.post(LOCAL_STORE_PATH, bodyLimit({ maxSize: MAX_UPLOAD_BYTES + 64 * 1024 }), (c) =>
+  store(c.req.raw),
+);
 server.get(`${LOCAL_STORE_PATH}/*`, (c) => store(c.req.raw));
 // #endregion dev
 
@@ -49,5 +60,7 @@ server.post("/local/token", async (c) => {
 server.route("/", api);
 
 serve({ fetch: server.fetch, port }, (info) => {
-  console.log(`notes API listening on http://localhost:${info.port} with LOCAL sign-in and in-memory uploads`);
+  console.log(
+    `notes API listening on http://localhost:${info.port} with LOCAL sign-in and in-memory uploads`,
+  );
 });

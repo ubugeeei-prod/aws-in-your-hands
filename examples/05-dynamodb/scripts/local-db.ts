@@ -2,8 +2,10 @@
 //   node scripts/local-db.ts <start|migrate|seed|reset|stop>
 // `start` and `stop` need a Docker daemon, which the Nix shell does not provide.
 // Every command refuses to run unless the endpoint is a localhost URL.
+
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+
 import {
   CreateTableCommand,
   DeleteTableCommand,
@@ -15,6 +17,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { z } from "zod";
+
 import { noteSchema } from "../src/contract.ts";
 import { DynamoDbNoteRepository } from "../src/dynamodb-repository.ts";
 import { SHARED_OWNER } from "../src/notes.ts";
@@ -91,7 +94,11 @@ async function drop(): Promise<void> {
 async function seed(): Promise<void> {
   const fixture = z
     .array(noteSchema)
-    .parse(JSON.parse(readFileSync(new URL("../test/fixtures/seed-notes.json", import.meta.url), "utf8")));
+    .parse(
+      JSON.parse(
+        readFileSync(new URL("../test/fixtures/seed-notes.json", import.meta.url), "utf8"),
+      ),
+    );
   const repository = new DynamoDbNoteRepository(DynamoDBDocumentClient.from(client), tableName);
   let created = 0;
   for (const note of fixture) {
@@ -139,6 +146,8 @@ try {
   }
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  console.error(`Is DynamoDB Local running at ${endpoint}? Start it with \`vp run db:local:start\`.`);
+  console.error(
+    `Is DynamoDB Local running at ${endpoint}? Start it with \`vp run db:local:start\`.`,
+  );
   process.exitCode = 1;
 }

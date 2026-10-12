@@ -2,8 +2,10 @@
 //
 // Tails the sending function's log group, or with --events the group of the
 // function that records bounces, complaints and deliveries.
+
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 
@@ -16,12 +18,26 @@ const { values } = parseArgs({
 });
 
 try {
-  const { target } = await preflight({ access: "observe", action: "read function logs", stack: "AihEmail" });
+  const { target } = await preflight({
+    access: "observe",
+    action: "read function logs",
+    stack: "AihEmail",
+  });
   const logGroup = requireOutput(
     await readStackOutputs(process.cwd(), "AihEmail", target.region),
     values.events ? "EventLogGroupName" : "ApiLogGroupName",
   );
-  const args = ["logs", "tail", logGroup, "--region", target.region, "--since", values.since, "--format", "short"];
+  const args = [
+    "logs",
+    "tail",
+    logGroup,
+    "--region",
+    target.region,
+    "--since",
+    values.since,
+    "--format",
+    "short",
+  ];
   if (values.follow) {
     args.push("--follow");
   }

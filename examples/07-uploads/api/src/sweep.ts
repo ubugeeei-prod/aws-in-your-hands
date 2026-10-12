@@ -24,7 +24,10 @@ export type SweepReport = {
 };
 
 /** Compares the bucket with the table and removes what nothing points at. */
-export async function sweep(deps: SweepDeps, options: { dryRun: boolean; graceMs?: number }): Promise<SweepReport> {
+export async function sweep(
+  deps: SweepDeps,
+  options: { dryRun: boolean; graceMs?: number },
+): Promise<SweepReport> {
   const graceMs = options.graceMs ?? SWEEP_GRACE_MS;
   const report: SweepReport = { kept: 0, tooYoung: 0, unknown: [], removed: [] };
 

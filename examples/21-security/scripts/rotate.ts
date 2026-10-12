@@ -4,12 +4,16 @@
 // `rotate` writes a new version of the signing secret (PutSecretValue). The
 // new key is generated here and sent straight to Secrets Manager; it is never
 // printed, logged, or written to disk.
+
 import { randomBytes, randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
-import { preflight } from "@aih/tools/aws/preflight.ts";
-import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { z } from "zod";
+
+import { preflight } from "@aih/tools/aws/preflight.ts";
+import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { rotate } from "../src/rotation.ts";
 import { createRotationApi } from "../src/secrets-manager-source.ts";
 
@@ -32,7 +36,10 @@ try {
     action: rotating ? "rotate the signing secret" : "list the signing secret's versions",
     stack: "AihSecurity",
   });
-  const secretArn = requireOutput(await readStackOutputs(process.cwd(), "AihSecurity", target.region), "SecretArn");
+  const secretArn = requireOutput(
+    await readStackOutputs(process.cwd(), "AihSecurity", target.region),
+    "SecretArn",
+  );
   const api = createRotationApi(new SecretsManagerClient({ region: target.region }), secretArn);
 
   if (rotating) {
@@ -53,7 +60,9 @@ try {
       );
       process.exit(2);
     }
-    console.log(`${result.status}: AWSCURRENT ${result.current}, AWSPREVIOUS ${result.previous ?? "(none)"}`);
+    console.log(
+      `${result.status}: AWSCURRENT ${result.current}, AWSPREVIOUS ${result.previous ?? "(none)"}`,
+    );
   }
 
   for (const version of await api.versions()) {

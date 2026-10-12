@@ -3,10 +3,14 @@
 //
 // Prints what to enter in the encoder. The stream key itself is printed only
 // with --show, and only to this terminal: it is never written to a file.
+
 import { parseArgs } from "node:util";
+
+import { IvsClient } from "@aws-sdk/client-ivs";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { IvsClient } from "@aws-sdk/client-ivs";
+
 import { channelSettings, maxVideoKbps, rtmpsServer } from "../src/channel.ts";
 import { getStreamKeyValue } from "../src/ivs.ts";
 
@@ -29,7 +33,9 @@ try {
   if (values.show) {
     const value = await getStreamKeyValue(new IvsClient({ region: target.region }), streamKeyArn);
     console.log(`             ${value}`);
-    console.log("Anyone who has this value can broadcast to the channel. Clear your scrollback when you are done.");
+    console.log(
+      "Anyone who has this value can broadcast to the channel. Clear your scrollback when you are done.",
+    );
   } else {
     console.log("             (value hidden; run `vp run stream:key --show` to print it once)");
   }

@@ -1,8 +1,10 @@
+import { describe, expect, it } from "vite-plus/test";
+
 import { parseNetworkConfig } from "@aih/example-11-network/src/config.ts";
 import { planNetwork } from "@aih/example-11-network/src/plan.ts";
 import { loadPricing } from "@aih/tools/data/load.ts";
 import { calculate } from "@aih/tools/pricing/calc.ts";
-import { describe, expect, it } from "vite-plus/test";
+
 import { parseEc2Config, type Placement } from "../src/config.ts";
 import { fixedItems, type InstanceState, networkSettingsFor } from "../src/cost.ts";
 import { allFixedItems } from "../src/report.ts";
@@ -45,9 +47,9 @@ describe("what the instance costs before it serves one request", () => {
     ["ec2-public-stopped", "public", "stopped", 1.54],
   ])("%s: the stack's billed parts are the scenario's lines", (id, placement, state, monthly) => {
     const recorded = scenario(id);
-    expect(itemsFor(placement, state, 730).map(({ priceId, quantity }) => ({ priceId, quantity }))).toEqual(
-      recorded.items.map(({ priceId, quantity }) => ({ priceId, quantity })),
-    );
+    expect(
+      itemsFor(placement, state, 730).map(({ priceId, quantity }) => ({ priceId, quantity })),
+    ).toEqual(recorded.items.map(({ priceId, quantity }) => ({ priceId, quantity })));
     expect(calculate(recorded, prices.prices, allowances).listUsd).toBe(monthly);
     expect(cost(placement, state)).toBe(monthly);
   });
@@ -68,8 +70,12 @@ describe("what the instance costs before it serves one request", () => {
   });
 
   it("stops billing for an auto-assigned public address when the instance stops", () => {
-    const running = fixedItems(parseEc2Config({ placement: "public" }), "running").map((item) => item.priceId);
-    const stopped = fixedItems(parseEc2Config({ placement: "public" }), "stopped").map((item) => item.priceId);
+    const running = fixedItems(parseEc2Config({ placement: "public" }), "running").map(
+      (item) => item.priceId,
+    );
+    const stopped = fixedItems(parseEc2Config({ placement: "public" }), "stopped").map(
+      (item) => item.priceId,
+    );
     expect(running).toContain("vpc.public-ipv4.in-use.hour");
     expect(stopped).not.toContain("vpc.public-ipv4.in-use.hour");
   });

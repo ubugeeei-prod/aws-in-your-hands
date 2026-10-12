@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { type Cidr, containsCidr, parseCidr } from "./cidr.ts";
 
 export const REGION = "ap-northeast-1";
@@ -48,7 +49,9 @@ export const networkConfigSchema = z
       .default(["ap-northeast-1a", "ap-northeast-1c"]),
     subnetPrefix: z.coerce.number().int().min(17).max(28).default(20),
     egress: z.enum(EGRESS_MODES).default("none"),
-    interfaceEndpoints: z.preprocess(commaSeparated, z.array(z.enum(INTERFACE_SERVICES))).default([]),
+    interfaceEndpoints: z
+      .preprocess(commaSeparated, z.array(z.enum(INTERFACE_SERVICES)))
+      .default([]),
   })
   .superRefine((config, context) => {
     const issue = (path: string, message: string): void =>
@@ -90,7 +93,9 @@ export type NetworkConfig = z.infer<typeof networkConfigSchema>;
 export function parseNetworkConfig(input: unknown): NetworkConfig {
   const result = networkConfigSchema.safeParse(input);
   if (!result.success) {
-    const problems = result.error.issues.map((item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`);
+    const problems = result.error.issues.map(
+      (item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`,
+    );
     throw new Error(`Invalid network settings:\n${problems.join("\n")}`);
   }
   return result.data;

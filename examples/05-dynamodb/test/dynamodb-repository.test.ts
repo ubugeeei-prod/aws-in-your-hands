@@ -1,6 +1,8 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, GetCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import type { DeleteCommand, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Note } from "../src/contract.ts";
 import { DynamoDbNoteRepository } from "../src/dynamodb-repository.ts";
 import { encodeCursor } from "../src/repository.ts";
@@ -56,11 +58,16 @@ describe("DynamoDbNoteRepository requests", () => {
   it("reads one note with a strongly consistent GetItem", async () => {
     const { repository, sent } = setup(() => ({ Item: item }));
     expect(await repository.get("u1", "abc")).toEqual(stored);
-    expect(sent[0]?.input).toMatchObject({ Key: { pk: "OWNER#u1", sk: "NOTE#abc" }, ConsistentRead: true });
+    expect(sent[0]?.input).toMatchObject({
+      Key: { pk: "OWNER#u1", sk: "NOTE#abc" },
+      ConsistentRead: true,
+    });
   });
 
   it("updates only at the expected version", async () => {
-    const { repository, sent } = setup(() => ({ Attributes: { ...item, version: 4, title: "new" } }));
+    const { repository, sent } = setup(() => ({
+      Attributes: { ...item, version: 4, title: "new" },
+    }));
     const result = await repository.update("u1", "abc", {
       title: "new",
       body: "b",
@@ -87,7 +94,10 @@ describe("DynamoDbNoteRepository requests", () => {
       expectedVersion: 3,
       updatedAt: "x",
     });
-    expect(result).toMatchObject({ status: "conflict", current: { version: 5, title: "someone else" } });
+    expect(result).toMatchObject({
+      status: "conflict",
+      current: { version: 5, title: "someone else" },
+    });
   });
 
   it("turns a failed condition on a missing note into not_found", async () => {
@@ -97,9 +107,14 @@ describe("DynamoDbNoteRepository requests", () => {
       }
       return {};
     });
-    expect(await repository.update("u1", "gone", { title: "t", body: "", expectedVersion: 1, updatedAt: "x" })).toEqual(
-      { status: "not_found" },
-    );
+    expect(
+      await repository.update("u1", "gone", {
+        title: "t",
+        body: "",
+        expectedVersion: 1,
+        updatedAt: "x",
+      }),
+    ).toEqual({ status: "not_found" });
   });
 
   it("does not swallow errors that are not a failed condition", async () => {
@@ -112,7 +127,10 @@ describe("DynamoDbNoteRepository requests", () => {
   });
 
   it("queries one owner's notes newest first and resumes from the cursor", async () => {
-    const { repository, sent } = setup(() => ({ Items: [item], LastEvaluatedKey: { pk: "OWNER#u1", sk: "NOTE#abc" } }));
+    const { repository, sent } = setup(() => ({
+      Items: [item],
+      LastEvaluatedKey: { pk: "OWNER#u1", sk: "NOTE#abc" },
+    }));
     const page = await repository.list("u1", { limit: 1, cursor: encodeCursor("abd") });
     expect(sent[0]?.input).toMatchObject({
       KeyConditionExpression: "pk = :pk AND begins_with(sk, :note)",

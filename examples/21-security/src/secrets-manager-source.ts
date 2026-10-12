@@ -5,17 +5,28 @@ import {
   type SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
 import { z } from "zod";
+
 import type { RotationApi } from "./rotation.ts";
-import { parseSecretString, SecretAccessDenied, type SecretSource, type Stage } from "./secret-source.ts";
+import {
+  parseSecretString,
+  SecretAccessDenied,
+  type SecretSource,
+  type Stage,
+} from "./secret-source.ts";
 
 type Sender = Pick<SecretsManagerClient, "send">;
 
 const valueSchema = z.object({ VersionId: z.string().min(1), SecretString: z.string().min(1) });
 const versionsSchema = z.array(
-  z.object({ VersionId: z.string(), VersionStages: z.array(z.string()).default([]), CreatedDate: z.date() }),
+  z.object({
+    VersionId: z.string(),
+    VersionStages: z.array(z.string()).default([]),
+    CreatedDate: z.date(),
+  }),
 );
 
-const named = (error: unknown, name: string): boolean => error instanceof Error && error.name === name;
+const named = (error: unknown, name: string): boolean =>
+  error instanceof Error && error.name === name;
 
 // #region adapter
 /** Reads one secret by staging label. The value never leaves this function except as the return value. */
@@ -23,7 +34,9 @@ export function createSecretsManagerSource(client: Sender, secretId: string): Se
   return {
     async read(stage: Stage) {
       try {
-        const response = await client.send(new GetSecretValueCommand({ SecretId: secretId, VersionStage: stage }));
+        const response = await client.send(
+          new GetSecretValueCommand({ SecretId: secretId, VersionStage: stage }),
+        );
         const value = valueSchema.safeParse(response);
         if (!value.success) {
           throw new Error(`GetSecretValue(${stage}) returned no VersionId or SecretString`);
@@ -35,9 +48,12 @@ export function createSecretsManagerSource(client: Sender, secretId: string): Se
           return null;
         }
         if (named(error, "AccessDeniedException")) {
-          throw new SecretAccessDenied(`not allowed to read the ${stage} version of the signing secret`, {
-            cause: error,
-          });
+          throw new SecretAccessDenied(
+            `not allowed to read the ${stage} version of the signing secret`,
+            {
+              cause: error,
+            },
+          );
         }
         throw error;
       }

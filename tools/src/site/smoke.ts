@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
+
 import { preflight } from "../aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "../infra/outputs.ts";
 import { sourceRevision } from "./revision.ts";
@@ -24,7 +25,11 @@ const { values, positionals } = parseArgs({
   },
 });
 const [profile, appDir, stack] = positionals;
-if (!(PROFILES as readonly string[]).includes(profile ?? "") || appDir === undefined || stack === undefined) {
+if (
+  !(PROFILES as readonly string[]).includes(profile ?? "") ||
+  appDir === undefined ||
+  stack === undefined
+) {
   console.error(
     "usage: smoke.ts <book|spa> <appDir> <stack> [--url URL] [--expect-revision REV] [--timeout-seconds N]",
   );
@@ -48,7 +53,10 @@ async function runCheck(base: URL, check: Check): Promise<string | null> {
   }
 }
 
-async function runAll(base: URL, expectedRevision: string): Promise<{ name: string; problem: string | null }[]> {
+async function runAll(
+  base: URL,
+  expectedRevision: string,
+): Promise<{ name: string; problem: string | null }[]> {
   const spec = checksFor(profile as Profile);
   const checks = [...spec.checks, revisionCheck(expectedRevision), httpsRedirectCheck(base.host)];
   const results: { name: string; problem: string | null }[] = [];
@@ -56,7 +64,9 @@ async function runAll(base: URL, expectedRevision: string): Promise<{ name: stri
     results.push({ name: check.name, problem: await runCheck(base, check) });
   }
   try {
-    const asset = assetCheckFrom((await observe(new URL(spec.assetSourcePath, base).toString())).body);
+    const asset = assetCheckFrom(
+      (await observe(new URL(spec.assetSourcePath, base).toString())).body,
+    );
     results.push(
       typeof asset === "string"
         ? { name: "serves a hashed asset as immutable", problem: asset }
@@ -71,7 +81,11 @@ async function runAll(base: URL, expectedRevision: string): Promise<{ name: stri
 try {
   let base: URL;
   if (values.url === undefined) {
-    const { target } = await preflight({ access: "observe", action: "smoke test the deployed site", stack });
+    const { target } = await preflight({
+      access: "observe",
+      action: "smoke test the deployed site",
+      stack,
+    });
     const domain = requireOutput(
       await readStackOutputs(resolve(appDir), stack, target.region),
       "DistributionDomainName",

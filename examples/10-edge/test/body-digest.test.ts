@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { handler } from "../src/lambda-edge/body-digest.ts";
 
 const originRequest = (method: string, body?: { data: string; inputTruncated?: boolean }) => ({

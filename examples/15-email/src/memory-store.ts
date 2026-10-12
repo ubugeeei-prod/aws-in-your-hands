@@ -17,7 +17,8 @@ export class MemoryNotificationStore implements NotificationStore {
 
   claim(claim: Claim): Promise<ClaimResult> {
     const existing = this.#records.get(claim.notificationId);
-    const retryAfterRejection = existing?.state === "rejected" && existing.fingerprint === claim.fingerprint;
+    const retryAfterRejection =
+      existing?.state === "rejected" && existing.fingerprint === claim.fingerprint;
     if (existing !== undefined && !retryAfterRejection) {
       return Promise.resolve({ claimed: false, existing: { ...existing } });
     }
@@ -33,7 +34,11 @@ export class MemoryNotificationStore implements NotificationStore {
     return Promise.resolve({ claimed: true });
   }
 
-  advance(notificationId: string, next: Exclude<NotificationState, "claimed">, change: Advance): Promise<boolean> {
+  advance(
+    notificationId: string,
+    next: Exclude<NotificationState, "claimed">,
+    change: Advance,
+  ): Promise<boolean> {
     const record = this.#records.get(notificationId);
     if (record === undefined || !allowedFrom[next].includes(record.state)) {
       return Promise.resolve(false);

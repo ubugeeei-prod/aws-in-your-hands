@@ -3,16 +3,23 @@
 //
 // Copies .output/public/_nuxt into the stack's bucket. Run it before
 // deploying the function, so new HTML never points at files that are not there yet.
+
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
+
+import { S3Client } from "@aws-sdk/client-s3";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
 import { listLocal, listRemote, remove, upload } from "@aih/tools/site/bucket.ts";
-import { S3Client } from "@aws-sdk/client-s3";
+
 import { describeAssetPlan, planAssets } from "./asset-plan.ts";
 
 const { values } = parseArgs({
-  options: { "dry-run": { type: "boolean", default: false }, "retention-days": { type: "string", default: "7" } },
+  options: {
+    "dry-run": { type: "boolean", default: false },
+    "retention-days": { type: "string", default: "7" },
+  },
 });
 const retentionDays = Number(values["retention-days"]);
 if (!Number.isInteger(retentionDays) || retentionDays < 0) {
@@ -27,7 +34,10 @@ try {
     action: "publish SSR static assets",
     stack: "AihSsr",
   });
-  const bucket = requireOutput(await readStackOutputs(process.cwd(), "AihSsr", target.region), "ContentBucketName");
+  const bucket = requireOutput(
+    await readStackOutputs(process.cwd(), "AihSsr", target.region),
+    "ContentBucketName",
+  );
   const directory = resolve(".output/public");
   const s3 = new S3Client({ region: target.region });
 
@@ -49,6 +59,8 @@ try {
   console.log("assets published. Deploy the function next: vp run ssr:infra:deploy");
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  console.error("The publish did not finish. It is safe to run it again: files already uploaded are skipped.");
+  console.error(
+    "The publish did not finish. It is safe to run it again: files already uploaded are skipped.",
+  );
   process.exit(1);
 }

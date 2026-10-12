@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseFleetConfig } from "../../src/config.ts";
 import { nodeSpec, renderUserData } from "../../src/machine.ts";
 import { CelldStack } from "../lib/celld-stack.ts";
@@ -11,7 +12,12 @@ type Resource = {
   DeletionPolicy?: string;
   UpdateReplacePolicy?: string;
 };
-type Statement = { Effect: string; Action: string | string[]; Resource: unknown; Condition?: unknown };
+type Statement = {
+  Effect: string;
+  Action: string | string[];
+  Resource: unknown;
+  Condition?: unknown;
+};
 
 function synth(input: unknown = {}) {
   const app = new App();
@@ -24,7 +30,9 @@ function synth(input: unknown = {}) {
   };
   const all = (type: string): [string, Resource][] =>
     Object.entries(json.Resources).filter(([, resource]) => resource.Type === type);
-  const types = [...new Set(Object.values(json.Resources).map((resource) => resource.Type))].toSorted();
+  const types = [
+    ...new Set(Object.values(json.Resources).map((resource) => resource.Type)),
+  ].toSorted();
   return { app, template, json, all, types };
 }
 
@@ -98,7 +106,13 @@ describe("CelldStack with `nodes=3`", () => {
   it("lets a node open HTTPS, and the internal port inside the VPC, and nothing else", () => {
     const [[, group]] = fleet.all("AWS::EC2::SecurityGroup") as [[string, Resource]];
     expect(group.Properties?.["SecurityGroupEgress"]).toEqual([
-      { IpProtocol: "tcp", FromPort: 443, ToPort: 443, CidrIp: "0.0.0.0/0", Description: "HTTPS to AWS APIs" },
+      {
+        IpProtocol: "tcp",
+        FromPort: 443,
+        ToPort: 443,
+        CidrIp: "0.0.0.0/0",
+        Description: "HTTPS to AWS APIs",
+      },
       {
         IpProtocol: "tcp",
         FromPort: 8081,
@@ -123,7 +137,9 @@ describe("CelldStack with `nodes=3`", () => {
 
   it("passes the same user data to every node, with nothing filled in at deploy time", () => {
     for (const [id, instance] of instances) {
-      expect(instance.Properties?.["UserData"], id).toEqual({ "Fn::Base64": renderUserData(nodeSpec()) });
+      expect(instance.Properties?.["UserData"], id).toEqual({
+        "Fn::Base64": renderUserData(nodeSpec()),
+      });
     }
   });
 
@@ -136,7 +152,9 @@ describe("CelldStack with `nodes=3`", () => {
       Encrypted: true,
       Tags: [{ Key: "Name", Value: "AihCelld/node-b-data" }],
     });
-    expect(fleet.all("AWS::EC2::VolumeAttachment").map(([, attachment]) => attachment.Properties)).toEqual([
+    expect(
+      fleet.all("AWS::EC2::VolumeAttachment").map(([, attachment]) => attachment.Properties),
+    ).toEqual([
       { InstanceId: { Ref: "NodeA" }, VolumeId: { Ref: "NodeAData" }, Device: "/dev/sdf" },
       { InstanceId: { Ref: "NodeB" }, VolumeId: { Ref: "NodeBData" }, Device: "/dev/sdf" },
       { InstanceId: { Ref: "NodeC" }, VolumeId: { Ref: "NodeCData" }, Device: "/dev/sdf" },
@@ -245,7 +263,12 @@ describe("what a node may do in AWS", () => {
     }
     const [[, role]] = fleet.all("AWS::IAM::Role") as [[string, Resource]];
     expect(role.Properties?.["ManagedPolicyArns"]).toEqual([
-      { "Fn::Join": ["", ["arn:", { Ref: "AWS::Partition" }, ":iam::aws:policy/AmazonSSMManagedInstanceCore"]] },
+      {
+        "Fn::Join": [
+          "",
+          ["arn:", { Ref: "AWS::Partition" }, ":iam::aws:policy/AmazonSSMManagedInstanceCore"],
+        ],
+      },
     ]);
   });
 });
@@ -270,7 +293,10 @@ describe("what outlives the stack", () => {
 
   it("deletes them with the stack only when asked: `stateOnDestroy=delete`", () => {
     const throwaway = synth({ nodes: 2, stateOnDestroy: "delete" });
-    for (const [id, resource] of [...throwaway.all("AWS::S3::Bucket"), ...throwaway.all("AWS::EC2::Volume")]) {
+    for (const [id, resource] of [
+      ...throwaway.all("AWS::S3::Bucket"),
+      ...throwaway.all("AWS::EC2::Volume"),
+    ]) {
       expect(resource.DeletionPolicy, id).toBe("Delete");
     }
   });
@@ -297,7 +323,10 @@ describe("restore and other settings", () => {
   it("starts a node's volume from a snapshot with `dataSnapshots`, one node at a time", () => {
     const restored = synth({ nodes: 2, dataSnapshots: "a:snap-0123456789abcdef0" });
     const [a, b] = restored.all("AWS::EC2::Volume");
-    expect(a?.[1].Properties).toMatchObject({ SnapshotId: "snap-0123456789abcdef0", Encrypted: true });
+    expect(a?.[1].Properties).toMatchObject({
+      SnapshotId: "snap-0123456789abcdef0",
+      Encrypted: true,
+    });
     expect(b?.[1].Properties?.["SnapshotId"]).toBeUndefined();
   });
 
@@ -312,7 +341,9 @@ describe("restore and other settings", () => {
       { nodes: 1, dataSnapshots: "b:snap-0123456789abcdef0" },
       { nodes: 2, dataSnapshots: "a:vol-0123456789abcdef0" },
     ]) {
-      expect(() => parseFleetConfig(input), JSON.stringify(input)).toThrow("Invalid fleet settings");
+      expect(() => parseFleetConfig(input), JSON.stringify(input)).toThrow(
+        "Invalid fleet settings",
+      );
     }
   });
 });

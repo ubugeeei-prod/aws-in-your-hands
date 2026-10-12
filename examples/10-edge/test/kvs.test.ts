@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
-import { checkLimits, type EdgeData, edgeDataSchema, LIMITS, toEntries } from "../src/kvs/config.ts";
+
+import {
+  checkLimits,
+  type EdgeData,
+  edgeDataSchema,
+  LIMITS,
+  toEntries,
+} from "../src/kvs/config.ts";
 import { planSync, toBatches } from "../src/kvs/plan.ts";
 
 const data = (overrides: Partial<EdgeData> = {}): unknown => ({
@@ -9,7 +16,9 @@ const data = (overrides: Partial<EdgeData> = {}): unknown => ({
 });
 const issues = (input: unknown): string[] => {
   const result = edgeDataSchema.safeParse(input);
-  return result.success ? [] : result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+  return result.success
+    ? []
+    : result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
 };
 
 describe("edge data", () => {
@@ -63,16 +72,24 @@ describe("edge data", () => {
   });
 
   it("refuses a status that is not a redirect and an unknown flag", () => {
-    expect(issues(data({ redirects: [{ from: "/a", to: "/b", status: 200 as 301 }] }))).not.toEqual([]);
-    expect(issues({ flags: { maintenance: false, newHome: false, beta: true }, redirects: [] })).not.toEqual([]);
+    expect(issues(data({ redirects: [{ from: "/a", to: "/b", status: 200 as 301 }] }))).not.toEqual(
+      [],
+    );
+    expect(
+      issues({ flags: { maintenance: false, newHome: false, beta: true }, redirects: [] }),
+    ).not.toEqual([]);
   });
 
   it("finds pairs that would not fit before anything is written", () => {
     expect(checkLimits(new Map([["flag:maintenance", "on"]]))).toEqual([]);
     expect(checkLimits(new Map([[`redirect:/${"é".repeat(260)}`, "x"]]))).toHaveLength(1);
-    expect(checkLimits(new Map([["redirect:/a", "x".repeat(LIMITS.valueBytes + 1)]]))).toHaveLength(1);
+    expect(checkLimits(new Map([["redirect:/a", "x".repeat(LIMITS.valueBytes + 1)]]))).toHaveLength(
+      1,
+    );
 
-    const full = new Map(Array.from({ length: 5200 }, (_, index) => [`redirect:/${index}`, "x".repeat(1000)]));
+    const full = new Map(
+      Array.from({ length: 5200 }, (_, index) => [`redirect:/${index}`, "x".repeat(1000)]),
+    );
     expect(checkLimits(full)).toEqual([expect.stringContaining("a store holds 5242880")]);
   });
 });
@@ -118,8 +135,12 @@ describe("planSync", () => {
 
 describe("toBatches", () => {
   it("keeps every request within 50 keys, puts before deletes", () => {
-    const desired = new Map(Array.from({ length: 70 }, (_, index) => [`redirect:/new-${index}`, "x"]));
-    const current = new Map(Array.from({ length: 40 }, (_, index) => [`redirect:/old-${index}`, "x"]));
+    const desired = new Map(
+      Array.from({ length: 70 }, (_, index) => [`redirect:/new-${index}`, "x"]),
+    );
+    const current = new Map(
+      Array.from({ length: 40 }, (_, index) => [`redirect:/old-${index}`, "x"]),
+    );
     const batches = toBatches(planSync(desired, current));
 
     expect(batches.map((batch) => batch.puts.length + batch.deletes.length)).toEqual([50, 50, 10]);

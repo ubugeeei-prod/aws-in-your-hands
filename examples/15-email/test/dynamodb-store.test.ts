@@ -1,6 +1,8 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import type { GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { describe, expect, it } from "vite-plus/test";
+
 import { DynamoDbNotificationStore } from "../src/dynamodb-store.ts";
 
 // Pins the requests that carry the guarantees. Whether DynamoDB honours them
@@ -45,8 +47,14 @@ describe("DynamoDbNotificationStore requests", () => {
     expect(sent[0]).toBeInstanceOf(PutCommand);
     expect(sent[0]?.input).toMatchObject({
       TableName: "mail-table",
-      Item: { pk: "NOTIFICATION#share-1", state: "claimed", fingerprint: "abc", expiresAt: 1_800_000_000 },
-      ConditionExpression: "attribute_not_exists(pk) OR (#state = :rejected AND fingerprint = :fingerprint)",
+      Item: {
+        pk: "NOTIFICATION#share-1",
+        state: "claimed",
+        fingerprint: "abc",
+        expiresAt: 1_800_000_000,
+      },
+      ConditionExpression:
+        "attribute_not_exists(pk) OR (#state = :rejected AND fingerprint = :fingerprint)",
       ExpressionAttributeNames: { "#state": "state" },
       ExpressionAttributeValues: { ":rejected": "rejected", ":fingerprint": "abc" },
     });
@@ -60,7 +68,10 @@ describe("DynamoDbNotificationStore requests", () => {
       return { Item: stored };
     });
     expect(await store.claim(claim)).toMatchObject({ claimed: false, existing: { state: "sent" } });
-    expect(sent[1]?.input).toMatchObject({ Key: { pk: "NOTIFICATION#share-1" }, ConsistentRead: true });
+    expect(sent[1]?.input).toMatchObject({
+      Key: { pk: "NOTIFICATION#share-1" },
+      ConsistentRead: true,
+    });
   });
 
   it("does not report a claim when the write failed for another reason", async () => {
@@ -104,7 +115,11 @@ describe("DynamoDbNotificationStore requests", () => {
       feedbackId: "f-1",
     });
     expect(sent[0]?.input).toMatchObject({
-      Item: { pk: "SUPPRESSION#recipient@example.com", address: "recipient@example.com", reason: "bounce" },
+      Item: {
+        pk: "SUPPRESSION#recipient@example.com",
+        address: "recipient@example.com",
+        reason: "bounce",
+      },
     });
     expect(sent[0]?.input).not.toHaveProperty("ConditionExpression");
     expect((sent[0] as PutCommand).input.Item).not.toHaveProperty("expiresAt");
@@ -120,7 +135,9 @@ describe("DynamoDbNotificationStore requests", () => {
         feedbackId: "f-1",
       },
     }));
-    expect(await store.findSuppression("RECIPIENT@example.com")).toMatchObject({ reason: "complaint" });
+    expect(await store.findSuppression("RECIPIENT@example.com")).toMatchObject({
+      reason: "complaint",
+    });
     expect(sent[0]?.input).toMatchObject({ Key: { pk: "SUPPRESSION#recipient@example.com" } });
   });
 

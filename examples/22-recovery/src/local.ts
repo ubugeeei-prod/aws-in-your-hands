@@ -1,10 +1,15 @@
 import { createHash } from "node:crypto";
+
 import type { LogEntry } from "@aih/example-05-dynamodb/src/log.ts";
 import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
-import { createAttachmentService, withAttachmentCleanup } from "@aih/example-07-uploads/api/src/attachments.ts";
+import {
+  createAttachmentService,
+  withAttachmentCleanup,
+} from "@aih/example-07-uploads/api/src/attachments.ts";
 import { objectKey } from "@aih/example-07-uploads/api/src/keys.ts";
 import { sweep } from "@aih/example-07-uploads/api/src/sweep.ts";
 import { handleEvent } from "@aih/example-08-async/src/worker.ts";
+
 import { check, takeSnapshot } from "./invariants.ts";
 import {
   MemoryTable,
@@ -90,7 +95,9 @@ export function createWorld() {
       },
       /** Permit, upload, finish, and the worker's inspection: one attached and inspected image. */
       async attach(noteId: string, bytes: Uint8Array = PNG) {
-        const permitted = await attachmentService.requestUpload(OWNER, noteId, { contentType: "image/png" });
+        const permitted = await attachmentService.requestUpload(OWNER, noteId, {
+          contentType: "image/png",
+        });
         if (permitted.status !== "permitted") {
           throw new Error(`upload not permitted: ${permitted.status}`);
         }
@@ -122,12 +129,17 @@ export function createWorld() {
         }
         tick();
       },
-      report: async (graceMs = 0) => check(await takeSnapshot(table, bucket), { now: now(), graceMs }),
+      report: async (graceMs = 0) =>
+        check(await takeSnapshot(table, bucket), { now: now(), graceMs }),
       snapshot: () => takeSnapshot(table, bucket),
       repairDeps: () => ({ bucket, attachments, inspections, reader: bucket, now }),
       async repairAll(options: { dryRun: boolean } = { dryRun: false }) {
         const report = check(await takeSnapshot(table, bucket), { now: now(), graceMs: 0 });
-        return repair({ bucket, attachments, inspections, reader: bucket, now }, report.findings, options);
+        return repair(
+          { bucket, attachments, inspections, reader: bucket, now },
+          report.findings,
+          options,
+        );
       },
       sweep: (options: { dryRun: boolean }) =>
         sweep({ objects: bucket, attachments, notes: plainNotes, now }, { ...options, graceMs: 0 }),

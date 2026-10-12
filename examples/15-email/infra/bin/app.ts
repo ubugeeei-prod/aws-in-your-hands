@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { EmailStack } from "../lib/email-stack.ts";
 
 const app = new App();

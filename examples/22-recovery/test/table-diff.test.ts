@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { diffTables, fenceVersions } from "../src/table-diff.ts";
 import { createWorld, OWNER } from "./world.ts";
 
@@ -46,8 +47,12 @@ describe("chapter 05's version check across a restore", () => {
     await restored.notes.update(OWNER, note.id, edit(2, "more work"));
 
     // Version 3 again, but a different version 3.
-    expect(await restored.notes.update(OWNER, note.id, staleTab)).toMatchObject({ status: "updated" });
-    expect(await restored.notes.get(OWNER, note.id)).toMatchObject({ title: "saved from the old tab" });
+    expect(await restored.notes.update(OWNER, note.id, staleTab)).toMatchObject({
+      status: "updated",
+    });
+    expect(await restored.notes.get(OWNER, note.id)).toMatchObject({
+      title: "saved from the old tab",
+    });
   });
 
   it("refuses the stale tab after the restored versions are raised past the live ones", async () => {
@@ -60,8 +65,13 @@ describe("chapter 05's version check across a restore", () => {
     await restored.notes.update(OWNER, note.id, edit(4, "after the restore"));
     await restored.notes.update(OWNER, note.id, edit(5, "more work"));
 
-    expect(await restored.notes.update(OWNER, note.id, staleTab)).toMatchObject({ status: "conflict" });
-    expect(await restored.notes.get(OWNER, note.id)).toMatchObject({ title: "more work", version: 6 });
+    expect(await restored.notes.update(OWNER, note.id, staleTab)).toMatchObject({
+      status: "conflict",
+    });
+    expect(await restored.notes.get(OWNER, note.id)).toMatchObject({
+      title: "more work",
+      version: 6,
+    });
   });
 
   it("raises a version once, and never lowers one", async () => {
@@ -75,7 +85,10 @@ describe("chapter 05's version check across a restore", () => {
     await restored.notes.update(OWNER, note.id, edit(4, "edited after the fence"));
     await fenceVersions(restored.noteRepository, diff, { dryRun: false });
 
-    expect(await restored.notes.get(OWNER, note.id)).toMatchObject({ title: "edited after the fence", version: 5 });
+    expect(await restored.notes.get(OWNER, note.id)).toMatchObject({
+      title: "edited after the fence",
+      version: 5,
+    });
     expect(await restored.noteRepository.raiseVersion(OWNER, "no-such-note", 9)).toBe("unchanged");
   });
 });

@@ -1,13 +1,21 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 import { PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Architecture, LayerVersion, LoggingFormat, Runtime, Tracing } from "aws-cdk-lib/aws-lambda";
+import {
+  Architecture,
+  LayerVersion,
+  LoggingFormat,
+  Runtime,
+  Tracing,
+} from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
+
 import { Monitoring } from "./monitoring.ts";
 
 export type ObservabilityStackProps = StackProps & {
@@ -37,7 +45,9 @@ export class ObservabilityStack extends Stack {
     });
     // #endregion logs
 
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     role.addToPolicy(
       new PolicyStatement({
@@ -81,7 +91,8 @@ export class ObservabilityStack extends Stack {
         sourceMap: false,
         externalModules: [],
         // The bundled AWS SDK still calls require(); an ESM bundle has none unless we provide it.
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
     // #endregion function
@@ -100,7 +111,12 @@ export class ObservabilityStack extends Stack {
       description: "Notes API with alarms, a dashboard and tracing",
       corsPreflight: {
         allowOrigins: [props.allowedOrigin],
-        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
+        allowMethods: [
+          CorsHttpMethod.GET,
+          CorsHttpMethod.POST,
+          CorsHttpMethod.PUT,
+          CorsHttpMethod.DELETE,
+        ],
         allowHeaders: ["content-type", "traceparent"],
         maxAge: Duration.hours(1),
       },
@@ -108,7 +124,11 @@ export class ObservabilityStack extends Stack {
     const integration = new HttpLambdaIntegration("Notes", handler);
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/notes", methods: [HttpMethod.GET, HttpMethod.POST], integration });
-    api.addRoutes({ path: "/notes/{id}", methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE], integration });
+    api.addRoutes({
+      path: "/notes/{id}",
+      methods: [HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE],
+      integration,
+    });
 
     // #region monitoring
     const monitoring = new Monitoring(this, "Monitoring", {

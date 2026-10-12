@@ -1,4 +1,5 @@
 import type { Access } from "@aih/tools/aws/target.ts";
+
 import { apiStackName, type Stage, stageSchema } from "../infra/lib/config.ts";
 
 export const ACTIONS = ["bootstrap", "synth", "diff", "deploy", "destroy"] as const;
@@ -82,10 +83,18 @@ export function buildCdkInvocation(input: {
       }
       // A change set, executed by CloudFormation, rolled back by CloudFormation if a resource fails.
       const approval = unattended ? "never" : "broadening";
-      return { access: "mutate", stack, args: ["deploy", stack, "--require-approval", approval, ...extra] };
+      return {
+        access: "mutate",
+        stack,
+        args: ["deploy", stack, "--require-approval", approval, ...extra],
+      };
     }
     case "destroy":
-      return { access: "mutate", stack, args: ["destroy", stack, ...(unattended ? ["--force"] : []), ...extra] };
+      return {
+        access: "mutate",
+        stack,
+        args: ["destroy", stack, ...(unattended ? ["--force"] : []), ...extra],
+      };
   }
 }
 // #endregion invocation

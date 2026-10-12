@@ -1,6 +1,8 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import type { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { describe, expect, it } from "vite-plus/test";
+
 import { DynamoDbCacheStore, DynamoDbCounterStore } from "../src/dynamodb-store.ts";
 
 // Pins the requests that carry the guarantees. Whether DynamoDB honours them
@@ -22,7 +24,11 @@ function fakeClient(respond: (command: Command) => unknown = () => ({})) {
 const conditionFailed = () =>
   new ConditionalCheckFailedException({ message: "The conditional request failed", $metadata: {} });
 
-const window = { subject: "client-1", windowStart: 1_760_000_040_000, expiresAt: 1_760_000_160_500 };
+const window = {
+  subject: "client-1",
+  windowStart: 1_760_000_040_000,
+  expiresAt: 1_760_000_160_500,
+};
 
 describe("DynamoDbCounterStore requests", () => {
   it("adds and checks the cap in one UpdateItem, with no read before it", async () => {
@@ -53,20 +59,24 @@ describe("DynamoDbCounterStore requests", () => {
     const full = fakeClient(() => {
       throw conditionFailed();
     });
-    expect(await new DynamoDbCounterStore(full.client, "kv-table").incrementBelow(window, 5)).toEqual({
+    expect(
+      await new DynamoDbCounterStore(full.client, "kv-table").incrementBelow(window, 5),
+    ).toEqual({
       accepted: false,
     });
 
     const throttled = fakeClient(() => {
       throw new Error("ProvisionedThroughputExceededException");
     });
-    await expect(new DynamoDbCounterStore(throttled.client, "kv-table").incrementBelow(window, 5)).rejects.toThrow(
-      "ProvisionedThroughputExceeded",
-    );
+    await expect(
+      new DynamoDbCounterStore(throttled.client, "kv-table").incrementBelow(window, 5),
+    ).rejects.toThrow("ProvisionedThroughputExceeded");
   });
 
   it("reads a window with a strongly consistent GetItem", async () => {
-    const { client, sent } = fakeClient(() => ({ Item: { pk: "RATE#client-1", sk: "WINDOW#1", hits: 4 } }));
+    const { client, sent } = fakeClient(() => ({
+      Item: { pk: "RATE#client-1", sk: "WINDOW#1", hits: 4 },
+    }));
     expect(await new DynamoDbCounterStore(client, "kv-table").read(window)).toBe(4);
     expect(sent[0]?.input).toMatchObject({ ConsistentRead: true });
   });
@@ -75,7 +85,13 @@ describe("DynamoDbCounterStore requests", () => {
 describe("DynamoDbCacheStore and TTL", () => {
   const NOW = 1_760_000_100_000;
   const stored = (expiresAtMs: number) => ({
-    Item: { pk: "CACHE#list", sk: "VALUE", payload: "v1", expiresAtMs, expiresAt: Math.ceil(expiresAtMs / 1000) },
+    Item: {
+      pk: "CACHE#list",
+      sk: "VALUE",
+      payload: "v1",
+      expiresAtMs,
+      expiresAt: Math.ceil(expiresAtMs / 1000),
+    },
   });
 
   // #region ttl-test
@@ -92,13 +108,18 @@ describe("DynamoDbCacheStore and TTL", () => {
   // #endregion ttl-test
 
   it("treats an item of an unknown shape as a miss", async () => {
-    const { client } = fakeClient(() => ({ Item: { pk: "CACHE#list", sk: "VALUE", body: "old format" } }));
+    const { client } = fakeClient(() => ({
+      Item: { pk: "CACHE#list", sk: "VALUE", body: "old format" },
+    }));
     expect(await new DynamoDbCacheStore(client, "kv-table").get("list", NOW)).toBeUndefined();
   });
 
   it("writes the precise expiry for reads and whole seconds for the TTL process", async () => {
     const { client, sent } = fakeClient();
-    await new DynamoDbCacheStore(client, "kv-table").set("list", { value: "v1", expiresAt: NOW + 30_250 });
+    await new DynamoDbCacheStore(client, "kv-table").set("list", {
+      value: "v1",
+      expiresAt: NOW + 30_250,
+    });
     expect(sent[0]).toBeInstanceOf(PutCommand);
     expect(sent[0]?.input).toMatchObject({
       Item: {
@@ -113,7 +134,9 @@ describe("DynamoDbCacheStore and TTL", () => {
 
   it("takes a lock only if none exists or the existing one has expired", async () => {
     const { client, sent } = fakeClient();
-    expect(await new DynamoDbCacheStore(client, "kv-table").tryLock("list", "a", NOW + 5_000, NOW)).toBe(true);
+    expect(
+      await new DynamoDbCacheStore(client, "kv-table").tryLock("list", "a", NOW + 5_000, NOW),
+    ).toBe(true);
     expect(sent[0]?.input).toMatchObject({
       Item: { pk: "CACHE#list", sk: "LOCK", owner: "a", expiresAtMs: NOW + 5_000 },
       ConditionExpression: "attribute_not_exists(pk) OR #expiresAtMs <= :now",
@@ -123,7 +146,9 @@ describe("DynamoDbCacheStore and TTL", () => {
     const held = fakeClient(() => {
       throw conditionFailed();
     });
-    expect(await new DynamoDbCacheStore(held.client, "kv-table").tryLock("list", "b", NOW + 5_000, NOW)).toBe(false);
+    expect(
+      await new DynamoDbCacheStore(held.client, "kv-table").tryLock("list", "b", NOW + 5_000, NOW),
+    ).toBe(false);
   });
 
   it("releases a lock only for its owner", async () => {
@@ -139,6 +164,8 @@ describe("DynamoDbCacheStore and TTL", () => {
     const taken = fakeClient(() => {
       throw conditionFailed();
     });
-    await expect(new DynamoDbCacheStore(taken.client, "kv-table").unlock("list", "a")).resolves.toBeUndefined();
+    await expect(
+      new DynamoDbCacheStore(taken.client, "kv-table").unlock("list", "a"),
+    ).resolves.toBeUndefined();
   });
 });

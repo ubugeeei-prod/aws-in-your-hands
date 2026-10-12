@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { createError, useFetch, useHead, useRoute } from "nuxt/app";
+
 import { publicNoteSchema } from "../../../core/notes.ts";
 
 const route = useRoute();

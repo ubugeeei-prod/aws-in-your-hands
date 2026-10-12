@@ -1,5 +1,6 @@
 import { Server } from "node:http";
 import type { AddressInfo } from "node:net";
+
 import { serve } from "@hono/node-server";
 
 export type ShutdownResult = "drained" | "forced";

@@ -3,10 +3,7 @@
 //
 // Commands that change AWS print what they would do and stop, unless --apply
 // is given. All of them run with your credentials.
-import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
-import { createAttachmentService, withAttachmentCleanup } from "@aih/example-07-uploads/api/src/attachments.ts";
-import { KEY_PREFIX, objectKey } from "@aih/example-07-uploads/api/src/keys.ts";
-import { SWEEP_GRACE_MS } from "@aih/example-07-uploads/api/src/sweep.ts";
+
 import {
   DeleteTableCommand,
   DescribeContinuousBackupsCommand,
@@ -17,13 +14,30 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { GetBucketVersioningCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+
+import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
+import {
+  createAttachmentService,
+  withAttachmentCleanup,
+} from "@aih/example-07-uploads/api/src/attachments.ts";
+import { KEY_PREFIX, objectKey } from "@aih/example-07-uploads/api/src/keys.ts";
+import { SWEEP_GRACE_MS } from "@aih/example-07-uploads/api/src/sweep.ts";
+
 import { audit, auditSchema } from "../src/audit.ts";
 import { SEVERITY, takeSnapshot } from "../src/invariants.ts";
 import { restoreObjects } from "../src/object-restore.ts";
 import { type ContinuousBackups, planTableRestore, RESTORED_MARK } from "../src/pitr.ts";
 import { repair } from "../src/repair.ts";
 import { diffTables, fenceVersions } from "../src/table-diff.ts";
-import { type Context, connect, flags, pointInTime, positionals, remindToApply, verb } from "./context.ts";
+import {
+  type Context,
+  connect,
+  flags,
+  pointInTime,
+  positionals,
+  remindToApply,
+  verb,
+} from "./context.ts";
 
 // Everything the drill writes belongs to this owner, and `accident` deletes nothing else.
 const OWNER = "drill";
@@ -40,7 +54,9 @@ function seedImage(): Uint8Array {
 }
 
 async function backupsOf(context: Context, tableName: string): Promise<ContinuousBackups> {
-  const result = await context.dynamodb.send(new DescribeContinuousBackupsCommand({ TableName: tableName }));
+  const result = await context.dynamodb.send(
+    new DescribeContinuousBackupsCommand({ TableName: tableName }),
+  );
   const pitr = result.ContinuousBackupsDescription?.PointInTimeRecoveryDescription;
   return {
     enabled: pitr?.PointInTimeRecoveryStatus === "ENABLED",
@@ -50,11 +66,15 @@ async function backupsOf(context: Context, tableName: string): Promise<Continuou
 }
 
 async function describe(context: Context, tableName: string): Promise<void> {
-  const { Table: table } = await context.dynamodb.send(new DescribeTableCommand({ TableName: tableName }));
+  const { Table: table } = await context.dynamodb.send(
+    new DescribeTableCommand({ TableName: tableName }),
+  );
   const backups = await backupsOf(context, tableName);
   console.log(`table ${tableName}`);
   console.log(`  status:               ${table?.TableStatus ?? "unknown"}`);
-  console.log(`  deletion protection:  ${table?.DeletionProtectionEnabled === true ? "on" : "off"}`);
+  console.log(
+    `  deletion protection:  ${table?.DeletionProtectionEnabled === true ? "on" : "off"}`,
+  );
   console.log(`  point-in-time:        ${backups.enabled ? "on" : "off"}`);
   console.log(`  earliest restorable:  ${backups.earliestRestorable?.toISOString() ?? "-"}`);
   console.log(`  latest restorable:    ${backups.latestRestorable?.toISOString() ?? "-"}`);
@@ -69,16 +89,24 @@ async function status(): Promise<void> {
     await describe(context, context.activeTable);
   }
 
-  const versioning = await context.s3.send(new GetBucketVersioningCommand({ Bucket: context.bucketName }));
-  console.log(`bucket ${context.bucketName}\n  versioning:           ${versioning.Status ?? "never enabled"}`);
+  const versioning = await context.s3.send(
+    new GetBucketVersioningCommand({ Bucket: context.bucketName }),
+  );
+  console.log(
+    `bucket ${context.bucketName}\n  versioning:           ${versioning.Status ?? "never enabled"}`,
+  );
 
   // Restored tables are not in the stack, so no stack output and no drift check knows them.
   let start: string | undefined;
   const restored: string[] = [];
   do {
-    const page = await context.dynamodb.send(new ListTablesCommand({ ExclusiveStartTableName: start }));
+    const page = await context.dynamodb.send(
+      new ListTablesCommand({ ExclusiveStartTableName: start }),
+    );
     restored.push(
-      ...(page.TableNames ?? []).filter((name) => name.startsWith(`${context.ownedTable}${RESTORED_MARK}`)),
+      ...(page.TableNames ?? []).filter((name) =>
+        name.startsWith(`${context.ownedTable}${RESTORED_MARK}`),
+      ),
     );
     start = page.LastEvaluatedTableName;
   } while (start !== undefined);
@@ -92,7 +120,9 @@ async function status(): Promise<void> {
 async function seed(): Promise<void> {
   const context = await connect("write the drill's notes and images", { change: true });
   const store = context.open(context.activeTable);
-  console.log(`${verb(context.dryRun, "wrote", "would write")} ${SEED_TITLES.length} notes with one image each,`);
+  console.log(
+    `${verb(context.dryRun, "wrote", "would write")} ${SEED_TITLES.length} notes with one image each,`,
+  );
   console.log(`owner "${OWNER}", into ${store.tableName} and ${context.bucketName}`);
   if (!context.dryRun) {
     let counter = 0;
@@ -107,7 +137,12 @@ async function seed(): Promise<void> {
       const attachmentId = `${note.id}-img`;
       const key = objectKey({ owner: OWNER, noteId: note.id, attachmentId });
       const put = await context.s3.send(
-        new PutObjectCommand({ Bucket: context.bucketName, Key: key, Body: image, ContentType: "image/png" }),
+        new PutObjectCommand({
+          Bucket: context.bucketName,
+          Key: key,
+          Body: image,
+          ContentType: "image/png",
+        }),
       );
       // Chapter 07's order: the object first, then the record that points at it.
       await store.attachments.create(OWNER, {
@@ -142,10 +177,16 @@ async function seed(): Promise<void> {
 
 // #region accident
 async function accident(): Promise<void> {
-  const context = await connect("delete one drill note and damage one drill image", { change: true });
+  const context = await connect("delete one drill note and damage one drill image", {
+    change: true,
+  });
   const store = context.open(context.activeTable);
   const log = () => {};
-  const plain = createNoteService({ repository: store.notes, now: () => new Date(), randomSuffix: () => "" });
+  const plain = createNoteService({
+    repository: store.notes,
+    now: () => new Date(),
+    randomSuffix: () => "",
+  });
   const attachments = createAttachmentService({
     notes: plain,
     attachments: store.attachments,
@@ -160,7 +201,9 @@ async function accident(): Promise<void> {
   const page = await notes.list(OWNER, { limit: 100 });
   const [damaged, deleted] = page.notes;
   if (damaged === undefined || deleted === undefined) {
-    throw new Error(`Fewer than two notes of owner "${OWNER}" in ${store.tableName}. Run recovery:seed first.`);
+    throw new Error(
+      `Fewer than two notes of owner "${OWNER}" in ${store.tableName}. Run recovery:seed first.`,
+    );
   }
   console.log(`before the accident: ${new Date().toISOString()}`);
   console.log(
@@ -171,7 +214,9 @@ async function accident(): Promise<void> {
   }
   for (const image of await store.attachments.listByNote(OWNER, damaged.id)) {
     const key = objectKey({ owner: OWNER, noteId: damaged.id, attachmentId: image.id });
-    console.log(`${verb(context.dryRun, "overwrote", "would overwrite")} ${key} with bytes that are not an image`);
+    console.log(
+      `${verb(context.dryRun, "overwrote", "would overwrite")} ${key} with bytes that are not an image`,
+    );
     if (!context.dryRun) {
       await context.s3.send(
         new PutObjectCommand({
@@ -190,7 +235,9 @@ async function accident(): Promise<void> {
 
 // #region restore-table
 async function restoreTable(): Promise<void> {
-  const context = await connect("restore the table to a point in time, as a new table", { change: true });
+  const context = await connect("restore the table to a point in time, as a new table", {
+    change: true,
+  });
   const plan = planTableRestore({
     sourceTableName: context.ownedTable,
     backups: await backupsOf(context, context.ownedTable),
@@ -201,11 +248,15 @@ async function restoreTable(): Promise<void> {
     throw new Error(plan.reason);
   }
   const point = plan.input.RestoreDateTime?.toISOString() ?? "the latest restorable time";
-  console.log(`${verb(context.dryRun, "restoring", "would restore")} ${context.ownedTable} as of ${point}`);
+  console.log(
+    `${verb(context.dryRun, "restoring", "would restore")} ${context.ownedTable} as of ${point}`,
+  );
   console.log(`into a new table: ${plan.targetTableName}`);
   if (!context.dryRun) {
     await context.dynamodb.send(new RestoreTableToPointInTimeCommand(plan.input));
-    console.log(`requested at ${new Date().toISOString()}. The source table is untouched and stays in use.`);
+    console.log(
+      `requested at ${new Date().toISOString()}. The source table is untouched and stays in use.`,
+    );
     console.log(`Watch it with: vp run recovery:status   (ACTIVE means the restore is done)`);
   }
   remindToApply(context.dryRun);
@@ -214,9 +265,13 @@ async function restoreTable(): Promise<void> {
 
 /** A restore does not carry these over. The restored table starts without either. */
 async function protect(): Promise<void> {
-  const context = await connect("turn on point-in-time recovery for a restored table", { change: true });
+  const context = await connect("turn on point-in-time recovery for a restored table", {
+    change: true,
+  });
   const tableName = requireRestored(context, "protect");
-  console.log(`${verb(context.dryRun, "turned on", "would turn on")} point-in-time recovery for ${tableName}`);
+  console.log(
+    `${verb(context.dryRun, "turned on", "would turn on")} point-in-time recovery for ${tableName}`,
+  );
   if (!context.dryRun) {
     await context.dynamodb.send(
       new UpdateContinuousBackupsCommand({
@@ -229,15 +284,26 @@ async function protect(): Promise<void> {
 }
 
 async function restoreObjectsCommand(): Promise<void> {
-  const context = await connect("bring the bucket's keys back to a point in time", { change: true });
+  const context = await connect("bring the bucket's keys back to a point in time", {
+    change: true,
+  });
   const point = pointInTime();
   if (point === undefined) {
     throw new Error("restore-objects needs --at <time>: the moment whose bytes you want back.");
   }
-  const plan = await restoreObjects(context.bucket, { prefix: KEY_PREFIX, point, dryRun: context.dryRun });
+  const plan = await restoreObjects(context.bucket, {
+    prefix: KEY_PREFIX,
+    point,
+    dryRun: context.dryRun,
+  });
   for (const step of plan.steps) {
-    const what = step.type === "remove_delete_marker" ? "the delete marker removed" : "the old version copied on top";
-    console.log(`${verb(context.dryRun, "done", "planned")}: ${step.key}, ${what} (${step.versionId})`);
+    const what =
+      step.type === "remove_delete_marker"
+        ? "the delete marker removed"
+        : "the old version copied on top";
+    console.log(
+      `${verb(context.dryRun, "done", "planned")}: ${step.key}, ${what} (${step.versionId})`,
+    );
   }
   for (const key of plan.newerThanPoint) {
     console.log(`left alone: ${key} did not exist at ${point.toISOString()}`);
@@ -250,14 +316,18 @@ async function restoreObjectsCommand(): Promise<void> {
 
 // #region diff
 async function diff(): Promise<void> {
-  const context = await connect("compare the live table with a restored one", { change: flags.fence });
+  const context = await connect("compare the live table with a restored one", {
+    change: flags.fence,
+  });
   const restoredName = requireRestored(context, "diff");
   const live = await takeSnapshot(context.open(context.activeTable).table, context.bucket);
   const restored = context.open(restoredName);
   const result = diffTables(live, await takeSnapshot(restored.table, context.bucket));
 
   console.log(`cutting over from ${context.activeTable} to ${restoredName}:`);
-  console.log(`  gives back ${result.returning.length} notes and ${result.attachmentsReturning} attachment records`);
+  console.log(
+    `  gives back ${result.returning.length} notes and ${result.attachmentsReturning} attachment records`,
+  );
   console.log(
     `  loses      ${result.lost.length} notes and ${result.attachmentsLost} attachment records created since`,
   );
@@ -266,7 +336,9 @@ async function diff(): Promise<void> {
     console.log(`  lost:        ${note.owner}/${note.noteId}`);
   }
   for (const note of result.rolledBack) {
-    console.log(`  rolled back: ${note.owner}/${note.noteId} version ${note.liveVersion} -> ${note.restoredVersion}`);
+    console.log(
+      `  rolled back: ${note.owner}/${note.noteId} version ${note.liveVersion} -> ${note.restoredVersion}`,
+    );
   }
   if (flags.fence) {
     const fences = await fenceVersions(restored.table, result, { dryRun: context.dryRun });
@@ -281,7 +353,9 @@ async function diff(): Promise<void> {
 // #endregion diff
 
 async function verify(): Promise<void> {
-  const context = await connect("check the invariants of chapters 05, 07, and 08", { change: false });
+  const context = await connect("check the invariants of chapters 05, 07, and 08", {
+    change: false,
+  });
   const { tableName, table } = context.chosen();
   const result = await audit(
     { tableName, table, bucket: context.bucket, now: () => new Date() },
@@ -302,7 +376,12 @@ async function repairCommand(): Promise<void> {
   const context = await connect("repair what the check found", { change: true });
   const store = context.chosen();
   const { report } = await audit(
-    { tableName: store.tableName, table: store.table, bucket: context.bucket, now: () => new Date() },
+    {
+      tableName: store.tableName,
+      table: store.table,
+      bucket: context.bucket,
+      now: () => new Date(),
+    },
     { graceMs: flags.frozen ? 0 : SWEEP_GRACE_MS },
   );
   const result = await repair(
@@ -317,12 +396,16 @@ async function repairCommand(): Promise<void> {
     { dryRun: context.dryRun },
   );
   for (const item of result.repaired) {
-    console.log(`${verb(context.dryRun, "done", "planned")}: ${item.key} ${item.finding} -> ${item.action}`);
+    console.log(
+      `${verb(context.dryRun, "done", "planned")}: ${item.key} ${item.finding} -> ${item.action}`,
+    );
   }
   for (const finding of result.left) {
     console.log(`left for you: ${JSON.stringify(finding)}`);
   }
-  console.log(`${result.repaired.length} repairs, ${result.left.length} findings left. Run recovery:verify again.`);
+  console.log(
+    `${result.repaired.length} repairs, ${result.left.length} findings left. Run recovery:verify again.`,
+  );
   remindToApply(context.dryRun);
 }
 
@@ -350,7 +433,9 @@ function requireRestored(context: Context, command: string): string {
     throw new Error(`${command} needs --table <the restored table>. recovery:status lists them.`);
   }
   if (!name.includes(RESTORED_MARK) || name === context.ownedTable) {
-    throw new Error(`${name} is not a table this drill restored (no "${RESTORED_MARK}" in its name).`);
+    throw new Error(
+      `${name} is not a table this drill restored (no "${RESTORED_MARK}" in its name).`,
+    );
   }
   return name;
 }
@@ -360,9 +445,13 @@ async function dropTable(): Promise<void> {
   const context = await connect("delete a restored table", { change: true });
   const tableName = requireRestored(context, "drop-table");
   if (tableName === context.activeTable) {
-    throw new Error(`${tableName} is the table the function reads now. Cut back to another table first.`);
+    throw new Error(
+      `${tableName} is the table the function reads now. Cut back to another table first.`,
+    );
   }
-  console.log(`${verb(context.dryRun, "deleting", "would delete")} table ${tableName} and everything in it`);
+  console.log(
+    `${verb(context.dryRun, "deleting", "would delete")} table ${tableName} and everything in it`,
+  );
   if (!context.dryRun) {
     await context.dynamodb.send(new DeleteTableCommand({ TableName: tableName }));
   }
@@ -372,7 +461,9 @@ async function dropTable(): Promise<void> {
 
 /** A versioned bucket is empty only when every version and every delete marker is gone. */
 async function empty(): Promise<void> {
-  const context = await connect("delete every version of every object in the uploads bucket", { change: true });
+  const context = await connect("delete every version of every object in the uploads bucket", {
+    change: true,
+  });
   let count = 0;
   for await (const version of context.bucket.listVersions("")) {
     count++;
@@ -404,7 +495,9 @@ const commands: Record<string, () => Promise<void>> = {
 
 const command = commands[positionals[0] ?? ""];
 if (command === undefined) {
-  console.error(`usage: recovery.ts <${Object.keys(commands).join("|")}> [--apply] [--table NAME] [--at ISO]`);
+  console.error(
+    `usage: recovery.ts <${Object.keys(commands).join("|")}> [--apply] [--table NAME] [--at ISO]`,
+  );
   process.exit(64);
 }
 try {

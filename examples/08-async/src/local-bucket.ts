@@ -1,5 +1,10 @@
 import { createHash } from "node:crypto";
-import { InMemoryObjectStore, type Received } from "@aih/example-07-uploads/api/src/memory-object-store.ts";
+
+import {
+  InMemoryObjectStore,
+  type Received,
+} from "@aih/example-07-uploads/api/src/memory-object-store.ts";
+
 import type { ObjectReader, ReadResult } from "./object-reader.ts";
 
 type Current = { body: Uint8Array; eTag: string; contentType: string };
@@ -15,7 +20,12 @@ export class LocalBucket extends InMemoryObjectStore implements ObjectReader {
   readonly #notify: (body: string) => void;
   #sequence = 0;
 
-  constructor(options: { baseUrl: string; secret: string; now: () => Date; notify: (body: string) => void }) {
+  constructor(options: {
+    baseUrl: string;
+    secret: string;
+    now: () => Date;
+    notify: (body: string) => void;
+  }) {
     super(options);
     this.#notify = options.notify;
   }
@@ -24,7 +34,11 @@ export class LocalBucket extends InMemoryObjectStore implements ObjectReader {
     // Always growing here. S3 only promises that, for one key, later is greater.
     const sequencer = (++this.#sequence).toString(16).toUpperCase().padStart(18, "0");
     this.#notify(
-      JSON.stringify({ Records: [{ eventVersion: "2.1", eventName, s3: { object: { key, ...object, sequencer } } }] }),
+      JSON.stringify({
+        Records: [
+          { eventVersion: "2.1", eventName, s3: { object: { key, ...object, sequencer } } },
+        ],
+      }),
     );
   }
 

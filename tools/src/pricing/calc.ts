@@ -51,7 +51,11 @@ export type ScenarioResult = {
 const toUsd = (tenthNano: bigint): number => Number(tenthNano) / 1e10;
 const roundCents = (usd: number): number => Math.round(usd * 100) / 100;
 
-export function calculate(scenario: Scenario, prices: UnitPrice[], allowances: Allowances): ScenarioResult {
+export function calculate(
+  scenario: Scenario,
+  prices: UnitPrice[],
+  allowances: Allowances,
+): ScenarioResult {
   let list = 0n;
   let afterAllowance = 0n;
   const lines = scenario.items.map((item): LineResult => {
@@ -60,7 +64,9 @@ export function calculate(scenario: Scenario, prices: UnitPrice[], allowances: A
       // A missing price is an error, never a silent zero.
       throw new Error(`Scenario ${scenario.id} uses unknown price "${item.priceId}"`);
     }
-    const allowance = allowances.allowances.find((candidate) => candidate.priceId === item.priceId)?.quantity ?? null;
+    const allowance =
+      allowances.allowances.find((candidate) => candidate.priceId === item.priceId)?.quantity ??
+      null;
     const lineList = tieredTenthNano(price, item.quantity);
     const lineAfter = tieredTenthNano(price, Math.max(0, item.quantity - (allowance ?? 0)));
     list += lineList;

@@ -1,7 +1,14 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand, type S3Client } from "@aws-sdk/client-s3";
+
+import {
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  type S3Client,
+} from "@aws-sdk/client-s3";
+
 import type { LocalFile, RemoteObject, Upload } from "./plan.ts";
 
 export function listLocal(directory: string): LocalFile[] {
@@ -29,9 +36,15 @@ export async function listRemote(s3: S3Client, bucket: string): Promise<RemoteOb
   const objects: RemoteObject[] = [];
   let token: string | undefined;
   do {
-    const page = await s3.send(new ListObjectsV2Command({ Bucket: bucket, ContinuationToken: token }));
+    const page = await s3.send(
+      new ListObjectsV2Command({ Bucket: bucket, ContinuationToken: token }),
+    );
     for (const object of page.Contents ?? []) {
-      if (object.Key !== undefined && object.ETag !== undefined && object.LastModified !== undefined) {
+      if (
+        object.Key !== undefined &&
+        object.ETag !== undefined &&
+        object.LastModified !== undefined
+      ) {
         objects.push({ key: object.Key, etag: object.ETag, lastModified: object.LastModified });
       }
     }
@@ -40,7 +53,12 @@ export async function listRemote(s3: S3Client, bucket: string): Promise<RemoteOb
   return objects;
 }
 
-export async function upload(s3: S3Client, bucket: string, directory: string, uploads: Upload[]): Promise<void> {
+export async function upload(
+  s3: S3Client,
+  bucket: string,
+  directory: string,
+  uploads: Upload[],
+): Promise<void> {
   for (const item of uploads) {
     await s3.send(
       new PutObjectCommand({
@@ -60,10 +78,15 @@ export async function remove(s3: S3Client, bucket: string, keys: string[]): Prom
   for (let start = 0; start < keys.length; start += 1000) {
     const batch = keys.slice(start, start + 1000);
     const response = await s3.send(
-      new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true } }),
+      new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
+      }),
     );
     if ((response.Errors ?? []).length > 0) {
-      throw new Error(`S3 could not delete ${response.Errors?.length} object(s), first: ${response.Errors?.[0]?.Key}`);
+      throw new Error(
+        `S3 could not delete ${response.Errors?.length} object(s), first: ${response.Errors?.[0]?.Key}`,
+      );
     }
     for (const key of batch) {
       console.log(`  delete ${key}`);

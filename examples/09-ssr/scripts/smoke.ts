@@ -3,9 +3,12 @@
 //
 // Asks the deployed distribution the questions this chapter is about. It only
 // sends GET and POST requests to your own site; nothing in AWS is changed.
+
 import { setTimeout as sleep } from "node:timers/promises";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { SESSION_COOKIE } from "../core/session.ts";
 import {
   directUrlProblem,
@@ -17,7 +20,11 @@ import {
 } from "./smoke-spec.ts";
 
 async function observe(url: string, init: RequestInit = {}): Promise<Observed> {
-  const response = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(20_000), ...init });
+  const response = await fetch(url, {
+    redirect: "manual",
+    signal: AbortSignal.timeout(20_000),
+    ...init,
+  });
   return {
     status: response.status,
     headers: Object.fromEntries(response.headers.entries()),
@@ -27,7 +34,9 @@ async function observe(url: string, init: RequestInit = {}): Promise<Observed> {
 
 const failures: string[] = [];
 const report = (name: string, problem: string | null): void => {
-  console.log(`${problem === null ? "ok  " : "FAIL"} ${name}${problem === null ? "" : `: ${problem}`}`);
+  console.log(
+    `${problem === null ? "ok  " : "FAIL"} ${name}${problem === null ? "" : `: ${problem}`}`,
+  );
   if (problem !== null) {
     failures.push(name);
   }

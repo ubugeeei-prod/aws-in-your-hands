@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEc2Config } from "../../src/config.ts";
 import { machineFor } from "../../src/machine.ts";
 import { renderUserData } from "../../src/user-data.ts";
@@ -31,7 +32,9 @@ function synth(input: unknown = {}) {
     }
     return found[0];
   };
-  const types = [...new Set(Object.values(json.Resources).map((resource) => resource.Type))].toSorted();
+  const types = [
+    ...new Set(Object.values(json.Resources).map((resource) => resource.Type)),
+  ].toSorted();
   return { app, config, template, json, only, types };
 }
 
@@ -48,12 +51,20 @@ describe("Ec2Stack, default layout", () => {
     expect(group["SecurityGroupIngress"]).toBeUndefined();
     template.resourceCountIs("AWS::EC2::SecurityGroupIngress", 0);
     expect(instance["KeyName"]).toBeUndefined();
-    expect(instance["SecurityGroupIds"]).toEqual([{ "Fn::GetAtt": ["InstanceSecurityGroup", "GroupId"] }]);
+    expect(instance["SecurityGroupIds"]).toEqual([
+      { "Fn::GetAtt": ["InstanceSecurityGroup", "GroupId"] },
+    ]);
   });
 
   it("lets the instance open HTTPS connections and nothing else", () => {
     expect(only("AWS::EC2::SecurityGroup").Properties?.["SecurityGroupEgress"]).toEqual([
-      { IpProtocol: "tcp", FromPort: 443, ToPort: 443, CidrIp: "0.0.0.0/0", Description: "HTTPS to AWS APIs" },
+      {
+        IpProtocol: "tcp",
+        FromPort: 443,
+        ToPort: 443,
+        CidrIp: "0.0.0.0/0",
+        Description: "HTTPS to AWS APIs",
+      },
     ]);
   });
 
@@ -79,7 +90,12 @@ describe("Ec2Stack, default layout", () => {
   it("gives the role the SSM agent policy and one read-only statement of its own", () => {
     const role = only("AWS::IAM::Role").Properties ?? {};
     expect(role["ManagedPolicyArns"]).toEqual([
-      { "Fn::Join": ["", ["arn:", { Ref: "AWS::Partition" }, ":iam::aws:policy/AmazonSSMManagedInstanceCore"]] },
+      {
+        "Fn::Join": [
+          "",
+          ["arn:", { Ref: "AWS::Partition" }, ":iam::aws:policy/AmazonSSMManagedInstanceCore"],
+        ],
+      },
     ]);
     expect(JSON.stringify(role["AssumeRolePolicyDocument"])).toContain("ec2.amazonaws.com");
 
@@ -90,7 +106,10 @@ describe("Ec2Stack, default layout", () => {
     expect(statements[0]?.Action).toBe("s3:GetObject");
     // The release prefix of this stack's bucket. Not the bucket, not "*".
     expect(statements[0]?.Resource).toEqual({
-      "Fn::Join": ["", [{ "Fn::GetAtt": [expect.stringMatching(/^Releases/), "Arn"] }, "/releases/*"]],
+      "Fn::Join": [
+        "",
+        [{ "Fn::GetAtt": [expect.stringMatching(/^Releases/), "Arn"] }, "/releases/*"],
+      ],
     });
     expect(only("AWS::IAM::InstanceProfile").Properties?.["Roles"]).toHaveLength(1);
     expect(instance["IamInstanceProfile"]).toEqual({ Ref: "InstanceProfile" });
@@ -182,14 +201,20 @@ describe("Ec2Stack, default layout", () => {
       "AWS::IAM::InstanceProfile": ["Roles"],
       "AWS::IAM::Policy": ["PolicyDocument", "PolicyName", "Roles"],
       "AWS::IAM::Role": ["AssumeRolePolicyDocument", "Description", "ManagedPolicyArns"],
-      "AWS::S3::Bucket": ["BucketEncryption", "OwnershipControls", "PublicAccessBlockConfiguration"],
+      "AWS::S3::Bucket": [
+        "BucketEncryption",
+        "OwnershipControls",
+        "PublicAccessBlockConfiguration",
+      ],
       "AWS::S3::BucketPolicy": ["Bucket", "PolicyDocument"],
     };
     for (const layout of [privateLayout, publicLayout]) {
       for (const [id, resource] of Object.entries(layout.json.Resources)) {
         const allowed = handled[resource.Type];
         if (allowed !== undefined) {
-          expect(allowed, id).toEqual(expect.arrayContaining(Object.keys(resource.Properties ?? {})));
+          expect(allowed, id).toEqual(
+            expect.arrayContaining(Object.keys(resource.Properties ?? {})),
+          );
         }
       }
     }
@@ -232,14 +257,20 @@ describe("Ec2Stack, other layouts", () => {
 
   it("starts the data volume from a snapshot with `dataSnapshotId`", () => {
     const volume = synth({ dataSnapshotId: "snap-0123456789abcdef0" }).only("AWS::EC2::Volume");
-    expect(volume.Properties).toMatchObject({ SnapshotId: "snap-0123456789abcdef0", Size: 8, Encrypted: true });
+    expect(volume.Properties).toMatchObject({
+      SnapshotId: "snap-0123456789abcdef0",
+      Size: 8,
+      Encrypted: true,
+    });
     expect(privateLayout.only("AWS::EC2::Volume").Properties?.["SnapshotId"]).toBeUndefined();
   });
 
   it("launches a pinned image with `amiId`, without the parameter", () => {
     const { only, json } = synth({ amiId: "ami-0123456789abcdef0" });
     expect(only("AWS::EC2::Instance").Properties?.["ImageId"]).toBe("ami-0123456789abcdef0");
-    expect(Object.values(json.Parameters).filter((parameter) => parameter.Type.includes("Image"))).toEqual([]);
+    expect(
+      Object.values(json.Parameters).filter((parameter) => parameter.Type.includes("Image")),
+    ).toEqual([]);
   });
 
   it("rejects settings that are not on the list", () => {

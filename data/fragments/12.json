@@ -445,7 +445,9 @@
       "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
       "title": "AWS Price List: Elastic Load Balancing, ap-northeast-1",
       "checkedAt": "2026-10-12",
-      "supports": ["Application Load Balancer: USD 0.0243 per hour (or partial hour) and USD 0.008 per LCU-hour"],
+      "supports": [
+        "Application Load Balancer: USD 0.0243 per hour (or partial hour) and USD 0.008 per LCU-hour"
+      ],
       "note": "Offer published 2026-09-11T12:45:44Z."
     },
     {
@@ -784,7 +786,10 @@
     },
     {
       "id": "12.architecture",
-      "sources": ["examples/12-containers/infra/lib/containers-stack.ts", "examples/12-containers/src/config.ts"],
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/config.ts"
+      ],
       "tasks": ["ecs:infra:synth"],
       "boundary": "local",
       "criteria": ["cost"],
@@ -903,7 +908,10 @@
     },
     {
       "id": "12.versions",
-      "sources": ["examples/12-containers/src/compat.ts", "examples/12-containers/test/versions.test.ts"],
+      "sources": [
+        "examples/12-containers/src/compat.ts",
+        "examples/12-containers/test/versions.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["distributed", "test"],
@@ -943,14 +951,25 @@
         "examples/12-containers/scripts/logs.ts",
         "tools/src/infra"
       ],
-      "tasks": ["ecs:infra:diff", "ecs:infra:deploy", "ecs:image:push", "ecs:watch", "ecs:logs", "ecs:infra:drift"],
+      "tasks": [
+        "ecs:infra:diff",
+        "ecs:infra:deploy",
+        "ecs:image:push",
+        "ecs:watch",
+        "ecs:logs",
+        "ecs:infra:drift"
+      ],
       "boundary": "cloud",
       "criteria": ["drift", "cost"],
       "verification": "unverified"
     },
     {
       "id": "12.cost",
-      "sources": ["examples/12-containers/src/cost.ts", "examples/12-containers/test/pricing.test.ts", "data/pricing"],
+      "sources": [
+        "examples/12-containers/src/cost.ts",
+        "examples/12-containers/test/pricing.test.ts",
+        "data/pricing"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["cost", "test"],
@@ -1230,7 +1249,10 @@
         "en": "Containers: the default layout for one day"
       },
       "assumptions": {
-        "ja": ["`containers-idle` と同じ構成を 24 時間", "repository の保存料金、ログ、データ転送、LCU は未算入"],
+        "ja": [
+          "`containers-idle` と同じ構成を 24 時間",
+          "repository の保存料金、ログ、データ転送、LCU は未算入"
+        ],
         "en": [
           "The layout of `containers-idle` for 24 hours",
           "Repository storage, logs, data transfer, and LCUs are not included"

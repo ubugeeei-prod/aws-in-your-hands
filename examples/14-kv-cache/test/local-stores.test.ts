@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
+
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { afterAll, describe, it } from "vite-plus/test";
+
 import { DynamoDbCacheStore, DynamoDbCounterStore } from "../src/dynamodb-store.ts";
 import { openLocalValkey } from "../src/valkey-client.ts";
 import { ValkeyCacheStore, ValkeyCounterStore } from "../src/valkey-store.ts";
@@ -23,7 +25,10 @@ if (valkeyUrl === undefined) {
   const provider = async () => valkey.commands;
   afterAll(() => valkey.close());
 
-  describeCounterContract("Valkey", async () => ({ store: new ValkeyCounterStore(provider), subject: randomUUID() }));
+  describeCounterContract("Valkey", async () => ({
+    store: new ValkeyCounterStore(provider),
+    subject: randomUUID(),
+  }));
   describeCacheContract("Valkey", async () => ({
     store: new ValkeyCacheStore(provider),
     prefix: randomUUID(),

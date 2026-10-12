@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ApiError } from "@aih/example-06-auth/api/src/client.ts";
 import { ref, watch } from "vue";
+
+import { ApiError } from "@aih/example-06-auth/api/src/client.ts";
+
 import { type AttachmentsClient, UploadError } from "../../api/src/client.ts";
 import { type AttachmentView, IMAGE_TYPES, MAX_UPLOAD_BYTES } from "../../api/src/contract.ts";
 import { checkFile } from "./check-file.ts";

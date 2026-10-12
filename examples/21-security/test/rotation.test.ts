@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { rotate, type RotationApi } from "../src/rotation.ts";
 import { MemorySecretStore } from "../src/secret-source.ts";
 
@@ -32,7 +33,12 @@ function fake(createdAt = at(0)) {
 describe("rotating the signing secret", () => {
   it("makes the new version current and keeps the old one as previous", async () => {
     const { api, store } = fake();
-    const result = await rotate(api, { versionId: "v2", newKey: key(2), now: at(OVERLAP), overlapMs: OVERLAP });
+    const result = await rotate(api, {
+      versionId: "v2",
+      newKey: key(2),
+      now: at(OVERLAP),
+      overlapMs: OVERLAP,
+    });
     expect(result).toEqual({ status: "rotated", current: "v2", previous: "v1" });
     expect(store.stageOf("v1")).toEqual(["AWSPREVIOUS"]);
     expect(store.stageOf("v2")).toEqual(["AWSCURRENT"]);
@@ -45,7 +51,11 @@ describe("rotating the signing secret", () => {
     await expect(rotate(api, input)).rejects.toThrow("socket hang up");
 
     // The write happened. The retry must notice, not rotate a second time and push v1 out of AWSPREVIOUS.
-    expect(await rotate(api, input)).toEqual({ status: "already-rotated", current: "v2", previous: "v1" });
+    expect(await rotate(api, input)).toEqual({
+      status: "already-rotated",
+      current: "v2",
+      previous: "v1",
+    });
     expect(state.puts).toBe(1);
     expect(store.versions).toHaveLength(2);
   });
@@ -55,18 +65,34 @@ describe("rotating the signing secret", () => {
     state.clock = at(OVERLAP);
     await rotate(api, { versionId: "v2", newKey: key(2), now: at(OVERLAP), overlapMs: OVERLAP });
 
-    const soon = await rotate(api, { versionId: "v3", newKey: key(3), now: at(OVERLAP + 60_000), overlapMs: OVERLAP });
+    const soon = await rotate(api, {
+      versionId: "v3",
+      newKey: key(3),
+      now: at(OVERLAP + 60_000),
+      overlapMs: OVERLAP,
+    });
     expect(soon).toEqual({ status: "too-soon", current: "v2", waitMs: OVERLAP - 60_000 });
     expect(state.puts).toBe(1);
 
     state.clock = at(2 * OVERLAP);
-    const later = await rotate(api, { versionId: "v3", newKey: key(3), now: at(2 * OVERLAP), overlapMs: OVERLAP });
+    const later = await rotate(api, {
+      versionId: "v3",
+      newKey: key(3),
+      now: at(2 * OVERLAP),
+      overlapMs: OVERLAP,
+    });
     expect(later).toMatchObject({ status: "rotated", current: "v3", previous: "v2" });
   });
 
   it("rotates at once when forced, for a key that has leaked", async () => {
     const { api } = fake();
-    const result = await rotate(api, { versionId: "v2", newKey: key(2), now: at(1), overlapMs: OVERLAP, force: true });
+    const result = await rotate(api, {
+      versionId: "v2",
+      newKey: key(2),
+      now: at(1),
+      overlapMs: OVERLAP,
+      force: true,
+    });
     expect(result.status).toBe("rotated");
   });
 
@@ -75,7 +101,12 @@ describe("rotating the signing secret", () => {
     store.put({ versionId: "v2", key: key(2), createdAt: at(0) });
     store.put({ versionId: "v3", key: key(3), createdAt: at(0) });
     await expect(
-      rotate(api, { versionId: "v2", newKey: "another-value".repeat(4), now: at(OVERLAP), overlapMs: OVERLAP }),
+      rotate(api, {
+        versionId: "v2",
+        newKey: "another-value".repeat(4),
+        now: at(OVERLAP),
+        overlapMs: OVERLAP,
+      }),
     ).rejects.toMatchObject({ name: "ResourceExistsException" });
   });
 

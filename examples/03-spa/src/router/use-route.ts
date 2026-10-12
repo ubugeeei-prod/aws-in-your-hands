@@ -1,4 +1,5 @@
 import { readonly, ref } from "vue";
+
 import { parseRoute, pathFor, type Route } from "./route.ts";
 
 const current = ref<Route>(parseRoute(window.location.pathname));

@@ -62,10 +62,13 @@ function parseRedirect(raw, uri) {
   if (!to.startsWith("/") || to.startsWith("//") || to.includes("\\") || to === uri) {
     return null;
   }
-  if (typeof rule.status !== "number" || !Object.prototype.hasOwnProperty.call(REDIRECTS, rule.status)) {
+  if (
+    typeof rule.status !== "number" ||
+    !Object.prototype.hasOwnProperty.call(REDIRECTS, rule.status)
+  ) {
     return null;
   }
-  return { to: to, status: rule.status };
+  return { to, status: rule.status };
 }
 
 function queryString(querystring) {
@@ -75,10 +78,10 @@ function queryString(querystring) {
     const entry = querystring[key];
     const values = entry.multiValue ? entry.multiValue : [entry];
     for (let i = 0; i < values.length; i++) {
-      pairs.push(values[i].value === "" ? key : key + "=" + values[i].value);
+      pairs.push(values[i].value === "" ? key : `${key}=${values[i].value}`);
     }
   }
-  return pairs.length > 0 ? "?" + pairs.join("&") : "";
+  return pairs.length > 0 ? `?${pairs.join("&")}` : "";
 }
 
 function redirect(rule, querystring) {
@@ -108,7 +111,7 @@ async function handler(event) {
   const lastSegment = uri.substring(uri.lastIndexOf("/") + 1);
   // Files are never redirected, which saves one read on every asset.
   if (!lastSegment.includes(".") && uri.length <= MAX_REDIRECT_PATH) {
-    const raw = await read("redirect:" + uri);
+    const raw = await read(`redirect:${uri}`);
     const rule = raw === null ? null : parseRedirect(raw, uri);
     if (rule !== null) {
       return redirect(rule, request.querystring);
@@ -118,7 +121,7 @@ async function handler(event) {
   if (uri === "/") {
     request.uri = (await read("flag:new-home")) === "on" ? "/home-v2.html" : "/index.html";
   } else if (uri.endsWith("/")) {
-    request.uri = uri + "index.html";
+    request.uri = `${uri}index.html`;
   }
   return request;
 }

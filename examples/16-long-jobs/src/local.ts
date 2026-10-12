@@ -3,7 +3,11 @@ import type { Invoke } from "./local-workflow.ts";
 import { type Budget, type Deps, discardExport, exportPages, finishExport } from "./steps.ts";
 import { exportWorkflow } from "./workflow.ts";
 
-const NAMES = { exportPages: "local:export-pages", finish: "local:finish", discard: "local:discard" };
+const NAMES = {
+  exportPages: "local:export-pages",
+  finish: "local:finish",
+  discard: "local:discard",
+};
 
 /** The deployed definition, with names in place of the function ARNs. */
 export const localDefinition = exportWorkflow(NAMES);

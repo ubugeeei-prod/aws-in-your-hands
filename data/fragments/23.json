@@ -288,7 +288,9 @@
       "url": "https://docs.aws.amazon.com/linux/al2023/ug/imdsv2.html",
       "title": "IMDSv2 (Amazon Linux 2023 User Guide)",
       "checkedAt": "2026-10-12",
-      "supports": ["Instances launched from the AL2023 AMI require IMDSv2 and get a hop limit of 2 by default"]
+      "supports": [
+        "Instances launched from the AL2023 AMI require IMDSv2 and get a hop limit of 2 by default"
+      ]
     },
     {
       "id": "ec2-iam-roles",
@@ -599,7 +601,9 @@
       "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html",
       "title": "DeletionPolicy attribute",
       "checkedAt": "2026-10-12",
-      "supports": ["Snapshot is supported for resources such as AWS::EC2::Volume; Retain is supported for any resource"]
+      "supports": [
+        "Snapshot is supported for resources such as AWS::EC2::Volume; Retain is supported for any resource"
+      ]
     },
     {
       "id": "aws-price-list-ec2-compute",
@@ -632,7 +636,9 @@
       "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-destroy.md",
       "title": "cdkd v0.296.28: destroy",
       "checkedAt": "2026-10-12",
-      "supports": ["A non-empty S3 bucket fails the destroy unless the bucket opted in to being emptied"]
+      "supports": [
+        "A non-empty S3 bucket fails the destroy unless the bucket opted in to being emptied"
+      ]
     },
     {
       "id": "aws-cdk-lib-ec2-machine-image",
@@ -712,7 +718,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
       "title": "Lambda quotas",
       "checkedAt": "2026-10-12",
-      "supports": ["A function invocation can run for up to 900 seconds (15 minutes); memory is up to 10,240 MB"]
+      "supports": [
+        "A function invocation can run for up to 900 seconds (15 minutes); memory is up to 10,240 MB"
+      ]
     },
     {
       "id": "fargate-ephemeral-storage",
@@ -738,7 +746,9 @@
       "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html",
       "title": "Amazon ECS services",
       "checkedAt": "2026-10-12",
-      "supports": ["When a task of a service fails or stops, the service scheduler launches another to replace it"]
+      "supports": [
+        "When a task of a service fails or stops, the service scheduler launches another to replace it"
+      ]
     },
     {
       "id": "lambda-ephemeral-storage",
@@ -763,7 +773,9 @@
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html",
       "title": "Manually create or edit the CloudWatch agent configuration file",
       "checkedAt": "2026-10-12",
-      "supports": ["The agent's logs section can collect systemd journal entries on Linux through a journald section"]
+      "supports": [
+        "The agent's logs section can collect systemd journal entries on Linux through a journald section"
+      ]
     }
   ],
   "glossary": [
@@ -959,7 +971,10 @@
     },
     {
       "id": "23.role",
-      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
       "tasks": ["test:unit", "ec2:infra:synth"],
       "boundary": "local+cloud",
       "criteria": ["test"],
@@ -967,7 +982,10 @@
     },
     {
       "id": "23.ami",
-      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
       "tasks": ["test:unit", "ec2:infra:synth"],
       "boundary": "local+cloud",
       "criteria": ["test", "drift"],

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { brokenList, harness, requestIdOf } from "./harness.ts";
 
 // No tracer is registered in this file: these are the lines of a process
@@ -6,7 +7,9 @@ import { brokenList, harness, requestIdOf } from "./harness.ts";
 
 async function mixedTraffic() {
   const h = harness({ repository: brokenList("table unavailable") });
-  const created = (await (await h.send("POST", "/notes", { title: "private title", body: "private body" })).json()) as {
+  const created = (await (
+    await h.send("POST", "/notes", { title: "private title", body: "private body" })
+  ).json()) as {
     id: string;
   };
   await h.send("GET", `/notes/${created.id}`);
@@ -50,7 +53,13 @@ describe("log lines written by the notes API", () => {
     );
     const written = h.raw.join("\n");
 
-    for (const secret of ["private title", "private body", "query-secret", "header-secret", "cookie-secret"]) {
+    for (const secret of [
+      "private title",
+      "private body",
+      "query-secret",
+      "header-secret",
+      "cookie-secret",
+    ]) {
       expect(written).not.toContain(secret);
     }
     expect(h.lines()[0]).toMatchObject({ path: "/notes", status: 201 });

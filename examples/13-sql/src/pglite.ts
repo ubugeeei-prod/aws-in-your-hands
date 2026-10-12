@@ -1,6 +1,8 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+
 import { PGlite } from "@electric-sql/pglite";
+
 import type { Db } from "./db.ts";
 
 function processIsAlive(pid: number): boolean {
@@ -58,7 +60,11 @@ export async function openPglite(dataDir?: string): Promise<Db> {
   return {
     withConnection(use) {
       const result = turn.then(() =>
-        use({ query: async (text, params) => ({ rows: (await pglite.query(text, [...(params ?? [])])).rows }) }),
+        use({
+          query: async (text, params) => ({
+            rows: (await pglite.query(text, [...(params ?? [])])).rows,
+          }),
+        }),
       );
       turn = result.catch(() => undefined);
       return result;

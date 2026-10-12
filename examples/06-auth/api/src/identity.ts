@@ -23,7 +23,10 @@ const eventSchema = z.object({
   requestContext: z.object({ authorizer: z.object({ jwt: z.object({ claims: z.unknown() }) }) }),
 });
 
-export function identityFromApiGateway(event: unknown, expectedClientId: string): Identity | undefined {
+export function identityFromApiGateway(
+  event: unknown,
+  expectedClientId: string,
+): Identity | undefined {
   const parsedEvent = eventSchema.safeParse(event);
   if (!parsedEvent.success) {
     // A route without the authorizer in front means "nobody", never "anybody".

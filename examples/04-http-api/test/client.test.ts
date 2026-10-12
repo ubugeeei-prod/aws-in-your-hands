@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
 import { createNoteService, InMemoryNoteRepository } from "../src/notes.ts";
@@ -56,7 +57,10 @@ describe("typed client against a server that breaks the contract", () => {
   });
 
   it("rejects an HTML error page from something in front of the API", async () => {
-    const client = createNotesClient("http://api.test", respond(502, "<html>Bad Gateway</html>", "text/html"));
+    const client = createNotesClient(
+      "http://api.test",
+      respond(502, "<html>Bad Gateway</html>", "text/html"),
+    );
     await expect(client.list()).rejects.toMatchObject({ status: 502, code: "unexpected_response" });
   });
 });

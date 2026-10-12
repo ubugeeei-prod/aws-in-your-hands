@@ -4,20 +4,35 @@
 // vp run recovery:drill summary <name>                  prints the record and the times computed from it
 //
 // Touches nothing but files under reports/, which git ignores.
+
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { type DrillRecord, drillRecordSchema, isCount, isMoment, mark, summarize } from "../src/drill.ts";
 
-const { values, positionals } = parseArgs({ allowPositionals: true, options: { at: { type: "string" } } });
+import {
+  type DrillRecord,
+  drillRecordSchema,
+  isCount,
+  isMoment,
+  mark,
+  summarize,
+} from "../src/drill.ts";
+
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: { at: { type: "string" } },
+});
 const [command, name, field, value] = positionals;
 
 const directory = new URL("../../../reports/drills/", import.meta.url);
 const template = new URL("../drill/record.template.json", import.meta.url);
-const read = (url: URL): DrillRecord => drillRecordSchema.parse(JSON.parse(readFileSync(url, "utf8")));
+const read = (url: URL): DrillRecord =>
+  drillRecordSchema.parse(JSON.parse(readFileSync(url, "utf8")));
 
 try {
   if (command === undefined || name === undefined || !/^[A-Za-z0-9-]+$/.test(name)) {
-    throw new Error("usage: drill.ts <new|mark|set|summary> <name> [moment|count] [number] [--at ISO]");
+    throw new Error(
+      "usage: drill.ts <new|mark|set|summary> <name> [moment|count] [number] [--at ISO]",
+    );
   }
   const file = new URL(`${name}.json`, directory);
   const save = (record: DrillRecord) => writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
@@ -44,7 +59,9 @@ try {
     const record = read(file);
     const number = Number(value);
     if (field === undefined || !isCount(record, field) || !Number.isInteger(number) || number < 0) {
-      throw new Error(`set needs one of: ${Object.keys(record.counts).join(", ")}, and a whole number`);
+      throw new Error(
+        `set needs one of: ${Object.keys(record.counts).join(", ")}, and a whole number`,
+      );
     }
     save({ ...record, counts: { ...record.counts, [field]: number } });
     console.log(`${field} = ${number}`);

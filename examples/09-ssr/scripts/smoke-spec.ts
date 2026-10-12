@@ -1,11 +1,13 @@
 // What the deployed site must show, as functions of what was observed.
+
 import { NO_STORE, SHARED } from "../core/cache-control.ts";
 
 export type Observed = { status: number; headers: Record<string, string>; body: string };
 
 // #region spec
 const servedFromCache = (observed: Observed): boolean =>
-  (observed.headers["x-cache"] ?? "").toLowerCase().startsWith("hit") || observed.headers["age"] !== undefined;
+  (observed.headers["x-cache"] ?? "").toLowerCase().startsWith("hit") ||
+  observed.headers["age"] !== undefined;
 
 /** A public page: labelled shareable, free of cookies, and actually reused by CloudFront. */
 export function publicPageProblem(first: Observed, later: Observed[]): string | null {
@@ -41,10 +43,14 @@ export function personalPageProblem(observations: Observed[]): string | null {
 
 /** The function URL itself, asked without CloudFront's signature. */
 export const directUrlProblem = (observed: Observed): string | null =>
-  observed.status === 403 ? null : `the function URL answered ${observed.status} to an unsigned request`;
+  observed.status === 403
+    ? null
+    : `the function URL answered ${observed.status} to an unsigned request`;
 
 export const refusedProblem = (observed: Observed): string | null =>
-  observed.status >= 400 && observed.status < 500 ? null : `expected a 4xx refusal, got ${observed.status}`;
+  observed.status >= 400 && observed.status < 500
+    ? null
+    : `expected a 4xx refusal, got ${observed.status}`;
 // #endregion spec
 
 /** Found from a page, because the names change with every build. */

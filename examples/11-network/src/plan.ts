@@ -5,7 +5,10 @@ import { type InterfaceService, type NetworkConfig, REGION } from "./config.ts";
 export type Tier = "public" | "private";
 
 /** Where 0.0.0.0/0 goes. `null`: the route table has no such route. */
-export type DefaultRoute = null | { via: "internet-gateway" } | { via: "nat-gateway"; availabilityZone: string };
+export type DefaultRoute =
+  | null
+  | { via: "internet-gateway" }
+  | { via: "nat-gateway"; availabilityZone: string };
 
 export type SubnetPlan = {
   /** "Public1", "Private2": also the logical ID in the stack and the name in exports. */
@@ -36,10 +39,15 @@ export function planNetwork(config: NetworkConfig): NetworkPlan {
   const zones = config.availabilityZones;
   // Lower half for public subnets, upper half for private ones. A third zone
   // or a larger subnet can be added later without renumbering what exists.
-  const half = { public: subnetAt(vpc, vpc.prefix + 1, 0), private: subnetAt(vpc, vpc.prefix + 1, 1) };
+  const half = {
+    public: subnetAt(vpc, vpc.prefix + 1, 0),
+    private: subnetAt(vpc, vpc.prefix + 1, 1),
+  };
 
-  const natZones = config.egress === "none" ? [] : config.egress === "nat" ? zones.slice(0, 1) : zones;
-  const natFor = (zone: string): string | undefined => (natZones.includes(zone) ? zone : natZones[0]);
+  const natZones =
+    config.egress === "none" ? [] : config.egress === "nat" ? zones.slice(0, 1) : zones;
+  const natFor = (zone: string): string | undefined =>
+    natZones.includes(zone) ? zone : natZones[0];
 
   const subnet = (tier: Tier, zone: string, index: number): SubnetPlan => {
     const cidr = subnetAt(half[tier], config.subnetPrefix, index);
@@ -66,7 +74,10 @@ export function planNetwork(config: NetworkConfig): NetworkPlan {
       ...zones.map((zone, index) => subnet("public", zone, index)),
       ...zones.map((zone, index) => subnet("private", zone, index)),
     ],
-    natGateways: natZones.map((zone) => ({ availabilityZone: zone, subnetId: `Public${zones.indexOf(zone) + 1}` })),
+    natGateways: natZones.map((zone) => ({
+      availabilityZone: zone,
+      subnetId: `Public${zones.indexOf(zone) + 1}`,
+    })),
     gatewayEndpoints: ["s3", "dynamodb"],
     interfaceEndpoints: [...config.interfaceEndpoints],
   };

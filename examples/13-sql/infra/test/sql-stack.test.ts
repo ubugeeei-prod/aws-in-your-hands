@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { SqlStack } from "../lib/sql-stack.ts";
 
 // Synthesis bundles the handler with esbuild, so it runs once for the file.
@@ -76,7 +77,9 @@ describe("SqlStack", () => {
 
   it("uses only resource types that were checked against the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::ApiGatewayV2::Api",
       "AWS::ApiGatewayV2::Integration",
       "AWS::ApiGatewayV2::Route",

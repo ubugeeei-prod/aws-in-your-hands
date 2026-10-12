@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
 import type { z } from "zod";
+
 import { allowancesSchema, scenariosSchema, unitPricesSchema } from "../pricing/schema.ts";
 import {
   glossarySchema,
@@ -14,9 +16,13 @@ import {
 export const repoRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
 function load<T>(path: string, schema: z.ZodType<T>): T {
-  const result = schema.safeParse(JSON.parse(readFileSync(new URL(path, `file://${repoRoot}`), "utf8")));
+  const result = schema.safeParse(
+    JSON.parse(readFileSync(new URL(path, `file://${repoRoot}`), "utf8")),
+  );
   if (!result.success) {
-    const problems = result.error.issues.slice(0, 10).map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = result.error.issues
+      .slice(0, 10)
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`);
     throw new Error(`${path} is not valid:\n  ${problems.join("\n  ")}`);
   }
   return result.data;

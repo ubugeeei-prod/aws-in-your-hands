@@ -1,10 +1,13 @@
 // Recovery only. A normal publish needs no invalidation.
+
 import { resolve } from "node:path";
+
 import {
   CloudFrontClient,
   CreateInvalidationCommand,
   waitUntilInvalidationCompleted,
 } from "@aws-sdk/client-cloudfront";
+
 import { preflight } from "../aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "../infra/outputs.ts";
 
@@ -15,8 +18,15 @@ if (appDir === undefined || stack === undefined) {
 }
 
 try {
-  const { target } = await preflight({ access: "mutate", action: "invalidate CloudFront cache", stack });
-  const distributionId = requireOutput(await readStackOutputs(resolve(appDir), stack, target.region), "DistributionId");
+  const { target } = await preflight({
+    access: "mutate",
+    action: "invalidate CloudFront cache",
+    stack,
+  });
+  const distributionId = requireOutput(
+    await readStackOutputs(resolve(appDir), stack, target.region),
+    "DistributionId",
+  );
   // CloudFront's control plane is global and served from us-east-1.
   const cloudfront = new CloudFrontClient({ region: "us-east-1" });
   // "/*" counts as one path toward the 1,000 free paths per month.
@@ -24,7 +34,10 @@ try {
   const created = await cloudfront.send(
     new CreateInvalidationCommand({
       DistributionId: distributionId,
-      InvalidationBatch: { CallerReference: `aih-${Date.now()}`, Paths: { Quantity: items.length, Items: items } },
+      InvalidationBatch: {
+        CallerReference: `aih-${Date.now()}`,
+        Paths: { Quantity: items.length, Items: items },
+      },
     }),
   );
   const id = created.Invalidation?.Id;

@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { CelldVersion } from "../src/celld.ts";
 import type { NodeName } from "../src/config.ts";
 import type { FleetView, NodeHealth } from "../src/health.ts";
-import { describeRollout, drainFleet, type FleetOps, rollingUpdate, stoppedFleetUpdate } from "../src/rollout.ts";
+import {
+  describeRollout,
+  drainFleet,
+  type FleetOps,
+  rollingUpdate,
+  stoppedFleetUpdate,
+} from "../src/rollout.ts";
 
 // A stand-in fleet: three records and a log. No clock: `wait` only writes to the log,
 // and every failure below is placed at an exact step.
@@ -115,7 +122,12 @@ const actions = (log: string[]): string[] =>
 describe("a rolling update", () => {
   it("takes one node at a time, in order: drain, install, start, settle", async () => {
     const { ops, log, observed } = fleet(["a", "b", "c"]);
-    const result = await rollingUpdate({ nodes: ["a", "b", "c"], target: "v0.6.2", ops, settle: quick });
+    const result = await rollingUpdate({
+      nodes: ["a", "b", "c"],
+      target: "v0.6.2",
+      ops,
+      settle: quick,
+    });
     expect(result.ok).toBe(true);
     expect(actions(log)).toEqual([
       "drain a",
@@ -148,20 +160,37 @@ describe("a rolling update", () => {
     ["drain", ["drain a", "install a v0.6.2", "start a"], ["b", "c"]],
     ["install", ["drain a", "install a v0.6.2", "start a", "drain b"], ["c"]],
     ["start", ["drain a", "install a v0.6.2", "start a", "drain b", "install b v0.6.2"], ["c"]],
-  ])("stops where %s fails on the second node and leaves the rest alone", async (step, done, untouched) => {
-    const { ops, log, observed } = fleet(["a", "b", "c"], { fail: { node: "b", step } });
-    const result = await rollingUpdate({ nodes: ["a", "b", "c"], target: "v0.6.2", ops, settle: quick });
-    expect(result).toMatchObject({ ok: false, failed: { node: "b", phase: step }, untouched });
-    expect(actions(log)).toEqual(done);
-    expect(observed.mostDownAtOnce).toBeLessThanOrEqual(1);
-  });
+  ])(
+    "stops where %s fails on the second node and leaves the rest alone",
+    async (step, done, untouched) => {
+      const { ops, log, observed } = fleet(["a", "b", "c"], { fail: { node: "b", step } });
+      const result = await rollingUpdate({
+        nodes: ["a", "b", "c"],
+        target: "v0.6.2",
+        ops,
+        settle: quick,
+      });
+      expect(result).toMatchObject({ ok: false, failed: { node: "b", phase: step }, untouched });
+      expect(actions(log)).toEqual(done);
+      expect(observed.mostDownAtOnce).toBeLessThanOrEqual(1);
+    },
+  );
 
   it("stops when a restarted node never finishes restoring, with the next node still serving", async () => {
     const { ops, log, nodes } = fleet(["a", "b", "c"], { neverSettles: "a" });
-    const result = await rollingUpdate({ nodes: ["a", "b", "c"], target: "v0.6.2", ops, settle: quick });
+    const result = await rollingUpdate({
+      nodes: ["a", "b", "c"],
+      target: "v0.6.2",
+      ops,
+      settle: quick,
+    });
     expect(result).toMatchObject({
       ok: false,
-      failed: { node: "a", phase: "settle", detail: "not settled after 4 checks: peer a is still restoring 7 cell(s)" },
+      failed: {
+        node: "a",
+        phase: "settle",
+        detail: "not settled after 4 checks: peer a is still restoring 7 cell(s)",
+      },
       untouched: ["b", "c"],
     });
     expect(log.filter((line) => line === "wait 5000")).toHaveLength(4);
@@ -181,16 +210,34 @@ describe("a rolling update", () => {
 
   it("touches nothing when a node is already down", async () => {
     const { ops, log } = fleet(["a", "b", "c"], { down: ["c"] });
-    const result = await rollingUpdate({ nodes: ["a", "b", "c"], target: "v0.6.2", ops, settle: quick });
-    expect(result).toMatchObject({ ok: false, failed: { node: "c", phase: "precheck" }, untouched: ["a", "b", "c"] });
+    const result = await rollingUpdate({
+      nodes: ["a", "b", "c"],
+      target: "v0.6.2",
+      ops,
+      settle: quick,
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      failed: { node: "c", phase: "precheck" },
+      untouched: ["a", "b", "c"],
+    });
     expect(actions(log)).toEqual([]);
   });
 
   it("refuses any version pair the upgrade notes do not list as rolling", async () => {
     for (const from of ["v0.5.1", "v0.3.0", "v9.9.9"]) {
       const { ops, log } = fleet(["a", "b"], { from });
-      const result = await rollingUpdate({ nodes: ["a", "b"], target: "v0.6.2", ops, settle: quick });
-      expect(result, from).toMatchObject({ ok: false, failed: { phase: "plan" }, untouched: ["a", "b"] });
+      const result = await rollingUpdate({
+        nodes: ["a", "b"],
+        target: "v0.6.2",
+        ops,
+        settle: quick,
+      });
+      expect(result, from).toMatchObject({
+        ok: false,
+        failed: { phase: "plan" },
+        untouched: ["a", "b"],
+      });
       expect(actions(log), from).toEqual([]);
     }
   });
@@ -206,7 +253,12 @@ describe("a rolling update", () => {
 describe("an update of a stopped fleet", () => {
   it("installs everywhere before anything starts, so two versions never serve together", async () => {
     const { ops, log, observed } = fleet(["a", "b", "c"], { down: ["a", "b", "c"] });
-    const result = await stoppedFleetUpdate({ nodes: ["a", "b", "c"], target: "v0.6.2", ops, settle: quick });
+    const result = await stoppedFleetUpdate({
+      nodes: ["a", "b", "c"],
+      target: "v0.6.2",
+      ops,
+      settle: quick,
+    });
     expect(result.ok).toBe(true);
     expect(actions(log)).toEqual([
       "install a v0.6.2",
@@ -221,15 +273,32 @@ describe("an update of a stopped fleet", () => {
 
   it("refuses to start while any old node is still running", async () => {
     const { ops, log } = fleet(["a", "b", "c"], { down: ["a", "c"] });
-    const result = await stoppedFleetUpdate({ nodes: ["a", "b", "c"], target: "v0.6.2", ops, settle: quick });
+    const result = await stoppedFleetUpdate({
+      nodes: ["a", "b", "c"],
+      target: "v0.6.2",
+      ops,
+      settle: quick,
+    });
     expect(result).toMatchObject({ ok: false, failed: { node: "b", phase: "precheck" } });
     expect(actions(log)).toEqual([]);
   });
 
   it("starts nothing when one install fails", async () => {
-    const { ops, log } = fleet(["a", "b"], { down: ["a", "b"], fail: { node: "b", step: "install" } });
-    const result = await stoppedFleetUpdate({ nodes: ["a", "b"], target: "v0.6.2", ops, settle: quick });
-    expect(result).toMatchObject({ ok: false, failed: { node: "b", phase: "install" }, untouched: ["b"] });
+    const { ops, log } = fleet(["a", "b"], {
+      down: ["a", "b"],
+      fail: { node: "b", step: "install" },
+    });
+    const result = await stoppedFleetUpdate({
+      nodes: ["a", "b"],
+      target: "v0.6.2",
+      ops,
+      settle: quick,
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      failed: { node: "b", phase: "install" },
+      untouched: ["b"],
+    });
     expect(actions(log)).toEqual(["install a v0.6.2"]);
   });
 
@@ -251,7 +320,11 @@ describe("stopping the whole fleet", () => {
   it("stops at the node that would not drain", async () => {
     const { ops, log } = fleet(["a", "b", "c"], { fail: { node: "b", step: "drain" } });
     const result = await drainFleet(["a", "b", "c"], ops);
-    expect(result).toMatchObject({ ok: false, failed: { node: "b", phase: "drain" }, untouched: ["b", "c"] });
+    expect(result).toMatchObject({
+      ok: false,
+      failed: { node: "b", phase: "drain" },
+      untouched: ["b", "c"],
+    });
     expect(log).toEqual(["drain a"]);
   });
 });

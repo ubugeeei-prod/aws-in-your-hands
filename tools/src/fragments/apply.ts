@@ -5,8 +5,11 @@
 // list, and the task block in vite.config.ts. Chapters are written in
 // parallel; each describes its additions in one fragment so that the shared
 // files are only ever edited by this script.
+
 import { readFileSync, writeFileSync } from "node:fs";
+
 import { z } from "zod";
+
 import { repoRoot } from "../data/load.ts";
 import {
   chapterSchema,
@@ -29,7 +32,10 @@ const fragmentSchema = z.object({
   unknownAllowances: allowancesSchema.shape.unknown.default([]),
   scenarios: scenariosSchema.shape.scenarios.default([]),
   validation: z
-    .object({ records: validationSchema.shape.records.default([]), open: validationSchema.shape.open.default([]) })
+    .object({
+      records: validationSchema.shape.records.default([]),
+      open: validationSchema.shape.open.default([]),
+    })
     .default({ records: [], open: [] }),
   toolchain: toolchainSchema.shape.tools.default([]),
   tasks: z.object({
@@ -53,7 +59,8 @@ if (id === undefined) {
 const path = (file: string) => `${repoRoot}${file}`;
 const readJson = (file: string): Record<string, unknown> =>
   JSON.parse(readFileSync(path(file), "utf8")) as Record<string, unknown>;
-const writeJson = (file: string, value: unknown) => writeFileSync(path(file), `${JSON.stringify(value, null, 2)}\n`);
+const writeJson = (file: string, value: unknown) =>
+  writeFileSync(path(file), `${JSON.stringify(value, null, 2)}\n`);
 
 /** Replaces entries with the same key, appends the rest. */
 function upsert<T>(existing: T[], incoming: T[], key: (item: T) => string): T[] {
@@ -63,14 +70,20 @@ function upsert<T>(existing: T[], incoming: T[], key: (item: T) => string): T[] 
 
 const fragment = fragmentSchema.parse(readJson(`data/fragments/${id}.json`));
 if (fragment.chapterId !== id || fragment.manifest.id !== id) {
-  throw new Error(`data/fragments/${id}.json describes chapter ${fragment.chapterId}/${fragment.manifest.id}`);
+  throw new Error(
+    `data/fragments/${id}.json describes chapter ${fragment.chapterId}/${fragment.manifest.id}`,
+  );
 }
 
 const manifest = readJson("data/chapters.json") as { chapters: { id: string }[] };
-manifest.chapters = manifest.chapters.map((chapter) => (chapter.id === id ? fragment.manifest : chapter));
+manifest.chapters = manifest.chapters.map((chapter) =>
+  chapter.id === id ? fragment.manifest : chapter,
+);
 writeJson("data/chapters.json", manifest);
 
-const sources = readJson("data/sources.json") as { sources: { id: string; checkedAt: string | null }[] };
+const sources = readJson("data/sources.json") as {
+  sources: { id: string; checkedAt: string | null }[];
+};
 const merged = upsert(sources.sources, fragment.sources, (source) => source.id);
 // Sources that were read stay ahead of the ones only listed for later.
 sources.sources = [
@@ -96,8 +109,16 @@ const allowances = readJson("data/pricing/allowances.json") as {
   allowances: { priceId: string }[];
   unknown: { priceId: string }[];
 };
-allowances.allowances = upsert(allowances.allowances, fragment.allowances, (entry) => entry.priceId);
-allowances.unknown = upsert(allowances.unknown, fragment.unknownAllowances, (entry) => entry.priceId);
+allowances.allowances = upsert(
+  allowances.allowances,
+  fragment.allowances,
+  (entry) => entry.priceId,
+);
+allowances.unknown = upsert(
+  allowances.unknown,
+  fragment.unknownAllowances,
+  (entry) => entry.priceId,
+);
 writeJson("data/pricing/allowances.json", allowances);
 
 const scenarios = readJson("data/pricing/scenarios.json") as { scenarios: { id: string }[] };
@@ -126,7 +147,7 @@ const begin = `      // >>> chapter ${id}`;
 const end = `      // <<< chapter ${id}`;
 const block = `${begin}\n${fragment.tasks.snippet.replace(/\s+$/, "")}\n${end}\n`;
 const existing = new RegExp(
-  `${begin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n[\\s\\S]*?${end.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n`,
+  `${begin.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n[\\s\\S]*?${end.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n`,
 );
 const anchor = "      // ---- chapter task blocks are inserted above this line ----\n";
 if (existing.test(config)) {
@@ -155,4 +176,6 @@ const typecheckPath = "tools/src/checks/typecheck-projects.json";
 const projects = JSON.parse(readFileSync(path(typecheckPath), "utf8")) as string[];
 writeJson(typecheckPath, [...new Set([...projects, ...fragment.tasks.typecheck])]);
 
-console.log(`applied chapter ${id}. Next: vp run book:generate, then vp check --fix, then vp run check:all`);
+console.log(
+  `applied chapter ${id}. Next: vp run book:generate, then vp check --fix, then vp run check:all`,
+);

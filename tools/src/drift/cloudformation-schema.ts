@@ -21,9 +21,21 @@ export const detectionStatusSchema = z.object({
 export const resourceDriftSchema = z.object({
   LogicalResourceId: z.string(),
   ResourceType: z.string(),
-  StackResourceDriftStatus: z.enum(["IN_SYNC", "MODIFIED", "DELETED", "NOT_CHECKED", "UNKNOWN", "UNSUPPORTED"]),
+  StackResourceDriftStatus: z.enum([
+    "IN_SYNC",
+    "MODIFIED",
+    "DELETED",
+    "NOT_CHECKED",
+    "UNKNOWN",
+    "UNSUPPORTED",
+  ]),
   PropertyDifferences: z
-    .array(z.object({ PropertyPath: z.string(), DifferenceType: z.enum(["ADD", "REMOVE", "NOT_EQUAL"]) }))
+    .array(
+      z.object({
+        PropertyPath: z.string(),
+        DifferenceType: z.enum(["ADD", "REMOVE", "NOT_EQUAL"]),
+      }),
+    )
     .optional(),
   DriftStatusReason: z.string().optional(),
   /** When this resource was last checked, which may be before the detection just run. */

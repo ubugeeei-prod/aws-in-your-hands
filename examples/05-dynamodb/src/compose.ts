@@ -1,6 +1,8 @@
 import { randomBytes, randomUUID } from "node:crypto";
+
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { type App, createApp } from "./app.ts";
 import { DynamoDbNoteRepository } from "./dynamodb-repository.ts";
 import { type Env, parseEnv } from "./env.ts";

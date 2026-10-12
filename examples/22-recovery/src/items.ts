@@ -1,7 +1,8 @@
+import { z } from "zod";
+
 import { type Note, noteSchema } from "@aih/example-05-dynamodb/src/contract.ts";
 import { type Attachment, attachmentSchema } from "@aih/example-07-uploads/api/src/contract.ts";
 import { type Inspection, inspectionSchema } from "@aih/example-08-async/src/inspection.ts";
-import { z } from "zod";
 
 // #region keys
 // The key formats of chapters 05, 07, and 08, which those chapters keep
@@ -15,9 +16,9 @@ export const inspectionKey = (noteId: string, id: string): string => `INSPECTION
 export type TableItem = Record<string, unknown>;
 
 /** Everything a full read of the table can yield. */
-export interface TableReader {
+export type TableReader = {
   scan(): AsyncIterable<TableItem>;
-}
+};
 
 // #region classify
 export type Classified =
@@ -58,7 +59,10 @@ export function classify(item: unknown): Classified {
   }
   if (sk.startsWith("INSPECTION#")) {
     const inspection = inspectionSchema.safeParse(body);
-    if (!inspection.success || sk !== inspectionKey(inspection.data.noteId, inspection.data.attachmentId)) {
+    if (
+      !inspection.success ||
+      sk !== inspectionKey(inspection.data.noteId, inspection.data.attachmentId)
+    ) {
       return unknown("not an inspection this app wrote");
     }
     return { kind: "inspection", owner, inspection: inspection.data };

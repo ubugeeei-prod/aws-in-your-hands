@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { EC2_STACK, parseEc2Config, REGION } from "../../src/config.ts";
 import { Ec2Stack } from "../lib/ec2-stack.ts";
 
@@ -19,6 +20,7 @@ const config = parseEc2Config({
 
 new Ec2Stack(app, EC2_STACK, {
   env: { region: REGION },
-  description: "AWS in Your Hands chapter 23: one EC2 instance reached through Systems Manager, with a data volume",
+  description:
+    "AWS in Your Hands chapter 23: one EC2 instance reached through Systems Manager, with a data volume",
   config,
 });

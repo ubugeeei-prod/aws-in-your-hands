@@ -52,8 +52,14 @@ export function timingProblems(t: Timing): string[] {
     t.deregistrationDelay >= t.longestRequest,
     "the load balancer cuts a request that was still within its expected time",
   );
-  check(t.stopTimeout >= 2 && t.stopTimeout <= 120, "Fargate accepts a stop timeout of 2 to 120 seconds");
-  check(t.healthCheckTimeout < t.healthCheckInterval, "a health check should give up before the next one starts");
+  check(
+    t.stopTimeout >= 2 && t.stopTimeout <= 120,
+    "Fargate accepts a stop timeout of 2 to 120 seconds",
+  );
+  check(
+    t.healthCheckTimeout < t.healthCheckInterval,
+    "a health check should give up before the next one starts",
+  );
   check(
     t.healthCheckInterval >= 5 && t.healthCheckInterval <= 300,
     "the health check interval has to be 5 to 300 seconds",

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Batch } from "../src/kvs/plan.ts";
-import { KvsConflictError, type KvsPort, KvsUnavailableError, type Snapshot, syncStore } from "../src/kvs/sync.ts";
+import {
+  KvsConflictError,
+  type KvsPort,
+  KvsUnavailableError,
+  type Snapshot,
+  syncStore,
+} from "../src/kvs/sync.ts";
 
 type Step = {
   /** Runs just before the store looks at the request: another writer getting in first. */
@@ -65,7 +72,8 @@ const desired = new Map([
   ["redirect:/plans", '{"to":"/pricing/","status":301}'],
 ]);
 const many = new Map(Array.from({ length: 120 }, (_, index) => [`redirect:/page-${index}`, "x"]));
-const managed = (store: FakeStore) => new Map([...store.entries].filter(([key]) => !key.startsWith("tenant:")));
+const managed = (store: FakeStore) =>
+  new Map([...store.entries].filter(([key]) => !key.startsWith("tenant:")));
 
 describe("syncStore", () => {
   it("makes the store match, and does nothing the second time", async () => {
@@ -75,7 +83,10 @@ describe("syncStore", () => {
     expect(await syncStore(store, desired)).toMatchObject({ outcome: "applied", rounds: 1 });
     expect(store.entries).toEqual(desired);
 
-    expect(await syncStore(store, desired)).toMatchObject({ outcome: "already-in-sync", plans: [] });
+    expect(await syncStore(store, desired)).toMatchObject({
+      outcome: "already-in-sync",
+      plans: [],
+    });
     expect(store.attempts).toBe(1);
   });
 
@@ -128,7 +139,10 @@ describe("syncStore", () => {
 
   it("plans again when another writer gets in between two requests", async () => {
     const store = new FakeStore();
-    store.script = [{}, { before: (other) => other.writeFromElsewhere("redirect:/page-0", "changed") }];
+    store.script = [
+      {},
+      { before: (other) => other.writeFromElsewhere("redirect:/page-0", "changed") },
+    ];
 
     const result = await syncStore(store, many);
 
@@ -139,7 +153,9 @@ describe("syncStore", () => {
 
   it("gives up instead of retrying forever", async () => {
     const store = new FakeStore();
-    const interfere: Step = { before: (other) => other.writeFromElsewhere("tenant:acme", String(other.version)) };
+    const interfere: Step = {
+      before: (other) => other.writeFromElsewhere("tenant:acme", String(other.version)),
+    };
     store.script = Array.from({ length: 10 }, () => interfere);
 
     await expect(syncStore(store, desired, { maxRounds: 3 })).rejects.toThrow(/3 rounds/);

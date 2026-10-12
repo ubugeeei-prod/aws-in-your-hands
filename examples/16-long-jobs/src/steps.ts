@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { ExportStore } from "./export-store.ts";
 import {
   ExportCorruptError,
@@ -40,7 +41,11 @@ const partMetadataSchema = z.object({
  * budget does. Safe to run twice from the same `progress`, and safe to run
  * while another copy is running.
  */
-export async function exportPages(deps: Deps, progress: Progress, budget: Budget): Promise<Progress> {
+export async function exportPages(
+  deps: Deps,
+  progress: Progress,
+  budget: Budget,
+): Promise<Progress> {
   let { cursor, nextPart, notes, done } = progress;
   while (!done) {
     const page = await deps.source.page(cursor, budget.pageSize);
@@ -50,11 +55,16 @@ export async function exportPages(deps: Deps, progress: Progress, budget: Budget
     } else {
       const key = partKey(progress.exportId, nextPart);
       const body = `${page.notes.map((note) => JSON.stringify(note)).join("\n")}\n`;
-      const mine = { count: String(page.notes.length), ...(page.nextCursor === null ? {} : { next: page.nextCursor }) };
+      const mine = {
+        count: String(page.notes.length),
+        ...(page.nextCursor === null ? {} : { next: page.nextCursor }),
+      };
       const result = await deps.store.putIfAbsent(key, body, mine);
       // If the part was already there, an earlier attempt wrote it, and what it
       // wrote is what counts: where it stopped is where the next part starts.
-      const kept = partMetadataSchema.parse(result === "written" ? mine : await deps.store.head(key));
+      const kept = partMetadataSchema.parse(
+        result === "written" ? mine : await deps.store.head(key),
+      );
       cursor = kept.next ?? null;
       notes += kept.count;
       nextPart += 1;
@@ -72,20 +82,31 @@ export async function exportPages(deps: Deps, progress: Progress, budget: Budget
 export type Finished = { exportId: string; manifestKey: string; parts: number; notes: number };
 
 /** Checks that every part is there, then writes the manifest that makes the export visible. */
-export async function finishExport(deps: Pick<Deps, "store">, progress: Progress): Promise<Finished> {
+export async function finishExport(
+  deps: Pick<Deps, "store">,
+  progress: Progress,
+): Promise<Finished> {
   if (!progress.done) {
     throw new Error(`export ${progress.exportId} still has pages to write`);
   }
-  const parts = Array.from({ length: progress.nextPart - 1 }, (_, index) => partKey(progress.exportId, index + 1));
+  const parts = Array.from({ length: progress.nextPart - 1 }, (_, index) =>
+    partKey(progress.exportId, index + 1),
+  );
   const present = new Set(await deps.store.list(partsPrefix(progress.exportId)));
   const missing = parts.filter((key) => !present.has(key));
   if (missing.length > 0) {
     // Retrying cannot bring a part back. The workflow catches this name and discards the export.
-    throw new ExportCorruptError(`${missing.length} of ${parts.length} parts are missing, first ${missing[0]}`);
+    throw new ExportCorruptError(
+      `${missing.length} of ${parts.length} parts are missing, first ${missing[0]}`,
+    );
   }
   const manifest: Manifest = { exportId: progress.exportId, notes: progress.notes, parts };
   // No timestamp inside: two runs of the same export write byte-identical manifests.
-  await deps.store.putIfAbsent(manifestKey(progress.exportId), `${JSON.stringify(manifest, null, 2)}\n`, {});
+  await deps.store.putIfAbsent(
+    manifestKey(progress.exportId),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    {},
+  );
   return {
     exportId: progress.exportId,
     manifestKey: manifestKey(progress.exportId),

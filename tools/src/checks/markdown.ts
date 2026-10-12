@@ -27,7 +27,15 @@ export function parsePage(markdown: string): Page {
     start = end + 1;
   }
 
-  const page: Page = { frontmatter, sections: [], imports: [], diagrams: [], links: [], headings: 0, codeBlocks: 0 };
+  const page: Page = {
+    frontmatter,
+    sections: [],
+    imports: [],
+    diagrams: [],
+    links: [],
+    headings: 0,
+    codeBlocks: 0,
+  };
   let fence: { marker: string; language: string; body: string[] } | undefined;
 
   for (const line of lines.slice(start)) {
@@ -71,4 +79,4 @@ export function parsePage(markdown: string): Page {
 
 /** Whether `source` declares `#region name` (as the snippet importer requires). */
 export const hasRegion = (source: string, name: string): boolean =>
-  new RegExp(`#region ${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m").test(source);
+  new RegExp(`#region ${name.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m").test(source);

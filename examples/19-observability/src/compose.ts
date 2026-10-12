@@ -1,7 +1,9 @@
 import { randomBytes, randomUUID } from "node:crypto";
+
 import { createRepository } from "@aih/example-05-dynamodb/src/compose.ts";
 import { parseEnv } from "@aih/example-05-dynamodb/src/env.ts";
 import { createLogger } from "@aih/example-05-dynamodb/src/log.ts";
+
 import { createObservedApp, type ObservedApp } from "./app.ts";
 
 // #region compose

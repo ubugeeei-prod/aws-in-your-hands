@@ -29,7 +29,10 @@ export class InMemoryNoteRepository implements NoteRepository {
       .filter((note) => after === undefined || note.id < after);
     const notes = mine.slice(0, options.limit);
     const last = notes.at(-1);
-    return { notes, nextCursor: mine.length > options.limit && last !== undefined ? encodeCursor(last.id) : null };
+    return {
+      notes,
+      nextCursor: mine.length > options.limit && last !== undefined ? encodeCursor(last.id) : null,
+    };
   }
 
   async update(

@@ -1,12 +1,19 @@
 // vp run dev:edge
 //   node --watch src/local/dev.ts
 // The deployed function file in front of the files in site/, with edge-data.json standing in for the store.
+
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+
 import { edgeDataSchema, toEntries } from "../kvs/config.ts";
-import { isGeneratedResponse, loadViewerRequestFunction, mapKvs, type ViewerRequestEvent } from "./load-function.ts";
+import {
+  isGeneratedResponse,
+  loadViewerRequestFunction,
+  mapKvs,
+  type ViewerRequestEvent,
+} from "./load-function.ts";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const siteDir = join(root, "site");
@@ -24,7 +31,10 @@ const CONTENT_TYPES: Record<string, string> = {
 const kvs = mapKvs(() =>
   toEntries(edgeDataSchema.parse(JSON.parse(readFileSync(join(root, "edge-data.json"), "utf8")))),
 );
-const handler = loadViewerRequestFunction(new URL("../../infra/functions/edge-router.js", import.meta.url), kvs);
+const handler = loadViewerRequestFunction(
+  new URL("../../infra/functions/edge-router.js", import.meta.url),
+  kvs,
+);
 
 createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -34,7 +44,9 @@ createServer(async (request, response) => {
     request: {
       method: request.method ?? "GET",
       uri: url.pathname,
-      querystring: Object.fromEntries([...url.searchParams].map(([key, value]) => [key, { value }])),
+      querystring: Object.fromEntries(
+        [...url.searchParams].map(([key, value]) => [key, { value }]),
+      ),
       headers: {},
       cookies: {},
     },
@@ -60,7 +72,11 @@ createServer(async (request, response) => {
       throw new Error("outside site/");
     }
     const body = readFileSync(file);
-    response.writeHead(200, { "content-type": CONTENT_TYPES[extname(file)] ?? "application/octet-stream" }).end(body);
+    response
+      .writeHead(200, {
+        "content-type": CONTENT_TYPES[extname(file)] ?? "application/octet-stream",
+      })
+      .end(body);
     console.log(`200 ${url.pathname} -> ${result.uri} (reads: ${reads})`);
   } catch {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" }).end("Not Found\n");

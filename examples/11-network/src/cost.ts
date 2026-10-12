@@ -13,7 +13,8 @@ export const PRICE_IDS = {
 
 export type FixedItem = { priceId: string; quantity: number; basis: string };
 
-const count = (value: number, one: string, many: string): string => `${value} ${value === 1 ? one : many}`;
+const count = (value: number, one: string, many: string): string =>
+  `${value} ${value === 1 ? one : many}`;
 
 /** What the plan is billed for while no traffic flows. Data processing and transfer come on top. */
 export function fixedMonthlyItems(plan: NetworkPlan, hours: number = MONTH_HOURS): FixedItem[] {

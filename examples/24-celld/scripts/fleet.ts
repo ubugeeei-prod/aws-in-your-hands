@@ -3,8 +3,10 @@
 //
 // Everything that talks to the deployed fleet. Commands reach the nodes through
 // Systems Manager Run Command; nothing here opens a port or uses SSH.
+
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+
 import {
   commandResultArgs,
   invocationSchema,
@@ -15,6 +17,7 @@ import {
 } from "@aih/example-23-ec2/src/remote.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import {
   backupIdFor,
   backupIdSchema,
@@ -32,9 +35,27 @@ import { CELLD_STACK, type NodeName, nodeNames } from "../src/config.ts";
 import { parseDiagnose, parseNodeHealth } from "../src/health.ts";
 import { describeReport, joinLedgers, judge } from "../src/ledger.ts";
 import { ARTIFACT_TARGET, artifactKey, nodeSpec } from "../src/machine.ts";
-import { defaultProbePlan, lastSeqBefore, parseProbeOutput, probePlanSchema, type ProbeOutput } from "../src/probe.ts";
-import { killArgs, nodeCommands, startInstanceArgs, uploadArtifactArgs, waitInstanceArgs } from "../src/remote.ts";
-import { describeRollout, drainFleet, type FleetOps, rollingUpdate, stoppedFleetUpdate } from "../src/rollout.ts";
+import {
+  defaultProbePlan,
+  lastSeqBefore,
+  parseProbeOutput,
+  probePlanSchema,
+  type ProbeOutput,
+} from "../src/probe.ts";
+import {
+  killArgs,
+  nodeCommands,
+  startInstanceArgs,
+  uploadArtifactArgs,
+  waitInstanceArgs,
+} from "../src/remote.ts";
+import {
+  describeRollout,
+  drainFleet,
+  type FleetOps,
+  rollingUpdate,
+  stoppedFleetUpdate,
+} from "../src/rollout.ts";
 
 const ACTIONS = [
   "status",
@@ -60,7 +81,8 @@ type Action = (typeof ACTIONS)[number];
 const OBSERVING: readonly Action[] = ["status", "logs", "diagnose", "cells"];
 
 const [action, ...rest] = process.argv.slice(2);
-const isAction = (value: string | undefined): value is Action => (ACTIONS as readonly string[]).includes(value ?? "");
+const isAction = (value: string | undefined): value is Action =>
+  (ACTIONS as readonly string[]).includes(value ?? "");
 if (!isAction(action)) {
   console.error(`usage: fleet.ts <${ACTIONS.join("|")}> [arguments]`);
   process.exit(64);
@@ -78,7 +100,9 @@ function aws(args: string[], options: { inherit?: boolean } = {}): string {
     stdio: ["ignore", options.inherit === true ? "inherit" : "pipe", "inherit"],
   });
   if (result.status !== 0) {
-    throw new Error(`aws ${args.slice(0, 2).join(" ")} exited with ${result.status ?? result.signal}`);
+    throw new Error(
+      `aws ${args.slice(0, 2).join(" ")} exited with ${result.status ?? result.signal}`,
+    );
   }
   return result.stdout ?? "";
 }
@@ -86,7 +110,9 @@ function aws(args: string[], options: { inherit?: boolean } = {}): string {
 function nodeArgument(value: string | undefined, known: NodeName[]): NodeName {
   const found = known.find((node) => node === value);
   if (found === undefined) {
-    throw new Error(`expected one of the deployed nodes (${known.join(", ") || "none"}), got "${value ?? ""}"`);
+    throw new Error(
+      `expected one of the deployed nodes (${known.join(", ") || "none"}), got "${value ?? ""}"`,
+    );
   }
   return found;
 }
@@ -102,8 +128,10 @@ try {
   const bucket = requireOutput(outputs, "FleetBucketName");
   const backupBucket = requireOutput(outputs, "BackupBucketName");
   const nodes = nodeNames(Number(requireOutput(outputs, "NodeCount")));
-  const instanceOf = (node: NodeName): string => requireOutput(outputs, `Node${node.toUpperCase()}InstanceId`);
-  const volumeOf = (node: NodeName): string => requireOutput(outputs, `Node${node.toUpperCase()}VolumeId`);
+  const instanceOf = (node: NodeName): string =>
+    requireOutput(outputs, `Node${node.toUpperCase()}InstanceId`);
+  const volumeOf = (node: NodeName): string =>
+    requireOutput(outputs, `Node${node.toUpperCase()}VolumeId`);
 
   /** Sends shell lines to one node and waits for them. `quiet` keeps the node's stdout for the caller. */
   async function run(
@@ -134,7 +162,9 @@ try {
     const polls = Math.ceil((options.maxWaitSeconds ?? 300) / 2);
     for (let poll = 0; poll < polls; poll += 1) {
       await sleep(2000);
-      const result = spawnSync("aws", commandResultArgs({ commandId, instanceId, region }), { encoding: "utf8" });
+      const result = spawnSync("aws", commandResultArgs({ commandId, instanceId, region }), {
+        encoding: "utf8",
+      });
       if (result.status !== 0) {
         // The invocation takes a moment to exist after the command is accepted.
         continue;
@@ -147,7 +177,9 @@ try {
         process.stdout.write(invocation.StandardOutputContent);
       }
       process.stderr.write(invocation.StandardErrorContent);
-      console.error(`[${node}] status: ${invocation.Status}, exit code: ${invocation.ResponseCode ?? "none"}`);
+      console.error(
+        `[${node}] status: ${invocation.Status}, exit code: ${invocation.ResponseCode ?? "none"}`,
+      );
       return { ok: succeeded(invocation), stdout: invocation.StandardOutputContent };
     }
     throw new Error(`[${node}] command ${commandId} did not finish in time`);
@@ -164,7 +196,8 @@ try {
   // #region ops
   // The real side of FleetOps. src/rollout.ts decides the order; this only carries it out.
   const ops: FleetOps = {
-    nodeHealth: async (node) => parseNodeHealth(await must(node, commands.health(), "aih celld health")),
+    nodeHealth: async (node) =>
+      parseNodeHealth(await must(node, commands.health(), "aih celld health")),
     fleetView: async (via) => {
       // A failing diagnosis still prints its checks, so the output is read whatever the exit code.
       const result = await run(via, commands.diagnose(), "aih celld diagnose", { quiet: true });
@@ -188,7 +221,8 @@ try {
       ok = (await run(node, lines, comment)).ok && ok;
     }
   };
-  const chosen = (): NodeName[] => (words.length === 0 ? nodes : words.map((word) => nodeArgument(word, nodes)));
+  const chosen = (): NodeName[] =>
+    words.length === 0 ? nodes : words.map((word) => nodeArgument(word, nodes));
 
   switch (action) {
     case "status":
@@ -198,13 +232,23 @@ try {
       await each(chosen(), commands.logs(), "aih celld:logs");
       break;
     case "diagnose":
-      ok = (await run(nodeArgument(words[0] ?? nodes[0], nodes), commands.diagnose(), "aih celld:diagnose")).ok;
+      ok = (
+        await run(
+          nodeArgument(words[0] ?? nodes[0], nodes),
+          commands.diagnose(),
+          "aih celld:diagnose",
+        )
+      ).ok;
       break;
     case "smoke":
-      ok = (await run(nodeArgument(words[0] ?? nodes[0], nodes), commands.smoke(), "aih celld:smoke")).ok;
+      ok = (
+        await run(nodeArgument(words[0] ?? nodes[0], nodes), commands.smoke(), "aih celld:smoke")
+      ).ok;
       break;
     case "cells":
-      ok = (await run(nodeArgument(words[0] ?? nodes[0], nodes), commands.cells(), "aih celld:cells")).ok;
+      ok = (
+        await run(nodeArgument(words[0] ?? nodes[0], nodes), commands.cells(), "aih celld:cells")
+      ).ok;
       break;
     case "artifacts": {
       // What `vp run celld:fetch` downloaded and checked, copied to where the nodes can read it.
@@ -214,13 +258,16 @@ try {
       if (!existsSync(file)) {
         throw new Error(`${file} is missing. Run: vp run celld:fetch ${version}`);
       }
-      aws(uploadArtifactArgs({ file, bucket, key: artifactKey(spec, version, asset.file), region }));
+      aws(
+        uploadArtifactArgs({ file, bucket, key: artifactKey(spec, version, asset.file), region }),
+      );
       console.log(`uploaded ${asset.file} for ${version}`);
       break;
     }
     case "install": {
       const version = versionSchema.parse(words[0] ?? PINNED_VERSION);
-      const targets = words.length > 1 ? words.slice(1).map((word) => nodeArgument(word, nodes)) : nodes;
+      const targets =
+        words.length > 1 ? words.slice(1).map((word) => nodeArgument(word, nodes)) : nodes;
       await each(targets, commands.install(bucket, version), `aih celld:install ${version}`);
       break;
     }
@@ -241,9 +288,18 @@ try {
       const binary = ".celld/bin/celld";
       const project = ".celld/app/counter";
       if (!existsSync(binary) || !existsSync(`${project}/wrangler.jsonc`)) {
-        throw new Error("the local celld binary or the counter example is missing. Run: vp run celld:fetch --host");
+        throw new Error(
+          "the local celld binary or the counter example is missing. Run: vp run celld:fetch --host",
+        );
       }
-      const args = ["deploy", project, "--bucket", `s3://${bucket}/${spec.fleetPrefix}`, "--region", region];
+      const args = [
+        "deploy",
+        project,
+        "--bucket",
+        `s3://${bucket}/${spec.fleetPrefix}`,
+        "--region",
+        region,
+      ];
       console.error(`$ ${binary} ${args.join(" ")}`);
       ok =
         spawnSync(binary, args, {
@@ -273,7 +329,11 @@ try {
           "This pair needs a stopped fleet: vp run celld:stop-all, vp run celld:backup, then vp run celld:rollout <version> --stopped",
         );
       }
-      const result = await (stopAll ? stoppedFleetUpdate : rollingUpdate)({ nodes, target: version, ops });
+      const result = await (stopAll ? stoppedFleetUpdate : rollingUpdate)({
+        nodes,
+        target: version,
+        ops,
+      });
       console.log(describeRollout(result).join("\n"));
       ok = result.ok;
       break;
@@ -281,14 +341,18 @@ try {
     case "kill": {
       const node = nodeArgument(words[0], nodes);
       aws(killArgs({ instanceId: instanceOf(node), region }), { inherit: true });
-      console.error(`[${node}] stop requested without an OS shutdown. Bring it back with: vp run celld:revive ${node}`);
+      console.error(
+        `[${node}] stop requested without an OS shutdown. Bring it back with: vp run celld:revive ${node}`,
+      );
       break;
     }
     case "revive": {
       const node = nodeArgument(words[0], nodes);
       aws(startInstanceArgs({ instanceId: instanceOf(node), region }), { inherit: true });
       aws(waitInstanceArgs({ instanceId: instanceOf(node), region, state: "running" }));
-      console.error(`[${node}] running. celld starts with the machine; check with: vp run celld:status ${node}`);
+      console.error(
+        `[${node}] running. celld starts with the machine; check with: vp run celld:status ${node}`,
+      );
       break;
     }
     // #region loss-check
@@ -316,13 +380,24 @@ try {
       const outputs: ProbeOutput[] = [ledger];
       for (const node of survivors) {
         const sweep = probePlanSchema.parse({ ...plan, rounds: 2, pauseSeconds: 0 });
-        const result = await run(node, commands.probe(sweep), `aih celld:loss-check sweep ${runId}`, { quiet: true });
+        const result = await run(
+          node,
+          commands.probe(sweep),
+          `aih celld:loss-check sweep ${runId}`,
+          { quiet: true },
+        );
         outputs.push(parseProbeOutput(result.stdout));
       }
-      const report = judge(joinLedgers(outputs), { cells: plan.cells, faultAtSeq: lastSeqBefore(plan, lead) + 1 });
+      const report = judge(joinLedgers(outputs), {
+        cells: plan.cells,
+        faultAtSeq: lastSeqBefore(plan, lead) + 1,
+      });
       console.log(describeReport(report).join("\n"));
       mkdirSync("../../reports/celld", { recursive: true });
-      writeFileSync(`../../reports/celld/loss-check-${runId}.json`, JSON.stringify({ victim, plan, report }, null, 2));
+      writeFileSync(
+        `../../reports/celld/loss-check-${runId}.json`,
+        JSON.stringify({ victim, plan, report }, null, 2),
+      );
       console.error(
         `report: reports/celld/loss-check-${runId}.json. The victim is still stopped: vp run celld:revive ${victim}`,
       );
@@ -336,7 +411,9 @@ try {
       for (const node of nodes) {
         const health = await ops.nodeHealth(node);
         if (health.active) {
-          throw new Error(`node ${node} is running. Stop the whole fleet first: vp run celld:stop-all`);
+          throw new Error(
+            `node ${node} is running. Stop the whole fleet first: vp run celld:stop-all`,
+          );
         }
         versions.set(node, health.version);
         await must(node, commands.flush(), "aih celld:backup flush");
@@ -364,8 +441,18 @@ try {
       mkdirSync("../../reports/celld", { recursive: true });
       const file = `../../reports/celld/backup-${id}.json`;
       writeFileSync(file, JSON.stringify(manifest, null, 2));
-      aws(["s3", "cp", file, `s3://${backupBucket}/${manifestKey(id)}`, "--region", region, "--only-show-errors"]);
-      console.log(`backup ${id}: ${snapshots.length} snapshot(s) and a copy of s3://${bucket}/${spec.fleetPrefix}/`);
+      aws([
+        "s3",
+        "cp",
+        file,
+        `s3://${backupBucket}/${manifestKey(id)}`,
+        "--region",
+        region,
+        "--only-show-errors",
+      ]);
+      console.log(
+        `backup ${id}: ${snapshots.length} snapshot(s) and a copy of s3://${bucket}/${spec.fleetPrefix}/`,
+      );
       break;
     }
     case "restore": {
@@ -373,11 +460,15 @@ try {
       const execute = flags.has("--yes");
       for (const node of nodes) {
         if ((await ops.nodeHealth(node)).active) {
-          throw new Error(`node ${node} is running. Stop the whole fleet first: vp run celld:stop-all`);
+          throw new Error(
+            `node ${node} is running. Stop the whole fleet first: vp run celld:stop-all`,
+          );
         }
       }
       const manifest = manifestSchema.parse(
-        JSON.parse(aws(["s3", "cp", `s3://${backupBucket}/${manifestKey(id)}`, "-", "--region", region])),
+        JSON.parse(
+          aws(["s3", "cp", `s3://${backupBucket}/${manifestKey(id)}`, "-", "--region", region]),
+        ),
       );
       if (!execute) {
         console.error("Dry run. Pass --yes to overwrite the fleet bucket with the backup.");

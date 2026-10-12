@@ -7,6 +7,7 @@ import {
   type SpanExporter,
 } from "@opentelemetry/sdk-trace-node";
 import { beforeAll, beforeEach, describe, expect, it } from "vite-plus/test";
+
 import { startLocalTracing } from "../src/local-tracing.ts";
 import { contextFromHeaders, outgoingTraceHeaders, withSpan } from "../src/telemetry.ts";
 import { formatTraceparent, parseTraceparent } from "../src/trace-context.ts";
@@ -17,7 +18,9 @@ import { brokenList, harness } from "./harness.ts";
 const root = {
   on: true,
   shouldSample() {
-    return { decision: this.on ? SamplingDecision.RECORD_AND_SAMPLED : SamplingDecision.NOT_RECORD };
+    return {
+      decision: this.on ? SamplingDecision.RECORD_AND_SAMPLED : SamplingDecision.NOT_RECORD,
+    };
   },
   toString: () => "switch",
 };
@@ -129,7 +132,13 @@ describe("what a span is allowed to carry", () => {
     const exported = JSON.stringify(
       spans().map((span) => [span.name, span.attributes, span.status, span.events, span.links]),
     );
-    for (const secret of ["private title", "private body", "query-secret", "header-secret", "alice@example.com"]) {
+    for (const secret of [
+      "private title",
+      "private body",
+      "query-secret",
+      "header-secret",
+      "alice@example.com",
+    ]) {
       expect(exported).not.toContain(secret);
     }
     expect(named("notes.list").attributes["error.type"]).toBe("Error");
@@ -137,7 +146,11 @@ describe("what a span is allowed to carry", () => {
 });
 
 describe("crossing a process boundary", () => {
-  const caller = { traceId: "4efaaf4d1e8720b39541901950019ee5", parentId: "00f067aa0ba902b7", sampled: true };
+  const caller = {
+    traceId: "4efaaf4d1e8720b39541901950019ee5",
+    parentId: "00f067aa0ba902b7",
+    sampled: true,
+  };
 
   it("continues the caller's trace from a traceparent header", async () => {
     const h = harness();
@@ -168,7 +181,8 @@ describe("crossing a process boundary", () => {
     if (message === undefined) {
       throw new Error("nothing was enqueued");
     }
-    const deliver = () => withSpan("worker", { parent: contextFromHeaders(message) }, async () => {});
+    const deliver = () =>
+      withSpan("worker", { parent: contextFromHeaders(message) }, async () => {});
     await deliver();
     await deliver();
 
@@ -208,7 +222,10 @@ describe("sampling", () => {
     await h.send("GET", "/health", undefined, { traceparent: unsampled });
 
     expect(spans()).toEqual([]);
-    expect(h.lines()[0]).toMatchObject({ traceId: "4efaaf4d1e8720b39541901950019ee5", sampled: false });
+    expect(h.lines()[0]).toMatchObject({
+      traceId: "4efaaf4d1e8720b39541901950019ee5",
+      sampled: false,
+    });
   });
 
   it("can lose one worker span while the rest of the trace is exported", async () => {

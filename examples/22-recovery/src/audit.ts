@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { check, type Report, SEVERITY, takeSnapshot } from "./invariants.ts";
 import type { TableReader } from "./items.ts";
 import type { VersionedBucket } from "./versioned-bucket.ts";
@@ -27,7 +28,10 @@ export type AuditDeps = {
 };
 
 /** Reads both stores and counts what does not line up. Changes nothing. */
-export async function audit(deps: AuditDeps, options: { graceMs?: number } = {}): Promise<Audit & { report: Report }> {
+export async function audit(
+  deps: AuditDeps,
+  options: { graceMs?: number } = {},
+): Promise<Audit & { report: Report }> {
   const snapshot = await takeSnapshot(deps.table, deps.bucket);
   const report = check(snapshot, { now: deps.now(), ...options });
   const byKind: Record<string, number> = {};

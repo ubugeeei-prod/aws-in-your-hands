@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { StreamStatus } from "../src/stream.ts";
 import { believe, reconcile, type SeenEvent } from "../src/timeline.ts";
 
 const a = "st-AAAAAAAAAAAAAAAAAAAAAAAA";
 const b = "st-BBBBBBBBBBBBBBBBBBBBBBBB";
 
-const event = (name: string, streamId: string): SeenEvent => ({ eventId: `${streamId}/${name}`, name, streamId });
+const event = (name: string, streamId: string): SeenEvent => ({
+  eventId: `${streamId}/${name}`,
+  name,
+  streamId,
+});
 const liveOn = (streamId: string): StreamStatus => ({
   state: "live",
   streamId,
@@ -19,12 +24,17 @@ function permutations<T>(items: T[]): T[][] {
     return [items];
   }
   return items.flatMap((item, index) =>
-    permutations([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [item, ...rest]),
+    permutations([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [
+      item,
+      ...rest,
+    ]),
   );
 }
 
 describe("what the events say", () => {
-  const whole = ["Session Created", "Stream Start", "Stream End", "Session Ended"].map((name) => event(name, a));
+  const whole = ["Session Created", "Stream Start", "Stream End", "Session Ended"].map((name) =>
+    event(name, a),
+  );
 
   it("is the same in every one of the 24 delivery orders", () => {
     for (const order of permutations(whole)) {
@@ -45,7 +55,11 @@ describe("what the events say", () => {
   });
 
   it("tracks two streams on one channel separately", () => {
-    const beliefs = believe([event("Stream Start", a), event("Stream End", a), event("Stream Start", b)]);
+    const beliefs = believe([
+      event("Stream Start", a),
+      event("Stream End", a),
+      event("Stream Start", b),
+    ]);
     expect([beliefs.get(a), beliefs.get(b)]).toEqual(["ended", "live"]);
   });
 });
@@ -68,12 +82,21 @@ describe("events against GetStream", () => {
   });
 
   it("flags a lost start event: the channel is live and no event said so", () => {
-    expect(reconcile(believe([]), liveOn(a))).toMatchObject({ agrees: false, reason: "start event missing or late" });
-    expect(reconcile(believe([event("Session Created", a)]), liveOn(a))).toMatchObject({ agrees: false });
+    expect(reconcile(believe([]), liveOn(a))).toMatchObject({
+      agrees: false,
+      reason: "start event missing or late",
+    });
+    expect(reconcile(believe([event("Session Created", a)]), liveOn(a))).toMatchObject({
+      agrees: false,
+    });
   });
 
   it("flags an older stream whose end never arrived", () => {
     const beliefs = believe([event("Stream Start", a), event("Stream Start", b)]);
-    expect(reconcile(beliefs, liveOn(b))).toEqual({ agrees: false, reason: "end event missing or late", streamId: a });
+    expect(reconcile(beliefs, liveOn(b))).toEqual({
+      agrees: false,
+      reason: "end event missing or late",
+      streamId: a,
+    });
   });
 });

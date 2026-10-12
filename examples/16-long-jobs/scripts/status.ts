@@ -1,9 +1,9 @@
 // vp run export:status                       recent executions and finished exports (reads AWS)
 // vp run export:status --redrive <arn>       resumes a failed execution from the failed step (changes AWS)
 //   node scripts/status.ts [--redrive <execution ARN>]
+
 import { parseArgs } from "node:util";
-import { preflight } from "@aih/tools/aws/preflight.ts";
-import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import {
   GetExecutionHistoryCommand,
@@ -11,6 +11,10 @@ import {
   RedriveExecutionCommand,
   SFNClient,
 } from "@aws-sdk/client-sfn";
+
+import { preflight } from "@aih/tools/aws/preflight.ts";
+import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { EXPORT_PREFIX } from "../src/job.ts";
 
 const STACK = "AihLongJobs";
@@ -19,7 +23,8 @@ const { values } = parseArgs({ options: { redrive: { type: "string" } } });
 try {
   const { target } = await preflight({
     access: values.redrive === undefined ? "observe" : "mutate",
-    action: values.redrive === undefined ? "read executions and exports" : "redrive a failed execution",
+    action:
+      values.redrive === undefined ? "read executions and exports" : "redrive a failed execution",
     stack: STACK,
   });
   const outputs = await readStackOutputs(process.cwd(), STACK, target.region);
@@ -33,12 +38,19 @@ try {
   }
 
   const { executions = [] } = await sfn.send(
-    new ListExecutionsCommand({ stateMachineArn: requireOutput(outputs, "ExportWorkflowArn"), maxResults: 5 }),
+    new ListExecutionsCommand({
+      stateMachineArn: requireOutput(outputs, "ExportWorkflowArn"),
+      maxResults: 5,
+    }),
   );
   for (const execution of executions) {
     // The length of the history is what the 25,000-event limit counts.
     const history = await sfn.send(
-      new GetExecutionHistoryCommand({ executionArn: execution.executionArn, reverseOrder: true, maxResults: 1 }),
+      new GetExecutionHistoryCommand({
+        executionArn: execution.executionArn,
+        reverseOrder: true,
+        maxResults: 1,
+      }),
     );
     console.log(
       `${execution.status}  ${execution.name}  started ${execution.startDate?.toISOString() ?? "?"}  ` +
@@ -55,9 +67,13 @@ try {
   const bucket = requireOutput(outputs, "ExportsBucketName");
   const s3 = new S3Client({ region: target.region });
   // Only the first 1,000 keys: enough to see whether the latest exports have a manifest.
-  const listing = await s3.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: EXPORT_PREFIX }));
+  const listing = await s3.send(
+    new ListObjectsV2Command({ Bucket: bucket, Prefix: EXPORT_PREFIX }),
+  );
   const keys = (listing.Contents ?? []).flatMap((object) => object.Key ?? []);
-  const exportsSeen = new Set(keys.map((key) => key.slice(EXPORT_PREFIX.length).split("/")[0] ?? ""));
+  const exportsSeen = new Set(
+    keys.map((key) => key.slice(EXPORT_PREFIX.length).split("/")[0] ?? ""),
+  );
   for (const id of exportsSeen) {
     const prefix = `${EXPORT_PREFIX}${id}/`;
     const parts = keys.filter((key) => key.startsWith(`${prefix}parts/`)).length;

@@ -1,7 +1,11 @@
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { SignatureV4 } from "@smithy/signature-v4";
 
-export type AwsCredentials = { accessKeyId: string; secretAccessKey: string; sessionToken?: string };
+export type AwsCredentials = {
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+};
 
 export type TokenRequest = {
   /** The serverless cache's name, not its endpoint. */

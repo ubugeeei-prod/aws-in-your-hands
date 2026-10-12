@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
+
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
+
 import type { Note } from "../src/contract.ts";
 import { type Db, sqlStateOf } from "../src/db.ts";
 import { SqlNoteRepository } from "../src/notes-repository.ts";
@@ -16,7 +18,8 @@ beforeAll(async () => {
 afterAll(() => db.close());
 
 const QUOTA = 2;
-const repositoryOn = (database: Db) => new SqlNoteRepository(runnerFor(database).transaction, QUOTA);
+const repositoryOn = (database: Db) =>
+  new SqlNoteRepository(runnerFor(database).transaction, QUOTA);
 const freshOwner = () => `owner-${randomUUID()}`;
 
 const note = (overrides: Partial<Note> = {}): Note => ({
@@ -70,7 +73,9 @@ describe("SqlNoteRepository on PostgreSQL", () => {
       status: "conflict",
       current: { version: 2, title: "first writer" },
     });
-    expect(await repository.update(owner, randomUUID(), change(1))).toEqual({ status: "not_found" });
+    expect(await repository.update(owner, randomUUID(), change(1))).toEqual({
+      status: "not_found",
+    });
   });
 
   it("does not let one owner read, change, or delete another owner's note", async () => {
@@ -81,7 +86,9 @@ describe("SqlNoteRepository on PostgreSQL", () => {
     await repository.create(owner, secret);
 
     expect(await repository.get(intruder, secret.id)).toBeUndefined();
-    expect(await repository.update(intruder, secret.id, change(1))).toEqual({ status: "not_found" });
+    expect(await repository.update(intruder, secret.id, change(1))).toEqual({
+      status: "not_found",
+    });
     expect(await repository.delete(intruder, secret.id)).toBe(false);
     expect(await repository.get(owner, secret.id)).toMatchObject({ title: "secret", version: 1 });
   });
@@ -114,7 +121,9 @@ describe("SqlNoteRepository on PostgreSQL", () => {
     // 23503: no owner row to reference. 23514: the CHECK on the title.
     expect(sqlStateOf(await insert("orphan").catch((error: unknown) => error))).toBe("23503");
     await repositoryOn(db).create(owner, note());
-    expect(sqlStateOf(await insert("x".repeat(121)).catch((error: unknown) => error))).toBe("23514");
+    expect(sqlStateOf(await insert("x".repeat(121)).catch((error: unknown) => error))).toBe(
+      "23514",
+    );
   });
 });
 
@@ -176,7 +185,11 @@ describe("SqlNoteRepository when a commit loses", () => {
     const losing = losingCommits(db, {
       conflicts: 1,
       winner: async (transaction) => {
-        await new SqlNoteRepository(transaction, QUOTA).update(owner, shared.id, change(1, "winner"));
+        await new SqlNoteRepository(transaction, QUOTA).update(
+          owner,
+          shared.id,
+          change(1, "winner"),
+        );
       },
     });
 
@@ -202,7 +215,9 @@ describe("SqlNoteRepository when a commit loses", () => {
     const owner = freshOwner();
     const losing = losingCommits(db, { conflicts: 4 });
 
-    await expect(repositoryOn(losing).create(owner, note())).rejects.toBeInstanceOf(RetriesExhaustedError);
+    await expect(repositoryOn(losing).create(owner, note())).rejects.toBeInstanceOf(
+      RetriesExhaustedError,
+    );
 
     expect(await counts(db, owner)).toEqual({ counted: 0, stored: 0 });
   });

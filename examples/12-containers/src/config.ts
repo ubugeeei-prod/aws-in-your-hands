@@ -34,7 +34,9 @@ export type ContainersConfig = z.infer<typeof containersConfigSchema>;
 export function parseContainersConfig(input: unknown): ContainersConfig {
   const result = containersConfigSchema.safeParse(input);
   if (!result.success) {
-    const problems = result.error.issues.map((item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`);
+    const problems = result.error.issues.map(
+      (item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`,
+    );
     throw new Error(`Invalid container settings:\n${problems.join("\n")}`);
   }
   return result.data;

@@ -22,7 +22,9 @@ export const stackDriftSchema = z.object({
   region: z.string(),
   drifted: z.array(
     resourceRef.extend({
-      changes: z.array(z.object({ path: z.string(), stateValue: z.unknown(), awsValue: z.unknown() })),
+      changes: z.array(
+        z.object({ path: z.string(), stateValue: z.unknown(), awsValue: z.unknown() }),
+      ),
       referencesUnresolved: z.boolean(),
     }),
   ),

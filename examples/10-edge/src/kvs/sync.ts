@@ -49,7 +49,12 @@ export async function syncStore(
     const snapshot = await port.read();
     const plan = planSync(desired, snapshot.entries);
     if (isInSync(plan)) {
-      return { outcome: plans.length === 0 ? "already-in-sync" : "applied", rounds: round, plans, etag: snapshot.etag };
+      return {
+        outcome: plans.length === 0 ? "already-in-sync" : "applied",
+        rounds: round,
+        plans,
+        etag: snapshot.etag,
+      };
     }
     plans.push(plan);
 
@@ -66,8 +71,11 @@ export async function syncStore(
       lastError = error;
     }
   }
-  throw new Error(`the store kept changing or failing for ${maxRounds} rounds; run the sync again`, {
-    cause: lastError,
-  });
+  throw new Error(
+    `the store kept changing or failing for ${maxRounds} rounds; run the sync again`,
+    {
+      cause: lastError,
+    },
+  );
 }
 // #endregion sync

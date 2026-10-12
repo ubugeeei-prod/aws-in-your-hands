@@ -2,10 +2,12 @@
 //
 // Loads every synthesized Lambda bundle in plain Node, the way Lambda does on a cold start.
 // Unit tests cannot catch a bundle that fails to load: vitest supplies its own `require`.
+
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
+
 import { repoRoot } from "../data/load.ts";
 
 const entryNames = ["index.mjs", "index.js"];
@@ -56,7 +58,11 @@ function load(bundleDir: string): string | undefined {
       encoding: "utf8",
       timeout: 30_000,
       // No credentials and no real endpoints: start-up code must not reach AWS from here.
-      env: { PATH: process.env.PATH ?? "", AWS_REGION: "ap-northeast-1", AWS_EC2_METADATA_DISABLED: "true" },
+      env: {
+        PATH: process.env.PATH ?? "",
+        AWS_REGION: "ap-northeast-1",
+        AWS_EC2_METADATA_DISABLED: "true",
+      },
     });
     const output = `${result.stdout}${result.stderr}`;
     return loadFailure.test(output) ? output.trim().split("\n").slice(0, 3).join("\n") : undefined;

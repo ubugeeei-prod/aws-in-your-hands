@@ -3,8 +3,11 @@
 // Rewrites the `tiers` of every recorded price from the AWS Price List bulk
 // offers, by SKU. Public endpoint, no credentials. Review the diff: a changed
 // number changes the worked examples in the book.
+
 import { readFileSync, writeFileSync } from "node:fs";
+
 import { z } from "zod";
+
 import { repoRoot } from "../data/load.ts";
 import { unitPricesSchema } from "./schema.ts";
 
@@ -33,7 +36,9 @@ const offerSchema = z.object({
 });
 
 const path = `${repoRoot}data/pricing/unit-prices.json`;
-const file = z.looseObject({ prices: unitPricesSchema.shape.prices }).parse(JSON.parse(readFileSync(path, "utf8")));
+const file = z
+  .looseObject({ prices: unitPricesSchema.shape.prices })
+  .parse(JSON.parse(readFileSync(path, "utf8")));
 const today = new Date().toISOString().slice(0, 10);
 const offers = new Map<string, z.infer<typeof offerSchema>>();
 
@@ -51,7 +56,9 @@ for (const price of file.prices) {
   const terms = offer.terms.OnDemand[price.sku];
   if (terms === undefined) {
     // Keep the old value and say so. A vanished SKU needs a human decision.
-    console.error(`SKU ${price.sku} (${price.id}) is no longer in the offer; left unchanged, checkedAt not updated.`);
+    console.error(
+      `SKU ${price.sku} (${price.id}) is no longer in the offer; left unchanged, checkedAt not updated.`,
+    );
     process.exitCode = 1;
     continue;
   }

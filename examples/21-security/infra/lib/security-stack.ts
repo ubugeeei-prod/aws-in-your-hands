@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import { FunctionUrlOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
@@ -76,7 +77,9 @@ export class SecurityStack extends Stack {
           actions: ["kms:Decrypt"],
           resources: [key.keyArn],
           // Only as part of a Secrets Manager call. The role cannot use the key directly.
-          conditions: { StringEquals: { "kms:ViaService": `secretsmanager.${this.region}.amazonaws.com` } },
+          conditions: {
+            StringEquals: { "kms:ViaService": `secretsmanager.${this.region}.amazonaws.com` },
+          },
         }),
       );
     }
@@ -115,7 +118,8 @@ export class SecurityStack extends Stack {
         // Bundle the AWS SDK too, so the function runs the version in pnpm-lock.yaml.
         externalModules: [],
         // The bundled SDK still calls require() for Node's own modules, which an ES module does not have.
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     });
     // #endregion function

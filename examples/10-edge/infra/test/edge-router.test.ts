@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { edgeDataSchema, toEntries } from "../../src/kvs/config.ts";
 import {
   type GeneratedResponse,
@@ -15,9 +17,12 @@ const file = new URL("../functions/edge-router.js", import.meta.url);
 const source = readFileSync(file, "utf8");
 
 const shipped = toEntries(
-  edgeDataSchema.parse(JSON.parse(readFileSync(new URL("../../edge-data.json", import.meta.url), "utf8"))),
+  edgeDataSchema.parse(
+    JSON.parse(readFileSync(new URL("../../edge-data.json", import.meta.url), "utf8")),
+  ),
 );
-const withEntries = (overrides: Record<string, string>) => new Map([...shipped, ...Object.entries(overrides)]);
+const withEntries = (overrides: Record<string, string>) =>
+  new Map([...shipped, ...Object.entries(overrides)]);
 
 async function run(entries: ReadonlyMap<string, string>, event: ViewerRequestEvent) {
   const kvs = mapKvs(entries);
@@ -55,7 +60,9 @@ describe("edge-router: rewrites", () => {
   it("serves the new home page only while the flag is on", async () => {
     expect(await uriOf(withEntries({ "flag:new-home": "on" }), "/")).toBe("/home-v2.html");
     expect(await uriOf(withEntries({ "flag:new-home": "off" }), "/")).toBe("/index.html");
-    expect(await uriOf(withEntries({ "flag:new-home": "on" }), "/pricing/")).toBe("/pricing/index.html");
+    expect(await uriOf(withEntries({ "flag:new-home": "on" }), "/pricing/")).toBe(
+      "/pricing/index.html",
+    );
   });
 });
 
@@ -68,9 +75,10 @@ describe("edge-router: redirects", () => {
   });
 
   it("carries the query string over, unless the target has its own", async () => {
-    expect((await responseOf(shipped, viewerRequest("/plans", { ref: "mail" }))).headers?.["location"]?.value).toBe(
-      "/pricing/?ref=mail",
-    );
+    expect(
+      (await responseOf(shipped, viewerRequest("/plans", { ref: "mail" }))).headers?.["location"]
+        ?.value,
+    ).toBe("/pricing/?ref=mail");
     const sale = await responseOf(shipped, viewerRequest("/sale", { ref: "mail" }));
     expect(sale.statusCode).toBe(302);
     expect(sale.headers?.["location"]?.value).toBe("/pricing/?campaign=autumn");
@@ -129,9 +137,18 @@ describe("edge-router: when the store does not answer", () => {
 
 describe("edge-router: what it costs and where it can run", () => {
   it("reads the store once for a file, twice for a page, three times for the home page", async () => {
-    expect((await run(shipped, viewerRequest("/assets/app.css"))).reads).toEqual(["flag:maintenance"]);
-    expect((await run(shipped, viewerRequest("/pricing/"))).reads).toEqual(["flag:maintenance", "redirect:/pricing/"]);
-    expect((await run(shipped, viewerRequest("/"))).reads).toEqual(["flag:maintenance", "redirect:/", "flag:new-home"]);
+    expect((await run(shipped, viewerRequest("/assets/app.css"))).reads).toEqual([
+      "flag:maintenance",
+    ]);
+    expect((await run(shipped, viewerRequest("/pricing/"))).reads).toEqual([
+      "flag:maintenance",
+      "redirect:/pricing/",
+    ]);
+    expect((await run(shipped, viewerRequest("/"))).reads).toEqual([
+      "flag:maintenance",
+      "redirect:/",
+      "flag:new-home",
+    ]);
   });
 
   it("does not look up a path too long to be a key", async () => {
@@ -145,7 +162,9 @@ describe("edge-router: what it costs and where it can run", () => {
 
   it("avoids syntax that Node accepts and the documented runtime does not list", () => {
     // A text search, not a parser. It catches the slips that are easy to make coming from Node.
-    const code = source.replaceAll(/\/\/.*$/gm, "").replaceAll(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
+    const code = source
+      .replaceAll(/\/\/.*$/gm, "")
+      .replaceAll(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
     const unlisted: [string, RegExp][] = [
       ["optional chaining", /\?\./],
       ["nullish coalescing", /\?\?/],
@@ -160,6 +179,8 @@ describe("edge-router: what it costs and where it can run", () => {
       ["process or environment access", /\bprocess\b/],
     ];
     const withoutKvsImport = code.replace(/^import cf from "";\n/, "");
-    expect(unlisted.filter(([, pattern]) => pattern.test(withoutKvsImport)).map(([name]) => name)).toEqual([]);
+    expect(
+      unlisted.filter(([, pattern]) => pattern.test(withoutKvsImport)).map(([name]) => name),
+    ).toEqual([]);
   });
 });

@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { buildInvocation } from "./cdkd-args.ts";
 
 describe("cdkd invocation", () => {
   it("synth never needs AWS", () => {
-    expect(buildInvocation("synth", "AihBookSite", "ap-northeast-1", [])).toEqual({ access: "local", args: ["synth"] });
+    expect(buildInvocation("synth", "AihBookSite", "ap-northeast-1", [])).toEqual({
+      access: "local",
+      args: ["synth"],
+    });
   });
 
   it("diff only observes", () => {

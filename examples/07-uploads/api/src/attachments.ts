@@ -1,6 +1,7 @@
 import { newNoteId } from "@aih/example-05-dynamodb/src/id.ts";
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
 import type { NoteService } from "@aih/example-05-dynamodb/src/notes.ts";
+
 import type { AttachmentRepository } from "./attachment-repository.ts";
 import {
   type Attachment,
@@ -54,7 +55,13 @@ export function createAttachmentService(deps: AttachmentDeps) {
       await deps.objects.delete(objectKey({ owner, noteId, attachmentId: id }));
     } catch (error) {
       // The user's delete has already happened. The object is now garbage for the sweep.
-      deps.log({ level: "warn", message: "orphaned object left for the sweep", noteId, attachmentId: id, error });
+      deps.log({
+        level: "warn",
+        message: "orphaned object left for the sweep",
+        noteId,
+        attachmentId: id,
+        error,
+      });
     }
     return true;
     // #endregion remove
@@ -66,7 +73,11 @@ export function createAttachmentService(deps: AttachmentDeps) {
       owner: string,
       noteId: string,
       input: UploadRequest,
-    ): Promise<{ status: "permitted"; permit: UploadPermit } | { status: "note_not_found" } | { status: "limit" }> {
+    ): Promise<
+      | { status: "permitted"; permit: UploadPermit }
+      | { status: "note_not_found" }
+      | { status: "limit" }
+    > {
       // The note is looked up under the caller's own `sub`, so someone else's
       // note is "not found" here exactly as it is in chapter 06.
       if ((await deps.notes.get(owner, noteId)) === undefined) {
@@ -115,10 +126,16 @@ export function createAttachmentService(deps: AttachmentDeps) {
       // S3 already enforced type and size. Checked again because a wrong
       // record is worse than a refused one.
       if (!isImageType(object.contentType) || object.size < 1 || object.size > MAX_UPLOAD_BYTES) {
-        return { status: "upload_rejected", reason: "The uploaded object is not an allowed image." };
+        return {
+          status: "upload_rejected",
+          reason: "The uploaded object is not an allowed image.",
+        };
       }
       if (deps.now().getTime() - object.lastModified.getTime() > FINISH_WITHIN_MS) {
-        return { status: "upload_rejected", reason: "The upload was not finished in time. Upload the image again." };
+        return {
+          status: "upload_rejected",
+          reason: "The upload was not finished in time. Upload the image again.",
+        };
       }
       if ((await deps.attachments.listByNote(owner, noteId)).length >= MAX_ATTACHMENTS_PER_NOTE) {
         return { status: "limit" };
@@ -201,7 +218,12 @@ export function withAttachmentCleanup(
         try {
           await attachments.removeAllOf(owner, id);
         } catch (error) {
-          log({ level: "warn", message: "attachments of a deleted note left for the sweep", noteId: id, error });
+          log({
+            level: "warn",
+            message: "attachments of a deleted note left for the sweep",
+            noteId: id,
+            error,
+          });
         }
       }
       return removed;

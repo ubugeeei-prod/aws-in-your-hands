@@ -1,5 +1,7 @@
-import { bucketNameSchema } from "@aih/example-23-ec2/src/remote.ts";
 import { z } from "zod";
+
+import { bucketNameSchema } from "@aih/example-23-ec2/src/remote.ts";
+
 import { NODE_NAMES, type NodeName } from "./config.ts";
 
 // What a backup and a restore consist of, as data. celld has no backup command.
@@ -17,7 +19,10 @@ export const manifestSchema = z.object({
   createdAt: z.iso.datetime(),
   region: z.string(),
   /** Where the bucket copy came from, so a restore cannot be pointed at another fleet by accident. */
-  source: z.object({ bucket: bucketNameSchema, prefix: z.string().regex(/^[a-z][a-z0-9-]{0,30}$/) }),
+  source: z.object({
+    bucket: bucketNameSchema,
+    prefix: z.string().regex(/^[a-z][a-z0-9-]{0,30}$/),
+  }),
   nodes: z
     .array(
       z.object({
@@ -52,7 +57,12 @@ export type AwsCall = { args: string[]; describe: string; destructive: boolean }
 
 const at = (region: string) => ["--region", region, "--output", "json"];
 
-export const snapshotArgs = (input: { volumeId: string; node: NodeName; id: string; region: string }): string[] => [
+export const snapshotArgs = (input: {
+  volumeId: string;
+  node: NodeName;
+  id: string;
+  region: string;
+}): string[] => [
   "ec2",
   "create-snapshot",
   "--volume-id",
@@ -95,7 +105,9 @@ export function copyOutCall(input: {
 // #endregion backup
 
 // #region restore
-export type RestoreStep = { kind: "aws"; call: AwsCall } | { kind: "manual"; describe: string; command: string };
+export type RestoreStep =
+  | { kind: "aws"; call: AwsCall }
+  | { kind: "manual"; describe: string; command: string };
 
 /**
  * A restore puts the bucket back to the backup and gives every node the disk it had
@@ -111,7 +123,9 @@ export function restorePlan(input: {
 }): RestoreStep[] {
   const manifest = manifestSchema.parse(input.manifest);
   if (manifest.source.bucket !== input.bucket) {
-    throw new Error(`backup ${manifest.id} was taken from ${manifest.source.bucket}, not from ${input.bucket}`);
+    throw new Error(
+      `backup ${manifest.id} was taken from ${manifest.source.bucket}, not from ${input.bucket}`,
+    );
   }
   const backedUp = manifest.nodes.map((entry) => entry.node).toSorted();
   if (backedUp.join() !== input.nodes.toSorted().join()) {

@@ -15,9 +15,9 @@ export type Decision = {
   retryAfterSeconds: number;
 };
 
-export interface RateLimiter {
+export type RateLimiter = {
   hit(subject: string, now: number): Promise<Decision>;
-}
+};
 
 // #region window
 /** Windows are aligned to the epoch, so every caller with a sane clock names the same one. */
@@ -27,13 +27,23 @@ export const windowStartOf = (now: number, windowMs: number): number => now - (n
  * What the current window may still hold under a sliding window. The previous
  * window counts in proportion to how much of it the last `windowMs` still covers.
  */
-export function slidingCap(limit: number, previousCount: number, elapsedMs: number, windowMs: number): number {
+export function slidingCap(
+  limit: number,
+  previousCount: number,
+  elapsedMs: number,
+  windowMs: number,
+): number {
   return Math.floor(limit - previousCount * (1 - elapsedMs / windowMs));
 }
 // #endregion window
 
 /** A lower bound: the caller may be refused again if others used the budget meanwhile. */
-export function slidingRetryAfterMs(limit: number, previousCount: number, elapsedMs: number, windowMs: number): number {
+export function slidingRetryAfterMs(
+  limit: number,
+  previousCount: number,
+  elapsedMs: number,
+  windowMs: number,
+): number {
   const budget = limit - previousCount * (1 - elapsedMs / windowMs);
   // The current counter holds at least this much, or the request would have passed.
   const used = Math.max(Math.floor(budget), 0);
@@ -68,10 +78,16 @@ export function createRateLimiter(store: CounterStore, policy: RateLimitPolicy):
 
       // The store decides, not this process: two callers that both read "one
       // left" must not both be let through.
-      const result = cap > 0 ? await store.incrementBelow(current, cap) : { accepted: false as const };
+      const result =
+        cap > 0 ? await store.incrementBelow(current, cap) : { accepted: false as const };
       return result.accepted
         ? { allowed: true, limit, remaining: cap - result.count, retryAfterSeconds: 0 }
-        : { allowed: false, limit, remaining: 0, retryAfterSeconds: Math.max(1, Math.ceil(retryAfterMs / 1000)) };
+        : {
+            allowed: false,
+            limit,
+            remaining: 0,
+            retryAfterSeconds: Math.max(1, Math.ceil(retryAfterMs / 1000)),
+          };
     },
   };
 }

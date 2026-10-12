@@ -1,6 +1,8 @@
 import { setTimeout as sleep } from "node:timers/promises";
+
 import { serve } from "@hono/node-server";
 import { z } from "zod";
+
 import { createBedrockGateway } from "./bedrock.ts";
 import { composeApp } from "./compose.ts";
 import { parseEnv } from "./env.ts";
@@ -26,7 +28,9 @@ if (env.AI_BACKEND === "bedrock") {
       () => undefined,
     ),
   );
-  console.log(`inference: none. Replaying fixtures/converse-stream/${name}.json. No AWS call, no charge`);
+  console.log(
+    `inference: none. Replaying fixtures/converse-stream/${name}.json. No AWS call, no charge`,
+  );
 }
 
 // Loopback only: with AI_BACKEND=bedrock, anyone who can reach this port spends your money.

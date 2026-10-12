@@ -1,8 +1,14 @@
 import type { Note } from "@aih/example-05-dynamodb/src/contract.ts";
 import type { Attachment } from "@aih/example-07-uploads/api/src/contract.ts";
-import { isKeySegment, KEY_PREFIX, objectKey, parseObjectKey } from "@aih/example-07-uploads/api/src/keys.ts";
+import {
+  isKeySegment,
+  KEY_PREFIX,
+  objectKey,
+  parseObjectKey,
+} from "@aih/example-07-uploads/api/src/keys.ts";
 import { SWEEP_GRACE_MS } from "@aih/example-07-uploads/api/src/sweep.ts";
 import type { Inspection } from "@aih/example-08-async/src/inspection.ts";
+
 import { attachmentKey, classify, inspectionKey, ownerKey, type TableReader } from "./items.ts";
 import type { CurrentObject, VersionedBucket } from "./versioned-bucket.ts";
 
@@ -20,7 +26,13 @@ export async function takeSnapshot(
   table: TableReader,
   bucket: Pick<VersionedBucket, "listCurrent">,
 ): Promise<Snapshot> {
-  const snapshot: Snapshot = { notes: [], attachments: [], inspections: [], unreadable: [], objects: [] };
+  const snapshot: Snapshot = {
+    notes: [],
+    attachments: [],
+    inspections: [],
+    unreadable: [],
+    objects: [],
+  };
   for await (const item of table.scan()) {
     const found = classify(item);
     if (found.kind === "note") {
@@ -58,7 +70,12 @@ export type Finding =
   | { kind: "object_without_record"; key: string }
   | { kind: "unknown_object"; key: string }
   /** Chapter 08: a verdict is about the bytes of one event. Other bytes under the key make it a verdict about nothing. */
-  | ({ kind: "inspection_for_other_bytes"; sequencer: string; recordedETag: string; storedETag: string } & Where)
+  | ({
+      kind: "inspection_for_other_bytes";
+      sequencer: string;
+      recordedETag: string;
+      storedETag: string;
+    } & Where)
   /** Chapter 08's two open paths end here: a record whose object is gone. */
   | ({ kind: "inspection_without_object"; sequencer: string; recordedETag: string } & Where);
 
@@ -86,7 +103,10 @@ export type Report = { findings: Finding[]; tooYoung: number };
  */
 export function check(snapshot: Snapshot, options: { now: Date; graceMs?: number }): Report {
   const graceMs = options.graceMs ?? SWEEP_GRACE_MS;
-  const findings: Finding[] = snapshot.unreadable.map((item) => ({ kind: "unreadable_item", ...item }));
+  const findings: Finding[] = snapshot.unreadable.map((item) => ({
+    kind: "unreadable_item",
+    ...item,
+  }));
   let tooYoung = 0;
 
   const id = (owner: string, ...rest: string[]): string => [owner, ...rest].join("/");
@@ -107,7 +127,12 @@ export function check(snapshot: Snapshot, options: { now: Date; graceMs?: number
   for (const { owner, attachment } of snapshot.attachments) {
     if (!keyable(owner, attachment.noteId, attachment.id)) {
       const sk = attachmentKey(attachment.noteId, attachment.id);
-      findings.push({ kind: "unreadable_item", pk: ownerKey(owner), sk, reason: "cannot name an object" });
+      findings.push({
+        kind: "unreadable_item",
+        pk: ownerKey(owner),
+        sk,
+        reason: "cannot name an object",
+      });
       continue;
     }
     const where = {
@@ -121,7 +146,12 @@ export function check(snapshot: Snapshot, options: { now: Date; graceMs?: number
     if (object === undefined) {
       findings.push({ kind: "attachment_without_object", ...where });
     } else if (object.size !== attachment.size) {
-      findings.push({ kind: "attachment_size_mismatch", ...where, recorded: attachment.size, stored: object.size });
+      findings.push({
+        kind: "attachment_size_mismatch",
+        ...where,
+        recorded: attachment.size,
+        stored: object.size,
+      });
     }
     if (!notes.has(id(owner, attachment.noteId))) {
       findings.push({ kind: "attachment_without_note", ...where });
@@ -131,7 +161,12 @@ export function check(snapshot: Snapshot, options: { now: Date; graceMs?: number
   for (const { owner, inspection } of snapshot.inspections) {
     if (!keyable(owner, inspection.noteId, inspection.attachmentId)) {
       const sk = inspectionKey(inspection.noteId, inspection.attachmentId);
-      findings.push({ kind: "unreadable_item", pk: ownerKey(owner), sk, reason: "cannot name an object" });
+      findings.push({
+        kind: "unreadable_item",
+        pk: ownerKey(owner),
+        sk,
+        reason: "cannot name an object",
+      });
       continue;
     }
     const where = {

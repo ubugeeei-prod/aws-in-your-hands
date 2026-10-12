@@ -1,7 +1,9 @@
+import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "@aih/example-04-http-api/src/app.ts";
 import { noteListSchema, type Note } from "@aih/example-04-http-api/src/contract.ts";
 import { createNoteService } from "@aih/example-04-http-api/src/notes.ts";
-import { describe, expect, it } from "vite-plus/test";
+
 import { type FileOps, FileNoteRepository } from "../src/file-notes.ts";
 
 const PATH = "/var/lib/notes/notes.json";
@@ -53,8 +55,14 @@ function disk(initial: Record<string, string> = {}) {
   };
 }
 
-const note = (id: string): Note => ({ id, title: id, body: "", createdAt: `2026-10-12T00:00:0${id.length}.000Z` });
-const ids = async (repository: FileNoteRepository) => (await repository.list()).map((item) => item.id).toSorted();
+const note = (id: string): Note => ({
+  id,
+  title: id,
+  body: "",
+  createdAt: `2026-10-12T00:00:0${id.length}.000Z`,
+});
+const ids = async (repository: FileNoteRepository) =>
+  (await repository.list()).map((item) => item.id).toSorted();
 
 describe("FileNoteRepository", () => {
   it("lets a restarted process read every note that was acknowledged", async () => {
@@ -148,7 +156,9 @@ describe("the chapter 04 API on top of the file", () => {
       body: JSON.stringify({ title }),
     });
   const titles = async (app: Awaited<ReturnType<typeof api>>) =>
-    noteListSchema.parse(await (await app.request("/notes")).json()).notes.map((item) => item.title);
+    noteListSchema
+      .parse(await (await app.request("/notes")).json())
+      .notes.map((item) => item.title);
 
   it("answers 201 only for notes that survive a restart", async () => {
     const d = disk();

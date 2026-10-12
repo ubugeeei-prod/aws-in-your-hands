@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
+
 import { createApp } from "@aih/example-04-http-api/src/app.ts";
 import { createLogger, type Logger } from "@aih/example-04-http-api/src/log.ts";
-import { createNoteService, InMemoryNoteRepository, type NoteRepository } from "@aih/example-04-http-api/src/notes.ts";
+import {
+  createNoteService,
+  InMemoryNoteRepository,
+  type NoteRepository,
+} from "@aih/example-04-http-api/src/notes.ts";
+
 import { parseServerEnv, type ServerEnv } from "./env.ts";
 
 export type Fetch = (request: Request) => Response | Promise<Response>;

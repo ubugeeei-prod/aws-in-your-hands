@@ -1,6 +1,13 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { OidcProviderNative, PolicyDocument, PolicyStatement, Role, WebIdentityPrincipal } from "aws-cdk-lib/aws-iam";
+import {
+  OidcProviderNative,
+  PolicyDocument,
+  PolicyStatement,
+  Role,
+  WebIdentityPrincipal,
+} from "aws-cdk-lib/aws-iam";
 import type { Construct } from "constructs";
+
 import { API_STACK_PREFIX, type CiConfig } from "./config.ts";
 
 export const GITHUB_ISSUER = "token.actions.githubusercontent.com";
@@ -44,7 +51,10 @@ export class CiStack extends Stack {
     // StringEquals on both claims: the token must be for STS, and from exactly this job kind.
     const github = (subject: string) =>
       new WebIdentityPrincipal(providerArn, {
-        StringEquals: { [`${GITHUB_ISSUER}:aud`]: "sts.amazonaws.com", [`${GITHUB_ISSUER}:sub`]: subject },
+        StringEquals: {
+          [`${GITHUB_ISSUER}:aud`]: "sts.amazonaws.com",
+          [`${GITHUB_ISSUER}:sub`]: subject,
+        },
       });
     const subjects = githubSubjects(ci);
     // #endregion trust
@@ -70,7 +80,12 @@ export class CiStack extends Stack {
       resources: [shipStacks],
     });
 
-    const role = (id: string, subject: string, description: string, statements: PolicyStatement[]) =>
+    const role = (
+      id: string,
+      subject: string,
+      description: string,
+      statements: PolicyStatement[],
+    ) =>
       new Role(this, id, {
         assumedBy: github(subject),
         description,
@@ -120,7 +135,12 @@ export class CiStack extends Stack {
       }),
       new PolicyStatement({
         sid: "ReadRoles",
-        actions: ["iam:GetRole", "iam:GetRolePolicy", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies"],
+        actions: [
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+        ],
         resources: [`arn:${this.partition}:iam::${this.account}:role/${API_STACK_PREFIX}*`],
       }),
       new PolicyStatement({

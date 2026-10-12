@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseToken, signToken, verifyToken } from "../src/token.ts";
 
 const key = { versionId: "v1", key: "k".repeat(48) };
@@ -7,7 +8,11 @@ const other = { versionId: "v1", key: "j".repeat(48) };
 describe("tokens", () => {
   it("round-trips the subject, the expiry, and the key version", () => {
     const parsed = parseToken(signToken(key, "alice@example.com", 2_000));
-    expect(parsed).toMatchObject({ versionId: "v1", subject: "alice@example.com", expiresAt: 2_000 });
+    expect(parsed).toMatchObject({
+      versionId: "v1",
+      subject: "alice@example.com",
+      expiresAt: 2_000,
+    });
     expect(parsed && verifyToken(parsed, key, 1_999)).toBe("ok");
     expect(parsed && verifyToken(parsed, key, 2_000)).toBe("expired");
   });
@@ -21,7 +26,9 @@ describe("tokens", () => {
     const [v, id, , subject, signature] = signToken(key, "alice", 2_000).split(".");
     const later = parseToken([v, id, 9_999_999, subject, signature].join("."));
     expect(later && verifyToken(later, key, 0)).toBe("bad-signature");
-    const mallory = parseToken([v, id, 2_000, Buffer.from("mallory").toString("base64url"), signature].join("."));
+    const mallory = parseToken(
+      [v, id, 2_000, Buffer.from("mallory").toString("base64url"), signature].join("."),
+    );
     expect(mallory && verifyToken(mallory, key, 0)).toBe("bad-signature");
   });
 

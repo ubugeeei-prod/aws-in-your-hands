@@ -1,9 +1,13 @@
 import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { buildReport, GATE_EXIT, type RunResult, summarize } from "./report.ts";
 
 const fixture = (name: string): RunResult =>
-  JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8")) as RunResult;
+  JSON.parse(
+    readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8"),
+  ) as RunResult;
 
 const check = (name: string, requestedStacks = ["AihBookSite"]) =>
   buildReport({
@@ -27,7 +31,11 @@ describe("drift report", () => {
     expect(report.status).toBe("drifted");
     expect(report.gate.exitCode).toBe(GATE_EXIT.differs);
     expect(report.stacks[0]?.drifted).toEqual([
-      { logicalId: "Distribution", type: "AWS::CloudFront::Distribution", paths: ["DistributionConfig.Comment"] },
+      {
+        logicalId: "Distribution",
+        type: "AWS::CloudFront::Distribution",
+        paths: ["DistributionConfig.Comment"],
+      },
     ]);
   });
 
@@ -89,7 +97,9 @@ describe("drift report", () => {
     const report = check("clean");
     expect(report.target).toEqual({ accountId: "111111111111", region: "ap-northeast-1" });
     expect(report.executedAt).toBe("2026-10-11T12:00:00.000Z");
-    expect(summarize(report)).toContain("compared and matching: 4, drifted: 0, deleted: 0, not compared: 0");
+    expect(summarize(report)).toContain(
+      "compared and matching: 4, drifted: 0, deleted: 0, not compared: 0",
+    );
   });
 
   it("fails when cdkd says some resources were not compared but lists none", () => {

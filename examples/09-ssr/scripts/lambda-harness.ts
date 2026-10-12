@@ -1,10 +1,13 @@
 // Calls the handler that `nuxt build` wrote, the way a Lambda function URL
 // would, without Lambda. It checks the shape Nitro 2.13.4 produces, not that
 // Lambda accepts it.
+
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+
 import { z } from "zod";
+
 import type { CacheRequest, CacheResponse } from "../test/support/shared-cache.ts";
 
 // #region nitro-json
@@ -16,7 +19,9 @@ const nitroJsonSchema = z.object({
 
 /** What the build says about itself. The stack reads the same file. */
 export function readBuildInfo(outputDir: string): { streaming: boolean; nitro: string } {
-  const info = nitroJsonSchema.parse(JSON.parse(readFileSync(join(outputDir, "nitro.json"), "utf8")));
+  const info = nitroJsonSchema.parse(
+    JSON.parse(readFileSync(join(outputDir, "nitro.json"), "utf8")),
+  );
   return { streaming: info.config.awsLambda.streaming, nitro: info.versions.nitro };
 }
 // #endregion nitro-json
@@ -84,7 +89,9 @@ export async function loadHandler(outputDir: string) {
   }
   const module: unknown = await import(pathToFileURL(join(outputDir, "server/index.mjs")).href);
   const { handler } = z
-    .object({ handler: z.custom<(...args: unknown[]) => unknown>((value) => typeof value === "function") })
+    .object({
+      handler: z.custom<(...args: unknown[]) => unknown>((value) => typeof value === "function"),
+    })
     .parse(module);
 
   return async (request: CacheRequest & { body?: string }): Promise<Invocation> => {
@@ -96,14 +103,20 @@ export async function loadHandler(outputDir: string) {
         status: result.statusCode,
         headers: lowerCased(result.headers),
         cookies: result.cookies ?? [],
-        body: result.isBase64Encoded ? Buffer.from(result.body, "base64").toString("utf8") : result.body,
+        body: result.isBase64Encoded
+          ? Buffer.from(result.body, "base64").toString("utf8")
+          : result.body,
         writesAt: [performance.now() - startedAt],
       };
     }
 
     const chunks: Buffer[] = [];
     const writesAt: number[] = [];
-    const responseStream: { metadata?: unknown; write(chunk: string | Uint8Array): void; end(): void } = {
+    const responseStream: {
+      metadata?: unknown;
+      write(chunk: string | Uint8Array): void;
+      end(): void;
+    } = {
       write: (chunk) => {
         chunks.push(Buffer.from(chunk));
         writesAt.push(performance.now() - startedAt);

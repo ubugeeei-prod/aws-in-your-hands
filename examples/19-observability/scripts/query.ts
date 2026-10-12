@@ -1,12 +1,16 @@
 // vp run obs:query:print --name errors            (local: prints the query text)
 // vp run obs:query --name request --id <x-request-id>   (AWS: runs it, billed per GB scanned)
 //   node scripts/query.ts --name request|trace|errors|slow [--id <id>] [--slow-ms 1000] [--minutes 60] [--print]
+
 import { spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
+
+import { z } from "zod";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { z } from "zod";
+
 import {
   byRequestId,
   byTraceId,
@@ -30,7 +34,10 @@ const startedSchema = z.object({ queryId: z.string() });
 const resultsSchema = z.object({
   status: z.string(),
   results: z.array(z.array(z.object({ field: z.string(), value: z.string() }))).default([]),
-  statistics: z.object({ recordsScanned: z.number(), bytesScanned: z.number() }).partial().optional(),
+  statistics: z
+    .object({ recordsScanned: z.number(), bytesScanned: z.number() })
+    .partial()
+    .optional(),
 });
 
 function pick(args: z.infer<typeof argsSchema>): Query {
@@ -71,8 +78,15 @@ try {
     process.exit(0);
   }
 
-  const { target } = await preflight({ access: "observe", action: "run a Logs Insights query", stack: STACK });
-  const logGroup = requireOutput(await readStackOutputs(process.cwd(), STACK, target.region), "HandlerLogGroupName");
+  const { target } = await preflight({
+    access: "observe",
+    action: "run a Logs Insights query",
+    stack: STACK,
+  });
+  const logGroup = requireOutput(
+    await readStackOutputs(process.cwd(), STACK, target.region),
+    "HandlerLogGroupName",
+  );
   const end = Math.floor(Date.now() / 1000);
   // The time range is what you pay for: every byte in it is scanned.
   const start = end - args.minutes * 60;
@@ -104,7 +118,9 @@ try {
     console.log(`\nstatus: ${response.status}, last ${String(args.minutes)} min of ${logGroup}`);
     for (const row of response.results) {
       console.log(
-        Object.fromEntries(row.filter((cell) => cell.field !== "@ptr").map((cell) => [cell.field, cell.value])),
+        Object.fromEntries(
+          row.filter((cell) => cell.field !== "@ptr").map((cell) => [cell.field, cell.value]),
+        ),
       );
     }
     console.log(

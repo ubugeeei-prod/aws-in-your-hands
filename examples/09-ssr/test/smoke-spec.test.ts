@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { NO_STORE, SHARED } from "../core/cache-control.ts";
 import {
   directUrlProblem,
@@ -19,15 +20,25 @@ const miss = { "x-cache": "Miss from cloudfront" };
 describe("smoke checks", () => {
   it("want a public page to be reused, and to carry no cookie", () => {
     expect(publicPageProblem(page(SHARED, miss), [page(SHARED, hit)])).toBeNull();
-    expect(publicPageProblem(page(SHARED, miss), [page(SHARED, miss)])).toMatch(/never answered from its cache/);
-    expect(publicPageProblem(page(SHARED, { ...miss, "set-cookie": "a=b" }), [page(SHARED, hit)])).toMatch(/cookie/);
-    expect(publicPageProblem(page(NO_STORE, miss), [page(NO_STORE, miss)])).toMatch(/expected cache-control/);
+    expect(publicPageProblem(page(SHARED, miss), [page(SHARED, miss)])).toMatch(
+      /never answered from its cache/,
+    );
+    expect(
+      publicPageProblem(page(SHARED, { ...miss, "set-cookie": "a=b" }), [page(SHARED, hit)]),
+    ).toMatch(/cookie/);
+    expect(publicPageProblem(page(NO_STORE, miss), [page(NO_STORE, miss)])).toMatch(
+      /expected cache-control/,
+    );
   });
 
   it("fail a personal page that CloudFront reused even once", () => {
     expect(personalPageProblem([page(NO_STORE, miss), page(NO_STORE, miss)])).toBeNull();
-    expect(personalPageProblem([page(NO_STORE, miss), page(NO_STORE, hit)])).toMatch(/answered from its cache/);
-    expect(personalPageProblem([page(NO_STORE, { ...miss, age: "3" })])).toMatch(/answered from its cache/);
+    expect(personalPageProblem([page(NO_STORE, miss), page(NO_STORE, hit)])).toMatch(
+      /answered from its cache/,
+    );
+    expect(personalPageProblem([page(NO_STORE, { ...miss, age: "3" })])).toMatch(
+      /answered from its cache/,
+    );
     expect(personalPageProblem([page(SHARED, miss)])).toMatch(/expected cache-control/);
   });
 
@@ -37,7 +48,9 @@ describe("smoke checks", () => {
   });
 
   it("find a built asset in the page", () => {
-    expect(firstAssetPath('<link rel="stylesheet" href="/_nuxt/entry.abc.css">')).toBe("/_nuxt/entry.abc.css");
+    expect(firstAssetPath('<link rel="stylesheet" href="/_nuxt/entry.abc.css">')).toBe(
+      "/_nuxt/entry.abc.css",
+    );
     expect(firstAssetPath("<p>no assets</p>")).toBeUndefined();
   });
 });

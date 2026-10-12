@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { fixtureSchema } from "../src/fixture-gateway.ts";
 import { fixtures } from "../src/fixtures.ts";
 import { MAX_SUMMARY_CHARS, type ModelGateway } from "../src/summarize.ts";
@@ -32,7 +33,11 @@ describe("relaying a ConverseStream", () => {
 
   it("does not call a summary cut by maxTokens complete", async () => {
     const { events } = await run("max-tokens");
-    expect(events.at(-1)).toMatchObject({ type: "done", stopReason: "max_tokens", complete: false });
+    expect(events.at(-1)).toMatchObject({
+      type: "done",
+      stopReason: "max_tokens",
+      complete: false,
+    });
   });
 
   it("reports a stream that just ends as interrupted, never as done", async () => {
@@ -56,16 +61,26 @@ describe("relaying a ConverseStream", () => {
       const cut = fixtureSchema.parse({ ...fixtures.complete, steps: whole.slice(0, length) });
       const start = await fromFixture(cut).summarize(NOTE, never);
       const events = start.ok ? await drain(start.events) : [];
-      const sawStop = whole.slice(0, length).some((step) => JSON.stringify(step).includes("messageStop"));
+      const sawStop = whole
+        .slice(0, length)
+        .some((step) => JSON.stringify(step).includes("messageStop"));
       expect(events.at(-1)?.type, `cut after ${length} step(s)`).toBe(sawStop ? "done" : "error");
     }
   });
 
   it("still completes when only the usage is lost, and says the usage is unknown", async () => {
-    const cut = fixtureSchema.parse({ ...fixtures.complete, steps: fixtures.complete.steps.slice(0, -1) });
+    const cut = fixtureSchema.parse({
+      ...fixtures.complete,
+      steps: fixtures.complete.steps.slice(0, -1),
+    });
     const start = await fromFixture(cut).summarize(NOTE, never);
     const events = start.ok ? await drain(start.events) : [];
-    expect(events.at(-1)).toEqual({ type: "done", stopReason: "end_turn", complete: true, usage: null });
+    expect(events.at(-1)).toEqual({
+      type: "done",
+      stopReason: "end_turn",
+      complete: true,
+      usage: null,
+    });
   });
 
   it("stops relaying when an event has a known key with the wrong shape", async () => {
@@ -79,7 +94,9 @@ describe("relaying a ConverseStream", () => {
       ],
     });
     const start = await fromFixture(bad).summarize(NOTE, never);
-    expect(start.ok && (await drain(start.events))).toEqual([{ type: "error", code: "bad_output", retryable: false }]);
+    expect(start.ok && (await drain(start.events))).toEqual([
+      { type: "error", code: "bad_output", retryable: false },
+    ]);
   });
 
   it("ignores event kinds it does not know, and deltas that carry no text", async () => {
@@ -89,7 +106,14 @@ describe("relaying a ConverseStream", () => {
       steps: [
         { event: { messageStart: { role: "assistant" } } },
         { event: { somethingNew: { value: 1 } } },
-        { event: { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { text: "hmm" } } } } },
+        {
+          event: {
+            contentBlockDelta: {
+              contentBlockIndex: 0,
+              delta: { reasoningContent: { text: "hmm" } },
+            },
+          },
+        },
         { event: { contentBlockDelta: { contentBlockIndex: 1, delta: { text: "ok" } } } },
         { event: { messageStop: { stopReason: "end_turn" } } },
       ],
@@ -105,7 +129,12 @@ describe("relaying a ConverseStream", () => {
       source: "test",
       description: "more text than MAX_SUMMARY_CHARS",
       steps: Array.from({ length: 5 }, () => ({
-        event: { contentBlockDelta: { contentBlockIndex: 0, delta: { text: "x".repeat(MAX_SUMMARY_CHARS / 4 + 1) } } },
+        event: {
+          contentBlockDelta: {
+            contentBlockIndex: 0,
+            delta: { text: "x".repeat(MAX_SUMMARY_CHARS / 4 + 1) },
+          },
+        },
       })),
     });
     const start = await fromFixture(flood).summarize(NOTE, never);
@@ -124,7 +153,9 @@ describe("relaying a ConverseStream", () => {
       ],
     });
     const start = await fromFixture(asEvent).summarize(NOTE, never);
-    expect(start.ok && (await drain(start.events))).toEqual([{ type: "error", code: "throttled", retryable: true }]);
+    expect(start.ok && (await drain(start.events))).toEqual([
+      { type: "error", code: "throttled", retryable: true },
+    ]);
   });
 });
 
@@ -142,7 +173,10 @@ describe("opening the stream", () => {
     const always = fixtureSchema.parse({
       source: "test",
       description: "throttled on every attempt",
-      openErrors: Array.from({ length: 5 }, () => ({ name: "ThrottlingException", message: "slow down" })),
+      openErrors: Array.from({ length: 5 }, () => ({
+        name: "ThrottlingException",
+        message: "slow down",
+      })),
       steps: [],
     });
     const { summarize, gateway } = fromFixture(always);
@@ -167,7 +201,11 @@ describe("opening the stream", () => {
       steps: [],
     });
     const { summarize, gateway, sleeps } = fromFixture(denied);
-    expect(await summarize(NOTE, never)).toEqual({ ok: false, attempts: 1, failure: { code, retryable: false } });
+    expect(await summarize(NOTE, never)).toEqual({
+      ok: false,
+      attempts: 1,
+      failure: { code, retryable: false },
+    });
     expect(gateway.calls).toBe(1);
     expect(sleeps).toEqual([]);
   });
@@ -222,7 +260,11 @@ describe("stopping", () => {
     expect(seen.signal?.aborted).toBe(false);
 
     caller.abort();
-    expect((await start.events.next()).value).toEqual({ type: "error", code: "cancelled", retryable: false });
+    expect((await start.events.next()).value).toEqual({
+      type: "error",
+      code: "cancelled",
+      retryable: false,
+    });
     expect(seen.signal?.aborted).toBe(true);
   });
 
@@ -236,7 +278,11 @@ describe("stopping", () => {
     await start.events.next();
 
     expire();
-    expect((await start.events.next()).value).toEqual({ type: "error", code: "timeout", retryable: true });
+    expect((await start.events.next()).value).toEqual({
+      type: "error",
+      code: "timeout",
+      retryable: true,
+    });
     expect(seen.signal?.aborted).toBe(true);
   });
 

@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { UploadsStack } from "../lib/uploads-stack.ts";
 
 const app = new App();

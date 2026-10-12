@@ -2,9 +2,12 @@
 //
 // Prints the DNS records to publish for a domain identity. It changes nothing:
 // creating the records at your DNS host is done by hand.
+
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { dnsRecords } from "../src/dns.ts";
 
 const { values } = parseArgs({ options: { report: { type: "string" } } });
@@ -23,7 +26,9 @@ try {
         "Deploy with -c senderIdentity=<your domain> to verify a domain.",
     );
   }
-  const hasMailFrom = Object.keys(outputs).some((key) => key === "MailFromDomain" || key.endsWith(".MailFromDomain"));
+  const hasMailFrom = Object.keys(outputs).some(
+    (key) => key === "MailFromDomain" || key.endsWith(".MailFromDomain"),
+  );
   const records = dnsRecords({
     domain,
     dkim: [1, 2, 3].map((n) => ({
@@ -35,7 +40,9 @@ try {
     dmarcReportAddress: values.report,
   });
   for (const record of records) {
-    console.log(`${record.type.padEnd(5)} ${record.name}\n      ${record.value}\n      # ${record.purpose}\n`);
+    console.log(
+      `${record.type.padEnd(5)} ${record.name}\n      ${record.value}\n      # ${record.purpose}\n`,
+    );
   }
 } catch (error) {
   console.error("FAIL", error instanceof Error ? error.message : error);

@@ -1,4 +1,5 @@
 import { handle } from "hono/aws-lambda";
+
 import { composeApp } from "./compose.ts";
 import { openDsql } from "./dsql.ts";
 import { parseEnv, regionOfEndpoint } from "./env.ts";
@@ -17,7 +18,9 @@ const db = openDsql({
   region: regionOfEndpoint(env.DSQL_ENDPOINT),
   user: env.DSQL_USER,
   onPoolError: (error) =>
-    console.error(JSON.stringify({ level: "warn", message: "idle connection lost", error: error.message })),
+    console.error(
+      JSON.stringify({ level: "warn", message: "idle connection lost", error: error.message }),
+    ),
 });
 
 export const handler = handle(composeApp(env, db));

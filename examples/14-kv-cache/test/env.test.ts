@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEnv } from "../src/env.ts";
 
 describe("environment", () => {
@@ -19,9 +20,9 @@ describe("environment", () => {
   it("requires each store's own settings", () => {
     expect(() => parseEnv({ KV_STORE: "dynamodb" })).toThrow(/TABLE_NAME/);
     expect(() => parseEnv({ KV_STORE: "valkey" })).toThrow(/VALKEY_URL/);
-    expect(() => parseEnv({ KV_STORE: "elasticache", VALKEY_ENDPOINT: "x.cache.amazonaws.com" })).toThrow(
-      /VALKEY_CACHE_NAME/,
-    );
+    expect(() =>
+      parseEnv({ KV_STORE: "elasticache", VALKEY_ENDPOINT: "x.cache.amazonaws.com" }),
+    ).toThrow(/VALKEY_CACHE_NAME/);
   });
 
   it("accepts the settings the stack passes for ElastiCache", () => {
@@ -39,6 +40,8 @@ describe("environment", () => {
 
   it("rejects a limit of zero and a Valkey URL without a scheme", () => {
     expect(() => parseEnv({ KV_STORE: "memory", RATE_LIMIT: "0" })).toThrow(/RATE_LIMIT/);
-    expect(() => parseEnv({ KV_STORE: "valkey", VALKEY_URL: "localhost:6390" })).toThrow(/VALKEY_URL/);
+    expect(() => parseEnv({ KV_STORE: "valkey", VALKEY_URL: "localhost:6390" })).toThrow(
+      /VALKEY_URL/,
+    );
   });
 });

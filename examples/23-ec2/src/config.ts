@@ -36,7 +36,10 @@ export const ec2ConfigSchema = z.object({
   // Ends up in a file that systemd reads, so the characters are limited to what an origin needs.
   allowedOrigin: z
     .url({ protocol: /^https?$/ })
-    .regex(/^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/, "an origin: scheme, host, and optional port, nothing else")
+    .regex(
+      /^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/,
+      "an origin: scheme, host, and optional port, nothing else",
+    )
     .default("http://localhost:5173"),
 });
 
@@ -47,7 +50,9 @@ export type Ec2Config = z.infer<typeof ec2ConfigSchema>;
 export function parseEc2Config(input: unknown): Ec2Config {
   const result = ec2ConfigSchema.safeParse(input);
   if (!result.success) {
-    const problems = result.error.issues.map((item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`);
+    const problems = result.error.issues.map(
+      (item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`,
+    );
     throw new Error(`Invalid EC2 settings:\n${problems.join("\n")}`);
   }
   return result.data;

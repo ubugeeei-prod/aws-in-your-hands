@@ -1,14 +1,27 @@
-import { GetStreamCommand, GetStreamKeyCommand, type IvsClient, StopStreamCommand } from "@aws-sdk/client-ivs";
+import {
+  GetStreamCommand,
+  GetStreamKeyCommand,
+  type IvsClient,
+  StopStreamCommand,
+} from "@aws-sdk/client-ivs";
 import { z } from "zod";
+
 import { type GetStreamOutcome, interpretGetStream, type StreamStatus } from "./stream.ts";
 
-const errorName = (error: unknown): string => (error instanceof Error ? error.name : "UnknownError");
+const errorName = (error: unknown): string =>
+  error instanceof Error ? error.name : "UnknownError";
 
 // #region get-stream
-export async function getStreamStatus(client: IvsClient, channelArn: string): Promise<StreamStatus> {
+export async function getStreamStatus(
+  client: IvsClient,
+  channelArn: string,
+): Promise<StreamStatus> {
   let outcome: GetStreamOutcome;
   try {
-    outcome = { kind: "response", stream: (await client.send(new GetStreamCommand({ channelArn }))).stream };
+    outcome = {
+      kind: "response",
+      stream: (await client.send(new GetStreamCommand({ channelArn }))).stream,
+    };
   } catch (error) {
     outcome = { kind: "error", name: errorName(error) };
   }

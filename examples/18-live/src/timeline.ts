@@ -36,14 +36,23 @@ export type Disagreement =
   | "start event missing or late"
   | "ended in events, live in GetStream";
 
-export type Reconciliation = { agrees: true } | { agrees: false; reason: Disagreement; streamId: string };
+export type Reconciliation =
+  | { agrees: true }
+  | { agrees: false; reason: Disagreement; streamId: string };
 
 /** Events are hints, delivered best effort. GetStream is the answer. */
-export function reconcile(beliefs: Map<string, StreamBelief>, actual: StreamStatus): Reconciliation {
+export function reconcile(
+  beliefs: Map<string, StreamBelief>,
+  actual: StreamStatus,
+): Reconciliation {
   if (actual.state === "live") {
     const belief = beliefs.get(actual.streamId);
     if (belief === "ended") {
-      return { agrees: false, reason: "ended in events, live in GetStream", streamId: actual.streamId };
+      return {
+        agrees: false,
+        reason: "ended in events, live in GetStream",
+        streamId: actual.streamId,
+      };
     }
     if (belief !== "live") {
       return { agrees: false, reason: "start event missing or late", streamId: actual.streamId };

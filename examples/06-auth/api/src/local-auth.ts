@@ -1,4 +1,5 @@
 import { jwtVerify, SignJWT } from "jose";
+
 import type { Identity } from "./identity.ts";
 
 // Local sign-in for development, not an emulation of Cognito. Tokens are HS256
@@ -14,7 +15,11 @@ const key = (secret: string): Uint8Array => {
   return new TextEncoder().encode(secret);
 };
 
-export function signLocalToken(secret: string, sub: string, lifetimeSeconds = 3600): Promise<string> {
+export function signLocalToken(
+  secret: string,
+  sub: string,
+  lifetimeSeconds = 3600,
+): Promise<string> {
   return new SignJWT({ token_use: "access" })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(sub)
@@ -38,7 +43,9 @@ export function createLocalAuthenticator(secret: string) {
         audience: AUDIENCE,
         algorithms: ["HS256"],
       });
-      return typeof payload.sub === "string" && payload.sub !== "" ? { sub: payload.sub } : undefined;
+      return typeof payload.sub === "string" && payload.sub !== ""
+        ? { sub: payload.sub }
+        : undefined;
     } catch {
       // Expired, forged, wrong audience, not a JWT: all mean "nobody".
       return undefined;

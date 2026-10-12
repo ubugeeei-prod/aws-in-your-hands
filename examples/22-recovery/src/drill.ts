@@ -76,14 +76,17 @@ export function summarize(record: DrillRecord): DrillSummary {
 // #endregion summary
 
 // #region mark
-export const isMoment = (record: DrillRecord, name: string): name is Moment => name in record.timeline;
+export const isMoment = (record: DrillRecord, name: string): name is Moment =>
+  name in record.timeline;
 export const isCount = (record: DrillRecord, name: string): name is Count => name in record.counts;
 
 /** A record is evidence: a moment written once is not written over. */
 export function mark(record: DrillRecord, name: Moment, at: Date): DrillRecord {
   const existing = record.timeline[name];
   if (existing !== null) {
-    throw new Error(`${name} is already recorded as ${existing}. Start a new record instead of rewriting this one.`);
+    throw new Error(
+      `${name} is already recorded as ${existing}. Start a new record instead of rewriting this one.`,
+    );
   }
   return { ...record, timeline: { ...record.timeline, [name]: at.toISOString() } };
 }

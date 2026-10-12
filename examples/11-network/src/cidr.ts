@@ -29,7 +29,12 @@ export const formatCidr = (cidr: Cidr): string => `${formatIpv4(cidr.network)}/$
 
 export function parseCidr(text: string): Cidr {
   const [address, prefixText, ...rest] = text.split("/");
-  if (address === undefined || prefixText === undefined || rest.length > 0 || !/^\d{1,2}$/.test(prefixText)) {
+  if (
+    address === undefined ||
+    prefixText === undefined ||
+    rest.length > 0 ||
+    !/^\d{1,2}$/.test(prefixText)
+  ) {
     throw new Error(`"${text}" is not a CIDR block such as 10.20.0.0/16`);
   }
   const cidr = { network: parseIpv4(address), prefix: Number(prefixText) };
@@ -38,7 +43,9 @@ export function parseCidr(text: string): Cidr {
   }
   // 10.20.1.0/16 names the same block as 10.20.0.0/16. EC2 rejects it; so does this.
   if (cidr.network % sizeOf(cidr) !== 0) {
-    throw new Error(`"${text}" has host bits set; did you mean ${formatCidr(alignTo(cidr.network, cidr.prefix))}?`);
+    throw new Error(
+      `"${text}" has host bits set; did you mean ${formatCidr(alignTo(cidr.network, cidr.prefix))}?`,
+    );
   }
   return cidr;
 }
@@ -66,7 +73,9 @@ export function subnetAt(parent: Cidr, prefix: number, index: number): Cidr {
   }
   const count = 2 ** (prefix - parent.prefix);
   if (!Number.isInteger(index) || index < 0 || index >= count) {
-    throw new Error(`${formatCidr(parent)} holds ${count} blocks of /${prefix}; index ${index} is out of range`);
+    throw new Error(
+      `${formatCidr(parent)} holds ${count} blocks of /${prefix}; index ${index} is out of range`,
+    );
   }
   return { network: parent.network + index * 2 ** (32 - prefix), prefix };
 }
@@ -76,5 +85,6 @@ export function subnetAt(parent: Cidr, prefix: number, index: number): Cidr {
 // A VPC subnet keeps the first four addresses and the last one for itself.
 export const AWS_RESERVED_PER_SUBNET = 5;
 
-export const usableAddresses = (cidr: Cidr): number => Math.max(0, sizeOf(cidr) - AWS_RESERVED_PER_SUBNET);
+export const usableAddresses = (cidr: Cidr): number =>
+  Math.max(0, sizeOf(cidr) - AWS_RESERVED_PER_SUBNET);
 // #endregion usable

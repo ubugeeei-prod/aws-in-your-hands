@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEnv } from "../src/env.ts";
 import { backoffMs, classifyError, nextDelayMs } from "../src/failure.ts";
 
@@ -7,8 +8,17 @@ const named = (name: string) => Object.assign(new Error("x"), { name });
 
 describe("classifying errors", () => {
   it("retries only what a second try can fix", () => {
-    const retryable = ["ThrottlingException", "ServiceUnavailableException", "InternalServerException"];
-    const final = ["AccessDeniedException", "ResourceNotFoundException", "ValidationException", "ModelErrorException"];
+    const retryable = [
+      "ThrottlingException",
+      "ServiceUnavailableException",
+      "InternalServerException",
+    ];
+    const final = [
+      "AccessDeniedException",
+      "ResourceNotFoundException",
+      "ValidationException",
+      "ModelErrorException",
+    ];
     for (const name of retryable) {
       expect(classifyError(named(name))?.retryable, name).toBe(true);
     }
@@ -26,7 +36,9 @@ describe("classifying errors", () => {
 
 describe("backing off", () => {
   it("doubles the ceiling per attempt, caps it, and waits a random part of it", () => {
-    expect([1, 2, 3, 4].map((attempt) => backoffMs(attempt, policy, () => 0.999))).toEqual([199, 399, 499, 499]);
+    expect([1, 2, 3, 4].map((attempt) => backoffMs(attempt, policy, () => 0.999))).toEqual([
+      199, 399, 499, 499,
+    ]);
     expect(backoffMs(3, policy, () => 0)).toBe(0);
     expect(backoffMs(2, policy, () => 0.5)).toBe(200);
   });
@@ -51,7 +63,9 @@ describe("environment", () => {
     expect(parseEnv(valid).MAX_OUTPUT_TOKENS).toBe(400);
     expect(parseEnv({ ...valid, MAX_OUTPUT_TOKENS: "120" }).MAX_OUTPUT_TOKENS).toBe(120);
     for (const value of ["0", "100000", "many"]) {
-      expect(() => parseEnv({ ...valid, MAX_OUTPUT_TOKENS: value }), value).toThrow(/MAX_OUTPUT_TOKENS/);
+      expect(() => parseEnv({ ...valid, MAX_OUTPUT_TOKENS: value }), value).toThrow(
+        /MAX_OUTPUT_TOKENS/,
+      );
     }
   });
 });

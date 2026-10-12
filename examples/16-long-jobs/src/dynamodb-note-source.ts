@@ -1,6 +1,8 @@
-import { noteSchema } from "@aih/example-05-dynamodb/src/contract.ts";
 import { type DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { z } from "zod";
+
+import { noteSchema } from "@aih/example-05-dynamodb/src/contract.ts";
+
 import type { ExportedNote, NotePage, NoteSource } from "./note-source.ts";
 
 // Chapter 05's layout: pk "OWNER#<owner>", sk "NOTE#<id>".
@@ -34,7 +36,11 @@ export class DynamoDbNoteSource implements NoteSource {
         // The cursor went through the workflow's state and back, so it is checked like any input.
         ...(cursor === null
           ? {}
-          : { ExclusiveStartKey: keySchema.parse(JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"))) }),
+          : {
+              ExclusiveStartKey: keySchema.parse(
+                JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")),
+              ),
+            }),
       }),
     );
     const last = result.LastEvaluatedKey;
@@ -42,7 +48,9 @@ export class DynamoDbNoteSource implements NoteSource {
       notes: (result.Items ?? []).map(toNote),
       // No LastEvaluatedKey is the only sign that the table has been read to the end.
       nextCursor:
-        last === undefined ? null : Buffer.from(JSON.stringify(keySchema.parse(last)), "utf8").toString("base64url"),
+        last === undefined
+          ? null
+          : Buffer.from(JSON.stringify(keySchema.parse(last)), "utf8").toString("base64url"),
     };
   }
   // #endregion scan

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseHelloConfig } from "../lib/config.ts";
 
 describe("hello config", () => {

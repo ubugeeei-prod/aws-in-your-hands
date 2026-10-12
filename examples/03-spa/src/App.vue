@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+
 import type { Note } from "./notes/note.ts";
 import { createLocalNoteStore } from "./notes/store.ts";
 import { useRoute } from "./router/use-route.ts";
@@ -16,7 +17,9 @@ const title = ref("");
 const body = ref("");
 const error = ref("");
 
-const editing = computed(() => (route.value.name === "note" ? store.get(route.value.id) : undefined));
+const editing = computed(() =>
+  route.value.name === "note" ? store.get(route.value.id) : undefined,
+);
 
 watch(
   route,
@@ -57,7 +60,10 @@ function remove(id: string): void {
       <p v-if="notes.length === 0">No notes yet. They are kept in this browser only.</p>
       <ul>
         <li v-for="note in notes" :key="note.id">
-          <a :href="`/notes/${encodeURIComponent(note.id)}`" @click.prevent="navigate({ name: 'note', id: note.id })">
+          <a
+            :href="`/notes/${encodeURIComponent(note.id)}`"
+            @click.prevent="navigate({ name: 'note', id: note.id })"
+          >
             {{ note.title }}
           </a>
           <time :datetime="note.updatedAt">{{ new Date(note.updatedAt).toLocaleString() }}</time>
@@ -71,14 +77,17 @@ function remove(id: string): void {
         <label>Body <textarea v-model="body" rows="10" maxlength="10000" /></label>
         <p v-if="error !== ''" role="alert">{{ error }}</p>
         <button type="submit">Save</button>
-        <button v-if="editing !== undefined" type="button" @click="remove(editing.id)">Delete</button>
+        <button v-if="editing !== undefined" type="button" @click="remove(editing.id)">
+          Delete
+        </button>
       </form>
     </section>
 
     <section v-else>
       <h2>Not found</h2>
       <p>
-        There is no page or note at <code>{{ route.name === "not-found" ? route.path : "this address" }}</code
+        There is no page or note at
+        <code>{{ route.name === "not-found" ? route.path : "this address" }}</code
         >.
       </p>
     </section>

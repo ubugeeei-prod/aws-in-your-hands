@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
+
 import { describe, expect, it } from "vite-plus/test";
 
 type QueryValue = { value: string; multiValue?: { value: string }[] };
@@ -12,7 +13,8 @@ const handler = runInNewContext(`${source}; handler`) as (event: {
   request: ViewerRequest;
 }) => ViewerRequest | Redirect;
 
-const run = (uri: string, querystring: Record<string, QueryValue> = {}) => handler({ request: { uri, querystring } });
+const run = (uri: string, querystring: Record<string, QueryValue> = {}) =>
+  handler({ request: { uri, querystring } });
 
 describe("book url-rewrite function", () => {
   it.each([

@@ -41,12 +41,19 @@ export function planObjectRestore(versions: Iterable<ObjectVersion>, point: Date
       } else {
         plan.unchanged++;
       }
-    } else if (after.length === 0 || (latest !== undefined && !latest.deleteMarker && latest.eTag === atPoint.eTag)) {
+    } else if (
+      after.length === 0 ||
+      (latest !== undefined && !latest.deleteMarker && latest.eTag === atPoint.eTag)
+    ) {
       // Untouched since the point, or already holding the same bytes (a copy made by an earlier run).
       plan.unchanged++;
     } else if (after.every((version) => version.deleteMarker)) {
       plan.steps.push(
-        ...after.map((marker) => ({ type: "remove_delete_marker" as const, key, versionId: marker.versionId })),
+        ...after.map((marker) => ({
+          type: "remove_delete_marker" as const,
+          key,
+          versionId: marker.versionId,
+        })),
       );
     } else {
       plan.steps.push({ type: "copy_version", key, versionId: atPoint.versionId });

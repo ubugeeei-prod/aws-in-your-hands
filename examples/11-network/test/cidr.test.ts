@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import {
   containsCidr,
   formatCidr,
@@ -14,7 +15,13 @@ import {
 
 describe("CIDR arithmetic", () => {
   it("round-trips blocks above 128.0.0.0, where signed 32-bit math goes negative", () => {
-    for (const text of ["10.20.0.0/16", "172.16.0.0/12", "192.168.255.0/24", "255.255.255.255/32", "0.0.0.0/0"]) {
+    for (const text of [
+      "10.20.0.0/16",
+      "172.16.0.0/12",
+      "192.168.255.0/24",
+      "255.255.255.255/32",
+      "0.0.0.0/0",
+    ]) {
       expect(formatCidr(parseCidr(text))).toBe(text);
     }
     expect(parseIpv4("192.168.0.1")).toBe(3_232_235_521);

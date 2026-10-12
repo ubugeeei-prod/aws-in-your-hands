@@ -1,15 +1,16 @@
 import { z } from "zod";
+
 import type { CacheEntry, CacheStore, CounterStore, IncrementResult, WindowRef } from "./stores.ts";
 
 // #region commands
 /** The four commands the stores send. Both iovalkey's `Redis` and `Cluster` fit. */
-export interface ValkeyCommands {
+export type ValkeyCommands = {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, token: "PXAT", at: number): Promise<unknown>;
   set(key: string, value: string, token: "PXAT", at: number, nx: "NX"): Promise<unknown>;
   del(key: string): Promise<number>;
   eval(script: string, numberOfKeys: number, ...args: (string | number)[]): Promise<unknown>;
-}
+};
 
 /** Asked for before every command, so the connection behind it can be replaced. */
 export type ValkeyProvider = () => Promise<ValkeyCommands>;
@@ -48,7 +49,9 @@ export class ValkeyCounterStore implements CounterStore {
 
   async incrementBelow(window: WindowRef, cap: number): Promise<IncrementResult> {
     const valkey = await this.#valkey();
-    const reply = z.number().parse(await valkey.eval(INCREMENT_BELOW, 1, counterKey(window), cap, window.expiresAt));
+    const reply = z
+      .number()
+      .parse(await valkey.eval(INCREMENT_BELOW, 1, counterKey(window), cap, window.expiresAt));
     return reply < 0 ? { accepted: false } : { accepted: true, count: reply };
   }
 

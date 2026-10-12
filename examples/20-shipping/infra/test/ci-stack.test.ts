@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { CiStack, GITHUB_ISSUER, githubSubjects } from "../lib/ci-stack.ts";
 import { ciConfigSchema, parseShipConfig } from "../lib/config.ts";
 
@@ -40,7 +41,8 @@ const roles = (from: Template = template) =>
   );
 const statements = (role: RoleProperties | undefined) =>
   (role?.Policies ?? []).flatMap((policy) => policy.PolicyDocument.Statement);
-const actions = (role: RoleProperties | undefined) => statements(role).flatMap((statement) => statement.Action);
+const actions = (role: RoleProperties | undefined) =>
+  statements(role).flatMap((statement) => statement.Action);
 
 describe("trust policies", () => {
   it("each role trusts one exact subject of one repository, and STS as the audience", () => {
@@ -59,7 +61,10 @@ describe("trust policies", () => {
       expect(Object.keys(trust[0]?.Principal ?? {})).toEqual(["Federated"]);
       // StringEquals only. A StringLike here is how a role ends up open to every branch.
       expect(trust[0]?.Condition).toEqual({
-        StringEquals: { [`${GITHUB_ISSUER}:aud`]: "sts.amazonaws.com", [`${GITHUB_ISSUER}:sub`]: expected[name] },
+        StringEquals: {
+          [`${GITHUB_ISSUER}:aud`]: "sts.amazonaws.com",
+          [`${GITHUB_ISSUER}:sub`]: expected[name],
+        },
       });
       expect(role.MaxSessionDuration).toBe(3600);
     }
@@ -73,7 +78,10 @@ describe("trust policies", () => {
   });
 
   it("carries immutable subject claims through unchanged", () => {
-    const immutable = synth({ githubRepository: "octo-org@123456/octo-repo@456789", deployBranch: "release" });
+    const immutable = synth({
+      githubRepository: "octo-org@123456/octo-repo@456789",
+      deployBranch: "release",
+    });
     const trust = roles(immutable.template)["DriftRole"]?.AssumeRolePolicyDocument.Statement[0];
     expect(trust?.Condition["StringEquals"]?.[`${GITHUB_ISSUER}:sub`]).toBe(
       "repo:octo-org@123456/octo-repo@456789:ref:refs/heads/release",
@@ -105,7 +113,10 @@ describe("OIDC provider", () => {
   it("registers GitHub's issuer for STS and nothing else", () => {
     template.resourceCountIs("AWS::IAM::OIDCProvider", 1);
     template.hasResource("AWS::IAM::OIDCProvider", {
-      Properties: { Url: "https://token.actions.githubusercontent.com", ClientIdList: ["sts.amazonaws.com"] },
+      Properties: {
+        Url: "https://token.actions.githubusercontent.com",
+        ClientIdList: ["sts.amazonaws.com"],
+      },
       DeletionPolicy: "Delete",
     });
   });
@@ -124,7 +135,9 @@ describe("permissions", () => {
   const bootstrapKinds = (role: RoleProperties | undefined) =>
     statements(role)
       .filter((statement) => statement.Action === "sts:AssumeRole")
-      .flatMap((statement) => [...JSON.stringify(statement.Resource).matchAll(/cdk-hnb659fds-([a-z-]+)-role-/g)])
+      .flatMap((statement) => [
+        ...JSON.stringify(statement.Resource).matchAll(/cdk-hnb659fds-([a-z-]+)-role-/g),
+      ])
       .map((match) => match[1])
       .toSorted();
 
@@ -135,7 +148,10 @@ describe("permissions", () => {
 
   it("the deploy roles reach CloudFormation only through the bootstrap roles", () => {
     for (const name of ["DeployRole", "PreviewRole"]) {
-      expect(actions(roles()[name]).toSorted(), name).toEqual(["cloudformation:DescribeStacks", "sts:AssumeRole"]);
+      expect(actions(roles()[name]).toSorted(), name).toEqual([
+        "cloudformation:DescribeStacks",
+        "sts:AssumeRole",
+      ]);
       expect(bootstrapKinds(roles()[name])).toEqual(["deploy", "file-publishing"]);
     }
   });
@@ -171,7 +187,9 @@ describe("permissions", () => {
     for (const role of Object.values(roles())) {
       expect(role.ManagedPolicyArns).toBeUndefined();
     }
-    const types = Object.values(template.toJSON()["Resources"] as Record<string, { Type: string }>).map((r) => r.Type);
+    const types = Object.values(
+      template.toJSON()["Resources"] as Record<string, { Type: string }>,
+    ).map((r) => r.Type);
     expect([...new Set(types)].toSorted()).toEqual(["AWS::IAM::OIDCProvider", "AWS::IAM::Role"]);
   });
 });

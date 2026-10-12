@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEc2Config } from "../src/config.ts";
 import { machineFor, type MachineSpec, pathsOf } from "../src/machine.ts";
 import { renderedFiles } from "../src/rendered.ts";
@@ -39,11 +41,14 @@ describe("the files under deploy/", () => {
     expect(deployed(name)).toBe(renderedFiles()[name]);
   });
 
-  it.each(["user-data.sh", "notes-data-volume.sh", "notes-release.sh"])("%s parses as bash", (name) => {
-    const result = spawnSync("bash", ["-n"], { input: deployed(name), encoding: "utf8" });
-    expect(result.stderr).toBe("");
-    expect(result.status).toBe(0);
-  });
+  it.each(["user-data.sh", "notes-data-volume.sh", "notes-release.sh"])(
+    "%s parses as bash",
+    (name) => {
+      const result = spawnSync("bash", ["-n"], { input: deployed(name), encoding: "utf8" });
+      expect(result.stderr).toBe("");
+      expect(result.status).toBe(0);
+    },
+  );
 });
 
 describe("user data", () => {
@@ -75,7 +80,9 @@ describe("user data", () => {
 
   it("contains no credential and nothing that looks like one", () => {
     // Anyone who can call DescribeInstanceAttribute, and any process on the instance, can read user data.
-    expect(script).not.toMatch(/AKIA|ASIA|aws_secret|secret_access|password|passwd|BEGIN [A-Z ]*PRIVATE KEY|token=/i);
+    expect(script).not.toMatch(
+      /AKIA|ASIA|aws_secret|secret_access|password|passwd|BEGIN [A-Z ]*PRIVATE KEY|token=/i,
+    );
     expect(
       renderEnvFile(machine)
         .trim()
@@ -84,17 +91,16 @@ describe("user data", () => {
     ).toEqual(["ALLOWED_ORIGIN", "LOG_LEVEL", "STAGE", "HOST", "PORT", "NOTES_FILE"]);
   });
 
-  it.each(Object.keys(machine).filter((key) => typeof machine[key as keyof MachineSpec] === "string"))(
-    "refuses to render when %s could break out of its quotes",
-    (key) => {
-      for (const value of HOSTILE) {
-        const spec = { ...machine, [key]: value };
-        expect(() => renderUserData(spec), JSON.stringify(value)).toThrow();
-        expect(() => renderUnit(spec), JSON.stringify(value)).toThrow();
-        expect(() => renderEnvFile(spec), JSON.stringify(value)).toThrow();
-      }
-    },
-  );
+  it.each(
+    Object.keys(machine).filter((key) => typeof machine[key as keyof MachineSpec] === "string"),
+  )("refuses to render when %s could break out of its quotes", (key) => {
+    for (const value of HOSTILE) {
+      const spec = { ...machine, [key]: value };
+      expect(() => renderUserData(spec), JSON.stringify(value)).toThrow();
+      expect(() => renderUnit(spec), JSON.stringify(value)).toThrow();
+      expect(() => renderEnvFile(spec), JSON.stringify(value)).toThrow();
+    }
+  });
 
   it("refuses a path that climbs out of its directory", () => {
     expect(() => renderUserData({ ...machine, appDir: "/opt/../etc" })).toThrow();
@@ -108,7 +114,9 @@ describe("user data", () => {
       "javascript:alert(1)",
       "http://a/$(id)",
     ]) {
-      expect(() => parseEc2Config({ allowedOrigin: origin }), JSON.stringify(origin)).toThrow("Invalid EC2 settings");
+      expect(() => parseEc2Config({ allowedOrigin: origin }), JSON.stringify(origin)).toThrow(
+        "Invalid EC2 settings",
+      );
     }
     expect(parseEc2Config({ allowedOrigin: "https://d111.cloudfront.net" }).allowedOrigin).toBe(
       "https://d111.cloudfront.net",

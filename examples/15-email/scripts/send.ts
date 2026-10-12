@@ -2,10 +2,17 @@
 //
 // Sends one real mail through the deployed API, twice with the same ID, and
 // shows that the second request sends nothing. SES bills each accepted message.
+
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { errorSchema, shareNotificationResultSchema, shareNotificationSchema } from "../src/contract.ts";
+
+import {
+  errorSchema,
+  shareNotificationResultSchema,
+  shareNotificationSchema,
+} from "../src/contract.ts";
 import { signedFetch } from "./signed-fetch.ts";
 
 const { values } = parseArgs({
@@ -31,10 +38,20 @@ try {
     noteTitle: values.title,
   });
 
-  const { target } = await preflight({ access: "mutate", action: `send one mail to ${body.to}`, stack: "AihEmail" });
-  const api = requireOutput(await readStackOutputs(process.cwd(), "AihEmail", target.region), "ApiUrl");
+  const { target } = await preflight({
+    access: "mutate",
+    action: `send one mail to ${body.to}`,
+    stack: "AihEmail",
+  });
+  const api = requireOutput(
+    await readStackOutputs(process.cwd(), "AihEmail", target.region),
+    "ApiUrl",
+  );
   const post = () =>
-    signedFetch(new URL("/share-notifications", api), target.region, { method: "POST", body: JSON.stringify(body) });
+    signedFetch(new URL("/share-notifications", api), target.region, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
 
   for (const attempt of ["first", "second"]) {
     const response = await post();

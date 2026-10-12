@@ -173,7 +173,9 @@
       "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/dead-letter-queues-alarms-cloudwatch.html",
       "title": "Creating alarms for dead-letter queues using Amazon CloudWatch",
       "checkedAt": "2026-10-12",
-      "supports": ["A dead-letter queue is monitored with an alarm on the ApproximateNumberOfMessagesVisible metric"]
+      "supports": [
+        "A dead-letter queue is monitored with an alarm on the ApproximateNumberOfMessagesVisible metric"
+      ]
     },
     {
       "id": "sqs-pricing",
@@ -460,7 +462,9 @@
       "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html",
       "title": "Supported data types and naming rules in Amazon DynamoDB",
       "checkedAt": "2026-10-12",
-      "supports": ["DynamoDB collates and compares strings using the bytes of the underlying UTF-8 encoding"]
+      "supports": [
+        "DynamoDB collates and compares strings using the bytes of the underlying UTF-8 encoding"
+      ]
     },
     {
       "id": "cdkd-source-async",
@@ -553,7 +557,9 @@
       "url": "https://developers.cloudflare.com/workers/configuration/cron-triggers/",
       "title": "Cloudflare Workers: Cron Triggers",
       "checkedAt": "2026-10-12",
-      "supports": ["A Worker can be run on a schedule with a cron expression through its scheduled() handler"],
+      "supports": [
+        "A Worker can be run on a schedule with a cron expression through its scheduled() handler"
+      ],
       "note": "The page was not found to state a delivery guarantee for scheduled runs."
     }
   ],
@@ -900,8 +906,16 @@
       },
       "items": [
         { "priceId": "scheduler.invocation", "quantity": 730, "basis": "one invocation an hour" },
-        { "priceId": "lambda.request.arm", "quantity": 730, "basis": "one housekeeping run an hour" },
-        { "priceId": "lambda.duration.arm", "quantity": 91.25, "basis": "730 x 0.5 s x 0.25 GB, in GB-seconds" },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 730,
+          "basis": "one housekeeping run an hour"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 91.25,
+          "basis": "730 x 0.5 s x 0.25 GB, in GB-seconds"
+        },
         { "priceId": "s3.request.tier1", "quantity": 1460, "basis": "730 runs x 2 LIST requests" },
         { "priceId": "logs.ingest.standard", "quantity": 0.0007, "basis": "730 x 1 KB, in GB" },
         { "priceId": "logs.storage", "quantity": 0.0002, "basis": "0.0007 GB x 7/30, in GB-month" }
@@ -937,13 +951,41 @@
         ]
       },
       "items": [
-        { "priceId": "sqs.request.standard", "quantity": 33000, "basis": "11,000 messages x 3 requests" },
-        { "priceId": "lambda.request.arm", "quantity": 11000, "basis": "one invocation per message" },
-        { "priceId": "lambda.duration.arm", "quantity": 550, "basis": "11,000 x 0.2 s x 0.25 GB, in GB-seconds" },
-        { "priceId": "s3.request.tier2", "quantity": 10000, "basis": "one GetObject per create event" },
-        { "priceId": "dynamodb.write.on-demand", "quantity": 11000, "basis": "one conditional write per event" },
-        { "priceId": "dynamodb.read.on-demand", "quantity": 10000, "basis": "one attachment lookup per create event" },
-        { "priceId": "logs.ingest.standard", "quantity": 0.0084, "basis": "11,000 x 0.8 KB, in GB" },
+        {
+          "priceId": "sqs.request.standard",
+          "quantity": 33000,
+          "basis": "11,000 messages x 3 requests"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 11000,
+          "basis": "one invocation per message"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 550,
+          "basis": "11,000 x 0.2 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "s3.request.tier2",
+          "quantity": 10000,
+          "basis": "one GetObject per create event"
+        },
+        {
+          "priceId": "dynamodb.write.on-demand",
+          "quantity": 11000,
+          "basis": "one conditional write per event"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 10000,
+          "basis": "one attachment lookup per create event"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.0084,
+          "basis": "11,000 x 0.8 KB, in GB"
+        },
         { "priceId": "logs.storage", "quantity": 0.002, "basis": "0.0084 GB x 7/30, in GB-month" }
       ]
     },
@@ -972,10 +1014,26 @@
       },
       "items": [
         { "priceId": "scheduler.invocation", "quantity": 730, "basis": "one invocation an hour" },
-        { "priceId": "lambda.request.arm", "quantity": 730, "basis": "one housekeeping run an hour" },
-        { "priceId": "lambda.duration.arm", "quantity": 36500, "basis": "730 x 200 s x 0.25 GB, in GB-seconds" },
-        { "priceId": "s3.request.tier1", "quantity": 14600, "basis": "730 runs x 2 passes x 10 LIST pages" },
-        { "priceId": "dynamodb.read.on-demand", "quantity": 29200000, "basis": "730 runs x 10,000 images x 4 reads" },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 730,
+          "basis": "one housekeeping run an hour"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 36500,
+          "basis": "730 x 200 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 14600,
+          "basis": "730 runs x 2 passes x 10 LIST pages"
+        },
+        {
+          "priceId": "dynamodb.read.on-demand",
+          "quantity": 29200000,
+          "basis": "730 runs x 10,000 images x 4 reads"
+        },
         { "priceId": "logs.ingest.standard", "quantity": 0.0007, "basis": "730 x 1 KB, in GB" },
         { "priceId": "logs.storage", "quantity": 0.0002, "basis": "0.0007 GB x 7/30, in GB-month" }
       ]

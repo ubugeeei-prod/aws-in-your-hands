@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { type Condition, insightsFilter, matches } from "./conditions.ts";
 
 // #region model
@@ -31,7 +32,17 @@ export function renderInsights(query: Query): string {
 // #region queries
 const requestIdSchema = z.uuid();
 const traceIdSchema = z.string().regex(/^[0-9a-f]{32}$/);
-const requestFields = ["level", "message", "method", "path", "status", "durationMs", "traceId", "sampled", "error"];
+const requestFields = [
+  "level",
+  "message",
+  "method",
+  "path",
+  "status",
+  "durationMs",
+  "traceId",
+  "sampled",
+  "error",
+];
 
 /** Everything one request wrote, oldest first. The ID is the `x-request-id` response header. */
 export function byRequestId(requestId: string): Query {
@@ -73,7 +84,10 @@ export function slowRequests(thresholdMs: number): Query {
       { field: "message", op: "=", value: "request" },
       { field: "durationMs", op: ">=", value: thresholdMs },
     ],
-    show: { kind: "fields", fields: ["requestId", "method", "path", "status", "durationMs", "traceId"] },
+    show: {
+      kind: "fields",
+      fields: ["requestId", "method", "path", "status", "durationMs", "traceId"],
+    },
     sort: { field: "durationMs", order: "desc" },
     limit: 20,
   };
@@ -92,7 +106,9 @@ export const conflictLines: Condition[] = [
 type Row = Record<string, unknown>;
 
 function compare(a: unknown, b: unknown): number {
-  return typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b));
+  return typeof a === "number" && typeof b === "number"
+    ? a - b
+    : String(a).localeCompare(String(b));
 }
 
 /**
@@ -104,13 +120,18 @@ export function runLocally(query: Query, lines: readonly Row[]): Row[] {
   let rows: Row[];
   if (query.show.kind === "fields") {
     const fields = query.show.fields;
-    rows = selected.map((line) => Object.fromEntries(fields.filter((f) => f in line).map((f) => [f, line[f]])));
+    rows = selected.map((line) =>
+      Object.fromEntries(fields.filter((f) => f in line).map((f) => [f, line[f]])),
+    );
   } else {
     const by = query.show.by;
     const groups = new Map<string, Row>();
     for (const line of selected) {
       const key = JSON.stringify(by.map((field) => line[field]));
-      const group = groups.get(key) ?? { ...Object.fromEntries(by.map((field) => [field, line[field]])), [COUNT]: 0 };
+      const group = groups.get(key) ?? {
+        ...Object.fromEntries(by.map((field) => [field, line[field]])),
+        [COUNT]: 0,
+      };
       group[COUNT] = (group[COUNT] as number) + 1;
       groups.set(key, group);
     }

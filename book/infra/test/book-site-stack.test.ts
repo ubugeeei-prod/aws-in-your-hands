@@ -1,10 +1,13 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { BookSiteStack } from "../lib/book-site-stack.ts";
 
 const synth = (): Template =>
-  Template.fromStack(new BookSiteStack(new App(), "AihBookSite", { env: { region: "ap-northeast-1" } }));
+  Template.fromStack(
+    new BookSiteStack(new App(), "AihBookSite", { env: { region: "ap-northeast-1" } }),
+  );
 
 // Checked in the source of @go-to-k/cdkd 0.296.28. Check a new type there before adding it.
 const typesCheckedAgainstCdkd = [
@@ -77,7 +80,10 @@ describe("BookSiteStack", () => {
   });
 
   it("deletes the bucket with the stack", () => {
-    synth().hasResource("AWS::S3::Bucket", { DeletionPolicy: "Delete", UpdateReplacePolicy: "Delete" });
+    synth().hasResource("AWS::S3::Bucket", {
+      DeletionPolicy: "Delete",
+      UpdateReplacePolicy: "Delete",
+    });
   });
 
   it("uses only resource types checked against cdkd", () => {
@@ -88,6 +94,10 @@ describe("BookSiteStack", () => {
 
   it("exposes the outputs the site tasks read", () => {
     const outputs = Object.keys(synth().toJSON()["Outputs"] as Record<string, unknown>);
-    expect(outputs.toSorted()).toEqual(["ContentBucketName", "DistributionDomainName", "DistributionId"]);
+    expect(outputs.toSorted()).toEqual([
+      "ContentBucketName",
+      "DistributionDomainName",
+      "DistributionId",
+    ]);
   });
 });

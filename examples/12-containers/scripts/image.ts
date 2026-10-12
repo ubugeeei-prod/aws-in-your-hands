@@ -3,11 +3,14 @@
 //
 // Every action needs the docker command and a running Docker daemon. The Nix
 // shell provides neither. --dry-run prints the commands and runs none of them.
+
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { CONTAINERS_STACK, parseContainersConfig } from "../src/config.ts";
 import { buildSteps, pushSteps, render, runSteps, type Step } from "../src/image.ts";
 
@@ -50,7 +53,9 @@ try {
     if (action === "build" && !existsSync("dist/server.mjs")) {
       throw new Error("dist/server.mjs is missing. Run `vp run ecs:bundle` first.");
     }
-    const daemon = spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], { stdio: "ignore" });
+    const daemon = spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], {
+      stdio: "ignore",
+    });
     if (daemon.error !== undefined || daemon.status !== 0) {
       throw new Error(
         "No Docker daemon answered. The Nix shell includes neither the docker command nor a daemon: start Docker Desktop, Colima, or similar, then run this again. With --dry-run the commands are printed and not run.",
@@ -64,8 +69,14 @@ try {
   } else if (action === "run") {
     steps = runSteps(tag);
   } else if (dryRun && values["repository-uri"] === undefined) {
-    console.error("# 123456789012 and the repository name are placeholders; the real URI is the stack's RepositoryUri");
-    steps = pushSteps(tag, "123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/repository-name", "ap-northeast-1");
+    console.error(
+      "# 123456789012 and the repository name are placeholders; the real URI is the stack's RepositoryUri",
+    );
+    steps = pushSteps(
+      tag,
+      "123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/repository-name",
+      "ap-northeast-1",
+    );
   } else {
     let uri = values["repository-uri"];
     let region = "ap-northeast-1";
@@ -76,7 +87,10 @@ try {
         stack: CONTAINERS_STACK,
       });
       region = target.region;
-      uri = requireOutput(await readStackOutputs(process.cwd(), CONTAINERS_STACK, region), "RepositoryUri");
+      uri = requireOutput(
+        await readStackOutputs(process.cwd(), CONTAINERS_STACK, region),
+        "RepositoryUri",
+      );
     }
     steps = pushSteps(tag, uri, region);
   }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { AuthProvider } from "./provider.ts";
 
 const tokenSchema = z.object({ accessToken: z.string().min(1) });

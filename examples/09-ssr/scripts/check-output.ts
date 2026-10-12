@@ -3,7 +3,9 @@
 //
 // Runs the built Lambda handler in this process and checks the headers the
 // real application sends. No AWS, no network.
+
 import { resolve } from "node:path";
+
 import { NO_STORE, SHARED } from "../core/cache-control.ts";
 import { noteListSchema } from "../core/notes.ts";
 import { SESSION_COOKIE } from "../core/session.ts";
@@ -21,14 +23,18 @@ const check = (name: string, ok: boolean, detail = ""): void => {
     problems.push(name);
   }
 };
-const cacheControl = (response: Invocation): string => response.headers["cache-control"] ?? "(none)";
+const cacheControl = (response: Invocation): string =>
+  response.headers["cache-control"] ?? "(none)";
 const SECRET_SHAPED = /[A-Za-z0-9_-]{43}/;
 
 try {
   const build = readBuildInfo(outputDir);
-  console.log(`output: ${outputDir}\nnitro ${build.nitro}, handler: ${build.streaming ? "streaming" : "buffered"}`);
+  console.log(
+    `output: ${outputDir}\nnitro ${build.nitro}, handler: ${build.streaming ? "streaming" : "buffered"}`,
+  );
   const invoke = await loadHandler(outputDir);
-  const get = (path: string, headers: Record<string, string> = {}) => invoke({ method: "GET", path, headers });
+  const get = (path: string, headers: Record<string, string> = {}) =>
+    invoke({ method: "GET", path, headers });
 
   // #region public
   const home = await get("/");
@@ -36,11 +42,22 @@ try {
     "the list page is rendered on the server",
     home.status === 200 && home.body.includes("What a shared cache keeps"),
   );
-  check("an anonymous public page may be shared", cacheControl(home) === SHARED, cacheControl(home));
-  check("a public page sets no cookie", home.cookies.length === 0 && home.headers["set-cookie"] === undefined);
+  check(
+    "an anonymous public page may be shared",
+    cacheControl(home) === SHARED,
+    cacheControl(home),
+  );
+  check(
+    "a public page sets no cookie",
+    home.cookies.length === 0 && home.headers["set-cookie"] === undefined,
+  );
 
   const note = await get("/notes/tokens-stay-on-the-server");
-  check("a note page may be shared", note.status === 200 && cacheControl(note) === SHARED, cacheControl(note));
+  check(
+    "a note page may be shared",
+    note.status === 200 && cacheControl(note) === SHARED,
+    cacheControl(note),
+  );
   const api = await get("/api/notes");
   check(
     "the public API matches its schema and may be shared",
@@ -48,7 +65,9 @@ try {
     cacheControl(api),
   );
 
-  console.log("info asking for a note that does not exist; Nuxt logs the 404 below as a request error");
+  console.log(
+    "info asking for a note that does not exist; Nuxt logs the 404 below as a request error",
+  );
   const missing = await get("/notes/no-such-note");
   check(
     "a missing note is a 404 that is not shared",
@@ -59,7 +78,11 @@ try {
 
   // #region credentials
   const withCookie = await get("/", { cookie: "theme=dark" });
-  check("any cookie on the request stops sharing", cacheControl(withCookie) === NO_STORE, cacheControl(withCookie));
+  check(
+    "any cookie on the request stops sharing",
+    cacheControl(withCookie) === NO_STORE,
+    cacheControl(withCookie),
+  );
   const withAuthorization = await get("/", { authorization: "Bearer anything" });
   check(
     "an Authorization header stops sharing",
@@ -96,7 +119,9 @@ try {
   );
   check(
     "the session cookie is HttpOnly, SameSite=Lax, and scoped to /me",
-    /HttpOnly/i.test(setCookie) && /SameSite=Lax/i.test(setCookie) && /Path=\/me(;|$)/i.test(setCookie),
+    /HttpOnly/i.test(setCookie) &&
+      /SameSite=Lax/i.test(setCookie) &&
+      /Path=\/me(;|$)/i.test(setCookie),
     setCookie.replace(/=[^;]+/, "=<redacted>"),
   );
   const aliceCookie = setCookie.split(";")[0] ?? "";
@@ -106,7 +131,10 @@ try {
   );
 
   const mine = await get("/me", { cookie: aliceCookie });
-  check("the personal page is rendered for its reader", mine.status === 200 && mine.body.includes("Alice"));
+  check(
+    "the personal page is rendered for its reader",
+    mine.status === 200 && mine.body.includes("Alice"),
+  );
   check("the personal page is not shared", cacheControl(mine) === NO_STORE, cacheControl(mine));
   check("neither token nor session id is in the HTML", !SECRET_SHAPED.test(mine.body));
   const viewer = await get("/me/api/viewer", { cookie: aliceCookie });
@@ -162,7 +190,9 @@ try {
 }
 
 if (problems.length > 0) {
-  console.error(`${problems.length} problem(s). Is .output current? Run the matching build task first.`);
+  console.error(
+    `${problems.length} problem(s). Is .output current? Run the matching build task first.`,
+  );
   process.exit(1);
 }
 console.log("the built handler keeps personal responses out of a shared cache");

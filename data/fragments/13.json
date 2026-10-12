@@ -8,7 +8,14 @@
       "en": "SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
     },
     "prerequisites": ["04"],
-    "services": ["Aurora DSQL", "RDS for PostgreSQL", "Aurora Serverless v2", "Lambda", "API Gateway HTTP API", "IAM"],
+    "services": [
+      "Aurora DSQL",
+      "RDS for PostgreSQL",
+      "Aurora Serverless v2",
+      "Lambda",
+      "API Gateway HTTP API",
+      "IAM"
+    ],
     "samplePath": "examples/13-sql",
     "writing": { "ja": "complete", "en": "complete" },
     "sourceRevision": 1,
@@ -387,7 +394,9 @@
       "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/configure-root-certificates.html",
       "title": "Configuring SSL/TLS certificates for Aurora DSQL connections",
       "checkedAt": "2026-10-11",
-      "supports": ["The server certificate chains to Amazon Root CA 1; AWS recommends verify-full for production"]
+      "supports": [
+        "The server certificate chains to Amazon Root CA 1; AWS recommends verify-full for production"
+      ]
     },
     {
       "id": "cfn-dsql-cluster",
@@ -511,14 +520,18 @@
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html",
       "title": "Amazon RDS Proxy",
       "checkedAt": "2026-10-11",
-      "supports": ["RDS Proxy pools and shares database connections for applications that open many of them"]
+      "supports": [
+        "RDS Proxy pools and shares database connections for applications that open many of them"
+      ]
     },
     {
       "id": "rds-pitr",
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIT.html",
       "title": "Restoring a DB instance to a specified time for Amazon RDS",
       "checkedAt": "2026-10-11",
-      "supports": ["Point-in-time restore creates a new DB instance within the backup retention period"]
+      "supports": [
+        "Point-in-time restore creates a new DB instance within the backup retention period"
+      ]
     },
     {
       "id": "postgres-transaction-iso",
@@ -586,14 +599,18 @@
       "url": "https://developers.cloudflare.com/d1/reference/time-travel/",
       "title": "Cloudflare D1: Time Travel",
       "checkedAt": "2026-10-11",
-      "supports": ["Time Travel restores a database to any minute within the last 30 days without scheduled backups"]
+      "supports": [
+        "Time Travel restores a database to any minute within the last 30 days without scheduled backups"
+      ]
     },
     {
       "id": "cloudflare-d1-database-api",
       "url": "https://developers.cloudflare.com/d1/worker-api/d1-database/",
       "title": "Cloudflare D1: D1 Database (Workers Binding API)",
       "checkedAt": "2026-10-11",
-      "supports": ["batch() runs its statements as one SQL transaction and rolls the whole sequence back if one fails"]
+      "supports": [
+        "batch() runs its statements as one SQL transaction and rolls the whole sequence back if one fails"
+      ]
     },
     {
       "id": "cloudflare-d1-sql-statements",
@@ -891,7 +908,12 @@
       "currency": "USD",
       "unit": "DPU",
       "tiers": [
-        { "from": 0, "to": null, "usd": "0.0000100000", "description": "$0.00001 per DPU in Asia Pacific (Tokyo)" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$0.00001 per DPU in Asia Pacific (Tokyo)"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:45:22Z",
@@ -907,7 +929,12 @@
       "currency": "USD",
       "unit": "GB-Month",
       "tiers": [
-        { "from": 0, "to": null, "usd": "0.4000000000", "description": "$0.40 per GB-Month in Asia Pacific (Tokyo)" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4000000000",
+          "description": "$0.40 per GB-Month in Asia Pacific (Tokyo)"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:45:22Z",
@@ -1099,8 +1126,16 @@
         ]
       },
       "items": [
-        { "priceId": "rds.postgres.t4g-micro.single-az", "quantity": 730, "basis": "one instance for 730 hours" },
-        { "priceId": "rds.postgres.gp3.storage", "quantity": 20, "basis": "20 GB provisioned for the month" }
+        {
+          "priceId": "rds.postgres.t4g-micro.single-az",
+          "quantity": 730,
+          "basis": "one instance for 730 hours"
+        },
+        {
+          "priceId": "rds.postgres.gp3.storage",
+          "quantity": 20,
+          "basis": "20 GB provisioned for the month"
+        }
       ]
     },
     {
@@ -1125,8 +1160,16 @@
         ]
       },
       "items": [
-        { "priceId": "aurora.postgres.serverless-v2.acu", "quantity": 365, "basis": "0.5 ACU x 730 hours" },
-        { "priceId": "aurora.postgres.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 365,
+          "basis": "0.5 ACU x 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
       ]
     },
     {
@@ -1149,8 +1192,16 @@
         ]
       },
       "items": [
-        { "priceId": "aurora.postgres.serverless-v2.acu", "quantity": 0, "basis": "paused for all 730 hours" },
-        { "priceId": "aurora.postgres.storage", "quantity": 1, "basis": "1 GB stored for the month" }
+        {
+          "priceId": "aurora.postgres.serverless-v2.acu",
+          "quantity": 0,
+          "basis": "paused for all 730 hours"
+        },
+        {
+          "priceId": "aurora.postgres.storage",
+          "quantity": 1,
+          "basis": "1 GB stored for the month"
+        }
       ]
     }
   ],

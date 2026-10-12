@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { CONTAINERS_STACK, parseContainersConfig, REGION } from "../../src/config.ts";
 import { ContainersStack } from "../lib/containers-stack.ts";
 
@@ -15,6 +16,7 @@ const config = parseContainersConfig({
 
 new ContainersStack(app, CONTAINERS_STACK, {
   env: { region: REGION },
-  description: "AWS in Your Hands chapter 12: the notes API as a container on ECS/Fargate behind an ALB",
+  description:
+    "AWS in Your Hands chapter 12: the notes API as a container on ECS/Fargate behind an ALB",
   config,
 });

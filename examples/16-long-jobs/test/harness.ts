@@ -38,7 +38,8 @@ function controllable<T extends object>(target: T) {
   return {
     proxy,
     /** Lets `skip` calls through, then fails the next `times`. */
-    failAfter: (method: keyof T, skip: number, times = 1) => void failing.set(method, { skip, times }),
+    failAfter: (method: keyof T, skip: number, times = 1) =>
+      void failing.set(method, { skip, times }),
     /** The next call waits. `reached` resolves once that call is made; `release` lets it continue. */
     holdNext: (method: keyof T): { reached: Promise<void>; release: () => void } => {
       let release = () => {};
@@ -97,6 +98,7 @@ export function setup(count: number) {
 
 export const ID = "2026-10-12T030000Z";
 export const START = { exportId: "2026-10-12T03:00:00Z" };
-export const ids = (notes: ExportedNote[] | undefined): string[] => (notes ?? []).map((item) => item.id);
+export const ids = (notes: ExportedNote[] | undefined): string[] =>
+  (notes ?? []).map((item) => item.id);
 export const range = (from: number, to: number): string[] =>
   Array.from({ length: to - from + 1 }, (_, index) => note("alice", from + index).id);

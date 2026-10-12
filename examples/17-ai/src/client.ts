@@ -2,7 +2,9 @@ import { type Failure, type SummaryEvent, summaryEventSchema, type Usage } from 
 
 // #region sse
 /** Yields the `data` of each server-sent event. An event counts only once its blank line arrived. */
-export async function* sseData(body: ReadableStream<Uint8Array>): AsyncGenerator<string, void, void> {
+export async function* sseData(
+  body: ReadableStream<Uint8Array>,
+): AsyncGenerator<string, void, void> {
   // stream: true keeps a character that was split across two chunks intact.
   const decoder = new TextDecoder();
   let buffer = "";
@@ -34,7 +36,9 @@ const interrupted: SummaryEvent = { type: "error", code: "interrupted", retryabl
  * The events of one summary, checked against the contract. Always ends with
  * `done` or `error`: when the server sent neither, the client supplies the error.
  */
-export async function* summaryEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<SummaryEvent, void, void> {
+export async function* summaryEvents(
+  body: ReadableStream<Uint8Array>,
+): AsyncGenerator<SummaryEvent, void, void> {
   try {
     for await (const data of sseData(body)) {
       let json: unknown;
@@ -65,7 +69,12 @@ export async function* summaryEvents(body: ReadableStream<Uint8Array>): AsyncGen
 export type SummaryResult =
   | { status: "complete"; text: string; usage: Usage | null }
   // `partial` may be shown as unfinished. It must not be stored as the summary.
-  | { status: "incomplete"; partial: string; reason: Failure["code"] | "stopped_early"; retryable: boolean };
+  | {
+      status: "incomplete";
+      partial: string;
+      reason: Failure["code"] | "stopped_early";
+      retryable: boolean;
+    };
 
 export async function collectSummary(
   events: AsyncIterable<SummaryEvent>,
@@ -81,7 +90,12 @@ export async function collectSummary(
         ? { status: "complete", text, usage: event.usage }
         : { status: "incomplete", partial: text, reason: "stopped_early", retryable: false };
     } else {
-      return { status: "incomplete", partial: text, reason: event.code, retryable: event.retryable };
+      return {
+        status: "incomplete",
+        partial: text,
+        reason: event.code,
+        retryable: event.retryable,
+      };
     }
   }
   return { status: "incomplete", partial: text, reason: "interrupted", retryable: true };

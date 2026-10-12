@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { joinLedgers, judge, judgeCell } from "../src/ledger.ts";
 import type { Attempt, ProbeOutput } from "../src/probe.ts";
 import { type Flaw, ToyFleet } from "./toy-fleet.ts";
@@ -49,7 +50,9 @@ describe("after a node is lost, every acknowledged increment is still there", ()
       return ["b", "c"];
     });
     expect(report.verdict).toBe("violated");
-    expect(report.violations.map((violation) => violation.kind)).toEqual(Array(CELLS).fill("acknowledged-write-lost"));
+    expect(report.violations.map((violation) => violation.kind)).toEqual(
+      Array(CELLS).fill("acknowledged-write-lost"),
+    );
     expect(report.violations[0]?.detail).toBe("answered 1 after 2 had been acknowledged");
   });
 
@@ -83,7 +86,9 @@ describe("one writer at a time, as a client can see it", () => {
     });
     expect(report.verdict).toBe("violated");
     expect(
-      report.violations.some((violation) => violation.kind === "acknowledged-write-lost" && violation.cell === 1),
+      report.violations.some(
+        (violation) => violation.kind === "acknowledged-write-lost" && violation.cell === 1,
+      ),
     ).toBe(true);
   });
 
@@ -123,7 +128,12 @@ describe("a request without an answer", () => {
       { seq: 4, cell: 1, status: 200, n: 1 },
     ];
     expect(judgeCell(1, attempts).violations).toEqual([
-      { kind: "acknowledged-write-lost", cell: 1, seq: 4, detail: "answered 1 after 1 had been acknowledged" },
+      {
+        kind: "acknowledged-write-lost",
+        cell: 1,
+        seq: 4,
+        detail: "answered 1 after 1 had been acknowledged",
+      },
     ]);
   });
 
@@ -149,7 +159,10 @@ describe("what the check refuses to conclude", () => {
   });
 
   it("is inconclusive when a cell never answered again after the fault", () => {
-    const report = judge(ledger([ok(1, 1, 1), { seq: 2, cell: 1, status: 503, n: null }]), { cells: 1, faultAtSeq: 2 });
+    const report = judge(ledger([ok(1, 1, 1), { seq: 2, cell: 1, status: 503, n: null }]), {
+      cells: 1,
+      faultAtSeq: 2,
+    });
     expect(report.verdict).toBe("inconclusive");
     expect(report.notes).toEqual([
       "cell 1: no acknowledgement after the fault, so its earlier writes were never read back",
@@ -157,13 +170,20 @@ describe("what the check refuses to conclude", () => {
   });
 
   it("is inconclusive when nothing had been acknowledged before the fault", () => {
-    const report = judge(ledger([{ seq: 1, cell: 1, status: 503, n: null }, ok(2, 1, 1)]), { cells: 1, faultAtSeq: 2 });
+    const report = judge(ledger([{ seq: 1, cell: 1, status: 503, n: null }, ok(2, 1, 1)]), {
+      cells: 1,
+      faultAtSeq: 2,
+    });
     expect(report.verdict).toBe("inconclusive");
   });
 
   it("is inconclusive when the output was cut off or held lines it could not read", () => {
-    expect(judge(ledger([ok(1, 1, 1)], { complete: false }), { cells: 1 }).verdict).toBe("inconclusive");
-    expect(judge(ledger([ok(1, 1, 1)], { malformed: ["curl: (7)"] }), { cells: 1 }).verdict).toBe("inconclusive");
+    expect(judge(ledger([ok(1, 1, 1)], { complete: false }), { cells: 1 }).verdict).toBe(
+      "inconclusive",
+    );
+    expect(judge(ledger([ok(1, 1, 1)], { malformed: ["curl: (7)"] }), { cells: 1 }).verdict).toBe(
+      "inconclusive",
+    );
   });
 
   it("is inconclusive when a cell is missing from the ledger", () => {

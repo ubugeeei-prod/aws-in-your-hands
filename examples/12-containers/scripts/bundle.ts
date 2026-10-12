@@ -3,7 +3,9 @@
 //
 // Writes dist/server.mjs: the server and everything it imports, as one file.
 // This is the only file the Dockerfile copies into the image.
+
 import { statSync } from "node:fs";
+
 import { build } from "esbuild";
 
 // #region bundle
@@ -20,7 +22,9 @@ await build({
   minify: false,
   sourcemap: false,
   // A dependency that reaches for require() would not find it in an ES module.
-  banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" },
+  banner: {
+    js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+  },
   logLevel: "warning",
 });
 // #endregion bundle

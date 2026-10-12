@@ -1,5 +1,6 @@
 import { SignJWT } from "jose";
 import { describe, expect, it } from "vite-plus/test";
+
 import { createLocalAuthenticator, signLocalToken } from "../src/local-auth.ts";
 
 const secret = "test-secret-that-is-at-least-32-chars";
@@ -8,7 +9,9 @@ const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
 
 describe("local development sign-in", () => {
   it("accepts a token it signed", async () => {
-    expect(await authenticate(bearer(await signLocalToken(secret, "local-alice")))).toEqual({ sub: "local-alice" });
+    expect(await authenticate(bearer(await signLocalToken(secret, "local-alice")))).toEqual({
+      sub: "local-alice",
+    });
   });
 
   it("rejects a token signed with another secret", async () => {
@@ -17,13 +20,19 @@ describe("local development sign-in", () => {
   });
 
   it("rejects an expired token", async () => {
-    expect(await authenticate(bearer(await signLocalToken(secret, "local-alice", -10)))).toBeUndefined();
+    expect(
+      await authenticate(bearer(await signLocalToken(secret, "local-alice", -10))),
+    ).toBeUndefined();
   });
 
   it("rejects an unsigned token", async () => {
     const header = Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url");
     const payload = Buffer.from(
-      JSON.stringify({ sub: "local-alice", iss: "http://localhost/aih-local", aud: "aih-notes-local" }),
+      JSON.stringify({
+        sub: "local-alice",
+        iss: "http://localhost/aih-local",
+        aud: "aih-notes-local",
+      }),
     ).toString("base64url");
     expect(await authenticate(bearer(`${header}.${payload}.`))).toBeUndefined();
   });

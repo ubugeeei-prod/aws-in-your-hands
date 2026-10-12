@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { partKey } from "../src/job.ts";
-import { localDefinition, localInvoke } from "../src/local.ts";
 import { type Invoke, runWorkflow, TaskError } from "../src/local-workflow.ts";
+import { localDefinition, localInvoke } from "../src/local.ts";
 import { atMostPages } from "../src/steps.ts";
 import { ID, ids, range, setup, START } from "./harness.ts";
 
@@ -10,7 +11,9 @@ const invokeFor = (t: ReturnType<typeof setup>): Invoke =>
   localInvoke(t.deps, () => ({ pageSize: 10, mayContinue: atMostPages(1) }));
 
 const states = (outcome: { steps: { state: string; error?: string }[] }) =>
-  outcome.steps.map((step) => (step.error === undefined ? step.state : `${step.state}!${step.error}`));
+  outcome.steps.map((step) =>
+    step.error === undefined ? step.state : `${step.state}!${step.error}`,
+  );
 
 describe("the export workflow, run locally", () => {
   it("loops over the pages, then finishes", async () => {
@@ -66,10 +69,18 @@ describe("the export workflow, run locally", () => {
     if (failed.status !== "FAILED" || failed.resume === undefined) {
       throw new Error("expected a failure that can be resumed");
     }
-    expect(failed.resume).toMatchObject({ state: "ExportPages", input: { nextPart: 3, notes: 20 } });
+    expect(failed.resume).toMatchObject({
+      state: "ExportPages",
+      input: { nextPart: 3, notes: 20 },
+    });
 
     // What a redrive does: the failed state again, with the input it had.
-    const resumed = await runWorkflow(localDefinition, failed.resume.input, invokeFor(t), failed.resume);
+    const resumed = await runWorkflow(
+      localDefinition,
+      failed.resume.input,
+      invokeFor(t),
+      failed.resume,
+    );
     expect(resumed.status).toBe("SUCCEEDED");
     expect(states(resumed)).toEqual(["ExportPages", "ExportPages", "ExportPages", "Finish"]);
     expect(ids(t.read())).toEqual(range(1, 45));
@@ -96,7 +107,13 @@ describe("the export workflow, run locally", () => {
       return invoke(resource, input);
     };
     const outcome = await runWorkflow(localDefinition, START, sabotaged);
-    expect(states(outcome)).toEqual(["ExportPages", "ExportPages", "ExportPages", "Finish!ExportCorrupt", "Discard"]);
+    expect(states(outcome)).toEqual([
+      "ExportPages",
+      "ExportPages",
+      "ExportPages",
+      "Finish!ExportCorrupt",
+      "Discard",
+    ]);
     expect(outcome).toMatchObject({ status: "FAILED", error: "ExportDiscarded" });
     // A Fail state is the end: a redrive would only fail again.
     expect(outcome).not.toHaveProperty("resume");
@@ -139,7 +156,9 @@ describe("the definition", () => {
     const catchers = Object.values(localDefinition.States).flatMap((state) =>
       state.Type === "Task" ? (state.Catch ?? []) : [],
     );
-    expect(catchers).toEqual([{ ErrorEquals: ["ExportCorrupt"], ResultPath: "$.error", Next: "Discard" }]);
+    expect(catchers).toEqual([
+      { ErrorEquals: ["ExportCorrupt"], ResultPath: "$.error", Next: "Discard" },
+    ]);
   });
 
   it("names only states that exist", () => {
@@ -148,7 +167,9 @@ describe("the definition", () => {
       if (state.Type === "Task") {
         return [state.Next, ...(state.Catch ?? []).map((catcher) => catcher.Next)];
       }
-      return state.Type === "Choice" ? [state.Default, ...state.Choices.map((choice) => choice.Next)] : [];
+      return state.Type === "Choice"
+        ? [state.Default, ...state.Choices.map((choice) => choice.Next)]
+        : [];
     });
     expect(names.has(localDefinition.StartAt)).toBe(true);
     expect(targets.filter((target) => !names.has(target))).toEqual([]);

@@ -2,6 +2,7 @@ import type { AttachmentRepository } from "@aih/example-07-uploads/api/src/attac
 import { KEY_PREFIX, parseObjectKey } from "@aih/example-07-uploads/api/src/keys.ts";
 import type { ObjectStore } from "@aih/example-07-uploads/api/src/object-store.ts";
 import { SWEEP_GRACE_MS, type SweepReport, sweep } from "@aih/example-07-uploads/api/src/sweep.ts";
+
 import type { InspectionRepository } from "./inspection.ts";
 
 // #region housekeeping
@@ -32,7 +33,10 @@ export type HousekeepingReport = {
  * so it never meets a request that is still finishing an upload. Running it
  * twice, or twice at once, ends in the same state as running it once.
  */
-export async function housekeep(deps: HousekeepingDeps, options: { dryRun: boolean }): Promise<HousekeepingReport> {
+export async function housekeep(
+  deps: HousekeepingDeps,
+  options: { dryRun: boolean },
+): Promise<HousekeepingReport> {
   const orphans = await sweep(deps, options);
   const report: HousekeepingReport = { orphans, rejected: [], untagged: 0 };
 
@@ -49,7 +53,8 @@ export async function housekeep(deps: HousekeepingDeps, options: { dryRun: boole
     const inspection = await deps.inspections.get(parts.owner, parts.noteId, parts.attachmentId);
     // A verdict counts only if it was reached after these bytes arrived. An
     // older one is about an object that has since been replaced.
-    const current = inspection !== undefined && new Date(inspection.inspectedAt) >= object.lastModified;
+    const current =
+      inspection !== undefined && new Date(inspection.inspectedAt) >= object.lastModified;
     if (current && inspection.verdict === "rejected") {
       if (!options.dryRun) {
         // Chapter 07's order for a delete: the record first, then the object.

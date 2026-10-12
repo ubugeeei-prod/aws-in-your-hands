@@ -1,14 +1,17 @@
 // Shared by local-db.ts and cloud-db.ts: the same migrations and the same
 // seed, whichever database they are pointed at.
+
 import { readFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+
 import { z } from "zod";
+
 import { MAX_NOTES_PER_OWNER, noteSchema } from "../src/contract.ts";
 import type { Db } from "../src/db.ts";
 import { type Dialect, loadMigrations, migrate } from "../src/migrate.ts";
-import { SHARED_OWNER } from "../src/notes.ts";
 import { SqlNoteRepository } from "../src/notes-repository.ts";
+import { SHARED_OWNER } from "../src/notes.ts";
 import { createTransactionRunner, defaultRetryPolicy } from "../src/transaction.ts";
 
 const here = (path: string): string => fileURLToPath(new URL(path, import.meta.url));
@@ -16,13 +19,20 @@ const here = (path: string): string => fileURLToPath(new URL(path, import.meta.u
 export async function runMigrations(db: Db, dialect: Dialect): Promise<void> {
   const migrations = loadMigrations(here("../migrations"));
   const { applied } = await db.withConnection((connection) =>
-    migrate(connection, migrations, { dialect, now: () => new Date(), sleep: (ms) => sleep(ms), log: console.log }),
+    migrate(connection, migrations, {
+      dialect,
+      now: () => new Date(),
+      sleep: (ms) => sleep(ms),
+      log: console.log,
+    }),
   );
   console.log(applied.length === 0 ? "nothing to apply" : `applied ${applied.length} migration(s)`);
 }
 
 export async function runSeed(db: Db): Promise<void> {
-  const fixture = z.array(noteSchema).parse(JSON.parse(readFileSync(here("../test/fixtures/seed-notes.json"), "utf8")));
+  const fixture = z
+    .array(noteSchema)
+    .parse(JSON.parse(readFileSync(here("../test/fixtures/seed-notes.json"), "utf8")));
   const transaction = createTransactionRunner({
     db,
     policy: defaultRetryPolicy,

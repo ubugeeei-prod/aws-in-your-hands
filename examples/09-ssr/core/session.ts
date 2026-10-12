@@ -27,11 +27,11 @@ export type Session = {
   expiresAt: number;
 };
 
-export interface SessionStore {
+export type SessionStore = {
   put(id: string, session: Session): void;
   get(id: string, nowMs: number): Session | undefined;
   delete(id: string): void;
-}
+};
 
 /** One Map per process: fine for `nuxt dev`, wrong for Lambda. */
 export function createMemorySessions(): SessionStore {
@@ -51,7 +51,11 @@ export function createMemorySessions(): SessionStore {
 }
 // #endregion store
 
-export function findSession(store: SessionStore, cookieValue: string | undefined, nowMs: number): Session | undefined {
+export function findSession(
+  store: SessionStore,
+  cookieValue: string | undefined,
+  nowMs: number,
+): Session | undefined {
   const id = sessionIdSchema.safeParse(cookieValue);
   return id.success ? store.get(id.data, nowMs) : undefined;
 }

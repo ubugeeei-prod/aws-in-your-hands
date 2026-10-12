@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+
 import { hasControlCharacter, type ShareNotification } from "./contract.ts";
 
 export type Email = {
@@ -17,17 +18,27 @@ export type MailSettings = { fromAddress: string; appOrigin: string };
 export const NOTIFICATION_TAG = "notification_id";
 
 // #region escape
-const HTML_ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
 
 export function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char);
+  return value.replaceAll(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char);
 }
 // #endregion escape
 
 // #region build
 export function buildShareEmail(input: ShareNotification, settings: MailSettings): Email {
   // The schema already refuses these. This is the last stop before a header.
-  for (const [field, value] of Object.entries({ to: input.to, sharedBy: input.sharedBy, noteTitle: input.noteTitle })) {
+  for (const [field, value] of Object.entries({
+    to: input.to,
+    sharedBy: input.sharedBy,
+    noteTitle: input.noteTitle,
+  })) {
     if (hasControlCharacter(value)) {
       throw new Error(`${field} contains a control character and cannot go into a mail header`);
     }
@@ -41,9 +52,13 @@ export function buildShareEmail(input: ShareNotification, settings: MailSettings
     from: settings.fromAddress,
     to: input.to,
     subject,
-    text: [subject, "", `Open the note: ${url}`, "", "If you did not expect this, you can ignore this email."].join(
-      "\n",
-    ),
+    text: [
+      subject,
+      "",
+      `Open the note: ${url}`,
+      "",
+      "If you did not expect this, you can ignore this email.",
+    ].join("\n"),
     html: [
       `<p>${escapeHtml(input.sharedBy)} shared a note with you: ${escapeHtml(input.noteTitle)}</p>`,
       `<p><a href="${escapeHtml(url)}">Open the note</a></p>`,

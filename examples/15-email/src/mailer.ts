@@ -7,10 +7,10 @@ export type SendResult =
   // The provider said no. Nothing went out.
   | { kind: "rejected"; reason: string };
 
-export interface Mailer {
+export type Mailer = {
   /** Resolves when the provider answered. Throws when nobody knows what happened. */
   send(email: Email): Promise<SendResult>;
-}
+};
 // #endregion mailer
 
 // #region outbox

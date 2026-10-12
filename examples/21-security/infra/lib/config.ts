@@ -27,7 +27,9 @@ export function parseSecurityConfig(context: (key: string) => unknown): Security
     wafCommonRules: context("wafCommonRules"),
   });
   if (!result.success) {
-    const problems = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = result.error.issues.map(
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
+    );
     throw new Error(`Invalid CDK context:\n  ${problems.join("\n  ")}`);
   }
   return result.data;

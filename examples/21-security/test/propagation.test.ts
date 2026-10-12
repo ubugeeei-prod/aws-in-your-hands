@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { StillDenied, untilAllowed, untilDenied } from "../src/propagation.ts";
 
 class Denied extends Error {}
@@ -44,7 +45,9 @@ describe("after granting a permission", () => {
 
   it("does not retry an error that is not a denial", async () => {
     const { next, calls, wait } = scripted<string>([new Error("ResourceNotFoundException")]);
-    await expect(untilAllowed(next, isDenied, wait(5))).rejects.toThrow("ResourceNotFoundException");
+    await expect(untilAllowed(next, isDenied, wait(5))).rejects.toThrow(
+      "ResourceNotFoundException",
+    );
     expect(calls.count).toBe(1);
   });
 });
@@ -52,12 +55,26 @@ describe("after granting a permission", () => {
 describe("after removing a permission", () => {
   it("does not take the first denial as proof", async () => {
     // denied, then allowed again by an endpoint that has not caught up, then denied for good
-    const { next, wait } = scripted<"allowed" | "denied">(["denied", "allowed", "denied", "denied", "denied"]);
-    expect(await untilDenied(next, 3, wait(10))).toEqual({ confirmed: true, probes: 5, lastAllowedAt: 2 });
+    const { next, wait } = scripted<"allowed" | "denied">([
+      "denied",
+      "allowed",
+      "denied",
+      "denied",
+      "denied",
+    ]);
+    expect(await untilDenied(next, 3, wait(10))).toEqual({
+      confirmed: true,
+      probes: 5,
+      lastAllowedAt: 2,
+    });
   });
 
   it("reports failure when the denials never line up", async () => {
     const { next, wait } = scripted<"allowed" | "denied">(["denied", "denied", "allowed"]);
-    expect(await untilDenied(next, 3, wait(6))).toEqual({ confirmed: false, probes: 6, lastAllowedAt: 6 });
+    expect(await untilDenied(next, 3, wait(6))).toEqual({
+      confirmed: false,
+      probes: 6,
+      lastAllowedAt: 6,
+    });
   });
 });

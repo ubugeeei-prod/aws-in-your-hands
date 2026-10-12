@@ -1,4 +1,5 @@
 import * as oauth from "oauth4webapi";
+
 import { savePending, type TabStorage, takePending } from "./pending.ts";
 import type { AuthProvider } from "./provider.ts";
 
@@ -66,10 +67,15 @@ export function createCognitoProvider(
         settings.redirectUri,
         pending.codeVerifier,
       );
-      const tokens = await oauth.processAuthorizationCodeResponse(server, client, response, { requireIdToken: true });
+      const tokens = await oauth.processAuthorizationCodeResponse(server, client, response, {
+        requireIdToken: true,
+      });
       // The response also carries an ID token (checked by the library) and a
       // refresh token. Neither is kept, so the session ends with the access token.
-      return { accessToken: tokens.access_token, expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000 };
+      return {
+        accessToken: tokens.access_token,
+        expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+      };
     },
 
     signOutUrl() {

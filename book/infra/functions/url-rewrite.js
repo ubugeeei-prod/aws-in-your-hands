@@ -6,7 +6,7 @@ function handler(event) {
   var uri = request.uri;
 
   if (uri.endsWith("/")) {
-    request.uri = uri + "index.html";
+    request.uri = `${uri}index.html`;
     return request;
   }
 
@@ -20,15 +20,17 @@ function handler(event) {
     var entry = request.querystring[key];
     var values = entry.multiValue ? entry.multiValue : [entry];
     for (var i = 0; i < values.length; i++) {
-      pairs.push(values[i].value === "" ? key : key + "=" + values[i].value);
+      pairs.push(values[i].value === "" ? key : `${key}=${values[i].value}`);
     }
   }
+
+  var query = pairs.length > 0 ? `?${pairs.join("&")}` : "";
 
   return {
     statusCode: 301,
     statusDescription: "Moved Permanently",
     headers: {
-      location: { value: uri + "/" + (pairs.length > 0 ? "?" + pairs.join("&") : "") },
+      location: { value: `${uri}/${query}` },
       "cache-control": { value: "public, max-age=3600" },
     },
   };

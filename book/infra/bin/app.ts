@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { BookSiteStack } from "../lib/book-site-stack.ts";
 
 const app = new App();

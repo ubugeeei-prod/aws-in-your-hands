@@ -1,4 +1,3 @@
-import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
 import { CfnOutput, Duration, Fn, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import {
   AmazonLinux2023ImageSsmParameter,
@@ -10,9 +9,18 @@ import {
   CfnVolume,
   CfnVolumeAttachment,
 } from "aws-cdk-lib/aws-ec2";
-import { CfnInstanceProfile, ManagedPolicy, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import {
+  CfnInstanceProfile,
+  ManagedPolicy,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from "aws-cdk-lib/aws-iam";
 import { BlockPublicAccess, Bucket, BucketEncryption, ObjectOwnership } from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
+
+import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
+
 import { type FleetConfig, nodeNames } from "../../src/config.ts";
 import { nodeSpec, renderUserData } from "../../src/machine.ts";
 
@@ -24,7 +32,8 @@ export class CelldStack extends Stack {
     const { config } = props;
     const spec = nodeSpec();
     const named = (name: string) => [{ key: "Name", value: `${id}/${name}` }];
-    const removal = config.stateOnDestroy === "retain" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY;
+    const removal =
+      config.stateOnDestroy === "retain" ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY;
 
     // #region buckets
     const bucketDefaults = {
@@ -78,7 +87,13 @@ export class CelldStack extends Stack {
       groupDescription: "Chapter 24 celld nodes: peers in, HTTPS and peers out",
       vpcId: vpc.vpcId,
       securityGroupEgress: [
-        { ipProtocol: "tcp", fromPort: 443, toPort: 443, cidrIp: "0.0.0.0/0", description: "HTTPS to AWS APIs" },
+        {
+          ipProtocol: "tcp",
+          fromPort: 443,
+          toPort: 443,
+          cidrIp: "0.0.0.0/0",
+          description: "HTTPS to AWS APIs",
+        },
         {
           ipProtocol: "tcp",
           fromPort: spec.internalPort,
@@ -124,7 +139,11 @@ export class CelldStack extends Stack {
         iamInstanceProfile: profile.ref,
         subnetId: subnet.subnetId,
         securityGroupIds: [securityGroup.attrGroupId],
-        metadataOptions: { httpEndpoint: "enabled", httpTokens: "required", httpPutResponseHopLimit: 1 },
+        metadataOptions: {
+          httpEndpoint: "enabled",
+          httpTokens: "required",
+          httpPutResponseHopLimit: 1,
+        },
         creditSpecification: { cpuCredits: "standard" },
         userData,
         tags: named(`node-${node}`),

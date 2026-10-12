@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { buildCfnReport, detectStackDrift } from "@aih/tools/drift/cloudformation.ts";
+
 import {
   type CloudFormationClient,
   DescribeStackDriftDetectionStatusCommand,
@@ -8,13 +8,24 @@ import {
   ListStackResourcesCommand,
 } from "@aws-sdk/client-cloudformation";
 import { describe, expect, it } from "vite-plus/test";
+
+import { buildCfnReport, detectStackDrift } from "@aih/tools/drift/cloudformation.ts";
+
 import { cfnDriftApi } from "../src/drift-client.ts";
 import { ACKNOWLEDGED_UNCHECKED_TYPES } from "../src/drift-coverage.ts";
 
-type Fixture = { detect: unknown; statuses: unknown[]; driftPages: unknown[]; resourcePages: unknown[] };
+type Fixture = {
+  detect: unknown;
+  statuses: unknown[];
+  driftPages: unknown[];
+  resourcePages: unknown[];
+};
 const fixture = (name: string): Fixture =>
   JSON.parse(
-    readFileSync(new URL(`../../../tools/src/drift/fixtures/cloudformation/${name}.json`, import.meta.url), "utf8"),
+    readFileSync(
+      new URL(`../../../tools/src/drift/fixtures/cloudformation/${name}.json`, import.meta.url),
+      "utf8",
+    ),
   ) as Fixture;
 
 /** Stands in for CloudFormationClient: answers by command class and keeps what it was sent. */
@@ -76,7 +87,9 @@ describe("CloudFormation drift through the SDK client", () => {
     ]);
     expect(sent[0]?.input).toEqual({ StackName: "AihShipApi" });
     // The ID returned by the first call, not the stack name, identifies the run being polled.
-    expect(sent[1]?.input).toEqual({ StackDriftDetectionId: "11111111-2222-4333-8444-555555555555" });
+    expect(sent[1]?.input).toEqual({
+      StackDriftDetectionId: "11111111-2222-4333-8444-555555555555",
+    });
     // No status filter: unfiltered results are what "checked" is counted from.
     expect(sent[4]?.input).toEqual({ StackName: "AihShipApi", NextToken: undefined });
     expect(sent[5]?.input).toEqual({ StackName: "AihShipApi", NextToken: "page-2" });
@@ -88,7 +101,10 @@ describe("CloudFormation drift through the SDK client", () => {
     const { report } = await run("not-checked");
     expect(report.status).toBe("unsupported");
     expect(report.gate.passed).toBe(false);
-    expect(report.acknowledged).toMatchObject({ exitCode: 0, types: ["AWS::ApiGatewayV2::Integration"] });
+    expect(report.acknowledged).toMatchObject({
+      exitCode: 0,
+      types: ["AWS::ApiGatewayV2::Integration"],
+    });
   });
 
   it("an acknowledged gap never hides drift", async () => {

@@ -1,5 +1,6 @@
-import { errorCodes as noteErrorCodes, noteSchema } from "@aih/example-06-auth/api/src/contract.ts";
 import { z } from "zod";
+
+import { errorCodes as noteErrorCodes, noteSchema } from "@aih/example-06-auth/api/src/contract.ts";
 
 // #region limits
 // SVG is left out on purpose: it can carry script.
@@ -18,7 +19,10 @@ export type UploadRequest = z.infer<typeof uploadRequestSchema>;
 export const uploadPermitSchema = z.object({
   attachmentId: z.string().min(1),
   /** Sent as multipart/form-data: every field as given, then the file as the last field. */
-  upload: z.object({ url: z.url({ protocol: /^https?$/ }), fields: z.record(z.string(), z.string()) }),
+  upload: z.object({
+    url: z.url({ protocol: /^https?$/ }),
+    fields: z.record(z.string(), z.string()),
+  }),
   maxBytes: z.number().int().positive(),
   expiresAt: z.iso.datetime(),
 });

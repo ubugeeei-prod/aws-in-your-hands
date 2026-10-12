@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { objectKey, parseObjectKey } from "../src/keys.ts";
 
 describe("object keys", () => {
@@ -15,8 +16,18 @@ describe("object keys", () => {
   });
 
   it("reads back only keys of its own shape", () => {
-    expect(parseObjectKey("u/alice/n1/a1")).toEqual({ owner: "alice", noteId: "n1", attachmentId: "a1" });
-    for (const other of ["alice/n1/a1", "u/alice/n1", "u/alice/n1/a1/extra", "u/alice//a1", "u/../n1/a1"]) {
+    expect(parseObjectKey("u/alice/n1/a1")).toEqual({
+      owner: "alice",
+      noteId: "n1",
+      attachmentId: "a1",
+    });
+    for (const other of [
+      "alice/n1/a1",
+      "u/alice/n1",
+      "u/alice/n1/a1/extra",
+      "u/alice//a1",
+      "u/../n1/a1",
+    ]) {
       expect(parseObjectKey(other), other).toBeUndefined();
     }
   });

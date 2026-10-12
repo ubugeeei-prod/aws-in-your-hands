@@ -1,6 +1,8 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import type { DeleteCommand, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Attachment } from "../src/contract.ts";
 import { DynamoDbAttachmentRepository } from "../src/dynamodb-attachment-repository.ts";
 
@@ -41,14 +43,19 @@ describe("DynamoDbAttachmentRepository requests", () => {
 
   it("reports a second finish as already_exists", async () => {
     const { repository } = setup(() => {
-      throw new ConditionalCheckFailedException({ message: "The conditional request failed", $metadata: {} });
+      throw new ConditionalCheckFailedException({
+        message: "The conditional request failed",
+        $metadata: {},
+      });
     });
     expect(await repository.create("u1", stored)).toBe("already_exists");
   });
 
   it("lists one note's attachments, following every page", async () => {
     const { repository, sent } = setup((_command, call) =>
-      call === 1 ? { Items: [item], LastEvaluatedKey: { pk: item.pk, sk: item.sk } } : { Items: [] },
+      call === 1
+        ? { Items: [item], LastEvaluatedKey: { pk: item.pk, sk: item.sk } }
+        : { Items: [] },
     );
     expect(await repository.listByNote("u1", "n1")).toEqual([stored]);
     expect(sent).toHaveLength(2);
@@ -69,7 +76,9 @@ describe("DynamoDbAttachmentRepository requests", () => {
   it("says whether a delete removed anything", async () => {
     const present = setup(() => ({ Attributes: item }));
     expect(await present.repository.delete("u1", "n1", "a1")).toBe(true);
-    expect(present.sent[0]?.input).toMatchObject({ Key: { pk: "OWNER#u1", sk: "ATTACHMENT#n1#a1" } });
+    expect(present.sent[0]?.input).toMatchObject({
+      Key: { pk: "OWNER#u1", sk: "ATTACHMENT#n1#a1" },
+    });
     expect(await setup().repository.delete("u1", "n1", "a1")).toBe(false);
   });
 });

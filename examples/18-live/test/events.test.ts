@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { eventRecordSchema, parseIvsEvent, toRecord } from "../src/events.ts";
 import { handleEvent } from "../src/handler.ts";
 import { parseLoggedEvents } from "../src/logged-events.ts";
@@ -12,17 +13,30 @@ describe("IVS events", () => {
       parseIvsEvent(stateChange("Stream Start", streamId, "2026-10-11T10:00:07Z")),
       new Date("2026-10-11T10:00:09.500Z"),
     );
-    expect(record).toMatchObject({ name: "Stream Start", streamId, channelArn, lagMs: 2500, detail: null });
+    expect(record).toMatchObject({
+      name: "Stream Start",
+      streamId,
+      channelArn,
+      lagMs: 2500,
+      detail: null,
+    });
   });
 
   it("keeps the reason a session ended", () => {
-    const event = stateChange("Session Ended", streamId, "2026-10-11T10:00:07Z", { code: "MultitrackInputNotAllowed" });
-    expect(toRecord(parseIvsEvent(event), new Date("2026-10-11T10:00:08Z")).detail).toBe("MultitrackInputNotAllowed");
+    const event = stateChange("Session Ended", streamId, "2026-10-11T10:00:07Z", {
+      code: "MultitrackInputNotAllowed",
+    });
+    expect(toRecord(parseIvsEvent(event), new Date("2026-10-11T10:00:08Z")).detail).toBe(
+      "MultitrackInputNotAllowed",
+    );
   });
 
   it("reads a limit breach with its numbers", () => {
     const record = toRecord(parseIvsEvent(bitrateBreach), new Date("2026-10-11T10:05:01Z"));
-    expect(record).toMatchObject({ name: "Ingest Bitrate", detail: "3500000 bits per second, exceeded by 1200000" });
+    expect(record).toMatchObject({
+      name: "Ingest Bitrate",
+      detail: "3500000 bits per second, exceeded by 1200000",
+    });
   });
 
   it("records an event name it has never seen", () => {
@@ -35,7 +49,10 @@ describe("IVS events", () => {
 
   it("refuses events from another source", () => {
     expect(() =>
-      parseIvsEvent({ ...stateChange("Stream Start", streamId, "2026-10-11T10:00:07Z"), source: "x" }),
+      parseIvsEvent({
+        ...stateChange("Stream Start", streamId, "2026-10-11T10:00:07Z"),
+        source: "x",
+      }),
     ).toThrow();
   });
 
@@ -53,18 +70,24 @@ describe("event handler", () => {
 
   it("writes one record that the status script can read back", () => {
     const lines: string[] = [];
-    expect(handleEvent(stateChange("Stream Start", streamId, "2026-10-11T10:00:07Z"), now, (l) => lines.push(l))).toBe(
-      true,
-    );
+    expect(
+      handleEvent(stateChange("Stream Start", streamId, "2026-10-11T10:00:07Z"), now, (l) =>
+        lines.push(l),
+      ),
+    ).toBe(true);
     expect(lines).toHaveLength(1);
-    expect(eventRecordSchema.parse(JSON.parse(lines[0] ?? ""))).toMatchObject({ name: "Stream Start" });
+    expect(eventRecordSchema.parse(JSON.parse(lines[0] ?? ""))).toMatchObject({
+      name: "Stream Start",
+    });
   });
 
   it("logs an unreadable event and does not throw", () => {
     const lines: string[] = [];
-    expect(handleEvent({ source: "aws.ivs", "detail-type": "IVS Something New" }, now, (l) => lines.push(l))).toBe(
-      false,
-    );
+    expect(
+      handleEvent({ source: "aws.ivs", "detail-type": "IVS Something New" }, now, (l) =>
+        lines.push(l),
+      ),
+    ).toBe(false);
     expect(JSON.parse(lines[0] ?? "")).toMatchObject({ kind: "ivs-event-unreadable" });
   });
 });
@@ -95,6 +118,9 @@ describe("events read back from the log", () => {
   it("orders by event time, not by arrival", () => {
     const end = line(stateChange("Stream End", streamId, "2026-10-11T11:00:00Z"));
     const start = line(stateChange("Stream Start", streamId, "2026-10-11T10:00:07Z"));
-    expect(parseLoggedEvents([end, start]).map((record) => record.name)).toEqual(["Stream Start", "Stream End"]);
+    expect(parseLoggedEvents([end, start]).map((record) => record.name)).toEqual([
+      "Stream Start",
+      "Stream End",
+    ]);
   });
 });

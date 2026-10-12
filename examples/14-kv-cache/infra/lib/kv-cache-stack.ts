@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { ArnFormat, CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -9,6 +10,7 @@ import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction, OutputFormat } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
+
 import { TTL_ATTRIBUTE } from "../../src/dynamodb-store.ts";
 
 export type KvCacheStackProps = StackProps & {
@@ -43,12 +45,19 @@ export class KvCacheStack extends Stack {
     });
 
     // #region role
-    const role = new Role(this, "HandlerRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const role = new Role(this, "HandlerRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     logGroup.grantWrite(role);
     // The four calls the stores make. No Query, no Scan.
     role.addToPolicy(
       new PolicyStatement({
-        actions: ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"],
+        actions: [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+        ],
         resources: [table.tableArn],
       }),
     );
@@ -81,7 +90,10 @@ export class KvCacheStack extends Stack {
         connectionType: "public",
         userGroupId: IAM_USER_GROUP,
         // A ceiling on what a mistake or an attack can cost. Past it, ElastiCache evicts and throttles.
-        cacheUsageLimits: { dataStorage: { maximum: 1, unit: "GB" }, ecpuPerSecond: { maximum: 1000 } },
+        cacheUsageLimits: {
+          dataStorage: { maximum: 1, unit: "GB" },
+          ecpuPerSecond: { maximum: 1000 },
+        },
       });
       // No final snapshot is named, so nothing outlives the stack.
       cache.applyRemovalPolicy(RemovalPolicy.DESTROY);
@@ -134,7 +146,9 @@ export class KvCacheStack extends Stack {
       },
     });
 
-    const api = new HttpApi(this, "Api", { description: "Items API with a rate limit and a cache" });
+    const api = new HttpApi(this, "Api", {
+      description: "Items API with a rate limit and a cache",
+    });
     const integration = new HttpLambdaIntegration("Items", handler);
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration });
     api.addRoutes({ path: "/items", methods: [HttpMethod.GET], integration });

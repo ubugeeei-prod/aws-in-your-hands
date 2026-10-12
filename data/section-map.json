@@ -125,7 +125,10 @@
     },
     {
       "id": "02.types",
-      "sources": ["examples/02-toolchain/lib/config.ts", "examples/02-toolchain/test/config.test.ts"],
+      "sources": [
+        "examples/02-toolchain/lib/config.ts",
+        "examples/02-toolchain/test/config.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["type", "test"],
@@ -145,7 +148,10 @@
     },
     {
       "id": "02.synth",
-      "sources": ["examples/02-toolchain/cdk.json", "examples/02-toolchain/test/hello-stack.test.ts"],
+      "sources": [
+        "examples/02-toolchain/cdk.json",
+        "examples/02-toolchain/test/hello-stack.test.ts"
+      ],
       "tasks": ["hello:infra:synth", "hello:infra:synth:cdk", "test:unit"],
       "boundary": "local",
       "criteria": ["test", "local-dx"],
@@ -225,7 +231,16 @@
         "examples/03-spa/vite.config.ts",
         "examples/03-spa/tsconfig.json"
       ],
-      "tasks": ["dev:spa", "check", "typecheck:vue", "test:unit", "build:spa", "preview:spa", "typecheck", "lint:vue"],
+      "tasks": [
+        "dev:spa",
+        "check",
+        "typecheck:vue",
+        "test:unit",
+        "build:spa",
+        "preview:spa",
+        "typecheck",
+        "lint:vue"
+      ],
       "boundary": "local",
       "criteria": ["type", "test", "local-dx"],
       "verification": "local"
@@ -244,7 +259,10 @@
     },
     {
       "id": "03.fallback",
-      "sources": ["examples/03-spa/infra/functions/spa-fallback.js", "examples/03-spa/infra/test/spa-fallback.test.ts"],
+      "sources": [
+        "examples/03-spa/infra/functions/spa-fallback.js",
+        "examples/03-spa/infra/test/spa-fallback.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local+cloud",
       "criteria": ["test"],
@@ -291,7 +309,11 @@
     },
     {
       "id": "03.smoke",
-      "sources": ["tools/src/site/smoke-spec.ts", "tools/src/site/smoke-spec.test.ts", "tools/src/site/smoke.ts"],
+      "sources": [
+        "tools/src/site/smoke-spec.ts",
+        "tools/src/site/smoke-spec.test.ts",
+        "tools/src/site/smoke.ts"
+      ],
       "tasks": ["spa:smoke", "test:unit"],
       "boundary": "local+cloud",
       "criteria": ["test", "distributed"],
@@ -458,7 +480,14 @@
         "tools/src/checks/markdown.test.ts",
         "data"
       ],
-      "tasks": ["dev:book", "build:book", "preview:book", "book:generate", "book:generate:check", "content:check"],
+      "tasks": [
+        "dev:book",
+        "build:book",
+        "preview:book",
+        "book:generate",
+        "book:generate:check",
+        "content:check"
+      ],
       "boundary": "local",
       "criteria": ["type", "test", "local-dx"],
       "verification": "local"
@@ -483,7 +512,13 @@
         "book/infra/cdk.json",
         "book/infra/test/book-site-stack.test.ts"
       ],
-      "tasks": ["book:infra:synth", "book:infra:diff", "book:infra:deploy", "book:infra:drift", "test:unit"],
+      "tasks": [
+        "book:infra:synth",
+        "book:infra:diff",
+        "book:infra:deploy",
+        "book:infra:drift",
+        "test:unit"
+      ],
       "boundary": "local+cloud",
       "criteria": ["test", "drift"],
       "verification": "local"
@@ -601,7 +636,14 @@
         "examples/05-dynamodb/test/fixtures/seed-notes.json",
         "examples/05-dynamodb/.env.example"
       ],
-      "tasks": ["dev:notes", "db:local:start", "db:migrate:local", "db:seed:local", "db:reset:local", "db:local:stop"],
+      "tasks": [
+        "dev:notes",
+        "db:local:start",
+        "db:migrate:local",
+        "db:seed:local",
+        "db:reset:local",
+        "db:local:stop"
+      ],
       "boundary": "local",
       "criteria": ["type", "local-dx"],
       "verification": "local"
@@ -842,7 +884,13 @@
         "examples/18-live/web/src/App.vue",
         "examples/18-live/web/src/viewer.test.ts"
       ],
-      "tasks": ["dev:stream:web", "build:stream:web", "typecheck:stream:web", "lint:stream:web", "test:unit"],
+      "tasks": [
+        "dev:stream:web",
+        "build:stream:web",
+        "typecheck:stream:web",
+        "lint:stream:web",
+        "test:unit"
+      ],
       "boundary": "local",
       "criteria": ["type", "test", "local-dx"],
       "verification": "local"
@@ -862,7 +910,13 @@
         "examples/18-live/scripts/write-config.ts",
         "examples/18-live/src/channel.ts"
       ],
-      "tasks": ["stream:infra:diff", "stream:infra:deploy", "stream:key", "stream:config", "preview:stream:web"],
+      "tasks": [
+        "stream:infra:diff",
+        "stream:infra:deploy",
+        "stream:key",
+        "stream:config",
+        "preview:stream:web"
+      ],
       "boundary": "cloud",
       "criteria": ["local-dx"],
       "verification": "unverified"
@@ -930,7 +984,10 @@
     },
     {
       "id": "11.architecture",
-      "sources": ["examples/11-network/infra/lib/network-stack.ts", "examples/11-network/infra/bin/app.ts"],
+      "sources": [
+        "examples/11-network/infra/lib/network-stack.ts",
+        "examples/11-network/infra/bin/app.ts"
+      ],
       "tasks": ["net:infra:synth"],
       "boundary": "local",
       "criteria": ["cost"],
@@ -1038,7 +1095,11 @@
     },
     {
       "id": "11.deploy",
-      "sources": ["examples/11-network/infra/bin/app.ts", "examples/11-network/cdk.json", "tools/src/infra"],
+      "sources": [
+        "examples/11-network/infra/bin/app.ts",
+        "examples/11-network/cdk.json",
+        "tools/src/infra"
+      ],
       "tasks": ["net:infra:diff", "net:infra:deploy", "net:infra:drift"],
       "boundary": "cloud",
       "criteria": ["drift", "cost"],
@@ -1143,7 +1204,11 @@
     },
     {
       "id": "17.tests",
-      "sources": ["examples/17-ai/test", "examples/17-ai/fixtures/converse-stream", "examples/17-ai/scripts/live.ts"],
+      "sources": [
+        "examples/17-ai/test",
+        "examples/17-ai/fixtures/converse-stream",
+        "examples/17-ai/scripts/live.ts"
+      ],
       "tasks": ["test:unit", "ai:test:live"],
       "boundary": "local+cloud",
       "criteria": ["test"],
@@ -1299,7 +1364,10 @@
     },
     {
       "id": "15.identity",
-      "sources": ["examples/15-email/infra/lib/email-stack.ts", "examples/15-email/infra/bin/app.ts"],
+      "sources": [
+        "examples/15-email/infra/lib/email-stack.ts",
+        "examples/15-email/infra/bin/app.ts"
+      ],
       "tasks": ["mail:infra:diff", "mail:infra:deploy"],
       "boundary": "cloud",
       "criteria": ["cost"],
@@ -1374,7 +1442,10 @@
     },
     {
       "id": "10.router",
-      "sources": ["examples/10-edge/infra/functions/edge-router.js", "examples/10-edge/edge-data.json"],
+      "sources": [
+        "examples/10-edge/infra/functions/edge-router.js",
+        "examples/10-edge/edge-data.json"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local+cloud",
       "criteria": ["test"],
@@ -1382,7 +1453,10 @@
     },
     {
       "id": "10.tests",
-      "sources": ["examples/10-edge/src/local/load-function.ts", "examples/10-edge/infra/test/edge-router.test.ts"],
+      "sources": [
+        "examples/10-edge/src/local/load-function.ts",
+        "examples/10-edge/infra/test/edge-router.test.ts"
+      ],
       "tasks": ["test:unit", "typecheck"],
       "boundary": "local",
       "criteria": ["type", "test"],
@@ -1390,7 +1464,11 @@
     },
     {
       "id": "10.local",
-      "sources": ["examples/10-edge/src/local/dev.ts", "examples/10-edge/site", "examples/10-edge/scripts/kvs-file.ts"],
+      "sources": [
+        "examples/10-edge/src/local/dev.ts",
+        "examples/10-edge/site",
+        "examples/10-edge/scripts/kvs-file.ts"
+      ],
       "tasks": ["dev:edge", "dev:edge:cdkd"],
       "boundary": "local",
       "criteria": ["local-dx"],
@@ -1433,7 +1511,11 @@
     },
     {
       "id": "10.deploy",
-      "sources": ["tools/src/infra/cdkd.ts", "tools/src/site/publish.ts", "examples/10-edge/scripts/kvs-sync.ts"],
+      "sources": [
+        "tools/src/infra/cdkd.ts",
+        "tools/src/site/publish.ts",
+        "examples/10-edge/scripts/kvs-sync.ts"
+      ],
       "tasks": [
         "edge:infra:diff",
         "edge:infra:deploy",
@@ -1454,7 +1536,12 @@
         "examples/10-edge/infra/test/body-digest-stack.test.ts",
         "examples/10-edge/test/body-digest.test.ts"
       ],
-      "tasks": ["edge:body:infra:synth", "edge:body:infra:deploy", "edge:body:infra:destroy", "test:unit"],
+      "tasks": [
+        "edge:body:infra:synth",
+        "edge:body:infra:deploy",
+        "edge:body:infra:destroy",
+        "test:unit"
+      ],
       "boundary": "local+cloud",
       "criteria": ["test"],
       "verification": "local"
@@ -1787,7 +1874,12 @@
         "examples/07-uploads/scripts/user.ts",
         "tools/src/site/unpublish.ts"
       ],
-      "tasks": ["uploads:empty", "uploads:unpublish", "uploads:infra:destroy", "uploads:user:delete"],
+      "tasks": [
+        "uploads:empty",
+        "uploads:unpublish",
+        "uploads:infra:destroy",
+        "uploads:user:delete"
+      ],
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
@@ -1888,7 +1980,14 @@
         "examples/09-ssr/tsconfig.json",
         "examples/09-ssr/app/tsconfig.json"
       ],
-      "tasks": ["dev:ssr", "test:unit", "typecheck", "typecheck:ssr", "lint:ssr", "ssr:check:output"],
+      "tasks": [
+        "dev:ssr",
+        "test:unit",
+        "typecheck",
+        "typecheck:ssr",
+        "lint:ssr",
+        "ssr:check:output"
+      ],
       "boundary": "local",
       "criteria": ["test", "local-dx"],
       "verification": "local"
@@ -2085,7 +2184,14 @@
         "examples/19-observability/scripts/query.ts",
         "examples/19-observability/scripts/alarms.ts"
       ],
-      "tasks": ["obs:infra:diff", "obs:infra:deploy", "obs:smoke", "obs:query", "obs:alarms", "obs:infra:drift"],
+      "tasks": [
+        "obs:infra:diff",
+        "obs:infra:deploy",
+        "obs:smoke",
+        "obs:query",
+        "obs:alarms",
+        "obs:infra:drift"
+      ],
       "boundary": "cloud",
       "criteria": ["drift"],
       "verification": "unverified"
@@ -2100,7 +2206,10 @@
     },
     {
       "id": "19.cost",
-      "sources": ["examples/19-observability/src/cost-inputs.ts", "examples/19-observability/test/cost-inputs.test.ts"],
+      "sources": [
+        "examples/19-observability/src/cost-inputs.ts",
+        "examples/19-observability/test/cost-inputs.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "none",
       "criteria": ["cost", "test"],
@@ -2132,7 +2241,10 @@
     },
     {
       "id": "14.interface",
-      "sources": ["examples/14-kv-cache/src/stores.ts", "examples/14-kv-cache/test/store-contracts.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/stores.ts",
+        "examples/14-kv-cache/test/store-contracts.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["type", "test"],
@@ -2140,7 +2252,10 @@
     },
     {
       "id": "14.rate-limit",
-      "sources": ["examples/14-kv-cache/src/rate-limit.ts", "examples/14-kv-cache/test/rate-limit.test.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/rate-limit.ts",
+        "examples/14-kv-cache/test/rate-limit.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["test", "distributed"],
@@ -2160,7 +2275,10 @@
     },
     {
       "id": "14.ttl",
-      "sources": ["examples/14-kv-cache/src/dynamodb-store.ts", "examples/14-kv-cache/test/dynamodb-store.test.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/dynamodb-store.ts",
+        "examples/14-kv-cache/test/dynamodb-store.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local+cloud",
       "criteria": ["test", "distributed"],
@@ -2204,7 +2322,10 @@
     },
     {
       "id": "14.stampede",
-      "sources": ["examples/14-kv-cache/src/read-through.ts", "examples/14-kv-cache/test/read-through.test.ts"],
+      "sources": [
+        "examples/14-kv-cache/src/read-through.ts",
+        "examples/14-kv-cache/test/read-through.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["test", "distributed"],
@@ -2241,7 +2362,14 @@
         "examples/14-kv-cache/scripts/test-local.ts",
         "examples/14-kv-cache/.env.example"
       ],
-      "tasks": ["dev:kv", "kv:local:start", "kv:local:migrate", "kv:test:local", "kv:local:stop", "test:unit"],
+      "tasks": [
+        "dev:kv",
+        "kv:local:start",
+        "kv:local:migrate",
+        "kv:test:local",
+        "kv:local:stop",
+        "test:unit"
+      ],
       "boundary": "local",
       "criteria": ["local-dx", "test"],
       "verification": "local"
@@ -2357,7 +2485,10 @@
     },
     {
       "id": "20.roles",
-      "sources": ["examples/20-shipping/infra/lib/ci-stack.ts", "examples/20-shipping/infra/test/ci-stack.test.ts"],
+      "sources": [
+        "examples/20-shipping/infra/lib/ci-stack.ts",
+        "examples/20-shipping/infra/test/ci-stack.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["test"],
@@ -2437,7 +2568,10 @@
     },
     {
       "id": "20.drift-lab",
-      "sources": ["examples/20-shipping/scripts/drift.ts", "examples/20-shipping/scripts/status.ts"],
+      "sources": [
+        "examples/20-shipping/scripts/drift.ts",
+        "examples/20-shipping/scripts/status.ts"
+      ],
       "tasks": ["ship:cfn:drift", "ship:cfn:diff", "ship:cfn:deploy"],
       "boundary": "cloud",
       "criteria": ["drift"],
@@ -2445,7 +2579,10 @@
     },
     {
       "id": "20.workers",
-      "sources": ["examples/20-shipping/infra/lib/ship-api-stack.ts", "examples/20-shipping/workflows/deploy.yml"],
+      "sources": [
+        "examples/20-shipping/infra/lib/ship-api-stack.ts",
+        "examples/20-shipping/workflows/deploy.yml"
+      ],
       "tasks": [],
       "boundary": "none",
       "criteria": ["distributed"],
@@ -2469,7 +2606,10 @@
     },
     {
       "id": "12.architecture",
-      "sources": ["examples/12-containers/infra/lib/containers-stack.ts", "examples/12-containers/src/config.ts"],
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/config.ts"
+      ],
       "tasks": ["ecs:infra:synth"],
       "boundary": "local",
       "criteria": ["cost"],
@@ -2588,7 +2728,10 @@
     },
     {
       "id": "12.versions",
-      "sources": ["examples/12-containers/src/compat.ts", "examples/12-containers/test/versions.test.ts"],
+      "sources": [
+        "examples/12-containers/src/compat.ts",
+        "examples/12-containers/test/versions.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["distributed", "test"],
@@ -2628,14 +2771,25 @@
         "examples/12-containers/scripts/logs.ts",
         "tools/src/infra"
       ],
-      "tasks": ["ecs:infra:diff", "ecs:infra:deploy", "ecs:image:push", "ecs:watch", "ecs:logs", "ecs:infra:drift"],
+      "tasks": [
+        "ecs:infra:diff",
+        "ecs:infra:deploy",
+        "ecs:image:push",
+        "ecs:watch",
+        "ecs:logs",
+        "ecs:infra:drift"
+      ],
       "boundary": "cloud",
       "criteria": ["drift", "cost"],
       "verification": "unverified"
     },
     {
       "id": "12.cost",
-      "sources": ["examples/12-containers/src/cost.ts", "examples/12-containers/test/pricing.test.ts", "data/pricing"],
+      "sources": [
+        "examples/12-containers/src/cost.ts",
+        "examples/12-containers/test/pricing.test.ts",
+        "data/pricing"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local",
       "criteria": ["cost", "test"],
@@ -2837,7 +2991,10 @@
     },
     {
       "id": "23.role",
-      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
       "tasks": ["test:unit", "ec2:infra:synth"],
       "boundary": "local+cloud",
       "criteria": ["test"],
@@ -2845,7 +3002,10 @@
     },
     {
       "id": "23.ami",
-      "sources": ["examples/23-ec2/infra/lib/ec2-stack.ts", "examples/23-ec2/infra/test/ec2-stack.test.ts"],
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
       "tasks": ["test:unit", "ec2:infra:synth"],
       "boundary": "local+cloud",
       "criteria": ["test", "drift"],
@@ -3000,7 +3160,10 @@
     },
     {
       "id": "16.architecture",
-      "sources": ["examples/16-long-jobs/infra/lib/long-jobs-stack.ts", "examples/16-long-jobs/src/workflow.ts"],
+      "sources": [
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
+        "examples/16-long-jobs/src/workflow.ts"
+      ],
       "tasks": [],
       "boundary": "none",
       "criteria": ["distributed", "cost"],
@@ -3048,7 +3211,10 @@
     },
     {
       "id": "16.workflow",
-      "sources": ["examples/16-long-jobs/src/workflow.ts", "examples/16-long-jobs/test/workflow.test.ts"],
+      "sources": [
+        "examples/16-long-jobs/src/workflow.ts",
+        "examples/16-long-jobs/test/workflow.test.ts"
+      ],
       "tasks": ["test:unit"],
       "boundary": "local+cloud",
       "criteria": ["type", "test", "distributed"],
@@ -3168,7 +3334,10 @@
     },
     {
       "id": "21.architecture",
-      "sources": ["examples/21-security/infra/bin/app.ts", "examples/21-security/infra/lib/security-stack.ts"],
+      "sources": [
+        "examples/21-security/infra/bin/app.ts",
+        "examples/21-security/infra/lib/security-stack.ts"
+      ],
       "tasks": ["sec:infra:synth"],
       "boundary": "none",
       "criteria": ["cost", "distributed"],
@@ -3280,7 +3449,10 @@
     },
     {
       "id": "21.detect",
-      "sources": ["examples/21-security/scripts/posture.ts", "examples/21-security/scripts/trail.ts"],
+      "sources": [
+        "examples/21-security/scripts/posture.ts",
+        "examples/21-security/scripts/trail.ts"
+      ],
       "tasks": ["sec:posture", "sec:trail:iam"],
       "boundary": "cloud",
       "criteria": ["cost"],
@@ -3471,7 +3643,12 @@
         "examples/22-recovery/infra/bin/app.ts",
         "examples/22-recovery/infra/test/recovery-stack.test.ts"
       ],
-      "tasks": ["recovery:infra:diff", "recovery:infra:deploy", "recovery:audit", "recovery:infra:drift"],
+      "tasks": [
+        "recovery:infra:diff",
+        "recovery:infra:deploy",
+        "recovery:audit",
+        "recovery:infra:drift"
+      ],
       "boundary": "cloud",
       "criteria": ["drift", "test"],
       "verification": "unverified"
@@ -3532,7 +3709,10 @@
     },
     {
       "id": "24.network",
-      "sources": ["examples/24-celld/infra/lib/celld-stack.ts", "examples/24-celld/infra/test/celld-stack.test.ts"],
+      "sources": [
+        "examples/24-celld/infra/lib/celld-stack.ts",
+        "examples/24-celld/infra/test/celld-stack.test.ts"
+      ],
       "tasks": ["celld:infra:synth", "test:unit"],
       "boundary": "local",
       "criteria": ["test"],
@@ -3540,7 +3720,10 @@
     },
     {
       "id": "24.state",
-      "sources": ["examples/24-celld/infra/lib/celld-stack.ts", "examples/24-celld/infra/test/celld-stack.test.ts"],
+      "sources": [
+        "examples/24-celld/infra/lib/celld-stack.ts",
+        "examples/24-celld/infra/test/celld-stack.test.ts"
+      ],
       "tasks": ["celld:infra:synth", "test:unit"],
       "boundary": "local",
       "criteria": ["test", "distributed"],
@@ -3561,7 +3744,11 @@
     },
     {
       "id": "24.cost",
-      "sources": ["examples/24-celld/src/cost.ts", "examples/24-celld/test/pricing.test.ts", "data/pricing"],
+      "sources": [
+        "examples/24-celld/src/cost.ts",
+        "examples/24-celld/test/pricing.test.ts",
+        "data/pricing"
+      ],
       "tasks": ["celld:plan", "test:unit"],
       "boundary": "local",
       "criteria": ["cost", "test"],

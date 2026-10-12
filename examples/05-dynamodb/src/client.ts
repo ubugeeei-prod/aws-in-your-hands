@@ -1,5 +1,6 @@
 import { hc } from "hono/client";
 import type { z } from "zod";
+
 import type { App } from "./app.ts";
 import {
   type CreateNote,
@@ -17,7 +18,13 @@ export class ApiError extends Error {
   readonly requestId: string | undefined;
   readonly current: Note | undefined;
 
-  constructor(status: number, code: string, message: string, requestId: string | undefined, current?: Note) {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    requestId: string | undefined,
+    current?: Note,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -49,7 +56,12 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
   }
   const body = schema.safeParse(json);
   if (!body.success) {
-    throw new ApiError(response.status, "unexpected_response", "The response does not match the contract.", requestId);
+    throw new ApiError(
+      response.status,
+      "unexpected_response",
+      "The response does not match the contract.",
+      requestId,
+    );
   }
   return body.data;
 }
@@ -65,7 +77,9 @@ export type UpdateOutcome =
 export function isOwnWrite(sent: UpdateNote, current: Note): boolean {
   // The server trims the title before storing it.
   return (
-    current.version === sent.expectedVersion + 1 && current.title === sent.title.trim() && current.body === sent.body
+    current.version === sent.expectedVersion + 1 &&
+    current.title === sent.title.trim() &&
+    current.body === sent.body
   );
 }
 // #endregion outcome
@@ -91,7 +105,10 @@ export function createNotesClient(baseUrl: string, fetchImpl: typeof fetch = fet
       try {
         return {
           status: "updated",
-          note: await parse(await api.notes[":id"].$put({ param: { id }, json: input }), noteSchema),
+          note: await parse(
+            await api.notes[":id"].$put({ param: { id }, json: input }),
+            noteSchema,
+          ),
         };
       } catch (error) {
         if (error instanceof ApiError && error.code === "conflict" && error.current !== undefined) {

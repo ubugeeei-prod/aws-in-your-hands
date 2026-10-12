@@ -3,10 +3,14 @@
 //
 // Lists preview stacks (AihShipApiPr<number>) and how old they are. Reads only:
 // deleting one is `vp run ship:cfn:destroy -c stage=pr-<number>`.
+
 import { parseArgs } from "node:util";
-import { preflight } from "@aih/tools/aws/preflight.ts";
+
 import { CloudFormationClient } from "@aws-sdk/client-cloudformation";
 import { z } from "zod";
+
+import { preflight } from "@aih/tools/aws/preflight.ts";
+
 import { listPreviews } from "../src/previews.ts";
 import { listLiveStacks } from "../src/stack-info.ts";
 

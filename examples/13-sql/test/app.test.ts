@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
+
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
 import { errorSchema, noteListSchema, noteSchema } from "../src/contract.ts";
 import type { Db } from "../src/db.ts";
 import type { LogEntry } from "../src/log.ts";
-import { createNoteService } from "../src/notes.ts";
 import { SqlNoteRepository } from "../src/notes-repository.ts";
+import { createNoteService } from "../src/notes.ts";
 import { losingCommits, migratedDb, runnerFor } from "./support.ts";
 
 let db: Db;
@@ -33,7 +35,10 @@ async function setup(options: { database?: Db; quota?: number } = {}) {
       PGLITE_DATA_DIR: "unused",
     },
     notes: createNoteService({
-      repository: new SqlNoteRepository(runnerFor(options.database ?? db).transaction, options.quota ?? 100),
+      repository: new SqlNoteRepository(
+        runnerFor(options.database ?? db).transaction,
+        options.quota ?? 100,
+      ),
       now: () => new Date((clock += 1000)),
       newId: randomUUID,
     }),
@@ -44,7 +49,9 @@ async function setup(options: { database?: Db; quota?: number } = {}) {
   const send = (method: string, path: string, body?: unknown) =>
     app.request(path, {
       method,
-      ...(body === undefined ? {} : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
+      ...(body === undefined
+        ? {}
+        : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
     });
   return { app, logs, send };
 }
@@ -53,16 +60,24 @@ describe("notes API on SQL", () => {
   it("creates notes and lists them newest first", async () => {
     const { send } = await setup();
     expect((await send("POST", "/notes", { title: "first" })).status).toBe(201);
-    const second = noteSchema.parse(await (await send("POST", "/notes", { title: "second", body: "hello" })).json());
+    const second = noteSchema.parse(
+      await (await send("POST", "/notes", { title: "second", body: "hello" })).json(),
+    );
 
     const list = noteListSchema.parse(await (await send("GET", "/notes")).json());
     expect(list.notes.map((item) => item.title)).toEqual(["second", "first"]);
-    expect(noteSchema.parse(await (await send("GET", `/notes/${second.id}`)).json())).toEqual(second);
+    expect(noteSchema.parse(await (await send("GET", `/notes/${second.id}`)).json())).toEqual(
+      second,
+    );
   });
 
   it("answers 404 for an id that is not a UUID instead of passing it to the database", async () => {
     const { send, logs } = await setup();
-    for (const [method, body] of [["GET"], ["DELETE"], ["PUT", { title: "x", expectedVersion: 1 }]] as const) {
+    for (const [method, body] of [
+      ["GET"],
+      ["DELETE"],
+      ["PUT", { title: "x", expectedVersion: 1 }],
+    ] as const) {
       const response = await send(method, "/notes/not-a-uuid", body);
       expect(response.status).toBe(404);
       expect(errorSchema.parse(await response.json()).error.code).toBe("not_found");
@@ -72,10 +87,17 @@ describe("notes API on SQL", () => {
 
   it("refuses a stale update with 409 and the note as it is stored", async () => {
     const { send } = await setup();
-    const created = noteSchema.parse(await (await send("POST", "/notes", { title: "draft" })).json());
-    expect((await send("PUT", `/notes/${created.id}`, { title: "mine", expectedVersion: 1 })).status).toBe(200);
+    const created = noteSchema.parse(
+      await (await send("POST", "/notes", { title: "draft" })).json(),
+    );
+    expect(
+      (await send("PUT", `/notes/${created.id}`, { title: "mine", expectedVersion: 1 })).status,
+    ).toBe(200);
 
-    const stale = await send("PUT", `/notes/${created.id}`, { title: "theirs", expectedVersion: 1 });
+    const stale = await send("PUT", `/notes/${created.id}`, {
+      title: "theirs",
+      expectedVersion: 1,
+    });
     const body = errorSchema.parse(await stale.json());
 
     expect(stale.status).toBe(409);
@@ -117,6 +139,8 @@ describe("notes API on SQL", () => {
     expect(response.status).toBe(500);
     expect(text).not.toContain("app.notes");
     expect(errorSchema.parse(JSON.parse(text)).error.code).toBe("internal");
-    expect(logs.some((entry) => entry.level === "error" && String(entry["error"]).includes("app.notes"))).toBe(true);
+    expect(
+      logs.some((entry) => entry.level === "error" && String(entry["error"]).includes("app.notes")),
+    ).toBe(true);
   });
 });

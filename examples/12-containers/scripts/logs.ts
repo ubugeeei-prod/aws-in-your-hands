@@ -3,23 +3,43 @@
 //
 // Shows the tasks' recent log lines with the AWS CLI. All tasks write to one
 // log group, so the lines of old and new tasks appear together.
+
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { CONTAINERS_STACK } from "../src/config.ts";
 
 const { values } = parseArgs({
-  options: { follow: { type: "boolean", default: false }, since: { type: "string", default: "15m" } },
+  options: {
+    follow: { type: "boolean", default: false },
+    since: { type: "string", default: "15m" },
+  },
 });
 
 try {
-  const { target } = await preflight({ access: "observe", action: "read task logs", stack: CONTAINERS_STACK });
+  const { target } = await preflight({
+    access: "observe",
+    action: "read task logs",
+    stack: CONTAINERS_STACK,
+  });
   const logGroup = requireOutput(
     await readStackOutputs(process.cwd(), CONTAINERS_STACK, target.region),
     "TaskLogGroupName",
   );
-  const args = ["logs", "tail", logGroup, "--region", target.region, "--since", values.since, "--format", "short"];
+  const args = [
+    "logs",
+    "tail",
+    logGroup,
+    "--region",
+    target.region,
+    "--since",
+    values.since,
+    "--format",
+    "short",
+  ];
   if (values.follow) {
     args.push("--follow");
   }

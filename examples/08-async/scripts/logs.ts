@@ -3,11 +3,14 @@
 //
 // The worker writes one JSON line per event, with the message ID, the key,
 // and what it did (`status`). A failed message has `"message":"message failed"`.
+
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
+
+import { z } from "zod";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { z } from "zod";
 
 const STACK = "AihAsync";
 const { values } = parseArgs({
@@ -24,12 +27,26 @@ if (!which.success) {
 }
 
 try {
-  const { target } = await preflight({ access: "observe", action: `read the ${which.data} logs`, stack: STACK });
+  const { target } = await preflight({
+    access: "observe",
+    action: `read the ${which.data} logs`,
+    stack: STACK,
+  });
   const logGroup = requireOutput(
     await readStackOutputs(process.cwd(), STACK, target.region),
     which.data === "worker" ? "WorkerLogGroupName" : "HousekeepingLogGroupName",
   );
-  const args = ["logs", "tail", logGroup, "--region", target.region, "--since", values.since, "--format", "short"];
+  const args = [
+    "logs",
+    "tail",
+    logGroup,
+    "--region",
+    target.region,
+    "--since",
+    values.since,
+    "--format",
+    "short",
+  ];
   if (values.follow) {
     args.push("--follow");
   }

@@ -46,7 +46,9 @@ export const fleetConfigSchema = z
     // The bucket is the fleet's long-term state, and a node disk can hold writes the bucket lacks.
     stateOnDestroy: z.enum(STATE_ON_DESTROY).default("retain"),
     // Restore only: a node listed here gets a data volume created from that snapshot.
-    dataSnapshots: z.preprocess(snapshotMap, z.partialRecord(z.enum(NODE_NAMES), snapshotId)).default({}),
+    dataSnapshots: z
+      .preprocess(snapshotMap, z.partialRecord(z.enum(NODE_NAMES), snapshotId))
+      .default({}),
     // Unset: the latest Amazon Linux 2023, looked up at deploy time. Set: this image, until you change it.
     amiId: z
       .string()
@@ -77,7 +79,9 @@ export function nodeNames(count: number): NodeName[] {
 export function parseFleetConfig(input: unknown): FleetConfig {
   const result = fleetConfigSchema.safeParse(input);
   if (!result.success) {
-    const problems = result.error.issues.map((item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`);
+    const problems = result.error.issues.map(
+      (item) => `  ${item.path.join(".") || "(root)"}: ${item.message}`,
+    );
     throw new Error(`Invalid fleet settings:\n${problems.join("\n")}`);
   }
   return result.data;

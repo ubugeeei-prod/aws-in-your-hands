@@ -92,7 +92,9 @@
       "url": "https://cdkd.dev/introduction/",
       "title": "cdkd: Introduction",
       "checkedAt": "2026-10-11",
-      "supports": ["cdkd describes itself as for dev/test workflows and recommends the AWS CDK CLI for production"]
+      "supports": [
+        "cdkd describes itself as for dev/test workflows and recommends the AWS CDK CLI for production"
+      ]
     },
     {
       "id": "ox-content-npm",
@@ -218,7 +220,9 @@
       "url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html",
       "title": "Amazon S3 API: GetObject",
       "checkedAt": "2026-10-11",
-      "supports": ["For a missing object S3 returns 404 when the caller has s3:ListBucket and 403 when it does not"]
+      "supports": [
+        "For a missing object S3 returns 404 when the caller has s3:ListBucket and 403 when it does not"
+      ]
     },
     {
       "id": "dynamodb-read-consistency",
@@ -379,7 +383,9 @@
       "url": "https://www.npmjs.com/package/oauth4webapi/v/3.8.8",
       "title": "oauth4webapi 3.8.8 and jose 6.2.12 (npm type definitions)",
       "checkedAt": "2026-10-11",
-      "supports": ["Function signatures used in examples/06-auth/web/src/auth/cognito.ts and api/src/local-auth.ts"],
+      "supports": [
+        "Function signatures used in examples/06-auth/web/src/auth/cognito.ts and api/src/local-auth.ts"
+      ],
       "note": "Type-checked only. The Cognito flow in cognito.ts has never been run against a user pool."
     },
     {
@@ -505,7 +511,9 @@
       "url": "https://docs.aws.amazon.com/ivs/latest/LowLatencyAPIReference/API_GetStream.html",
       "title": "IVS API: GetStream",
       "checkedAt": "2026-10-11",
-      "supports": ["An offline channel is reported as the ChannelNotBroadcasting error (HTTP 404), not as a response"]
+      "supports": [
+        "An offline channel is reported as the ChannelNotBroadcasting error (HTTP 404), not as a response"
+      ]
     },
     {
       "id": "ivs-api-stream",
@@ -980,7 +988,9 @@
       "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-ec2-subnet.html",
       "title": "AWS::EC2::Subnet",
       "checkedAt": "2026-10-11",
-      "supports": ["Updating a subnet's CidrBlock replaces the subnet: a new one is created and the old one deleted"]
+      "supports": [
+        "Updating a subnet's CidrBlock replaces the subnet: a new one is created and the old one deleted"
+      ]
     },
     {
       "id": "elasticache-vpc",
@@ -1172,7 +1182,9 @@
       "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
       "title": "AWS Price List: Amazon Bedrock foundation models (Marketplace), ap-northeast-1",
       "checkedAt": "2026-10-11",
-      "supports": ["Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens"]
+      "supports": [
+        "Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens"
+      ]
     },
     {
       "id": "cloudflare-workers-ai-quickstart",
@@ -1200,7 +1212,9 @@
       "url": "https://developers.cloudflare.com/workers/development-testing/bindings-per-env/",
       "title": "Cloudflare Workers: Supported bindings per development mode",
       "checkedAt": "2026-10-11",
-      "supports": ["The AI binding has no local simulation; it connects to the remote service during local development"]
+      "supports": [
+        "The AI binding has no local simulation; it connects to the remote service during local development"
+      ]
     },
     {
       "id": "cloudflare-workers-ai-pricing",
@@ -1299,7 +1313,9 @@
       "url": "https://docs.aws.amazon.com/ses/latest/APIReference-V2/API_MessageTag.html",
       "title": "SES API v2: MessageTag",
       "checkedAt": "2026-10-11",
-      "supports": ["Tag names and values: ASCII letters, digits, underscore and dash only, at most 256 characters"]
+      "supports": [
+        "Tag names and values: ASCII letters, digits, underscore and dash only, at most 256 characters"
+      ]
     },
     {
       "id": "ses-event-publishing",
@@ -1331,7 +1347,9 @@
       "url": "https://docs.aws.amazon.com/ses/latest/dg/event-publishing-retrieving-sns-examples.html",
       "title": "Examples of event data that Amazon SES publishes to Amazon SNS",
       "checkedAt": "2026-10-11",
-      "supports": ["The Bounce, Complaint and Delivery example records that examples/15-email/test/fixtures/ follow"],
+      "supports": [
+        "The Bounce, Complaint and Delivery example records that examples/15-email/test/fixtures/ follow"
+      ],
       "note": "The fixtures are edited copies of the documented examples. No event was captured from a real account."
     },
     {
@@ -1677,7 +1695,9 @@
       "url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/kvs-with-functions-create-s3-kvp.html",
       "title": "File format for key-value pairs",
       "checkedAt": "2026-10-11",
-      "supports": ["Import file limits: 5 MB, 512-character keys, 1024-character values, no duplicate keys"]
+      "supports": [
+        "Import file limits: 5 MB, 512-character keys, 1024-character values, no duplicate keys"
+      ]
     },
     {
       "id": "cloudfront-kvs-api-updatekeys",
@@ -1777,7 +1797,9 @@
       "url": "https://aws.amazon.com/blogs/aws/introducing-amazon-cloudfront-keyvaluestore-a-low-latency-datastore-for-cloudfront-functions/",
       "title": "AWS News Blog: Introducing Amazon CloudFront KeyValueStore",
       "checkedAt": "2026-10-11",
-      "supports": ["Updates to a store are described as propagating to all edge locations in a few seconds"],
+      "supports": [
+        "Updates to a store are described as propagating to all edge locations in a few seconds"
+      ],
       "note": "A launch post, not a specification. The Developer Guide pages read for this chapter give no propagation time and no guarantee."
     },
     {
@@ -2179,7 +2201,9 @@
       "url": "https://docs.aws.amazon.com/aurora-dsql/latest/userguide/configure-root-certificates.html",
       "title": "Configuring SSL/TLS certificates for Aurora DSQL connections",
       "checkedAt": "2026-10-11",
-      "supports": ["The server certificate chains to Amazon Root CA 1; AWS recommends verify-full for production"]
+      "supports": [
+        "The server certificate chains to Amazon Root CA 1; AWS recommends verify-full for production"
+      ]
     },
     {
       "id": "cfn-dsql-cluster",
@@ -2303,14 +2327,18 @@
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html",
       "title": "Amazon RDS Proxy",
       "checkedAt": "2026-10-11",
-      "supports": ["RDS Proxy pools and shares database connections for applications that open many of them"]
+      "supports": [
+        "RDS Proxy pools and shares database connections for applications that open many of them"
+      ]
     },
     {
       "id": "rds-pitr",
       "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIT.html",
       "title": "Restoring a DB instance to a specified time for Amazon RDS",
       "checkedAt": "2026-10-11",
-      "supports": ["Point-in-time restore creates a new DB instance within the backup retention period"]
+      "supports": [
+        "Point-in-time restore creates a new DB instance within the backup retention period"
+      ]
     },
     {
       "id": "postgres-transaction-iso",
@@ -2378,7 +2406,9 @@
       "url": "https://developers.cloudflare.com/d1/worker-api/d1-database/",
       "title": "Cloudflare D1: D1 Database (Workers Binding API)",
       "checkedAt": "2026-10-11",
-      "supports": ["batch() runs its statements as one SQL transaction and rolls the whole sequence back if one fails"]
+      "supports": [
+        "batch() runs its statements as one SQL transaction and rolls the whole sequence back if one fails"
+      ]
     },
     {
       "id": "cloudflare-d1-sql-statements",
@@ -2546,7 +2576,9 @@
       "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
       "title": "Blocking public access to your Amazon S3 storage",
       "checkedAt": "2026-10-11",
-      "supports": ["The four settings BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets"]
+      "supports": [
+        "The four settings BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, and RestrictPublicBuckets"
+      ]
     },
     {
       "id": "s3-consistency",
@@ -2790,7 +2822,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
       "title": "Working with Lambda environment variables",
       "checkedAt": "2026-10-11",
-      "supports": ["AWS_LAMBDA_FUNCTION_NAME is a defined runtime environment variable holding the function's name"]
+      "supports": [
+        "AWS_LAMBDA_FUNCTION_NAME is a defined runtime environment variable holding the function's name"
+      ]
     },
     {
       "id": "mdn-set-cookie",
@@ -2913,7 +2947,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-tracing.html",
       "title": "Instrumenting Node.js code in AWS Lambda",
       "checkedAt": "2026-10-12",
-      "supports": ["Lambda's Node.js guide offers ADOT layers or the X-Ray SDK for Node.js to send trace data to X-Ray"]
+      "supports": [
+        "Lambda's Node.js guide offers ADOT layers or the X-Ray SDK for Node.js to send trace data to X-Ray"
+      ]
     },
     {
       "id": "lambda-nodejs-logging",
@@ -3014,7 +3050,9 @@
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html",
       "title": "Notifying users on alarm changes",
       "checkedAt": "2026-10-12",
-      "supports": ["An email subscription to the SNS topic stays pending until the recipient confirms it"]
+      "supports": [
+        "An email subscription to the SNS topic stays pending until the recipient confirms it"
+      ]
     },
     {
       "id": "logs-insights-syntax",
@@ -3543,7 +3581,9 @@
       "url": "https://valkey.io/commands/incr/",
       "title": "Valkey command: INCR",
       "checkedAt": "2026-10-12",
-      "supports": ["INCR is an atomic increment; the page describes the counter and rate limiter patterns built on it"]
+      "supports": [
+        "INCR is an atomic increment; the page describes the counter and rate limiter patterns built on it"
+      ]
     },
     {
       "id": "valkey-container-image",
@@ -3717,7 +3757,9 @@
       "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStackResources.html",
       "title": "ListStackResources",
       "checkedAt": "2026-10-12",
-      "supports": ["Returns every resource of the stack as StackResourceSummary, paginated with NextToken"]
+      "supports": [
+        "Returns every resource of the stack as StackResourceSummary, paginated with NextToken"
+      ]
     },
     {
       "id": "aws-sdk-cloudformation-npm",
@@ -3911,7 +3953,9 @@
       "url": "https://servicereference.us-east-1.amazonaws.com/v1/logs/logs.json",
       "title": "AWS service reference: CloudWatch Logs",
       "checkedAt": "2026-10-12",
-      "supports": ["DescribeLogGroups, DescribeIndexPolicies, and DescribeResourcePolicies have no resource type"]
+      "supports": [
+        "DescribeLogGroups, DescribeIndexPolicies, and DescribeResourcePolicies have no resource type"
+      ]
     },
     {
       "id": "iam-oidc-role",
@@ -4009,7 +4053,9 @@
       "url": "https://api.github.com/repos/actions/checkout/releases/latest",
       "title": "actions/checkout: latest release",
       "checkedAt": "2026-10-12",
-      "supports": ["v7.0.1, commit 3d3c42e5aac5ba805825da76410c181273ba90b1; has a persist-credentials input"]
+      "supports": [
+        "v7.0.1, commit 3d3c42e5aac5ba805825da76410c181273ba90b1; has a persist-credentials input"
+      ]
     },
     {
       "id": "install-nix-action-release",
@@ -4023,14 +4069,18 @@
       "url": "https://api.github.com/repos/actions/upload-artifact/releases/latest",
       "title": "actions/upload-artifact: latest release",
       "checkedAt": "2026-10-12",
-      "supports": ["v7.0.2, commit cf430e030ddbb5b0abf93d22962f4752f3646cd9; inputs name, path, if-no-files-found"]
+      "supports": [
+        "v7.0.2, commit cf430e030ddbb5b0abf93d22962f4752f3646cd9; inputs name, path, if-no-files-found"
+      ]
     },
     {
       "id": "lambda-versions",
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html",
       "title": "Manage Lambda function versions",
       "checkedAt": "2026-10-12",
-      "supports": ["A published version's code and most configuration are immutable; deploying code overwrites $LATEST"]
+      "supports": [
+        "A published version's code and most configuration are immutable; deploying code overwrites $LATEST"
+      ]
     },
     {
       "id": "lambda-alias-routing",
@@ -4083,7 +4133,9 @@
       "url": "https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/",
       "title": "Cloudflare Workers: GitHub Actions",
       "checkedAt": "2026-10-12",
-      "supports": ["The documented setup stores a Cloudflare API token and the account ID as CI secrets for Wrangler"]
+      "supports": [
+        "The documented setup stores a Cloudflare API token and the account ID as CI secrets for Wrangler"
+      ]
     },
     {
       "id": "cdkd-drift",
@@ -4490,7 +4542,9 @@
       "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
       "title": "AWS Price List: Elastic Load Balancing, ap-northeast-1",
       "checkedAt": "2026-10-12",
-      "supports": ["Application Load Balancer: USD 0.0243 per hour (or partial hour) and USD 0.008 per LCU-hour"],
+      "supports": [
+        "Application Load Balancer: USD 0.0243 per hour (or partial hour) and USD 0.008 per LCU-hour"
+      ],
       "note": "Offer published 2026-09-11T12:45:44Z."
     },
     {
@@ -4723,7 +4777,9 @@
       "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/dead-letter-queues-alarms-cloudwatch.html",
       "title": "Creating alarms for dead-letter queues using Amazon CloudWatch",
       "checkedAt": "2026-10-12",
-      "supports": ["A dead-letter queue is monitored with an alarm on the ApproximateNumberOfMessagesVisible metric"]
+      "supports": [
+        "A dead-letter queue is monitored with an alarm on the ApproximateNumberOfMessagesVisible metric"
+      ]
     },
     {
       "id": "sqs-pricing",
@@ -5010,7 +5066,9 @@
       "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html",
       "title": "Supported data types and naming rules in Amazon DynamoDB",
       "checkedAt": "2026-10-12",
-      "supports": ["DynamoDB collates and compares strings using the bytes of the underlying UTF-8 encoding"]
+      "supports": [
+        "DynamoDB collates and compares strings using the bytes of the underlying UTF-8 encoding"
+      ]
     },
     {
       "id": "cdkd-source-async",
@@ -5103,7 +5161,9 @@
       "url": "https://developers.cloudflare.com/workers/configuration/cron-triggers/",
       "title": "Cloudflare Workers: Cron Triggers",
       "checkedAt": "2026-10-12",
-      "supports": ["A Worker can be run on a schedule with a cron expression through its scheduled() handler"],
+      "supports": [
+        "A Worker can be run on a schedule with a cron expression through its scheduled() handler"
+      ],
       "note": "The page was not found to state a delivery guarantee for scheduled runs."
     },
     {
@@ -5297,7 +5357,9 @@
       "url": "https://docs.aws.amazon.com/linux/al2023/ug/imdsv2.html",
       "title": "IMDSv2 (Amazon Linux 2023 User Guide)",
       "checkedAt": "2026-10-12",
-      "supports": ["Instances launched from the AL2023 AMI require IMDSv2 and get a hop limit of 2 by default"]
+      "supports": [
+        "Instances launched from the AL2023 AMI require IMDSv2 and get a hop limit of 2 by default"
+      ]
     },
     {
       "id": "ec2-iam-roles",
@@ -5608,7 +5670,9 @@
       "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-deletionpolicy.html",
       "title": "DeletionPolicy attribute",
       "checkedAt": "2026-10-12",
-      "supports": ["Snapshot is supported for resources such as AWS::EC2::Volume; Retain is supported for any resource"]
+      "supports": [
+        "Snapshot is supported for resources such as AWS::EC2::Volume; Retain is supported for any resource"
+      ]
     },
     {
       "id": "aws-price-list-ec2-compute",
@@ -5641,7 +5705,9 @@
       "url": "https://github.com/go-to-k/cdkd/blob/v0.296.28/docs/cli-destroy.md",
       "title": "cdkd v0.296.28: destroy",
       "checkedAt": "2026-10-12",
-      "supports": ["A non-empty S3 bucket fails the destroy unless the bucket opted in to being emptied"]
+      "supports": [
+        "A non-empty S3 bucket fails the destroy unless the bucket opted in to being emptied"
+      ]
     },
     {
       "id": "aws-cdk-lib-ec2-machine-image",
@@ -5721,7 +5787,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html",
       "title": "Lambda quotas",
       "checkedAt": "2026-10-12",
-      "supports": ["A function invocation can run for up to 900 seconds (15 minutes); memory is up to 10,240 MB"]
+      "supports": [
+        "A function invocation can run for up to 900 seconds (15 minutes); memory is up to 10,240 MB"
+      ]
     },
     {
       "id": "fargate-ephemeral-storage",
@@ -5747,7 +5815,9 @@
       "url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html",
       "title": "Amazon ECS services",
       "checkedAt": "2026-10-12",
-      "supports": ["When a task of a service fails or stops, the service scheduler launches another to replace it"]
+      "supports": [
+        "When a task of a service fails or stops, the service scheduler launches another to replace it"
+      ]
     },
     {
       "id": "lambda-ephemeral-storage",
@@ -5772,7 +5842,9 @@
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html",
       "title": "Manually create or edit the CloudWatch agent configuration file",
       "checkedAt": "2026-10-12",
-      "supports": ["The agent's logs section can collect systemd journal entries on Linux through a journald section"]
+      "supports": [
+        "The agent's logs section can collect systemd journal entries on Linux through a journald section"
+      ]
     },
     {
       "id": "lambda-durable-functions",
@@ -5901,7 +5973,9 @@
       "url": "https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html",
       "title": "Using the Lambda context object to retrieve Node.js function information",
       "checkedAt": "2026-10-12",
-      "supports": ["context.getRemainingTimeInMillis() returns the milliseconds left before the execution times out"]
+      "supports": [
+        "context.getRemainingTimeInMillis() returns the milliseconds left before the execution times out"
+      ]
     },
     {
       "id": "durable-sdk-key-concepts",
@@ -6001,7 +6075,9 @@
       "url": "https://docs.aws.amazon.com/step-functions/latest/dg/input-output-resultpath.html",
       "title": "Specifying state output using ResultPath in Step Functions",
       "checkedAt": "2026-10-12",
-      "supports": ["ResultPath in a Catch keeps the state's input and adds the error under the given field"]
+      "supports": [
+        "ResultPath in a Catch keeps the state's input and adds the error under the given field"
+      ]
     },
     {
       "id": "sfn-redrive",
@@ -6364,7 +6440,10 @@
       "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based.html",
       "title": "Using rate-based rule statements in AWS WAF",
       "checkedAt": "2026-10-12",
-      "supports": ["A rate-based rule costs 2 WCUs as a base", "Each use of a rate-based rule is tracked separately"]
+      "supports": [
+        "A rate-based rule costs 2 WCUs as a base",
+        "Each use of a rate-based rule is tracked separately"
+      ]
     },
     {
       "id": "waf-rate-based-caveats",
@@ -6410,7 +6489,9 @@
       "url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-testing.html",
       "title": "Testing and tuning your AWS WAF protections",
       "checkedAt": "2026-10-12",
-      "supports": ["AWS recommends testing and tuning rules in count mode with production traffic before enabling them"]
+      "supports": [
+        "AWS recommends testing and tuning rules in count mode with production traffic before enabling them"
+      ]
     },
     {
       "id": "cfn-wafv2-webacl",
@@ -6694,7 +6775,9 @@
       "url": "https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html",
       "title": "Getting started with Amazon Inspector",
       "checkedAt": "2026-10-12",
-      "supports": ["Activating Inspector for a standalone account in the console activates all scan types by default"]
+      "supports": [
+        "Activating Inspector for a standalone account in the console activates all scan types by default"
+      ]
     },
     {
       "id": "inspector-pricing",
@@ -6897,7 +6980,9 @@
       "url": "https://developers.cloudflare.com/waf/rate-limiting-rules/",
       "title": "Cloudflare WAF: Rate limiting rules",
       "checkedAt": "2026-10-12",
-      "supports": ["Rate limiting rules are available on the Free plan, with features that depend on the plan"]
+      "supports": [
+        "Rate limiting rules are available on the Free plan, with features that depend on the plan"
+      ]
     },
     {
       "id": "dynamodb-pitr",
@@ -7157,7 +7242,9 @@
       "url": "https://developers.cloudflare.com/r2/api/s3/api/",
       "title": "Cloudflare R2: S3 API compatibility",
       "checkedAt": "2026-10-12",
-      "supports": ["The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented"]
+      "supports": [
+        "The compatibility table marks GetBucketVersioning and PutBucketVersioning as not implemented"
+      ]
     },
     {
       "id": "celld-source",
@@ -7202,7 +7289,9 @@
       "url": "https://celld.dev/docs/guarantees/",
       "title": "celld guarantees",
       "checkedAt": "2026-10-12",
-      "supports": ["The page exists and carries the same guarantees text as docs/guarantees.md in the repository"],
+      "supports": [
+        "The page exists and carries the same guarantees text as docs/guarantees.md in the repository"
+      ],
       "note": "Read through a summarizing fetch; the claims this chapter relies on are taken from the repository file at the v0.6.2 tag (celld-guarantees-v062)."
     },
     {
@@ -7359,7 +7448,9 @@
       "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html",
       "title": "Use instance metadata to manage your EC2 instance",
       "checkedAt": "2026-10-12",
-      "supports": ["local-ipv4 is the private IPv4 address of the instance (the device with device number 0)"]
+      "supports": [
+        "local-ipv4 is the private IPv4 address of the instance (the device with device number 0)"
+      ]
     },
     {
       "id": "ec2-imds-retrieval",
@@ -7471,7 +7562,9 @@
       "url": "https://cdkd.dev/concepts/index.html",
       "title": "cdkd: Concepts",
       "checkedAt": null,
-      "supports": ["cdkd provisions through AWS SDK and Cloud Control API calls and keeps its own state in S3"],
+      "supports": [
+        "cdkd provisions through AWS SDK and Cloud Control API calls and keeps its own state in S3"
+      ],
       "note": "Listed in the research starter index (checked there 2026-10-11) but not re-read while writing. Re-verify before relying on it for a new claim."
     },
     {

@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import { HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpIamAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
@@ -67,7 +68,9 @@ export class EmailStack extends Stack {
     // Creating this starts verification; it does not finish it. An address gets a
     // confirmation mail to click, a domain gets DKIM records to publish by hand.
     const identity = new EmailIdentity(this, "Sender", {
-      identity: isDomain ? Identity.domain(props.senderIdentity) : Identity.email(props.senderIdentity),
+      identity: isDomain
+        ? Identity.domain(props.senderIdentity)
+        : Identity.email(props.senderIdentity),
       configurationSet,
       ...(isDomain && props.mailFromDomain !== undefined
         ? {
@@ -89,7 +92,9 @@ export class EmailStack extends Stack {
     });
 
     // #region send-role
-    const apiRole = new Role(this, "ApiRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const apiRole = new Role(this, "ApiRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     apiLogs.grantWrite(apiRole);
     apiRole.addToPolicy(
       new PolicyStatement({
@@ -117,10 +122,15 @@ export class EmailStack extends Stack {
 
     // #region events-role
     // Records what SES reports. It cannot send mail and cannot read the table.
-    const eventsRole = new Role(this, "EventsRole", { assumedBy: new ServicePrincipal("lambda.amazonaws.com") });
+    const eventsRole = new Role(this, "EventsRole", {
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
     eventLogs.grantWrite(eventsRole);
     eventsRole.addToPolicy(
-      new PolicyStatement({ actions: ["dynamodb:PutItem", "dynamodb:UpdateItem"], resources: [table.tableArn] }),
+      new PolicyStatement({
+        actions: ["dynamodb:PutItem", "dynamodb:UpdateItem"],
+        resources: [table.tableArn],
+      }),
     );
     // #endregion events-role
 
@@ -137,7 +147,8 @@ export class EmailStack extends Stack {
         minify: false,
         sourceMap: false,
         externalModules: [],
-        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+        banner:
+          "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
       },
     };
 
@@ -173,8 +184,18 @@ export class EmailStack extends Stack {
     const integration = new HttpLambdaIntegration("Mail", apiHandler);
     const authorizer = new HttpIamAuthorizer();
     api.addRoutes({ path: "/health", methods: [HttpMethod.GET], integration, authorizer });
-    api.addRoutes({ path: "/share-notifications", methods: [HttpMethod.POST], integration, authorizer });
-    api.addRoutes({ path: "/share-notifications/{id}", methods: [HttpMethod.GET], integration, authorizer });
+    api.addRoutes({
+      path: "/share-notifications",
+      methods: [HttpMethod.POST],
+      integration,
+      authorizer,
+    });
+    api.addRoutes({
+      path: "/share-notifications/{id}",
+      methods: [HttpMethod.GET],
+      integration,
+      authorizer,
+    });
     // #endregion api
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });

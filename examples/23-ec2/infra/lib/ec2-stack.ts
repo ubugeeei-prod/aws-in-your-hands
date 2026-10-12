@@ -1,4 +1,3 @@
-import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
 import { CfnOutput, Fn, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import {
   AmazonLinux2023ImageSsmParameter,
@@ -9,9 +8,18 @@ import {
   CfnVolume,
   CfnVolumeAttachment,
 } from "aws-cdk-lib/aws-ec2";
-import { CfnInstanceProfile, ManagedPolicy, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import {
+  CfnInstanceProfile,
+  ManagedPolicy,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from "aws-cdk-lib/aws-iam";
 import { BlockPublicAccess, Bucket, BucketEncryption, ObjectOwnership } from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
+
+import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
+
 import type { Ec2Config } from "../../src/config.ts";
 import { machineFor } from "../../src/machine.ts";
 import { RELEASE_PREFIX } from "../../src/release.ts";
@@ -46,7 +54,13 @@ export class Ec2Stack extends Stack {
       vpcId: vpc.vpcId,
       // Listing one egress rule replaces the allow-everything rule a new group starts with.
       securityGroupEgress: [
-        { ipProtocol: "tcp", fromPort: 443, toPort: 443, cidrIp: "0.0.0.0/0", description: "HTTPS to AWS APIs" },
+        {
+          ipProtocol: "tcp",
+          fromPort: 443,
+          toPort: 443,
+          cidrIp: "0.0.0.0/0",
+          description: "HTTPS to AWS APIs",
+        },
       ],
       tags: named("instance"),
     });

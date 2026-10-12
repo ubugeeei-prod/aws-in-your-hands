@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { AiStack } from "../lib/ai-stack.ts";
 import { defaultProfileId, isVerifiedProfileId, verifiedProfiles } from "../lib/models.ts";
 
@@ -15,6 +16,7 @@ if (!isVerifiedProfileId(requested)) {
 
 new AiStack(app, "AihAi", {
   env: { region: "ap-northeast-1" },
-  description: "AWS in Your Hands chapter 17: streaming note summaries (Lambda function URL + Amazon Bedrock)",
+  description:
+    "AWS in Your Hands chapter 17: streaming note summaries (Lambda function URL + Amazon Bedrock)",
   profileId: requested,
 });

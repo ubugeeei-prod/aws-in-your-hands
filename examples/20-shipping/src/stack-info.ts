@@ -27,7 +27,11 @@ export async function describeStack(client: Sender, name: string): Promise<Stack
     const response = await client.send(new DescribeStacksCommand({ StackName: name }));
     return stackSchema.parse(response.Stacks?.[0]);
   } catch (error) {
-    if (error instanceof Error && error.name === "ValidationError" && /does not exist/i.test(error.message)) {
+    if (
+      error instanceof Error &&
+      error.name === "ValidationError" &&
+      /does not exist/i.test(error.message)
+    ) {
       return null;
     }
     throw error;
@@ -55,7 +59,9 @@ export async function listLiveStacks(client: Sender): Promise<StackSummary[]> {
   const stacks: StackSummary[] = [];
   let nextToken: string | undefined;
   do {
-    const page = await client.send(new ListStacksCommand({ StackStatusFilter: live, NextToken: nextToken }));
+    const page = await client.send(
+      new ListStacksCommand({ StackStatusFilter: live, NextToken: nextToken }),
+    );
     stacks.push(...z.array(summarySchema).parse(page.StackSummaries ?? []));
     nextToken = page.NextToken;
   } while (nextToken !== undefined);

@@ -8,7 +8,7 @@ export type ReadResult =
 
 // The worker asks for "the object this event describes", not "whatever is under
 // this key now". Between the event and the read, the object may have been replaced.
-export interface ObjectReader {
+export type ObjectReader = {
   readExact(key: string, eTag: string, maxBytes: number): Promise<ReadResult>;
-}
+};
 // #endregion port

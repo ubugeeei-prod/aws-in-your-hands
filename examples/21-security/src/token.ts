@@ -3,13 +3,20 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 /** One version of the signing secret. `versionId` is the Secrets Manager VersionId. */
 export type SigningKey = { versionId: string; key: string };
 
-export type ParsedToken = { versionId: string; expiresAt: number; subject: string; signed: string; signature: Buffer };
+export type ParsedToken = {
+  versionId: string;
+  expiresAt: number;
+  subject: string;
+  signed: string;
+  signature: Buffer;
+};
 
 const VERSION = "v1";
 const SUBJECT = /^[A-Za-z0-9_.@-]{1,64}$/;
 const VERSION_ID = /^[A-Za-z0-9-]{1,64}$/;
 
-const mac = (key: string, signed: string): Buffer => createHmac("sha256", key).update(signed).digest();
+const mac = (key: string, signed: string): Buffer =>
+  createHmac("sha256", key).update(signed).digest();
 
 // #region sign
 /** `v1.<version id>.<expiry, Unix seconds>.<subject>.<HMAC-SHA256>`. The version id says which key to check with. */
@@ -17,7 +24,12 @@ export function signToken(key: SigningKey, subject: string, expiresAt: number): 
   if (!SUBJECT.test(subject)) {
     throw new Error("subject must be 1 to 64 characters of A-Z a-z 0-9 _ . @ -");
   }
-  const signed = [VERSION, key.versionId, expiresAt, Buffer.from(subject).toString("base64url")].join(".");
+  const signed = [
+    VERSION,
+    key.versionId,
+    expiresAt,
+    Buffer.from(subject).toString("base64url"),
+  ].join(".");
   return `${signed}.${mac(key.key, signed).toString("base64url")}`;
 }
 // #endregion sign
@@ -26,10 +38,20 @@ export function signToken(key: SigningKey, subject: string, expiresAt: number): 
 export function parseToken(token: string): ParsedToken | null {
   const parts = token.split(".");
   const [version, versionId, expiry, subjectPart, signaturePart] = parts;
-  if (parts.length !== 5 || version !== VERSION || versionId === undefined || !VERSION_ID.test(versionId)) {
+  if (
+    parts.length !== 5 ||
+    version !== VERSION ||
+    versionId === undefined ||
+    !VERSION_ID.test(versionId)
+  ) {
     return null;
   }
-  if (expiry === undefined || !/^\d{1,12}$/.test(expiry) || subjectPart === undefined || signaturePart === undefined) {
+  if (
+    expiry === undefined ||
+    !/^\d{1,12}$/.test(expiry) ||
+    subjectPart === undefined ||
+    signaturePart === undefined
+  ) {
     return null;
   }
   const subject = Buffer.from(subjectPart, "base64url").toString("utf8");

@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { emailAddressSchema } from "./contract.ts";
 
 const logLevel = z.enum(["debug", "info", "warn", "error"]).default("info");
@@ -32,11 +33,15 @@ export type EventsEnv = z.infer<typeof eventsEnvSchema>;
 function parse<T>(schema: z.ZodType<T>, source: Record<string, string | undefined>): T {
   const result = schema.safeParse(source);
   if (!result.success) {
-    const problems = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
+    const problems = result.error.issues.map(
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
+    );
     throw new Error(`Invalid environment:\n  ${problems.join("\n  ")}`);
   }
   return result.data;
 }
 
-export const parseEnv = (source: Record<string, string | undefined>): Env => parse(envSchema, source);
-export const parseEventsEnv = (source: Record<string, string | undefined>): EventsEnv => parse(eventsEnvSchema, source);
+export const parseEnv = (source: Record<string, string | undefined>): Env =>
+  parse(envSchema, source);
+export const parseEventsEnv = (source: Record<string, string | undefined>): EventsEnv =>
+  parse(eventsEnvSchema, source);

@@ -1,11 +1,12 @@
-import { IMAGE_TYPES } from "@aih/example-07-uploads/api/src/contract.ts";
+import type { IMAGE_TYPES } from "@aih/example-07-uploads/api/src/contract.ts";
 
 export type ImageType = (typeof IMAGE_TYPES)[number];
 export type Sniffed = { type: ImageType; width: number; height: number };
 
 const ascii = (bytes: Uint8Array, at: number, length: number): string =>
   String.fromCharCode(...bytes.subarray(at, at + length));
-const view = (bytes: Uint8Array): DataView => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+const view = (bytes: Uint8Array): DataView =>
+  new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
 // #region sniff
 // Reads the type and the pixel size from the first bytes of the file, and
@@ -27,7 +28,11 @@ function gif(bytes: Uint8Array): Sniffed | undefined {
   if (bytes.length < 10 || !["GIF87a", "GIF89a"].includes(ascii(bytes, 0, 6))) {
     return undefined;
   }
-  return { type: "image/gif", width: view(bytes).getUint16(6, true), height: view(bytes).getUint16(8, true) };
+  return {
+    type: "image/gif",
+    width: view(bytes).getUint16(6, true),
+    height: view(bytes).getUint16(8, true),
+  };
 }
 
 function jpeg(bytes: Uint8Array): Sniffed | undefined {
@@ -50,7 +55,8 @@ function jpeg(bytes: Uint8Array): Sniffed | undefined {
     if (marker === 0xda || marker === 0xd9) {
       return undefined;
     }
-    const isFrameHeader = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+    const isFrameHeader =
+      marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
     if (isFrameHeader) {
       return {
         type: "image/jpeg",
@@ -77,7 +83,11 @@ function webp(bytes: Uint8Array): Sniffed | undefined {
       };
     case "VP8L": {
       const bits = data.getUint32(21, true);
-      return { type: "image/webp", width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
+      return {
+        type: "image/webp",
+        width: (bits & 0x3fff) + 1,
+        height: ((bits >>> 14) & 0x3fff) + 1,
+      };
     }
     case "VP8X": {
       const uint24 = (at: number) => data.getUint16(at, true) | ((bytes[at + 2] ?? 0) << 16);

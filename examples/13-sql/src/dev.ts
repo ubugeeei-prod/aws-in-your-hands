@@ -1,5 +1,7 @@
 import { fileURLToPath } from "node:url";
+
 import { serve } from "@hono/node-server";
+
 import { composeApp } from "./compose.ts";
 import type { Db } from "./db.ts";
 import { openDsql } from "./dsql.ts";
@@ -14,10 +16,14 @@ if (env.NOTES_DB === "pglite") {
   db = await openPglite(env.PGLITE_DATA_DIR);
   // Like `wrangler dev`, this server does not migrate for you.
   const migrations = loadMigrations(fileURLToPath(new URL("../migrations", import.meta.url)));
-  const pending = await db.withConnection((connection) => pendingMigrations(connection, migrations));
+  const pending = await db.withConnection((connection) =>
+    pendingMigrations(connection, migrations),
+  );
   if (pending.length > 0) {
     await db.close();
-    console.error(`Not applied yet: ${pending.join(", ")}\nRun \`vp run sql:db:migrate:local\`, then start again.`);
+    console.error(
+      `Not applied yet: ${pending.join(", ")}\nRun \`vp run sql:db:migrate:local\`, then start again.`,
+    );
     process.exit(1);
   }
 } else {

@@ -1,18 +1,27 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import type { StateMachine } from "../../src/workflow.ts";
 import { LongJobsStack } from "../lib/long-jobs-stack.ts";
 
 // Synthesized once each: every synth bundles the functions with esbuild.
 const synth = (durable: boolean) =>
-  Template.fromStack(new LongJobsStack(new App(), "AihLongJobs", { env: { region: "ap-northeast-1" }, durable }));
+  Template.fromStack(
+    new LongJobsStack(new App(), "AihLongJobs", { env: { region: "ap-northeast-1" }, durable }),
+  );
 const base = synth(false);
 const withDurable = synth(true);
 
-type Statement = { Effect: string; Action: string | string[]; Resource: unknown; Condition?: unknown };
+type Statement = {
+  Effect: string;
+  Action: string | string[];
+  Resource: unknown;
+  Condition?: unknown;
+};
 type Resource = { Type: string; Properties: Record<string, unknown>; DependsOn?: string[] };
-const resourcesOf = (template: Template) => template.toJSON()["Resources"] as Record<string, Resource>;
+const resourcesOf = (template: Template) =>
+  template.toJSON()["Resources"] as Record<string, Resource>;
 const typesOf = (template: Template): string[] =>
   [...new Set(Object.values(resourcesOf(template)).map((resource) => resource.Type))].toSorted();
 
@@ -25,7 +34,9 @@ function actionsOf(template: Template, rolePrefix: string): string[] {
 function statementsOf(template: Template, rolePrefix: string): Statement[] {
   return Object.values(template.findResources("AWS::IAM::Policy"))
     .filter((policy) =>
-      (policy["Properties"].Roles as { Ref: string }[]).some((role) => role.Ref.startsWith(rolePrefix)),
+      (policy["Properties"].Roles as { Ref: string }[]).some((role) =>
+        role.Ref.startsWith(rolePrefix),
+      ),
     )
     .flatMap((policy) => policy["Properties"].PolicyDocument.Statement as Statement[]);
 }
@@ -36,9 +47,15 @@ function definitionOf(template: Template): StateMachine {
   if (machine === undefined) {
     throw new Error("the template has no state machine");
   }
-  const parts = (machine["Properties"].DefinitionString as { "Fn::Join": [string, unknown[]] })["Fn::Join"][1];
+  const parts = (machine["Properties"].DefinitionString as { "Fn::Join": [string, unknown[]] })[
+    "Fn::Join"
+  ][1];
   const text = parts
-    .map((part) => (typeof part === "string" ? part : (part as { "Fn::GetAtt": [string, string] })["Fn::GetAtt"][0]))
+    .map((part) =>
+      typeof part === "string"
+        ? part
+        : (part as { "Fn::GetAtt": [string, string] })["Fn::GetAtt"][0],
+    )
     .join("");
   return JSON.parse(text) as StateMachine;
 }
@@ -60,9 +77,11 @@ describe("LongJobsStack, default", () => {
   it("uses only resource types cdkd has a provider for, and nothing billed by the hour", () => {
     expect(typesOf(base)).toEqual(BASE_TYPES);
     base.hasResourceProperties("AWS::DynamoDB::Table", { BillingMode: "PAY_PER_REQUEST" });
-    expect(Object.keys(resourcesOf(base)).filter((id) => resourcesOf(base)[id]?.Type.startsWith("Custom::"))).toEqual(
-      [],
-    );
+    expect(
+      Object.keys(resourcesOf(base)).filter((id) =>
+        resourcesOf(base)[id]?.Type.startsWith("Custom::"),
+      ),
+    ).toEqual([]);
   });
 
   it("has no durable function unless asked", () => {
@@ -83,7 +102,9 @@ describe("LongJobsStack, default", () => {
         RestrictPublicBuckets: true,
       },
       OwnershipControls: { Rules: [{ ObjectOwnership: "BucketOwnerEnforced" }] },
-      LifecycleConfiguration: { Rules: [{ Prefix: "exports/", ExpirationInDays: 7, Status: "Enabled" }] },
+      LifecycleConfiguration: {
+        Rules: [{ Prefix: "exports/", ExpirationInDays: 7, Status: "Enabled" }],
+      },
     });
     // The only bucket policy statement is the one that refuses plain HTTP.
     const [policy] = Object.values(base.findResources("AWS::S3::BucketPolicy"));
@@ -107,7 +128,12 @@ describe("LongJobsStack, default", () => {
 
   it("gives each step its own role with only what the step does", () => {
     const logs = ["logs:CreateLogStream", "logs:PutLogEvents"];
-    expect(actionsOf(base, "ExportPagesRole")).toEqual(["dynamodb:Scan", ...logs, "s3:GetObject", "s3:PutObject"]);
+    expect(actionsOf(base, "ExportPagesRole")).toEqual([
+      "dynamodb:Scan",
+      ...logs,
+      "s3:GetObject",
+      "s3:PutObject",
+    ]);
     expect(actionsOf(base, "FinishRole")).toEqual([...logs, "s3:ListBucket", "s3:PutObject"]);
     expect(actionsOf(base, "DiscardRole")).toEqual([...logs, "s3:DeleteObject", "s3:ListBucket"]);
     base.allResourcesProperties("AWS::IAM::Role", { ManagedPolicyArns: Match.absent() });
@@ -169,9 +195,15 @@ describe("LongJobsStack, default", () => {
       "Discard",
       "Discarded",
     ]);
-    expect(definition.States["ExportPages"]).toMatchObject({ Resource: expect.stringMatching(/^ExportPages/) });
-    expect(definition.States["Finish"]).toMatchObject({ Resource: expect.stringMatching(/^Finish/) });
-    expect(definition.States["Discard"]).toMatchObject({ Resource: expect.stringMatching(/^Discard/) });
+    expect(definition.States["ExportPages"]).toMatchObject({
+      Resource: expect.stringMatching(/^ExportPages/),
+    });
+    expect(definition.States["Finish"]).toMatchObject({
+      Resource: expect.stringMatching(/^Finish/),
+    });
+    expect(definition.States["Discard"]).toMatchObject({
+      Resource: expect.stringMatching(/^Discard/),
+    });
   });
 
   it("lets each function finish or time out before its task gives up", () => {
@@ -213,7 +245,9 @@ describe("LongJobsStack, default", () => {
 describe("LongJobsStack with -c durable=true", () => {
   it("adds one function, a version, and an alias", () => {
     // Neither has a dedicated provider in cdkd 0.296.28: both go through Cloud Control API.
-    expect(typesOf(withDurable)).toEqual([...BASE_TYPES, "AWS::Lambda::Alias", "AWS::Lambda::Version"].toSorted());
+    expect(typesOf(withDurable)).toEqual(
+      [...BASE_TYPES, "AWS::Lambda::Alias", "AWS::Lambda::Version"].toSorted(),
+    );
     withDurable.resourceCountIs("AWS::Lambda::Function", 4);
     withDurable.resourceCountIs("AWS::StepFunctions::StateMachine", 1);
   });
@@ -243,7 +277,9 @@ describe("LongJobsStack with -c durable=true", () => {
     const checkpoint = statementsOf(withDurable, "DurableExportRole").find((statement) =>
       [statement.Action].flat().includes("lambda:CheckpointDurableExecution"),
     );
-    expect(JSON.stringify(checkpoint?.Resource)).toContain(":function:aih-long-jobs-durable-export:*");
+    expect(JSON.stringify(checkpoint?.Resource)).toContain(
+      ":function:aih-long-jobs-durable-export:*",
+    );
     withDurable.allResourcesProperties("AWS::IAM::Role", { ManagedPolicyArns: Match.absent() });
   });
 });

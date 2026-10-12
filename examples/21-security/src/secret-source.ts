@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { SigningKey } from "./token.ts";
 
 export const STAGES = ["AWSCURRENT", "AWSPREVIOUS"] as const;
@@ -49,7 +50,9 @@ export class MemorySecretStore implements SecretSource {
 
   async read(stage: Stage): Promise<SigningKey | null> {
     this.reads += 1;
-    const version = this.versions.find((candidate) => candidate.versionId === this.labels.get(stage));
+    const version = this.versions.find(
+      (candidate) => candidate.versionId === this.labels.get(stage),
+    );
     return version === undefined ? null : { versionId: version.versionId, key: version.key };
   }
 

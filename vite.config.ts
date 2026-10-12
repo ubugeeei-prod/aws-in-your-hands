@@ -48,13 +48,22 @@ function infra(name: string, appDir: string, stack: string): Record<string, Task
 // #endregion infra
 
 /** Publishing built files into a bucket that an infra task created. */
-function site(name: string, appDir: string, stack: string, buildDir: string, buildTask: string): Record<string, Task> {
-  const run = (script: string, args = "") => `${node} tools/src/site/${script}.ts ${args}`.trimEnd();
+function site(
+  name: string,
+  appDir: string,
+  stack: string,
+  buildDir: string,
+  buildTask: string,
+): Record<string, Task> {
+  const run = (script: string, args = "") =>
+    `${node} tools/src/site/${script}.ts ${args}`.trimEnd();
   return {
     [`${name}:publish:plan`]: live(run("publish", `${appDir} ${stack} ${buildDir} --dry-run`), {
       dependsOn: [buildTask],
     }),
-    [`${name}:publish`]: live(run("publish", `${appDir} ${stack} ${buildDir}`), { dependsOn: [buildTask] }),
+    [`${name}:publish`]: live(run("publish", `${appDir} ${stack} ${buildDir}`), {
+      dependsOn: [buildTask],
+    }),
     [`${name}:smoke`]: live(run("smoke", `${name} ${appDir} ${stack}`)),
     [`${name}:invalidate`]: live(run("invalidate", `${appDir} ${stack}`)),
     [`${name}:unpublish`]: live(run("unpublish", `${appDir} ${stack}`)),
@@ -120,10 +129,15 @@ export default defineConfig({
       // Vize gets only the Vue app (src/). The CDK code under infra/ goes through tsc above.
       "typecheck:vue": { command: "./node_modules/.bin/vize check", cwd: "examples/03-spa" },
       // Vize's linter reads the <template> blocks that oxlint does not.
-      "lint:vue": { command: "./node_modules/.bin/vize lint src --preset essential", cwd: "examples/03-spa" },
+      "lint:vue": {
+        command: "./node_modules/.bin/vize lint src --preset essential",
+        cwd: "examples/03-spa",
+      },
       "test:unit": { command: "vp test run" },
       "content:check": fresh("node tools/src/checks/content.ts"),
-      "links:check": fresh("node tools/src/checks/links.ts book/dist", { dependsOn: ["build:book"] }),
+      "links:check": fresh("node tools/src/checks/links.ts book/dist", {
+        dependsOn: ["build:book"],
+      }),
       "infra:synth": fresh("node -e \"console.log('all CDK apps synthesized')\"", {
         dependsOn: ["book:infra:synth", ...chapterSynthTasks],
       }),
@@ -160,7 +174,10 @@ export default defineConfig({
       "build:stream:web": { command: "vp build", cwd: "examples/18-live/web" },
       // Serves web/dist as it is, so the config written by stream:config survives.
       "preview:stream:web": fresh("vp preview", { cwd: "examples/18-live/web" }),
-      "typecheck:stream:web": { command: "../node_modules/.bin/vize check", cwd: "examples/18-live/web" },
+      "typecheck:stream:web": {
+        command: "../node_modules/.bin/vize check",
+        cwd: "examples/18-live/web",
+      },
       "lint:stream:web": {
         command: "../node_modules/.bin/vize lint src --preset essential",
         cwd: "examples/18-live/web",
@@ -172,10 +189,16 @@ export default defineConfig({
         dependsOn: ["build:stream:web"],
       }),
       // Read-only: is the channel live, and so accruing input time?
-      "stream:status": live("node --env-file-if-exists=../../.env scripts/status.ts", { cwd: "examples/18-live" }),
+      "stream:status": live("node --env-file-if-exists=../../.env scripts/status.ts", {
+        cwd: "examples/18-live",
+      }),
       // Prints the encoder settings. The stream key only with --show.
-      "stream:key": live("node --env-file-if-exists=../../.env scripts/key.ts", { cwd: "examples/18-live" }),
-      "stream:stop": live("node --env-file-if-exists=../../.env scripts/stop.ts", { cwd: "examples/18-live" }),
+      "stream:key": live("node --env-file-if-exists=../../.env scripts/key.ts", {
+        cwd: "examples/18-live",
+      }),
+      "stream:stop": live("node --env-file-if-exists=../../.env scripts/stop.ts", {
+        cwd: "examples/18-live",
+      }),
       // <<< chapter 18
 
       // >>> chapter 11
@@ -188,30 +211,52 @@ export default defineConfig({
       // >>> chapter 17
       // ---- chapter 17: Bedrock ------------------------------------------
       // The summary API on plain Node. Replays a fixture unless .env says AI_BACKEND=bedrock.
-      "dev:ai": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/17-ai" }),
+      "dev:ai": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/17-ai",
+      }),
       ...infra("ai", "examples/17-ai", "AihAi"),
       // BILLED: the next three call a real model. None of them is part of check:all.
-      "ai:hello": live("node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/hello.ts", {
+      "ai:hello": live(
+        "node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/hello.ts",
+        {
+          cwd: "examples/17-ai",
+        },
+      ),
+      "ai:test:live": live(
+        "node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/live.ts",
+        {
+          cwd: "examples/17-ai",
+        },
+      ),
+      "ai:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
         cwd: "examples/17-ai",
       }),
-      "ai:test:live": live("node --env-file-if-exists=../../.env --env-file-if-exists=.env scripts/live.ts", {
+      "ai:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
         cwd: "examples/17-ai",
       }),
-      "ai:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/17-ai" }),
-      "ai:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/17-ai" }),
       // <<< chapter 17
 
       // >>> chapter 15
       // ---- chapter 15: email ---------------------------------------------
       // API with an in-memory outbox instead of SES. No Docker, no AWS, nothing is sent.
-      "dev:mail": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/15-email" }),
+      "dev:mail": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/15-email",
+      }),
       ...infra("mail", "examples/15-email", "AihEmail"),
       // Sends one real, billed mail through the deployed API, twice with the same ID.
-      "mail:send": live("node --env-file-if-exists=../../.env scripts/send.ts", { cwd: "examples/15-email" }),
-      "mail:status": live("node --env-file-if-exists=../../.env scripts/status.ts", { cwd: "examples/15-email" }),
+      "mail:send": live("node --env-file-if-exists=../../.env scripts/send.ts", {
+        cwd: "examples/15-email",
+      }),
+      "mail:status": live("node --env-file-if-exists=../../.env scripts/status.ts", {
+        cwd: "examples/15-email",
+      }),
       // Prints the DNS records to publish by hand. Changes nothing.
-      "mail:dns": live("node --env-file-if-exists=../../.env scripts/dns.ts", { cwd: "examples/15-email" }),
-      "mail:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/15-email" }),
+      "mail:dns": live("node --env-file-if-exists=../../.env scripts/dns.ts", {
+        cwd: "examples/15-email",
+      }),
+      "mail:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/15-email",
+      }),
       // <<< chapter 15
 
       // >>> chapter 10
@@ -226,19 +271,25 @@ export default defineConfig({
       ...infra("edge", "examples/10-edge", "AihEdge"),
       // The Lambda@Edge function. Its stack is in us-east-1, whatever AIH_AWS_REGION says.
       ...infra("edge:body", "examples/10-edge", "AihEdgeBodyDigest"),
-      "edge:publish": live(`${node} tools/src/site/publish.ts examples/10-edge AihEdge examples/10-edge/site`),
+      "edge:publish": live(
+        `${node} tools/src/site/publish.ts examples/10-edge AihEdge examples/10-edge/site`,
+      ),
       "edge:unpublish": live(`${node} tools/src/site/unpublish.ts examples/10-edge AihEdge`),
       // Compares edge-data.json with the key value store. Reads only.
       "edge:kvs:plan": live("node --env-file-if-exists=../../.env scripts/kvs-sync.ts --dry-run", {
         cwd: "examples/10-edge",
       }),
-      "edge:kvs:sync": live("node --env-file-if-exists=../../.env scripts/kvs-sync.ts", { cwd: "examples/10-edge" }),
+      "edge:kvs:sync": live("node --env-file-if-exists=../../.env scripts/kvs-sync.ts", {
+        cwd: "examples/10-edge",
+      }),
       // <<< chapter 10
 
       // >>> chapter 13
       // ---- chapter 13: SQL -----------------------------------------------
       // The API on PGlite (PostgreSQL inside the Node process). No Docker, no AWS.
-      "dev:sql": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/13-sql" }),
+      "dev:sql": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/13-sql",
+      }),
       "sql:db:migrate:local": fresh("node --env-file-if-exists=.env scripts/local-db.ts migrate", {
         cwd: "examples/13-sql",
       }),
@@ -259,17 +310,26 @@ export default defineConfig({
       "sql:db:seed": live("node --env-file-if-exists=../../.env scripts/cloud-db.ts seed", {
         cwd: "examples/13-sql",
       }),
-      "sql:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/13-sql" }),
-      "sql:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/13-sql" }),
+      "sql:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/13-sql",
+      }),
+      "sql:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/13-sql",
+      }),
       // <<< chapter 13
 
       // >>> chapter 07
       // ---- chapter 07: image uploads ------------------------------------
       // API with local sign-in and uploads kept in memory, and the SPA that uses it. No Docker, no AWS.
-      "dev:uploads:api": fresh("node --watch --env-file-if-exists=.env api/src/dev.ts", { cwd: "examples/07-uploads" }),
+      "dev:uploads:api": fresh("node --watch --env-file-if-exists=.env api/src/dev.ts", {
+        cwd: "examples/07-uploads",
+      }),
       "dev:uploads:web": fresh("vp dev", { cwd: "examples/07-uploads/web" }),
       "build:uploads:web": { command: "vp build", cwd: "examples/07-uploads/web" },
-      "typecheck:uploads:web": { command: "../node_modules/.bin/vize check", cwd: "examples/07-uploads/web" },
+      "typecheck:uploads:web": {
+        command: "../node_modules/.bin/vize check",
+        cwd: "examples/07-uploads/web",
+      },
       "lint:uploads:web": {
         command: "../node_modules/.bin/vize lint src --preset essential",
         cwd: "examples/07-uploads/web",
@@ -279,17 +339,23 @@ export default defineConfig({
         "node --env-file-if-exists=../../.env scripts/write-config.ts && node --env-file-if-exists=../../.env ../../tools/src/site/publish.ts . AihUploads web/dist",
         { cwd: "examples/07-uploads", dependsOn: ["build:uploads:web"] },
       ),
-      "uploads:smoke:web": live(`${node} tools/src/site/smoke.ts spa examples/07-uploads AihUploads`),
+      "uploads:smoke:web": live(
+        `${node} tools/src/site/smoke.ts spa examples/07-uploads AihUploads`,
+      ),
       "uploads:smoke:api": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
         cwd: "examples/07-uploads",
       }),
       // Lists objects that no record points at. Deletes them only with --delete.
-      "uploads:sweep": live("node --env-file-if-exists=../../.env scripts/sweep.ts", { cwd: "examples/07-uploads" }),
+      "uploads:sweep": live("node --env-file-if-exists=../../.env scripts/sweep.ts", {
+        cwd: "examples/07-uploads",
+      }),
       // Counts the uploaded images. Deletes them all only with --yes.
       "uploads:empty": live("node --env-file-if-exists=../../.env scripts/empty-uploads.ts", {
         cwd: "examples/07-uploads",
       }),
-      "uploads:unpublish": live(`${node} tools/src/site/unpublish.ts examples/07-uploads AihUploads`),
+      "uploads:unpublish": live(
+        `${node} tools/src/site/unpublish.ts examples/07-uploads AihUploads`,
+      ),
       "uploads:user:create": live("node --env-file-if-exists=../../.env scripts/user.ts create", {
         cwd: "examples/07-uploads",
       }),
@@ -305,41 +371,62 @@ export default defineConfig({
       // Never cached: the stack deploys whatever .output holds, so it has to be this checkout's build.
       "build:ssr": fresh("./node_modules/.bin/nuxt build", { cwd: "examples/09-ssr" }),
       // The same app with Nitro's streaming Lambda handler. Overwrites .output.
-      "build:ssr:stream": fresh("AIH_SSR_STREAMING=true ./node_modules/.bin/nuxt build", { cwd: "examples/09-ssr" }),
+      "build:ssr:stream": fresh("AIH_SSR_STREAMING=true ./node_modules/.bin/nuxt build", {
+        cwd: "examples/09-ssr",
+      }),
       // Runs the built handler in this process and checks the headers it sends.
-      "ssr:check:output": fresh("node scripts/check-output.ts", { cwd: "examples/09-ssr", dependsOn: ["build:ssr"] }),
+      "ssr:check:output": fresh("node scripts/check-output.ts", {
+        cwd: "examples/09-ssr",
+        dependsOn: ["build:ssr"],
+      }),
       "ssr:check:output:stream": fresh("node scripts/check-output.ts", {
         cwd: "examples/09-ssr",
         dependsOn: ["build:ssr:stream"],
       }),
       "typecheck:ssr": { command: "../node_modules/.bin/vize check", cwd: "examples/09-ssr/app" },
-      "lint:ssr": { command: "../node_modules/.bin/vize lint . --preset essential", cwd: "examples/09-ssr/app" },
+      "lint:ssr": {
+        command: "../node_modules/.bin/vize lint . --preset essential",
+        cwd: "examples/09-ssr/app",
+      },
       ...infra("ssr", "examples/09-ssr", "AihSsr"),
       // Replaces the synth task from infra(): this stack needs the build to exist.
       "ssr:infra:synth": fresh(`${node} tools/src/infra/cdkd.ts synth examples/09-ssr AihSsr`, {
         dependsOn: ["build:ssr"],
       }),
-      "ssr:assets:plan": live("node --env-file-if-exists=../../.env scripts/publish-assets.ts --dry-run", {
-        cwd: "examples/09-ssr",
-      }),
+      "ssr:assets:plan": live(
+        "node --env-file-if-exists=../../.env scripts/publish-assets.ts --dry-run",
+        {
+          cwd: "examples/09-ssr",
+        },
+      ),
       "ssr:assets:publish": live("node --env-file-if-exists=../../.env scripts/publish-assets.ts", {
         cwd: "examples/09-ssr",
       }),
-      "ssr:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/09-ssr" }),
+      "ssr:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/09-ssr",
+      }),
       "ssr:unpublish": live(`${node} tools/src/site/unpublish.ts examples/09-ssr AihSsr`),
       // <<< chapter 09
 
       // >>> chapter 19
       // ---- chapter 19: observability -------------------------------------
       // The notes API with spans printed to the console. No Docker, no AWS.
-      "dev:obs": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/19-observability" }),
+      "dev:obs": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/19-observability",
+      }),
       // Prints the text of a Logs Insights query. Runs nothing.
-      "obs:query:print": fresh("node scripts/query.ts --print", { cwd: "examples/19-observability" }),
+      "obs:query:print": fresh("node scripts/query.ts --print", {
+        cwd: "examples/19-observability",
+      }),
       ...infra("obs", "examples/19-observability", "AihObservability"),
       // Creates and deletes one note through the deployed API.
-      "obs:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/19-observability" }),
+      "obs:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/19-observability",
+      }),
       // BILLED by the amount of log data scanned.
-      "obs:query": live("node --env-file-if-exists=../../.env scripts/query.ts", { cwd: "examples/19-observability" }),
+      "obs:query": live("node --env-file-if-exists=../../.env scripts/query.ts", {
+        cwd: "examples/19-observability",
+      }),
       "obs:alarms": live("node --env-file-if-exists=../../.env scripts/alarms.ts", {
         cwd: "examples/19-observability",
       }),
@@ -348,7 +435,9 @@ export default defineConfig({
       // >>> chapter 14
       // ---- chapter 14: key-value stores and caches ------------------------
       // The items API with counters and cache in memory, Valkey, or DynamoDB, as examples/14-kv-cache/.env says.
-      "dev:kv": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/14-kv-cache" }),
+      "dev:kv": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/14-kv-cache",
+      }),
       // Valkey and DynamoDB Local in containers. Needs a running Docker daemon.
       "kv:local:start": fresh("node --env-file-if-exists=.env scripts/local-stores.ts start", {
         cwd: "examples/14-kv-cache",
@@ -365,8 +454,12 @@ export default defineConfig({
       }),
       // `-c store=valkey` adds an ElastiCache Serverless cache, billed for as long as it exists.
       ...infra("kv", "examples/14-kv-cache", "AihKvCache"),
-      "kv:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/14-kv-cache" }),
-      "kv:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/14-kv-cache" }),
+      "kv:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/14-kv-cache",
+      }),
+      "kv:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/14-kv-cache",
+      }),
       // <<< chapter 14
 
       // >>> chapter 20
@@ -395,7 +488,9 @@ export default defineConfig({
       // >>> chapter 12
       // ---- chapter 12: containers ----------------------------------------
       // The server the container runs, on plain Node. No Docker, no AWS.
-      "dev:ecs": fresh("node --watch --env-file-if-exists=.env src/server.ts", { cwd: "examples/12-containers" }),
+      "dev:ecs": fresh("node --watch --env-file-if-exists=.env src/server.ts", {
+        cwd: "examples/12-containers",
+      }),
       // One file with the server and its dependencies: the only thing the image copies.
       "ecs:bundle": fresh("node scripts/bundle.ts", { cwd: "examples/12-containers" }),
       // Starts that file away from node_modules, calls it, and stops it with SIGTERM. No Docker.
@@ -416,20 +511,32 @@ export default defineConfig({
       // BILLED BY THE HOUR once deployed with -c imageTag=...: a load balancer and two Fargate tasks.
       ...infra("ecs", "examples/12-containers", "AihContainers"),
       // Calls /health once a second and prints which image tag answered. Reads only.
-      "ecs:watch": live("node --env-file-if-exists=../../.env scripts/watch.ts", { cwd: "examples/12-containers" }),
-      "ecs:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/12-containers" }),
+      "ecs:watch": live("node --env-file-if-exists=../../.env scripts/watch.ts", {
+        cwd: "examples/12-containers",
+      }),
+      "ecs:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/12-containers",
+      }),
       // <<< chapter 12
 
       // >>> chapter 08
       // ---- chapter 08: work off the request ------------------------------
       // Chapter 07's API with an in-memory queue and the worker, in one process. No Docker, no AWS.
-      "dev:async": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/08-async" }),
+      "dev:async": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/08-async",
+      }),
       ...infra("async", "examples/08-async", "AihAsync"),
       // Uploads with your credentials and waits for the worker's record.
-      "async:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/08-async" }),
+      "async:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/08-async",
+      }),
       // Depth of both queues and a look at the dead-letter queue. Moves messages back only with --redrive.
-      "async:queue": live("node --env-file-if-exists=../../.env scripts/queue.ts", { cwd: "examples/08-async" }),
-      "async:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/08-async" }),
+      "async:queue": live("node --env-file-if-exists=../../.env scripts/queue.ts", {
+        cwd: "examples/08-async",
+      }),
+      "async:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/08-async",
+      }),
       // Lists what the scheduled function would do. Does it only with --delete.
       "async:housekeeping": live("node --env-file-if-exists=../../.env scripts/housekeeping.ts", {
         cwd: "examples/08-async",
@@ -456,7 +563,9 @@ export default defineConfig({
       // >>> chapter 23
       // ---- chapter 23: EC2 ----------------------------------------------
       // The chapter 04 API as a long-running process that keeps notes in a file. No AWS.
-      "dev:ec2": fresh("node --watch --env-file-if-exists=.env src/server.ts", { cwd: "examples/23-ec2" }),
+      "dev:ec2": fresh("node --watch --env-file-if-exists=.env src/server.ts", {
+        cwd: "examples/23-ec2",
+      }),
       // Where the instance would live, whether it could reach Systems Manager, and the idle cost. Reads only this checkout.
       "ec2:plan": fresh("node scripts/plan.ts", { cwd: "examples/23-ec2" }),
       // Fails when deploy/ differs from what the generators produce. `--write` rewrites it.
@@ -464,9 +573,15 @@ export default defineConfig({
       "ec2:app:build": fresh("node scripts/build.ts", { cwd: "examples/23-ec2" }),
       ...infra("ec2", "examples/23-ec2", "AihEc2"),
       // Everything below goes through Systems Manager to the deployed instance.
-      "ec2:status": live("node --env-file-if-exists=../../.env scripts/remote.ts status", { cwd: "examples/23-ec2" }),
-      "ec2:session": live("node --env-file-if-exists=../../.env scripts/remote.ts session", { cwd: "examples/23-ec2" }),
-      "ec2:forward": live("node --env-file-if-exists=../../.env scripts/remote.ts forward", { cwd: "examples/23-ec2" }),
+      "ec2:status": live("node --env-file-if-exists=../../.env scripts/remote.ts status", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:session": live("node --env-file-if-exists=../../.env scripts/remote.ts session", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:forward": live("node --env-file-if-exists=../../.env scripts/remote.ts forward", {
+        cwd: "examples/23-ec2",
+      }),
       "ec2:app:release": live("node --env-file-if-exists=../../.env scripts/remote.ts release", {
         cwd: "examples/23-ec2",
         dependsOn: ["ec2:app:build"],
@@ -474,23 +589,36 @@ export default defineConfig({
       "ec2:app:rollback": live("node --env-file-if-exists=../../.env scripts/remote.ts rollback", {
         cwd: "examples/23-ec2",
       }),
-      "ec2:smoke": live("node --env-file-if-exists=../../.env scripts/remote.ts smoke", { cwd: "examples/23-ec2" }),
-      "ec2:logs": live("node --env-file-if-exists=../../.env scripts/remote.ts logs", { cwd: "examples/23-ec2" }),
+      "ec2:smoke": live("node --env-file-if-exists=../../.env scripts/remote.ts smoke", {
+        cwd: "examples/23-ec2",
+      }),
+      "ec2:logs": live("node --env-file-if-exists=../../.env scripts/remote.ts logs", {
+        cwd: "examples/23-ec2",
+      }),
       "ec2:data:unmount": live("node --env-file-if-exists=../../.env scripts/remote.ts unmount", {
         cwd: "examples/23-ec2",
       }),
       "ec2:data:mount": live("node --env-file-if-exists=../../.env scripts/remote.ts mount", {
         cwd: "examples/23-ec2",
       }),
-      "ec2:patch:check": live("node --env-file-if-exists=../../.env scripts/remote.ts patch-check", {
-        cwd: "examples/23-ec2",
-      }),
-      "ec2:patch:apply": live("node --env-file-if-exists=../../.env scripts/remote.ts patch-apply", {
-        cwd: "examples/23-ec2",
-      }),
-      "ec2:releases:empty": live("node --env-file-if-exists=../../.env scripts/remote.ts releases-empty", {
-        cwd: "examples/23-ec2",
-      }),
+      "ec2:patch:check": live(
+        "node --env-file-if-exists=../../.env scripts/remote.ts patch-check",
+        {
+          cwd: "examples/23-ec2",
+        },
+      ),
+      "ec2:patch:apply": live(
+        "node --env-file-if-exists=../../.env scripts/remote.ts patch-apply",
+        {
+          cwd: "examples/23-ec2",
+        },
+      ),
+      "ec2:releases:empty": live(
+        "node --env-file-if-exists=../../.env scripts/remote.ts releases-empty",
+        {
+          cwd: "examples/23-ec2",
+        },
+      ),
       // <<< chapter 23
 
       // >>> chapter 16
@@ -499,44 +627,70 @@ export default defineConfig({
       "export:local": fresh("node scripts/run-local.ts", { cwd: "examples/16-long-jobs" }),
       ...infra("export", "examples/16-long-jobs", "AihLongJobs"),
       // Writes sample notes to the deployed table.
-      "export:seed": live("node --env-file-if-exists=../../.env scripts/seed.ts", { cwd: "examples/16-long-jobs" }),
-      // Starts one export now. --wait follows it to the end.
-      "export:start": live("node --env-file-if-exists=../../.env scripts/start.ts", { cwd: "examples/16-long-jobs" }),
-      // Recent executions and finished exports. --redrive <arn> resumes a failed one.
-      "export:status": live("node --env-file-if-exists=../../.env scripts/status.ts", { cwd: "examples/16-long-jobs" }),
-      // Tails one step's log group.
-      "export:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/16-long-jobs" }),
-      // Counts, and with --yes deletes, every object in the exports bucket.
-      "export:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", { cwd: "examples/16-long-jobs" }),
-      // Starts the durable-function variant. Needs a deploy with -c durable=true.
-      "export:durable:start": live("node --env-file-if-exists=../../.env scripts/durable-start.ts", {
+      "export:seed": live("node --env-file-if-exists=../../.env scripts/seed.ts", {
         cwd: "examples/16-long-jobs",
       }),
+      // Starts one export now. --wait follows it to the end.
+      "export:start": live("node --env-file-if-exists=../../.env scripts/start.ts", {
+        cwd: "examples/16-long-jobs",
+      }),
+      // Recent executions and finished exports. --redrive <arn> resumes a failed one.
+      "export:status": live("node --env-file-if-exists=../../.env scripts/status.ts", {
+        cwd: "examples/16-long-jobs",
+      }),
+      // Tails one step's log group.
+      "export:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/16-long-jobs",
+      }),
+      // Counts, and with --yes deletes, every object in the exports bucket.
+      "export:empty": live("node --env-file-if-exists=../../.env scripts/empty.ts", {
+        cwd: "examples/16-long-jobs",
+      }),
+      // Starts the durable-function variant. Needs a deploy with -c durable=true.
+      "export:durable:start": live(
+        "node --env-file-if-exists=../../.env scripts/durable-start.ts",
+        {
+          cwd: "examples/16-long-jobs",
+        },
+      ),
       // <<< chapter 16
 
       // >>> chapter 21
       // ---- chapter 21: security and governance -----------------------------
       // The token API with a made-up signing key in memory. No AWS.
-      "dev:sec": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/21-security" }),
+      "dev:sec": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/21-security",
+      }),
       // Lints IAM policies in synthesized templates. Pass other cdk.out directories to lint other chapters.
-      "sec:iam:lint": fresh("node examples/21-security/scripts/iam-lint.ts", { dependsOn: ["sec:infra:synth"] }),
+      "sec:iam:lint": fresh("node examples/21-security/scripts/iam-lint.ts", {
+        dependsOn: ["sec:infra:synth"],
+      }),
       // One secret is the only monthly fee. `-c cmk=on` adds a KMS key, `-c webAclArn=...` attaches a web ACL.
       ...infra("sec", "examples/21-security", "AihSecurity"),
       // The web ACL for CloudFront, in us-east-1 whatever AIH_AWS_REGION says. Billed by the month while it exists.
       ...infra("sec:waf", "examples/21-security", "AihSecurityWaf"),
-      "sec:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/21-security" }),
-      // Lists the secret's versions and staging labels. Never prints a value.
-      "sec:secret:versions": live("node --env-file-if-exists=../../.env scripts/rotate.ts versions", {
+      "sec:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
         cwd: "examples/21-security",
       }),
+      // Lists the secret's versions and staging labels. Never prints a value.
+      "sec:secret:versions": live(
+        "node --env-file-if-exists=../../.env scripts/rotate.ts versions",
+        {
+          cwd: "examples/21-security",
+        },
+      ),
       // Writes a new version of the signing secret. The previous one stays accepted.
       "sec:secret:rotate": live("node --env-file-if-exists=../../.env scripts/rotate.ts rotate", {
         cwd: "examples/21-security",
       }),
       // Which account-level protections are on. Reads only.
-      "sec:posture": live("node --env-file-if-exists=../../.env scripts/posture.ts", { cwd: "examples/21-security" }),
+      "sec:posture": live("node --env-file-if-exists=../../.env scripts/posture.ts", {
+        cwd: "examples/21-security",
+      }),
       // Recent IAM changes from CloudTrail event history in us-east-1. Reads only.
-      "sec:trail:iam": live("node --env-file-if-exists=../../.env scripts/trail.ts", { cwd: "examples/21-security" }),
+      "sec:trail:iam": live("node --env-file-if-exists=../../.env scripts/trail.ts", {
+        cwd: "examples/21-security",
+      }),
       // <<< chapter 21
 
       // >>> chapter 22
@@ -564,24 +718,36 @@ export default defineConfig({
       "recovery:seed": live("node --env-file-if-exists=../../.env scripts/recovery.ts seed", {
         cwd: "examples/22-recovery",
       }),
-      "recovery:accident": live("node --env-file-if-exists=../../.env scripts/recovery.ts accident", {
-        cwd: "examples/22-recovery",
-      }),
-      "recovery:restore:table": live("node --env-file-if-exists=../../.env scripts/recovery.ts restore-table", {
-        cwd: "examples/22-recovery",
-      }),
-      "recovery:restore:objects": live("node --env-file-if-exists=../../.env scripts/recovery.ts restore-objects", {
-        cwd: "examples/22-recovery",
-      }),
+      "recovery:accident": live(
+        "node --env-file-if-exists=../../.env scripts/recovery.ts accident",
+        {
+          cwd: "examples/22-recovery",
+        },
+      ),
+      "recovery:restore:table": live(
+        "node --env-file-if-exists=../../.env scripts/recovery.ts restore-table",
+        {
+          cwd: "examples/22-recovery",
+        },
+      ),
+      "recovery:restore:objects": live(
+        "node --env-file-if-exists=../../.env scripts/recovery.ts restore-objects",
+        {
+          cwd: "examples/22-recovery",
+        },
+      ),
       "recovery:protect": live("node --env-file-if-exists=../../.env scripts/recovery.ts protect", {
         cwd: "examples/22-recovery",
       }),
       "recovery:repair": live("node --env-file-if-exists=../../.env scripts/recovery.ts repair", {
         cwd: "examples/22-recovery",
       }),
-      "recovery:drop-table": live("node --env-file-if-exists=../../.env scripts/recovery.ts drop-table", {
-        cwd: "examples/22-recovery",
-      }),
+      "recovery:drop-table": live(
+        "node --env-file-if-exists=../../.env scripts/recovery.ts drop-table",
+        {
+          cwd: "examples/22-recovery",
+        },
+      ),
       "recovery:empty": live("node --env-file-if-exists=../../.env scripts/recovery.ts empty", {
         cwd: "examples/22-recovery",
       }),
@@ -600,25 +766,35 @@ export default defineConfig({
       "celld:status": live("node --env-file-if-exists=../../.env scripts/fleet.ts status", {
         cwd: "examples/24-celld",
       }),
-      "celld:logs": live("node --env-file-if-exists=../../.env scripts/fleet.ts logs", { cwd: "examples/24-celld" }),
+      "celld:logs": live("node --env-file-if-exists=../../.env scripts/fleet.ts logs", {
+        cwd: "examples/24-celld",
+      }),
       "celld:diagnose": live("node --env-file-if-exists=../../.env scripts/fleet.ts diagnose", {
         cwd: "examples/24-celld",
       }),
-      "celld:cells": live("node --env-file-if-exists=../../.env scripts/fleet.ts cells", { cwd: "examples/24-celld" }),
-      "celld:smoke": live("node --env-file-if-exists=../../.env scripts/fleet.ts smoke", { cwd: "examples/24-celld" }),
+      "celld:cells": live("node --env-file-if-exists=../../.env scripts/fleet.ts cells", {
+        cwd: "examples/24-celld",
+      }),
+      "celld:smoke": live("node --env-file-if-exists=../../.env scripts/fleet.ts smoke", {
+        cwd: "examples/24-celld",
+      }),
       "celld:artifacts": live("node --env-file-if-exists=../../.env scripts/fleet.ts artifacts", {
         cwd: "examples/24-celld",
       }),
       "celld:install": live("node --env-file-if-exists=../../.env scripts/fleet.ts install", {
         cwd: "examples/24-celld",
       }),
-      "celld:start": live("node --env-file-if-exists=../../.env scripts/fleet.ts start", { cwd: "examples/24-celld" }),
+      "celld:start": live("node --env-file-if-exists=../../.env scripts/fleet.ts start", {
+        cwd: "examples/24-celld",
+      }),
       // Runs the local celld binary against the fleet bucket with your credentials.
       "celld:app-deploy": live("node --env-file-if-exists=../../.env scripts/fleet.ts app-deploy", {
         cwd: "examples/24-celld",
       }),
       // SIGTERM to one node: it hands its cells off, then stops.
-      "celld:drain": live("node --env-file-if-exists=../../.env scripts/fleet.ts drain", { cwd: "examples/24-celld" }),
+      "celld:drain": live("node --env-file-if-exists=../../.env scripts/fleet.ts drain", {
+        cwd: "examples/24-celld",
+      }),
       "celld:stop-all": live("node --env-file-if-exists=../../.env scripts/fleet.ts stop-all", {
         cwd: "examples/24-celld",
       }),
@@ -627,7 +803,9 @@ export default defineConfig({
         cwd: "examples/24-celld",
       }),
       // Stops an instance without an OS shutdown. The instance and its volumes stay.
-      "celld:kill": live("node --env-file-if-exists=../../.env scripts/fleet.ts kill", { cwd: "examples/24-celld" }),
+      "celld:kill": live("node --env-file-if-exists=../../.env scripts/fleet.ts kill", {
+        cwd: "examples/24-celld",
+      }),
       "celld:revive": live("node --env-file-if-exists=../../.env scripts/fleet.ts revive", {
         cwd: "examples/24-celld",
       }),
@@ -643,9 +821,12 @@ export default defineConfig({
         cwd: "examples/24-celld",
       }),
       // Lists what it would delete. `--yes` deletes every object.
-      "celld:bucket-empty": live("node --env-file-if-exists=../../.env scripts/fleet.ts bucket-empty", {
-        cwd: "examples/24-celld",
-      }),
+      "celld:bucket-empty": live(
+        "node --env-file-if-exists=../../.env scripts/fleet.ts bucket-empty",
+        {
+          cwd: "examples/24-celld",
+        },
+      ),
       // <<< chapter 24
 
       // ---- chapter task blocks are inserted above this line ----
@@ -664,9 +845,12 @@ export default defineConfig({
       "infra:bootstrap": live(`${node} tools/src/infra/cdkd.ts bootstrap book/infra -`),
       ...infra("hello", "examples/02-toolchain", "AihHello"),
       // The same app through the AWS CDK CLI. Local only; shown for comparison.
-      "hello:infra:synth:cdk": fresh("CDK_DISABLE_CLI_TELEMETRY=1 CDK_DISABLE_VERSION_CHECK=1 cdk synth --quiet", {
-        cwd: "examples/02-toolchain",
-      }),
+      "hello:infra:synth:cdk": fresh(
+        "CDK_DISABLE_CLI_TELEMETRY=1 CDK_DISABLE_VERSION_CHECK=1 cdk synth --quiet",
+        {
+          cwd: "examples/02-toolchain",
+        },
+      ),
 
       // ---- chapter 03: SPA ----------------------------------------------
       "dev:spa": fresh("vp dev", { cwd: "examples/03-spa" }),
@@ -677,16 +861,26 @@ export default defineConfig({
 
       // ---- chapter 04: HTTP API -----------------------------------------
       // Plain Node, restarted on change. No Docker, no AWS.
-      "dev:api": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/04-http-api" }),
+      "dev:api": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/04-http-api",
+      }),
       // The synthesized API in local Lambda containers. Needs a running Docker daemon.
-      "dev:api:cdkd": fresh(`${node} tools/src/infra/cdkd.ts local-api examples/04-http-api AihHttpApi`),
+      "dev:api:cdkd": fresh(
+        `${node} tools/src/infra/cdkd.ts local-api examples/04-http-api AihHttpApi`,
+      ),
       ...infra("api", "examples/04-http-api", "AihHttpApi"),
-      "api:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/04-http-api" }),
-      "api:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", { cwd: "examples/04-http-api" }),
+      "api:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/04-http-api",
+      }),
+      "api:logs": live("node --env-file-if-exists=../../.env scripts/logs.ts", {
+        cwd: "examples/04-http-api",
+      }),
 
       // ---- chapter 05: DynamoDB -----------------------------------------
       // The API with notes kept in memory or in DynamoDB, as examples/05-dynamodb/.env says.
-      "dev:notes": fresh("node --watch --env-file-if-exists=.env src/dev.ts", { cwd: "examples/05-dynamodb" }),
+      "dev:notes": fresh("node --watch --env-file-if-exists=.env src/dev.ts", {
+        cwd: "examples/05-dynamodb",
+      }),
       // DynamoDB Local in a container. Needs a running Docker daemon.
       "db:local:start": fresh("node --env-file-if-exists=.env scripts/local-db.ts start", {
         cwd: "examples/05-dynamodb",
@@ -707,15 +901,25 @@ export default defineConfig({
         cwd: "examples/05-dynamodb",
       }),
       ...infra("notes", "examples/05-dynamodb", "AihNotes"),
-      "notes:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/05-dynamodb" }),
+      "notes:smoke": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/05-dynamodb",
+      }),
 
       // ---- chapter 06: sign-in and authorization ------------------------
       // API with local development sign-in, and the SPA that uses it. No Docker, no AWS.
-      "dev:app:api": fresh("node --watch --env-file-if-exists=.env api/src/dev.ts", { cwd: "examples/06-auth" }),
+      "dev:app:api": fresh("node --watch --env-file-if-exists=.env api/src/dev.ts", {
+        cwd: "examples/06-auth",
+      }),
       "dev:app:web": fresh("vp dev", { cwd: "examples/06-auth/web" }),
       "build:app:web": { command: "vp build", cwd: "examples/06-auth/web" },
-      "typecheck:app:web": { command: "../node_modules/.bin/vize check", cwd: "examples/06-auth/web" },
-      "lint:app:web": { command: "../node_modules/.bin/vize lint src --preset essential", cwd: "examples/06-auth/web" },
+      "typecheck:app:web": {
+        command: "../node_modules/.bin/vize check",
+        cwd: "examples/06-auth/web",
+      },
+      "lint:app:web": {
+        command: "../node_modules/.bin/vize lint src --preset essential",
+        cwd: "examples/06-auth/web",
+      },
       ...infra("app", "examples/06-auth", "AihNotesApp"),
       // Writes the deployed endpoints into the built SPA, then publishes it.
       "app:publish": live(
@@ -723,7 +927,9 @@ export default defineConfig({
         { cwd: "examples/06-auth", dependsOn: ["build:app:web"] },
       ),
       "app:smoke:web": live(`${node} tools/src/site/smoke.ts spa examples/06-auth AihNotesApp`),
-      "app:smoke:api": live("node --env-file-if-exists=../../.env scripts/smoke.ts", { cwd: "examples/06-auth" }),
+      "app:smoke:api": live("node --env-file-if-exists=../../.env scripts/smoke.ts", {
+        cwd: "examples/06-auth",
+      }),
       "app:unpublish": live(`${node} tools/src/site/unpublish.ts examples/06-auth AihNotesApp`),
       "app:user:create": live("node --env-file-if-exists=../../.env scripts/user.ts create", {
         cwd: "examples/06-auth",
@@ -742,9 +948,38 @@ export default defineConfig({
     ignorePatterns: [".claude/**"],
     // Types are checked by `vp run typecheck` (tsc per project) and by Vize for .vue files.
     options: { typeAware: false, typeCheck: false },
+    plugins: ["typescript", "import", "unicorn", "oxc"],
+    rules: {
+      curly: "warn",
+      eqeqeq: "warn",
+      "object-shorthand": "warn",
+      "prefer-template": "warn",
+      "prefer-const": "warn",
+      "no-else-return": "warn",
+      "no-useless-rename": "warn",
+      "arrow-body-style": "warn",
+      "no-lonely-if": "warn",
+      "import/no-duplicates": "warn",
+      "import/first": "warn",
+      "typescript/consistent-type-imports": "warn",
+      "typescript/consistent-type-definitions": ["warn", "type"],
+      "typescript/array-type": "warn",
+      "unicorn/prefer-node-protocol": "warn",
+      "unicorn/no-negated-condition": "warn",
+      "unicorn/prefer-string-replace-all": "warn",
+      "unicorn/no-lonely-if": "warn",
+    },
   },
   fmt: {
-    printWidth: 120,
+    // The book shows code in a column about this wide; longer lines would scroll sideways.
+    printWidth: 100,
+    // Imports read top-down: Node, packages, other workspace packages, then this package.
+    // A blank line between each.
+    sortImports: {
+      internalPattern: ["@aih/"],
+      groups: ["builtin", "external", "internal", ["parent", "sibling", "index"], "unknown"],
+      newlinesBetween: true,
+    },
     ignorePatterns: [
       // Prose and recorded fixtures are kept byte for byte as written.
       // Worktrees of in-progress chapters live here.

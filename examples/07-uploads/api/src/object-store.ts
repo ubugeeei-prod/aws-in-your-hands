@@ -3,7 +3,7 @@ export type UploadForm = { url: string; fields: Record<string, string> };
 export type StoredObject = { size: number; contentType: string; lastModified: Date };
 
 // What the app needs from "a place that holds bytes": S3 in AWS, a Map on a laptop.
-export interface ObjectStore {
+export type ObjectStore = {
   /** A permit to upload one object: this key, this type, at most this size, until it expires. */
   presignUpload(input: {
     key: string;
@@ -18,7 +18,7 @@ export interface ObjectStore {
   /** Deleting a key that is not there is not an error. */
   delete(key: string): Promise<void>;
   list(prefix: string): AsyncIterable<{ key: string; lastModified: Date }>;
-}
+};
 // #endregion port
 
 // #region tags

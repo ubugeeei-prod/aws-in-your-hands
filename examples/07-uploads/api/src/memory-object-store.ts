@@ -1,5 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+
 import { z } from "zod";
+
 import type { ObjectStore } from "./object-store.ts";
 
 // A stand-in for S3 on a laptop, not an emulation of it. It refuses the same
@@ -17,7 +19,9 @@ const policySchema = z.object({
 type State = "pending" | "attached";
 type Entry = { body: Uint8Array; contentType: string; lastModified: Date; state: State };
 
-export type Received = { ok: true } | { ok: false; reason: "forged" | "expired" | "mismatch" | "size" };
+export type Received =
+  | { ok: true }
+  | { ok: false; reason: "forged" | "expired" | "mismatch" | "size" };
 
 export class InMemoryObjectStore implements ObjectStore {
   readonly #objects = new Map<string, Entry>();
@@ -41,7 +45,12 @@ export class InMemoryObjectStore implements ObjectStore {
     return given.length === expected.length && timingSafeEqual(given, expected);
   }
 
-  async presignUpload(input: { key: string; contentType: string; maxBytes: number; expiresInSeconds: number }) {
+  async presignUpload(input: {
+    key: string;
+    contentType: string;
+    maxBytes: number;
+    expiresInSeconds: number;
+  }) {
     const policy = Buffer.from(
       JSON.stringify({
         key: input.key,
@@ -52,7 +61,12 @@ export class InMemoryObjectStore implements ObjectStore {
     ).toString("base64url");
     return {
       url: `${this.#baseUrl}/local/s3`,
-      fields: { key: input.key, "Content-Type": input.contentType, policy, signature: this.#sign(policy) },
+      fields: {
+        key: input.key,
+        "Content-Type": input.contentType,
+        policy,
+        signature: this.#sign(policy),
+      },
     };
   }
 
@@ -61,7 +75,9 @@ export class InMemoryObjectStore implements ObjectStore {
     if (fields["policy"] === undefined || !this.#signed(fields["policy"], fields["signature"])) {
       return { ok: false, reason: "forged" };
     }
-    const policy = policySchema.parse(JSON.parse(Buffer.from(fields["policy"], "base64url").toString("utf8")));
+    const policy = policySchema.parse(
+      JSON.parse(Buffer.from(fields["policy"], "base64url").toString("utf8")),
+    );
     if (this.#now().getTime() > policy.expiresAt) {
       return { ok: false, reason: "expired" };
     }
@@ -85,7 +101,11 @@ export class InMemoryObjectStore implements ObjectStore {
     const entry = this.#objects.get(key);
     return entry === undefined
       ? undefined
-      : { size: entry.body.byteLength, contentType: entry.contentType, lastModified: entry.lastModified };
+      : {
+          size: entry.body.byteLength,
+          contentType: entry.contentType,
+          lastModified: entry.lastModified,
+        };
   }
 
   async markAttached(key: string) {
@@ -121,7 +141,9 @@ export class InMemoryObjectStore implements ObjectStore {
   }
 
   async *list(prefix: string) {
-    for (const [key, entry] of [...this.#objects.entries()].toSorted(([a], [b]) => (a < b ? -1 : 1))) {
+    for (const [key, entry] of [...this.#objects.entries()].toSorted(([a], [b]) =>
+      a < b ? -1 : 1,
+    )) {
       if (key.startsWith(prefix)) {
         yield { key, lastModified: entry.lastModified };
       }

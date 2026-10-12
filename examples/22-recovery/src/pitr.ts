@@ -42,7 +42,10 @@ export function planTableRestore(options: {
 }): TableRestorePlan {
   const { sourceTableName, backups, at, now } = options;
   if (sourceTableName.includes(RESTORED_MARK)) {
-    return { ok: false, reason: `${sourceTableName} is itself a restored table. Restore from the table it came from.` };
+    return {
+      ok: false,
+      reason: `${sourceTableName} is itself a restored table. Restore from the table it came from.`,
+    };
   }
   if (!backups.enabled) {
     return {
@@ -52,13 +55,20 @@ export function planTableRestore(options: {
   }
   const targetTableName = `${sourceTableName}${RESTORED_MARK}${stamp(now)}`;
   if (targetTableName.length > 255) {
-    return { ok: false, reason: "The name of the restored table would be longer than 255 characters." };
+    return {
+      ok: false,
+      reason: "The name of the restored table would be longer than 255 characters.",
+    };
   }
   if (at === undefined) {
     return {
       ok: true,
       targetTableName,
-      input: { SourceTableName: sourceTableName, TargetTableName: targetTableName, UseLatestRestorableTime: true },
+      input: {
+        SourceTableName: sourceTableName,
+        TargetTableName: targetTableName,
+        UseLatestRestorableTime: true,
+      },
     };
   }
   const { earliestRestorable, latestRestorable } = backups;
@@ -78,7 +88,11 @@ export function planTableRestore(options: {
   return {
     ok: true,
     targetTableName,
-    input: { SourceTableName: sourceTableName, TargetTableName: targetTableName, RestoreDateTime: at },
+    input: {
+      SourceTableName: sourceTableName,
+      TargetTableName: targetTableName,
+      RestoreDateTime: at,
+    },
   };
 }
 // #endregion plan

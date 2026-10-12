@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vite-plus/test";
+
 import type { CacheStore, CounterStore } from "../src/stores.ts";
 
 // What every store has to do, whatever it is made of. The memory stores run
@@ -12,7 +13,11 @@ export function describeCounterContract(
   describe(`CounterStore contract: ${name}`, () => {
     let store: CounterStore;
     let subject: string;
-    const window = (windowStart = 60_000) => ({ subject, windowStart, expiresAt: Date.now() + 120_000 });
+    const window = (windowStart = 60_000) => ({
+      subject,
+      windowStart,
+      expiresAt: Date.now() + 120_000,
+    });
 
     beforeEach(async () => {
       ({ store, subject } = await setup());
@@ -45,9 +50,13 @@ export function describeCounterContract(
     });
 
     it("loses no increment and admits none too many when 50 arrive at once", async () => {
-      const results = await Promise.all(Array.from({ length: 50 }, () => store.incrementBelow(window(), 20)));
+      const results = await Promise.all(
+        Array.from({ length: 50 }, () => store.incrementBelow(window(), 20)),
+      );
       const counts = results.flatMap((result) => (result.accepted ? [result.count] : []));
-      expect(counts.toSorted((a, b) => a - b)).toEqual(Array.from({ length: 20 }, (_, index) => index + 1));
+      expect(counts.toSorted((a, b) => a - b)).toEqual(
+        Array.from({ length: 20 }, (_, index) => index + 1),
+      );
       expect(await store.read(window())).toBe(20);
     });
   });

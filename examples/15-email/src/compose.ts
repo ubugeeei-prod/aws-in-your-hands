@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SESv2Client } from "@aws-sdk/client-sesv2";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { type App, createApp } from "./app.ts";
 import { DynamoDbNotificationStore } from "./dynamodb-store.ts";
 import { type Env, parseEnv, parseEventsEnv } from "./env.ts";
@@ -16,7 +18,11 @@ export const createDynamoDbStore = (tableName: string): NotificationStore =>
   new DynamoDbNotificationStore(DynamoDBDocumentClient.from(new DynamoDBClient({})), tableName);
 
 // #region adapters
-export function createAdapters(env: Env): { store: NotificationStore; mailer: Mailer; outbox?: OutboxMailer } {
+export function createAdapters(env: Env): {
+  store: NotificationStore;
+  mailer: Mailer;
+  outbox?: OutboxMailer;
+} {
   if (env.MAIL_MODE === "local") {
     const outbox = new OutboxMailer();
     return { store: new MemoryNotificationStore(), mailer: outbox, outbox };
@@ -29,7 +35,13 @@ export function createAdapters(env: Env): { store: NotificationStore; mailer: Ma
 }
 // #endregion adapters
 
-export type Composed = { app: App; env: Env; store: NotificationStore; log: Logger; outbox?: OutboxMailer };
+export type Composed = {
+  app: App;
+  env: Env;
+  store: NotificationStore;
+  log: Logger;
+  outbox?: OutboxMailer;
+};
 
 /** The one place that touches the real clock, real randomness, and the real environment. */
 export function composeApp(source: Record<string, string | undefined>): Composed {
@@ -47,7 +59,11 @@ export function composeApp(source: Record<string, string | undefined>): Composed
       mailer,
       log,
       now: () => new Date(),
-      settings: { fromAddress: env.FROM_ADDRESS, appOrigin: env.APP_ORIGIN, retentionDays: env.RETENTION_DAYS },
+      settings: {
+        fromAddress: env.FROM_ADDRESS,
+        appOrigin: env.APP_ORIGIN,
+        retentionDays: env.RETENTION_DAYS,
+      },
     },
   });
   return { app, env, store, log, ...(outbox === undefined ? {} : { outbox }) };
@@ -55,5 +71,8 @@ export function composeApp(source: Record<string, string | undefined>): Composed
 
 export function composeEventsHandler(source: Record<string, string | undefined>) {
   const env = parseEventsEnv(source);
-  return createEventsHandler({ store: createDynamoDbStore(env.TABLE_NAME), log: createLogger(env.LOG_LEVEL) });
+  return createEventsHandler({
+    store: createDynamoDbStore(env.TABLE_NAME),
+    log: createLogger(env.LOG_LEVEL),
+  });
 }

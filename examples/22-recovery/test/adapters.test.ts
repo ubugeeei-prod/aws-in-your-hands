@@ -1,9 +1,11 @@
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
+import { describe, expect, it } from "vite-plus/test";
+
 import { DynamoDbNoteRepository } from "@aih/example-05-dynamodb/src/dynamodb-repository.ts";
 import { describeRepositoryContract } from "@aih/example-05-dynamodb/test/repository-contract.ts";
 import { DynamoDbAttachmentRepository } from "@aih/example-07-uploads/api/src/dynamodb-attachment-repository.ts";
 import { DynamoDbInspectionRepository } from "@aih/example-08-async/src/dynamodb-inspection-repository.ts";
-import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { describe, expect, it } from "vite-plus/test";
+
 import { audit } from "../src/audit.ts";
 import { DynamoDbTable } from "../src/dynamodb-table.ts";
 import { check, takeSnapshot } from "../src/invariants.ts";
@@ -51,7 +53,7 @@ const attachment = {
 const inspection = {
   noteId: note.id,
   attachmentId: attachment.id,
-  sequencer: "0".repeat(31) + "1",
+  sequencer: `${"0".repeat(31)}1`,
   eTag: "abc",
   size: 33,
   declaredType: "image/png",
@@ -89,7 +91,12 @@ describe("classify", () => {
     const world = createWorld();
     world.table.put({ pk: "OWNER#alice", sk: "NOTE#1", id: "1", title: "no version" });
     expect((await world.report()).findings).toEqual([
-      { kind: "unreadable_item", pk: "OWNER#alice", sk: "NOTE#1", reason: "not a note this app wrote" },
+      {
+        kind: "unreadable_item",
+        pk: "OWNER#alice",
+        sk: "NOTE#1",
+        reason: "not a note this app wrote",
+      },
     ]);
   });
 
@@ -169,22 +176,49 @@ describe("S3VersionedBucket", () => {
   it("merges versions and delete markers across pages, with bare ETags", async () => {
     const { sent, client } = fakeClient([
       {
-        Versions: [{ Key: "u/a/n/1", VersionId: "v1", IsLatest: false, LastModified: at, ETag: '"abc"', Size: 3 }],
+        Versions: [
+          {
+            Key: "u/a/n/1",
+            VersionId: "v1",
+            IsLatest: false,
+            LastModified: at,
+            ETag: '"abc"',
+            Size: 3,
+          },
+        ],
         DeleteMarkers: [{ Key: "u/a/n/1", VersionId: "m1", IsLatest: true, LastModified: at }],
         IsTruncated: true,
         NextKeyMarker: "u/a/n/1",
         NextVersionIdMarker: "v1",
       },
-      { Versions: [{ Key: "u/a/n/2", VersionId: "v2", IsLatest: true, LastModified: at, ETag: '"def"' }] },
+      {
+        Versions: [
+          { Key: "u/a/n/2", VersionId: "v2", IsLatest: true, LastModified: at, ETag: '"def"' },
+        ],
+      },
     ]);
     const versions = [];
     for await (const version of new S3VersionedBucket(client, "bucket").listVersions("u/")) {
       versions.push(version);
     }
     expect(versions).toEqual([
-      { key: "u/a/n/1", versionId: "v1", deleteMarker: false, isLatest: false, lastModified: at, eTag: "abc" },
+      {
+        key: "u/a/n/1",
+        versionId: "v1",
+        deleteMarker: false,
+        isLatest: false,
+        lastModified: at,
+        eTag: "abc",
+      },
       { key: "u/a/n/1", versionId: "m1", deleteMarker: true, isLatest: true, lastModified: at },
-      { key: "u/a/n/2", versionId: "v2", deleteMarker: false, isLatest: true, lastModified: at, eTag: "def" },
+      {
+        key: "u/a/n/2",
+        versionId: "v2",
+        deleteMarker: false,
+        isLatest: true,
+        lastModified: at,
+        eTag: "def",
+      },
     ]);
     expect(sent[1]?.input).toMatchObject({ KeyMarker: "u/a/n/1", VersionIdMarker: "v1" });
   });
@@ -197,13 +231,19 @@ describe("S3VersionedBucket", () => {
 
     expect(sent.map((command) => [command.constructor.name, command.input])).toEqual([
       ["DeleteObjectCommand", { Bucket: "bucket", Key: "u/a/n/1", VersionId: "m1" }],
-      ["CopyObjectCommand", { Bucket: "bucket", Key: "u/a/n/1", CopySource: "bucket/u/a/n/1?versionId=v%201" }],
+      [
+        "CopyObjectCommand",
+        { Bucket: "bucket", Key: "u/a/n/1", CopySource: "bucket/u/a/n/1?versionId=v%201" },
+      ],
     ]);
   });
 
   it("lists current objects with the ETag form that chapter 08's records use", async () => {
     const { client } = fakeClient([
-      { Contents: [{ Key: "u/a/n/1", ETag: '"abc"', Size: 3, LastModified: at }], IsTruncated: false },
+      {
+        Contents: [{ Key: "u/a/n/1", ETag: '"abc"', Size: 3, LastModified: at }],
+        IsTruncated: false,
+      },
     ]);
     const objects = [];
     for await (const object of new S3VersionedBucket(client, "bucket").listCurrent("u/")) {
@@ -220,7 +260,12 @@ describe("audit", () => {
     const image = await world.attach(trip.id);
     await world.bucket.delete(image.key);
 
-    const result = await audit({ tableName: "Notes", table: world.table, bucket: world.bucket, now: world.now });
+    const result = await audit({
+      tableName: "Notes",
+      table: world.table,
+      bucket: world.bucket,
+      now: world.now,
+    });
     expect(result).toMatchObject({
       tableName: "Notes",
       notes: 1,
@@ -237,8 +282,8 @@ describe("audit", () => {
 
 describe("nextSequencer", () => {
   it("is the next value in the fixed-width form that chapter 08 compares as strings", () => {
-    expect(nextSequencer("0".repeat(30) + "0F")).toBe("0".repeat(30) + "10");
-    expect(nextSequencer("0".repeat(30) + "FF")).toBe("0".repeat(29) + "100");
-    expect(nextSequencer("0".repeat(31) + "9") > "0".repeat(31) + "9").toBe(true);
+    expect(nextSequencer(`${"0".repeat(30)}0F`)).toBe(`${"0".repeat(30)}10`);
+    expect(nextSequencer(`${"0".repeat(30)}FF`)).toBe(`${"0".repeat(29)}100`);
+    expect(nextSequencer(`${"0".repeat(31)}9`) > `${"0".repeat(31)}9`).toBe(true);
   });
 });

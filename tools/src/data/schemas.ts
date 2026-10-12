@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 const localized = z.object({ ja: z.string().min(1), en: z.string().min(1) });
-const localizedList = z.object({ ja: z.array(z.string().min(1)).min(1), en: z.array(z.string().min(1)).min(1) });
+const localizedList = z.object({
+  ja: z.array(z.string().min(1)).min(1),
+  en: z.array(z.string().min(1)).min(1),
+});
 const chapterId = z.string().regex(/^\d{2}$/);
 
 /** How far the prose has come. Says nothing about whether the code was run. */
@@ -65,7 +68,13 @@ export const sourcesSchema = z.object({
 
 export const glossarySchema = z.object({
   terms: z.array(
-    z.object({ id: z.string(), ja: z.string(), en: z.string(), firstUse: chapterId, definition: localized }),
+    z.object({
+      id: z.string(),
+      ja: z.string(),
+      en: z.string(),
+      firstUse: chapterId,
+      definition: localized,
+    }),
   ),
 });
 
@@ -90,7 +99,12 @@ export const sectionMapSchema = z.looseObject({
 export type SectionMap = z.infer<typeof sectionMapSchema>;
 
 export const validationSchema = z.object({
-  environment: z.object({ os: z.string(), cpu: z.string(), nix: z.string(), recordedAt: z.iso.date() }),
+  environment: z.object({
+    os: z.string(),
+    cpu: z.string(),
+    nix: z.string(),
+    recordedAt: z.iso.date(),
+  }),
   records: z.array(
     z.object({
       scope: z.string(),
@@ -108,5 +122,12 @@ export const toolchainSchema = z.object({
   recordedAt: z.iso.date(),
   verifiedPlatforms: z.array(z.string()),
   unverifiedPlatforms: z.array(z.string()),
-  tools: z.array(z.object({ name: z.string(), version: z.string(), providedBy: z.string(), pinnedIn: z.string() })),
+  tools: z.array(
+    z.object({
+      name: z.string(),
+      version: z.string(),
+      providedBy: z.string(),
+      pinnedIn: z.string(),
+    }),
+  ),
 });

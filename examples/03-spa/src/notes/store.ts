@@ -1,13 +1,14 @@
 import { z } from "zod";
+
 import { type Note, type NoteDraft, noteDraftSchema, noteSchema } from "./note.ts";
 
 // #region interface
-export interface NoteStore {
+export type NoteStore = {
   list(): Note[];
   get(id: string): Note | undefined;
   save(draft: NoteDraft, id?: string): Note;
   remove(id: string): void;
-}
+};
 // #endregion interface
 
 /** Narrow enough that a Map-backed fake satisfies it in tests. */

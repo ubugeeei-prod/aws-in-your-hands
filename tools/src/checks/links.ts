@@ -3,6 +3,7 @@
 //
 // Every internal link and asset in the built HTML must have been generated,
 // at the object key the CloudFront function will ask S3 for.
+
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
@@ -46,7 +47,9 @@ for (const required of ["404.html", "search-index.json", "ja/index.html", "en/in
 }
 
 if (broken.length > 0) {
-  console.error(`${broken.length} broken internal reference(s):\n  ${[...new Set(broken)].slice(0, 50).join("\n  ")}`);
+  console.error(
+    `${broken.length} broken internal reference(s):\n  ${[...new Set(broken)].slice(0, 50).join("\n  ")}`,
+  );
   process.exit(1);
 }
 console.log(`links check passed: ${pages.length} pages, ${checked} internal references`);

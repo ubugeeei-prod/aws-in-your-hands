@@ -1,4 +1,5 @@
 import { App } from "aws-cdk-lib";
+
 import { NotesAppStack } from "../lib/notes-app-stack.ts";
 
 const app = new App();

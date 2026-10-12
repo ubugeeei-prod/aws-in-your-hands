@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseContainersConfig, SERVICE } from "../../src/config.ts";
 import { timing } from "../../src/timing.ts";
 import { ContainersStack } from "../lib/containers-stack.ts";
@@ -30,7 +31,9 @@ const HOURLY_TYPES = ["AWS::ECS::Service", "AWS::ElasticLoadBalancingV2::LoadBal
 
 describe("ContainersStack without an image tag", () => {
   it("is the repository alone, with nothing billed by the hour", () => {
-    expect(Object.values(repositoryOnly.resources).map((resource) => resource.Type)).toEqual(["AWS::ECR::Repository"]);
+    expect(Object.values(repositoryOnly.resources).map((resource) => resource.Type)).toEqual([
+      "AWS::ECR::Repository",
+    ]);
   });
 
   it("never lets a tag point at a different image, and keeps old images from piling up", () => {
@@ -38,7 +41,9 @@ describe("ContainersStack without an image tag", () => {
     expect(repository?.Properties?.["ImageTagMutability"]).toBe("IMMUTABLE");
     const policy = repository?.Properties?.["LifecyclePolicy"] as { LifecyclePolicyText: string };
     expect(JSON.parse(policy.LifecyclePolicyText).rules).toEqual([
-      expect.objectContaining({ selection: { tagStatus: "any", countType: "imageCountMoreThan", countNumber: 10 } }),
+      expect.objectContaining({
+        selection: { tagStatus: "any", countType: "imageCountMoreThan", countNumber: 10 },
+      }),
     ]);
   });
 
@@ -56,10 +61,14 @@ describe("ContainersStack with an image tag", () => {
     const policies = ofType("AWS::IAM::Policy");
     expect(policies).toHaveLength(1);
     const [[, policy] = []] = policies;
-    const [[executionRoleId] = []] = ofType("AWS::IAM::Role").filter(([id]) => id.startsWith("ExecutionRole"));
+    const [[executionRoleId] = []] = ofType("AWS::IAM::Role").filter(([id]) =>
+      id.startsWith("ExecutionRole"),
+    );
     expect(policy?.Properties?.["Roles"]).toEqual([{ Ref: executionRoleId }]);
 
-    const document = policy?.Properties?.["PolicyDocument"] as { Statement: Statement[] } | undefined;
+    const document = policy?.Properties?.["PolicyDocument"] as
+      | { Statement: Statement[] }
+      | undefined;
     const statements = document?.Statement ?? [];
     expect(statements.flatMap((statement) => statement.Action).toSorted()).toEqual([
       "ecr:BatchCheckLayerAvailability",
@@ -70,7 +79,9 @@ describe("ContainersStack with an image tag", () => {
       "logs:PutLogEvents",
     ]);
     // ecr:GetAuthorizationToken has no resource to name; it is the one "*" in the stack.
-    const wildcards = statements.filter((statement) => JSON.stringify(statement.Resource) === '"*"');
+    const wildcards = statements.filter(
+      (statement) => JSON.stringify(statement.Resource) === '"*"',
+    );
     expect(wildcards.map((statement) => statement.Action)).toEqual(["ecr:GetAuthorizationToken"]);
 
     // Neither role carries a managed or inline policy, so the task role has nothing.
@@ -92,10 +103,18 @@ describe("ContainersStack with an image tag", () => {
 
   it("runs the tag it was given, and tells the app which one that is", () => {
     const [[, task] = []] = ofType("AWS::ECS::TaskDefinition");
-    const [container] = (task?.Properties?.["ContainerDefinitions"] ?? []) as Record<string, unknown>[];
+    const [container] = (task?.Properties?.["ContainerDefinitions"] ?? []) as Record<
+      string,
+      unknown
+    >[];
     expect(JSON.stringify(container?.["Image"])).toContain(':v1"');
-    expect(container?.["Environment"]).toEqual(expect.arrayContaining([{ Name: "APP_VERSION", Value: "v1" }]));
-    expect(container).toMatchObject({ ReadonlyRootFilesystem: true, StopTimeout: timing.stopTimeout });
+    expect(container?.["Environment"]).toEqual(
+      expect.arrayContaining([{ Name: "APP_VERSION", Value: "v1" }]),
+    );
+    expect(container).toMatchObject({
+      ReadonlyRootFilesystem: true,
+      StopTimeout: timing.stopTimeout,
+    });
     // No secret belongs in a plain environment variable.
     expect(container).not.toHaveProperty("Secrets");
   });
@@ -109,11 +128,15 @@ describe("ContainersStack with an image tag", () => {
         FromPort: 8080,
         ToPort: 8080,
         GroupId: { "Fn::GetAtt": [expect.stringMatching(/^TaskGroup/), "GroupId"] },
-        SourceSecurityGroupId: { "Fn::GetAtt": [expect.stringMatching(/^LoadBalancerGroup/), "GroupId"] },
+        SourceSecurityGroupId: {
+          "Fn::GetAtt": [expect.stringMatching(/^LoadBalancerGroup/), "GroupId"],
+        },
       },
     ]);
     // The task's own group has no inline ingress: a public IP address alone lets nobody in.
-    const [[, taskGroup] = []] = ofType("AWS::EC2::SecurityGroup").filter(([id]) => id.startsWith("TaskGroup"));
+    const [[, taskGroup] = []] = ofType("AWS::EC2::SecurityGroup").filter(([id]) =>
+      id.startsWith("TaskGroup"),
+    );
     expect(taskGroup?.Properties).not.toHaveProperty("SecurityGroupIngress");
     expect(taskGroup?.Properties?.["SecurityGroupEgress"]).toEqual([
       expect.objectContaining({ IpProtocol: "tcp", FromPort: 443, ToPort: 443 }),
@@ -121,12 +144,16 @@ describe("ContainersStack with an image tag", () => {
   });
 
   it("exposes port 80 of the load balancer to the internet, and nothing else", () => {
-    const [[, group] = []] = ofType("AWS::EC2::SecurityGroup").filter(([id]) => id.startsWith("LoadBalancerGroup"));
+    const [[, group] = []] = ofType("AWS::EC2::SecurityGroup").filter(([id]) =>
+      id.startsWith("LoadBalancerGroup"),
+    );
     expect(group?.Properties?.["SecurityGroupIngress"]).toEqual([
       expect.objectContaining({ CidrIp: "0.0.0.0/0", IpProtocol: "tcp", FromPort: 80, ToPort: 80 }),
     ]);
     template.resourceCountIs("AWS::ElasticLoadBalancingV2::Listener", 1);
-    template.hasResourceProperties("AWS::ElasticLoadBalancingV2::LoadBalancer", { Scheme: "internet-facing" });
+    template.hasResourceProperties("AWS::ElasticLoadBalancingV2::LoadBalancer", {
+      Scheme: "internet-facing",
+    });
   });
 
   it("replaces tasks without dropping below the desired count, and rolls back by itself", () => {
@@ -159,7 +186,9 @@ describe("ContainersStack with an image tag", () => {
         { Key: "idle_timeout.timeout_seconds", Value: String(timing.albIdleTimeout) },
       ]),
     });
-    template.hasResourceProperties("AWS::ECS::Service", { HealthCheckGracePeriodSeconds: timing.healthCheckGrace });
+    template.hasResourceProperties("AWS::ECS::Service", {
+      HealthCheckGracePeriodSeconds: timing.healthCheckGrace,
+    });
   });
 
   it("caps auto scaling, and with it the bill", () => {
@@ -178,13 +207,21 @@ describe("ContainersStack with an image tag", () => {
   });
 
   it("expires logs after a week, and leaves nothing behind when the stack is destroyed", () => {
-    template.hasResource("AWS::Logs::LogGroup", { Properties: { RetentionInDays: 7 }, DeletionPolicy: "Delete" });
-    template.hasResource("AWS::ECR::Repository", { Properties: { EmptyOnDelete: true }, DeletionPolicy: "Delete" });
+    template.hasResource("AWS::Logs::LogGroup", {
+      Properties: { RetentionInDays: 7 },
+      DeletionPolicy: "Delete",
+    });
+    template.hasResource("AWS::ECR::Repository", {
+      Properties: { EmptyOnDelete: true },
+      DeletionPolicy: "Delete",
+    });
     for (const [id, resource] of Object.entries(resources)) {
       expect(resource.DeletionPolicy ?? "Delete", id).toBe("Delete");
     }
     template.hasResourceProperties("AWS::ElasticLoadBalancingV2::LoadBalancer", {
-      LoadBalancerAttributes: Match.arrayWith([{ Key: "deletion_protection.enabled", Value: "false" }]),
+      LoadBalancerAttributes: Match.arrayWith([
+        { Key: "deletion_protection.enabled", Value: "false" },
+      ]),
     });
   });
 
@@ -199,7 +236,12 @@ describe("ContainersStack with an image tag", () => {
     // src/provisioning/register-providers.ts at v0.296.28. A property outside
     // these lists would send the whole resource through Cloud Control.
     const handled: Record<string, string[]> = {
-      "AWS::EC2::SecurityGroup": ["GroupDescription", "SecurityGroupEgress", "SecurityGroupIngress", "VpcId"],
+      "AWS::EC2::SecurityGroup": [
+        "GroupDescription",
+        "SecurityGroupEgress",
+        "SecurityGroupIngress",
+        "VpcId",
+      ],
       "AWS::EC2::SecurityGroupIngress": [
         "Description",
         "FromPort",
@@ -233,7 +275,12 @@ describe("ContainersStack with an image tag", () => {
         "RuntimePlatform",
         "TaskRoleArn",
       ],
-      "AWS::ElasticLoadBalancingV2::Listener": ["DefaultActions", "LoadBalancerArn", "Port", "Protocol"],
+      "AWS::ElasticLoadBalancingV2::Listener": [
+        "DefaultActions",
+        "LoadBalancerArn",
+        "Port",
+        "Protocol",
+      ],
       "AWS::ElasticLoadBalancingV2::LoadBalancer": [
         "LoadBalancerAttributes",
         "Scheme",
@@ -265,7 +312,9 @@ describe("ContainersStack with an image tag", () => {
       "AWS::EC2::SecurityGroupEgress",
     ];
 
-    const types = [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted();
+    const types = [
+      ...new Set(Object.values(resources).map((resource) => resource.Type)),
+    ].toSorted();
     expect(types).toEqual([...Object.keys(handled), ...viaCloudControl].toSorted());
     for (const [id, resource] of Object.entries(resources)) {
       const allowed = handled[resource.Type];

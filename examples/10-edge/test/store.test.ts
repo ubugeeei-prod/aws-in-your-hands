@@ -8,6 +8,7 @@ import {
   ValidationException,
 } from "@aws-sdk/client-cloudfront-keyvaluestore";
 import { describe, expect, it } from "vite-plus/test";
+
 import { createKvsStore } from "../src/kvs/store.ts";
 import { KvsConflictError, KvsUnavailableError } from "../src/kvs/sync.ts";
 
@@ -17,7 +18,10 @@ type Sent = { name: string; input: Record<string, unknown> };
 type Sender = Parameters<typeof createKvsStore>[0];
 
 /** Answers each command from a queue and records what was sent. */
-function fakeClient(answers: (Record<string, unknown> | Error)[]): { client: Sender; sent: Sent[] } {
+function fakeClient(answers: (Record<string, unknown> | Error)[]): {
+  client: Sender;
+  sent: Sent[];
+} {
   const sent: Sent[] = [];
   const send = (command: { constructor: { name: string }; input: Record<string, unknown> }) => {
     sent.push({ name: command.constructor.name, input: command.input });
@@ -77,12 +81,15 @@ describe("createKvsStore", () => {
 
   it("tells a stale ETag, an unclear failure, and a plain refusal apart", async () => {
     const update = (error: Error) =>
-      createKvsStore(fakeClient([error]).client, ARN).update("E1", { puts: [], deletes: ["redirect:/gone"] });
+      createKvsStore(fakeClient([error]).client, ARN).update("E1", {
+        puts: [],
+        deletes: ["redirect:/gone"],
+      });
     const meta = { $metadata: { httpStatusCode: 400 }, message: "no" };
 
-    await expect(update(new ConflictException({ ...meta, $metadata: { httpStatusCode: 409 } }))).rejects.toBeInstanceOf(
-      KvsConflictError,
-    );
+    await expect(
+      update(new ConflictException({ ...meta, $metadata: { httpStatusCode: 409 } })),
+    ).rejects.toBeInstanceOf(KvsConflictError);
     await expect(
       update(new InternalServerException({ ...meta, $metadata: { httpStatusCode: 500 } })),
     ).rejects.toBeInstanceOf(KvsUnavailableError);
@@ -101,7 +108,11 @@ describe("createKvsStore", () => {
         handle: (request: { headers: Record<string, string> }) => {
           authorization = request.headers["authorization"] ?? "";
           return Promise.resolve({
-            response: { statusCode: 200, headers: { etag: "E1", "content-type": "application/json" }, body: undefined },
+            response: {
+              statusCode: 200,
+              headers: { etag: "E1", "content-type": "application/json" },
+              body: undefined,
+            },
           });
         },
       } as never,

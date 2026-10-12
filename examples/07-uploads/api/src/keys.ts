@@ -27,7 +27,12 @@ export function parseObjectKey(key: string): KeyParts | undefined {
     return undefined;
   }
   const [owner, noteId, attachmentId, ...rest] = key.slice(KEY_PREFIX.length).split("/");
-  if (owner === undefined || noteId === undefined || attachmentId === undefined || rest.length > 0) {
+  if (
+    owner === undefined ||
+    noteId === undefined ||
+    attachmentId === undefined ||
+    rest.length > 0
+  ) {
     return undefined;
   }
   const parts = { owner, noteId, attachmentId };

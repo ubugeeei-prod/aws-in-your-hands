@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+
 import type { ObjectStore } from "@aih/example-07-uploads/api/src/object-store.ts";
 import type { ObjectReader, ReadResult } from "@aih/example-08-async/src/object-reader.ts";
 
@@ -17,7 +18,7 @@ export type ObjectVersion = {
 export type CurrentObject = { key: string; eTag: string; size: number; lastModified: Date };
 
 /** What a restore needs from a bucket with versioning turned on. */
-export interface VersionedBucket {
+export type VersionedBucket = {
   /** Every version and delete marker under the prefix, in no promised order. */
   listVersions(prefix: string): AsyncIterable<ObjectVersion>;
   /** Removes exactly this version or delete marker, for good. */
@@ -26,7 +27,7 @@ export interface VersionedBucket {
   copyVersion(key: string, versionId: string): Promise<void>;
   /** What a plain listing shows: keys whose current version is not a delete marker. */
   listCurrent(prefix: string): AsyncIterable<CurrentObject>;
-}
+};
 // #endregion port
 
 type Stored = {
@@ -63,11 +64,19 @@ export class MemoryVersionedBucket implements ObjectStore, ObjectReader, Version
 
   /** The browser's upload: arrives pending, as in chapter 07. */
   put(key: string, body: Uint8Array, contentType: string): void {
-    this.#push(key, { body, contentType, eTag: createHash("md5").update(body).digest("hex"), pending: true });
+    this.#push(key, {
+      body,
+      contentType,
+      eTag: createHash("md5").update(body).digest("hex"),
+      pending: true,
+    });
   }
 
   async presignUpload(input: { key: string; contentType: string }) {
-    return { url: "memory://uploads", fields: { key: input.key, "Content-Type": input.contentType } };
+    return {
+      url: "memory://uploads",
+      fields: { key: input.key, "Content-Type": input.contentType },
+    };
   }
 
   async head(key: string) {
@@ -152,7 +161,9 @@ export class MemoryVersionedBucket implements ObjectStore, ObjectReader, Version
   }
 
   async removeVersion(key: string, versionId: string) {
-    const left = (this.#versions.get(key) ?? []).filter((version) => version.versionId !== versionId);
+    const left = (this.#versions.get(key) ?? []).filter(
+      (version) => version.versionId !== versionId,
+    );
     if (left.length === 0) {
       this.#versions.delete(key);
     } else {
@@ -161,7 +172,9 @@ export class MemoryVersionedBucket implements ObjectStore, ObjectReader, Version
   }
 
   async copyVersion(key: string, versionId: string) {
-    const source = this.#versions.get(key)?.find((version) => version.versionId === versionId)?.object;
+    const source = this.#versions
+      .get(key)
+      ?.find((version) => version.versionId === versionId)?.object;
     if (source === undefined) {
       throw new Error(`NoSuchVersion: ${key} ${versionId}`);
     }

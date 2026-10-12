@@ -1,7 +1,14 @@
 import { hc } from "hono/client";
 import type { z } from "zod";
+
 import type { App } from "./app.ts";
-import { type CreateNote, errorSchema, healthSchema, noteListSchema, noteSchema } from "./contract.ts";
+import {
+  type CreateNote,
+  errorSchema,
+  healthSchema,
+  noteListSchema,
+  noteSchema,
+} from "./contract.ts";
 
 // #region client
 export class ApiError extends Error {
@@ -26,7 +33,12 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
   if (!response.ok) {
     const body = errorSchema.safeParse(json);
     throw body.success
-      ? new ApiError(response.status, body.data.error.code, body.data.error.message, body.data.error.requestId)
+      ? new ApiError(
+          response.status,
+          body.data.error.code,
+          body.data.error.message,
+          body.data.error.requestId,
+        )
       : new ApiError(
           response.status,
           "unexpected_response",
@@ -36,7 +48,12 @@ async function parse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
   }
   const body = schema.safeParse(json);
   if (!body.success) {
-    throw new ApiError(response.status, "unexpected_response", "The response does not match the contract.", requestId);
+    throw new ApiError(
+      response.status,
+      "unexpected_response",
+      "The response does not match the contract.",
+      requestId,
+    );
   }
   return body.data;
 }

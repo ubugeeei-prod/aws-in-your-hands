@@ -1,4 +1,5 @@
 import { GetCallerIdentityCommand, STSClient } from "@aws-sdk/client-sts";
+
 import { type Access, checkTarget, type Identity, resolveTarget, type Target } from "./target.ts";
 
 export async function fetchIdentity(region: string): Promise<Identity> {

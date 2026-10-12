@@ -11,7 +11,12 @@ export type Invocation = {
 
 // Checked against the help output and source of @go-to-k/cdkd 0.296.28.
 // #region invocation
-export function buildInvocation(action: Action, stack: string, region: string, extra: string[]): Invocation {
+export function buildInvocation(
+  action: Action,
+  stack: string,
+  region: string,
+  extra: string[],
+): Invocation {
   switch (action) {
     case "bootstrap":
       // The one command that takes --region.

@@ -1,4 +1,5 @@
 import { BedrockRuntimeClient, ConverseStreamCommand } from "@aws-sdk/client-bedrock-runtime";
+
 import type { ModelGateway } from "./summarize.ts";
 
 // #region bedrock
@@ -8,7 +9,9 @@ export function createBedrockGateway(region: string): ModelGateway {
   const client = new BedrockRuntimeClient({ region, maxAttempts: 1 });
   return {
     async converseStream(request, signal) {
-      const response = await client.send(new ConverseStreamCommand(request), { abortSignal: signal });
+      const response = await client.send(new ConverseStreamCommand(request), {
+        abortSignal: signal,
+      });
       if (response.stream === undefined) {
         throw new Error("ConverseStream answered without a stream");
       }

@@ -16,7 +16,11 @@ export function nextStep(status: StackStatus): NextStep {
     case "CREATE_COMPLETE":
     case "UPDATE_COMPLETE":
     case "IMPORT_COMPLETE":
-      return { state: "settled", deployable: true, advice: "The last operation finished. Nothing to repair." };
+      return {
+        state: "settled",
+        deployable: true,
+        advice: "The last operation finished. Nothing to repair.",
+      };
 
     case "UPDATE_ROLLBACK_COMPLETE":
     case "IMPORT_ROLLBACK_COMPLETE":
@@ -40,14 +44,16 @@ export function nextStep(status: StackStatus): NextStep {
       return {
         state: "in-progress",
         deployable: false,
-        advice: "An operation is running. Old and new resources may both be serving. Wait; do not start another.",
+        advice:
+          "An operation is running. Old and new resources may both be serving. Wait; do not start another.",
       };
 
     case "REVIEW_IN_PROGRESS":
       return {
         state: "needs-repair",
         deployable: false,
-        advice: "A change set created this stack but was never executed. Execute it or delete the stack.",
+        advice:
+          "A change set created this stack but was never executed. Execute it or delete the stack.",
       };
 
     case "ROLLBACK_COMPLETE":
@@ -83,18 +89,24 @@ export function nextStep(status: StackStatus): NextStep {
       return {
         state: "needs-repair",
         deployable: false,
-        advice: "Some resources could not be removed. Read the stack events, clear what blocks them, delete again.",
+        advice:
+          "Some resources could not be removed. Read the stack events, clear what blocks them, delete again.",
       };
 
     case "IMPORT_ROLLBACK_FAILED":
       return {
         state: "needs-repair",
         deployable: false,
-        advice: "An import could not be undone. Read the stack events. This book does not cover repairing imports.",
+        advice:
+          "An import could not be undone. Read the stack events. This book does not cover repairing imports.",
       };
 
     case "DELETE_COMPLETE":
-      return { state: "gone", deployable: true, advice: "The stack was deleted. A deploy creates it from scratch." };
+      return {
+        state: "gone",
+        deployable: true,
+        advice: "The stack was deleted. A deploy creates it from scratch.",
+      };
   }
 }
 // #endregion next-step

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createKeyring } from "../src/keyring.ts";
 import { MemorySecretStore, type SecretSource } from "../src/secret-source.ts";
 import { parseToken, signToken, verifyToken } from "../src/token.ts";

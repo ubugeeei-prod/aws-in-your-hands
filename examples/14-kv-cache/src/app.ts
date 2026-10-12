@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+
 import type { ItemSource } from "./catalog.ts";
 import { clientIdSchema, type ErrorBody, type Item, type ItemList } from "./contract.ts";
 import type { Env } from "./env.ts";
@@ -86,14 +87,19 @@ export function createApp(deps: AppDeps) {
 
   return (
     app
-      .get("/health", (c) => c.json({ status: "ok" as const, stage: deps.env.STAGE, store: deps.env.KV_STORE }))
+      .get("/health", (c) =>
+        c.json({ status: "ok" as const, stage: deps.env.STAGE, store: deps.env.KV_STORE }),
+      )
       // #region items
       .get("/items", async (c) => {
         const loaded = await deps.cache.get("items", () => deps.source.list());
         c.header("x-cache", loaded.source === "cache" ? "hit" : "miss");
         // How stale this answer may be, in seconds.
         c.header("age", String(Math.max(0, Math.floor((deps.now() - loaded.loadedAt) / 1000))));
-        const body: ItemList = { items: loaded.value, loadedAt: new Date(loaded.loadedAt).toISOString() };
+        const body: ItemList = {
+          items: loaded.value,
+          loadedAt: new Date(loaded.loadedAt).toISOString(),
+        };
         return c.json(body);
       })
     // #endregion items

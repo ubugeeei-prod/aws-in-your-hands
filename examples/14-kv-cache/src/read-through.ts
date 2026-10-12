@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { CacheStore } from "./stores.ts";
 
 export type Loaded<T> = {
@@ -30,11 +31,11 @@ export type ReadThroughOptions<T> = {
   onStoreError?: (error: unknown) => void;
 };
 
-export interface ReadThrough<T> {
+export type ReadThrough<T> = {
   get(key: string, load: () => Promise<T>): Promise<Loaded<T>>;
   /** Call after changing the source. It narrows the stale window; it does not close it. */
   invalidate(key: string): Promise<void>;
-}
+};
 
 // #region jitter
 export function jitteredTtl(ttlMs: number, jitter: number, random: () => number): number {
@@ -58,7 +59,9 @@ export function createReadThrough<T>(options: ReadThroughOptions<T>): ReadThroug
         return undefined;
       }
       const parsed = envelope.safeParse(JSON.parse(raw));
-      return parsed.success ? { value: parsed.data.value, source: "cache", loadedAt: parsed.data.loadedAt } : undefined;
+      return parsed.success
+        ? { value: parsed.data.value, source: "cache", loadedAt: parsed.data.loadedAt }
+        : undefined;
     } catch (error) {
       report(error);
       return undefined;

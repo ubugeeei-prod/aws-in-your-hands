@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseEnv } from "../core/env.ts";
 import { createStaticNotes } from "../core/notes.ts";
 import { createDevIdentity, viewerSchema } from "../core/profile.ts";
@@ -29,7 +30,12 @@ describe("sessions", () => {
   });
 
   it("use a cookie that scripts cannot read and that stays under /me", () => {
-    expect(sessionCookieAttributes(true)).toMatchObject({ httpOnly: true, secure: true, sameSite: "lax", path: "/me" });
+    expect(sessionCookieAttributes(true)).toMatchObject({
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/me",
+    });
   });
 
   it("accept form posts from the same origin only", () => {
@@ -42,7 +48,10 @@ describe("sessions", () => {
 
 describe("the BFF boundary", () => {
   it("has no field in the browser-facing shape that could carry a token", async () => {
-    const identity = createDevIdentity({ now: () => new Date("2026-10-11T00:00:00.000Z"), newToken: () => "secret" });
+    const identity = createDevIdentity({
+      now: () => new Date("2026-10-11T00:00:00.000Z"),
+      newToken: () => "secret",
+    });
     const { accessToken } = identity.signIn("alice");
     const profile = await identity.profile(accessToken);
 
@@ -57,7 +66,9 @@ describe("parseEnv", () => {
   it("keeps sign-in off unless asked, and refuses the practice sign-in on Lambda", () => {
     expect(parseEnv({})).toEqual({ stage: "local", signIn: "off" });
     expect(parseEnv({ AIH_SSR_SIGN_IN: "dev" }).signIn).toBe("dev");
-    expect(() => parseEnv({ AIH_SSR_SIGN_IN: "dev", AWS_LAMBDA_FUNCTION_NAME: "AihSsr-Server" })).toThrow(/Lambda/);
+    expect(() =>
+      parseEnv({ AIH_SSR_SIGN_IN: "dev", AWS_LAMBDA_FUNCTION_NAME: "AihSsr-Server" }),
+    ).toThrow(/Lambda/);
     expect(() => parseEnv({ AIH_SSR_SIGN_IN: "yes" })).toThrow(/AIH_SSR_SIGN_IN/);
   });
 });

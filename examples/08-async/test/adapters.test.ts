@@ -1,7 +1,10 @@
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { GetObjectCommand, NoSuchKey, S3ServiceException } from "@aws-sdk/client-s3";
-import { DeleteCommand, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import type { GetObjectCommand } from "@aws-sdk/client-s3";
+import { NoSuchKey, S3ServiceException } from "@aws-sdk/client-s3";
+import type { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { describe, expect, it } from "vite-plus/test";
+
 import { DynamoDbInspectionRepository } from "../src/dynamodb-inspection-repository.ts";
 import { parseFunctionEnv, parseLocalQueueEnv } from "../src/env.ts";
 import type { Inspection } from "../src/inspection.ts";
@@ -22,7 +25,10 @@ const inspection: Inspection = {
   height: 2,
   inspectedAt: "2026-10-12T00:00:00.000Z",
 };
-const conflict = new ConditionalCheckFailedException({ message: "The conditional request failed", $metadata: {} });
+const conflict = new ConditionalCheckFailedException({
+  message: "The conditional request failed",
+  $metadata: {},
+});
 
 function table(respond: () => unknown = () => ({})) {
   const sent: (PutCommand | DeleteCommand | GetCommand)[] = [];
@@ -53,7 +59,9 @@ describe("DynamoDbInspectionRepository requests", () => {
       throw conflict;
     });
     expect(await refused.repository.putIfNewer("u1", inspection)).toBe("not_newer");
-    expect(await refused.repository.deleteIfOlder("u1", "n1", "a1", inspection.sequencer)).toBe("kept");
+    expect(await refused.repository.deleteIfOlder("u1", "n1", "a1", inspection.sequencer)).toBe(
+      "kept",
+    );
 
     const broken = table(() => {
       throw new Error("ProvisionedThroughputExceededException");
@@ -76,7 +84,9 @@ describe("DynamoDbInspectionRepository requests", () => {
     expect(await good.repository.get("u1", "n1", "a1")).toEqual(inspection);
     expect(good.sent[0]?.input).toMatchObject({ ConsistentRead: true });
 
-    const bad = table(() => ({ Item: { pk: "OWNER#u1", sk: "INSPECTION#n1#a1", ...inspection, sequencer: "E5" } }));
+    const bad = table(() => ({
+      Item: { pk: "OWNER#u1", sk: "INSPECTION#n1#a1", ...inspection, sequencer: "E5" },
+    }));
     await expect(bad.repository.get("u1", "n1", "a1")).rejects.toThrow();
     expect(await table().repository.get("u1", "n1", "a1")).toBeUndefined();
   });
@@ -93,7 +103,11 @@ function bucket(respond: () => unknown) {
   return { reader: new S3ObjectReader(client as never, "uploads"), sent };
 }
 const s3Error = (status: number) =>
-  new S3ServiceException({ name: "Error", $fault: "client", $metadata: { httpStatusCode: status } });
+  new S3ServiceException({
+    name: "Error",
+    $fault: "client",
+    $metadata: { httpStatusCode: status },
+  });
 
 describe("S3ObjectReader requests", () => {
   it("asks for the object the event describes, and no more than a limit", async () => {
@@ -108,7 +122,12 @@ describe("S3ObjectReader requests", () => {
       size: 170,
       contentType: "image/png",
     });
-    expect(sent[0]?.input).toEqual({ Bucket: "uploads", Key: "u/a/n/x", IfMatch: '"abc"', Range: "bytes=0-4" });
+    expect(sent[0]?.input).toEqual({
+      Bucket: "uploads",
+      Key: "u/a/n/x",
+      IfMatch: '"abc"',
+      Range: "bytes=0-4",
+    });
   });
 
   it("tells gone from replaced from broken", async () => {
@@ -116,7 +135,9 @@ describe("S3ObjectReader requests", () => {
       bucket(() => {
         throw error;
       }).reader.readExact("u/a/n/x", "abc", 5);
-    expect(await answer(new NoSuchKey({ message: "gone", $metadata: {} }))).toEqual({ status: "gone" });
+    expect(await answer(new NoSuchKey({ message: "gone", $metadata: {} }))).toEqual({
+      status: "gone",
+    });
     expect(await answer(s3Error(412))).toEqual({ status: "changed" });
     expect(await answer(s3Error(416))).toMatchObject({ status: "found", size: 0 });
     // Without s3:ListBucket a missing key is a 403, and that must not pass as "gone".
@@ -127,7 +148,9 @@ describe("S3ObjectReader requests", () => {
 describe("environment", () => {
   it("names what a function is missing", () => {
     expect(() => parseFunctionEnv({ TABLE_NAME: "notes" })).toThrow("UPLOADS_BUCKET");
-    expect(parseFunctionEnv({ TABLE_NAME: "notes", UPLOADS_BUCKET: "uploads" })).toMatchObject({ LOG_LEVEL: "info" });
+    expect(parseFunctionEnv({ TABLE_NAME: "notes", UPLOADS_BUCKET: "uploads" })).toMatchObject({
+      LOG_LEVEL: "info",
+    });
   });
 
   it("gives the local queue defaults, and refuses nonsense", () => {
@@ -136,6 +159,8 @@ describe("environment", () => {
       LOCAL_QUEUE_MAX_RECEIVE_COUNT: 3,
       LOCAL_QUEUE_DUPLICATE: "false",
     });
-    expect(() => parseLocalQueueEnv({ LOCAL_QUEUE_MAX_RECEIVE_COUNT: "0" })).toThrow("LOCAL_QUEUE_MAX_RECEIVE_COUNT");
+    expect(() => parseLocalQueueEnv({ LOCAL_QUEUE_MAX_RECEIVE_COUNT: "0" })).toThrow(
+      "LOCAL_QUEUE_MAX_RECEIVE_COUNT",
+    );
   });
 });

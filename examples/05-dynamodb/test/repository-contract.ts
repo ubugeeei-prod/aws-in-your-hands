@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import type { Note } from "../src/contract.ts";
 import { InvalidCursorError, type NoteRepository } from "../src/repository.ts";
 
@@ -35,7 +36,9 @@ export function describeRepositoryContract(
     it("never overwrites an existing note on create", async () => {
       const { repository, owner } = await fresh();
       await repository.create(owner, note("a1", { title: "original" }));
-      expect(await repository.create(owner, note("a1", { title: "intruder" }))).toBe("already_exists");
+      expect(await repository.create(owner, note("a1", { title: "intruder" }))).toBe(
+        "already_exists",
+      );
       expect((await repository.get(owner, "a1"))?.title).toBe("original");
     });
 
@@ -43,8 +46,14 @@ export function describeRepositoryContract(
       const { repository, owner } = await fresh();
       await repository.create(owner, note("a1"));
       const result = await repository.update(owner, "a1", change(1));
-      expect(result).toMatchObject({ status: "updated", note: { version: 2, title: "changed", body: "new body" } });
-      expect(await repository.get(owner, "a1")).toMatchObject({ version: 2, createdAt: "2026-10-11T00:00:00.000Z" });
+      expect(result).toMatchObject({
+        status: "updated",
+        note: { version: 2, title: "changed", body: "new body" },
+      });
+      expect(await repository.get(owner, "a1")).toMatchObject({
+        version: 2,
+        createdAt: "2026-10-11T00:00:00.000Z",
+      });
     });
 
     it("refuses a stale update and leaves the note as it was", async () => {
@@ -53,8 +62,14 @@ export function describeRepositoryContract(
       await repository.update(owner, "a1", change(1, "first writer"));
 
       const stale = await repository.update(owner, "a1", change(1, "second writer"));
-      expect(stale).toMatchObject({ status: "conflict", current: { version: 2, title: "first writer" } });
-      expect(await repository.get(owner, "a1")).toMatchObject({ version: 2, title: "first writer" });
+      expect(stale).toMatchObject({
+        status: "conflict",
+        current: { version: 2, title: "first writer" },
+      });
+      expect(await repository.get(owner, "a1")).toMatchObject({
+        version: 2,
+        title: "first writer",
+      });
     });
 
     it("lets exactly one of two writers holding the same version win", async () => {
@@ -100,9 +115,9 @@ export function describeRepositoryContract(
 
     it("rejects a cursor it did not issue", async () => {
       const { repository, owner } = await fresh();
-      await expect(repository.list(owner, { limit: 2, cursor: "not a cursor!" })).rejects.toBeInstanceOf(
-        InvalidCursorError,
-      );
+      await expect(
+        repository.list(owner, { limit: 2, cursor: "not a cursor!" }),
+      ).rejects.toBeInstanceOf(InvalidCursorError);
     });
 
     it("deletes once; a second delete reports nothing to delete", async () => {

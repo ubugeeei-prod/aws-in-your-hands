@@ -3,11 +3,13 @@
 //
 // Replaces the local config.json in web/dist with one written from the
 // stack's outputs, so one build can be pointed at any deployment.
+
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+
+import { parseConfig } from "@aih/example-06-auth/web/src/config.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { parseConfig } from "@aih/example-06-auth/web/src/config.ts";
 
 try {
   const { target } = await preflight({

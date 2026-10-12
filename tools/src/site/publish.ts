@@ -1,9 +1,12 @@
 // Only copies files. The bucket and the distribution stay cdkd's to manage.
+
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+
 import { S3Client } from "@aws-sdk/client-s3";
+
 import { preflight } from "../aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "../infra/outputs.ts";
 import { listLocal, listRemote, remove, upload } from "./bucket.ts";
@@ -20,7 +23,9 @@ const { values, positionals } = parseArgs({
 });
 const [appDir, stack, buildDir] = positionals;
 if (appDir === undefined || stack === undefined || buildDir === undefined) {
-  console.error("usage: publish.ts <appDir> <stack> <buildDir> [--dry-run] [--force] [--asset-retention-days N]");
+  console.error(
+    "usage: publish.ts <appDir> <stack> <buildDir> [--dry-run] [--force] [--asset-retention-days N]",
+  );
   process.exit(64);
 }
 const assetRetentionDays = Number(values["asset-retention-days"]);
@@ -31,7 +36,11 @@ if (!Number.isInteger(assetRetentionDays) || assetRetentionDays < 0) {
 
 try {
   const dryRun = values["dry-run"];
-  const { target } = await preflight({ access: dryRun ? "observe" : "mutate", action: "publish site content", stack });
+  const { target } = await preflight({
+    access: dryRun ? "observe" : "mutate",
+    action: "publish site content",
+    stack,
+  });
   const outputs = await readStackOutputs(resolve(appDir), stack, target.region);
   const bucket = requireOutput(outputs, "ContentBucketName");
   const directory = resolve(buildDir);
@@ -67,9 +76,13 @@ try {
   await upload(s3, bucket, staging, [
     { key: REVISION_KEY, contentType: contentTypeFor(REVISION_KEY), cacheControl: REVALIDATE },
   ]);
-  console.log(`published revision ${revision}. Run the smoke task to confirm what readers receive.`);
+  console.log(
+    `published revision ${revision}. Run the smoke task to confirm what readers receive.`,
+  );
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  console.error("The publish did not finish. It is safe to run it again: files already uploaded are skipped.");
+  console.error(
+    "The publish did not finish. It is safe to run it again: files already uploaded are skipped.",
+  );
   process.exit(1);
 }

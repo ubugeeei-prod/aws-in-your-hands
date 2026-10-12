@@ -1,7 +1,9 @@
 // vp run <name>:infra:drift and the drift remediation tasks end up here.
 //   node tools/src/drift/cli.ts <check|preview-revert|revert|accept> <appDir> <stack>
+
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+
 import { preflight } from "../aws/preflight.ts";
 import { runCdkd } from "../infra/run-cdkd.ts";
 import { buildReport, summarize } from "./report.ts";
@@ -10,7 +12,11 @@ const MODES = ["check", "preview-revert", "revert", "accept"] as const;
 type Mode = (typeof MODES)[number];
 
 const [mode, appDirArg, stack, ...extra] = process.argv.slice(2);
-if (!(MODES as readonly string[]).includes(mode ?? "") || appDirArg === undefined || stack === undefined) {
+if (
+  !(MODES as readonly string[]).includes(mode ?? "") ||
+  appDirArg === undefined ||
+  stack === undefined
+) {
   console.error(`usage: cli.ts <${MODES.join("|")}> <appDir> <stack>`);
   process.exit(64);
 }
@@ -57,7 +63,11 @@ async function check(): Promise<number> {
 async function remediate(kind: Exclude<Mode, "check">): Promise<number> {
   // --accept rewrites the state only: the CDK source still has the old value.
   // --revert writes the recorded values back to AWS.
-  const flags = { "preview-revert": ["--revert", "--dry-run"], revert: ["--revert"], accept: ["--accept"] }[kind];
+  const flags = {
+    "preview-revert": ["--revert", "--dry-run"],
+    revert: ["--revert"],
+    accept: ["--accept"],
+  }[kind];
   const { target } = await preflight({
     access: kind === "preview-revert" ? "observe" : "mutate",
     action: `cdkd drift ${flags.join(" ")}`,
@@ -70,7 +80,9 @@ async function remediate(kind: Exclude<Mode, "check">): Promise<number> {
     capture: false,
   });
   if (kind !== "preview-revert") {
-    console.error("\nRun the drift check again. This command's exit code does not show that the stack is now in sync.");
+    console.error(
+      "\nRun the drift check again. This command's exit code does not show that the stack is now in sync.",
+    );
   }
   return result.exitCode;
 }

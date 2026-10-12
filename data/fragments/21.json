@@ -163,7 +163,10 @@
       "url": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based.html",
       "title": "Using rate-based rule statements in AWS WAF",
       "checkedAt": "2026-10-12",
-      "supports": ["A rate-based rule costs 2 WCUs as a base", "Each use of a rate-based rule is tracked separately"]
+      "supports": [
+        "A rate-based rule costs 2 WCUs as a base",
+        "Each use of a rate-based rule is tracked separately"
+      ]
     },
     {
       "id": "waf-rate-based-caveats",
@@ -209,7 +212,9 @@
       "url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-testing.html",
       "title": "Testing and tuning your AWS WAF protections",
       "checkedAt": "2026-10-12",
-      "supports": ["AWS recommends testing and tuning rules in count mode with production traffic before enabling them"]
+      "supports": [
+        "AWS recommends testing and tuning rules in count mode with production traffic before enabling them"
+      ]
     },
     {
       "id": "cfn-wafv2-webacl",
@@ -493,7 +498,9 @@
       "url": "https://docs.aws.amazon.com/inspector/latest/user/getting_started_tutorial.html",
       "title": "Getting started with Amazon Inspector",
       "checkedAt": "2026-10-12",
-      "supports": ["Activating Inspector for a standalone account in the console activates all scan types by default"]
+      "supports": [
+        "Activating Inspector for a standalone account in the console activates all scan types by default"
+      ]
     },
     {
       "id": "inspector-pricing",
@@ -696,7 +703,9 @@
       "url": "https://developers.cloudflare.com/waf/rate-limiting-rules/",
       "title": "Cloudflare WAF: Rate limiting rules",
       "checkedAt": "2026-10-12",
-      "supports": ["Rate limiting rules are available on the Free plan, with features that depend on the plan"]
+      "supports": [
+        "Rate limiting rules are available on the Free plan, with features that depend on the plan"
+      ]
     }
   ],
   "glossary": [
@@ -816,7 +825,10 @@
     },
     {
       "id": "21.architecture",
-      "sources": ["examples/21-security/infra/bin/app.ts", "examples/21-security/infra/lib/security-stack.ts"],
+      "sources": [
+        "examples/21-security/infra/bin/app.ts",
+        "examples/21-security/infra/lib/security-stack.ts"
+      ],
       "tasks": ["sec:infra:synth"],
       "boundary": "none",
       "criteria": ["cost", "distributed"],
@@ -928,7 +940,10 @@
     },
     {
       "id": "21.detect",
-      "sources": ["examples/21-security/scripts/posture.ts", "examples/21-security/scripts/trail.ts"],
+      "sources": [
+        "examples/21-security/scripts/posture.ts",
+        "examples/21-security/scripts/trail.ts"
+      ],
       "tasks": ["sec:posture", "sec:trail:iam"],
       "boundary": "cloud",
       "criteria": ["cost"],
@@ -989,7 +1004,9 @@
       "plan": "on-demand",
       "currency": "USD",
       "unit": "Secrets",
-      "tiers": [{ "from": 0, "to": null, "usd": "0.4000000000", "description": "$0.40 per Secret" }],
+      "tiers": [
+        { "from": 0, "to": null, "usd": "0.4000000000", "description": "$0.40 per Secret" }
+      ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:46:10Z",
       "checkedAt": "2026-10-12"
@@ -1003,7 +1020,14 @@
       "plan": "on-demand",
       "currency": "USD",
       "unit": "API Requests",
-      "tiers": [{ "from": 0, "to": null, "usd": "0.0000050000", "description": "$0.05 per 10000 API Requests" }],
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000050000",
+          "description": "$0.05 per 10000 API Requests"
+        }
+      ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-11T12:46:10Z",
       "checkedAt": "2026-10-12"
@@ -1060,7 +1084,12 @@
       "currency": "USD",
       "unit": "Month",
       "tiers": [
-        { "from": 0, "to": null, "usd": "5.0000000000", "description": "$5.00 per web ACL created (prorated hourly)" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.0000000000",
+          "description": "$5.00 per web ACL created (prorated hourly)"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
       "offerPublicationDate": "2026-09-14T16:39:21Z",
@@ -1076,7 +1105,12 @@
       "currency": "USD",
       "unit": "Month",
       "tiers": [
-        { "from": 0, "to": null, "usd": "1.0000000000", "description": "$1.00 per rule created (prorated hourly)" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.0000000000",
+          "description": "$1.00 per rule created (prorated hourly)"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
       "offerPublicationDate": "2026-09-14T16:39:21Z",
@@ -1092,7 +1126,12 @@
       "currency": "USD",
       "unit": "Request",
       "tiers": [
-        { "from": 0, "to": null, "usd": "0.0000006000", "description": "$0.60 per million requests processed" }
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000006000",
+          "description": "$0.60 per million requests processed"
+        }
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
       "offerPublicationDate": "2026-09-14T16:39:21Z",
@@ -1232,7 +1271,13 @@
           "The CloudFront distribution, Lambda, and the IAM role cost nothing uncalled; logs have expired and nothing is stored"
         ]
       },
-      "items": [{ "priceId": "secretsmanager.secret", "quantity": 1, "basis": "1 secret for the whole month" }]
+      "items": [
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "1 secret for the whole month"
+        }
+      ]
     },
     {
       "id": "sec-idle-cmk",
@@ -1254,7 +1299,11 @@
         ]
       },
       "items": [
-        { "priceId": "secretsmanager.secret", "quantity": 1, "basis": "1 secret for the whole month" },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "1 secret for the whole month"
+        },
         { "priceId": "kms.key", "quantity": 1, "basis": "1 customer managed key, one key version" }
       ]
     },
@@ -1284,7 +1333,11 @@
       "items": [
         { "priceId": "waf.global.webacl", "quantity": 1, "basis": "1 web ACL for the whole month" },
         { "priceId": "waf.global.rule", "quantity": 3, "basis": "3 rules for the whole month" },
-        { "priceId": "waf.global.request", "quantity": 1000000, "basis": "1,000,000 requests inspected" }
+        {
+          "priceId": "waf.global.request",
+          "quantity": 1000000,
+          "basis": "1,000,000 requests inspected"
+        }
       ]
     },
     {
@@ -1313,18 +1366,46 @@
         ]
       },
       "items": [
-        { "priceId": "secretsmanager.secret", "quantity": 1, "basis": "1 secret for the whole month" },
+        {
+          "priceId": "secretsmanager.secret",
+          "quantity": 1,
+          "basis": "1 secret for the whole month"
+        },
         {
           "priceId": "secretsmanager.api",
           "quantity": 17520,
           "basis": "730 hours x 12 reloads x 2 GetSecretValue calls"
         },
-        { "priceId": "cloudfront.jp.request.https", "quantity": 200000, "basis": "100,000 /token + 100,000 /verify" },
-        { "priceId": "cloudfront.jp.transfer", "quantity": 0.095367, "basis": "200,000 x 0.5 KB, in GB" },
-        { "priceId": "lambda.request.arm", "quantity": 200000, "basis": "every request reaches the function" },
-        { "priceId": "lambda.duration.arm", "quantity": 2500, "basis": "200,000 x 0.05 s x 0.25 GB, in GB-seconds" },
-        { "priceId": "logs.ingest.standard", "quantity": 0.05722, "basis": "200,000 x 0.3 KB, in GB" },
-        { "priceId": "logs.storage", "quantity": 0.013351, "basis": "0.057220 GB x 7/30, in GB-month" }
+        {
+          "priceId": "cloudfront.jp.request.https",
+          "quantity": 200000,
+          "basis": "100,000 /token + 100,000 /verify"
+        },
+        {
+          "priceId": "cloudfront.jp.transfer",
+          "quantity": 0.095367,
+          "basis": "200,000 x 0.5 KB, in GB"
+        },
+        {
+          "priceId": "lambda.request.arm",
+          "quantity": 200000,
+          "basis": "every request reaches the function"
+        },
+        {
+          "priceId": "lambda.duration.arm",
+          "quantity": 2500,
+          "basis": "200,000 x 0.05 s x 0.25 GB, in GB-seconds"
+        },
+        {
+          "priceId": "logs.ingest.standard",
+          "quantity": 0.05722,
+          "basis": "200,000 x 0.3 KB, in GB"
+        },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.013351,
+          "basis": "0.057220 GB x 7/30, in GB-month"
+        }
       ]
     },
     {
@@ -1356,8 +1437,16 @@
           "quantity": 100000,
           "basis": "100,000 management events analyzed (assumed)"
         },
-        { "priceId": "inspector.lambda.standard", "quantity": 730, "basis": "1 function x 730 hours" },
-        { "priceId": "config.item.continuous", "quantity": 500, "basis": "500 configuration items (assumed)" }
+        {
+          "priceId": "inspector.lambda.standard",
+          "quantity": 730,
+          "basis": "1 function x 730 hours"
+        },
+        {
+          "priceId": "config.item.continuous",
+          "quantity": 500,
+          "basis": "500 configuration items (assumed)"
+        }
       ]
     }
   ],

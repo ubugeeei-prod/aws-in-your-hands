@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { checkTarget, resolveTarget } from "./target.ts";
 
-const identity = { accountId: "111111111111", arn: "arn:aws:sts::111111111111:assumed-role/dev/me" };
+const identity = {
+  accountId: "111111111111",
+  arn: "arn:aws:sts::111111111111:assumed-role/dev/me",
+};
 
 describe("target", () => {
   it("defaults to the Tokyo region", () => {

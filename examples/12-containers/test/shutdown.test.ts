@@ -4,8 +4,11 @@ import { Agent, request } from "node:http";
 import { connect, type Socket } from "node:net";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
-import { noteSchema } from "@aih/example-04-http-api/src/contract.ts";
+
 import { afterEach, describe, expect, it } from "vite-plus/test";
+
+import { noteSchema } from "@aih/example-04-http-api/src/contract.ts";
+
 import { type RunningServer, startServer } from "../src/serve.ts";
 
 const serverEntry = fileURLToPath(new URL("../src/server.ts", import.meta.url));
@@ -23,7 +26,9 @@ function readUntil(socket: Socket, marker: string): Promise<string> {
     };
     socket.on("data", onData);
     socket.once("error", reject);
-    socket.once("close", () => reject(new Error(`connection closed before "${marker}"; got: ${received}`)));
+    socket.once("close", () =>
+      reject(new Error(`connection closed before "${marker}"; got: ${received}`)),
+    );
   });
 }
 
@@ -34,7 +39,12 @@ describe("the server as a process", () => {
 
   it("finishes the request it was handling when SIGTERM arrived, then exits with 0", async () => {
     child = spawn(process.execPath, [serverEntry], {
-      env: { PATH: process.env["PATH"], PORT: "0", ALLOWED_ORIGIN: "http://localhost:5173", APP_VERSION: "test" },
+      env: {
+        PATH: process.env["PATH"],
+        PORT: "0",
+        ALLOWED_ORIGIN: "http://localhost:5173",
+        APP_VERSION: "test",
+      },
       stdio: ["ignore", "pipe", "inherit"],
     });
     const exited = once(child, "exit");

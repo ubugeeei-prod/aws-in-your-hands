@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import type { NotificationState } from "./contract.ts";
 import type { Logger } from "./log.ts";
 import { NOTIFICATION_TAG } from "./message.ts";
@@ -41,7 +42,9 @@ export const sesEventSchema = z.discriminatedUnion("eventType", [
 ]);
 export type SesEvent = z.infer<typeof sesEventSchema>;
 
-const HANDLED = new Set(sesEventSchema.options.map((option) => option.shape.eventType.value as string));
+const HANDLED = new Set(
+  sesEventSchema.options.map((option) => option.shape.eventType.value as string),
+);
 // #endregion schema
 
 export type ParsedSesMessage =
@@ -69,7 +72,9 @@ export function parseSesMessage(message: string): ParsedSesMessage {
     ? { kind: "event", event: event.data }
     : {
         kind: "invalid",
-        problem: event.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; "),
+        problem: event.error.issues
+          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+          .join("; "),
       };
 }
 
@@ -84,12 +89,14 @@ export type EventAction =
     };
 
 // "Jane <jane@example.com>" and "jane@example.com" are the same mailbox.
-const bareAddress = (value: string): string => normalizeAddress(/<([^<>]+)>\s*$/.exec(value)?.[1] ?? value);
+const bareAddress = (value: string): string =>
+  normalizeAddress(/<([^<>]+)>\s*$/.exec(value)?.[1] ?? value);
 
 /** What one event asks for. No I/O, so every branch is a plain test. */
 export function planEventActions(event: SesEvent): EventAction[] {
   const tagged = event.mail.tags[NOTIFICATION_TAG]?.[0];
-  const notificationId = tagged !== undefined && /^[A-Za-z0-9_-]{1,64}$/.test(tagged) ? tagged : undefined;
+  const notificationId =
+    tagged !== undefined && /^[A-Za-z0-9_-]{1,64}$/.test(tagged) ? tagged : undefined;
   const advance = (next: "delivered" | "bounced" | "complained", at: string): EventAction[] =>
     notificationId === undefined ? [] : [{ kind: "advance", notificationId, next, at }];
 
@@ -136,7 +143,10 @@ export function planEventActions(event: SesEvent): EventAction[] {
 export type EventDeps = { store: NotificationStore; log: Logger };
 
 /** One SES event. Safe to run twice: SNS and Lambda both deliver at least once. */
-export async function handleSesMessage(deps: EventDeps, message: string): Promise<ParsedSesMessage> {
+export async function handleSesMessage(
+  deps: EventDeps,
+  message: string,
+): Promise<ParsedSesMessage> {
   const parsed = parseSesMessage(message);
   if (parsed.kind === "invalid") {
     // Retrying cannot fix a message this code does not understand. Log it loudly and move on.
@@ -151,7 +161,9 @@ export async function handleSesMessage(deps: EventDeps, message: string): Promis
     if (action.kind === "suppress") {
       await deps.store.suppress(action.suppression);
     } else {
-      const applied = await deps.store.advance(action.notificationId, action.next, { at: action.at });
+      const applied = await deps.store.advance(action.notificationId, action.next, {
+        at: action.at,
+      });
       deps.log({
         level: "info",
         message: "notification state",

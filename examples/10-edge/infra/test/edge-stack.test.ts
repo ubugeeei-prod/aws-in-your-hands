@@ -1,12 +1,18 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { EdgeStack } from "../lib/edge-stack.ts";
 
 const VERSION_ARN = "arn:aws:lambda:us-east-1:123456789012:function:aih-edge-body-digest:3";
 
 const synth = (bodyDigestVersionArn?: string): Template =>
-  Template.fromStack(new EdgeStack(new App(), "AihEdge", { env: { region: "ap-northeast-1" }, bodyDigestVersionArn }));
+  Template.fromStack(
+    new EdgeStack(new App(), "AihEdge", {
+      env: { region: "ap-northeast-1" },
+      bodyDigestVersionArn,
+    }),
+  );
 
 const types = (template: Template): string[] => {
   const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
@@ -56,7 +62,9 @@ describe("EdgeStack", () => {
   it("creates the store empty and removes it with the stack", () => {
     const template = synth();
     // An import source would tie the pairs to the stack: changing them would replace the store.
-    template.hasResourceProperties("AWS::CloudFront::KeyValueStore", { ImportSource: Match.absent() });
+    template.hasResourceProperties("AWS::CloudFront::KeyValueStore", {
+      ImportSource: Match.absent(),
+    });
     template.hasResource("AWS::CloudFront::KeyValueStore", { DeletionPolicy: "Delete" });
     template.hasResource("AWS::S3::Bucket", { DeletionPolicy: "Delete" });
   });
@@ -114,7 +122,10 @@ describe("EdgeStack with the Lambda@Edge version", () => {
   it.each([
     ["$LATEST", "arn:aws:lambda:us-east-1:123456789012:function:aih-edge-body-digest"],
     ["an alias", "arn:aws:lambda:us-east-1:123456789012:function:aih-edge-body-digest:live"],
-    ["another Region", "arn:aws:lambda:ap-northeast-1:123456789012:function:aih-edge-body-digest:3"],
+    [
+      "another Region",
+      "arn:aws:lambda:ap-northeast-1:123456789012:function:aih-edge-body-digest:3",
+    ],
   ])("refuses %s before anything is synthesized", (_label, arn) => {
     expect(() => synth(arn)).toThrow(/numbered function version in us-east-1/);
   });

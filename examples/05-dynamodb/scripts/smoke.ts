@@ -1,9 +1,12 @@
 // vp run notes:smoke
 //   node scripts/smoke.ts [--url https://xxxx.execute-api.ap-northeast-1.amazonaws.com]
 // Writes one real note through the deployed API, then removes it.
+
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
+
 import { ApiError, createNotesClient } from "../src/client.ts";
 
 const { values } = parseArgs({ options: { url: { type: "string" } } });
@@ -35,13 +38,21 @@ try {
   }
   console.log("ok   read it back");
 
-  const updated = await client.update(note.id, { title: note.title, body: "v2", expectedVersion: 1 });
+  const updated = await client.update(note.id, {
+    title: note.title,
+    body: "v2",
+    expectedVersion: 1,
+  });
   if (updated.status !== "updated" || updated.note.version !== 2) {
     throw new Error("the update based on the current version was not applied");
   }
   console.log("ok   updated to version 2");
 
-  const stale = await client.update(note.id, { title: note.title, body: "stale", expectedVersion: 1 });
+  const stale = await client.update(note.id, {
+    title: note.title,
+    body: "stale",
+    expectedVersion: 1,
+  });
   if (stale.status !== "conflict" || stale.current.body !== "v2") {
     throw new Error("an update based on a stale version was not refused");
   }
@@ -56,7 +67,9 @@ try {
 } catch (error) {
   console.error(
     "FAIL",
-    error instanceof ApiError ? `${error.status} ${error.code} (request ${error.requestId})` : error,
+    error instanceof ApiError
+      ? `${error.status} ${error.code} (request ${error.requestId})`
+      : error,
   );
   process.exit(1);
 }

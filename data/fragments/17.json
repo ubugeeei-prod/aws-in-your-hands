@@ -8,7 +8,13 @@
       "en": "AI Development for Workers AI Users: Bedrock"
     },
     "prerequisites": ["04"],
-    "services": ["Bedrock", "Lambda response streaming", "Lambda function URL", "IAM", "CloudWatch Logs"],
+    "services": [
+      "Bedrock",
+      "Lambda response streaming",
+      "Lambda function URL",
+      "IAM",
+      "CloudWatch Logs"
+    ],
     "samplePath": "examples/17-ai",
     "writing": {
       "ja": "complete",
@@ -257,7 +263,9 @@
       "url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
       "title": "AWS Price List: Amazon Bedrock foundation models (Marketplace), ap-northeast-1",
       "checkedAt": "2026-10-11",
-      "supports": ["Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens"]
+      "supports": [
+        "Claude Haiku 4.5 in Tokyo, Regional: USD 1.10 per 1M input tokens, USD 5.50 per 1M output tokens"
+      ]
     },
     {
       "id": "cloudflare-workers-ai-quickstart",
@@ -285,7 +293,9 @@
       "url": "https://developers.cloudflare.com/workers/development-testing/bindings-per-env/",
       "title": "Cloudflare Workers: Supported bindings per development mode",
       "checkedAt": "2026-10-11",
-      "supports": ["The AI binding has no local simulation; it connects to the remote service during local development"]
+      "supports": [
+        "The AI binding has no local simulation; it connects to the remote service during local development"
+      ]
     },
     {
       "id": "cloudflare-workers-ai-pricing",
@@ -497,7 +507,11 @@
     },
     {
       "id": "17.tests",
-      "sources": ["examples/17-ai/test", "examples/17-ai/fixtures/converse-stream", "examples/17-ai/scripts/live.ts"],
+      "sources": [
+        "examples/17-ai/test",
+        "examples/17-ai/fixtures/converse-stream",
+        "examples/17-ai/scripts/live.ts"
+      ],
       "tasks": ["test:unit", "ai:test:live"],
       "boundary": "local+cloud",
       "criteria": ["test"],
@@ -735,7 +749,10 @@
         "en": "Summary API: output cost if all 1,000 summaries hit the output limit"
       },
       "assumptions": {
-        "ja": ["1,000 件すべてが maxTokens の 400 token まで出力", "出力 token の分だけ。入力と Lambda は含まない"],
+        "ja": [
+          "1,000 件すべてが maxTokens の 400 token まで出力",
+          "出力 token の分だけ。入力と Lambda は含まない"
+        ],
         "en": [
           "All 1,000 summaries write up to the maxTokens of 400",
           "Output tokens only; input and Lambda are not included"

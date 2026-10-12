@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { grantStatements } from "../src/grant.ts";
 
 const ARN = "arn:aws:iam::123456789012:role/AihSql-HandlerRole-AbC123";
@@ -14,8 +15,12 @@ describe("grant statements", () => {
   });
 
   it("refuses names that would change the meaning of the statement", () => {
-    expect(() => grantStatements("notes_api", `${ARN}'; DROP TABLE app.notes; --`)).toThrow("not an IAM role ARN");
-    expect(() => grantStatements("notes_api", "arn:aws:iam::123456789012:user/someone")).toThrow("not an IAM role ARN");
+    expect(() => grantStatements("notes_api", `${ARN}'; DROP TABLE app.notes; --`)).toThrow(
+      "not an IAM role ARN",
+    );
+    expect(() => grantStatements("notes_api", "arn:aws:iam::123456789012:user/someone")).toThrow(
+      "not an IAM role ARN",
+    );
     expect(() => grantStatements("admin; DROP", ARN)).toThrow("not a plain database role name");
   });
 });

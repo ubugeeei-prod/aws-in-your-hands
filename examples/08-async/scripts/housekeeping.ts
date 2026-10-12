@@ -4,15 +4,19 @@
 //
 // The same function the schedule starts every hour, run from a laptop. The
 // deployed one runs under its own role; this one runs under yours.
+
 import { parseArgs } from "node:util";
+
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { S3Client } from "@aws-sdk/client-s3";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { DynamoDbNoteRepository } from "@aih/example-05-dynamodb/src/dynamodb-repository.ts";
 import { DynamoDbAttachmentRepository } from "@aih/example-07-uploads/api/src/dynamodb-attachment-repository.ts";
 import { S3ObjectStore } from "@aih/example-07-uploads/api/src/s3-object-store.ts";
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { S3Client } from "@aws-sdk/client-s3";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+
 import { DynamoDbInspectionRepository } from "../src/dynamodb-inspection-repository.ts";
 import { housekeep } from "../src/housekeeping.ts";
 
@@ -32,7 +36,10 @@ try {
 
   const report = await housekeep(
     {
-      objects: new S3ObjectStore(new S3Client({ region: target.region }), requireOutput(outputs, "UploadsBucketName")),
+      objects: new S3ObjectStore(
+        new S3Client({ region: target.region }),
+        requireOutput(outputs, "UploadsBucketName"),
+      ),
       attachments: new DynamoDbAttachmentRepository(documents, table),
       notes: new DynamoDbNoteRepository(documents, table),
       inspections: new DynamoDbInspectionRepository(documents, table),
@@ -55,7 +62,9 @@ try {
       `${values.delete ? "took" : "would take"} the pending tag off ${report.untagged} recent attached images`,
   );
   if (!values.delete) {
-    console.log("Nothing was changed. Pass --delete to do this now; the schedule does it every hour anyway.");
+    console.log(
+      "Nothing was changed. Pass --delete to do this now; the schedule does it every hour anyway.",
+    );
   }
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);

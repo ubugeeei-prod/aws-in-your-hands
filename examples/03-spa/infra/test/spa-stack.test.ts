@@ -1,6 +1,7 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
+
 import { SpaStack } from "../lib/spa-stack.ts";
 
 const synth = (): Template =>
@@ -55,7 +56,9 @@ describe("SpaStack", () => {
 
   it("uses only resource types checked against cdkd", () => {
     const resources = synth().toJSON()["Resources"] as Record<string, { Type: string }>;
-    expect([...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted()).toEqual([
+    expect(
+      [...new Set(Object.values(resources).map((resource) => resource.Type))].toSorted(),
+    ).toEqual([
       "AWS::CloudFront::Distribution",
       "AWS::CloudFront::Function",
       "AWS::CloudFront::OriginAccessControl",

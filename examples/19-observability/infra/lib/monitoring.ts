@@ -16,6 +16,7 @@ import { FilterPattern, type ILogGroup, MetricFilter } from "aws-cdk-lib/aws-log
 import { Topic } from "aws-cdk-lib/aws-sns";
 import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 import { Construct } from "constructs";
+
 import { errorRateExpressions, errorRateRule, latencyRule } from "../../src/alarm-math.ts";
 import { metricFilterPattern } from "../../src/conditions.ts";
 import { conflictLines } from "../../src/queries.ts";
@@ -138,13 +139,19 @@ export class Monitoring extends Construct {
         [
           new GraphWidget({
             title: "Lambda: errors and throttles",
-            left: [handler.metricInvocations(sum), handler.metricErrors(sum), handler.metricThrottles(sum)],
+            left: [
+              handler.metricInvocations(sum),
+              handler.metricErrors(sum),
+              handler.metricThrottles(sum),
+            ],
             width: 12,
           }),
           new GraphWidget({
             title: "Lambda: duration (ms) and concurrency",
             left: [handler.metricDuration({ period: minute, statistic: "p95" })],
-            right: [handler.metric("ConcurrentExecutions", { period: minute, statistic: "Maximum" })],
+            right: [
+              handler.metric("ConcurrentExecutions", { period: minute, statistic: "Maximum" }),
+            ],
             width: 12,
           }),
         ],

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { ExportCorruptError, manifestKey, partKey, toProgress } from "../src/job.ts";
 import { atMostPages, discardExport, exportPages, finishExport } from "../src/steps.ts";
 import { everyPage, ID, ids, range, setup, START } from "./harness.ts";
@@ -34,7 +35,10 @@ describe("an export that nothing interrupts", () => {
     let progress = begin();
     let calls = 0;
     while (!progress.done) {
-      progress = await exportPages(fine.deps, progress, { pageSize: 10, mayContinue: atMostPages(1) });
+      progress = await exportPages(fine.deps, progress, {
+        pageSize: 10,
+        mayContinue: atMostPages(1),
+      });
       calls += 1;
     }
     await finishExport(fine.deps, progress);
@@ -98,7 +102,10 @@ describe("two workers on the same export", () => {
 
     // The workflow gives up on A. A note A is holding gets deleted, and worker B does the whole export.
     t.source.remove("alice", "n0003");
-    const afterPartOne = await exportPages(t.deps, begin(), { pageSize: 10, mayContinue: atMostPages(1) });
+    const afterPartOne = await exportPages(t.deps, begin(), {
+      pageSize: 10,
+      mayContinue: atMostPages(1),
+    });
     await finishExport(t.deps, await exportPages(t.deps, afterPartOne, everyPage(10)));
     const before = t.read();
     expect(ids(before)).toEqual([...range(1, 2), ...range(4, 25)]);
@@ -117,7 +124,10 @@ describe("two workers on the same export", () => {
     const run = async () => {
       let progress = begin();
       while (!progress.done) {
-        progress = await exportPages(t.deps, progress, { pageSize: 10, mayContinue: atMostPages(1) });
+        progress = await exportPages(t.deps, progress, {
+          pageSize: 10,
+          mayContinue: atMostPages(1),
+        });
       }
       return finishExport(t.deps, progress);
     };
@@ -141,7 +151,10 @@ describe("finishing and discarding", () => {
 
   it("refuses to finish before the last page", async () => {
     const t = setup(25);
-    const progress = await exportPages(t.deps, begin(), { pageSize: 10, mayContinue: atMostPages(1) });
+    const progress = await exportPages(t.deps, begin(), {
+      pageSize: 10,
+      mayContinue: atMostPages(1),
+    });
     await expect(finishExport(t.deps, progress)).rejects.toThrow("still has pages");
   });
 
@@ -159,14 +172,26 @@ describe("finishing and discarding", () => {
     await expect(discardExport(t.deps, { exportId: ID })).rejects.toThrow("injected failure");
     expect(await t.parts()).toHaveLength(2);
 
-    expect(await discardExport(t.deps, { exportId: ID })).toEqual({ exportId: ID, removed: 2, kept: false });
-    expect(await discardExport(t.deps, { exportId: ID })).toEqual({ exportId: ID, removed: 0, kept: false });
+    expect(await discardExport(t.deps, { exportId: ID })).toEqual({
+      exportId: ID,
+      removed: 2,
+      kept: false,
+    });
+    expect(await discardExport(t.deps, { exportId: ID })).toEqual({
+      exportId: ID,
+      removed: 0,
+      kept: false,
+    });
   });
 
   it("never discards an export that has its manifest", async () => {
     const t = setup(25);
     await finishExport(t.deps, await exportPages(t.deps, begin(), everyPage(10)));
-    expect(await discardExport(t.deps, { exportId: ID })).toEqual({ exportId: ID, removed: 0, kept: true });
+    expect(await discardExport(t.deps, { exportId: ID })).toEqual({
+      exportId: ID,
+      removed: 0,
+      kept: true,
+    });
     expect(ids(t.read())).toEqual(range(1, 25));
   });
 });
@@ -189,6 +214,8 @@ describe("what starts a run", () => {
   });
 
   it("does not take a damaged progress for a fresh start", () => {
-    expect(() => toProgress({ exportId: ID, nextPart: 0, cursor: null, notes: 0, done: false })).toThrow();
+    expect(() =>
+      toProgress({ exportId: ID, nextPart: 0, cursor: null, notes: 0, done: false }),
+    ).toThrow();
   });
 });

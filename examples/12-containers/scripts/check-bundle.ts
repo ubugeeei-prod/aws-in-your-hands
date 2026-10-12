@@ -4,12 +4,14 @@
 // Runs dist/server.mjs, the file that goes into the image, away from this
 // workspace's node_modules: it has to start with nothing but Node.js, answer,
 // and stop cleanly on SIGTERM. No Docker involved.
+
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
+
 import { healthSchema } from "@aih/example-04-http-api/src/contract.ts";
 
 const directory = mkdtempSync(join(tmpdir(), "aih-bundle-"));
@@ -18,7 +20,12 @@ try {
   copyFileSync("dist/server.mjs", join(directory, "server.mjs"));
   child = spawn(process.execPath, ["server.mjs"], {
     cwd: directory,
-    env: { PATH: process.env["PATH"], PORT: "0", ALLOWED_ORIGIN: "http://localhost:5173", APP_VERSION: "bundle" },
+    env: {
+      PATH: process.env["PATH"],
+      PORT: "0",
+      ALLOWED_ORIGIN: "http://localhost:5173",
+      APP_VERSION: "bundle",
+    },
     stdio: ["ignore", "pipe", "inherit"],
   });
   const exited = once(child, "exit");

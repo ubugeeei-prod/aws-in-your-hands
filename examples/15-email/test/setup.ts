@@ -13,7 +13,11 @@ export const input: ShareNotification = {
   noteTitle: "Trip plan",
 };
 
-export const settings = { fromAddress: "notes@example.com", appOrigin: "https://notes.example.com", retentionDays: 30 };
+export const settings = {
+  fromAddress: "notes@example.com",
+  appOrigin: "https://notes.example.com",
+  retentionDays: 30,
+};
 
 /** A store, an outbox and a clock that tests own. Nothing here reaches AWS. */
 export function setup(overrides: { store?: NotificationStore; mailer?: Mailer } = {}) {
@@ -45,8 +49,9 @@ export function withFault(
   fault: Fault,
 ): { store: NotificationStore; mailer: Mailer } {
   let armed = true;
-  const wrap = <Args extends unknown[], Result>(step: Step, call: (...args: Args) => Promise<Result>) => {
-    return async (...args: Args): Promise<Result> => {
+  const wrap =
+    <Args extends unknown[], Result>(step: Step, call: (...args: Args) => Promise<Result>) =>
+    async (...args: Args): Promise<Result> => {
       if (!armed || fault.step !== step) {
         return call(...args);
       }
@@ -56,7 +61,6 @@ export function withFault(
       }
       throw new Error(`injected: ${step} failed ${fault.when} taking effect`);
     };
-  };
   return {
     store: {
       findSuppression: wrap("findSuppression", (address) => store.findSuppression(address)),

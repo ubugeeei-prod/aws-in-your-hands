@@ -7,15 +7,26 @@
 // upstream counter example into .celld/app/counter.
 //
 // Talks to github.com. Touches no AWS account. Runs nothing it downloads.
+
 import { createHash } from "node:crypto";
 import { chmodSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
-import { assetOf, assetUrl, type CelldTarget, COUNTER_APP, PINNED_VERSION, versionSchema } from "../src/celld.ts";
+
+import {
+  assetOf,
+  assetUrl,
+  type CelldTarget,
+  COUNTER_APP,
+  PINNED_VERSION,
+  versionSchema,
+} from "../src/celld.ts";
 import { ARTIFACT_TARGET } from "../src/machine.ts";
 
 const args = process.argv.slice(2);
 const host = args.includes("--host");
-const version = versionSchema.parse(args.find((argument) => !argument.startsWith("--")) ?? PINNED_VERSION);
+const version = versionSchema.parse(
+  args.find((argument) => !argument.startsWith("--")) ?? PINNED_VERSION,
+);
 
 const sha256 = (bytes: Uint8Array): string => createHash("sha256").update(bytes).digest("hex");
 
@@ -56,7 +67,9 @@ function hostTarget(): CelldTarget {
   };
   const target = targets[key];
   if (target === undefined) {
-    throw new Error(`celld publishes no binary for ${key}. Deploy the application from a supported machine.`);
+    throw new Error(
+      `celld publishes no binary for ${key}. Deploy the application from a supported machine.`,
+    );
   }
   return target;
 }
@@ -81,7 +94,9 @@ try {
       console.log(`.celld/app/counter/${file}`);
     }
   }
-  console.log("Provenance, if you have the GitHub CLI: gh attestation verify <file> --repo denoland/celld");
+  console.log(
+    "Provenance, if you have the GitHub CLI: gh attestation verify <file> --repo denoland/celld",
+  );
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);

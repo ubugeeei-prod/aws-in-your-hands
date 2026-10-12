@@ -1,14 +1,20 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { parseConfig } from "./config.ts";
 
 describe("runtime config", () => {
   it("accepts the local config", () => {
-    expect(parseConfig({ apiUrl: "http://localhost:8787", auth: { mode: "local" } }).auth.mode).toBe("local");
+    expect(
+      parseConfig({ apiUrl: "http://localhost:8787", auth: { mode: "local" } }).auth.mode,
+    ).toBe("local");
   });
 
   it("requires every Cognito setting", () => {
     expect(() =>
-      parseConfig({ apiUrl: "https://api.example.com", auth: { mode: "cognito", clientId: "abc" } }),
+      parseConfig({
+        apiUrl: "https://api.example.com",
+        auth: { mode: "cognito", clientId: "abc" },
+      }),
     ).toThrow();
   });
 

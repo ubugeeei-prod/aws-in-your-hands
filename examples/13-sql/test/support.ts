@@ -1,9 +1,15 @@
 import { fileURLToPath } from "node:url";
+
 import { z } from "zod";
+
 import { type Db, type Queryable, rows } from "../src/db.ts";
 import { loadMigrations, migrate } from "../src/migrate.ts";
 import { openPglite } from "../src/pglite.ts";
-import { createTransactionRunner, type RetryPolicy, type TransactionRunner } from "../src/transaction.ts";
+import {
+  createTransactionRunner,
+  type RetryPolicy,
+  type TransactionRunner,
+} from "../src/transaction.ts";
 
 export const migrationsDirectory = fileURLToPath(new URL("../migrations", import.meta.url));
 
@@ -38,7 +44,9 @@ export function runnerFor(db: Db, policy: RetryPolicy = testPolicy) {
 // #region inject
 export function serializationFailure(): Error {
   // The message and SQLSTATE Aurora DSQL documents for a data conflict.
-  return Object.assign(new Error("change conflicts with another transaction (OC000)"), { code: "40001" });
+  return Object.assign(new Error("change conflicts with another transaction (OC000)"), {
+    code: "40001",
+  });
 }
 
 /**
@@ -69,7 +77,10 @@ export function losingCommits(
             remaining--;
             await connection.query("ROLLBACK");
             // The winner runs on the same session, after the rollback.
-            const session: Db = { withConnection: (run) => run(connection), close: () => Promise.resolve() };
+            const session: Db = {
+              withConnection: (run) => run(connection),
+              close: () => Promise.resolve(),
+            };
             await plan.winner?.(runnerFor(session).transaction);
             throw serializationFailure();
           },

@@ -1,10 +1,17 @@
-import type { Logger } from "@aih/example-04-http-api/src/log.ts";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
 import { validator } from "hono/validator";
-import { type ErrorBody, type Failure, summarizeRequestSchema, type SummaryEvent } from "./contract.ts";
+
+import type { Logger } from "@aih/example-04-http-api/src/log.ts";
+
+import {
+  type ErrorBody,
+  type Failure,
+  summarizeRequestSchema,
+  type SummaryEvent,
+} from "./contract.ts";
 import type { Env } from "./env.ts";
 import type { Summarize } from "./summarize.ts";
 
@@ -59,7 +66,10 @@ export function createApp(deps: AppDeps) {
   app.onError((error, c) => {
     const requestId = c.get("requestId");
     if (error instanceof HTTPException && error.status === 400) {
-      return c.json(failure("invalid_request", "The request body is not valid JSON.", requestId), 400);
+      return c.json(
+        failure("invalid_request", "The request body is not valid JSON.", requestId),
+        400,
+      );
     }
     deps.log({
       level: "error",
@@ -86,13 +96,22 @@ export function createApp(deps: AppDeps) {
       bodyLimit({
         maxSize: 64 * 1024,
         onError: (c) =>
-          c.json(failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")), 413),
+          c.json(
+            failure("payload_too_large", "The request body exceeds 64 KiB.", c.get("requestId")),
+            413,
+          ),
       }),
       validator("json", (value, c) => {
         const input = summarizeRequestSchema.safeParse(value);
         if (!input.success) {
-          const issues = input.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
-          return c.json(failure("invalid_request", "The note is not valid.", c.get("requestId"), { issues }), 400);
+          const issues = input.error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            message: issue.message,
+          }));
+          return c.json(
+            failure("invalid_request", "The note is not valid.", c.get("requestId"), { issues }),
+            400,
+          );
         }
         return input.data;
       }),
@@ -123,7 +142,10 @@ export function createApp(deps: AppDeps) {
           // Nothing was sent yet, so the failure can still be an ordinary HTTP error.
           record(start.failure.code, start.attempts);
           const { code, retryable } = start.failure;
-          return c.json(failure(code, "The summary could not be started.", requestId, { retryable }), STATUS[code]);
+          return c.json(
+            failure(code, "The summary could not be started.", requestId, { retryable }),
+            STATUS[code],
+          );
         }
 
         return streamSSE(c, async (stream) => {

@@ -1,12 +1,12 @@
 import type { CreateNote, Note } from "./contract.ts";
 
 // #region repository
-export interface NoteRepository {
+export type NoteRepository = {
   list(): Promise<Note[]>;
   get(id: string): Promise<Note | undefined>;
   put(note: Note): Promise<void>;
   delete(id: string): Promise<boolean>;
-}
+};
 
 /** Notes in a Map. On Lambda that means one Map per execution environment. */
 export class InMemoryNoteRepository implements NoteRepository {

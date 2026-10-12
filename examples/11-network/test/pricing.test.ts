@@ -1,6 +1,8 @@
+import { describe, expect, it } from "vite-plus/test";
+
 import { loadPricing } from "@aih/tools/data/load.ts";
 import { calculate } from "@aih/tools/pricing/calc.ts";
-import { describe, expect, it } from "vite-plus/test";
+
 import { parseNetworkConfig } from "../src/config.ts";
 import { fixedMonthlyItems } from "../src/cost.ts";
 import { planNetwork } from "../src/plan.ts";
@@ -61,8 +63,10 @@ describe("the monthly cost of each layout", () => {
   });
 
   it("puts the break-even between three endpoints and one NAT gateway near 240 GB a month", () => {
-    const perGb = (id: string): number => Number(prices.prices.find((price) => price.id === id)?.tiers[0]?.usd);
-    const fixedGap = fixedCost({ interfaceEndpoints: "ecr.api,ecr.dkr,logs" }) - fixedCost({ egress: "nat" });
+    const perGb = (id: string): number =>
+      Number(prices.prices.find((price) => price.id === id)?.tiers[0]?.usd);
+    const fixedGap =
+      fixedCost({ interfaceEndpoints: "ecr.api,ecr.dkr,logs" }) - fixedCost({ egress: "nat" });
     const perGbGap = perGb("nat.gateway.data") - perGb("vpc.endpoint.interface.data");
 
     expect(fixedGap).toBeCloseTo(12.41, 2);
@@ -71,7 +75,11 @@ describe("the monthly cost of each layout", () => {
   });
 
   it("makes three interface endpoints cost more than one NAT gateway before any traffic", () => {
-    expect(fixedCost({ interfaceEndpoints: "ecr.api,ecr.dkr,logs" })).toBeGreaterThan(fixedCost({ egress: "nat" }));
-    expect(fixedCost({ interfaceEndpoints: "ecr.api,ecr.dkr" })).toBeLessThan(fixedCost({ egress: "nat" }));
+    expect(fixedCost({ interfaceEndpoints: "ecr.api,ecr.dkr,logs" })).toBeGreaterThan(
+      fixedCost({ egress: "nat" }),
+    );
+    expect(fixedCost({ interfaceEndpoints: "ecr.api,ecr.dkr" })).toBeLessThan(
+      fixedCost({ egress: "nat" }),
+    );
   });
 });

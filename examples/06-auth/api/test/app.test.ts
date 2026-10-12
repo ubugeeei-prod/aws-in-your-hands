@@ -1,6 +1,8 @@
+import { describe, expect, it } from "vite-plus/test";
+
 import { InMemoryNoteRepository } from "@aih/example-05-dynamodb/src/memory-repository.ts";
 import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
-import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
 import { errorSchema } from "../src/contract.ts";
@@ -13,7 +15,12 @@ async function setup() {
   let suffix = 0;
   const logs: Record<string, unknown>[] = [];
   const app = createApp({
-    env: { ALLOWED_ORIGIN: "http://localhost:5173", LOG_LEVEL: "debug", STAGE: "test", NOTES_STORE: "memory" },
+    env: {
+      ALLOWED_ORIGIN: "http://localhost:5173",
+      LOG_LEVEL: "debug",
+      STAGE: "test",
+      NOTES_STORE: "memory",
+    },
     notes: createNoteService({
       repository: new InMemoryNoteRepository(),
       now: () => new Date((clock += 1000)),
@@ -25,9 +32,20 @@ async function setup() {
     now: () => clock,
   });
   const viaApp: typeof fetch = async (input, init) => app.fetch(new Request(input, init));
-  const tokens = { alice: await signLocalToken(secret, "alice"), bob: await signLocalToken(secret, "bob") };
-  const as = (token: string | undefined) => createNotesClient("http://api.test", () => token, viaApp);
-  return { app, logs, tokens, alice: as(tokens.alice), bob: as(tokens.bob), anonymous: as(undefined) };
+  const tokens = {
+    alice: await signLocalToken(secret, "alice"),
+    bob: await signLocalToken(secret, "bob"),
+  };
+  const as = (token: string | undefined) =>
+    createNotesClient("http://api.test", () => token, viaApp);
+  return {
+    app,
+    logs,
+    tokens,
+    alice: as(tokens.alice),
+    bob: as(tokens.bob),
+    anonymous: as(undefined),
+  };
 }
 
 const rejection = async (promise: Promise<unknown>) => {
@@ -57,7 +75,9 @@ describe("authentication", () => {
 
   it("answers 401 to a token that does not verify", async () => {
     const { app } = await setup();
-    const response = await app.request("/notes", { headers: { authorization: "Bearer not.a.token" } });
+    const response = await app.request("/notes", {
+      headers: { authorization: "Bearer not.a.token" },
+    });
     expect(response.status).toBe(401);
   });
 
@@ -86,18 +106,27 @@ describe("authorization: own notes only", () => {
     const error = await rejection(bob.get(note.id));
     // Same answer as a missing ID, so Bob learns nothing.
     expect(error).toMatchObject({ status: 404, code: "not_found" });
-    expect(await rejection(bob.get("no-such-note"))).toMatchObject({ status: 404, code: "not_found" });
+    expect(await rejection(bob.get("no-such-note"))).toMatchObject({
+      status: 404,
+      code: "not_found",
+    });
   });
 
   it("cannot update or delete another user's note", async () => {
     const { alice, bob } = await setup();
     const note = await alice.create({ title: "private", body: "original" });
 
-    expect(await rejection(bob.update(note.id, { title: "defaced", body: "", expectedVersion: 1 }))).toMatchObject({
+    expect(
+      await rejection(bob.update(note.id, { title: "defaced", body: "", expectedVersion: 1 })),
+    ).toMatchObject({
       status: 404,
     });
     expect(await rejection(bob.remove(note.id))).toMatchObject({ status: 404 });
-    expect(await alice.get(note.id)).toMatchObject({ title: "private", body: "original", version: 1 });
+    expect(await alice.get(note.id)).toMatchObject({
+      title: "private",
+      body: "original",
+      version: 1,
+    });
   });
 
   it("takes the owner from the token only", async () => {
@@ -105,7 +134,11 @@ describe("authorization: own notes only", () => {
     // Bob names Alice everywhere a request can.
     const response = await app.request("/notes?owner=alice&sub=alice", {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${tokens.bob}`, "x-owner": "alice" },
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${tokens.bob}`,
+        "x-owner": "alice",
+      },
       body: JSON.stringify({ title: "planted", body: "", owner: "alice", sub: "alice" }),
     });
     expect(response.status).toBe(201);
@@ -117,7 +150,9 @@ describe("authorization: own notes only", () => {
     const { alice } = await setup();
     const note = await alice.create({ title: "draft", body: "" });
     await alice.update(note.id, { title: "tab A", body: "", expectedVersion: 1 });
-    expect(await alice.update(note.id, { title: "tab B", body: "", expectedVersion: 1 })).toMatchObject({
+    expect(
+      await alice.update(note.id, { title: "tab B", body: "", expectedVersion: 1 }),
+    ).toMatchObject({
       status: "conflict",
     });
   });
@@ -127,7 +162,9 @@ describe("audit trail", () => {
   it("logs the sub, never the token", async () => {
     const { logs, tokens, alice } = await setup();
     await alice.list();
-    expect(logs).toContainEqual(expect.objectContaining({ path: "/notes", status: 200, sub: "alice" }));
+    expect(logs).toContainEqual(
+      expect.objectContaining({ path: "/notes", status: 200, sub: "alice" }),
+    );
     expect(JSON.stringify(logs)).not.toContain(tokens.alice);
   });
 

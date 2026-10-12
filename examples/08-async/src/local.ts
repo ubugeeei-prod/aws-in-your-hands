@@ -6,6 +6,7 @@ import { createLocalAuthenticator } from "@aih/example-06-auth/api/src/local-aut
 import { createApp } from "@aih/example-07-uploads/api/src/app.ts";
 import { InMemoryAttachmentRepository } from "@aih/example-07-uploads/api/src/attachment-repository.ts";
 import { createAttachmentService } from "@aih/example-07-uploads/api/src/attachments.ts";
+
 import { housekeep } from "./housekeeping.ts";
 import { InMemoryInspectionRepository } from "./inspection.ts";
 import { LocalBucket } from "./local-bucket.ts";
@@ -52,7 +53,11 @@ export function createLocal(options: LocalOptions) {
   const inspections = new InMemoryInspectionRepository();
   const objects = wrap("bucket", bucket);
 
-  const notes = createNoteService({ repository: noteRepository, now: options.now, randomSuffix: options.randomSuffix });
+  const notes = createNoteService({
+    repository: noteRepository,
+    now: options.now,
+    randomSuffix: options.randomSuffix,
+  });
   const app = createApp({
     env: options.env,
     authenticate: createLocalAuthenticator(options.secret),
@@ -90,7 +95,13 @@ export function createLocal(options: LocalOptions) {
     /** What the schedule starts. */
     housekeep: (run: { dryRun: boolean }) =>
       housekeep(
-        { objects, attachments: attachmentRepository, notes: noteRepository, inspections, now: options.now },
+        {
+          objects,
+          attachments: attachmentRepository,
+          notes: noteRepository,
+          inspections,
+          now: options.now,
+        },
         run,
       ),
   };

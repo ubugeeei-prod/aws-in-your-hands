@@ -2,11 +2,20 @@
 //   node scripts/smoke.ts [--url https://dxxxxxxxxxxxx.cloudfront.net]
 // Goes through CloudFront, the signed function URL, Lambda, IAM, and Secrets
 // Manager. Reads the secret (a billed API call); writes nothing.
+
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
+
 import { preflight } from "@aih/tools/aws/preflight.ts";
 import { readStackOutputs, requireOutput } from "@aih/tools/infra/outputs.ts";
-import { errorSchema, healthSchema, issuedSchema, TOKEN_HEADER, verifiedSchema } from "../src/contract.ts";
+
+import {
+  errorSchema,
+  healthSchema,
+  issuedSchema,
+  TOKEN_HEADER,
+  verifiedSchema,
+} from "../src/contract.ts";
 import { untilAllowed } from "../src/propagation.ts";
 
 const { values } = parseArgs({ options: { url: { type: "string" } } });
@@ -16,7 +25,11 @@ class KeyUnavailable extends Error {}
 try {
   let url = values.url;
   if (url === undefined) {
-    const { target } = await preflight({ access: "mutate", action: "smoke test the token API", stack: "AihSecurity" });
+    const { target } = await preflight({
+      access: "mutate",
+      action: "smoke test the token API",
+      stack: "AihSecurity",
+    });
     url = requireOutput(await readStackOutputs(process.cwd(), "AihSecurity", target.region), "Url");
   }
   console.log(`api: ${url}`);
@@ -53,7 +66,9 @@ try {
   }
   console.log(`ok   verified for subject ${verifiedSchema.parse(await verified.json()).subject}`);
 
-  const forged = await fetch(`${url}/verify`, { headers: { [TOKEN_HEADER]: `${issued.token.slice(0, -4)}AAAA` } });
+  const forged = await fetch(`${url}/verify`, {
+    headers: { [TOKEN_HEADER]: `${issued.token.slice(0, -4)}AAAA` },
+  });
   if (forged.status !== 401) {
     throw new Error(`a token with an edited signature answered ${forged.status}, expected 401`);
   }
@@ -61,7 +76,9 @@ try {
 
   const post = await fetch(`${url}/token?sub=smoke`, { method: "POST" });
   if (post.status !== 403) {
-    throw new Error(`POST answered ${post.status}; CloudFront should refuse methods the behavior does not allow`);
+    throw new Error(
+      `POST answered ${post.status}; CloudFront should refuse methods the behavior does not allow`,
+    );
   }
   console.log("ok   POST is refused at CloudFront");
   console.log(`checked at ${new Date().toISOString()}`);

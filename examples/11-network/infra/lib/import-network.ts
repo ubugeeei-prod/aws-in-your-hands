@@ -1,6 +1,7 @@
 import { Fn } from "aws-cdk-lib";
 import { type IVpc, Vpc } from "aws-cdk-lib/aws-ec2";
 import type { Construct } from "constructs";
+
 import { exportName, outputNames } from "../../src/exports.ts";
 
 // #region import
@@ -20,9 +21,13 @@ export function importNetwork(scope: Construct, id: string, zoneCount = 2): IVpc
     vpcCidrBlock: value(outputNames.vpcCidr),
     availabilityZones: numbers.map((number) => value(outputNames.zone(number))),
     publicSubnetIds: numbers.map((number) => value(outputNames.subnetId(`Public${number}`))),
-    publicSubnetRouteTableIds: numbers.map((number) => value(outputNames.routeTableId(`Public${number}`))),
+    publicSubnetRouteTableIds: numbers.map((number) =>
+      value(outputNames.routeTableId(`Public${number}`)),
+    ),
     isolatedSubnetIds: numbers.map((number) => value(outputNames.subnetId(`Private${number}`))),
-    isolatedSubnetRouteTableIds: numbers.map((number) => value(outputNames.routeTableId(`Private${number}`))),
+    isolatedSubnetRouteTableIds: numbers.map((number) =>
+      value(outputNames.routeTableId(`Private${number}`)),
+    ),
   });
 }
 // #endregion import

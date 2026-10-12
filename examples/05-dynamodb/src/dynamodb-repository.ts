@@ -8,6 +8,7 @@ import {
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { z } from "zod";
+
 import { type Note, noteSchema } from "./contract.ts";
 import { decodeCursor, encodeCursor, type NoteRepository } from "./repository.ts";
 
@@ -92,7 +93,8 @@ export class DynamoDbNoteRepository implements NoteRepository {
     // It can be present on the final page; the next page is then empty.
     return {
       notes,
-      nextCursor: result.LastEvaluatedKey !== undefined && last !== undefined ? encodeCursor(last.id) : null,
+      nextCursor:
+        result.LastEvaluatedKey !== undefined && last !== undefined ? encodeCursor(last.id) : null,
     };
   }
   // #endregion list
@@ -108,7 +110,8 @@ export class DynamoDbNoteRepository implements NoteRepository {
         new UpdateCommand({
           TableName: this.#tableName,
           Key: { pk: pk(owner), sk: sk(id) },
-          UpdateExpression: "SET title = :title, body = :body, updatedAt = :updatedAt, version = :next",
+          UpdateExpression:
+            "SET title = :title, body = :body, updatedAt = :updatedAt, version = :next",
           // The whole optimistic lock: checked and applied as a single step, so
           // two writers holding the same version cannot both pass. A missing item fails too.
           ConditionExpression: "version = :expected",
@@ -130,14 +133,20 @@ export class DynamoDbNoteRepository implements NoteRepository {
       // Gone, or version moved on? This read tells which. It is a separate
       // step: the note can change again before the caller sees the answer.
       const current = await this.get(owner, id);
-      return current === undefined ? { status: "not_found" as const } : { status: "conflict" as const, current };
+      return current === undefined
+        ? { status: "not_found" as const }
+        : { status: "conflict" as const, current };
     }
   }
   // #endregion update
 
   async delete(owner: string, id: string) {
     const result = await this.#client.send(
-      new DeleteCommand({ TableName: this.#tableName, Key: { pk: pk(owner), sk: sk(id) }, ReturnValues: "ALL_OLD" }),
+      new DeleteCommand({
+        TableName: this.#tableName,
+        Key: { pk: pk(owner), sk: sk(id) },
+        ReturnValues: "ALL_OLD",
+      }),
     );
     return result.Attributes !== undefined;
   }

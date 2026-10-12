@@ -22,9 +22,12 @@ const sitePath = z
 
 const redirectSchema = z.strictObject({
   // The function never looks up files, queries, or fragments.
-  from: sitePath.refine((path) => !/[?#]/.test(path) && !path.slice(path.lastIndexOf("/") + 1).includes("."), {
-    message: "must be a page path without an extension, a query, or a fragment",
-  }),
+  from: sitePath.refine(
+    (path) => !/[?#]/.test(path) && !path.slice(path.lastIndexOf("/") + 1).includes("."),
+    {
+      message: "must be a page path without an extension, a query, or a fragment",
+    },
+  ),
   to: sitePath,
   status: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]),
 });
@@ -83,10 +86,14 @@ export function checkLimits(entries: ReadonlyMap<string, string>): string[] {
   for (const [key, value] of entries) {
     total += bytes(key) + bytes(value);
     if (bytes(key) > LIMITS.keyBytes) {
-      problems.push(`key "${key.slice(0, 40)}..." is ${bytes(key)} bytes; the limit is ${LIMITS.keyBytes}`);
+      problems.push(
+        `key "${key.slice(0, 40)}..." is ${bytes(key)} bytes; the limit is ${LIMITS.keyBytes}`,
+      );
     }
     if (bytes(value) > LIMITS.valueBytes) {
-      problems.push(`value of "${key}" is ${bytes(value)} bytes; the limit is ${LIMITS.valueBytes}`);
+      problems.push(
+        `value of "${key}" is ${bytes(value)} bytes; the limit is ${LIMITS.valueBytes}`,
+      );
     }
   }
   if (total > LIMITS.storeBytes) {

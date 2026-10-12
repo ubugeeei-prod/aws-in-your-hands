@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+
 import { CfnOutput, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
@@ -48,7 +49,9 @@ export class SpaStack extends Stack {
         compress: true,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
-        functionAssociations: [{ function: spaFallback, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
+        functionAssociations: [
+          { function: spaFallback, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
+        ],
       },
     });
     // #endregion distribution

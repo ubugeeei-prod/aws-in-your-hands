@@ -1,5 +1,10 @@
 // #region dns
-export type DnsRecord = { name: string; type: "CNAME" | "MX" | "TXT"; value: string; purpose: string };
+export type DnsRecord = {
+  name: string;
+  type: "CNAME" | "MX" | "TXT";
+  value: string;
+  purpose: string;
+};
 
 export type DnsInput = {
   domain: string;
@@ -18,7 +23,8 @@ export function dnsRecords(input: DnsInput): DnsRecord[] {
     name: record.name,
     type: "CNAME",
     value: record.value,
-    purpose: "DKIM: publishes the key SES signs with. SES verifies the domain by finding all three.",
+    purpose:
+      "DKIM: publishes the key SES signs with. SES verifies the domain by finding all three.",
   }));
 
   if (input.mailFromDomain !== undefined) {

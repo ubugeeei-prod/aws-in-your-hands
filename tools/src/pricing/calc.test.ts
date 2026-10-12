@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { loadPricing } from "../data/load.ts";
 import { calculate } from "./calc.ts";
 import type { Allowances, Scenario, UnitPrice } from "./schema.ts";
@@ -48,7 +49,14 @@ describe("pricing calculator", () => {
   it("keeps list price and after-allowance price apart", () => {
     const allowances: Allowances = {
       allowances: [
-        { priceId: "req", quantity: 1_000_000, period: "month", kind: "always-free", sourceId: "s", note: "" },
+        {
+          priceId: "req",
+          quantity: 1_000_000,
+          period: "month",
+          kind: "always-free",
+          sourceId: "s",
+          note: "",
+        },
       ],
       unknown: [],
     };
@@ -62,13 +70,16 @@ describe("pricing calculator", () => {
   });
 
   it("unknown price throws, never counts as zero", () => {
-    expect(() => calculate(scenario([{ priceId: "nat.hour", quantity: 730, basis: "" }]), [], none)).toThrow(
-      /unknown price/,
-    );
+    expect(() =>
+      calculate(scenario([{ priceId: "nat.hour", quantity: 730, basis: "" }]), [], none),
+    ).toThrow(/unknown price/);
   });
 
   it("unconfirmed allowance is flagged and deducts nothing", () => {
-    const allowances: Allowances = { allowances: [], unknown: [{ priceId: "req", reason: "not confirmed" }] };
+    const allowances: Allowances = {
+      allowances: [],
+      unknown: [{ priceId: "req", reason: "not confirmed" }],
+    };
     const result = calculate(
       scenario([{ priceId: "req", quantity: 10, basis: "" }]),
       [price("req", [[0, null, "1"]])],

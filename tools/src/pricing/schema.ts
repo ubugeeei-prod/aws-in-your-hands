@@ -14,7 +14,14 @@ export const unitPriceSchema = z.object({
   // `usd` stays the string AWS publishes, comparable byte for byte.
   // `to: null` is the open-ended last tier.
   tiers: z
-    .array(z.object({ from: z.number(), to: z.number().nullable(), usd: decimal, description: z.string() }))
+    .array(
+      z.object({
+        from: z.number(),
+        to: z.number().nullable(),
+        usd: decimal,
+        description: z.string(),
+      }),
+    )
     .min(1),
   sourceUrl: z.url(),
   offerPublicationDate: z.string(),
@@ -51,7 +58,9 @@ export const scenariosSchema = z.object({
       chapter: z.string(),
       title: localized,
       assumptions: z.object({ ja: z.array(z.string()), en: z.array(z.string()) }),
-      items: z.array(z.object({ priceId: z.string(), quantity: z.number().nonnegative(), basis: z.string() })),
+      items: z.array(
+        z.object({ priceId: z.string(), quantity: z.number().nonnegative(), basis: z.string() }),
+      ),
     }),
   ),
 });

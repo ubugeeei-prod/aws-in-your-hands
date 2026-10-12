@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+
 import { createApp } from "../src/app.ts";
 import { errorSchema, issuedSchema, TOKEN_HEADER, verifiedSchema } from "../src/contract.ts";
 import { parseEnv } from "../src/env.ts";
@@ -69,7 +70,9 @@ describe("token API", () => {
   });
 
   it("answers 503 with retry-after while the function may not read its secret", async () => {
-    const denied: SecretSource = { read: () => Promise.reject(new SecretAccessDenied("not allowed")) };
+    const denied: SecretSource = {
+      read: () => Promise.reject(new SecretAccessDenied("not allowed")),
+    };
     const { app, logged } = setup(denied);
     const response = await app.request("/token?sub=alice");
     expect(response.status).toBe(503);
@@ -98,8 +101,12 @@ describe("environment", () => {
 
   it("accepts where the secret is, and refuses anything that is not a secret ARN", () => {
     const arn = "arn:aws:secretsmanager:ap-northeast-1:111111111111:secret:SigningKey-AbCdEf";
-    expect(parseEnv({ SECRET_SOURCE: "secretsmanager", SECRET_ID: arn })).toMatchObject({ SECRET_ID: arn });
+    expect(parseEnv({ SECRET_SOURCE: "secretsmanager", SECRET_ID: arn })).toMatchObject({
+      SECRET_ID: arn,
+    });
     expect(() => parseEnv({ SECRET_SOURCE: "secretsmanager" })).toThrow("SECRET_ID");
-    expect(() => parseEnv({ SECRET_SOURCE: "secretsmanager", SECRET_ID: KEY })).toThrow("must be a secret ARN");
+    expect(() => parseEnv({ SECRET_SOURCE: "secretsmanager", SECRET_ID: KEY })).toThrow(
+      "must be a secret ARN",
+    );
   });
 });
