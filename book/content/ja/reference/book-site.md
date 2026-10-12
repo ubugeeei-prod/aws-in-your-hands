@@ -9,7 +9,7 @@ revision: 2
 
 このページでは、同じサイトを自分のアカウントに作り直す手順と、サイトの中身を説明します。[02章](/ja/chapters/02-toolchain.md)と[03章](/ja/chapters/03-spa.md)を読んでいることを前提にしています。
 
-手元で確かめられたのは、ビルド、リンク検査、CDK の synth と assertion までです。AWS へのデプロイ、公開、smoke test はまだ実行していません。このサイトの公開 URL も、まだありません。
+手元で確かめられたのは、ビルド、リンク検査、CDK の synth とアサーションまでです。AWS へのデプロイ、公開、smoke test はまだ実行していません。このサイトの公開 URL も、まだありません。
 
 ## 全体像
 
@@ -89,7 +89,7 @@ vp run preview:book
 
 ### 手で書いていないページ
 
-料金、出典、用語集、検証記録、ツールチェイン、未執筆の章のアウトラインは、手で書いていません。`data/` の JSON から、日英の両方を生成します。
+料金、出典、用語集、検証記録、ツールチェインのページは、手で書いていません。`data/` の JSON から、日英の両方を生成します。
 
 ```bash
 vp run book:generate
@@ -163,7 +163,7 @@ cdkd 0.296.28 での扱いは、ソースで確認しました。
 - `AWS::CloudFront::Distribution`、`AWS::CloudFront::OriginAccessControl` も専用の実装
 - `AWS::CloudFront::Function` は Cloud Control API 経由。こちらは、実際のデプロイをまだ確認できていません
 
-デプロイのときにバケットへファイルを置く CDK の construct である `BucketDeployment` は、使っていません。内容の公開を、インフラの更新から切り離しておきたいからです。
+デプロイのときにバケットへファイルを置く CDK のコンストラクトである `BucketDeployment` は、使っていません。内容の公開を、インフラの更新から切り離しておきたいからです。
 
 ### cdkd を使ううえで守ること
 
@@ -262,11 +262,11 @@ vp run book:infra:destroy
 
 ## CI から公開するなら
 
-人の端末からではなく CI から公開するときも、同じ Nix の lock と同じ `vp run` タスクを使います。例を `docs/examples/book-publish.yml` に置いています。AWS の認証には、長期のアクセスキーではなく、OIDC による期限の短い認証情報を使います。そのロールの定義は 20章（planned）で扱う予定で、まだこのリポジトリにはありません。
+人の端末からではなく CI から公開するときも、同じ Nix の lock と同じ `vp run` タスクを使います。例を `docs/examples/book-publish.yml` に置いています。AWS の認証には、長期のアクセスキーではなく、OIDC による期限の短い認証情報を使います。GitHub の OIDC プロバイダーと、ジョブの種類ごとに `sub` を 1 つだけ信頼するロールの書き方は、[20章](/ja/chapters/20-shipping/build.md)が `examples/20-shipping/infra/lib/ci-stack.ts` で扱っています。ただし、20章が定義しているのは 20章の API をデプロイするための 4 つのロール（`PlanRole`、`DeployRole`、`PreviewRole`、`DriftRole`）です。本のサイトを公開するためのロールは、このリポジトリにはありません。
 
 ::: details このページの検証メモ
 
-**手元で確かめたこと。** ビルド、リンク検査、CDK の synth と assertion。
+**手元で確かめたこと。** ビルド、リンク検査、CDK の synth とアサーション。
 
 **まだ確かめていないこと。** AWS へのデプロイ、公開、smoke test は実行していません。`AWS::CloudFront::Function` の実際のデプロイ、デプロイに失敗したときの cdkd の実際の挙動も未確認です。このサイトの公開 URL は、まだありません。
 

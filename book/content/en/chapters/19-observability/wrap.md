@@ -105,7 +105,7 @@ A canary that runs every minute costs five times as much as one that runs every 
 
 Destroying the stack stops this chapter's charges.
 
-## How Cloudflare Workers differs
+## If you're coming from Workers
 
 <!-- section: 19.workers -->
 
@@ -127,7 +127,7 @@ One caution applies to Workers pricing. According to the official documentation,
 
 On either platform, instrumenting with OpenTelemetry keeps the application code from being tied to the observability backend. This chapter's `telemetry.ts` contains no code specific to AWS.
 
-## Common problems
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -144,7 +144,7 @@ On either platform, instrumenting with OpenTelemetry keeps the application code 
 | The function does not start after you add the layer | Look for layer errors in the function's log. Also check that the runtime is in the layer's list of supported runtimes |
 | A trace breaks off partway | Either the sampling decision was not carried over or a span failed to export. Connect the parts with the `traceId` in the logs |
 
-## For production
+## If you take this to production
 
 - Set the alarm thresholds from your own service's numbers. 5% and one second are practice values. Watch the metrics for a week or two first to learn the normal values, then decide
 - Add monitoring from outside. If there are hours with no users, Synthetics lets the alarms tell a quiet night apart from an outage that nobody can get through
@@ -199,7 +199,7 @@ The observability tools are themselves a distributed system: their records trave
 
 | Section | Files | Tasks |
 | --- | --- | --- |
-| Overview | `examples/19-observability/infra/lib/observability-stack.ts`, `src/compose.ts`, `test/compose.test.ts`, `infra/test/observability-stack.test.ts` | `test:unit` |
+| The big picture | `examples/19-observability/infra/lib/observability-stack.ts`, `src/compose.ts`, `test/compose.test.ts`, `infra/test/observability-stack.test.ts` | `test:unit` |
 | Alarms on symptoms | `examples/19-observability/src/alarm-math.ts`, `test/alarm-math.test.ts`, `infra/lib/monitoring.ts` | `test:unit` |
 | The first numbers to look at | `examples/19-observability/infra/lib/monitoring.ts`, `infra/test/observability-stack.test.ts` | `test:unit`, `obs:infra:synth` |
 | Narrowing down to one request with logs | `examples/19-observability/src/log-shape.ts`, `src/conditions.ts`, `src/queries.ts`, `test/log-shape.test.ts`, `test/queries.test.ts`, `scripts/query.ts` | `test:unit`, `obs:query:print` |
@@ -209,8 +209,8 @@ The observability tools are themselves a distributed system: their records trave
 | Following one ID | `examples/19-observability/src/trace-context.ts`, `src/telemetry.ts`, `test/trace-context.test.ts`, `test/tracing.test.ts` | `test:unit` |
 | Only some traces are kept | `examples/19-observability/src/local-tracing.ts`, `src/cost-inputs.ts`, `test/tracing.test.ts` | `test:unit` |
 | What stays out of logs and traces | `examples/19-observability/src/log-shape.ts`, `src/telemetry.ts`, `test/log-shape.test.ts`, `test/tracing.test.ts` | `test:unit` |
-| Seeing it on your machine | `examples/19-observability/src/dev.ts`, `src/local-tracing.ts`, `.env.example` | `dev:obs`, `test:unit` |
-| Deploy and check | `examples/19-observability/infra/bin/app.ts`, `scripts/smoke.ts`, `scripts/query.ts`, `scripts/alarms.ts` | `obs:infra:diff`, `obs:infra:deploy`, `obs:smoke`, `obs:query`, `obs:alarms`, `obs:infra:drift` |
+| Running it locally | `examples/19-observability/src/dev.ts`, `src/local-tracing.ts`, `.env.example` | `dev:obs`, `test:unit` |
+| Deploying and checking | `examples/19-observability/infra/bin/app.ts`, `scripts/smoke.ts`, `scripts/query.ts`, `scripts/alarms.ts` | `obs:infra:diff`, `obs:infra:deploy`, `obs:smoke`, `obs:query`, `obs:alarms`, `obs:infra:drift` |
 | Cost | `examples/19-observability/src/cost-inputs.ts`, `test/cost-inputs.test.ts`, `data/pricing/` | `test:unit` |
 | Cleaning up | `tools/src/infra/` | `obs:infra:destroy` |
 

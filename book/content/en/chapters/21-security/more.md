@@ -84,7 +84,7 @@ A deploy creates a role and immediately runs a function with it, which is exactl
 
 It retries only denials. Other errors won't go away by waiting, so it raises them at once. The number of attempts is also capped. If the call is still denied at the cap, the cause is a mistake in the policy and not propagation delay. Somewhere you have to separate what waiting fixes from what it doesn't.
 
-The function, for its part, answers 503 with `retry-after` when it lacks permission to read the secret.
+The function, for its part, answers 503 with `retry-after` whenever handling a request throws, whatever the cause. Lacking permission to read the secret is one such case, and only the message in the response tells it apart.
 
 <<< @/examples/21-security/src/app.ts{unavailable}
 

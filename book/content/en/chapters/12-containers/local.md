@@ -4,7 +4,7 @@ title: "12 Containers: Run It Locally"
 
 # 12 Containers: Run It Locally
 
-## Checking things locally
+## Checking it locally
 
 <!-- section: 12.local -->
 

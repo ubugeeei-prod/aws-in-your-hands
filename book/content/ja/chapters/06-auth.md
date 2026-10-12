@@ -1,6 +1,6 @@
 ---
 title: "06 Auth: Cognito と認可"
-revision: 4
+revision: 5
 ---
 
 # 06 Auth: Cognito と認可
@@ -19,12 +19,12 @@ SPA は公開でき、ノートはテーブルに残るようになりました�
 caption: SPA は Cognito のマネージドログインでサインインし、認可コードをアクセストークンに交換する
 type: sequence
 actor browser: Browser | CloudFront + S3 から配る SPA
-actor cognito: Cognito managed login | user pool domain
+actor cognito: Cognito managed login | ユーザープールのドメイン
 step browser -> cognito: 1. サインイン画面へリダイレクト
 note cognito: 2. パスワードはここで入力する。SPA ではない
 step cognito --> browser: 3. ?code=...&state=... を付けてリダイレクトで戻す
 step browser -> cognito: 4. POST /oauth2/token (code + PKCE code_verifier)
-step cognito --> browser: access token
+step cognito --> browser: アクセストークン
 ```
 
 ```figure
@@ -32,8 +32,8 @@ caption: API Gateway の JWT オーソライザーがアクセストークンを
 node browser: Browser | CloudFront + S3 から配る SPA
 node api: API Gateway HTTP API | JWT authorizer: signature, issuer, expiry, client, scope
 node fn: Lambda function | owner = claims.sub
-node table: DynamoDB table | pk = OWNER#<sub>, sk = NOTE#<note id>
-edge browser -> api: 5. GET /notes + access token
+node table: DynamoDB テーブル | pk = OWNER#<sub>, sk = NOTE#<note id>
+edge browser -> api: 5. GET /notes + アクセストークン
 edge api -> fn: 検証済みのクレームをイベントで渡す
 edge fn -> table
 edge api -x browser: 失敗は 401/403。Lambda は呼ばれない
@@ -135,7 +135,7 @@ API Gateway と Lambda の両方で確かめるのは重複に見えますが、
 
 認可のためのコードは、ほとんどありません。この利用者がこのノートに触ってよいかを確かめる if 文は、どこにもありません。かわりに、決まりが 2 つあります。
 
-1. service に渡す持ち主は、いつもトークンの `sub` にする。path、query、body からは決して取らない
+1. service に渡す持ち主は、いつもトークンの `sub` にする。パス、クエリ、ボディからは決して取らない
 2. ノートは持ち主の下に保存されている（05章の `pk = OWNER#<持ち主>`）
 
 この 2 つがあると、他人のノートは見つからないことになります。Bob が Alice のノートの ID を指定して `GET /notes/<id>` を呼ぶと、アプリは `OWNER#bob` の下でその ID を探します。そこにはないので、404 が返ります。ここで `bob` と書いた部分に実際に入るのは `sub` で、手元の開発用サインインなら `local-bob`、実環境ならユーザープールが発行する ID です。
@@ -151,7 +151,7 @@ API Gateway と Lambda の両方で確かめるのは重複に見えますが、
 - Bob の一覧に Alice のノートが出ない
 - Bob が Alice のノートの ID を指定すると、存在しない ID と同じ 404 が返る
 - Bob は、ID と version を知っていても、Alice のノートを更新も削除もできない
-- Bob が query、ヘッダー、body のすべてに `owner: alice` と書いても、ノートは Bob の下に作られる
+- Bob がクエリ、ヘッダー、ボディのすべてに `owner: alice` と書いても、ノートは Bob の下に作られる
 
 `sub` はメールアドレスではありません。メールアドレスは変更でき、別の人に再利用されることもあります。`sub` はユーザープールが発行する変わらない識別子で、公式ドキュメントも、利用者を識別するには `sub` を使うよう勧めています。
 

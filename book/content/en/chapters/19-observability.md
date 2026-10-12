@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics
@@ -13,7 +13,7 @@ Cost is the other subject. If you add observability tools without thinking about
 
 You need [chapter 04](/en/chapters/04-http-api.md) first. The code is in `examples/19-observability/`.
 
-## Overview
+## The big picture
 
 <!-- section: 19.overview -->
 

@@ -4,7 +4,7 @@ title: "15 Email: Run It Locally"
 
 # 15 Email: Run It Locally
 
-## Run it locally
+## Running it locally
 
 <!-- section: 15.local -->
 

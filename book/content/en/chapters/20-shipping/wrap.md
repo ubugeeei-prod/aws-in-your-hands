@@ -6,7 +6,7 @@ title: "20 CI/CD: Costs, Pitfalls, and Cleanup"
 
 This is the last page of the chapter. It covers how this differs from Cloudflare Workers, what it costs, where you are likely to get stuck, what to add for production, and how to clean up, and it ends with what was and was not verified.
 
-## If you come from Workers
+## If you're coming from Workers
 
 <!-- section: 20.workers -->
 
@@ -24,7 +24,7 @@ Workers takes far fewer steps. A Worker is one unit, so switching versions is in
 
 Both have things that do not come back.
 
-## Money
+## Cost
 
 Amounts are in USD, for the Tokyo Region, on demand, before tax. The calculations are in [Pricing calculations](/en/reference/pricing.md).
 
@@ -40,7 +40,7 @@ Consider also what it costs when the API gets hammered. This chapter's API, in d
 
 Notes are stored in chapter 04's in-memory repository, so they stop at 100 per execution environment. Response sizes are chapter 04's too: a list is 20 summaries and at most 20 KiB, and one note is at most 64 KiB. For how far data transfer can go, the calculation on [chapter 04's costs page](/en/chapters/04-http-api/wrap.md) applies unchanged (up to about USD 180 a month). What to add before real users arrive is also the same as in chapter 04: authentication (chapter 06), and AWS WAF with CloudFront in front (chapter 21; the web ACL is 8.00 a month).
 
-## Where you get stuck
+## Where people get stuck
 
 The table below does not list problems met by running anything. It lists the places where the documentation and the code show you are likely to get stuck.
 
@@ -55,7 +55,7 @@ The table below does not list problems met by running anything. It lists the pla
 | `ship:cfn:diff` is empty but the behavior differs | The diff compares templates. Run `vp run ship:cfn:drift` |
 | The prod stack cannot be deleted | Termination protection is on. If you really mean to delete the stack, turn it off in the console first |
 
-## Taking it to production
+## If you take this to production
 
 - Narrow the cfn-exec role. The default is `AdministratorAccess`. Pass only the policies you need when bootstrapping, and add a permissions boundary. Every job that can use the deploy role reaches as far as the cfn-exec role's permissions
 - Separate the accounts. As long as dev, previews, and prod share an account, only names keep them apart
@@ -118,7 +118,7 @@ This chapter changed nothing in cdkd's bootstrap (chapter 02) or in chapter 04's
 | CloudFormation drift through the same gate | `tools/src/drift/cloudformation.ts`, `cloudformation-schema.ts`, `cloudformation.test.ts`, `fixtures/cloudformation/`, `examples/20-shipping/src/drift-client.ts`, `test/drift-client.test.ts`, `scripts/drift.ts` | `ship:cfn:drift`, `test:unit` |
 | `IN_SYNC` is not "everything matches" | `examples/20-shipping/src/drift-coverage.ts`, `infra/test/ship-api-stack.test.ts` | `ship:cfn:drift`, `test:unit` |
 | Cleaning up | `examples/20-shipping/scripts/cdk.ts` | `ship:cfn:destroy`, `ship:ci:destroy` |
-| Money | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
+| Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-12)
 

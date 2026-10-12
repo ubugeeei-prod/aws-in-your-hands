@@ -6,7 +6,7 @@ title: "21 Security: Costs, Pitfalls, and Cleanup"
 
 This last page of the chapter covers how the setup differs from Workers, what it costs, where you might get stuck, what to add for production, and how to clean up. What was verified and the primary sources are in the verification notes at the bottom of the page.
 
-## If you come from Workers
+## If you're coming from Workers
 
 <!-- section: 21.workers -->
 
@@ -71,7 +71,7 @@ Organizations and SCPs, CloudTrail event history, and IAM carry no additional ch
 
 Three things could not be confirmed: whether a KMS key is billed during its 7 days pending deletion, which usage type a web ACL for CloudFront appears under on a bill, and how CloudFront's flat-rate plans include WAF. This chapter looks only at pay-as-you-go pricing.
 
-## Where you might get stuck
+## Where people get stuck
 
 The items in this table were not encountered by running anything. They are the places where the documentation and the code suggest you could get stuck.
 
@@ -155,7 +155,7 @@ Anything this chapter's tasks did not create is not removed. GuardDuty or Inspec
 | Until an IAM change takes effect everywhere | `examples/21-security/src/propagation.ts`, `test/propagation.test.ts`, `scripts/smoke.ts`, `scripts/trail.ts` | `sec:smoke`, `sec:trail:iam` |
 | Four services for detection and recording | `examples/21-security/scripts/posture.ts`, `scripts/trail.ts` | `sec:posture`, `sec:trail:iam` |
 | Once you are an organization | `examples/21-security/policies/scp-guardrails.json`, `src/policy-model.ts`, `test/scp.test.ts` | `test:unit` |
-| Deploy and check | `examples/21-security/scripts/smoke.ts` | `sec:infra:deploy`, `sec:smoke`, `sec:infra:drift` |
+| Deploying and checking | `examples/21-security/scripts/smoke.ts` | `sec:infra:deploy`, `sec:smoke`, `sec:infra:drift` |
 | Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 | Cleaning up | `examples/21-security/infra/lib/security-stack.ts` | `sec:infra:destroy`, `sec:waf:infra:destroy` |
 

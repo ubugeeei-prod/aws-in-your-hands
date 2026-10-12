@@ -28,7 +28,7 @@ According to the official documentation (the read consistency page), global tabl
 
 Whether this chapter's optimistic locking holds unchanged should depend on the mode. In the default mode, changes are replicated asynchronously, so the evaluation of a condition in one Region may not yet see a write made a moment ago in another Region. This is an inference from the description of replication, and it has not been confirmed directly in the official documentation. Either way, don't assume from the name "global" that conditional writes take effect across Regions. Before using global tables, check the mode, the supported Regions, and the scope of transactions in the official documentation as it stands at that time.
 
-## Costs
+## Cost
 
 Amounts are in USD, for the Tokyo Region, on-demand, before tax. The inputs and unit prices behind the calculations are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -113,7 +113,7 @@ Delete the stack and the table is deleted with it, and nothing remains.
 - Watch throttling and failures. Look at DynamoDB errors and the proportion of 409s ([chapter 19](/en/chapters/19-observability.md)). A high proportion of 409s is a signal to reconsider how the screen is built or how notes are divided up
 - Deploy through the AWS CDK CLI and CloudFormation, as chapter 02 explained
 
-## Clean up
+## Cleaning up
 
 <!-- section: 05.cleanup -->
 
@@ -149,12 +149,12 @@ The table's caps and the stage's throttling are in the same state. Tests pin `On
 | Choose the read consistency | `examples/05-dynamodb/src/dynamodb-repository.ts`, `test/dynamodb-repository.test.ts` | `test:unit` |
 | Page through without dropping items | `examples/05-dynamodb/src/repository.ts`, `src/app.ts`, `src/contract.ts`, `test/app.test.ts` | `test:unit` |
 | When the response never arrives | `examples/05-dynamodb/src/client.ts`, `test/app.test.ts` | `test:unit` |
-| Run it on your machine | `examples/05-dynamodb/src/dev.ts`, `src/env.ts`, `test/env.test.ts`, `scripts/local-db.ts`, `test/fixtures/seed-notes.json`, `.env.example` | `dev:notes`, `db:local:start`, `db:migrate:local`, `db:seed:local`, `db:reset:local`, `db:local:stop` |
+| Running it locally | `examples/05-dynamodb/src/dev.ts`, `src/env.ts`, `test/env.test.ts`, `scripts/local-db.ts`, `test/fixtures/seed-notes.json`, `.env.example` | `dev:notes`, `db:local:start`, `db:migrate:local`, `db:seed:local`, `db:reset:local`, `db:local:stop` |
 | Tests | `examples/05-dynamodb/test/`, `scripts/test-local.ts` | `test:unit`, `test:local:dynamodb` |
 | Getting ready for AWS | `examples/05-dynamodb/infra/lib/notes-stack.ts`, `infra/bin/app.ts`, `infra/test/notes-stack.test.ts`, `cdk.json` | `notes:infra:synth`, `test:unit` |
-| Deploy it and check | `examples/05-dynamodb/src/lambda.ts`, `scripts/smoke.ts`, `tools/src/infra/` | `notes:infra:diff`, `notes:infra:deploy`, `notes:smoke`, `notes:infra:drift` |
-| Clean up | `tools/src/infra/` | `notes:infra:destroy`, `db:local:stop` |
-| Costs | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
+| Deploying and checking | `examples/05-dynamodb/src/lambda.ts`, `scripts/smoke.ts`, `tools/src/infra/` | `notes:infra:diff`, `notes:infra:deploy`, `notes:smoke`, `notes:infra:drift` |
+| Cleaning up | `tools/src/infra/` | `notes:infra:destroy`, `db:local:stop` |
+| Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-11)
 

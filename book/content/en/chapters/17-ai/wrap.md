@@ -6,7 +6,7 @@ title: "17 AI: Costs, Pitfalls, and Cleanup"
 
 With the [deploy](/en/chapters/17-ai/deploy.md) done, this page sets out how Bedrock differs from Workers AI and what the chapter costs, and then cleans up what you built.
 
-## Differences from Workers AI
+## If you're coming from Workers AI
 
 <!-- section: 17.workers-ai -->
 
@@ -65,7 +65,7 @@ Some things could not be confirmed: whether Bedrock has a free allowance, and ho
 
 Deleting the stack stops the charges from this chapter.
 
-## Common problems
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -78,7 +78,7 @@ Deleting the stack stops the charges from this chapter.
 | The last event is `error` with `interrupted` | The stream was cut partway. If `retryable` is `true`, you can send the same request again |
 | The response arrives all at once at the end | Check that the URL's `InvokeMode` is `RESPONSE_STREAM`. If you put a proxy in between, check that the proxy is not buffering. The times `ai:smoke` prints are a clue |
 
-## Going to production
+## If you take this to production
 
 - To let a browser call the API, the official documentation describes putting CloudFront in front of the function URL and having CloudFront sign requests with origin access control. The URL's authentication stays `AWS_IAM`. That alone lets anyone who knows the CloudFront URL call it, though, so the app needs to verify the access token from chapter 06. The documentation also says that for a POST, the SHA-256 of the body must be sent in the `x-amz-content-sha256` header. This chapter builds none of this
 - Add a limit per user. The only limits now are the limit on one call and, if you specify it, the limit on how many run at once. If the same person calls 10,000 times, you pay for 10,000 calls. Limiting the number of calls needs authentication that tells users apart, and a place to count the calls
@@ -88,7 +88,7 @@ Deleting the stack stops the charges from this chapter.
 - Track the model's end date. Each model card gives an indication of when the model ends. Claude Haiku 4.5, for example, is listed as "EOL no sooner than 2026-10-16". The model ID is an environment variable because the day to change it will come
 - Move deployment to the AWS CDK CLI and CloudFormation, as explained in chapter 02
 
-## Cleanup
+## Cleaning up
 
 <!-- section: 17.cleanup -->
 
@@ -119,7 +119,7 @@ What remains is the storage created by cdkd's bootstrap (chapter 02) and the dep
 
 | Section | Files | Tasks |
 | --- | --- | --- |
-| Overview | `examples/17-ai/infra/lib/ai-stack.ts` | |
+| The big picture | `examples/17-ai/infra/lib/ai-stack.ts` | |
 | Calling a model in a few lines | `examples/17-ai/scripts/hello.ts`, `src/converse-stream.ts` | `ai:hello` |
 | Choosing a model | `examples/17-ai/infra/lib/models.ts`, `infra/bin/app.ts` | `test:unit` |
 | The input limit and the events you return | `examples/17-ai/src/contract.ts`, `src/prompt.ts` | `test:unit` |
@@ -130,8 +130,8 @@ What remains is the storage created by cdkd's bootstrap (chapter 02) and the dep
 | Tests | `examples/17-ai/test/`, `infra/test/ai-stack.test.ts`, `scripts/live.ts` | `test:unit`, `ai:test:live` |
 | When the stream is cut | `examples/17-ai/src/client.ts`, `test/client.test.ts` | `test:unit` |
 | Getting ready for AWS | `examples/17-ai/infra/lib/ai-stack.ts`, `src/lambda.ts`, `infra/test/ai-stack.test.ts`, `cdk.json` | `ai:infra:synth`, `test:unit` |
-| Deploy and call | `examples/17-ai/scripts/smoke.ts`, `scripts/sign.ts`, `scripts/logs.ts`, `tools/src/infra/` | `ai:infra:diff`, `ai:infra:deploy`, `ai:smoke`, `ai:logs`, `ai:infra:drift` |
-| Cleanup | `tools/src/infra/` | `ai:infra:destroy` |
+| Deploying and calling | `examples/17-ai/scripts/smoke.ts`, `scripts/sign.ts`, `scripts/logs.ts`, `tools/src/infra/` | `ai:infra:diff`, `ai:infra:deploy`, `ai:smoke`, `ai:logs`, `ai:infra:drift` |
+| Cleaning up | `tools/src/infra/` | `ai:infra:destroy` |
 | Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Primary sources** (all checked on 2026-10-11)

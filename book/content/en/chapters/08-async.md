@@ -1,6 +1,6 @@
 ---
 title: "08 Queue: SQS, DLQs, Idempotency, and Scheduler"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 08 Queue: SQS, DLQs, Idempotency, and Scheduler
@@ -48,7 +48,7 @@ step worker -> s3: 4. DeleteObjectTagging (if ATTACHMENT#...)
 ```
 
 ```figure
-caption: Every hour the Scheduler invokes Housekeeping, which compares the bucket with the table, deletes objects that nothing points at or that failed the inspection, and takes the pending tag off attached images.
+caption: Every hour the Scheduler invokes Housekeeping, which compares the bucket with the table, deletes objects that nothing points at or that failed the inspection, and takes the pending tag off the attached images that remain and are less than two days old.
 node sched: EventBridge Scheduler | "aih-async-housekeeping": rate(1 hour)
 node hk: Lambda function "Housekeeping" | timeout 15 min
 node s3: S3 bucket
@@ -331,7 +331,7 @@ The second is deleting attachments that the inspection rejected. The order is th
 
 Before deleting, housekeeping also checks that the verdict is about the object as it is now. A verdict reached before the object's last-modified time is about the bytes from before a replacement, and housekeeping does not use it.
 
-The third is taking the pending tag off attached images once more. This does what the worker's step 4 does without relying on an event. The lifecycle rule deletes a pending object one day after its creation at the earliest, and housekeeping that runs hourly passes over the same object more than twenty times before then.
+The third is taking the pending tag off attached images once more. This does what the worker's step 4 does without relying on an event. It applies to objects at least an hour old and less than two days old, and it skips the ones the second job has just deleted. An object older than two days that still exists either never got the pending tag back or is past saving. The lifecycle rule deletes a pending object one day after its creation at the earliest, and housekeeping that runs hourly passes over the same object more than twenty times before then.
 
 Step 4 alone leaves a very narrow gap: the form is sent again between the finishing request taking the tag off and writing the attachment record, and the worker handles that notification before the record is written. The third job covers that gap too.
 
@@ -354,4 +354,4 @@ vp run async:housekeeping --delete
 
 This task runs with your credentials, and the deployed function runs with its own role.
 
-One note on cost before moving on. Every run of this housekeeping looks at every object in the bucket, so its time and its cost grow with the number of images stored. The numbers are under "What it costs" on the [costs page](/en/chapters/08-async/wrap.md).
+One note on cost before moving on. Every run of this housekeeping looks at every object in the bucket, so its time and its cost grow with the number of images stored. The numbers are under "Cost" on the [costs page](/en/chapters/08-async/wrap.md).

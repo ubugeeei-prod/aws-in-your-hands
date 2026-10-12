@@ -162,7 +162,7 @@ any layout
 
 In step 2, zone 1a is the one that stopped, yet 1c, which should be unaffected, can no longer reach the internet either, because its way out was the NAT gateway in 1a. Using a single NAT gateway has undone the point of having two zones.
 
-The test replays exactly this sequence.
+The test below replays steps 1 to 3 in order for the `nat` layout, and then checks that zone 1a doesn't notice when 1c is the one that fails. Steps 2' and 4 are separate tests in the same file.
 
 <<< @/examples/11-network/test/reach.test.ts{zone-failure}
 
@@ -170,6 +170,6 @@ With `nat-per-az`, 1c keeps its way out, and the fixed cost doubles. You can cho
 
 The second is step 4. A zone is a division inside a Region, and a VPC exists in one Region only. If the whole Region is impaired, nothing in this VPC is reachable, however many zones it has. Multiple zones cover the failure of one zone and do not cover the failure of a Region. Covering that takes another full set in another Region, which is a different design and outside this chapter.
 
-The invariant of this section, in one sentence, is "a private subnet in a zone that is up still reaches whatever it reached before another zone went down". `nat-per-az` and the default layout satisfy it, and `nat` doesn't. The tests pin that down.
+The invariant of this section, in one sentence, is "a private subnet in a zone that is up still reaches whatever it reached before another zone went down". `nat-per-az` and the default layout satisfy it, and `nat` doesn't. What the tests pin down is that `nat` doesn't, and that with `nat-per-az` the surviving side still reaches the internet whichever zone goes down. No test takes one zone down in the default layout. What is pinned for the default layout is that a private subnet has no route out and reaches only S3 and DynamoDB.
 
 What this test breaks is a model of the plan. It does not stop a real zone.

@@ -6,7 +6,7 @@ title: "21 Security: Deploy"
 
 This page deploys the default stack built so far to AWS and checks it. It also adds the bounds that hold when a flood of requests reaches the public URL.
 
-## Deploy and check
+## Deploying and checking
 
 <!-- section: 21.deploy -->
 

@@ -25,7 +25,7 @@ AWS has more parts. You define the entry point, the function, the role, and the 
 
 CloudFront Functions (chapter 03) has a similar name, but it is not a counterpart of Workers. It is a small environment for rewriting URLs and headers, and it can't reach the network or the file system.
 
-## Costs
+## Cost
 
 Amounts are in USD, for the Tokyo Region, pay-as-you-go, before tax. The details of the calculation are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -71,7 +71,7 @@ The second is duration. The table assumes 50 milliseconds, but the ceiling the c
 
 Whether API Gateway charges for the 429s that throttling turns away has not been checked either.
 
-Before real users arrive, the first thing to add is authentication (chapter 06). To stop one IP address at a time you would use AWS WAF, but it can't be attached to an HTTP API, so you would put CloudFront in front. The web ACL in [chapter 21](/en/chapters/21-security.md) costs USD 8.00 a month plus USD 0.60 per million requests. This book doesn't build that setup.
+Before real users arrive, the first thing to add is authentication (chapter 06). To stop one IP address at a time you would use AWS WAF, but it can't be attached to an HTTP API, so you would put CloudFront in front. The web ACL in [chapter 21](/en/chapters/21-security.md) costs USD 8.00 a month (USD 5 for the web ACL and USD 1 for each of its three rules) plus USD 0.60 per million requests inspected. This book doesn't build that setup.
 
 Deleting the stack stops the charges for this chapter.
 
@@ -103,7 +103,7 @@ When an error comes back, look first for the `x-request-id` header. If it is the
 - Deploy through the AWS CDK CLI and CloudFormation, for the reason chapter 02 gave
 - Check the concurrency limit. The default is 1,000 per Region, shared by every function in the account, and new accounts start lower
 
-## Clean up
+## Cleaning up
 
 <!-- section: 04.cleanup -->
 
@@ -128,14 +128,14 @@ What remains is the storage created by the cdkd bootstrap (chapter 02) and the d
 | Decide the contract first | `examples/04-http-api/src/contract.ts` | `test:unit` |
 | Write the app | `examples/04-http-api/src/app.ts`, `src/notes.ts`, `src/compose.ts`, `src/log.ts` | `test:unit` |
 | Check the configuration at startup | `examples/04-http-api/src/env.ts`, `test/env.test.ts`, `.env.example` | `test:unit` |
-| Run it on your machine | `examples/04-http-api/src/dev.ts` | `dev:api`, `dev:api:cdkd` |
+| Running it locally | `examples/04-http-api/src/dev.ts` | `dev:api`, `dev:api:cdkd` |
 | Tests | `examples/04-http-api/test/app.test.ts`, `test/client.test.ts`, `src/client.ts` | `test:unit` |
 | Where the notes live | `examples/04-http-api/src/lambda.ts`, `src/notes.ts`, `scripts/smoke.ts` | `api:smoke` |
 | Getting ready for AWS | `examples/04-http-api/infra/lib/http-api-stack.ts`, `infra/bin/app.ts`, `infra/test/http-api-stack.test.ts`, `cdk.json` | `api:infra:synth`, `test:unit` |
-| Deploy it and call it | `tools/src/infra/`, `examples/04-http-api/scripts/smoke.ts` | `api:infra:diff`, `api:infra:deploy`, `api:smoke` |
+| Deploying and calling | `tools/src/infra/`, `examples/04-http-api/scripts/smoke.ts` | `api:infra:diff`, `api:infra:deploy`, `api:smoke` |
 | Look at the logs | `examples/04-http-api/src/log.ts`, `scripts/logs.ts` | `api:logs`, `api:infra:drift` |
-| Clean up | `tools/src/infra/` | `api:infra:destroy` |
-| Costs | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
+| Cleaning up | `tools/src/infra/` | `api:infra:destroy` |
+| Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-11)
 

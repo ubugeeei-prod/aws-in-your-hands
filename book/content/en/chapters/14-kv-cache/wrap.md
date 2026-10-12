@@ -4,7 +4,7 @@ title: "14 Cache: Costs, Pitfalls, and Cleanup"
 
 # 14 Cache: Costs, Pitfalls, and Cleanup
 
-## Coming from Workers KV or Durable Objects
+## If you're coming from Workers KV or Durable Objects
 
 <!-- section: 14.cloudflare -->
 
@@ -51,7 +51,7 @@ Use CloudFront KeyValueStore only for configuration that edge functions read.
 
 Lambda memory is a first cache layer that comes at no extra charge, and you do not rely on it for correctness.
 
-## The money
+## Cost
 
 <!-- section: 14.cost -->
 
@@ -120,7 +120,7 @@ Before real users arrive, add authentication (chapter 06) and, if you need it, A
 
 Deleting the stack stops this chapter's charges.
 
-## Where it goes wrong
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -136,7 +136,7 @@ Deleting the stack stops this chapter's charges.
 | `Valkey did not answer within 1000 ms` | The cache is not being reached, or it is answering slowly. The API keeps answering from the source |
 | A sliding window refuses one request sooner than expected | Fractions are rounded down. It is an approximation and does not guarantee exactly the limit |
 
-## Before production
+## If you take this to production
 
 - To tell users apart, count by a verified ID. An IP address lumps together everyone behind the same exit and counts a caller with many addresses separately (chapter 06)
 - Set the throttling values to fit your API. 10 requests a second is a practice value, and if you raise it, raise the cap on the table with it. AWS WAF cannot be attached to an HTTP API, so if you need it you have to choose the setup again ([chapter 04](/en/chapters/04-http-api.md)). The rate limit in the app is for sharing out calls fairly, not for absorbing an attack
@@ -210,8 +210,8 @@ The second also carries a caveat. What the caller cannot choose is which address
 | Edge configuration and CloudFront KeyValueStore | `examples/10-edge/` | - |
 | Running it locally | `examples/14-kv-cache/src/app.ts`, `src/caller.ts`, `test/caller.test.ts`, `src/compose.ts`, `src/env.ts`, `src/dev.ts`, `scripts/local-stores.ts`, `scripts/test-local.ts`, `.env.example` | `dev:kv`, `kv:local:start`, `kv:local:migrate`, `kv:test:local`, `kv:local:stop` |
 | Getting ready for AWS | `examples/14-kv-cache/infra/lib/kv-cache-stack.ts`, `infra/bin/app.ts`, `infra/test/kv-cache-stack.test.ts`, `cdk.json` | `kv:infra:synth`, `test:unit` |
-| Deploy and check | `examples/14-kv-cache/scripts/smoke.ts`, `scripts/logs.ts` | `kv:infra:diff`, `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift` |
-| The money | `data/pricing/` | `test:unit` |
+| Deploying and checking | `examples/14-kv-cache/scripts/smoke.ts`, `scripts/logs.ts` | `kv:infra:diff`, `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift` |
+| Cost | `data/pricing/` | `test:unit` |
 | Cleaning up | `tools/src/infra/` | `kv:infra:destroy`, `kv:local:stop` |
 
 **Primary sources** (checked 2026-10-12 unless noted)

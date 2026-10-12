@@ -1,6 +1,6 @@
 ---
 title: "16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch

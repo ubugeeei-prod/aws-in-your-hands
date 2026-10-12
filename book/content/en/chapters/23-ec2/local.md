@@ -4,7 +4,7 @@ title: "23 VM: Run It Locally"
 
 # 23 VM: Run It Locally
 
-## Checking it on your machine
+## Running it locally
 
 <!-- section: 23.local -->
 

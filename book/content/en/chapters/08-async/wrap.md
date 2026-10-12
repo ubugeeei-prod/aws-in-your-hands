@@ -6,7 +6,7 @@ title: "08 Queue: Costs, Pitfalls, and Cleanup"
 
 This page closes the chapter. For the setup built on the [first page](/en/chapters/08-async.md) and prepared for AWS on the [deploy page](/en/chapters/08-async/deploy.md), it covers how it differs from Cloudflare Queues, what it costs, where it tends to go wrong, and how to clean up.
 
-## If you come from Queues
+## If you're coming from Queues
 
 Cloudflare has parts that play the same roles. The table sets them side by side, as far as the official documentation was checked.
 
@@ -26,7 +26,7 @@ Idempotency works the same way on both. Cloudflare's documentation also says to 
 
 The example message of an R2 notification has the object's key, size, ETag, and time, but nothing that corresponds to S3's `sequencer` was found in it. How to order operations on the same key with R2 has not been checked. The page that was read did not state the delivery guarantee of Cron Triggers either.
 
-## What it costs
+## Cost
 
 Amounts are in USD, for the Tokyo Region, before tax. The inputs and unit prices are in the [pricing worksheets](/en/reference/pricing.md).
 
@@ -80,7 +80,7 @@ The last item is the resending of one form, described under ["The queue grows" o
 
 One thing needs watching with the table's limits. The API, the worker, and housekeeping share them. While housekeeping is reading heavily, DynamoDB can refuse reads from the API. When a worker's write is refused, that message goes back on the queue and lands in the DLQ on the fifth try. At how many images this starts to happen has not been measured.
 
-## Where it goes wrong
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -96,9 +96,9 @@ One thing needs watching with the table's limits. The API, the worker, and house
 | Messages with nothing wrong in them pile up in the DLQ | Check that the worker is not returning "already done" as a failure |
 | The worker's or housekeeping's log shows a DynamoDB throttling error | The API, the worker, and housekeeping share the table's request unit limits (150 read, 40 write). Have housekeeping read less, or raise the limits |
 | The queue keeps growing, and the events are all for the same key | The same form is being sent again and again. See ["The queue grows" on the deploy page](/en/chapters/08-async/deploy.md) and "When it gets hammered" on this page |
-| The housekeeping function times out | There are too many objects. See "What it costs" and "Before production" on this page |
+| The housekeeping function times out | There are too many objects. See "Cost" and "If you take this to production" on this page |
 
-## Before production
+## If you take this to production
 
 - **Put an alarm on the DLQ.** A DLQ that nobody looks at only collects messages. Raise an alert when `ApproximateNumberOfMessagesVisible` is no longer 0. On the source queue, alarm on the age of the oldest message ([chapter 19](/en/chapters/19-observability.md) shows how to put an alarm together)
 - **Limit at the entrance.** A queue accepts everything that arrives. Close the resending of a form on chapter 07's side, and count uploads
@@ -145,7 +145,7 @@ What remains is the storage that cdkd's bootstrap created (chapter 02) and the d
 | Deploying and checking | `examples/08-async/scripts/smoke.ts`, `scripts/user.ts`, `scripts/write-config.ts`, `tools/src/site/`, `tools/src/infra/` | `async:infra:diff`, `async:infra:deploy`, `async:smoke`, `async:user:create`, `async:publish`, `async:smoke:web`, `async:infra:drift` |
 | When it backs up, when it falls over | `examples/08-async/scripts/queue.ts`, `scripts/logs.ts` | `async:queue`, `async:logs` |
 | Cleaning up | `examples/08-async/scripts/empty-uploads.ts`, `scripts/user.ts`, `tools/src/site/unpublish.ts` | `async:empty`, `async:unpublish`, `async:infra:destroy`, `async:user:delete` |
-| What it costs | `data/pricing/` | `test:unit` |
+| Cost | `data/pricing/` | `test:unit` |
 
 **Primary sources** (all checked on 2026-10-12)
 

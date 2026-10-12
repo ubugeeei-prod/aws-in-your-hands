@@ -6,7 +6,7 @@ title: "09 SSR: Run It Locally"
 
 This page runs the cache decision, the BFF, and streaming from [Design and Build](/en/chapters/09-ssr/build.md) on your machine, without AWS.
 
-## Run it locally
+## Running it locally
 
 <!-- section: 09.local -->
 

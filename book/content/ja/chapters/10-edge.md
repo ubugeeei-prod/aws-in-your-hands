@@ -1,6 +1,6 @@
 ---
 title: "10 Edge: CloudFront Functions、KeyValueStore、Lambda@Edge"
-revision: 2
+revision: 3
 ---
 
 # 10 Edge: CloudFront Functions、KeyValueStore、Lambda@Edge
@@ -20,7 +20,7 @@ revision: 2
 ```figure
 caption: 読者のリクエストはキャッシュより先に CloudFront Function を通り、関数が KeyValueStore を読んで、その場で応答するか先へ流すかを決める
 node reader: 読者
-node fn: CloudFront Function "edge-router" | viewer-request, runtime 2.0
+node fn: CloudFront Function "edge-router" | viewer-request, ランタイム 2.0
 node cache: CloudFront のキャッシュ
 node kvs: KeyValueStore
 node digest: Lambda@Edge "body-digest" | origin-request, 任意, /digest だけ
@@ -101,7 +101,7 @@ mark kvs
 
 1 段目では、メンテナンス中なら 503 を返して終わります。キャッシュもオリジンも通りません。
 
-2 段目では、リダイレクトの表を引きます。ただし、最後の部分に `.` があるパス（`/assets/app.css` のようなファイル）では引きません。ファイルをリダイレクトすることは無いので、ファイルへのリクエストのたびに読み取りを 1 回節約できます。
+2 段目では、リダイレクトの表を引きます。ただし、最後の部分に `.` があるパス（`/assets/app.css` のようなファイル）と、256 文字を超えるパスでは引きません。ファイルをリダイレクトすることは無いので、ファイルへのリクエストのたびに読み取りを 1 回節約できます。
 
 どちらにも当たらなければ、3 段目で URL を書き換えます。`/` はフラグを見て `/index.html` か `/home-v2.html` に、`/pricing/` のようなパスは `/pricing/index.html` にします。書き換えはキャッシュを調べる前に起きるので、2 つのトップページは別々の URL としてキャッシュされます。そのため、フラグを切り替えたときにキャッシュを消す必要はありません。
 

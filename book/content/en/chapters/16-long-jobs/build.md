@@ -56,7 +56,7 @@ The `Resource` of each `Task` is the function's ARN, written directly. Written t
 
 ### Retry and Catch
 
-`Retry` runs the same state again with the same input. `ExportPages` is retried up to three times on any error, starting 5 seconds apart and doubling. `States.ALL` is a name that matches almost every error, including an exception in the function, a transient Lambda fault, and a timeout.
+`Retry` runs the same state again with the same input. `ExportPages` is retried up to three times on any error, with a ceiling on the wait that starts at 5 seconds and doubles. `JitterStrategy` is `FULL`, so the actual wait is a random length up to that ceiling. `States.ALL` is a name that matches almost every error, including an exception in the function, a transient Lambda fault, and a timeout.
 
 Only `Finish` has two retriers. `ExportCorrupt` gets zero attempts, which means no retry, and everything else gets up to three. `ExportCorrupt` is the `name` of the exception the function throws, and an error thrown by a Lambda function reaches Step Functions under its `name`.
 

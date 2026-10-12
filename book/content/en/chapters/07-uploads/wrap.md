@@ -12,7 +12,7 @@ Cloudflare R2 has presigned URLs too. According to R2's official documentation, 
 
 If you use R2 from Workers, you will often skip presigned URLs and read and write from inside the Worker through a binding. In that setup the image passes through the Worker. That is the approach this chapter avoided, sending the image through the function, although the limits and the price of doing so differ between a Worker and Lambda. The limits and prices on the Worker side have not been checked.
 
-## Costs
+## Cost
 
 Amounts are in USD, for the Tokyo Region, before tax. The inputs and unit prices behind the calculations are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -36,7 +36,7 @@ Storing tags is charged too, but a tag stays on an object only until the upload 
 
 **In a month when nobody uses the app, the stored images still cost storage.** 10 GB is USD 0.25 a month. Objects left without a record are counted at the same price, which is why the sweep is needed.
 
-Deleting the stack deletes the bucket and the images in it. What remains is listed under "Clean up".
+Deleting the stack deletes the bucket and the images in it. What remains is listed under "Cleaning up".
 
 ### When it gets hammered
 
@@ -48,7 +48,7 @@ What is new in this chapter is a path that doesn't go through the API. Requests 
 - The number of uploads is not capped. A permit works any number of times for 5 minutes. Each use overwrites the same key, so the amount stored doesn't grow, but a POST to S3 costs USD 4.70 per million. How many requests a second S3 accepts has not been checked in this book
 - Reading images is not capped. For 5 minutes, anyone holding a view URL can read it as often as they like. The cost is data transfer: one 5 MB image read 10,000 times is 48.8 GB, USD 5.57. This is the charge that can grow largest in this chapter
 
-Only a signed-in user, or someone that user passed a URL or a form to, can use the two uncapped paths. The only users are the ones you created, so a stranger can't reach this path directly. If you open the app to users widely, though, you will want it closed. Serving the images from CloudFront lets the cache work and lets you attach AWS WAF ([chapter 21](/en/chapters/21-security.md): USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected). This book doesn't build image delivery through CloudFront.
+Only a signed-in user, or someone that user passed a URL or a form to, can use the two uncapped paths. The only users are the ones you created, so a stranger can't reach this path directly. If you open the app to users widely, though, you will want it closed. Serving the images from CloudFront lets the cache work and lets you attach AWS WAF ([chapter 21](/en/chapters/21-security.md): USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected; chapter 21's setup has three rules, so it starts at USD 8.00 a month). This book doesn't build image delivery through CloudFront.
 
 ## Where people get stuck
 
@@ -77,7 +77,7 @@ Only a signed-in user, or someone that user passed a URL or a form to, can use t
 - Remove the local origin. Take `http://localhost:5173` out of the bucket's CORS and the API's CORS
 - Record access. The API's logs don't show who used a presigned URL. You need records on the S3 side (this book doesn't cover them)
 
-## Clean up
+## Cleaning up
 
 <!-- section: 07.cleanup -->
 
@@ -108,11 +108,11 @@ What remains is the storage created by the cdkd bootstrap (chapter 02) and the d
 | Two stores, one order | `examples/07-uploads/api/src/attachments.ts`, `api/src/attachment-repository.ts`, `api/src/dynamodb-attachment-repository.ts`, `api/src/client.ts`, `api/test/partial-failure.test.ts`, `api/test/harness.ts` | `test:unit` |
 | Cleaning up what is left | `examples/07-uploads/api/src/sweep.ts`, `scripts/sweep.ts`, `infra/lib/uploads-stack.ts` | `test:unit`, `uploads:sweep` |
 | Showing the image | `examples/07-uploads/api/src/s3-object-store.ts`, `api/src/attachments.ts`, `api/src/lambda.ts` | `test:unit` |
-| Run it on your machine | `examples/07-uploads/api/src/dev.ts`, `api/src/memory-object-store.ts`, `api/src/local-store-http.ts`, `api/src/compose.ts`, `api/src/env.ts`, `.env.example`, `web/` | `dev:uploads:api`, `dev:uploads:web`, `typecheck:uploads:web`, `lint:uploads:web`, `build:uploads:web` |
+| Running it locally | `examples/07-uploads/api/src/dev.ts`, `api/src/memory-object-store.ts`, `api/src/local-store-http.ts`, `api/src/compose.ts`, `api/src/env.ts`, `.env.example`, `web/` | `dev:uploads:api`, `dev:uploads:web`, `typecheck:uploads:web`, `lint:uploads:web`, `build:uploads:web` |
 | Getting ready for AWS | `examples/07-uploads/infra/lib/uploads-stack.ts`, `infra/bin/app.ts`, `infra/test/uploads-stack.test.ts`, `cdk.json` | `uploads:infra:synth`, `test:unit` |
-| Deploy | `examples/07-uploads/scripts/write-config.ts`, `scripts/user.ts`, `scripts/smoke.ts`, `tools/src/site/`, `tools/src/infra/` | `uploads:infra:diff`, `uploads:infra:deploy`, `uploads:user:create`, `uploads:publish`, `uploads:smoke:web`, `uploads:smoke:api`, `uploads:infra:drift` |
-| Clean up | `examples/07-uploads/scripts/empty-uploads.ts`, `scripts/user.ts`, `tools/src/site/unpublish.ts` | `uploads:empty`, `uploads:unpublish`, `uploads:infra:destroy`, `uploads:user:delete` |
-| Costs | `data/pricing/` | `test:unit` |
+| Deploying | `examples/07-uploads/scripts/write-config.ts`, `scripts/user.ts`, `scripts/smoke.ts`, `tools/src/site/`, `tools/src/infra/` | `uploads:infra:diff`, `uploads:infra:deploy`, `uploads:user:create`, `uploads:publish`, `uploads:smoke:web`, `uploads:smoke:api`, `uploads:infra:drift` |
+| Cleaning up | `examples/07-uploads/scripts/empty-uploads.ts`, `scripts/user.ts`, `tools/src/site/unpublish.ts` | `uploads:empty`, `uploads:unpublish`, `uploads:infra:destroy`, `uploads:user:delete` |
+| Cost | `data/pricing/` | `test:unit` |
 
 **Primary sources** (all checked on 2026-10-11)
 

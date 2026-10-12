@@ -93,7 +93,7 @@ If you have done live streaming on Cloudflare, Stream's Live is the nearest expe
 
 I have not compared latency, because that Cloudflare page gave no figures. Which is cheaper also depends on the number of viewers, the quality, and whether you need recordings, so I do not say here.
 
-## Common problems
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -106,7 +106,7 @@ I have not compared latency, because that Cloudflare page gave no figures. Which
 | `stream:infra:destroy` fails | A live channel can't be deleted (409). Stop the broadcast and delete after `stream:status --expect-offline` passes |
 | `stream:status --events` says "DISAGREE" | Events are late or were never delivered. As the output says, `GetStream` is the answer |
 
-## If this were production
+## If you take this to production
 
 - Restrict who can watch. Right now anyone with the URL can, and every hour they watch is on your bill (the arithmetic is under "When the URL gets around"). IVS has private channels (`authorized: true`), which play only with a signed token, and playback restriction policies, which filter by country or origin. This chapter does not cover them
 - Reconsider the type. If viewers' connections vary, use `STANDARD` or `ADVANCED`, which produce several renditions, and weigh that against the input rate

@@ -1,6 +1,6 @@
 ---
 title: "21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations"
-revision: 2
+revision: 3
 ---
 
 # 21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations
@@ -66,7 +66,7 @@ GuardDuty が無効でも、タスクは失敗しません。GuardDuty を入れ
 
 <!-- section: 21.architecture -->
 
-題材は小さなトークン API です。`/token` が署名つきのトークンを発行し、`/verify` がそのトークンを検証します。署名に使う鍵が、この章で守るシークレットです。
+題材は小さなトークン API です。`/token` が署名付きのトークンを発行し、`/verify` がそのトークンを検証します。署名に使う鍵が、この章で守るシークレットです。
 
 ```figure
 caption: viewer からシークレットまでの経路に、WAF、関数のロール、シークレットを暗号化する鍵が並び、CloudTrail がそれらへの管理操作を記録する
@@ -75,7 +75,7 @@ node waf: Web ACL | AihSecurityWaf (us-east-1), -c webAclArn=... のときだけ
 node cf: CloudFront | distribution
 node url: Lambda function URL | AuthType AWS_IAM, 署名なしは 403
 node fn: Lambda function | HandlerRole
-node secret: Secrets Manager secret
+node secret: Secrets Manager のシークレット
 node key: KMS key | aws/secretsmanager, -c cmk=on なら customer managed key
 node trail: CloudTrail event history | CreateRole, PutSecretValue, ... を 90 日
 edge viewer -> cf

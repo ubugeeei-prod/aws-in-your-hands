@@ -109,7 +109,7 @@ IP アドレスごとに止めたいなら AWS WAF を使いますが、HTTP API
 - テーブルを守ります。`removalPolicy` を `RETAIN` にして、削除保護と point-in-time recovery を有効にします。誤って消したデータを戻す手順は [22章](/ja/chapters/22-recovery.md)で練習します
 - スロットリングとテーブルの上限を、自分の API に合わせます。ステージの 1 秒 10 件も、テーブルの 150 と 40 も、練習用の値です。上げるときは、「叩かれたら」の計算をやり直してください
 - 本文を別のアイテムに分けます。一覧のレスポンスは本文を載せませんが、DynamoDB からは本文ごと読んでいます。一覧の読み取りの料金を減らすなら、本文を別のアイテムに置きます
-- 作成を冪等にして、再試行でノートが重複する問題を直します。呼び出し側が `Idempotency-Key` のような値を送り、サーバーがその値をキーにして条件付きで書く形です。この本では実装していません。同じ考え方を、[08章](/ja/chapters/08-async.md)が S3 のイベントを処理する worker で使っています
+- 作成を冪等にして、再試行でノートが重複する問題を直します。呼び出し側が `Idempotency-Key` のような値を送り、サーバーがその値をキーにして条件付きで書く形です。この本では実装していません。同じ考え方を、[08章](/ja/chapters/08-async.md)が S3 のイベントを処理するワーカーで使っています
 - スロットリングと失敗を見張ります。DynamoDB のエラーと、409 の割合を見ます（[19章](/ja/chapters/19-observability.md)）。409 が多いなら、画面の作りか、ノートの分け方を見直す合図です
 - 反映の経路を AWS CDK CLI と CloudFormation にします。02章で説明したとおりです
 
@@ -130,9 +130,9 @@ vp run db:local:stop
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** コントラクトテスト（メモリ）、DynamoDB へのリクエストの検査、アプリとクライアントのテスト、インフラの assertion を実行しました。型検査と、AWS SDK を含むバンドルの synth も通しています。`dev:notes` をメモリで起動して、本文の `curl` を実行しました。一覧が本文を返さないこと、1 ページが 20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことは、テストで固定しました。件数の上限を入れたあと、`test/dynamodb-local.test.ts` の 15 件（リポジトリの規則 10 件と、件数の上限 5 件）を DynamoDB Local 3.3.1 に対して実行しました。このときは Docker を使わず、AWS が配布する jar を Java で直接起動し、テーブルは `scripts/local-db.ts migrate` で作っています。
+**手元で確かめたこと。** コントラクトテスト（メモリ）、DynamoDB へのリクエストの検査、アプリとクライアントのテスト、インフラのアサーションを実行しました。型検査と、AWS SDK を含むバンドルの synth も通しています。`dev:notes` をメモリで起動して、本文の `curl` を実行しました。一覧が本文を返さないこと、1 ページが 20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことは、テストで固定しました。件数の上限を入れたあと、`test/dynamodb-local.test.ts` の 15 件（リポジトリの規則 10 件と、件数の上限 5 件）を DynamoDB Local 3.3.1 に対して実行しました。このときは Docker を使わず、AWS が配布する jar を Java で直接起動し、テーブルは `scripts/local-db.ts migrate` で作っています。
 
-**まだ確かめていないこと。** DynamoDB Local を Docker で動かすタスク（`db:local:start`、`db:local:stop`）は、Docker の daemon が使えなかったため、実行していません。`db:migrate:local`、`db:seed:local`、`db:reset:local`、`test:local:dynamodb` も、タスクとしては実行していません。`notes:infra:diff`、`notes:infra:deploy`、`notes:smoke`、`notes:infra:drift`、`notes:infra:destroy` も、実際の AWS では動かしていません。
+**まだ確かめていないこと。** DynamoDB Local を Docker で動かすタスク（`db:local:start`、`db:local:stop`）は、Docker のデーモンが使えなかったため、実行していません。`db:migrate:local`、`db:seed:local`、`db:reset:local`、`test:local:dynamodb` も、タスクとしては実行していません。`notes:infra:diff`、`notes:infra:deploy`、`notes:smoke`、`notes:infra:drift`、`notes:infra:destroy` も、実際の AWS では動かしていません。
 
 したがって、この章の中心である「条件付き書き込みが同時の書き込みを決まった数だけ通す」ことは、実際の DynamoDB の上では一度も確かめていません。確かめたのは、正しい条件式を送っていることと、メモリの実装と DynamoDB Local が同じ規則に従うことです。DynamoDB の挙動についての記述は、公式ドキュメントに基づきます。
 

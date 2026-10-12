@@ -198,7 +198,7 @@ Starting with the next chapter you create resources that cost money, though, so 
 
 To stop using the account altogether, sign in as the root user and close it from the Account page. This is also a manual step.
 
-## Where you might get stuck
+## Where people get stuck
 
 | Symptom | What to check |
 | --- | --- |

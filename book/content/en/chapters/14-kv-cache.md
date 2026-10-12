@@ -1,6 +1,6 @@
 ---
 title: "14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration

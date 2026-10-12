@@ -6,7 +6,7 @@ title: "11 Network: Costs, Pitfalls, and Cleanup"
 
 This is the last page of the chapter. It collects the common problems, what to change for production, and the cleanup steps, and it ends with the details of what was verified. The cost breakdown is under "What costs money just by existing" in [Design and Build](/en/chapters/11-network/build.md).
 
-## Common problems
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -58,7 +58,7 @@ All that remains is the storage that cdkd's bootstrap created (chapter 02).
 
 **Checked locally.** The unit tests for CIDR arithmetic, settings validation, the route model, the pricing inputs, the stack assertions, and the match between imports and exports. Type checking. `net:infra:synth` (the default layout, and `-c egress=nat-per-az -c interfaceEndpoints=ecr.api,ecr.dkr,logs`). `net:plan` (the defaults, `egress=nat`, `egress=nat-per-az`, `interfaceEndpoints=ecr.api,ecr.dkr,logs`, and invalid settings). The amounts in the text are what `tools/src/pricing/calc.ts` calculates from the Price List unit prices, and `examples/11-network/test/pricing.test.ts` compares them. The AWS CLI flags (`--filters`, and `--filter` for `describe-nat-gateways`) were checked in the help of AWS CLI 2.35.11 from the devShell.
 
-**Not checked yet.** `net:infra:diff`, `net:infra:deploy`, `net:infra:drift`, and `net:infra:destroy` have not been run against real AWS. All of the following therefore still wait for a real environment. That cdkd 0.296.28 can create and delete this stack. That `AWS::EC2::VPCEndpoint` can be created through Cloud Control API. That traffic from a private subnet actually arrives through the gateway and interface endpoints. How security groups and network ACLs behave. That deploying again without `-c` removes the NAT gateway. That a stack in another app can read the values with `Fn::ImportValue`, and that the destroy is refused while they are in use. Whether the default zone names (`ap-northeast-1a`, `ap-northeast-1c`) are usable in every account. The symptoms in "Common problems". The behavior of a Lambda function in a VPC was only read in the documentation, and there is no sample.
+**Not checked yet.** `net:infra:diff`, `net:infra:deploy`, `net:infra:drift`, and `net:infra:destroy` have not been run against real AWS. All of the following therefore still wait for a real environment. That cdkd 0.296.28 can create and delete this stack. That `AWS::EC2::VPCEndpoint` can be created through Cloud Control API. That traffic from a private subnet actually arrives through the gateway and interface endpoints. How security groups and network ACLs behave. That deploying again without `-c` removes the NAT gateway. That a stack in another app can read the values with `Fn::ImportValue`, and that the destroy is refused while they are in use. Whether the default zone names (`ap-northeast-1a`, `ap-northeast-1c`) are usable in every account. The symptoms in "Where people get stuck". The behavior of a Lambda function in a VPC was only read in the documentation, and there is no sample.
 
 What primary sources couldn't settle. Whether the Free Tier allowance for public IPv4 addresses (750 hours) applies to a NAT gateway's Elastic IP address. The Price List also has a separate SKU called Regional NAT Gateway (USD 0.062 an hour, USD 0.062 per GB), which this chapter doesn't cover and whose specification I haven't read. I also didn't look into whether Cloudflare has an experience that corresponds to a VPC, so there is no comparison.
 
@@ -75,7 +75,7 @@ The resource types cdkd handles. In `src/provisioning/register-providers.ts` at 
 | Three ways to call AWS from a private subnet | `examples/11-network/infra/lib/network-stack.ts`, `src/reach.ts`, `test/reach.test.ts` | `test:unit`, `net:plan` |
 | What costs money just by existing | `examples/11-network/src/cost.ts`, `test/pricing.test.ts`, `scripts/plan.ts`, `data/pricing/` | `test:unit`, `net:plan` |
 | Two zones, still one Region | `examples/11-network/src/reach.ts`, `test/reach.test.ts` | `test:unit` |
-| Check it on your machine | `examples/11-network/scripts/plan.ts`, `src/report.ts`, `infra/test/network-stack.test.ts` | `net:plan`, `test:unit`, `net:infra:synth` |
+| Checking it locally | `examples/11-network/scripts/plan.ts`, `src/report.ts`, `infra/test/network-stack.test.ts` | `net:plan`, `test:unit`, `net:infra:synth` |
 | Using it from other stacks | `examples/11-network/src/exports.ts`, `infra/lib/import-network.ts`, `infra/test/import-network.test.ts` | `test:unit` |
 | Deploying | `examples/11-network/infra/bin/app.ts`, `cdk.json`, `tools/src/infra/` | `net:infra:diff`, `net:infra:deploy`, `net:infra:drift` |
 | Cleaning up | `tools/src/infra/` | `net:infra:destroy` |

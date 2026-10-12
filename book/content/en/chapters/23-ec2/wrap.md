@@ -96,7 +96,7 @@ The further right you go, the more you can do and the more you have to do yourse
 
 The symptoms in this table were put together from the documentation and the source. They were not reproduced.
 
-## If this were production
+## If you take this to production
 
 - **Decide whether one machine is acceptable.** Answer the four conditions under "Conditions for accepting one machine". If you cannot meet even one of them, this chapter's layout does not fit
 - **Do not delete the data with the stack.** Use `-c dataOnDestroy=snapshot` or `retain`. Then take snapshots on a schedule and run a restore once
@@ -162,7 +162,7 @@ Resource types that cdkd handles. In `src/provisioning/register-providers.ts` at
 | Turning a process into a systemd service | `examples/23-ec2/src/unit.ts`, `deploy/notes.service`, `deploy/notes.env`, `test/machine.test.ts` | `ec2:render`, `test:unit`, `ec2:logs` |
 | Shutting down | `examples/23-ec2/src/shutdown.ts`, `src/server.ts`, `test/shutdown.test.ts` | `test:unit`, `dev:ec2` |
 | Data goes on a separate volume | `examples/23-ec2/src/file-notes.ts`, `src/node-files.ts`, `deploy/notes-data-volume.sh`, `test/file-notes.test.ts`, `test/data-volume.test.ts` | `test:unit` |
-| Checking it on your machine | `examples/23-ec2/src/server.ts`, `src/env.ts`, `.env.example`, `scripts/build.ts` | `dev:ec2`, `test:unit`, `ec2:plan`, `ec2:render`, `ec2:app:build`, `ec2:infra:synth` |
+| Running it locally | `examples/23-ec2/src/server.ts`, `src/env.ts`, `.env.example`, `scripts/build.ts` | `dev:ec2`, `test:unit`, `ec2:plan`, `ec2:render`, `ec2:app:build`, `ec2:infra:synth` |
 | Deploying, and getting into the instance | `examples/23-ec2/scripts/remote.ts`, `src/remote.ts`, `src/release.ts`, `deploy/notes-release.sh`, `test/remote.test.ts`, `tools/src/infra/` | `ec2:infra:diff`, `ec2:infra:deploy`, `ec2:status`, `ec2:app:release`, `ec2:app:rollback`, `ec2:smoke`, `ec2:logs`, `ec2:forward`, `ec2:session`, `ec2:infra:drift` |
 | Snapshot and restore | `examples/23-ec2/scripts/remote.ts`, `src/remote.ts`, `deploy/notes-data-volume.sh` | `ec2:data:unmount`, `ec2:data:mount` |
 | Patching | `examples/23-ec2/scripts/remote.ts`, `src/remote.ts`, `test/remote.test.ts` | `ec2:patch:check`, `ec2:patch:apply` |

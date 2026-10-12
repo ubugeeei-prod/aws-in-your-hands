@@ -4,7 +4,7 @@ title: "19 Observability: 手元で動かす"
 
 # 19 Observability: 手元で動かす
 
-## 手元で見る
+## 手元で動かす
 
 <!-- section: 19.local -->
 

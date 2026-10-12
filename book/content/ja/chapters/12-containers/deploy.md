@@ -30,7 +30,7 @@ vp run ecs:image:build v1
 vp run ecs:image:push v1
 ```
 
-`ecs:image:push` は、スタックの output からリポジトリの URI を読み、`aws ecr get-login-password` の出力を標準入力で `docker login` に渡してから、タグを付けてプッシュします。ログインの有効期間は 12 時間です。
+`ecs:image:push` は、スタックの出力からリポジトリの URI を読み、`aws ecr get-login-password` の出力を標準入力で `docker login` に渡してから、タグを付けてプッシュします。ログインの有効期間は 12 時間です。
 
 最後に、タグを付けてデプロイします。**このデプロイから課金されます。**
 

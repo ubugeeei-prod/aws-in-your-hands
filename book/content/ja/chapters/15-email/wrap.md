@@ -18,7 +18,7 @@ AWS の側は、この章で見たとおり部品が多く、identity、configur
 
 どちらを使っても変わらないのは、この章の中心だった[記録と送信の順序](/ja/chapters/15-email.md)です。送信の API が同じ依頼を見分けないかぎり、重複を防ぐ記録は自分で持つことになります。
 
-## お金の話
+## 料金
 
 金額は USD、東京リージョン、従量課金、税別です。計算の中身は[料金の計算](/ja/reference/pricing.md)にあります。
 
@@ -48,22 +48,22 @@ SES の無料枠は、不明としています。料金ページにあるのは�
 
 - ステージのスロットリングが、リクエストを 1 秒に 10 件までに抑えます。30 日で、多くて 2,592 万件です
 - 同じ `notificationId` で送るメールは 1 通です。同じ依頼を何回繰り返しても、送るのは 1 回です。ただし、毎回ちがう ID を付けてくるループには効きません
-- SES の上限があります。sandbox の中なら、24 時間に 200 通、1 秒に 1 通で、宛先は確認済みのものだけです。30 日で多くて 6,000 通、USD 0.60 です
+- SES の上限があります。サンドボックスの中なら、24 時間に 200 通、1 秒に 1 通で、宛先は確認済みのものだけです。30 日で多くて 6,000 通、USD 0.60 です
 
-sandbox の中で、毎回ちがう ID の依頼が 1 秒に 10 件、30 日続いたとします。ほとんどの依頼は SES に断られますが、依頼のたびに API Gateway と関数は動き、テーブルには 2 回書きます（先取りと、断られた記録）。上の表と同じ仮定（関数は 300 ミリ秒、ログは 0.5 KB）で計算すると、API Gateway が USD 33.44、Lambda が USD 31.10、DynamoDB が USD 38.91、ログが USD 9.39、SES が USD 0.60 で、合わせて月 USD 113 ほどです。
+サンドボックスの中で、毎回ちがう ID の依頼が 1 秒に 10 件、30 日続いたとします。ほとんどの依頼は SES に断られますが、依頼のたびに API Gateway と関数は動き、テーブルを 1 回読んで（送信停止の一覧を引く `findSuppression`。結果整合の読み取りです）、2 回書きます（先取りと、断られた記録）。上の表と同じ仮定（関数は 300 ミリ秒、ログは 0.5 KB）で計算すると、API Gateway が USD 33.44、Lambda が USD 31.10、DynamoDB が USD 38.91（2 回の書き込みと 1 回の読み取りを含みます）、ログが USD 9.39、SES が USD 0.60 で、合わせて月 USD 113 ほどです。
 
-sandbox の外では、SES の上限がアカウントの送信の上限（`SendQuota`）に変わります。その値は、この本ではわかりません。上限が許せば、スロットリングいっぱいの 2,592 万通が送られ、SES だけで USD 2,592 かかります。その金額より先に、送信元としての評判を失います。sandbox を出る前に、「本番にするなら」の最初の 2 つを済ませてください。
+サンドボックスの外では、SES の上限がアカウントの送信の上限（`SendQuota`）に変わります。その値は、この本ではわかりません。上限が許せば、スロットリングいっぱいの 2,592 万通が送られ、SES だけで USD 2,592 かかります。その金額より先に、送信元としての評判を失います。サンドボックスを出る前に、「本番にするなら」の最初の 2 つを済ませてください。
 
 スタックを消せば、この章のぶんの料金は止まります。
 
-## ハマりどころ
+## つまずきやすいところ
 
 | こうなったら | ここを見る |
 | --- | --- |
 | `dev:mail` が `Invalid environment` で止まる | `examples/15-email/.env` があるか、`MAIL_MODE=local` になっているかを確かめてください |
 | `mail:send` が、この本のエラーの形（`error.code`）ではない応答で失敗する | API Gateway が、関数を呼ぶ前に拒否しています。`vp run account:whoami` で、いまの認証情報がスタックと同じアカウントのものかを確かめてください。API を呼ぶには `execute-api` の権限が要ります |
 | `mail:send` が 429 で失敗する | ステージのスロットリングです。API 全体で 1 秒に 10 件を超えています。呼ぶ側がループしていないか確かめてください |
-| `send_rejected` が返る | SES が断りました。`vp run mail:logs` で `reason` を見ます。identity が未確認、sandbox で未確認の宛先に送った、流量制限に当たった、のどれかであることが多いはずです |
+| `send_rejected` が返る | SES が断りました。`vp run mail:logs` で `reason` を見ます。identity が未確認、サンドボックスで未確認の宛先に送った、スロットリングに当たった、のどれかであることが多いはずです |
 | ログの `reason` が権限のエラー（`AccessDenied` など） | 送信のロールのポリシーが足りません。エラーに出るリソースの ARN と、スタックのポリシーを見比べてください |
 | `send_unknown` が返る | SES から答えが返りませんでした。同じ `notificationId` では、もう送られません。`mail:status` で状態を確かめ、`delivered` に進まなければ、新しい `notificationId` で送り直すかどうかを判断します |
 | 送れているのに、状態が `sent` のまま | イベントが届いていません。`vp run mail:logs --events` を見て、送信時に configuration set を指定しているかを確かめてください |
@@ -77,7 +77,7 @@ sandbox の外では、SES の上限がアカウントの送信の上限（`Send
 ## 本番にするなら
 
 - 呼べる相手を絞ります。IAM の認可が絞るのは、`execute-api` の権限を持つ誰か、までです。その権限を、通知を送る処理のロールにだけ持たせます。スロットリングの 1 秒に 10 件も、実際に要る数まで下げます
-- API の前にキューを置きます。呼ぶ側を SES の遅さから切り離せるうえ、流量制限に当たったときに、待ってからやり直せます（[08章](/ja/chapters/08-async.md)）
+- API の前にキューを置きます。呼ぶ側を SES の遅さから切り離せるうえ、スロットリングに当たったときに、待ってからやり直せます（[08章](/ja/chapters/08-async.md)）
 - イベントの取りこぼしに備えます。関数が 3 回とも失敗したイベントは、Lambda が捨てます。関数にデッドレターキュー（dead-letter queue）か、失敗時の送り先（on-failure destination）を付けて、取っておけるようにします。デッドレターキューの考え方は [08章](/ja/chapters/08-async.md)にあります。08章では SQS のキューに付けています
 - bounce と complaint の数を見張ります。送信元としての評判に問題があると、SES はアカウントを審査中にしたり（`PROBATION`）、送信を止めたり（`SHUTDOWN`）します。いまの状態は `aws sesv2 get-account` の `EnforcementStatus` に出ます。読めなかったイベントのログと一緒に、アラームにします（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）
 - `claimed` のまま動かない記録を拾います。一定の時間がたっても進まない記録を一覧にして、送り直すかどうかを決める運用が要ります
@@ -95,7 +95,7 @@ sandbox の外では、SES の上限がアカウントの送信の上限（`Send
 vp run mail:infra:destroy
 ```
 
-identity、configuration set、トピック、2 つの関数とそのロール、API、テーブル、log group が消えます。テーブルの中の記録と、送信停止の一覧も一緒に消えます。
+identity、configuration set、トピック、2 つの関数とそのロール、API、テーブル、ロググループが消えます。テーブルの中の記録と、送信停止の一覧も一緒に消えます。
 
 スタックを消しても残るものが、3 つあります。
 
@@ -107,15 +107,15 @@ cdkd の bootstrap で作った保存場所（02章）と、そこに置かれ�
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ユニットテストを実行しました。対象は、メールの組み立てとヘッダーインジェクションの拒否、記録を先に取る送信、8 か所の障害注入、同時の依頼、SES イベントの検証と重複・順序の入れ替わり、DynamoDB と SES に送るリクエストの検査、インフラの assertion です。型検査と synth（esbuild の bundle 込み、25 リソース）も通しました。`dev:mail` を起動して、本文の `curl` を実行しました。署名付きのリクエストを作る部品が `Authorization` ヘッダーを付けることは、偽の認証情報と手元のサーバーで確かめました。
+**手元で確かめたこと。** ユニットテストを実行しました。対象は、メールの組み立てとヘッダーインジェクションの拒否、記録を先に取る送信、8 か所の障害注入、同時の依頼、SES イベントの検証と重複・順序の入れ替わり、DynamoDB と SES に送るリクエストの検査、インフラのアサーションです。型検査と synth（esbuild のバンドル込み、25 リソース）も通しました。`dev:mail` を起動して、本文の `curl` を実行しました。署名付きのリクエストを作る部品が `Authorization` ヘッダーを付けることは、偽の認証情報と手元のサーバーで確かめました。
 
 **まだ確かめていないこと。** この章は、SES を一度も呼んでいません。`mail:infra:deploy`、`mail:send`、`mail:status`、`mail:dns`、`mail:logs`、`mail:infra:drift`、`mail:infra:destroy` と、本文の `aws sesv2` のコマンドは、実際の AWS では動かしていません。とくに次の点は、実環境での確認待ちです。
 
-- 送信のロールのポリシー（identity と configuration set の 2 つのリソース、`ses:FromAddress` の条件）で `SendEmail` が通ること。sandbox の間は宛先の identity にも権限が要る、という話を見かけますが、一次情報では確認できていません
+- 送信のロールのポリシー（identity と configuration set の 2 つのリソース、`ses:FromAddress` の条件）で `SendEmail` が通ること。サンドボックスの間は宛先の identity にも権限が要る、という話を見かけますが、一次情報では確認できていません
 - ドメインだけを確認した状態で、そのドメインのアドレスから configuration set を指定して送れること。公式ドキュメントに、ドメインから確認を引き継いだアドレスは「configuration set と一緒に使う」ことができない、と読める記述があります。スタックは、configuration set を identity の既定にもしています
 - 実際のイベントが、フィクスチャと同じ形であること。SNS から関数への配送。configuration set の suppression の動き
 - DynamoDB の条件付き書き込みが、同時の依頼を 1 つだけ通すこと。確かめたのは、送っている条件式と、メモリの実装が同じ規則に従うことだけです
-- cdkd が、SES の 3 種類のリソースを Cloud Control API 経由で作り、drift を検出し、消せること
+- cdkd が、SES の 3 種類のリソースを Cloud Control API 経由で作り、ドリフトを検出し、消せること
 - 改行を含む件名や宛先を、SES がどう扱うか
 - ステージのスロットリングが実際に効くこと。確かめたのは、テンプレートに値が入っていることと、cdkd 0.296.28 のソースがその値を AWS の API に渡していることだけです。スロットリングが返す 429 の形と、その課金も確かめていません
 - production access の申請の画面と、審査にかかる時間。本文の項目は、公式ドキュメントの記述です
@@ -131,11 +131,11 @@ cdkd の bootstrap で作った保存場所（02章）と、そこに置かれ�
 | 手元で動かす | `examples/15-email/src/dev.ts`、`src/app.ts`、`src/env.ts`、`test/app.test.ts`、`test/env.test.ts`、`.env.example` | `dev:mail`、`test:unit` |
 | 届かなかったメールの後始末 | `examples/15-email/src/events.ts`、`src/events-lambda.ts`、`test/events.test.ts`、`test/fixtures/` | `test:unit`、`dev:mail` |
 | AWS にのせる準備 | `examples/15-email/infra/lib/email-stack.ts`、`infra/bin/app.ts`、`infra/test/email-stack.test.ts`、`cdk.json` | `mail:infra:synth`、`test:unit` |
-| sandbox と identity | `examples/15-email/infra/lib/email-stack.ts`、`infra/bin/app.ts` | `mail:infra:diff`、`mail:infra:deploy` |
+| サンドボックスと identity | `examples/15-email/infra/lib/email-stack.ts`、`infra/bin/app.ts` | `mail:infra:diff`、`mail:infra:deploy` |
 | デプロイした API で送る | `examples/15-email/scripts/send.ts`、`scripts/status.ts`、`scripts/signed-fetch.ts`、`scripts/logs.ts`、`src/lambda.ts` | `mail:send`、`mail:status`、`mail:logs`、`mail:infra:drift` |
 | 独自ドメインで送る | `examples/15-email/src/dns.ts`、`scripts/dns.ts`、`test/dns.test.ts` | `mail:dns`、`test:unit` |
 | 片付け | `tools/src/infra/` | `mail:infra:destroy` |
-| お金の話 | `data/pricing/`、`tools/src/pricing/calc.test.ts` | `test:unit` |
+| 料金 | `data/pricing/`、`tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **一次情報**（確認日はすべて 2026-10-11）
 

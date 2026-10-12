@@ -71,7 +71,7 @@ vp run hello:infra:destroy
 | 依存を入れる | `package.json`、`pnpm-workspace.yaml`、`pnpm-lock.yaml` | （`vp install`） |
 | コマンドはすべて `vp run` | `vite.config.ts` | `check:all` |
 | 型が守るもの、守らないもの | `examples/02-toolchain/lib/config.ts`、`examples/02-toolchain/test/config.test.ts` | `test:unit` |
-| construct、スタック、アプリ | `examples/02-toolchain/lib/hello-stack.ts`、`examples/02-toolchain/bin/app.ts` | `hello:infra:synth` |
+| コンストラクト、スタック、アプリ | `examples/02-toolchain/lib/hello-stack.ts`、`examples/02-toolchain/bin/app.ts` | `hello:infra:synth` |
 | synth | `examples/02-toolchain/cdk.json`、`examples/02-toolchain/test/hello-stack.test.ts` | `hello:infra:synth`、`hello:infra:synth:cdk`、`test:unit` |
 | cdkd | `tools/src/infra/cdkd-args.ts`、`tools/src/infra/cdkd.ts`、`tools/src/infra/run-cdkd.ts` | `infra:bootstrap` |
 | デプロイする | 同上 | `hello:infra:diff`、`hello:infra:deploy` |

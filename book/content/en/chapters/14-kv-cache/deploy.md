@@ -46,7 +46,7 @@ I also checked how cdkd handles these resources. The pinned version (0.296.28) h
 
 For the two limits, I read in the source of the same version that the stage implementation passes `DefaultRouteSettings`, and the table implementation passes `OnDemandThroughput`, to the AWS API unchanged. Reading the source is as far as the check went, and whether the limits take effect is not known until someone deploys and looks.
 
-## Deploy and check
+## Deploying and checking
 
 <!-- section: 14.deploy -->
 
@@ -82,4 +82,4 @@ Drift is checked the same way as in chapter 02.
 vp run kv:infra:drift
 ```
 
-None of the commands in this section have been run against real AWS. The Valkey variant in particular has many unconfirmed points, such as whether CloudFormation accepts this combination of settings, whether the hand-written token is accepted, and whether iovalkey can read the cluster topology through a public endpoint. The breakdown and the steps for resuming are in "Verification notes for this chapter" on [the last page](/en/chapters/14-kv-cache/wrap.md).
+None of the commands in this section have been run against real AWS. The Valkey variant in particular has many unconfirmed points, such as whether CloudFormation accepts this combination of settings, whether the hand-written token is accepted, and whether iovalkey can read the cluster topology through a public endpoint. The breakdown is in "Verification notes for this chapter" on [the last page](/en/chapters/14-kv-cache/wrap.md). The steps for resuming are under "Open items and how to resume" in the [validation record](/en/reference/validation.md).

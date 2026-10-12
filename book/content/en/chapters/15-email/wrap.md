@@ -18,7 +18,7 @@ The comparison can go no further than that. On the Cloudflare side only the over
 
 What stays the same whichever you use is the center of this chapter, [the order of recording and sending](/en/chapters/15-email.md). Unless the sending API recognizes a repeated request, you have to keep the record that prevents duplicates yourself.
 
-## The money part
+## Cost
 
 Amounts are in USD, for the Tokyo Region, pay-as-you-go, before tax. The details of the calculation are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -50,7 +50,7 @@ Data transfer out to the internet, dedicated IPs (USD 24.95 a month each), and V
 - One `notificationId` sends one mail. However often the same request is repeated, one mail is sent. This does not stop a loop that makes up a new ID every time
 - SES has limits. Inside the sandbox they are 200 messages per 24 hours, one a second, and verified recipients only. That is at most 6,000 messages in 30 days, USD 0.60
 
-Suppose that, inside the sandbox, requests that each carry a new ID arrive at 10 a second for 30 days. SES refuses most of them, but every request still runs API Gateway and the function and writes to the table twice (the claim, and the record of the refusal). Under the same assumptions as the table above (300 ms for the function, 0.5 KB of logs), that comes to USD 33.44 for API Gateway, USD 31.10 for Lambda, USD 38.91 for DynamoDB, USD 9.39 for logs, and USD 0.60 for SES, about USD 113 a month in all.
+Suppose that, inside the sandbox, requests that each carry a new ID arrive at 10 a second for 30 days. SES refuses most of them, but every request still runs API Gateway and the function reads the table once (`findSuppression`, the lookup in the suppression list, an eventually consistent read) and writes to it twice (the claim, and the record of the refusal). Under the same assumptions as the table above (300 ms for the function, 0.5 KB of logs), that comes to USD 33.44 for API Gateway, USD 31.10 for Lambda, USD 38.91 for DynamoDB (the two writes and the one read), USD 9.39 for logs, and USD 0.60 for SES, about USD 113 a month in all.
 
 Outside the sandbox, the SES limit becomes the account's sending quota (`SendQuota`), and this book does not know its value. If the quota allows it, the full 25.92 million messages that the throttle lets through are sent, and they cost USD 2,592 for SES alone. You would lose your reputation as a sender before you lost that money. Do the first two items of "If you take this to production" before leaving the sandbox.
 
@@ -128,14 +128,14 @@ The storage created by cdkd's bootstrap (chapter 02), and the deployment files p
 | Make the sending part swappable | `examples/15-email/src/mailer.ts`, `src/ses-mailer.ts`, `src/compose.ts`, `test/ses-mailer.test.ts` | `test:unit` |
 | Record first, or send first | `examples/15-email/src/notify.ts`, `src/store.ts`, `src/memory-store.ts`, `src/dynamodb-store.ts`, `test/dynamodb-store.test.ts` | `test:unit` |
 | Break it to check it | `examples/15-email/test/notify.test.ts`, `test/setup.ts` | `test:unit` |
-| Run it locally | `examples/15-email/src/dev.ts`, `src/app.ts`, `src/env.ts`, `test/app.test.ts`, `test/env.test.ts`, `.env.example` | `dev:mail`, `test:unit` |
+| Running it locally | `examples/15-email/src/dev.ts`, `src/app.ts`, `src/env.ts`, `test/app.test.ts`, `test/env.test.ts`, `.env.example` | `dev:mail`, `test:unit` |
 | Cleaning up after mail that didn't arrive | `examples/15-email/src/events.ts`, `src/events-lambda.ts`, `test/events.test.ts`, `test/fixtures/` | `test:unit`, `dev:mail` |
-| Getting it ready for AWS | `examples/15-email/infra/lib/email-stack.ts`, `infra/bin/app.ts`, `infra/test/email-stack.test.ts`, `cdk.json` | `mail:infra:synth`, `test:unit` |
+| Getting ready for AWS | `examples/15-email/infra/lib/email-stack.ts`, `infra/bin/app.ts`, `infra/test/email-stack.test.ts`, `cdk.json` | `mail:infra:synth`, `test:unit` |
 | The sandbox and identities | `examples/15-email/infra/lib/email-stack.ts`, `infra/bin/app.ts` | `mail:infra:diff`, `mail:infra:deploy` |
 | Send through the deployed API | `examples/15-email/scripts/send.ts`, `scripts/status.ts`, `scripts/signed-fetch.ts`, `scripts/logs.ts`, `src/lambda.ts` | `mail:send`, `mail:status`, `mail:logs`, `mail:infra:drift` |
 | Sending from your own domain | `examples/15-email/src/dns.ts`, `scripts/dns.ts`, `test/dns.test.ts` | `mail:dns`, `test:unit` |
 | Cleaning up | `tools/src/infra/` | `mail:infra:destroy` |
-| The money part | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
+| Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-11)
 

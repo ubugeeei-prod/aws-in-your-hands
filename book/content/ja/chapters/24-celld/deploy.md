@@ -23,7 +23,7 @@ vp run celld:smoke
 vp run celld:diagnose
 ```
 
-1 行目は 23章と同じで、private subnet のインスタンスが Systems Manager に届くためのエンドポイントを足します。4 行目の `celld:status` では、ユーザーデータの処理が終わり、data volume がマウントされたことを確かめます。
+1 行目は 23章と同じで、プライベートサブネットのインスタンスが Systems Manager に届くためのエンドポイントを足します。4 行目の `celld:status` では、ユーザーデータの処理が終わり、データボリュームがマウントされたことを確かめます。
 
 `celld:artifacts` がアーカイブをバケットに置き、`celld:install` が[しくみと実装](/ja/chapters/24-celld/build.md)のページで見たインストールのスクリプトを各ノードで動かします。この時点では、celld はまだ起動していません。
 
@@ -140,7 +140,7 @@ note victim: --skip-os-shutdown
 note witness: probe DONE
 step survivors -> survivors: sweep: 各 cell を読み直す
 note judge: 応答済みの値は戻らない
-note judge: request のない step はない
+note judge: request のないステップはない
 note judge: 障害の後に
 note judge: 全部の cell で応答
 ```
@@ -185,7 +185,7 @@ vp run celld:backup
 vp run celld:start
 ```
 
-`celld:backup` は、動いているノードが 1 台でもあれば何もしません。全部が止まっていることを確かめると、ノードごとに data volume のスナップショットを取り、fleet のプレフィックスをバックアップ用のバケットにコピーして、どのスナップショットがどのノードのものかをマニフェストに書きます。
+`celld:backup` は、動いているノードが 1 台でもあれば何もしません。全部が止まっていることを確かめると、ノードごとにデータボリュームのスナップショットを取り、fleet のプレフィックスをバックアップ用のバケットにコピーして、どのスナップショットがどのノードのものかをマニフェストに書きます。
 
 fleet を動かしたまま取るバックアップは、用意していません。動いている fleet のバケットをコピーしたものが戻せる状態である、という保証を、公式文書のどこにも見つけられなかったからです。[22章](/ja/chapters/22-recovery.md)の PITR は DynamoDB のテーブルを、バージョニングはバケットのオブジェクトを 1 つずつ、前の状態に戻す道具でした。22章で見たとおり、別々に戻した置き場所は食い違います。celld の状態はバケットと複数のディスクにまたがっているので、バケットだけを戻しても、揃った状態にはなりません。
 

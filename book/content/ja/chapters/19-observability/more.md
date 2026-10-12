@@ -23,7 +23,7 @@ title: "19 Observability: 実装のつづき"
 
 <<< @/examples/19-observability/src/telemetry.ts{fields}
 
-ログのすべての行に `traceId` を足し、スパンには request ID を属性として付けます。利用者から request ID を聞けば、ログから trace ID がわかります。トレースの画面で遅いスパンを見つけたら、属性の request ID でログに戻れます。テストは、この行き来を両方向で確かめています。
+有効なスパンがあるあいだは、ログの行に `traceId` を足し、スパンには request ID を属性として付けます。SDK が登録されていないときは有効なスパンがないので、`traceFields()` は何も返さず、ログの行に `traceId` は付きません。利用者から request ID を聞けば、ログから trace ID がわかります。トレースの画面で遅いスパンを見つけたら、属性の request ID でログに戻れます。テストは、この行き来を両方向で確かめています。
 
 ### X-Ray の書き方との変換
 
@@ -105,9 +105,9 @@ note worker: log: traceId=<trace>
 
 - ログの項目は、[前のページ](/ja/chapters/19-observability/build.md)の `strictObject` で固定しています。項目を増やすにはスキーマに足すことになり、そのときに人の目が入ります
 - スパンの属性は、テストが名前の一覧を固定しています。`http.request.method`、`url.path`、`http.response.status_code`、`app.request_id`、`app.repository.operation`、`app.repository.outcome`、`error.type` の 7 つだけです
-- パスには query string を含めません。query string にはトークンが入ることがあり、06章の認可コードがその例でした
+- パスにはクエリ文字列を含めません。クエリ文字列にはトークンが入ることがあり、06章の認可コードがその例でした
 - 例外は種類だけを残します。スパンに例外を記録する標準の方法は、メッセージとスタックトレースを丸ごと写します。メッセージには入力がそのまま入ることがあるので、この章では例外の型の名前だけを残します。詳しい内容は、ログの `error` に 1 回だけ書きます
 
-テストは、ノートの本文、query string のトークン、`Authorization` ヘッダー、cookie、例外メッセージに入ったメールアドレスを流して、ログにもスパンにも出てこないことを確かめています。
+テストは、ノートの本文、クエリ文字列のトークン、`Authorization` ヘッダー、cookie、例外メッセージに入ったメールアドレスを流して、ログにもスパンにも出てこないことを確かめています。
 
 この方法でも防げない穴が 1 つ残っています。ログの `error` にはスタックトレースが入るので、例外のメッセージに個人情報を入れるライブラリを使うと、そこから漏れます。許可する項目の一覧では、これは防げません。

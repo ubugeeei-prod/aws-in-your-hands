@@ -1,6 +1,6 @@
 ---
 title: "04 HTTP API: Lambda and API Gateway HTTP API"
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 # 04 HTTP API: Lambda and API Gateway HTTP API

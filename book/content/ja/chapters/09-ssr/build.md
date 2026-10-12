@@ -36,9 +36,9 @@ function URL は、Lambda の関数 1 つに付く専用の HTTPS エンドポ�
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{reserved}
 
-04章の API Gateway には、秒あたりのリクエスト数の上限を付けました。function URL と CloudFront には、それに当たる無料の設定がなく、キャッシュに当たらないリクエストは来た数だけ関数を動かします。reserved concurrency を付けると、その数に上限ができます。上限を超えたリクエストは、関数を動かさずに断られます。
+04章の API Gateway には、秒あたりのリクエスト数の上限を付けました。function URL と CloudFront には、それに当たる無料の設定がなく、キャッシュに当たらないリクエストは来た数だけ関数を動かします。予約済み同時実行数を付けると、その数に上限ができます。上限を超えたリクエストは、関数を動かさずに断られます。
 
-既定にしなかったのは、デプロイが失敗する可能性があるからです。reserved concurrency は、アカウント全体の同時実行数の枠から N を取り分けます。作ったばかりのアカウントは枠が小さいことがあり、その場合は取り分けること自体を断られます。あなたのアカウントでどうなるかは、この本では確かめられません。付ける時期の目安は、[費用のページ](/ja/chapters/09-ssr/wrap.md)の「叩かれたら」で金額と合わせて説明します。
+既定にしなかったのは、デプロイが失敗する可能性があるからです。予約済み同時実行数は、アカウント全体の同時実行数の枠から N を取り分けます。作ったばかりのアカウントは枠が小さいことがあり、その場合は取り分けること自体を断られます。あなたのアカウントでどうなるかは、この本では確かめられません。付ける時期の目安は、[費用のページ](/ja/chapters/09-ssr/wrap.md)の「叩かれたら」で金額と合わせて説明します。
 
 ### function URL を公開のままにしない
 
@@ -167,7 +167,7 @@ actor browser: Browser
 actor bff: BFF | Nuxt のサーバー
 actor api: 後ろの API
 step browser -> bff: Cookie: session id
-step bff -> bff: session id -> access token
+step bff -> bff: session id -> アクセストークン
 step bff -> api: Authorization: Bearer <token>
 step api --> bff: profile
 step bff --> browser: HTML か JSON。トークンなし

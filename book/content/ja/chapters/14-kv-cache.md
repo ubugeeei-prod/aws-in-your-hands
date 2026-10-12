@@ -1,6 +1,6 @@
 ---
 title: "14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定"
-revision: 2
+revision: 3
 ---
 
 # 14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定

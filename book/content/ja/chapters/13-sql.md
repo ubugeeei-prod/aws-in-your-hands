@@ -1,6 +1,6 @@
 ---
 title: "13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2"
-revision: 3
+revision: 4
 ---
 
 # 13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2
@@ -22,7 +22,7 @@ caption: リクエストは API Gateway と Lambda 関数を通り、PostgreSQL 
 node client: Client | curl, あとで SPA
 node api: API Gateway HTTP API | ap-northeast-1
 node fn: Lambda function | Node.js 24, arm64, VPC の外
-node db: Aurora DSQL cluster | single-Region, ap-northeast-1
+node db: Aurora DSQL クラスター | single-Region, ap-northeast-1
 edge client -> api: HTTPS
 edge api -> fn: GET /health, GET|POST /notes, GET|PUT|DELETE /notes/{id}
 edge fn -> db: PostgreSQL wire protocol over TLS, port 5432
@@ -30,8 +30,8 @@ mark db
 ```
 
 ```figure
-caption: Lambda 関数は自分でクラスターに接続する。データベースロールは notes_api で、関数の中で作った IAM 署名つきのトークンをパスワードにする
-node role: execution role | このクラスターへの dsql:DbConnect, 自分のロググループ
+caption: Lambda 関数は自分でクラスターに接続する。データベースロールは notes_api で、関数の中で作った IAM 署名付きのトークンをパスワードにする
+node role: 実行ロール | このクラスターへの dsql:DbConnect, 自分のロググループ
 node app: Hono app
 node svc: NoteService
 node repo: SqlNoteRepository
@@ -50,7 +50,7 @@ caption: 手元のマシンでは、同じアプリを PGlite の上で動かす
 node dev: vp run dev:sql | 同じアプリを動かす
 node mig: vp run sql:db:migrate
 node pglite: PGlite | Node プロセスの中の PostgreSQL
-node db: Aurora DSQL cluster
+node db: Aurora DSQL クラスター
 edge dev -> pglite
 edge mig -> db: admin, 自分の IAM 認証情報
 group laptop: 手元のマシン = dev, mig
@@ -60,7 +60,7 @@ group laptop: 手元のマシン = dev, mig
 
 D1 に慣れていると、この構成には勝手の違うところが 3 つあります。
 
-1 つ目は、バインディングが無いことです。Worker では `env.DB` にデータベースが現れますが、ここでは 1 枚目の図の右端の矢印のとおり、Lambda 関数が自分で TCP の接続を張ります。接続先は環境変数で渡し、つないでよいかは IAM が決め、つないだあとに何ができるかはデータベースの中の権限が決めるので、設定は 3 か所に分かれます。
+1 つ目は、bindingが無いことです。Worker では `env.DB` にデータベースが現れますが、ここでは 1 枚目の図の右端の矢印のとおり、Lambda 関数が自分で TCP の接続を張ります。接続先は環境変数で渡し、つないでよいかは IAM が決め、つないだあとに何ができるかはデータベースの中の権限が決めるので、設定は 3 か所に分かれます。
 
 2 つ目は、パスワードが無いことです。Aurora DSQL には保存しておくパスワードがなく、接続するたびに、IAM の認証情報で署名した期限つきのトークンを作ってパスワードの欄に入れます。2 枚目の図で transaction runner からデータベースへ伸びる矢印が、この接続です。
 

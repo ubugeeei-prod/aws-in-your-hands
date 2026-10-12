@@ -62,7 +62,7 @@ EventBridge、Lambda、CloudWatch Logs の料金は、この表に入れてい�
 
 歯止めになることが 2 つあります。1 つは、この料金がかかるのは配信している間だけだということです。配信していなければ届ける映像がないので、URL に何万回アクセスされても出力は 0 のままです。もう 1 つは、配信を止めれば料金の増加も止まることです。`stream:status` は同時視聴の数も表示するので、心当たりのない数字が出ていたら、[デプロイのページ](/ja/chapters/18-live/deploy.md)の「止まっていることを確かめる」にある `stream:stop` と `streamKey=off` で、そのまま止められます。01章の予算の通知は 8〜12 時間おきにしか更新されないので、この場面では間に合いません。
 
-人を集める配信をするなら、先に足しておくものがあります。見られる人を署名つきのトークンで絞る private channel、国やオリジンで絞る playback restriction policy、そして同時視聴の数を見張って知らせる仕組みです。「本番にするなら」に並べました。private channel の手順と料金は、この本では確かめていません。
+人を集める配信をするなら、先に足しておくものがあります。見られる人を署名付きのトークンで絞る private channel、国やオリジンで絞る playback restriction policy、そして同時視聴の数を見張って知らせる仕組みです。「本番にするなら」に並べました。private channel の手順と料金は、この本では確かめていません。
 
 ### 消した後
 
@@ -108,7 +108,7 @@ Cloudflare でライブ配信をしたことがあるなら、Stream の Live �
 
 ## 本番にするなら
 
-- 見られる人を絞ります。いまは URL を知っていれば誰でも見られて、見られた時間はすべてあなたの請求になります（「URL が広まったとき」の計算です）。IVS には、署名つきのトークンがないと再生できない private channel（`authorized: true`）と、国やオリジンで絞る playback restriction policy があります。この章では扱っていません
+- 見られる人を絞ります。いまは URL を知っていれば誰でも見られて、見られた時間はすべてあなたの請求になります（「URL が広まったとき」の計算です）。IVS には、署名付きのトークンがないと再生できない private channel（`authorized: true`）と、国やオリジンで絞る playback restriction policy があります。この章では扱っていません
 - type を選び直します。視聴者の回線がばらばらなら、複数のレンディションを作る `STANDARD` か `ADVANCED` にします。入力の単価との兼ね合いで決めてください
 - 止め忘れと見られすぎを仕組みで防ぎます。予定の時間を過ぎても配信中なら通知する、同時視聴が想定を超えたら通知する、鍵を配信のたびに発行して終わったら消す、といった方法があります。気をつけるだけでは仕組みになりません
 - ストリームキーの置き場所を決めます。配信者に渡す経路、作り直す手順、state のバケットを読める人を決めておきます
@@ -122,7 +122,7 @@ IVS は、決まった形の配信を決まった形で配るためのサービ�
 
 出力の形式や画質の段階を自分で決めたいときや、ほかの映像サービスとつなぎたいときには、AWS Elemental MediaLive を使います。MediaLive は、ライブの映像を別の形式やパッケージに変換するサービスで、出力を自分で設計できます。MediaPackage は、その出力を視聴用にパッケージして、配信のオリジンになるサービスです。この場合は、MediaLive、MediaPackage、CDN を自分で組み合わせることになります。
 
-引き換えに、部品と料金の軸が増えます。MediaLive の channel は、入力に何も届いていなくても、動いている間は課金されます。止めてあっても、一部のリソースには待機の料金があります。IVS のように、流していなければ 0 というわけにはいきません。
+引き換えに、部品と料金の軸が増えます。MediaLive のチャンネルは、入力に何も届いていなくても、動いている間は課金されます。止めてあっても、一部のリソースには待機の料金があります。IVS のように、流していなければ 0 というわけにはいきません。
 
 OBS から送って、数秒の遅延で、Web で見せられれば足りるうちは、IVS のままで十分です。
 
@@ -145,7 +145,7 @@ vp run stream:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ユニットテスト（チャンネルの設定、`GetStream` の解釈、イベントの検証と集計、視聴ページの判断、スタックの assertion）。型検査（サンプル全体と、Vize による視聴ページ）。テンプレートの lint。synth（esbuild のバンドル込み。AWS への問い合わせなし）。視聴ページのビルドにプレイヤーの worker と `.wasm` が含まれること。`dev:stream:web` を起動して、チャンネルが未設定のときの表示をブラウザで確認。さらに、存在しないチャンネルの再生 URL を一時的に設定して、プレイヤーが worker と WebAssembly を読み込み、IVS の配信ドメインから 404 を受け取って、ページが「offline」と表示し、再試行を予約するところまでを確認（認証情報は使っていません。確認後、設定は元に戻しました）。
+**手元で確かめたこと。** ユニットテスト（チャンネルの設定、`GetStream` の解釈、イベントの検証と集計、視聴ページの判断、スタックのアサーション）。型検査（サンプル全体と、Vize による視聴ページ）。テンプレートの lint。synth（esbuild のバンドル込み。AWS への問い合わせなし）。視聴ページのビルドにプレイヤーの worker と `.wasm` が含まれること。`dev:stream:web` を起動して、チャンネルが未設定のときの表示をブラウザで確認。さらに、存在しないチャンネルの再生 URL を一時的に設定して、プレイヤーが worker と WebAssembly を読み込み、IVS の配信ドメインから 404 を受け取って、ページが「offline」と表示し、再試行を予約するところまでを確認（認証情報は使っていません。確認後、設定は元に戻しました）。
 
 **まだ確かめていないこと。** 実際の配信と視聴は、一度も行っていません。`stream:infra:diff`、`deploy`、`drift`、`destroy`、`stream:key`、`stream:config`、`stream:status`、`stream:stop` は AWS に対して実行していません。具体的には、Cloud Control API 経由での `AWS::IVS::Channel` と `AWS::IVS::StreamKey` の作成と削除、cdkd の state にストリームキーの値が入るかどうか、`streamKey=off` を挟んだ鍵の作り直し、OBS からの接続、プレイヤーでの再生と遅延の値、timed metadata の表示、`GetStream` の実際の応答と `ChannelNotBroadcasting` の名前、EventBridge のイベントの実際の形、Lambda のログの行から `stream:status --events` がイベントを読み戻せること、配信中のチャンネルの削除が失敗すること。OBS の手順は IVS のドキュメントに基づくもので、画面では確かめていません。同時視聴が上限の 15,000 に達したあとの挙動と、`StopStream` のあと出力の課金が止まるまでの時間も、確かめていません。「URL が広まったとき」の金額は、クォータの既定値と Price List の単価を掛けた計算です。図の遅延の秒数は説明のための作り物です。
 
@@ -180,6 +180,6 @@ vp run stream:infra:destroy
 - [Cloudflare Stream: Stream live video](https://developers.cloudflare.com/stream/stream-live/)
 - [@go-to-k/cdkd 0.296.28](https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28)
 
-一次情報で確かめられなかった点を挙げます。aws-cdk-lib に IVS の高レベル construct が無いことは、固定した版（2.273.0）の `aws-ivs` に `Cfn*` しか無いことで確認しました。別パッケージの construct があるかどうかは調べていません。private channel と playback restriction policy は、CloudFormation のプロパティとクォータの表で存在を確認しただけで、手順は読んでいません。録画がチャンネルの削除後も残ることは、S3 のオブジェクトである以上そのはずですが、明記した記述は見つけていません。MediaPackage の説明は、MediaLive のドキュメントの「Related Services」の記述によります。
+一次情報で確かめられなかった点を挙げます。aws-cdk-lib に IVS の高レベルコンストラクトが無いことは、固定した版（2.273.0）の `aws-ivs` に `Cfn*` しか無いことで確認しました。別パッケージのコンストラクトがあるかどうかは調べていません。private channel と playback restriction policy は、CloudFormation のプロパティとクォータの表で存在を確認しただけで、手順は読んでいません。録画がチャンネルの削除後も残ることは、S3 のオブジェクトである以上そのはずですが、明記した記述は見つけていません。MediaPackage の説明は、MediaLive のドキュメントの「Related Services」の記述によります。
 
 :::

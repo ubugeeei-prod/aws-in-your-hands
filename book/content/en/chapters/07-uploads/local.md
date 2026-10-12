@@ -6,7 +6,7 @@ title: "07 File Upload: Run It Locally"
 
 This page runs the attachment feature described up to [Design and Build](/en/chapters/07-uploads/build.md) on your machine, without S3.
 
-## Run it on your machine
+## Running it locally
 
 <!-- section: 07.local -->
 

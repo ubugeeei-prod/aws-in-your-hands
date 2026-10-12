@@ -44,7 +44,7 @@ The unit prices of durable functions in Tokyo are USD 0.0000106 per operation, 0
 
 Deleting the stack removes the state machine, the functions, and the schedule, and this chapter's charges stop.
 
-## Common problems
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -59,7 +59,7 @@ Deleting the stack removes the state machine, the functions, and the schedule, a
 | The durable function fails with an error about missing checkpoint permissions | Is the role's resource `function:<name>:*`? A function ARN without `:*` does not match an execution's ARN |
 | Invoking the durable function fails with an error that a qualifier is required | Is it invoked with an alias or a version? `export:durable:start` uses the alias's ARN |
 
-## Before production
+## If you take this to production
 
 - Make failures noticeable. This chapter's workflow tells nobody when it fails. Step Functions sends an event to EventBridge when an execution's status changes. Connect that event to a notification, or put an alarm on the number of failed executions ([chapter 19](/en/chapters/19-observability.md))
 - Build a way to hand an export over. That means an API that reads the manifest and the parts and gives them to a user. To split by owner, write parts under a prefix per owner, or filter when handing over. This chapter's export mixes everyone's notes in one file

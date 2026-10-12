@@ -6,7 +6,7 @@ title: "03 Static Hosting: Deploy"
 
 On this page you create the bucket and the distribution in AWS, publish the built SPA, and confirm that it reached readers.
 
-## Deploy
+## Deploying
 
 <!-- section: 03.deploy -->
 

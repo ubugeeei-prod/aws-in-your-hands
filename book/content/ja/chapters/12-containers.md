@@ -9,7 +9,7 @@ revision: 3
 
 04章のノート API を Node.js の HTTP サーバーとしてコンテナにし、ECS on Fargate で 2 つ動かして、Application Load Balancer（ALB）の後ろに並べます。そのうえで、サービスを止めずに新しい版へ入れ替えるところまで進めます。
 
-ここまでの章の多くは、誰も呼ばなければ料金が 0 でしたが、この章は違います。**サービスを動かしている間は、誰も呼ばなくても 1 時間におよそ USD 0.069、1 日で USD 1.65、1 か月置くと USD 50.33 かかります**（東京、既定の構成。内訳は[お金の話](/ja/chapters/12-containers/wrap.md)にあります）。ALB と、タスク 2 つと、public IPv4 アドレス 4 つの料金です。試し終わったら、その日のうちに[片付け](/ja/chapters/12-containers/wrap.md)まで進めてください。
+ここまでの章の多くは、誰も呼ばなければ料金が 0 でしたが、この章は違います。**サービスを動かしている間は、誰も呼ばなくても 1 時間におよそ USD 0.069、1 日で USD 1.65、1 か月置くと USD 50.33 かかります**（東京、既定の構成。内訳は[料金](/ja/chapters/12-containers/wrap.md)にあります）。ALB と、タスク 2 つと、パブリック IPv4 アドレス 4 つの料金です。試し終わったら、その日のうちに[片付け](/ja/chapters/12-containers/wrap.md)まで進めてください。
 
 前提は [11章](/ja/chapters/11-network.md)の VPC と、[04章](/ja/chapters/04-http-api.md)のアプリです。コードは `examples/12-containers/` にあります。
 
@@ -37,7 +37,7 @@ revision: 3
 ```figure
 caption: Application Load Balancer が 2 つの AZ のタスクへリクエストを配る。セキュリティグループが通すのはその通信だけで、VPC、サブネット、ルートテーブルは 11章のスタック AihNetwork から Fn::ImportValue で読む
 node client: クライアント | curl, あとで SPA
-node alb: Application Load Balancer | Public1 + Public2, AZ ごとにノードと public IPv4 が 1 つ
+node alb: Application Load Balancer | Public1 + Public2, AZ ごとにノードとパブリック IPv4 が 1 つ
 node tg: ターゲットグループ | target type: ip, 10 秒ごとに GET /health
 node t1: タスク | AZ 1a, 既定で Public1
 node t2: タスク | AZ 1c, 既定で Public2

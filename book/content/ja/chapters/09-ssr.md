@@ -1,6 +1,6 @@
 ---
 title: "09 SSR: BFF、Nuxt をリージョンの Lambda で動かす"
-revision: 2
+revision: 3
 ---
 
 # 09 SSR: BFF、Nuxt をリージョンの Lambda で動かす
@@ -18,11 +18,11 @@ revision: 2
 ```figure
 caption: CloudFront がパスで行き先を 3 つに分け、/_nuxt/* は S3 が、それ以外は Lambda が答える
 node browser: Browser
-node cf: CloudFront distribution | edge locations
+node cf: CloudFront ディストリビューション | edge locations
 node nuxt: /_nuxt/*
 node me: /me, /me/* | キャッシュしない、cookie を転送
 node other: それ以外 | レスポンスが許すときだけキャッシュ、cookie は落とす
-node s3: S3 bucket | private, OAC
+node s3: S3 バケット | private, OAC
 node furl: Lambda function URL | OAC
 node nitro: Nitro handler | Nuxt がページを描画、サーバールートが /api/* と /me/* に答える
 node logs: CloudWatch Logs | 7 日保持

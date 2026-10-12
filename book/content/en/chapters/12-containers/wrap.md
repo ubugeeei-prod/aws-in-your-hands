@@ -4,7 +4,7 @@ title: "12 Containers: Costs, Pitfalls, and Cleanup"
 
 # 12 Containers: Costs, Pitfalls, and Cleanup
 
-## What it costs
+## Cost
 
 <!-- section: 12.cost -->
 
@@ -79,7 +79,7 @@ How the hourly items are counted is written as code.
 
 The tests check that the hours this function produces match the scenarios in the pricing data, and that the amounts on this page match what the calculator returns.
 
-## If you come from Cloudflare
+## If you're coming from Cloudflare
 
 <!-- section: 12.cloudflare -->
 
@@ -101,7 +101,7 @@ The other difference is where routing and starting are decided. On Cloudflare a 
 
 Finishing the work in flight after SIGTERM and then stopping is the right design on both. Old and new running together during an update is the same too: Cloudflare's documentation also says that new Worker code can reach containers on the previous image. "What happens during an update" and "Old and new run side by side" in [Build, Continued](/en/chapters/12-containers/more.md) apply to Cloudflare as they are.
 
-## Where it goes wrong
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -119,7 +119,7 @@ Finishing the work in flight after SIGTERM and then stopping is the right design
 
 Apart from the first two rows, these were put together from the documentation. I have not made them happen to check them.
 
-## Before production
+## If you take this to production
 
 - **Switch to HTTPS.** Get a domain name and a certificate and make the listener port 443. Right now everything is plain text
 - **Add authentication and authorization.** As in chapter 04, anyone who knows the URL can call it (chapter 06)
@@ -195,9 +195,9 @@ Resource types that cdkd handles. In `src/provisioning/register-providers.ts` at
 | What happens during an update | `examples/12-containers/infra/lib/containers-stack.ts`, `src/timing.ts`, `scripts/watch.ts`, `src/watch.ts` | `ecs:watch` |
 | Old and new run side by side | `examples/12-containers/src/compat.ts`, `test/versions.test.ts` | `test:unit` |
 | More tasks, fewer tasks | `examples/12-containers/infra/lib/containers-stack.ts`, `src/config.ts` | `test:unit` |
-| Checking things locally | `examples/12-containers/test/`, `infra/test/containers-stack.test.ts`, `scripts/check-bundle.ts` | `test:unit`, `ecs:bundle:check`, `ecs:infra:synth`, `dev:ecs` |
+| Checking it locally | `examples/12-containers/test/`, `infra/test/containers-stack.test.ts`, `scripts/check-bundle.ts` | `test:unit`, `ecs:bundle:check`, `ecs:infra:synth`, `dev:ecs` |
 | Deploying | `examples/12-containers/infra/bin/app.ts`, `cdk.json`, `scripts/image.ts`, `scripts/watch.ts`, `scripts/logs.ts`, `tools/src/infra/` | `ecs:infra:diff`, `ecs:infra:deploy`, `ecs:image:push`, `ecs:watch`, `ecs:logs`, `ecs:infra:drift` |
-| What it costs | `examples/12-containers/src/cost.ts`, `test/pricing.test.ts`, `data/pricing/` | `test:unit` |
+| Cost | `examples/12-containers/src/cost.ts`, `test/pricing.test.ts`, `data/pricing/` | `test:unit` |
 | Cleaning up | `tools/src/infra/` | `ecs:infra:deploy`, `ecs:infra:destroy` |
 
 **Primary sources** (all checked on 2026-10-12)

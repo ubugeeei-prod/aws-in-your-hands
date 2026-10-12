@@ -6,7 +6,7 @@ title: "02 Toolchain: Costs, Pitfalls, and Cleanup"
 
 To close the chapter, this page covers what the things you created cost, how to clean them up, and where you might get stuck.
 
-## What it costs
+## Cost
 
 This chapter creates an empty S3 bucket and cdkd's storage.
 
@@ -18,7 +18,7 @@ After you delete the stack, cdkd's three storage locations remain. The next sect
 
 S3 Standard storage in the Tokyo Region costs USD 0.025 per GB per month for the first 50 TB (AWS Price List, checked 2026-10-11). The list of unit prices is in [Pricing Worksheets](/en/reference/pricing.md).
 
-## Cleanup
+## Cleaning up
 
 <!-- section: 02.cleanup -->
 
@@ -39,7 +39,7 @@ When you have finished the book and want to delete those three as well, work in 
 
 If you delete the state bucket while a stack still exists, cdkd can no longer delete that stack.
 
-## Where you might get stuck
+## Where people get stuck
 
 | Symptom | What to check |
 | --- | --- |
@@ -76,7 +76,7 @@ If you delete the state bucket while a stack still exists, cdkd can no longer de
 | cdkd | `tools/src/infra/cdkd-args.ts`, `tools/src/infra/cdkd.ts`, `tools/src/infra/run-cdkd.ts` | `infra:bootstrap` |
 | Deploying | Same as above | `hello:infra:diff`, `hello:infra:deploy` |
 | Finding drift | `tools/src/drift/schema.ts`, `tools/src/drift/report.ts`, `tools/src/drift/cli.ts`, `tools/src/drift/fixtures/`, `tools/src/drift/report.test.ts` | `hello:infra:drift`, `hello:infra:drift:revert:preview`, `hello:infra:drift:revert`, `hello:infra:drift:accept` |
-| Cleanup | Same as above | `hello:infra:destroy` |
+| Cleaning up | Same as above | `hello:infra:destroy` |
 
 **Primary sources**
 

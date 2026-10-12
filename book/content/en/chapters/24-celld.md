@@ -1,6 +1,6 @@
 ---
 title: "24 Self-hosting: celld on AWS"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 24 Self-hosting: celld on AWS

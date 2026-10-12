@@ -45,7 +45,7 @@ A unit test pins the fact that the store adds without reading. The store sends a
 
 There are two things to know about this approach.
 
-The first is that a refused request is billed too. A write whose condition fails still consumes one write unit. A caller who keeps calling past the limit generates a DynamoDB charge for every call. A flood of requests has to be stopped further out, not by the rate limit in the app. This chapter's stack throttles the HTTP API stage and also caps the writes the table accepts per second. The settings are on the [Deploy](/en/chapters/14-kv-cache/deploy.md) page, and the amounts are under "The money" on [the last page](/en/chapters/14-kv-cache/wrap.md).
+The first is that a refused request is billed too. A write whose condition fails still consumes one write unit. A caller who keeps calling past the limit generates a DynamoDB charge for every call. A flood of requests has to be stopped further out, not by the rate limit in the app. This chapter's stack throttles the HTTP API stage and also caps the writes the table accepts per second. The settings are on the [Deploy](/en/chapters/14-kv-cache/deploy.md) page, and the amounts are under "Cost" on [the last page](/en/chapters/14-kv-cache/wrap.md).
 
 The second is that the addition is not idempotent. If a write to DynamoDB succeeds and its response never arrives, the SDK retries and adds one more, so a single request is counted twice. For a rate limit that only costs the caller one call, so the sample leaves it as it is. Do not count money or stock this way, where a miscount is not acceptable. That kind of data needs the technique from "When the response never arrives" in chapter 05, which gives the same operation the same ID.
 

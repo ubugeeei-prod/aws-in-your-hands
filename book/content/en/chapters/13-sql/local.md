@@ -6,7 +6,7 @@ title: "13 SQL: Run It Locally"
 
 This page runs the API built on the [previous page](/en/chapters/13-sql/build.md) on your own machine, without connecting to AWS. It needs no credentials and costs nothing.
 
-## Starting and checking it
+## Running it locally
 
 <!-- section: 13.local -->
 

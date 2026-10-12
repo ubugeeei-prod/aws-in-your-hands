@@ -48,7 +48,7 @@ Throttling applies to the added routes as well. A request for a permit can't get
 
 The stack uses the same 19 resource types as chapter 06. The upload bucket adds no new type. The pinned cdkd has a dedicated implementation for `AWS::S3::Bucket`, and its package was checked to contain code that handles the lifecycle and CORS settings. The three types without a dedicated implementation (`AWS::CloudFront::Function`, `AWS::Cognito::UserPoolClient`, `AWS::Cognito::UserPoolDomain`) are the same as in chapter 06.
 
-## Deploy
+## Deploying
 
 <!-- section: 07.deploy -->
 

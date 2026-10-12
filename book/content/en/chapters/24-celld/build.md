@@ -4,7 +4,7 @@ title: "24 Self-hosting: Design and Build"
 
 # 24 Self-hosting: Design and Build
 
-The [previous page](/en/chapters/24-celld.md) showed where a celld fleet sits on AWS. This page goes through the reasons for that layout and the code behind it, covering the network, where the state lives, what is on a node, and the cost.
+The [previous page](/en/chapters/24-celld.md) showed where a celld fleet sits on AWS. This page goes through the reasons for that layout and the code behind it, covering the network, where the state lives, and what is on a node. The cost breakdown is on [the last page](/en/chapters/24-celld/wrap.md).
 
 ## Peer traffic has no TLS
 
@@ -92,24 +92,3 @@ celld is configured through environment variables, not flags. All the names come
 `CELLD_NODE`, the node's session ID, is not set. The documentation did not make clear whether it may be fixed, so it is left at the default, which generates a new one on every start.
 
 The script neither starts nor restarts the service. When a node stops and starts is decided step by step on the [Deploy](/en/chapters/24-celld/deploy.md) page.
-
-## Cost
-
-<!-- section: 24.cost -->
-
-The breakdown follows. Every amount is the list price in ap-northeast-1, in USD, for a 730-hour month.
-
-- One `t4g.small` instance is USD 15.77
-- The gp3 volumes are 16 GiB per node, USD 1.54 (the 8 GiB root volume is an assumption, and the real size has not been checked)
-- S3 requests are about USD 3.93 per node, which is an estimate
-- The interface endpoints added to the chapter 11 stack are USD 61.32
-
-That adds up to USD 82.56 for one node and USD 125.03 for three. As in chapter 23, the endpoints cost the most, and with one node they are more than 70 percent of the total. Without the endpoints it is USD 21.24 for one node and USD 63.71 for three.
-
-The S3 request figure is an estimate because a celld node keeps talking to the bucket even when it has nothing to do. The documented intervals are a lease renewal every third of a lifetime (a write about every 3.3 seconds), a read of the fleet's load every 5 seconds, and a check for deployments every 30 seconds. Over a month that comes to about 790,000 writes and about 610,000 reads. These counts are a lower bound calculated from the documented numbers, not a measurement. Active cells add to them, and storage for the objects that pile up in the bucket is charged separately.
-
-<<< @/examples/24-celld/src/cost.ts{billable}
-
-With all three instances stopped, the volumes and the endpoints still cost USD 65.93. After the stack is destroyed with the defaults, the three remaining data volumes cost USD 2.30 a month.
-
-As for the instance type, the celld documentation gives only a rule of thumb, that one 8 GB node can hold 1,000 cells in memory, and no minimum requirement. Whether a 2 GiB `t4g.small` is enough has not been checked.

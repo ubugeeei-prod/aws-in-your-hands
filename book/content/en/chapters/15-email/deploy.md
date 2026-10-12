@@ -4,7 +4,7 @@ title: "15 Email: Deploy"
 
 # 15 Email: Deploy
 
-## Getting it ready for AWS
+## Getting ready for AWS
 
 <!-- section: 15.infra -->
 

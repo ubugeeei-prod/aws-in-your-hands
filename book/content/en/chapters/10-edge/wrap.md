@@ -60,7 +60,7 @@ The two KV stores differ in how they document the delay. Workers KV gives a roug
 
 On pricing, the Workers Standard plan includes 10 million requests and 30 million CPU milliseconds a month, and beyond that it charges USD 0.30 per million requests and USD 0.02 per million CPU milliseconds. I haven't checked the monthly fee itself for this chapter.
 
-## The money part
+## Cost
 
 <!-- section: 10.cost -->
 
@@ -121,7 +121,7 @@ You can add three things against this.
 | --- | --- |
 | You synced, but the old value comes back | Wait first. Propagation to the edge locations takes time. If `edge:kvs:plan` shows an empty diff, the value is in the KVS |
 | The sync stops with an authentication error | The KVS API signs with SigV4A. Temporary credentials need a version 2 session token, and the ones issued by the global STS endpoint (`sts.amazonaws.com`) don't work. Check that you are set up to use a Regional STS endpoint |
-| The sync stops with "store is PROVISIONING" | The KVS was just created. Wait until it is `READY` |
+| `edge:kvs:plan` or `edge:kvs:sync` stops with "the store is PROVISIONING, not READY" | The KVS was just created. Wait until it is `READY` |
 | After a deploy, no redirect works | Check whether the KVS is empty. A KVS that was just recreated is. Run `edge:kvs:sync` again |
 | Local tests pass, but creating the function fails with a syntax error | Check for syntax that is not on the documented list. Runtime 2.0 rejects some things that Node.js accepts |
 | `/digest` returns 405 | `edge-router.js` refuses anything but POST before Lambda@Edge runs. Check that you are sending the request with `curl -X POST` |
@@ -175,13 +175,13 @@ Even after all of this, three things remain.
 | The big picture | `examples/10-edge/infra/lib/edge-stack.ts`, `infra/bin/app.ts` | - |
 | Reading the function | `examples/10-edge/infra/functions/edge-router.js`, `edge-data.json` | `test:unit` |
 | Running the same file under Node.js | `examples/10-edge/src/local/load-function.ts`, `infra/test/edge-router.test.ts` | `test:unit`, `typecheck` |
-| Run it on your machine | `examples/10-edge/src/local/dev.ts`, `site/`, `scripts/kvs-file.ts` | `dev:edge`, `dev:edge:cdkd` |
+| Running it locally | `examples/10-edge/src/local/dev.ts`, `site/`, `scripts/kvs-file.ts` | `dev:edge`, `dev:edge:cdkd` |
 | What KVS promises and what it does not | `examples/10-edge/src/kvs/config.ts`, `test/kvs.test.ts` | `test:unit` |
 | Changing the table safely | `examples/10-edge/src/kvs/plan.ts`, `src/kvs/sync.ts`, `src/kvs/store.ts`, `scripts/kvs-sync.ts`, `test/sync.test.ts`, `test/store.test.ts` | `edge:kvs:plan`, `edge:kvs:sync`, `test:unit` |
 | Getting ready for AWS | `examples/10-edge/infra/lib/edge-stack.ts`, `infra/test/edge-stack.test.ts`, `cdk.json` | `edge:infra:synth`, `test:unit` |
 | Deploying and switching | `tools/src/infra/`, `tools/src/site/publish.ts`, `examples/10-edge/scripts/kvs-sync.ts` | `edge:infra:diff`, `edge:infra:deploy`, `edge:publish`, `edge:kvs:plan`, `edge:kvs:sync`, `edge:infra:drift` |
 | Reading the body with Lambda@Edge | `examples/10-edge/src/lambda-edge/body-digest.ts`, `infra/lib/body-digest-stack.ts`, `infra/test/body-digest-stack.test.ts`, `test/body-digest.test.ts` | `edge:body:infra:synth`, `edge:body:infra:deploy`, `edge:body:infra:destroy`, `test:unit` |
-| The money part | `data/pricing/`, `tools/src/pricing/calc.ts` | `test:unit` |
+| Cost | `data/pricing/`, `tools/src/pricing/calc.ts` | `test:unit` |
 | Cleaning up | `tools/src/site/unpublish.ts`, `tools/src/infra/` | `edge:unpublish`, `edge:infra:destroy`, `edge:body:infra:destroy` |
 
 **Primary sources** (all checked 2026-10-11)

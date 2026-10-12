@@ -50,7 +50,7 @@ The second layer is inside the database. After the function connects, `GRANT`s t
 
 <<< @/examples/13-sql/src/grant.ts{grant}
 
-`AWS IAM GRANT` is a statement specific to DSQL. It registers that this IAM role may log in as this database role. The `GRANT`s give only the right to read and write rows, so the function cannot change the schema. You run the migrations yourself, as `admin`, from your own machine.
+The function builds three kinds of statement. The first, `CREATE ROLE ... WITH LOGIN`, creates a database role that can log in. `AWS IAM GRANT` is a statement specific to DSQL. It registers that this IAM role may log in as this database role. The `GRANT`s give only the right to read and write rows, so the function cannot change the schema. You run the migrations yourself, as `admin`, from your own machine.
 
 These statements do not accept `$1`, so the database role name and the IAM role ARN have to be put into the SQL text. The [Design and Build](/en/chapters/13-sql/build.md) page said that the application never puts values into SQL, and this is the one exception. For that reason the code checks the form of both names strictly before inserting them, and a test covers it.
 
@@ -62,7 +62,7 @@ The bundle format is CommonJS because node-postgres is CommonJS and loads Node.j
 
 <<< @/examples/13-sql/infra/lib/sql-stack.ts{throttle}
 
-This is the same stage throttling as in chapter 04. The whole API accepts up to 10 requests a second, API Gateway rejects the rest with a 429, and neither the function nor the database is called for them. This API has no authentication either, so without a limit the DPUs for every call would go straight onto the bill. The number of rows is held by the quota implemented on the [Design and Build](/en/chapters/13-sql/build.md) page, at 100 rows per owner.
+This is the same stage throttling as in chapter 04. The whole API accepts up to 10 requests a second with a burst of up to 20, API Gateway rejects the rest with a 429, and neither the function nor the database is called for them. This API has no authentication either, so without a limit the DPUs for every call would go straight onto the bill. The number of rows is held by the quota implemented on the [Design and Build](/en/chapters/13-sql/build.md) page, at 100 rows per owner.
 
 ## Deploy, then run the migrations
 

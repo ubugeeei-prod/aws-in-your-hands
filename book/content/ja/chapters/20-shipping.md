@@ -7,7 +7,7 @@ revision: 3
 
 ここまでの章では、自分の端末から、自分の認証情報で、cdkd を使ってデプロイしてきました。学ぶには速いやり方ですが、本番向けの経路と、人の認証情報を使わないデプロイについては、そのたびに「20章で扱います」と先送りにしてきました。
 
-この章でその両方を扱います。04章の API を、AWS CDK CLI と CloudFormation を使う標準の経路でデプロイし、GitHub Actions がアクセスキーをどこにも置かずに AWS に入れるようにします。あわせて、02章で作ったドリフトのゲートに、CloudFormation のドリフト検出をつなぎます。
+この章でその両方を扱います。04章の API を、AWS CDK CLI と CloudFormation を使う標準の経路でデプロイし、GitHub Actions がアクセスキーをどこにも置かずに AWS に入れるようにします。あわせて、02章で作ったドリフトの判定に、CloudFormation のドリフト検出をつなぎます。
 
 この章の AWS 側の手順と GitHub Actions のワークフローは、まだ一度も実際には動かしていません。手元で確かめたのは、テスト、型検査、synth までです。何が未確認かは、[章末の検証メモ](/ja/chapters/20-shipping/wrap.md)にまとめてあります。
 
@@ -24,7 +24,7 @@ node laptop: Developer laptop | check:all, ship:cfn:synth
 node gha: GitHub Actions | pr, deploy, drift, preview
 node aws: AWS account | ap-northeast-1
 edge laptop -> gha: git push
-edge gha -> aws: OIDC token
+edge gha -> aws: OIDC トークン
 edge aws --> gha: 1 時間の認証情報
 ```
 
@@ -57,7 +57,7 @@ node previewrole: PreviewRole | preview.yml
 node lookup: cdk lookup role | 読むだけ
 node cdkdeploy: cdk deploy role | CloudFormation へ
 node detect: DetectStackDrift | 読むだけ
-node prstack: AihShipApiPr<number> | preview stack
+node prstack: AihShipApiPr<number> | プレビューのスタック
 node cfn: CloudFormation | cfn-exec role が AihShipApiProd を作る
 edge plan -> lookup
 edge deployrole -> cdkdeploy
@@ -108,7 +108,7 @@ vp run ship:cfn:bootstrap
 | ECR リポジトリ | `cdkd-container-assets-<アカウント>-<リージョン>` | `cdk-hnb659fds-container-assets-<アカウント>-<リージョン>` |
 | IAM ロール | なし。実行した人の権限でそのまま作る | 5 つ（表の下で説明します） |
 | 何を作ったかの記録 | state のバケットの JSON | CloudFormation が持つ。バケットには置かない |
-| その他 | | 版を記録する SSM パラメータ `/cdk-bootstrap/hnb659fds/version` |
+| その他 | | 版を記録する SSM パラメーター `/cdk-bootstrap/hnb659fds/version` |
 
 `hnb659fds` は qualifier と呼ばれる既定の文字列で、値そのものに意味はありません。
 
@@ -152,7 +152,7 @@ dev と prod は、1 つのスタックを切り替えて使うのではなく�
 
 1 つは削除保護で、解除するまでスタックの削除を拒否します。もう 1 つはロググループで、本番ではスタックを消してもロググループを残します。練習用とプレビューのスタックは、消せば何も残りません。
 
-ステージによらず同じにしている設定もあります。どのスタックの API も、誰でも呼べる URL を 1 つ持つので、04章と同じ流量制限を、dev にも prod にもプレビューにも付けています。
+ステージによらず同じにしている設定もあります。どのスタックの API も、誰でも呼べる URL を 1 つ持つので、04章と同じスロットリングを、dev にも prod にもプレビューにも付けています。
 
 <<< @/examples/20-shipping/infra/lib/ship-api-stack.ts{throttle}
 

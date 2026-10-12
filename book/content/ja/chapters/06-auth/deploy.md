@@ -27,9 +27,9 @@ title: "06 Auth: デプロイ"
 アプリクライアント（app client）の設定は次のとおりです。
 
 - `generateSecret: false` なので、パブリッククライアントです
-- 許可する flow は authorization code だけで、implicit は無効です
+- 許可するフローは authorization code だけで、implicit は無効です
 - `authFlows` は、指定した 4 つ（`userSrp`、`userPassword`、`adminUserPassword`、`custom`）を `false` にしています。パスワードを API に直接送ってサインインする経路を閉じ、入口をマネージドログインへのリダイレクトだけにするためです
-- callback URL は、デプロイした SPA の `/callback` と、手元の開発サーバーの `/callback` の 2 つだけです。Cognito は、登録していない URL へは認可コードを返しません
+- コールバック URL は、デプロイした SPA の `/callback` と、手元の開発サーバーの `/callback` の 2 つだけです。Cognito は、登録していない URL へは認可コードを返しません
 - アクセストークンの寿命は 1 時間です
 
 `enableTokenRevocation` は、利用者のトークンを失効させられるようにする設定です。ただし、失効が効く範囲には限りがあります。その範囲は「無効にしても、しばらく通る」で説明します。
@@ -54,7 +54,7 @@ title: "06 Auth: デプロイ"
 
 - `/health` 以外のすべてのルートに JWT オーソライザーが付いている
 - 保護されたルートがすべてスコープを要求している
-- クライアントが secret を持たず、flow が authorization code だけである
+- クライアントが secret を持たず、フローが authorization code だけである
 - CORS で許可するオリジンが 2 つだけで、`*` を含まない
 
 ルートを足してオーソライザーを付け忘れると、最初の検査が落ちます。
@@ -86,7 +86,7 @@ actor cognito: Cognito
 actor alice: Alice のブラウザ
 actor api: API Gateway | JWT authorizer
 step alice -> cognito: t0 サインイン
-step cognito --> alice: access token (exp = t0 + 1h)
+step cognito --> alice: アクセストークン (exp = t0 + 1h)
 note cognito: t0+10m 管理者が Alice を無効にする /
 note cognito: トークンを失効させる
 note cognito: Cognito 自身の API はもう拒否する
@@ -140,7 +140,7 @@ vp run app:smoke:api
 
 `app:smoke:api` は、人がサインインしなくても確かめられることを確かめます。トークンなしのリクエストと、でたらめなトークンのリクエストが拒否されることです。サインイン後の経路は、環境変数 `AIH_ACCESS_TOKEN` にアクセストークンを入れたときだけ実行します。入れなかった場合、タスクは、サインイン後の経路は確かめていないと表示します。
 
-手元の SPA を、デプロイした API とユーザープールに向けることもできます。`http://localhost:5173/callback` を callback URL に、`http://localhost:5173` を CORS で許可するオリジンに、あらかじめ登録してあります。`web/public/config.json` をデプロイ先の値に書き換えて、`vp run dev:app:web` を起動してください。ただし本番のアプリでは、手元のオリジンを許可したままにしないでください。
+手元の SPA を、デプロイした API とユーザープールに向けることもできます。`http://localhost:5173/callback` をコールバック URL に、`http://localhost:5173` を CORS で許可するオリジンに、あらかじめ登録してあります。`web/public/config.json` をデプロイ先の値に書き換えて、`vp run dev:app:web` を起動してください。ただし本番のアプリでは、手元のオリジンを許可したままにしないでください。
 
 ドリフトの検査は、これまでの章と同じです。
 

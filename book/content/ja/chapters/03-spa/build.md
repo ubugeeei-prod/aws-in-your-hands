@@ -22,7 +22,7 @@ vp run dev:spa
 
 <<< @/examples/03-spa/src/notes/note.ts{schema}
 
-保存先は、あとで API に差し替えられるように、interface の後ろに隠してあります。
+保存先は、あとで API に差し替えられるように、インターフェースの後ろに隠してあります。
 
 <<< @/examples/03-spa/src/notes/store.ts{interface}
 

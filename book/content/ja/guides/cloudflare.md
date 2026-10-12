@@ -91,11 +91,11 @@ D1 の Time Travel との違いは、章の中で並べています。Time Trave
 
 | 慣れているもの | この本で並べているもの | 章 |
 | --- | --- | --- |
-| R2 の presigned URL | S3 の presigned POST | [07](/ja/chapters/07-uploads.md) |
+| R2 の署名付き URL | S3 の署名付き POST | [07](/ja/chapters/07-uploads.md) |
 | Queues、R2 の event notification、Cron Triggers | SQS と DLQ、S3 のイベント通知、EventBridge Scheduler | [08](/ja/chapters/08-async.md) |
 | Nuxt を Workers にデプロイする | Nuxt を CloudFront とリージョンの Lambda で動かす | [09](/ja/chapters/09-ssr.md) |
 | Cloudflare Containers | ECS on Fargate と ALB | [12](/ja/chapters/12-containers.md) |
-| Workers KV、Durable Objects、rate limit の binding | DynamoDB、ElastiCache（Valkey）、CloudFront KeyValueStore | [14](/ja/chapters/14-kv-cache.md) |
+| Workers KV、Durable Objects、レート制限の binding | DynamoDB、ElastiCache（Valkey）、CloudFront KeyValueStore | [14](/ja/chapters/14-kv-cache.md) |
 | Email Service | SES | [15](/ja/chapters/15-email.md) |
 | Workflows | Step Functions、Lambda durable functions | [16](/ja/chapters/16-long-jobs.md) |
 | Stream の Live | IVS | [18](/ja/chapters/18-live.md) |
@@ -106,7 +106,7 @@ D1 の Time Travel との違いは、章の中で並べています。Time Trave
 
 名前から取り違えやすいものが 3 つあります。
 
-Lambda durable functions と Durable Objects は、名前が似ているだけで別のものです。Cloudflare で Lambda durable functions に近いのは Workflows だと、16章が説明しています。Durable Objects は、14章で rate limit の状態を置く場所として出てきます。AWS には、Durable Objects に直接当たる部品がありません。
+Lambda durable functions と Durable Objects は、名前が似ているだけで別のものです。Cloudflare で Lambda durable functions に近いのは Workflows だと、16章が説明しています。Durable Objects は、14章でレート制限の状態を置く場所として出てきます。AWS には、Durable Objects に直接当たる部品がありません。
 
 Workers KV を、AWS の 3 つの key-value ストアのどれか 1 つに対応づけることはしません。重なり方がそれぞれ違うことを、14章が順に説明しています。
 

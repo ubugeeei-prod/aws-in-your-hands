@@ -4,7 +4,7 @@ title: "12 Containers: 費用、注意点、片付け"
 
 # 12 Containers: 費用、注意点、片付け
 
-## お金の話
+## 料金
 
 <!-- section: 12.cost -->
 
@@ -17,7 +17,7 @@ title: "12 Containers: 費用、注意点、片付け"
 | Fargate の vCPU（arm64） | タスク 2 × 0.25 vCPU × 730 時間 | 0.04045／vCPU 時 | 14.76 |
 | Fargate のメモリ（arm64） | タスク 2 × 0.5 GB × 730 時間 | 0.00442／GB 時 | 3.23 |
 | ALB | 730 時間 | 0.0243／時 | 17.74 |
-| public IPv4 アドレス | （ALB 2 + タスク 2）× 730 時間 | 0.005／時 | 14.60 |
+| パブリック IPv4 アドレス | （ALB 2 + タスク 2）× 730 時間 | 0.005／時 | 14.60 |
 | 小計 | | | **50.33** |
 
 1 日あたりでは USD 1.65 です。このほかに、リポジトリに置いたイメージの保存料金がかかります（1 GB あたり月 USD 0.10。イメージ 1 つを 0.1 GB と仮定して USD 0.01）。
@@ -26,7 +26,7 @@ title: "12 Containers: 費用、注意点、片付け"
 
 **何もしていなくても、Lambda の章のおよそ 25 倍かかります。** 04章は月 100 万リクエストで USD 2.02 でしたが、この章は 0 リクエストで USD 50.33 です。コンテナを選ぶなら、この固定費に見合う理由が必要です。
 
-**public IPv4 アドレスに、Fargate と同じくらいの料金がかかっています。** 4 つで月 USD 14.60 です。ALB は AZ ごとにノードを持ち、ノードがそれぞれ 1 つずつアドレスを使います。タスクのアドレスは、タスクを private サブネットに移せば不要になりますが、かわりに NAT Gateway かエンドポイントの料金がかかります。
+**パブリック IPv4 アドレスに、Fargate と同じくらいの料金がかかっています。** 4 つで月 USD 14.60 です。ALB は AZ ごとにノードを持ち、ノードがそれぞれ 1 つずつアドレスを使います。タスクのアドレスは、タスクをプライベートサブネットに移せば不要になりますが、かわりに NAT Gateway かエンドポイントの料金がかかります。
 
 **arm64 にすると 2 割安くなります。** 同じ大きさのタスク 1 つが、arm64 で月 USD 9.00、x86 で USD 11.25 です。
 
@@ -51,17 +51,17 @@ LCU は、ALB が仕事量に応じて課金するときの単位です。新規
 | --- | --- | --- | --- |
 | 既定（public サブネット） | 50.33 | 0 | 50.34 |
 | `-c taskSubnets=private` と NAT Gateway 1 つ | 43.03 | 48.91 | 92.07 |
-| `-c taskSubnets=private` と interface endpoint 3 つ | 43.03 | 61.32 | 104.37 |
+| `-c taskSubnets=private` とインターフェースエンドポイント 3 つ | 43.03 | 61.32 | 104.37 |
 
 合計には、イメージの保存（USD 0.01）と、NAT Gateway を通るデータを月 2 GB、エンドポイントを通るデータを月 1 GB と仮定した料金が入っています。
 
 無料枠は引いていません。Fargate の料金ページには、無料枠の記述が見つかりませんでした。ALB と ECR には新規の利用者向けの枠が書かれていますが、すべてのアカウントに当てはまるものではありません。
 
-**叩かれたら。** ALB の URL は、知っていれば誰でも HTTP で呼べます。認証はありません。ALB には、API Gateway のステージのスロットリングに当たる、追加料金なしの流量制限もないので、届いたリクエストはすべてタスクまで届きます。
+**叩かれたら。** ALB の URL は、知っていれば誰でも HTTP で呼べます。認証はありません。ALB には、API Gateway のステージのスロットリングに当たる、追加料金なしのスロットリングもないので、届いたリクエストはすべてタスクまで届きます。
 
 大量のリクエストが来たときに、上限があるものと無いものは次のとおりです。
 
-- **固定費には上限があります。** タスクは `maxCount` の 4 つまでしか増えません。4 つのまま 1 か月動いても、置いてあるだけでかかる料金は USD 75.62 です（Fargate 35.98、ALB 17.74、public IPv4 が 6 つで 21.90）
+- **固定費には上限があります。** タスクは `maxCount` の 4 つまでしか増えません。4 つのまま 1 か月動いても、置いてあるだけでかかる料金は USD 75.62 です（Fargate 35.98、ALB 17.74、パブリック IPv4 が 6 つで 21.90）
 - **メモリには上限があります。** ノートはタスクごとに 100 件までで、101 件目は 409 になります。本文は最大 10,000 文字なので、1 つのタスクが持つノートは多くても 100 万文字ほどです。接続はタスクごとに 512 本まで、本文は 1 件 64 KiB までです
 - **LCU、ログ、データ転送には上限がありません。** どれも、届いたリクエストのぶんだけ増えます
 
@@ -69,7 +69,7 @@ LCU は、ALB が仕事量に応じて課金するときの単位です。新規
 
 この計算に入っていないものが 2 つあります。LCU は 4 つの数え方のうち、いちばん大きいものが採られます。大きな本文を送り続けられたときに、データ量の数え方で何 LCU になるかは、計算していません。データ転送は、レスポンスの大きさでも変わります。04章の契約では、一覧は要約 20 件で 20 KiB まで、ノート 1 件は 64 KiB までです。1 秒に 100 件のレスポンスがすべて 64 KiB のノートだったとすると、30 日で約 15,820 GB、データ転送だけで USD 1,664 ほどになります。
 
-実際の利用者を迎える前に、入口に流量制限が必要です。AWS WAF は ALB に付けられます（[21章](/ja/chapters/21-security.md)）。ただし、この本が持っている WAF の単価は CloudFront 用のもので、東京リージョンの ALB に付ける web ACL の単価は確かめていません。練習の間だけなら、ALB のセキュリティグループを自分の IP アドレスだけに絞る方法もあります（この章のスタックは、そうしていません）。
+実際の利用者を迎える前に、入口にスロットリングが必要です。AWS WAF は ALB に付けられます（[21章](/ja/chapters/21-security.md)）。ただし、この本が持っている WAF の単価は CloudFront 用のもので、東京リージョンの ALB に付ける web ACL の単価は確かめていません。練習の間だけなら、ALB のセキュリティグループを自分の IP アドレスだけに絞る方法もあります（この章のスタックは、そうしていません）。
 
 タグなしでデプロイし直してリポジトリだけにすれば、時間課金は止まり、残るのはイメージの保存料金だけです。
 
@@ -101,16 +101,16 @@ Cloudflare にも Containers があります。ドキュメントを読んだ範
 
 SIGTERM を受けたら進行中の仕事を終えてから止まる、という作り方は、どちらでも同じです。更新中に新旧が同時に動くことも同じで、Cloudflare のドキュメントも、新しい Worker のコードが古いイメージのコンテナに届きうると書いています。[実装のつづき](/ja/chapters/12-containers/more.md)の「更新中に起きること」と「新旧が同時に動く」は、Cloudflare でもそのまま使えます。
 
-## ハマりどころ
+## つまずきやすいところ
 
 | こうなったら | ここを見る |
 | --- | --- |
 | `dev:ecs` が `Invalid environment` で止まる | `examples/12-containers/.env` があるかどうかを確かめる。メッセージに出た変数名も確認する |
 | `ecs:image:build` が `No Docker daemon answered` で止まる | クライアントだけがあって、デーモンが動いていません。Docker Desktop などを起動する |
 | プッシュが `ImageTagAlreadyExistsException` で失敗する | そのタグはすでに使われています。タグは immutable なので、新しいタグを付ける |
-| デプロイがサービスのところで長く止まり、失敗する | タスクが起動できていません。`aws ecs list-tasks --desired-status STOPPED` と `aws ecs describe-tasks` で `stoppedReason` を見る。イメージを取得できない（タグの打ち間違い、private サブネットなのに経路がない）ことが多い |
+| デプロイがサービスのところで長く止まり、失敗する | タスクが起動できていません。`aws ecs list-tasks --desired-status STOPPED` と `aws ecs describe-tasks` で `stoppedReason` を見る。イメージを取得できない（タグの打ち間違い、プライベートサブネットなのに経路がない）ことが多い |
 | タスクは動いているのに、ALB の URL がエラーを返す | `aws elbv2 describe-target-health` で、ターゲットが健全かどうかを見る。`/health` が 200 を返すか、8080 番がセキュリティグループで許されているかを確かめる |
-| ときどき 502 が返る | サーバーの keep-alive が ALB の idle timeout より短くなっていないかを確かめる。`src/timing.ts` の関係を確認する |
+| ときどき 502 が返る | サーバーの keep-alive が ALB のアイドルタイムアウトより短くなっていないかを確かめる。`src/timing.ts` の関係を確認する |
 | 更新のたびに、数件のリクエストが失敗する | SIGTERM を受けていない（`CMD` を配列で書いたか）、または deregistration delay より長いリクエストがある |
 | 作ったノートが、呼ぶたびに出たり消えたりする | タスクが 2 つあって、それぞれが自分の `Map` を持っています。この章の仕様です |
 | POST が 409 で `quota_exceeded` を返す | そのタスクの `Map` が 100 件でいっぱいです。タスクごとに数えるので、同じ POST が通ったり通らなかったりします。ノートを消すか、タスクが入れ替わると空きます |
@@ -123,9 +123,9 @@ SIGTERM を受けたら進行中の仕事を終えてから止まる、という
 
 - **HTTPS にする。** ドメイン名と証明書を用意して、リスナーを 443 番にします。いまは平文です
 - **認証と認可を足す。** 04章と同じで、URL を知っている人は誰でも呼べます（06章）
-- **入口に流量制限を置く。** ALB は、届いたリクエストをすべて通します。AWS WAF の rate-based rule を ALB に付けます（21章。ALB 用の単価は、この本では確かめていません）
+- **入口にスロットリングを置く。** ALB は、届いたリクエストをすべて通します。AWS WAF のレートベースのルールを ALB に付けます（21章。ALB 用の単価は、この本では確かめていません）
 - **データをタスクの外に置く。** いまは更新のたびに消えます（05章、13章）。外に置くと、[新旧が同時に動く](/ja/chapters/12-containers/more.md)の節の決まりが実際の制約になります
-- **タスクを private サブネットに置く。** 出口を NAT にするかエンドポイントにするかは、11章の表で決めます
+- **タスクをプライベートサブネットに置く。** 出口を NAT にするかエンドポイントにするかは、11章の表で決めます
 - **シークレットを環境変数に直接書かない。** タスク定義の `secrets` で、Secrets Manager などから起動時に渡します。読む権限はタスク実行ロールに付けます（シークレットの扱いは [21章](/ja/chapters/21-security.md)にあります。21章の例は Lambda です）
 - **アプリの指標でも更新を止める。** circuit breaker は起動とヘルスチェックしか見ません。ECS には、CloudWatch のアラームで更新を失敗にする仕組みもあります（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）
 - **ベースイメージをダイジェストで固定する。** `node:24-bookworm-slim` というタグは、中身が更新されていきます。いつビルドしても同じイメージにしたいなら、ダイジェストで指定します
@@ -171,13 +171,13 @@ aws ecr describe-repositories --region ap-northeast-1
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** サーバーを子プロセスとして起動し、リクエストの途中で SIGTERM を送るテスト。graceful shutdown のテスト（`sweep` を外すと `drained` が `forced` になって失敗することも確認）。新旧 2 つの版を同時に起動するテスト。時間の関係、設定、`docker` コマンドの組み立て、料金、スタックの assertion のユニットテスト。型検査。`ecs:infra:synth`（タグなし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`。`-c imageTag=latest` が拒否されることも）。`ecs:bundle` と `ecs:bundle:check`。`dev:ecs` を起動して、本文の `curl` と、Ctrl-C のときのログを確認。`ecs:image:build`、`ecs:image:run`、`ecs:image:push` の `--dry-run` と、デーモンなしで実行したときのメッセージ。`ecs:watch` を `--url` で手元のサーバーに向けて実行。`ecs.ContainerImage.fromAsset` を使った synth が、`docker` コマンドの無い PATH で通ること（aws-cdk-lib 2.273.0）。`docker` のフラグは、Docker CLI 29.7.2 の help で確かめました。本文の金額は、Price List の単価から `tools/src/pricing/calc.ts` が計算した値で、`examples/12-containers/test/pricing.test.ts` が照合しています。
+**手元で確かめたこと。** サーバーを子プロセスとして起動し、リクエストの途中で SIGTERM を送るテスト。グレースフルシャットダウンのテスト（`sweep` を外すと `drained` が `forced` になって失敗することも確認）。新旧 2 つの版を同時に起動するテスト。時間の関係、設定、`docker` コマンドの組み立て、料金、スタックのアサーションのユニットテスト。型検査。`ecs:infra:synth`（タグなし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`。`-c imageTag=latest` が拒否されることも）。`ecs:bundle` と `ecs:bundle:check`。`dev:ecs` を起動して、本文の `curl` と、Ctrl-C のときのログを確認。`ecs:image:build`、`ecs:image:run`、`ecs:image:push` の `--dry-run` と、デーモンなしで実行したときのメッセージ。`ecs:watch` を `--url` で手元のサーバーに向けて実行。`ecs.ContainerImage.fromAsset` を使った synth が、`docker` コマンドの無い PATH で通ること（aws-cdk-lib 2.273.0）。`docker` のフラグは、Docker CLI 29.7.2 の help で確かめました。本文の金額は、Price List の単価から `tools/src/pricing/calc.ts` が計算した値で、`examples/12-containers/test/pricing.test.ts` が照合しています。
 
-**まだ確かめていないこと。** 接続の上限（`maxConnections`）は、手元の Node.js で、上限を超えた接続が応答なしで閉じられることを確かめただけです。ALB の後ろで接続が上限に達したときに利用者へ何が返るか、ヘルスチェックがどうなるかは、確かめていません。512 という数も、計って決めた値ではありません。Docker のデーモンが動いていなかったため、イメージを一度もビルドしていません。したがって、Dockerfile が通ること、`.dockerignore` の例外指定が効くこと、arm64 のベースイメージで起動すること、`--read-only` で動くこと、イメージの大きさ（料金の表の 0.1 GB は仮定）は未確認です。`ecs:infra:diff`、`ecs:infra:deploy`、`ecs:image:push`、`ecs:watch`、`ecs:logs`、`ecs:infra:drift`、`ecs:infra:destroy` は、実際の AWS では動かしていません。次の項目は、すべて実環境での確認を待っています。cdkd 0.296.28 がこのスタックを作って消せること。別のアプリのスタックから `Fn::ImportValue` で 11章の VPC を読めること。Cloud Control API 経由の 3 種類が通ること。public サブネットのタスクがイメージを取得できること、443 番だけの egress で足りること。`-c taskSubnets=private` の 2 通りの経路。ALB のヘルスチェックと fail open。ローリングアップデートの間にエラーが出ないこと。ターゲットの登録解除のあとに SIGTERM が届くという順序。circuit breaker のロールバックと、そのときの cdkd の表示。auto scaling の増減。タグなしでデプロイし直すと ALB とタスクだけが消えること。「ハマりどころ」の症状。
+**まだ確かめていないこと。** 接続の上限（`maxConnections`）は、手元の Node.js で、上限を超えた接続が応答なしで閉じられることを確かめただけです。ALB の後ろで接続が上限に達したときに利用者へ何が返るか、ヘルスチェックがどうなるかは、確かめていません。512 という数も、計って決めた値ではありません。Docker のデーモンが動いていなかったため、イメージを一度もビルドしていません。したがって、Dockerfile が通ること、`.dockerignore` の例外指定が効くこと、arm64 のベースイメージで起動すること、`--read-only` で動くこと、イメージの大きさ（料金の表の 0.1 GB は仮定）は未確認です。`ecs:infra:diff`、`ecs:infra:deploy`、`ecs:image:push`、`ecs:watch`、`ecs:logs`、`ecs:infra:drift`、`ecs:infra:destroy` は、実際の AWS では動かしていません。次の項目は、すべて実環境での確認を待っています。cdkd 0.296.28 がこのスタックを作って消せること。別のアプリのスタックから `Fn::ImportValue` で 11章の VPC を読めること。Cloud Control API 経由の 3 種類が通ること。パブリックサブネットのタスクがイメージを取得できること、443 番だけの egress で足りること。`-c taskSubnets=private` の 2 通りの経路。ALB のヘルスチェックと fail open。ローリングアップデートの間にエラーが出ないこと。ターゲットの登録解除のあとに SIGTERM が届くという順序。circuit breaker のロールバックと、そのときの cdkd の表示。auto scaling の増減。タグなしでデプロイし直すと ALB とタスクだけが消えること。「つまずきやすいところ」の症状。
 
-一次情報で確かめられなかったこと。リクエストが無いときの ALB の LCU。ECS と Application Auto Scaling の service-linked role が、そのアカウントでの最初のデプロイで自動的に作られるかどうか。auto scaling が動いているサービスをデプロイし直したとき、タスクの数が `desiredCount` の 2 に戻るかどうか。ALB が負荷に応じてノードを増やしたときの public IPv4 アドレスの数。Docker Hub の `node:24-bookworm-slim` に arm64 版があることは、API の応答の先頭（amd64 の項目）しか読んでおらず、確かめていません。Cloudflare Containers は、ドキュメントを読んだだけです。
+一次情報で確かめられなかったこと。リクエストが無いときの ALB の LCU。ECS と Application Auto Scaling のサービスリンクロールが、そのアカウントでの最初のデプロイで自動的に作られるかどうか。auto scaling が動いているサービスをデプロイし直したとき、タスクの数が `desiredCount` の 2 に戻るかどうか。ALB が負荷に応じてノードを増やしたときのパブリック IPv4 アドレスの数。Docker Hub の `node:24-bookworm-slim` に arm64 版があることは、API の応答の先頭（amd64 の項目）しか読んでおらず、確かめていません。Cloudflare Containers は、ドキュメントを読んだだけです。
 
-cdkd が扱うリソースの種類。`v0.296.28` タグの `src/provisioning/register-providers.ts` では、`AWS::ECS::Cluster`、`TaskDefinition`、`Service`（ECS の provider）、`AWS::ElasticLoadBalancingV2::LoadBalancer`、`TargetGroup`、`Listener`（ELBv2 の provider）、`AWS::ECR::Repository`、`AWS::EC2::SecurityGroup`、`SecurityGroupIngress`、`AWS::IAM::Role`、`Policy`、`AWS::Logs::LogGroup` が専用の実装に登録されています。`AWS::ApplicationAutoScaling::ScalableTarget`、`ScalingPolicy`、`AWS::EC2::SecurityGroupEgress` は登録が無く、未対応の一覧にも無いので、Cloud Control API を経由します。ECS の provider は、タスク定義の変更を置き換え（新しいリビジョンの登録と、古いリビジョンの登録解除）として扱います。サービスについては、既定では `CreateService`／`UpdateService` が受け付けられた時点で戻り、`--full-wait` のときだけ安定するまで待ちます。ECR の provider は、`EmptyOnDelete` が true のときに限って、イメージごとリポジトリを消します。npm の tarball には TypeScript のソースが入っていないため、GitHub のタグの archive を読みました。
+cdkd が扱うリソースの種類。`v0.296.28` タグの `src/provisioning/register-providers.ts` では、`AWS::ECS::Cluster`、`TaskDefinition`、`Service`（ECS のプロバイダー）、`AWS::ElasticLoadBalancingV2::LoadBalancer`、`TargetGroup`、`Listener`（ELBv2 のプロバイダー）、`AWS::ECR::Repository`、`AWS::EC2::SecurityGroup`、`SecurityGroupIngress`、`AWS::IAM::Role`、`Policy`、`AWS::Logs::LogGroup` が専用の実装に登録されています。`AWS::ApplicationAutoScaling::ScalableTarget`、`ScalingPolicy`、`AWS::EC2::SecurityGroupEgress` は登録が無く、未対応の一覧にも無いので、Cloud Control API を経由します。ECS のプロバイダーは、タスク定義の変更を置き換え（新しいリビジョンの登録と、古いリビジョンの登録解除）として扱います。サービスについては、既定では `CreateService`／`UpdateService` が受け付けられた時点で戻り、`--full-wait` のときだけ安定するまで待ちます。ECR のプロバイダーは、`EmptyOnDelete` が true のときに限って、イメージごとリポジトリを消します。npm の tarball には TypeScript のソースが入っていないため、GitHub のタグの archive を読みました。
 
 **コードの場所。**
 
@@ -185,7 +185,7 @@ cdkd が扱うリソースの種類。`v0.296.28` タグの `src/provisioning/re
 | --- | --- | --- |
 | 全体像 | `examples/12-containers/infra/lib/containers-stack.ts`、`src/config.ts` | `ecs:infra:synth` |
 | docker は 2 つのプログラム | `examples/12-containers/src/image.ts`、`scripts/image.ts` | `ecs:image:build` |
-| handler から、動き続けるサーバーへ | `examples/12-containers/src/compose.ts`、`src/env.ts`、`src/server.ts`、`test/compose.test.ts`、`.env.example` | `dev:ecs`、`test:unit` |
+| ハンドラーから、動き続けるサーバーへ | `examples/12-containers/src/compose.ts`、`src/env.ts`、`src/server.ts`、`test/compose.test.ts`、`.env.example` | `dev:ecs`、`test:unit` |
 | 止められたときの振る舞い | `examples/12-containers/src/serve.ts`、`src/server.ts`、`test/shutdown.test.ts` | `test:unit` |
 | イメージを作る | `examples/12-containers/Dockerfile`、`.dockerignore`、`scripts/bundle.ts`、`scripts/check-bundle.ts`、`src/image.ts` | `ecs:bundle`、`ecs:bundle:check`、`ecs:image:build`、`ecs:image:run` |
 | イメージの置き場所 | `examples/12-containers/infra/lib/containers-stack.ts`、`infra/bin/app.ts`、`src/config.ts`、`test/config.test.ts` | `ecs:infra:synth`、`ecs:image:push`、`test:unit` |
@@ -197,7 +197,7 @@ cdkd が扱うリソースの種類。`v0.296.28` タグの `src/provisioning/re
 | タスクを増やす、減らす | `examples/12-containers/infra/lib/containers-stack.ts`、`src/config.ts` | `test:unit` |
 | 手元で確かめる | `examples/12-containers/test/`、`infra/test/containers-stack.test.ts`、`scripts/check-bundle.ts` | `test:unit`、`ecs:bundle:check`、`ecs:infra:synth`、`dev:ecs` |
 | デプロイする | `examples/12-containers/infra/bin/app.ts`、`cdk.json`、`scripts/image.ts`、`scripts/watch.ts`、`scripts/logs.ts`、`tools/src/infra/` | `ecs:infra:diff`、`ecs:infra:deploy`、`ecs:image:push`、`ecs:watch`、`ecs:logs`、`ecs:infra:drift` |
-| お金の話 | `examples/12-containers/src/cost.ts`、`test/pricing.test.ts`、`data/pricing/` | `test:unit` |
+| 料金 | `examples/12-containers/src/cost.ts`、`test/pricing.test.ts`、`data/pricing/` | `test:unit` |
 | 片付け | `tools/src/infra/` | `ecs:infra:deploy`、`ecs:infra:destroy` |
 
 **一次情報**（確認日はすべて 2026-10-12）
@@ -210,7 +210,7 @@ cdkd が扱うリソースの種類。`v0.296.28` タグの `src/provisioning/re
 - [Health checks for Application Load Balancer target groups](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html)、[Edit target group attributes](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html)、[Edit attributes for your Application Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-load-balancer-attributes.html)、[Application Load Balancers](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html)
 - [Pushing a Docker image to an Amazon ECR private repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html)、[Image tag mutability](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-tag-mutability.html)
 - [AWS Fargate pricing](https://aws.amazon.com/fargate/pricing/)、[Elastic Load Balancing pricing](https://aws.amazon.com/elasticloadbalancing/pricing/)、[Amazon ECR pricing](https://aws.amazon.com/ecr/pricing/)
-- AWS Price List bulk API: [ECS](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json)（Fargate）、[ELB](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json)、[ECR](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json)。NAT Gateway、interface endpoint、public IPv4 アドレス、CloudWatch Logs、データ転送の単価は、11章までに取得したもの（2026-10-11 確認）
+- AWS Price List bulk API: [ECS](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json)（Fargate）、[ELB](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json)、[ECR](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json)。NAT Gateway、インターフェースエンドポイント、パブリック IPv4 アドレス、CloudWatch Logs、データ転送の単価は、11章までに取得したもの（2026-10-11 確認）
 - [Lambda quotas](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html)
 - [What is Docker?](https://docs.docker.com/get-started/docker-overview/)、[Dockerfile reference](https://docs.docker.com/reference/dockerfile/)、[docker-node: Best Practices](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md)、[Docker Hub: node:24-bookworm-slim](https://hub.docker.com/v2/repositories/library/node/tags/24-bookworm-slim)、[Node.js v24: HTTP](https://nodejs.org/docs/latest-v24.x/api/http.html)
 - Cloudflare Containers: [Overview](https://developers.cloudflare.com/containers/)、[Pricing](https://developers.cloudflare.com/containers/platform/pricing/)、[Rollouts](https://developers.cloudflare.com/containers/configuration/rollouts/)、[Lifecycle of a container](https://developers.cloudflare.com/containers/concepts/architecture/)、[FAQ](https://developers.cloudflare.com/containers/faq/)、[Local development](https://developers.cloudflare.com/containers/guides/local-dev/)

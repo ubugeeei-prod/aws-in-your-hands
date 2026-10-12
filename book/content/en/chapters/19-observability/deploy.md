@@ -4,7 +4,7 @@ title: "19 Observability: Deploy"
 
 # 19 Observability: Deploy
 
-## Deploy and check
+## Deploying and checking
 
 <!-- section: 19.deploy -->
 

@@ -47,7 +47,7 @@ Reading the list of versions from S3 needs care in one place.
 
 ### Versioning changes what other chapters assumed
 
-Chapter 07's "Going to production" mentioned in one line that versioning changes how lifecycle rules behave. This is what changes.
+Chapter 07's "If you take this to production" mentioned in one line that versioning changes how lifecycle rules behave. This is what changes.
 
 Chapter 07's bucket has a rule that removes unfinished uploads after a day. With versioning on, that rule does not remove the object. It places a delete marker, and the bytes stay as an old version. What actually deletes those bytes is `noncurrentVersionExpiration` in this chapter's rule, 30 days after they stopped being current. Those 30 days are how long an image can be brought back. Without `noncurrentVersionExpiration`, every byte ever uploaded is stored and billed forever.
 

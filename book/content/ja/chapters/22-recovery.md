@@ -23,8 +23,8 @@ revision: 2
 caption: recovery のタスクは、手元からテーブルとバケットに書き、事故を起こし、別々に戻してから、突き合わせて直す
 type: sequence
 actor cli: vp run recovery:* | 手元, 自分の認証情報
-actor table: DynamoDB table Notes
-actor bucket: S3 bucket Uploads
+actor table: DynamoDB テーブル Notes
+actor bucket: S3 バケット Uploads
 step cli -> table: seed, accident
 step cli -> bucket: seed, accident
 note cli: アプリと同じ書き方 (owner "drill")
@@ -43,8 +43,8 @@ note cli: repair: 見つけたものを直す
 ```figure
 caption: スタックが作るのはテーブル、バケット、検査する関数で、いちばん下の 2 つは指定したときだけ足される
 node audit: Lambda function Audit | 読むだけ, 合わないものを数える
-node table: DynamoDB table Notes | point-in-time recovery, 過去 35 日のどの秒にも
-node bucket: S3 bucket Uploads | versioning, 古いバージョンを 30 日
+node table: DynamoDB テーブル Notes | point-in-time recovery, 過去 35 日のどの秒にも
+node bucket: S3 バケット Uploads | versioning, 古いバージョンを 30 日
 node vault: AWS Backup vault | 1 日 1 回のスナップショット, 7 日保持
 node replica: 2 つ目のバケット | S3 Replication, 削除マーカーは複製しない
 edge audit -> table: Scan (TABLE_NAME: -c table=<name> のあとは復元したテーブル)

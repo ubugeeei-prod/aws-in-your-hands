@@ -6,7 +6,7 @@ title: "04 HTTP API: Run It Locally"
 
 This page takes the app written on [the previous page](/en/chapters/04-http-api.md), runs it on your machine without AWS, and tests it. It ends with what happens to notes kept in memory once the app is on Lambda.
 
-## Run it on your machine
+## Running it locally
 
 <!-- section: 04.local -->
 

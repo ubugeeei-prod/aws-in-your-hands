@@ -2024,8 +2024,8 @@
     {
       "id": "kvs-stale-etag-error",
       "summary": {
-        "ja": "KeyValueStore API が古い If-Match に対して返すエラーの種類を確認していない。API リファレンスは ConflictException（409）を載せているが、どの条件で返るかは書いていない。10章の adapter は ConflictException だけを競合として扱い、それ以外は再試行せずに止まる。",
-        "en": "Which error the KeyValueStore API returns for a stale If-Match is unconfirmed. The API reference lists ConflictException (409) without saying when it is returned. Chapter 10's adapter treats only ConflictException as a conflict and stops without retrying on anything else."
+        "ja": "KeyValueStore API が古い If-Match に対して返すエラーの種類を確認していない。API リファレンスは ConflictException（409）を載せているが、どの条件で返るかは書いていない。10章の adapter は ConflictException だけを競合として扱う。それ以外のエラーは、5xx と状態コードの無いものを 5 回まで再試行し、ほかはその場で止まる。",
+        "en": "Which error the KeyValueStore API returns for a stale If-Match is unconfirmed. The API reference lists ConflictException (409) without saying when it is returned. Chapter 10's adapter treats only ConflictException as a conflict. Of the other errors, it retries a 5xx or one with no status code up to five rounds and stops at once on the rest."
       },
       "resume": {
         "ja": "デプロイ後、aws cloudfront-keyvaluestore put-key を古い ETag の --if-match で実行し、エラー名と状態コードを記録する。ConflictException でなければ examples/10-edge/src/kvs/store.ts の translate と test/store.test.ts を直す。",

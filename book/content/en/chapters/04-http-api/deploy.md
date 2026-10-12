@@ -60,7 +60,7 @@ This sets throttling on the stage. The stage accepts up to 10 requests a second,
 
 The 10 is one value for the whole API, not one per caller. If somebody else is using up the 10 a second, your requests get a 429 as well. Throttling protects your bill, not the experience of using the API. Because 10 is a practice value, choose your own before real users arrive.
 
-## Deploy it and call it
+## Deploying and calling
 
 <!-- section: 04.deploy -->
 

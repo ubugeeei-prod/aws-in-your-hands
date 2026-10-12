@@ -4,7 +4,7 @@ title: "21 Security: 費用、注意点、片付け"
 
 # 21 Security: 費用、注意点、片付け
 
-章の最後に、Workers との違い、料金、詰まりやすいところ、本番に進めるときに足すもの、片付けをまとめます。検証した範囲と一次情報は、ページ末尾の検証メモにあります。
+章の最後に、Workers との違い、料金、つまずきやすいところ、本番に進めるときに足すもの、片付けをまとめます。検証した範囲と一次情報は、ページ末尾の検証メモにあります。
 
 ## Workers から来た人へ
 
@@ -26,7 +26,7 @@ Workers の secret は、Worker に付く binding です。暗号化された値
 
 AWS のやり方が長くなるのは、シークレットが関数とは別のリソースだからです。別のリソースなので、権限をシークレットごとに決められ、複数の関数や Lambda 以外のものからも読め、バージョンをラベルで持てます。その代わり、読みに行くコードと、読みに行く権限と、読めなかったときの扱いを、自分で書くことになります。
 
-WAF は位置づけが違います。Cloudflare では、無料の managed ruleset がすべてのプランで使えます。rate limiting の rule も、機能に差はありますが無料プランから使えます。AWS では、web ACL を作り、付けられる種類の入口に付けて、月額を払います。最初から無料で入っている防御は、AWS にはありません。
+WAF は位置づけが違います。Cloudflare では、無料の managed ruleset がすべてのプランで使えます。rate limiting のルールも、機能に差はありますが無料プランから使えます。AWS では、web ACL を作り、付けられる種類の入口に付けて、月額を払います。最初から無料で入っている防御は、AWS にはありません。
 
 Cloudflare 側の監査ログや、アカウントをまたぐ統制の仕組みは、この章では調べていません。
 
@@ -71,7 +71,7 @@ Organizations と SCP、CloudTrail のイベント履歴、IAM には、追加�
 
 確認できなかったこともあります。KMS の鍵が削除待ちの 7 日間に課金されるかどうか、CloudFront 用の web ACL が請求のうえでどの usage type になるか、CloudFront の定額プランに WAF がどう含まれるか、の 3 点です。この章は従量課金だけを見ています。
 
-## 詰まりやすいところ
+## つまずきやすいところ
 
 次の表は、実行して出会ったものではなく、ドキュメントとコードから詰まりそうだと分かっているものです。
 
@@ -127,7 +127,7 @@ vp run sec:infra:destroy
 
 **まだ確かめていないこと。** AWS に触るものは、すべて未実行です。`sec:infra:diff`、`sec:infra:deploy`、`sec:smoke`、`sec:infra:drift`、`sec:infra:destroy`、`sec:waf:infra:*`、`sec:secret:versions`、`sec:secret:rotate`、`sec:posture`、`sec:trail:iam`。とくに次の点は、実環境での確認待ちです。
 
-- CloudFront、署名つきの関数 URL、Secrets Manager を通した一連の動作。関数 URL を直接呼ぶと 403 になること
+- CloudFront、署名付きの関数 URL、Secrets Manager を通した一連の動作。関数 URL を直接呼ぶと 403 になること
 - デプロイ直後に、関数がシークレットを読めない時間があるのかどうか。権限を消したあと、いつまで読めるのか
 - `PutSecretValue` のあとのステージングラベルの動き。`AWSPREVIOUS` が無いシークレットを読んだときのエラー名
 - web ACL の作成と関連付け。レートベースのルールがブロックを始めるまでの時間。請求のうえでの usage type
@@ -155,7 +155,7 @@ vp run sec:infra:destroy
 | IAM の変更が行き渡るまで | `examples/21-security/src/propagation.ts`、`test/propagation.test.ts`、`scripts/smoke.ts`、`scripts/trail.ts` | `sec:smoke`、`sec:trail:iam` |
 | 検出と記録の 4 つのサービス | `examples/21-security/scripts/posture.ts`、`scripts/trail.ts` | `sec:posture`、`sec:trail:iam` |
 | 組織になったら | `examples/21-security/policies/scp-guardrails.json`、`src/policy-model.ts`、`test/scp.test.ts` | `test:unit` |
-| デプロイと動作確認 | `examples/21-security/scripts/smoke.ts` | `sec:infra:deploy`、`sec:smoke`、`sec:infra:drift` |
+| デプロイして確かめる | `examples/21-security/scripts/smoke.ts` | `sec:infra:deploy`、`sec:smoke`、`sec:infra:drift` |
 | 料金 | `data/pricing/`、`tools/src/pricing/calc.test.ts` | `test:unit` |
 | 片付け | `examples/21-security/infra/lib/security-stack.ts` | `sec:infra:destroy`、`sec:waf:infra:destroy` |
 
@@ -173,7 +173,7 @@ vp run sec:infra:destroy
 - AWS Config: [What is AWS Config?](https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html)、[料金](https://aws.amazon.com/config/pricing/)
 - Organizations: [SCP](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)、[SCP の評価](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html)、[SCP の構文](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_syntax.html)、[quota](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html)、[組織の作成](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_create.html)、[FAQs](https://aws.amazon.com/organizations/faqs/)、[aws-samples の SCP の例](https://github.com/aws-samples/service-control-policy-examples)
 - AWS Price List: [Secrets Manager](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json)、[KMS](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json)、[WAF](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json)、[GuardDuty](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json)、[Inspector](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json)、[Config](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json)
-- cdkd: [@go-to-k/cdkd 0.296.28](https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28)（tarball の `dist/`。provider の登録、シークレットと KMS の鍵の作成と削除）
+- cdkd: [@go-to-k/cdkd 0.296.28](https://www.npmjs.com/package/@go-to-k/cdkd/v/0.296.28)（tarball の `dist/`。プロバイダーの登録、シークレットと KMS の鍵の作成と削除）
 - AWS SDK for JavaScript v3: [3.1149.0](https://www.npmjs.com/package/@aws-sdk/client-secrets-manager/v/3.1149.0)（7 つのクライアントの型定義）
 - Cloudflare: [Workers の secret](https://developers.cloudflare.com/workers/configuration/secrets/)、[WAF の managed rules](https://developers.cloudflare.com/waf/managed-rules/)、[rate limiting rules](https://developers.cloudflare.com/waf/rate-limiting-rules/)
 

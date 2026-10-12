@@ -4,7 +4,7 @@ title: "19 Observability: Run It Locally"
 
 # 19 Observability: Run It Locally
 
-## Seeing it on your machine
+## Running it locally
 
 <!-- section: 19.local -->
 

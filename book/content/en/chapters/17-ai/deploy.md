@@ -56,7 +56,7 @@ It is not on by default because adding it can be enough to make the deploy fail.
 
 The authentication is `AWS_IAM` and the invoke mode is `RESPONSE_STREAM`. The stack contains no `AWS::Lambda::Permission` at all, which means that it creates no resource-based policy giving anyone the right to call. A test pins this down too.
 
-## Deploy and call
+## Deploying and calling
 
 <!-- section: 17.deploy -->
 

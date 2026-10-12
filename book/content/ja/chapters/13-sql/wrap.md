@@ -4,7 +4,7 @@ title: "13 SQL: 費用、注意点、片付け"
 
 # 13 SQL: 費用、注意点、片付け
 
-章の最後に、D1 との違いを 1 つの表にまとめ、料金、失敗したときに見るところ、本番に向けて変えること、片付けの順に確かめます。
+章の最後に、D1 との違いを 1 つの表にまとめ、料金、つまずきやすいところ、本番に向けて変えること、片付けの順に確かめます。
 
 ## D1 から来た人へ
 
@@ -15,7 +15,7 @@ title: "13 SQL: 費用、注意点、片付け"
 | SQL | SQLite | PostgreSQL 16 互換の一部 |
 | 手元 | `wrangler dev` がローカルの D1 を用意する。本番と同じ D1 | PGlite で代用。DSQL ではない |
 | マイグレーション | 番号つきの `.sql` を Wrangler が順に流す。失敗したマイグレーションはロールバックされる | 番号つきの `.sql` を、この章のランナーが順に流す。1 ファイル 1 文。途中で止まっても流し直せる形にする |
-| つなぎ方 | バインディング（`env.DB`） | TCP の接続。IAM のトークンがパスワード |
+| つなぎ方 | binding（`env.DB`） | TCP の接続。IAM のトークンがパスワード |
 | トランザクション | `batch()` に並べた文が 1 つのトランザクション | `BEGIN` から `COMMIT` まで。途中で読んだ値を見て、次の文を決められる |
 | 同時に書いたとき | 書き込みはプライマリの 1 か所に集まる | コミットのときに競合を調べて、負けた側は `40001`。やり直す |
 | 読み取りの置き場所 | リードレプリカを世界中に置ける。非同期 | 1 リージョンの中の 3 つの AZ。同期 |
@@ -32,7 +32,7 @@ DSQL が D1 を分散させたものではない、と章の最初に書いた�
 
 トランザクションの書き方も違います。D1 の `batch()` は文を先にすべて並べて渡すので、途中で結果を見て分岐することはできません。DSQL では `BEGIN` と `COMMIT` の間で、読んで、判断して、書けます。[しくみと実装](/ja/chapters/13-sql/build.md)のページで書いた件数の上限の処理が、その例です。その自由と引き換えに、やり直しを自分で書くことになりました。
 
-バインディング、本番と同じものが動くローカル、Time Travel のように、D1 のほうが楽な場面は多くあります。この本は、D1 をやめるよう勧めるものではありません。SQLite では足りず PostgreSQL の SQL が要るときや、AWS のほかのサービスのすぐ隣にデータベースを置きたいときの選択肢として読んでください。
+binding、本番と同じものが動くローカル、Time Travel のように、D1 のほうが楽な場面は多くあります。この本は、D1 をやめるよう勧めるものではありません。SQLite では足りず PostgreSQL の SQL が要るときや、AWS のほかのサービスのすぐ隣にデータベースを置きたいときの選択肢として読んでください。
 
 ## 料金
 
@@ -92,7 +92,7 @@ IP アドレスごとに止めるには AWS WAF を使いますが、HTTP API �
 
 スタックを消せば、この章の分の料金は止まります。
 
-## 失敗したときに見るところ
+## つまずきやすいところ
 
 | こうなったら | ここを見る |
 | --- | --- |
@@ -138,7 +138,7 @@ vp run sql:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ユニットテスト（トランザクションの再試行、PGlite の上での repository、`COMMIT` の競合の注入、マイグレーションの lint と中断からの再開、grant の文、API、インフラ）。一覧が本文を返さないこと、20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことも、このテストで固定しています。型検査。synth と、できたバンドルを Node.js 24 で読み込んで `GET /health` と UUID でない ID の 404 が返ること。`sql:db:reset:local`、`sql:db:migrate:local`、`sql:db:seed:local` と、2 回目の実行で何も変わらないこと。`dev:sql` を起動して、本文の `curl`（作成、更新、古い `version` の 409）と削除。`dev:sql` の起動中に reset が拒否されること、サーバーを止めたあとは古い lock が引き継がれること。
+**手元で確かめたこと。** ユニットテスト（トランザクションの再試行、PGlite の上での repository、`COMMIT` の競合の注入、マイグレーションの lint と中断からの再開、grant の文、API、インフラ）。一覧が本文を返さないこと、20 件で止まること、いちばん大きい題名を並べても 20 KiB を超えないことも、このテストで固定しています。型検査。synth と、できたバンドルを Node.js 24 で読み込んで `GET /health` と UUID でない ID の 404 が返ること。`sql:db:reset:local`、`sql:db:migrate:local`、`sql:db:seed:local` と、2 回目の実行で何も変わらないこと。`dev:sql` を起動して、本文の `curl`（作成、更新、古い `version` の 409）と削除。`dev:sql` の起動中に reset が拒否されること、サーバーを止めたあとは古いロックが引き継がれること。
 
 **まだ確かめていないこと。** ステージのスロットリングは、テンプレートに入っていることをテストで固定し、固定した版の cdkd（0.296.28）のソースが `DefaultRouteSettings` を API Gateway に渡していることを読んだだけです。実際に反映されること、429 の本文の形、429 に料金がかかるかどうかは確かめていません。「叩かれたら」の金額は、単価と設定と仮定から計算しただけです。
 
@@ -154,13 +154,13 @@ vp run sql:infra:destroy
 | 行を型にする | `examples/13-sql/src/contract.ts`、`src/db.ts`、`src/notes-repository.ts`、`src/notes.ts`、`src/app.ts` | `test:unit` |
 | トランザクションは丸ごとやり直す | `examples/13-sql/src/transaction.ts`、`src/notes-repository.ts`、`test/transaction.test.ts` | `test:unit` |
 | 競合をわざと起こす | `examples/13-sql/test/support.ts`、`test/notes-repository.test.ts`、`test/app.test.ts` | `test:unit` |
-| 起動と動作確認 | `examples/13-sql/src/pglite.ts`、`src/dev.ts`、`src/compose.ts`、`scripts/local-db.ts`、`scripts/db-tasks.ts`、`test/fixtures/seed-notes.json`、`.env.example` | `dev:sql`、`sql:db:migrate:local`、`sql:db:seed:local`、`sql:db:reset:local` |
+| 手元で動かす | `examples/13-sql/src/pglite.ts`、`src/dev.ts`、`src/compose.ts`、`scripts/local-db.ts`、`scripts/db-tasks.ts`、`test/fixtures/seed-notes.json`、`.env.example` | `dev:sql`、`sql:db:migrate:local`、`sql:db:seed:local`、`sql:db:reset:local` |
 | Lambda からつなぐ | `examples/13-sql/src/dsql.ts`、`src/lambda.ts`、`src/env.ts`、`src/grant.ts`、`infra/lib/sql-stack.ts`、`infra/bin/app.ts`、`infra/test/sql-stack.test.ts`、`cdk.json` | `sql:infra:synth`、`test:unit` |
 | デプロイして、マイグレーションを流す | `examples/13-sql/scripts/cloud-db.ts`、`scripts/db-tasks.ts`、`scripts/smoke.ts`、`scripts/logs.ts`、`test/grant.test.ts` | `sql:infra:diff`、`sql:infra:deploy`、`sql:db:migrate`、`sql:db:grant`、`sql:db:seed`、`sql:smoke`、`sql:logs`、`sql:infra:drift` |
 | 片付け | `tools/src/infra/`、`examples/13-sql/scripts/local-db.ts` | `sql:infra:destroy`、`sql:db:reset:local` |
 | 料金 | `data/pricing/`、`tools/src/pricing/calc.test.ts` | `test:unit` |
 
-**cdkd が扱うリソースの種類。** 固定した版（0.296.28）の `src/provisioning/register-providers.ts` を見ると、`AWS::ApiGatewayV2::Api`、`Integration`、`Route`、`Stage`、`AWS::IAM::Policy`、`AWS::IAM::Role`、`AWS::Lambda::Function`、`AWS::Lambda::Permission`、`AWS::Logs::LogGroup` には専用の実装があります。`AWS::DSQL::Cluster` にはありません。Cloud Control API 経由です。同じ tag の `cc-protection-properties.ts` に、削除保護の property として `DeletionProtectionEnabled` が登録されています。
+**cdkd が扱うリソースの種類。** 固定した版（0.296.28）の `src/provisioning/register-providers.ts` を見ると、`AWS::ApiGatewayV2::Api`、`Integration`、`Route`、`Stage`、`AWS::IAM::Policy`、`AWS::IAM::Role`、`AWS::Lambda::Function`、`AWS::Lambda::Permission`、`AWS::Logs::LogGroup` には専用の実装があります。`AWS::DSQL::Cluster` にはありません。Cloud Control API 経由です。同じタグの `cc-protection-properties.ts` に、削除保護のプロパティとして `DeletionProtectionEnabled` が登録されています。
 
 **一次情報**（確認日はすべて 2026-10-11）
 

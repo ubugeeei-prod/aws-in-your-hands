@@ -1,6 +1,6 @@
 ---
 title: "07 File Upload: presigned URL と S3"
-revision: 2
+revision: 3
 ---
 
 # 07 File Upload: presigned URL と S3
@@ -20,7 +20,7 @@ caption: ブラウザは API から許可をもらい、画像は S3 に直接�
 type: sequence
 actor browser: Browser | SPA
 actor api: API Gateway + Lambda | Authorization: Bearer <access token>
-actor s3: S3 bucket | Block Public Access on
+actor s3: S3 バケット | Block Public Access on
 note browser: body: { contentType }
 step browser -> api: 1. POST /notes/{id}/attachments
 step api -> api: 呼び出し元の sub の下でノートを探す
@@ -134,7 +134,7 @@ S3 が確かめるのは、フォームに書かれた `Content-Type` がポリ�
 テストは、次のようにしてこの仕組みを破ろうとします。
 
 - Bob が Alice のノートに許可を求めると、存在しないノートと同じ 404 が返る
-- Bob が query、ヘッダー、body のすべてに Alice の名前と Alice のキーを書いても、返ってくるキーは `u/bob/` で始まる
+- Bob がクエリ、ヘッダー、ボディのすべてに Alice の名前と Alice のキーを書いても、返ってくるキーは `u/bob/` で始まる
 - Bob は、Alice の添付の ID を知っていても、完了も、一覧も、削除もできない
 - キーの部品に `/`、`..`、空文字が入ると、キーを組み立てる関数が例外を投げる
 

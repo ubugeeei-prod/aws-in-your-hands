@@ -4,7 +4,7 @@ title: "22 Backup: 費用、注意点、片付け"
 
 # 22 Backup: 費用、注意点、片付け
 
-章の最後のページです。Cloudflare D1 との違い、料金、うまくいかないときの調べ方、本番で足すもの、片付けの順に書きます。
+章の最後のページです。Cloudflare D1 との違い、料金、つまずきやすいところ、本番で足すもの、片付けの順に書きます。
 
 ## D1 の Time Travel から来た人へ
 
@@ -12,17 +12,17 @@ title: "22 Backup: 費用、注意点、片付け"
 
 Cloudflare D1 を使ってきた人は、ここまで読んで、手数が多いと感じたはずです。実際に、手数は D1 より多くなります。
 
-D1 の Time Travel は最初から有効で、追加の料金がかかりません。過去 30 日（Workers Free plan では 7 日）の、分単位の時刻に戻せます。戻すと database がその場で上書きされ、新しい database はできません。binding も名前もそのままなので、切り替えの仕事がありません。
+D1 の Time Travel は最初から有効で、追加の料金がかかりません。過去 30 日（Workers Free plan では 7 日）の、分単位の時刻に戻せます。戻すとデータベースがその場で上書きされ、新しいデータベースはできません。binding も名前もそのままなので、切り替えの仕事がありません。
 
 DynamoDB の PITR は、自分で有効にして、テーブルの大きさに応じた料金を払います。粒度は秒で、戻せるのは最大 35 日です。そして、必ず新しいテーブルができます。
 
-どちらが良いかは、何を恐れるかによります。その場で上書きする復元は、速くて簡単です。その代わり、戻した瞬間に、いまのデータが見えなくなります。D1 は、戻す前の状態に帰るための bookmark を返すので、取り消しはできます。しかし、戻した結果と戻す前の状態を、並べて見比べることはできません。ドキュメントは、database を複製する機能はまだないと書いています。新しいテーブルを作る復元は、遅くて面倒です。その代わり、元のテーブルと並べて差分を数えてから、切り替えるかどうかを決められます。この章の `recovery:diff` は、その差分を数えています。
+どちらが良いかは、何を恐れるかによります。その場で上書きする復元は、速くて簡単です。その代わり、戻した瞬間に、いまのデータが見えなくなります。D1 は、戻す前の状態に帰るための bookmark を返すので、取り消しはできます。しかし、戻した結果と戻す前の状態を、並べて見比べることはできません。ドキュメントは、データベースを複製する機能はまだないと書いています。新しいテーブルを作る復元は、遅くて面倒です。その代わり、元のテーブルと並べて差分を数えてから、切り替えるかどうかを決められます。この章の `recovery:diff` は、その差分を数えています。
 
 R2 については、S3 互換 API の対応表で、バージョニングの API（`GetBucketVersioning`、`PutBucketVersioning`）が未対応になっているところまでを確かめました。R2 にほかの復元の手段があるかは、調べていません。
 
-D1 と R2 を組み合わせているなら、この章で長く扱った食い違いの話は、そのまま当てはまります。database を 10 分前に戻しても、バケットは戻りません。
+D1 と R2 を組み合わせているなら、この章で長く扱った食い違いの話は、そのまま当てはまります。データベースを 10 分前に戻しても、バケットは戻りません。
 
-## お金の話
+## 料金
 
 <!-- section: 22.cost -->
 
@@ -66,7 +66,7 @@ AWS Backup は、1 GB・月あたり USD 0.114 です。0.80 は、7 つのス�
 
 無料枠は、どの表でも引いていません。復元と AWS Backup に無料枠があるかどうかは、調べていません。
 
-## ハマりどころ
+## つまずきやすいところ
 
 | こうなったら | ここを見る |
 | --- | --- |
@@ -149,7 +149,7 @@ vp run recovery:infra:destroy
 | 訓練を実行する | `examples/22-recovery/scripts/recovery.ts`、`scripts/context.ts`、`scripts/drill.ts`、`src/drill.ts`、`drill/TEMPLATE.md`、`drill/record.template.json` | `recovery:drill`、`recovery:seed`、`recovery:accident`、`recovery:restore:table`、`recovery:restore:objects`、`recovery:diff`、`recovery:verify`、`recovery:repair`、`recovery:protect` |
 | 切り替える | `examples/22-recovery/infra/lib/recovery-stack.ts`、`infra/bin/app.ts` | `recovery:infra:diff`、`recovery:infra:deploy`、`recovery:audit`、`recovery:infra:drift` |
 | 片付け | `examples/22-recovery/scripts/recovery.ts` | `recovery:drop-table`、`recovery:empty`、`recovery:infra:destroy` |
-| お金の話 | `data/pricing/` | `test:unit` |
+| 料金 | `data/pricing/` | `test:unit` |
 
 **一次情報**（確認日はすべて 2026-10-12）
 

@@ -100,10 +100,10 @@ CloudFront Functions では足りなくなる場面は決まっています。�
 - arm64 が使えません。x86_64 だけです
 - 実行ロールは、`lambda.amazonaws.com` と `edgelambda.amazonaws.com` の両方が引き受けられる必要があります
 - タイムアウトは 30 秒までです
-- 関数が作る応答の大きさは、viewer 側のイベントで 40 KB、origin 側で 1 MB までです
+- 関数が作る応答の大きさは、ビューワー側のイベントで 40 KB、オリジン側で 1 MB までです
 - ボディは、viewer request で 40 KB、origin request で 1 MB に切り詰められます。それより長いボディは、先頭の部分だけが渡されます
 
-関数の組み合わせにも決まりがあります。1 つのビヘイビア（cache behavior）の 1 つのイベントに付けられる関数は 1 つだけです。また、viewer 側のイベント（viewer request と viewer response）では、CloudFront Functions と Lambda@Edge を混ぜられません。viewer request に CloudFront Function、origin request に Lambda@Edge という組み合わせは許されていて、この章はその構成をとります。
+関数の組み合わせにも決まりがあります。1 つのビヘイビア（cache behavior）の 1 つのイベントに付けられる関数は 1 つだけです。また、ビューワー側のイベント（viewer request と viewer response）では、CloudFront Functions と Lambda@Edge を混ぜられません。viewer request に CloudFront Function、origin request に Lambda@Edge という組み合わせは許されていて、この章はその構成をとります。
 
 ### 最小の例として、ボディのダイジェストを返す
 

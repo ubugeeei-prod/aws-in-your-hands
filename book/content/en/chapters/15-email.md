@@ -1,6 +1,6 @@
 ---
 title: "15 Email: SES"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 15 Email: SES
@@ -230,7 +230,7 @@ The condition is that there is no record yet, or that the last attempt was refus
 Each record holds one state.
 
 ```figure
-caption: A notification starts with a claim and moves on with what SES answers and the events that arrive later
+caption: A notification starts with a claim and moves on with what SES answers and the events that arrive later (the usual order; Delivery and Complaint also apply from other states)
 node none: (none)
 node claimed: claimed | no answer: stays claimed (nobody retries automatically)
 node sent: sent
@@ -257,6 +257,8 @@ edge rejected -> bounced
 edge sent -> bounced
 edge delivered -> bounced
 ```
+
+The first figure draws the usual order. Events arrive late and out of order, so the code accepts other moves too. A Delivery moves a record to `delivered` from `claimed`, `rejected` or `sent`. A Complaint works like a Bounce: it moves a record to `complained` from `claimed`, `rejected`, `sent` or `delivered`.
 
 Each of the three outcomes of `mailer` leads to a different state.
 

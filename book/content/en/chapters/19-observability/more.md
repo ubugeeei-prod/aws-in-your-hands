@@ -23,7 +23,7 @@ The request ID is the one the user sees, and the trace ID is the one shared acro
 
 <<< @/examples/19-observability/src/telemetry.ts{fields}
 
-Every log line gets a `traceId`, and each span gets the request ID as an attribute. If a user gives you a request ID, the log gives you the trace ID. If you find a slow span on the trace screen, its request ID attribute takes you back to the log. The tests check the lookup in both directions.
+While there is a valid active span, each log line gets a `traceId`, and each span gets the request ID as an attribute. When no SDK is registered there is no valid span, so `traceFields()` returns nothing and the log lines carry no `traceId`. If a user gives you a request ID, the log gives you the trace ID. If you find a slow span on the trace screen, its request ID attribute takes you back to the log. The tests check the lookup in both directions.
 
 ### Converting to X-Ray's notation
 

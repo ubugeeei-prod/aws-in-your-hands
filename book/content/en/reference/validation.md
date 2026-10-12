@@ -331,7 +331,7 @@ To resume: After vp run edge:infra:deploy, run aws cloudfront test-function (sta
 
 ### kvs-stale-etag-error
 
-Which error the KeyValueStore API returns for a stale If-Match is unconfirmed. The API reference lists ConflictException (409) without saying when it is returned. Chapter 10's adapter treats only ConflictException as a conflict and stops without retrying on anything else.
+Which error the KeyValueStore API returns for a stale If-Match is unconfirmed. The API reference lists ConflictException (409) without saying when it is returned. Chapter 10's adapter treats only ConflictException as a conflict. Of the other errors, it retries a 5xx or one with no status code up to five rounds and stops at once on the rest.
 
 To resume: After deploying, run aws cloudfront-keyvaluestore put-key with an old ETag as --if-match and record the error name and status code. If it is not ConflictException, fix translate in examples/10-edge/src/kvs/store.ts and test/store.test.ts.
 

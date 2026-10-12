@@ -6,7 +6,7 @@ title: "03 Static Hosting: Design and Build"
 
 This page first runs the SPA on your machine, then goes through the AWS side in order: the bucket, the function that rewrites URLs, and the distribution.
 
-## Run it locally
+## Running it locally
 
 <!-- section: 03.app -->
 

@@ -6,7 +6,7 @@ title: "03 Static Hosting: Costs, Pitfalls, and Cleanup"
 
 To close the chapter, this page covers cost, where you might get stuck, what to change for production, and cleanup. It ends with how the book's own site, which is served by the same architecture, differs.
 
-## What it costs
+## Cost
 
 Think about cost in three states. Amounts are in USD before tax, for S3 in the Tokyo Region and CloudFront at edge locations in Japan on pay-as-you-go pricing. The inputs and unit prices behind the calculations are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -31,7 +31,7 @@ Some things are not in this calculation. Access logs, AWS WAF, and a custom doma
 
 Besides pay-as-you-go, CloudFront also has flat-rate monthly plans. On the date checked there were four: Free, Pro, Business, and Premium. The features differ by plan, and how to select a plan from CDK has not been checked, so this book's sample stays on pay-as-you-go.
 
-## Where you might get stuck
+## Where people get stuck
 
 | Symptom | What to check |
 | --- | --- |
@@ -50,7 +50,7 @@ Besides pay-as-you-go, CloudFront also has flat-rate monthly plans. On the date 
 - Make the AWS CDK CLI and CloudFormation the deployment path, for the reasons given in chapter 02
 - Publish from CI. Run it with short-lived credentials, not from a person's machine (for getting into AWS from CI without stored keys, see [chapter 20](/en/chapters/20-shipping.md))
 
-## Clean up
+## Cleaning up
 
 <!-- section: 03.cleanup -->
 
@@ -89,14 +89,14 @@ If the book's site used SPA fallback, every broken link would be shown as the to
 
 | Section | Files | Tasks |
 | --- | --- | --- |
-| Run it locally | `examples/03-spa/src/`, `examples/03-spa/index.html`, `examples/03-spa/vite.config.ts` | `dev:spa`, `lint:vue`, `typecheck:vue`, `test:unit`, `build:spa`, `preview:spa` |
+| Running it locally | `examples/03-spa/src/`, `examples/03-spa/index.html`, `examples/03-spa/vite.config.ts` | `dev:spa`, `lint:vue`, `typecheck:vue`, `test:unit`, `build:spa`, `preview:spa` |
 | The bucket stays private, Define the distribution | `examples/03-spa/infra/lib/spa-stack.ts`, `examples/03-spa/infra/bin/app.ts`, `examples/03-spa/infra/test/spa-stack.test.ts`, `examples/03-spa/cdk.json` | `spa:infra:synth`, `test:unit` |
 | When /notes/abc is opened directly | `examples/03-spa/infra/functions/spa-fallback.js`, `examples/03-spa/infra/test/spa-fallback.test.ts` | `test:unit` |
-| Deploy | `tools/src/infra/` | `spa:infra:diff`, `spa:infra:deploy`, `spa:infra:drift` |
+| Deploying | `tools/src/infra/` | `spa:infra:diff`, `spa:infra:deploy`, `spa:infra:drift` |
 | Publish | `tools/src/site/plan.ts`, `tools/src/site/plan.test.ts`, `tools/src/site/publish.ts`, `tools/src/site/bucket.ts`, `tools/src/site/revision.ts`, `tools/src/site/invalidate.ts`, `tools/src/infra/outputs.ts` | `spa:publish:plan`, `spa:publish`, `spa:invalidate` |
 | Confirm that it arrived | `tools/src/site/smoke-spec.ts`, `tools/src/site/smoke-spec.test.ts`, `tools/src/site/smoke.ts` | `spa:smoke` |
-| Clean up | `tools/src/site/unpublish.ts` | `spa:unpublish`, `spa:infra:destroy` |
-| What it costs | `data/pricing/`, `tools/src/pricing/` | `test:unit` |
+| Cleaning up | `tools/src/site/unpublish.ts` | `spa:unpublish`, `spa:infra:destroy` |
+| Cost | `data/pricing/`, `tools/src/pricing/` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-11)
 

@@ -34,7 +34,7 @@ The API Gateway in front has the same throttling as in chapter 04, 10 requests a
 
 The `banner` line deals with a side effect of bundling the SDK. The bundled SDK calls `require()` internally, and an ES module has no `require`, so without help the function fails as soon as it is loaded. The banner defines `require` at the top of the bundle. Unit tests can't catch this problem, because the test runner has its own `require`. That is why `vp run bundles:check` loads each synthesized bundle in plain Node.js.
 
-## Deploy it and check
+## Deploying and checking
 
 <!-- section: 05.deploy -->
 

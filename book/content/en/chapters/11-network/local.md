@@ -4,7 +4,7 @@ title: "11 Network: Run It Locally"
 
 # 11 Network: Run It Locally
 
-## Check it on your machine
+## Checking it locally
 
 <!-- section: 11.local -->
 

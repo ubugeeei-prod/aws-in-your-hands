@@ -1,6 +1,6 @@
 ---
 title: "24 Self-hosting: celld を AWS で動かす"
-revision: 1
+revision: 2
 ---
 
 # 24 Self-hosting: celld を AWS で動かす
@@ -69,14 +69,14 @@ vp run celld:fetch
 構成は 2 つの図に分けました。1 つ目はノードの配置と通信、2 つ目はバケットへのアクセスです。
 
 ```figure
-caption: ノードは外からの inbound がない private subnet に並び、celld は :8081 でピアと平文の HTTP を話し、Worker は各ノードの 127.0.0.1:8080 だけで待つ
+caption: ノードは外からのインバウンドがないプライベートサブネットに並び、celld は :8081 でピアと平文の HTTP を話し、Worker は各ノードの 127.0.0.1:8080 だけで待つ
 node cli: vp run celld:* | 手元のマシン
 node a: node a (AZ 1) | celld :8081, Worker :8080
 node b: node b (AZ 2) | celld :8081, Worker :8080
 node c: node c (AZ 1) | celld :8081, Worker :8080
-node va: data volume | retained
-node vb: data volume | retained
-node vc: data volume | retained
+node va: データボリューム | retained
+node vb: データボリューム | retained
+node vc: データボリューム | retained
 edge cli -> a: Run Command
 edge cli -> b
 edge cli -> c
@@ -90,7 +90,7 @@ group vpc: VPC (11章), private subnets, ap-northeast-1 = a, b, c, va, vb, vc
 
 ```figure
 caption: ノードが読み書きできるのは fleet のバケットだけで、バックアップのバケットには触れない
-node nodes: node a, b, c | S3 gateway endpoint から
+node nodes: node a, b, c | S3 ゲートウェイエンドポイントから
 node backup: backup bucket | s3://<bucket>/backups/, retained
 node fleet: fleet bucket | s3://<bucket>/fleet/, retained
 node deploy: celld deploy | 手元のマシンから S3 API
@@ -109,7 +109,7 @@ cdkd と celld をつなぐ仕組みは作っていません。そうした仕�
 
 `nodes` の既定は 0 なので、`vp run celld:infra:deploy` とだけ実行しても、時間で課金されるものは 1 つもできません。
 
-11章で書いた注意が、ここでも当てはまります。`-c` はその回の実行にしか効きません。`-c nodes=3` で作った後に `-c` を付け忘れてデプロイすると、cdkd はノードを 3 台とも消しにいきます。data volume は残ります（理由は[しくみと実装](/ja/chapters/24-celld/build.md)のページで説明します）が、テンプレートの管理からは外れるので、次に `-c nodes=3` でデプロイすると空のボリュームが新しく作られます。デプロイの前には、必ず `vp run celld:infra:diff -c nodes=3` の結果を見てください。
+11章で書いた注意が、ここでも当てはまります。`-c` はその回の実行にしか効きません。`-c nodes=3` で作った後に `-c` を付け忘れてデプロイすると、cdkd はノードを 3 台とも消しにいきます。データボリュームは残ります（理由は[しくみと実装](/ja/chapters/24-celld/build.md)のページで説明します）が、テンプレートの管理からは外れるので、次に `-c nodes=3` でデプロイすると空のボリュームが新しく作られます。デプロイの前には、必ず `vp run celld:infra:diff -c nodes=3` の結果を見てください。
 
 デプロイの計画を手元で見るタスクもあります。このタスクは AWS に触りません。
 

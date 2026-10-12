@@ -81,9 +81,9 @@ vp run spa:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** SPA の起動、型検査、ユニットテスト、ビルド、CDK の synth と assertion、公開の計画と smoke の検査の定義に対するテスト。
+**手元で確かめたこと。** SPA の起動、型検査、ユニットテスト、ビルド、CDK の synth とアサーション、公開の計画と smoke の検査の定義に対するテスト。
 
-**まだ確かめていないこと。** `spa:infra:deploy`、`spa:publish`、`spa:smoke`、`spa:infra:drift`、`spa:unpublish`、`spa:infra:destroy` は、実際の AWS アカウントでは実行していません。とくに、cdkd が `AWS::CloudFront::Function` を作成・読み戻しできること、`cdkd state show` の出力からスタックの output を読む処理が実際の出力の形に合っていることは、実環境での確認待ちです。
+**まだ確かめていないこと。** `spa:infra:deploy`、`spa:publish`、`spa:smoke`、`spa:infra:drift`、`spa:unpublish`、`spa:infra:destroy` は、実際の AWS アカウントでは実行していません。とくに、cdkd が `AWS::CloudFront::Function` を作成・読み戻しできること、`cdkd state show` の出力からスタックの出力を読む処理が実際の出力の形に合っていることは、実環境での確認待ちです。
 
 **コードの場所。**
 

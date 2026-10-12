@@ -331,7 +331,7 @@ cdkd 0.296.28 は AWS::SES::EmailIdentity、ConfigurationSet、ConfigurationSetE
 
 ### kvs-stale-etag-error
 
-KeyValueStore API が古い If-Match に対して返すエラーの種類を確認していない。API リファレンスは ConflictException（409）を載せているが、どの条件で返るかは書いていない。10章の adapter は ConflictException だけを競合として扱い、それ以外は再試行せずに止まる。
+KeyValueStore API が古い If-Match に対して返すエラーの種類を確認していない。API リファレンスは ConflictException（409）を載せているが、どの条件で返るかは書いていない。10章の adapter は ConflictException だけを競合として扱う。それ以外のエラーは、5xx と状態コードの無いものを 5 回まで再試行し、ほかはその場で止まる。
 
 再開手順: デプロイ後、aws cloudfront-keyvaluestore put-key を古い ETag の --if-match で実行し、エラー名と状態コードを記録する。ConflictException でなければ examples/10-edge/src/kvs/store.ts の translate と test/store.test.ts を直す。
 

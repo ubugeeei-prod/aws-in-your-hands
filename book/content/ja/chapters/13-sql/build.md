@@ -60,7 +60,7 @@ API の契約は 04章とほぼ同じで、更新（`PUT`）と `version` を足
 
 <<< @/examples/13-sql/src/contract.ts{note}
 
-アプリとデータベースの間には、薄い interface を 1 枚だけ挟みます。
+アプリとデータベースの間には、薄いインターフェースを 1 枚だけ挟みます。
 
 <<< @/examples/13-sql/src/db.ts{db}
 

@@ -6,7 +6,7 @@ title: "22 Backup: Costs, Pitfalls, and Cleanup"
 
 This is the last page of the chapter. It covers the difference from Cloudflare D1, the cost, what to look at when something goes wrong, what to add for production, and cleanup.
 
-## If you come from D1's Time Travel
+## If you're coming from D1's Time Travel
 
 <!-- section: 22.cloudflare -->
 
@@ -22,7 +22,7 @@ For R2, what was checked is that the compatibility table of its S3 API marks the
 
 If you combine D1 and R2, the disagreement this chapter spends most of its pages on applies to you unchanged. When you take the database back ten minutes, the bucket does not go back with it.
 
-## What it costs
+## Cost
 
 <!-- section: 22.cost -->
 
@@ -66,7 +66,7 @@ AWS Backup is USD 0.114 per GB-month. The 0.80 assumes that each of the seven sn
 
 No free allowance is deducted in any of these tables. Whether restores and AWS Backup have one was not looked into.
 
-## Where it goes wrong
+## Where people get stuck
 
 | If this happens | Look here |
 | --- | --- |
@@ -82,7 +82,7 @@ No free allowance is deducted in any of these tables. Whether restores and AWS B
 | `recovery:infra:destroy` cannot delete the bucket | Versions are left. Run `recovery:empty --apply` first |
 | The stack is gone and DynamoDB is still on the bill | A restored table is left. `recovery:status` lists them |
 
-## Going to production
+## If you take this to production
 
 - **Protect the table and the bucket.** `-c protect=on` does this with `RETAIN` and deletion protection. It protects only the table itself. The contents are protected by PITR and versioning
 - **Set targets first, and check them with a drill.** An RTO and an RPO that you have only chosen are just numbers, and you learn whether you meet them by measuring. The restore time changes as the table grows, so measure regularly
@@ -149,7 +149,7 @@ Some things are not closed. The check reads the table and the bucket separately,
 | Running the drill | `examples/22-recovery/scripts/recovery.ts`, `scripts/context.ts`, `scripts/drill.ts`, `src/drill.ts`, `drill/TEMPLATE.md`, `drill/record.template.json` | `recovery:drill`, `recovery:seed`, `recovery:accident`, `recovery:restore:table`, `recovery:restore:objects`, `recovery:diff`, `recovery:verify`, `recovery:repair`, `recovery:protect` |
 | Cutting over | `examples/22-recovery/infra/lib/recovery-stack.ts`, `infra/bin/app.ts` | `recovery:infra:diff`, `recovery:infra:deploy`, `recovery:audit`, `recovery:infra:drift` |
 | Cleaning up | `examples/22-recovery/scripts/recovery.ts` | `recovery:drop-table`, `recovery:empty`, `recovery:infra:destroy` |
-| What it costs | `data/pricing/` | `test:unit` |
+| Cost | `data/pricing/` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-12)
 

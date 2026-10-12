@@ -22,7 +22,7 @@ Workers KV を AWS の 3 つのどれかに対応づけたくなりますが、�
 
 レート制限のように正確に数える仕事は、Cloudflare でも Workers KV の役目ではありません。Durable Objects は、名前で一意に決まる、single-thread の小さな実体で、それぞれが強い整合性の保存領域を持ちます。同時に来たリクエストを 1 つずつ処理するので、この章が DynamoDB の条件式や Valkey のスクリプトで得た保証を、別の形で得ています。AWS には、Durable Objects に直接あたる部品はありません。
 
-Workers には、レート制限専用のバインディング（Rate Limiting binding）もあります。ドキュメントによると、数えるのは Cloudflare の拠点ごとで、「寛容で、結果整合で、正確な計数のためのものではない」とされています。この章の DynamoDB 版は、その逆を選び、1 つのリージョンで、リクエストごとに 1 回書き込んで、正確に数えます。速さと手軽さではバインディングが上で、厳密さでは DynamoDB 版が上です。どちらが要るかは、何を守りたいかで決まります。
+Workers には、レート制限専用のbinding（Rate Limiting binding）もあります。ドキュメントによると、数えるのは Cloudflare の拠点ごとで、「寛容で、結果整合で、正確な計数のためのものではない」とされています。この章の DynamoDB 版は、その逆を選び、1 つのリージョンで、リクエストごとに 1 回書き込んで、正確に数えます。速さと手軽さではbindingが上で、厳密さでは DynamoDB 版が上です。どちらが要るかは、何を守りたいかで決まります。
 
 料金の形も違います。Workers KV は、Free プランで 1 日あたり読み取り 10 万回・書き込み 1,000 回、Paid プランで月に読み取り 1,000 万回・書き込み 100 万回を含み、その先は読み取り 100 万回あたり USD 0.50、書き込み 100 万回あたり USD 5.00 です。置いてあるだけでかかる料金は、保存量が 1 GB を超えるまでありません。Cloudflare から来た人にとっては、置いてあるだけで料金がかかる ElastiCache が、いちばん違和感のあるところだと思います。Durable Objects の料金は、この章では確かめていません。
 
@@ -51,7 +51,7 @@ CloudFront KeyValueStore は、エッジの関数が読む設定にだけ使い�
 
 Lambda のメモリは、追加の料金なしで使える 1 段目のキャッシュで、正しさは預けません。
 
-## お金の話
+## 料金
 
 <!-- section: 14.cost -->
 
@@ -120,7 +120,7 @@ Valkey 版では、数える先が ElastiCache に替わり、上限は `cacheUs
 
 スタックを消せば、この章のぶんの料金は止まります。
 
-## ハマりどころ
+## つまずきやすいところ
 
 | こうなったら | ここを見る |
 | --- | --- |
@@ -190,7 +190,7 @@ vp run kv:local:stop
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ユニットテスト（レートリミッターの境界と同時実行、ストアのコントラクト、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、スタンピード、揺らぎ、トークンの署名、アプリ、スタックの assertion）。型検査。synth（既定と `-c store=valkey`、esbuild のバンドル込み）。バンドルしたハンドラーを Node.js で読み込み、API Gateway の形のイベントで呼び出し。ストアのコントラクト 22 件を、Valkey 9.1.2 と DynamoDB Local 3.3.1 に対して実行。`dev:kv` を memory、valkey、dynamodb の 3 通りで起動して、本文の `curl` を実行。数える相手を送信元のアドレスに変えたあとは、memory で起動し直して、ヘッダーを変えても同じ枠で数えられることを確かめました（valkey と dynamodb では流し直していません）。
+**手元で確かめたこと。** ユニットテスト（レートリミッターの境界と同時実行、ストアのコントラクト、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、スタンピード、揺らぎ、トークンの署名、アプリ、スタックのアサーション）。型検査。synth（既定と `-c store=valkey`、esbuild のバンドル込み）。バンドルしたハンドラーを Node.js で読み込み、API Gateway の形のイベントで呼び出し。ストアのコントラクト 22 件を、Valkey 9.1.2 と DynamoDB Local 3.3.1 に対して実行。`dev:kv` を memory、valkey、dynamodb の 3 通りで起動して、本文の `curl` を実行。数える相手を送信元のアドレスに変えたあとは、memory で起動し直して、ヘッダーを変えても同じ枠で数えられることを確かめました（valkey と dynamodb では流し直していません）。
 
 **まだ確かめていないこと。** `kv:infra:deploy`、`kv:smoke`、`kv:logs`、`kv:infra:drift`、`kv:infra:destroy` は、実際の AWS では動かしていません。ステージのスロットリングとテーブルの上限は、テンプレートに入っていることをテストで固定し、cdkd 0.296.28 のソースがそれを AWS の API に渡していることを読んだだけです。実際に反映されること、スロットリングが返す 429 の形とその課金、テーブルの上限に当たったときの振る舞い、API Gateway のイベントに入る `sourceIp` の実際の値は、確かめていません。`kv:local:start` と `kv:local:stop` は、Docker のデーモンが無く実行していません（Valkey と DynamoDB Local は、nixpkgs の `valkey-server` と AWS が配布する jar を、プロセスとして起動しました）。ElastiCache については、何も実機で確かめていません。内訳は、CloudFormation と Cloud Control API が `ConnectionType: public` と `UserGroupId: default.iam-user-group` を受け付けること、`CacheUsageLimits` の ECPU の上限 1,000 が有効な値であること（上限の最小値はドキュメントに見つからず、1,000 は公式の例が下限に使っている値です）、自作の SigV4 トークンが通ること、iovalkey の `Cluster` がパブリックエンドポイントでクラスターの構成を読めること、TLS 1.3 での接続、スクリプトの ECPU 消費、キャッシュの作成と削除にかかる時間です。DynamoDB については、TTL で項目が消えるまでの実際の時間と、実物での応答時間を確かめていません。`@valkey/valkey-glide` は npm の情報を読んだだけで、インストールも実行もしていません。Durable Objects の料金は確かめていません。
 
@@ -211,7 +211,7 @@ vp run kv:local:stop
 | 手元で動かす | `examples/14-kv-cache/src/app.ts`、`src/caller.ts`、`test/caller.test.ts`、`src/compose.ts`、`src/env.ts`、`src/dev.ts`、`scripts/local-stores.ts`、`scripts/test-local.ts`、`.env.example` | `dev:kv`、`kv:local:start`、`kv:local:migrate`、`kv:test:local`、`kv:local:stop` |
 | AWS にのせる準備 | `examples/14-kv-cache/infra/lib/kv-cache-stack.ts`、`infra/bin/app.ts`、`infra/test/kv-cache-stack.test.ts`、`cdk.json` | `kv:infra:synth`、`test:unit` |
 | デプロイして確かめる | `examples/14-kv-cache/scripts/smoke.ts`、`scripts/logs.ts` | `kv:infra:diff`、`kv:infra:deploy`、`kv:smoke`、`kv:logs`、`kv:infra:drift` |
-| お金の話 | `data/pricing/` | `test:unit` |
+| 料金 | `data/pricing/` | `test:unit` |
 | 片付け | `tools/src/infra/` | `kv:infra:destroy`、`kv:local:stop` |
 
 **一次情報**（確認日は、とくに書いていなければ 2026-10-12）

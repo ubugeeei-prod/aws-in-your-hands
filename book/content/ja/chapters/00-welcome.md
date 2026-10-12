@@ -38,7 +38,7 @@ node browser: Browser
 node s3: S3
 node sqs: SQS
 node lambda: Lambda | 画像の確認
-edge browser -> s3: 07 presigned アップロード
+edge browser -> s3: 07 署名付きアップロード
 edge s3 -> sqs: 08 S3 イベント
 edge sqs -> lambda: 08
 ```

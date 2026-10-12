@@ -4,9 +4,30 @@ title: "24 Self-hosting: Costs, Pitfalls, and Cleanup"
 
 # 24 Self-hosting: Costs, Pitfalls, and Cleanup
 
-This page covers what to look at when the fleet does not work, what production would need on top of this setup, and how to clean up. It ends by looking at the chapter's design as a distributed system. The cost breakdown is on the [Design and Build](/en/chapters/24-celld/build.md) page.
+This page covers the cost breakdown, what to look at when the fleet does not work, what production would need on top of this setup, and how to clean up. It ends by looking at the chapter's design as a distributed system.
 
-## When it does not work
+## Cost
+
+<!-- section: 24.cost -->
+
+The breakdown follows. Every amount is the list price in ap-northeast-1, in USD, for a 730-hour month.
+
+- One `t4g.small` instance is USD 15.77
+- The gp3 volumes are 16 GiB per node, USD 1.54 (the 8 GiB root volume is an assumption, and the real size has not been checked)
+- S3 requests are about USD 3.93 per node, which is an estimate
+- The interface endpoints added to the chapter 11 stack are USD 61.32
+
+That adds up to USD 82.56 for one node and USD 125.03 for three. As in chapter 23, the endpoints cost the most, and with one node they are more than 70 percent of the total. Without the endpoints it is USD 21.24 for one node and USD 63.71 for three.
+
+The S3 request figure is an estimate because a celld node keeps talking to the bucket even when it has nothing to do. The documented intervals are a lease renewal every third of a lifetime (a write about every 3.3 seconds), a read of the fleet's load every 5 seconds, and a check for deployments every 30 seconds. Over a month that comes to about 790,000 writes and about 610,000 reads. These counts are a lower bound calculated from the documented numbers, not a measurement. Active cells add to them, and storage for the objects that pile up in the bucket is charged separately.
+
+<<< @/examples/24-celld/src/cost.ts{billable}
+
+With all three instances stopped, the volumes and the endpoints still cost USD 65.93. After the stack is destroyed with the defaults, the three remaining data volumes cost USD 2.30 a month.
+
+As for the instance type, the celld documentation gives only a rule of thumb, that one 8 GB node can hold 1,000 cells in memory, and no minimum requirement. Whether a 2 GiB `t4g.small` is enough has not been checked.
+
+## Where people get stuck
 
 <!-- section: 24.failures -->
 
@@ -26,7 +47,7 @@ vp run celld:diagnose
 - **`celld:rollout` stopped at settle.** The rollout has rolled nothing back. Read the log of the node it stopped at, and decide whether to get that node running or to reinstall the previous version with `celld:install <version> <node>`. The remaining nodes are still running the old version
 - **Health keeps returning 503.** celld does not report a new node healthy until the fleet has settled. After 120 seconds it logs `ready_gate_expired` once, and the node stays closed after that
 
-## If this were production
+## If you take this to production
 
 <!-- section: 24.production -->
 
@@ -123,7 +144,7 @@ Resource types as cdkd handles them. I read the `dist` of the pinned npm package
 | Make it a fleet, and replace nodes one at a time | `examples/24-celld/src/rollout.ts`, `src/health.ts`, `test/rollout.test.ts`, `test/health.test.ts` | `celld:drain`, `celld:rollout`, `celld:stop-all`, `test:unit` |
 | Losing a node | `examples/24-celld/src/probe.ts`, `src/ledger.ts`, `test/toy-fleet.ts`, `test/ledger.test.ts`, `test/probe.test.ts` | `celld:loss-check`, `celld:kill`, `celld:revive`, `test:unit` |
 | Backup and restore | `examples/24-celld/src/backup.ts`, `test/remote.test.ts` | `celld:backup`, `celld:restore`, `test:unit` |
-| When it does not work | `examples/24-celld/scripts/fleet.ts` | `celld:status`, `celld:logs`, `celld:diagnose` |
+| Where people get stuck | `examples/24-celld/scripts/fleet.ts` | `celld:status`, `celld:logs`, `celld:diagnose` |
 | Cleaning up | `examples/24-celld/scripts/fleet.ts` | `celld:infra:destroy`, `celld:bucket-empty` |
 | As a distributed system | `examples/24-celld/src/ledger.ts`, `test/ledger.test.ts` | `test:unit` |
 

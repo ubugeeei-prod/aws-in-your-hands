@@ -49,20 +49,20 @@ type: sequence
 actor job: GitHub Actions job | id-token: write
 actor issuer: GitHub OIDC issuer
 actor sts: AWS STS
-actor role: IAM role | trust policy
-step job -> issuer: token を要求 (aud=sts)
-step issuer --> job: 署名つき JWT: iss, aud, sub
+actor role: IAM ロール | 信頼ポリシー
+step job -> issuer: トークンを要求 (aud=sts)
+step issuer --> job: 署名付き JWT: iss, aud, sub
 step job -> sts: AssumeRoleWithWebIdentity
 note job: role ARN と JWT を渡す
 step sts -> sts: 署名は正しいか
 step sts -> sts: aud == sts.amazonaws.com?
 step sts -> role: sub はこの値と同じか
 step sts --> job: 1 時間有効な認証情報
-note job: access key, secret key
-note job: session token
+note job: アクセスキー, シークレットキー
+note job: セッショントークン
 ```
 
-ジョブは、自分が何者かを記した署名つきのトークンを GitHub に発行してもらい、AWS の STS に見せます。STS は署名を確かめ、トークンの内容をロールの信頼ポリシーと照らし合わせて、合っていれば 1 時間だけ使える認証情報を返します。GitHub に保存するのはロールの ARN とアカウント ID だけで、どちらも秘密ではありません。
+ジョブは、自分が何者かを記した署名付きのトークンを GitHub に発行してもらい、AWS の STS に見せます。STS は署名を確かめ、トークンの内容をロールの信頼ポリシーと照らし合わせて、合っていれば 1 時間だけ使える認証情報を返します。GitHub に保存するのはロールの ARN とアカウント ID だけで、どちらも秘密ではありません。
 
 準備は 2 つあります。1 つ目は、GitHub が発行したトークンを信用する、とアカウントに登録することです。
 
@@ -70,7 +70,7 @@ note job: session token
 
 OIDC provider は、同じ URL のものをアカウントに 1 つしか作れません。すでに登録してあるアカウントでは、`-c existingOidcProviderArn=...` を付けて既存のものを使います。
 
-2 つ目は、誰がこのロールを使えるかを決める、ロールの信頼ポリシー（trust policy）です。provider を登録しただけでは、GitHub 上のすべてのリポジトリが候補になってしまいます。候補を絞るには、トークンの中の `sub` という項目を使います。GitHub は、ジョブの種類ごとに違う文字列を `sub` に入れます。
+2 つ目は、誰がこのロールを使えるかを決める、ロールの信頼ポリシー（trust policy）です。プロバイダーを登録しただけでは、GitHub 上のすべてのリポジトリが候補になってしまいます。候補を絞るには、トークンの中の `sub` という項目を使います。GitHub は、ジョブの種類ごとに違う文字列を `sub` に入れます。
 
 <<< @/examples/20-shipping/infra/lib/ci-stack.ts{subjects}
 
@@ -80,7 +80,7 @@ OIDC provider は、同じ URL のものをアカウントに 1 つしか作れ�
 
 条件に使うのは `StringEquals` だけです。`StringLike` と `*` を使えば「このリポジトリのどのブランチでも」と書けますが、そう書くと、誰かが作った作業用のブランチからでも本番にデプロイできることになります。そのため、ロールごとに、ちょうど 1 つの文字列だけを許しています。
 
-リポジトリの名前は、CDK の context で渡します。型の外から来る値であり、しかも信頼ポリシーにそのまま入る値なので、スキーマで検証します。
+リポジトリの名前は、CDK のコンテキストで渡します。型の外から来る値であり、しかも信頼ポリシーにそのまま入る値なので、スキーマで検証します。
 
 <<< @/examples/20-shipping/infra/lib/config.ts{ci-config}
 
@@ -116,9 +116,9 @@ vp run ship:ci:deploy -c githubRepository=<owner>/<repo>
 
 <<< @/examples/20-shipping/infra/lib/ci-stack.ts{drift-role}
 
-このポリシーが少し長いのは、CloudFormation のドリフト検出が、呼び出した側の権限でスタックの中のリソースを 1 つずつ読みに行くからです。CloudFormation の操作の権限だけでは足りず、Lambda や IAM や API Gateway を読む権限も要ります。必要な操作は、各リソースタイプが公開しているスキーマの「read に必要な権限」から拾いました。この権限で足りるかどうかは、実際に動かして確かめてはいません。足りなければ、検出は「読めなかった」という結果になり、ゲートは合格にしません。そのときは、report に出る理由を見て、このポリシーに操作を足します。
+このポリシーが少し長いのは、CloudFormation のドリフト検出が、呼び出した側の権限でスタックの中のリソースを 1 つずつ読みに行くからです。CloudFormation の操作の権限だけでは足りず、Lambda や IAM や API Gateway を読む権限も要ります。必要な操作は、各リソースタイプが公開しているスキーマの「read に必要な権限」から拾いました。この権限で足りるかどうかは、実際に動かして確かめてはいません。足りなければ、検出は「読めなかった」という結果になり、判定は合格にしません。そのときは、report に出る理由を見て、このポリシーに操作を足します。
 
-最後の statement だけ、対象が `*` です。この 5 つの操作には、対象を ARN で絞る書き方がありません。`*` を使っているのがこの 5 つだけであることも、テストで固定しています。
+最後のステートメントだけ、対象が `*` です。この 5 つの操作には、対象を ARN で絞る書き方がありません。`*` を使っているのがこの 5 つだけであることも、テストで固定しています。
 
 プルリクエストの `plan` ジョブには、知っておくべき点があります。このジョブでは、レビュー前のコードが lookup role の権限で動きます。lookup role は読み取り専用ですが、中身は AWS 管理の `ReadOnlyAccess` で、拒否しているのは KMS での復号だけです。つまり、アカウントの中の多くのものを読めます。そのため `plan` ジョブは、同じリポジトリのブランチからのプルリクエストに限っています。フォークからのプルリクエストで OIDC のトークンが発行されるのかどうかは、確かめていません。発行されてもされなくても問題がないように、ジョブの側で止めています。
 
@@ -132,7 +132,7 @@ vp run ship:ci:deploy -c githubRepository=<owner>/<repo>
 
 <<< @/examples/20-shipping/workflows/pr.yml
 
-`check` ジョブには、AWS に入る手段がありません。`id-token: write` も、認証情報を取得する step も持っていないからです。フォークからのものも含めて、すべてのプルリクエストで動くのは、この `check` ジョブです。
+`check` ジョブには、AWS に入る手段がありません。`id-token: write` も、認証情報を取得するステップも持っていないからです。フォークからのものも含めて、すべてのプルリクエストで動くのは、この `check` ジョブです。
 
 `plan` ジョブは、本番のスタックに対する `cdk diff` を出力します。このプルリクエストを merge すると本番で何が変わるのかを、レビューのときに確かめられます。
 
@@ -140,13 +140,13 @@ vp run ship:ci:deploy -c githubRepository=<owner>/<repo>
 
 <<< @/examples/20-shipping/workflows/deploy.yml
 
-step の順番には意味があります。`check:all` が通るまでは、認証情報を取りに行きません。デプロイの前には `ship:cfn:status` を呼び、スタックが更新を始めてよい状態かどうかを確かめます。デプロイのあとには API を呼びます。途中のどこかで失敗した場合は、最後の step が、スタックがどの状態で止まったかを表示します。
+ステップの順番には意味があります。`check:all` が通るまでは、認証情報を取りに行きません。デプロイの前には `ship:cfn:status` を呼び、スタックが更新を始めてよい状態かどうかを確かめます。デプロイのあとには API を呼びます。途中のどこかで失敗した場合は、最後のステップが、スタックがどの状態で止まったかを表示します。
 
 `concurrency` の `cancel-in-progress: false` も重要です。新しい push が来たときにデプロイ中のジョブを止めると、止まるのは CLI だけで、CloudFormation の更新は途中のまま進み続けます。
 
 すべてのワークフローに共通する次の点を、テストで固定しました。
 
-- action は、タグではなく commit の SHA で固定している。タグは付け替えられるので、GitHub のドキュメントも、不変にできるのは SHA だけだと書いています
+- アクションは、タグではなく commit の SHA で固定している。タグは付け替えられるので、GitHub のドキュメントも、不変にできるのは SHA だけだと書いています
 - アクセスキー、シークレットの参照、アカウント ID、ARN の直書きが無い
 - `id-token: write` を持つのは、ロールを assume するジョブだけ
 - `run` はすべて `nix develop --command vp ...` で、呼んでいるタスクが `vite.config.ts` に実在する
@@ -179,7 +179,7 @@ step の順番には意味があります。`check:all` が通るまでは、認
 
 **どれも付けられないなら、プレビューは有効にしないでください。** この章のワークフローは `.github/workflows/` ではなく `examples/` に置いてあるので、自分で移すまでは動きません。
 
-プレビューを有効にすると、公開の URL も増えます。プルリクエスト 1 つにつき、認証なしの API が 1 つできます。流量制限はスタックごとに付くので、1 つあたりの料金の上限は[「お金の話」](/ja/chapters/20-shipping/wrap.md)に書いたとおりで、その上限が、開いているプルリクエストの数だけ並びます。
+プレビューを有効にすると、公開の URL も増えます。プルリクエスト 1 つにつき、認証なしの API が 1 つできます。スロットリングはスタックごとに付くので、1 つあたりの料金の上限は[「料金」](/ja/chapters/20-shipping/wrap.md)に書いたとおりで、その上限が、開いているプルリクエストの数だけ並びます。
 
 片付け忘れの問題もあります。閉じられたときに消すジョブは、失敗することがあります。ワークフローが無効になっていた場合、承認待ちのまま放置された場合、削除が途中で失敗した場合などです。AWS の側はプルリクエストが閉じられたことを知らないので、スタックは誰かが消すまで残ります。
 

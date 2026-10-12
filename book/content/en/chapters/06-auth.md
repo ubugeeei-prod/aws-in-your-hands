@@ -1,6 +1,6 @@
 ---
 title: "06 Auth: Cognito and Authorization"
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 # 06 Auth: Cognito and Authorization

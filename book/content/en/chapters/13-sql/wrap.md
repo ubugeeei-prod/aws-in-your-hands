@@ -6,7 +6,7 @@ title: "13 SQL: Costs, Pitfalls, and Cleanup"
 
 This last page of the chapter puts the differences from D1 into one table, and then goes through the costs, where to look when something fails, what to change for production, and the cleanup.
 
-## For people coming from D1
+## If you're coming from D1
 
 <!-- section: 13.d1 -->
 
@@ -34,7 +34,7 @@ Transactions are written differently as well. D1's `batch()` takes all of its st
 
 D1 is easier in many places, such as bindings, a local mode that runs the same thing as production, and Time Travel. This book does not recommend leaving D1. Read this chapter as an option for when SQLite is not enough and you need PostgreSQL's SQL, or when you want the database right next to other AWS services.
 
-## Costs
+## Cost
 
 Amounts are in USD, for the Tokyo Region, on-demand, before tax. The calculations are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -92,7 +92,7 @@ To stop requests per IP address you would use AWS WAF, but it cannot be attached
 
 Destroying the stack stops the charges for this chapter.
 
-## Where to look when something fails
+## Where people get stuck
 
 | If you see this | Look here |
 | --- | --- |
@@ -110,7 +110,7 @@ Destroying the stack stops the charges for this chapter.
 
 The last row is a guess. What error a dropped connection produces in an execution environment that has returned from a freeze has not been observed on a real system.
 
-## Before production
+## If you take this to production
 
 - Turn on deletion protection, and keep the cluster when the stack is destroyed. At present it is the other way around
 - Set up a backup plan, and rehearse a restore at least once, including the switch to the new cluster
@@ -154,11 +154,11 @@ Nothing was ever connected to a real Aurora DSQL cluster. `sql:infra:deploy`, `s
 | Rows into types | `examples/13-sql/src/contract.ts`, `src/db.ts`, `src/notes-repository.ts`, `src/notes.ts`, `src/app.ts` | `test:unit` |
 | A transaction is retried as a whole | `examples/13-sql/src/transaction.ts`, `src/notes-repository.ts`, `test/transaction.test.ts` | `test:unit` |
 | Causing a conflict on purpose | `examples/13-sql/test/support.ts`, `test/notes-repository.test.ts`, `test/app.test.ts` | `test:unit` |
-| Starting and checking it | `examples/13-sql/src/pglite.ts`, `src/dev.ts`, `src/compose.ts`, `scripts/local-db.ts`, `scripts/db-tasks.ts`, `test/fixtures/seed-notes.json`, `.env.example` | `dev:sql`, `sql:db:migrate:local`, `sql:db:seed:local`, `sql:db:reset:local` |
+| Running it locally | `examples/13-sql/src/pglite.ts`, `src/dev.ts`, `src/compose.ts`, `scripts/local-db.ts`, `scripts/db-tasks.ts`, `test/fixtures/seed-notes.json`, `.env.example` | `dev:sql`, `sql:db:migrate:local`, `sql:db:seed:local`, `sql:db:reset:local` |
 | Connecting from Lambda | `examples/13-sql/src/dsql.ts`, `src/lambda.ts`, `src/env.ts`, `src/grant.ts`, `infra/lib/sql-stack.ts`, `infra/bin/app.ts`, `infra/test/sql-stack.test.ts`, `cdk.json` | `sql:infra:synth`, `test:unit` |
 | Deploy, then run the migrations | `examples/13-sql/scripts/cloud-db.ts`, `scripts/db-tasks.ts`, `scripts/smoke.ts`, `scripts/logs.ts`, `test/grant.test.ts` | `sql:infra:diff`, `sql:infra:deploy`, `sql:db:migrate`, `sql:db:grant`, `sql:db:seed`, `sql:smoke`, `sql:logs`, `sql:infra:drift` |
 | Cleaning up | `tools/src/infra/`, `examples/13-sql/scripts/local-db.ts` | `sql:infra:destroy`, `sql:db:reset:local` |
-| Costs | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
+| Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Resource types and cdkd.** According to `src/provisioning/register-providers.ts` at the pinned version (0.296.28), `AWS::ApiGatewayV2::Api`, `Integration`, `Route`, `Stage`, `AWS::IAM::Policy`, `AWS::IAM::Role`, `AWS::Lambda::Function`, `AWS::Lambda::Permission`, and `AWS::Logs::LogGroup` have dedicated providers. `AWS::DSQL::Cluster` does not. It goes through Cloud Control API. `cc-protection-properties.ts` at the same tag registers `DeletionProtectionEnabled` as its deletion protection property.
 

@@ -1,6 +1,6 @@
 ---
 title: "08 Queue: SQS、DLQ、冪等性、Scheduler"
-revision: 2
+revision: 3
 ---
 
 # 08 Queue: SQS、DLQ、冪等性、Scheduler
@@ -20,12 +20,12 @@ revision: 2
 ```figure
 caption: S3 のイベントはキューに入り、イベントソースマッピングがバッチにまとめて Worker に渡す
 node browser: Browser
-node s3: S3 bucket "Uploads"
+node s3: S3 バケット "Uploads"
 node notif: event notification | ObjectCreated:*, ObjectRemoved:Delete, LifecycleExpiration:Delete
-node q: SQS queue "UploadEvents" | standard, visibility timeout 180 s, 4 日保持
-node esm: Lambda event source mapping | 1 バッチは最大 10 件、同時に最大 2 バッチ
-node dlq: SQS queue "DeadLetters" | 14 日保持
-node worker: Lambda function "Worker" | timeout 30 s
+node q: SQS キュー "UploadEvents" | standard, 可視性タイムアウト 180 s, 4 日保持
+node esm: Lambda イベントソースマッピング | 1 バッチは最大 10 件、同時に最大 2 バッチ
+node dlq: SQS キュー "DeadLetters" | 14 日保持
+node worker: Lambda function "Worker" | タイムアウト 30 s
 edge browser -> s3: POST form, DELETE .../attachments/{attachmentId} (07章)
 edge s3 -> notif: u/ の下のキー
 edge notif -> q: 少なくとも 1 回、順序の保証なし、ふつうは数秒以内
@@ -39,8 +39,8 @@ mark q
 caption: Worker が 1 つのイベントについて S3 とテーブルに対して実行する 4 つの手順
 type: sequence
 actor worker: Worker | Lambda function
-actor s3: S3 bucket "Uploads"
-actor table: DynamoDB table | ノートのテーブル
+actor s3: S3 バケット "Uploads"
+actor table: DynamoDB テーブル | ノートのテーブル
 step worker -> s3: 1. GetObject, If-Match <イベントの eTag>
 step worker -> worker: 2. 先頭のバイト列: type, width, height
 step worker -> table: 3. PutItem INSPECTION#... (新しければ)
@@ -48,11 +48,11 @@ step worker -> s3: 4. DeleteObjectTagging (ATTACHMENT#... あり)
 ```
 
 ```figure
-caption: 1 時間ごとに Scheduler が Housekeeping を呼び、バケットとテーブルを見比べて、どこからも指されていないオブジェクトと検査に落ちたオブジェクトを消し、添付済みの画像から pending のタグを外す
+caption: 1 時間ごとに Scheduler が Housekeeping を呼び、バケットとテーブルを見比べて、どこからも指されていないオブジェクトと検査に落ちたオブジェクトを消し、残った添付済みの画像のうち 2 日より新しいものから pending のタグを外す
 node sched: EventBridge Scheduler | "aih-async-housekeeping": rate(1 hour)
-node hk: Lambda function "Housekeeping" | timeout 15 min
-node s3: S3 bucket
-node table: DynamoDB table
+node hk: Lambda function "Housekeeping" | タイムアウト 15 min
+node s3: S3 バケット
+node table: DynamoDB テーブル
 edge sched -> hk: "ScheduleRole" を引き受け、非同期に呼び出す
 edge hk -> s3: 一覧、削除、タグを外す
 edge hk -> table: 読み取り
@@ -135,9 +135,9 @@ SQS のメッセージは、受け取っただけではキューから消えず�
 ```figure
 caption: 受け取られたメッセージは隠されるだけで、削除されなければまた見えるようになり、別のワーカーに渡る
 type: sequence
-actor a: worker A
+actor a: ワーカー A
 actor q: queue "UploadEvents"
-actor b: worker B
+actor b: ワーカー B
 note q: t0 メッセージ M が見えている
 step q -> a: t1 M を受信: 180 秒隠される
 note a: M の処理を始める
@@ -158,7 +158,7 @@ note q: 次の受信で M は "DeadLetters" へ移る
 
 ### メッセージを読む
 
-キューから来るメッセージの本文は、S3 が書いた JSON です。型の外から来る値なので、schema と照合します。
+キューから来るメッセージの本文は、S3 が書いた JSON です。型の外から来る値なので、スキーマと照合します。
 
 <<< @/examples/08-async/src/events.ts{schema}
 
@@ -331,7 +331,7 @@ never, in any order of deliveries:
 
 消す前に、判定がいまのオブジェクトについてのものかも確かめます。判定の時刻がオブジェクトの更新時刻より前なら、その判定は置き換えられる前のバイト列についてのものなので、使いません。
 
-3 つ目は、添付されている画像の pending のタグを、もう一度外すことです。ワーカーの手順 4 と同じことを、イベントに頼らずに実行します。ライフサイクルルールが pending のオブジェクトを消すのは、早くても作成の 1 日後です。1 時間ごとに動く掃除は、それまでに 20 回以上、同じオブジェクトを通ります。
+3 つ目は、添付されている画像の pending のタグを、もう一度外すことです。ワーカーの手順 4 と同じことを、イベントに頼らずに実行します。対象は、作成から 1 時間以上たっていて 2 日より新しいオブジェクトで、2 つ目の仕事でいま消したものは飛ばします。2 日より古いのにまだ残っているオブジェクトは、pending のタグが付き直していないか、もう手遅れかのどちらかだからです。ライフサイクルルールが pending のオブジェクトを消すのは、早くても作成の 1 日後です。1 時間ごとに動く掃除は、それまでに 20 回以上、同じオブジェクトを通ります。
 
 手順 4 だけでは、ごく狭い隙間が残ります。完了の処理がタグを外してから添付の記録を書くまでの間にフォームが再送されて、しかもその通知を、記録が書かれる前にワーカーが処理した場合です。3 つ目の仕事は、その隙間もふさぎます。
 
@@ -354,4 +354,4 @@ vp run async:housekeeping --delete
 
 このタスクはあなたの認証情報で動き、デプロイされた関数は関数自身のロールで動きます。
 
-最後に、費用について 1 つ断っておきます。この掃除は、動くたびにバケットのすべてのオブジェクトを見るので、置いてある枚数に比例して時間も料金もかかります。数字は[費用のページ](/ja/chapters/08-async/wrap.md)の「お金の話」に書きました。
+最後に、費用について 1 つ断っておきます。この掃除は、動くたびにバケットのすべてのオブジェクトを見るので、置いてある枚数に比例して時間も料金もかかります。数字は[費用のページ](/ja/chapters/08-async/wrap.md)の「料金」に書きました。

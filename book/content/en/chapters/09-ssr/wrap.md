@@ -26,7 +26,7 @@ In return, everything you decided is recorded in code. You can read the stack an
 
 One thing is the same on both. Keeping a signed-in page out of a shared cache is the job of the person who writes the app, on any platform. I did not read up on how Workers static assets are cached and billed for this chapter.
 
-## What it costs
+## Cost
 
 Amounts are in USD, for the Tokyo Region, pay-as-you-go, before tax. The details of the calculation are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -78,7 +78,7 @@ While the function is at the limit, pages that are not in the cache fail for rea
 
 Set reserved concurrency before you tell anyone the URL, and whenever the stack will stay up for more than a few days. If you try the stack and delete it right away, you can leave it off. If the deploy fails with a concurrency error, your account's total is too small, so remove the option and deploy again.
 
-Further measures are the same as in chapter 10's "When it gets hammered". An AWS WAF rate-based rule ([chapter 21](/en/chapters/21-security.md): USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected) limits the number of requests from one IP address before they reach the function. Because the function URL cannot be called directly, the WAF cannot be bypassed either. For CloudFront's flat-rate plans (USD 0, 15, 200, and 1,000 a month), what they include has not been checked.
+Further measures are the same as in chapter 10's "When it gets hammered". An AWS WAF rate-based rule ([chapter 21](/en/chapters/21-security.md): USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected; chapter 21's setup has three rules, so it starts at USD 8.00 a month) limits the number of requests from one IP address before they reach the function. Because the function URL cannot be called directly, the WAF cannot be bypassed either. For CloudFront's flat-rate plans (USD 0, 15, 200, and 1,000 a month), what they include has not been checked.
 
 ## Where people get stuck
 
@@ -98,18 +98,18 @@ This table lists what the settings and the primary sources say should happen. No
 | You fixed something and the old page still shows | Wait 60 seconds, or run an invalidation. Each edge switches at its own time |
 | You switched to streaming and nothing arrives bit by bit | Compare `streaming` in `.output/nitro.json` with `InvokeMode` in the template. If they match, the next suspect is CloudFront (the stretch that has not been checked yet) |
 
-## Before production
+## If you take this to production
 
 - Add a real sign-in. Keep sessions in DynamoDB, and have the BFF exchange chapter 06's authorization code for tokens. For the POST entry point, either put API Gateway in between or have the browser attach the hash of the body
 - Always set `Secure` on the session cookie. The practice code decides by the protocol so that it runs on `http://localhost`
 - Decide the cache time for each page. Sixty seconds on every page is a value for learning. Pages that hardly change can be cached longer, and content that is harmful when stale, such as stock levels, should not be cached
 - Attach WAF to CloudFront. Because the function URL cannot be called directly, a WAF on CloudFront cannot be bypassed. A rate-based rule limits a flood of requests to `/me` and to 404s before it reaches the function
-- Choose a concurrency number and monitor it. Pick the N in `-c reservedConcurrency=N` from real traffic. A function URL returns 429 once the function reaches its concurrency limit, and a sudden rise in traffic to pages that miss the cache reaches that limit. Put an alarm on the throttling metric ([chapter 19](/en/chapters/19-observability.md))
+- Choose a concurrency number and monitor it. Pick the N in `-c reservedConcurrency=N` from real traffic. Once the function reaches its concurrency limit, requests past it are refused without running the function. The status that the function URL and CloudFront return then has not been checked, as the verification memo on this page says. A sudden rise in traffic to pages that miss the cache reaches that limit. Put an alarm on the throttling metric ([chapter 19](/en/chapters/19-observability.md))
 - Cache 404s briefly. They are `no-store` today, so every request for a path that does not exist runs the function. Caching them for even a few seconds keeps repeated requests for the same path from running the function during that time. It does nothing when the path changes each time, so it does not replace WAF
 - Provide an error page. A custom error response sets what CloudFront returns while Lambda is down
 - Apply changes through the AWS CDK CLI and CloudFormation, for the reasons given in chapter 02
 
-## Clean up
+## Cleaning up
 
 <!-- section: 09.cleanup -->
 
@@ -154,11 +154,11 @@ What remains is the storage that cdkd's bootstrap created (chapter 02) and the d
 | The cache boundary | `examples/09-ssr/core/routes.ts`, `core/cache-control.ts`, `server/plugins/cache-control.ts`, `test/cache-control.test.ts`, `test/support/shared-cache.ts` | `test:unit`, `ssr:check:output` |
 | A BFF: the token stays on the server | `examples/09-ssr/core/session.ts`, `core/profile.ts`, `core/env.ts`, `server/routes/me/`, `test/session.test.ts` | `dev:ssr`, `test:unit` |
 | Streaming depends on the whole path | `examples/09-ssr/server/routes/feed.get.ts`, `scripts/lambda-harness.ts` | `build:ssr:stream`, `ssr:check:output:stream` |
-| Run it locally | `examples/09-ssr/scripts/check-output.ts`, `test/`, `.env.example` | `dev:ssr`, `test:unit`, `typecheck`, `ssr:check:output` |
-| Deploy and check | `examples/09-ssr/scripts/publish-assets.ts`, `scripts/asset-plan.ts`, `scripts/smoke.ts`, `scripts/smoke-spec.ts` | `ssr:infra:deploy`, `ssr:assets:publish`, `ssr:smoke`, `ssr:infra:drift` |
+| Running it locally | `examples/09-ssr/scripts/check-output.ts`, `test/`, `.env.example` | `dev:ssr`, `test:unit`, `typecheck`, `ssr:check:output` |
+| Deploying and checking | `examples/09-ssr/scripts/publish-assets.ts`, `scripts/asset-plan.ts`, `scripts/smoke.ts`, `scripts/smoke-spec.ts` | `ssr:infra:deploy`, `ssr:assets:publish`, `ssr:smoke`, `ssr:infra:drift` |
 | How stale a page may be | `examples/09-ssr/core/cache-control.ts`, `scripts/asset-plan.ts` | `test:unit` |
-| Clean up | `tools/src/site/unpublish.ts`, `tools/src/infra/` | `ssr:unpublish`, `ssr:infra:destroy` |
-| What it costs | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
+| Cleaning up | `tools/src/site/unpublish.ts`, `tools/src/infra/` | `ssr:unpublish`, `ssr:infra:destroy` |
+| Cost | `data/pricing/`, `tools/src/pricing/calc.test.ts` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-11)
 

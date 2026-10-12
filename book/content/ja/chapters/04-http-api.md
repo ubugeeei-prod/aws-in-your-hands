@@ -1,6 +1,6 @@
 ---
 title: "04 HTTP API: Lambda と API Gateway HTTP API"
-revision: 5
+revision: 6
 ---
 
 # 04 HTTP API: Lambda と API Gateway HTTP API
@@ -22,7 +22,7 @@ node health: /health | GET
 node notes: /notes | GET, POST
 node note: /notes/{id} | GET, DELETE
 node other: それ以外 | 404、Lambda は呼ばれない
-node fn: Lambda 関数 | Node.js 24, arm64, 256 MB, timeout 10 s
+node fn: Lambda 関数 | Node.js 24, arm64, 256 MB, タイムアウト 10 s
 node logs: CloudWatch Logs | リクエストごとに JSON 1 行、7 日保持
 edge client -> health: HTTPS
 edge client -> notes
@@ -111,13 +111,13 @@ HTTP の処理には Hono を使います。Hono は Web 標準の `Request` と
 
 想定していない例外は、理由を外に出しません。`onError` がログに書き、呼んだ側には `requestId` だけを返します。スタックトレースをレスポンスに載せると、アプリの内部の作りを外に教えることになるからです。
 
-ノートの保存先は interface にしてあります。
+ノートの保存先はインターフェースにしてあります。
 
 <<< @/examples/04-http-api/src/notes.ts{repository}
 
 いまの実装はただの `Map` です。`Map` はメモリの上にあるので、誰でも `POST` できる API でそのままにしておくと、入れられただけ膨らみます。そこで 100 件で打ち切り、101 件目には `NoteLimitError` を投げます。アプリの `onError` は、この例外を 409 と `quota_exceeded` にして返します。429 ではなく 409 にしたのは、待っても空きはできず、1 件消せば空くからです。
 
-05章で保存先を DynamoDB に差し替えますが、この interface はそのまま使います。
+05章で保存先を DynamoDB に差し替えますが、このインターフェースはそのまま使います。
 
 本物の時刻、乱数、環境変数に触るのは、次の 1 か所だけです。
 

@@ -16,7 +16,7 @@ Verifying in front means less code, and an invalid request doesn't run the funct
 
 This comparison describes common architectures, and the primary sources on the Cloudflare side have not been checked.
 
-## Costs
+## Cost
 
 Amounts are in USD, for the Tokyo Region, before tax. The inputs and unit prices behind the calculations are in [Pricing Worksheets](/en/reference/pricing.md).
 
@@ -40,7 +40,7 @@ For the cost of SPA delivery (CloudFront and S3), see the calculation in chapter
 
 **In a month when nobody signs in, the Cognito charge is 0.** What remains is the charge for what the table and the bucket store.
 
-Deleting the stack deletes the user pool and the users in it. As "Clean up" says, what remains is the storage created by the cdkd bootstrap and the deployment files placed in it.
+Deleting the stack deletes the user pool and the users in it. As "Cleaning up" says, what remains is the storage created by the cdkd bootstrap and the deployment files placed in it.
 
 ### When it gets hammered
 
@@ -69,7 +69,7 @@ The table leaves out data transfer for the responses. Response size is capped: a
 
 The amount of stored data is capped too. One person holds at most 100 notes and a note is about 31 KB at its largest, so that is about 3 MB a person.
 
-Throttling doesn't tell callers apart. On a route a bot keeps sending requests to, real users get a 429 as well. Your bill is protected, but the API's availability is not. Protecting that takes something that limits each caller separately. An AWS WAF rate-based rule does this, but as [chapter 21](/en/chapters/21-security.md) explains, it can't be attached to an HTTP API directly. You put CloudFront in front and attach it there (USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected). This book doesn't build that setup.
+Throttling doesn't tell callers apart. On a route a bot keeps sending requests to, real users get a 429 as well. Your bill is protected, but the API's availability is not. Protecting that takes something that limits each caller separately. An AWS WAF rate-based rule does this, but as [chapter 21](/en/chapters/21-security.md) explains, it can't be attached to an HTTP API directly. You put CloudFront in front and attach it there (USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected; chapter 21's setup has three rules, so it starts at USD 8.00 a month). This book doesn't build that setup.
 
 ## Where people get stuck
 
@@ -100,7 +100,7 @@ The body of a 401 or 403 returned by API Gateway is not in this book's error sha
 - Connect deleting a user to deleting their data. When you delete a user, the notes under that `sub` remain in the table, so you need a process that deletes them
 - Protect the user pool. Set `removalPolicy` to `RETAIN` and enable deletion protection. If you delete the user pool, every user has to register again
 
-## Clean up
+## Cleaning up
 
 <!-- section: 06.cleanup -->
 
@@ -131,9 +131,9 @@ What remains is the storage created by the cdkd bootstrap (chapter 02) and the d
 | Run it as two users on your machine | `examples/06-auth/api/src/dev.ts`, `api/src/local-auth.ts`, `api/test/local-auth.test.ts`, `api/src/compose.ts`, `web/src/auth/local.ts`, `web/src/config.ts`, `web/public/config.json`, `.env.example` | `dev:app:api`, `dev:app:web` |
 | Sign in from the SPA | `examples/06-auth/web/src/auth/`, `web/src/App.vue`, `web/src/router/route.ts`, `api/src/client.ts` | `test:unit`, `typecheck:app:web`, `lint:app:web`, `build:app:web` |
 | Getting ready for AWS | `examples/06-auth/infra/lib/notes-app-stack.ts`, `infra/bin/app.ts`, `infra/functions/spa-fallback.js`, `infra/test/notes-app-stack.test.ts`, `cdk.json` | `app:infra:synth`, `test:unit` |
-| Deploy | `examples/06-auth/scripts/write-config.ts`, `scripts/user.ts`, `scripts/smoke.ts`, `tools/src/site/`, `tools/src/infra/` | `app:infra:diff`, `app:infra:deploy`, `app:user:create`, `app:publish`, `app:smoke:web`, `app:smoke:api`, `app:infra:drift` |
-| Clean up | `tools/src/site/unpublish.ts`, `examples/06-auth/scripts/user.ts` | `app:unpublish`, `app:infra:destroy`, `app:user:delete` |
-| Costs | `data/pricing/` | `test:unit` |
+| Deploying | `examples/06-auth/scripts/write-config.ts`, `scripts/user.ts`, `scripts/smoke.ts`, `tools/src/site/`, `tools/src/infra/` | `app:infra:diff`, `app:infra:deploy`, `app:user:create`, `app:publish`, `app:smoke:web`, `app:smoke:api`, `app:infra:drift` |
+| Cleaning up | `tools/src/site/unpublish.ts`, `examples/06-auth/scripts/user.ts` | `app:unpublish`, `app:infra:destroy`, `app:user:delete` |
+| Cost | `data/pricing/` | `test:unit` |
 
 **Primary sources** (all checked 2026-10-11)
 

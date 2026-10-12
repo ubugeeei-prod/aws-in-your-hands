@@ -52,7 +52,7 @@ durable function の単価は、東京で、operation 1 個あたり USD 0.00001
 | 実行が `ExportPages` で失敗して、エラーが `States.Runtime` や `States.DataLimitExceeded` | `States.ALL` は、この 2 つを再試行しません。関数が 256 KiB を超える値を返していませんか |
 | `ExportPages` のログに 403 があり、3 回再試行して失敗する | ロールに `s3:PutObject` と `s3:GetObject` がありますか。412 の後の `HeadObject` は `s3:GetObject` で許可されます |
 | 実行が成功したのに、ノートの件数がテーブルと合わない | エクスポートの途中で書かれた、または消されたノートは、入ることも入らないこともあります。`Scan` は、ある瞬間の写しではありません |
-| 実行が `ExportDiscarded` で終わる | part が、マニフェストを書く前に消えています。誰かがバケットを手で掃除したか、7 日より長くかかったか、同じエクスポートの別の実行が `Discard` まで行ったか、のどれかです |
+| 実行が `ExportDiscarded` で終わる | パートが、マニフェストを書く前に消えています。誰かがバケットを手で掃除したか、7 日より長くかかったか、同じエクスポートの別の実行が `Discard` まで行ったか、のどれかです |
 | `export:start` が `ExecutionAlreadyExists` を返す | 同じ ID で、もう起動しています。`--id` を変えてください。名前は、実行が終わってから 90 日間は再利用できません |
 | redrive しても、すぐにまた失敗する | 原因は直しましたか。`Discarded` まで行った実行は、redrive しても `Fail` ステートに入り直すだけです |
 | 実行がいつまでも `RUNNING` のまま | `Task` に `TimeoutSeconds` はありますか。この章の定義は、全体でも 6 時間で打ち切ります |
@@ -62,9 +62,9 @@ durable function の単価は、東京で、operation 1 個あたり USD 0.00001
 ## 本番にするなら
 
 - 失敗に気づけるようにします。この章のワークフローは、失敗しても誰にも知らせません。Step Functions は、実行の状態が変わると EventBridge にイベントを送ります。このイベントを通知につなぐか、失敗した実行の数にアラームを付けます（[19章](/ja/chapters/19-observability.md)）
-- エクスポートを渡す経路を作ります。マニフェストと part を読んで、利用者に渡す API です。持ち主ごとに分けるなら、part を持ち主のプレフィックスに書き分けるか、渡すときに絞ります。この章のエクスポートは、全員のノートが 1 つのファイルに混ざっています
+- エクスポートを渡す経路を作ります。マニフェストとパートを読んで、利用者に渡す API です。持ち主ごとに分けるなら、パートを持ち主のプレフィックスに書き分けるか、渡すときに絞ります。この章のエクスポートは、全員のノートが 1 つのファイルに混ざっています
 - 整合性を決めます。「始めた時点の全ノート」が要るなら、`Scan` では足りません。DynamoDB には、テーブルを S3 に書き出す機能（export to S3）があり、point-in-time recovery を有効にしたテーブルの、ある時点の状態を取り出せます。この章では試していません
-- `Finish` と `Discard` の間の穴を閉じます。同じエクスポートの実行が重ならないように、名前を付けて起動します。あるいは、`Discard` を、part を消す処理から、捨てた印を書く処理に変えます
+- `Finish` と `Discard` の間の穴を閉じます。同じエクスポートの実行が重ならないように、名前を付けて起動します。あるいは、`Discard` を、パートを消す処理から、捨てた印を書く処理に変えます
 - ステートマシンのログを残します。この章は、実行の履歴を Step Functions に任せていて、履歴は 90 日で消えます。CloudWatch Logs に送る設定（`LoggingConfiguration`）がありますが、この章では付けていません
 - 履歴の上限を見ます。`export:status` が表示するイベント数を、上限の 25,000 と比べます。近づくようなら、1 回の呼び出しで進む量を増やすか、実行を分けます
 - バケットとテーブルを消えないようにします。どちらも `RemovalPolicy.DESTROY` です。本物のノートが入るテーブルは `RETAIN` にします
@@ -87,9 +87,9 @@ vp run export:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ステップのテスト（同じステップの 2 回目、応答が失われた後にテーブルが変わった場合、呼び出しの途中での書き込みの失敗、読み取りの失敗、止まっていたワーカーの遅れた書き込み、同じエクスポートの 2 つの実行の重なり、チェックポイントの大きさを変えても出力が同じこと、空のテーブル）。マニフェストと補償処理のテスト（欠けた part、最後のページより前の `Finish`、2 回の `Finish`、途中で止まった `Discard` のやり直し、完成したエクスポートを消さないこと）。入力の検証（時刻からの ID、プレフィックスの外に出る ID、壊れた進捗）。ワークフローの定義を手元の実行器で動かすテスト（応答の喪失、再試行の打ち切りと再開、最初からのやり直し、`ExportCorrupt` が再試行されずに `Discard` へ進むこと、`Discard` の再試行、定義の中の行き先がすべて存在すること）。S3 と DynamoDB へのリクエストの形と、412、409、404、403 の扱い。durable function 版を、SDK の `LocalDurableTestRunner` で動かすテスト（ステップの区切り、失敗したステップのやり直し）。インフラの assertion（既定と `-c durable=true`）。型検査と、両方の構成での synth。それから、条件を 2 か所わざと壊して、どちらもテストが 2 つ落ちることを確かめました。`export:local` を、既定、`--notes 450 --lose 2 --break 4`、`--notes 1000 --pages-per-call 20` の 3 通りで実行しました。
+**手元で確かめたこと。** ステップのテスト（同じステップの 2 回目、応答が失われた後にテーブルが変わった場合、呼び出しの途中での書き込みの失敗、読み取りの失敗、止まっていたワーカーの遅れた書き込み、同じエクスポートの 2 つの実行の重なり、チェックポイントの大きさを変えても出力が同じこと、空のテーブル）。マニフェストと補償処理のテスト（欠けたパート、最後のページより前の `Finish`、2 回の `Finish`、途中で止まった `Discard` のやり直し、完成したエクスポートを消さないこと）。入力の検証（時刻からの ID、プレフィックスの外に出る ID、壊れた進捗）。ワークフローの定義を手元の実行器で動かすテスト（応答の喪失、再試行の打ち切りと再開、最初からのやり直し、`ExportCorrupt` が再試行されずに `Discard` へ進むこと、`Discard` の再試行、定義の中の行き先がすべて存在すること）。S3 と DynamoDB へのリクエストの形と、412、409、404、403 の扱い。durable function 版を、SDK の `LocalDurableTestRunner` で動かすテスト（ステップの区切り、失敗したステップのやり直し）。インフラのアサーション（既定と `-c durable=true`）。型検査と、両方の構成での synth。それから、条件を 2 か所わざと壊して、どちらもテストが 2 つ落ちることを確かめました。`export:local` を、既定、`--notes 450 --lose 2 --break 4`、`--notes 1000 --pages-per-call 20` の 3 通りで実行しました。
 
-**まだ確かめていないこと。** AWS に対しては、何も実行していません。`export:infra:diff`、`export:infra:deploy`、`export:seed`、`export:start`、`export:status`、`export:logs`、`export:infra:drift`、`export:empty`、`export:infra:destroy`、`export:durable:start` のどれもです。したがって、次のことは実物で確かめていません。cdkd が、`Fn::Join` で組み立てた `DefinitionString` からステートマシンを作れること。ステートマシンのロールの信頼ポリシーの条件が通ること。Scheduler が `<aws.scheduler.scheduled-time>` を置き換えた入力で `StartExecution` を呼ぶこと、そのとき実行に名前が付くかどうか。関数の ARN を `Resource` に書いた `Task` の入出力の形。Lambda の例外の `name` が `Catch` の `ExportCorrupt` に一致すること。S3 が `If-None-Match: *` に 412 を返し、固定した版の SDK がそれを status 412 の例外として投げること。`HeadObject` がメタデータのキーを小文字で返すこと。`Task` のタイムアウトの後も関数が動き続けるかどうか。状態遷移と履歴のイベントの実際の数。redrive の動き。`Scan` の読み取りユニットと、関数の実行時間（料金の例の 200 ミリ秒と 20 秒は仮定です）。durable function については、東京リージョンで使えること、cdkd で `DurableConfig` つきの関数とバージョン、エイリアスを作れること、ロールの権限が足りること、bundle した SDK が Lambda の上で動くこと、`DurableExecutionName` が 2 重の起動を防ぐこと、1 回の呼び出しが関数のタイムアウトに当たったときの動き、durable operation の実際の数。ECS のタスクと AWS Batch は、説明だけで、コードがありません。Express ワークフローは、ドキュメントを読んだだけです。Cloudflare Workflows も、ドキュメントを読んだだけで、動かしていません。
+**まだ確かめていないこと。** AWS に対しては、何も実行していません。`export:infra:diff`、`export:infra:deploy`、`export:seed`、`export:start`、`export:status`、`export:logs`、`export:infra:drift`、`export:empty`、`export:infra:destroy`、`export:durable:start` のどれもです。したがって、次のことは実物で確かめていません。cdkd が、`Fn::Join` で組み立てた `DefinitionString` からステートマシンを作れること。ステートマシンのロールの信頼ポリシーの条件が通ること。Scheduler が `<aws.scheduler.scheduled-time>` を置き換えた入力で `StartExecution` を呼ぶこと、そのとき実行に名前が付くかどうか。関数の ARN を `Resource` に書いた `Task` の入出力の形。Lambda の例外の `name` が `Catch` の `ExportCorrupt` に一致すること。S3 が `If-None-Match: *` に 412 を返し、固定した版の SDK がそれを status 412 の例外として投げること。`HeadObject` がメタデータのキーを小文字で返すこと。`Task` のタイムアウトの後も関数が動き続けるかどうか。状態遷移と履歴のイベントの実際の数。redrive の動き。`Scan` の読み取りユニットと、関数の実行時間（料金の例の 200 ミリ秒と 20 秒は仮定です）。durable function については、東京リージョンで使えること、cdkd で `DurableConfig` つきの関数とバージョン、エイリアスを作れること、ロールの権限が足りること、バンドルした SDK が Lambda の上で動くこと、`DurableExecutionName` が 2 重の起動を防ぐこと、1 回の呼び出しが関数のタイムアウトに当たったときの動き、durable operation の実際の数。ECS のタスクと AWS Batch は、説明だけで、コードがありません。Express ワークフローは、ドキュメントを読んだだけです。Cloudflare Workflows も、ドキュメントを読んだだけで、動かしていません。
 
 **コードの場所。**
 

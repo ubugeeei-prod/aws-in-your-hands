@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics"
-revision: 3
+revision: 4
 ---
 
 # 19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics
@@ -23,17 +23,17 @@ node client: Browser / curl
 node api: API Gateway HTTP API
 node fn: Lambda | 05章で作った Hono app
 node metrics: CloudWatch Metrics | Count, 4xx, 5xx, Latency
-node table: DynamoDB table
+node table: DynamoDB テーブル
 node alarms: Alarms | 5xx rate, p95 latency
-node dashboard: dashboard | 原因: throttles, server errors
+node dashboard: ダッシュボード | 原因: throttles, server errors
 node sns: SNS topic
 node email: email
 edge client -> api: HTTPS（traceparent ヘッダー、任意）
 edge api -> fn
-edge api --> metrics: metrics
+edge api --> metrics: メトリクス
 edge fn -> table
 edge metrics -> alarms
-edge table --> dashboard: metrics
+edge table --> dashboard: メトリクス
 edge alarms -> sns: ALARM / OK
 edge sns -> email
 ```
@@ -44,7 +44,7 @@ node fn: Lambda | Node.js 24, active tracing
 node logs: CloudWatch Logs | JSON のイベント、7 日保存
 node xray: X-Ray | サンプリング: 毎秒最初の 1 件 + 5%
 node insights: Logs Insights のクエリ | requestId, traceId, errors, slow
-node filter: metric filter | status = 409
+node filter: メトリクスフィルター | status = 409
 node conflicts: NoteConflicts metric
 edge fn --> logs: ログ: どの行にも traceId
 edge fn --> xray: トレース: リクエストごと、テーブルの呼び出しごとにスパン
@@ -73,7 +73,7 @@ edge filter -> conflicts
 
 <<< @/examples/19-observability/infra/lib/observability-stack.ts{throttle}
 
-API が受け付けるのは毎秒 10 件までで、テーブルには毎秒の request unit に上限があり、ノートは 05章と同じく 100 件までです。超えたぶんは請求にはならず、429 か 409 のレスポンスになります。上限に当たったときにダッシュボードでどう見えるか、料金がいくらで止まるかは、料金の節の[叩かれたとき](/ja/chapters/19-observability/wrap.md)に書きました。
+API が受け付けるのは毎秒 10 件までで、テーブルには毎秒の request unit に上限があり、ノートは 05章と同じく 100 件までです。超えたぶんは請求にはならず、429 か 409 のレスポンスになります。上限に当たったときにダッシュボードでどう見えるか、料金がいくらで止まるかは、料金の節の[叩かれたら](/ja/chapters/19-observability/wrap.md)に書きました。
 
 ## 症状に付けるアラーム
 
@@ -123,7 +123,7 @@ API が受け付けるのは毎秒 10 件までで、テーブルには毎秒の
 
 アラームは SNS のトピックに通知し、トピックがメールに配ります。メールアドレスが購読されるのは、デプロイのときにアドレスを渡した場合だけです。購読は、届いた確認メールのリンクを押すまで保留のままなので、押し忘れると、アラームが鳴っても何も届きません。
 
-`enforceSSL` は、暗号化されていない経路からの publish を断る設定です。これを付けるとトピックにポリシーが 1 つでき、自分のポリシーを持ったトピックは既定のポリシーを使わなくなります。そのため、このアカウントの CloudWatch アラームに publish を許す statement を、こちらで書き足しています。書き忘れると、アラームは鳴るのに通知が出ません。この組み合わせは、まだ実際の AWS で確かめられていません。
+`enforceSSL` は、暗号化されていない経路からの publish を断る設定です。これを付けるとトピックにポリシーが 1 つでき、自分のポリシーを持ったトピックは既定のポリシーを使わなくなります。そのため、このアカウントの CloudWatch アラームに publish を許すステートメントを、こちらで書き足しています。書き忘れると、アラームは鳴るのに通知が出ません。この組み合わせは、まだ実際の AWS で確かめられていません。
 
 アラームが OK に戻ったときも通知します。障害がいつ終わったかも知りたいからです。
 
@@ -137,7 +137,7 @@ API が受け付けるのは毎秒 10 件までで、テーブルには毎秒の
 
 サービスごとに、最初に見るメトリクスを挙げます。
 
-API Gateway HTTP API では、`Count`、`4xx`、`5xx`、`Latency`、`IntegrationLatency` を見ます。`Latency` はリクエストを受け取ってからレスポンスを返すまでの時間で、`IntegrationLatency` はそのうち Lambda を待っていた時間です。2 つの差が大きければ、API Gateway の側で時間を使っています。ルートごとの数字は、詳細メトリクスを有効にしないと出ません。ステージの流量制限で断られたリクエストは 429 なので、`4xx` に入ります。ダッシュボードの線の名前にも、そう書いてあります。
+API Gateway HTTP API では、`Count`、`4xx`、`5xx`、`Latency`、`IntegrationLatency` を見ます。`Latency` はリクエストを受け取ってからレスポンスを返すまでの時間で、`IntegrationLatency` はそのうち Lambda を待っていた時間です。2 つの差が大きければ、API Gateway の側で時間を使っています。ルートごとの数字は、詳細メトリクスを有効にしないと出ません。ステージのスロットリングで断られたリクエストは 429 なので、`4xx` に入ります。ダッシュボードの線の名前にも、そう書いてあります。
 
 Lambda では、`Errors`、`Throttles`、`Duration`、`ConcurrentExecutions` を見ます。注意が要るのは `Errors` です。`Errors` が数えるのは、関数が例外で終わった呼び出しとタイムアウトだけです。このアプリは例外を捕まえて 500 のレスポンスを返すので、利用者に 500 が返っていても、Lambda の `Errors` は 0 のままです。症状のアラームを API Gateway の `5xx` に付けたのはこのためです。反対に `Errors` が増えていたら、タイムアウト、初期化の失敗、メモリ不足のような、アプリの外の原因を疑います。`Throttles` は `Invocations` にも `Errors` にも数えられないので、別に見ます。
 

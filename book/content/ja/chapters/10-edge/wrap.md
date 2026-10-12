@@ -44,7 +44,7 @@ Cloudflare Workers を使ってきた人は、この章の内容は Worker 1 つ
 | --- | --- | --- | --- |
 | ネットワーク（`fetch`） | できる。1 回の呼び出しで subrequest は Free 50、Paid は既定 10,000 | できない | できる |
 | CPU 時間 | Free 10 ミリ秒、Paid は既定 30 秒（最大 5 分）。`fetch` や KV を待つ時間は数えない | 1 ミリ秒未満 | 実行時間で 30 秒まで |
-| メモリ | isolate あたり 128 MB | 2 MB | viewer 側 128 MB、origin 側は Lambda の上限まで |
+| メモリ | isolate あたり 128 MB | 2 MB | ビューワー側 128 MB、オリジン側は Lambda の上限まで |
 | コードの大きさ | 64 MiB（非圧縮） | 10 KB | 50 MB（圧縮後） |
 | KV への書き込み | Worker から書ける | 関数からは書けない | KVS は使えない |
 | KV の値の大きさ | 25 MiB | 1 KB（全体で 5 MB） | - |
@@ -52,7 +52,7 @@ Cloudflare Workers を使ってきた人は、この章の内容は Worker 1 つ
 
 CloudFront Functions は、Workers に対応する製品ではありません。名前と、エッジで JavaScript が動くという点は似ていますが、できることの規模が桁違いです。Workers はアプリを書く場所で、CloudFront Functions は CDN の設定をコードで書く場所だと考えると、混同せずに済みます。
 
-AWS で Workers に近いことをするには、部品を組み合わせます。入口の小さな判断は CloudFront Functions、アプリは東京の Lambda、データは DynamoDB という、この本がここまで作ってきた構成です。部品が多いのは事実で、1 つの Worker にバインディングを足していく手軽さは、AWS にはありません。
+AWS で Workers に近いことをするには、部品を組み合わせます。入口の小さな判断は CloudFront Functions、アプリは東京の Lambda、データは DynamoDB という、この本がここまで作ってきた構成です。部品が多いのは事実で、1 つの Worker にbindingを足していく手軽さは、AWS にはありません。
 
 その代わりに AWS にあるのは、部品ごとの境界です。CloudFront Functions はネットワークに出られないので、どう書いても外部の障害に巻き込まれません。料金も、全リクエストで動かして 100 万回あたり USD 0.10 です。この制約が合う仕事には、よくできた道具だと思います。
 
@@ -60,7 +60,7 @@ KV どうしでは、遅れの書き方が違います。Workers KV は「最大
 
 料金は、Workers の Standard プランが月 1,000 万リクエストと 3,000 万 CPU ミリ秒を含み、以降は 100 万リクエストあたり USD 0.30、100 万 CPU ミリ秒あたり USD 0.02 です。月額そのものは、この章では確認していません。
 
-## お金の話
+## 料金
 
 <!-- section: 10.cost -->
 
@@ -107,7 +107,7 @@ Lambda@Edge は、100 万リクエストあたり USD 0.60 と、1 GB 秒あた�
 
 そして、**リクエストの数そのものに上限はありません。** 04章の API Gateway には、秒あたりの上限を無料で付けられました。従量課金の CloudFront のディストリビューションには、それに当たる設定がありません。たとえば 1 秒 1,000 回のリクエストを 1 日続けられると 8,640 万回になり、リクエストが USD 103.68、関数が USD 8.64、KVS の読み取り（1 回ずつ）が USD 2.59 かかります。1 回 20 KB の応答なら、転送が 1,648 GB で USD 187.87 です。合わせて USD 302.78 になります（定価。月ごとの無料枠は引いていません）。この金額は 1 秒 1,000 回の場合の計算で、リクエストがもっと速ければ、その分だけ増えます。
 
-`/digest` を足した場合は、Lambda@Edge の分が加わります。POST 以外は手前の関数が 405 で断るので、かかるのは上と同じくリクエストと関数の実行だけで、100 万回あたり USD 1.30 です。POST は 1 回ごとに Lambda@Edge が動き、100 万回あたり USD 2.27 かかります。内訳は、CloudFront のリクエスト 1.20、関数 0.10、KVS の読み取り 2 回で 0.06、Lambda@Edge のリクエスト 0.60、実行時間 0.31（128 MB、50 ミリ秒という仮定）です。Lambda@Edge には reserved concurrency を付けられないので、関数の側で回数を絞る方法もありません。各リージョンに書かれるログの料金は、この金額に入れていません。
+`/digest` を足した場合は、Lambda@Edge の分が加わります。POST 以外は手前の関数が 405 で断るので、かかるのは上と同じくリクエストと関数の実行だけで、100 万回あたり USD 1.30 です。POST は 1 回ごとに Lambda@Edge が動き、100 万回あたり USD 2.27 かかります。内訳は、CloudFront のリクエスト 1.20、関数 0.10、KVS の読み取り 2 回で 0.06、Lambda@Edge のリクエスト 0.60、実行時間 0.31（128 MB、50 ミリ秒という仮定）です。Lambda@Edge には予約済み同時実行数を付けられないので、関数の側で回数を絞る方法もありません。各リージョンに書かれるログの料金は、この金額に入れていません。
 
 対策として足せるものは 3 つあります。
 
@@ -115,13 +115,13 @@ Lambda@Edge は、100 万リクエストあたり USD 0.60 と、1 GB 秒あた�
 - CloudFront の定額プラン。料金ページには、月 USD 0（Free）、15（Pro）、200（Business）、1,000（Premium）のプランが載っています。どのプランに何が含まれるか、この章の構成（KVS、Lambda@Edge）で使えるかは、確認していません
 - 請求の通知。01章で設定した予算の通知です。リクエストを止めてはくれませんが、気づくことはできます。ただし、届くのは 8〜12 時間後です
 
-## ハマりどころ
+## つまずきやすいところ
 
 | こうなったら | ここを見る |
 | --- | --- |
 | 同期したのに、古い値が返る | まず待ちます。エッジロケーションへの伝播には時間がかかります。`edge:kvs:plan` で差分が空なら、KVS には入っています |
 | 同期が認証のエラーで止まる | KVS の API は SigV4A で署名します。一時的な認証情報には version 2 のセッショントークンが必要で、STS のグローバルなエンドポイント（`sts.amazonaws.com`）が出すものは使えません。リージョンの STS エンドポイントを使う設定になっているか確認します |
-| 同期が「store is PROVISIONING」で止まる | KVS を作った直後です。`READY` になるまで待ちます |
+| `edge:kvs:plan` や `edge:kvs:sync` が「the store is PROVISIONING, not READY」で止まる | KVS を作った直後です。`READY` になるまで待ちます |
 | デプロイ後、リダイレクトが全部効かない | KVS が空になっていないか確認します。作り直した直後の KVS は空です。`edge:kvs:sync` をもう一度実行します |
 | 手元のテストは通るのに、関数の作成が構文エラーになる | ドキュメントの一覧に無い構文を使っていないか確認します。Node.js は受け付けても、ランタイム 2.0 が受け付けないものがあります |
 | `/digest` が 405 を返す | POST 以外は、`edge-router.js` が Lambda@Edge の手前で断ります。`curl -X POST` で送っているか確認します |
@@ -166,7 +166,7 @@ vp run edge:body:infra:destroy
 
 **手元で確かめたこと。** ユニットテストで、関数（デプロイするファイルを `node:vm` で実行）、KVS の計画と同期、SDK のアダプター、Lambda@Edge のハンドラー、2 つのスタックを確かめました。型検査と synth（esbuild のバンドル込み、`-c bodyDigestVersionArn` あり・なし）も通しています。`dev:edge` を起動して、本文の `curl` と、`edge-data.json` のフラグの切り替えを実行しました。`dev:edge:cdkd`（cdkd のエミュレーター、Docker なし）も起動して、同じ `curl` で同じ応答を確認しました。SDK のクライアントが SigV4A の形式で署名することも確かめています（ネットワークには出ていません）。`/digest` への POST 以外を、関数が KVS を読まずに 405 で断ることは、同じ `node:vm` のテストで確かめました。
 
-**まだ確かめていないこと。** AWS では何も実行していません。とくに次の点は、実環境での確認が残っています。`edge-router.js` がランタイム 2.0 で動くこと（構文、10 KB、2 MB、compute utilization、ID なしの `cf.kvs()`、無いキーで `get()` が reject すること）。KVS の更新がエッジロケーションに届くまでの時間。古い `If-Match` に KVS の API が返すエラーの種類。`@aws-sdk/signature-v4a` の署名を AWS が受け付けること。cdkd が `AWS::CloudFront::KeyValueStore` と `AWS::CloudFront::Function`、`us-east-1` のスタックの `AWS::Lambda::Version` を実際に扱えること、`us-east-1` での bootstrap が必要かどうか。Node.js 24 が Lambda@Edge で使えること。Lambda@Edge の複製の削除にかかる時間、ロググループが作られる場所。「ハマりどころ」の表の症状は、ドキュメントから組み立てたもので、実際に起こして確かめたものではありません。ランタイム 2.0 の一覧に無い構文が実際に拒否されるかも、試していません。`/digest` の 405 も同じです。CloudFront Functions が `allow` ヘッダーの付いた応答を受け付けること、POST 以外のリクエストで Lambda@Edge が実際に動かないことは、デプロイして確かめていません。「叩かれたら」の金額は単価からの計算で、請求で確かめたものではありません。
+**まだ確かめていないこと。** AWS では何も実行していません。とくに次の点は、実環境での確認が残っています。`edge-router.js` がランタイム 2.0 で動くこと（構文、10 KB、2 MB、compute utilization、ID なしの `cf.kvs()`、無いキーで `get()` が reject すること）。KVS の更新がエッジロケーションに届くまでの時間。古い `If-Match` に KVS の API が返すエラーの種類。`@aws-sdk/signature-v4a` の署名を AWS が受け付けること。cdkd が `AWS::CloudFront::KeyValueStore` と `AWS::CloudFront::Function`、`us-east-1` のスタックの `AWS::Lambda::Version` を実際に扱えること、`us-east-1` での bootstrap が必要かどうか。Node.js 24 が Lambda@Edge で使えること。Lambda@Edge の複製の削除にかかる時間、ロググループが作られる場所。「つまずきやすいところ」の表の症状は、ドキュメントから組み立てたもので、実際に起こして確かめたものではありません。ランタイム 2.0 の一覧に無い構文が実際に拒否されるかも、試していません。`/digest` の 405 も同じです。CloudFront Functions が `allow` ヘッダーの付いた応答を受け付けること、POST 以外のリクエストで Lambda@Edge が実際に動かないことは、デプロイして確かめていません。「叩かれたら」の金額は単価からの計算で、請求で確かめたものではありません。
 
 **コードの場所。**
 
@@ -181,7 +181,7 @@ vp run edge:body:infra:destroy
 | AWS にのせる準備 | `examples/10-edge/infra/lib/edge-stack.ts`、`infra/test/edge-stack.test.ts`、`cdk.json` | `edge:infra:synth`、`test:unit` |
 | デプロイと切り替え | `tools/src/infra/`、`tools/src/site/publish.ts`、`examples/10-edge/scripts/kvs-sync.ts` | `edge:infra:diff`、`edge:infra:deploy`、`edge:publish`、`edge:kvs:plan`、`edge:kvs:sync`、`edge:infra:drift` |
 | Lambda@Edge でボディを読む | `examples/10-edge/src/lambda-edge/body-digest.ts`、`infra/lib/body-digest-stack.ts`、`infra/test/body-digest-stack.test.ts`、`test/body-digest.test.ts` | `edge:body:infra:synth`、`edge:body:infra:deploy`、`edge:body:infra:destroy`、`test:unit` |
-| お金の話 | `data/pricing/`、`tools/src/pricing/calc.ts` | `test:unit` |
+| 料金 | `data/pricing/`、`tools/src/pricing/calc.ts` | `test:unit` |
 | 片付け | `tools/src/site/unpublish.ts`、`tools/src/infra/` | `edge:unpublish`、`edge:infra:destroy`、`edge:body:infra:destroy` |
 
 **一次情報**（確認日はすべて 2026-10-11）

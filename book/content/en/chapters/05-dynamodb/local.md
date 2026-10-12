@@ -6,7 +6,7 @@ title: "05 KV Store: Run It Locally"
 
 This page runs the API from the [Design and Build](/en/chapters/05-dynamodb/build.md) page on your machine, first with the in-memory implementation and then against DynamoDB Local. After that it goes through what the tests check.
 
-## Run it on your machine
+## Running it locally
 
 <!-- section: 05.local -->
 
@@ -55,7 +55,7 @@ Local development differs from D1 in two ways. With D1, starting `wrangler dev` 
 
 Because DynamoDB Local is a simulation, it can confirm only that the expressions are accepted and that they behave as intended on a single machine. It doesn't reproduce IAM, throttling, or the replication and latency of the real service.
 
-The DynamoDB Local tasks in this section haven't been run yet, because a Docker daemon wasn't available at the time of writing.
+Of the tasks in this section, `db:local:start` and `db:local:stop`, which start the container with Docker, haven't been run yet, because a Docker daemon wasn't available at the time of writing. `db:migrate:local`, `db:seed:local`, and `db:reset:local` haven't been run as tasks either. The results of the tests against DynamoDB Local are in the "Tests" section that follows.
 
 ## Tests
 
@@ -86,4 +86,4 @@ For concurrent writes, the contract tests check that of two writes carrying the 
 
 The limit on the count has the same kind of check. It sends six creates at once where there are three places and confirms that exactly three go through.
 
-The place these checks really need to run is the real DynamoDB, and they have never been run there. On DynamoDB Local (3.3.1), the 15 contract tests passed, but the simulation runs on one machine. So the central claim of this chapter, that "a conditional write lets through exactly as many concurrent writes as it should", is unconfirmed on the real service. The statements about DynamoDB's behavior are based on the official documentation.
+The place these checks really need to run is the real DynamoDB, and they have never been run there. On DynamoDB Local (3.3.1), the 15 contract tests passed. That DynamoDB Local was started directly from the jar that AWS distributes, not by the Docker task. The simulation runs on one machine, though. So the central claim of this chapter, that "a conditional write lets through exactly as many concurrent writes as it should", is unconfirmed on the real service. The statements about DynamoDB's behavior are based on the official documentation.

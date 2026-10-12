@@ -4,9 +4,30 @@ title: "24 Self-hosting: 費用、注意点、片付け"
 
 # 24 Self-hosting: 費用、注意点、片付け
 
-このページでは、fleet がうまく動かないときの調べ方、本番で使うなら足すもの、片付けの手順を順に扱い、最後に、この章の構成を分散システムとして見直します。料金の内訳は[しくみと実装](/ja/chapters/24-celld/build.md)のページにあります。
+このページでは、料金の内訳、fleet がうまく動かないときの調べ方、本番で使うなら足すもの、片付けの手順を順に扱い、最後に、この章の構成を分散システムとして見直します。
 
-## うまくいかないとき
+## 料金
+
+<!-- section: 24.cost -->
+
+内訳は次のとおりです。金額はすべて ap-northeast-1 の定価で、単位は USD、1 か月は 730 時間です。
+
+- `t4g.small` のインスタンスが 1 台 USD 15.77
+- gp3 のボリュームがノードごとに 16 GiB で USD 1.54（root の 8 GiB は仮定で、実際の大きさは確かめていません）
+- S3 へのリクエストがノードごとに USD 3.93 ほど（見積もりです）
+- 11章のスタックに足すインターフェースエンドポイントが USD 61.32
+
+合計すると、1 台で USD 82.56、3 台で USD 125.03 です。23章と同じで、いちばん高いのはエンドポイントで、1 台構成なら 7 割以上を占めます。エンドポイントを除くと 1 台 USD 21.24、3 台 USD 63.71 です。
+
+S3 へのリクエストが見積もりなのは、celld のノードが、何もしていなくてもバケットと通信し続けるからです。文書にある間隔は、リースの更新が寿命の 3 分の 1 ごと（約 3.3 秒に 1 回の書き込み）、fleet の負荷の読み取りが 5 秒に 1 回、デプロイの確認が 30 秒に 1 回です。1 か月では、書き込みが約 79 万回、読み取りが約 61 万回になります。この回数は文書の数字から計算した下限で、実測ではありません。cell が動けば増えますし、バケットに溜まるオブジェクトの保存料金も別にかかります。
+
+<<< @/examples/24-celld/src/cost.ts{billable}
+
+インスタンスを 3 台とも止めても、ボリュームとエンドポイントの分として USD 65.93 がかかり続けます。既定のままスタックを消した後も、残ったデータボリューム 3 つに月 USD 2.30 かかります。
+
+インスタンスタイプについては、celld の文書に「8 GB のノード 1 台で、メモリに載った cell を 1,000 個持てる」という目安があるだけで、最小の要件は書かれていません。2 GiB の `t4g.small` で足りるかどうかは、確かめていません。
+
+## つまずきやすいところ
 
 <!-- section: 24.failures -->
 
@@ -19,9 +40,9 @@ vp run celld:diagnose
 ```
 
 - **`celld:status` が何も返さない。** ノードが Systems Manager に届いていません。[23章](/ja/chapters/23-ec2/build.md)で SSH のポートを開けずに Systems Manager を使ったときと同じ項目を確認します。エンドポイントを足した net のスタックを、後から `-c` なしでデプロイし直していないかも見てください
-- **service が `inactive` のまま。** unit は、バイナリと環境変数のファイルが無いと、エラーを出さずに起動を見送ります。`celld:install` を忘れていないか確かめてください
-- **起動してすぐ落ちる。** ログを読みます。バケットへの AccessDenied なら、ロールの権限が原因です。ファイルに書けないというエラーなら、unit の `ProtectSystem=strict` が celld の書き込み先を塞いでいるのかもしれません（この組み合わせは動かして確かめていません）。celld は、不正な環境変数があるときも起動時に止まります
-- **ログに `SELF-FENCE:` が出る。** ノードがリースを更新できず、自分から止まりました。15 秒後に systemd が起こします。繰り返すなら、バケットへの経路（S3 の gateway endpoint、ロール）を疑います
+- **サービスが `inactive` のまま。** ユニットは、バイナリと環境変数のファイルが無いと、エラーを出さずに起動を見送ります。`celld:install` を忘れていないか確かめてください
+- **起動してすぐ落ちる。** ログを読みます。バケットへの AccessDenied なら、ロールの権限が原因です。ファイルに書けないというエラーなら、ユニットの `ProtectSystem=strict` が celld の書き込み先を塞いでいるのかもしれません（この組み合わせは動かして確かめていません）。celld は、不正な環境変数があるときも起動時に止まります
+- **ログに `SELF-FENCE:` が出る。** ノードがリースを更新できず、自分から止まりました。15 秒後に systemd が起こします。繰り返すなら、バケットへの経路（S3 のゲートウェイエンドポイント、ロール）を疑います
 - **`celld:diagnose` に出るピアが足りない。** 出てこないノードのリースが切れているか、internal のポートに届いていません。セキュリティグループのルールと、`CELLD_ADVERTISE` のアドレスを見ます
 - **`celld:rollout` が settle で止まった。** rollout は何も巻き戻していません。止まったノードのログを見て、そのまま起動させるか、元の版を `celld:install <version> <node>` で入れ直すかを決めます。残りのノードは、古い版のまま動いています
 - **health がいつまでも 503 を返す。** celld は、fleet が落ち着くまで新しいノードを healthy にしません。120 秒経つと `ready_gate_expired` を 1 回ログに出しますが、その後も閉じたままです
@@ -55,7 +76,7 @@ vp run celld:infra:destroy
 vp run net:infra:destroy
 ```
 
-既定の `stateOnDestroy=retain` では、インスタンスは消えますが、バケット 2 つと data volume は残ります。残るのは意図したとおりの動作ですが、練習が終わったら消してください。
+既定の `stateOnDestroy=retain` では、インスタンスは消えますが、バケット 2 つとデータボリュームは残ります。残るのは意図したとおりの動作ですが、練習が終わったら消してください。
 
 ```bash
 aws ec2 describe-volumes --region ap-northeast-1 --filters Name=tag:Name,Values='AihCelld/*'
@@ -80,7 +101,7 @@ destroy のときに効くのは、デプロイしたときの設定のはずで
 
 手元に残るのは、`examples/24-celld/.celld/` のアーカイブとバイナリです。git には入りません。
 
-## 分散システムとして見る
+## 分散システムとして見ると
 
 <!-- section: 24.distributed -->
 
@@ -96,17 +117,17 @@ destroy のときに効くのは、デプロイしたときの設定のはずで
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ユニットテスト（更新の順序を決める関数に各段階で失敗を差し込むテスト、作り物の fleet に対する ledger の判定、probe のスクリプトを bash と curl で実行するテスト、インストールのスクリプトが不正な引数とダイジェストの不一致を拒むことを bash で実行して確かめるテスト、unit とユーザーデータの生成、`celld diagnose --json` の出力の読み取り、バックアップとリストアの計画、料金の入力、スタックの assertion）。型検査。`celld:infra:synth`（既定、`-c nodes=1`、`-c nodes=3`、`-c nodes=2 -c stateOnDestroy=delete`、`-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0`）。`celld:plan`、`celld:render`。`celld:fetch`（v0.6.2 と v0.6.1 の Linux arm64 のアーカイブを取得し、大きさと SHA-256 が固定した値と一致しました。`--host` は付けておらず、展開も実行もしていません）。これとは別に、v0.6.2 と v0.6.1 の 3 つのプラットフォームのアーカイブ計 6 個を取得して、GitHub の API が返すダイジェストと一致することを確かめました。devShell の AWS CLI（2.35.11）が `aws ec2 stop-instances --skip-os-shutdown` を受け付けることは、help の表示で確かめました。
+**手元で確かめたこと。** ユニットテスト（更新の順序を決める関数に各段階で失敗を差し込むテスト、作り物の fleet に対する ledger の判定、probe のスクリプトを bash と curl で実行するテスト、インストールのスクリプトが不正な引数とダイジェストの不一致を拒むことを bash で実行して確かめるテスト、ユニットとユーザーデータの生成、`celld diagnose --json` の出力の読み取り、バックアップとリストアの計画、料金の入力、スタックのアサーション）。型検査。`celld:infra:synth`（既定、`-c nodes=1`、`-c nodes=3`、`-c nodes=2 -c stateOnDestroy=delete`、`-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0`）。`celld:plan`、`celld:render`。`celld:fetch`（v0.6.2 と v0.6.1 の Linux arm64 のアーカイブを取得し、大きさと SHA-256 が固定した値と一致しました。`--host` は付けておらず、展開も実行もしていません）。これとは別に、v0.6.2 と v0.6.1 の 3 つのプラットフォームのアーカイブ計 6 個を取得して、GitHub の API が返すダイジェストと一致することを確かめました。devShell の AWS CLI（2.35.11）が `aws ec2 stop-instances --skip-os-shutdown` を受け付けることは、help の表示で確かめました。
 
-**まだ確かめていないこと。** AWS に対しては、何も実行していません。`celld:infra:diff`、`celld:infra:deploy`、`celld:infra:drift`、`celld:infra:destroy` と、`celld:status` から `celld:bucket-empty` までの、ノードに触るタスクすべてです。celld のバイナリも一度も実行していません（`celld dev`、`celld deploy`、ノードの起動、`celld diagnose`）。そのため、次のことは文書とソースを読んだだけです。celld がインスタンスのロール（IMDSv2 必須、hop limit 1）から認証情報を得られること。S3 の gateway endpoint だけで fleet のバケットに届くこと。この章の IAM の action の一覧で足りること。systemd の `ProtectSystem=strict` の下で celld が動くこと。`t4g.small` で足りること。`celld diagnose --json` の実際の出力（テストの sample は、v0.6.2 の `fleet.rs` の書式から組み立てたもので、実物の写しではありません）。SIGTERM での引き渡しと health の gate の実際の振る舞い。`--skip-os-shutdown` の後に残ったノードが cell を引き継ぐこと。バックアップから戻した fleet が起動すること。cdkd がボリュームの置き換えを伴うリストアのデプロイを通せること。`vp run` のタスクに `-c` や `--yes` を渡す形は、23章までと同じ書き方に揃えました。
+**まだ確かめていないこと。** AWS に対しては、何も実行していません。`celld:infra:diff`、`celld:infra:deploy`、`celld:infra:drift`、`celld:infra:destroy` と、`celld:status` から `celld:bucket-empty` までの、ノードに触るタスクすべてです。celld のバイナリも一度も実行していません（`celld dev`、`celld deploy`、ノードの起動、`celld diagnose`）。そのため、次のことは文書とソースを読んだだけです。celld がインスタンスのロール（IMDSv2 必須、hop limit 1）から認証情報を得られること。S3 のゲートウェイエンドポイントだけで fleet のバケットに届くこと。この章の IAM のアクションの一覧で足りること。systemd の `ProtectSystem=strict` の下で celld が動くこと。`t4g.small` で足りること。`celld diagnose --json` の実際の出力（テストの sample は、v0.6.2 の `fleet.rs` の書式から組み立てたもので、実物の写しではありません）。SIGTERM での引き渡しと health の判定の実際の振る舞い。`--skip-os-shutdown` の後に残ったノードが cell を引き継ぐこと。バックアップから戻した fleet が起動すること。cdkd がボリュームの置き換えを伴うリストアのデプロイを通せること。`vp run` のタスクに `-c` や `--yes` を渡す形は、23章までと同じ書き方に揃えました。
 
-一次情報で確かめられなかったこと。celld が必要とする S3 の action の一覧（Azure 向けの記述からの読み替えです）。バケットのバージョニングと celld の組み合わせ。`CELLD_NODE` を再起動をまたいで固定してよいか。動いている fleet のバケットのコピーが戻せる状態かどうか。celld の最小のメモリ要件。Amazon Linux 2023 の systemd の版（v252 の man page を読みましたが、インスタンスでは確かめていません）。Cloudflare 側の Durable Objects の保証や料金は調べていません。
+一次情報で確かめられなかったこと。celld が必要とする S3 のアクションの一覧（Azure 向けの記述からの読み替えです）。バケットのバージョニングと celld の組み合わせ。`CELLD_NODE` を再起動をまたいで固定してよいか。動いている fleet のバケットのコピーが戻せる状態かどうか。celld の最小のメモリ要件。Amazon Linux 2023 の systemd の版（v252 の man page を読みましたが、インスタンスでは確かめていません）。Cloudflare 側の Durable Objects の保証や料金は調べていません。
 
 依頼された構成から変えた点。「ピアの通信は private なネットワークと TLS」は、celld が TLS を持たないので「private なネットワークだけ」になりました。ノードを失ったときの検査は、持ち主の記録（ownership record）を直接読むのではなく、クライアントから見える counter の履歴で判定します（記録の形式が公開されたインターフェースではないため）。
 
 S3 の料金の単価は、この章では読み直していません。07章と 11章、23章が AWS Price List から記録した単価（確認日 2026-10-11、2026-10-12）を、そのまま使っています。
 
-cdkd が扱うリソースの種類。固定した版（0.296.28）の npm パッケージの `dist` を読みました。`AWS::EC2::Instance`、`AWS::EC2::SecurityGroup`、`AWS::EC2::SecurityGroupIngress` が EC2 の provider に、`AWS::IAM::InstanceProfile`、`AWS::IAM::Role`、`AWS::IAM::Policy`、`AWS::S3::Bucket`、`AWS::S3::BucketPolicy` がそれぞれ専用の provider に登録されています。`AWS::EC2::Volume` と `AWS::EC2::VolumeAttachment` は登録が無く、Cloud Control API 経由です（23章の確認と同じ）。`AWS::EC2::SecurityGroupEgress` も登録が無いので、outbound のルールはセキュリティグループの中に書き、別のリソースにしていません。cdkd の公式ドキュメントは cdkd を開発・テスト用途向けとし、本番には AWS CDK CLI を勧めています（これは前の章が記録した出典によるもので、この章では読み直していません）。
+cdkd が扱うリソースの種類。固定した版（0.296.28）の npm パッケージの `dist` を読みました。`AWS::EC2::Instance`、`AWS::EC2::SecurityGroup`、`AWS::EC2::SecurityGroupIngress` が EC2 のプロバイダーに、`AWS::IAM::InstanceProfile`、`AWS::IAM::Role`、`AWS::IAM::Policy`、`AWS::S3::Bucket`、`AWS::S3::BucketPolicy` がそれぞれ専用のプロバイダーに登録されています。`AWS::EC2::Volume` と `AWS::EC2::VolumeAttachment` は登録が無く、Cloud Control API 経由です（23章の確認と同じ）。`AWS::EC2::SecurityGroupEgress` も登録が無いので、アウトバウンドのルールはセキュリティグループの中に書き、別のリソースにしていません。cdkd の公式ドキュメントは cdkd を開発・テスト用途向けとし、本番には AWS CDK CLI を勧めています（これは前の章が記録した出典によるもので、この章では読み直していません）。
 
 **コードの場所。**
 
@@ -123,9 +144,9 @@ cdkd が扱うリソースの種類。固定した版（0.296.28）の npm パ�
 | fleet にして、1 台ずつ入れ替える | `examples/24-celld/src/rollout.ts`、`src/health.ts`、`test/rollout.test.ts`、`test/health.test.ts` | `celld:drain`、`celld:rollout`、`celld:stop-all`、`test:unit` |
 | ノードを 1 台失う | `examples/24-celld/src/probe.ts`、`src/ledger.ts`、`test/toy-fleet.ts`、`test/ledger.test.ts`、`test/probe.test.ts` | `celld:loss-check`、`celld:kill`、`celld:revive`、`test:unit` |
 | バックアップとリストア | `examples/24-celld/src/backup.ts`、`test/remote.test.ts` | `celld:backup`、`celld:restore`、`test:unit` |
-| うまくいかないとき | `examples/24-celld/scripts/fleet.ts` | `celld:status`、`celld:logs`、`celld:diagnose` |
+| つまずきやすいところ | `examples/24-celld/scripts/fleet.ts` | `celld:status`、`celld:logs`、`celld:diagnose` |
 | 片付け | `examples/24-celld/scripts/fleet.ts` | `celld:infra:destroy`、`celld:bucket-empty` |
-| 分散システムとして見る | `examples/24-celld/src/ledger.ts`、`test/ledger.test.ts` | `test:unit` |
+| 分散システムとして見ると | `examples/24-celld/src/ledger.ts`、`test/ledger.test.ts` | `test:unit` |
 
 **一次情報**（確認日はすべて 2026-10-12）
 

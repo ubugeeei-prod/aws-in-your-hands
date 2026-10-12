@@ -89,7 +89,7 @@ The sidebar is built from the chapter list (`data/chapters.json`).
 
 ### Pages that are not written by hand
 
-The pricing, sources, glossary, validation record, and toolchain pages, and the outlines of unwritten chapters, are not written by hand. Both the Japanese and English versions are generated from the JSON in `data/`.
+The pricing, sources, glossary, validation record, and toolchain pages are not written by hand. Both the Japanese and English versions are generated from the JSON in `data/`.
 
 ```bash
 vp run book:generate
@@ -240,7 +240,7 @@ nix develop --command vp run book:smoke
 
 A custom domain is not supported yet. When it is added, the Route 53 hosted zone and the ACM certificate in `us-east-1` will be defined in the same `book/infra/`. At that point, setting `AIH_BOOK_SITE_URL` at build time makes Ox Content output canonical and hreflang links. While there is no real URL, it is left unset.
 
-## What it costs
+## Cost
 
 The calculation is the same as in chapter 03. [Pricing Worksheets](/en/reference/pricing.md) has two worked examples.
 
@@ -249,7 +249,7 @@ The calculation is the same as in chapter 03. [Pricing Worksheets](/en/reference
 
 Access logs, AWS WAF, and a custom domain are not used.
 
-## Clean up
+## Cleaning up
 
 <!-- section: book.cleanup -->
 
@@ -262,7 +262,7 @@ What remains is the state bucket, the asset bucket, and the ECR repository creat
 
 ## If you publish from CI
 
-When you publish from CI instead of a person's terminal, use the same Nix lock and the same `vp run` tasks. An example is in `docs/examples/book-publish.yml`. For AWS authentication, use short-lived credentials obtained through OIDC, not long-term access keys. The definition of that role is to be covered in chapter 20 (planned) and is not in this repository yet.
+When you publish from CI instead of a person's terminal, use the same Nix lock and the same `vp run` tasks. An example is in `docs/examples/book-publish.yml`. For AWS authentication, use short-lived credentials obtained through OIDC, not long-term access keys. [Chapter 20](/en/chapters/20-shipping/build.md) shows how to define GitHub's OIDC provider and roles that each trust exactly one `sub`, one per kind of job, in `examples/20-shipping/infra/lib/ci-stack.ts`. What chapter 20 defines, though, is the four roles for deploying its own API (`PlanRole`, `DeployRole`, `PreviewRole`, `DriftRole`). A role for publishing the book's site is not in this repository.
 
 ::: details Verification notes for this page
 
@@ -278,6 +278,6 @@ When you publish from CI instead of a person's terminal, use the same Nix lock a
 | URL handling | `book/infra/functions/url-rewrite.js`, `book/infra/test/url-rewrite.test.ts`, `tools/src/checks/links.ts` | `test:unit`, `links:check` |
 | Infrastructure | `book/infra/lib/book-site-stack.ts`, `book/infra/bin/app.ts`, `book/infra/cdk.json`, `book/infra/test/book-site-stack.test.ts` | `book:infra:synth`, `book:infra:diff`, `book:infra:deploy`, `book:infra:drift` |
 | Publishing | `tools/src/site/` | `book:publish:plan`, `book:publish`, `book:smoke`, `book:invalidate` |
-| Clean up | `tools/src/site/unpublish.ts` | `book:unpublish`, `book:infra:destroy` |
+| Cleaning up | `tools/src/site/unpublish.ts` | `book:unpublish`, `book:infra:destroy` |
 
 :::

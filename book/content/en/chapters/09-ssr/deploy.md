@@ -6,7 +6,7 @@ title: "09 SSR: Deploy"
 
 This page puts the build you [checked locally](/en/chapters/09-ssr/local.md) on AWS and checks that the cache boundary also holds in CloudFront.
 
-## Deploy and check
+## Deploying and checking
 
 <!-- section: 09.deploy -->
 
@@ -49,7 +49,7 @@ vp run ssr:smoke
 The task checks five things.
 
 1. When `/` is opened several times, the response header is `public, max-age=0, s-maxage=60`, and at least one of the later responses comes from CloudFront's cache
-2. However often `/me` and `/me/api/viewer` are opened, alternating a made-up session cookie with no cookie, the header is `private, no-store` and no response ever comes from the cache
+2. When `/me` is opened with a made-up session cookie and with no cookie, and `/me/api/viewer` with the cookie, three times each in turn, the header is `private, no-store` and no response ever comes from the cache
 3. A `/_nuxt/` file that the HTML points at comes back marked `immutable`
 4. Opening the function URL directly returns 403
 5. CloudFront refuses POST

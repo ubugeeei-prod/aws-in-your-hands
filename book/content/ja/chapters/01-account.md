@@ -84,7 +84,7 @@ aws iam get-account-summary --query 'SummaryMap.AccountMFAEnabled'
 
 <!-- section: 01.login -->
 
-`aws login` は、コンソールにサインインするときと同じ資格で、ターミナル用の一時認証情報（temporary credentials）を受け取るコマンドです。一時認証情報は、access key、secret key、session token の 3 つに期限が付いたものです。
+`aws login` は、コンソールにサインインするときと同じ資格で、ターミナル用の一時認証情報（temporary credentials）を受け取るコマンドです。一時認証情報は、アクセスキー、シークレットキー、セッショントークンの 3 つに期限が付いたものです。
 
 `aws login` には AWS CLI 2.32.0 以上が必要です。この本の環境には 2.35.11 が入っています。
 

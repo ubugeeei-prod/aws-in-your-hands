@@ -26,7 +26,7 @@
       "en": "temporary credentials",
       "firstUse": "01",
       "definition": {
-        "ja": "期限付きで発行される access key、secret key、session token の組。",
+        "ja": "期限付きで発行されるアクセスキー、シークレットキー、セッショントークンの組。",
         "en": "An access key, secret key, and session token issued with an expiry."
       }
     },
@@ -56,7 +56,7 @@
       "en": "devShell",
       "firstUse": "02",
       "definition": {
-        "ja": "Nix の flake が定義する、固定した版のツールが入った shell 環境。",
+        "ja": "Nix の flake が定義する、固定した版のツールが入ったシェル環境。",
         "en": "A shell environment, defined by a Nix flake, that contains tools at pinned versions."
       }
     },
@@ -72,17 +72,17 @@
     },
     {
       "id": "construct",
-      "ja": "construct",
+      "ja": "コンストラクト（construct）",
       "en": "construct",
       "firstUse": "02",
       "definition": {
-        "ja": "CDK で 1 つ以上の AWS リソースを表す TypeScript の class。",
+        "ja": "CDK で 1 つ以上の AWS リソースを表す TypeScript のクラス。",
         "en": "A TypeScript class in CDK that represents one or more AWS resources."
       }
     },
     {
       "id": "stack",
-      "ja": "stack",
+      "ja": "スタック",
       "en": "stack",
       "firstUse": "02",
       "definition": {
@@ -96,7 +96,7 @@
       "en": "synth (synthesis)",
       "firstUse": "02",
       "definition": {
-        "ja": "CDK のコードを実行して CloudFormation template などの cloud assembly を出力すること。AWS は変更しない。",
+        "ja": "CDK のコードを実行して CloudFormation テンプレートなどの cloud assembly を出力すること。AWS は変更しない。",
         "en": "Running CDK code to produce a cloud assembly, including CloudFormation templates. It changes nothing in AWS."
       }
     },
@@ -106,13 +106,13 @@
       "en": "diff",
       "firstUse": "02",
       "definition": {
-        "ja": "これから行う変更の予告。ソースから作った template と、管理ツールが記録している状態との比較。",
+        "ja": "これから行う変更の予告。ソースから作ったテンプレートと、管理ツールが記録している状態との比較。",
         "en": "A preview of an intended change: the template built from source compared with what the deployment tool has recorded."
       }
     },
     {
       "id": "drift",
-      "ja": "drift",
+      "ja": "ドリフト",
       "en": "drift",
       "firstUse": "02",
       "definition": {
@@ -132,11 +132,11 @@
     },
     {
       "id": "origin",
-      "ja": "origin",
+      "ja": "オリジン",
       "en": "origin",
       "firstUse": "03",
       "definition": {
-        "ja": "CDN が元のコンテンツを取りに行く先。この本では S3 bucket や API。",
+        "ja": "CDN が元のコンテンツを取りに行く先。この本では S3 バケットや API。",
         "en": "Where a CDN fetches the original content from. In this book, an S3 bucket or an API."
       }
     },
@@ -146,13 +146,13 @@
       "en": "origin access control (OAC)",
       "firstUse": "03",
       "definition": {
-        "ja": "CloudFront が origin へのリクエストに署名し、bucket がその distribution だけを許可する仕組み。",
+        "ja": "CloudFront がオリジンへのリクエストに署名し、バケットがそのディストリビューションだけを許可する仕組み。",
         "en": "A mechanism in which CloudFront signs its origin requests and the bucket admits only that distribution."
       }
     },
     {
       "id": "distribution",
-      "ja": "distribution",
+      "ja": "ディストリビューション",
       "en": "distribution",
       "firstUse": "03",
       "definition": {
@@ -162,31 +162,31 @@
     },
     {
       "id": "edge-location",
-      "ja": "edge location",
+      "ja": "エッジロケーション",
       "en": "edge location",
       "firstUse": "03",
       "definition": {
-        "ja": "利用者に近い場所で cache を返す CloudFront の拠点。",
+        "ja": "利用者に近い場所でキャッシュを返す CloudFront の拠点。",
         "en": "A CloudFront site that serves cached responses close to the reader."
       }
     },
     {
       "id": "invalidation",
-      "ja": "invalidation",
+      "ja": "キャッシュの無効化（invalidation）",
       "en": "invalidation",
       "firstUse": "03",
       "definition": {
-        "ja": "edge の cache を期限前に捨てさせる操作。",
+        "ja": "エッジのキャッシュを期限前に捨てさせる操作。",
         "en": "An operation that makes edge caches discard objects before they expire."
       }
     },
     {
       "id": "spa-fallback",
-      "ja": "SPA fallback",
+      "ja": "SPA フォールバック",
       "en": "SPA fallback",
       "firstUse": "03",
       "definition": {
-        "ja": "ファイルに対応しない URL に index.html を返し、client 側の router に処理させること。",
+        "ja": "ファイルに対応しない URL に index.html を返し、クライアント側の router に処理させること。",
         "en": "Answering URLs that match no file with index.html so that the client-side router handles them."
       }
     },
@@ -202,7 +202,7 @@
     },
     {
       "id": "cold-start",
-      "ja": "cold start",
+      "ja": "コールドスタート",
       "en": "cold start",
       "firstUse": "04",
       "definition": {
@@ -212,11 +212,11 @@
     },
     {
       "id": "execution-role",
-      "ja": "実行 role",
+      "ja": "実行ロール",
       "en": "execution role",
       "firstUse": "04",
       "definition": {
-        "ja": "関数が AWS 上で動くときに引き受ける IAM role。開発者自身の権限とは別物。",
+        "ja": "関数が AWS 上で動くときに引き受ける IAM ロール。開発者自身の権限とは別物。",
         "en": "The IAM role a function assumes when it runs in AWS. It is separate from the developer's own permissions."
       }
     },
@@ -232,7 +232,7 @@
     },
     {
       "id": "integration",
-      "ja": "integration",
+      "ja": "統合（integration）",
       "en": "integration",
       "firstUse": "04",
       "definition": {
@@ -246,13 +246,13 @@
       "en": "runtime validation",
       "firstUse": "02",
       "definition": {
-        "ja": "実行時に届いたデータを schema と照合すること。型注釈はこれを行わない。",
+        "ja": "実行時に届いたデータをスキーマと照合すること。型注釈はこれを行わない。",
         "en": "Checking data against a schema when it arrives at run time. A type annotation does not do this."
       }
     },
     {
       "id": "invariant",
-      "ja": "invariant",
+      "ja": "不変条件",
       "en": "invariant",
       "firstUse": "04",
       "definition": {
@@ -272,21 +272,21 @@
     },
     {
       "id": "partition-key",
-      "ja": "partition key",
+      "ja": "パーティションキー",
       "en": "partition key",
       "firstUse": "05",
       "definition": {
-        "ja": "item の置き場所を決める key。同じ値の item はまとめて保存される。",
+        "ja": "アイテムの置き場所を決めるキー。同じ値のアイテムはまとめて保存される。",
         "en": "The key that decides where an item is stored. Items with the same value are stored together."
       }
     },
     {
       "id": "sort-key",
-      "ja": "sort key",
+      "ja": "ソートキー",
       "en": "sort key",
       "firstUse": "05",
       "definition": {
-        "ja": "同じ partition key の中で item を並べ、区別する key。",
+        "ja": "同じパーティションキーの中でアイテムを並べ、区別するキー。",
         "en": "The key that orders and distinguishes items within one partition key value."
       }
     },
@@ -362,31 +362,31 @@
     },
     {
       "id": "user-pool",
-      "ja": "user pool",
+      "ja": "ユーザープール",
       "en": "user pool",
       "firstUse": "06",
       "definition": {
-        "ja": "Amazon Cognito が持つ利用者の名簿。パスワードの検証と token の発行を行う。",
+        "ja": "Amazon Cognito が持つ利用者の名簿。パスワードの検証とトークンの発行を行う。",
         "en": "Amazon Cognito's directory of users. It verifies passwords and issues tokens."
       }
     },
     {
       "id": "access-token",
-      "ja": "access token",
+      "ja": "アクセストークン",
       "en": "access token",
       "firstUse": "06",
       "definition": {
-        "ja": "API を呼ぶための token。",
+        "ja": "API を呼ぶためのトークン。",
         "en": "The token used to call an API."
       }
     },
     {
       "id": "id-token",
-      "ja": "ID token",
+      "ja": "ID トークン",
       "en": "ID token",
       "firstUse": "06",
       "definition": {
-        "ja": "サインインした事実と利用者の属性を、アプリ自身に伝える token。API には送らない。",
+        "ja": "サインインした事実と利用者の属性を、アプリ自身に伝えるトークン。API には送らない。",
         "en": "The token that tells the app itself that sign-in happened and who the user is. It is not sent to APIs."
       }
     },
@@ -396,13 +396,13 @@
       "en": "PKCE",
       "firstUse": "06",
       "definition": {
-        "ja": "authorization code を横取りされても token と交換できないようにする仕組み。",
+        "ja": "authorization code を横取りされてもトークンと交換できないようにする仕組み。",
         "en": "A mechanism that keeps an intercepted authorization code from being exchanged for tokens."
       }
     },
     {
       "id": "public-client",
-      "ja": "public client",
+      "ja": "パブリッククライアント",
       "en": "public client",
       "firstUse": "06",
       "definition": {
@@ -412,17 +412,17 @@
     },
     {
       "id": "jwt-authorizer",
-      "ja": "JWT authorizer",
+      "ja": "JWT オーソライザー",
       "en": "JWT authorizer",
       "firstUse": "06",
       "definition": {
-        "ja": "API Gateway HTTP API が、関数を呼ぶ前に token を検証する機能。",
+        "ja": "API Gateway HTTP API が、関数を呼ぶ前にトークンを検証する機能。",
         "en": "The API Gateway HTTP API feature that verifies a token before the function is invoked."
       }
     },
     {
       "id": "ivs-channel",
-      "ja": "channel",
+      "ja": "チャンネル",
       "en": "channel",
       "firstUse": "18",
       "definition": {
@@ -432,11 +432,11 @@
     },
     {
       "id": "stream-key",
-      "ja": "stream key",
+      "ja": "ストリームキー",
       "en": "stream key",
       "firstUse": "18",
       "definition": {
-        "ja": "配信ソフトが channel へ送るときに示す秘密の文字列。持っている人は誰でもその channel に配信できる。",
+        "ja": "配信ソフトがチャンネルへ送るときに示す秘密の文字列。持っている人は誰でもそのチャンネルに配信できる。",
         "en": "The secret string an encoder presents when it sends to a channel. Anyone who has it can broadcast to that channel."
       }
     },
@@ -452,11 +452,11 @@
     },
     {
       "id": "rendition",
-      "ja": "rendition",
+      "ja": "レンディション（rendition）",
       "en": "rendition",
       "firstUse": "18",
       "definition": {
-        "ja": "同じ映像の、解像度と bitrate が違う版の 1 つ。player は回線に合わせて切り替える。",
+        "ja": "同じ映像の、解像度と bitrate が違う版の 1 つ。プレイヤーは回線に合わせて切り替える。",
         "en": "One version of the same video at a particular resolution and bitrate. The player switches between them to fit the connection."
       }
     },
@@ -476,7 +476,7 @@
       "en": "VPC",
       "firstUse": "11",
       "definition": {
-        "ja": "Virtual Private Cloud。1 つのリージョンの中に作る、自分専用の IP ネットワーク。アドレスの範囲を自分で決め、subnet に分けて使う。",
+        "ja": "Virtual Private Cloud。1 つのリージョンの中に作る、自分専用の IP ネットワーク。アドレスの範囲を自分で決め、サブネットに分けて使う。",
         "en": "Virtual Private Cloud: your own IP network inside one Region. You choose its address range and divide it into subnets."
       }
     },
@@ -492,11 +492,11 @@
     },
     {
       "id": "subnet",
-      "ja": "subnet",
+      "ja": "サブネット",
       "en": "subnet",
       "firstUse": "11",
       "definition": {
-        "ja": "VPC のアドレス範囲の一部で、1 つの Availability Zone の中に置かれる。public か private かは、関連付けた route table で決まる。",
+        "ja": "VPC のアドレス範囲の一部で、1 つの Availability Zone の中に置かれる。パブリックかプライベートかは、関連付けたルートテーブルで決まる。",
         "en": "A slice of a VPC's address range that lives in one Availability Zone. Whether it is public or private follows from the route table associated with it."
       }
     },
@@ -512,17 +512,17 @@
     },
     {
       "id": "route-table",
-      "ja": "route table",
+      "ja": "ルートテーブル",
       "en": "route table",
       "firstUse": "11",
       "definition": {
-        "ja": "「この宛先はここへ送る」という規則の表。subnet に関連付ける。インターネットへの経路があるかどうかは、この表だけで決まる。",
+        "ja": "「この宛先はここへ送る」という規則の表。サブネットに関連付ける。インターネットへの経路があるかどうかは、この表だけで決まる。",
         "en": "A list of rules saying where traffic for each destination goes, associated with subnets. Whether a subnet has a way to the internet is decided here and nowhere else."
       }
     },
     {
       "id": "internet-gateway",
-      "ja": "internet gateway",
+      "ja": "インターネットゲートウェイ",
       "en": "internet gateway",
       "firstUse": "11",
       "definition": {
@@ -536,47 +536,47 @@
       "en": "NAT gateway",
       "firstUse": "11",
       "definition": {
-        "ja": "private subnet の中から外への接続だけを通す中継点。public subnet に置き、Elastic IP アドレスを 1 つ持つ。存在している時間と、通したデータ量の両方に料金がかかる。",
+        "ja": "プライベートサブネットの中から外への接続だけを通す中継点。パブリックサブネットに置き、Elastic IP アドレスを 1 つ持つ。存在している時間と、通したデータ量の両方に料金がかかる。",
         "en": "A relay that lets resources in private subnets open connections outward and nothing inward. It sits in a public subnet with one Elastic IP address, and is billed both for every hour it exists and for every GB it passes."
       }
     },
     {
       "id": "security-group",
-      "ja": "security group",
+      "ja": "セキュリティグループ",
       "en": "security group",
       "firstUse": "11",
       "definition": {
-        "ja": "instance などのリソースに付ける、許可だけの通信規則。stateful で、許可した通信の返事は逆向きの規則がなくても通る。",
+        "ja": "インスタンスなどのリソースに付ける、許可だけの通信規則。stateful で、許可した通信の返事は逆向きの規則がなくても通る。",
         "en": "Allow-only traffic rules attached to resources such as instances. Stateful: replies to allowed traffic pass without a rule in the other direction."
       }
     },
     {
       "id": "network-acl",
-      "ja": "network ACL",
+      "ja": "ネットワーク ACL",
       "en": "network ACL",
       "firstUse": "11",
       "definition": {
-        "ja": "subnet の境界に付ける通信規則。許可と拒否を番号順に評価する。stateless で、返事の通信も別に許可が要る。",
+        "ja": "サブネットの境界に付ける通信規則。許可と拒否を番号順に評価する。stateless で、返事の通信も別に許可が要る。",
         "en": "Traffic rules at a subnet's edge, with allow and deny rules evaluated in numeric order. Stateless: replies need their own allow rule."
       }
     },
     {
       "id": "gateway-endpoint",
-      "ja": "gateway endpoint",
+      "ja": "ゲートウェイエンドポイント",
       "en": "gateway endpoint",
       "firstUse": "11",
       "definition": {
-        "ja": "S3 と DynamoDB へ、インターネットを通らずに届く経路。route table に経路として入る。追加料金はない。",
+        "ja": "S3 と DynamoDB へ、インターネットを通らずに届く経路。ルートテーブルに経路として入る。追加料金はない。",
         "en": "A path to S3 and DynamoDB that does not cross the internet, installed as a route in route tables. It has no additional charge."
       }
     },
     {
       "id": "interface-endpoint",
-      "ja": "interface endpoint",
+      "ja": "インターフェースエンドポイント",
       "en": "interface endpoint",
       "firstUse": "11",
       "definition": {
-        "ja": "AWS のサービスへの入口を、subnet の中に private IP アドレスつきの network interface として置くもの（AWS PrivateLink）。サービスごと、AZ ごとに時間課金される。",
+        "ja": "AWS のサービスへの入口を、サブネットの中にプライベート IP アドレスつきのネットワークインターフェースとして置くもの（AWS PrivateLink）。サービスごと、AZ ごとに時間課金される。",
         "en": "A doorway to an AWS service placed inside a subnet as a network interface with a private IP address (AWS PrivateLink). Billed by the hour per service and per Availability Zone."
       }
     },
@@ -592,7 +592,7 @@
     },
     {
       "id": "token",
-      "ja": "token",
+      "ja": "トークン",
       "en": "token",
       "firstUse": "17",
       "definition": {
@@ -622,7 +622,7 @@
     },
     {
       "id": "response-streaming",
-      "ja": "response streaming",
+      "ja": "レスポンスストリーミング",
       "en": "response streaming",
       "firstUse": "17",
       "definition": {
@@ -636,7 +636,7 @@
       "en": "function URL",
       "firstUse": "17",
       "definition": {
-        "ja": "Lambda 関数に直接付く HTTPS の endpoint。API Gateway を挟まない。",
+        "ja": "Lambda 関数に直接付く HTTPS のエンドポイント。API Gateway を挟まない。",
         "en": "An HTTPS endpoint attached directly to a Lambda function, with no API Gateway in between."
       }
     },
@@ -656,7 +656,7 @@
       "en": "SigV4 signature",
       "firstUse": "17",
       "definition": {
-        "ja": "AWS の API が呼び出し元を確かめるためのリクエスト署名。認証情報から計算して header に付ける。",
+        "ja": "AWS の API が呼び出し元を確かめるためのリクエスト署名。認証情報から計算してヘッダーに付ける。",
         "en": "The request signature AWS APIs use to identify the caller, computed from credentials and sent in headers."
       }
     },
@@ -672,7 +672,7 @@
     },
     {
       "id": "ses-sandbox",
-      "ja": "sandbox（SES）",
+      "ja": "サンドボックス（SES）",
       "en": "sandbox (SES)",
       "firstUse": "15",
       "definition": {
@@ -702,7 +702,7 @@
     },
     {
       "id": "suppression-list",
-      "ja": "suppression list",
+      "ja": "送信停止の一覧（suppression list）",
       "en": "suppression list",
       "firstUse": "15",
       "definition": {
@@ -756,7 +756,7 @@
       "en": "CloudFront Functions",
       "firstUse": "10",
       "definition": {
-        "ja": "CloudFront の edge location で、リクエストやレスポンスのたびに動く小さな JavaScript。ネットワークにもファイルにも触れず、URL やヘッダーの書き換えに使う。",
+        "ja": "CloudFront のエッジロケーションで、リクエストやレスポンスのたびに動く小さな JavaScript。ネットワークにもファイルにも触れず、URL やヘッダーの書き換えに使う。",
         "en": "Small JavaScript that runs at CloudFront edge locations on each request or response. It cannot reach the network or files and is used to rewrite URLs and headers."
       }
     },
@@ -766,7 +766,7 @@
       "en": "viewer request",
       "firstUse": "10",
       "definition": {
-        "ja": "CloudFront が読者からリクエストを受け取った直後、cache を調べる前のタイミング。",
+        "ja": "CloudFront が読者からリクエストを受け取った直後、キャッシュを調べる前のタイミング。",
         "en": "The moment right after CloudFront receives a request from the reader, before it looks in the cache."
       }
     },
@@ -786,7 +786,7 @@
       "en": "Lambda@Edge",
       "firstUse": "10",
       "definition": {
-        "ja": "us-east-1 に作った Lambda 関数の version を CloudFront が各地に複製し、リクエストの途中で呼ぶ仕組み。",
+        "ja": "us-east-1 に作った Lambda 関数のバージョンを CloudFront が各地に複製し、リクエストの途中で呼ぶ仕組み。",
         "en": "A version of a Lambda function created in us-east-1 that CloudFront replicates around the world and invokes partway through a request."
       }
     },
@@ -802,17 +802,17 @@
     },
     {
       "id": "migration",
-      "ja": "migration",
+      "ja": "マイグレーション",
       "en": "migration",
       "firstUse": "13",
       "definition": {
-        "ja": "schema の変更を順番つきのファイルにして、どこまで適用したかを DB 自身に記録するやり方。",
+        "ja": "スキーマの変更を順番つきのファイルにして、どこまで適用したかを DB 自身に記録するやり方。",
         "en": "A schema change kept as a numbered file, with the database itself recording which ones have been applied."
       }
     },
     {
       "id": "transaction",
-      "ja": "transaction",
+      "ja": "トランザクション",
       "en": "transaction",
       "firstUse": "13",
       "definition": {
@@ -826,7 +826,7 @@
       "en": "snapshot isolation",
       "firstUse": "13",
       "definition": {
-        "ja": "transaction が、開始した時点のデータを最後まで読み続ける分離の方式。PostgreSQL の REPEATABLE READ がこれにあたる。",
+        "ja": "トランザクションが、開始した時点のデータを最後まで読み続ける分離の方式。PostgreSQL の REPEATABLE READ がこれにあたる。",
         "en": "Isolation in which a transaction keeps reading the data as it was when the transaction started. PostgreSQL's REPEATABLE READ is this."
       }
     },
@@ -836,7 +836,7 @@
       "en": "optimistic concurrency control (OCC)",
       "firstUse": "13",
       "definition": {
-        "ja": "ロックで待たせず、commit のときに競合を調べて、負けた transaction を失敗させる方式。",
+        "ja": "ロックで待たせず、コミットのときに競合を調べて、負けたトランザクションを失敗させる方式。",
         "en": "Checking for conflicts at commit instead of making transactions wait for locks; the transaction that loses fails."
       }
     },
@@ -846,7 +846,7 @@
       "en": "serialization failure",
       "firstUse": "13",
       "definition": {
-        "ja": "ほかの transaction と競合したので commit できなかった、という DB からの応答。SQLSTATE は 40001。何も反映されていないので、transaction を最初からやり直す。",
+        "ja": "ほかのトランザクションと競合したのでコミットできなかった、という DB からの応答。SQLSTATE は 40001。何も反映されていないので、トランザクションを最初からやり直す。",
         "en": "The database's answer that a transaction could not commit because it conflicted with another. SQLSTATE 40001. Nothing was applied, so the transaction is run again from the start."
       }
     },
@@ -856,23 +856,23 @@
       "en": "write skew",
       "firstUse": "13",
       "definition": {
-        "ja": "2 つの transaction が同じデータを読んで判断し、別々の行に書いた結果、どちらか一方だけなら守れた条件が破れること。",
+        "ja": "2 つのトランザクションが同じデータを読んで判断し、別々の行に書いた結果、どちらか一方だけなら守れた条件が破れること。",
         "en": "Two transactions decide from the same data and write different rows, breaking a condition that either alone would have kept."
       }
     },
     {
       "id": "database-role",
-      "ja": "database role",
+      "ja": "データベースロール",
       "en": "database role",
       "firstUse": "13",
       "definition": {
-        "ja": "DB の中の利用者。どの table に何ができるかは、この role への GRANT で決まる。IAM の role とは別のもの。",
+        "ja": "DB の中の利用者。どのテーブルに何ができるかは、このロールへの GRANT で決まる。IAM のロールとは別のもの。",
         "en": "A user inside the database. GRANTs to it decide what it may do to which table. Not the same thing as an IAM role."
       }
     },
     {
       "id": "dsql-auth-token",
-      "ja": "認証 token（Aurora DSQL）",
+      "ja": "認証トークン（Aurora DSQL）",
       "en": "authentication token (Aurora DSQL)",
       "firstUse": "13",
       "definition": {
@@ -902,7 +902,7 @@
     },
     {
       "id": "presigned-url",
-      "ja": "presigned URL",
+      "ja": "署名付き URL",
       "en": "presigned URL",
       "firstUse": "07",
       "definition": {
@@ -912,27 +912,27 @@
     },
     {
       "id": "post-policy",
-      "ja": "POST policy",
+      "ja": "POST ポリシー",
       "en": "POST policy",
       "firstUse": "07",
       "definition": {
-        "ja": "ブラウザからの form による S3 へのアップロードが満たすべき条件（key、種類、大きさの範囲、期限）を書いた、署名つきの文書。",
+        "ja": "ブラウザからのフォームによる S3 へのアップロードが満たすべき条件（キー、種類、大きさの範囲、期限）を書いた、署名付きの文書。",
         "en": "A signed document listing the conditions (key, type, size range, expiry) that a browser's form upload to S3 must meet."
       }
     },
     {
       "id": "object-key",
-      "ja": "object key",
+      "ja": "オブジェクトキー",
       "en": "object key",
       "firstUse": "07",
       "definition": {
-        "ja": "bucket の中で object を一意に指す名前。`/` を含められるが、フォルダーがあるわけではない。",
+        "ja": "バケットの中でオブジェクトを一意に指す名前。`/` を含められるが、フォルダーがあるわけではない。",
         "en": "The name that identifies an object within a bucket. It may contain `/`, but there are no folders."
       }
     },
     {
       "id": "bearer-token",
-      "ja": "bearer token",
+      "ja": "ベアラートークン",
       "en": "bearer token",
       "firstUse": "07",
       "definition": {
@@ -942,11 +942,11 @@
     },
     {
       "id": "lifecycle-rule",
-      "ja": "lifecycle rule",
+      "ja": "ライフサイクルルール",
       "en": "lifecycle rule",
       "firstUse": "07",
       "definition": {
-        "ja": "条件に合う object を、作成から一定の日数の後に S3 自身が削除（または移動）する、bucket の設定。",
+        "ja": "条件に合うオブジェクトを、作成から一定の日数の後に S3 自身が削除（または移動）する、バケットの設定。",
         "en": "A bucket setting under which S3 itself deletes (or moves) matching objects a number of days after they were created."
       }
     },
@@ -956,27 +956,27 @@
       "en": "Block Public Access",
       "firstUse": "07",
       "definition": {
-        "ja": "ACL や bucket policy で bucket や object を公開する設定を、拒否または無効にする S3 の 4 つの設定。",
+        "ja": "ACL やバケットポリシーでバケットやオブジェクトを公開する設定を、拒否または無効にする S3 の 4 つの設定。",
         "en": "Four S3 settings that reject or ignore ACLs and bucket policies that would make a bucket or object public."
       }
     },
     {
       "id": "orphaned-object",
-      "ja": "孤立した object",
+      "ja": "孤立したオブジェクト",
       "en": "orphaned object",
       "firstUse": "07",
       "definition": {
-        "ja": "bucket にはあるが、それを指す記録がどこにも無い object。誰にも見えないまま、保存料金だけがかかる。",
+        "ja": "バケットにはあるが、それを指す記録がどこにも無いオブジェクト。誰にも見えないまま、保存料金だけがかかる。",
         "en": "An object that is in the bucket while no record points at it. Nobody sees it, and it is still billed for storage."
       }
     },
     {
       "id": "multipart-upload",
-      "ja": "multipart upload",
+      "ja": "マルチパートアップロード",
       "en": "multipart upload",
       "firstUse": "07",
       "definition": {
-        "ja": "大きな object を複数の part に分けて送る S3 の仕組み。完了も中止もされなかった part は、保存されたまま残る。",
+        "ja": "大きなオブジェクトを複数のパートに分けて送る S3 の仕組み。完了も中止もされなかったパートは、保存されたまま残る。",
         "en": "S3's way of sending a large object in parts. Parts of an upload that is neither completed nor aborted stay stored."
       }
     },
@@ -992,27 +992,27 @@
     },
     {
       "id": "shared-cache",
-      "ja": "共有 cache",
+      "ja": "共有キャッシュ",
       "en": "shared cache",
       "firstUse": "09",
       "definition": {
-        "ja": "1 つの応答を保存して、複数の利用者に返す cache。CDN がその例。ブラウザの中の cache は 1 人のものなので private cache と呼ぶ。",
+        "ja": "1 つの応答を保存して、複数の利用者に返すキャッシュ。CDN がその例。ブラウザの中のキャッシュは 1 人のものなので private cache と呼ぶ。",
         "en": "A cache that stores one response and returns it to many users, such as a CDN. The cache inside a browser belongs to one person and is called a private cache."
       }
     },
     {
       "id": "cache-key",
-      "ja": "cache key",
+      "ja": "キャッシュキー",
       "en": "cache key",
       "firstUse": "09",
       "definition": {
-        "ja": "CloudFront が「同じリクエスト」とみなす基準。path に加えて、cache policy で選んだ query string、header、cookie からできる。",
+        "ja": "CloudFront が「同じリクエスト」とみなす基準。パスに加えて、キャッシュポリシーで選んだクエリ文字列、ヘッダー、cookie からできる。",
         "en": "What CloudFront treats as the same request: the path plus whichever query strings, headers, and cookies the cache policy selects."
       }
     },
     {
       "id": "cache-policy",
-      "ja": "cache policy",
+      "ja": "キャッシュポリシー",
       "en": "cache policy",
       "firstUse": "09",
       "definition": {
@@ -1026,7 +1026,7 @@
       "en": "backend for frontend (BFF)",
       "firstUse": "09",
       "definition": {
-        "ja": "ある画面のためだけに置くサーバー。ブラウザの代わりに token を持ち、裏の API を呼ぶ。",
+        "ja": "ある画面のためだけに置くサーバー。ブラウザの代わりにトークンを持ち、裏の API を呼ぶ。",
         "en": "A server that exists for one front end. It holds tokens on the browser's behalf and calls the APIs behind it."
       }
     },
@@ -1062,11 +1062,11 @@
     },
     {
       "id": "metric-filter",
-      "ja": "metric filter",
+      "ja": "メトリクスフィルター",
       "en": "metric filter",
       "firstUse": "19",
       "definition": {
-        "ja": "log group に届くログの行を条件で数え、メトリクスにする CloudWatch Logs の設定。作成より前のログには効かない。",
+        "ja": "ロググループに届くログの行を条件で数え、メトリクスにする CloudWatch Logs の設定。作成より前のログには効かない。",
         "en": "A CloudWatch Logs setting that counts incoming log lines matching a pattern and publishes the count as a metric. It does not apply to logs from before it was created."
       }
     },
@@ -1082,21 +1082,21 @@
     },
     {
       "id": "trace",
-      "ja": "trace",
+      "ja": "トレース",
       "en": "trace",
       "firstUse": "19",
       "definition": {
-        "ja": "1 つのリクエストが通った処理の記録。trace ID を共有する span の集まり。",
+        "ja": "1 つのリクエストが通った処理の記録。トレース ID を共有するスパンの集まり。",
         "en": "The record of the work one request passed through: a set of spans that share a trace ID."
       }
     },
     {
       "id": "span",
-      "ja": "span",
+      "ja": "スパン",
       "en": "span",
       "firstUse": "19",
       "definition": {
-        "ja": "trace の中の 1 区間。名前、開始と終了の時刻、親の span、属性を持つ。X-Ray では segment や subsegment になる。",
+        "ja": "トレースの中の 1 区間。名前、開始と終了の時刻、親のスパン、属性を持つ。X-Ray では segment や subsegment になる。",
         "en": "One timed step in a trace, with a name, start and end times, a parent span and attributes. In X-Ray it becomes a segment or a subsegment."
       }
     },
@@ -1106,17 +1106,17 @@
       "en": "OpenTelemetry",
       "firstUse": "19",
       "definition": {
-        "ja": "trace、メトリクス、ログの計装と送信のための、ベンダーに依らない仕様とライブラリ。",
+        "ja": "トレース、メトリクス、ログの計装と送信のための、ベンダーに依らない仕様とライブラリ。",
         "en": "Vendor-neutral specifications and libraries for instrumenting and exporting traces, metrics and logs."
       }
     },
     {
       "id": "sampling",
-      "ja": "sampling",
+      "ja": "サンプリング",
       "en": "sampling",
       "firstUse": "19",
       "definition": {
-        "ja": "全部のリクエストではなく、一部だけを trace として記録すること。",
+        "ja": "全部のリクエストではなく、一部だけをトレースとして記録すること。",
         "en": "Recording only a share of requests as traces instead of all of them."
       }
     },
@@ -1126,7 +1126,7 @@
       "en": "trace context (traceparent)",
       "firstUse": "19",
       "definition": {
-        "ja": "trace ID、呼び出し元の span ID、sampling の決定を次の処理へ渡すための W3C の仕様。HTTP では traceparent ヘッダー。",
+        "ja": "トレース ID、呼び出し元のスパン ID、サンプリングの決定を次の処理へ渡すための W3C の仕様。HTTP では traceparent ヘッダー。",
         "en": "The W3C specification for passing the trace ID, the caller's span ID and the sampling decision to the next process. In HTTP it is the traceparent header."
       }
     },
@@ -1162,7 +1162,7 @@
     },
     {
       "id": "rate-limit",
-      "ja": "rate limit",
+      "ja": "レート制限",
       "en": "rate limit",
       "firstUse": "14",
       "definition": {
@@ -1176,7 +1176,7 @@
       "en": "fixed window",
       "firstUse": "14",
       "definition": {
-        "ja": "時間を決まった長さの区間に切り、区間ごとに回数を数える rate limit の方式。区間の境目をまたぐと、短い時間に上限の 2 倍まで通る。",
+        "ja": "時間を決まった長さの区間に切り、区間ごとに回数を数えるレート制限の方式。区間の境目をまたぐと、短い時間に上限の 2 倍まで通る。",
         "en": "A rate limit that cuts time into equal periods and counts per period. Around a boundary it lets up to twice the limit through in a short time."
       }
     },
@@ -1186,7 +1186,7 @@
       "en": "sliding window",
       "firstUse": "14",
       "definition": {
-        "ja": "直前の区間の回数を、いまの時刻から見てまだ窓に入っている割合だけ数に入れる rate limit の方式。境目での 2 倍を防ぐ。",
+        "ja": "直前の区間の回数を、いまの時刻から見てまだ窓に入っている割合だけ数に入れるレート制限の方式。境目での 2 倍を防ぐ。",
         "en": "A rate limit that also counts the previous period, in proportion to how much of it the window still covers. It prevents the doubling at a boundary."
       }
     },
@@ -1226,7 +1226,7 @@
       "en": "read-through cache",
       "firstUse": "14",
       "definition": {
-        "ja": "まず cache を読み、無ければ元データを読んで cache に入れる読み方。正しいのは常に元データで、cache はその写し。",
+        "ja": "まずキャッシュを読み、無ければ元データを読んでキャッシュに入れる読み方。正しいのは常に元データで、キャッシュはその写し。",
         "en": "Reading the cache first and, on a miss, reading the source of truth and storing a copy. The source is always right; the cache is a copy."
       }
     },
@@ -1236,17 +1236,17 @@
       "en": "stale read",
       "firstUse": "14",
       "definition": {
-        "ja": "元データが変わったあとに、古い写しを読むこと。cache を使うかぎり起きるので、どれだけ古くてよいかを先に決める。",
+        "ja": "元データが変わったあとに、古い写しを読むこと。キャッシュを使うかぎり起きるので、どれだけ古くてよいかを先に決める。",
         "en": "Reading an old copy after the source changed. It happens whenever there is a cache, so decide beforehand how old is acceptable."
       }
     },
     {
       "id": "cache-stampede",
-      "ja": "cache stampede",
+      "ja": "キャッシュスタンピード",
       "en": "cache stampede",
       "firstUse": "14",
       "definition": {
-        "ja": "cache が切れた瞬間に、多数のリクエストが同時に miss して、全員が元データへ取りに行くこと。",
+        "ja": "キャッシュが切れた瞬間に、多数のリクエストが同時に miss して、全員が元データへ取りに行くこと。",
         "en": "Many requests missing at the moment an entry expires, and all of them going to the source of truth at once."
       }
     },
@@ -1256,7 +1256,7 @@
       "en": "single flight",
       "firstUse": "14",
       "definition": {
-        "ja": "同じ key の読み込みが進行中なら、新しく始めずにその結果を待つこと。効くのは 1 つのプロセスの中だけ。",
+        "ja": "同じキーの読み込みが進行中なら、新しく始めずにその結果を待つこと。効くのは 1 つのプロセスの中だけ。",
         "en": "Waiting for a load of the same key that is already in progress instead of starting another. It works within one process only."
       }
     },
@@ -1266,7 +1266,7 @@
       "en": "CloudFormation",
       "firstUse": "20",
       "definition": {
-        "ja": "template を受け取ってリソースを作り、何を作ったかを stack として自分で記録する AWS のサービス。更新に失敗すると、既定では前の状態に戻す。",
+        "ja": "テンプレートを受け取ってリソースを作り、何を作ったかをスタックとして自分で記録する AWS のサービス。更新に失敗すると、既定では前の状態に戻す。",
         "en": "The AWS service that takes a template, creates the resources, and records what it created as a stack. By default it rolls a failed update back."
       }
     },
@@ -1276,17 +1276,17 @@
       "en": "CDK bootstrap",
       "firstUse": "20",
       "definition": {
-        "ja": "AWS CDK CLI でデプロイする前に、アカウントとリージョンごとに一度行う準備。CDKToolkit という stack が、asset 用の bucket、ECR repository、5 つの IAM role を作る。cdkd の bootstrap とは別物。",
+        "ja": "AWS CDK CLI でデプロイする前に、アカウントとリージョンごとに一度行う準備。CDKToolkit というスタックが、asset 用のバケット、ECR のリポジトリ、5 つの IAM ロールを作る。cdkd の bootstrap とは別物。",
         "en": "The one-time preparation per account and Region before deploying with the AWS CDK CLI. A stack named CDKToolkit creates an asset bucket, an ECR repository, and five IAM roles. Not the same as cdkd's bootstrap."
       }
     },
     {
       "id": "change-set",
-      "ja": "change set",
+      "ja": "変更セット",
       "en": "change set",
       "firstUse": "20",
       "definition": {
-        "ja": "stack の更新を、実行する前に「何が追加・変更・置き換え・削除されるか」の一覧にしたもの。実行するまで何も変わらない。成功を保証するものではない。",
+        "ja": "スタックの更新を、実行する前に「何が追加・変更・置き換え・削除されるか」の一覧にしたもの。実行するまで何も変わらない。成功を保証するものではない。",
         "en": "A list of what a stack update would add, modify, replace, or delete, made before anything runs. Nothing changes until it is executed, and it does not guarantee success."
       }
     },
@@ -1296,17 +1296,17 @@
       "en": "OIDC (OpenID Connect)",
       "firstUse": "20",
       "definition": {
-        "ja": "あるサービスが発行した署名つきの token で「自分が誰か」を別のサービスに示す標準。この本では、GitHub Actions の job が AWS に入るために使う。",
+        "ja": "あるサービスが発行した署名付きのトークンで「自分が誰か」を別のサービスに示す標準。この本では、GitHub Actions のジョブが AWS に入るために使う。",
         "en": "A standard for proving who you are to one service with a signed token issued by another. In this book, how a GitHub Actions job gets into AWS."
       }
     },
     {
       "id": "trust-policy",
-      "ja": "trust policy",
+      "ja": "信頼ポリシー",
       "en": "trust policy",
       "firstUse": "20",
       "definition": {
-        "ja": "IAM role に付く「誰がこの role を使えるか」の定義。role に何ができるかを決める権限の policy とは別。",
+        "ja": "IAM ロールに付く「誰がこのロールを使えるか」の定義。ロールに何ができるかを決める権限のポリシーとは別。",
         "en": "The part of an IAM role that says who may use it. Separate from the permission policies that say what the role may do."
       }
     },
@@ -1316,13 +1316,13 @@
       "en": "sub (subject) claim",
       "firstUse": "20",
       "definition": {
-        "ja": "OIDC の token に入っている「この token は何のために発行されたか」を表す文字列。GitHub Actions では repository と、branch、environment、pull request のいずれかが入る。",
+        "ja": "OIDC のトークンに入っている「このトークンは何のために発行されたか」を表す文字列。GitHub Actions ではリポジトリと、ブランチ、environment、プルリクエストのいずれかが入る。",
         "en": "The string in an OIDC token that says what the token was issued for. In GitHub Actions it holds the repository and a branch, an environment, or the pull request marker."
       }
     },
     {
       "id": "lambda-version",
-      "ja": "Lambda の version",
+      "ja": "Lambda のバージョン",
       "en": "Lambda version",
       "firstUse": "20",
       "definition": {
@@ -1332,121 +1332,121 @@
     },
     {
       "id": "lambda-alias",
-      "ja": "Lambda の alias",
+      "ja": "Lambda のエイリアス",
       "en": "Lambda alias",
       "firstUse": "20",
       "definition": {
-        "ja": "version を指す名前つきのポインタ。呼び出す側は alias を呼び、指す先を変えることで版を切り替える。2 つの version に重みを付けて振り分けることもできる。",
+        "ja": "バージョンを指す名前つきのポインタ。呼び出す側はエイリアスを呼び、指す先を変えることで版を切り替える。2 つのバージョンに重みを付けて振り分けることもできる。",
         "en": "A named pointer to a version. Callers invoke the alias, and moving it switches versions. It can also split traffic between two versions by weight."
       }
     },
     {
       "id": "rollback",
-      "ja": "rollback",
+      "ja": "ロールバック",
       "en": "rollback",
       "firstUse": "20",
       "definition": {
-        "ja": "変更を、変更の前の状態に戻すこと。CloudFormation が戻すのは template にあるリソースの設定で、その間に書かれたデータは戻らない。",
+        "ja": "変更を、変更の前の状態に戻すこと。CloudFormation が戻すのはテンプレートにあるリソースの設定で、その間に書かれたデータは戻らない。",
         "en": "Returning a change to the state before it. CloudFormation puts back the configuration of the resources in the template, not the data written in the meantime."
       }
     },
     {
       "id": "termination-protection",
-      "ja": "termination protection",
+      "ja": "削除保護（termination protection）",
       "en": "termination protection",
       "firstUse": "20",
       "definition": {
-        "ja": "stack の削除を拒否する設定。解除するまで DeleteStack が失敗する。stack の更新でリソースが消えることは防がない。",
+        "ja": "スタックの削除を拒否する設定。解除するまで DeleteStack が失敗する。スタックの更新でリソースが消えることは防がない。",
         "en": "A setting that refuses to delete a stack: DeleteStack fails until it is turned off. It does not stop an update from removing resources."
       }
     },
     {
       "id": "preview-environment",
-      "ja": "preview 環境",
+      "ja": "プレビュー環境",
       "en": "preview environment",
       "firstUse": "20",
       "definition": {
-        "ja": "pull request ごとに作る、一時的な環境。この本では PR ごとに 1 つの stack。pull request を閉じたら消す前提で作る。",
+        "ja": "プルリクエストごとに作る、一時的な環境。この本では PR ごとに 1 つのスタック。プルリクエストを閉じたら消す前提で作る。",
         "en": "A temporary environment created per pull request; in this book, one stack per pull request, made to be deleted when the pull request closes."
       }
     },
     {
       "id": "nested-stack",
-      "ja": "nested stack",
+      "ja": "ネストしたスタック（nested stack）",
       "en": "nested stack",
       "firstUse": "20",
       "definition": {
-        "ja": "別の stack のリソース（AWS::CloudFormation::Stack）として作られる stack。親の stack で drift を検出しても、中は調べられない。",
+        "ja": "別のスタックのリソース（AWS::CloudFormation::Stack）として作られるスタック。親のスタックでドリフトを検出しても、中は調べられない。",
         "en": "A stack created as a resource (AWS::CloudFormation::Stack) of another stack. Drift detection on the parent does not look inside it."
       }
     },
     {
       "id": "container-image",
-      "ja": "コンテナ image",
+      "ja": "コンテナイメージ",
       "en": "container image",
       "firstUse": "12",
       "definition": {
-        "ja": "アプリと、それが動くのに要るファイル一式を固めたもの。同じ image からは、どこで起動しても同じ中身のコンテナができる。",
+        "ja": "アプリと、それが動くのに要るファイル一式を固めたもの。同じイメージからは、どこで起動しても同じ中身のコンテナができる。",
         "en": "An application packed together with every file it needs to run. The same image starts a container with the same contents wherever it runs."
       }
     },
     {
       "id": "docker-daemon",
-      "ja": "Docker daemon",
+      "ja": "Docker のデーモン",
       "en": "Docker daemon",
       "firstUse": "12",
       "definition": {
-        "ja": "image の build とコンテナの実行を実際に行う常駐プログラム（dockerd）。`docker` コマンドは、これに頼みごとを送る client にすぎない。",
+        "ja": "イメージの build とコンテナの実行を実際に行う常駐プログラム（dockerd）。`docker` コマンドは、これに頼みごとを送るクライアントにすぎない。",
         "en": "The long-running program (dockerd) that actually builds images and runs containers. The `docker` command is only a client that sends it requests."
       }
     },
     {
       "id": "image-tag",
-      "ja": "image の tag",
+      "ja": "イメージのタグ",
       "en": "image tag",
       "firstUse": "12",
       "definition": {
-        "ja": "repository の中で image に付ける名前。`v1` や commit の hash など。tag を immutable にすると、一度付けた tag は別の image を指せなくなる。",
+        "ja": "リポジトリの中でイメージに付ける名前。`v1` やコミットの hash など。タグを immutable にすると、一度付けたタグは別のイメージを指せなくなる。",
         "en": "A name given to an image inside a repository, such as `v1` or a commit hash. With immutable tags, a tag can never be moved to a different image."
       }
     },
     {
       "id": "ecr-repository",
-      "ja": "ECR の repository",
+      "ja": "ECR のリポジトリ",
       "en": "ECR repository",
       "firstUse": "12",
       "definition": {
-        "ja": "Amazon ECR の中の、image の置き場所。ECS はここから image を取ってくる。",
+        "ja": "Amazon ECR の中の、イメージの置き場所。ECS はここからイメージを取ってくる。",
         "en": "A place for images in Amazon ECR. ECS pulls images from it."
       }
     },
     {
       "id": "task-definition",
-      "ja": "task definition",
+      "ja": "タスク定義",
       "en": "task definition",
       "firstUse": "12",
       "definition": {
-        "ja": "「どの image を、どれだけの CPU とメモリで、どの role と環境変数で動かすか」を書いた設計書。変更のたびに新しい revision になり、既存の revision は書き換えられない。",
+        "ja": "「どのイメージを、どれだけの CPU とメモリで、どのロールと環境変数で動かすか」を書いた設計書。変更のたびに新しい revision になり、既存の revision は書き換えられない。",
         "en": "The blueprint that says which image runs, with how much CPU and memory, and with which roles and environment variables. Every change makes a new revision; an existing revision is never edited."
       }
     },
     {
       "id": "ecs-task",
-      "ja": "task",
+      "ja": "タスク（ECS）",
       "en": "task",
       "firstUse": "12",
       "definition": {
-        "ja": "task definition から起動された、動いている 1 つの実体。Fargate では task ごとに network interface と private IP アドレスを 1 つ持つ。",
+        "ja": "タスク定義から起動された、動いている 1 つの実体。Fargate ではタスクごとにネットワークインターフェースとプライベート IP アドレスを 1 つ持つ。",
         "en": "One running instance started from a task definition. On Fargate each task has its own network interface and private IP address."
       }
     },
     {
       "id": "ecs-service",
-      "ja": "service（ECS）",
+      "ja": "サービス（ECS）",
       "en": "service (ECS)",
       "firstUse": "12",
       "definition": {
-        "ja": "「この task definition の task を、常に N 個動かしておく」という指示と、それを守り続ける仕組み。task が落ちれば補充し、task definition が変われば入れ替える。",
+        "ja": "「このタスク定義のタスクを、常に N 個動かしておく」という指示と、それを守り続ける仕組み。タスクが落ちれば補充し、タスク定義が変われば入れ替える。",
         "en": "The instruction to keep N tasks of a task definition running, and the machinery that keeps it true: it replaces tasks that die and swaps them when the task definition changes."
       }
     },
@@ -1456,7 +1456,7 @@
       "en": "Fargate",
       "firstUse": "12",
       "definition": {
-        "ja": "コンテナを動かすサーバーを自分で持たずに、task の CPU とメモリの大きさと時間だけで課金される実行基盤。",
+        "ja": "コンテナを動かすサーバーを自分で持たずに、タスクの CPU とメモリの大きさと時間だけで課金される実行基盤。",
         "en": "A way to run containers without owning the servers under them, billed by the CPU and memory size of each task and the time it runs."
       }
     },
@@ -1466,27 +1466,27 @@
       "en": "Application Load Balancer (ALB)",
       "firstUse": "12",
       "definition": {
-        "ja": "HTTP のリクエストを受けて、後ろにいる複数の task へ振り分ける入口。存在している時間で課金される。",
+        "ja": "HTTP のリクエストを受けて、後ろにいる複数のタスクへ振り分ける入口。存在している時間で課金される。",
         "en": "The entry point that receives HTTP requests and spreads them over the tasks behind it. It is billed for every hour it exists."
       }
     },
     {
       "id": "target-group",
-      "ja": "target group",
+      "ja": "ターゲットグループ",
       "en": "target group",
       "firstUse": "12",
       "definition": {
-        "ja": "ALB が振り分ける先の一覧。task の IP アドレスが登録され、health check の設定もここに持つ。",
+        "ja": "ALB が振り分ける先の一覧。タスクの IP アドレスが登録され、ヘルスチェックの設定もここに持つ。",
         "en": "The list of destinations an ALB routes to. Task IP addresses are registered in it, and it holds the health check settings."
       }
     },
     {
       "id": "health-check",
-      "ja": "health check",
+      "ja": "ヘルスチェック",
       "en": "health check",
       "firstUse": "12",
       "definition": {
-        "ja": "ALB が target に定期的に送る確認のリクエスト。失敗が続いた target には、リクエストを送らなくなる。",
+        "ja": "ALB がターゲットに定期的に送る確認のリクエスト。失敗が続いたターゲットには、リクエストを送らなくなる。",
         "en": "The request an ALB sends to each target at intervals. A target that keeps failing it stops receiving requests."
       }
     },
@@ -1496,17 +1496,17 @@
       "en": "deregistration delay",
       "firstUse": "12",
       "definition": {
-        "ja": "target group から外すと決まった target について、進行中のリクエストが終わるのを ALB が待つ時間。既定は 300 秒。",
+        "ja": "ターゲットグループから外すと決まったターゲットについて、進行中のリクエストが終わるのを ALB が待つ時間。既定は 300 秒。",
         "en": "How long an ALB waits for in-flight requests to finish on a target that is being removed from the target group. 300 seconds by default."
       }
     },
     {
       "id": "rolling-update",
-      "ja": "rolling update",
+      "ja": "ローリングアップデート",
       "en": "rolling update",
       "firstUse": "12",
       "definition": {
-        "ja": "新しい task を起動し、健全になったら古い task を止める、を繰り返して入れ替える更新方法。途中は新旧の版が同時に動く。",
+        "ja": "新しいタスクを起動し、健全になったら古いタスクを止める、を繰り返して入れ替える更新方法。途中は新旧の版が同時に動く。",
         "en": "Replacing tasks by starting new ones and stopping old ones once the new ones are healthy. Old and new versions run side by side while it lasts."
       }
     },
@@ -1516,33 +1516,33 @@
       "en": "deployment circuit breaker",
       "firstUse": "12",
       "definition": {
-        "ja": "新しい task が起動できない、または health check に通らないことが続いたら、更新を失敗と判定する仕組み。設定すれば、最後に成功した状態へ自動で戻す。",
+        "ja": "新しいタスクが起動できない、またはヘルスチェックに通らないことが続いたら、更新を失敗と判定する仕組み。設定すれば、最後に成功した状態へ自動で戻す。",
         "en": "The mechanism that declares a deployment failed when new tasks keep failing to start or to pass health checks. Optionally it rolls back to the last deployment that completed."
       }
     },
     {
       "id": "task-role",
-      "ja": "task role",
+      "ja": "タスクロール",
       "en": "task role",
       "firstUse": "12",
       "definition": {
-        "ja": "コンテナの中のアプリが AWS を呼ぶときに使う IAM role。Lambda の実行 role に当たる。",
+        "ja": "コンテナの中のアプリが AWS を呼ぶときに使う IAM ロール。Lambda の実行ロールに当たる。",
         "en": "The IAM role that application code inside the container uses when it calls AWS. The counterpart of a Lambda function's execution role."
       }
     },
     {
       "id": "task-execution-role",
-      "ja": "task execution role",
+      "ja": "タスク実行ロール",
       "en": "task execution role",
       "firstUse": "12",
       "definition": {
-        "ja": "アプリが起動する前に、ECS の agent が image の取得とログの送信に使う IAM role。アプリのコードからは使えない。",
+        "ja": "アプリが起動する前に、ECS の agent がイメージの取得とログの送信に使う IAM ロール。アプリのコードからは使えない。",
         "en": "The IAM role the ECS agent uses, before the application starts, to pull the image and ship logs. Application code cannot use it."
       }
     },
     {
       "id": "graceful-shutdown",
-      "ja": "graceful shutdown",
+      "ja": "グレースフルシャットダウン",
       "en": "graceful shutdown",
       "firstUse": "12",
       "definition": {
@@ -1556,7 +1556,7 @@
       "en": "SIGTERM",
       "firstUse": "12",
       "definition": {
-        "ja": "プロセスに「終了してほしい」と伝える signal。受け取った側は後片付けができる。一定時間で終わらなければ、拒否できない SIGKILL が送られる。",
+        "ja": "プロセスに「終了してほしい」と伝えるシグナル。受け取った側は後片付けができる。一定時間で終わらなければ、拒否できない SIGKILL が送られる。",
         "en": "The signal that asks a process to terminate. The process may clean up first. If it does not finish in time, SIGKILL follows, which cannot be handled."
       }
     },
@@ -1566,13 +1566,13 @@
       "en": "target tracking",
       "firstUse": "12",
       "definition": {
-        "ja": "「平均 CPU 使用率を 60% に保つ」のように指標と目標値だけを決め、task の数の増減を任せる auto scaling の方式。",
+        "ja": "「平均 CPU 使用率を 60% に保つ」のように指標と目標値だけを決め、タスクの数の増減を任せる auto scaling の方式。",
         "en": "An auto scaling policy where you name a metric and a target value, such as 60 percent average CPU, and leave the number of tasks to the service."
       }
     },
     {
       "id": "queue",
-      "ja": "queue",
+      "ja": "キュー",
       "en": "queue",
       "firstUse": "08",
       "definition": {
@@ -1592,7 +1592,7 @@
     },
     {
       "id": "visibility-timeout",
-      "ja": "visibility timeout",
+      "ja": "可視性タイムアウト",
       "en": "visibility timeout",
       "firstUse": "08",
       "definition": {
@@ -1602,11 +1602,11 @@
     },
     {
       "id": "dead-letter-queue",
-      "ja": "dead-letter queue（DLQ）",
+      "ja": "デッドレターキュー（DLQ）",
       "en": "dead-letter queue (DLQ)",
       "firstUse": "08",
       "definition": {
-        "ja": "決めた回数だけ受け取られても処理が終わらなかったメッセージを、よけておく別の queue。人が調べるための場所。",
+        "ja": "決めた回数だけ受け取られても処理が終わらなかったメッセージを、よけておく別のキュー。人が調べるための場所。",
         "en": "A second queue where messages are set aside after being received a set number of times without being finished. A place for a person to look."
       }
     },
@@ -1616,17 +1616,17 @@
       "en": "redrive",
       "firstUse": "08",
       "definition": {
-        "ja": "dead-letter queue のメッセージを、元の queue に戻してもう一度処理させること。",
+        "ja": "デッドレターキューのメッセージを、元のキューに戻してもう一度処理させること。",
         "en": "Moving messages from a dead-letter queue back to the queue they came from, to be handled again."
       }
     },
     {
       "id": "event-source-mapping",
-      "ja": "event source mapping",
+      "ja": "イベントソースマッピング",
       "en": "event source mapping",
       "firstUse": "08",
       "definition": {
-        "ja": "Lambda が queue や stream を自分で読みにいき、まとめて関数に渡す設定。batch の大きさや同時実行の上限はここで決める。",
+        "ja": "Lambda がキューやストリームを自分で読みにいき、まとめて関数に渡す設定。バッチの大きさや同時実行の上限はここで決める。",
         "en": "The Lambda setting under which Lambda itself reads a queue or stream and hands batches to a function. Batch size and the concurrency limit are set here."
       }
     },
@@ -1636,7 +1636,7 @@
       "en": "partial batch response",
       "firstUse": "08",
       "definition": {
-        "ja": "batch のうち失敗したメッセージの ID だけを関数が返す仕組み。成功したメッセージまでやり直されるのを防ぐ。",
+        "ja": "バッチのうち失敗したメッセージの ID だけを関数が返す仕組み。成功したメッセージまでやり直されるのを防ぐ。",
         "en": "A function's reply that names only the messages of a batch that failed, so that the ones that succeeded are not retried."
       }
     },
@@ -1656,7 +1656,7 @@
       "en": "sequencer",
       "firstUse": "08",
       "definition": {
-        "ja": "S3 が作成と削除のイベントに付ける 16 進の文字列。同じ key のイベントどうしなら、大きいほうが後に起きた。",
+        "ja": "S3 が作成と削除のイベントに付ける 16 進の文字列。同じキーのイベントどうしなら、大きいほうが後に起きた。",
         "en": "A hexadecimal string S3 puts on create and delete events. Between two events for the same key, the greater one happened later."
       }
     },
@@ -1666,7 +1666,7 @@
       "en": "backpressure",
       "firstUse": "08",
       "definition": {
-        "ja": "処理する側が追いつかないとき、その遅れを上流に伝えて流量を抑えること。queue はそれを「待ち行列が伸びる」という形で引き受ける。",
+        "ja": "処理する側が追いつかないとき、その遅れを上流に伝えて流量を抑えること。キューはそれを「待ち行列が伸びる」という形で引き受ける。",
         "en": "Slowing the flow when the worker cannot keep up, by letting the delay be felt upstream. A queue takes it on in the form of a growing backlog."
       }
     },
@@ -1682,11 +1682,11 @@
     },
     {
       "id": "ec2-instance",
-      "ja": "instance（EC2）",
+      "ja": "インスタンス（EC2）",
       "en": "instance (EC2)",
       "firstUse": "23",
       "definition": {
-        "ja": "EC2 で借りる仮想マシン 1 台。OS から上は自分で面倒を見る。動いている時間に対して課金され、止めても volume の料金は続く。",
+        "ja": "EC2 で借りる仮想マシン 1 台。OS から上は自分で面倒を見る。動いている時間に対して課金され、止めてもボリュームの料金は続く。",
         "en": "One virtual machine rented from EC2. Everything from the operating system up is yours to look after. Billed while running; its volumes are billed even when it is stopped."
       }
     },
@@ -1696,17 +1696,17 @@
       "en": "AMI",
       "firstUse": "23",
       "definition": {
-        "ja": "Amazon Machine Image。instance の最初の disk の中身になる雛形。OS と、最初から入っているソフトウェアが決まる。",
+        "ja": "Amazon Machine Image。インスタンスの最初のディスクの中身になる雛形。OS と、最初から入っているソフトウェアが決まる。",
         "en": "Amazon Machine Image: the template for an instance's first disk. It decides the operating system and what is installed from the start."
       }
     },
     {
       "id": "instance-profile",
-      "ja": "instance profile",
+      "ja": "インスタンスプロファイル",
       "en": "instance profile",
       "firstUse": "23",
       "definition": {
-        "ja": "IAM role を EC2 の instance に渡すための入れ物。1 つの profile に入る role は 1 つ。",
+        "ja": "IAM ロールを EC2 のインスタンスに渡すための入れ物。1 つのプロファイルに入るロールは 1 つ。",
         "en": "The container that hands an IAM role to an EC2 instance. One profile holds one role."
       }
     },
@@ -1716,37 +1716,37 @@
       "en": "IMDS",
       "firstUse": "23",
       "definition": {
-        "ja": "Instance Metadata Service。instance の中からだけ届くアドレス（169.254.169.254）で、instance 自身の情報と、role の一時認証情報を返す。IMDSv2 は先に token を取ってから問い合わせる方式。",
+        "ja": "Instance Metadata Service。インスタンスの中からだけ届くアドレス（169.254.169.254）で、インスタンス自身の情報と、ロールの一時認証情報を返す。IMDSv2 は先にトークンを取ってから問い合わせる方式。",
         "en": "Instance Metadata Service: an address reachable only from inside the instance (169.254.169.254) that returns facts about the instance and temporary credentials for its role. IMDSv2 requires fetching a token first."
       }
     },
     {
       "id": "user-data",
-      "ja": "user data",
+      "ja": "ユーザーデータ",
       "en": "user data",
       "firstUse": "23",
       "definition": {
-        "ja": "instance の起動時に渡すデータ。shell script を渡すと、最初の起動のときに一度だけ、root で実行される。",
+        "ja": "インスタンスの起動時に渡すデータ。シェルスクリプトを渡すと、最初の起動のときに一度だけ、root で実行される。",
         "en": "Data handed to an instance at launch. A shell script given this way runs once, as root, on the first boot."
       }
     },
     {
       "id": "ebs-volume",
-      "ja": "EBS volume",
+      "ja": "EBS ボリューム",
       "en": "EBS volume",
       "firstUse": "23",
       "definition": {
-        "ja": "instance に取り付けるネットワーク越しの disk。1 つの Availability Zone に属し、同じ AZ の instance にしか付けられない。instance とは別に生き残れる。",
+        "ja": "インスタンスに取り付けるネットワーク越しのディスク。1 つの Availability Zone に属し、同じ AZ のインスタンスにしか付けられない。インスタンスとは別に生き残れる。",
         "en": "A network-attached disk for an instance. It belongs to one Availability Zone and attaches only to instances in that zone. It can outlive the instance."
       }
     },
     {
       "id": "ebs-snapshot",
-      "ja": "snapshot（EBS）",
+      "ja": "スナップショット（EBS）",
       "en": "snapshot (EBS)",
       "firstUse": "23",
       "definition": {
-        "ja": "ある時点の volume の写し。差分で保存され、リージョン内のどの AZ にも volume として復元できる。",
+        "ja": "ある時点のボリュームの写し。差分で保存され、リージョン内のどの AZ にもボリュームとして復元できる。",
         "en": "A point-in-time copy of a volume. Stored incrementally, and restorable as a volume in any zone of the Region."
       }
     },
@@ -1756,7 +1756,7 @@
       "en": "Session Manager",
       "firstUse": "23",
       "definition": {
-        "ja": "Systems Manager の機能。instance の中の SSM Agent が外向きに張った接続を通して shell を開く。inbound の port も SSH の鍵も使わない。",
+        "ja": "Systems Manager の機能。インスタンスの中の SSM Agent が外向きに張った接続を通してシェルを開く。インバウンドのポートも SSH の鍵も使わない。",
         "en": "A Systems Manager feature that opens a shell over a connection the SSM Agent on the instance made outward. No inbound port and no SSH key."
       }
     },
@@ -1766,27 +1766,27 @@
       "en": "Run Command",
       "firstUse": "23",
       "definition": {
-        "ja": "Systems Manager の機能。instance にコマンドを送って実行させ、結果を受け取る。対話はしない。",
+        "ja": "Systems Manager の機能。インスタンスにコマンドを送って実行させ、結果を受け取る。対話はしない。",
         "en": "A Systems Manager feature that sends commands to an instance, runs them, and returns the result. Not interactive."
       }
     },
     {
       "id": "systemd-unit",
-      "ja": "unit（systemd）",
+      "ja": "ユニット（systemd）",
       "en": "unit (systemd)",
       "firstUse": "23",
       "definition": {
-        "ja": "systemd に「何を、誰として、どう起動して、落ちたらどうするか」を伝える設定ファイル。service を定義するものは `.service` で終わる。",
+        "ja": "systemd に「何を、誰として、どう起動して、落ちたらどうするか」を伝える設定ファイル。サービスを定義するものは `.service` で終わる。",
         "en": "A file that tells systemd what to run, as whom, how to start it, and what to do when it dies. Those that define a service end in `.service`."
       }
     },
     {
       "id": "status-check",
-      "ja": "status check",
+      "ja": "ステータスチェック",
       "en": "status check",
       "firstUse": "23",
       "definition": {
-        "ja": "EC2 が 1 分ごとに行う instance の検査。AWS 側の基盤の問題を見る system status check と、instance 自身の問題を見る instance status check がある。",
+        "ja": "EC2 が 1 分ごとに行うインスタンスの検査。AWS 側の基盤の問題を見る system status check と、インスタンス自身の問題を見る instance status check がある。",
         "en": "A check EC2 runs on an instance every minute. System status checks look at the AWS infrastructure underneath; instance status checks look at the instance itself."
       }
     },
@@ -1796,37 +1796,37 @@
       "en": "single point of failure",
       "firstUse": "23",
       "definition": {
-        "ja": "そこが止まると全体が止まる部品。1 台の instance と、その 1 つの volume がそれにあたる。",
+        "ja": "そこが止まると全体が止まる部品。1 台のインスタンスと、その 1 つのボリュームがそれにあたる。",
         "en": "A part whose failure stops the whole. One instance, and its one volume, are exactly that."
       }
     },
     {
       "id": "cpu-credit",
-      "ja": "CPU credit",
+      "ja": "CPU クレジット",
       "en": "CPU credit",
       "firstUse": "23",
       "definition": {
-        "ja": "T 系の instance が、baseline を超えて CPU を使うために貯めて使う持ち分。standard では使い切ると baseline に絞られ、unlimited では超過分が課金される。",
+        "ja": "T 系のインスタンスが、baseline を超えて CPU を使うために貯めて使う持ち分。standard では使い切ると baseline に絞られ、unlimited では超過分が課金される。",
         "en": "What T-family instances earn and spend to use CPU above their baseline. In standard mode an empty balance means throttling to the baseline; in unlimited mode the excess is billed."
       }
     },
     {
       "id": "workflow",
-      "ja": "workflow",
+      "ja": "ワークフロー",
       "en": "workflow",
       "firstUse": "16",
       "definition": {
-        "ja": "複数の step を、決めた順序と条件で実行する処理。どの step まで終わったかを、step の外にある仕組みが覚えている。",
+        "ja": "複数のステップを、決めた順序と条件で実行する処理。どのステップまで終わったかを、ステップの外にある仕組みが覚えている。",
         "en": "Work made of several steps run in a defined order under defined conditions, where something outside the steps remembers how far it has got."
       }
     },
     {
       "id": "state-machine",
-      "ja": "state machine",
+      "ja": "ステートマシン",
       "en": "state machine",
       "firstUse": "16",
       "definition": {
-        "ja": "Step Functions での workflow の定義。state（Task、Choice など）と、そのつながりを JSON で書く。",
+        "ja": "Step Functions でのワークフローの定義。state（Task、Choice など）と、そのつながりを JSON で書く。",
         "en": "A workflow definition in Step Functions: states such as Task and Choice, and how they connect, written as JSON."
       }
     },
@@ -1836,27 +1836,27 @@
       "en": "Amazon States Language",
       "firstUse": "16",
       "definition": {
-        "ja": "Step Functions の state machine を書く JSON の言語。ASL と略す。",
+        "ja": "Step Functions のステートマシンを書く JSON の言語。ASL と略す。",
         "en": "The JSON language that Step Functions state machines are written in. ASL for short."
       }
     },
     {
       "id": "state-transition",
-      "ja": "state transition",
+      "ja": "状態遷移",
       "en": "state transition",
       "firstUse": "16",
       "definition": {
-        "ja": "state machine の実行が、ある state から次へ進むこと。Standard workflow の課金単位で、再試行も 1 回と数える。",
+        "ja": "ステートマシンの実行が、ある state から次へ進むこと。Standard ワークフローの課金単位で、再試行も 1 回と数える。",
         "en": "One move of an execution from a state to the next. It is the billing unit of Standard workflows, and a retry counts as one."
       }
     },
     {
       "id": "checkpoint",
-      "ja": "checkpoint",
+      "ja": "チェックポイント",
       "en": "checkpoint",
       "firstUse": "16",
       "definition": {
-        "ja": "長い処理の途中で「ここまで終わった」を保存すること、またはその記録。やり直すときは、最後の checkpoint から続ける。",
+        "ja": "長い処理の途中で「ここまで終わった」を保存すること、またはその記録。やり直すときは、最後のチェックポイントから続ける。",
         "en": "Saving \"done up to here\" partway through long work, or the record itself. A rerun continues from the last checkpoint."
       }
     },
@@ -1866,17 +1866,17 @@
       "en": "durable function",
       "firstUse": "16",
       "definition": {
-        "ja": "Lambda の関数で、step の結果を Lambda が保存し、中断の後に最初から実行し直して済んだ step を飛ばすもの。1 回の呼び出しは 15 分までだが、実行全体は最長 1 年。",
+        "ja": "Lambda の関数で、ステップの結果を Lambda が保存し、中断の後に最初から実行し直して済んだステップを飛ばすもの。1 回の呼び出しは 15 分までだが、実行全体は最長 1 年。",
         "en": "A Lambda function whose step results Lambda stores; after an interruption it runs again from the top and skips the finished steps. One invocation is limited to 15 minutes, the whole execution to one year."
       }
     },
     {
       "id": "replay",
-      "ja": "replay",
+      "ja": "リプレイ",
       "en": "replay",
       "firstUse": "16",
       "definition": {
-        "ja": "保存してある step の結果を使いながら、コードを最初から実行し直すこと。同じ入力から同じ順序で step を呼ぶコードでなければ成り立たない。",
+        "ja": "保存してあるステップの結果を使いながら、コードを最初から実行し直すこと。同じ入力から同じ順序でステップを呼ぶコードでなければ成り立たない。",
         "en": "Running the code again from the beginning while using the stored results of finished steps. It works only if the code calls the same steps in the same order for the same input."
       }
     },
@@ -1886,13 +1886,13 @@
       "en": "compensation",
       "firstUse": "16",
       "definition": {
-        "ja": "途中まで進んだ処理を取り消すために、済んだ step の効果を打ち消す別の step を実行すること。データベースの rollback と違い、自分で書き、それ自体も失敗しうる。",
+        "ja": "途中まで進んだ処理を取り消すために、済んだステップの効果を打ち消す別のステップを実行すること。データベースのロールバックと違い、自分で書き、それ自体も失敗しうる。",
         "en": "Undoing work that got partway by running other steps that cancel the effects of the finished ones. Unlike a database rollback, you write it yourself, and it can fail too."
       }
     },
     {
       "id": "manifest",
-      "ja": "manifest",
+      "ja": "マニフェスト",
       "en": "manifest",
       "firstUse": "16",
       "definition": {
@@ -1912,11 +1912,11 @@
     },
     {
       "id": "standard-workflow",
-      "ja": "Standard workflow",
+      "ja": "Standard ワークフロー",
       "en": "Standard workflow",
       "firstUse": "16",
       "definition": {
-        "ja": "Step Functions の workflow の種類の 1 つ。最長 1 年、state の間で状態を保存し、state transition の数で課金される。もう 1 つは最長 5 分の Express。",
+        "ja": "Step Functions のワークフローの種類の 1 つ。最長 1 年、state の間で状態を保存し、状態遷移の数で課金される。もう 1 つは最長 5 分の Express。",
         "en": "One of the two Step Functions workflow types: up to a year, state persisted between states, billed per state transition. The other is Express, up to five minutes."
       }
     },
@@ -1926,7 +1926,7 @@
       "en": "AWS Batch",
       "firstUse": "16",
       "definition": {
-        "ja": "コンテナの job を queue に積み、必要な計算資源（Fargate や EC2）を用意して実行するサービス。",
+        "ja": "コンテナのジョブをキューに積み、必要な計算資源（Fargate や EC2）を用意して実行するサービス。",
         "en": "A service that queues container jobs and provisions the compute (Fargate or EC2) to run them."
       }
     },
@@ -1936,43 +1936,43 @@
       "en": "least privilege",
       "firstUse": "21",
       "definition": {
-        "ja": "仕事に必要な action を、必要な resource に対してだけ許すこと。「あとで要るかもしれない」権限は足さない。",
+        "ja": "仕事に必要なアクションを、必要なリソースに対してだけ許すこと。「あとで要るかもしれない」権限は足さない。",
         "en": "Allowing only the actions a job needs, on only the resources it needs. Permissions that might be useful later are left out."
       }
     },
     {
       "id": "secret",
-      "ja": "secret",
+      "ja": "シークレット",
       "en": "secret",
       "firstUse": "21",
       "definition": {
-        "ja": "漏れたら困る値（署名鍵、API キー、パスワード）。Secrets Manager では、暗号化された値と、その version、誰が読めるかの設定をまとめた 1 つの resource。",
+        "ja": "漏れたら困る値（署名鍵、API キー、パスワード）。Secrets Manager では、暗号化された値と、そのバージョン、誰が読めるかの設定をまとめた 1 つのリソース。",
         "en": "A value that must not leak, such as a signing key, an API key, or a password. In Secrets Manager, one resource holding the encrypted value, its versions, and who may read it."
       }
     },
     {
       "id": "staging-label",
-      "ja": "staging label",
+      "ja": "ステージングラベル",
       "en": "staging label",
       "firstUse": "21",
       "definition": {
-        "ja": "Secrets Manager が secret の version に付ける名札。AWSCURRENT（いまの値）、AWSPREVIOUS（1 つ前）、AWSPENDING（rotation の途中）の 3 つを Secrets Manager が管理する。",
+        "ja": "Secrets Manager がシークレットのバージョンに付ける名札。AWSCURRENT（いまの値）、AWSPREVIOUS（1 つ前）、AWSPENDING（ローテーションの途中）の 3 つを Secrets Manager が管理する。",
         "en": "A name tag Secrets Manager puts on a version of a secret. It manages three: AWSCURRENT (the value now), AWSPREVIOUS (the one before), and AWSPENDING (mid-rotation)."
       }
     },
     {
       "id": "secret-rotation",
-      "ja": "rotation",
+      "ja": "ローテーション",
       "en": "rotation",
       "firstUse": "21",
       "definition": {
-        "ja": "secret の値を新しいものに入れ替えること。入れ替えた瞬間に全員が新しい値を持っているわけではないので、古い値もしばらく受け入れる期間を作る。",
+        "ja": "シークレットの値を新しいものに入れ替えること。入れ替えた瞬間に全員が新しい値を持っているわけではないので、古い値もしばらく受け入れる期間を作る。",
         "en": "Replacing a secret's value with a new one. Not everyone holds the new value the moment it changes, so the old one stays accepted for a while."
       }
     },
     {
       "id": "kms-key",
-      "ja": "KMS key",
+      "ja": "KMS の鍵",
       "en": "KMS key",
       "firstUse": "21",
       "definition": {
@@ -1986,27 +1986,27 @@
       "en": "web ACL",
       "firstUse": "21",
       "definition": {
-        "ja": "AWS WAF の設定の単位。rule を順番に並べたもので、CloudFront や ALB などに関連付けると、リクエストが届く前に検査する。置いてあるだけで月額がかかる。",
+        "ja": "AWS WAF の設定の単位。ルールを順番に並べたもので、CloudFront や ALB などに関連付けると、リクエストが届く前に検査する。置いてあるだけで月額がかかる。",
         "en": "The unit of AWS WAF configuration: an ordered list of rules. Associated with CloudFront, an ALB, and so on, it inspects requests before they arrive. It carries a monthly fee just for existing."
       }
     },
     {
       "id": "managed-rule-group",
-      "ja": "managed rule group",
+      "ja": "マネージドルールグループ",
       "en": "managed rule group",
       "firstUse": "21",
       "definition": {
-        "ja": "AWS や第三者が保守している WAF の rule のまとまり。中身は提供者が更新する。web ACL の中では 1 つの rule として数える。",
+        "ja": "AWS や第三者が保守している WAF のルールのまとまり。中身は提供者が更新する。web ACL の中では 1 つのルールとして数える。",
         "en": "A set of WAF rules maintained by AWS or a third party, who also updates them. Inside a web ACL it counts as one rule."
       }
     },
     {
       "id": "management-event",
-      "ja": "management event",
+      "ja": "管理イベント",
       "en": "management event",
       "firstUse": "21",
       "definition": {
-        "ja": "リソースを作る・変える・消す、設定を読む、といった API 呼び出しの記録。CloudTrail が既定で 90 日ぶん持っている。S3 の object の読み書きのような data event は含まない。",
+        "ja": "リソースを作る・変える・消す、設定を読む、といった API 呼び出しの記録。CloudTrail が既定で 90 日ぶん持っている。S3 のオブジェクトの読み書きのような data event は含まない。",
         "en": "The record of an API call that creates, changes, deletes, or reads the configuration of a resource. CloudTrail keeps 90 days of them by default. Data events, such as reading an S3 object, are not included."
       }
     },
@@ -2016,13 +2016,13 @@
       "en": "SCP (service control policy)",
       "firstUse": "21",
       "definition": {
-        "ja": "AWS Organizations で、メンバーアカウントの IAM user と role に許せる権限の上限を決める policy。権限は与えない。management account には効かない。",
+        "ja": "AWS Organizations で、メンバーアカウントの IAM ユーザーとロールに許せる権限の上限を決めるポリシー。権限は与えない。管理アカウントには効かない。",
         "en": "In AWS Organizations, a policy that sets the upper bound on what IAM users and roles in member accounts can be allowed. It grants nothing, and does not apply to the management account."
       }
     },
     {
       "id": "management-account",
-      "ja": "management account",
+      "ja": "管理アカウント",
       "en": "management account",
       "firstUse": "21",
       "definition": {
@@ -2036,7 +2036,7 @@
       "en": "PITR (point-in-time recovery)",
       "firstUse": "22",
       "definition": {
-        "ja": "過去のある時点の状態に戻す機能。DynamoDB では、連続して取られた backup から、指定した秒の内容を持つ新しい table を作る。元の table は書き換えない。",
+        "ja": "過去のある時点の状態に戻す機能。DynamoDB では、連続して取られたバックアップから、指定した秒の内容を持つ新しいテーブルを作る。元のテーブルは書き換えない。",
         "en": "Restoring to the state at some past moment. In DynamoDB, a new table holding the contents as of a chosen second is built from continuous backups; the source table is not rewritten."
       }
     },
@@ -2062,11 +2062,11 @@
     },
     {
       "id": "delete-marker",
-      "ja": "delete marker",
+      "ja": "削除マーカー",
       "en": "delete marker",
       "firstUse": "22",
       "definition": {
-        "ja": "versioning を有効にした S3 bucket で、version を指定せずに object を消したときに置かれる目印。中身は消えず、目印がいちばん新しい version になる。目印を消すと、object は戻る。",
+        "ja": "バージョニングを有効にした S3 バケットで、バージョンを指定せずにオブジェクトを消したときに置かれる目印。中身は消えず、目印がいちばん新しいバージョンになる。目印を消すと、オブジェクトは戻る。",
         "en": "The marker S3 places when an object in a versioning-enabled bucket is deleted without naming a version. The bytes stay, and the marker becomes the newest version. Deleting the marker brings the object back."
       }
     },
@@ -2082,11 +2082,11 @@
     },
     {
       "id": "celld-node",
-      "ja": "node（celld）",
+      "ja": "ノード（celld）",
       "en": "node (celld)",
       "firstUse": "24",
       "definition": {
-        "ja": "1 台のマシンで動く celld のプロセス 1 つ。どの node もどの cell でも担当できる。",
+        "ja": "1 台のマシンで動く celld のプロセス 1 つ。どのノードもどの cell でも担当できる。",
         "en": "One celld process on one machine. Any node can serve any cell."
       }
     },
@@ -2096,17 +2096,17 @@
       "en": "fleet",
       "firstUse": "24",
       "definition": {
-        "ja": "同じ bucket を共有する celld の node の集まり。参加の手続きはなく、bucket の中の lease でお互いを見つける。",
+        "ja": "同じバケットを共有する celld のノードの集まり。参加の手続きはなく、バケットの中のリースでお互いを見つける。",
         "en": "The celld nodes that share one bucket. There is no join step; they find each other through leases in the bucket."
       }
     },
     {
       "id": "ownership-record",
-      "ja": "ownership record",
+      "ja": "持ち主の記録（ownership record）",
       "en": "ownership record",
       "firstUse": "24",
       "definition": {
-        "ja": "cell ごとに bucket に 1 つある小さなオブジェクト。いまの持ち主（node の session）と fencing epoch が書いてある。条件付きの書き込みでしか更新されない。",
+        "ja": "cell ごとにバケットに 1 つある小さなオブジェクト。いまの持ち主（ノードのセッション）と fencing epoch が書いてある。条件付きの書き込みでしか更新されない。",
         "en": "One small object per cell in the bucket, naming the current owner (a node session) and a fencing epoch. It changes only through conditional writes."
       }
     },
@@ -2122,21 +2122,21 @@
     },
     {
       "id": "node-lease",
-      "ja": "lease（node）",
+      "ja": "リース（ノード）",
       "en": "lease (node)",
       "firstUse": "24",
       "definition": {
-        "ja": "node が生きていることを示す、期限つきの記録。期限までに更新できなかった node は、自分から止まる。",
+        "ja": "ノードが生きていることを示す、期限つきの記録。期限までに更新できなかったノードは、自分から止まる。",
         "en": "A record with an expiry that says a node is alive. A node that cannot renew it in time stops itself."
       }
     },
     {
       "id": "follower",
-      "ja": "follower",
+      "ja": "フォロワー",
       "en": "follower",
       "firstUse": "24",
       "definition": {
-        "ja": "持ち主の node から書き込みを受け取り、自分の disk に保存する別の node。celld では 1 台か 2 台。",
+        "ja": "持ち主のノードから書き込みを受け取り、自分のディスクに保存する別のノード。celld では 1 台か 2 台。",
         "en": "Another node that receives each write from the owner and stores it on its own disk. One or two of them in celld."
       }
     },
@@ -2146,13 +2146,13 @@
       "en": "drain",
       "firstUse": "24",
       "definition": {
-        "ja": "node を止める前に、担当している仕事をほかへ引き渡すこと。celld では SIGTERM がその合図。",
+        "ja": "ノードを止める前に、担当している仕事をほかへ引き渡すこと。celld では SIGTERM がその合図。",
         "en": "Handing a node's work to others before it stops. In celld, SIGTERM is the signal for it."
       }
     },
     {
       "id": "supervisor",
-      "ja": "supervisor",
+      "ja": "スーパーバイザー",
       "en": "supervisor",
       "firstUse": "24",
       "definition": {

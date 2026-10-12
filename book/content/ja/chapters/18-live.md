@@ -23,8 +23,8 @@ node encoder: Encoder | OBS, FFmpeg、ストリームキーを添える
 node terminal: 自分の端末 | stream:status
 node viewer: 視聴者のブラウザ | 視聴ページ（Vue + IVS player SDK）
 node ingest: IVS ingest endpoint | global
-node channel: IVS channel "aih-live" | ap-northeast-1, type BASIC, latency mode LOW, ストリームキーは 1 つまで
-node rule: EventBridge rule | このチャンネルだけ: stream state, stream health, limit breach
+node channel: IVS チャンネル "aih-live" | ap-northeast-1, type BASIC, latency mode LOW, ストリームキーは 1 つまで
+node rule: EventBridge ルール | このチャンネルだけ: stream state, stream health, limit breach
 node playback: IVS playback URL | HTTPS、global に配信
 node fn: Lambda | 検証して、ログに 1 行書く
 node logs: CloudWatch Logs | 7 日
@@ -107,7 +107,7 @@ IVS という名前の下には、別々の製品が 2 つあります。作る�
 
 <<< @/examples/18-live/infra/lib/live-stack.ts{channel}
 
-固定している版の aws-cdk-lib には IVS の高レベルの construct がないので、CloudFormation のリソースにそのまま対応する `CfnChannel` を使っています。プロパティが少ないので、これで困りません。
+固定している版の aws-cdk-lib には IVS の高レベルのコンストラクトがないので、CloudFormation のリソースにそのまま対応する `CfnChannel` を使っています。プロパティが少ないので、これで困りません。
 
 `authorized: false` は、再生 URL を知っていれば誰でも見られるという意味です。この章の配信は公開で、見られた時間の料金は配信する側が払います。URL が広まるといくらになるかは[費用のページ](/ja/chapters/18-live/wrap.md)の「URL が広まったとき」で計算し、見られる人を絞る方法は同じページの「本番にするなら」に挙げました。
 

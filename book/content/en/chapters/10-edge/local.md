@@ -6,7 +6,7 @@ title: "10 Edge: Run It Locally"
 
 The [previous page](/en/chapters/10-edge.md) read the edge function, `edge-router.js`, and ran it in tests under Node.js. This page runs the same function in a local server, then covers what KVS guarantees about consistency and the script that changes what KVS holds.
 
-## Run it on your machine
+## Running it locally
 
 <!-- section: 10.local -->
 
@@ -28,7 +28,7 @@ curl -si 'http://localhost:8790/sale?ref=mail' | grep -i location
 
 <<< @/examples/10-edge/edge-data.json
 
-With the server still running, change `maintenance` to `true` and save the file, and the next request gets a 503. Set `newHome` to `true` and the content of `/` changes. The server's terminal shows how many times KVS was read for each request.
+With the server still running, change `maintenance` to `true` and save the file, and the next request gets a 503. Set `newHome` to `true` and the content of `/` changes. The server's terminal shows, for each request, the names of the keys that were read from KVS.
 
 <<< @/examples/10-edge/src/local/dev.ts{dev}
 
@@ -156,4 +156,4 @@ Errors are sorted as follows.
 
 <<< @/examples/10-edge/src/kvs/store.ts{errors}
 
-One point in this sorting is unconfirmed. The API reference lists `ConflictException` (409) but doesn't say that it is the error returned for a stale ETag. This adapter treats only `ConflictException` as a conflict. If a different error comes back in practice, the sync stops with an error instead of retrying. It still doesn't overwrite anything, so it fails on the safe side, but it would need fixing.
+One point in this sorting is unconfirmed. The API reference lists `ConflictException` (409) but doesn't say that it is the error returned for a stale ETag. This adapter treats only `ConflictException` as a conflict. If a different error comes back in practice, what happens next depends on its status. For anything other than a 5xx, the sync stops with an error instead of retrying. For a 5xx, or an error with no status, it treats the failure as temporary, reads again, and retries up to five rounds. Either way it doesn't overwrite anything, so it fails on the safe side, but it would need fixing.

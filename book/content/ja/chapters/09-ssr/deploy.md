@@ -49,7 +49,7 @@ vp run ssr:smoke
 確かめるのは次の 5 つです。
 
 1. `/` を何度か開くと、レスポンスのヘッダーが `public, max-age=0, s-maxage=60` で、2 回目以降のどれかが CloudFront のキャッシュから返る
-2. `/me` と `/me/api/viewer` を、でたらめなセッション cookie 付きと cookie なしで交互に何度開いても、`private, no-store` で、一度もキャッシュから返らない
+2. `/me` をでたらめなセッション cookie 付きと cookie なしで、`/me/api/viewer` を cookie 付きで、順に 3 回ずつ開いても、`private, no-store` で、一度もキャッシュから返らない
 3. HTML が指す `/_nuxt/` のファイルが、`immutable` 付きで返る
 4. function URL を直接開くと 403 が返る
 5. POST は CloudFront が断る

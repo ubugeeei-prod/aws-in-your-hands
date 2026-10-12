@@ -44,7 +44,7 @@ The bucket sends notifications only for creates and deletes of keys that start w
 
 <<< @/examples/08-async/infra/lib/async-stack.ts{worker}
 
-The worker's role is separate from the API function's role. It allows three operations for reading the queue, reading objects under `u/` and removing their tags, and three operations on the table. It has no permission to delete an object, because deleting is housekeeping's job.
+The worker's role is separate from the API function's role. It allows three operations for reading the queue, reading objects under `u/` and removing their tags, listing the bucket (`s3:ListBucket`), and three operations on the table. Listing is allowed for the same reason as in chapter 07: with it, reading a key that does not exist returns 404 and not 403. It has no permission to delete an object, because deleting is housekeeping's job.
 
 Lambda, not your code, goes and reads the queue, and it uses this function's role to do so. The managed policy AWS provides (`AWSLambdaSQSQueueExecutionRole`) allows the same three operations, but on every queue. This chapter narrows them to one queue.
 
@@ -144,7 +144,7 @@ One way in is not limited. As chapter 07 explained, a permit works any number of
 
 When that happens, some things are protected and some are not.
 
-- The workers do not multiply. At most two run at once. At 200 ms a message, the assumption from ["What it costs"](/en/chapters/08-async/wrap.md), they get through about 10 a second, around 860,000 a day
+- The workers do not multiply. At most two run at once. At 200 ms a message, the assumption from ["Cost"](/en/chapters/08-async/wrap.md), they get through about 10 a second, around 860,000 a day
 - Requests to DynamoDB do not multiply either. With two workers, writes and reads go only as far as two workers take them. The table also has the same request unit limits as in chapter 07
 - What the workers cannot get to is gone after 4 days. On the assumption above, they get through about 3.46 million messages in 4 days. Anything queued beyond that is deleted without being processed. Those images were never inspected
 - The bill follows the number of events that arrive. Nothing stops messages from being put on the queue

@@ -1,6 +1,6 @@
 ---
 title: "10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge
@@ -101,7 +101,7 @@ The three lines about `/digest` at the top are for the Lambda@Edge function adde
 
 In the first step, if the site is under maintenance, the handler returns a 503 and stops. Neither the cache nor the origin is involved.
 
-In the second step, it looks the path up in the redirect table. It skips the lookup for paths whose last segment contains a `.`, which are files such as `/assets/app.css`. Files are never redirected, so skipping saves one read on every request for a file.
+In the second step, it looks the path up in the redirect table. It skips the lookup for paths whose last segment contains a `.`, which are files such as `/assets/app.css`, and for paths longer than 256 characters. Files are never redirected, so skipping saves one read on every request for a file.
 
 If neither step applies, the third step rewrites the URL. `/` becomes `/index.html` or `/home-v2.html` depending on the flag, and a path like `/pricing/` becomes `/pricing/index.html`. The rewrite happens before the cache lookup, so the two home pages are cached under two different URLs. You therefore don't need to clear the cache when you flip the flag.
 

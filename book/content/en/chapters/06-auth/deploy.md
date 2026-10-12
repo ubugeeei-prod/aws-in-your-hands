@@ -117,7 +117,7 @@ This chapter takes the third. For a notes app, cases where it matters that notes
 
 API Gateway also caches the issuer's public keys for up to two hours. Take that time into account when the user pool's keys change.
 
-## Deploy
+## Deploying
 
 <!-- section: 06.deploy -->
 

@@ -66,13 +66,13 @@ vp run mail:infra:synth
 
 synth は手元だけで動き、AWS には問い合わせません。
 
-## sandbox と identity
+## サンドボックスと identity
 
 <!-- section: 15.identity -->
 
-デプロイの前に、SES の sandbox を知っておく必要があります。
+デプロイの前に、SES のサンドボックス（sandbox）を知っておく必要があります。
 
-新しいアカウントの SES は、sandbox という状態から始まります。sandbox はリージョンごとの状態なので、東京で sandbox を出ても、別のリージョンでは sandbox のままです。sandbox の間は、次の制限がかかります。
+新しいアカウントの SES は、サンドボックスという状態から始まります。サンドボックスはリージョンごとの状態なので、東京でサンドボックスを出ても、別のリージョンではサンドボックスのままです。サンドボックスの間は、次の制限がかかります。
 
 - 送れる宛先は、確認済みのアドレスとドメイン、それに SES の mailbox simulator だけ
 - 24 時間に 200 通まで
@@ -89,7 +89,7 @@ synth は手元だけで動き、AWS には問い合わせません。
 | 送信元にできるもの | そのアドレスだけ | そのドメインのすべてのアドレス |
 | 向いている場面 | この章を試す | 本番 |
 
-フリーメールのアドレスを送信元にして、sandbox の外で使うのは避けてください。フリーメールのドメインの DNS はあなたのものではないので、「独自ドメインで送る」の節で扱う SPF、DKIM、DMARC を設定できません。
+フリーメールのアドレスを送信元にして、サンドボックスの外で使うのは避けてください。フリーメールのドメインの DNS はあなたのものではないので、「独自ドメインで送る」の節で扱う SPF、DKIM、DMARC を設定できません。
 
 ### デプロイして、確認する
 
@@ -111,7 +111,7 @@ aws sesv2 get-account --region ap-northeast-1
 
 1 つ目のコマンドの `VerifiedForSendingStatus` が `true` なら、確認済みです。アドレスは大文字と小文字を区別するので、確認したとおりの綴りで使います。
 
-2 つ目のコマンドの `ProductionAccessEnabled` が `false` なら、sandbox の中です。`SendQuota` には、24 時間の上限と、直近 24 時間に送った数が出ます。
+2 つ目のコマンドの `ProductionAccessEnabled` が `false` なら、サンドボックスの中です。`SendQuota` には、24 時間の上限と、直近 24 時間に送った数が出ます。
 
 ## デプロイした API で送る
 
@@ -140,7 +140,7 @@ vp run mail:logs --events --follow
 
 ### bounce と complaint を起こしてみる
 
-自分のアドレスでは、bounce も complaint も起こせません。そのために SES が用意している宛先が mailbox simulator で、sandbox の中でも使えます。
+自分のアドレスでは、bounce も complaint も起こせません。そのために SES が用意している宛先が mailbox simulator で、サンドボックスの中でも使えます。
 
 ```bash
 vp run mail:send --to success@simulator.amazonses.com
@@ -220,7 +220,7 @@ aws sesv2 get-email-identity --email-identity your-domain.example --region ap-no
 
 Route 53 を使っている場合、SES のコンソールには、DKIM のレコードを自動で作る機能があります。この章のスタックがその機能を使わないのは、置くレコードを自分の目で一度見ておいてほしいからです。
 
-## sandbox を出る
+## サンドボックスを出る
 
 <!-- section: 15.production -->
 
@@ -249,16 +249,16 @@ aws sesv2 put-account-details --region ap-northeast-1 \
 
 公式ドキュメントによると、最初の返信は 24 時間以内に来ます。追加の情報を求められた場合は、それより長くかかります。審査中は、申請の内容を直せません。
 
-ドキュメントは、申請の前にドメインを確認しておくことを勧めています。申請の結果は、sandbox の中かどうかを確かめたときと同じコマンドで見ます。
+ドキュメントは、申請の前にドメインを確認しておくことを勧めています。申請の結果は、サンドボックスの中かどうかを確かめたときと同じコマンドで見ます。
 
 ```bash
 aws sesv2 get-account --region ap-northeast-1
 ```
 
-`ProductionAccessEnabled` が `true` になれば、sandbox の外です。sandbox を出ても、送信元の identity の確認は要ります。1 日の上限と 1 秒あたりの上限は、`SendQuota` に出ます。
+`ProductionAccessEnabled` が `true` になれば、サンドボックスの外です。サンドボックスを出ても、送信元の identity の確認は要ります。1 日の上限と 1 秒あたりの上限は、`SendQuota` に出ます。
 
 ### Cognito のメールも、ここにつながる
 
-06章で、Cognito の既定のメール送信は少量向けだと書きました。公式ドキュメントも、既定の設定の 1 日の上限は、ふつうの本番の量には足りないとしています。利用者が増えたら、user pool の設定で、あなたのアカウントの SES の identity から送るように切り替えます。
+06章で、Cognito の既定のメール送信は少量向けだと書きました。公式ドキュメントも、既定の設定の 1 日の上限は、ふつうの本番の量には足りないとしています。利用者が増えたら、ユーザープールの設定で、あなたのアカウントの SES の identity から送るように切り替えます。
 
-切り替えに必要なのは、この章で用意した 2 つ、確認済みの identity と、sandbox の外に出ていることです。sandbox の中のままだと、Cognito は利用者にメールを送れません。
+切り替えに必要なのは、この章で用意した 2 つ、確認済みの identity と、サンドボックスの外に出ていることです。サンドボックスの中のままだと、Cognito は利用者にメールを送れません。
