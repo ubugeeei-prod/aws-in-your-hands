@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import manifest from "../data/chapters.json" with { type: "json" };
 import { chapterTitle } from "./theme/title.ts";
 
@@ -13,6 +16,23 @@ const chapterLink = (id: string, slug: string): string => `/ja/chapters/${id}-${
 
 const short = (id: string, title: string): string => chapterTitle(`${id} ${title}`)?.name ?? title;
 
+// A chapter is several pages: its opening page, then these, in this order, where they exist.
+const parts = [
+  ["build", { ja: "しくみと実装", en: "Design and Build" }],
+  ["more", { ja: "実装のつづき", en: "Build, Continued" }],
+  ["local", { ja: "手元で動かす", en: "Run It Locally" }],
+  ["deploy", { ja: "デプロイ", en: "Deploy" }],
+  ["wrap", { ja: "費用、注意点、片付け", en: "Costs, Pitfalls, and Cleanup" }],
+] as const;
+
+const hasPage = (path: string): boolean =>
+  existsSync(fileURLToPath(new URL(`./content${path}`, import.meta.url)));
+
+const chapterParts = (id: string, slug: string): SidebarItem[] =>
+  parts
+    .map(([key, text]) => ({ text, link: `/ja/chapters/${id}-${slug}/${key}.md` }))
+    .filter((item) => hasPage(item.link));
+
 const chapterItems = (from: number, to: number): SidebarItem[] =>
   manifest.chapters
     .filter((chapter) => Number(chapter.id) >= from && Number(chapter.id) <= to)
@@ -23,6 +43,9 @@ const chapterItems = (from: number, to: number): SidebarItem[] =>
         en: short(chapter.id, chapter.title.en),
       },
       link: chapterLink(chapter.id, chapter.slug),
+      ...(chapterParts(chapter.id, chapter.slug).length === 0
+        ? {}
+        : { items: chapterParts(chapter.id, chapter.slug), collapsed: true }),
     }));
 
 // Links are ja source paths. Ox Content rewrites each to the locale being rendered.
