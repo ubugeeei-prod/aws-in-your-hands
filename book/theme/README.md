@@ -37,12 +37,11 @@ Three things happen each frame.
 What it is not: a 3D fluid simulation. Depth and lighting are an optical approximation.
 
 Behind the reading pages the same cloud runs thin and slow. On paper it is turned over in CSS,
-so the sky goes to white and the cloud becomes its shade. A button in the header (and in the bar
+so the sky goes to white and the cloud becomes its shade. A button among the controls (and in the bar
 a phone shows) stops it, and the choice is kept across pages.
 
-The header and the phone's bar stay put while the text scrolls under them. They cover it with
-the ground itself: the strip of the cloud that lies behind each bar is drawn again on the bar
-after every frame (`onDraw`), so the cloud runs through them unbroken.
+There is no bar across the top of a reading page. The controls sit in the bottom right corner
+and blur what scrolls under them, so the cloud runs from edge to edge as one picture.
 
 It holds still for readers who ask for reduced motion, stops when the tab or the canvas is
 out of sight, and shrinks the ray-marched image when frames run slow (`quality.ts`). Without

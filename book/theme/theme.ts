@@ -110,7 +110,7 @@ export function brandTheme(base: string) {
         },
       },
     },
-    layout: { maxContentWidth: "720px", headerHeight: "56px", sidebarWidth: "18rem" },
+    layout: { maxContentWidth: "720px", headerHeight: "0px", sidebarWidth: "18rem" },
     footer: {
       message: "AWS in Your Hands: An open field guide",
     },
@@ -122,6 +122,11 @@ export function brandTheme(base: string) {
     css,
     // The cover gets its cloud; every other page gets the thin one behind the text.
     js: [
+      // There is no bar across the top: the book's name heads the contents.
+      `{
+        const name = document.querySelector(".header > .header-title");
+        if (name) document.querySelector("#ox-sidebar")?.prepend(name);
+      }`,
       // The chapter you are in shows its pages, unless the reader folded it. Ox Content keeps what
       // the reader opened and folded (stickyCollapsed in site.ts); opening one here is not theirs
       // to remember, so the toggle it causes is kept from the listener that would record it.

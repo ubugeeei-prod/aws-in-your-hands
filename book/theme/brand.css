@@ -85,36 +85,28 @@ body {
   }
 }
 
-/* The cover's cloud, thin, behind the text. It sits under everything and takes no input.
-   .aih-veil is the strip of it behind a fixed bar, drawn again on the bar (client/ground.ts). */
-.aih-ground,
-.aih-veil {
+/* The cover's cloud, thin, behind the text. It sits under everything and takes no input. */
+.aih-ground {
+  position: fixed;
+  inset: 0;
   z-index: -1;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   opacity: 0;
   transition: opacity 1200ms ease;
 }
 
-.aih-ground {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.aih-ground.is-live,
-.aih-veil.is-live {
+.aih-ground.is-live {
   opacity: 0.22;
 }
 
 /* On paper the same cloud is turned over: the sky goes to white and the cloud becomes its shade. */
-:root[data-theme="light"] .aih-ground,
-:root[data-theme="light"] .aih-veil {
+:root[data-theme="light"] .aih-ground {
   filter: invert(1) hue-rotate(180deg);
 }
 
-:root[data-theme="light"] .aih-ground.is-live,
-:root[data-theme="light"] .aih-veil.is-live {
+:root[data-theme="light"] .aih-ground.is-live {
   opacity: 0.16;
 }
 
@@ -132,45 +124,56 @@ body:has(.aih-ground) {
   }
 }
 
-/* ---- header --------------------------------------------------------- */
+/* ---- the controls ---------------------------------------------------- */
 
-/* One ground from edge to edge: the bars are not surfaces of their own, and nothing is ruled off.
-   A bar covers what scrolls under it with the ground itself, the flat colour and then the cloud
-   over it, and both fade out at the bar's far edge, where the real ground takes over. */
+/* There is no bar across the top. The page is one ground from edge to edge, and the controls
+   (language, search, theme, motion) sit together in the bottom right corner. What scrolls
+   under them is blurred, not covered. The book's name is at the head of the contents (theme.ts). */
 .header {
+  inset: auto var(--aih-4) var(--aih-4) auto;
+  width: auto;
+  height: auto;
+  padding: 0 var(--aih-1);
   background: none;
-  border-bottom: 0;
+  border: 0;
   box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  padding-inline: var(--aih-6);
-  gap: var(--aih-4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
-.header::before,
-.mobile-footer::before,
-.aih-veil {
-  position: absolute;
-  inset: 0 0 calc(var(--aih-6) * -1);
-  width: 100%;
-  height: calc(100% + var(--aih-6));
-  -webkit-mask: linear-gradient(#000 62%, transparent);
-  mask: linear-gradient(#000 62%, transparent);
+.header > .menu-toggle,
+body:has(.aih-cover) .header {
+  display: none;
 }
 
-.header::before,
+@media (max-width: 768px) {
+  .header {
+    display: none;
+  }
+}
+
+/* The corner is at the foot of the screen, so the list of languages opens upwards. */
+.header .ox-header-select-menu {
+  top: auto;
+  bottom: calc(100% + var(--aih-1));
+}
+
+.ox-back-to-top {
+  right: var(--aih-4);
+  bottom: calc(var(--aih-4) + 44px + var(--aih-2));
+}
+
+/* The bar a phone shows blurs what scrolls under it, and fades out at its upper edge. */
 .mobile-footer::before {
   content: "";
+  position: absolute;
   z-index: -1;
-  background: var(--octc-color-bg);
-  pointer-events: none;
-}
-
-.mobile-footer::before,
-.mobile-footer > .aih-veil {
   inset: calc(var(--aih-6) * -1) 0 0;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   -webkit-mask: linear-gradient(transparent, #000 38%);
   mask: linear-gradient(transparent, #000 38%);
+  pointer-events: none;
 }
 
 .header-title {
@@ -180,6 +183,13 @@ body:has(.aih-ground) {
   letter-spacing: 0;
   color: var(--octc-color-text);
   gap: var(--aih-3);
+}
+
+.sidebar > .header-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--aih-8);
+  text-decoration: none;
 }
 
 /* The mark, in whatever colour the text has. */
@@ -278,10 +288,10 @@ body:has(.aih-ground) {
   font-size: 15px;
 }
 
-/* The default theme tints the sidebar when dark is chosen by hand, so that case is named too. */
+/* The default theme tints the sidebar on a dark ground, whether dark was chosen by hand or by
+   the system. The id outranks all three of its rules, so the ground shows through in every case. */
 @media (min-width: 769px) {
-  .sidebar,
-  [data-theme="dark"] .sidebar {
+  #ox-sidebar {
     background: none;
     border-right: 0;
     padding: var(--aih-8) var(--aih-6) var(--aih-16);
@@ -290,8 +300,7 @@ body:has(.aih-ground) {
 
 /* On a phone the contents come up as a sheet over the text, so there it is a surface. */
 @media (max-width: 768px) {
-  .sidebar,
-  [data-theme="dark"] .sidebar {
+  #ox-sidebar {
     background: var(--octc-color-bg);
     border-radius: 0;
   }
@@ -340,7 +349,7 @@ body:has(.aih-ground) {
 }
 
 .nav-link:hover,
-[data-theme="dark"] .nav-link:not(.active):hover {
+#ox-sidebar .nav-link:hover {
   background: none;
   text-decoration: underline;
   text-underline-offset: 0.3em;
