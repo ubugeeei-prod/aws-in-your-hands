@@ -4,8 +4,8 @@
     "id": "19",
     "slug": "observability",
     "title": {
-      "ja": "本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics",
-      "en": "See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics"
+      "ja": "Observability: CloudWatch、OpenTelemetry、RUM、Synthetics",
+      "en": "Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
     },
     "prerequisites": ["04"],
     "services": [
@@ -24,9 +24,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 5,
+    "sourceRevision": 6,
     "translatedRevision": {
-      "en": 5
+      "en": 6
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [

@@ -14,7 +14,7 @@ This chapter's design worked because there were only two ways of reading. Dynamo
 
 - Queries that are added later and weren't decided in advance. Conditions such as "notes whose body contains a certain word" or "notes updated last month, for all owners" are not in the key, so they mean reading the whole table
 - Aggregations and joins across several kinds of data
-- Constraints that span several items. A rule such as "at most 100 notes per user" can't be kept by a conditional write on the note alone. This chapter handled it with a count kept in a separate item, but because the place and the note are written separately, the two can get out of step. Transactions exist, but they limit the number and size of items they handle at once
+- Constraints that span several items. A rule such as "at most 100 notes per user" can't be kept by a conditional write on the note alone. This chapter handled it with a count kept in a separate item, but because the place and the note are written separately, the two can get out of step. Transactions exist, but they limit the number and size of items they handle at once. [Chapter 30](/en/chapters/30-data-modeling.md) covers designs that use transactions and indexes
 
 There is also a limit of 400 KB per item. Large data such as images doesn't go in an item. It goes in S3 ([chapter 07](/en/chapters/07-uploads.md)).
 

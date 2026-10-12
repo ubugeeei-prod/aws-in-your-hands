@@ -68,7 +68,10 @@ const groups: SidebarItem[] = [
   { text: { ja: "データを置く", en: "Store Data" }, items: chapterItems(13, 14) },
   { text: { ja: "機能を足す", en: "Add Features" }, items: [...chapterItems(15, 18), ...pick(51)] },
   { text: { ja: "運用する", en: "Operate It" }, items: chapterItems(19, 22) },
-  { text: { ja: "サーバーを持つ", en: "Run Your Own Servers" }, items: pick(23, 24, 64, 66) },
+  {
+    text: { ja: "サーバーを持つ", en: "Run Your Own Servers" },
+    items: pick(23, 24, 64, 66, 67, 68),
+  },
   { text: { ja: "つなぐ", en: "Connect Services" }, items: pick(25, 61, 54, 47) },
   {
     text: { ja: "データを深める", en: "Deeper into Data" },

@@ -1031,132 +1031,6 @@
       "checkedAt": "2026-10-11"
     },
     {
-      "id": "dsql.dpu",
-      "offerCode": "AuroraDSQL",
-      "region": "ap-northeast-1",
-      "sku": "KKEFZWCUG3W2KAYV",
-      "usageType": "APN1-DSQL-DistributedProcessingUnits",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "DPU",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000100000",
-          "description": "$0.00001 per DPU in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:45:22Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "dsql.storage",
-      "offerCode": "AuroraDSQL",
-      "region": "ap-northeast-1",
-      "sku": "JQ8P9RAR84XYTK3T",
-      "usageType": "APN1-DSQL-Storage-ByteHrs",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-Month",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.4000000000",
-          "description": "$0.40 per GB-Month in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:45:22Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "rds.postgres.t4g-micro.single-az",
-      "offerCode": "AmazonRDS",
-      "region": "ap-northeast-1",
-      "sku": "YXENKSJFV9BXQF4N",
-      "usageType": "APN1-InstanceUsage:db.t4g.micro",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hrs",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0250000000",
-          "description": "$ 0.025 per RDS db.t4g.micro Single-AZ instance hour (or partial hour) running PostgreSQL"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-06T22:40:50Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "rds.postgres.gp3.storage",
-      "offerCode": "AmazonRDS",
-      "region": "ap-northeast-1",
-      "sku": "YM9AR73XYRPUSCN3",
-      "usageType": "APN1-RDS:GP3-Storage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-Mo",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1380000000",
-          "description": "$0.138 per GB-month of provisioned GP3 storage running PostgreSQL"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-06T22:40:50Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "aurora.postgres.serverless-v2.acu",
-      "offerCode": "AmazonRDS",
-      "region": "ap-northeast-1",
-      "sku": "NTURMTB2PWMA53X6",
-      "usageType": "APN1-Aurora:ServerlessV2Usage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "ACU-Hr",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1500000000",
-          "description": "USD 0.15 per Aurora Capacity Unit hour running Aurora PostgreSQL Serverless v2"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-06T22:40:50Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "aurora.postgres.storage",
-      "offerCode": "AmazonRDS",
-      "region": "ap-northeast-1",
-      "sku": "E7NHVJRED3R3PUY7",
-      "usageType": "APN1-Aurora:StorageUsage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-Mo",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1200000000",
-          "description": "USD 0.12 per GB-month of consumed storage for Aurora PostgreSQL"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-06T22:40:50Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
       "id": "datatransfer.out.internet",
       "offerCode": "AWSDataTransfer",
       "region": "ap-northeast-1",
@@ -1194,192 +1068,6 @@
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-16T13:22:08Z",
       "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "lambda.streaming.arm",
-      "offerCode": "AWSLambda",
-      "region": "ap-northeast-1",
-      "sku": "SU5948MRY5A8GWNM",
-      "usageType": "APN1-Lambda-Streaming-Response-Processed-Bytes-ARM",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Processed-Gigabytes",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0080000000",
-          "description": "$0.008 per GiB for Lambda-Streaming-Response-Processed-Bytes-ARM in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T22:31:22Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "cloudwatch.metric.custom",
-      "offerCode": "AmazonCloudWatch",
-      "region": "ap-northeast-1",
-      "sku": "F96ZRPX8AM4T93NV",
-      "usageType": "APN1-CW:MetricMonitorUsage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Metrics",
-      "tiers": [
-        {
-          "from": 0,
-          "to": 10000,
-          "usd": "0.3000000000",
-          "description": "$0.30 per metric-month for the first 10,000 metrics - Asia Pacific (Tokyo)"
-        },
-        {
-          "from": 10000,
-          "to": 250000,
-          "usd": "0.1000000000",
-          "description": "$0.10 per metric-month for the next 240,000 metrics - Asia Pacific (Tokyo)"
-        },
-        {
-          "from": 250000,
-          "to": 1000000,
-          "usd": "0.0500000000",
-          "description": "$0.05 per metric-month for the next 750,000 metrics - Asia Pacific (Tokyo)"
-        },
-        {
-          "from": 1000000,
-          "to": null,
-          "usd": "0.0200000000",
-          "description": "$0.02 per metric-month for over 1,000,000 metrics - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-07T11:55:40Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "cloudwatch.alarm.standard",
-      "offerCode": "AmazonCloudWatch",
-      "region": "ap-northeast-1",
-      "sku": "FBMB6TVC844YGZ3J",
-      "usageType": "APN1-CW:AlarmMonitorUsage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Alarms",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1000000000",
-          "description": "$0.10 per alarm metric month (standard resolution) - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-07T11:55:40Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "logs.insights.scanned",
-      "offerCode": "AmazonCloudWatch",
-      "region": "ap-northeast-1",
-      "sku": "QE3CDKDURP2A2WR5",
-      "usageType": "APN1-DataScanned-Bytes",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0076000000",
-          "description": "$0.0076 per GB log data scanned by CloudWatch Logs Insights queries - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-07T11:55:40Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "xray.trace.recorded",
-      "offerCode": "AWSXRay",
-      "region": "ap-northeast-1",
-      "sku": "A2DFYMNB5KZNWKX4",
-      "usageType": "APN1-XRay-TracesStored",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "traces",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000050000",
-          "description": "AWS X-Ray - Total Traces Stored - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:46:22Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "xray.trace.retrieved",
-      "offerCode": "AWSXRay",
-      "region": "ap-northeast-1",
-      "sku": "ZF5AQUZ2PJQESZQR",
-      "usageType": "APN1-XRay-TracesAccessed",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "traces",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000005000",
-          "description": "AWS X-Ray - Total Traces Accessed - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:46:22Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "cloudwatch.rum.event",
-      "offerCode": "AmazonCloudWatch",
-      "region": "ap-northeast-1",
-      "sku": "UMUKYCB9NNDT49U2",
-      "usageType": "APN1-CW:RUM-events",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Events",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000100000",
-          "description": "$1 per 100k RUM events in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-07T11:55:40Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "cloudwatch.synthetics.run",
-      "offerCode": "AmazonCloudWatch",
-      "region": "ap-northeast-1",
-      "sku": "TVDGJTPNCD29VTN5",
-      "usageType": "APN1-CW:Canary-runs",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Runs",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0019000000",
-          "description": "$0.0019 per canary run per month - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-07T11:55:40Z",
-      "checkedAt": "2026-10-12"
     },
     {
       "id": "elasticache.serverless.valkey.storage",
@@ -1442,738 +1130,6 @@
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonElastiCache/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-09-14T06:37:14Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "fargate.arm.vcpu.hour",
-      "offerCode": "AmazonECS",
-      "region": "ap-northeast-1",
-      "sku": "ZNX9M5D8R95VT2QQ",
-      "usageType": "APN1-Fargate-ARM-vCPU-Hours:perCPU",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0404500000",
-          "description": "AWS Fargate - ARM - vCPU - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "fargate.arm.memory.gb-hour",
-      "offerCode": "AmazonECS",
-      "region": "ap-northeast-1",
-      "sku": "WXXGZM434J9JXCU5",
-      "usageType": "APN1-Fargate-ARM-GB-Hours",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0044200000",
-          "description": "AWS Fargate - ARM - Memory - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "fargate.x86.vcpu.hour",
-      "offerCode": "AmazonECS",
-      "region": "ap-northeast-1",
-      "sku": "KBQ3Q6DY9J327G8N",
-      "usageType": "APN1-Fargate-vCPU-Hours:perCPU",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0505600000",
-          "description": "AWS Fargate - vCPU  - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "fargate.x86.memory.gb-hour",
-      "offerCode": "AmazonECS",
-      "region": "ap-northeast-1",
-      "sku": "JQEE6EF5FAF2AESH",
-      "usageType": "APN1-Fargate-GB-Hours",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0055300000",
-          "description": "AWS Fargate - Memory  - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "alb.hour",
-      "offerCode": "AWSELB",
-      "region": "ap-northeast-1",
-      "sku": "98ZU8QNDMR4AS8FJ",
-      "usageType": "APN1-LoadBalancerUsage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hrs",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0243000000",
-          "description": "$0.0243 per Application LoadBalancer-hour (or partial hour)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:45:44Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "alb.lcu.hour",
-      "offerCode": "AWSELB",
-      "region": "ap-northeast-1",
-      "sku": "F2UQT6CZGM7BTWS8",
-      "usageType": "APN1-LCUUsage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "LCU-Hrs",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0080000000",
-          "description": "$0.008 per used Application load balancer capacity unit-hour (or partial hour)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:45:44Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "ecr.storage",
-      "offerCode": "AmazonECR",
-      "region": "ap-northeast-1",
-      "sku": "R5SQFH8FHUZV8GYE",
-      "usageType": "APN1-TimedStorage-ByteHrs",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-Mo",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1000000000",
-          "description": "$0.10 per GB-month of data storage"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "sqs.request.standard",
-      "offerCode": "AWSQueueService",
-      "region": "ap-northeast-1",
-      "sku": "5Q2SBURHPCGERHBD",
-      "usageType": "APN1-Requests-Tier1",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Requests",
-      "tiers": [
-        {
-          "from": 0,
-          "to": 100000000000,
-          "usd": "0.0000004000",
-          "description": "$0.40 per million Amazon SQS standard requests in Tier1 in Asia Pacific (Tokyo)"
-        },
-        {
-          "from": 100000000000,
-          "to": 200000000000,
-          "usd": "0.0000003500",
-          "description": "$0.35 per million Amazon SQS standard requests in Tier2 in Asia Pacific (Tokyo)"
-        },
-        {
-          "from": 200000000000,
-          "to": null,
-          "usd": "0.0000003200",
-          "description": "$0.32 per million Amazon SQS standard requests in Tier3 in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:46:07Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "scheduler.invocation",
-      "offerCode": "AWSEvents",
-      "region": "ap-northeast-1",
-      "sku": "29C3758CBCYNXH8B",
-      "usageType": "APN1-ScheduledInvocation",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Invocations",
-      "tiers": [
-        {
-          "from": 0,
-          "to": 14000000,
-          "usd": "0.0000000000",
-          "description": "$0 for the first 14 million scheduled invocations"
-        },
-        {
-          "from": 14000000,
-          "to": null,
-          "usd": "0.0000012500",
-          "description": "$1.25 per million scheduled invocations in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-24T16:39:03Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "ec2.t4g-micro.linux.hour",
-      "offerCode": "AmazonEC2",
-      "region": "ap-northeast-1",
-      "sku": "VQYSJNTK8DNEGB5Z",
-      "usageType": "APN1-BoxUsage:t4g.micro",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hrs",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0108000000",
-          "description": "$0.0108 per On Demand Linux t4g.micro Instance Hour"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "ec2.t4g-small.linux.hour",
-      "offerCode": "AmazonEC2",
-      "region": "ap-northeast-1",
-      "sku": "74TFX697KNZ72UYS",
-      "usageType": "APN1-BoxUsage:t4g.small",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hrs",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0216000000",
-          "description": "$0.0216 per On Demand Linux t4g.small Instance Hour"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "ec2.t4g.cpu-credit",
-      "offerCode": "AmazonEC2",
-      "region": "ap-northeast-1",
-      "sku": "225544MWSED9SX58",
-      "usageType": "APN1-CPUCredits:t4g",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "vCPU-Hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0400000000",
-          "description": "$0.04 per vCPU-Hour of T4G CPU Credits"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "ebs.gp3.storage",
-      "offerCode": "AmazonEC2",
-      "region": "ap-northeast-1",
-      "sku": "C8Y3GJZBQTH8T5JV",
-      "usageType": "APN1-EBS:VolumeUsage.gp3",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-Mo",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0960000000",
-          "description": "$0.096 per GB-month of General Purpose (gp3) provisioned storage - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "ebs.snapshot.storage",
-      "offerCode": "AmazonEC2",
-      "region": "ap-northeast-1",
-      "sku": "4NHX4ZW7X52XZACJ",
-      "usageType": "APN1-EBS:SnapshotUsage",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-Mo",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0500000000",
-          "description": "$0.05 per GB-Month of snapshot data stored - Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "sfn.standard.transition",
-      "offerCode": "AmazonStates",
-      "region": "ap-northeast-1",
-      "sku": "BTKF2VQUME7BCFVV",
-      "usageType": "APN1-StateTransition",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "StateTransitions",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000250000",
-          "description": "$0.000025 per state transition"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:45:11Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "lambda.durable.operation",
-      "offerCode": "AWSLambda",
-      "region": "ap-northeast-1",
-      "sku": "38G2CJHVYQC45MTY",
-      "usageType": "APN1-Lambda-Durable-Execution-Operations",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "DurableOperations",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000106000",
-          "description": "$0.0000106 per DurableOperation for Lambda-Durable-Execution-Operations in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T22:31:22Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "lambda.durable.written",
-      "offerCode": "AWSLambda",
-      "region": "ap-northeast-1",
-      "sku": "MVB47QVZRQ9MSHUU",
-      "usageType": "APN1-Lambda-Durable-Execution-Written-Bytes",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GigaBytes",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.3300000000",
-          "description": "$0.33 per GigaByte for Lambda-Durable-Execution-Written-Bytes in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T22:31:22Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "lambda.durable.retained",
-      "offerCode": "AWSLambda",
-      "region": "ap-northeast-1",
-      "sku": "A7USWCXHVDSE3RNW",
-      "usageType": "APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GigaBytesMonth",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.2000000000",
-          "description": "$0.20 per GigaBytesMonth for Lambda-Durable-Execution-TimedStorage-ByteHrs in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T22:31:22Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "dynamodb.restore",
-      "offerCode": "AmazonDynamoDB",
-      "region": "ap-northeast-1",
-      "sku": "T6RK6THJVQUFJ4M5",
-      "usageType": "APN1-RestoreDataSize-Bytes",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1710000000",
-          "description": "$0.171 per GB of data restored"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:22Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "backup.dynamodb.warm",
-      "offerCode": "AWSBackup",
-      "region": "ap-northeast-1",
-      "sku": "C3P55YRKVN5AZQMC",
-      "usageType": "APN1-WarmStorage-ByteHrs-DynamoDB",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-month",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1140000000",
-          "description": "$0.114 per GB-month for warm backup storage for DynamoDB"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-28T17:01:20Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "bedrock.nova-2-lite.input",
-      "offerCode": "AmazonBedrock",
-      "region": "ap-northeast-1",
-      "sku": "6F8ZM9MBQZNJNGFN",
-      "usageType": "APN1-Nova2.0Lite-input-tokens",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1K tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0003960000",
-          "description": "$0.000396 per 1K tokens for APN1-Nova2.0Lite-input-tokens in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-10T18:22:42Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "bedrock.nova-2-lite.output",
-      "offerCode": "AmazonBedrock",
-      "region": "ap-northeast-1",
-      "sku": "9Z5KZBA2AANN9UQS",
-      "usageType": "APN1-Nova2.0Lite-output-tokens",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1K tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0033110000",
-          "description": "$0.003311 per 1K tokens for APN1-Nova2.0Lite-output-tokens in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-10T18:22:42Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "bedrock.claude-haiku-4-5.input",
-      "offerCode": "AmazonBedrockFoundationModels",
-      "region": "ap-northeast-1",
-      "sku": "CUDWXBGUTQHMHKJX",
-      "usageType": "APN1-MP:APN1_InputTokenCount-Units",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1M tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "1.1000000000",
-          "description": "AWS Marketplace software usage|ap-northeast-1|Million Input Tokens Regional"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-08T23:56:37Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "bedrock.claude-haiku-4-5.output",
-      "offerCode": "AmazonBedrockFoundationModels",
-      "region": "ap-northeast-1",
-      "sku": "TEKBTVMTEVXXBRTZ",
-      "usageType": "APN1-MP:APN1_OutputTokenCount-Units",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "1M tokens",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "5.5000000000",
-          "description": "AWS Marketplace software usage|ap-northeast-1|Million Response Tokens Regional"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-08T23:56:37Z",
-      "checkedAt": "2026-10-11"
-    },
-    {
-      "id": "secretsmanager.secret",
-      "offerCode": "AWSSecretsManager",
-      "region": "ap-northeast-1",
-      "sku": "GVA2ZKT9KD5RYX6P",
-      "usageType": "APN1-AWSSecretsManager-Secrets",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Secrets",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.4000000000",
-          "description": "$0.40 per Secret"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:46:10Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "secretsmanager.api",
-      "offerCode": "AWSSecretsManager",
-      "region": "ap-northeast-1",
-      "sku": "JC68V52M47AA94EZ",
-      "usageType": "APN1-AWSSecretsManagerAPIRequest",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "API Requests",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000050000",
-          "description": "$0.05 per 10000 API Requests"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:46:10Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "kms.key",
-      "offerCode": "awskms",
-      "region": "ap-northeast-1",
-      "sku": "VJNSHSJEC3XAPATF",
-      "usageType": "ap-northeast-1-KMS-Keys",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Keys",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "1.0000000000",
-          "description": "$1 per customer managed KMS key version in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:46:01Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "kms.request",
-      "offerCode": "awskms",
-      "region": "ap-northeast-1",
-      "sku": "ZXP6ZS4WWG9FNXHG",
-      "usageType": "ap-northeast-1-KMS-Requests",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Requests",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000030000",
-          "description": "$0.03 per 10000 KMS requests in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:46:01Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "waf.global.webacl",
-      "offerCode": "awswaf",
-      "region": "global",
-      "sku": "DYTQ8YBXB7SEXYTZ",
-      "usageType": "Global-WebACLV2",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Month",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "5.0000000000",
-          "description": "$5.00 per web ACL created (prorated hourly)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
-      "offerPublicationDate": "2026-09-14T16:39:21Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "waf.global.rule",
-      "offerCode": "awswaf",
-      "region": "global",
-      "sku": "VRM2EPFJG75YBY5A",
-      "usageType": "Global-RuleV2",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Month",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "1.0000000000",
-          "description": "$1.00 per rule created (prorated hourly)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
-      "offerPublicationDate": "2026-09-14T16:39:21Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "waf.global.request",
-      "offerCode": "awswaf",
-      "region": "global",
-      "sku": "8D94VMB3JSN7FAX3",
-      "usageType": "Global-RequestV2-Tier1",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Request",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000006000",
-          "description": "$0.60 per million requests processed"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
-      "offerPublicationDate": "2026-09-14T16:39:21Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "guardduty.cloudtrail.event",
-      "offerCode": "AmazonGuardDuty",
-      "region": "ap-northeast-1",
-      "sku": "TFHCE6Z4YPX3UBZM",
-      "usageType": "APN1-PaidEventsAnalyzed",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Events",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0000047200",
-          "description": "$0.00000472 per CloudTrail event analyzed in Asia Pacific (Tokyo) region"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-08T23:12:03Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "inspector.lambda.standard",
-      "offerCode": "AmazonInspectorV2",
-      "region": "ap-northeast-1",
-      "sku": "TKG5JCZ3WXG5PJ3W",
-      "usageType": "APN1-Lambda-Standard-Scanning",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hourly",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0005000000",
-          "description": "$0.0005 per Hourly for Lambda-Standard-Scanning in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:40Z",
-      "checkedAt": "2026-10-12"
-    },
-    {
-      "id": "config.item.continuous",
-      "offerCode": "AWSConfig",
-      "region": "ap-northeast-1",
-      "sku": "JHD3G7BJYKRN97JU",
-      "usageType": "APN1-ConfigurationItemRecorded",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "APN1-ConfigurationItemRecorded",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0030000000",
-          "description": "$0.003 per  Configuration Item recorded in Asia Pacific (Tokyo) region"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:45:34Z",
       "checkedAt": "2026-10-12"
     },
     {
@@ -3008,90 +1964,6 @@
       ],
       "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSCostExplorer/current/index.json",
       "offerPublicationDate": "2026-09-11T12:45:38Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "eks.cluster.hour",
-      "offerCode": "AmazonEKS",
-      "region": "ap-northeast-1",
-      "sku": "F7AV3M7DBEX7FCHJ",
-      "usageType": "APN1-AmazonEKS-Hours:perCluster",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1000000000",
-          "description": "Amazon EKS cluster usage in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-28T19:42:55Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "eks.cluster.extended-support.hour",
-      "offerCode": "AmazonEKS",
-      "region": "ap-northeast-1",
-      "sku": "JG44SV8KC4NJSEJJ",
-      "usageType": "APN1-AmazonEKS-Hours:extendedSupport",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.5000000000",
-          "description": "Amazon EKS extended support usage in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-28T19:42:55Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "eks.auto.t4g-medium.hour",
-      "offerCode": "AmazonEKS",
-      "region": "ap-northeast-1",
-      "sku": "9E8CXQ8ZDT2ZNRUA",
-      "usageType": "APN1-EKS-Auto:t4g.medium-management-hours",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "hours",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0051800000",
-          "description": "$0.00518 per hour for EKS Auto Mode management of t4g.medium in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-28T19:42:55Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "ec2.t4g-medium.linux.hour",
-      "offerCode": "AmazonEC2",
-      "region": "ap-northeast-1",
-      "sku": "DQ2JMSDRJM7SCPDH",
-      "usageType": "APN1-BoxUsage:t4g.medium",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Hrs",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0432000000",
-          "description": "$0.0432 per On Demand Linux t4g.medium Instance Hour"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
       "checkedAt": "2026-10-13"
     },
     {
@@ -4349,117 +3221,6 @@
       "checkedAt": "2026-10-13"
     },
     {
-      "id": "ecr.storage.archive",
-      "offerCode": "AmazonECR",
-      "region": "ap-northeast-1",
-      "sku": "VYM99M4HCC4JPT6C",
-      "usageType": "APN1-TimedStorage-Archive-ByteHrs",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB-Mo",
-      "tiers": [
-        {
-          "from": 0,
-          "to": 153600,
-          "usd": "0.1000000000",
-          "description": "$0.10 per GB-Mo from 0 to 153,600 for TimedStorage-Archive-ByteHrs in Asia Pacific (Tokyo)"
-        },
-        {
-          "from": 153600,
-          "to": null,
-          "usd": "0.0700000000",
-          "description": "$0.07 per GB-Mo from 153,600 for TimedStorage-Archive-ByteHrs in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "ecr.archive.retrieval",
-      "offerCode": "AmazonECR",
-      "region": "ap-northeast-1",
-      "sku": "AGSTWYZYHGV8SXU8",
-      "usageType": "APN1-Retrieval-Archive",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "GB",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0300000000",
-          "description": "$0.03 per GB for Retrieval-Archive in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "ecr.signing",
-      "offerCode": "AmazonECR",
-      "region": "ap-northeast-1",
-      "sku": "X8FZ4CKPMMVP6Q5U",
-      "usageType": "APN1-AsyncActions-ImageSigning",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Count",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0200000000",
-          "description": "$0.02 per Count for AsyncActions-ImageSigning in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:25Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "inspector.image.initial-scan",
-      "offerCode": "AmazonInspectorV2",
-      "region": "ap-northeast-1",
-      "sku": "X7HQKHYG7EKPNN8V",
-      "usageType": "APN1-container-image-initial-scan",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Resource-assessment",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.1100000000",
-          "description": "$0.11 per Resource-assessment for container-image-initial-scan in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:40Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
-      "id": "inspector.image.rescan",
-      "offerCode": "AmazonInspectorV2",
-      "region": "ap-northeast-1",
-      "sku": "BSKUQR36ETBDFUZN",
-      "usageType": "APN1-container-image-re-scan",
-      "plan": "on-demand",
-      "currency": "USD",
-      "unit": "Resource-assessment",
-      "tiers": [
-        {
-          "from": 0,
-          "to": null,
-          "usd": "0.0100000000",
-          "description": "$0.01 per Resource-assessment for container-image-re-scan in Asia Pacific (Tokyo)"
-        }
-      ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
-      "offerPublicationDate": "2026-09-11T12:44:40Z",
-      "checkedAt": "2026-10-13"
-    },
-    {
       "id": "efs.standard.storage",
       "offerCode": "AmazonEFS",
       "region": "ap-northeast-1",
@@ -5486,6 +4247,174 @@
       "checkedAt": "2026-10-13"
     },
     {
+      "id": "ec2.t3-micro.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "DAPC5MD4ZQN9K67N",
+      "usageType": "APN1-BoxUsage:t3.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0136000000",
+          "description": "$0.0136 per On Demand Linux t3.micro Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c6g-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "367GKYK8T8KTCEGA",
+      "usageType": "APN1-BoxUsage:c6g.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0856000000",
+          "description": "$0.0856 per On Demand Linux c6g.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c6i-large.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "YWJM42SBFH2YFKVN",
+      "usageType": "APN1-BoxUsage:c6i.large",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1070000000",
+          "description": "$0.107 per On Demand Linux c6i.large Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.c6i-xlarge.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "U5GNAU94PPRNDA36",
+      "usageType": "APN1-BoxUsage:c6i.xlarge",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2140000000",
+          "description": "$0.214 per On Demand Linux c6i.xlarge Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "eks.cluster.hour",
+      "offerCode": "AmazonEKS",
+      "region": "ap-northeast-1",
+      "sku": "F7AV3M7DBEX7FCHJ",
+      "usageType": "APN1-AmazonEKS-Hours:perCluster",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "Amazon EKS cluster usage in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T19:42:55Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "eks.cluster.extended-support.hour",
+      "offerCode": "AmazonEKS",
+      "region": "ap-northeast-1",
+      "sku": "JG44SV8KC4NJSEJJ",
+      "usageType": "APN1-AmazonEKS-Hours:extendedSupport",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.5000000000",
+          "description": "Amazon EKS extended support usage in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T19:42:55Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "eks.auto.t4g-medium.hour",
+      "offerCode": "AmazonEKS",
+      "region": "ap-northeast-1",
+      "sku": "9E8CXQ8ZDT2ZNRUA",
+      "usageType": "APN1-EKS-Auto:t4g.medium-management-hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0051800000",
+          "description": "$0.00518 per hour for EKS Auto Mode management of t4g.medium in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEKS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T19:42:55Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "ec2.t4g-medium.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "DQ2JMSDRJM7SCPDH",
+      "usageType": "APN1-BoxUsage:t4g.medium",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0432000000",
+          "description": "$0.0432 per On Demand Linux t4g.medium Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
       "id": "datatransfer.regional",
       "offerCode": "AWSDataTransfer",
       "region": "ap-northeast-1",
@@ -5570,11 +4499,176 @@
       "checkedAt": "2026-10-13"
     },
     {
-      "id": "ec2.t3-micro.linux.hour",
-      "offerCode": "AmazonEC2",
+      "id": "sqs.request.standard",
+      "offerCode": "AWSQueueService",
       "region": "ap-northeast-1",
-      "sku": "DAPC5MD4ZQN9K67N",
-      "usageType": "APN1-BoxUsage:t3.micro",
+      "sku": "5Q2SBURHPCGERHBD",
+      "usageType": "APN1-Requests-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 100000000000,
+          "usd": "0.0000004000",
+          "description": "$0.40 per million Amazon SQS standard requests in Tier1 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 100000000000,
+          "to": 200000000000,
+          "usd": "0.0000003500",
+          "description": "$0.35 per million Amazon SQS standard requests in Tier2 in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 200000000000,
+          "to": null,
+          "usd": "0.0000003200",
+          "description": "$0.32 per million Amazon SQS standard requests in Tier3 in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSQueueService/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:07Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "scheduler.invocation",
+      "offerCode": "AWSEvents",
+      "region": "ap-northeast-1",
+      "sku": "29C3758CBCYNXH8B",
+      "usageType": "APN1-ScheduledInvocation",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Invocations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 14000000,
+          "usd": "0.0000000000",
+          "description": "$0 for the first 14 million scheduled invocations"
+        },
+        {
+          "from": 14000000,
+          "to": null,
+          "usd": "0.0000012500",
+          "description": "$1.25 per million scheduled invocations in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSEvents/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-24T16:39:03Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.streaming.arm",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "SU5948MRY5A8GWNM",
+      "usageType": "APN1-Lambda-Streaming-Response-Processed-Bytes-ARM",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Processed-Gigabytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0080000000",
+          "description": "$0.008 per GiB for Lambda-Streaming-Response-Processed-Bytes-ARM in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "fargate.arm.vcpu.hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "ZNX9M5D8R95VT2QQ",
+      "usageType": "APN1-Fargate-ARM-vCPU-Hours:perCPU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0404500000",
+          "description": "AWS Fargate - ARM - vCPU - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.arm.memory.gb-hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "WXXGZM434J9JXCU5",
+      "usageType": "APN1-Fargate-ARM-GB-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0044200000",
+          "description": "AWS Fargate - ARM - Memory - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.x86.vcpu.hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "KBQ3Q6DY9J327G8N",
+      "usageType": "APN1-Fargate-vCPU-Hours:perCPU",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0505600000",
+          "description": "AWS Fargate - vCPU  - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "fargate.x86.memory.gb-hour",
+      "offerCode": "AmazonECS",
+      "region": "ap-northeast-1",
+      "sku": "JQEE6EF5FAF2AESH",
+      "usageType": "APN1-Fargate-GB-Hours",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0055300000",
+          "description": "AWS Fargate - Memory  - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "alb.hour",
+      "offerCode": "AWSELB",
+      "region": "ap-northeast-1",
+      "sku": "98ZU8QNDMR4AS8FJ",
+      "usageType": "APN1-LoadBalancerUsage",
       "plan": "on-demand",
       "currency": "USD",
       "unit": "Hrs",
@@ -5582,75 +4676,981 @@
         {
           "from": 0,
           "to": null,
-          "usd": "0.0136000000",
-          "description": "$0.0136 per On Demand Linux t3.micro Instance Hour"
+          "usd": "0.0243000000",
+          "description": "$0.0243 per Application LoadBalancer-hour (or partial hour)"
         }
       ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:44Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "alb.lcu.hour",
+      "offerCode": "AWSELB",
+      "region": "ap-northeast-1",
+      "sku": "F2UQT6CZGM7BTWS8",
+      "usageType": "APN1-LCUUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "LCU-Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0080000000",
+          "description": "$0.008 per used Application load balancer capacity unit-hour (or partial hour)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:44Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ecr.storage",
+      "offerCode": "AmazonECR",
+      "region": "ap-northeast-1",
+      "sku": "R5SQFH8FHUZV8GYE",
+      "usageType": "APN1-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per GB-month of data storage"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "dsql.dpu",
+      "offerCode": "AuroraDSQL",
+      "region": "ap-northeast-1",
+      "sku": "KKEFZWCUG3W2KAYV",
+      "usageType": "APN1-DSQL-DistributedProcessingUnits",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DPU",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$0.00001 per DPU in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "dsql.storage",
+      "offerCode": "AuroraDSQL",
+      "region": "ap-northeast-1",
+      "sku": "JQ8P9RAR84XYTK3T",
+      "usageType": "APN1-DSQL-Storage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4000000000",
+          "description": "$0.40 per GB-Month in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AuroraDSQL/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:22Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "rds.postgres.t4g-micro.single-az",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "YXENKSJFV9BXQF4N",
+      "usageType": "APN1-InstanceUsage:db.t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0250000000",
+          "description": "$ 0.025 per RDS db.t4g.micro Single-AZ instance hour (or partial hour) running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "rds.postgres.gp3.storage",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "YM9AR73XYRPUSCN3",
+      "usageType": "APN1-RDS:GP3-Storage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1380000000",
+          "description": "$0.138 per GB-month of provisioned GP3 storage running PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "aurora.postgres.serverless-v2.acu",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "NTURMTB2PWMA53X6",
+      "usageType": "APN1-Aurora:ServerlessV2Usage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "ACU-Hr",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1500000000",
+          "description": "USD 0.15 per Aurora Capacity Unit hour running Aurora PostgreSQL Serverless v2"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "aurora.postgres.storage",
+      "offerCode": "AmazonRDS",
+      "region": "ap-northeast-1",
+      "sku": "E7NHVJRED3R3PUY7",
+      "usageType": "APN1-Aurora:StorageUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1200000000",
+          "description": "USD 0.12 per GB-month of consumed storage for Aurora PostgreSQL"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-06T22:40:50Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "sfn.standard.transition",
+      "offerCode": "AmazonStates",
+      "region": "ap-northeast-1",
+      "sku": "BTKF2VQUME7BCFVV",
+      "usageType": "APN1-StateTransition",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "StateTransitions",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000250000",
+          "description": "$0.000025 per state transition"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonStates/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:11Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.operation",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "38G2CJHVYQC45MTY",
+      "usageType": "APN1-Lambda-Durable-Execution-Operations",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "DurableOperations",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000106000",
+          "description": "$0.0000106 per DurableOperation for Lambda-Durable-Execution-Operations in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.written",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "MVB47QVZRQ9MSHUU",
+      "usageType": "APN1-Lambda-Durable-Execution-Written-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GigaBytes",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.3300000000",
+          "description": "$0.33 per GigaByte for Lambda-Durable-Execution-Written-Bytes in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "lambda.durable.retained",
+      "offerCode": "AWSLambda",
+      "region": "ap-northeast-1",
+      "sku": "A7USWCXHVDSE3RNW",
+      "usageType": "APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GigaBytesMonth",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.2000000000",
+          "description": "$0.20 per GigaBytesMonth for Lambda-Durable-Execution-TimedStorage-ByteHrs in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T22:31:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "bedrock.nova-2-lite.input",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "6F8ZM9MBQZNJNGFN",
+      "usageType": "APN1-Nova2.0Lite-input-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0003960000",
+          "description": "$0.000396 per 1K tokens for APN1-Nova2.0Lite-input-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.nova-2-lite.output",
+      "offerCode": "AmazonBedrock",
+      "region": "ap-northeast-1",
+      "sku": "9Z5KZBA2AANN9UQS",
+      "usageType": "APN1-Nova2.0Lite-output-tokens",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1K tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0033110000",
+          "description": "$0.003311 per 1K tokens for APN1-Nova2.0Lite-output-tokens in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-10T18:22:42Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.claude-haiku-4-5.input",
+      "offerCode": "AmazonBedrockFoundationModels",
+      "region": "ap-northeast-1",
+      "sku": "CUDWXBGUTQHMHKJX",
+      "usageType": "APN1-MP:APN1_InputTokenCount-Units",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1M tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.1000000000",
+          "description": "AWS Marketplace software usage|ap-northeast-1|Million Input Tokens Regional"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:56:37Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "bedrock.claude-haiku-4-5.output",
+      "offerCode": "AmazonBedrockFoundationModels",
+      "region": "ap-northeast-1",
+      "sku": "TEKBTVMTEVXXBRTZ",
+      "usageType": "APN1-MP:APN1_OutputTokenCount-Units",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "1M tokens",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.5000000000",
+          "description": "AWS Marketplace software usage|ap-northeast-1|Million Response Tokens Regional"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrockFoundationModels/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:56:37Z",
+      "checkedAt": "2026-10-11"
+    },
+    {
+      "id": "cloudwatch.metric.custom",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "F96ZRPX8AM4T93NV",
+      "usageType": "APN1-CW:MetricMonitorUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Metrics",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 10000,
+          "usd": "0.3000000000",
+          "description": "$0.30 per metric-month for the first 10,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 10000,
+          "to": 250000,
+          "usd": "0.1000000000",
+          "description": "$0.10 per metric-month for the next 240,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 250000,
+          "to": 1000000,
+          "usd": "0.0500000000",
+          "description": "$0.05 per metric-month for the next 750,000 metrics - Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 1000000,
+          "to": null,
+          "usd": "0.0200000000",
+          "description": "$0.02 per metric-month for over 1,000,000 metrics - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.alarm.standard",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "FBMB6TVC844YGZ3J",
+      "usageType": "APN1-CW:AlarmMonitorUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Alarms",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1000000000",
+          "description": "$0.10 per alarm metric month (standard resolution) - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "logs.insights.scanned",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "QE3CDKDURP2A2WR5",
+      "usageType": "APN1-DataScanned-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0076000000",
+          "description": "$0.0076 per GB log data scanned by CloudWatch Logs Insights queries - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "xray.trace.recorded",
+      "offerCode": "AWSXRay",
+      "region": "ap-northeast-1",
+      "sku": "A2DFYMNB5KZNWKX4",
+      "usageType": "APN1-XRay-TracesStored",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "traces",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000050000",
+          "description": "AWS X-Ray - Total Traces Stored - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "xray.trace.retrieved",
+      "offerCode": "AWSXRay",
+      "region": "ap-northeast-1",
+      "sku": "ZF5AQUZ2PJQESZQR",
+      "usageType": "APN1-XRay-TracesAccessed",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "traces",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000005000",
+          "description": "AWS X-Ray - Total Traces Accessed - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSXRay/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.rum.event",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "UMUKYCB9NNDT49U2",
+      "usageType": "APN1-CW:RUM-events",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Events",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000100000",
+          "description": "$1 per 100k RUM events in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "cloudwatch.synthetics.run",
+      "offerCode": "AmazonCloudWatch",
+      "region": "ap-northeast-1",
+      "sku": "TVDGJTPNCD29VTN5",
+      "usageType": "APN1-CW:Canary-runs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Runs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0019000000",
+          "description": "$0.0019 per canary run per month - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonCloudWatch/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-07T11:55:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "secretsmanager.secret",
+      "offerCode": "AWSSecretsManager",
+      "region": "ap-northeast-1",
+      "sku": "GVA2ZKT9KD5RYX6P",
+      "usageType": "APN1-AWSSecretsManager-Secrets",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Secrets",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.4000000000",
+          "description": "$0.40 per Secret"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:10Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "secretsmanager.api",
+      "offerCode": "AWSSecretsManager",
+      "region": "ap-northeast-1",
+      "sku": "JC68V52M47AA94EZ",
+      "usageType": "APN1-AWSSecretsManagerAPIRequest",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "API Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000050000",
+          "description": "$0.05 per 10000 API Requests"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSSecretsManager/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:10Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "kms.key",
+      "offerCode": "awskms",
+      "region": "ap-northeast-1",
+      "sku": "VJNSHSJEC3XAPATF",
+      "usageType": "ap-northeast-1-KMS-Keys",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Keys",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.0000000000",
+          "description": "$1 per customer managed KMS key version in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:01Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "kms.request",
+      "offerCode": "awskms",
+      "region": "ap-northeast-1",
+      "sku": "ZXP6ZS4WWG9FNXHG",
+      "usageType": "ap-northeast-1-KMS-Requests",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Requests",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000030000",
+          "description": "$0.03 per 10000 KMS requests in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awskms/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:46:01Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.webacl",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "DYTQ8YBXB7SEXYTZ",
+      "usageType": "Global-WebACLV2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "5.0000000000",
+          "description": "$5.00 per web ACL created (prorated hourly)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.rule",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "VRM2EPFJG75YBY5A",
+      "usageType": "Global-RuleV2",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "1.0000000000",
+          "description": "$1.00 per rule created (prorated hourly)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "waf.global.request",
+      "offerCode": "awswaf",
+      "region": "global",
+      "sku": "8D94VMB3JSN7FAX3",
+      "usageType": "Global-RequestV2-Tier1",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Request",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000006000",
+          "description": "$0.60 per million requests processed"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/awswaf/current/index.json",
+      "offerPublicationDate": "2026-09-14T16:39:21Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "guardduty.cloudtrail.event",
+      "offerCode": "AmazonGuardDuty",
+      "region": "ap-northeast-1",
+      "sku": "TFHCE6Z4YPX3UBZM",
+      "usageType": "APN1-PaidEventsAnalyzed",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Events",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0000047200",
+          "description": "$0.00000472 per CloudTrail event analyzed in Asia Pacific (Tokyo) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGuardDuty/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-08T23:12:03Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "inspector.lambda.standard",
+      "offerCode": "AmazonInspectorV2",
+      "region": "ap-northeast-1",
+      "sku": "TKG5JCZ3WXG5PJ3W",
+      "usageType": "APN1-Lambda-Standard-Scanning",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hourly",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0005000000",
+          "description": "$0.0005 per Hourly for Lambda-Standard-Scanning in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:40Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "config.item.continuous",
+      "offerCode": "AWSConfig",
+      "region": "ap-northeast-1",
+      "sku": "JHD3G7BJYKRN97JU",
+      "usageType": "APN1-ConfigurationItemRecorded",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "APN1-ConfigurationItemRecorded",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0030000000",
+          "description": "$0.003 per  Configuration Item recorded in Asia Pacific (Tokyo) region"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSConfig/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:45:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "dynamodb.restore",
+      "offerCode": "AmazonDynamoDB",
+      "region": "ap-northeast-1",
+      "sku": "T6RK6THJVQUFJ4M5",
+      "usageType": "APN1-RestoreDataSize-Bytes",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1710000000",
+          "description": "$0.171 per GB of data restored"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonDynamoDB/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:22Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "backup.dynamodb.warm",
+      "offerCode": "AWSBackup",
+      "region": "ap-northeast-1",
+      "sku": "C3P55YRKVN5AZQMC",
+      "usageType": "APN1-WarmStorage-ByteHrs-DynamoDB",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-month",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.1140000000",
+          "description": "$0.114 per GB-month for warm backup storage for DynamoDB"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSBackup/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-28T17:01:20Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g-micro.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "VQYSJNTK8DNEGB5Z",
+      "usageType": "APN1-BoxUsage:t4g.micro",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0108000000",
+          "description": "$0.0108 per On Demand Linux t4g.micro Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
       "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g-small.linux.hour",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "74TFX697KNZ72UYS",
+      "usageType": "APN1-BoxUsage:t4g.small",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Hrs",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0216000000",
+          "description": "$0.0216 per On Demand Linux t4g.small Instance Hour"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ec2.t4g.cpu-credit",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "225544MWSED9SX58",
+      "usageType": "APN1-CPUCredits:t4g",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "vCPU-Hours",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0400000000",
+          "description": "$0.04 per vCPU-Hour of T4G CPU Credits"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ebs.gp3.storage",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "C8Y3GJZBQTH8T5JV",
+      "usageType": "APN1-EBS:VolumeUsage.gp3",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0960000000",
+          "description": "$0.096 per GB-month of General Purpose (gp3) provisioned storage - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ebs.snapshot.storage",
+      "offerCode": "AmazonEC2",
+      "region": "ap-northeast-1",
+      "sku": "4NHX4ZW7X52XZACJ",
+      "usageType": "APN1-EBS:SnapshotUsage",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0500000000",
+          "description": "$0.05 per GB-Month of snapshot data stored - Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "checkedAt": "2026-10-12"
+    },
+    {
+      "id": "ecr.storage.archive",
+      "offerCode": "AmazonECR",
+      "region": "ap-northeast-1",
+      "sku": "VYM99M4HCC4JPT6C",
+      "usageType": "APN1-TimedStorage-Archive-ByteHrs",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "GB-Mo",
+      "tiers": [
+        {
+          "from": 0,
+          "to": 153600,
+          "usd": "0.1000000000",
+          "description": "$0.10 per GB-Mo from 0 to 153,600 for TimedStorage-Archive-ByteHrs in Asia Pacific (Tokyo)"
+        },
+        {
+          "from": 153600,
+          "to": null,
+          "usd": "0.0700000000",
+          "description": "$0.07 per GB-Mo from 153,600 for TimedStorage-Archive-ByteHrs in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
       "checkedAt": "2026-10-13"
     },
     {
-      "id": "ec2.c6g-large.linux.hour",
-      "offerCode": "AmazonEC2",
+      "id": "ecr.archive.retrieval",
+      "offerCode": "AmazonECR",
       "region": "ap-northeast-1",
-      "sku": "367GKYK8T8KTCEGA",
-      "usageType": "APN1-BoxUsage:c6g.large",
+      "sku": "AGSTWYZYHGV8SXU8",
+      "usageType": "APN1-Retrieval-Archive",
       "plan": "on-demand",
       "currency": "USD",
-      "unit": "Hrs",
+      "unit": "GB",
       "tiers": [
         {
           "from": 0,
           "to": null,
-          "usd": "0.0856000000",
-          "description": "$0.0856 per On Demand Linux c6g.large Instance Hour"
+          "usd": "0.0300000000",
+          "description": "$0.03 per GB for Retrieval-Archive in Asia Pacific (Tokyo)"
         }
       ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
       "checkedAt": "2026-10-13"
     },
     {
-      "id": "ec2.c6i-large.linux.hour",
-      "offerCode": "AmazonEC2",
+      "id": "ecr.signing",
+      "offerCode": "AmazonECR",
       "region": "ap-northeast-1",
-      "sku": "YWJM42SBFH2YFKVN",
-      "usageType": "APN1-BoxUsage:c6i.large",
+      "sku": "X8FZ4CKPMMVP6Q5U",
+      "usageType": "APN1-AsyncActions-ImageSigning",
       "plan": "on-demand",
       "currency": "USD",
-      "unit": "Hrs",
+      "unit": "Count",
       "tiers": [
         {
           "from": 0,
           "to": null,
-          "usd": "0.1070000000",
-          "description": "$0.107 per On Demand Linux c6i.large Instance Hour"
+          "usd": "0.0200000000",
+          "description": "$0.02 per Count for AsyncActions-ImageSigning in Asia Pacific (Tokyo)"
         }
       ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonECR/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:25Z",
       "checkedAt": "2026-10-13"
     },
     {
-      "id": "ec2.c6i-xlarge.linux.hour",
-      "offerCode": "AmazonEC2",
+      "id": "inspector.image.initial-scan",
+      "offerCode": "AmazonInspectorV2",
       "region": "ap-northeast-1",
-      "sku": "U5GNAU94PPRNDA36",
-      "usageType": "APN1-BoxUsage:c6i.xlarge",
+      "sku": "X7HQKHYG7EKPNN8V",
+      "usageType": "APN1-container-image-initial-scan",
       "plan": "on-demand",
       "currency": "USD",
-      "unit": "Hrs",
+      "unit": "Resource-assessment",
       "tiers": [
         {
           "from": 0,
           "to": null,
-          "usd": "0.2140000000",
-          "description": "$0.214 per On Demand Linux c6i.xlarge Instance Hour"
+          "usd": "0.1100000000",
+          "description": "$0.11 per Resource-assessment for container-image-initial-scan in Asia Pacific (Tokyo)"
         }
       ],
-      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-northeast-1/index.csv",
-      "offerPublicationDate": "2026-10-09T20:31:34Z",
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:40Z",
+      "checkedAt": "2026-10-13"
+    },
+    {
+      "id": "inspector.image.rescan",
+      "offerCode": "AmazonInspectorV2",
+      "region": "ap-northeast-1",
+      "sku": "BSKUQR36ETBDFUZN",
+      "usageType": "APN1-container-image-re-scan",
+      "plan": "on-demand",
+      "currency": "USD",
+      "unit": "Resource-assessment",
+      "tiers": [
+        {
+          "from": 0,
+          "to": null,
+          "usd": "0.0100000000",
+          "description": "$0.01 per Resource-assessment for container-image-re-scan in Asia Pacific (Tokyo)"
+        }
+      ],
+      "sourceUrl": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonInspectorV2/current/ap-northeast-1/index.json",
+      "offerPublicationDate": "2026-09-11T12:44:40Z",
       "checkedAt": "2026-10-13"
     }
   ]

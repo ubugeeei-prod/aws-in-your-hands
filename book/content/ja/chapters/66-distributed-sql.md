@@ -1,6 +1,6 @@
 ---
 title: "66 Distributed SQL: 分散 DB を EC2 でセルフホストする"
-revision: 1
+revision: 2
 ---
 
 # 66 Distributed SQL: 分散 DB を EC2 でセルフホストする

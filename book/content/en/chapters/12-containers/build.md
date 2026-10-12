@@ -136,6 +136,8 @@ An image you build exists only inside your local daemon. For Fargate to fetch it
 
 <<< @/examples/12-containers/src/config.ts{schema}
 
+The `imageDigest` setting in the schema names the same image by digest instead of by tag. The [deploy](/en/chapters/12-containers/deploy.md) page shows how to use it.
+
 The lifecycle rule keeps the 10 newest images and deletes older ones, because stored images are billed for as long as they stay.
 
 ### Why the deploy has two steps

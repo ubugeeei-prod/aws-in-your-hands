@@ -26,6 +26,8 @@
             pkgs.pnpm_10
             pkgs.awscli2
             pkgs.git
+            pkgs.kubectl
+            pkgs.openssl
             self.packages.${pkgs.stdenv.hostPlatform.system}.vp
           ];
 

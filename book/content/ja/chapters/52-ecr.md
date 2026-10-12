@@ -1,6 +1,6 @@
 ---
 title: "52 ECR: tag と digest、lifecycle、scan、複製、pull through cache"
-revision: 1
+revision: 2
 ---
 
 # 52 ECR: tag と digest、lifecycle、scan、複製、pull through cache
@@ -83,7 +83,7 @@ ECS も、この問題の一部を引き受けています。ドキュメント�
 
 ダイジェストは、プッシュしたあとでリポジトリに聞けば分かります。`aws ecr describe-images` の応答には `imageDigest` があり、プッシュが終わったときに ECR が EventBridge に送るイベントにも `image-digest` が入っています。CDK では、`ecs.ContainerImage.fromEcrRepository(repository, "sha256:...")` のように、2 つ目の引数に `sha256:` で始まる文字列を渡すと、`@` でつないだ形になります。固定している版の aws-cdk-lib（2.273.0）のコードで確かめました。
 
-12章のスタックが受け取るのは `-c imageTag` だけで、ダイジェストは渡せません。immutable なリポジトリで、イメージを消せる人が限られていれば、タグでも同じイメージに決まります。それでもダイジェストを勧めるのは、設定に頼らずに済むからです。リポジトリの設定は、あとから誰かが変えられます。
+12章のスタックは、`-c imageTag` のほかに `-c imageDigest=sha256:...` も受け取ります。immutable なリポジトリで、イメージを消せる人が限られていれば、タグでも同じイメージに決まります。それでもダイジェストを勧めるのは、設定に頼らずに済むからです。リポジトリの設定は、あとから誰かが変えられます。
 
 ## この章が要らない場合
 

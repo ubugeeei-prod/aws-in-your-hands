@@ -31,13 +31,15 @@ generated: true
 | esbuild | 0.28.2 | pnpm | `package.json, pnpm-lock.yaml` |
 | Vize (vize, @vizejs/vite-plugin) | 0.443.0 | pnpm | `examples/03-spa/package.json, pnpm-lock.yaml` |
 | DynamoDB Local (container image, not run yet) | amazon/dynamodb-local:3.3.1 | Docker, outside the Nix shell | `examples/05-dynamodb/scripts/local-db.ts` |
+| awscdk-lint for Oxlint (oxlint-plugin-awscdk), by ren-yamanashi | 1.0.3 | pnpm | `package.json, pnpm-lock.yaml` |
+| jsonata (the JSONata reference implementation, used by the local interpreter) | 2.0.6 | pnpm | `examples/47-step-functions/package.json, pnpm-lock.yaml` |
+| kubectl | 1.37.1 (Kustomize 5.8.1) | nixpkgs kubectl | `flake.lock` |
+| YugabyteDB | 2025.2.7.0-b107 | vp run distsql:fetch (software.yugabyte.com), into examples/66-distributed-sql/.yugabyte/ | `examples/66-distributed-sql/src/yugabyte.ts` |
+| OpenSSL | 3.5.8 | nixpkgs openssl | `flake.lock` |
 | Nuxt (nuxt, @nuxt/nitro-server) | 4.6.1 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 | Nitro (nitropack) and h3 | 2.13.4 and 1.15.11 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 | Vize Nuxt module (@vizejs/nuxt) | 0.443.0 | pnpm | `examples/09-ssr/package.json, pnpm-lock.yaml` |
 | AWS Durable Execution SDK for JavaScript (@aws/durable-execution-sdk-js, -testing) | 2.6.0 and 1.3.0 | pnpm | `examples/16-long-jobs/package.json, pnpm-lock.yaml` |
-| awscdk-lint for Oxlint (oxlint-plugin-awscdk), by ren-yamanashi | 1.0.3 | pnpm | `package.json, pnpm-lock.yaml` |
-| jsonata (the JSONata reference implementation, used by the local interpreter) | 2.0.6 | pnpm | `examples/47-step-functions/package.json, pnpm-lock.yaml` |
-| YugabyteDB | 2025.2.7.0-b107 | vp run distsql:fetch (software.yugabyte.com), into examples/66-distributed-sql/.yugabyte/ | `examples/66-distributed-sql/src/yugabyte.ts` |
 
 - 検証済みの OS/CPU: aarch64-darwin (macOS 26, Darwin 25.6.0)
 - Nix 式はあるが未検証の OS/CPU: x86_64-darwin, aarch64-linux, x86_64-linux

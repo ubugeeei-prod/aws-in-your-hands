@@ -84,14 +84,14 @@ No free allowance is deducted in any of these tables. Whether restores and AWS B
 
 ## If you take this to production
 
-- **Protect the table and the bucket.** `-c protect=on` does this with `RETAIN` and deletion protection. It protects only the table itself. The contents are protected by PITR and versioning
+- **Protect the table and the bucket.** `-c protect=on` does this with `RETAIN` and deletion protection. It protects only the table itself. The contents are protected by PITR and versioning. [Chapter 58](/en/chapters/58-ledger.md) uses S3 Object Lock, which keeps a version itself from being deleted until its retention period ends
 - **Set targets first, and check them with a drill.** An RTO and an RPO that you have only chosen are just numbers, and you learn whether you meet them by measuring. The restore time changes as the table grows, so measure regularly
 - **Have a way to know when the accident happened.** PITR restores to whatever time you give it, but only you know that time. Record API calls so that you can trace who deleted what, and when (the tool is CloudTrail. The event history you read in [chapter 21](/en/chapters/21-security.md) records management events, so check beforehand what will be in it)
 - **Have a way to stop writes during the cutover.** If you cut over on a running service, the check's grace period and the count of lost data both keep moving. This chapter builds no way to stop writes
 - **Put stopping the cleanup into the recovery procedure.** Chapter 08's schedule deletes images whose records were lost
 - **Return the restored table to the source.** Decide whether to import it or rebuild it. Do not keep running the service on a table outside the stack
 - **Mix the number of restores into the version comparison.** That closes the hole of rewound numbers, deleted notes included
-- **Keep backups in another account or another Region as well.** PITR and versioning both live in the same account and the same Region. They do nothing against losing the whole account. AWS Backup's cross-Region and cross-account copies are not covered in this chapter
+- **Keep backups in another account or another Region as well.** PITR and versioning both live in the same account and the same Region. They do nothing against losing the whole account. AWS Backup's cross-Region and cross-account copies are not covered in this chapter. [Chapter 28](/en/chapters/28-multi-region.md) covers a setup that keeps answering when a Region stops responding, and [chapter 40](/en/chapters/40-disaster-recovery.md) covers AWS Elastic Disaster Recovery, which keeps replicating a server's disks to another location
 - **Do not keep the check for recoveries only.** Small disagreements appear in normal operation too, as with chapter 08's open gaps. Run the function on a schedule and send a notification when `broken` stops being 0. The cost grows with the size of the table
 
 ## Cleaning up

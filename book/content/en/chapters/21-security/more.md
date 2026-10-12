@@ -43,7 +43,7 @@ It has three rules.
 
 The first is a rate-based rule, which blocks an IP address once it sends more than 300 requests in five minutes. It differs from the rate limit in [chapter 14](/en/chapters/14-kv-cache.md) in where it sits and what it is for. Chapter 14's rate limit is inside the application and shares capacity fairly among users. This rule is in front of the application and keeps Lambda from being invoked.
 
-Don't expect it to be exact. According to the documentation, AWS WAF estimates the rate about every 10 seconds and limits "near" the limit you set, without guaranteeing that it stops exactly at the limit. Blocking usually starts within 30 seconds of the limit being exceeded and can take several minutes. Requests sent in that interval get through.
+Don't expect it to be exact. How often AWS WAF checks the rate is "about every 10 seconds" in the CloudFormation reference, while the AWS WAF Developer Guide says only "frequently" (both read on 2026-10-13). According to the Developer Guide, it limits "near" the limit you set, without guaranteeing that it stops exactly at the limit. Blocking usually starts within 30 seconds of the limit being exceeded and can take several minutes. Requests sent in that interval get through.
 
 The second and third are managed rule groups maintained by AWS: a list of IP addresses with a bad reputation, and the core rule set, which collects common attack patterns.
 

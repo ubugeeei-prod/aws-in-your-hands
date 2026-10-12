@@ -1,6 +1,6 @@
 ---
 title: "66 Distributed SQL: Self-Hosting a Distributed Database on EC2"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 66 Distributed SQL: Self-Hosting a Distributed Database on EC2

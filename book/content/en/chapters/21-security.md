@@ -1,6 +1,6 @@
 ---
 title: "21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations
@@ -99,7 +99,7 @@ There are two stacks.
 
 As with `-c store=valkey` in [chapter 14](/en/chapters/14-kv-cache.md), passing nothing gives you the cheaper variant. A mistyped value such as `-c cmk=true` is not treated as off. It stops the synth, because a switch that costs money must not silently mean something else.
 
-`reservedConcurrency` is the one switch that costs nothing. It is still off by default, because a new account can have a concurrency limit so low that reserving any concurrency gets the deploy refused. The [deploy page](/en/chapters/21-security/deploy.md) explains when to turn it on.
+`reservedConcurrency` is the one switch that costs nothing. It is still off by default, because a new account can have a concurrency limit so low that reserving any concurrency gets the deploy refused. You can reserve up to the account's concurrency quota minus 100 ([chapter 32](/en/chapters/32-limits.md)). The [deploy page](/en/chapters/21-security/deploy.md) explains when to turn it on.
 
 ## Narrowing permissions
 

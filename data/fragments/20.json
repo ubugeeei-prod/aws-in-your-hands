@@ -4,8 +4,8 @@
     "id": "20",
     "slug": "shipping",
     "title": {
-      "ja": "変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift",
-      "en": "Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift"
+      "ja": "CI/CD: OIDC、環境、preview、rollback、drift",
+      "en": "CI/CD: OIDC, Environments, Previews, Rollback, and Drift"
     },
     "prerequisites": ["02", "04"],
     "services": ["IAM OIDC", "CloudFormation", "AWS CDK"],
@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 4,
+    "sourceRevision": 5,
     "translatedRevision": {
-      "en": 4
+      "en": 5
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [
@@ -336,13 +336,13 @@
     },
     {
       "id": "cfn-resource-schemas",
-      "url": "https://schema.cloudformation.ap-northeast-1.amazonaws.com/CloudformationSchema.zip",
-      "title": "CloudFormation resource provider schemas, ap-northeast-1",
-      "checkedAt": "2026-10-12",
+      "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-type-schemas.html",
+      "title": "CloudFormation resource provider schemas",
+      "checkedAt": "2026-10-13",
       "supports": [
-        "Read handler permissions of AWS::Lambda::Function, Version, Alias, Permission, AWS::ApiGatewayV2::Api, Route, Stage, AWS::IAM::Role, and AWS::Logs::LogGroup, used for the DriftRole policy"
+        "CloudFormation publishes one zip of resource provider schemas per Region, and says to check a resource's availability in a Region against that Region's schemas"
       ],
-      "note": "That drift detection needs exactly these actions is an inference from the schemas, not a documented statement."
+      "note": "On 2026-10-13 the zips for us-east-1 and us-west-2 contained aws-drs-launchconfigurationtemplate, aws-drs-recoveryplan, aws-drs-replicationconfigurationtemplate, and aws-drs-sourcenetwork. The zips for ap-northeast-1, ap-northeast-3, us-east-2, eu-west-1, and ap-southeast-1 contained no aws-drs file. The Template Reference's table of contents had no AWS::DRS section."
     },
     {
       "id": "aws-service-reference-cloudformation",

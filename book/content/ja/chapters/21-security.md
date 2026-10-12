@@ -1,6 +1,6 @@
 ---
 title: "21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations"
-revision: 2
+revision: 3
 ---
 
 # 21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations
@@ -99,7 +99,7 @@ edge secret --> trail: 管理操作を記録
 
 [14章](/ja/chapters/14-kv-cache.md)の `-c store=valkey` と同じ考え方で、何も付けなければ安いほうになります。`-c cmk=true` のような書き間違いは、off として扱わずに synth で止めます。料金のかかるスイッチが、黙って別の意味になっては困るからです。
 
-`reservedConcurrency` だけは、料金のかからないスイッチです。それでも既定で off にしているのは、新しいアカウントでは同時実行数の上限が低く、予約しただけでデプロイが断られることがあるからです。いつ付けるかは[デプロイのページ](/ja/chapters/21-security/deploy.md)で説明します。
+`reservedConcurrency` だけは、料金のかからないスイッチです。それでも既定で off にしているのは、新しいアカウントでは同時実行数の上限が低く、予約しただけでデプロイが断られることがあるからです。予約できるのは、アカウントの同時実行数のクォータから 100 を引いた数までです（[32章](/ja/chapters/32-limits.md)）。いつ付けるかは[デプロイのページ](/ja/chapters/21-security/deploy.md)で説明します。
 
 ## 権限を絞る
 

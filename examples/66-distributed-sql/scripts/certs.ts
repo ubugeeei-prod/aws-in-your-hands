@@ -3,7 +3,7 @@
 //
 // Makes a certificate authority in .yugabyte/ca/ and one node certificate for
 // 127.0.0.1 in .yugabyte/certs/, for a local cluster with TLS. Needs `openssl`
-// on PATH (macOS ships one; the Nix shell does not add one). No network.
+// on PATH (the Nix shell provides one). No network.
 
 import { execFileSync } from "node:child_process";
 import { chmodSync, copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";

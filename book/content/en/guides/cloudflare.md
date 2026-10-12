@@ -1,6 +1,6 @@
 ---
 title: Coming from Cloudflare
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # Coming from Cloudflare
@@ -50,6 +50,8 @@ Locally, you run the very file that gets deployed, under Node.js (`vp run dev:ed
 
 The chapter ends with a table that puts Workers, CloudFront Functions, and Lambda@Edge side by side. Its conclusion is that CloudFront Functions is not a counterpart to Workers. It is an environment for rewriting URLs and headers, with no access to the network or the file system.
 
+Running workerd itself, the Workers runtime, in AWS is the subject of [chapter 64](/en/chapters/64-isolates.md). Besides chapters 04 and 10, chapter 64 builds on chapters 11, 12, 23, 24, and 35.
+
 ## If you're coming from D1
 
 The reading order is 00 → 01 → 02 → 04 → 13. To follow recovery as well, go on to chapter 22 after that. Chapter 22 works on the notes and images from chapters 05 through 08, so it is easier to follow if you read those first.
@@ -87,7 +89,7 @@ Whether the stream arrives a little at a time from the deployed function through
 
 ## Comparisons in other chapters
 
-Besides the three paths, more chapters explain their subject next to a Cloudflare product. This table collects them so that you can look one up from what you already know.
+Besides the three paths, more chapters explain their subject next to a Cloudflare product. First, the chapters up to 24. This table collects them so that you can look one up from what you already know.
 
 | What you know | What this book sets next to it | Chapter |
 | --- | --- | --- |
@@ -113,6 +115,85 @@ This guide does not map Workers KV onto any one of the three key-value stores on
 celld, the subject of chapter 24, is open-source software that runs Workers and Durable Objects applications on your own machines. It is not an AWS service, and the only thing the chapter compares is who operates it.
 
 Every comparison in these chapters was written from reading Cloudflare's official documentation, not from using the product and checking. What could not be confirmed is written down as such in each chapter. Chapter 06 has a paragraph that mentions Cloudflare Access, which describes common setups without primary sources checked. Chapters 11 and 23 have no comparison, because we have not looked into whether Cloudflare has something that corresponds to a VPC or a virtual machine.
+
+## Comparisons from chapter 25 on
+
+From chapter 25 on, each chapter stands on its own, and most of them have a section on how the nearest Cloudflare and Vercel products differ. This section picks out the Cloudflare side and arranges it so that you can find a chapter from a product you know. The right-hand column is the difference, among those the chapter gives, that is most useful to know before you read. Each link goes to the page that holds the comparison.
+
+In every chapter, what is said about Cloudflare comes from reading the official documentation. The pages were checked on 2026-10-12 or 2026-10-13, and each chapter says which. Where a chapter says it could not confirm something, this page says so too.
+
+### Queues, events, and workflows
+
+| What you know | Chapter | The difference the chapter gives |
+| --- | --- | --- |
+| Queues, handing one event to several receivers | [25](/en/chapters/25-events/wrap.md) | The documentation says a queue can have only one active consumer. To reach three receivers, the Worker that publishes sends to three queues. Within the pages the chapter read, it found nothing that corresponds to rules that route on content, or to archive and replay |
+| Event subscriptions in Queues | [25](/en/chapters/25-events/wrap.md) | The name is close, but it is a different thing: a way to receive, on a queue, events that Cloudflare's own products raise. It corresponds to the events AWS services put on the default event bus |
+| Delivery and ordering in Queues | [61](/en/chapters/61-sqs.md) | Queues delivers at least once and does not guarantee that messages arrive in the order they were published. Within what the chapter read, it found no kind of queue that keeps order. A delay can be up to 24 hours, which is more than the 15 minutes SQS allows |
+| Queues, and streams in Basin Pipelines | [54](/en/chapters/54-kinesis.md) | The chapter says it found no part that corresponds directly to a Kinesis stream. A stream in Basin Pipelines plays a role close to Firehose in chapter 26, and the pages the chapter read had no API for application code to read again from a position of its choosing |
+| Workflows | [47](/en/chapters/47-step-functions.md) | A Workflow is code with its steps wrapped in `step.do()`, and the documentation says rollback handlers run in the reverse of the order the steps started. Step Functions fits when what you call is an AWS service and you want to call its API directly, without a function |
+
+### Databases and storage
+
+| What you know | Chapter | The difference the chapter gives |
+| --- | --- | --- |
+| D1, and SQLite in Durable Objects | [30](/en/chapters/30-data-modeling.md) | In D1, `CREATE UNIQUE INDEX` keeps a value unique, and `batch()` runs as one transaction. DynamoDB has no `UNIQUE` constraint, so chapter 30 builds uniqueness from conditional writes and transactions. With SQLite in Durable Objects, the execution model gives you from the start the guarantee the chapter builds that way |
+| Where D1, KV, Durable Objects, and R2 keep data | [28](/en/chapters/28-multi-region/wrap.md) | Only the code has no location; the data has one. D1 has the shape "writes in one place, reads everywhere". What D1 does when the primary's location becomes unavailable was not in the pages the chapter read, and the chapter did not check |
+| Getting data out of D1 | [39](/en/chapters/39-database-migration.md) | DMS cannot be used to bring D1 data to AWS. What D1 offers is `wrangler d1 export`, and what it writes is SQLite's SQL. The chapter did not try converting that for PostgreSQL |
+| Hyperdrive | [59](/en/chapters/59-rds.md), [60](/en/chapters/60-aurora/wrap.md) | Hyperdrive has no database of its own. It pools connections in front of a PostgreSQL or MySQL database you already have. Databases in AWS are included, so it is a way to use RDS or Aurora without leaving Workers. Neither chapter tried that setup |
+| Renting D1 | [66](/en/chapters/66-distributed-sql.md) | Chapter 66 self-hosts a distributed database on EC2. The chapter says that if you rent one and have no trouble with it, keeping it is the right answer |
+| Moving data between R2 and S3 | [38](/en/chapters/38-data-movement/wrap.md) | From S3 to R2, Cloudflare has Super Slurper and Sippy. From R2 to S3, DataSync works, with R2 registered as an object storage location |
+| Bucket locks in R2 | [58](/en/chapters/58-ledger.md) | A rule can be removed from the dashboard or with Wrangler. The chapter found no mode in the documentation that even the bucket's owner cannot remove. The chapter says the behavior is close to governance mode in S3 Object Lock, and that it does not make a place for evidence that you yourself cannot delete |
+| `node:fs` and `/tmp` in Workers | [53](/en/chapters/53-efs/wrap.md) | `node:fs` in Workers is a virtual file system in memory, and what is in `/tmp` does not persist and is separate for each request. The pages the chapter read had nothing like an NFS that several functions mount at once |
+| Bindings | [48](/en/chapters/48-sdk.md) | With a binding, the order in which credentials are looked up, the signing, and the endpoint never come up as things to think about. Chapter 48 handles all of them through the SDK. The chapter did not check how much of retries and timeouts the platform takes on |
+
+### Analytics and search
+
+| What you know | Chapter | The difference the chapter gives |
+| --- | --- | --- |
+| Workers Analytics Engine | [26](/en/chapters/26-analytics/wrap.md) | Heavy writes are sampled, retention is three months, and a query reads one table only. Chapter 26's setup keeps every record that arrives and can join it with other tables. In exchange, you decide how the files are laid out and how duplicates are handled |
+| Basin Pipelines, Basin SQL, Logpush | [26](/en/chapters/26-analytics/wrap.md), [49](/en/chapters/49-athena/wrap.md) | Basin Pipelines and Basin SQL used to be called Cloudflare Pipelines and R2 SQL. Basin SQL is an entry point for reading, and its SQL reference does not list `INSERT`, `UPDATE`, `DELETE`, `MERGE`, or `CREATE TABLE AS`. Athena handles writes and row-level changes with the same engine |
+| Basin Catalog | [43](/en/chapters/43-glue/wrap.md) | Formerly R2 Data Catalog, it handles Iceberg tables only. Within the pages the chapter read, it found no runtime like a Glue job that rewrites files already written |
+| Vectorize | [27](/en/chapters/27-search/wrap.md) | To filter on metadata, you have to create the metadata index before inserting the vectors. In S3 Vectors, metadata can be used for filtering without doing anything |
+| AI Search | [27](/en/chapters/27-search/wrap.md) | Hybrid search is on by default, so the product has the rank fusion that chapter 27 writes itself. The chapter says AI Search takes far fewer steps from handing over documents to being able to search them. The chapter did not check what can be chosen as a source to ingest from |
+
+### AI and calls
+
+| What you know | Chapter | The difference the chapter gives |
+| --- | --- | --- |
+| Function calling, JSON Mode, prompt caching, and the Batch API in Workers AI | [36](/en/chapters/36-bedrock/wrap.md) | `runWithTools` writes the tool-calling loop for you. Decisions such as whether to retry a response that was cut off are made by the library. Chapter 36 puts those decisions in its own code and pins them with tests |
+| AI Gateway | [36](/en/chapters/36-bedrock/wrap.md) | AI Gateway is a proxy that sits between the app and the model providers. Bedrock has no single product that corresponds to it. Caching in AI Gateway returns the same response for the same request, which is a different thing from prompt caching in chapter 36 |
+| Agents, the Sandbox SDK | [50](/en/chapters/50-agentcore.md) | Agents maps each agent to a Durable Object. The unit of isolation is the Durable Object, not a microVM per session as in AgentCore |
+| Sandbox | [63](/en/chapters/63-agent-sandbox.md) | The documentation says a Sandbox container is a microVM with its own kernel and network, and that the Worker decides whether it can reach the internet. On pricing and limits, the chapter read only the overview page |
+| Image, video, and audio models in Workers AI | [56](/en/chapters/56-nova/wrap.md) | The chapter says that if all you want is to generate images, there is no reason to choose Nova today. Nova has no generation model, and the Workers AI catalog does. The chapter found no category for generating video in the catalog. The catalog was read in summary, and the chapter did not check it line by line |
+| Text-to-speech in Workers AI | [57](/en/chapters/57-polly/wrap.md) | The models listed are Deepgram's `aura-1`, `aura-2-en`, and `aura-2-es`, and MyShell's `melotts`. The chapter did not confirm whether `melotts` can read Japanese |
+| Realtime | [51](/en/chapters/51-chime-sdk.md) | With RealtimeKit, the backend creates the meeting and hands each participant's auth token to the client. That is the same division of roles as in chapter 51. The chapter does not quote RealtimeKit's prices |
+
+### Where code runs
+
+| What you know | Chapter | The difference the chapter gives |
+| --- | --- | --- |
+| Startup, memory, and billing in Workers | [29](/en/chapters/29-lambda-tuning/wrap.md) | Memory in Workers is 128 MB per isolate and cannot be chosen, and what is billed is the time the CPU was used. In Lambda you choose the memory, and time spent waiting is billed too. The chapter says about half of chapter 29 does not apply to Workers |
+| One instance handling several requests | [35](/en/chapters/35-lambda-managed-instances.md) | The advice in Workers not to use global state is about the same kind of bug chapter 35 deals with. Where Lambda Managed Instances differs is that it costs money even when no requests come, and that the instances are in a VPC in your own account |
+| Containers | [41](/en/chapters/41-fargate/wrap.md), [34](/en/chapters/34-eks/wrap.md) | By default a container sleeps after 10 minutes without use, and billing stops. The FAQ says there is no built-in autoscaling for stateless apps for now. Within what chapter 34 read, it found no service at Cloudflare that offers the Kubernetes API |
+| Where Containers keeps images | [52](/en/chapters/52-ecr.md) | Images go into a registry that Cloudflare manages, and `wrangler deploy` does the build and the push. The chapter did not look into whether the registry has settings that correspond to lifecycle rules or scanning |
+| workerd | [64](/en/chapters/64-isolates.md) | Chapter 64 runs workerd in your own AWS account. The locations around the world, the storage behind bindings, the per-request limits, and the layered security defenses are not in the workerd binary. In the example of 15 million requests a month, Workers comes to USD 8.00 and the chapter's setup to USD 39.02 |
+| The isolate as a boundary | [67](/en/chapters/67-firecracker.md) | Chapter 67 sets the microVM that runs under Lambda and Fargate next to the isolate. The chapter says the difference is not which is better but what each promised to run |
+
+### Deployment, operations, and protection
+
+| What you know | Chapter | The difference the chapter gives |
+| --- | --- | --- |
+| Gradual deployments, version affinity, Flagship | [31](/en/chapters/31-progressive-delivery/wrap.md) | In Workers, one command puts percentages on two versions. The pages the chapter read said nothing about rolling back automatically on an error rate. Chapter 31's setup rolls back automatically when the alarm goes off |
+| Workers limits, the Rate Limiting binding | [32](/en/chapters/32-limits/wrap.md) | Limits in Workers are values per plan, so there is one place to look. Limits in AWS are quotas per service, per account, and per Region. The Rate Limiting binding counts per location, and the documentation states that the count is not exact |
+| Retention in Workers Logs | [33](/en/chapters/33-production-readiness.md) | Workers Logs keeps logs for 7 days at most, and the platform decides that. In AWS, a log group with no retention written stays forever. The chapter did not confirm whether Cloudflare publishes a pre-launch checklist |
+| `wrangler login` and API tokens | [37](/en/chapters/37-cloudshell/wrap.md) | As far as the chapter checked, Cloudflare has no shell that opens inside the console and already holds the account's credentials. `wrangler` runs on your machine or in CI |
+| Workers Builds | [62](/en/chapters/62-ci-runners/wrap.md) | The pages the chapter read had no way to supply your own build machines. The only page it read is the one on Workers Builds limits and pricing |
+| Incident Alerts, Maintenance Notification | [44](/en/chapters/44-health/wrap.md) | In Cloudflare, subscribing to announced incidents is done entirely in the dashboard. In AWS, what arrives with no setup is only the email about events that concern your own resources. To receive announced incidents, you create a rule or a notification configuration yourself |
+| DDoS mitigation | [46](/en/chapters/46-shield/wrap.md) | In Cloudflare, mitigation from layer 3 to layer 7 is included in every plan, Free among them. In AWS, Shield Standard takes layers 3 and 4, and for layer 7 you put the web ACL, the cache, and the brakes in place yourself |
+| Account-level WAF | [42](/en/chapters/42-firewall-manager/wrap.md) | It creates rulesets on the account and applies them to several zones, and it needs the Enterprise plan. The chapter did not check whether the rules can apply across several accounts in an Organization |
+| Not choosing a Region | [40](/en/chapters/40-disaster-recovery/wrap.md) | Workers has no server with a disk to replicate, and no Region that the developer picks and switches. The chapter says there is no experience there that corresponds to DRS in chapter 40 |
+
+Some chapters from 25 on have no comparison. Chapter 45 wrote none, because Cloudflare has nothing that corresponds to a template and the chapter did not confirm what to compare against in a primary source. Chapter 55 does not mention Cloudflare either. Chapter 68 read a single page about Workers, and did not check whether Workers has anything that corresponds to an enclave.
 
 ## Where the Cloudflare statements come from
 

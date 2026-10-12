@@ -4,8 +4,8 @@
     "id": "16",
     "slug": "long-jobs",
     "title": {
-      "ja": "長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch",
-      "en": "Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
+      "ja": "Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch",
+      "en": "Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
     },
     "prerequisites": ["08", "12"],
     "services": [
@@ -24,9 +24,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 3,
     "translatedRevision": {
-      "en": 1
+      "en": 3
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [
@@ -1077,7 +1077,7 @@
         },
         {
           "priceId": "logs.ingest.standard",
-          "quantity": 0.000057,
+          "quantity": 5.7e-5,
           "basis": "60 x 1 KB, in GB"
         }
       ]
@@ -1149,7 +1149,7 @@
         },
         {
           "priceId": "logs.ingest.standard",
-          "quantity": 0.000057,
+          "quantity": 5.7e-5,
           "basis": "60 x 1 KB, in GB"
         }
       ]
@@ -1272,7 +1272,7 @@
         },
         {
           "priceId": "lambda.durable.retained",
-          "quantity": 0.000007,
+          "quantity": 7e-6,
           "basis": "0.0002 GB x 1/30, in GB-month"
         },
         {
@@ -1302,7 +1302,7 @@
         },
         {
           "priceId": "logs.ingest.standard",
-          "quantity": 0.000029,
+          "quantity": 2.9e-5,
           "basis": "30 x 1 KB, in GB"
         }
       ]

@@ -29,6 +29,13 @@ export const containersConfigSchema = v.object({
       v.check((tag) => tag !== "latest", "name the build, for example a git commit hash"),
     ),
   ),
+  // The same image named by its content. A tag is looked up at pull time; a digest is the image or nothing.
+  imageDigest: v.optional(
+    v.pipe(
+      v.string(),
+      v.regex(/^sha256:[a-f0-9]{64}$/, "expected sha256: followed by 64 hex digits"),
+    ),
+  ),
   taskSubnets: v.optional(v.picklist(TASK_SUBNETS), "public"),
   allowedOrigin: v.optional(
     v.pipe(v.string(), v.url(), v.regex(/^https?:\/\//, "Must be an http or https URL.")),
@@ -38,7 +45,12 @@ export const containersConfigSchema = v.object({
 
 export type ContainersConfig = v.InferOutput<typeof containersConfigSchema>;
 
-/** Parses CDK context (`-c imageTag=...`); the message names every bad field. */
+/** The image the service runs, as ECR takes it after `:` (a tag) or `@` (a digest). Absent: no service. */
+export function imageOf(config: ContainersConfig): string | undefined {
+  return config.imageDigest ?? config.imageTag;
+}
+
+/** Parses CDK context (`-c imageTag=...` or `-c imageDigest=...`); the message names every bad field. */
 export function parseContainersConfig(input: unknown): ContainersConfig {
   const result = v.safeParse(containersConfigSchema, input);
   if (!result.success) {
@@ -46,6 +58,12 @@ export function parseContainersConfig(input: unknown): ContainersConfig {
       (item) => `  ${v.getDotPath(item) ?? "(root)"}: ${item.message}`,
     );
     throw new Error(`Invalid container settings:\n${problems.join("\n")}`);
+  }
+  if (result.output.imageTag !== undefined && result.output.imageDigest !== undefined) {
+    // Two names could mean two images, and only one of them would run.
+    throw new Error(
+      "Invalid container settings:\n  imageDigest: give imageTag or imageDigest, not both",
+    );
   }
   return result.output;
 }

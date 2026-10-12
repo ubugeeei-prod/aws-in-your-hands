@@ -1,6 +1,6 @@
 ---
 title: "12 Containers: ECR, ECS/Fargate, and ALB"
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 # 12 Containers: ECR, ECS/Fargate, and ALB

@@ -1,6 +1,6 @@
 ---
 title: "67 Firecracker: Lambda と Fargate の下で動く microVM"
-revision: 1
+revision: 2
 ---
 
 # 67 Firecracker: Lambda と Fargate の下で動く microVM

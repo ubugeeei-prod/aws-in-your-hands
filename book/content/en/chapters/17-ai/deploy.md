@@ -62,7 +62,7 @@ vp run ai:infra:deploy -c reservedConcurrency=2
 
 `reservedConcurrency` sets Lambda's reserved concurrency. With 2, at most two summaries run at the same time, and Lambda refuses the third without running the function.
 
-It is not on by default because adding it can be enough to make the deploy fail. Reserving concurrency sets N aside out of the account's total concurrency. A new account can have a low total, and then the reservation alone can fail the deploy. That cannot be checked here, so the limit is added only when you specify it. While you are the only caller, trying the API by hand, you can leave it off. Add it before you let anything other than yourself call the URL, such as another backend, a scheduled job, or CI.
+It is not on by default because adding it can be enough to make the deploy fail. Reserving concurrency sets N aside out of the account's total concurrency. A new account can have a low total, and then the reservation alone can fail the deploy. You can reserve up to the account's concurrency quota minus 100 ([chapter 32](/en/chapters/32-limits.md)). This book cannot know your account's quota, so the limit is added only when you specify it. While you are the only caller, trying the API by hand, you can leave it off. Add it before you let anything other than yourself call the URL, such as another backend, a scheduled job, or CI.
 
 ### The URL
 

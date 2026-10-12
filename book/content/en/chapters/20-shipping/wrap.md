@@ -15,7 +15,7 @@ Compared with deploying Cloudflare Workers, these are the differences.
 | | Cloudflare Workers | This chapter |
 | --- | --- | --- |
 | Deploy | `wrangler deploy` creates a version and switches to 100% at once | Synth, then CloudFormation applies the template's differences one by one |
-| Versions and switching | Versions and deployments. Traffic can be split between two versions by percentage | Lambda versions and an alias. Weights are possible but not implemented here |
+| Versions and switching | Versions and deployments. Traffic can be split between two versions by percentage | Lambda versions and an alias. Weights are possible but not implemented here ([chapter 31](/en/chapters/31-progressive-delivery.md) implements them) |
 | Going back | `wrangler rollback`, to one of the 100 most recent versions | CloudFormation puts things back on failure. Later, revert the code and deploy |
 | CI authentication | The documented setup stores an API token as a CI secret | OIDC, receiving credentials valid for one hour. No secret is stored |
 | What does not come back | The contents of KV, R2, D1, and so on are not part of a version | Data, schema, and whatever left the system |
@@ -61,7 +61,7 @@ The table below does not list problems met by running anything. It lists the pla
 - Separate the accounts. As long as dev, previews, and prod share an account, only names keep them apart
 - Limit previews to branches you trust. If you enable previews with neither of the two items above, **everyone who can push a branch can become an administrator of the account**
 - Protect the `production` environment. Limit the branches that may deploy to main, and require approval. What the trust policy trusts is this environment's name
-- Add something that stops on error rate, then shift gradually. Alias weights and CodeDeploy go together with alarms ([chapter 19](/en/chapters/19-observability.md))
+- Add something that stops on error rate, then shift gradually. Alias weights and CodeDeploy go together with alarms ([chapter 19](/en/chapters/19-observability.md)). [Chapter 31](/en/chapters/31-progressive-delivery.md) implements a weighted alias that advances only while its alarms stay quiet
 - Send the drift report somewhere people look. Do not rely only on the notification of a failed job, because schedules can stop
 - Clean up assets. The pinned CLI has `cdk gc`. This chapter has not tried it
 - Watch the OIDC provider and the CI roles for drift too. This chapter's DriftRole can read only stacks whose names begin with `AihShipApi`. If someone rewrites `AihShipCi`, nobody will notice

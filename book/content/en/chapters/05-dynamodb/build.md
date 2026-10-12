@@ -94,7 +94,7 @@ Each owner gets one item whose `sk` is `QUOTA`, and that item holds the count. A
 
 Reserving the place and writing the note are two separate requests. If the function stops between them, the place stays reserved with no note, and the count remains 1 higher than the real number. The opposite error doesn't happen. So this limit guarantees that there are never more than 100 notes, and it doesn't promise that exactly 100 will fit. If the count is off, fewer notes fit, never more. Deletes follow the same order: the note is deleted first, and then the place is given back.
 
-DynamoDB also has transactions, which write two items in one go. This chapter doesn't use them.
+DynamoDB also has transactions, which write two items in one go. This chapter doesn't use them; [chapter 30](/en/chapters/30-data-modeling.md) does.
 
 `composeApp` decides the limit. A repository built without a limit doesn't count notes.
 
@@ -124,7 +124,7 @@ The list stays eventually consistent, because it costs half as much and a list t
 
 Choosing per operation works because conditional writes don't depend on read consistency. If you send an update after looking at a stale list, DynamoDB still evaluates the `version` condition against the latest value. A stale read can cause more 409s, but it can't cause an overwrite.
 
-Strongly consistent reads are available only on the table itself and on local secondary indexes, not on global secondary indexes. This chapter doesn't use an index.
+Strongly consistent reads are available only on the table itself and on local secondary indexes, not on global secondary indexes. This chapter doesn't use an index. [Chapter 30](/en/chapters/30-data-modeling.md) adds a global secondary index.
 
 ## Page through without dropping items
 

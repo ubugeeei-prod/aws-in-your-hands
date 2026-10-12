@@ -4,8 +4,8 @@
     "id": "23",
     "slug": "ec2",
     "title": {
-      "ja": "制御したいときの EC2: SSM、EBS、プロセス運用",
-      "en": "EC2 When You Want Control: SSM, EBS, and Process Management"
+      "ja": "VM: EC2、SSM、EBS、プロセス運用",
+      "en": "VM: EC2, SSM, EBS, and Process Management"
     },
     "prerequisites": ["11"],
     "services": ["EC2", "Systems Manager", "EBS"],
@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 2,
+    "sourceRevision": 3,
     "translatedRevision": {
-      "en": 2
+      "en": 3
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [

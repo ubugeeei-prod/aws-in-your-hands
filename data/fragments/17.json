@@ -20,9 +20,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 2,
+    "sourceRevision": 3,
     "translatedRevision": {
-      "en": 2
+      "en": 3
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [
@@ -55,7 +55,8 @@
       "lambda-pricing",
       "aws-price-list-lambda",
       "aws-price-list-cloudwatch",
-      "cdkd-npm"
+      "cdkd-npm",
+      "bedrock-model-card-claude-haiku-5-5"
     ]
   },
   "sources": [
@@ -155,11 +156,12 @@
       "id": "bedrock-model-card-claude-haiku-4-5",
       "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-4-5.html",
       "title": "Model card: Anthropic Claude Haiku 4.5",
-      "checkedAt": "2026-10-11",
+      "checkedAt": "2026-10-13",
       "supports": [
         "On bedrock-runtime the model needs a geo or global inference profile ID; the bare model ID is not supported for on-demand use",
         "jp.anthropic.claude-haiku-4-5-20251001-v1:0 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3",
-        "Billed through AWS Marketplace; EOL no sooner than 2026-10-16"
+        "Billed through AWS Marketplace; EOL no sooner than 2026-10-16",
+        "Read again on 2026-10-13: Model lifecycle Active, Model EOL date N/A, Legacy period at least 6 months"
       ]
     },
     {
@@ -343,6 +345,19 @@
         "The default retry strategy makes up to 3 attempts"
       ],
       "note": "Read from the type definitions and from @smithy/core 3.35.2 (event-streams getUnmarshalledStream.js, DEFAULT_MAX_ATTEMPTS) in the installed packages. No request was sent."
+    },
+    {
+      "id": "bedrock-model-card-claude-haiku-5-5",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-haiku-5-5.html",
+      "title": "Model card: Anthropic Claude Haiku 5.5",
+      "checkedAt": "2026-10-13",
+      "supports": [
+        "Model ID anthropic.claude-haiku-5-5; geo inference IDs us., eu., au., and jp.anthropic.claude-haiku-5-5; global.anthropic.claude-haiku-5-5",
+        "jp.anthropic.claude-haiku-5-5 called from ap-northeast-1 routes to ap-northeast-1 and ap-northeast-3; from ap-northeast-1 the model is offered through Geo and Global, not In-Region",
+        "Model launch date October 7, 2026; EOL no sooner than October 7, 2027; Model lifecycle Active",
+        "Converse and Invoke are supported on bedrock-runtime"
+      ],
+      "note": "The profile is not in examples/17-ai/infra/lib/models.ts: chapter 36 keeps a per-model table typed by the same list, and both have to change together."
     }
   ],
   "glossary": [

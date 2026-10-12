@@ -1,6 +1,6 @@
 ---
 title: "52 ECR: Tags and Digests, Lifecycle, Scanning, Replication, and Pull-Through Cache"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 52 ECR: Tags and Digests, Lifecycle, Scanning, Replication, and Pull-Through Cache
@@ -83,7 +83,7 @@ ECS takes on part of the problem itself. According to its documentation, an ECS 
 
 You learn the digest by asking the repository after the push. The response of `aws ecr describe-images` has `imageDigest`, and the event ECR sends to EventBridge when a push completes carries `image-digest`. In CDK, passing a string that starts with `sha256:` as the second argument, as in `ecs.ContainerImage.fromEcrRepository(repository, "sha256:...")`, produces the form joined with `@`. This was checked in the code of the pinned aws-cdk-lib (2.273.0).
 
-Chapter 12's stack accepts only `-c imageTag`; it cannot be given a digest. In an immutable repository where few people can delete images, a tag settles on one image as well. The digest is still the better habit, because it does not depend on a setting. Someone can change a repository's settings later.
+Chapter 12's stack accepts `-c imageDigest=sha256:...` as well as `-c imageTag`. In an immutable repository where few people can delete images, a tag settles on one image as well. The digest is still the better habit, because it does not depend on a setting. Someone can change a repository's settings later.
 
 ## When you do not need this chapter
 

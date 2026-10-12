@@ -57,7 +57,7 @@ Cloudflare 側の監査ログや、アカウントをまたぐ統制の仕組み
 - `-c reservedConcurrency=5`（無料）を付けた場合。実行環境は同時に 5 つまでになります。シークレットの読み取りは最大で月 USD 4.32、Lambda の実行時間は、5 つが 30 日動き続けても USD 43.20 です。CloudFront のリクエスト料金（100 万件あたり 1.20）には、天井ができません
 - web ACL（月 USD 8.00）を付けた場合。1 つの IP アドレスから届くのは 5 分で 300 件、ならして毎秒 1 件までになります。30 日張り付かれても 1 つの IP につき 259 万件で、USD 4.77 です。検査の料金（100 万件あたり 0.60）は、止めたぶんにもかかります。多くの IP アドレスから来るフラッドは、IP の数だけ通ります。そのため、この 2 つを両方付けるのがいちばん堅い構成です
 
-ブロックしたリクエストに CloudFront のリクエスト料金がかかるかどうかは、確かめていません。
+AWS WAF がブロックしたリクエストには、CloudFront のリクエスト料金もデータ転送の料金もかかりません。2024 年 10 月 25 日からの扱いで、AWS の告知を 2026-10-13 に読んで確かめました（[46章](/ja/chapters/46-shield/build.md)も同じ告知を引いています）。AWS WAF の検査の料金は、止めたぶんにもかかります。
 
 GuardDuty、Inspector、Config は、使い方によって金額の桁が変わるので、単価だけを書きます。
 
@@ -69,7 +69,7 @@ GuardDuty、Inspector、Config は、使い方によって金額の桁が変わ�
 
 Organizations と SCP、CloudTrail のイベント履歴、IAM には、追加料金がかかりません。
 
-確認できなかったこともあります。KMS の鍵が削除待ちの 7 日間に課金されるかどうか、CloudFront 用の web ACL が請求のうえでどの usage type になるか、CloudFront の定額プランに WAF がどう含まれるか、の 3 点です。この章は従量課金だけを見ています。
+確認できなかったこともあります。KMS の鍵が削除待ちの 7 日間に課金されるかどうか、CloudFront 用の web ACL が請求のうえでどの usage type になるか、の 2 点です。CloudFront の定額プラン（flat-rate pricing plan）は、ドキュメントによると、プランに入れたディストリビューションの web ACL、ルール、リクエストの料金を月額に含みます（2026-10-13 確認。プランの条件は [46章](/ja/chapters/46-shield/build.md)にあります）。この章の金額は、従量課金だけを見ています。
 
 ## つまずきやすいところ
 
@@ -131,7 +131,7 @@ vp run sec:infra:destroy
 - デプロイ直後に、関数がシークレットを読めない時間があるのかどうか。権限を消したあと、いつまで読めるのか
 - `PutSecretValue` のあとのステージングラベルの動き。`AWSPREVIOUS` が無いシークレットを読んだときのエラー名
 - web ACL の作成と関連付け。レートベースのルールがブロックを始めるまでの時間。請求のうえでの usage type
-- `-c reservedConcurrency=N` を付けたデプロイ。cdkd 0.296.28 が `ReservedConcurrentExecutions` を反映すること（固定した版のソースには、作成後に `PutFunctionConcurrency` を呼ぶコードがあります。動かしてはいません）、新しいアカウントでどの値から断られるか、上限に達したときに CloudFront が返すステータス、ブロックやスロットリングで断ったリクエストへの CloudFront の課金。「叩かれたら」の金額は、この章の単価と仮定からの計算で、実際にリクエストを流したことはありません
+- `-c reservedConcurrency=N` を付けたデプロイ。cdkd 0.296.28 が `ReservedConcurrentExecutions` を反映すること（固定した版のソースには、作成後に `PutFunctionConcurrency` を呼ぶコードがあります。動かしてはいません）、上限に達したときに CloudFront が返すステータス、Lambda がスロットリングで断ったリクエストへの CloudFront の課金。予約がどの値から断られるかは、アカウントの同時実行数のクォータから 100 を引いた数が上限、という決まりで決まります（[32章](/ja/chapters/32-limits.md)）。「叩かれたら」の金額は、この章の単価と仮定からの計算で、実際にリクエストを流したことはありません
 - カスタマーマネージドキーを使った構成。削除待ちの 7 日間の課金
 - `sec:posture` が呼ぶ 6 つの API の、実際の応答の形。権限が無いときのエラー名
 - GuardDuty、Inspector、AWS Config、証跡、Organizations、SCP。どれも有効にしていません。SCP の JSON は、Organizations に受け付けられることを確かめていません
@@ -159,11 +159,12 @@ vp run sec:infra:destroy
 | 料金 | `data/pricing/`、`tools/src/pricing/calc.test.ts` | `test:unit` |
 | 片付け | `examples/21-security/infra/lib/security-stack.ts` | `sec:infra:destroy`、`sec:waf:infra:destroy` |
 
-**一次情報**（確認日はすべて 2026-10-12）
+**一次情報**（確認日は、断りのないかぎり 2026-10-12）
 
 - IAM: [Troubleshoot IAM（eventual consistency）](https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot.html)、[Security best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)、[Access Analyzer の policy generation](https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-policy-generation.html)、[Policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)、AWS service reference（[secretsmanager](https://servicereference.us-east-1.amazonaws.com/v1/secretsmanager/secretsmanager.json) ほか、アクションとリソースタイプの確認）
 - AWS WAF: [保護できるリソース](https://docs.aws.amazon.com/waf/latest/developerguide/how-aws-waf-works-resources.html)、[レートベースのルール](https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based.html)、[その注意点](https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-caveats.html)、[baseline rule groups](https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html)、[IP reputation rule groups](https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html)、[WCU](https://docs.aws.amazon.com/waf/latest/developerguide/aws-waf-capacity-units.html)、[テストと調整](https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-testing.html)、[AWS::WAFv2::WebACL](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-wafv2-webacl.html)、[RateBasedStatement](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-wafv2-webacl-ratebasedstatement.html)
 - CloudFront: [AWS WAF を使う](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html)、[関数 URL のオリジンへのアクセス制限](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html)
+- 2026-10-13 に読んだもの: [Amazon CloudFront no longer charges for requests blocked by AWS WAF](https://aws.amazon.com/about-aws/whats-new/2024/10/amazon-cloudfront-charges-requests-blocked-aws-waf/)、[CloudFront flat-rate pricing plans](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/flat-rate-pricing-plan.html)、[Rate-based rule high-level settings](https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-high-level-settings.html)、[RateBasedStatement](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-wafv2-webacl-ratebasedstatement.html)（再読）
 - Secrets Manager: [シークレットの中身とバージョン](https://docs.aws.amazon.com/secretsmanager/latest/userguide/whats-in-a-secret.html)、[PutSecretValue](https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_PutSecretValue.html)、[GetSecretValue](https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html)、[DeleteSecret](https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_DeleteSecret.html)、[best practices](https://docs.aws.amazon.com/secretsmanager/latest/userguide/best-practices.html)、[Lambda 関数によるローテーション](https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotate-secrets_lambda-functions.html)、[AWS::SecretsManager::Secret](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-secretsmanager-secret.html)、[料金](https://aws.amazon.com/secrets-manager/pricing/)
 - Lambda: [環境変数](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html)、[Lambda で Secrets Manager を使う](https://docs.aws.amazon.com/lambda/latest/dg/with-secrets-manager.html)
 - AWS KMS: [KMS keys](https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html)、[ローテーション](https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html)、[鍵の削除](https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html)、[料金](https://aws.amazon.com/kms/pricing/)

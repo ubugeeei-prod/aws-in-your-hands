@@ -116,7 +116,7 @@ AMI には `ami-0123...` のような ID があります。ID はリージョン
 
 このコードに落ち着くまでに、固定した版（aws-cdk-lib 2.273.0）で 2 回つまずきました。
 
-まず、よく紹介される `MachineImage.latestAmazonLinux2023()` は、`kernel` を渡しても無視して、カーネル 6.1 用のパラメーターを引きます。Amazon Linux のドキュメントによると、`kernel-default` のほうは 2026 年 8 月から 6.18 になっています。次に、かわりに `AmazonLinux2023ImageSsmParameter` を直接使うと、既定では合成のときに AMI を調べに行こうとするので、アカウントを指定していないスタックでは合成が失敗します。これを避けるには `cachedInContext: false` が要ります。
+まず、よく紹介される `MachineImage.latestAmazonLinux2023()` は、`kernel` を渡しても無視して、カーネル 6.1 用のパラメーターを引きます。Amazon Linux のドキュメントによると、`kernel-default` のほうは 2026 年 8 月から 6.18 になっています。次に、かわりに `AmazonLinux2023ImageSsmParameter` を直接使うと、既定では合成のときに AMI を調べに行こうとするので、アカウントを指定していないスタックでは合成が失敗します。これを避けるには `cachedInContext: false` が要ります。なお、カーネル 6.18 は、AWS Elastic Disaster Recovery のドキュメントが Amazon Linux 2023 について対象としている範囲（6.12 まで）の外にあります（[40章](/ja/chapters/40-disaster-recovery.md)が 2026-10-13 に確認）。
 
 ### 「最新」の AMI は置き換えを起こす
 

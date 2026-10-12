@@ -26,6 +26,8 @@ function synth(input: unknown) {
 const repositoryOnly = synth({});
 const inPublic = synth({ imageTag: "v1" });
 const inPrivate = synth({ imageTag: "v1", taskSubnets: "private" });
+const DIGEST = `sha256:${"0123456789abcdef".repeat(4)}`;
+const byDigest = synth({ imageDigest: DIGEST });
 
 const HOURLY_TYPES = ["AWS::ECS::Service", "AWS::ElasticLoadBalancingV2::LoadBalancer"];
 
@@ -117,6 +119,32 @@ describe("ContainersStack with an image tag", () => {
     });
     // No secret belongs in a plain environment variable.
     expect(container).not.toHaveProperty("Secrets");
+  });
+
+  it("runs the digest it was given: joined with '@', and otherwise the same stack", () => {
+    const [[, task] = []] = byDigest.ofType("AWS::ECS::TaskDefinition");
+    const [container] = (task?.Properties?.["ContainerDefinitions"] ?? []) as Record<
+      string,
+      unknown
+    >[];
+    const image = JSON.stringify(container?.["Image"]);
+    expect(image).toContain(`@${DIGEST}"`);
+    expect(image).not.toContain(`:${DIGEST}`);
+    expect(container?.["Environment"]).toEqual(
+      expect.arrayContaining([{ Name: "APP_VERSION", Value: DIGEST }]),
+    );
+
+    // Nothing but the image's name and the version differs from the stack deployed by tag.
+    const byTag = JSON.stringify(inPublic.template.toJSON());
+    expect(JSON.stringify(byDigest.template.toJSON()).replaceAll(`@${DIGEST}`, ":v1")).toBe(
+      byTag.replaceAll('"Value":"v1"', `"Value":"${DIGEST}"`),
+    );
+  });
+
+  it("refuses a malformed digest before anything is synthesized", () => {
+    expect(() => synth({ imageDigest: "sha256:abc" })).toThrow(/imageDigest: expected sha256:/);
+    expect(() => synth({ imageDigest: "latest" })).toThrow(/imageDigest/);
+    expect(() => synth({ imageTag: "v1", imageDigest: DIGEST })).toThrow(/not both/);
   });
 
   it("opens the tasks to the load balancer only", () => {

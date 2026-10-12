@@ -1,6 +1,6 @@
 ---
 title: Cloudflare から来た人へ
-revision: 3
+revision: 4
 ---
 
 # Cloudflare から来た人へ
@@ -50,6 +50,8 @@ CloudFront Functions では足りない処理のために、Lambda@Edge も 1 �
 
 章の終わりでは、Workers、CloudFront Functions、Lambda@Edge を表に並べています。結論から言うと、CloudFront Functions は Workers に対応するものではありません。ネットワークにもファイルシステムにも触れられない、URL とヘッダーを書き換えるための環境です。
 
+Workers のランタイムである workerd そのものを AWS で動かす話は、[64章](/ja/chapters/64-isolates.md)にあります。64章は、04章と 10章のほかに 11章、12章、23章、24章、35章を前提にしています。
+
 ## D1 から来たなら
 
 読む順は 00 → 01 → 02 → 04 → 13 です。復旧まで追うなら、そのあと 22章へ進みます。22章は 05章から 08章のノートと画像を題材にしているので、先にそちらを読んでおくと理解しやすくなります。
@@ -87,7 +89,7 @@ D1 の Time Travel との違いは、章の中で並べています。Time Trave
 
 ## ほかの章にある比較
 
-3 つの経路のほかにも、Cloudflare の製品と並べて説明している章があります。慣れているものから探せるように、表にまとめます。
+3 つの経路のほかにも、Cloudflare の製品と並べて説明している章があります。まず、24章までの章です。慣れているものから探せるように、表にまとめます。
 
 | 慣れているもの | この本で並べているもの | 章 |
 | --- | --- | --- |
@@ -113,6 +115,85 @@ Workers KV を、AWS の 3 つの key-value ストアのどれか 1 つに対応
 24章の題材である celld は、Workers と Durable Objects のアプリケーションを自分のマシンで動かす OSS です。AWS のサービスではなく、章で比べているのは誰が運用するかという点だけです。
 
 どの章の比較も、Cloudflare の公式ドキュメントを読んだ範囲で書いたもので、使って確かめたものではありません。確かめられなかった点は、それぞれの章にそのまま書いてあります。06章には Cloudflare Access に触れた段落がありますが、一次情報を確認していない、一般的な構成についての記述です。11章と 23章には比較がありません。VPC や仮想マシンに当たるものが Cloudflare にあるかどうかを、調べていないからです。
+
+## 25章から先の比較
+
+25章から先の章は、それぞれ独立していて、ほとんどが Cloudflare と Vercel にある近い製品との違いを 1 節にまとめています。ここでは Cloudflare の側だけを拾い、慣れている製品から章を探せるように並べます。右の列は、その章が挙げている違いのうち、読む前に知っておくと役に立つものです。リンクは、比較が書いてあるページに張りました。
+
+Cloudflare 側の記述は、どの章でも、公式ドキュメントを読んだ範囲のものです。確認日は 2026-10-12 か 2026-10-13 で、章ごとに書いてあります。章が確かめられなかったと書いていることは、ここでもそう書きます。
+
+### キュー、イベント、ワークフロー
+
+| 慣れているもの | 章 | 章が挙げている違い |
+| --- | --- | --- |
+| Queues で、同じ出来事を複数の相手に渡す | [25](/ja/chapters/25-events/wrap.md) | ドキュメントには、1 つのキューが持てるアクティブなコンシューマーは 1 つだけとあります。3 つの相手に渡すなら、載せる側の Worker が 3 つのキューに送ります。中身で行き先を決めるルール、archive とリプレイに当たるものは、章が読んだページの範囲では見当たりませんでした |
+| Queues の event subscriptions | [25](/ja/chapters/25-events/wrap.md) | 名前は近くても別のものです。Cloudflare の製品が起こした出来事をキューで受け取る仕組みで、AWS のサービスが既定のイベントバスに載せるイベントに当たります |
+| Queues の配送と順序 | [61](/ja/chapters/61-sqs.md) | Queues は少なくとも 1 回の配送で、発行した順に届く保証はありません。順序を保つ種類のキューは、章が読んだ範囲では見当たりませんでした。遅延は 24 時間まで指定でき、15 分までの SQS より広く取れます |
+| Queues、Basin Pipelines の stream | [54](/ja/chapters/54-kinesis.md) | Kinesis の stream にそのまま当たる部品は見当たらない、と章は書いています。Basin Pipelines の stream の役割は 26章の Firehose に近く、アプリケーションのコードが好きな位置から読み直す API は、読んだページには見つかりませんでした |
+| Workflows | [47](/ja/chapters/47-step-functions.md) | Workflows は `step.do()` で囲んだコードとして書き、取り消しのハンドラーは、ステップを始めた順の逆に走るとドキュメントにあります。Step Functions が向いているのは、呼ぶ相手が AWS のサービスで、その API を関数なしで直接呼びたいときです |
+
+### データベースとストレージ
+
+| 慣れているもの | 章 | 章が挙げている違い |
+| --- | --- | --- |
+| D1、Durable Objects の SQLite | [30](/ja/chapters/30-data-modeling.md) | D1 では一意性を `CREATE UNIQUE INDEX` で守れ、`batch()` は 1 つのトランザクションとして実行されます。DynamoDB には `UNIQUE` 制約がないので、30章は一意性を条件付き書き込みとトランザクションで作ります。Durable Objects の SQLite では、章がそうして作っている保証を、実行のモデルが最初から与えてくれます |
+| D1、KV、Durable Objects、R2 の置き場所 | [28](/ja/chapters/28-multi-region/wrap.md) | 場所がないのはコードだけで、データには置き場所があります。D1 は「書き込みは 1 か所、読み取りは各地」の形です。プライマリのある場所が使えなくなったときに D1 がどう動くかは、読んだページに書かれておらず、章は確かめていません |
+| D1 のデータを運び出す | [39](/ja/chapters/39-database-migration.md) | D1 のデータを AWS へ持ってくるときに、DMS は使えません。用意されているのは `wrangler d1 export` で、書き出されるのは SQLite の SQL です。PostgreSQL 向けに直す変換は、章では試していません |
+| Hyperdrive | [59](/ja/chapters/59-rds.md)、[60](/ja/chapters/60-aurora/wrap.md) | Hyperdrive は自分ではデータベースを持たず、すでにある PostgreSQL や MySQL の手前で接続をプールします。AWS の上のデータベースも対象なので、Workers をやめずに RDS や Aurora を使う道具になります。どちらの章も、その構成は試していません |
+| D1 を借りていること | [66](/ja/chapters/66-distributed-sql.md) | 66章は、分散データベースを EC2 でセルフホストします。借りていて困っていないなら、そのまま借りておくのが正解だと章は書いています |
+| R2 と S3 のあいだでデータを運ぶ | [38](/ja/chapters/38-data-movement/wrap.md) | S3 から R2 へは、Cloudflare の Super Slurper と Sippy があります。R2 から S3 へは、R2 を object storage ロケーションとして登録した DataSync が使えます |
+| R2 の bucket locks | [58](/ja/chapters/58-ledger.md) | ルールはダッシュボードや Wrangler から外せます。バケットの持ち主にも外せないモードは、ドキュメントに見当たりませんでした。性質は S3 の Object Lock の governance モードに近く、自分にも消せない証拠の置き場所にはならない、と章は書いています |
+| Workers の `node:fs` と `/tmp` | [53](/ja/chapters/53-efs/wrap.md) | Workers の `node:fs` はメモリ上の仮想ファイルシステムで、`/tmp` の内容は永続せず、リクエストごとに別です。複数の関数が同時にマウントする NFS のようなものは、章が読んだページには見当たりませんでした |
+| binding | [48](/ja/chapters/48-sdk.md) | binding を使うと、認証情報を探す順序も、署名も、エンドポイントも、考える対象として出てきません。48章は、そのすべてを SDK で扱います。再試行とタイムアウトをどこまでプラットフォームが受け持つかは、章では確かめていません |
+
+### 分析と検索
+
+| 慣れているもの | 章 | 章が挙げている違い |
+| --- | --- | --- |
+| Workers Analytics Engine | [26](/ja/chapters/26-analytics/wrap.md) | 書き込みが多いと標本化され、保持は 3 か月で、クエリは 1 つのテーブルだけです。26章の構成は、届いた記録を全件残し、ほかのテーブルと結合できます。その代わり、ファイルの置き方と重複の扱いを自分で決めます |
+| Basin Pipelines、Basin SQL、Logpush | [26](/ja/chapters/26-analytics/wrap.md)、[49](/ja/chapters/49-athena/wrap.md) | Basin Pipelines と Basin SQL は、以前は Cloudflare Pipelines、R2 SQL と呼ばれていました。Basin SQL は読むための入口で、SQL のリファレンスに `INSERT`、`UPDATE`、`DELETE`、`MERGE`、`CREATE TABLE AS` は載っていません。Athena は、書き込みと行単位の変更も同じエンジンで扱います |
+| Basin Catalog | [43](/ja/chapters/43-glue/wrap.md) | 以前の R2 Data Catalog で、扱うのは Iceberg のテーブルだけです。すでに書かれたファイルを後からまとめて書き直す、Glue のジョブのような実行環境は、章が読んだページの範囲では見当たりませんでした |
+| Vectorize | [27](/ja/chapters/27-search/wrap.md) | メタデータで絞り込むには、ベクトルを入れる前に、メタデータインデックスを作っておく必要があります。S3 Vectors では、メタデータは何もしなくても絞り込みに使えます |
+| AI Search | [27](/ja/chapters/27-search/wrap.md) | ハイブリッド検索が既定で有効で、27章が自分で書いた順位の合わせ込みを、製品が持っています。文書を渡して検索できるようになるまでの手数は AI Search のほうがずっと少ない、と章は書いています。取り込み元として何を選べるかは、章は確かめていません |
+
+### AI と通話
+
+| 慣れているもの | 章 | 章が挙げている違い |
+| --- | --- | --- |
+| Workers AI の function calling、JSON Mode、prompt caching、Batch API | [36](/ja/chapters/36-bedrock/wrap.md) | `runWithTools` は、ツールを呼ぶループを書いてくれます。途中で切れた応答をやり直すかどうかといった判断は、ライブラリが決めます。36章は、その判断を自分のコードに置いて、テストで固定しています |
+| AI Gateway | [36](/ja/chapters/36-bedrock/wrap.md) | AI Gateway は、アプリとモデルの提供元のあいだに置くプロキシです。Bedrock には、これに当たる単独の製品がありません。AI Gateway の caching は同じリクエストに同じレスポンスを返す機能で、36章の prompt caching とは別のものです |
+| Agents、Sandbox SDK | [50](/ja/chapters/50-agentcore.md) | Agents は、エージェントの 1 つ 1 つを Durable Object に対応させます。分離の単位は Durable Object で、AgentCore のようなセッションごとの microVM ではありません |
+| Sandbox | [63](/ja/chapters/63-agent-sandbox.md) | Sandbox のコンテナは自分のカーネルとネットワークを持つ microVM で、インターネットに出られるかどうかを Worker が決める、とドキュメントにあります。料金と上限については、章は概要のページを読んだだけです |
+| Workers AI の画像、動画、音声のモデル | [56](/ja/chapters/56-nova/wrap.md) | 画像を生成したいだけなら、いまは Nova を選ぶ理由がない、と章は書いています。Nova には生成のモデルがなく、Workers AI の一覧にはあります。動画を生成する分類は、一覧に見当たりませんでした。一覧は要約して読んだもので、章は 1 行ずつ確かめてはいません |
+| Workers AI の音声合成 | [57](/ja/chapters/57-polly/wrap.md) | 載っているモデルは、Deepgram の `aura-1`、`aura-2-en`、`aura-2-es` と、MyShell の `melotts` です。`melotts` が日本語を読めるかどうかは、章は確認していません |
+| Realtime | [51](/ja/chapters/51-chime-sdk.md) | RealtimeKit では、バックエンドがミーティングを作り、参加者ごとの認証トークンをクライアントに渡します。51章の構成と同じ役割分担です。RealtimeKit の料金は、章は引用していません |
+
+### 動かす場所
+
+| 慣れているもの | 章 | 章が挙げている違い |
+| --- | --- | --- |
+| Workers の起動、メモリ、課金 | [29](/ja/chapters/29-lambda-tuning/wrap.md) | Workers のメモリは isolate あたり 128 MB で選べず、課金されるのは CPU を使った時間です。Lambda はメモリを選び、待っている時間にも課金されます。29章の半分ほどは Workers には当てはまらない、と章は書いています |
+| 1 つのインスタンスが複数のリクエストを処理すること | [35](/ja/chapters/35-lambda-managed-instances.md) | グローバルな状態を使わないという Workers の注意は、35章が扱う不具合と同じ種類のものです。Lambda Managed Instances が違うのは、リクエストが来なくても料金がかかることと、インスタンスが自分のアカウントの VPC にあることです |
+| Containers | [41](/ja/chapters/41-fargate/wrap.md)、[34](/ja/chapters/34-eks/wrap.md) | Containers は、既定で 10 分使われないと sleep し、課金が止まります。stateless なアプリ向けの組み込みの autoscaling は、いまは無いと FAQ にあります。Kubernetes の API を提供するサービスは、34章が読んだ範囲では Cloudflare に見当たりませんでした |
+| Containers のイメージの置き場所 | [52](/ja/chapters/52-ecr.md) | イメージは Cloudflare が管理するレジストリに置かれ、`wrangler deploy` がビルドとプッシュまで行います。レジストリの側にライフサイクルや検査に当たる設定があるかどうかは、章は調べていません |
+| workerd | [64](/ja/chapters/64-isolates.md) | 64章は、workerd を自分の AWS アカウントで動かします。世界中の拠点、binding の先の保存先、リクエストごとの上限、セキュリティの多層防御は、workerd のバイナリには入っていません。月 1,500 万リクエストの例では、Workers が USD 8.00、章の構成が USD 39.02 です |
+| isolate という境界 | [67](/ja/chapters/67-firecracker.md) | 67章は、Lambda と Fargate の下で動く microVM と、isolate を並べています。優劣ではなく、何を動かすと約束したかの違いだと章は書いています |
+
+### デプロイ、運用、守り
+
+| 慣れているもの | 章 | 章が挙げている違い |
+| --- | --- | --- |
+| gradual deployments、version affinity、Flagship | [31](/ja/chapters/31-progressive-delivery/wrap.md) | Workers では、コマンド 1 つで 2 つの version に割合を付けられます。エラー率を見て自動で戻すという記述は、章が読んだページには見つかりませんでした。31章の構成は、アラームが鳴ったら自動で戻します |
+| Workers の limits、Rate Limiting binding | [32](/ja/chapters/32-limits/wrap.md) | Workers の上限はプランごとの値で、調べる場所が 1 つで済みます。AWS の上限は、サービスごと、アカウントごと、リージョンごとのクォータです。Rate Limiting binding は拠点ごとに数え、正確な数え方ではないとドキュメントが断っています |
+| Workers Logs の保持 | [33](/ja/chapters/33-production-readiness.md) | Workers Logs の保持は最長 7 日で、プラットフォームが決めています。AWS では、保持期間を書かなかったロググループは無期限に残ります。Cloudflare が公開前の確認事項の一覧を公開しているかどうかは、章は確認していません |
+| `wrangler login` と API トークン | [37](/ja/chapters/37-cloudshell/wrap.md) | 管理画面の中で開けて、アカウントの認証情報を最初から持っているシェルは、章が確かめた範囲では Cloudflare にありません。`wrangler` は手元か CI で動かします |
+| Workers Builds | [62](/ja/chapters/62-ci-runners/wrap.md) | ビルドのマシンを自分で用意する方法は、章が読んだページには見つかりませんでした。章が読んだのは、Workers Builds の制限と料金のページだけです |
+| Incident Alerts、Maintenance Notification | [44](/ja/chapters/44-health/wrap.md) | Cloudflare では、公表された障害の購読が、画面の操作だけで済みます。AWS で設定なしで届くのは、自分のリソースに関わるイベントのメールだけです。公表された障害は、ルールか通知の設定を自分で作って受け取ります |
+| DDoS の緩和 | [46](/ja/chapters/46-shield/wrap.md) | Cloudflare では、レイヤー 3 から 7 までの緩和が、Free を含むすべてのプランに含まれます。AWS では、レイヤー 3、4 は Shield Standard が受け持ち、レイヤー 7 は自分で web ACL、キャッシュ、歯止めを置きます |
+| アカウントレベルの WAF | [42](/ja/chapters/42-firewall-manager/wrap.md) | ルールセットをアカウントに作って複数のゾーンに適用する機能で、Enterprise プランが要ります。Organization の中の複数のアカウントにまたがって適用できるかどうかは、章は確かめていません |
+| リージョンを選ばないこと | [40](/ja/chapters/40-disaster-recovery/wrap.md) | 複製するディスクを持つサーバーも、開発者が選んで切り替えるリージョンも、Workers にはありません。40章の DRS に対応する体験はない、と章は書いています |
+
+25章から先にも、比較のない章があります。45章は、テンプレートに当たるものが Cloudflare に無く、比べる対象を一次情報で確かめていないので、比較を書いていません。55章も、Cloudflare には触れていません。68章が読んだのは Workers の 1 ページだけで、Workers にエンクレーブに当たる仕組みがあるかどうかは、確かめていません。
 
 ## Cloudflare 側の記述の出どころ
 

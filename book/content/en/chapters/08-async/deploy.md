@@ -36,7 +36,7 @@ The chapter fixes the bucket's name instead. With a known name, the ARN can be w
 
 This choice gives something up. No two AWS accounts in the world can have a bucket of the same name. The account ID is part of this name, so a clash is unlikely, but it is not impossible. A bucket with a fixed name is also harder to change in ways that require re-creating it, such as moving it to another Region.
 
-Another option is to send S3's notifications to EventBridge and have an EventBridge rule put them on the queue. The bucket then only says that it sends to EventBridge, so there is no cycle. In exchange, the shape of the events changes, and so does the service in between. This chapter has not tried it.
+Another option is to send S3's notifications to EventBridge and have an EventBridge rule put them on the queue. The bucket then only says that it sends to EventBridge, so there is no cycle. In exchange, the shape of the events changes, and so does the service in between. This chapter has not tried it. [Chapter 25](/en/chapters/25-events.md) covers EventBridge buses and rules, which deliver one event to several receivers.
 
 The bucket sends notifications only for creates and deletes of keys that start with `u/`.
 

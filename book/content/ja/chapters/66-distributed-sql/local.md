@@ -56,7 +56,7 @@ vp run distsql:local:status
 
 1 つ注意があります。`yb-tserver` は内部で PostgreSQL を起動し、PostgreSQL は System V の共有メモリを使います。共有メモリを使わせないサンドボックスの中では、`initdb` が失敗して `yb-tserver` が終了しました。ふつうの端末では起きません。
 
-TLS を有効にしたクラスターも作れます。証明書は `openssl` で作るので、PATH に `openssl` が要ります。Nix の shell には入っていないので、macOS に付属のものか、自分で入れたものが使われます。
+TLS を有効にしたクラスターも作れます。証明書は `openssl` で作ります。`openssl` は devShell（Nix）に入っていて、版は 3.5.8 です。
 
 ```bash
 vp run distsql:local:destroy

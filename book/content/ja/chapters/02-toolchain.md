@@ -1,6 +1,6 @@
 ---
 title: 02 Toolchain: Nix、vp、CDK、cdkd、drift
-revision: 3
+revision: 4
 ---
 
 # 02 Toolchain: Nix、vp、CDK、cdkd、drift
@@ -52,7 +52,7 @@ nix develop
 
 <<< @/flake.nix
 
-devShell に入るのは、Node.js 24.21.0、pnpm 10.34.5、AWS CLI 2.35.11、git、`vp` 1.1.0 です。正確な版の一覧は[ツールチェイン](/ja/reference/toolchain.md)にあります。
+devShell に入るのは、Node.js 24.21.0、pnpm 10.34.5、AWS CLI 2.35.11、git、`vp` 1.1.0 です。34章で使う kubectl 1.37.1 と、66章で使う OpenSSL 3.5.8 も入っています。正確な版の一覧は[ツールチェイン](/ja/reference/toolchain.md)にあります。
 
 `vp` は nixpkgs に入っていないので、この本のリポジトリに Nix 式を置いています。配布元が npm に公開しているプラットフォーム別のバイナリを、ハッシュを固定して取得する式です。
 

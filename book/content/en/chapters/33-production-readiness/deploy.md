@@ -26,7 +26,7 @@ The check is whether you can state the ID of the production account. Every task 
 vp run account:whoami
 ```
 
-Adding accounts and joining them in an organization is in ["Once you are an organization" in chapter 21](/en/chapters/21-security/more.md). AWS also publishes a whitepaper on organizing an environment with multiple accounts. This book read only its opening and did not try the structure it recommends.
+Adding accounts and joining them in an organization is in ["Once you are an organization" in chapter 21](/en/chapters/21-security/more.md). AWS also publishes a whitepaper on organizing an environment with multiple accounts. This book read only its opening and did not try the structure it recommends. Keeping every public entry behind the same rules as accounts are added is the scope of [chapter 42](/en/chapters/42-firewall-manager.md).
 
 ### The root user
 
@@ -50,7 +50,7 @@ This area corresponds to SEC03-BP02 (grant least privilege access) in the securi
 
 ### What running code may do
 
-When the role of a function that handles requests from the internet contains `*`, one hole in that function is a hole in everything the `*` covers. This is what `iam-wildcard` in the template check looks at. Underneath it is the lint of [chapter 21](/en/chapters/21-security/build.md), which wants a reason for each action that keeps `*`.
+When the role of a function that handles requests from the internet contains `*`, one hole in that function is a hole in everything the `*` covers. This is what `iam-wildcard` in the template check looks at. Underneath it is the lint of [chapter 21](/en/chapters/21-security/build.md), which wants a reason for each action that keeps `*`. Running an agent that executes commands chosen by a model in an environment away from a person's credentials is the scope of [chapter 63](/en/chapters/63-agent-sandbox.md).
 
 The permissions of people appear in no template. After deploys moved to the CI role (chapter 20), you should be able to say who still has administrator access and for which task. SEC03-BP02 describes, as the outcome to aim for, developers who are given access to production only for the duration of a task and lose it afterwards.
 
@@ -101,6 +101,7 @@ Keeping data too long is a problem as well. Write down where a user's data remai
 - Objects in the bucket. With versioning on, older versions remain after a delete. Chapter 22's stack removes them after 30 days
 - Logs. They remain for the retention period. [Chapter 19](/en/chapters/19-observability/more.md) decides what is never written to them
 - Copies of events sent off for analysis (the scope of [chapter 26](/en/chapters/26-analytics.md)), and the search index (the scope of [chapter 27](/en/chapters/27-search.md))
+- Records in a bucket with Object Lock. Until the retention period passes, you cannot delete them yourself (the scope of [chapter 58](/en/chapters/58-ledger.md))
 
 The template check sees only whether a log group has a retention written. Whether the number of days matches what you promised is for a person to decide.
 
@@ -126,7 +127,7 @@ Without an alarm, the first to tell you the service is down is a user. With an a
 vp run obs:alarms
 ```
 
-What the task cannot know either is whether a notification arrives. An email subscription stays pending until the link in the confirmation mail is clicked. The question for a person is who received the last test notification, and on which device.
+Showing a dashboard to people who have no access to the AWS account is the scope of [chapter 55](/en/chapters/55-grafana.md). What the task cannot know either is whether a notification arrives. An email subscription stays pending until the link in the confirmation mail is clicked. The question for a person is who received the last test notification, and on which device.
 
 ### Work that keeps failing
 
@@ -138,13 +139,13 @@ A dead-letter queue solves nothing by existing. It is useful once it is decided 
 
 RTO is how long the service may be down before it is back. RPO is how much time's worth of data may be lost. REL13-BP01 in the reliability pillar asks for both to be set for every workload, and lists as anti-patterns arbitrary numbers and unrealistic ones such as zero.
 
-Without the numbers, nobody can judge during an incident whether two hours of downtime is acceptable. Chapter 22's drill is how you measure whether you meet them. The numbers for a whole Region being down are the scope of [chapter 28](/en/chapters/28-multi-region.md).
+Without the numbers, nobody can judge during an incident whether two hours of downtime is acceptable. Chapter 22's drill is how you measure whether you meet them. The numbers for a whole Region being down are the scope of [chapter 28](/en/chapters/28-multi-region.md), and what happens to a transaction interrupted while a database instance is replaced is the scope of [chapter 60](/en/chapters/60-aurora.md).
 
 ### The first limit you reach
 
 Every service has limits per account. When users grow, or retries pile up, the service stops at a line nobody had looked up. This is REL01-BP01 (aware of service quotas and constraints).
 
-How to look limits up, and how to retry when refused, is the scope of [chapter 32](/en/chapters/32-limits.md). Function concurrency and timeouts are the scope of [chapter 29](/en/chapters/29-lambda-tuning.md). When functions run on your own EC2 capacity, as in [chapter 35](/en/chapters/35-lambda-managed-instances.md), the limit on capacity is a value you set. The question for a person is which limit is closest, and how long an increase takes.
+How to look limits up, and how to retry when refused, is the scope of [chapter 32](/en/chapters/32-limits.md). How the pinned SDK retries by default is the scope of [chapter 48](/en/chapters/48-sdk.md). Function concurrency and timeouts are the scope of [chapter 29](/en/chapters/29-lambda-tuning.md). When functions run on your own EC2 capacity, as in [chapter 35](/en/chapters/35-lambda-managed-instances.md), the limit on capacity is a value you set. The question for a person is which limit is closest, and how long an increase takes.
 
 ### Runbooks
 
@@ -166,7 +167,7 @@ Whether a runbook works is unknown until someone other than its author has follo
 
 While production can be deployed from a laptop, what runs there stops matching any commit, and during an incident nobody can say what changed. [Chapter 20](/en/chapters/20-shipping.md) built the path: a reviewed commit, deployed by the CI role, through CloudFormation.
 
-cdkd, which this book uses for its everyday deploys, is described by its own documentation as a tool for development and testing. Why the production path is the AWS CDK CLI and CloudFormation is explained in [chapter 02](/en/chapters/02-toolchain.md) and chapter 20.
+cdkd, which this book uses for its everyday deploys, is described by its own documentation as a tool for development and testing. Why the production path is the AWS CDK CLI and CloudFormation is explained in [chapter 02](/en/chapters/02-toolchain.md) and chapter 20. If you host the runners that execute the workflows in your own account, making one per job, giving it no permissions, and discarding it afterwards is the scope of [chapter 62](/en/chapters/62-ci-runners.md).
 
 ```bash
 vp run ship:cfn:diff
@@ -176,7 +177,7 @@ vp run ship:cfn:diff
 
 A rollback brings back code and configuration. The data the new code wrote stays. If that data is in a shape the old code cannot read, things are more broken after the rollback than before. OPS06-BP01 in the operational excellence pillar asks for a plan for an unsuccessful change before the change is made.
 
-Chapter 20's [deploy page](/en/chapters/20-shipping/deploy.md) has the steps for changing a schema "in an order old code survives". The time during which old and new containers run side by side is in [chapter 12](/en/chapters/12-containers.md), SQL schemas are in [chapter 13](/en/chapters/13-sql.md), and moving DynamoDB keys without downtime is the scope of [chapter 30](/en/chapters/30-data-modeling.md). The question for a person is whether the previous version can run against today's data.
+Chapter 20's [deploy page](/en/chapters/20-shipping/deploy.md) has the steps for changing a schema "in an order old code survives". The time during which old and new containers run side by side is in [chapter 12](/en/chapters/12-containers.md), SQL schemas are in [chapter 13](/en/chapters/13-sql.md), and moving DynamoDB keys without downtime is the scope of [chapter 30](/en/chapters/30-data-modeling.md). Whether a deploy points at an image's tag or at the digest computed from its content is the scope of [chapter 52](/en/chapters/52-ecr.md). The question for a person is whether the previous version can run against today's data.
 
 ### A few requests first
 
@@ -228,7 +229,7 @@ One script in a loop, or one user who keeps sending long prompts, can decide the
 
 ### A brake at every entry
 
-Check that every public entry has some brake in front of it. It matters just as much that the brake cannot be bypassed. A WAF in front of CloudFront does nothing if the function URL behind it can be called directly. [Chapter 09](/en/chapters/09-ssr.md) and chapter 21 set the function URL to `AWS_IAM` so that only CloudFront can call it, and the `function-url-auth` rule looks at that.
+Check that every public entry has some brake in front of it. It matters just as much that the brake cannot be bypassed. A WAF in front of CloudFront does nothing if the function URL behind it can be called directly. [Chapter 09](/en/chapters/09-ssr.md) and chapter 21 set the function URL to `AWS_IAM` so that only CloudFront can call it, and the `function-url-auth` rule looks at that. For DDoS, what is protected with nothing configured, and how to cover the rest by design, is the scope of [chapter 46](/en/chapters/46-shield.md).
 
 Which entries can carry a WAF and which cannot is in [chapter 21's continued build page](/en/chapters/21-security/more.md). A web ACL cannot be attached to an HTTP API directly, so there the brakes are throttling and the application's rate limit. API Gateway throttling and usage plans are the scope of chapter 32. Brakes on what goes into a model and what comes out are the scope of chapter 36.
 
@@ -262,7 +263,7 @@ From here on, nothing appears in a template or a task. This area is the core of 
 
 ### On call
 
-Check that a reachable person is named for every hour the service promises to be up. Chapter 19's alarms arrive as mail, and mail is not read until Monday morning. Connecting the notification to chat or to an on-call system, and deciding who covers when that person is away, is work outside this book.
+Check that a reachable person is named for every hour the service promises to be up. Chapter 19's alarms arrive as mail, and mail is not read until Monday morning. Connecting the notification to chat or to an on-call system, and deciding who covers when that person is away, is work outside this book. Sending notices of failures on the AWS side and of scheduled maintenance down the same notification path is the scope of [chapter 44](/en/chapters/44-health.md).
 
 If you operate alone, the true answer may be "nobody watches at night". Sometimes that is fine. What matters is to put that answer next to the RTO. If the RTO is one hour and nobody watches at night, one of the two is false.
 
@@ -278,10 +279,10 @@ The notes are also what this review grows from. OPS07-BP02 says that your own po
 
 Cause a failure on purpose, and find out whether the procedures, the access, and the alarms actually work. Well-Architected calls this a game day, and REL12-BP05 in the reliability pillar recommends holding them regularly with the same people who would handle a real event.
 
-Chapter 22's drill is one form of it: delete data, restore it, record how long it took. A drill for a Region failure is the scope of [chapter 28](/en/chapters/28-multi-region.md). What a drill usually finds is not a mistake in the runbook but an assumption the runbook never stated: the person on call lacked a permission, or the notification went to the address of someone who had left.
+Chapter 22's drill is one form of it: delete data, restore it, record how long it took. A drill for a Region failure is the scope of [chapter 28](/en/chapters/28-multi-region.md), and a recovery drill that starts a server again from its replica is the scope of [chapter 40](/en/chapters/40-disaster-recovery.md). What a drill usually finds is not a mistake in the runbook but an assumption the runbook never stated: the person on call lacked a permission, or the notification went to the address of someone who had left.
 
 ### The day support ends
 
-Runtimes, database engines, and clusters have a day on which support ends. With no owner, the upgrade is forced on a date you did not choose. Cluster versions and their support windows are the scope of [chapter 34](/en/chapters/34-eks.md). For Lambda runtimes, every stack in this book uses `nodejs24.x`, and this chapter did not look up when its support ends.
+Runtimes, database engines, and clusters have a day on which support ends. With no owner, the upgrade is forced on a date you did not choose. Cluster versions and their support windows are the scope of [chapter 34](/en/chapters/34-eks.md), and when to upgrade the version of an RDS database is the scope of [chapter 59](/en/chapters/59-rds.md). For Lambda runtimes, every stack in this book uses `nodejs24.x`, and this chapter did not look up when its support ends.
 
 The next page covers what the production settings cost, where things go wrong, cleanup, and the verification notes.

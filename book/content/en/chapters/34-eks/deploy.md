@@ -10,7 +10,7 @@ title: "34 Kubernetes: Deploy"
 
 Hourly charges begin at the second block of commands on this page. **None of the commands on this page was run against real AWS.** The steps were put together from the documentation and from the source of the pinned tools.
 
-These steps need `kubectl`. This book's devShell (Nix) does not include it, so provide it some other way. Use a `kubectl` within one minor version of the cluster. This cluster is 1.37, so that means 1.36 to 1.38.
+These steps need `kubectl`. This book's devShell (Nix) includes it, at version 1.37.1. Use a `kubectl` within one minor version of the cluster. This cluster is 1.37, so 1.36 to 1.38 will do. The devShell's `kubectl` changes when the nixpkgs pin is updated, so check again with `kubectl version --client` after an update.
 
 First, prepare chapter 11's VPC, and chapter 12's repository and image. Deployed without a tag, chapter 12's stack is the repository alone and has no hourly charge. Building and pushing the image needs a Docker daemon.
 

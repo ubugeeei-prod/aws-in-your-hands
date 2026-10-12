@@ -4,8 +4,8 @@
     "id": "08",
     "slug": "async",
     "title": {
-      "ja": "リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler",
-      "en": "Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler"
+      "ja": "Queue: SQS、DLQ、冪等性、Scheduler",
+      "en": "Queue: SQS, DLQs, Idempotency, and Scheduler"
     },
     "prerequisites": ["07"],
     "services": ["SQS", "Lambda", "EventBridge Scheduler", "S3 Event Notifications", "DynamoDB"],
@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 4,
+    "sourceRevision": 5,
     "translatedRevision": {
-      "en": 4
+      "en": 5
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [

@@ -1,6 +1,6 @@
 ---
 title: 02 Toolchain: Nix, vp, CDK, cdkd, and Drift
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 02 Toolchain: Nix, vp, CDK, cdkd, and Drift
@@ -52,7 +52,7 @@ It puts you in a shell that contains the tools at their pinned versions. This sh
 
 <<< @/flake.nix
 
-The devShell provides Node.js 24.21.0, pnpm 10.34.5, AWS CLI 2.35.11, git, and `vp` 1.1.0. The exact list of versions is in [Toolchain](/en/reference/toolchain.md).
+The devShell provides Node.js 24.21.0, pnpm 10.34.5, AWS CLI 2.35.11, git, and `vp` 1.1.0. It also holds kubectl 1.37.1, which chapter 34 uses, and OpenSSL 3.5.8, which chapter 66 uses. The exact list of versions is in [Toolchain](/en/reference/toolchain.md).
 
 `vp` is not in nixpkgs, so this repository carries a Nix expression for it. The expression fetches the per-platform binary that the publisher releases on npm, with the hash pinned.
 

@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 2,
     "translatedRevision": {
-      "en": 1
+      "en": 2
     },
     "checkedAt": "2026-10-13",
     "sourceIds": [
@@ -1066,8 +1066,8 @@
         "status": "passed",
         "ranAt": "2026-10-13",
         "note": {
-          "ja": "openssl（Homebrew の 3.6.1。Nix の shell には入っていない）で CA と 127.0.0.1 の証明書を作り、TLS とパスワード認証を有効にして同じ検証を 5 回実行。TLS なしのクライアントは断られた。40001 による再試行は 12、12、12、26、29 回。b を失った後の 20 件は 1.1 秒から 4.3 秒。2 ノードを失ったときの 1 件は確認されず、戻した後に入っていたのは 5 回のうち 2 回。3 回目の実行は、2 ノードを戻した直後の CREATE DATABASE が『current transaction is expired or aborted』で失敗し、検証が失敗で終わった。バックアップの段に再試行を入れた後の 2 回は通った。ysql_dump の出力は 4 回、別のデータベースに揃って入った。yb-admin は --certs_dir_name を付けると list_all_masters と modify_placement_info に応え、付けないと 60 秒でリーダーを見つけられずに終わった。検証の後、distsql:local:destroy で全プロセスを止めた",
-          "en": "With a CA and a certificate for 127.0.0.1 made by openssl (Homebrew's 3.6.1; the Nix shell has none), and TLS and password authentication on, the same verification ran five times. A client without TLS was refused. 12, 12, 12, 26, and 29 retries after 40001. The 20 creates after losing b took 1.1 s to 4.3 s. The one create with two nodes lost was never acknowledged, and was there afterwards in 2 runs of 5. The third run ended in failure: the CREATE DATABASE right after the two nodes returned failed with \"current transaction is expired or aborted\". The two runs after a retry was added to the backup block passed. A ysql_dump fed into another database held everything in 4 runs. yb-admin answered list_all_masters and modify_placement_info with --certs_dir_name, and without it gave up after 60 s without finding the leader. After the verification, distsql:local:destroy stopped every process"
+          "ja": "openssl（Homebrew の 3.6.1。この実行の時点では、Nix の shell には入っていなかった）で CA と 127.0.0.1 の証明書を作り、TLS とパスワード認証を有効にして同じ検証を 5 回実行。TLS なしのクライアントは断られた。40001 による再試行は 12、12、12、26、29 回。b を失った後の 20 件は 1.1 秒から 4.3 秒。2 ノードを失ったときの 1 件は確認されず、戻した後に入っていたのは 5 回のうち 2 回。3 回目の実行は、2 ノードを戻した直後の CREATE DATABASE が『current transaction is expired or aborted』で失敗し、検証が失敗で終わった。バックアップの段に再試行を入れた後の 2 回は通った。ysql_dump の出力は 4 回、別のデータベースに揃って入った。yb-admin は --certs_dir_name を付けると list_all_masters と modify_placement_info に応え、付けないと 60 秒でリーダーを見つけられずに終わった。検証の後、distsql:local:destroy で全プロセスを止めた",
+          "en": "With a CA and a certificate for 127.0.0.1 made by openssl (Homebrew's 3.6.1; the Nix shell had none at the time of this run), and TLS and password authentication on, the same verification ran five times. A client without TLS was refused. 12, 12, 12, 26, and 29 retries after 40001. The 20 creates after losing b took 1.1 s to 4.3 s. The one create with two nodes lost was never acknowledged, and was there afterwards in 2 runs of 5. The third run ended in failure: the CREATE DATABASE right after the two nodes returned failed with \"current transaction is expired or aborted\". The two runs after a retry was added to the backup block passed. A ysql_dump fed into another database held everything in 4 runs. yb-admin answered list_all_masters and modify_placement_info with --certs_dir_name, and without it gave up after 60 s without finding the leader. After the verification, distsql:local:destroy stopped every process"
         }
       },
       {
@@ -1112,6 +1112,17 @@
         "note": {
           "ja": "実行していない",
           "en": "Not run"
+        }
+      },
+      {
+        "scope": "66",
+        "command": "vp run distsql:local:certs (devShell openssl 3.5.8)",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "flake.nix の devShell に `pkgs.openssl` を足したあと、`nix develop` の中で実行した。`openssl version` は OpenSSL 3.5.8。`.yugabyte/ca` と `.yugabyte/certs` に以前の実行の証明書が残っていたので、タスクは何も作らずに終了コード 0 で終わった。別に、`src/certs.ts` の `caArgs`、`requestArgs`、`extensionsFor`、`signArgs` を同じ順で、リポジトリの外の空のディレクトリに対して devShell の openssl で実行し、`openssl verify` が OK を返すこと、証明書の subject が CN=127.0.0.1、subjectAltName が IP Address:127.0.0.1 であることを確かめた。クラスターは起動していない",
+          "en": "Run inside `nix develop` after `pkgs.openssl` was added to the devShell in flake.nix. `openssl version` printed OpenSSL 3.5.8. `.yugabyte/ca` and `.yugabyte/certs` still held the certificates of an earlier run, so the task made nothing and exited 0. Separately, `caArgs`, `requestArgs`, `extensionsFor` and `signArgs` of `src/certs.ts` were run in the same order with the devShell's openssl against an empty directory outside the repository: `openssl verify` answered OK, and the certificate has the subject CN=127.0.0.1 and the subjectAltName IP Address:127.0.0.1. No cluster was started"
         }
       }
     ],
@@ -1163,12 +1174,12 @@
       {
         "id": "66-openssl-not-in-nix",
         "summary": {
-          "ja": "証明書を作る `distsql:local:certs` と `distsql:certs` は PATH の openssl を使う。Nix の devShell には openssl が入っていない（この作業では Homebrew の 3.6.1 が使われた）。",
-          "en": "`distsql:local:certs` and `distsql:certs` use the openssl on PATH. The Nix devShell does not provide one (Homebrew's 3.6.1 was used here)."
+          "ja": "devShell に OpenSSL 3.5.8 を足し、`distsql:local:certs` と同じ引数で認証局と証明書を作れることは確かめた。TLS を有効にしたクラスターの検証（5 回）は Homebrew の OpenSSL 3.6.1 で作った証明書で実行したもので、3.5.8 で作った証明書ではクラスターを起動していない。`distsql:certs`（AWS のノード向け）は実行していない。",
+          "en": "OpenSSL 3.5.8 was added to the devShell, and the arguments of `distsql:local:certs` were confirmed to produce a certificate authority and a certificate with it. The verification of a cluster with TLS (5 runs) used certificates made by Homebrew's OpenSSL 3.6.1; no cluster was started with certificates made by 3.5.8. `distsql:certs` (for the nodes on AWS) was not run."
         },
         "resume": {
-          "ja": "flake の devShell に openssl を足すかどうかを決める。足さない場合は、macOS に付属の /usr/bin/openssl（LibreSSL）で同じ引数が通るかを確かめる。",
-          "en": "Decide whether to add openssl to the flake's devShell. If not, check that the same arguments work with the /usr/bin/openssl (LibreSSL) that macOS ships."
+          "ja": "`vp run distsql:local:destroy` のあと `examples/66-distributed-sql/.yugabyte/ca` と `.yugabyte/certs` を消し、devShell の中で `vp run distsql:local:certs`、`vp run distsql:local:start --tls`、`vp run distsql:local:verify` を実行して、結果を記録する。",
+          "en": "After `vp run distsql:local:destroy`, delete `examples/66-distributed-sql/.yugabyte/ca` and `.yugabyte/certs`, then run `vp run distsql:local:certs`, `vp run distsql:local:start --tls` and `vp run distsql:local:verify` inside the devShell and record the result."
         }
       },
       {
@@ -1201,6 +1212,12 @@
       "version": "2025.2.7.0-b107",
       "providedBy": "vp run distsql:fetch (software.yugabyte.com), into examples/66-distributed-sql/.yugabyte/",
       "pinnedIn": "examples/66-distributed-sql/src/yugabyte.ts"
+    },
+    {
+      "name": "OpenSSL",
+      "version": "3.5.8",
+      "providedBy": "nixpkgs openssl",
+      "pinnedIn": "flake.lock"
     }
   ],
   "tasks": {

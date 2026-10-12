@@ -59,6 +59,8 @@ vp run ecs:infra:deploy -c imageTag=v2
 
 As in chapter 11, `-c` applies only to the one command it is given to. If you deploy and forget `-c imageTag=...`, the ALB and the tasks are deleted. That is a convenient way to stop the hourly charges, and it stops the service if you do it by accident. Pass the same `-c` to `diff` and look at the changes first.
 
+You can also name the image by digest instead of by tag. Pass `-c imageDigest=sha256:...` in place of `-c imageTag=v2`, and the task definition points at the image by its digest, and `x-app-version` is the digest too. A value that is not `sha256:` followed by 64 lowercase hex digits, or a digest given together with `imageTag`, is refused at synth. [Chapter 52](/en/chapters/52-ecr.md) explains why a deployment should name its image by digest and how to find the digest of an image you pushed.
+
 The drift check is the same as in chapter 02.
 
 ```bash

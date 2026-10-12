@@ -124,6 +124,36 @@
       "pinnedIn": "examples/05-dynamodb/scripts/local-db.ts"
     },
     {
+      "name": "awscdk-lint for Oxlint (oxlint-plugin-awscdk), by ren-yamanashi",
+      "version": "1.0.3",
+      "providedBy": "pnpm",
+      "pinnedIn": "package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "jsonata (the JSONata reference implementation, used by the local interpreter)",
+      "version": "2.0.6",
+      "providedBy": "pnpm",
+      "pinnedIn": "examples/47-step-functions/package.json, pnpm-lock.yaml"
+    },
+    {
+      "name": "kubectl",
+      "version": "1.37.1 (Kustomize 5.8.1)",
+      "providedBy": "nixpkgs kubectl",
+      "pinnedIn": "flake.lock"
+    },
+    {
+      "name": "YugabyteDB",
+      "version": "2025.2.7.0-b107",
+      "providedBy": "vp run distsql:fetch (software.yugabyte.com), into examples/66-distributed-sql/.yugabyte/",
+      "pinnedIn": "examples/66-distributed-sql/src/yugabyte.ts"
+    },
+    {
+      "name": "OpenSSL",
+      "version": "3.5.8",
+      "providedBy": "nixpkgs openssl",
+      "pinnedIn": "flake.lock"
+    },
+    {
       "name": "Nuxt (nuxt, @nuxt/nitro-server)",
       "version": "4.6.1",
       "providedBy": "pnpm",
@@ -146,24 +176,6 @@
       "version": "2.6.0 and 1.3.0",
       "providedBy": "pnpm",
       "pinnedIn": "examples/16-long-jobs/package.json, pnpm-lock.yaml"
-    },
-    {
-      "name": "awscdk-lint for Oxlint (oxlint-plugin-awscdk), by ren-yamanashi",
-      "version": "1.0.3",
-      "providedBy": "pnpm",
-      "pinnedIn": "package.json, pnpm-lock.yaml"
-    },
-    {
-      "name": "jsonata (the JSONata reference implementation, used by the local interpreter)",
-      "version": "2.0.6",
-      "providedBy": "pnpm",
-      "pinnedIn": "examples/47-step-functions/package.json, pnpm-lock.yaml"
-    },
-    {
-      "name": "YugabyteDB",
-      "version": "2025.2.7.0-b107",
-      "providedBy": "vp run distsql:fetch (software.yugabyte.com), into examples/66-distributed-sql/.yugabyte/",
-      "pinnedIn": "examples/66-distributed-sql/src/yugabyte.ts"
     }
   ]
 }

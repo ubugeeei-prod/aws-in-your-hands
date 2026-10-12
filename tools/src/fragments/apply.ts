@@ -77,6 +77,18 @@ if (fragment.chapterId !== id || fragment.manifest.id !== id) {
 }
 
 const manifest = readJson("data/chapters.json") as { chapters: { id: string }[] };
+// A fragment older than the manifest would undo later edits. Its author has to bring it up to date first.
+const recorded = (manifest.chapters as { id: string; sourceRevision?: number }[]).find(
+  (chapter) => chapter.id === id,
+);
+// A chapter that is still only planned has no revision yet.
+const offered = "sourceRevision" in fragment.manifest ? fragment.manifest.sourceRevision : 0;
+if (recorded?.sourceRevision !== undefined && recorded.sourceRevision > offered) {
+  console.error(
+    `data/fragments/${id}.json is at revision ${offered}, data/chapters.json at ${recorded.sourceRevision}: update the fragment before applying it`,
+  );
+  process.exit(65);
+}
 // A chapter the manifest does not know yet is added, in the order of the IDs.
 if (!manifest.chapters.some((chapter) => chapter.id === id)) {
   manifest.chapters = [...manifest.chapters, { id }].toSorted((a, b) => a.id.localeCompare(b.id));

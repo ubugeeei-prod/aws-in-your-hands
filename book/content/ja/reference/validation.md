@@ -70,79 +70,17 @@ generated: true
 | 10 | `vp run edge:infra:diff / deploy / drift / destroy, edge:publish / unpublish` | AWS | 未実行 | - | S3、CloudFront の distribution、Function、KeyValueStore を作る |
 | 10 | `vp run edge:kvs:plan / edge:kvs:sync` | AWS | 未実行 | - | デプロイ済みの KeyValueStore が必要。API 操作は 1,000 回あたり USD 1 |
 | 10 | `vp run edge:body:infra:deploy / destroy` | AWS | 未実行 | - | us-east-1 に Lambda 関数と version、IAM role を作る |
-| 13 | `vp run test:unit (examples/13-sql)` | ローカル | 成功 | 2026-10-11 | transaction の再試行、PGlite 上の repository（quota、version、owner の分離、制約）、COMMIT の競合の注入、migration の lint と中断からの再開、grant 文の検査、API、インフラの assertion |
-| 13 | `vp run sql:db:reset:local / sql:db:migrate:local / sql:db:seed:local, vp run dev:sql + curl (NOTES_DB=pglite)` | ローカル | 成功 | 2026-10-11 | migration と seed の適用、2 回目の実行で何も変わらないこと、作成、更新、古い version の 409、UUID でない id の 404、削除、開発サーバーの起動中に reset が拒否されることを確認 |
-| 13 | `vp run sql:infra:synth` | ローカル | 成功 | 2026-10-11 | node-postgres と AWS SDK の署名を含む CommonJS の bundle を esbuild で作成。bundle を Node.js 24 で読み込み、DB に触れない route（GET /health と UUID でない id）が応答することを確認 |
-| 13 | `vp run sql:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Aurora DSQL の cluster を作る。cdkd は AWS::DSQL::Cluster を Cloud Control API 経由で扱う |
-| 13 | `vp run sql:db:migrate / sql:db:grant / sql:db:seed` | AWS | 未実行 | - | admin として cluster に接続し、schema、database role、seed を作る |
-| 13 | `vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)` | AWS | 未実行 | - | デプロイ済みの API と cluster が必要 |
 | 07 | `vp run test:unit (examples/07-uploads)` | ローカル | 成功 | 2026-10-11 | 認可（他人のノートは 404、key は token からのみ）、許可証の中身、完了と期限と上限、途中で止めた場合の S3 と DynamoDB の状態、掃除、同じ form の再送、SDK が作る POST policy と presigned GET（偽の認証情報で署名のみ）、DynamoDB へのリクエストの形、インフラの assertion |
 | 07 | `vp run dev:uploads:api + vp run dev:uploads:web + ブラウザの自動操作 / browser automation` | ローカル | 成功 | 2026-10-11 | サインイン、ノートの作成、ファイルを選んで画像が表示されること、別の利用者の許可・一覧・完了が 404、大きすぎるファイル・違う種類・違う key の拒否、完了の再実行、削除とノートの削除の後に画像の URL が読めないことを確認。相手はメモリ上の実装で、S3 ではない |
 | 07 | `vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck` | ローカル | 成功 | 2026-10-11 | 06章と同じ 19 種類のリソース。Cognito 用のコードと scripts/ は型検査のみ |
 | 07 | `S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation` | ローカル | 未実行 | - | タスクを用意していない。Docker の daemon が要り、執筆環境では動いていなかった |
 | 07 | `vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish` | AWS | 未実行 | - | bucket を 2 つ、user pool、distribution、table を作る。S3 への presigned POST、lifecycle rule、CORS、DynamoDB への添付の記録は、どれも実環境で未確認 |
-| 09 | `vp run test:unit (examples/09-ssr)` | ローカル | 成功 | 2026-10-11 | cache の判定、共有 cache 越しの漏れの再現、session、publish の計画、smoke の判定、CDK の assertion |
-| 09 | `vp run typecheck / typecheck:ssr / lint:ssr` | ローカル | 成功 | 2026-10-11 | tsc で core、server、infra、scripts、test。Vize で app の .vue。わざと入れた型エラーで vize check が失敗することも確認 |
-| 09 | `vp run ssr:check:output (runs build:ssr first)` | ローカル | 成功 | 2026-10-11 | Nuxt 4.6.1 と nitropack 2.13.4 の buffered な Lambda handler を function URL の形の event で呼び、ヘッダー、サインイン、共有 cache 越しの再現を確認。/feed は 1 回、HTML は 1 回で書かれた。Lambda では実行していない |
-| 09 | `vp run ssr:check:output:stream (runs build:ssr:stream first)` | ローカル | 成功 | 2026-10-11 | awslambda を記録用の偽物に差し替えて streaming の handler を呼んだ。/feed は 3 回（約 300 ms おき）、HTML は 1 回で書かれた。Lambda の runtime、function URL、CloudFront は通していない |
-| 09 | `vp run ssr:infra:synth` | ローカル | 成功 | 2026-10-11 | cdkd で synth。template に function URL（AWS_IAM）、OAC、2 つの Lambda::Permission、cache policy、response headers policy があることを確認 |
-| 09 | `nuxt dev on port 3909 (the command behind dev:ssr, started directly) + HTTP requests` | ローカル | 成功 | 2026-10-11 | AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない |
-| 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | 未実行 | - | distribution、Lambda の関数と function URL、bucket を作る |
-| 19 | `vp run test:unit (examples/19-observability)` | ローカル | 成功 | 2026-10-12 | 実際に書かれるログの形と大きさ、ログの query と metric filter の条件を本物のログ行で評価、traceparent と X-Ray の trace ID の変換、span とログの相互参照、属性の許可リスト、sampling されない要求と欠けた span の再現、アラームの条件、料金計算の入力、インフラの assertion |
-| 19 | `vp run dev:obs + curl` | ローカル | 成功 | 2026-10-12 | 本文の curl を実行。ログの行に traceId が付くこと、span がコンソールに出ること、traceparent を付けた要求が同じ trace ID を引き継ぐこと、TRACE_SAMPLE_RATIO=0 で span が出ずログは残ることを確認 |
-| 19 | `vp run obs:query:print` | ローカル | 成功 | 2026-10-12 | Logs Insights の query の文字列を出力するだけ。AWS には問い合わせない |
-| 19 | `vp run obs:infra:synth` | ローカル | 成功 | 2026-10-12 | 関数を OpenTelemetry の API ごと esbuild で bundle。-c otelLayerArn を付けた場合も synth できることを確認。AWS には問い合わせない |
-| 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | DynamoDB の table、Lambda、HTTP API、SNS の topic、アラーム 2 つ、ダッシュボード、metric filter を作る。ダッシュボードと metric filter は cdkd が Cloud Control API 経由で扱う |
-| 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | 未実行 | - | デプロイ済みの stack が必要。obs:smoke はノートを 1 件作って消す。obs:query は走査したログの量に課金される |
-| 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | 未実行 | - | AWS Lambda Layer for OpenTelemetry を付けた構成。Node.js 24 の runtime はこの layer の対応一覧に無い |
 | 14 | `vp run test:unit (examples/14-kv-cache)` | ローカル | 成功 | 2026-10-12 | rate limiter の境界と同時実行、store の contract（メモリ）、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、stampede、TTL の揺らぎ、IAM 認証 token の署名、アプリ、stack の assertion |
 | 14 | `vp run kv:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成と `-c store=valkey` の両方で synth した（esbuild の bundle 込み） |
 | 14 | `vp run dev:kv` | ローカル | 成功 | 2026-10-12 | KV_STORE を memory、valkey、dynamodb にして起動し、本文の curl を実行した。valkey と dynamodb は下の行の手元のサーバーに対して |
 | 14 | `node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)` | ローカル | 成功 | 2026-10-12 | store の contract 22 件を、nixpkgs の valkey-server 9.1.2 と、AWS が配布する DynamoDB Local 3.3.1（jar を JRE 21 で起動）に対して実行した。Docker の daemon が無かったので、コンテナではなくプロセスとして起動している |
 | 14 | `vp run kv:local:start / kv:local:stop` | ローカル | 未実行 | - | Docker の daemon が無く実行していない。valkey/valkey:9.0.6-alpine と amazon/dynamodb-local:3.3.1 の image は取得も起動もしていない |
 | 14 | `vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs` | AWS | 未実行 | - | DynamoDB の table、Lambda、HTTP API を作る。`-c store=valkey` では、置いてあるだけで課金される ElastiCache Serverless の cache も作る |
-| 20 | `vp run test:unit (examples/20-shipping, tools/src/drift)` | ローカル | 成功 | 2026-10-12 | CloudFormation の drift の polling・分類・gate（clean、drifted、deleted、未検査、nested stack、検出失敗、stack 不在、timeout、古い結果、矛盾、形の違う応答）、SDK の client を差し替えた呼び出し順、OIDC の trust policy と role の権限、stage ごとの stack、CDK CLI の引数、stack の状態ごとの次の一手、preview の洗い出し、workflow の YAML |
-| 20 | `vp run ship:cfn:synth` | ローカル | 成功 | 2026-10-12 | 固定した AWS CDK CLI 2.1145.0 で synth。認証情報なし。AihShipApi と AihShipCi の template が cdk.out に出ること、AihShipApi に AWS::IAM::Policy と AWS::CDK::Metadata が無いことを確認。-c stage=prod、-c stage=pr-12 でも実行 |
-| 20 | `vp run ship:cfn:deploy -c stage=staging / vp run ship:ci:deploy (no AWS call)` | ローカル | 成功 | 2026-10-12 | 知らない stage と、repository を指定しない CI role のデプロイが、AWS を呼ぶ前に止まることを確認 |
-| 20 | `vp run check:all` | ローカル | 成功 | 2026-10-12 | format、lint、型検査、全テスト、全 CDK アプリの synth、本のビルドとリンク検査 |
-| 20 | `vp run ship:cfn:bootstrap` | AWS | 未実行 | - | CDKToolkit stack の作成は未実行。作られるものの記述は、固定した CLI の `cdk bootstrap --show-template` による |
-| 20 | `vp run ship:cfn:diff / ship:cfn:deploy / ship:smoke / ship:cfn:status / ship:cfn:destroy` | AWS | 未実行 | - | CloudFormation 経路でのデプロイと確認は未実行。alias 経由の integration が動くこと、失敗時の rollback の様子も未確認 |
-| 20 | `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` | AWS | 未実行 | - | OIDC provider と 4 つの role の作成は未実行。trust policy を IAM が受け入れること、bootstrap の role を assume できることも未確認 |
-| 20 | `vp run ship:cfn:drift (and the drift lab)` | AWS | 未実行 | - | 実際の stack での drift 検出は未実行。fixture は API リファレンスと SDK の型から書いたもので、実機の応答ではない |
-| 20 | `vp run ship:preview:list` | AWS | 未実行 | - | preview stack の一覧は未実行 |
-| 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | 未実行 | - | 4 つの workflow は GitHub Actions で一度も実行していない。x86_64-linux の runner で Nix の devShell が入ることも未確認 |
-| 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | 未実行 | - | cdkd と CloudFormation の間で stack を移す手順は未実行。記述は固定した版のヘルプによる |
-| 12 | `vp run test:unit (examples/12-containers)` | ローカル | 成功 | 2026-10-12 | SIGTERM を送る子プロセスのテスト、graceful shutdown、新旧の版の同居、時間の関係、設定、docker コマンドの組み立て、料金、stack の assertion |
-| 12 | `vp run ecs:infra:synth` | ローカル | 成功 | 2026-10-12 | image tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private` の 3 通りで synth した |
-| 12 | `vp run ecs:bundle / ecs:bundle:check` | ローカル | 成功 | 2026-10-12 | dist/server.mjs を作り、node_modules の無い場所で起動して /health を呼び、SIGTERM で終了コード 0 になることを確かめた |
-| 12 | `vp run dev:ecs` | ローカル | 成功 | 2026-10-12 | 起動して本文の curl を実行し、Ctrl-C（SIGINT）で draining、stopped のログが出て終了することを確かめた |
-| 12 | `vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push` | ローカル | 成功 | 2026-10-12 | --dry-run でコマンドを表示した。daemon なしで実行すると、理由を表示して終了コード 1 になることも確かめた |
-| 12 | `vp run ecs:watch --url http://localhost:8099 --for 3` | ローカル | 成功 | 2026-10-12 | 手元で起動したサーバーに向けて実行し、版ごとの集計が出ることを確かめた。deploy した service には向けていない |
-| 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | ローカル | 未実行 | - | Docker の daemon が動いていなかったため、image を一度も build していない |
-| 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | ECR の repository を作る。image tag を渡すと ALB と Fargate の task 2 つ（時間課金）も作る |
-| 12 | `vp run ecs:watch / ecs:logs` | AWS | 未実行 | - | deploy した service を読むだけのタスク |
-| 08 | `vp run test:unit (examples/08-async)` | ローカル | 成功 | 2026-10-12 | 重複配送（同じメッセージ、別の ID の同じイベント、2 つの worker の同時実行）、順序の入れ替わり（古い作成、遅れた削除）、途中での中断（記録の前、記録の後）、batch の一部の失敗、DLQ への移動と戻し、S3 の test event、07章の穴（form の再送）の修復、掃除の再実行・同時実行・中断、画像の種類と大きさの判定（sips と cwebp が書いた実ファイル）、DynamoDB と S3 へのリクエストの形、インフラの assertion。条件を 2 か所わざと壊して、テストが落ちることも確かめた |
-| 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | ローカル | 成功 | 2026-10-12 | サインイン、ノートの作成、form でのアップロード、worker の記録（ok、1x1）、完了、同じ form で HTML を再送して記録が rejected に変わること、掃除の dry run、削除で記録が消えることを /local/queue で確認。相手はメモリ上の queue と bucket で、SQS でも S3 でもない |
-| 08 | `vp run async:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 07章の 19 種類に 5 種類（SQS::Queue、SQS::QueuePolicy、Lambda::EventSourceMapping、Lambda::EventInvokeConfig、Scheduler::Schedule）を足した 24 種類。Custom:: のリソースはない。scripts/ は型検査のみ |
-| 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | 未実行 | - | queue を 2 つ、関数を 2 つ、schedule を 1 つ、そして 07章の一式（bucket 2 つ、user pool、distribution、table）を作る。S3 の通知、SQS、event source mapping、Scheduler、DynamoDB の条件付き書き込みは、どれも実環境で未確認 |
-| 23 | `vp run test:unit (examples/23-ec2)` | ローカル | 成功 | 2026-10-12 | file に書く repository を電源断の各段階で壊すテスト、SIGTERM のときの挙動（本物の socket）、user data と unit の生成と injection の拒否、data volume の script を bash で実行するテスト、Run Command の引数、SSM への経路のモデル、料金の入力、stack の assertion |
-| 23 | `vp run ec2:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成と、`-c placement=public`、`-c dataOnDestroy=snapshot`、`-c dataSnapshotId=snap-0123456789abcdef0`、`-c amiId=ami-0123456789abcdef0` で synth した |
-| 23 | `vp run ec2:plan / ec2:render / ec2:app:build` | ローカル | 成功 | 2026-10-12 | ec2:plan は既定、`placement=public`、endpoint の足りない設定、不正な設定で実行。ec2:render は deploy/ が生成結果と一致することを確認。ec2:app:build は 1 つの ESM の file を作る |
-| 23 | `vp run dev:ec2 + curl, SIGTERM` | ローカル | 成功 | 2026-10-12 | ビルドした dist/server.mjs と src/server.ts の両方を Node.js 24 で起動。作成、一覧、再起動後も残ること、SIGTERM で exit code 0 で終わること、壊した notes.json では起動を拒否することを確認 |
-| 23 | `vp run ec2:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | EC2 の instance（時間課金）、EBS volume、S3 bucket を作る。11章の stack が先に要る |
-| 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | 未実行 | - | Systems Manager を通して instance に入る、release を配る、動作を確かめる。ec2:session と ec2:forward は Session Manager plugin が要る（devShell には入っていない） |
-| 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | 未実行 | - | instance の上で dnf を実行する、data volume を unmount、mount する、release の object を消す |
-| 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | 未実行 | - | 本文の手順は実行していない。flag は devShell の AWS CLI 2.35.11 の help で確かめた |
-| 16 | `vp run test:unit (examples/16-long-jobs)` | ローカル | 成功 | 2026-10-12 | step の再実行（同じ step の 2 回目、応答が失われた後に table が変わった場合、呼び出しの途中での失敗、読み取りの失敗）、2 つの worker（止まっていた worker が遅れて書く、同じ export の 2 つの実行が重なる）、checkpoint の大きさを変えても出力が同じこと、manifest と補償処理（欠けた part、途中で止まった破棄、完成した export を消さないこと）、workflow の定義を手元の実行器で動かす（応答の喪失、再試行の打ち切りと再開、最初からのやり直し、破棄）、S3 と DynamoDB へのリクエストの形、durable function 版（SDK の LocalDurableTestRunner）、stack の assertion。条件を 2 か所わざと壊して、どちらもテストが 2 つ落ちることも確かめた |
-| 16 | `vp run export:local` | ローカル | 成功 | 2026-10-12 | 既定（250 件）、`--notes 450 --lose 2 --break 4`（応答の喪失と、再試行の打ち切りからの再開）、`--notes 1000 --pages-per-call 20` を実行し、manifest の行数と重複のない件数がノートの件数と一致することを確かめた。相手はメモリ上の store で、Step Functions でも S3 でも DynamoDB でもない |
-| 16 | `vp run export:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 既定の構成と `-c durable=true` の両方で synth した（esbuild の bundle 込み。durable 版は SDK も bundle する）。既定は 9 種類で、どれも cdkd 0.296.28 に専用の実装がある。durable 版は Lambda::Version と Lambda::Alias が増え、この 2 つは Cloud Control API 経由。scripts/ は型検査のみ |
-| 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | 未実行 | - | bucket、table、関数 3 つ、state machine、schedule を作る。`-c durable=true` では durable function と version、alias が増える。Step Functions、Scheduler からの起動、S3 の条件付き書き込み、DynamoDB の Scan、durable function は、どれも実環境で未確認 |
-| 22 | `vp run test:unit (examples/22-recovery)` | ローカル | 成功 | 2026-10-12 | table と bucket を別の時点に戻したときの検出と修復（同じ時点、table だけ、アップロードより前、上書きの後、version が残っていない場合）、修復の dry run・二重実行・途中での中断、08章の残った検査記録、object の復元計画と再実行、version 番号の巻き戻りと fence、PITR の計画、drill の記録、item の分類、05章の repository contract、DynamoDB と S3 へのリクエストの形、stack の assertion |
-| 22 | `vp run recovery:demo` | ローカル | 成功 | 2026-10-12 | メモリ上の table と bucket で、事故、table の復元、検査（4 件）、bucket の復元、再検査（0 件）、fence までを実行した。本文に載せた出力はこの実行のもの |
-| 22 | `vp run recovery:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成で synth した（esbuild の bundle 込み）。`-c table`、`-c protect=on`、`-c backup=on`、`-c replica=on` は、テストの中と、`node infra/bin/app.ts` に context を渡す形で synth した |
-| 22 | `vp run recovery:drill new / mark / set / summary` | ローカル | 成功 | 2026-10-12 | 記録ファイルの作成、時刻と件数の記入、上書きの拒否、集計を手元で実行した。書いた値は動作確認用で、drill の実測ではない。ファイルは消した |
-| 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | PITR を有効にした DynamoDB の table、versioning を有効にした S3 bucket、Lambda 関数を作る。`-c backup=on` で AWS Backup の vault と plan、`-c replica=on` で 2 つ目の bucket と複製の設定が加わる |
-| 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | 未実行 | - | drill の手順。AWS に対しては 1 つも実行していない。RPO と RTO の実測値はない |
 | 24 | `vp run test:unit (examples/24-celld)` | ローカル | 成功 | 2026-10-12 | 更新の順序を決める関数に、各段階で失敗を差し込むテスト（待ち時間なし）、作り物の fleet に対する ledger の判定、probe の script を bash と curl で実行するテスト、install script の引数と checksum の拒否、unit と user data の生成、diagnose の出力の読み取り、backup と restore の計画、料金の入力、stack の assertion |
 | 24 | `vp run celld:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定（node なし）と、`-c nodes=1`、`-c nodes=3`、`-c nodes=2 -c stateOnDestroy=delete`、`-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0` で synth した |
 | 24 | `vp run celld:plan / vp run celld:render` | ローカル | 成功 | 2026-10-12 | node 数ごとの計画と固定費の表示、deploy/ が生成結果と一致することの確認 |
@@ -152,24 +90,6 @@ generated: true
 | 24 | `vp run celld:rollout / celld:drain / celld:stop-all` | AWS | 未実行 | - | drain と、v0.6.1 から v0.6.2 への rolling update は実機で未実行。順序の制御は手元の stand-in に対してだけ確かめた |
 | 24 | `vp run celld:loss-check` | AWS | 未実行 | - | node を失わせて invariant を確かめる検査は、celld の実物には一度も当てていない |
 | 24 | `vp run celld:backup / celld:restore` | AWS | 未実行 | - | 停止した fleet の backup と restore は未実行。bucket の copy と snapshot から戻した fleet が正しく起動するかは未確認 |
-| 17 | `vp run test:unit (examples/17-ai)` | ローカル | 成功 | 2026-10-12 | 59 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、SSE の書式、awslambda の代役を渡した function URL のアダプター、CDK の assertion |
-| 17 | `vp run typecheck (examples/17-ai)` | ローカル | 成功 | 2026-10-12 | scripts/ と infra/ を含む |
-| 17 | `vp run ai:infra:synth` | ローカル | 成功 | 2026-10-12 | esbuild による bundle（Docker なし）を含む。5 リソース |
-| 17 | `vp run dev:ai + curl` | ローカル | 成功 | 2026-10-12 | AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log（curl を 0.5 秒で打ち切り、durationMs は 501）、AI_FIXTURE=truncated の error イベントを確認 |
-| 17 | `vp run check:all` | ローカル | 成功 | 2026-10-11 | 17章を加えた状態で通過 |
-| 17 | `vp run dev:ai (AI_BACKEND=bedrock)` | AWS | 未実行 | - | 手元のサーバーから実際の Bedrock を呼ぶ。課金される |
-| 17 | `vp run ai:hello / ai:test:live` | AWS | 未実行 | - | 実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない |
-| 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Lambda、function URL、IAM role、log group を作る |
-| 17 | `vp run ai:smoke / ai:logs` | AWS | 未実行 | - | デプロイ済みの function URL が必要。課金される |
-| 21 | `vp run test:unit (examples/21-security)` | ローカル | 成功 | 2026-10-12 | token の署名と検証、rotation をまたぐ鍵の cache（古い cache の実行環境、2 回の rotation、でたらめな version id の連打、Secrets Manager の停止、同時リクエスト）、rotation の手順（応答の喪失後の再実行、早すぎる 2 回目、version id の使い回し）、SDK の client を差し替えた secret の読み取り、wildcard の lint と理由つきの例外、20章の CI role への適用、SCP の JSON と評価の model、IAM の伝播待ち、posture の判定、stack の assertion（既定で月額がかかるのは secret 1 つだけ、cmk と web ACL は opt-in） |
-| 21 | `vp run sec:infra:synth` | ローカル | 成功 | 2026-10-12 | 固定した cdkd 0.296.28 で synth。認証情報なし。AihSecurity と AihSecurityWaf の template が cdk.out に出ること、-c cmk=on と -c webAclArn=... で template が変わること、形の違う webAclArn で synth が止まることを確認 |
-| 21 | `vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)` | ローカル | 成功 | 2026-10-12 | この章の 2 つの template は例外なしで合格。`vp run infra:synth` のあとに全章の cdk.out を渡した結果は、本文の「本全体に当ててみる」に書いたとおり |
-| 21 | `vp run dev:sec` | ローカル | 成功 | 2026-10-12 | 手元の server で /health、/token、/verify を curl で確認。鍵はメモリの中だけで、AWS は呼ばない |
-| 21 | `vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy` | AWS | 未実行 | - | 未実行。CloudFront、function URL、Secrets Manager を通した動作、デプロイ直後の 503 の有無、destroy 後に secret が残らないこと |
-| 21 | `vp run sec:secret:versions / sec:secret:rotate` | AWS | 未実行 | - | 未実行。PutSecretValue 後の staging label の動き、同じ version id での再実行、rotation 後に古い cache の実行環境が新しい token を受け入れること |
-| 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | 未実行 | - | 未実行。us-east-1 への web ACL の作成、distribution への関連付け、rate-based rule が実際に block を始めるまでの時間、count にした rule group の記録 |
-| 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | 未実行 | - | 未実行。customer managed key での secret の暗号化、kms:ViaService の条件つきで関数が読めること、destroy 後の鍵の状態 |
-| 21 | `vp run sec:posture / sec:trail:iam` | AWS | 未実行 | - | 未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示 |
 | 30 | `vp run modeling:test:local (DynamoDB Local 3.3.1)` | ローカル | 成功 | 2026-10-13 | テーブルの操作の規則 14 件と、ノートブックの規則 21 件を、DynamoDB Local 3.3.1 に対して実行した。Docker ではなく、AWS が配布する jar を Java 21 で直接起動し（ポート 8030、-inMemory -sharedDb -disableTelemetry）、テーブルは `scripts/local-db.ts reset` で作った。ストリームを読む処理と移行は、DynamoDB Local では実行していない |
 | 33 | `node examples/33-production-readiness/scripts/check.ts` | ローカル | 成功 | 2026-10-13 | `vp run ready:check` のスクリプトを、依存する `infra:synth` を通さずに直接実行した（ほかの章が同じ作業ツリーで書かれている最中で、全スタックの synth をやり直せなかったため）。読んだのは、すでに cdk.out にあった 02〜24章と本のサイトの 27 個のテンプレートと、この章の 2 個。本文の件数はこの実行のもので、25〜32章と 34〜36章のスタックは含まない |
 | 46 | `node examples/46-shield/scripts/origins.ts --gate AihShield examples/46-shield/cdk.out` | ローカル | 成功 | 2026-10-13 | shield:origins:gate の中身。AihShield の function URL は closed |
@@ -253,22 +173,6 @@ generated: true
 | 32 | `vp run limits:cost` | AWS | 未実行 | - | Cost Explorer は呼んでいない（1 回 USD 0.01） |
 | 32 | `vp run limits:infra:drift` | AWS | 未実行 | - | 実行していない |
 | 32 | `vp run limits:infra:destroy` | AWS | 未実行 | - | 実行していない |
-| 33 | `vp test run examples/33-production-readiness` | ローカル | 成功 | 2026-10-13 | 5 ファイル、110 件。テンプレートの読み取り（テンプレートでないものの拒否、参照の辿り方、リテラルと組み込み関数の区別）、10 個のルールの通る例と落ちる例、例外（理由の必須、使われていない例外、21章の例外の取り込み）、判定（報告だけのスタックと通過を求めるスタック、読めなかった判定対象）、2 つのフィクスチャ、点検の項目（ルールの置き場所、タスクの実在）、練習用と本番向けの 2 つのスタックの synth と点検の結果、Aspect があとから足したテーブルに届くこと。コードを 11 か所わざと壊してテストが落ちることも確かめた（1 か所は最初は落ちず、バケットポリシーの配列を読み落とす誤りが見つかった） |
-| 33 | `tsc --noEmit -p examples/33-production-readiness` | ローカル | 成功 | 2026-10-13 | サンプル、スクリプト、テスト、CDK のコードの型検査 |
-| 33 | `vp run ready:infra:synth` | ローカル | 成功 | 2026-10-13 | AihReadyPractice と AihReadyProduction の 2 つのテンプレートを cdk.out に書いた。AWS には問い合わせない |
-| 33 | `vp run ready:gate` | ローカル | 成功 | 2026-10-13 | 練習用のスタックは 7 件の指摘を報告し、本番向けのスタックは理由つきの例外 2 件を使って通過した。本文に載せた出力はこの実行のもの |
-| 33 | `vp run ready:review` | ローカル | 成功 | 2026-10-13 | 8 つの分野、32 項目の一覧を表示した |
-| 33 | `node examples/33-production-readiness/scripts/check.ts <cdk.out of chapters 02-24 and book/infra>` | ローカル | 成功 | 2026-10-13 | `vp run ready:check` のスクリプトを、依存する `infra:synth` を通さずに直接実行した（ほかの章が同じ作業ツリーで書かれている最中で、全スタックの synth をやり直せなかったため）。読んだのは、すでに cdk.out にあった 02〜24章と本のサイトの 27 個のテンプレート。結果は 81 件の指摘と 7 件の例外で、本文の件数はこの実行のもの。25〜32章と 34〜36章のスタックは含まない |
-| 33 | `vp run ready:check` | ローカル | 未実行 | - | タスクとしては実行していない。`infra:synth` に依存していて、本のすべてのスタックを synth し直すため |
-| 33 | `account:whoami, sec:posture, sec:trail:iam, sec:secret:versions, sec:secret:rotate, obs:alarms, ship:cfn:diff, ship:cfn:drift, recovery:status, account:budget:create` | AWS | 未実行 | - | 点検の項目が指している、アカウントを読む・変えるタスク。この章では 1 つも実行していない |
-| 34 | `vp test run examples/34-eks` | ローカル | 成功 | 2026-10-13 | マニフェストのスキーマと参照の検査、k8s/ のファイルとジェネレーターの一致、ローリングアップデートと PodDisruptionBudget と drain の計算、時間の関係、サポート期間、料金、スタックのアサーション |
-| 34 | `tsc --noEmit -p examples/34-eks` | ローカル | 成功 | 2026-10-13 | 型検査 |
-| 34 | `vp run eks:infra:synth` | ローカル | 成功 | 2026-10-13 | context なしと `-c deployRoleArn=arn:aws:iam::123456789012:role/aih-deploy` の 2 通りで synth した。AWS には問い合わせていない |
-| 34 | `vp run eks:render` | ローカル | 成功 | 2026-10-13 | k8s/cluster.json と k8s/app.json がジェネレーターの出力と一致する |
-| 34 | `vp run eks:manifests cluster --node-role ... --security-group ... ; vp run eks:manifests app --image ...` | ローカル | 成功 | 2026-10-13 | 値をすべてフラグで渡し、AWS を読まずにマニフェストを出力した |
-| 34 | `vp run eks:infra:deploy` | AWS | 未実行 | - | クラスターを作っていない。cdkd 0.296.28 が Cloud Control API 経由で AWS::EKS::Cluster、AccessEntry、PodIdentityAssociation を作れるかは未確認 |
-| 34 | `kubectl apply -f - (vp run eks:manifests cluster / app)` | AWS | 未実行 | - | kubectl は Nix の shell に無く、クラスターも無い。マニフェストは API サーバーに一度も渡していない |
-| 34 | `vp run eks:infra:destroy` | AWS | 未実行 | - | 実行していない |
 | 35 | `vp test run examples/35-lambda-managed-instances` | ローカル | 成功 | 2026-10-13 | 8 ファイル、52 件。同時に処理中の 2 つのリクエストでリクエスト ID が入れ替わること（モジュールスコープ）と入れ替わらないこと（AsyncLocalStorage）を、関数の呼び出しと本物のソケットの両方で決まった順序で再現。ワーカースレッド 2 本で Map が別々になること。設定の検証、ログへの経路のモデル、料金の入力、損益分岐の計算、スタックのアサーション |
 | 35 | `tsc --noEmit -p examples/35-lambda-managed-instances` | ローカル | 成功 | 2026-10-13 | 型検査 |
 | 35 | `vp run lmi:infra:synth` | ローカル | 成功 | 2026-10-13 | 既定の設定と、`-c instanceType=m7g.large`、`-c minExecutionEnvironments=0 -c maxExecutionEnvironments=0`、`-c maxVCpuCount=16` で synth した。esbuild がハンドラーをバンドルする。AWS には問い合わせない |
@@ -427,14 +331,6 @@ generated: true
 | 51 | `vp run build:calls:web` | ローカル | 成功 | 2026-10-13 | ページのビルド。amazon-chime-sdk-js を含むチャンクは 1,325.59 kB（gzip 294.80 kB）で、参加時にだけ読み込まれる |
 | 51 | `node --env-file=.env.example api/src/dev.ts と vp dev --port 5193（dev:calls:api、dev:calls:web と同じコマンド）` | ローカル | 成功 | 2026-10-13 | 開発用の API に curl で、部屋の作成、メンバーでない人の 404、トークンなしの 401、追加、参加、退出、閉鎖を実行。ブラウザーで、サインイン、部屋の作成、参加、退出、閉鎖が画面に反映されることと、session.ts（amazon-chime-sdk-js）が読み込めることを確認。5173 番が使用中だったので 5193 番で起動 |
 | 51 | `vp run calls:infra:diff / deploy / drift / destroy, calls:user:create, calls:config, preview:calls:web, calls:end` | AWS | 未実行 | - | ユーザープール、テーブル、関数、HTTP API を作り、Chime SDK のミーティングで通話する。実際の通話は AWS が無いと確かめられない |
-| 52 | `vp test run examples/52-ecr` | ローカル | 成功 | 2026-10-13 | 60 件。参照の読み書き、ワイルドカード、タグの設定の 4 つの値、タグが動いたときの 2 つの壊れ方と 2 つの直し方（リポジトリのモデルの上で）、ドキュメントの 6 つの例の再現、この章のポリシー、スキーマが拒否するポリシー、デプロイの判定、describe-images の読み取り、preview との突き合わせ、スタックの assertion（テンプレートのライフサイクルポリシーがテストのものと同じであること、プッシュ用のロールの信頼ポリシーと許可した操作の一覧、消す操作と設定を変える操作が無いこと、使うリソースの種類） |
-| 52 | `tsc --noEmit -p examples/52-ecr` | ローカル | 成功 | 2026-10-13 | 型検査 |
-| 52 | `vp run ecr:lifecycle:preview` | ローカル | 成功 | 2026-10-13 | fixture の 46 個のイメージに対して、ルール 1 が 2 個、ルール 2 が 1 個、ルール 3 が 8 個を消し、35 個が残ると表示されること。この章の evaluator の出力で、ECR の preview ではない |
-| 52 | `vp run ecr:infra:synth` | ローカル | 成功 | 2026-10-13 | 既定の構成（リポジトリだけ）と、-c githubRepository=example/notes -c pullThroughCache=on を渡した構成のテンプレートが、AWS に問い合わせずに生成されること |
-| 52 | `vp run ecr:infra:deploy` | AWS | 未実行 | - | デプロイしていない。リポジトリ、プッシュ用のロール、pull through cache のルールは AWS では作っていない |
-| 52 | `docker build / docker push` | ローカル | 未実行 | - | Nix の shell には Docker のデーモンが無い。イメージは 1 つもビルドもプッシュもしていない |
-| 52 | `vp run ecr:lifecycle:compare` | AWS | 未実行 | - | ECR の lifecycle policy preview を実行していない。evaluator と ECR の結果を比べていない |
-| 52 | `vp run ecr:scan:gate` | AWS | 未実行 | - | 実際の検査結果を読んでいない |
 | 53 | `vp test run examples/53-efs` | ローカル | 成功 | 2026-10-13 | 53 件。ノートを 1 件 1 ファイルで置くリポジトリを、書き込みの各段階で中断するテスト。実際のファイルシステム（macOS、APFS）の上で、その場での上書きが半分の内容を見せること、rename による置き換えではどの段階でも古い内容か新しい内容だけが見えること、23章のリポジトリを 2 つ開くと確認済みのノートが消えること、追記のモデル。04章の API を載せたテスト、パスを抜け出す ID の拒否、スタックの assertion |
 | 53 | `tsc --noEmit -p examples/53-efs` | ローカル | 成功 | 2026-10-13 | 型検査 |
 | 53 | `vp run efs:infra:synth` | ローカル | 成功 | 2026-10-13 | 既定の構成と `-c dataOnDestroy=retain -c backup=true` で、AWS に問い合わせずにテンプレートを生成した（esbuild のバンドル込み） |
@@ -472,14 +368,6 @@ generated: true
 | 57 | `vp run polly:listen` | AWS | 未実行 | - | 実行していない。Polly を 1 回も呼んでいない。課金される（1 回およそ 70 文字） |
 | 57 | `vp run polly:empty --yes` | AWS | 未実行 | - | 実行していない |
 | 57 | `vp run polly:infra:destroy` | AWS | 未実行 | - | 実行していない |
-| 58 | `vp test run examples/58-ledger` | ローカル | 成功 | 2026-10-13 | 83 件が通り、1 件（DynamoDB Local 用）はスキップ。ハッシュの固定値、行の読み戻し、追記の番号の取り合いと応答の喪失、ジャーナルの規則（メモリ上のモデル）、ダイジェストの作成と拒否、過去の記録の変更・削除・入れ替え・末尾の切り落としの検出、ダイジェストへの攻撃、Object Lock のモデル、DynamoDB と S3 へのリクエストの形、関数、片付けの計画、スタックのアサーション |
-| 58 | `tsc --noEmit -p examples/58-ledger` | ローカル | 成功 | 2026-10-13 | 型検査。エラーなし |
-| 58 | `vp run ledger:demo` | ローカル | 成功 | 2026-10-13 | メモリ上で、追記、ダイジェスト、履歴の書き換え、監査を実行。本文の出力はこの実行のもの |
-| 58 | `vp run ledger:db:reset:local && vp run ledger:test:local (DynamoDB Local 3.3.1)` | ローカル | 成功 | 2026-10-13 | ジャーナルの規則 5 件を PartiQL の INSERT と条件付きの PutItem の両方で、加えて追記からダイジェスト、監査までの 1 件を、DynamoDB Local 3.3.1 に対して実行した（11 件）。Docker ではなく、AWS が配布する jar を Java 21 で直接起動し（ポート 8058、-inMemory -sharedDb -disableTelemetry）、タスクには環境変数 `DYNAMODB_ENDPOINT=http://localhost:8058` を渡した。重複した INSERT への応答の名前は `DuplicateItem` だった。ダイジェストの保存先はメモリ上のモデル |
-| 58 | `vp run ledger:infra:synth` | ローカル | 成功 | 2026-10-13 | テンプレートを生成。リソース 12 個、AWS SDK を含む関数のバンドル込み。AWS には問い合わせない |
-| 58 | `vp run ledger:infra:deploy` | AWS | 未実行 | - | デプロイしていない |
-| 58 | `vp run ledger:append / ledger:digest / ledger:verify` | AWS | 未実行 | - | 実行していない |
-| 58 | `vp run ledger:infra:destroy / ledger:purge` | AWS | 未実行 | - | 実行していない |
 | 59 | `vp test run examples/59-rds` | ローカル | 成功 | 2026-10-13 | 48 件。LSN の解析と比較、PGlite が返す実際の位置、プライマリとレプリカのモデルの上での read-your-writes と読み取りが巻き戻らないこと、遅れたレプリカの昇格で書き込みが失われること、API のヘッダーと CORS、運用用の関数（ロールの作成、13章のマイグレーション、notes_api の権限、冪等性、入力の検査）、設定と環境変数、スタックのアサーション 15 件（3 通りの synth） |
 | 59 | `tsc --noEmit -p examples/59-rds` | ローカル | 成功 | 2026-10-13 | src、infra、test、scripts の型検査 |
 | 59 | `vp run rds:infra:synth` | ローカル | 成功 | 2026-10-13 | テンプレート（リソース 32、出力 8）と 2 つのバンドルを cdk.out に出力。AWS には問い合わせない。2 つのバンドルを Node.js 24.21.0 で読み込み、API の関数が GET /health に 200 を返すことと、運用用の関数が知らないコマンドを接続の前に断ることを確かめた |
@@ -527,17 +415,44 @@ generated: true
 | 64 | `vp run isolates:smoke` | AWS | 未実行 | - | 未実行 |
 | 64 | `vp run isolates:infra:drift` | AWS | 未実行 | - | 未実行 |
 | 64 | `vp run isolates:infra:destroy` | AWS | 未実行 | - | 未実行 |
+| 68 | `vp test run examples/68-nitro` | ローカル | 成功 | 2026-10-13 | インスタンスタイプの名前の読み取り、ボリューム ID からのデバイスの特定、PCR3 と PCR4 の計算（ユーザーガイドの例の値と一致）、キーポリシーとその評価器、親・エンクレーブ・KMS のモデルと不変条件、料金の入力、スタックのアサーション |
+| 68 | `tsc --noEmit -p examples/68-nitro` | ローカル | 成功 | 2026-10-13 | 型検査 |
+| 68 | `vp run nitro:infra:synth` | ローカル | 成功 | 2026-10-13 | 既定の構成と、`-c measurement=<96 桁>`、`-c instanceType=m6g.large` で synth した |
+| 68 | `vp run nitro:demo` | ローカル | 成功 | 2026-10-13 | モデルの上で、ノートの封印と開封、親による直接の Decrypt の拒否、ドキュメントの再送、デバッグモードの拒否を通した |
+| 68 | `vp run nitro:names` | ローカル | 成功 | 2026-10-13 | 既定の 6 つの名前を読んだ |
+| 68 | `vp run nitro:prices` | ローカル | 成功 | 2026-10-13 | arm64 と x86 の単価の差と、スタックの置いてあるだけの料金を表示した |
+| 68 | `vp run nitro:infra:deploy` | AWS | 未実行 | - | デプロイしていない |
+| 68 | `nitro-cli build-enclave / run-enclave` | AWS | 未実行 | - | エンクレーブのイメージを作っていないし、エンクレーブを起動していない。この機械は macOS で、Docker も無い |
+| 68 | `vp run nitro:infra:destroy` | AWS | 未実行 | - | デプロイしていないので、片付けも実行していない |
+| 33 | `vp test run examples/33-production-readiness` | ローカル | 成功 | 2026-10-13 | 5 ファイル、110 件。テンプレートの読み取り（テンプレートでないものの拒否、参照の辿り方、リテラルと組み込み関数の区別）、10 個のルールの通る例と落ちる例、例外（理由の必須、使われていない例外、21章の例外の取り込み）、判定（報告だけのスタックと通過を求めるスタック、読めなかった判定対象）、2 つのフィクスチャ、点検の項目（ルールの置き場所、タスクの実在）、練習用と本番向けの 2 つのスタックの synth と点検の結果、Aspect があとから足したテーブルに届くこと。コードを 11 か所わざと壊してテストが落ちることも確かめた（1 か所は最初は落ちず、バケットポリシーの配列を読み落とす誤りが見つかった） |
+| 33 | `tsc --noEmit -p examples/33-production-readiness` | ローカル | 成功 | 2026-10-13 | サンプル、スクリプト、テスト、CDK のコードの型検査 |
+| 33 | `vp run ready:infra:synth` | ローカル | 成功 | 2026-10-13 | AihReadyPractice と AihReadyProduction の 2 つのテンプレートを cdk.out に書いた。AWS には問い合わせない |
+| 33 | `vp run ready:gate` | ローカル | 成功 | 2026-10-13 | 練習用のスタックは 7 件の指摘を報告し、本番向けのスタックは理由つきの例外 2 件を使って通過した。本文に載せた出力はこの実行のもの |
+| 33 | `vp run ready:review` | ローカル | 成功 | 2026-10-13 | 8 つの分野、32 項目の一覧を表示した |
+| 33 | `node examples/33-production-readiness/scripts/check.ts <cdk.out of chapters 02-24 and book/infra>` | ローカル | 成功 | 2026-10-13 | 25章以降が書かれる前に、`vp run ready:check` のスクリプトを `infra:synth` を通さずに直接実行した。読んだのは 02〜24章と本のサイトの 27 個のテンプレートで、指摘は 81 件、例外は 7 件だった。本文の件数は、この実行のものから、同じ日にタスクとして実行した `vp run ready:check` のものに置き換えた |
+| 33 | `vp run ready:check` | ローカル | 成功 | 2026-10-13 | タスクとして実行した。依存する `infra:synth` が本のすべてのスタックを合成し直し、73 個のテンプレートを読んだ（02〜36章、38〜44章、46章、47章、49〜64章、66〜68章と本のサイト。01、37、45、48章にはスタックがない）。指摘は 272 件、例外は 9 件。内訳は bucket-public 0、iam-wildcard 43、function-url-auth 1、api-throttle 0、table-pitr 27、stateful-delete 135、log-retention 1、function-alarm 50、alarm-recipient 15、queue-dlq 0。指摘のないスタックは 13 個。本文の件数はこの実行のもの |
+| 33 | `account:whoami, sec:posture, sec:trail:iam, sec:secret:versions, sec:secret:rotate, obs:alarms, ship:cfn:diff, ship:cfn:drift, recovery:status, account:budget:create` | AWS | 未実行 | - | 点検の項目が指している、アカウントを読む・変えるタスク。この章では 1 つも実行していない |
+| 34 | `vp test run examples/34-eks` | ローカル | 成功 | 2026-10-13 | マニフェストのスキーマと参照の検査、k8s/ のファイルとジェネレーターの一致、ローリングアップデートと PodDisruptionBudget と drain の計算、時間の関係、サポート期間、料金、スタックのアサーション |
+| 34 | `tsc --noEmit -p examples/34-eks` | ローカル | 成功 | 2026-10-13 | 型検査 |
+| 34 | `vp run eks:infra:synth` | ローカル | 成功 | 2026-10-13 | context なしと `-c deployRoleArn=arn:aws:iam::123456789012:role/aih-deploy` の 2 通りで synth した。AWS には問い合わせていない |
+| 34 | `vp run eks:render` | ローカル | 成功 | 2026-10-13 | k8s/cluster.json と k8s/app.json がジェネレーターの出力と一致する |
+| 34 | `vp run eks:manifests cluster --node-role ... --security-group ... ; vp run eks:manifests app --image ...` | ローカル | 成功 | 2026-10-13 | 値をすべてフラグで渡し、AWS を読まずにマニフェストを出力した |
+| 34 | `vp run eks:infra:deploy` | AWS | 未実行 | - | クラスターを作っていない。cdkd 0.296.28 が Cloud Control API 経由で AWS::EKS::Cluster、AccessEntry、PodIdentityAssociation を作れるかは未確認 |
+| 34 | `kubectl apply -f - (vp run eks:manifests cluster / app)` | AWS | 未実行 | - | クラスターが無い。kubectl は devShell に入ったが、マニフェストは API サーバーに一度も渡していない |
+| 34 | `vp run eks:infra:destroy` | AWS | 未実行 | - | 実行していない |
+| 34 | `kubectl version --client` | ローカル | 成功 | 2026-10-13 | flake.nix の devShell に `pkgs.kubectl` を足し、`nix develop` の中で実行した。Client Version は v1.37.1、Kustomize は v5.8.1。スタックのクラスターは 1.37 なので、1 マイナーバージョン以内に入っている。クラスターには接続していない |
 | 66 | `vp test run examples/66-distributed-sql` | ローカル | 成功 | 2026-10-13 | フラグファイルの生成と検査、接続先の切り替え、過半数のモデル（1 ノードの喪失を全通り、2 ノードの喪失、非同期の複製で失われる書き込み）、PGlite の上で 13章の再試行ループに YugabyteDB のエラーを渡した結果、ノードに置くファイル、証明書の引数、料金、スタックのアサーション。7 ファイル 73 件 |
 | 66 | `tsc --noEmit -p examples/66-distributed-sql` | ローカル | 成功 | 2026-10-13 | 型検査 |
 | 66 | `vp run distsql:infra:synth` | ローカル | 成功 | 2026-10-13 | 既定の設定（ノードなし、リソース 10 個）と `-c nodes=3`（19 個）で synth。AWS には問い合わせない |
 | 66 | `vp run distsql:render` | ローカル | 成功 | 2026-10-13 | deploy/ のファイルが、生成したものと一致する |
 | 66 | `vp run distsql:fetch` | ローカル | 成功 | 2026-10-13 | macOS 26.6（arm64）で、yugabyte-2025.2.7.0-b107-darwin-arm64.tar.gz（130,180,590 バイト）を software.yugabyte.com から取得。SHA-256 が、隣に公開されている .sha の値（4a6a23f6…edde49）と一致した。.yugabyte/ に展開 |
 | 66 | `vp run distsql:local:start, then vp run distsql:local:verify (no TLS, 2 runs)` | ローカル | 成功 | 2026-10-13 | 127.0.0.1 の上で yb-master と yb-tserver を 3 組起動（PostgreSQL 15.12-YB-2025.2.7.0-b0）。13章のマイグレーション 4 つと repository を変えずに実行。上限 3 件に 12 件の作成を 3 ノードから同時に送り、2 回とも作成 3、quota_exceeded 9、note_count と行数が 3 で一致。40001 による再試行は 16 回と 4 回。ノード b を SIGKILL した後も a と c が確認済みの 40 件をすべて返し、続く 20 件の作成は 1.1 秒と 0.9 秒で終わった。b と c を落とすと残る 1 ノードは書き込みを確認せず（20 秒の無応答、接続のタイムアウト）、戻すと確認済みの 40 件がすべて残っていた。確認されなかった 1 件は、1 回目は入っていて、2 回目は入っていなかった。2 回目は ysql_dump の出力を別のデータベースに流し込み、40 件が揃った |
-| 66 | `vp run distsql:local:certs, vp run distsql:local:start --tls, then vp run distsql:local:verify (TLS, 5 runs, 1 failed)` | ローカル | 成功 | 2026-10-13 | openssl（Homebrew の 3.6.1。Nix の shell には入っていない）で CA と 127.0.0.1 の証明書を作り、TLS とパスワード認証を有効にして同じ検証を 5 回実行。TLS なしのクライアントは断られた。40001 による再試行は 12、12、12、26、29 回。b を失った後の 20 件は 1.1 秒から 4.3 秒。2 ノードを失ったときの 1 件は確認されず、戻した後に入っていたのは 5 回のうち 2 回。3 回目の実行は、2 ノードを戻した直後の CREATE DATABASE が『current transaction is expired or aborted』で失敗し、検証が失敗で終わった。バックアップの段に再試行を入れた後の 2 回は通った。ysql_dump の出力は 4 回、別のデータベースに揃って入った。yb-admin は --certs_dir_name を付けると list_all_masters と modify_placement_info に応え、付けないと 60 秒でリーダーを見つけられずに終わった。検証の後、distsql:local:destroy で全プロセスを止めた |
+| 66 | `vp run distsql:local:certs, vp run distsql:local:start --tls, then vp run distsql:local:verify (TLS, 5 runs, 1 failed)` | ローカル | 成功 | 2026-10-13 | openssl（Homebrew の 3.6.1。この実行の時点では、Nix の shell には入っていなかった）で CA と 127.0.0.1 の証明書を作り、TLS とパスワード認証を有効にして同じ検証を 5 回実行。TLS なしのクライアントは断られた。40001 による再試行は 12、12、12、26、29 回。b を失った後の 20 件は 1.1 秒から 4.3 秒。2 ノードを失ったときの 1 件は確認されず、戻した後に入っていたのは 5 回のうち 2 回。3 回目の実行は、2 ノードを戻した直後の CREATE DATABASE が『current transaction is expired or aborted』で失敗し、検証が失敗で終わった。バックアップの段に再試行を入れた後の 2 回は通った。ysql_dump の出力は 4 回、別のデータベースに揃って入った。yb-admin は --certs_dir_name を付けると list_all_masters と modify_placement_info に応え、付けないと 60 秒でリーダーを見つけられずに終わった。検証の後、distsql:local:destroy で全プロセスを止めた |
 | 66 | `vp run distsql:fetch --nodes` | ローカル | 未実行 | - | ノード用のアーカイブ（el8-aarch64、479,462,171 バイト）は取得していない。SHA-256 は公開されている .sha の値を写しただけ |
 | 66 | `vp run distsql:infra:deploy -c nodes=3` | AWS | 未実行 | - | AWS には何も作っていない |
 | 66 | `vp run distsql:artifact / distsql:install / distsql:certs / distsql:configure / distsql:start / distsql:status / distsql:health / distsql:logs / distsql:stop / distsql:session` | AWS | 未実行 | - | ノードに触るタスクは実行していない |
 | 66 | `vp run distsql:infra:destroy` | AWS | 未実行 | - | 実行していない |
+| 66 | `vp run distsql:local:certs (devShell openssl 3.5.8)` | ローカル | 成功 | 2026-10-13 | flake.nix の devShell に `pkgs.openssl` を足したあと、`nix develop` の中で実行した。`openssl version` は OpenSSL 3.5.8。`.yugabyte/ca` と `.yugabyte/certs` に以前の実行の証明書が残っていたので、タスクは何も作らずに終了コード 0 で終わった。別に、`src/certs.ts` の `caArgs`、`requestArgs`、`extensionsFor`、`signArgs` を同じ順で、リポジトリの外の空のディレクトリに対して devShell の openssl で実行し、`openssl verify` が OK を返すこと、証明書の subject が CN=127.0.0.1、subjectAltName が IP Address:127.0.0.1 であることを確かめた。クラスターは起動していない |
 | 67 | `vp test run examples/67-firecracker` | ローカル | 成功 | 2026-10-13 | 5 ファイル 67 件。仕様との照合、設定の検証、リクエストの順序、Unix ドメインソケット越しのクライアント、設定を断られたときに起動しないこと、InstanceStart の応答の喪失、スナップショットの前提、起動時間の測り方、スタックのアサーション |
 | 67 | `tsc --noEmit -p examples/67-firecracker` | ローカル | 成功 | 2026-10-13 | 型検査 |
 | 67 | `vp run firecracker:plan` | ローカル | 成功 | 2026-10-13 | 起動の 5 つのリクエストを curl の形で表示。本文に載せた出力はこの実行のもの |
@@ -550,15 +465,104 @@ generated: true
 | 67 | `node book/theme/figure-cli.ts (67章の図のある 4 ページ)` | ローカル | 成功 | 2026-10-13 | 図 6 つ、問題 0 |
 | 67 | `bash deploy/prepare.sh; sudo bash deploy/tap.sh up; sudo work/firecracker --api-sock ...; sudo work/node/bin/node boot.mjs` | ローカル | 未実行 | - | macOS には KVM が無く、Firecracker を起動していない |
 | 67 | `vp run firecracker:infra:deploy -c run=true / firecracker:kit:publish / firecracker:kit:empty / firecracker:infra:destroy` | AWS | 未実行 | - | AWS に対しては何も実行していない |
-| 68 | `vp test run examples/68-nitro` | ローカル | 成功 | 2026-10-13 | インスタンスタイプの名前の読み取り、ボリューム ID からのデバイスの特定、PCR3 と PCR4 の計算（ユーザーガイドの例の値と一致）、キーポリシーとその評価器、親・エンクレーブ・KMS のモデルと不変条件、料金の入力、スタックのアサーション |
-| 68 | `tsc --noEmit -p examples/68-nitro` | ローカル | 成功 | 2026-10-13 | 型検査 |
-| 68 | `vp run nitro:infra:synth` | ローカル | 成功 | 2026-10-13 | 既定の構成と、`-c measurement=<96 桁>`、`-c instanceType=m6g.large` で synth した |
-| 68 | `vp run nitro:demo` | ローカル | 成功 | 2026-10-13 | モデルの上で、ノートの封印と開封、親による直接の Decrypt の拒否、ドキュメントの再送、デバッグモードの拒否を通した |
-| 68 | `vp run nitro:names` | ローカル | 成功 | 2026-10-13 | 既定の 6 つの名前を読んだ |
-| 68 | `vp run nitro:prices` | ローカル | 成功 | 2026-10-13 | arm64 と x86 の単価の差と、スタックの置いてあるだけの料金を表示した |
-| 68 | `vp run nitro:infra:deploy` | AWS | 未実行 | - | デプロイしていない |
-| 68 | `nitro-cli build-enclave / run-enclave` | AWS | 未実行 | - | エンクレーブのイメージを作っていないし、エンクレーブを起動していない。この機械は macOS で、Docker も無い |
-| 68 | `vp run nitro:infra:destroy` | AWS | 未実行 | - | デプロイしていないので、片付けも実行していない |
+| 67 | `curl https://raw.githubusercontent.com/firecracker-microvm/firecracker/v1.17.0/{LICENSE,NOTICE}` | ローカル | 成功 | 2026-10-13 | 切り出した仕様の横に、Firecracker の v1.17.0 のタグの LICENSE と NOTICE を変更せずに置いた（`examples/67-firecracker/spec/`）。LICENSE の SHA-256 は cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30 で、同じ日に取得した https://www.apache.org/licenses/LICENSE-2.0.txt とバイト単位で一致した。NOTICE の SHA-256 は 0f443af83ca8226c7ec44e2ade3a09fa3eed8c9b923b6c014b6d439816b6f1c2。NOTICE が指す THIRD-PARTY は写していない |
+| 08 | `vp run test:unit (examples/08-async)` | ローカル | 成功 | 2026-10-12 | 重複配送（同じメッセージ、別の ID の同じイベント、2 つの worker の同時実行）、順序の入れ替わり（古い作成、遅れた削除）、途中での中断（記録の前、記録の後）、batch の一部の失敗、DLQ への移動と戻し、S3 の test event、07章の穴（form の再送）の修復、掃除の再実行・同時実行・中断、画像の種類と大きさの判定（sips と cwebp が書いた実ファイル）、DynamoDB と S3 へのリクエストの形、インフラの assertion。条件を 2 か所わざと壊して、テストが落ちることも確かめた |
+| 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | ローカル | 成功 | 2026-10-12 | サインイン、ノートの作成、form でのアップロード、worker の記録（ok、1x1）、完了、同じ form で HTML を再送して記録が rejected に変わること、掃除の dry run、削除で記録が消えることを /local/queue で確認。相手はメモリ上の queue と bucket で、SQS でも S3 でもない |
+| 08 | `vp run async:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 07章の 19 種類に 5 種類（SQS::Queue、SQS::QueuePolicy、Lambda::EventSourceMapping、Lambda::EventInvokeConfig、Scheduler::Schedule）を足した 24 種類。Custom:: のリソースはない。scripts/ は型検査のみ |
+| 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | 未実行 | - | queue を 2 つ、関数を 2 つ、schedule を 1 つ、そして 07章の一式（bucket 2 つ、user pool、distribution、table）を作る。S3 の通知、SQS、event source mapping、Scheduler、DynamoDB の条件付き書き込みは、どれも実環境で未確認 |
+| 09 | `vp run test:unit (examples/09-ssr)` | ローカル | 成功 | 2026-10-11 | cache の判定、共有 cache 越しの漏れの再現、session、publish の計画、smoke の判定、CDK の assertion |
+| 09 | `vp run typecheck / typecheck:ssr / lint:ssr` | ローカル | 成功 | 2026-10-11 | tsc で core、server、infra、scripts、test。Vize で app の .vue。わざと入れた型エラーで vize check が失敗することも確認 |
+| 09 | `vp run ssr:check:output (runs build:ssr first)` | ローカル | 成功 | 2026-10-11 | Nuxt 4.6.1 と nitropack 2.13.4 の buffered な Lambda handler を function URL の形の event で呼び、ヘッダー、サインイン、共有 cache 越しの再現を確認。/feed は 1 回、HTML は 1 回で書かれた。Lambda では実行していない |
+| 09 | `vp run ssr:check:output:stream (runs build:ssr:stream first)` | ローカル | 成功 | 2026-10-11 | awslambda を記録用の偽物に差し替えて streaming の handler を呼んだ。/feed は 3 回（約 300 ms おき）、HTML は 1 回で書かれた。Lambda の runtime、function URL、CloudFront は通していない |
+| 09 | `vp run ssr:infra:synth` | ローカル | 成功 | 2026-10-11 | cdkd で synth。template に function URL（AWS_IAM）、OAC、2 つの Lambda::Permission、cache policy、response headers policy があることを確認 |
+| 09 | `nuxt dev on port 3909 (the command behind dev:ssr, started directly) + HTTP requests` | ローカル | 成功 | 2026-10-11 | AIH_SSR_SIGN_IN=dev で起動し、公開ページ、404、/me、サインイン、サインアウト、よそからの POST の 403、/feed が 3 つに分かれて届くことを確認。ブラウザでの操作はしていない |
+| 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | 未実行 | - | distribution、Lambda の関数と function URL、bucket を作る |
+| 12 | `vp run test:unit (examples/12-containers)` | ローカル | 成功 | 2026-10-13 | SIGTERM を送る子プロセスのテスト、graceful shutdown、新旧の版の同居、時間の関係、設定、docker コマンドの組み立て、料金、stack の assertion。digest での指定と、不正な digest の拒否を含む |
+| 12 | `vp run ecs:infra:synth` | ローカル | 成功 | 2026-10-13 | image tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`、`-c imageDigest=sha256:...` の 4 通りで synth した。桁の足りない digest と、imageTag との同時指定が拒否されることも確かめた |
+| 12 | `vp run ecs:bundle / ecs:bundle:check` | ローカル | 成功 | 2026-10-12 | dist/server.mjs を作り、node_modules の無い場所で起動して /health を呼び、SIGTERM で終了コード 0 になることを確かめた |
+| 12 | `vp run dev:ecs` | ローカル | 成功 | 2026-10-12 | 起動して本文の curl を実行し、Ctrl-C（SIGINT）で draining、stopped のログが出て終了することを確かめた |
+| 12 | `vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push` | ローカル | 成功 | 2026-10-12 | --dry-run でコマンドを表示した。daemon なしで実行すると、理由を表示して終了コード 1 になることも確かめた |
+| 12 | `vp run ecs:watch --url http://localhost:8099 --for 3` | ローカル | 成功 | 2026-10-12 | 手元で起動したサーバーに向けて実行し、版ごとの集計が出ることを確かめた。deploy した service には向けていない |
+| 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | ローカル | 未実行 | - | Docker の daemon が動いていなかったため、image を一度も build していない |
+| 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | ECR の repository を作る。image tag を渡すと ALB と Fargate の task 2 つ（時間課金）も作る |
+| 12 | `vp run ecs:watch / ecs:logs` | AWS | 未実行 | - | deploy した service を読むだけのタスク |
+| 13 | `vp run test:unit (examples/13-sql)` | ローカル | 成功 | 2026-10-11 | transaction の再試行、PGlite 上の repository（quota、version、owner の分離、制約）、COMMIT の競合の注入、migration の lint と中断からの再開、grant 文の検査、API、インフラの assertion |
+| 13 | `vp run sql:db:reset:local / sql:db:migrate:local / sql:db:seed:local, vp run dev:sql + curl (NOTES_DB=pglite)` | ローカル | 成功 | 2026-10-11 | migration と seed の適用、2 回目の実行で何も変わらないこと、作成、更新、古い version の 409、UUID でない id の 404、削除、開発サーバーの起動中に reset が拒否されることを確認 |
+| 13 | `vp run sql:infra:synth` | ローカル | 成功 | 2026-10-11 | node-postgres と AWS SDK の署名を含む CommonJS の bundle を esbuild で作成。bundle を Node.js 24 で読み込み、DB に触れない route（GET /health と UUID でない id）が応答することを確認 |
+| 13 | `vp run sql:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Aurora DSQL の cluster を作る。cdkd は AWS::DSQL::Cluster を Cloud Control API 経由で扱う |
+| 13 | `vp run sql:db:migrate / sql:db:grant / sql:db:seed` | AWS | 未実行 | - | admin として cluster に接続し、schema、database role、seed を作る |
+| 13 | `vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)` | AWS | 未実行 | - | デプロイ済みの API と cluster が必要 |
+| 16 | `vp run test:unit (examples/16-long-jobs)` | ローカル | 成功 | 2026-10-12 | step の再実行（同じ step の 2 回目、応答が失われた後に table が変わった場合、呼び出しの途中での失敗、読み取りの失敗）、2 つの worker（止まっていた worker が遅れて書く、同じ export の 2 つの実行が重なる）、checkpoint の大きさを変えても出力が同じこと、manifest と補償処理（欠けた part、途中で止まった破棄、完成した export を消さないこと）、workflow の定義を手元の実行器で動かす（応答の喪失、再試行の打ち切りと再開、最初からのやり直し、破棄）、S3 と DynamoDB へのリクエストの形、durable function 版（SDK の LocalDurableTestRunner）、stack の assertion。条件を 2 か所わざと壊して、どちらもテストが 2 つ落ちることも確かめた |
+| 16 | `vp run export:local` | ローカル | 成功 | 2026-10-12 | 既定（250 件）、`--notes 450 --lose 2 --break 4`（応答の喪失と、再試行の打ち切りからの再開）、`--notes 1000 --pages-per-call 20` を実行し、manifest の行数と重複のない件数がノートの件数と一致することを確かめた。相手はメモリ上の store で、Step Functions でも S3 でも DynamoDB でもない |
+| 16 | `vp run export:infra:synth / typecheck` | ローカル | 成功 | 2026-10-12 | 既定の構成と `-c durable=true` の両方で synth した（esbuild の bundle 込み。durable 版は SDK も bundle する）。既定は 9 種類で、どれも cdkd 0.296.28 に専用の実装がある。durable 版は Lambda::Version と Lambda::Alias が増え、この 2 つは Cloud Control API 経由。scripts/ は型検査のみ |
+| 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | 未実行 | - | bucket、table、関数 3 つ、state machine、schedule を作る。`-c durable=true` では durable function と version、alias が増える。Step Functions、Scheduler からの起動、S3 の条件付き書き込み、DynamoDB の Scan、durable function は、どれも実環境で未確認 |
+| 17 | `vp run test:unit (examples/17-ai)` | ローカル | 成功 | 2026-10-12 | 59 件。fixture の stream（完了、maxTokens、途中で切断、途中で throttling、開始時の throttling）、cancel と timeout、client、SSE の書式、awslambda の代役を渡した function URL のアダプター、CDK の assertion |
+| 17 | `vp run typecheck (examples/17-ai)` | ローカル | 成功 | 2026-10-12 | scripts/ と infra/ を含む |
+| 17 | `vp run ai:infra:synth` | ローカル | 成功 | 2026-10-12 | esbuild による bundle（Docker なし）を含む。5 リソース |
+| 17 | `vp run dev:ai + curl` | ローカル | 成功 | 2026-10-12 | AI_BACKEND=fixture で起動。/health、要約の stream、不正な入力の 400、途中で切断したときの cancelled の log（curl を 0.5 秒で打ち切り、durationMs は 501）、AI_FIXTURE=truncated の error イベントを確認 |
+| 17 | `vp run check:all` | ローカル | 成功 | 2026-10-11 | 17章を加えた状態で通過 |
+| 17 | `vp run dev:ai (AI_BACKEND=bedrock)` | AWS | 未実行 | - | 手元のサーバーから実際の Bedrock を呼ぶ。課金される |
+| 17 | `vp run ai:hello / ai:test:live` | AWS | 未実行 | - | 実際のモデルを呼ぶ。課金される。モデル ID、権限、実際のイベントの形はここでしか確かめられない |
+| 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | Lambda、function URL、IAM role、log group を作る |
+| 17 | `vp run ai:smoke / ai:logs` | AWS | 未実行 | - | デプロイ済みの function URL が必要。課金される |
+| 19 | `vp run test:unit (examples/19-observability)` | ローカル | 成功 | 2026-10-12 | 実際に書かれるログの形と大きさ、ログの query と metric filter の条件を本物のログ行で評価、traceparent と X-Ray の trace ID の変換、span とログの相互参照、属性の許可リスト、sampling されない要求と欠けた span の再現、アラームの条件、料金計算の入力、インフラの assertion |
+| 19 | `vp run dev:obs + curl` | ローカル | 成功 | 2026-10-12 | 本文の curl を実行。ログの行に traceId が付くこと、span がコンソールに出ること、traceparent を付けた要求が同じ trace ID を引き継ぐこと、TRACE_SAMPLE_RATIO=0 で span が出ずログは残ることを確認 |
+| 19 | `vp run obs:query:print` | ローカル | 成功 | 2026-10-12 | Logs Insights の query の文字列を出力するだけ。AWS には問い合わせない |
+| 19 | `vp run obs:infra:synth` | ローカル | 成功 | 2026-10-12 | 関数を OpenTelemetry の API ごと esbuild で bundle。-c otelLayerArn を付けた場合も synth できることを確認。AWS には問い合わせない |
+| 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | DynamoDB の table、Lambda、HTTP API、SNS の topic、アラーム 2 つ、ダッシュボード、metric filter を作る。ダッシュボードと metric filter は cdkd が Cloud Control API 経由で扱う |
+| 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | 未実行 | - | デプロイ済みの stack が必要。obs:smoke はノートを 1 件作って消す。obs:query は走査したログの量に課金される |
+| 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | 未実行 | - | AWS Lambda Layer for OpenTelemetry を付けた構成。Node.js 24 の runtime はこの layer の対応一覧に無い |
+| 20 | `vp run test:unit (examples/20-shipping, tools/src/drift)` | ローカル | 成功 | 2026-10-12 | CloudFormation の drift の polling・分類・gate（clean、drifted、deleted、未検査、nested stack、検出失敗、stack 不在、timeout、古い結果、矛盾、形の違う応答）、SDK の client を差し替えた呼び出し順、OIDC の trust policy と role の権限、stage ごとの stack、CDK CLI の引数、stack の状態ごとの次の一手、preview の洗い出し、workflow の YAML |
+| 20 | `vp run ship:cfn:synth` | ローカル | 成功 | 2026-10-12 | 固定した AWS CDK CLI 2.1145.0 で synth。認証情報なし。AihShipApi と AihShipCi の template が cdk.out に出ること、AihShipApi に AWS::IAM::Policy と AWS::CDK::Metadata が無いことを確認。-c stage=prod、-c stage=pr-12 でも実行 |
+| 20 | `vp run ship:cfn:deploy -c stage=staging / vp run ship:ci:deploy (no AWS call)` | ローカル | 成功 | 2026-10-12 | 知らない stage と、repository を指定しない CI role のデプロイが、AWS を呼ぶ前に止まることを確認 |
+| 20 | `vp run check:all` | ローカル | 成功 | 2026-10-12 | format、lint、型検査、全テスト、全 CDK アプリの synth、本のビルドとリンク検査 |
+| 20 | `vp run ship:cfn:bootstrap` | AWS | 未実行 | - | CDKToolkit stack の作成は未実行。作られるものの記述は、固定した CLI の `cdk bootstrap --show-template` による |
+| 20 | `vp run ship:cfn:diff / ship:cfn:deploy / ship:smoke / ship:cfn:status / ship:cfn:destroy` | AWS | 未実行 | - | CloudFormation 経路でのデプロイと確認は未実行。alias 経由の integration が動くこと、失敗時の rollback の様子も未確認 |
+| 20 | `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` | AWS | 未実行 | - | OIDC provider と 4 つの role の作成は未実行。trust policy を IAM が受け入れること、bootstrap の role を assume できることも未確認 |
+| 20 | `vp run ship:cfn:drift (and the drift lab)` | AWS | 未実行 | - | 実際の stack での drift 検出は未実行。fixture は API リファレンスと SDK の型から書いたもので、実機の応答ではない |
+| 20 | `vp run ship:preview:list` | AWS | 未実行 | - | preview stack の一覧は未実行 |
+| 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | 未実行 | - | 4 つの workflow は GitHub Actions で一度も実行していない。x86_64-linux の runner で Nix の devShell が入ることも未確認 |
+| 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | 未実行 | - | cdkd と CloudFormation の間で stack を移す手順は未実行。記述は固定した版のヘルプによる |
+| 21 | `vp run test:unit (examples/21-security)` | ローカル | 成功 | 2026-10-12 | token の署名と検証、rotation をまたぐ鍵の cache（古い cache の実行環境、2 回の rotation、でたらめな version id の連打、Secrets Manager の停止、同時リクエスト）、rotation の手順（応答の喪失後の再実行、早すぎる 2 回目、version id の使い回し）、SDK の client を差し替えた secret の読み取り、wildcard の lint と理由つきの例外、20章の CI role への適用、SCP の JSON と評価の model、IAM の伝播待ち、posture の判定、stack の assertion（既定で月額がかかるのは secret 1 つだけ、cmk と web ACL は opt-in） |
+| 21 | `vp run sec:infra:synth` | ローカル | 成功 | 2026-10-12 | 固定した cdkd 0.296.28 で synth。認証情報なし。AihSecurity と AihSecurityWaf の template が cdk.out に出ること、-c cmk=on と -c webAclArn=... で template が変わること、形の違う webAclArn で synth が止まることを確認 |
+| 21 | `vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)` | ローカル | 成功 | 2026-10-12 | この章の 2 つの template は例外なしで合格。`vp run infra:synth` のあとに全章の cdk.out を渡した結果は、本文の「本全体に当ててみる」に書いたとおり |
+| 21 | `vp run dev:sec` | ローカル | 成功 | 2026-10-12 | 手元の server で /health、/token、/verify を curl で確認。鍵はメモリの中だけで、AWS は呼ばない |
+| 21 | `vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy` | AWS | 未実行 | - | 未実行。CloudFront、function URL、Secrets Manager を通した動作、デプロイ直後の 503 の有無、destroy 後に secret が残らないこと |
+| 21 | `vp run sec:secret:versions / sec:secret:rotate` | AWS | 未実行 | - | 未実行。PutSecretValue 後の staging label の動き、同じ version id での再実行、rotation 後に古い cache の実行環境が新しい token を受け入れること |
+| 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | 未実行 | - | 未実行。us-east-1 への web ACL の作成、distribution への関連付け、rate-based rule が実際に block を始めるまでの時間、count にした rule group の記録 |
+| 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | 未実行 | - | 未実行。customer managed key での secret の暗号化、kms:ViaService の条件つきで関数が読めること、destroy 後の鍵の状態 |
+| 21 | `vp run sec:posture / sec:trail:iam` | AWS | 未実行 | - | 未実行。6 つのサービスの読み取り API の実際の応答、権限が無いときの表示 |
+| 22 | `vp run test:unit (examples/22-recovery)` | ローカル | 成功 | 2026-10-12 | table と bucket を別の時点に戻したときの検出と修復（同じ時点、table だけ、アップロードより前、上書きの後、version が残っていない場合）、修復の dry run・二重実行・途中での中断、08章の残った検査記録、object の復元計画と再実行、version 番号の巻き戻りと fence、PITR の計画、drill の記録、item の分類、05章の repository contract、DynamoDB と S3 へのリクエストの形、stack の assertion |
+| 22 | `vp run recovery:demo` | ローカル | 成功 | 2026-10-12 | メモリ上の table と bucket で、事故、table の復元、検査（4 件）、bucket の復元、再検査（0 件）、fence までを実行した。本文に載せた出力はこの実行のもの |
+| 22 | `vp run recovery:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成で synth した（esbuild の bundle 込み）。`-c table`、`-c protect=on`、`-c backup=on`、`-c replica=on` は、テストの中と、`node infra/bin/app.ts` に context を渡す形で synth した |
+| 22 | `vp run recovery:drill new / mark / set / summary` | ローカル | 成功 | 2026-10-12 | 記録ファイルの作成、時刻と件数の記入、上書きの拒否、集計を手元で実行した。書いた値は動作確認用で、drill の実測ではない。ファイルは消した |
+| 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | PITR を有効にした DynamoDB の table、versioning を有効にした S3 bucket、Lambda 関数を作る。`-c backup=on` で AWS Backup の vault と plan、`-c replica=on` で 2 つ目の bucket と複製の設定が加わる |
+| 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | 未実行 | - | drill の手順。AWS に対しては 1 つも実行していない。RPO と RTO の実測値はない |
+| 23 | `vp run test:unit (examples/23-ec2)` | ローカル | 成功 | 2026-10-12 | file に書く repository を電源断の各段階で壊すテスト、SIGTERM のときの挙動（本物の socket）、user data と unit の生成と injection の拒否、data volume の script を bash で実行するテスト、Run Command の引数、SSM への経路のモデル、料金の入力、stack の assertion |
+| 23 | `vp run ec2:infra:synth` | ローカル | 成功 | 2026-10-12 | 既定の構成と、`-c placement=public`、`-c dataOnDestroy=snapshot`、`-c dataSnapshotId=snap-0123456789abcdef0`、`-c amiId=ami-0123456789abcdef0` で synth した |
+| 23 | `vp run ec2:plan / ec2:render / ec2:app:build` | ローカル | 成功 | 2026-10-12 | ec2:plan は既定、`placement=public`、endpoint の足りない設定、不正な設定で実行。ec2:render は deploy/ が生成結果と一致することを確認。ec2:app:build は 1 つの ESM の file を作る |
+| 23 | `vp run dev:ec2 + curl, SIGTERM` | ローカル | 成功 | 2026-10-12 | ビルドした dist/server.mjs と src/server.ts の両方を Node.js 24 で起動。作成、一覧、再起動後も残ること、SIGTERM で exit code 0 で終わること、壊した notes.json では起動を拒否することを確認 |
+| 23 | `vp run ec2:infra:diff / deploy / drift / destroy` | AWS | 未実行 | - | EC2 の instance（時間課金）、EBS volume、S3 bucket を作る。11章の stack が先に要る |
+| 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | 未実行 | - | Systems Manager を通して instance に入る、release を配る、動作を確かめる。ec2:session と ec2:forward は Session Manager plugin が要る（devShell には入っていない） |
+| 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | 未実行 | - | instance の上で dnf を実行する、data volume を unmount、mount する、release の object を消す |
+| 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | 未実行 | - | 本文の手順は実行していない。flag は devShell の AWS CLI 2.35.11 の help で確かめた |
+| 58 | `vp test run examples/58-ledger` | ローカル | 成功 | 2026-10-13 | 83 件が通り、1 件（DynamoDB Local 用）はスキップ。ハッシュの固定値、行の読み戻し、追記の番号の取り合いと応答の喪失、ジャーナルの規則（メモリ上のモデル）、ダイジェストの作成と拒否、過去の記録の変更・削除・入れ替え・末尾の切り落としの検出、ダイジェストへの攻撃、Object Lock のモデル、DynamoDB と S3 へのリクエストの形、関数、片付けの計画、スタックのアサーション |
+| 58 | `tsc --noEmit -p examples/58-ledger` | ローカル | 成功 | 2026-10-13 | 型検査。エラーなし |
+| 58 | `vp run ledger:demo` | ローカル | 成功 | 2026-10-13 | メモリ上で、追記、ダイジェスト、履歴の書き換え、監査を実行。本文の出力はこの実行のもの |
+| 58 | `vp run ledger:db:reset:local && vp run ledger:test:local (DynamoDB Local 3.3.1)` | ローカル | 成功 | 2026-10-13 | ジャーナルの規則 5 件を PartiQL の INSERT と条件付きの PutItem の両方で、加えて追記からダイジェスト、監査までの 1 件を、DynamoDB Local 3.3.1 に対して実行した（11 件）。Docker ではなく、AWS が配布する jar を Java 21 で直接起動し（ポート 8058、-inMemory -sharedDb -disableTelemetry）、タスクには環境変数 `DYNAMODB_ENDPOINT=http://localhost:8058` を渡した。重複した INSERT への応答の名前は `DuplicateItem` だった。ダイジェストの保存先はメモリ上のモデル |
+| 58 | `vp run ledger:infra:synth` | ローカル | 成功 | 2026-10-13 | テンプレートを生成。リソース 12 個、AWS SDK を含む関数のバンドル込み。AWS には問い合わせない |
+| 58 | `vp run ledger:infra:deploy` | AWS | 未実行 | - | デプロイしていない |
+| 58 | `vp run ledger:append / ledger:digest / ledger:verify` | AWS | 未実行 | - | 実行していない |
+| 58 | `vp run ledger:infra:destroy / ledger:purge` | AWS | 未実行 | - | 実行していない |
+| 52 | `vp test run examples/52-ecr` | ローカル | 成功 | 2026-10-13 | 60 件。参照の読み書き、ワイルドカード、タグの設定の 4 つの値、タグが動いたときの 2 つの壊れ方と 2 つの直し方（リポジトリのモデルの上で）、ドキュメントの 6 つの例の再現、この章のポリシー、スキーマが拒否するポリシー、デプロイの判定、describe-images の読み取り、preview との突き合わせ、スタックの assertion（テンプレートのライフサイクルポリシーがテストのものと同じであること、プッシュ用のロールの信頼ポリシーと許可した操作の一覧、消す操作と設定を変える操作が無いこと、使うリソースの種類） |
+| 52 | `tsc --noEmit -p examples/52-ecr` | ローカル | 成功 | 2026-10-13 | 型検査 |
+| 52 | `vp run ecr:lifecycle:preview` | ローカル | 成功 | 2026-10-13 | fixture の 46 個のイメージに対して、ルール 1 が 2 個、ルール 2 が 1 個、ルール 3 が 8 個を消し、35 個が残ると表示されること。この章の evaluator の出力で、ECR の preview ではない |
+| 52 | `vp run ecr:infra:synth` | ローカル | 成功 | 2026-10-13 | 既定の構成（リポジトリだけ）と、-c githubRepository=example/notes -c pullThroughCache=on を渡した構成のテンプレートが、AWS に問い合わせずに生成されること |
+| 52 | `vp run ecr:infra:deploy` | AWS | 未実行 | - | デプロイしていない。リポジトリ、プッシュ用のロール、pull through cache のルールは AWS では作っていない |
+| 52 | `docker build / docker push` | ローカル | 未実行 | - | Nix の shell には Docker のデーモンが無い。イメージは 1 つもビルドもプッシュもしていない |
+| 52 | `vp run ecr:lifecycle:compare` | AWS | 未実行 | - | ECR の lifecycle policy preview を実行していない。evaluator と ECR の結果を比べていない |
+| 52 | `vp run ecr:scan:gate` | AWS | 未実行 | - | 実際の検査結果を読んでいない |
+| 68 | `vp run check:all` | ローカル | 成功 | 2026-10-13 | 00章から 68章まで（65 は欠番）がそろった状態で通過。format と lint（awscdk-lint を含む）、型検査、テスト 5,044 件（ほかに 5 件は条件が合わずスキップ）、全 CDK アプリの synth、54 個の bundle の読み込み、本のビルド、668 ページのリンク検査。AWS には触れていない |
 
 ## 未解決事項と再開手順
 
@@ -718,24 +722,6 @@ cdkd 0.296.28 で AWS::CloudFront::KeyValueStore（Cloud Control API 経由、st
 
 再開手順: AIH_AWS_REGION=us-east-1 vp run infra:bootstrap の後に vp run edge:body:infra:deploy を実行する。出力の BodyDigestVersionArn を -c bodyDigestVersionArn=... で vp run edge:infra:deploy に渡し、curl -X POST で /digest を確かめる。失敗したら内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
 
-### dsql-real-cluster
-
-13章のコードを実際の Aurora DSQL に一度もつないでいない。未確認: 4 つの migration の SQL が受け付けられること（CREATE SCHEMA IF NOT EXISTS、外部キー、CHECK、CREATE INDEX ASYNC IF NOT EXISTS）、CREATE INDEX ASYNC の応答から job_id を読めて sys.jobs を polling できること、AWS IAM GRANT と schema への GRANT で notes_api が読み書きできること、node-postgres の password に渡した関数で token が通ること、競合が node-postgres のエラーの code に 40001 として現れること、凍結から戻った実行環境で切れた接続がどう見えるか。手元の代用は PGlite（PostgreSQL 18.3）で、DSQL（PostgreSQL 16 互換）とは版も違う。
-
-再開手順: 学習用アカウントで vp run sql:infra:deploy、sql:db:migrate、sql:db:grant、sql:smoke を順に実行する。同じ note を同時に更新する負荷をかけ、sql:logs で "transaction retry" の行と 40001 を確認する。15 分以上あけて呼び、接続の張り直しを見る。結果を data/validation.json に記録し、vp run sql:infra:destroy で消す。
-
-### cdkd-dsql-cluster
-
-cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Control API 経由で扱う。作成、Ref が cluster の identifier を返すこと、drift の読み戻し、削除が実際に動くかは未確認。13章の stack は Ref から endpoint と ARN を組み立てている。
-
-再開手順: vp run sql:infra:deploy の後、output の ClusterEndpoint が <26 文字の id>.dsql.ap-northeast-1.on.aws の形であること、関数の環境変数と IAM policy の Resource が同じ cluster を指すことを確認する。vp run sql:infra:drift と sql:infra:destroy の結果も記録する。
-
-### dsql-dpu-estimate
-
-13章の料金のシナリオは、1 リクエストあたりの DPU を公式ドキュメントの計算例から借りた仮定で、この章の query を測った値ではない。
-
-再開手順: デプロイした cluster で EXPLAIN ANALYZE VERBOSE を使うか、CloudWatch の ComputeDPU、ReadDPU、WriteDPU を見て、作成、更新、一覧の 1 件あたりの DPU を測る。data/fragments/13.json の scenarios を直して apply し直す。
-
 ### uploads-s3-post-policy
 
 07章: presigned POST を実物の S3 に送っていない。とくに、form の tagging の欄を S3 が policy の条件 {"tagging": ...} で受け付けるかは、POST policy の条件の表に tagging が載っていないため未確認。content-length-range と Content-Type による拒否、bucket の CORS、POST 直後の HeadObject も未確認。
@@ -760,60 +746,6 @@ cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Cont
 
 再開手順: presigned PUT と If-None-Match に替える（Content-Length の署名で大きさを固定できるかを先に実機で確かめる）か、許可証の期限後に tag をもう一度外す処理を足す。
 
-### ssr-aws-path
-
-09章の構成を AWS で一度も動かしていない。Nitro の handler が Node.js 24 の runtime と function URL で動くこと、OAC の署名を function URL が受け入れ直接のリクエストを断ること、cache policy と response headers policy が意図どおり働くこと、smoke が見る x-cache と age ヘッダーの実際の値、許可していない method への応答が未確認。
-
-再開手順: vp run build:ssr、ssr:infra:deploy、ssr:assets:publish、ssr:smoke の順に実行する。smoke が落ちたら、判定（examples/09-ssr/scripts/smoke-spec.ts）と実際のヘッダーのどちらが違うのかを記録してから直す。終わったら ssr:unpublish --yes と ssr:infra:destroy。
-
-### ssr-streaming-path
-
-response streaming が、Lambda、function URL（RESPONSE_STREAM）、CloudFront、ブラウザまで通して少しずつ届くかは未確認。stream した応答を CloudFront が圧縮しないこと、handler の形と InvokeMode が食い違ったときの応答も未確認。手元で確かめたのは Nitro の handler が書き込む回数と間隔だけ。
-
-再開手順: vp run ssr:check:output:stream、ssr:assets:publish、ssr:infra:deploy のあと、curl -sN で /feed を、curl -s -o /dev/null -D - --compressed で / を取得し、行が届く間隔と content-encoding を記録する。function URL を直接ではなく distribution 経由で見ること。
-
-### ssr-cdkd-cloudfront-policies
-
-cdkd 0.296.28 は AWS::CloudFront::CachePolicy と AWS::CloudFront::ResponseHeadersPolicy に専用の実装を持たず、Cloud Control API 経由で扱う。作成、更新、drift の読み戻し、削除が実際に動くかは未確認。minTtl と defaultTtl が 0、maxTtl が 60 の cache policy で圧縮の設定を有効にできるかも未確認。
-
-再開手順: vp run ssr:infra:deploy と ssr:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
-
-### ssr-bff-deployed
-
-09章の BFF（サインイン、session、token の保持）は手元でしか動かない。session がプロセスのメモリにあり、サインインが POST で、function URL と OAC の組み合わせがブラウザの form からの POST をそのままでは通さないため。デプロイした環境で「cookie を持つ人にその人のページが返る」ことは確かめていない。
-
-再開手順: 著者が方針を決める（session を DynamoDB に置き、POST の入口を API Gateway にする、など）。決まったら examples/09-ssr に実装し、ssr:smoke に本物の session での検査を足す。
-
-### obs-lambda-json-log-shape
-
-Lambda の JSON ログ形式で、アプリが console.log に渡した JSON の行が、そのままの形で CloudWatch Logs に入るかを実機で確かめていない。metric filter の JSON pattern と Logs Insights の項目名がこれに依存する。
-
-再開手順: vp run obs:infra:deploy、vp run obs:smoke の後、vp run obs:query --name request --id <x-request-id> を実行する。行が見つかり、status などの項目が取れること、NoteConflicts にデータ点が出ることを確かめる。形が違えば、src/compose.ts の出力先を process.stdout に替えるか、query の項目名を直す。
-
-### obs-otel-layer-node24
-
-AWS Lambda Layer for OpenTelemetry を Node.js 24 の関数に付けた構成を動かしていない。ADOT のドキュメントの対応 runtime は Node.js 22 まで。esbuild で bundle した ESM の関数で、手書きの span が layer の SDK に届くか、AWS SDK の自動計装が効くか、実行 role の権限が xray:PutTraceSegments で足りるかも未確認。
-
-再開手順: ADOT のドキュメントの Node.js の表から東京リージョンの layer の ARN を取り、vp run obs:infra:deploy -c otelLayerArn=<ARN> を実行する。vp run obs:smoke の後、X-Ray の画面で notes.* の span が Lambda の segment の下に出るか確かめる。出なければ、関数のログで layer のエラーを探し、runtime を nodejs22.x にして比べる。
-
-### obs-alarm-behavior
-
-アラームの実際の状態遷移を確かめていない。metric math の IF の式が受け付けられること、リクエストが無い間に 5xx と Count のデータ点が欠損になること、SNS の通知が届くことは、ドキュメントからの読み取り。
-
-再開手順: vp run obs:infra:deploy -c alarmEmail=<自分のアドレス> の後、届いた確認メールを承認し、vp run obs:alarms で状態を見る。5xx を起こすには、table の権限を一時的に外す変更を別の branch で deploy するなど、練習用アカウントで行う。
-
-### obs-cdkd-cloud-control
-
-cdkd 0.296.28 は AWS::CloudWatch::Dashboard と AWS::Logs::MetricFilter を Cloud Control API 経由で扱う。作成、更新、drift の読み戻しが実際に動くかは未確認。
-
-再開手順: vp run obs:infra:deploy と vp run obs:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
-
-### obs-pricing-gaps
-
-ダッシュボードの単価（4 つ目から）、Lambda が JSON 形式で書くシステムログの大きさ、layer 経由で送った span が X-Ray の trace として課金されるのかを確認できていない。
-
-再開手順: 料金ページを JavaScript が動くブラウザで開いてダッシュボードの単価を読む。デプロイ後、Logs Insights で 1 リクエストあたりの @message の合計バイト数を測り、data/fragments/19.json の仮定を直す。数日後に Cost Explorer の usage type を見る。
-
 ### 14-deploy
 
 14章の stack を AWS に一度も deploy していない。DynamoDB の条件付き `ADD` が実物で同時の増分を失わないこと、TTL で item が消えるまでの実際の時間、Lambda の実行環境が増えたときの memory 版の振る舞い、cdkd 0.296.28 での作成と削除が未確認。
@@ -831,168 +763,6 @@ ElastiCache Serverless（public endpoint）には一度もつないでいない�
 `vp run kv:local:start` と `kv:local:stop`（Docker のコンテナで Valkey と DynamoDB Local を起動・停止する）を実行していない。contract test そのものは、同じ版の DynamoDB Local と、Valkey 9.1.2 のプロセスに対して通っている。
 
 再開手順: Docker の daemon を起動し、`examples/14-kv-cache/.env.example` を `.env` にコピーして、`vp run kv:local:start`、`vp run kv:local:migrate`、`vp run kv:test:local`、`vp run kv:local:stop` の順に実行する。
-
-### 20-cfn-deploy
-
-CloudFormation 経路（bootstrap、diff、deploy、smoke、status、destroy）を実環境で通していない
-
-再開手順: `vp run ship:cfn:bootstrap` のあと、`vp run ship:cfn:diff`、`ship:cfn:deploy`、`ship:smoke`、`ship:cfn:status`、`ship:cfn:destroy` を順に実行する。`ship:smoke` が alias 経由で 200 を返すこと、`cdk diff --method template` が lookup role だけで通ることを記録する。CDKToolkit stack に作られたリソースを、本文の表と照合する
-
-### 20-oidc-roles
-
-OIDC の role を GitHub Actions から assume していない
-
-再開手順: `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` を実行し、出力の 4 つの ARN と アカウント ID を repository の variables に入れる。workflows/ の 4 ファイルを .github/workflows/ にコピーして、pull request、main への push、手動実行の drift を 1 回ずつ流す。別の branch や別の repository から assume が拒否されること、repository の sub が immutable 形式かどうか、fork の pull request で plan job が走らないことを記録する
-
-### 20-drift-role-permissions
-
-DriftRole の読み取り権限は resource type の schema から導いたもので、実際の検出で足りるかは未確認
-
-再開手順: DriftRole で `vp run ship:cfn:drift -c stage=prod` を実行する。`failed` や `incomplete` になったら report の理由に出た action を examples/20-shipping/infra/lib/ci-stack.ts に足し、テストの一覧も直す。足りていたら、使われなかった action を CloudTrail で確かめて削る
-
-### 20-drift-live
-
-CloudFormation の drift 検出の応答を実機で採取していない。検出範囲（Integration が未検査になるか、inline policy の変更が Role の drift として出るか）も未確認
-
-再開手順: 本文の「わざとずらしてみる」の手順を実行する。各段階の reports/drift/AihShipApi.json と、同じ時点の `aws cloudformation describe-stack-resource-drifts` の出力を採り、tools/src/drift/fixtures/cloudformation/ の fixture と形を比べる。存在しない stack 名で実行し、エラーの name と message が `ValidationError` と `does not exist` であることを確かめる。未検査になった resource type を examples/20-shipping/src/drift-coverage.ts の 2 つの一覧と照合する
-
-### 20-rollback-live
-
-失敗したデプロイの rollback、alias の付け替え、`cdk rollback` を実環境で観察していない
-
-再開手順: わざと失敗する変更（たとえば Lambda の memorySize を上限より大きくする）をデプロイし、`vp run ship:cfn:status` が UPDATE_ROLLBACK_COMPLETE を返すまでの状態の移り変わりを記録する。正常なデプロイを 2 回行い、古い version が残っていること、stack を消したときに version も消えることを確かめる
-
-### 20-tool-migration
-
-cdkd と CloudFormation の間で stack を移す手順（`cdkd export`、`cdkd import --migrate-from-cloudformation`）は未実行
-
-再開手順: 練習用の stack を cdkd でデプロイし、`cdkd export <stack> --dry-run` の計画を読んでから実行する。import できない resource type で止まるかどうか、成功後に cdkd の state が消え、CloudFormation の stack として `cdk diff` が空になることを記録する。逆方向も同じ stack で試す
-
-### 12-image-build
-
-12章の Dockerfile で image を一度も build していない。`.dockerignore` の例外指定で dist/server.mjs だけが context に入ること、node:24-bookworm-slim の arm64 版で起動すること、`--read-only` で動くこと、image の大きさが未確認。
-
-再開手順: Docker の daemon を起動し、`vp run ecs:bundle`、`vp run ecs:image:build v1`、`vp run ecs:image:run v1` を実行する。別のターミナルで `curl http://localhost:8080/health` を呼び、Ctrl-C で `stopped` のログと終了コード 0 を確かめる。`docker image ls aih-notes` で大きさを見る。
-
-### 12-deploy
-
-12章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が ECR、ECS、ALB を作って消せること、`Fn::ImportValue` で 11章の VPC を読めること、Cloud Control API 経由になる 3 種類（ScalableTarget、ScalingPolicy、SecurityGroupEgress）が通ること、public subnet の task が image を取得できること、ALB の DNS 名で応答することが未確認。
-
-再開手順: `vp run net:infra:deploy`、`vp run ecs:infra:deploy`、`vp run ecs:image:push v1`、`vp run ecs:infra:deploy -c imageTag=v1` の順に実行し、output の `ServiceUrl` に `curl` する。`vp run ecs:infra:drift` を通したら、`vp run ecs:infra:destroy`、`vp run net:infra:destroy` で消す（時間課金）。
-
-### 12-rolling-update
-
-rolling update を実環境で観察していない。更新中にエラーが出ないこと、新旧の版が交互に応答すること、target の登録解除が終わってから SIGTERM が届くという順序、壊れた image を渡したときに circuit breaker が元に戻すこと、そのとき cdkd の `--full-wait` が何を報告するかが未確認。
-
-再開手順: v1 を deploy した状態で `vp run ecs:watch` を別のターミナルで動かし、`vp run ecs:image:push v2`、`vp run ecs:infra:deploy -c imageTag=v2` を実行する。`ecs:watch` の集計と、`vp run ecs:logs` の `draining`、`stopped` の行の時刻を見る。続けて、存在しない tag で deploy し、`aws ecs describe-services` の `rolloutState` と cdkd の終了コードを記録する。
-
-### 12-private-subnets
-
-`-c taskSubnets=private` の構成を実環境で動かしていない。NAT Gateway 経由、interface endpoint 経由のどちらでも image を取得してログを送れること、443 番だけの egress で足りることが未確認。
-
-再開手順: 11章を `-c egress=nat` で deploy し、12章を `-c imageTag=v1 -c taskSubnets=private` で deploy して `ServiceUrl` を確かめる。次に 11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy し直し、task を入れ替えて（新しい tag で deploy）同じことを確かめる。終わったらすぐ destroy する。
-
-### 12-alb-idle-lcu
-
-リクエストが無いときに ALB の LCU がいくらになるか（health check が LCU に数えられるか）を一次情報で確認できていない。料金の表では LCU を未算入としている。
-
-再開手順: deploy して 1 日置き、Cost Explorer か請求書で `APN1-LCUUsage` の数量を確かめる。
-
-### async-s3-event-shape
-
-08章: form（POST Object）による作成のイベント（ObjectCreated:Post）と、lifecycle rule による削除のイベント（LifecycleExpiration:Delete）に sequencer が入るかを確認していない。公式ドキュメントは「PUT と DELETE のリクエストでだけ使われる」と書いている。worker は、sequencer のない作成イベントを失敗にして DLQ へ送り、sequencer のない削除イベントは何もせずに受け取る。
-
-再開手順: vp run async:infra:deploy の後、AIH_ACCESS_TOKEN を入れて vp run async:smoke を実行する。form の経路で記録ができなければ vp run async:queue で DLQ を見る。POST のイベントに sequencer がなければ、eventTime と eTag を使う順序づけに替えるか、S3 の通知を EventBridge 経由に替える。
-
-### async-notification-deploy
-
-08章: bucket の名前を固定して queue policy との循環を避ける書き方が、cdkd で実際に通るかを確認していない。S3 が通知の設定時に queue へ送れるかを検証すること、SQS 管理の鍵で暗号化した queue（SSE-SQS）に S3 が送れること、event source mapping の作成時に role の権限が検証されること、If-Match に引用符つきの ETag を渡して 412 が返ることも未確認。
-
-再開手順: vp run async:infra:deploy を実行する。bucket の作成が「Unable to validate the following destination configurations」で失敗したら、queue policy が先に作られているかを確かめる。その後 vp run async:smoke を実行する。
-
-### async-idle-polling-cost
-
-08章: Lambda が空の queue を long polling する頻度が公式ドキュメントに書かれておらず、使われていない月の SQS のリクエスト数を見積もれない。
-
-再開手順: デプロイして 1 日置き、CloudWatch の SQS のメトリクス NumberOfEmptyReceives を読んで、観測値として書く。
-
-### async-housekeeping-scale
-
-08章: 掃除は 1 回の実行で bucket のすべての object を見て、1 枚ごとに DynamoDB を 4 回、順に読む。実行時間は計測していない。枚数が増えると、関数の timeout（15 分）と読み取りの料金の両方に当たる。
-
-再開手順: vp run async:logs --function housekeeping で REPORT 行の実行時間を読む。枚数に対して長すぎるなら、実行の間隔を広げるか、新しい object だけを見るか、S3 Inventory を入力にする。
-
-### async-inspection-orphans
-
-08章: 検査の記録が、object のないまま残る経路が 2 つある。作成イベントを処理している worker が記録を書く直前に、別の worker が同じ key の削除イベントを処理し終えた場合。lifecycle rule による削除のイベントに sequencer がなかった場合。どちらも利用者には見えないが、記録は残る。
-
-再開手順: 削除のときに記録を消すかわりに、sequencer つきの墓石（tombstone）を条件付きで書き、DynamoDB の TTL で消す。
-
-### 23-deploy
-
-23章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が instance、instance profile、security group を専用の実装で、volume と volume attachment を Cloud Control API 経由で作れること、SSM 型の parameter から AMI の ID が解決されること、`Fn::ImportValue` で 11章の output を読めることが未確認。
-
-再開手順: `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages` の後に `vp run ec2:infra:deploy`、`vp run ec2:status`、`vp run ec2:infra:drift` を通す。終わったら「片付け」の順に消す（時間課金）。
-
-### 23-first-boot
-
-user data を本物の Amazon Linux 2023 で走らせていない。未確認: private subnet から S3 の gateway endpoint だけで dnf の repository に届くこと（repository が S3 にあることは、ドキュメントの出力例の host 名から読み取っただけ）、`nodejs24` と `xfsprogs` が入ること、`/dev/sdf` の link ができること、attach を待つ loop が足りること、unit の directive（`AssertPathIsMountPoint` など）が AL2023 の systemd で通ること、root volume の大きさ（料金は 8 GiB と仮定）。
-
-再開手順: deploy 後に `vp run ec2:status` で cloud-init の結果、service の状態、mount を見る。失敗していたら `vp run ec2:session` で入り、`/var/log/cloud-init-output.log` を読む。root volume は `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>` で確かめ、8 GiB でなければ `src/cost.ts` の `ASSUMED_ROOT_GIB` と本文の金額を直す。
-
-### 23-ssm-endpoints
-
-interface endpoint が 3 つとも要るのかを確かめていない。Systems Manager のドキュメントは、SSM Agent 3.3.40.0 以降は ssmmessages を優先すると書いているが、ec2messages の endpoint を省けるとは書いていない。AMI に入っている agent の版も見ていない。
-
-再開手順: 11章の stack を `-c interfaceEndpoints=ssm,ssmmessages` で deploy し直し、instance を再起動して `vp run ec2:status` が Online を返すか、`vp run ec2:smoke` が通るかを見る。通れば月 USD 20.44 減らせる。
-
-### 23-release
-
-release の経路（S3 への upload、Run Command、instance 上の `notes-release`、restart、`/health` の確認）と、restart のときに処理中のリクエストが完了することを、実機で通していない。Session Manager と port forwarding も未実行（plugin が devShell に無い）。
-
-再開手順: `vp run ec2:app:release`、`vp run ec2:smoke`、`vp run ec2:logs` を通す。もう一度 release して、前の版を `vp run ec2:app:rollback <version>` で戻す。Session Manager plugin を入れて `vp run ec2:forward` を実行し、手元から `curl http://localhost:8787/health` を呼ぶ。
-
-### 23-replace-and-restore
-
-instance を作り直したときに data volume が残って付け直されること、snapshot からの restore、destroy のときの volume attachment の扱いを実行していない。cdkd のソースでは、`UserData` の変更は instance に反映されず、`ImageId` の変更は置き換えになる。置き換えのときに attachment がどう動くか（古い instance から外れて新しい instance に付くのか、途中で失敗するのか）は読み切れていない。
-
-再開手順: ノートを 1 件作り、`vp run ec2:data:unmount` の後に `-c amiId=<1 つ前の AMI>` で deploy して置き換えを起こす。新しい instance で `vp run ec2:status` と `vp run ec2:app:release`、`vp run ec2:smoke` を実行し、ノートが残っているかを見る。続けて「snapshot と restore」の手順を通す。
-
-### 23-patch
-
-`ec2:patch:check` と `ec2:patch:apply` を実機で実行していない。Patch Manager（`AWS-RunPatchBaseline`）は手順を書いただけで、タスクも無い。
-
-再開手順: 数週間前の AMI を `-c amiId=...` で指定して deploy し、`vp run ec2:patch:check` で新しい release が出ることを確かめ、`vp run ec2:patch:apply <releasever>` を実行する。kernel が更新されたら `aws ec2 reboot-instances` で再起動し、`vp run ec2:smoke` を通す。
-
-### 16-deploy
-
-16章の stack を AWS に一度も deploy していない。未確認: cdkd 0.296.28 が inline の DefinitionString（Fn::Join）で state machine を作れること。state machine の role の trust policy の条件が通ること。Scheduler が `<aws.scheduler.scheduled-time>` を置き換えた入力で StartExecution を呼ぶこと。関数の ARN を Resource に直接書いた Task の入出力。Lambda の例外の name が Catch の `ExportCorrupt` に一致すること。S3 が `If-None-Match: *` に 412 を返し、SDK がそれを status 412 の例外として投げること。HeadObject の metadata のキーが小文字で返ること。Task の timeout の後も Lambda が動き続けるかどうか。state transition の実際の数。
-
-再開手順: `vp run export:infra:deploy`、`vp run export:seed --notes 250`、`vp run export:start --id check-1 --wait` の順に実行し、`vp run export:status` で manifest と history の件数を見る。同じ ID でもう一度 `export:start` を実行して ExecutionAlreadyExists になることを確かめる。失敗の経路は、実行中に S3 の console で part を 1 つ消すか、ExportPages の関数の timeout を一時的に短くして確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy`。
-
-### 16-durable
-
-Lambda durable function は一度も deploy していない。未確認: ap-northeast-1 で使えること（根拠は Price List に東京の SKU があることだけ）。cdkd 0.296.28 が DurableConfig つきの関数を作れること、Lambda::Version と Lambda::Alias を Cloud Control API 経由で作れること。実行 role の権限（`function:<名前>:*` への CheckpointDurableExecution と GetDurableExecutionState）で足りること。esbuild で bundle した SDK 2.6.0 が nodejs24.x で動くこと。`DurableExecutionName` による重複起動の抑止。1 回の呼び出しが関数の timeout に当たったときの実際の動き。durable operation の実際の数と料金。
-
-再開手順: `vp run export:infra:deploy -c durable=true` のあと `vp run export:seed`、`vp run export:durable:start --id check-1` を実行し、Lambda の console の Durable executions タブと `vp run export:logs --function durable` で経過を見る。同じ ID でもう一度起動して、新しい実行が増えないことを確かめる。`vp run export:status` で manifest を確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy -c durable=true`。
-
-### 16-containers
-
-step を ECS task（`ecs:runTask.sync`）や AWS Batch の job にする構成は、本文で説明しただけで、コードもテストもない。必要な IAM、ネットワーク、task の終了コードの扱い、料金の実測は未確認。
-
-再開手順: 12章の image の扱い（tag は immutable、`fromAsset` を使わない）で export の worker を image にし、state machine の ExportPages を `arn:aws:states:::ecs:runTask.sync` に置き換える。進捗は task の戻り値ではなく S3 に置く必要がある。Docker の daemon が要る。
-
-### 22-drill
-
-22章の復旧 drill を AWS で一度も実行していない。未確認: PITR の復元にかかる時間、`LatestRestorableDateTime` の実際の遅れ、復元した table に引き継がれる設定と引き継がれない設定（削除保護と PITR を含む）、S3 で delete marker を消した後と version を上書きコピーした後の ETag・`LastModified`・通知、`ListObjectVersions` の時刻が同じ version の並び、RPO と RTO の実測値。
-
-再開手順: `vp run recovery:infra:deploy` のあと、本文「drill を実行する」の順に `recovery:drill new`、`recovery:seed --apply`、`recovery:accident --apply`、`recovery:restore:table --apply`、`recovery:restore:objects --at <時刻> --apply`、`recovery:verify --table <復元した table> --frozen`、`recovery:repair` を実行し、`recovery:drill summary` の値を `examples/22-recovery/drill/TEMPLATE.md` の写しに記録する。最後に「片付け」の 3 つのタスク。
-
-### 22-cutover
-
-復元した table への切り替えを実機で確かめていない。未確認: `-c table=<名前>` での deploy が関数の環境変数と IAM policy だけを変えること、cdkd の drift 検査が復元した table を報告しないこと、`cdkd orphan` と `cdkd import --resource` で stack の table を入れ替えられること、`-c protect=on` の stack を cdkd で destroy したときの動き、`-c backup=on`（Cloud Control API 経由）と `-c replica=on` の作成と削除。
-
-再開手順: drill の続きで `vp run recovery:infra:diff -c table=<復元した table>` の差分を読み、deploy して `vp run recovery:audit` と `vp run recovery:infra:drift` を実行する。import を試すなら、`examples/22-recovery` で `cdkd orphan AihRecovery/Notes --dry-run` と `cdkd import AihRecovery --resource <logical ID>=<復元した table> --dry-run` の出力を先に読む。
 
 ### 24-deploy
 
@@ -1065,60 +835,6 @@ stage の既定のスロットリングが API 全体で 1 つの枠なのか、
 ノートの一覧は、本文を返さず、多くて 20 件の要約だけを返す。契約が受け付ける最大のノートで組んでも 20 KiB 以下になることをテストで確かめたが、デプロイした API のレスポンスでは確かめていない。06・07章の SPA は型検査と既存のテストを通しただけで、この変更のあとブラウザで操作していない。
 
 再開手順: デプロイした API に最大のノートを 20 件作り、`curl -s <url>/notes | wc -c` が 20,480 以下であることを見る。`vp run dev:app` で SPA を開き、一覧からノートを開けることを確かめる。
-
-### 17-live-inference
-
-17章は実際の Bedrock を一度も呼んでいない。モデル ID（jp.amazon.nova-2-lite-v1:0 など）が東京から呼べること、実際の ConverseStream のイベントが src/converse-stream.ts の schema に合うこと、fixture の形が実物と一致することは未確認。
-
-再開手順: examples/17-ai/.env を用意して vp run ai:hello、続けて vp run ai:test:live を実行する（課金される）。イベントの形が違えば schema と fixture を直す。
-
-### 17-deployed-streaming
-
-17章の stack はデプロイしていない。この章のアダプター（src/function-url.ts）のレスポンスが Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、awslambda.HttpResponseStream.from に渡す key（statusCode、headers、cookies）を Lambda がそのとおりに読むこと、切断でレスポンスストリームへの書き込みが失敗するかどうか、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。
-
-再開手順: vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。
-
-### 17-bedrock-billing-details
-
-途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。
-
-再開手順: Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。
-
-### 21-deploy
-
-既定の stack（CloudFront、function URL、Secrets Manager）を実環境で通していない
-
-再開手順: `vp run sec:infra:deploy` のあと、すぐに `vp run sec:smoke` を実行し、「after N refusals」の N を記録する。function URL を直接 curl して 403 になること、`vp run sec:infra:drift` の結果、`vp run sec:infra:destroy` のあとに Secrets Manager のコンソールで secret が「削除予定」としても残っていないことを確かめる
-
-### 21-rotation
-
-secret の rotation を実環境で試していない
-
-再開手順: デプロイ後に `vp run sec:smoke`、`vp run sec:secret:rotate`、もう一度 `vp run sec:smoke` の順に実行する。rotation の直後に、古い key version で発行した token が検証を通ること、`sec:secret:versions` の表示が AWSCURRENT と AWSPREVIOUS になっていること、同じ `--version-id` での再実行が already-rotated になること、10 分以内の 2 回目が too-soon で止まることを記録する。AWSPREVIOUS が無い secret に GetSecretValue したときのエラー名が ResourceNotFoundException かどうかも確かめる
-
-### 21-waf
-
-web ACL を作っていない。rate-based rule の動きも見ていない
-
-再開手順: `vp run sec:waf:infra:deploy` の出力 WebAclArn を `vp run sec:infra:deploy -c webAclArn=<ARN>` に渡す。5 分間に 300 回を超えるリクエストを 1 つの IP から送り、403 が返り始めるまでの時間と回数を記録する。WAF のコンソールで AwsCommonRules が count として記録していることを確かめる。請求で usage type が Global-* か USE1-* かを確かめる。終わったら `sec:infra:deploy`（webAclArn なし）で外してから `vp run sec:waf:infra:destroy`
-
-### 21-cmk
-
-customer managed key を使う構成を実環境で試していない
-
-再開手順: `vp run sec:infra:deploy -c cmk=on` のあと `vp run sec:smoke`。関数が kms:ViaService の条件つきの kms:Decrypt だけで secret を読めることを確かめる。`vp run sec:infra:destroy` のあと、KMS のコンソールで鍵が「削除保留中」で、7 日後に消える予定になっていること、その間の請求に鍵の料金が載るかどうかを記録する
-
-### 21-iam-propagation
-
-IAM の変更が伝わるまでの遅れを、実際には観測していない
-
-再開手順: デプロイ直後の `vp run sec:smoke` で refusals が 0 かどうかを数回記録する。次に、コンソールで HandlerRole の ReadSigningKey を消し、実行環境が新しくなるのを待ってから `/token` を繰り返し呼び、503 になるまでの時間と、一度 503 になったあとに 200 が混ざるかどうかを記録する。終わったら `vp run sec:infra:drift` で差を確かめ、revert する
-
-### 21-posture
-
-`sec:posture` と `sec:trail:iam` を実アカウントで動かしていない。GuardDuty、Inspector、Config、trail、Organizations も有効にしていない
-
-再開手順: `vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す
 
 ### events-pipe-to-bus
 
@@ -1341,42 +1057,6 @@ Lambda が関数をスロットリングしたとき（予約済み同時実行�
 AWS の外（手元の端末）から自分の API に負荷をかける試験に、申請や上限が要るかを一次情報から読み取れなかった。EC2 のテストポリシーは EC2 からの試験についてのもので、ペネトレーションテストのポリシーはリクエストフラッディングを禁じている。この章の負荷生成スクリプトは localhost 以外を断る。
 
 再開手順: 実環境で負荷試験をする前に、2 つのポリシーのページを読み直し、判断がつかなければ AWS Support に計画を伝えて確認する。
-
-### 33-live-account
-
-33章の点検は、合成したテンプレートだけを読んでいる。指摘の内容を、デプロイ済みのアカウントの実際の設定と突き合わせたことはない。AihReadyProduction はデプロイしておらず、Aspect が付けた PITR、削除保護、Retain、90 日の保持が実物でどう働くかも見ていない。CloudFormation と cdkd のどちらでも、スタックの削除や置き換えの更新を実行していない。
-
-再開手順: 20章の経路（`ship:cfn:*` と同じ CDK CLI）で本番向けの設定を持つスタックを練習用のアカウントにデプロイし、`aws dynamodb describe-continuous-backups` と `aws logs describe-log-groups` で設定を確かめる。そのあとスタックを削除して、テーブルとロググループが残ることと、残ったものの消し方を記録する。
-
-### 33-sibling-chapters
-
-33章は 25〜32章と 34〜36章を、それぞれの章の範囲の説明だけをもとに参照している。本文は読んでおらず、それらの章のスタックを点検した結果も含んでいない。
-
-再開手順: すべての章が揃ったあとで `vp run ready:check` を実行し、本文の「本の全スタックに当てた結果」の件数と、各分野の節が指している章の内容を照らし合わせる。
-
-### 33-other-platforms
-
-Cloudflare が Vercel の production checklist にあたる一覧を公開しているかは確認していない。Cloudflare について読んだのは Workers Logs の保持の上限だけ。AWS Config の管理ルール、cdk-nag、CloudFormation Guard は名前と説明を読んだだけで、動かしていない。
-
-再開手順: Cloudflare の公式ドキュメントで公開前の確認事項にあたるページを探す。cdk-nag を 1 つのスタックに当てて、この章の 10 個のルールと重なる指摘、重ならない指摘を比べる。
-
-### 34-cluster-deploy
-
-34章のスタックを一度もデプロイしていない。cdkd 0.296.28 は AWS::EKS の種類に専用の実装を持たず、Cloud Control API を経由する。クラスターの作成と削除、アクセスエントリー、Pod Identity の関連付け、別のアプリのスタックからの Fn::ImportValue が通るかは未確認。
-
-再開手順: `vp run net:infra:deploy`、`vp run eks:infra:diff`、`vp run eks:infra:deploy` の順に実行し、`aws eks describe-cluster --name aih-eks` で status が ACTIVE になること、computeConfig、accessConfig、upgradePolicy がテンプレートどおりであることを確かめる。終わったら `vp run eks:infra:destroy`。
-
-### 34-manifests-on-a-cluster
-
-k8s/ のマニフェストを API サーバーに渡したことがない。自前の NodeClass（パブリックサブネット、associatePublicIPAddress）でノードが起動してクラスターに参加するか、t4g.medium が選ばれるか、Name タグで ALB のサブネットを選べるか、Ingress の annotation が Auto Mode で効くか、preStop の 15 秒で足りるか、Pod Identity の認証情報が Pod に届くかは未確認。
-
-再開手順: クラスターをデプロイし、kubectl を用意して `aws eks update-kubeconfig --name aih-eks --region ap-northeast-1`、`vp run eks:manifests cluster | kubectl apply -f -`、`vp run eks:manifests app --tag v1 | kubectl apply -f -` を実行する。`kubectl get nodes -o wide`、`kubectl -n notes get pods,ingress` を見て、Ingress のホスト名へ `curl -si .../health` を送る。`kubectl -n notes rollout restart deployment/notes-api` の間、12章の `vp run ecs:watch --url http://<host>` でエラーが出ないことを確かめる。
-
-### 34-flake-kubectl
-
-Nix の devShell に kubectl が無い。34章のデプロイの手順は、kubectl を別に用意する前提で書いてある。
-
-再開手順: flake.nix の devShell に `pkgs.kubectl` を足すかどうかを著者が決める。足す場合は、クラスターのバージョン（1.37）と 1 マイナーバージョン以内であることを `kubectl version --client` で確かめ、34章の deploy のページの断り書きを直す。
 
 ### 35-deploy
 
@@ -1828,36 +1508,6 @@ Runtime の Instances とプラットフォームバージョン V2 が一般提
 
 再開手順: デプロイ後、aws chime-sdk-meetings create-meeting を同じ --client-request-token で 2 回呼び、MeetingId を比べる。create-attendee も同じ --external-user-id で 2 回呼び、AttendeeId と JoinToken を比べる。終わったら delete-meeting。
 
-### ecr-lifecycle-not-previewed
-
-ライフサイクルポリシーを ECR で評価していない。src/lifecycle.ts の evaluator は、ドキュメントの評価規則と 6 つの例から書いたもので、例の結果は再現するが、ECR の実装と同じである保証はない。「N 日より古い」の境界、プッシュ時刻が同じイメージの順序、manifest list と reference artifact の扱いは実装していないか、確かめていない。
-
-再開手順: vp run ecr:infra:deploy の後、タグ付き・タグなしを混ぜて数十個のイメージをプッシュし、vp run ecr:lifecycle:compare を実行する。start-lifecycle-policy-preview の結果と evaluator の結果が、ダイジェストとルールの番号まで一致するかを報告する。食い違ったら src/lifecycle.ts を直し、その入力を test/lifecycle.test.ts に足す。
-
-### ecr-nothing-pushed
-
-イメージを 1 つもビルドもプッシュもしていない。immutable なリポジトリが同じタグの再プッシュを拒否すること、同じダイジェストに 2 つ目のタグを付けられること、イメージを消したあとで同じタグを付け直せるかどうか、プッシュ用のロールの権限で docker push が通ること、イメージの実際の大きさは、どれも確かめていない。
-
-再開手順: Docker のデーモンがある環境で、12章の vp run ecs:image:build <tag> でイメージを作り、12章の deploy ページの手順で AihEcr の RepositoryUri にプッシュする。同じタグで別のイメージをプッシュして ImageTagAlreadyExistsException になること、aws ecr describe-images で imageSizeInBytes を読むこと、GitHub Actions からプッシュ用のロールでプッシュできることを確かめる。
-
-### ecr-scan-not-observed
-
-検査結果を 1 件も見ていない。scan on push が走ること、検査結果が無いときの findingSeverityCounts の形（空のオブジェクトか、項目が無いか）、検査が終わるまでの時間、12章のイメージ（node:24-bookworm-slim）が basic scanning の対応 OS に入っているかは確かめていない。
-
-再開手順: イメージをプッシュした後、vp run ecr:scan:gate --digest <ダイジェスト> を実行する。スキーマが応答を拒否したら、応答の形に合わせて src/scan.ts を直す。
-
-### ecr-cache-not-deployed
-
-pull through cache のルールをデプロイしていない。cdkd 0.296.28 が AWS::ECR::PullThroughCacheRule を Cloud Control API 経由で作れること、キャッシュ経由の最初の取得でリポジトリが作られること、プッシュ用のロールの権限でそれが通ることは確かめていない。
-
-再開手順: vp run ecr:infra:deploy -c pullThroughCache=on -c githubRepository=<owner/repo> でデプロイし、docker pull <registry>/ecr-public/docker/library/node:24-bookworm-slim を実行する。aws ecr describe-repositories に ecr-public/docker/library/node が現れることを確かめる。片付けでは、このリポジトリを手で消す。
-
-### ecr-ecs-rollback-digest
-
-ECS がタグをダイジェストに解決するのはデプロイごとだとドキュメントから読んだが、circuit breaker によるロールバックが、前のデプロイで解決したダイジェストを使うのか、タグを解決し直すのかは確認できていない。
-
-再開手順: ECS のドキュメントで service revision の説明を読み、ロールバック先のリビジョンがダイジェストを持つかを確かめる。mutable なリポジトリで実際にタグを動かしてロールバックさせ、動いたタスクの imageDigest を aws ecs describe-tasks で見る。
-
 ### 53-deploy
 
 53章のスタックを一度もデプロイしていない。cdkd 0.296.28 の EFS プロバイダーでファイルシステム、マウントターゲット、アクセスポイントが作れること、関数が作成時にマウントターゲットを見つけられること、Deny だけのファイルシステムポリシーが受け付けられること、その下で Lambda がマウントできること（Lambda が TLS でマウントするという記述は 2020 年の公式ブログにしか見つけていない）、アクセスポイントのルートディレクトリが初回のマウントで作られることが未確認。
@@ -1971,12 +1621,6 @@ polly:SynthesizeSpeech を Resource "*" で許可している。Polly のリソ�
 src/player.ts をブラウザで動かしていない。audio 要素の代わりのオブジェクトでテストしただけで、署名付き URL の音声が audio 要素で再生できること、部分のつなぎ目がどう聞こえるかは未確認。
 
 再開手順: 06章の Web アプリのノートの画面にボタンを足し、requestSpeech と playInOrder(urls, (url) => new Audio(url)) を呼ぶ。2 つ以上の部分になる長さのノートで、つなぎ目の間を聞く。
-
-### 58-aws
-
-58章のスタックを AWS で一度も動かしていない。未確認: 実際の DynamoDB が重複した PartiQL の INSERT に DuplicateItemException を返すこと（DynamoDB Local 3.3.1 は DuplicateItem という名前で返した）、dynamodb:PartiQLInsert と dynamodb:Query だけの権限で追記が通り上書きが通らないこと、PartiQL の INSERT の課金単位、既定の保持期間だけのバケットへの PutObject が s3:PutObject の権限だけで通りロックがかかること、SDK が付けるチェックサムで Object Lock の PutObject が受け付けられること、If-None-Match の 412、ListObjectVersions の応答の形、ロック中のバージョンの削除が 403 になること、governance の解除、GetObjectRetention がロックのないバージョンに返すエラーの名前、1 時間ごとのルールの料金、cdkd が Object Lock つきのバケットとルールと Lambda の権限を実際に作れること、cdkd destroy が RETAIN のバケットを残すこと。QLDB の開発者ガイドは 404 で読めなかったので、QLDB の説明は AWS のブログ 2 本だけに基づく。
-
-再開手順: `vp run ledger:infra:diff`、`vp run ledger:infra:deploy`、`vp run ledger:append`（2 回）、`vp run ledger:digest`、`vp run ledger:verify` の順に実行する。関数のログは出力 `DigestLogGroupName` のロググループを見る。出力 `DigestBucketName` を控えてから `vp run ledger:infra:destroy`。保持期間（既定は 1 日）が過ぎたら `vp run ledger:purge --bucket <名前> --apply` でバケットを消す。
 
 ### rds59-never-deployed
 
@@ -2158,6 +1802,66 @@ CPU のループが打ち切られないこと、同じプロセスの worker �
 
 再開手順: `pnpm-workspace.yaml` の `ignoredBuiltDependencies` に `workerd` を足す（esbuild と同じ理由で、スクリプトは不要）。
 
+### 68-deploy
+
+68章のスタックを AWS に一度もデプロイしていない。cdkd 0.296.28 の EC2 のプロバイダーは `EnclaveOptions` を扱わず、指定があるとインスタンスを Cloud Control API 経由に回す、とインストールした版のコードにある。その経路でエンクレーブ対応のインスタンスが作れること、Principal だけで権限を与えるキーポリシーを KMS が受け付けること、明示した管理用のアクションだけで cdkd がキーを作って消せることが未確認。
+
+再開手順: 11章をデプロイした後に `vp run nitro:infra:deploy`。`aws ec2 describe-instances --query 'Reservations[].Instances[].EnclaveOptions'` が `Enabled: true` を返すことを見て、`vp run nitro:infra:drift` を通す。終わったら `vp run nitro:infra:destroy`（インスタンスは時間課金）。
+
+### 68-enclave
+
+エンクレーブを一度も起動していない。Graviton の 2 vCPU のインスタンスで allocator を 1 vCPU にして hello のサンプルが動くこと、`--cpu-count 1` で起動できること、既定のルートボリュームに Docker のイメージとイメージファイルが収まること、hop limit 1 のままユーザーガイドの親側のコンテナが IMDSv2 から認証情報を取れるかどうかが未確認。
+
+再開手順: デプロイの後、Session Manager で入り、本文「エンクレーブを起動するまで」の順に `dnf install`、allocator の設定、`docker build`、`nitro-cli build-enclave`、`run-enclave --debug-mode`、`console`、`terminate-enclave` を通す。
+
+### 68-attestation
+
+KMS のアテステーションを一度も通していない。この章のキーポリシーで、エンクレーブの中からの Decrypt と GenerateDataKey が通り、親からの同じ呼び出しが拒否されることは、ドキュメントの記述と自作の評価器でしか確かめていない。ノートを封印する TypeScript のコード（`src/enclave/vault.ts`）をエンクレーブのイメージにする部分（vsock の待ち受け、NSM からのドキュメントの取得、`kmstool_enclave_cli` の呼び出し）は、このリポジトリに無い。
+
+再開手順: ユーザーガイドの「Connect the parent instance with an enclave by using virtio-vsock」と「Connect an enclave with AWS KMS」をそのまま通す。`nitro-cli build-enclave` が出した PCR0 を `vp run nitro:infra:deploy -c measurement=<PCR0>` で渡し、デバッグモードなしで起動したエンクレーブから `kmstool_enclave_cli decrypt` が通ること、親で `aws kms decrypt` が AccessDenied になること、CloudTrail の `additionalEventData.recipient` を確かめる。
+
+### 68-lsblk
+
+`lsblk --json --nodeps --output NAME,SERIAL` をインスタンスで実行していない。テストの入力は util-linux 2.40.2 のソースを読んで手で書いたもので、Amazon Linux 2023 が出す実際の JSON と突き合わせていない。
+
+再開手順: 23章のインスタンスで `lsblk --json --nodeps --output NAME,SERIAL` を実行し、出力を `findDevice` に渡して、`vp run ec2:status` が示すボリューム ID のデバイスが返ることを確かめる。
+
+### 33-live-account
+
+33章の点検は、合成したテンプレートだけを読んでいる。指摘の内容を、デプロイ済みのアカウントの実際の設定と突き合わせたことはない。AihReadyProduction はデプロイしておらず、Aspect が付けた PITR、削除保護、Retain、90 日の保持が実物でどう働くかも見ていない。CloudFormation と cdkd のどちらでも、スタックの削除や置き換えの更新を実行していない。
+
+再開手順: 20章の経路（`ship:cfn:*` と同じ CDK CLI）で本番向けの設定を持つスタックを練習用のアカウントにデプロイし、`aws dynamodb describe-continuous-backups` と `aws logs describe-log-groups` で設定を確かめる。そのあとスタックを削除して、テーブルとロググループが残ることと、残ったものの消し方を記録する。
+
+### 33-sibling-chapters
+
+33章のデプロイのページは、25章以降の章を、範囲の説明か概要のページだけをもとに参照している（25〜32章と 34〜36章は範囲の説明だけ、40、42、44、46、48、52、55、58、59、60、62、63章は概要のページ）。本文の全体は読んでいない。`vp run ready:check` は全スタックに対して実行済みだが、25章以降のスタックにある iam-wildcard の 41 件と function-url-auth の 1 件（62章の webhook の関数 URL）には、この検査の例外としての理由を書いていない。
+
+再開手順: デプロイのページが参照している章の本文を読み、各分野の 1 行がその章の内容と合っているかを確かめる。25章以降の 42 件について、各章の本文とテストにある理由を `examples/33-production-readiness/readiness/waivers.json` に写すか、報告のままにするかを決め、決めた結果を「本のすべてのスタックに当てた結果」の節に書く。
+
+### 33-other-platforms
+
+Cloudflare が Vercel の production checklist にあたる一覧を公開しているかは確認していない。Cloudflare について読んだのは Workers Logs の保持の上限だけ。AWS Config の管理ルール、cdk-nag、CloudFormation Guard は名前と説明を読んだだけで、動かしていない。
+
+再開手順: Cloudflare の公式ドキュメントで公開前の確認事項にあたるページを探す。cdk-nag を 1 つのスタックに当てて、この章の 10 個のルールと重なる指摘、重ならない指摘を比べる。
+
+### 34-cluster-deploy
+
+34章のスタックを一度もデプロイしていない。cdkd 0.296.28 は AWS::EKS の種類に専用の実装を持たず、Cloud Control API を経由する。クラスターの作成と削除、アクセスエントリー、Pod Identity の関連付け、別のアプリのスタックからの Fn::ImportValue が通るかは未確認。
+
+再開手順: `vp run net:infra:deploy`、`vp run eks:infra:diff`、`vp run eks:infra:deploy` の順に実行し、`aws eks describe-cluster --name aih-eks` で status が ACTIVE になること、computeConfig、accessConfig、upgradePolicy がテンプレートどおりであることを確かめる。終わったら `vp run eks:infra:destroy`。
+
+### 34-manifests-on-a-cluster
+
+k8s/ のマニフェストを API サーバーに渡したことがない。自前の NodeClass（パブリックサブネット、associatePublicIPAddress）でノードが起動してクラスターに参加するか、t4g.medium が選ばれるか、Name タグで ALB のサブネットを選べるか、Ingress の annotation が Auto Mode で効くか、preStop の 15 秒で足りるか、Pod Identity の認証情報が Pod に届くかは未確認。
+
+再開手順: クラスターをデプロイし、kubectl を用意して `aws eks update-kubeconfig --name aih-eks --region ap-northeast-1`、`vp run eks:manifests cluster | kubectl apply -f -`、`vp run eks:manifests app --tag v1 | kubectl apply -f -` を実行する。`kubectl get nodes -o wide`、`kubectl -n notes get pods,ingress` を見て、Ingress のホスト名へ `curl -si .../health` を送る。`kubectl -n notes rollout restart deployment/notes-api` の間、12章の `vp run ecs:watch --url http://<host>` でエラーが出ないことを確かめる。
+
+### 34-flake-kubectl
+
+devShell の kubectl（1.37.1）は flake.lock が固定する nixpkgs のもので、34章のクラスターのバージョン（1.37）とは別々に変わる。nixpkgs の固定かクラスターのバージョンのどちらかを更新すると、1 マイナーバージョン以内でなくなることがある。この kubectl をクラスターに対して使ったことはない。
+
+再開手順: flake.lock かクラスターのバージョンを更新したら、`nix develop -c sh -c 'kubectl version --client'` の結果とクラスターのバージョンを比べ、34章の deploy のページの版と `data/fragments/34.json` の toolchain を直す。
+
 ### 66-nothing-on-aws
 
 66章のスタックをデプロイしていない。EC2 の上では YugabyteDB を一度も起動していない。
@@ -2184,9 +1888,9 @@ CPU のループが打ち切られないこと、同じプロセスの worker �
 
 ### 66-openssl-not-in-nix
 
-証明書を作る `distsql:local:certs` と `distsql:certs` は PATH の openssl を使う。Nix の devShell には openssl が入っていない（この作業では Homebrew の 3.6.1 が使われた）。
+devShell に OpenSSL 3.5.8 を足し、`distsql:local:certs` と同じ引数で認証局と証明書を作れることは確かめた。TLS を有効にしたクラスターの検証（5 回）は Homebrew の OpenSSL 3.6.1 で作った証明書で実行したもので、3.5.8 で作った証明書ではクラスターを起動していない。`distsql:certs`（AWS のノード向け）は実行していない。
 
-再開手順: flake の devShell に openssl を足すかどうかを決める。足さない場合は、macOS に付属の /usr/bin/openssl（LibreSSL）で同じ引数が通るかを確かめる。
+再開手順: `vp run distsql:local:destroy` のあと `examples/66-distributed-sql/.yugabyte/ca` と `.yugabyte/certs` を消し、devShell の中で `vp run distsql:local:certs`、`vp run distsql:local:start --tls`、`vp run distsql:local:verify` を実行して、結果を記録する。
 
 ### 66-deadlock-and-rotation
 
@@ -2236,26 +1940,326 @@ AWS::EC2::LaunchTemplate と、LaunchTemplate プロパティを使う AWS::EC2:
 
 再開手順: prepare.sh のあと sudo chroot work/squashfs-root /opt/node/bin/node --version を実行する。動かなければ、足りないライブラリを ldd で調べ、apt で入れる手順を prepare.sh に足す。
 
-### 68-deploy
+### async-s3-event-shape
 
-68章のスタックを AWS に一度もデプロイしていない。cdkd 0.296.28 の EC2 のプロバイダーは `EnclaveOptions` を扱わず、指定があるとインスタンスを Cloud Control API 経由に回す、とインストールした版のコードにある。その経路でエンクレーブ対応のインスタンスが作れること、Principal だけで権限を与えるキーポリシーを KMS が受け付けること、明示した管理用のアクションだけで cdkd がキーを作って消せることが未確認。
+08章: form（POST Object）による作成のイベント（ObjectCreated:Post）と、lifecycle rule による削除のイベント（LifecycleExpiration:Delete）に sequencer が入るかを確認していない。公式ドキュメントは「PUT と DELETE のリクエストでだけ使われる」と書いている。worker は、sequencer のない作成イベントを失敗にして DLQ へ送り、sequencer のない削除イベントは何もせずに受け取る。
 
-再開手順: 11章をデプロイした後に `vp run nitro:infra:deploy`。`aws ec2 describe-instances --query 'Reservations[].Instances[].EnclaveOptions'` が `Enabled: true` を返すことを見て、`vp run nitro:infra:drift` を通す。終わったら `vp run nitro:infra:destroy`（インスタンスは時間課金）。
+再開手順: vp run async:infra:deploy の後、AIH_ACCESS_TOKEN を入れて vp run async:smoke を実行する。form の経路で記録ができなければ vp run async:queue で DLQ を見る。POST のイベントに sequencer がなければ、eventTime と eTag を使う順序づけに替えるか、S3 の通知を EventBridge 経由に替える。
 
-### 68-enclave
+### async-notification-deploy
 
-エンクレーブを一度も起動していない。Graviton の 2 vCPU のインスタンスで allocator を 1 vCPU にして hello のサンプルが動くこと、`--cpu-count 1` で起動できること、既定のルートボリュームに Docker のイメージとイメージファイルが収まること、hop limit 1 のままユーザーガイドの親側のコンテナが IMDSv2 から認証情報を取れるかどうかが未確認。
+08章: bucket の名前を固定して queue policy との循環を避ける書き方が、cdkd で実際に通るかを確認していない。S3 が通知の設定時に queue へ送れるかを検証すること、SQS 管理の鍵で暗号化した queue（SSE-SQS）に S3 が送れること、event source mapping の作成時に role の権限が検証されること、If-Match に引用符つきの ETag を渡して 412 が返ることも未確認。
 
-再開手順: デプロイの後、Session Manager で入り、本文「エンクレーブを起動するまで」の順に `dnf install`、allocator の設定、`docker build`、`nitro-cli build-enclave`、`run-enclave --debug-mode`、`console`、`terminate-enclave` を通す。
+再開手順: vp run async:infra:deploy を実行する。bucket の作成が「Unable to validate the following destination configurations」で失敗したら、queue policy が先に作られているかを確かめる。その後 vp run async:smoke を実行する。
 
-### 68-attestation
+### async-idle-polling-cost
 
-KMS のアテステーションを一度も通していない。この章のキーポリシーで、エンクレーブの中からの Decrypt と GenerateDataKey が通り、親からの同じ呼び出しが拒否されることは、ドキュメントの記述と自作の評価器でしか確かめていない。ノートを封印する TypeScript のコード（`src/enclave/vault.ts`）をエンクレーブのイメージにする部分（vsock の待ち受け、NSM からのドキュメントの取得、`kmstool_enclave_cli` の呼び出し）は、このリポジトリに無い。
+08章: Lambda が空の queue を long polling する頻度が公式ドキュメントに書かれておらず、使われていない月の SQS のリクエスト数を見積もれない。
 
-再開手順: ユーザーガイドの「Connect the parent instance with an enclave by using virtio-vsock」と「Connect an enclave with AWS KMS」をそのまま通す。`nitro-cli build-enclave` が出した PCR0 を `vp run nitro:infra:deploy -c measurement=<PCR0>` で渡し、デバッグモードなしで起動したエンクレーブから `kmstool_enclave_cli decrypt` が通ること、親で `aws kms decrypt` が AccessDenied になること、CloudTrail の `additionalEventData.recipient` を確かめる。
+再開手順: デプロイして 1 日置き、CloudWatch の SQS のメトリクス NumberOfEmptyReceives を読んで、観測値として書く。
 
-### 68-lsblk
+### async-housekeeping-scale
 
-`lsblk --json --nodeps --output NAME,SERIAL` をインスタンスで実行していない。テストの入力は util-linux 2.40.2 のソースを読んで手で書いたもので、Amazon Linux 2023 が出す実際の JSON と突き合わせていない。
+08章: 掃除は 1 回の実行で bucket のすべての object を見て、1 枚ごとに DynamoDB を 4 回、順に読む。実行時間は計測していない。枚数が増えると、関数の timeout（15 分）と読み取りの料金の両方に当たる。
 
-再開手順: 23章のインスタンスで `lsblk --json --nodeps --output NAME,SERIAL` を実行し、出力を `findDevice` に渡して、`vp run ec2:status` が示すボリューム ID のデバイスが返ることを確かめる。
+再開手順: vp run async:logs --function housekeeping で REPORT 行の実行時間を読む。枚数に対して長すぎるなら、実行の間隔を広げるか、新しい object だけを見るか、S3 Inventory を入力にする。
+
+### async-inspection-orphans
+
+08章: 検査の記録が、object のないまま残る経路が 2 つある。作成イベントを処理している worker が記録を書く直前に、別の worker が同じ key の削除イベントを処理し終えた場合。lifecycle rule による削除のイベントに sequencer がなかった場合。どちらも利用者には見えないが、記録は残る。
+
+再開手順: 削除のときに記録を消すかわりに、sequencer つきの墓石（tombstone）を条件付きで書き、DynamoDB の TTL で消す。
+
+### ssr-aws-path
+
+09章の構成を AWS で一度も動かしていない。Nitro の handler が Node.js 24 の runtime と function URL で動くこと、OAC の署名を function URL が受け入れ直接のリクエストを断ること、cache policy と response headers policy が意図どおり働くこと、smoke が見る x-cache と age ヘッダーの実際の値、許可していない method への応答が未確認。
+
+再開手順: vp run build:ssr、ssr:infra:deploy、ssr:assets:publish、ssr:smoke の順に実行する。smoke が落ちたら、判定（examples/09-ssr/scripts/smoke-spec.ts）と実際のヘッダーのどちらが違うのかを記録してから直す。終わったら ssr:unpublish --yes と ssr:infra:destroy。
+
+### ssr-streaming-path
+
+response streaming が、Lambda、function URL（RESPONSE_STREAM）、CloudFront、ブラウザまで通して少しずつ届くかは未確認。stream した応答を CloudFront が圧縮しないこと、handler の形と InvokeMode が食い違ったときの応答も未確認。手元で確かめたのは Nitro の handler が書き込む回数と間隔だけ。
+
+再開手順: vp run ssr:check:output:stream、ssr:assets:publish、ssr:infra:deploy のあと、curl -sN で /feed を、curl -s -o /dev/null -D - --compressed で / を取得し、行が届く間隔と content-encoding を記録する。function URL を直接ではなく distribution 経由で見ること。
+
+### ssr-cdkd-cloudfront-policies
+
+cdkd 0.296.28 は AWS::CloudFront::CachePolicy と AWS::CloudFront::ResponseHeadersPolicy に専用の実装を持たず、Cloud Control API 経由で扱う。作成、更新、drift の読み戻し、削除が実際に動くかは未確認。minTtl と defaultTtl が 0、maxTtl が 60 の cache policy で圧縮の設定を有効にできるかも未確認。
+
+再開手順: vp run ssr:infra:deploy と ssr:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
+
+### ssr-bff-deployed
+
+09章の BFF（サインイン、session、token の保持）は手元でしか動かない。session がプロセスのメモリにあり、サインインが POST で、function URL と OAC の組み合わせがブラウザの form からの POST をそのままでは通さないため。デプロイした環境で「cookie を持つ人にその人のページが返る」ことは確かめていない。
+
+再開手順: 著者が方針を決める（session を DynamoDB に置き、POST の入口を API Gateway にする、など）。決まったら examples/09-ssr に実装し、ssr:smoke に本物の session での検査を足す。
+
+### 12-image-build
+
+12章の Dockerfile で image を一度も build していない。`.dockerignore` の例外指定で dist/server.mjs だけが context に入ること、node:24-bookworm-slim の arm64 版で起動すること、`--read-only` で動くこと、image の大きさが未確認。
+
+再開手順: Docker の daemon を起動し、`vp run ecs:bundle`、`vp run ecs:image:build v1`、`vp run ecs:image:run v1` を実行する。別のターミナルで `curl http://localhost:8080/health` を呼び、Ctrl-C で `stopped` のログと終了コード 0 を確かめる。`docker image ls aih-notes` で大きさを見る。
+
+### 12-deploy
+
+12章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が ECR、ECS、ALB を作って消せること、`Fn::ImportValue` で 11章の VPC を読めること、Cloud Control API 経由になる 3 種類（ScalableTarget、ScalingPolicy、SecurityGroupEgress）が通ること、public subnet の task が image を取得できること、ALB の DNS 名で応答することが未確認。
+
+再開手順: `vp run net:infra:deploy`、`vp run ecs:infra:deploy`、`vp run ecs:image:push v1`、`vp run ecs:infra:deploy -c imageTag=v1` の順に実行し、output の `ServiceUrl` に `curl` する。`vp run ecs:infra:drift` を通したら、`vp run ecs:infra:destroy`、`vp run net:infra:destroy` で消す（時間課金）。
+
+### 12-rolling-update
+
+rolling update を実環境で観察していない。更新中にエラーが出ないこと、新旧の版が交互に応答すること、target の登録解除が終わってから SIGTERM が届くという順序、壊れた image を渡したときに circuit breaker が元に戻すこと、そのとき cdkd の `--full-wait` が何を報告するかが未確認。
+
+再開手順: v1 を deploy した状態で `vp run ecs:watch` を別のターミナルで動かし、`vp run ecs:image:push v2`、`vp run ecs:infra:deploy -c imageTag=v2` を実行する。`ecs:watch` の集計と、`vp run ecs:logs` の `draining`、`stopped` の行の時刻を見る。続けて、存在しない tag で deploy し、`aws ecs describe-services` の `rolloutState` と cdkd の終了コードを記録する。
+
+### 12-private-subnets
+
+`-c taskSubnets=private` の構成を実環境で動かしていない。NAT Gateway 経由、interface endpoint 経由のどちらでも image を取得してログを送れること、443 番だけの egress で足りることが未確認。
+
+再開手順: 11章を `-c egress=nat` で deploy し、12章を `-c imageTag=v1 -c taskSubnets=private` で deploy して `ServiceUrl` を確かめる。次に 11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy し直し、task を入れ替えて（新しい tag で deploy）同じことを確かめる。終わったらすぐ destroy する。
+
+### 12-alb-idle-lcu
+
+リクエストが無いときに ALB の LCU がいくらになるか（health check が LCU に数えられるか）を一次情報で確認できていない。料金の表では LCU を未算入としている。
+
+再開手順: deploy して 1 日置き、Cost Explorer か請求書で `APN1-LCUUsage` の数量を確かめる。
+
+### dsql-real-cluster
+
+13章のコードを実際の Aurora DSQL に一度もつないでいない。未確認: 4 つの migration の SQL が受け付けられること（CREATE SCHEMA IF NOT EXISTS、外部キー、CHECK、CREATE INDEX ASYNC IF NOT EXISTS）、CREATE INDEX ASYNC の応答から job_id を読めて sys.jobs を polling できること、AWS IAM GRANT と schema への GRANT で notes_api が読み書きできること、node-postgres の password に渡した関数で token が通ること、競合が node-postgres のエラーの code に 40001 として現れること、凍結から戻った実行環境で切れた接続がどう見えるか。手元の代用は PGlite（PostgreSQL 18.3）で、DSQL（PostgreSQL 16 互換）とは版も違う。
+
+再開手順: 学習用アカウントで vp run sql:infra:deploy、sql:db:migrate、sql:db:grant、sql:smoke を順に実行する。同じ note を同時に更新する負荷をかけ、sql:logs で "transaction retry" の行と 40001 を確認する。15 分以上あけて呼び、接続の張り直しを見る。結果を data/validation.json に記録し、vp run sql:infra:destroy で消す。
+
+### cdkd-dsql-cluster
+
+cdkd 0.296.28 は AWS::DSQL::Cluster に専用の実装を持たず、Cloud Control API 経由で扱う。作成、Ref が cluster の identifier を返すこと、drift の読み戻し、削除が実際に動くかは未確認。13章の stack は Ref から endpoint と ARN を組み立てている。
+
+再開手順: vp run sql:infra:deploy の後、output の ClusterEndpoint が <26 文字の id>.dsql.ap-northeast-1.on.aws の形であること、関数の環境変数と IAM policy の Resource が同じ cluster を指すことを確認する。vp run sql:infra:drift と sql:infra:destroy の結果も記録する。
+
+### dsql-dpu-estimate
+
+13章の料金のシナリオは、1 リクエストあたりの DPU を公式ドキュメントの計算例から借りた仮定で、この章の query を測った値ではない。
+
+再開手順: デプロイした cluster で EXPLAIN ANALYZE VERBOSE を使うか、CloudWatch の ComputeDPU、ReadDPU、WriteDPU を見て、作成、更新、一覧の 1 件あたりの DPU を測る。data/fragments/13.json の scenarios を直して apply し直す。
+
+### 16-deploy
+
+16章の stack を AWS に一度も deploy していない。未確認: cdkd 0.296.28 が inline の DefinitionString（Fn::Join）で state machine を作れること。state machine の role の trust policy の条件が通ること。Scheduler が `<aws.scheduler.scheduled-time>` を置き換えた入力で StartExecution を呼ぶこと。関数の ARN を Resource に直接書いた Task の入出力。Lambda の例外の name が Catch の `ExportCorrupt` に一致すること。S3 が `If-None-Match: *` に 412 を返し、SDK がそれを status 412 の例外として投げること。HeadObject の metadata のキーが小文字で返ること。Task の timeout の後も Lambda が動き続けるかどうか。state transition の実際の数。
+
+再開手順: `vp run export:infra:deploy`、`vp run export:seed --notes 250`、`vp run export:start --id check-1 --wait` の順に実行し、`vp run export:status` で manifest と history の件数を見る。同じ ID でもう一度 `export:start` を実行して ExecutionAlreadyExists になることを確かめる。失敗の経路は、実行中に S3 の console で part を 1 つ消すか、ExportPages の関数の timeout を一時的に短くして確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy`。
+
+### 16-durable
+
+Lambda durable function は一度も deploy していない。未確認: ap-northeast-1 で使えること（根拠は Price List に東京の SKU があることだけ）。cdkd 0.296.28 が DurableConfig つきの関数を作れること、Lambda::Version と Lambda::Alias を Cloud Control API 経由で作れること。実行 role の権限（`function:<名前>:*` への CheckpointDurableExecution と GetDurableExecutionState）で足りること。esbuild で bundle した SDK 2.6.0 が nodejs24.x で動くこと。`DurableExecutionName` による重複起動の抑止。1 回の呼び出しが関数の timeout に当たったときの実際の動き。durable operation の実際の数と料金。
+
+再開手順: `vp run export:infra:deploy -c durable=true` のあと `vp run export:seed`、`vp run export:durable:start --id check-1` を実行し、Lambda の console の Durable executions タブと `vp run export:logs --function durable` で経過を見る。同じ ID でもう一度起動して、新しい実行が増えないことを確かめる。`vp run export:status` で manifest を確かめる。終わったら `vp run export:empty --yes` と `vp run export:infra:destroy -c durable=true`。
+
+### 16-containers
+
+step を ECS task（`ecs:runTask.sync`）や AWS Batch の job にする構成は、本文で説明しただけで、コードもテストもない。必要な IAM、ネットワーク、task の終了コードの扱い、料金の実測は未確認。
+
+再開手順: 12章の image の扱い（tag は immutable、`fromAsset` を使わない）で export の worker を image にし、state machine の ExportPages を `arn:aws:states:::ecs:runTask.sync` に置き換える。進捗は task の戻り値ではなく S3 に置く必要がある。Docker の daemon が要る。
+
+### 17-live-inference
+
+17章は実際の Bedrock を一度も呼んでいない。モデル ID（jp.amazon.nova-2-lite-v1:0 など）が東京から呼べること、実際の ConverseStream のイベントが src/converse-stream.ts の schema に合うこと、fixture の形が実物と一致することは未確認。
+
+再開手順: examples/17-ai/.env を用意して vp run ai:hello、続けて vp run ai:test:live を実行する（課金される）。イベントの形が違えば schema と fixture を直す。
+
+### 17-deployed-streaming
+
+17章の stack はデプロイしていない。この章のアダプター（src/function-url.ts）のレスポンスが Node.js 24 の Lambda で function URL（RESPONSE_STREAM、AWS_IAM）を通して少しずつ届くこと、awslambda.HttpResponseStream.from に渡す key（statusCode、headers、cookies）を Lambda がそのとおりに読むこと、切断でレスポンスストリームへの書き込みが失敗するかどうか、署名なしのリクエストが 403 になること、inference profile に絞った IAM policy で ConverseStream が通ること、cdkd が AWS::Lambda::Url の InvokeMode を反映することは未確認。
+
+再開手順: vp run ai:infra:deploy、vp run ai:smoke（delta の到着時刻が表示される）、vp run ai:logs、vp run ai:infra:drift、vp run ai:infra:destroy の順に実行する。
+
+### 17-bedrock-billing-details
+
+途中で中断した ConverseStream に、どこまでの token が課金されるかを一次情報で確認できていない。Bedrock の無料枠、東京リージョンでの quota の値も未確認。
+
+再開手順: Bedrock の料金ページと Service Quotas を確認する。中断時の課金は、ai:test:live を途中で止めて請求と CloudWatch の metrics を見比べる。
+
+### obs-lambda-json-log-shape
+
+Lambda の JSON ログ形式で、アプリが console.log に渡した JSON の行が、そのままの形で CloudWatch Logs に入るかを実機で確かめていない。metric filter の JSON pattern と Logs Insights の項目名がこれに依存する。
+
+再開手順: vp run obs:infra:deploy、vp run obs:smoke の後、vp run obs:query --name request --id <x-request-id> を実行する。行が見つかり、status などの項目が取れること、NoteConflicts にデータ点が出ることを確かめる。形が違えば、src/compose.ts の出力先を process.stdout に替えるか、query の項目名を直す。
+
+### obs-otel-layer-node24
+
+AWS Lambda Layer for OpenTelemetry を Node.js 24 の関数に付けた構成を動かしていない。ADOT のドキュメントの対応 runtime は Node.js 22 まで。esbuild で bundle した ESM の関数で、手書きの span が layer の SDK に届くか、AWS SDK の自動計装が効くか、実行 role の権限が xray:PutTraceSegments で足りるかも未確認。
+
+再開手順: ADOT のドキュメントの Node.js の表から東京リージョンの layer の ARN を取り、vp run obs:infra:deploy -c otelLayerArn=<ARN> を実行する。vp run obs:smoke の後、X-Ray の画面で notes.* の span が Lambda の segment の下に出るか確かめる。出なければ、関数のログで layer のエラーを探し、runtime を nodejs22.x にして比べる。
+
+### obs-alarm-behavior
+
+アラームの実際の状態遷移を確かめていない。metric math の IF の式が受け付けられること、リクエストが無い間に 5xx と Count のデータ点が欠損になること、SNS の通知が届くことは、ドキュメントからの読み取り。
+
+再開手順: vp run obs:infra:deploy -c alarmEmail=<自分のアドレス> の後、届いた確認メールを承認し、vp run obs:alarms で状態を見る。5xx を起こすには、table の権限を一時的に外す変更を別の branch で deploy するなど、練習用アカウントで行う。
+
+### obs-cdkd-cloud-control
+
+cdkd 0.296.28 は AWS::CloudWatch::Dashboard と AWS::Logs::MetricFilter を Cloud Control API 経由で扱う。作成、更新、drift の読み戻しが実際に動くかは未確認。
+
+再開手順: vp run obs:infra:deploy と vp run obs:infra:drift を実行する。失敗する場合は内容を記録し、著者に判断を仰ぐ（別のツールへは置き換えない）。
+
+### obs-pricing-gaps
+
+ダッシュボードの単価（4 つ目から）、Lambda が JSON 形式で書くシステムログの大きさ、layer 経由で送った span が X-Ray の trace として課金されるのかを確認できていない。
+
+再開手順: 料金ページを JavaScript が動くブラウザで開いてダッシュボードの単価を読む。デプロイ後、Logs Insights で 1 リクエストあたりの @message の合計バイト数を測り、data/fragments/19.json の仮定を直す。数日後に Cost Explorer の usage type を見る。
+
+### 20-cfn-deploy
+
+CloudFormation 経路（bootstrap、diff、deploy、smoke、status、destroy）を実環境で通していない
+
+再開手順: `vp run ship:cfn:bootstrap` のあと、`vp run ship:cfn:diff`、`ship:cfn:deploy`、`ship:smoke`、`ship:cfn:status`、`ship:cfn:destroy` を順に実行する。`ship:smoke` が alias 経由で 200 を返すこと、`cdk diff --method template` が lookup role だけで通ることを記録する。CDKToolkit stack に作られたリソースを、本文の表と照合する
+
+### 20-oidc-roles
+
+OIDC の role を GitHub Actions から assume していない
+
+再開手順: `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` を実行し、出力の 4 つの ARN と アカウント ID を repository の variables に入れる。workflows/ の 4 ファイルを .github/workflows/ にコピーして、pull request、main への push、手動実行の drift を 1 回ずつ流す。別の branch や別の repository から assume が拒否されること、repository の sub が immutable 形式かどうか、fork の pull request で plan job が走らないことを記録する
+
+### 20-drift-role-permissions
+
+DriftRole の読み取り権限は resource type の schema から導いたもので、実際の検出で足りるかは未確認
+
+再開手順: DriftRole で `vp run ship:cfn:drift -c stage=prod` を実行する。`failed` や `incomplete` になったら report の理由に出た action を examples/20-shipping/infra/lib/ci-stack.ts に足し、テストの一覧も直す。足りていたら、使われなかった action を CloudTrail で確かめて削る
+
+### 20-drift-live
+
+CloudFormation の drift 検出の応答を実機で採取していない。検出範囲（Integration が未検査になるか、inline policy の変更が Role の drift として出るか）も未確認
+
+再開手順: 本文の「わざとずらしてみる」の手順を実行する。各段階の reports/drift/AihShipApi.json と、同じ時点の `aws cloudformation describe-stack-resource-drifts` の出力を採り、tools/src/drift/fixtures/cloudformation/ の fixture と形を比べる。存在しない stack 名で実行し、エラーの name と message が `ValidationError` と `does not exist` であることを確かめる。未検査になった resource type を examples/20-shipping/src/drift-coverage.ts の 2 つの一覧と照合する
+
+### 20-rollback-live
+
+失敗したデプロイの rollback、alias の付け替え、`cdk rollback` を実環境で観察していない
+
+再開手順: わざと失敗する変更（たとえば Lambda の memorySize を上限より大きくする）をデプロイし、`vp run ship:cfn:status` が UPDATE_ROLLBACK_COMPLETE を返すまでの状態の移り変わりを記録する。正常なデプロイを 2 回行い、古い version が残っていること、stack を消したときに version も消えることを確かめる
+
+### 20-tool-migration
+
+cdkd と CloudFormation の間で stack を移す手順（`cdkd export`、`cdkd import --migrate-from-cloudformation`）は未実行
+
+再開手順: 練習用の stack を cdkd でデプロイし、`cdkd export <stack> --dry-run` の計画を読んでから実行する。import できない resource type で止まるかどうか、成功後に cdkd の state が消え、CloudFormation の stack として `cdk diff` が空になることを記録する。逆方向も同じ stack で試す
+
+### 21-deploy
+
+既定の stack（CloudFront、function URL、Secrets Manager）を実環境で通していない
+
+再開手順: `vp run sec:infra:deploy` のあと、すぐに `vp run sec:smoke` を実行し、「after N refusals」の N を記録する。function URL を直接 curl して 403 になること、`vp run sec:infra:drift` の結果、`vp run sec:infra:destroy` のあとに Secrets Manager のコンソールで secret が「削除予定」としても残っていないことを確かめる
+
+### 21-rotation
+
+secret の rotation を実環境で試していない
+
+再開手順: デプロイ後に `vp run sec:smoke`、`vp run sec:secret:rotate`、もう一度 `vp run sec:smoke` の順に実行する。rotation の直後に、古い key version で発行した token が検証を通ること、`sec:secret:versions` の表示が AWSCURRENT と AWSPREVIOUS になっていること、同じ `--version-id` での再実行が already-rotated になること、10 分以内の 2 回目が too-soon で止まることを記録する。AWSPREVIOUS が無い secret に GetSecretValue したときのエラー名が ResourceNotFoundException かどうかも確かめる
+
+### 21-waf
+
+web ACL を作っていない。rate-based rule の動きも見ていない
+
+再開手順: `vp run sec:waf:infra:deploy` の出力 WebAclArn を `vp run sec:infra:deploy -c webAclArn=<ARN>` に渡す。5 分間に 300 回を超えるリクエストを 1 つの IP から送り、403 が返り始めるまでの時間と回数を記録する。WAF のコンソールで AwsCommonRules が count として記録していることを確かめる。請求で usage type が Global-* か USE1-* かを確かめる。終わったら `sec:infra:deploy`（webAclArn なし）で外してから `vp run sec:waf:infra:destroy`
+
+### 21-cmk
+
+customer managed key を使う構成を実環境で試していない
+
+再開手順: `vp run sec:infra:deploy -c cmk=on` のあと `vp run sec:smoke`。関数が kms:ViaService の条件つきの kms:Decrypt だけで secret を読めることを確かめる。`vp run sec:infra:destroy` のあと、KMS のコンソールで鍵が「削除保留中」で、7 日後に消える予定になっていること、その間の請求に鍵の料金が載るかどうかを記録する
+
+### 21-iam-propagation
+
+IAM の変更が伝わるまでの遅れを、実際には観測していない
+
+再開手順: デプロイ直後の `vp run sec:smoke` で refusals が 0 かどうかを数回記録する。次に、コンソールで HandlerRole の ReadSigningKey を消し、実行環境が新しくなるのを待ってから `/token` を繰り返し呼び、503 になるまでの時間と、一度 503 になったあとに 200 が混ざるかどうかを記録する。終わったら `vp run sec:infra:drift` で差を確かめ、revert する
+
+### 21-posture
+
+`sec:posture` と `sec:trail:iam` を実アカウントで動かしていない。GuardDuty、Inspector、Config、trail、Organizations も有効にしていない
+
+再開手順: `vp run sec:posture` を実行し、6 つの読み取りがすべて read できること、Organizations に入っていないアカウントで AWSOrganizationsNotInUseException が返ることを確かめる。GuardDuty をコンソールで有効にして表示が on に変わること、30 日の試用期間中にコンソールの使用量ページが出す見積もりを記録する。`vp run sec:trail:iam` で、デプロイのときの CreateRole が us-east-1 の event history に出ることを確かめる。SCP は、練習用の organization と OU を用意できる場合にだけ、`policies/scp-guardrails.json` を OU に付けて試す
+
+### 22-drill
+
+22章の復旧 drill を AWS で一度も実行していない。未確認: PITR の復元にかかる時間、`LatestRestorableDateTime` の実際の遅れ、復元した table に引き継がれる設定と引き継がれない設定（削除保護と PITR を含む）、S3 で delete marker を消した後と version を上書きコピーした後の ETag・`LastModified`・通知、`ListObjectVersions` の時刻が同じ version の並び、RPO と RTO の実測値。
+
+再開手順: `vp run recovery:infra:deploy` のあと、本文「drill を実行する」の順に `recovery:drill new`、`recovery:seed --apply`、`recovery:accident --apply`、`recovery:restore:table --apply`、`recovery:restore:objects --at <時刻> --apply`、`recovery:verify --table <復元した table> --frozen`、`recovery:repair` を実行し、`recovery:drill summary` の値を `examples/22-recovery/drill/TEMPLATE.md` の写しに記録する。最後に「片付け」の 3 つのタスク。
+
+### 22-cutover
+
+復元した table への切り替えを実機で確かめていない。未確認: `-c table=<名前>` での deploy が関数の環境変数と IAM policy だけを変えること、cdkd の drift 検査が復元した table を報告しないこと、`cdkd orphan` と `cdkd import --resource` で stack の table を入れ替えられること、`-c protect=on` の stack を cdkd で destroy したときの動き、`-c backup=on`（Cloud Control API 経由）と `-c replica=on` の作成と削除。
+
+再開手順: drill の続きで `vp run recovery:infra:diff -c table=<復元した table>` の差分を読み、deploy して `vp run recovery:audit` と `vp run recovery:infra:drift` を実行する。import を試すなら、`examples/22-recovery` で `cdkd orphan AihRecovery/Notes --dry-run` と `cdkd import AihRecovery --resource <logical ID>=<復元した table> --dry-run` の出力を先に読む。
+
+### 23-deploy
+
+23章の stack を AWS に一度も deploy していない。cdkd 0.296.28 が instance、instance profile、security group を専用の実装で、volume と volume attachment を Cloud Control API 経由で作れること、SSM 型の parameter から AMI の ID が解決されること、`Fn::ImportValue` で 11章の output を読めることが未確認。
+
+再開手順: `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages` の後に `vp run ec2:infra:deploy`、`vp run ec2:status`、`vp run ec2:infra:drift` を通す。終わったら「片付け」の順に消す（時間課金）。
+
+### 23-first-boot
+
+user data を本物の Amazon Linux 2023 で走らせていない。未確認: private subnet から S3 の gateway endpoint だけで dnf の repository に届くこと（repository が S3 にあることは、ドキュメントの出力例の host 名から読み取っただけ）、`nodejs24` と `xfsprogs` が入ること、`/dev/sdf` の link ができること、attach を待つ loop が足りること、unit の directive（`AssertPathIsMountPoint` など）が AL2023 の systemd で通ること、root volume の大きさ（料金は 8 GiB と仮定）。
+
+再開手順: deploy 後に `vp run ec2:status` で cloud-init の結果、service の状態、mount を見る。失敗していたら `vp run ec2:session` で入り、`/var/log/cloud-init-output.log` を読む。root volume は `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>` で確かめ、8 GiB でなければ `src/cost.ts` の `ASSUMED_ROOT_GIB` と本文の金額を直す。
+
+### 23-ssm-endpoints
+
+interface endpoint が 3 つとも要るのかを確かめていない。Systems Manager のドキュメントは、SSM Agent 3.3.40.0 以降は ssmmessages を優先すると書いているが、ec2messages の endpoint を省けるとは書いていない。AMI に入っている agent の版も見ていない。
+
+再開手順: 11章の stack を `-c interfaceEndpoints=ssm,ssmmessages` で deploy し直し、instance を再起動して `vp run ec2:status` が Online を返すか、`vp run ec2:smoke` が通るかを見る。通れば月 USD 20.44 減らせる。
+
+### 23-release
+
+release の経路（S3 への upload、Run Command、instance 上の `notes-release`、restart、`/health` の確認）と、restart のときに処理中のリクエストが完了することを、実機で通していない。Session Manager と port forwarding も未実行（plugin が devShell に無い）。
+
+再開手順: `vp run ec2:app:release`、`vp run ec2:smoke`、`vp run ec2:logs` を通す。もう一度 release して、前の版を `vp run ec2:app:rollback <version>` で戻す。Session Manager plugin を入れて `vp run ec2:forward` を実行し、手元から `curl http://localhost:8787/health` を呼ぶ。
+
+### 23-replace-and-restore
+
+instance を作り直したときに data volume が残って付け直されること、snapshot からの restore、destroy のときの volume attachment の扱いを実行していない。cdkd のソースでは、`UserData` の変更は instance に反映されず、`ImageId` の変更は置き換えになる。置き換えのときに attachment がどう動くか（古い instance から外れて新しい instance に付くのか、途中で失敗するのか）は読み切れていない。
+
+再開手順: ノートを 1 件作り、`vp run ec2:data:unmount` の後に `-c amiId=<1 つ前の AMI>` で deploy して置き換えを起こす。新しい instance で `vp run ec2:status` と `vp run ec2:app:release`、`vp run ec2:smoke` を実行し、ノートが残っているかを見る。続けて「snapshot と restore」の手順を通す。
+
+### 23-patch
+
+`ec2:patch:check` と `ec2:patch:apply` を実機で実行していない。Patch Manager（`AWS-RunPatchBaseline`）は手順を書いただけで、タスクも無い。
+
+再開手順: 数週間前の AMI を `-c amiId=...` で指定して deploy し、`vp run ec2:patch:check` で新しい release が出ることを確かめ、`vp run ec2:patch:apply <releasever>` を実行する。kernel が更新されたら `aws ec2 reboot-instances` で再起動し、`vp run ec2:smoke` を通す。
+
+### 58-aws
+
+58章のスタックを AWS で一度も動かしていない。未確認: 実際の DynamoDB が重複した PartiQL の INSERT に DuplicateItemException を返すこと（DynamoDB Local 3.3.1 は DuplicateItem という名前で返した）、dynamodb:PartiQLInsert と dynamodb:Query だけの権限で追記が通り上書きが通らないこと、PartiQL の INSERT の課金単位、既定の保持期間だけのバケットへの PutObject が s3:PutObject の権限だけで通りロックがかかること、SDK が付けるチェックサムで Object Lock の PutObject が受け付けられること、If-None-Match の 412、ListObjectVersions の応答の形、ロック中のバージョンの削除が 403 になること、governance の解除、GetObjectRetention がロックのないバージョンに返すエラーの名前、1 時間ごとのルールの料金、cdkd が Object Lock つきのバケットとルールと Lambda の権限を実際に作れること、cdkd destroy が RETAIN のバケットを残すこと。QLDB の開発者ガイドは 404 で読めなかったので、QLDB の説明は AWS のブログ 2 本だけに基づく。
+
+再開手順: `vp run ledger:infra:diff`、`vp run ledger:infra:deploy`、`vp run ledger:append`（2 回）、`vp run ledger:digest`、`vp run ledger:verify` の順に実行する。関数のログは出力 `DigestLogGroupName` のロググループを見る。出力 `DigestBucketName` を控えてから `vp run ledger:infra:destroy`。保持期間（既定は 1 日）が過ぎたら `vp run ledger:purge --bucket <名前> --apply` でバケットを消す。
+
+### ecr-lifecycle-not-previewed
+
+ライフサイクルポリシーを ECR で評価していない。src/lifecycle.ts の evaluator は、ドキュメントの評価規則と 6 つの例から書いたもので、例の結果は再現するが、ECR の実装と同じである保証はない。「N 日より古い」の境界、プッシュ時刻が同じイメージの順序、manifest list と reference artifact の扱いは実装していないか、確かめていない。
+
+再開手順: vp run ecr:infra:deploy の後、タグ付き・タグなしを混ぜて数十個のイメージをプッシュし、vp run ecr:lifecycle:compare を実行する。start-lifecycle-policy-preview の結果と evaluator の結果が、ダイジェストとルールの番号まで一致するかを報告する。食い違ったら src/lifecycle.ts を直し、その入力を test/lifecycle.test.ts に足す。
+
+### ecr-nothing-pushed
+
+イメージを 1 つもビルドもプッシュもしていない。immutable なリポジトリが同じタグの再プッシュを拒否すること、同じダイジェストに 2 つ目のタグを付けられること、イメージを消したあとで同じタグを付け直せるかどうか、プッシュ用のロールの権限で docker push が通ること、イメージの実際の大きさは、どれも確かめていない。
+
+再開手順: Docker のデーモンがある環境で、12章の vp run ecs:image:build <tag> でイメージを作り、12章の deploy ページの手順で AihEcr の RepositoryUri にプッシュする。同じタグで別のイメージをプッシュして ImageTagAlreadyExistsException になること、aws ecr describe-images で imageSizeInBytes を読むこと、GitHub Actions からプッシュ用のロールでプッシュできることを確かめる。
+
+### ecr-scan-not-observed
+
+検査結果を 1 件も見ていない。scan on push が走ること、検査結果が無いときの findingSeverityCounts の形（空のオブジェクトか、項目が無いか）、検査が終わるまでの時間、12章のイメージ（node:24-bookworm-slim）が basic scanning の対応 OS に入っているかは確かめていない。
+
+再開手順: イメージをプッシュした後、vp run ecr:scan:gate --digest <ダイジェスト> を実行する。スキーマが応答を拒否したら、応答の形に合わせて src/scan.ts を直す。
+
+### ecr-cache-not-deployed
+
+pull through cache のルールをデプロイしていない。cdkd 0.296.28 が AWS::ECR::PullThroughCacheRule を Cloud Control API 経由で作れること、キャッシュ経由の最初の取得でリポジトリが作られること、プッシュ用のロールの権限でそれが通ることは確かめていない。
+
+再開手順: vp run ecr:infra:deploy -c pullThroughCache=on -c githubRepository=<owner/repo> でデプロイし、docker pull <registry>/ecr-public/docker/library/node:24-bookworm-slim を実行する。aws ecr describe-repositories に ecr-public/docker/library/node が現れることを確かめる。片付けでは、このリポジトリを手で消す。
+
+### ecr-ecs-rollback-digest
+
+ECS がタグをダイジェストに解決するのはデプロイごとだとドキュメントから読んだが、circuit breaker によるロールバックが、前のデプロイで解決したダイジェストを使うのか、タグを解決し直すのかは確認できていない。
+
+再開手順: ECS のドキュメントで service revision の説明を読み、ロールバック先のリビジョンがダイジェストを持つかを確かめる。mutable なリポジトリで実際にタグを動かしてロールバックさせ、動いたタスクの imageDigest を aws ecs describe-tasks で見る。

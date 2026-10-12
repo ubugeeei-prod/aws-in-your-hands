@@ -81,6 +81,54 @@
       "note": "Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only."
     },
     {
+      "priceId": "glue.catalog.storage",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-glue",
+      "note": "Objects. From the Global-Catalog-Storage USD 0 tier (0 to 1,000,000)."
+    },
+    {
+      "priceId": "glue.catalog.request",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "aws-price-list-glue",
+      "note": "Requests. From the Global-Catalog-Request USD 0 tier (0 to 1,000,000)."
+    },
+    {
+      "priceId": "sqs.request.fifo",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sqs61-pricing-page",
+      "note": "The same 1 million requests a month that sqs.request.standard lists: the pricing page gives one allowance for standard and FIFO queues together (Price List: Global-Requests, queue type Any). A scenario with both kinds of request must not count it twice."
+    },
+    {
+      "priceId": "codebuild.arm1.small.minute",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "cir-cb-pricing",
+      "note": "100 build minutes a month, shared between general1.small and arm1.small. The pricing page says it does not expire after 12 months."
+    },
+    {
+      "priceId": "sqs.request.standard",
+      "quantity": 1000000,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "sqs-pricing",
+      "note": "1 million requests a month for all customers, counted across all Regions and shared by every queue in the account."
+    },
+    {
+      "priceId": "lambda.streaming.arm",
+      "quantity": 100,
+      "period": "month",
+      "kind": "always-free",
+      "sourceId": "lambda-pricing",
+      "note": "GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100)."
+    },
+    {
       "priceId": "dsql.dpu",
       "quantity": 100000,
       "period": "month",
@@ -97,12 +145,12 @@
       "note": "First GB of storage each month. The pricing page does not say whether it expires."
     },
     {
-      "priceId": "lambda.streaming.arm",
-      "quantity": 100,
+      "priceId": "sfn.standard.transition",
+      "quantity": 4000,
       "period": "month",
       "kind": "always-free",
-      "sourceId": "lambda-pricing",
-      "note": "GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100)."
+      "sourceId": "sfn-pricing",
+      "note": "4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000)."
     },
     {
       "priceId": "cloudwatch.metric.custom",
@@ -153,60 +201,12 @@
       "note": "Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces."
     },
     {
-      "priceId": "sqs.request.standard",
-      "quantity": 1000000,
-      "period": "month",
-      "kind": "always-free",
-      "sourceId": "sqs-pricing",
-      "note": "1 million requests a month for all customers, counted across all Regions and shared by every queue in the account."
-    },
-    {
-      "priceId": "sfn.standard.transition",
-      "quantity": 4000,
-      "period": "month",
-      "kind": "always-free",
-      "sourceId": "sfn-pricing",
-      "note": "4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000)."
-    },
-    {
       "priceId": "kms.request",
       "quantity": 20000,
       "period": "month",
       "kind": "always-free",
       "sourceId": "kms-pricing",
       "note": "Calculated across all Regions. Requests on asymmetric keys and GenerateDataKeyPair are excluded."
-    },
-    {
-      "priceId": "glue.catalog.storage",
-      "quantity": 1000000,
-      "period": "month",
-      "kind": "always-free",
-      "sourceId": "aws-price-list-glue",
-      "note": "Objects. From the Global-Catalog-Storage USD 0 tier (0 to 1,000,000)."
-    },
-    {
-      "priceId": "glue.catalog.request",
-      "quantity": 1000000,
-      "period": "month",
-      "kind": "always-free",
-      "sourceId": "aws-price-list-glue",
-      "note": "Requests. From the Global-Catalog-Request USD 0 tier (0 to 1,000,000)."
-    },
-    {
-      "priceId": "sqs.request.fifo",
-      "quantity": 1000000,
-      "period": "month",
-      "kind": "always-free",
-      "sourceId": "sqs61-pricing-page",
-      "note": "The same 1 million requests a month that sqs.request.standard lists: the pricing page gives one allowance for standard and FIFO queues together (Price List: Global-Requests, queue type Any). A scenario with both kinds of request must not count it twice."
-    },
-    {
-      "priceId": "codebuild.arm1.small.minute",
-      "quantity": 100,
-      "period": "month",
-      "kind": "always-free",
-      "sourceId": "cir-cb-pricing",
-      "note": "100 build minutes a month, shared between general1.small and arm1.small. The pricing page says it does not expire after 12 months."
     }
   ],
   "unknown": [
@@ -239,14 +239,6 @@
       "reason": "The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied."
     },
     {
-      "priceId": "rds.postgres.t4g-micro.single-az",
-      "reason": "The RDS free tier terms were not checked while writing chapter 13."
-    },
-    {
-      "priceId": "rds.postgres.gp3.storage",
-      "reason": "The RDS free tier terms were not checked while writing chapter 13."
-    },
-    {
       "priceId": "datatransfer.out.internet",
       "reason": "The price list calls the first tier \"beyond the global free tier\". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied."
     },
@@ -257,110 +249,6 @@
     {
       "priceId": "s3.request.tier2",
       "reason": "No always-free S3 request allowance was confirmed; none is applied."
-    },
-    {
-      "priceId": "cloudwatch.rum.event",
-      "reason": "The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied."
-    },
-    {
-      "priceId": "fargate.arm.vcpu.hour",
-      "reason": "The Fargate pricing page lists no free allowance; none is applied."
-    },
-    {
-      "priceId": "fargate.arm.memory.gb-hour",
-      "reason": "The Fargate pricing page lists no free allowance; none is applied."
-    },
-    {
-      "priceId": "alb.hour",
-      "reason": "The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted."
-    },
-    {
-      "priceId": "alb.lcu.hour",
-      "reason": "The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted."
-    },
-    {
-      "priceId": "ecr.storage",
-      "reason": "The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted."
-    },
-    {
-      "priceId": "ec2.t4g-micro.linux.hour",
-      "reason": "The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted."
-    },
-    {
-      "priceId": "ebs.gp3.storage",
-      "reason": "The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted."
-    },
-    {
-      "priceId": "lambda.durable.operation",
-      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
-    },
-    {
-      "priceId": "lambda.durable.written",
-      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
-    },
-    {
-      "priceId": "lambda.durable.retained",
-      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
-    },
-    {
-      "priceId": "dynamodb.restore",
-      "reason": "No free allowance for restores was looked for or confirmed; none is applied."
-    },
-    {
-      "priceId": "backup.dynamodb.warm",
-      "reason": "No free allowance for AWS Backup storage was looked for or confirmed; none is applied."
-    },
-    {
-      "priceId": "bedrock.nova-2-lite.input",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
-      "priceId": "bedrock.nova-2-lite.output",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
-      "priceId": "bedrock.claude-haiku-4-5.input",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
-      "priceId": "bedrock.claude-haiku-4-5.output",
-      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
-    },
-    {
-      "priceId": "secretsmanager.secret",
-      "reason": "No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied."
-    },
-    {
-      "priceId": "secretsmanager.api",
-      "reason": "No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied."
-    },
-    {
-      "priceId": "kms.key",
-      "reason": "The KMS free tier covers requests, not keys; none is applied."
-    },
-    {
-      "priceId": "waf.global.webacl",
-      "reason": "No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans were not examined in this chapter."
-    },
-    {
-      "priceId": "waf.global.rule",
-      "reason": "No free allowance for rules was confirmed for the pay-as-you-go model; none is applied."
-    },
-    {
-      "priceId": "waf.global.request",
-      "reason": "No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied."
-    },
-    {
-      "priceId": "guardduty.cloudtrail.event",
-      "reason": "GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied."
-    },
-    {
-      "priceId": "inspector.lambda.standard",
-      "reason": "Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied."
-    },
-    {
-      "priceId": "config.item.continuous",
-      "reason": "No free allowance for configuration items was found on the pricing page; none is applied."
     },
     {
       "priceId": "events.custom-event",
@@ -441,22 +329,6 @@
     {
       "priceId": "costexplorer.api.request",
       "reason": "No free allowance for Cost Explorer API requests was found on the pricing page or in the Price List. None is applied."
-    },
-    {
-      "priceId": "eks.cluster.hour",
-      "reason": "The EKS pricing page lists no free allowance for the cluster hour; none is applied."
-    },
-    {
-      "priceId": "eks.cluster.extended-support.hour",
-      "reason": "The EKS pricing page lists no free allowance; none is applied."
-    },
-    {
-      "priceId": "eks.auto.t4g-medium.hour",
-      "reason": "The EKS pricing page lists no free allowance for Auto Mode; none is applied."
-    },
-    {
-      "priceId": "ec2.t4g-medium.linux.hour",
-      "reason": "Free tier offers for EC2 depend on when the account was created and on the instance type; none is applied."
     },
     {
       "priceId": "lambda.managed-instances.request.arm",
@@ -635,26 +507,6 @@
       "reason": "The Amazon Chime SDK pricing page names no free allowance for WebRTC media, and the Price List has no zero-priced tier. Nothing is deducted."
     },
     {
-      "priceId": "inspector.image.initial-scan",
-      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
-    },
-    {
-      "priceId": "inspector.image.rescan",
-      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
-    },
-    {
-      "priceId": "ecr.storage.archive",
-      "reason": "No free allowance for archive storage was found; none is applied."
-    },
-    {
-      "priceId": "ecr.archive.retrieval",
-      "reason": "No free allowance for archive retrieval was found; none is applied."
-    },
-    {
-      "priceId": "ecr.signing",
-      "reason": "No free allowance for managed signing was found; none is applied."
-    },
-    {
       "priceId": "efs.standard.storage",
       "reason": "The EFS pricing page gives new customers 5 GB of Standard storage on a Regional file system for 12 months, and accounts created from July 15, 2025 Free Tier credits instead. Neither is an always-free allowance, and which applies to a given account was not confirmed; nothing is deducted."
     },
@@ -799,6 +651,38 @@
       "reason": "The 100 free build minutes are shared with arm1.small and are applied there; nothing is deducted here."
     },
     {
+      "priceId": "ec2.t3-micro.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6g-large.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6i-large.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "ec2.c6i-xlarge.linux.hour",
+      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+    },
+    {
+      "priceId": "eks.cluster.hour",
+      "reason": "The EKS pricing page lists no free allowance for the cluster hour; none is applied."
+    },
+    {
+      "priceId": "eks.cluster.extended-support.hour",
+      "reason": "The EKS pricing page lists no free allowance; none is applied."
+    },
+    {
+      "priceId": "eks.auto.t4g-medium.hour",
+      "reason": "The EKS pricing page lists no free allowance for Auto Mode; none is applied."
+    },
+    {
+      "priceId": "ec2.t4g-medium.linux.hour",
+      "reason": "Free tier offers for EC2 depend on when the account was created and on the instance type; none is applied."
+    },
+    {
       "priceId": "datatransfer.regional",
       "reason": "The price list has a separate Global-DataTransfer-Regional-Bytes line at $0 \"under the monthly global free tier\" for the first GB. Whether and how it applies to a given account was not determined, so none is applied."
     },
@@ -815,20 +699,136 @@
       "reason": "No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only."
     },
     {
-      "priceId": "ec2.t3-micro.linux.hour",
-      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+      "priceId": "fargate.arm.vcpu.hour",
+      "reason": "The Fargate pricing page lists no free allowance; none is applied."
     },
     {
-      "priceId": "ec2.c6g-large.linux.hour",
-      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+      "priceId": "fargate.arm.memory.gb-hour",
+      "reason": "The Fargate pricing page lists no free allowance; none is applied."
     },
     {
-      "priceId": "ec2.c6i-large.linux.hour",
-      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+      "priceId": "alb.hour",
+      "reason": "The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted."
     },
     {
-      "priceId": "ec2.c6i-xlarge.linux.hour",
-      "reason": "Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only."
+      "priceId": "alb.lcu.hour",
+      "reason": "The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted."
+    },
+    {
+      "priceId": "ecr.storage",
+      "reason": "The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted."
+    },
+    {
+      "priceId": "rds.postgres.t4g-micro.single-az",
+      "reason": "The RDS free tier terms were not checked while writing chapter 13."
+    },
+    {
+      "priceId": "rds.postgres.gp3.storage",
+      "reason": "The RDS free tier terms were not checked while writing chapter 13."
+    },
+    {
+      "priceId": "lambda.durable.operation",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "lambda.durable.written",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "lambda.durable.retained",
+      "reason": "The Lambda pricing page names no free allowance for durable execution; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.nova-2-lite.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.input",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "bedrock.claude-haiku-4-5.output",
+      "reason": "No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied."
+    },
+    {
+      "priceId": "cloudwatch.rum.event",
+      "reason": "The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied."
+    },
+    {
+      "priceId": "secretsmanager.secret",
+      "reason": "No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied."
+    },
+    {
+      "priceId": "secretsmanager.api",
+      "reason": "No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied."
+    },
+    {
+      "priceId": "kms.key",
+      "reason": "The KMS free tier covers requests, not keys; none is applied."
+    },
+    {
+      "priceId": "waf.global.webacl",
+      "reason": "No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans cover the web ACL, its rules, and its request fees for the distribution in the plan (documentation read 2026-10-13); this chapter prices pay-as-you-go only."
+    },
+    {
+      "priceId": "waf.global.rule",
+      "reason": "No free allowance for rules was confirmed for the pay-as-you-go model; none is applied."
+    },
+    {
+      "priceId": "waf.global.request",
+      "reason": "No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied."
+    },
+    {
+      "priceId": "guardduty.cloudtrail.event",
+      "reason": "GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "inspector.lambda.standard",
+      "reason": "Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "config.item.continuous",
+      "reason": "No free allowance for configuration items was found on the pricing page; none is applied."
+    },
+    {
+      "priceId": "dynamodb.restore",
+      "reason": "No free allowance for restores was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "backup.dynamodb.warm",
+      "reason": "No free allowance for AWS Backup storage was looked for or confirmed; none is applied."
+    },
+    {
+      "priceId": "ec2.t4g-micro.linux.hour",
+      "reason": "The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "ebs.gp3.storage",
+      "reason": "The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted."
+    },
+    {
+      "priceId": "inspector.image.initial-scan",
+      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "inspector.image.rescan",
+      "reason": "Inspector has a free trial for new accounts, not a monthly allowance; none is applied."
+    },
+    {
+      "priceId": "ecr.storage.archive",
+      "reason": "No free allowance for archive storage was found; none is applied."
+    },
+    {
+      "priceId": "ecr.archive.retrieval",
+      "reason": "No free allowance for archive retrieval was found; none is applied."
+    },
+    {
+      "priceId": "ecr.signing",
+      "reason": "No free allowance for managed signing was found; none is applied."
     }
   ]
 }

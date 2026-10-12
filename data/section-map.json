@@ -1439,160 +1439,6 @@
       "verification": "unverified"
     },
     {
-      "id": "13.architecture",
-      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "13.choices",
-      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "13.compat",
-      "sources": ["examples/13-sql/src/migrate.ts", "examples/13-sql/test/migrate.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "13.migrations",
-      "sources": [
-        "examples/13-sql/migrations",
-        "examples/13-sql/src/migrate.ts",
-        "examples/13-sql/test/migrate.test.ts"
-      ],
-      "tasks": ["test:unit", "sql:db:migrate:local"],
-      "boundary": "local",
-      "criteria": ["test", "local-dx", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "13.queries",
-      "sources": [
-        "examples/13-sql/src/contract.ts",
-        "examples/13-sql/src/db.ts",
-        "examples/13-sql/src/notes-repository.ts",
-        "examples/13-sql/src/notes.ts",
-        "examples/13-sql/src/app.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "13.transactions",
-      "sources": [
-        "examples/13-sql/src/transaction.ts",
-        "examples/13-sql/src/notes-repository.ts",
-        "examples/13-sql/test/transaction.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "13.conflicts",
-      "sources": [
-        "examples/13-sql/test/support.ts",
-        "examples/13-sql/test/notes-repository.test.ts",
-        "examples/13-sql/test/app.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "13.local",
-      "sources": [
-        "examples/13-sql/src/pglite.ts",
-        "examples/13-sql/src/dev.ts",
-        "examples/13-sql/src/compose.ts",
-        "examples/13-sql/scripts/local-db.ts",
-        "examples/13-sql/scripts/db-tasks.ts",
-        "examples/13-sql/test/fixtures/seed-notes.json",
-        "examples/13-sql/.env.example"
-      ],
-      "tasks": ["dev:sql", "sql:db:migrate:local", "sql:db:seed:local", "sql:db:reset:local"],
-      "boundary": "local",
-      "criteria": ["local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "13.connect",
-      "sources": [
-        "examples/13-sql/src/dsql.ts",
-        "examples/13-sql/src/lambda.ts",
-        "examples/13-sql/src/env.ts",
-        "examples/13-sql/infra/lib/sql-stack.ts",
-        "examples/13-sql/infra/bin/app.ts",
-        "examples/13-sql/infra/test/sql-stack.test.ts",
-        "examples/13-sql/cdk.json"
-      ],
-      "tasks": ["sql:infra:synth", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "13.deploy",
-      "sources": [
-        "examples/13-sql/scripts/cloud-db.ts",
-        "examples/13-sql/scripts/db-tasks.ts",
-        "examples/13-sql/src/grant.ts",
-        "examples/13-sql/test/grant.test.ts",
-        "examples/13-sql/scripts/smoke.ts",
-        "examples/13-sql/scripts/logs.ts"
-      ],
-      "tasks": [
-        "sql:infra:diff",
-        "sql:infra:deploy",
-        "sql:db:migrate",
-        "sql:db:grant",
-        "sql:db:seed",
-        "sql:smoke",
-        "sql:logs",
-        "sql:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "13.backup",
-      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
-      "tasks": [],
-      "boundary": "cloud",
-      "criteria": ["distributed", "cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "13.d1",
-      "sources": ["examples/13-sql/migrations", "examples/13-sql/src/transaction.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "13.cleanup",
-      "sources": ["examples/13-sql/infra/lib/sql-stack.ts", "examples/13-sql/scripts/local-db.ts"],
-      "tasks": ["sql:infra:destroy", "sql:db:reset:local"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
       "id": "07.architecture",
       "sources": ["examples/07-uploads/infra/lib/uploads-stack.ts"],
       "tasks": [],
@@ -1742,353 +1588,6 @@
       ],
       "boundary": "cloud",
       "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "09.architecture",
-      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "09.nitro",
-      "sources": [
-        "examples/09-ssr/nuxt.config.ts",
-        "examples/09-ssr/scripts/lambda-harness.ts",
-        "examples/09-ssr/core/env.ts"
-      ],
-      "tasks": ["build:ssr", "ssr:check:output"],
-      "boundary": "local",
-      "criteria": ["type", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "09.app",
-      "sources": [
-        "examples/09-ssr/app",
-        "examples/09-ssr/server/api",
-        "examples/09-ssr/server/context.ts",
-        "examples/09-ssr/core/notes.ts",
-        "examples/09-ssr/core/seed.ts"
-      ],
-      "tasks": ["dev:ssr", "typecheck:ssr", "lint:ssr"],
-      "boundary": "local",
-      "criteria": ["type", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "09.connect",
-      "sources": [
-        "examples/09-ssr/infra/lib/ssr-stack.ts",
-        "examples/09-ssr/infra/bin/app.ts",
-        "examples/09-ssr/infra/test/ssr-stack.test.ts"
-      ],
-      "tasks": ["ssr:infra:synth", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "09.cache",
-      "sources": [
-        "examples/09-ssr/core/cache-control.ts",
-        "examples/09-ssr/core/routes.ts",
-        "examples/09-ssr/server/plugins/cache-control.ts",
-        "examples/09-ssr/infra/lib/ssr-stack.ts",
-        "examples/09-ssr/test/cache-control.test.ts",
-        "examples/09-ssr/test/support/shared-cache.ts",
-        "examples/09-ssr/infra/test/ssr-stack.test.ts"
-      ],
-      "tasks": ["test:unit", "ssr:check:output"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "09.bff",
-      "sources": [
-        "examples/09-ssr/core/session.ts",
-        "examples/09-ssr/core/profile.ts",
-        "examples/09-ssr/server/routes/me",
-        "examples/09-ssr/test/session.test.ts",
-        "examples/09-ssr/.env.example"
-      ],
-      "tasks": ["dev:ssr", "test:unit", "ssr:check:output"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "09.streaming",
-      "sources": [
-        "examples/09-ssr/server/routes/feed.get.ts",
-        "examples/09-ssr/scripts/lambda-harness.ts",
-        "examples/09-ssr/scripts/check-output.ts"
-      ],
-      "tasks": ["build:ssr:stream", "ssr:check:output:stream"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "09.local",
-      "sources": [
-        "examples/09-ssr/scripts/check-output.ts",
-        "examples/09-ssr/test",
-        "examples/09-ssr/tsconfig.json",
-        "examples/09-ssr/app/tsconfig.json"
-      ],
-      "tasks": [
-        "dev:ssr",
-        "test:unit",
-        "typecheck",
-        "typecheck:ssr",
-        "lint:ssr",
-        "ssr:check:output"
-      ],
-      "boundary": "local",
-      "criteria": ["test", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "09.deploy",
-      "sources": [
-        "examples/09-ssr/scripts/publish-assets.ts",
-        "examples/09-ssr/scripts/asset-plan.ts",
-        "examples/09-ssr/scripts/smoke.ts",
-        "examples/09-ssr/scripts/smoke-spec.ts",
-        "examples/09-ssr/test/asset-plan.test.ts",
-        "examples/09-ssr/test/smoke-spec.test.ts"
-      ],
-      "tasks": [
-        "ssr:infra:diff",
-        "ssr:infra:deploy",
-        "ssr:assets:plan",
-        "ssr:assets:publish",
-        "ssr:smoke",
-        "ssr:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift", "test"],
-      "verification": "unverified"
-    },
-    {
-      "id": "09.stale",
-      "sources": [
-        "examples/09-ssr/core/cache-control.ts",
-        "examples/09-ssr/scripts/asset-plan.ts",
-        "examples/09-ssr/test/cache-control.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "09.workers",
-      "sources": ["examples/09-ssr/nuxt.config.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["local-dx"],
-      "verification": "unverified"
-    },
-    {
-      "id": "09.cleanup",
-      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
-      "tasks": ["ssr:unpublish", "ssr:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "19.overview",
-      "sources": ["examples/19-observability/infra/lib/observability-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "19.alarms",
-      "sources": [
-        "examples/19-observability/src/alarm-math.ts",
-        "examples/19-observability/test/alarm-math.test.ts",
-        "examples/19-observability/infra/lib/monitoring.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "19.metrics",
-      "sources": [
-        "examples/19-observability/infra/lib/monitoring.ts",
-        "examples/19-observability/infra/test/observability-stack.test.ts"
-      ],
-      "tasks": ["test:unit", "obs:infra:synth"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "19.logs",
-      "sources": [
-        "examples/19-observability/src/log-shape.ts",
-        "examples/19-observability/src/conditions.ts",
-        "examples/19-observability/src/queries.ts",
-        "examples/19-observability/test/log-shape.test.ts",
-        "examples/19-observability/test/queries.test.ts",
-        "examples/19-observability/scripts/query.ts"
-      ],
-      "tasks": ["test:unit", "obs:query:print"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "19.log-metrics",
-      "sources": [
-        "examples/19-observability/src/conditions.ts",
-        "examples/19-observability/src/queries.ts",
-        "examples/19-observability/infra/lib/monitoring.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "19.tracing",
-      "sources": [
-        "examples/19-observability/src/telemetry.ts",
-        "examples/19-observability/src/traced-repository.ts",
-        "examples/19-observability/src/app.ts",
-        "examples/19-observability/src/compose.ts",
-        "examples/19-observability/test/tracing.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "19.lambda-tracing",
-      "sources": [
-        "examples/19-observability/src/lambda.ts",
-        "examples/19-observability/infra/lib/observability-stack.ts",
-        "examples/19-observability/infra/bin/app.ts"
-      ],
-      "tasks": ["obs:infra:synth", "test:unit"],
-      "boundary": "cloud",
-      "criteria": ["test", "drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "19.ids",
-      "sources": [
-        "examples/19-observability/src/trace-context.ts",
-        "examples/19-observability/src/telemetry.ts",
-        "examples/19-observability/test/trace-context.test.ts",
-        "examples/19-observability/test/tracing.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "19.sampling",
-      "sources": [
-        "examples/19-observability/src/local-tracing.ts",
-        "examples/19-observability/src/cost-inputs.ts",
-        "examples/19-observability/test/tracing.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "19.privacy",
-      "sources": [
-        "examples/19-observability/src/log-shape.ts",
-        "examples/19-observability/src/telemetry.ts",
-        "examples/19-observability/test/log-shape.test.ts",
-        "examples/19-observability/test/tracing.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "19.local",
-      "sources": [
-        "examples/19-observability/src/dev.ts",
-        "examples/19-observability/src/local-tracing.ts",
-        "examples/19-observability/.env.example"
-      ],
-      "tasks": ["dev:obs", "test:unit"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "19.deploy",
-      "sources": [
-        "examples/19-observability/infra/bin/app.ts",
-        "examples/19-observability/scripts/smoke.ts",
-        "examples/19-observability/scripts/query.ts",
-        "examples/19-observability/scripts/alarms.ts"
-      ],
-      "tasks": [
-        "obs:infra:diff",
-        "obs:infra:deploy",
-        "obs:smoke",
-        "obs:query",
-        "obs:alarms",
-        "obs:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "19.browser-and-probes",
-      "sources": [],
-      "tasks": [],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "19.cost",
-      "sources": [
-        "examples/19-observability/src/cost-inputs.ts",
-        "examples/19-observability/test/cost-inputs.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "none",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "19.workers",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": [],
-      "verification": "local"
-    },
-    {
-      "id": "19.cleanup",
-      "sources": [],
-      "tasks": ["obs:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": [],
       "verification": "unverified"
     },
     {
@@ -2288,1074 +1787,6 @@
       "verification": "unverified"
     },
     {
-      "id": "20.architecture",
-      "sources": ["examples/20-shipping/workflows", "examples/20-shipping/infra/bin/app.ts"],
-      "tasks": ["ship:cfn:synth"],
-      "boundary": "none",
-      "criteria": ["distributed", "drift"],
-      "verification": "local"
-    },
-    {
-      "id": "20.two-paths",
-      "sources": [
-        "examples/20-shipping/src/cdk-args.ts",
-        "examples/20-shipping/scripts/cdk.ts",
-        "examples/20-shipping/cdk.json"
-      ],
-      "tasks": ["ship:cfn:bootstrap", "ship:cfn:synth"],
-      "boundary": "cloud",
-      "criteria": ["drift", "local-dx"],
-      "verification": "unverified"
-    },
-    {
-      "id": "20.stages",
-      "sources": [
-        "examples/20-shipping/infra/lib/config.ts",
-        "examples/20-shipping/infra/lib/ship-api-stack.ts",
-        "examples/20-shipping/infra/test/ship-api-stack.test.ts"
-      ],
-      "tasks": ["ship:cfn:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "20.cfn-deploy",
-      "sources": [
-        "examples/20-shipping/src/cdk-args.ts",
-        "examples/20-shipping/test/cdk-args.test.ts",
-        "examples/20-shipping/scripts/smoke.ts"
-      ],
-      "tasks": ["ship:cfn:diff", "ship:cfn:deploy", "ship:smoke"],
-      "boundary": "cloud",
-      "criteria": ["test", "drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "20.oidc",
-      "sources": [
-        "examples/20-shipping/infra/lib/ci-stack.ts",
-        "examples/20-shipping/infra/lib/config.ts",
-        "examples/20-shipping/infra/test/ci-stack.test.ts"
-      ],
-      "tasks": ["test:unit", "ship:ci:diff", "ship:ci:deploy"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "20.roles",
-      "sources": [
-        "examples/20-shipping/infra/lib/ci-stack.ts",
-        "examples/20-shipping/infra/test/ci-stack.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "20.workflows",
-      "sources": ["examples/20-shipping/workflows", "examples/20-shipping/test/workflows.test.ts"],
-      "tasks": ["test:unit", "check:all"],
-      "boundary": "local",
-      "criteria": ["test", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "20.preview",
-      "sources": [
-        "examples/20-shipping/workflows/preview.yml",
-        "examples/20-shipping/src/previews.ts",
-        "examples/20-shipping/test/previews.test.ts",
-        "examples/20-shipping/scripts/previews.ts"
-      ],
-      "tasks": ["ship:preview:list", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "20.rollback",
-      "sources": [
-        "examples/20-shipping/infra/lib/ship-api-stack.ts",
-        "examples/20-shipping/infra/test/ship-api-stack.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["distributed", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "20.partial",
-      "sources": [
-        "examples/20-shipping/src/stack-status.ts",
-        "examples/20-shipping/test/stack-status.test.ts",
-        "examples/20-shipping/scripts/status.ts"
-      ],
-      "tasks": ["ship:cfn:status", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["distributed", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "20.drift",
-      "sources": [
-        "tools/src/drift/cloudformation.ts",
-        "tools/src/drift/cloudformation-schema.ts",
-        "tools/src/drift/cloudformation.test.ts",
-        "tools/src/drift/fixtures/cloudformation",
-        "examples/20-shipping/src/drift-client.ts",
-        "examples/20-shipping/test/drift-client.test.ts",
-        "examples/20-shipping/scripts/drift.ts"
-      ],
-      "tasks": ["ship:cfn:drift", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["drift", "test", "type"],
-      "verification": "local"
-    },
-    {
-      "id": "20.drift-coverage",
-      "sources": [
-        "examples/20-shipping/src/drift-coverage.ts",
-        "examples/20-shipping/infra/test/ship-api-stack.test.ts",
-        "tools/src/drift/cloudformation.ts"
-      ],
-      "tasks": ["ship:cfn:drift", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["drift", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "20.drift-lab",
-      "sources": [
-        "examples/20-shipping/scripts/drift.ts",
-        "examples/20-shipping/scripts/status.ts"
-      ],
-      "tasks": ["ship:cfn:drift", "ship:cfn:diff", "ship:cfn:deploy"],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "20.workers",
-      "sources": [
-        "examples/20-shipping/infra/lib/ship-api-stack.ts",
-        "examples/20-shipping/workflows/deploy.yml"
-      ],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "20.cleanup",
-      "sources": ["examples/20-shipping/scripts/cdk.ts"],
-      "tasks": ["ship:cfn:destroy", "ship:ci:destroy", "ship:preview:list"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "12.when",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "12.architecture",
-      "sources": [
-        "examples/12-containers/infra/lib/containers-stack.ts",
-        "examples/12-containers/src/config.ts"
-      ],
-      "tasks": ["ecs:infra:synth"],
-      "boundary": "local",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "12.docker",
-      "sources": ["examples/12-containers/src/image.ts", "examples/12-containers/scripts/image.ts"],
-      "tasks": ["ecs:image:build"],
-      "boundary": "local",
-      "criteria": ["local-dx"],
-      "verification": "unverified"
-    },
-    {
-      "id": "12.server",
-      "sources": [
-        "examples/12-containers/src/compose.ts",
-        "examples/12-containers/src/env.ts",
-        "examples/12-containers/src/server.ts",
-        "examples/12-containers/test/compose.test.ts",
-        "examples/12-containers/.env.example"
-      ],
-      "tasks": ["dev:ecs", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "12.shutdown",
-      "sources": [
-        "examples/12-containers/src/serve.ts",
-        "examples/12-containers/src/server.ts",
-        "examples/12-containers/test/shutdown.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "12.image",
-      "sources": [
-        "examples/12-containers/Dockerfile",
-        "examples/12-containers/.dockerignore",
-        "examples/12-containers/scripts/bundle.ts",
-        "examples/12-containers/scripts/check-bundle.ts",
-        "examples/12-containers/src/image.ts",
-        "examples/12-containers/test/config.test.ts"
-      ],
-      "tasks": ["ecs:bundle", "ecs:bundle:check", "ecs:image:build", "ecs:image:run"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "12.registry",
-      "sources": [
-        "examples/12-containers/infra/lib/containers-stack.ts",
-        "examples/12-containers/infra/bin/app.ts",
-        "examples/12-containers/src/config.ts",
-        "examples/12-containers/test/config.test.ts"
-      ],
-      "tasks": ["ecs:infra:synth", "ecs:image:push", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "drift"],
-      "verification": "local"
-    },
-    {
-      "id": "12.network",
-      "sources": [
-        "examples/12-containers/infra/lib/containers-stack.ts",
-        "examples/12-containers/infra/test/containers-stack.test.ts",
-        "examples/11-network/infra/lib/import-network.ts"
-      ],
-      "tasks": ["test:unit", "net:plan"],
-      "boundary": "local+cloud",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "12.roles",
-      "sources": [
-        "examples/12-containers/infra/lib/containers-stack.ts",
-        "examples/12-containers/infra/test/containers-stack.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "12.service",
-      "sources": [
-        "examples/12-containers/infra/lib/containers-stack.ts",
-        "examples/12-containers/src/timing.ts",
-        "examples/12-containers/test/timing.test.ts",
-        "examples/12-containers/infra/test/containers-stack.test.ts"
-      ],
-      "tasks": ["test:unit", "ecs:infra:synth"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "12.rollout",
-      "sources": [
-        "examples/12-containers/infra/lib/containers-stack.ts",
-        "examples/12-containers/src/timing.ts",
-        "examples/12-containers/scripts/watch.ts",
-        "examples/12-containers/src/watch.ts"
-      ],
-      "tasks": ["ecs:watch"],
-      "boundary": "cloud",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "12.versions",
-      "sources": [
-        "examples/12-containers/src/compat.ts",
-        "examples/12-containers/test/versions.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["distributed", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "12.scaling",
-      "sources": [
-        "examples/12-containers/infra/lib/containers-stack.ts",
-        "examples/12-containers/src/config.ts",
-        "examples/12-containers/infra/test/containers-stack.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["cost", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "12.local",
-      "sources": [
-        "examples/12-containers/test",
-        "examples/12-containers/infra/test/containers-stack.test.ts",
-        "examples/12-containers/scripts/check-bundle.ts"
-      ],
-      "tasks": ["test:unit", "ecs:bundle:check", "ecs:infra:synth", "dev:ecs"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "12.deploy",
-      "sources": [
-        "examples/12-containers/infra/bin/app.ts",
-        "examples/12-containers/cdk.json",
-        "examples/12-containers/scripts/image.ts",
-        "examples/12-containers/scripts/watch.ts",
-        "examples/12-containers/scripts/logs.ts",
-        "tools/src/infra"
-      ],
-      "tasks": [
-        "ecs:infra:diff",
-        "ecs:infra:deploy",
-        "ecs:image:push",
-        "ecs:watch",
-        "ecs:logs",
-        "ecs:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift", "cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "12.cost",
-      "sources": [
-        "examples/12-containers/src/cost.ts",
-        "examples/12-containers/test/pricing.test.ts",
-        "data/pricing"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "12.cloudflare",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["local-dx", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "12.cleanup",
-      "sources": ["tools/src/infra"],
-      "tasks": ["ecs:infra:deploy", "ecs:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "08.architecture",
-      "sources": ["examples/08-async/infra/lib/async-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "08.inspect",
-      "sources": [
-        "examples/08-async/src/inspect.ts",
-        "examples/08-async/src/inspection.ts",
-        "examples/08-async/test/inspect.test.ts",
-        "examples/08-async/test/fixtures.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "08.delivery",
-      "sources": [
-        "examples/08-async/src/events.ts",
-        "examples/08-async/src/worker.ts",
-        "examples/08-async/src/local-queue.ts",
-        "examples/08-async/test/events.test.ts",
-        "examples/08-async/test/queue.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "08.idempotency",
-      "sources": [
-        "examples/08-async/src/worker.ts",
-        "examples/08-async/src/sequencer.ts",
-        "examples/08-async/src/object-reader.ts",
-        "examples/08-async/src/s3-object-reader.ts",
-        "examples/08-async/src/dynamodb-inspection-repository.ts",
-        "examples/08-async/test/worker.test.ts",
-        "examples/08-async/test/adapters.test.ts",
-        "examples/08-async/test/harness.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "08.housekeeping",
-      "sources": [
-        "examples/08-async/src/housekeeping.ts",
-        "examples/08-async/src/housekeeping-lambda.ts",
-        "examples/08-async/test/housekeeping.test.ts",
-        "examples/08-async/scripts/housekeeping.ts"
-      ],
-      "tasks": ["test:unit", "async:housekeeping"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "08.local",
-      "sources": [
-        "examples/08-async/src/dev.ts",
-        "examples/08-async/src/local.ts",
-        "examples/08-async/src/local-bucket.ts",
-        "examples/08-async/src/local-queue.ts",
-        "examples/08-async/.env.example"
-      ],
-      "tasks": ["dev:async", "dev:uploads:web", "test:unit"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "08.infra",
-      "sources": [
-        "examples/08-async/infra/lib/async-stack.ts",
-        "examples/08-async/infra/bin/app.ts",
-        "examples/08-async/infra/test/async-stack.test.ts",
-        "examples/08-async/src/worker-lambda.ts",
-        "examples/08-async/src/env.ts",
-        "examples/08-async/cdk.json"
-      ],
-      "tasks": ["async:infra:synth", "test:unit"],
-      "boundary": "cloud",
-      "criteria": ["type", "test", "drift"],
-      "verification": "local"
-    },
-    {
-      "id": "08.deploy",
-      "sources": [
-        "examples/08-async/scripts/smoke.ts",
-        "examples/08-async/scripts/user.ts",
-        "examples/08-async/scripts/write-config.ts"
-      ],
-      "tasks": [
-        "async:infra:diff",
-        "async:infra:deploy",
-        "async:smoke",
-        "async:user:create",
-        "async:publish",
-        "async:smoke:web",
-        "async:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "08.operate",
-      "sources": ["examples/08-async/scripts/queue.ts", "examples/08-async/scripts/logs.ts"],
-      "tasks": ["async:queue", "async:logs"],
-      "boundary": "cloud",
-      "criteria": ["distributed", "cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "08.cleanup",
-      "sources": ["examples/08-async/scripts/empty-uploads.ts"],
-      "tasks": ["async:empty", "async:unpublish", "async:infra:destroy", "async:user:delete"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "23.why",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "23.cost",
-      "sources": [
-        "examples/23-ec2/src/cost.ts",
-        "examples/23-ec2/src/report.ts",
-        "examples/23-ec2/scripts/plan.ts",
-        "examples/23-ec2/test/pricing.test.ts",
-        "data/pricing"
-      ],
-      "tasks": ["ec2:plan", "test:unit"],
-      "boundary": "local",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "23.architecture",
-      "sources": [
-        "examples/23-ec2/infra/lib/ec2-stack.ts",
-        "examples/23-ec2/infra/bin/app.ts",
-        "examples/23-ec2/src/config.ts"
-      ],
-      "tasks": ["ec2:infra:synth"],
-      "boundary": "local",
-      "criteria": ["type"],
-      "verification": "local"
-    },
-    {
-      "id": "23.access",
-      "sources": [
-        "examples/23-ec2/infra/lib/ec2-stack.ts",
-        "examples/23-ec2/src/access.ts",
-        "examples/23-ec2/test/access.test.ts",
-        "examples/23-ec2/infra/test/ec2-stack.test.ts",
-        "examples/11-network/infra/lib/import-network.ts"
-      ],
-      "tasks": ["ec2:plan", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "23.role",
-      "sources": [
-        "examples/23-ec2/infra/lib/ec2-stack.ts",
-        "examples/23-ec2/infra/test/ec2-stack.test.ts"
-      ],
-      "tasks": ["test:unit", "ec2:infra:synth"],
-      "boundary": "local+cloud",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "23.ami",
-      "sources": [
-        "examples/23-ec2/infra/lib/ec2-stack.ts",
-        "examples/23-ec2/infra/test/ec2-stack.test.ts"
-      ],
-      "tasks": ["test:unit", "ec2:infra:synth"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "drift"],
-      "verification": "local"
-    },
-    {
-      "id": "23.user-data",
-      "sources": [
-        "examples/23-ec2/src/machine.ts",
-        "examples/23-ec2/src/user-data.ts",
-        "examples/23-ec2/src/rendered.ts",
-        "examples/23-ec2/scripts/render.ts",
-        "examples/23-ec2/deploy/user-data.sh",
-        "examples/23-ec2/test/machine.test.ts"
-      ],
-      "tasks": ["ec2:render", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "23.service",
-      "sources": [
-        "examples/23-ec2/src/unit.ts",
-        "examples/23-ec2/deploy/notes.service",
-        "examples/23-ec2/deploy/notes.env",
-        "examples/23-ec2/test/machine.test.ts"
-      ],
-      "tasks": ["ec2:render", "test:unit", "ec2:logs"],
-      "boundary": "local+cloud",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "23.shutdown",
-      "sources": [
-        "examples/23-ec2/src/shutdown.ts",
-        "examples/23-ec2/src/server.ts",
-        "examples/23-ec2/test/shutdown.test.ts"
-      ],
-      "tasks": ["test:unit", "dev:ec2"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "23.data",
-      "sources": [
-        "examples/23-ec2/src/file-notes.ts",
-        "examples/23-ec2/src/node-files.ts",
-        "examples/23-ec2/src/user-data.ts",
-        "examples/23-ec2/deploy/notes-data-volume.sh",
-        "examples/23-ec2/infra/lib/ec2-stack.ts",
-        "examples/23-ec2/test/file-notes.test.ts",
-        "examples/23-ec2/test/data-volume.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "23.local",
-      "sources": [
-        "examples/23-ec2/src/server.ts",
-        "examples/23-ec2/src/env.ts",
-        "examples/23-ec2/.env.example",
-        "examples/23-ec2/scripts/plan.ts",
-        "examples/23-ec2/scripts/build.ts",
-        "examples/23-ec2/infra/test/ec2-stack.test.ts"
-      ],
-      "tasks": ["dev:ec2", "test:unit", "ec2:plan", "ec2:app:build", "ec2:infra:synth"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "23.deploy",
-      "sources": [
-        "examples/23-ec2/scripts/remote.ts",
-        "examples/23-ec2/src/remote.ts",
-        "examples/23-ec2/src/release.ts",
-        "examples/23-ec2/deploy/notes-release.sh",
-        "examples/23-ec2/test/remote.test.ts",
-        "tools/src/infra"
-      ],
-      "tasks": [
-        "net:infra:deploy",
-        "ec2:infra:diff",
-        "ec2:infra:deploy",
-        "ec2:status",
-        "ec2:session",
-        "ec2:forward",
-        "ec2:app:release",
-        "ec2:app:rollback",
-        "ec2:smoke",
-        "ec2:logs",
-        "ec2:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "23.backup",
-      "sources": [
-        "examples/23-ec2/scripts/remote.ts",
-        "examples/23-ec2/src/remote.ts",
-        "examples/23-ec2/deploy/notes-data-volume.sh",
-        "examples/23-ec2/test/data-volume.test.ts"
-      ],
-      "tasks": ["ec2:data:unmount", "ec2:data:mount", "test:unit"],
-      "boundary": "cloud",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "23.patch",
-      "sources": [
-        "examples/23-ec2/scripts/remote.ts",
-        "examples/23-ec2/src/remote.ts",
-        "examples/23-ec2/test/remote.test.ts"
-      ],
-      "tasks": ["ec2:patch:check", "ec2:patch:apply"],
-      "boundary": "cloud",
-      "criteria": ["test"],
-      "verification": "unverified"
-    },
-    {
-      "id": "23.spof",
-      "sources": ["examples/23-ec2/test/access.test.ts", "examples/23-ec2/test/file-notes.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["distributed", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "23.compare",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "23.cleanup",
-      "sources": ["examples/23-ec2/scripts/remote.ts", "tools/src/infra"],
-      "tasks": ["ec2:data:unmount", "ec2:releases:empty", "ec2:infra:destroy", "net:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "16.architecture",
-      "sources": [
-        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
-        "examples/16-long-jobs/src/workflow.ts"
-      ],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "16.split",
-      "sources": [
-        "examples/16-long-jobs/src/job.ts",
-        "examples/16-long-jobs/src/note-source.ts",
-        "examples/16-long-jobs/src/dynamodb-note-source.ts",
-        "examples/16-long-jobs/test/adapters.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "16.idempotent-step",
-      "sources": [
-        "examples/16-long-jobs/src/steps.ts",
-        "examples/16-long-jobs/src/export-store.ts",
-        "examples/16-long-jobs/src/s3-export-store.ts",
-        "examples/16-long-jobs/test/steps.test.ts",
-        "examples/16-long-jobs/test/harness.ts",
-        "examples/16-long-jobs/test/adapters.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "16.manifest",
-      "sources": [
-        "examples/16-long-jobs/src/steps.ts",
-        "examples/16-long-jobs/src/job.ts",
-        "examples/16-long-jobs/test/steps.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "16.workflow",
-      "sources": [
-        "examples/16-long-jobs/src/workflow.ts",
-        "examples/16-long-jobs/test/workflow.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "16.checkpoint",
-      "sources": [
-        "examples/16-long-jobs/src/steps.ts",
-        "examples/16-long-jobs/src/export-pages-lambda.ts",
-        "examples/16-long-jobs/src/env.ts",
-        "examples/16-long-jobs/test/steps.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "16.local",
-      "sources": [
-        "examples/16-long-jobs/src/local-workflow.ts",
-        "examples/16-long-jobs/src/local.ts",
-        "examples/16-long-jobs/scripts/run-local.ts",
-        "examples/16-long-jobs/test/workflow.test.ts"
-      ],
-      "tasks": ["export:local", "test:unit"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "16.infra",
-      "sources": [
-        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
-        "examples/16-long-jobs/infra/bin/app.ts",
-        "examples/16-long-jobs/infra/test/long-jobs-stack.test.ts",
-        "examples/16-long-jobs/src/finish-lambda.ts",
-        "examples/16-long-jobs/src/discard-lambda.ts",
-        "examples/16-long-jobs/cdk.json"
-      ],
-      "tasks": ["export:infra:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "16.deploy",
-      "sources": [
-        "examples/16-long-jobs/scripts/seed.ts",
-        "examples/16-long-jobs/scripts/start.ts",
-        "examples/16-long-jobs/scripts/status.ts",
-        "examples/16-long-jobs/scripts/logs.ts"
-      ],
-      "tasks": [
-        "export:infra:diff",
-        "export:infra:deploy",
-        "export:seed",
-        "export:start",
-        "export:status",
-        "export:logs",
-        "export:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift", "distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "16.durable",
-      "sources": [
-        "examples/16-long-jobs/src/durable-export.ts",
-        "examples/16-long-jobs/src/durable-lambda.ts",
-        "examples/16-long-jobs/test/durable.test.ts",
-        "examples/16-long-jobs/scripts/durable-start.ts",
-        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts"
-      ],
-      "tasks": ["test:unit", "export:durable:start"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "16.containers",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "16.cost",
-      "sources": ["data/pricing"],
-      "tasks": ["test:unit"],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "16.cleanup",
-      "sources": ["examples/16-long-jobs/scripts/empty.ts"],
-      "tasks": ["export:empty", "export:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "22.overview",
-      "sources": ["examples/22-recovery"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "22.not-backup",
-      "sources": ["examples/22-recovery/infra/lib/recovery-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "22.pitr",
-      "sources": [
-        "examples/22-recovery/infra/lib/recovery-stack.ts",
-        "examples/22-recovery/src/pitr.ts",
-        "examples/22-recovery/src/memory-table.ts",
-        "examples/22-recovery/test/pitr-drill.test.ts"
-      ],
-      "tasks": ["test:unit", "recovery:status", "recovery:restore:table"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "22.versioning",
-      "sources": [
-        "examples/22-recovery/src/versioned-bucket.ts",
-        "examples/22-recovery/src/object-restore.ts",
-        "examples/22-recovery/src/s3-versioned-bucket.ts",
-        "examples/22-recovery/test/object-restore.test.ts"
-      ],
-      "tasks": ["test:unit", "recovery:restore:objects"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "22.skew",
-      "sources": [
-        "examples/22-recovery/src/invariants.ts",
-        "examples/22-recovery/src/items.ts",
-        "examples/22-recovery/src/audit.ts",
-        "examples/22-recovery/test/skew.test.ts",
-        "examples/22-recovery/test/adapters.test.ts"
-      ],
-      "tasks": ["test:unit", "recovery:demo", "recovery:verify"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "22.repair",
-      "sources": [
-        "examples/22-recovery/src/repair.ts",
-        "examples/22-recovery/test/skew.test.ts",
-        "examples/22-recovery/test/world.ts"
-      ],
-      "tasks": ["test:unit", "recovery:repair"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "22.versions",
-      "sources": [
-        "examples/22-recovery/src/table-diff.ts",
-        "examples/22-recovery/src/dynamodb-table.ts",
-        "examples/22-recovery/test/table-diff.test.ts"
-      ],
-      "tasks": ["test:unit", "recovery:diff"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "22.local",
-      "sources": [
-        "examples/22-recovery/scripts/demo.ts",
-        "examples/22-recovery/src/local.ts",
-        "examples/22-recovery/src/memory-table.ts",
-        "examples/22-recovery/src/versioned-bucket.ts"
-      ],
-      "tasks": ["recovery:demo", "test:unit"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "22.infra",
-      "sources": [
-        "examples/22-recovery/infra/lib/recovery-stack.ts",
-        "examples/22-recovery/infra/bin/app.ts",
-        "examples/22-recovery/infra/test/recovery-stack.test.ts",
-        "examples/22-recovery/src/audit-lambda.ts",
-        "examples/22-recovery/cdk.json"
-      ],
-      "tasks": ["recovery:infra:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "22.drill",
-      "sources": [
-        "examples/22-recovery/scripts/recovery.ts",
-        "examples/22-recovery/scripts/context.ts",
-        "examples/22-recovery/scripts/drill.ts",
-        "examples/22-recovery/src/drill.ts",
-        "examples/22-recovery/drill/TEMPLATE.md",
-        "examples/22-recovery/drill/record.template.json"
-      ],
-      "tasks": [
-        "recovery:infra:deploy",
-        "recovery:drill",
-        "recovery:seed",
-        "recovery:status",
-        "recovery:accident",
-        "recovery:restore:table",
-        "recovery:restore:objects",
-        "recovery:diff",
-        "recovery:verify",
-        "recovery:repair",
-        "recovery:protect"
-      ],
-      "boundary": "cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "22.cutover",
-      "sources": [
-        "examples/22-recovery/infra/lib/recovery-stack.ts",
-        "examples/22-recovery/infra/bin/app.ts",
-        "examples/22-recovery/infra/test/recovery-stack.test.ts"
-      ],
-      "tasks": [
-        "recovery:infra:diff",
-        "recovery:infra:deploy",
-        "recovery:audit",
-        "recovery:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift", "test"],
-      "verification": "unverified"
-    },
-    {
-      "id": "22.cloudflare",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "22.cost",
-      "sources": ["data/pricing"],
-      "tasks": ["test:unit"],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "22.cleanup",
-      "sources": ["examples/22-recovery/scripts/recovery.ts"],
-      "tasks": ["recovery:drop-table", "recovery:empty", "recovery:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
       "id": "24.what",
       "sources": [],
       "tasks": [],
@@ -3527,344 +1958,6 @@
       "boundary": "local",
       "criteria": ["distributed", "test"],
       "verification": "local"
-    },
-    {
-      "id": "17.architecture",
-      "sources": ["examples/17-ai/infra/lib/ai-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "17.hello",
-      "sources": ["examples/17-ai/scripts/hello.ts", "examples/17-ai/src/converse-stream.ts"],
-      "tasks": ["ai:hello"],
-      "boundary": "cloud",
-      "criteria": ["type"],
-      "verification": "unverified"
-    },
-    {
-      "id": "17.models",
-      "sources": [
-        "examples/17-ai/infra/lib/models.ts",
-        "examples/17-ai/infra/bin/app.ts",
-        "examples/17-ai/infra/test/ai-stack.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "17.contract",
-      "sources": ["examples/17-ai/src/contract.ts", "examples/17-ai/src/prompt.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "17.stream",
-      "sources": [
-        "examples/17-ai/src/converse-stream.ts",
-        "examples/17-ai/src/summarize.ts",
-        "examples/17-ai/src/bedrock.ts",
-        "examples/17-ai/test/summarize.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "17.failures",
-      "sources": [
-        "examples/17-ai/src/failure.ts",
-        "examples/17-ai/src/summarize.ts",
-        "examples/17-ai/test/failure.test.ts",
-        "examples/17-ai/test/summarize.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "17.app",
-      "sources": [
-        "examples/17-ai/src/app.ts",
-        "examples/17-ai/src/sse.ts",
-        "examples/17-ai/src/compose.ts",
-        "examples/17-ai/src/env.ts",
-        "examples/17-ai/test/app.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "17.local",
-      "sources": [
-        "examples/17-ai/src/dev.ts",
-        "examples/17-ai/src/fixture-gateway.ts",
-        "examples/17-ai/src/fixtures.ts",
-        "examples/17-ai/fixtures/converse-stream",
-        "examples/17-ai/.env.example"
-      ],
-      "tasks": ["dev:ai"],
-      "boundary": "local",
-      "criteria": ["local-dx", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "17.tests",
-      "sources": [
-        "examples/17-ai/test",
-        "examples/17-ai/fixtures/converse-stream",
-        "examples/17-ai/scripts/live.ts"
-      ],
-      "tasks": ["test:unit", "ai:test:live"],
-      "boundary": "local+cloud",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "17.partial",
-      "sources": ["examples/17-ai/src/client.ts", "examples/17-ai/test/client.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["distributed", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "17.infra",
-      "sources": [
-        "examples/17-ai/infra/lib/ai-stack.ts",
-        "examples/17-ai/infra/lib/models.ts",
-        "examples/17-ai/src/lambda.ts",
-        "examples/17-ai/src/function-url.ts",
-        "examples/17-ai/test/function-url.test.ts",
-        "examples/17-ai/infra/test/ai-stack.test.ts",
-        "examples/17-ai/cdk.json"
-      ],
-      "tasks": ["ai:infra:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "17.deploy",
-      "sources": [
-        "examples/17-ai/scripts/smoke.ts",
-        "examples/17-ai/scripts/sign.ts",
-        "examples/17-ai/scripts/logs.ts",
-        "tools/src/infra"
-      ],
-      "tasks": ["ai:infra:diff", "ai:infra:deploy", "ai:smoke", "ai:logs", "ai:infra:drift"],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "17.workers-ai",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "17.cleanup",
-      "sources": ["tools/src/infra"],
-      "tasks": ["ai:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "21.tiers",
-      "sources": [
-        "examples/21-security/src/posture.ts",
-        "examples/21-security/scripts/posture.ts",
-        "examples/21-security/test/posture.test.ts"
-      ],
-      "tasks": ["sec:posture", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "21.architecture",
-      "sources": [
-        "examples/21-security/infra/bin/app.ts",
-        "examples/21-security/infra/lib/security-stack.ts"
-      ],
-      "tasks": ["sec:infra:synth"],
-      "boundary": "none",
-      "criteria": ["cost", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "21.least-privilege",
-      "sources": [
-        "examples/21-security/infra/lib/security-stack.ts",
-        "examples/21-security/infra/test/security-stack.test.ts"
-      ],
-      "tasks": ["sec:infra:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "21.iam-lint",
-      "sources": [
-        "examples/21-security/src/iam-lint.ts",
-        "examples/21-security/src/json-object.ts",
-        "examples/21-security/test/iam-lint.test.ts",
-        "examples/21-security/scripts/iam-lint.ts",
-        "examples/21-security/policies/iam-lint-exceptions.json"
-      ],
-      "tasks": ["sec:iam:lint", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "21.secret",
-      "sources": [
-        "examples/21-security/src/secret-source.ts",
-        "examples/21-security/src/secrets-manager-source.ts",
-        "examples/21-security/src/env.ts",
-        "examples/21-security/src/compose.ts",
-        "examples/21-security/test/secrets-manager-source.test.ts",
-        "examples/21-security/infra/lib/security-stack.ts"
-      ],
-      "tasks": ["dev:sec", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "21.keyring",
-      "sources": [
-        "examples/21-security/src/keyring.ts",
-        "examples/21-security/src/token.ts",
-        "examples/21-security/src/app.ts",
-        "examples/21-security/test/keyring.test.ts",
-        "examples/21-security/test/token.test.ts",
-        "examples/21-security/test/app.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "21.rotation",
-      "sources": [
-        "examples/21-security/src/rotation.ts",
-        "examples/21-security/src/secrets-manager-source.ts",
-        "examples/21-security/scripts/rotate.ts",
-        "examples/21-security/test/rotation.test.ts"
-      ],
-      "tasks": ["sec:secret:versions", "sec:secret:rotate", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "21.kms",
-      "sources": [
-        "examples/21-security/infra/lib/security-stack.ts",
-        "examples/21-security/infra/lib/config.ts",
-        "examples/21-security/infra/test/security-stack.test.ts"
-      ],
-      "tasks": ["sec:infra:synth", "test:unit"],
-      "boundary": "cloud",
-      "criteria": ["test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "21.waf",
-      "sources": [
-        "examples/21-security/infra/lib/waf-stack.ts",
-        "examples/21-security/infra/lib/security-stack.ts",
-        "examples/21-security/infra/test/waf-stack.test.ts"
-      ],
-      "tasks": ["sec:waf:infra:deploy", "sec:waf:infra:destroy", "test:unit"],
-      "boundary": "cloud",
-      "criteria": ["test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "21.iam-consistency",
-      "sources": [
-        "examples/21-security/src/propagation.ts",
-        "examples/21-security/test/propagation.test.ts",
-        "examples/21-security/scripts/smoke.ts",
-        "examples/21-security/scripts/trail.ts"
-      ],
-      "tasks": ["sec:smoke", "sec:trail:iam", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "21.detect",
-      "sources": [
-        "examples/21-security/scripts/posture.ts",
-        "examples/21-security/scripts/trail.ts"
-      ],
-      "tasks": ["sec:posture", "sec:trail:iam"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "21.organizations",
-      "sources": [
-        "examples/21-security/policies/scp-guardrails.json",
-        "examples/21-security/src/policy-model.ts",
-        "examples/21-security/test/scp.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "21.deploy",
-      "sources": ["examples/21-security/scripts/smoke.ts", "examples/21-security/infra/bin/app.ts"],
-      "tasks": ["sec:infra:diff", "sec:infra:deploy", "sec:smoke", "sec:infra:drift"],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "21.cost",
-      "sources": ["data/pricing", "examples/21-security/infra/test/security-stack.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "21.workers",
-      "sources": ["examples/21-security/src/compose.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "21.cleanup",
-      "sources": ["examples/21-security/infra/lib/security-stack.ts"],
-      "tasks": ["sec:infra:destroy", "sec:waf:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
     },
     {
       "id": "25.architecture",
@@ -5335,417 +3428,6 @@
       "id": "32.cleanup",
       "sources": ["examples/32-limits/infra/lib/limits-stack.ts"],
       "tasks": ["limits:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.overview",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": ["ready:review"],
-      "boundary": "local",
-      "criteria": ["local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "33.item",
-      "sources": [
-        "examples/33-production-readiness/src/review.ts",
-        "examples/33-production-readiness/test/review.test.ts"
-      ],
-      "tasks": ["ready:review", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "33.stages",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.platforms",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.template",
-      "sources": [
-        "examples/33-production-readiness/src/template.ts",
-        "examples/33-production-readiness/test/template.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "33.rules",
-      "sources": [
-        "examples/33-production-readiness/src/rules",
-        "examples/33-production-readiness/test/rules.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "33.watching",
-      "sources": [
-        "examples/33-production-readiness/src/rules/watching.ts",
-        "examples/33-production-readiness/test/rules.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "33.waivers",
-      "sources": [
-        "examples/33-production-readiness/src/check.ts",
-        "examples/33-production-readiness/readiness/waivers.json",
-        "examples/33-production-readiness/test/check.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "33.twins",
-      "sources": [
-        "examples/33-production-readiness/infra/bin/app.ts",
-        "examples/33-production-readiness/infra/lib/production-settings.ts",
-        "examples/33-production-readiness/infra/test/twins.test.ts"
-      ],
-      "tasks": ["ready:infra:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "drift"],
-      "verification": "local"
-    },
-    {
-      "id": "33.local",
-      "sources": [
-        "examples/33-production-readiness/scripts/check.ts",
-        "examples/33-production-readiness/scripts/review.ts",
-        "examples/33-production-readiness/src/report.ts",
-        "examples/33-production-readiness/test/fixtures"
-      ],
-      "tasks": ["test:unit", "ready:review", "ready:infra:synth", "ready:gate"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "33.book-stacks",
-      "sources": [
-        "examples/33-production-readiness/scripts/check.ts",
-        "examples/33-production-readiness/src/report.ts"
-      ],
-      "tasks": ["ready:check"],
-      "boundary": "local",
-      "criteria": ["local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "33.blind-spots",
-      "sources": ["examples/33-production-readiness/src/rules"],
-      "tasks": [],
-      "boundary": "local+cloud",
-      "criteria": ["drift", "distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.accounts",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": ["account:whoami", "sec:posture"],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.identity",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": ["sec:iam:lint"],
-      "boundary": "local+cloud",
-      "criteria": ["test"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.data",
-      "sources": [
-        "examples/33-production-readiness/src/review.ts",
-        "examples/33-production-readiness/src/rules/data.ts"
-      ],
-      "tasks": ["recovery:drill", "recovery:status"],
-      "boundary": "local+cloud",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.failure",
-      "sources": [
-        "examples/33-production-readiness/src/review.ts",
-        "examples/33-production-readiness/src/rules/watching.ts"
-      ],
-      "tasks": ["obs:alarms", "obs:query:print", "recovery:drill"],
-      "boundary": "local+cloud",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.change",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": ["ship:cfn:diff", "ship:cfn:drift"],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.cost",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": ["account:budget:create"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.abuse",
-      "sources": [
-        "examples/33-production-readiness/src/review.ts",
-        "examples/33-production-readiness/src/rules/doors.ts"
-      ],
-      "tasks": ["sec:posture", "sec:secret:versions", "sec:secret:rotate", "sec:trail:iam"],
-      "boundary": "local+cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.operations",
-      "sources": ["examples/33-production-readiness/src/review.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "33.costs",
-      "sources": ["examples/33-production-readiness/infra/lib/production-settings.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "33.cleanup",
-      "sources": ["examples/33-production-readiness/cdk.json"],
-      "tasks": ["ready:infra:synth"],
-      "boundary": "local",
-      "criteria": ["local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "34.when",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "34.architecture",
-      "sources": [
-        "examples/34-eks/infra/lib/eks-stack.ts",
-        "examples/34-eks/src/config.ts",
-        "examples/34-eks/k8s"
-      ],
-      "tasks": ["eks:infra:synth"],
-      "boundary": "local",
-      "criteria": ["cost"],
-      "verification": "local"
-    },
-    {
-      "id": "34.control-plane",
-      "sources": ["examples/34-eks/src/cost.ts", "examples/34-eks/test/pricing.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.nodes",
-      "sources": [
-        "examples/34-eks/src/manifests.ts",
-        "examples/34-eks/src/config.ts",
-        "examples/34-eks/k8s/cluster.json",
-        "examples/34-eks/test/manifests.test.ts"
-      ],
-      "tasks": ["test:unit", "eks:render"],
-      "boundary": "local+cloud",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.cdk",
-      "sources": [
-        "examples/34-eks/infra/lib/eks-stack.ts",
-        "examples/34-eks/infra/bin/app.ts",
-        "examples/34-eks/infra/test/eks-stack.test.ts"
-      ],
-      "tasks": ["eks:infra:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test", "drift"],
-      "verification": "local"
-    },
-    {
-      "id": "34.access",
-      "sources": [
-        "examples/34-eks/infra/lib/eks-stack.ts",
-        "examples/34-eks/src/config.ts",
-        "examples/34-eks/infra/test/eks-stack.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.pod-identity",
-      "sources": [
-        "examples/34-eks/infra/lib/eks-stack.ts",
-        "examples/34-eks/infra/test/eks-stack.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.manifests",
-      "sources": [
-        "examples/34-eks/src/k8s/schema.ts",
-        "examples/34-eks/src/k8s/check.ts",
-        "examples/34-eks/src/manifests.ts",
-        "examples/34-eks/src/rendered.ts",
-        "examples/34-eks/scripts/render.ts",
-        "examples/34-eks/k8s",
-        "examples/34-eks/test/manifests.test.ts"
-      ],
-      "tasks": ["test:unit", "eks:render"],
-      "boundary": "local",
-      "criteria": ["type", "test", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "34.traffic",
-      "sources": [
-        "examples/34-eks/src/manifests.ts",
-        "examples/34-eks/k8s/app.json",
-        "examples/34-eks/k8s/cluster.json"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.shutdown",
-      "sources": [
-        "examples/34-eks/src/timing.ts",
-        "examples/34-eks/test/timing.test.ts",
-        "examples/34-eks/src/manifests.ts",
-        "examples/12-containers/src/timing.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "34.disruption",
-      "sources": [
-        "examples/34-eks/src/rollout.ts",
-        "examples/34-eks/test/rollout.test.ts",
-        "examples/34-eks/src/config.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "34.data",
-      "sources": ["examples/34-eks/infra/lib/eks-stack.ts"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "34.local",
-      "sources": [
-        "examples/34-eks/test",
-        "examples/34-eks/infra/test/eks-stack.test.ts",
-        "examples/34-eks/scripts/render.ts"
-      ],
-      "tasks": ["test:unit", "eks:render", "eks:infra:synth"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.deploy",
-      "sources": [
-        "examples/34-eks/infra/bin/app.ts",
-        "examples/34-eks/cdk.json",
-        "examples/34-eks/scripts/manifests.ts",
-        "tools/src/infra"
-      ],
-      "tasks": ["eks:infra:diff", "eks:infra:deploy", "eks:manifests", "eks:infra:drift"],
-      "boundary": "cloud",
-      "criteria": ["drift", "cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "34.upgrade",
-      "sources": [
-        "examples/34-eks/src/support.ts",
-        "examples/34-eks/test/support.test.ts",
-        "examples/34-eks/src/config.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.cost",
-      "sources": ["examples/34-eks/src/cost.ts", "examples/34-eks/test/pricing.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "34.others",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["local-dx", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "34.cleanup",
-      "sources": ["tools/src/infra"],
-      "tasks": ["eks:infra:destroy"],
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
@@ -8831,166 +6513,6 @@
       "verification": "unverified"
     },
     {
-      "id": "52.overview",
-      "sources": ["examples/52-ecr"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "52.digest",
-      "sources": [
-        "examples/52-ecr/src/reference.ts",
-        "examples/52-ecr/src/registry.ts",
-        "examples/52-ecr/test/invariant.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "52.settings",
-      "sources": [
-        "examples/52-ecr/infra/lib/ecr-stack.ts",
-        "examples/52-ecr/src/mutability.ts",
-        "examples/52-ecr/test/mutability.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "52.lifecycle",
-      "sources": [
-        "examples/52-ecr/src/lifecycle.ts",
-        "examples/52-ecr/src/policy.ts",
-        "examples/52-ecr/src/wildcard.ts",
-        "examples/52-ecr/test/lifecycle.test.ts"
-      ],
-      "tasks": ["test:unit", "ecr:lifecycle:preview"],
-      "boundary": "local",
-      "criteria": ["type", "test", "local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "52.scan",
-      "sources": [
-        "examples/52-ecr/src/scan.ts",
-        "examples/52-ecr/test/scan.test.ts",
-        "examples/52-ecr/scripts/scan-gate.ts"
-      ],
-      "tasks": ["test:unit", "ecr:scan:gate"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "52.cache",
-      "sources": ["examples/52-ecr/infra/lib/ecr-stack.ts", "examples/52-ecr/src/config.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "cloud",
-      "criteria": ["test", "cost"],
-      "verification": "local"
-    },
-    {
-      "id": "52.replication",
-      "sources": [],
-      "tasks": [],
-      "boundary": "cloud",
-      "criteria": [],
-      "verification": "unverified"
-    },
-    {
-      "id": "52.push",
-      "sources": [
-        "examples/52-ecr/infra/lib/ecr-stack.ts",
-        "examples/52-ecr/infra/bin/app.ts",
-        "examples/52-ecr/src/config.ts",
-        "examples/52-ecr/infra/test/ecr-stack.test.ts"
-      ],
-      "tasks": ["test:unit", "ecr:infra:synth"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "52.local",
-      "sources": [
-        "examples/52-ecr/scripts/lifecycle-preview.ts",
-        "examples/52-ecr/src/describe.ts",
-        "examples/52-ecr/fixtures",
-        "examples/52-ecr/test/describe.test.ts"
-      ],
-      "tasks": ["test:unit", "ecr:lifecycle:preview", "ecr:infra:synth"],
-      "boundary": "local",
-      "criteria": ["local-dx", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "52.deploy",
-      "sources": [
-        "examples/52-ecr/infra/bin/app.ts",
-        "examples/52-ecr/scripts/lifecycle-compare.ts",
-        "examples/52-ecr/scripts/scan-gate.ts"
-      ],
-      "tasks": [
-        "ecr:infra:diff",
-        "ecr:infra:deploy",
-        "ecr:lifecycle:compare",
-        "ecr:scan:gate",
-        "ecr:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "52.cost",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "52.pitfalls",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": [],
-      "verification": "unverified"
-    },
-    {
-      "id": "52.production",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": [],
-      "verification": "unverified"
-    },
-    {
-      "id": "52.cleanup",
-      "sources": [],
-      "tasks": ["ecr:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": [],
-      "verification": "unverified"
-    },
-    {
-      "id": "52.distributed",
-      "sources": [
-        "examples/52-ecr/test/invariant.test.ts",
-        "examples/52-ecr/test/lifecycle.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["distributed", "test"],
-      "verification": "local"
-    },
-    {
       "id": "53.choice",
       "sources": [],
       "tasks": [],
@@ -9789,180 +7311,6 @@
       "id": "57.cleanup",
       "sources": ["examples/57-polly/scripts/empty.ts"],
       "tasks": ["polly:empty", "polly:infra:destroy"],
-      "boundary": "cloud",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "58.qldb",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": [],
-      "verification": "unverified"
-    },
-    {
-      "id": "58.overview",
-      "sources": ["examples/58-ledger"],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "58.trust",
-      "sources": ["examples/58-ledger/test/verify.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "none",
-      "criteria": ["distributed", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "58.fit",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost", "distributed"],
-      "verification": "unverified"
-    },
-    {
-      "id": "58.journal",
-      "sources": [
-        "examples/58-ledger/src/entry.ts",
-        "examples/58-ledger/src/journal.ts",
-        "examples/58-ledger/test/entry.test.ts",
-        "examples/58-ledger/test/journal-contract.ts"
-      ],
-      "tasks": ["test:unit", "ledger:test:local"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "58.append",
-      "sources": ["examples/58-ledger/src/ledger.ts", "examples/58-ledger/test/ledger.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "58.writer",
-      "sources": [
-        "examples/58-ledger/src/dynamodb-journal.ts",
-        "examples/58-ledger/infra/lib/ledger-stack.ts",
-        "examples/58-ledger/test/adapters.test.ts",
-        "examples/58-ledger/test/dynamodb-local.test.ts"
-      ],
-      "tasks": ["test:unit", "ledger:test:local"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "58.digest",
-      "sources": [
-        "examples/58-ledger/src/digest.ts",
-        "examples/58-ledger/src/s3-digests.ts",
-        "examples/58-ledger/src/memory-digests.ts",
-        "examples/58-ledger/src/digest-lambda.ts",
-        "examples/58-ledger/test/digest.test.ts",
-        "examples/58-ledger/test/memory-digests.test.ts",
-        "examples/58-ledger/test/digest-lambda.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "58.verify",
-      "sources": [
-        "examples/58-ledger/src/verify.ts",
-        "examples/58-ledger/src/audit.ts",
-        "examples/58-ledger/test/verify.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test", "distributed"],
-      "verification": "local"
-    },
-    {
-      "id": "58.events",
-      "sources": ["examples/58-ledger/src/events.ts", "examples/58-ledger/test/events.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "58.local",
-      "sources": [
-        "examples/58-ledger/scripts/demo.ts",
-        "examples/58-ledger/scripts/local-db.ts",
-        "examples/58-ledger/.env.example"
-      ],
-      "tasks": ["ledger:demo", "ledger:db:migrate:local", "ledger:db:reset:local"],
-      "boundary": "local",
-      "criteria": ["local-dx"],
-      "verification": "local"
-    },
-    {
-      "id": "58.tests",
-      "sources": [
-        "examples/58-ledger/test",
-        "examples/58-ledger/infra/test/ledger-stack.test.ts",
-        "examples/58-ledger/scripts/test-local.ts"
-      ],
-      "tasks": ["test:unit", "ledger:test:local"],
-      "boundary": "local",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "58.stack",
-      "sources": [
-        "examples/58-ledger/infra/lib/ledger-stack.ts",
-        "examples/58-ledger/infra/bin/app.ts",
-        "examples/58-ledger/infra/test/ledger-stack.test.ts",
-        "examples/58-ledger/cdk.json"
-      ],
-      "tasks": ["ledger:infra:synth", "test:unit"],
-      "boundary": "local+cloud",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "58.deploy",
-      "sources": ["examples/58-ledger/scripts/ledger.ts"],
-      "tasks": [
-        "ledger:infra:diff",
-        "ledger:infra:deploy",
-        "ledger:append",
-        "ledger:digest",
-        "ledger:verify",
-        "ledger:infra:drift"
-      ],
-      "boundary": "cloud",
-      "criteria": ["drift"],
-      "verification": "unverified"
-    },
-    {
-      "id": "58.cost",
-      "sources": ["data/pricing"],
-      "tasks": ["test:unit"],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "58.cleanup",
-      "sources": [
-        "examples/58-ledger/scripts/ledger.ts",
-        "examples/58-ledger/src/purge.ts",
-        "examples/58-ledger/test/purge.test.ts"
-      ],
-      "tasks": ["ledger:infra:destroy", "ledger:purge"],
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
@@ -11024,6 +8372,597 @@
       "verification": "unverified"
     },
     {
+      "id": "68.cost",
+      "sources": [
+        "examples/68-nitro/src/cost.ts",
+        "examples/68-nitro/scripts/prices.ts",
+        "examples/68-nitro/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["nitro:prices", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.system",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.claims",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.when-not",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.devices",
+      "sources": [
+        "examples/68-nitro/src/volume.ts",
+        "examples/68-nitro/test/volume.test.ts",
+        "examples/68-nitro/test/fixtures/lsblk.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.names",
+      "sources": [
+        "examples/68-nitro/src/instance-type.ts",
+        "examples/68-nitro/scripts/names.ts",
+        "examples/68-nitro/test/instance-type.test.ts"
+      ],
+      "tasks": ["nitro:names", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.graviton",
+      "sources": [
+        "examples/68-nitro/src/arch.ts",
+        "examples/68-nitro/scripts/prices.ts",
+        "examples/68-nitro/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["nitro:prices", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.enclave",
+      "sources": [
+        "examples/68-nitro/src/measurement.ts",
+        "examples/68-nitro/test/measurement.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.policy",
+      "sources": ["examples/68-nitro/src/policy.ts", "examples/68-nitro/test/policy.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.design",
+      "sources": [
+        "examples/68-nitro/src/enclave/vault.ts",
+        "examples/68-nitro/src/enclave/protocol.ts",
+        "examples/68-nitro/test/enclave.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "68.stack",
+      "sources": [
+        "examples/68-nitro/infra/lib/nitro-stack.ts",
+        "examples/68-nitro/infra/bin/app.ts",
+        "examples/68-nitro/src/config.ts",
+        "examples/68-nitro/infra/test/nitro-stack.test.ts"
+      ],
+      "tasks": ["nitro:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "68.local",
+      "sources": [
+        "examples/68-nitro/src/enclave/model.ts",
+        "examples/68-nitro/src/enclave/attestation.ts",
+        "examples/68-nitro/src/enclave/kms-model.ts",
+        "examples/68-nitro/scripts/demo.ts",
+        "examples/68-nitro/test/enclave.test.ts"
+      ],
+      "tasks": ["nitro:demo", "test:unit", "nitro:infra:synth"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "68.deploy",
+      "sources": [
+        "examples/68-nitro/infra/bin/app.ts",
+        "examples/68-nitro/infra/lib/nitro-stack.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["nitro:infra:diff", "nitro:infra:deploy", "nitro:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.walkthrough",
+      "sources": ["examples/68-nitro/infra/bin/app.ts", "examples/68-nitro/src/measurement.ts"],
+      "tasks": ["nitro:infra:deploy"],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.limits",
+      "sources": [
+        "examples/68-nitro/test/enclave.test.ts",
+        "examples/68-nitro/src/enclave/model.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "68.platforms",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "68.cleanup",
+      "sources": ["examples/68-nitro/infra/lib/nitro-stack.ts"],
+      "tasks": ["nitro:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.overview",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["ready:review"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "33.item",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/test/review.test.ts"
+      ],
+      "tasks": ["ready:review", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.stages",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.platforms",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.template",
+      "sources": [
+        "examples/33-production-readiness/src/template.ts",
+        "examples/33-production-readiness/test/template.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.rules",
+      "sources": [
+        "examples/33-production-readiness/src/rules",
+        "examples/33-production-readiness/test/rules.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.watching",
+      "sources": [
+        "examples/33-production-readiness/src/rules/watching.ts",
+        "examples/33-production-readiness/test/rules.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "33.waivers",
+      "sources": [
+        "examples/33-production-readiness/src/check.ts",
+        "examples/33-production-readiness/readiness/waivers.json",
+        "examples/33-production-readiness/test/check.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.twins",
+      "sources": [
+        "examples/33-production-readiness/infra/bin/app.ts",
+        "examples/33-production-readiness/infra/lib/production-settings.ts",
+        "examples/33-production-readiness/infra/test/twins.test.ts"
+      ],
+      "tasks": ["ready:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "33.local",
+      "sources": [
+        "examples/33-production-readiness/scripts/check.ts",
+        "examples/33-production-readiness/scripts/review.ts",
+        "examples/33-production-readiness/src/report.ts",
+        "examples/33-production-readiness/test/fixtures"
+      ],
+      "tasks": ["test:unit", "ready:review", "ready:infra:synth", "ready:gate"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "33.book-stacks",
+      "sources": [
+        "examples/33-production-readiness/scripts/check.ts",
+        "examples/33-production-readiness/src/report.ts"
+      ],
+      "tasks": ["ready:check"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "33.blind-spots",
+      "sources": ["examples/33-production-readiness/src/rules"],
+      "tasks": [],
+      "boundary": "local+cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.accounts",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["account:whoami", "sec:posture"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.identity",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["sec:iam:lint"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.data",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/src/rules/data.ts"
+      ],
+      "tasks": ["recovery:drill", "recovery:status"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.failure",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/src/rules/watching.ts"
+      ],
+      "tasks": ["obs:alarms", "obs:query:print", "recovery:drill"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.change",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["ship:cfn:diff", "ship:cfn:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.cost",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": ["account:budget:create"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.abuse",
+      "sources": [
+        "examples/33-production-readiness/src/review.ts",
+        "examples/33-production-readiness/src/rules/doors.ts"
+      ],
+      "tasks": ["sec:posture", "sec:secret:versions", "sec:secret:rotate", "sec:trail:iam"],
+      "boundary": "local+cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.operations",
+      "sources": ["examples/33-production-readiness/src/review.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "33.costs",
+      "sources": ["examples/33-production-readiness/infra/lib/production-settings.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "33.cleanup",
+      "sources": ["examples/33-production-readiness/cdk.json"],
+      "tasks": ["ready:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "34.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "34.architecture",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/src/config.ts",
+        "examples/34-eks/k8s"
+      ],
+      "tasks": ["eks:infra:synth"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "34.control-plane",
+      "sources": ["examples/34-eks/src/cost.ts", "examples/34-eks/test/pricing.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.nodes",
+      "sources": [
+        "examples/34-eks/src/manifests.ts",
+        "examples/34-eks/src/config.ts",
+        "examples/34-eks/k8s/cluster.json",
+        "examples/34-eks/test/manifests.test.ts"
+      ],
+      "tasks": ["test:unit", "eks:render"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.cdk",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/infra/bin/app.ts",
+        "examples/34-eks/infra/test/eks-stack.test.ts"
+      ],
+      "tasks": ["eks:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "34.access",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/src/config.ts",
+        "examples/34-eks/infra/test/eks-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.pod-identity",
+      "sources": [
+        "examples/34-eks/infra/lib/eks-stack.ts",
+        "examples/34-eks/infra/test/eks-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.manifests",
+      "sources": [
+        "examples/34-eks/src/k8s/schema.ts",
+        "examples/34-eks/src/k8s/check.ts",
+        "examples/34-eks/src/manifests.ts",
+        "examples/34-eks/src/rendered.ts",
+        "examples/34-eks/scripts/render.ts",
+        "examples/34-eks/k8s",
+        "examples/34-eks/test/manifests.test.ts"
+      ],
+      "tasks": ["test:unit", "eks:render"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "34.traffic",
+      "sources": [
+        "examples/34-eks/src/manifests.ts",
+        "examples/34-eks/k8s/app.json",
+        "examples/34-eks/k8s/cluster.json"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.shutdown",
+      "sources": [
+        "examples/34-eks/src/timing.ts",
+        "examples/34-eks/test/timing.test.ts",
+        "examples/34-eks/src/manifests.ts",
+        "examples/12-containers/src/timing.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "34.disruption",
+      "sources": [
+        "examples/34-eks/src/rollout.ts",
+        "examples/34-eks/test/rollout.test.ts",
+        "examples/34-eks/src/config.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "34.data",
+      "sources": ["examples/34-eks/infra/lib/eks-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "34.local",
+      "sources": [
+        "examples/34-eks/test",
+        "examples/34-eks/infra/test/eks-stack.test.ts",
+        "examples/34-eks/scripts/render.ts"
+      ],
+      "tasks": ["test:unit", "eks:render", "eks:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.deploy",
+      "sources": [
+        "examples/34-eks/infra/bin/app.ts",
+        "examples/34-eks/cdk.json",
+        "examples/34-eks/scripts/manifests.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["eks:infra:diff", "eks:infra:deploy", "eks:manifests", "eks:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "34.upgrade",
+      "sources": [
+        "examples/34-eks/src/support.ts",
+        "examples/34-eks/test/support.test.ts",
+        "examples/34-eks/src/config.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.cost",
+      "sources": ["examples/34-eks/src/cost.ts", "examples/34-eks/test/pricing.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "34.others",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "34.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["eks:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
       "id": "66.overview",
       "sources": ["examples/66-distributed-sql"],
       "tasks": [],
@@ -11406,49 +9345,20 @@
       "verification": "unverified"
     },
     {
-      "id": "68.cost",
-      "sources": [
-        "examples/68-nitro/src/cost.ts",
-        "examples/68-nitro/scripts/prices.ts",
-        "examples/68-nitro/test/pricing.test.ts",
-        "data/pricing"
-      ],
-      "tasks": ["nitro:prices", "test:unit"],
-      "boundary": "local",
-      "criteria": ["cost", "test"],
+      "id": "08.architecture",
+      "sources": ["examples/08-async/infra/lib/async-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
       "verification": "local"
     },
     {
-      "id": "68.system",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": [],
-      "verification": "unverified"
-    },
-    {
-      "id": "68.claims",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": [],
-      "verification": "unverified"
-    },
-    {
-      "id": "68.when-not",
-      "sources": [],
-      "tasks": [],
-      "boundary": "none",
-      "criteria": ["cost"],
-      "verification": "unverified"
-    },
-    {
-      "id": "68.devices",
+      "id": "08.inspect",
       "sources": [
-        "examples/68-nitro/src/volume.ts",
-        "examples/68-nitro/test/volume.test.ts",
-        "examples/68-nitro/test/fixtures/lsblk.ts",
-        "examples/23-ec2/deploy/notes-data-volume.sh"
+        "examples/08-async/src/inspect.ts",
+        "examples/08-async/src/inspection.ts",
+        "examples/08-async/test/inspect.test.ts",
+        "examples/08-async/test/fixtures.ts"
       ],
       "tasks": ["test:unit"],
       "boundary": "local",
@@ -11456,113 +9366,319 @@
       "verification": "local"
     },
     {
-      "id": "68.names",
+      "id": "08.delivery",
       "sources": [
-        "examples/68-nitro/src/instance-type.ts",
-        "examples/68-nitro/scripts/names.ts",
-        "examples/68-nitro/test/instance-type.test.ts"
-      ],
-      "tasks": ["nitro:names", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "68.graviton",
-      "sources": [
-        "examples/68-nitro/src/arch.ts",
-        "examples/68-nitro/scripts/prices.ts",
-        "examples/68-nitro/test/pricing.test.ts",
-        "data/pricing"
-      ],
-      "tasks": ["nitro:prices", "test:unit"],
-      "boundary": "local",
-      "criteria": ["cost", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "68.enclave",
-      "sources": [
-        "examples/68-nitro/src/measurement.ts",
-        "examples/68-nitro/test/measurement.test.ts"
+        "examples/08-async/src/events.ts",
+        "examples/08-async/src/worker.ts",
+        "examples/08-async/src/local-queue.ts",
+        "examples/08-async/test/events.test.ts",
+        "examples/08-async/test/queue.test.ts"
       ],
       "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["test"],
-      "verification": "local"
-    },
-    {
-      "id": "68.policy",
-      "sources": ["examples/68-nitro/src/policy.ts", "examples/68-nitro/test/policy.test.ts"],
-      "tasks": ["test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
-      "verification": "local"
-    },
-    {
-      "id": "68.design",
-      "sources": [
-        "examples/68-nitro/src/enclave/vault.ts",
-        "examples/68-nitro/src/enclave/protocol.ts",
-        "examples/68-nitro/test/enclave.test.ts"
-      ],
-      "tasks": ["test:unit"],
-      "boundary": "local",
+      "boundary": "local+cloud",
       "criteria": ["type", "test", "distributed"],
       "verification": "local"
     },
     {
-      "id": "68.stack",
+      "id": "08.idempotency",
       "sources": [
-        "examples/68-nitro/infra/lib/nitro-stack.ts",
-        "examples/68-nitro/infra/bin/app.ts",
-        "examples/68-nitro/src/config.ts",
-        "examples/68-nitro/infra/test/nitro-stack.test.ts"
+        "examples/08-async/src/worker.ts",
+        "examples/08-async/src/sequencer.ts",
+        "examples/08-async/src/object-reader.ts",
+        "examples/08-async/src/s3-object-reader.ts",
+        "examples/08-async/src/dynamodb-inspection-repository.ts",
+        "examples/08-async/test/worker.test.ts",
+        "examples/08-async/test/adapters.test.ts",
+        "examples/08-async/test/harness.ts"
       ],
-      "tasks": ["nitro:infra:synth", "test:unit"],
-      "boundary": "local",
-      "criteria": ["type", "test"],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
       "verification": "local"
     },
     {
-      "id": "68.local",
+      "id": "08.housekeeping",
       "sources": [
-        "examples/68-nitro/src/enclave/model.ts",
-        "examples/68-nitro/src/enclave/attestation.ts",
-        "examples/68-nitro/src/enclave/kms-model.ts",
-        "examples/68-nitro/scripts/demo.ts",
-        "examples/68-nitro/test/enclave.test.ts"
+        "examples/08-async/src/housekeeping.ts",
+        "examples/08-async/src/housekeeping-lambda.ts",
+        "examples/08-async/test/housekeeping.test.ts",
+        "examples/08-async/scripts/housekeeping.ts"
       ],
-      "tasks": ["nitro:demo", "test:unit", "nitro:infra:synth"],
-      "boundary": "local",
-      "criteria": ["test", "local-dx", "distributed"],
+      "tasks": ["test:unit", "async:housekeeping"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
       "verification": "local"
     },
     {
-      "id": "68.deploy",
+      "id": "08.local",
       "sources": [
-        "examples/68-nitro/infra/bin/app.ts",
-        "examples/68-nitro/infra/lib/nitro-stack.ts",
-        "tools/src/infra"
+        "examples/08-async/src/dev.ts",
+        "examples/08-async/src/local.ts",
+        "examples/08-async/src/local-bucket.ts",
+        "examples/08-async/src/local-queue.ts",
+        "examples/08-async/.env.example"
       ],
-      "tasks": ["nitro:infra:diff", "nitro:infra:deploy", "nitro:infra:drift"],
+      "tasks": ["dev:async", "dev:uploads:web", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "08.infra",
+      "sources": [
+        "examples/08-async/infra/lib/async-stack.ts",
+        "examples/08-async/infra/bin/app.ts",
+        "examples/08-async/infra/test/async-stack.test.ts",
+        "examples/08-async/src/worker-lambda.ts",
+        "examples/08-async/src/env.ts",
+        "examples/08-async/cdk.json"
+      ],
+      "tasks": ["async:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "08.deploy",
+      "sources": [
+        "examples/08-async/scripts/smoke.ts",
+        "examples/08-async/scripts/user.ts",
+        "examples/08-async/scripts/write-config.ts"
+      ],
+      "tasks": [
+        "async:infra:diff",
+        "async:infra:deploy",
+        "async:smoke",
+        "async:user:create",
+        "async:publish",
+        "async:smoke:web",
+        "async:infra:drift"
+      ],
       "boundary": "cloud",
       "criteria": ["drift"],
       "verification": "unverified"
     },
     {
-      "id": "68.walkthrough",
-      "sources": ["examples/68-nitro/infra/bin/app.ts", "examples/68-nitro/src/measurement.ts"],
-      "tasks": ["nitro:infra:deploy"],
+      "id": "08.operate",
+      "sources": ["examples/08-async/scripts/queue.ts", "examples/08-async/scripts/logs.ts"],
+      "tasks": ["async:queue", "async:logs"],
       "boundary": "cloud",
-      "criteria": [],
+      "criteria": ["distributed", "cost"],
       "verification": "unverified"
     },
     {
-      "id": "68.limits",
+      "id": "08.cleanup",
+      "sources": ["examples/08-async/scripts/empty-uploads.ts"],
+      "tasks": ["async:empty", "async:unpublish", "async:infra:destroy", "async:user:delete"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "09.architecture",
+      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.nitro",
       "sources": [
-        "examples/68-nitro/test/enclave.test.ts",
-        "examples/68-nitro/src/enclave/model.ts"
+        "examples/09-ssr/nuxt.config.ts",
+        "examples/09-ssr/scripts/lambda-harness.ts",
+        "examples/09-ssr/core/env.ts"
+      ],
+      "tasks": ["build:ssr", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.app",
+      "sources": [
+        "examples/09-ssr/app",
+        "examples/09-ssr/server/api",
+        "examples/09-ssr/server/context.ts",
+        "examples/09-ssr/core/notes.ts",
+        "examples/09-ssr/core/seed.ts"
+      ],
+      "tasks": ["dev:ssr", "typecheck:ssr", "lint:ssr"],
+      "boundary": "local",
+      "criteria": ["type", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.connect",
+      "sources": [
+        "examples/09-ssr/infra/lib/ssr-stack.ts",
+        "examples/09-ssr/infra/bin/app.ts",
+        "examples/09-ssr/infra/test/ssr-stack.test.ts"
+      ],
+      "tasks": ["ssr:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "09.cache",
+      "sources": [
+        "examples/09-ssr/core/cache-control.ts",
+        "examples/09-ssr/core/routes.ts",
+        "examples/09-ssr/server/plugins/cache-control.ts",
+        "examples/09-ssr/infra/lib/ssr-stack.ts",
+        "examples/09-ssr/test/cache-control.test.ts",
+        "examples/09-ssr/test/support/shared-cache.ts",
+        "examples/09-ssr/infra/test/ssr-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ssr:check:output"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.bff",
+      "sources": [
+        "examples/09-ssr/core/session.ts",
+        "examples/09-ssr/core/profile.ts",
+        "examples/09-ssr/server/routes/me",
+        "examples/09-ssr/test/session.test.ts",
+        "examples/09-ssr/.env.example"
+      ],
+      "tasks": ["dev:ssr", "test:unit", "ssr:check:output"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "09.streaming",
+      "sources": [
+        "examples/09-ssr/server/routes/feed.get.ts",
+        "examples/09-ssr/scripts/lambda-harness.ts",
+        "examples/09-ssr/scripts/check-output.ts"
+      ],
+      "tasks": ["build:ssr:stream", "ssr:check:output:stream"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.local",
+      "sources": [
+        "examples/09-ssr/scripts/check-output.ts",
+        "examples/09-ssr/test",
+        "examples/09-ssr/tsconfig.json",
+        "examples/09-ssr/app/tsconfig.json"
+      ],
+      "tasks": [
+        "dev:ssr",
+        "test:unit",
+        "typecheck",
+        "typecheck:ssr",
+        "lint:ssr",
+        "ssr:check:output"
+      ],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "09.deploy",
+      "sources": [
+        "examples/09-ssr/scripts/publish-assets.ts",
+        "examples/09-ssr/scripts/asset-plan.ts",
+        "examples/09-ssr/scripts/smoke.ts",
+        "examples/09-ssr/scripts/smoke-spec.ts",
+        "examples/09-ssr/test/asset-plan.test.ts",
+        "examples/09-ssr/test/smoke-spec.test.ts"
+      ],
+      "tasks": [
+        "ssr:infra:diff",
+        "ssr:infra:deploy",
+        "ssr:assets:plan",
+        "ssr:assets:publish",
+        "ssr:smoke",
+        "ssr:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "09.stale",
+      "sources": [
+        "examples/09-ssr/core/cache-control.ts",
+        "examples/09-ssr/scripts/asset-plan.ts",
+        "examples/09-ssr/test/cache-control.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "09.workers",
+      "sources": ["examples/09-ssr/nuxt.config.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "09.cleanup",
+      "sources": ["examples/09-ssr/infra/lib/ssr-stack.ts"],
+      "tasks": ["ssr:unpublish", "ssr:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.when",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.architecture",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/config.ts"
+      ],
+      "tasks": ["ecs:infra:synth"],
+      "boundary": "local",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.docker",
+      "sources": ["examples/12-containers/src/image.ts", "examples/12-containers/scripts/image.ts"],
+      "tasks": ["ecs:image:build"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.server",
+      "sources": [
+        "examples/12-containers/src/compose.ts",
+        "examples/12-containers/src/env.ts",
+        "examples/12-containers/src/server.ts",
+        "examples/12-containers/test/compose.test.ts",
+        "examples/12-containers/.env.example"
+      ],
+      "tasks": ["dev:ecs", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "12.shutdown",
+      "sources": [
+        "examples/12-containers/src/serve.ts",
+        "examples/12-containers/src/server.ts",
+        "examples/12-containers/test/shutdown.test.ts"
       ],
       "tasks": ["test:unit"],
       "boundary": "local",
@@ -11570,7 +9686,1573 @@
       "verification": "local"
     },
     {
-      "id": "68.platforms",
+      "id": "12.image",
+      "sources": [
+        "examples/12-containers/Dockerfile",
+        "examples/12-containers/.dockerignore",
+        "examples/12-containers/scripts/bundle.ts",
+        "examples/12-containers/scripts/check-bundle.ts",
+        "examples/12-containers/src/image.ts",
+        "examples/12-containers/test/config.test.ts"
+      ],
+      "tasks": ["ecs:bundle", "ecs:bundle:check", "ecs:image:build", "ecs:image:run"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.registry",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/bin/app.ts",
+        "examples/12-containers/src/config.ts",
+        "examples/12-containers/test/config.test.ts"
+      ],
+      "tasks": ["ecs:infra:synth", "ecs:image:push", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "12.network",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts",
+        "examples/11-network/infra/lib/import-network.ts"
+      ],
+      "tasks": ["test:unit", "net:plan"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.roles",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.service",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/timing.ts",
+        "examples/12-containers/test/timing.test.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ecs:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.rollout",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/timing.ts",
+        "examples/12-containers/scripts/watch.ts",
+        "examples/12-containers/src/watch.ts"
+      ],
+      "tasks": ["ecs:watch"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.versions",
+      "sources": [
+        "examples/12-containers/src/compat.ts",
+        "examples/12-containers/test/versions.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.scaling",
+      "sources": [
+        "examples/12-containers/infra/lib/containers-stack.ts",
+        "examples/12-containers/src/config.ts",
+        "examples/12-containers/infra/test/containers-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "12.local",
+      "sources": [
+        "examples/12-containers/test",
+        "examples/12-containers/infra/test/containers-stack.test.ts",
+        "examples/12-containers/scripts/check-bundle.ts"
+      ],
+      "tasks": ["test:unit", "ecs:bundle:check", "ecs:infra:synth", "dev:ecs"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.deploy",
+      "sources": [
+        "examples/12-containers/infra/bin/app.ts",
+        "examples/12-containers/cdk.json",
+        "examples/12-containers/scripts/image.ts",
+        "examples/12-containers/scripts/watch.ts",
+        "examples/12-containers/scripts/logs.ts",
+        "tools/src/infra"
+      ],
+      "tasks": [
+        "ecs:infra:diff",
+        "ecs:infra:deploy",
+        "ecs:image:push",
+        "ecs:watch",
+        "ecs:logs",
+        "ecs:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "12.cost",
+      "sources": [
+        "examples/12-containers/src/cost.ts",
+        "examples/12-containers/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "12.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "12.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["ecs:infra:deploy", "ecs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "13.architecture",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "13.choices",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "13.compat",
+      "sources": ["examples/13-sql/src/migrate.ts", "examples/13-sql/test/migrate.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.migrations",
+      "sources": [
+        "examples/13-sql/migrations",
+        "examples/13-sql/src/migrate.ts",
+        "examples/13-sql/test/migrate.test.ts"
+      ],
+      "tasks": ["test:unit", "sql:db:migrate:local"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.queries",
+      "sources": [
+        "examples/13-sql/src/contract.ts",
+        "examples/13-sql/src/db.ts",
+        "examples/13-sql/src/notes-repository.ts",
+        "examples/13-sql/src/notes.ts",
+        "examples/13-sql/src/app.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.transactions",
+      "sources": [
+        "examples/13-sql/src/transaction.ts",
+        "examples/13-sql/src/notes-repository.ts",
+        "examples/13-sql/test/transaction.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.conflicts",
+      "sources": [
+        "examples/13-sql/test/support.ts",
+        "examples/13-sql/test/notes-repository.test.ts",
+        "examples/13-sql/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "13.local",
+      "sources": [
+        "examples/13-sql/src/pglite.ts",
+        "examples/13-sql/src/dev.ts",
+        "examples/13-sql/src/compose.ts",
+        "examples/13-sql/scripts/local-db.ts",
+        "examples/13-sql/scripts/db-tasks.ts",
+        "examples/13-sql/test/fixtures/seed-notes.json",
+        "examples/13-sql/.env.example"
+      ],
+      "tasks": ["dev:sql", "sql:db:migrate:local", "sql:db:seed:local", "sql:db:reset:local"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "13.connect",
+      "sources": [
+        "examples/13-sql/src/dsql.ts",
+        "examples/13-sql/src/lambda.ts",
+        "examples/13-sql/src/env.ts",
+        "examples/13-sql/infra/lib/sql-stack.ts",
+        "examples/13-sql/infra/bin/app.ts",
+        "examples/13-sql/infra/test/sql-stack.test.ts",
+        "examples/13-sql/cdk.json"
+      ],
+      "tasks": ["sql:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "13.deploy",
+      "sources": [
+        "examples/13-sql/scripts/cloud-db.ts",
+        "examples/13-sql/scripts/db-tasks.ts",
+        "examples/13-sql/src/grant.ts",
+        "examples/13-sql/test/grant.test.ts",
+        "examples/13-sql/scripts/smoke.ts",
+        "examples/13-sql/scripts/logs.ts"
+      ],
+      "tasks": [
+        "sql:infra:diff",
+        "sql:infra:deploy",
+        "sql:db:migrate",
+        "sql:db:grant",
+        "sql:db:seed",
+        "sql:smoke",
+        "sql:logs",
+        "sql:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "13.backup",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts"],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "13.d1",
+      "sources": ["examples/13-sql/migrations", "examples/13-sql/src/transaction.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "13.cleanup",
+      "sources": ["examples/13-sql/infra/lib/sql-stack.ts", "examples/13-sql/scripts/local-db.ts"],
+      "tasks": ["sql:infra:destroy", "sql:db:reset:local"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "16.architecture",
+      "sources": [
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
+        "examples/16-long-jobs/src/workflow.ts"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.split",
+      "sources": [
+        "examples/16-long-jobs/src/job.ts",
+        "examples/16-long-jobs/src/note-source.ts",
+        "examples/16-long-jobs/src/dynamodb-note-source.ts",
+        "examples/16-long-jobs/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.idempotent-step",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/export-store.ts",
+        "examples/16-long-jobs/src/s3-export-store.ts",
+        "examples/16-long-jobs/test/steps.test.ts",
+        "examples/16-long-jobs/test/harness.ts",
+        "examples/16-long-jobs/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.manifest",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/job.ts",
+        "examples/16-long-jobs/test/steps.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.workflow",
+      "sources": [
+        "examples/16-long-jobs/src/workflow.ts",
+        "examples/16-long-jobs/test/workflow.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.checkpoint",
+      "sources": [
+        "examples/16-long-jobs/src/steps.ts",
+        "examples/16-long-jobs/src/export-pages-lambda.ts",
+        "examples/16-long-jobs/src/env.ts",
+        "examples/16-long-jobs/test/steps.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.local",
+      "sources": [
+        "examples/16-long-jobs/src/local-workflow.ts",
+        "examples/16-long-jobs/src/local.ts",
+        "examples/16-long-jobs/scripts/run-local.ts",
+        "examples/16-long-jobs/test/workflow.test.ts"
+      ],
+      "tasks": ["export:local", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "16.infra",
+      "sources": [
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts",
+        "examples/16-long-jobs/infra/bin/app.ts",
+        "examples/16-long-jobs/infra/test/long-jobs-stack.test.ts",
+        "examples/16-long-jobs/src/finish-lambda.ts",
+        "examples/16-long-jobs/src/discard-lambda.ts",
+        "examples/16-long-jobs/cdk.json"
+      ],
+      "tasks": ["export:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.deploy",
+      "sources": [
+        "examples/16-long-jobs/scripts/seed.ts",
+        "examples/16-long-jobs/scripts/start.ts",
+        "examples/16-long-jobs/scripts/status.ts",
+        "examples/16-long-jobs/scripts/logs.ts"
+      ],
+      "tasks": [
+        "export:infra:diff",
+        "export:infra:deploy",
+        "export:seed",
+        "export:start",
+        "export:status",
+        "export:logs",
+        "export:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "16.durable",
+      "sources": [
+        "examples/16-long-jobs/src/durable-export.ts",
+        "examples/16-long-jobs/src/durable-lambda.ts",
+        "examples/16-long-jobs/test/durable.test.ts",
+        "examples/16-long-jobs/scripts/durable-start.ts",
+        "examples/16-long-jobs/infra/lib/long-jobs-stack.ts"
+      ],
+      "tasks": ["test:unit", "export:durable:start"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "16.containers",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "16.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "16.cleanup",
+      "sources": ["examples/16-long-jobs/scripts/empty.ts"],
+      "tasks": ["export:empty", "export:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.architecture",
+      "sources": ["examples/17-ai/infra/lib/ai-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.hello",
+      "sources": ["examples/17-ai/scripts/hello.ts", "examples/17-ai/src/converse-stream.ts"],
+      "tasks": ["ai:hello"],
+      "boundary": "cloud",
+      "criteria": ["type"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.models",
+      "sources": [
+        "examples/17-ai/infra/lib/models.ts",
+        "examples/17-ai/infra/bin/app.ts",
+        "examples/17-ai/infra/test/ai-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.contract",
+      "sources": ["examples/17-ai/src/contract.ts", "examples/17-ai/src/prompt.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.stream",
+      "sources": [
+        "examples/17-ai/src/converse-stream.ts",
+        "examples/17-ai/src/summarize.ts",
+        "examples/17-ai/src/bedrock.ts",
+        "examples/17-ai/test/summarize.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.failures",
+      "sources": [
+        "examples/17-ai/src/failure.ts",
+        "examples/17-ai/src/summarize.ts",
+        "examples/17-ai/test/failure.test.ts",
+        "examples/17-ai/test/summarize.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.app",
+      "sources": [
+        "examples/17-ai/src/app.ts",
+        "examples/17-ai/src/sse.ts",
+        "examples/17-ai/src/compose.ts",
+        "examples/17-ai/src/env.ts",
+        "examples/17-ai/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.local",
+      "sources": [
+        "examples/17-ai/src/dev.ts",
+        "examples/17-ai/src/fixture-gateway.ts",
+        "examples/17-ai/src/fixtures.ts",
+        "examples/17-ai/fixtures/converse-stream",
+        "examples/17-ai/.env.example"
+      ],
+      "tasks": ["dev:ai"],
+      "boundary": "local",
+      "criteria": ["local-dx", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.tests",
+      "sources": [
+        "examples/17-ai/test",
+        "examples/17-ai/fixtures/converse-stream",
+        "examples/17-ai/scripts/live.ts"
+      ],
+      "tasks": ["test:unit", "ai:test:live"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.partial",
+      "sources": ["examples/17-ai/src/client.ts", "examples/17-ai/test/client.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "17.infra",
+      "sources": [
+        "examples/17-ai/infra/lib/ai-stack.ts",
+        "examples/17-ai/infra/lib/models.ts",
+        "examples/17-ai/src/lambda.ts",
+        "examples/17-ai/src/function-url.ts",
+        "examples/17-ai/test/function-url.test.ts",
+        "examples/17-ai/infra/test/ai-stack.test.ts",
+        "examples/17-ai/cdk.json"
+      ],
+      "tasks": ["ai:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "17.deploy",
+      "sources": [
+        "examples/17-ai/scripts/smoke.ts",
+        "examples/17-ai/scripts/sign.ts",
+        "examples/17-ai/scripts/logs.ts",
+        "tools/src/infra"
+      ],
+      "tasks": ["ai:infra:diff", "ai:infra:deploy", "ai:smoke", "ai:logs", "ai:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.workers-ai",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "17.cleanup",
+      "sources": ["tools/src/infra"],
+      "tasks": ["ai:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.overview",
+      "sources": ["examples/19-observability/infra/lib/observability-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.alarms",
+      "sources": [
+        "examples/19-observability/src/alarm-math.ts",
+        "examples/19-observability/test/alarm-math.test.ts",
+        "examples/19-observability/infra/lib/monitoring.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.metrics",
+      "sources": [
+        "examples/19-observability/infra/lib/monitoring.ts",
+        "examples/19-observability/infra/test/observability-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "obs:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.logs",
+      "sources": [
+        "examples/19-observability/src/log-shape.ts",
+        "examples/19-observability/src/conditions.ts",
+        "examples/19-observability/src/queries.ts",
+        "examples/19-observability/test/log-shape.test.ts",
+        "examples/19-observability/test/queries.test.ts",
+        "examples/19-observability/scripts/query.ts"
+      ],
+      "tasks": ["test:unit", "obs:query:print"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.log-metrics",
+      "sources": [
+        "examples/19-observability/src/conditions.ts",
+        "examples/19-observability/src/queries.ts",
+        "examples/19-observability/infra/lib/monitoring.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "19.tracing",
+      "sources": [
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/src/traced-repository.ts",
+        "examples/19-observability/src/app.ts",
+        "examples/19-observability/src/compose.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.lambda-tracing",
+      "sources": [
+        "examples/19-observability/src/lambda.ts",
+        "examples/19-observability/infra/lib/observability-stack.ts",
+        "examples/19-observability/infra/bin/app.ts"
+      ],
+      "tasks": ["obs:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.ids",
+      "sources": [
+        "examples/19-observability/src/trace-context.ts",
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/test/trace-context.test.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "19.sampling",
+      "sources": [
+        "examples/19-observability/src/local-tracing.ts",
+        "examples/19-observability/src/cost-inputs.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "19.privacy",
+      "sources": [
+        "examples/19-observability/src/log-shape.ts",
+        "examples/19-observability/src/telemetry.ts",
+        "examples/19-observability/test/log-shape.test.ts",
+        "examples/19-observability/test/tracing.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.local",
+      "sources": [
+        "examples/19-observability/src/dev.ts",
+        "examples/19-observability/src/local-tracing.ts",
+        "examples/19-observability/.env.example"
+      ],
+      "tasks": ["dev:obs", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.deploy",
+      "sources": [
+        "examples/19-observability/infra/bin/app.ts",
+        "examples/19-observability/scripts/smoke.ts",
+        "examples/19-observability/scripts/query.ts",
+        "examples/19-observability/scripts/alarms.ts"
+      ],
+      "tasks": [
+        "obs:infra:diff",
+        "obs:infra:deploy",
+        "obs:smoke",
+        "obs:query",
+        "obs:alarms",
+        "obs:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.browser-and-probes",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "19.cost",
+      "sources": [
+        "examples/19-observability/src/cost-inputs.ts",
+        "examples/19-observability/test/cost-inputs.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "19.workers",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "local"
+    },
+    {
+      "id": "19.cleanup",
+      "sources": [],
+      "tasks": ["obs:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "20.architecture",
+      "sources": ["examples/20-shipping/workflows", "examples/20-shipping/infra/bin/app.ts"],
+      "tasks": ["ship:cfn:synth"],
+      "boundary": "none",
+      "criteria": ["distributed", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "20.two-paths",
+      "sources": [
+        "examples/20-shipping/src/cdk-args.ts",
+        "examples/20-shipping/scripts/cdk.ts",
+        "examples/20-shipping/cdk.json"
+      ],
+      "tasks": ["ship:cfn:bootstrap", "ship:cfn:synth"],
+      "boundary": "cloud",
+      "criteria": ["drift", "local-dx"],
+      "verification": "unverified"
+    },
+    {
+      "id": "20.stages",
+      "sources": [
+        "examples/20-shipping/infra/lib/config.ts",
+        "examples/20-shipping/infra/lib/ship-api-stack.ts",
+        "examples/20-shipping/infra/test/ship-api-stack.test.ts"
+      ],
+      "tasks": ["ship:cfn:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.cfn-deploy",
+      "sources": [
+        "examples/20-shipping/src/cdk-args.ts",
+        "examples/20-shipping/test/cdk-args.test.ts",
+        "examples/20-shipping/scripts/smoke.ts"
+      ],
+      "tasks": ["ship:cfn:diff", "ship:cfn:deploy", "ship:smoke"],
+      "boundary": "cloud",
+      "criteria": ["test", "drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "20.oidc",
+      "sources": [
+        "examples/20-shipping/infra/lib/ci-stack.ts",
+        "examples/20-shipping/infra/lib/config.ts",
+        "examples/20-shipping/infra/test/ci-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ship:ci:diff", "ship:ci:deploy"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.roles",
+      "sources": [
+        "examples/20-shipping/infra/lib/ci-stack.ts",
+        "examples/20-shipping/infra/test/ci-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.workflows",
+      "sources": ["examples/20-shipping/workflows", "examples/20-shipping/test/workflows.test.ts"],
+      "tasks": ["test:unit", "check:all"],
+      "boundary": "local",
+      "criteria": ["test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "20.preview",
+      "sources": [
+        "examples/20-shipping/workflows/preview.yml",
+        "examples/20-shipping/src/previews.ts",
+        "examples/20-shipping/test/previews.test.ts",
+        "examples/20-shipping/scripts/previews.ts"
+      ],
+      "tasks": ["ship:preview:list", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.rollback",
+      "sources": [
+        "examples/20-shipping/infra/lib/ship-api-stack.ts",
+        "examples/20-shipping/infra/test/ship-api-stack.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.partial",
+      "sources": [
+        "examples/20-shipping/src/stack-status.ts",
+        "examples/20-shipping/test/stack-status.test.ts",
+        "examples/20-shipping/scripts/status.ts"
+      ],
+      "tasks": ["ship:cfn:status", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.drift",
+      "sources": [
+        "tools/src/drift/cloudformation.ts",
+        "tools/src/drift/cloudformation-schema.ts",
+        "tools/src/drift/cloudformation.test.ts",
+        "tools/src/drift/fixtures/cloudformation",
+        "examples/20-shipping/src/drift-client.ts",
+        "examples/20-shipping/test/drift-client.test.ts",
+        "examples/20-shipping/scripts/drift.ts"
+      ],
+      "tasks": ["ship:cfn:drift", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["drift", "test", "type"],
+      "verification": "local"
+    },
+    {
+      "id": "20.drift-coverage",
+      "sources": [
+        "examples/20-shipping/src/drift-coverage.ts",
+        "examples/20-shipping/infra/test/ship-api-stack.test.ts",
+        "tools/src/drift/cloudformation.ts"
+      ],
+      "tasks": ["ship:cfn:drift", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["drift", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "20.drift-lab",
+      "sources": [
+        "examples/20-shipping/scripts/drift.ts",
+        "examples/20-shipping/scripts/status.ts"
+      ],
+      "tasks": ["ship:cfn:drift", "ship:cfn:diff", "ship:cfn:deploy"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "20.workers",
+      "sources": [
+        "examples/20-shipping/infra/lib/ship-api-stack.ts",
+        "examples/20-shipping/workflows/deploy.yml"
+      ],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "20.cleanup",
+      "sources": ["examples/20-shipping/scripts/cdk.ts"],
+      "tasks": ["ship:cfn:destroy", "ship:ci:destroy", "ship:preview:list"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "21.tiers",
+      "sources": [
+        "examples/21-security/src/posture.ts",
+        "examples/21-security/scripts/posture.ts",
+        "examples/21-security/test/posture.test.ts"
+      ],
+      "tasks": ["sec:posture", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.architecture",
+      "sources": [
+        "examples/21-security/infra/bin/app.ts",
+        "examples/21-security/infra/lib/security-stack.ts"
+      ],
+      "tasks": ["sec:infra:synth"],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.least-privilege",
+      "sources": [
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/test/security-stack.test.ts"
+      ],
+      "tasks": ["sec:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "21.iam-lint",
+      "sources": [
+        "examples/21-security/src/iam-lint.ts",
+        "examples/21-security/src/json-object.ts",
+        "examples/21-security/test/iam-lint.test.ts",
+        "examples/21-security/scripts/iam-lint.ts",
+        "examples/21-security/policies/iam-lint-exceptions.json"
+      ],
+      "tasks": ["sec:iam:lint", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.secret",
+      "sources": [
+        "examples/21-security/src/secret-source.ts",
+        "examples/21-security/src/secrets-manager-source.ts",
+        "examples/21-security/src/env.ts",
+        "examples/21-security/src/compose.ts",
+        "examples/21-security/test/secrets-manager-source.test.ts",
+        "examples/21-security/infra/lib/security-stack.ts"
+      ],
+      "tasks": ["dev:sec", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.keyring",
+      "sources": [
+        "examples/21-security/src/keyring.ts",
+        "examples/21-security/src/token.ts",
+        "examples/21-security/src/app.ts",
+        "examples/21-security/test/keyring.test.ts",
+        "examples/21-security/test/token.test.ts",
+        "examples/21-security/test/app.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.rotation",
+      "sources": [
+        "examples/21-security/src/rotation.ts",
+        "examples/21-security/src/secrets-manager-source.ts",
+        "examples/21-security/scripts/rotate.ts",
+        "examples/21-security/test/rotation.test.ts"
+      ],
+      "tasks": ["sec:secret:versions", "sec:secret:rotate", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.kms",
+      "sources": [
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/lib/config.ts",
+        "examples/21-security/infra/test/security-stack.test.ts"
+      ],
+      "tasks": ["sec:infra:synth", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.waf",
+      "sources": [
+        "examples/21-security/infra/lib/waf-stack.ts",
+        "examples/21-security/infra/lib/security-stack.ts",
+        "examples/21-security/infra/test/waf-stack.test.ts"
+      ],
+      "tasks": ["sec:waf:infra:deploy", "sec:waf:infra:destroy", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.iam-consistency",
+      "sources": [
+        "examples/21-security/src/propagation.ts",
+        "examples/21-security/test/propagation.test.ts",
+        "examples/21-security/scripts/smoke.ts",
+        "examples/21-security/scripts/trail.ts"
+      ],
+      "tasks": ["sec:smoke", "sec:trail:iam", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "21.detect",
+      "sources": [
+        "examples/21-security/scripts/posture.ts",
+        "examples/21-security/scripts/trail.ts"
+      ],
+      "tasks": ["sec:posture", "sec:trail:iam"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "21.organizations",
+      "sources": [
+        "examples/21-security/policies/scp-guardrails.json",
+        "examples/21-security/src/policy-model.ts",
+        "examples/21-security/test/scp.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "21.deploy",
+      "sources": ["examples/21-security/scripts/smoke.ts", "examples/21-security/infra/bin/app.ts"],
+      "tasks": ["sec:infra:diff", "sec:infra:deploy", "sec:smoke", "sec:infra:drift"],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "21.cost",
+      "sources": ["data/pricing", "examples/21-security/infra/test/security-stack.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "21.workers",
+      "sources": ["examples/21-security/src/compose.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "21.cleanup",
+      "sources": ["examples/21-security/infra/lib/security-stack.ts"],
+      "tasks": ["sec:infra:destroy", "sec:waf:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.overview",
+      "sources": ["examples/22-recovery"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.not-backup",
+      "sources": ["examples/22-recovery/infra/lib/recovery-stack.ts"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.pitr",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/src/pitr.ts",
+        "examples/22-recovery/src/memory-table.ts",
+        "examples/22-recovery/test/pitr-drill.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:status", "recovery:restore:table"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "22.versioning",
+      "sources": [
+        "examples/22-recovery/src/versioned-bucket.ts",
+        "examples/22-recovery/src/object-restore.ts",
+        "examples/22-recovery/src/s3-versioned-bucket.ts",
+        "examples/22-recovery/test/object-restore.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:restore:objects"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.skew",
+      "sources": [
+        "examples/22-recovery/src/invariants.ts",
+        "examples/22-recovery/src/items.ts",
+        "examples/22-recovery/src/audit.ts",
+        "examples/22-recovery/test/skew.test.ts",
+        "examples/22-recovery/test/adapters.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:demo", "recovery:verify"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.repair",
+      "sources": [
+        "examples/22-recovery/src/repair.ts",
+        "examples/22-recovery/test/skew.test.ts",
+        "examples/22-recovery/test/world.ts"
+      ],
+      "tasks": ["test:unit", "recovery:repair"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.versions",
+      "sources": [
+        "examples/22-recovery/src/table-diff.ts",
+        "examples/22-recovery/src/dynamodb-table.ts",
+        "examples/22-recovery/test/table-diff.test.ts"
+      ],
+      "tasks": ["test:unit", "recovery:diff"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "22.local",
+      "sources": [
+        "examples/22-recovery/scripts/demo.ts",
+        "examples/22-recovery/src/local.ts",
+        "examples/22-recovery/src/memory-table.ts",
+        "examples/22-recovery/src/versioned-bucket.ts"
+      ],
+      "tasks": ["recovery:demo", "test:unit"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "22.infra",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/infra/bin/app.ts",
+        "examples/22-recovery/infra/test/recovery-stack.test.ts",
+        "examples/22-recovery/src/audit-lambda.ts",
+        "examples/22-recovery/cdk.json"
+      ],
+      "tasks": ["recovery:infra:synth", "test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "22.drill",
+      "sources": [
+        "examples/22-recovery/scripts/recovery.ts",
+        "examples/22-recovery/scripts/context.ts",
+        "examples/22-recovery/scripts/drill.ts",
+        "examples/22-recovery/src/drill.ts",
+        "examples/22-recovery/drill/TEMPLATE.md",
+        "examples/22-recovery/drill/record.template.json"
+      ],
+      "tasks": [
+        "recovery:infra:deploy",
+        "recovery:drill",
+        "recovery:seed",
+        "recovery:status",
+        "recovery:accident",
+        "recovery:restore:table",
+        "recovery:restore:objects",
+        "recovery:diff",
+        "recovery:verify",
+        "recovery:repair",
+        "recovery:protect"
+      ],
+      "boundary": "cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cutover",
+      "sources": [
+        "examples/22-recovery/infra/lib/recovery-stack.ts",
+        "examples/22-recovery/infra/bin/app.ts",
+        "examples/22-recovery/infra/test/recovery-stack.test.ts"
+      ],
+      "tasks": [
+        "recovery:infra:diff",
+        "recovery:infra:deploy",
+        "recovery:audit",
+        "recovery:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift", "test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cloudflare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "22.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "22.cleanup",
+      "sources": ["examples/22-recovery/scripts/recovery.ts"],
+      "tasks": ["recovery:drop-table", "recovery:empty", "recovery:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.why",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.cost",
+      "sources": [
+        "examples/23-ec2/src/cost.ts",
+        "examples/23-ec2/src/report.ts",
+        "examples/23-ec2/scripts/plan.ts",
+        "examples/23-ec2/test/pricing.test.ts",
+        "data/pricing"
+      ],
+      "tasks": ["ec2:plan", "test:unit"],
+      "boundary": "local",
+      "criteria": ["cost", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.architecture",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/bin/app.ts",
+        "examples/23-ec2/src/config.ts"
+      ],
+      "tasks": ["ec2:infra:synth"],
+      "boundary": "local",
+      "criteria": ["type"],
+      "verification": "local"
+    },
+    {
+      "id": "23.access",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/src/access.ts",
+        "examples/23-ec2/test/access.test.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts",
+        "examples/11-network/infra/lib/import-network.ts"
+      ],
+      "tasks": ["ec2:plan", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "23.role",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ec2:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.ami",
+      "sources": [
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ec2:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "drift"],
+      "verification": "local"
+    },
+    {
+      "id": "23.user-data",
+      "sources": [
+        "examples/23-ec2/src/machine.ts",
+        "examples/23-ec2/src/user-data.ts",
+        "examples/23-ec2/src/rendered.ts",
+        "examples/23-ec2/scripts/render.ts",
+        "examples/23-ec2/deploy/user-data.sh",
+        "examples/23-ec2/test/machine.test.ts"
+      ],
+      "tasks": ["ec2:render", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.service",
+      "sources": [
+        "examples/23-ec2/src/unit.ts",
+        "examples/23-ec2/deploy/notes.service",
+        "examples/23-ec2/deploy/notes.env",
+        "examples/23-ec2/test/machine.test.ts"
+      ],
+      "tasks": ["ec2:render", "test:unit", "ec2:logs"],
+      "boundary": "local+cloud",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.shutdown",
+      "sources": [
+        "examples/23-ec2/src/shutdown.ts",
+        "examples/23-ec2/src/server.ts",
+        "examples/23-ec2/test/shutdown.test.ts"
+      ],
+      "tasks": ["test:unit", "dev:ec2"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.data",
+      "sources": [
+        "examples/23-ec2/src/file-notes.ts",
+        "examples/23-ec2/src/node-files.ts",
+        "examples/23-ec2/src/user-data.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh",
+        "examples/23-ec2/infra/lib/ec2-stack.ts",
+        "examples/23-ec2/test/file-notes.test.ts",
+        "examples/23-ec2/test/data-volume.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "23.local",
+      "sources": [
+        "examples/23-ec2/src/server.ts",
+        "examples/23-ec2/src/env.ts",
+        "examples/23-ec2/.env.example",
+        "examples/23-ec2/scripts/plan.ts",
+        "examples/23-ec2/scripts/build.ts",
+        "examples/23-ec2/infra/test/ec2-stack.test.ts"
+      ],
+      "tasks": ["dev:ec2", "test:unit", "ec2:plan", "ec2:app:build", "ec2:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.deploy",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/src/release.ts",
+        "examples/23-ec2/deploy/notes-release.sh",
+        "examples/23-ec2/test/remote.test.ts",
+        "tools/src/infra"
+      ],
+      "tasks": [
+        "net:infra:deploy",
+        "ec2:infra:diff",
+        "ec2:infra:deploy",
+        "ec2:status",
+        "ec2:session",
+        "ec2:forward",
+        "ec2:app:release",
+        "ec2:app:rollback",
+        "ec2:smoke",
+        "ec2:logs",
+        "ec2:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.backup",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/deploy/notes-data-volume.sh",
+        "examples/23-ec2/test/data-volume.test.ts"
+      ],
+      "tasks": ["ec2:data:unmount", "ec2:data:mount", "test:unit"],
+      "boundary": "cloud",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.patch",
+      "sources": [
+        "examples/23-ec2/scripts/remote.ts",
+        "examples/23-ec2/src/remote.ts",
+        "examples/23-ec2/test/remote.test.ts"
+      ],
+      "tasks": ["ec2:patch:check", "ec2:patch:apply"],
+      "boundary": "cloud",
+      "criteria": ["test"],
+      "verification": "unverified"
+    },
+    {
+      "id": "23.spof",
+      "sources": ["examples/23-ec2/test/access.test.ts", "examples/23-ec2/test/file-notes.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "23.compare",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "local"
+    },
+    {
+      "id": "23.cleanup",
+      "sources": ["examples/23-ec2/scripts/remote.ts", "tools/src/infra"],
+      "tasks": ["ec2:data:unmount", "ec2:releases:empty", "ec2:infra:destroy", "net:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.qldb",
       "sources": [],
       "tasks": [],
       "boundary": "none",
@@ -11578,12 +11260,330 @@
       "verification": "unverified"
     },
     {
-      "id": "68.cleanup",
-      "sources": ["examples/68-nitro/infra/lib/nitro-stack.ts"],
-      "tasks": ["nitro:infra:destroy"],
+      "id": "58.overview",
+      "sources": ["examples/58-ledger"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.trust",
+      "sources": ["examples/58-ledger/test/verify.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.fit",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost", "distributed"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.journal",
+      "sources": [
+        "examples/58-ledger/src/entry.ts",
+        "examples/58-ledger/src/journal.ts",
+        "examples/58-ledger/test/entry.test.ts",
+        "examples/58-ledger/test/journal-contract.ts"
+      ],
+      "tasks": ["test:unit", "ledger:test:local"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.append",
+      "sources": ["examples/58-ledger/src/ledger.ts", "examples/58-ledger/test/ledger.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "58.writer",
+      "sources": [
+        "examples/58-ledger/src/dynamodb-journal.ts",
+        "examples/58-ledger/infra/lib/ledger-stack.ts",
+        "examples/58-ledger/test/adapters.test.ts",
+        "examples/58-ledger/test/dynamodb-local.test.ts"
+      ],
+      "tasks": ["test:unit", "ledger:test:local"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.digest",
+      "sources": [
+        "examples/58-ledger/src/digest.ts",
+        "examples/58-ledger/src/s3-digests.ts",
+        "examples/58-ledger/src/memory-digests.ts",
+        "examples/58-ledger/src/digest-lambda.ts",
+        "examples/58-ledger/test/digest.test.ts",
+        "examples/58-ledger/test/memory-digests.test.ts",
+        "examples/58-ledger/test/digest-lambda.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "58.verify",
+      "sources": [
+        "examples/58-ledger/src/verify.ts",
+        "examples/58-ledger/src/audit.ts",
+        "examples/58-ledger/test/verify.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "58.events",
+      "sources": ["examples/58-ledger/src/events.ts", "examples/58-ledger/test/events.test.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.local",
+      "sources": [
+        "examples/58-ledger/scripts/demo.ts",
+        "examples/58-ledger/scripts/local-db.ts",
+        "examples/58-ledger/.env.example"
+      ],
+      "tasks": ["ledger:demo", "ledger:db:migrate:local", "ledger:db:reset:local"],
+      "boundary": "local",
+      "criteria": ["local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "58.tests",
+      "sources": [
+        "examples/58-ledger/test",
+        "examples/58-ledger/infra/test/ledger-stack.test.ts",
+        "examples/58-ledger/scripts/test-local.ts"
+      ],
+      "tasks": ["test:unit", "ledger:test:local"],
+      "boundary": "local",
+      "criteria": ["test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.stack",
+      "sources": [
+        "examples/58-ledger/infra/lib/ledger-stack.ts",
+        "examples/58-ledger/infra/bin/app.ts",
+        "examples/58-ledger/infra/test/ledger-stack.test.ts",
+        "examples/58-ledger/cdk.json"
+      ],
+      "tasks": ["ledger:infra:synth", "test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "58.deploy",
+      "sources": ["examples/58-ledger/scripts/ledger.ts"],
+      "tasks": [
+        "ledger:infra:diff",
+        "ledger:infra:deploy",
+        "ledger:append",
+        "ledger:digest",
+        "ledger:verify",
+        "ledger:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.cost",
+      "sources": ["data/pricing"],
+      "tasks": ["test:unit"],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "58.cleanup",
+      "sources": [
+        "examples/58-ledger/scripts/ledger.ts",
+        "examples/58-ledger/src/purge.ts",
+        "examples/58-ledger/test/purge.test.ts"
+      ],
+      "tasks": ["ledger:infra:destroy", "ledger:purge"],
       "boundary": "cloud",
       "criteria": ["cost"],
       "verification": "unverified"
+    },
+    {
+      "id": "52.overview",
+      "sources": ["examples/52-ecr"],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["distributed", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "52.digest",
+      "sources": [
+        "examples/52-ecr/src/reference.ts",
+        "examples/52-ecr/src/registry.ts",
+        "examples/52-ecr/test/invariant.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["test", "distributed"],
+      "verification": "local"
+    },
+    {
+      "id": "52.settings",
+      "sources": [
+        "examples/52-ecr/infra/lib/ecr-stack.ts",
+        "examples/52-ecr/src/mutability.ts",
+        "examples/52-ecr/test/mutability.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.lifecycle",
+      "sources": [
+        "examples/52-ecr/src/lifecycle.ts",
+        "examples/52-ecr/src/policy.ts",
+        "examples/52-ecr/src/wildcard.ts",
+        "examples/52-ecr/test/lifecycle.test.ts"
+      ],
+      "tasks": ["test:unit", "ecr:lifecycle:preview"],
+      "boundary": "local",
+      "criteria": ["type", "test", "local-dx"],
+      "verification": "local"
+    },
+    {
+      "id": "52.scan",
+      "sources": [
+        "examples/52-ecr/src/scan.ts",
+        "examples/52-ecr/test/scan.test.ts",
+        "examples/52-ecr/scripts/scan-gate.ts"
+      ],
+      "tasks": ["test:unit", "ecr:scan:gate"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.cache",
+      "sources": ["examples/52-ecr/infra/lib/ecr-stack.ts", "examples/52-ecr/src/config.ts"],
+      "tasks": ["test:unit"],
+      "boundary": "cloud",
+      "criteria": ["test", "cost"],
+      "verification": "local"
+    },
+    {
+      "id": "52.replication",
+      "sources": [],
+      "tasks": [],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.push",
+      "sources": [
+        "examples/52-ecr/infra/lib/ecr-stack.ts",
+        "examples/52-ecr/infra/bin/app.ts",
+        "examples/52-ecr/src/config.ts",
+        "examples/52-ecr/infra/test/ecr-stack.test.ts"
+      ],
+      "tasks": ["test:unit", "ecr:infra:synth"],
+      "boundary": "local+cloud",
+      "criteria": ["type", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.local",
+      "sources": [
+        "examples/52-ecr/scripts/lifecycle-preview.ts",
+        "examples/52-ecr/src/describe.ts",
+        "examples/52-ecr/fixtures",
+        "examples/52-ecr/test/describe.test.ts"
+      ],
+      "tasks": ["test:unit", "ecr:lifecycle:preview", "ecr:infra:synth"],
+      "boundary": "local",
+      "criteria": ["local-dx", "test"],
+      "verification": "local"
+    },
+    {
+      "id": "52.deploy",
+      "sources": [
+        "examples/52-ecr/infra/bin/app.ts",
+        "examples/52-ecr/scripts/lifecycle-compare.ts",
+        "examples/52-ecr/scripts/scan-gate.ts"
+      ],
+      "tasks": [
+        "ecr:infra:diff",
+        "ecr:infra:deploy",
+        "ecr:lifecycle:compare",
+        "ecr:scan:gate",
+        "ecr:infra:drift"
+      ],
+      "boundary": "cloud",
+      "criteria": ["drift"],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.cost",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": ["cost"],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.pitfalls",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.production",
+      "sources": [],
+      "tasks": [],
+      "boundary": "none",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.cleanup",
+      "sources": [],
+      "tasks": ["ecr:infra:destroy"],
+      "boundary": "cloud",
+      "criteria": [],
+      "verification": "unverified"
+    },
+    {
+      "id": "52.distributed",
+      "sources": [
+        "examples/52-ecr/test/invariant.test.ts",
+        "examples/52-ecr/test/lifecycle.test.ts"
+      ],
+      "tasks": ["test:unit"],
+      "boundary": "local",
+      "criteria": ["distributed", "test"],
+      "verification": "local"
     }
   ]
 }

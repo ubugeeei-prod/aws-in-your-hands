@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { parseContainersConfig } from "../src/config.ts";
+import { imageOf, parseContainersConfig } from "../src/config.ts";
 import { buildSteps, pushSteps, render, runSteps } from "../src/image.ts";
 
 describe("parseContainersConfig", () => {
@@ -22,6 +22,37 @@ describe("parseContainersConfig", () => {
     expect(parseContainersConfig({ imageTag: "2026-10-12_6a933b2" }).imageTag).toBe(
       "2026-10-12_6a933b2",
     );
+  });
+
+  it("takes the image by digest as well, and refuses anything that is not a whole SHA-256", () => {
+    const imageDigest = `sha256:${"0123456789abcdef".repeat(4)}`;
+    const config = parseContainersConfig({ imageDigest });
+    expect(config.imageDigest).toBe(imageDigest);
+    expect(imageOf(config)).toBe(imageDigest);
+    expect(imageOf(parseContainersConfig({ imageTag: "v1" }))).toBe("v1");
+    expect(imageOf(parseContainersConfig({}))).toBeUndefined();
+
+    const malformed = [
+      "sha256:abc",
+      "0123456789abcdef".repeat(4),
+      `sha256:${"0123456789ABCDEF".repeat(4)}`,
+      `sha256:${"0123456789abcdef".repeat(4)}0`,
+      `sha512:${"0123456789abcdef".repeat(4)}`,
+      `${imageDigest} --privileged`,
+      "v1",
+      "",
+    ];
+    for (const value of malformed) {
+      expect(() => parseContainersConfig({ imageDigest: value }), value).toThrow(
+        /imageDigest: expected sha256:/,
+      );
+    }
+  });
+
+  it("refuses a digest where a tag belongs, and a tag together with a digest", () => {
+    const imageDigest = `sha256:${"0123456789abcdef".repeat(4)}`;
+    expect(() => parseContainersConfig({ imageTag: imageDigest })).toThrow(/imageTag/);
+    expect(() => parseContainersConfig({ imageTag: "v1", imageDigest })).toThrow(/not both/);
   });
 
   it("refuses a subnet tier that does not exist", () => {

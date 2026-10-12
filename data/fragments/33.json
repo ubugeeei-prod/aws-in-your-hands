@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 2,
     "translatedRevision": {
-      "en": 1
+      "en": 2
     },
     "checkedAt": "2026-10-13",
     "sourceIds": [
@@ -732,19 +732,19 @@
         "status": "passed",
         "ranAt": "2026-10-13",
         "note": {
-          "ja": "`vp run ready:check` のスクリプトを、依存する `infra:synth` を通さずに直接実行した（ほかの章が同じ作業ツリーで書かれている最中で、全スタックの synth をやり直せなかったため）。読んだのは、すでに cdk.out にあった 02〜24章と本のサイトの 27 個のテンプレート。結果は 81 件の指摘と 7 件の例外で、本文の件数はこの実行のもの。25〜32章と 34〜36章のスタックは含まない",
-          "en": "Ran the script behind `vp run ready:check` directly, without its `infra:synth` dependency (other chapters were being written in the same tree, so every stack could not be synthesized again). It read the 27 templates of chapters 02 to 24 and the book site that were already in cdk.out: 81 findings and 7 waived. The counts in the chapter are from this run and do not include the stacks of chapters 25 to 32 and 34 to 36"
+          "ja": "25章以降が書かれる前に、`vp run ready:check` のスクリプトを `infra:synth` を通さずに直接実行した。読んだのは 02〜24章と本のサイトの 27 個のテンプレートで、指摘は 81 件、例外は 7 件だった。本文の件数は、この実行のものから、同じ日にタスクとして実行した `vp run ready:check` のものに置き換えた",
+          "en": "Before chapters 25 onward were written, the script behind `vp run ready:check` was run directly, without `infra:synth`. It read the 27 templates of chapters 02 to 24 and the book site: 81 findings and 7 waived. The counts in the chapter were replaced by those of `vp run ready:check`, run as a task on the same day"
         }
       },
       {
         "scope": "33",
         "command": "vp run ready:check",
         "kind": "local",
-        "status": "not-run",
-        "ranAt": null,
+        "status": "passed",
+        "ranAt": "2026-10-13",
         "note": {
-          "ja": "タスクとしては実行していない。`infra:synth` に依存していて、本のすべてのスタックを synth し直すため",
-          "en": "Not run as a task: it depends on `infra:synth`, which synthesizes every stack of the book again"
+          "ja": "タスクとして実行した。依存する `infra:synth` が本のすべてのスタックを合成し直し、73 個のテンプレートを読んだ（02〜36章、38〜44章、46章、47章、49〜64章、66〜68章と本のサイト。01、37、45、48章にはスタックがない）。指摘は 272 件、例外は 9 件。内訳は bucket-public 0、iam-wildcard 43、function-url-auth 1、api-throttle 0、table-pitr 27、stateful-delete 135、log-retention 1、function-alarm 50、alarm-recipient 15、queue-dlq 0。指摘のないスタックは 13 個。本文の件数はこの実行のもの",
+          "en": "Run as a task. Its `infra:synth` dependency synthesized every stack of the book again, and the check read 73 templates (chapters 02 to 36, 38 to 44, 46, 47, 49 to 64, 66 to 68, and the book site; chapters 01, 37, 45 and 48 have no stack). 272 findings and 9 waived: bucket-public 0, iam-wildcard 43, function-url-auth 1, api-throttle 0, table-pitr 27, stateful-delete 135, log-retention 1, function-alarm 50, alarm-recipient 15, queue-dlq 0. 13 stacks have no finding. The counts in the chapter are from this run"
         }
       },
       {
@@ -774,12 +774,12 @@
       {
         "id": "33-sibling-chapters",
         "summary": {
-          "ja": "33章は 25〜32章と 34〜36章を、それぞれの章の範囲の説明だけをもとに参照している。本文は読んでおらず、それらの章のスタックを点検した結果も含んでいない。",
-          "en": "Chapter 33 refers to chapters 25 to 32 and 34 to 36 by their stated scope only. Their text was not read, and the check results do not include their stacks."
+          "ja": "33章のデプロイのページは、25章以降の章を、範囲の説明か概要のページだけをもとに参照している（25〜32章と 34〜36章は範囲の説明だけ、40、42、44、46、48、52、55、58、59、60、62、63章は概要のページ）。本文の全体は読んでいない。`vp run ready:check` は全スタックに対して実行済みだが、25章以降のスタックにある iam-wildcard の 41 件と function-url-auth の 1 件（62章の webhook の関数 URL）には、この検査の例外としての理由を書いていない。",
+          "en": "Chapter 33's deploy page refers to the chapters from 25 onward from their stated scope or their opening page only (chapters 25 to 32 and 34 to 36 by scope; 40, 42, 44, 46, 48, 52, 55, 58, 59, 60, 62 and 63 by opening page). Their full text was not read. `vp run ready:check` has been run over every stack, but the 41 iam-wildcard findings and the one function-url-auth finding (the webhook function URL of chapter 62) in the stacks from chapter 25 onward have no reason written as waivers of this check."
         },
         "resume": {
-          "ja": "すべての章が揃ったあとで `vp run ready:check` を実行し、本文の「本の全スタックに当てた結果」の件数と、各分野の節が指している章の内容を照らし合わせる。",
-          "en": "Once every chapter is in, run `vp run ready:check` and compare the counts in the chapter's section on the book's stacks, and what each area's section says about the chapters it points at."
+          "ja": "デプロイのページが参照している章の本文を読み、各分野の 1 行がその章の内容と合っているかを確かめる。25章以降の 42 件について、各章の本文とテストにある理由を `examples/33-production-readiness/readiness/waivers.json` に写すか、報告のままにするかを決め、決めた結果を「本のすべてのスタックに当てた結果」の節に書く。",
+          "en": "Read the chapters the deploy page refers to and check each one-line reference against what the chapter says. For the 42 findings from chapter 25 onward, decide whether to copy the reasons given in each chapter's text and tests into `examples/33-production-readiness/readiness/waivers.json` or to leave them as a report, and write the decision into the section on the book's stacks."
         }
       },
       {

@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 2,
     "translatedRevision": {
-      "en": 1
+      "en": 2
     },
     "checkedAt": "2026-10-13",
     "sourceIds": [
@@ -982,6 +982,17 @@
         "note": {
           "ja": "AWS に対しては何も実行していない",
           "en": "Nothing was run against AWS"
+        }
+      },
+      {
+        "scope": "67",
+        "command": "curl https://raw.githubusercontent.com/firecracker-microvm/firecracker/v1.17.0/{LICENSE,NOTICE}",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "切り出した仕様の横に、Firecracker の v1.17.0 のタグの LICENSE と NOTICE を変更せずに置いた（`examples/67-firecracker/spec/`）。LICENSE の SHA-256 は cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30 で、同じ日に取得した https://www.apache.org/licenses/LICENSE-2.0.txt とバイト単位で一致した。NOTICE の SHA-256 は 0f443af83ca8226c7ec44e2ade3a09fa3eed8c9b923b6c014b6d439816b6f1c2。NOTICE が指す THIRD-PARTY は写していない",
+          "en": "The LICENSE and NOTICE of Firecracker at the tag v1.17.0 were placed, unmodified, beside the reduced specification (`examples/67-firecracker/spec/`). The SHA-256 of LICENSE is cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30, byte for byte the same as https://www.apache.org/licenses/LICENSE-2.0.txt fetched on the same day. The SHA-256 of NOTICE is 0f443af83ca8226c7ec44e2ade3a09fa3eed8c9b923b6c014b6d439816b6f1c2. The THIRD-PARTY file that NOTICE mentions was not copied"
         }
       }
     ],

@@ -127,11 +127,13 @@ SIGTERM を受けたら進行中の仕事を終えてから止まる、という
 - **データをタスクの外に置く。** いまは更新のたびに消えます（05章、13章）。外に置くと、[新旧が同時に動く](/ja/chapters/12-containers/more.md)の節の決まりが実際の制約になります
 - **タスクをプライベートサブネットに置く。** 出口を NAT にするかエンドポイントにするかは、11章の表で決めます
 - **シークレットを環境変数に直接書かない。** タスク定義の `secrets` で、Secrets Manager などから起動時に渡します。読む権限はタスク実行ロールに付けます（シークレットの扱いは [21章](/ja/chapters/21-security.md)にあります。21章の例は Lambda です）
-- **アプリの指標でも更新を止める。** circuit breaker は起動とヘルスチェックしか見ません。ECS には、CloudWatch のアラームで更新を失敗にする仕組みもあります（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）
+- **アプリの指標でも更新を止める。** circuit breaker は起動とヘルスチェックしか見ません。ECS には、CloudWatch のアラームで更新を失敗にする仕組みもあります（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)、アラームと結び付けたデプロイと、canary や blue/green の方式は [31章](/ja/chapters/31-progressive-delivery/more.md)）
 - **ベースイメージをダイジェストで固定する。** `node:24-bookworm-slim` というタグは、中身が更新されていきます。いつビルドしても同じイメージにしたいなら、ダイジェストで指定します
 - **AZ を 3 つにして、タスクも 3 つ以上にする。** 2 つだと、片方の AZ が止まった時点で処理能力が半分になります
 - **ログの保持期間、ALB の削除保護、リポジトリの `emptyOnDelete` を見直す。** どれも、練習用に消しやすい設定にしてあります
 - **反映の経路を AWS CDK CLI と CloudFormation にする。** cdkd の公式ドキュメントは、cdkd を開発・テスト用途向けとし、本番には AWS CDK CLI を勧めています（02章）
+
+タスクの大きさ、Fargate Spot、auto scaling の指標、定期実行、ECS Exec のように、サービスが動き始めたあとで決めることは、[41章](/ja/chapters/41-fargate.md)で扱います。
 
 ## 片付け
 
@@ -171,7 +173,7 @@ aws ecr describe-repositories --region ap-northeast-1
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** サーバーを子プロセスとして起動し、リクエストの途中で SIGTERM を送るテスト。グレースフルシャットダウンのテスト（`sweep` を外すと `drained` が `forced` になって失敗することも確認）。新旧 2 つの版を同時に起動するテスト。時間の関係、設定、`docker` コマンドの組み立て、料金、スタックのアサーションのユニットテスト。型検査。`ecs:infra:synth`（タグなし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`。`-c imageTag=latest` が拒否されることも）。`ecs:bundle` と `ecs:bundle:check`。`dev:ecs` を起動して、本文の `curl` と、Ctrl-C のときのログを確認。`ecs:image:build`、`ecs:image:run`、`ecs:image:push` の `--dry-run` と、デーモンなしで実行したときのメッセージ。`ecs:watch` を `--url` で手元のサーバーに向けて実行。`ecs.ContainerImage.fromAsset` を使った synth が、`docker` コマンドの無い PATH で通ること（aws-cdk-lib 2.273.0）。`docker` のフラグは、Docker CLI 29.7.2 の help で確かめました。本文の金額は、Price List の単価から `tools/src/pricing/calc.ts` が計算した値で、`examples/12-containers/test/pricing.test.ts` が照合しています。
+**手元で確かめたこと。** サーバーを子プロセスとして起動し、リクエストの途中で SIGTERM を送るテスト。グレースフルシャットダウンのテスト（`sweep` を外すと `drained` が `forced` になって失敗することも確認）。新旧 2 つの版を同時に起動するテスト。時間の関係、設定、`docker` コマンドの組み立て、料金、スタックのアサーションのユニットテスト。型検査。`ecs:infra:synth`（タグなし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`。`-c imageTag=latest` が拒否されることも。2026-10-13 に `-c imageDigest=sha256:...` でも synth し、桁の足りないダイジェストと、`imageTag` との同時指定が拒否されることを確かめました）。`ecs:bundle` と `ecs:bundle:check`。`dev:ecs` を起動して、本文の `curl` と、Ctrl-C のときのログを確認。`ecs:image:build`、`ecs:image:run`、`ecs:image:push` の `--dry-run` と、デーモンなしで実行したときのメッセージ。`ecs:watch` を `--url` で手元のサーバーに向けて実行。`ecs.ContainerImage.fromAsset` を使った synth が、`docker` コマンドの無い PATH で通ること（aws-cdk-lib 2.273.0）。`docker` のフラグは、Docker CLI 29.7.2 の help で確かめました。本文の金額は、Price List の単価から `tools/src/pricing/calc.ts` が計算した値で、`examples/12-containers/test/pricing.test.ts` が照合しています。
 
 **まだ確かめていないこと。** 接続の上限（`maxConnections`）は、手元の Node.js で、上限を超えた接続が応答なしで閉じられることを確かめただけです。ALB の後ろで接続が上限に達したときに利用者へ何が返るか、ヘルスチェックがどうなるかは、確かめていません。512 という数も、計って決めた値ではありません。Docker のデーモンが動いていなかったため、イメージを一度もビルドしていません。したがって、Dockerfile が通ること、`.dockerignore` の例外指定が効くこと、arm64 のベースイメージで起動すること、`--read-only` で動くこと、イメージの大きさ（料金の表の 0.1 GB は仮定）は未確認です。`ecs:infra:diff`、`ecs:infra:deploy`、`ecs:image:push`、`ecs:watch`、`ecs:logs`、`ecs:infra:drift`、`ecs:infra:destroy` は、実際の AWS では動かしていません。次の項目は、すべて実環境での確認を待っています。cdkd 0.296.28 がこのスタックを作って消せること。別のアプリのスタックから `Fn::ImportValue` で 11章の VPC を読めること。Cloud Control API 経由の 3 種類が通ること。パブリックサブネットのタスクがイメージを取得できること、443 番だけの egress で足りること。`-c taskSubnets=private` の 2 通りの経路。ALB のヘルスチェックと fail open。ローリングアップデートの間にエラーが出ないこと。ターゲットの登録解除のあとに SIGTERM が届くという順序。circuit breaker のロールバックと、そのときの cdkd の表示。auto scaling の増減。タグなしでデプロイし直すと ALB とタスクだけが消えること。「つまずきやすいところ」の症状。
 

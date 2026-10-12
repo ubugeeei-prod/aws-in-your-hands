@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 # 19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics
@@ -113,7 +113,7 @@ The second alarm watches slowness.
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{latency}
 
-An average hides the slow few among the fast many, so the alarm watches p95, the 95th percentile. It measures API Gateway's `Latency` and not Lambda's `Duration`. `Duration` does not include cold start time, so the value measured at the entrance is closer to how long the user waited.
+An average hides the slow few among the fast many, so the alarm watches p95, the 95th percentile. It measures API Gateway's `Latency` and not Lambda's `Duration`. `Duration` does not include cold start time, so the value measured at the entrance is closer to how long the user waited. [Chapter 29](/en/chapters/29-lambda-tuning.md) shows how to read the length and frequency of cold starts from the `REPORT` line.
 
 ### Where notifications go
 
@@ -131,7 +131,7 @@ The alarms also notify when they return to OK, because you want to know when the
 
 <!-- section: 19.metrics -->
 
-When an alarm fires, open the dashboard. The top row shows symptoms and the rows below show possible causes.
+When an alarm fires, open the dashboard. [Chapter 44](/en/chapters/44-health.md) covers AWS Health, which is where you look when the cause may be an AWS outage and not your own change. The top row shows symptoms and the rows below show possible causes.
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{dashboard}
 
@@ -143,4 +143,4 @@ For Lambda, look at `Errors`, `Throttles`, `Duration` and `ConcurrentExecutions`
 
 For DynamoDB, look at `ThrottledRequests`, `SystemErrors` and `ConditionalCheckFailedRequests`. `ConditionalCheckFailedRequests` is the number of times chapter 05's optimistic locking stepped in. `ThrottledRequests` also rises when requests hit the ceiling set on the table.
 
-There is one dashboard, and it refers to no more than 50 metrics because that is as far as the free tier goes. A test watches that limit.
+There is one dashboard, and it refers to no more than 50 metrics because that is as far as the free tier goes. A test watches that limit. [Chapter 55](/en/chapters/55-grafana.md) builds an Amazon Managed Grafana dashboard that shows the same numbers to people who have no access to the AWS account.

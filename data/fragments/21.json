@@ -26,9 +26,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 2,
+    "sourceRevision": 3,
     "translatedRevision": {
-      "en": 2
+      "en": 3
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [
@@ -92,7 +92,10 @@
       "aws-sdk-security-clients",
       "cloudflare-workers-secrets",
       "cloudflare-waf-managed-rules",
-      "cloudflare-rate-limiting-rules"
+      "cloudflare-rate-limiting-rules",
+      "shield-cloudfront-blocked-free",
+      "shield-cloudfront-flat-rate-plans",
+      "shield-waf-rate-based-settings"
     ]
   },
   "sources": [
@@ -235,12 +238,13 @@
       "id": "cfn-wafv2-ratebasedstatement",
       "url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-wafv2-webacl-ratebasedstatement.html",
       "title": "AWS::WAFv2::WebACL RateBasedStatement",
-      "checkedAt": "2026-10-12",
+      "checkedAt": "2026-10-13",
       "supports": [
         "Limit has a minimum of 10",
         "EvaluationWindowSec may be 60, 120, 300, or 600, and defaults to 300",
         "AWS WAF checks the rate about every 10 seconds"
-      ]
+      ],
+      "note": "Read again on 2026-10-13: still says \"about every 10 seconds\". The AWS WAF Developer Guide (rate-based rule high-level settings) says only that AWS WAF checks the rate frequently, with timing independent of the evaluation window."
     },
     {
       "id": "cloudfront-waf",
@@ -1237,7 +1241,7 @@
     },
     {
       "priceId": "waf.global.webacl",
-      "reason": "No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans were not examined in this chapter."
+      "reason": "No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans cover the web ACL, its rules, and its request fees for the distribution in the plan (documentation read 2026-10-13); this chapter prices pay-as-you-go only."
     },
     {
       "priceId": "waf.global.rule",

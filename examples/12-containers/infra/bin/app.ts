@@ -6,9 +6,10 @@ import { ContainersStack } from "../lib/containers-stack.ts";
 const app = new App();
 
 // #region context
-// Without `-c imageTag=...` the stack is the image repository and nothing else.
+// Without `-c imageTag=...` or `-c imageDigest=...` the stack is the image repository and nothing else.
 const config = parseContainersConfig({
   imageTag: app.node.tryGetContext("imageTag"),
+  imageDigest: app.node.tryGetContext("imageDigest"),
   taskSubnets: app.node.tryGetContext("taskSubnets"),
   allowedOrigin: app.node.tryGetContext("allowedOrigin"),
 });

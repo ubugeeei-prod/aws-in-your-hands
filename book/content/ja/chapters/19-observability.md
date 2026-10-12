@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics"
-revision: 5
+revision: 6
 ---
 
 # 19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics
@@ -113,7 +113,7 @@ API が受け付けるのは毎秒 10 件までで、テーブルには毎秒の
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{latency}
 
-平均は、速い大多数に遅い少数が埋もれてしまうので、p95（95 パーセンタイル）を見ます。測る対象は Lambda の `Duration` ではなく、API Gateway の `Latency` です。`Duration` にはコールドスタートの時間が入らないので、利用者が待った時間に近いのは入口で測った値のほうです。
+平均は、速い大多数に遅い少数が埋もれてしまうので、p95（95 パーセンタイル）を見ます。測る対象は Lambda の `Duration` ではなく、API Gateway の `Latency` です。`Duration` にはコールドスタートの時間が入らないので、利用者が待った時間に近いのは入口で測った値のほうです。コールドスタートの長さと頻度を `REPORT` 行から読む方法は、[29章](/ja/chapters/29-lambda-tuning.md)にあります。
 
 ### 通知先
 
@@ -131,7 +131,7 @@ API が受け付けるのは毎秒 10 件までで、テーブルには毎秒の
 
 <!-- section: 19.metrics -->
 
-アラームが鳴ったら、ダッシュボードを開きます。上の段に症状を、下の段に原因の候補を並べてあります。
+アラームが鳴ったら、ダッシュボードを開きます。原因が自分たちの変更ではなく AWS の側の障害かもしれないときに見る AWS Health は、[44章](/ja/chapters/44-health.md)で扱います。上の段に症状を、下の段に原因の候補を並べてあります。
 
 <<< @/examples/19-observability/infra/lib/monitoring.ts{dashboard}
 
@@ -143,4 +143,4 @@ Lambda では、`Errors`、`Throttles`、`Duration`、`ConcurrentExecutions` を
 
 DynamoDB では、`ThrottledRequests`、`SystemErrors`、`ConditionalCheckFailedRequests` を見ます。`ConditionalCheckFailedRequests` は、05章の楽観ロックが働いた回数です。`ThrottledRequests` は、テーブルに付けた上限に当たったときにも増えます。
 
-ダッシュボードは 1 つで、参照するメトリクスは 50 個以内に収めています。無料枠に入るのがそこまでだからで、この上限はテストで見張っています。
+ダッシュボードは 1 つで、参照するメトリクスは 50 個以内に収めています。無料枠に入るのがそこまでだからで、この上限はテストで見張っています。同じ数字を、AWS アカウントに入る権限のない人にも見せる Amazon Managed Grafana のダッシュボードは、[55章](/ja/chapters/55-grafana.md)で作ります。

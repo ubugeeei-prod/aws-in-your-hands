@@ -33,7 +33,7 @@ API の仕様は、リポジトリの `src/firecracker/swagger/firecracker.yaml`
 
 <<< @/examples/67-firecracker/src/spec.ts{pinned}
 
-固定したのは、2026 年 9 月 10 日に公開された v1.17.0 です。仕様の全体は 64 KB あり、バルーン、メモリのホットプラグ、MMDS など、この章が使わない操作が大半を占めます。リポジトリに入れたのは、上の 9 つの操作と、そこから参照される定義だけを切り出した JSON です（`spec/firecracker-v1.17.0.subset.json`）。切り出しは次の関数が行います。
+固定したのは、2026 年 9 月 10 日に公開された v1.17.0 です。仕様の全体は 64 KB あり、バルーン、メモリのホットプラグ、MMDS など、この章が使わない操作が大半を占めます。リポジトリに入れたのは、上の 9 つの操作と、そこから参照される定義だけを切り出した JSON です（`spec/firecracker-v1.17.0.subset.json`）。仕様は Apache License 2.0 で公開されているので、ライセンスの本文と `NOTICE` を同じディレクトリに置いてあります。切り出しは次の関数が行います。
 
 <<< @/examples/67-firecracker/src/spec.ts{extract}
 

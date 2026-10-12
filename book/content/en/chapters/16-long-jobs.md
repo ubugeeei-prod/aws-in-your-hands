@@ -1,6 +1,6 @@
 ---
 title: "16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch
@@ -9,7 +9,7 @@ The housekeeping function in [chapter 08](/en/chapters/08-async.md) had its time
 
 This chapter takes a job that may not fit in 15 minutes and runs it to the end. The job is an export of every note. It reads all the notes in the table and writes them to S3 as files, and if it stops halfway it resumes from where it stopped instead of starting over.
 
-The tool is Step Functions, but the subject is the same as chapter 08's. A step can run twice, its answer can get lost, and a worker that was supposed to have stopped can write later. Making sure there is still exactly one output is your job, and a workflow service does not do it for you.
+The tool is Step Functions, but the subject is the same as chapter 08's. A step can run twice, its answer can get lost, and a worker that was supposed to have stopped can write later. Making sure there is still exactly one output is your job, and a workflow service does not do it for you. [Chapter 47](/en/chapters/47-step-functions.md) covers Step Functions itself: calling service APIs directly, waiting for an answer from outside, and choosing between Standard and Express.
 
 You need chapter 08 (idempotency, Scheduler) and [chapter 12](/en/chapters/12-containers.md) (containers). The code is in `examples/16-long-jobs/`. The default stack costs next to nothing while it sits idle. The amounts are on [the costs page](/en/chapters/16-long-jobs/wrap.md).
 

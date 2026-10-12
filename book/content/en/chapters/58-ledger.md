@@ -1,6 +1,6 @@
 ---
 title: "58 Ledger: QLDB Today, and an Append-Only Ledger You Can Verify"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 58 Ledger: QLDB Today, and an Append-Only Ledger You Can Verify
@@ -84,7 +84,7 @@ And sometimes this chapter's mechanism is not enough.
 - A regulation requires the records themselves on WORM (write once, read many) storage. The S3 user guide says Object Lock has been assessed by a third party against regulations such as SEC 17a-4. The design then puts the records themselves, not digests of them, in a compliance-mode bucket. Which regulation applies to your business is not something this book can decide
 - You want to show that one entry is in the ledger without reading the whole ledger. Verification here reads every entry up to the digest
 - You have to convince someone who trusts neither you nor AWS. That takes several organizations each holding a copy. The AWS service for that, Amazon Managed Blockchain, is being retired, as noted above
-- You want to query the history with SQL on a relational database. The path AWS showed QLDB users is Aurora PostgreSQL with audit tables. Chapter 60 covers Aurora
+- You want to query the history with SQL on a relational database. The path AWS showed QLDB users is Aurora PostgreSQL with audit tables. [Chapter 60](/en/chapters/60-aurora.md) covers Aurora
 
 I checked the official documentation of Cloudflare and Vercel on 2026-10-13 as well. Cloudflare R2 has bucket locks, which forbid deleting and overwriting objects for a number of days, until a date, or indefinitely. A rule can be removed from the dashboard or with Wrangler. I found no mode in the documentation that the bucket's owner cannot remove. In kind it is close to governance mode, and it is not a place for evidence that you yourself cannot delete. The Vercel Blob overview page describes no feature that protects an object for a retention period. The hash chain can be written the same way on any database, D1 or Postgres included. Where the platforms differ is in where the evidence can go.
 

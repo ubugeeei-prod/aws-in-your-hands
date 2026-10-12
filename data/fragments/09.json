@@ -4,16 +4,21 @@
     "id": "09",
     "slug": "ssr",
     "title": {
-      "ja": "SSR と BFF: Nuxt をリージョンの Lambda で動かす",
-      "en": "SSR and a BFF: Nuxt on Regional Lambda"
+      "ja": "SSR: BFF、Nuxt をリージョンの Lambda で動かす",
+      "en": "SSR: A BFF, and Nuxt on Regional Lambda"
     },
     "prerequisites": ["03", "04"],
     "services": ["Lambda", "Lambda function URLs", "CloudFront", "S3"],
     "samplePath": "examples/09-ssr",
-    "writing": { "ja": "complete", "en": "complete" },
-    "sourceRevision": 1,
-    "translatedRevision": { "en": 1 },
-    "checkedAt": "2026-10-11",
+    "writing": {
+      "ja": "complete",
+      "en": "complete"
+    },
+    "sourceRevision": 4,
+    "translatedRevision": {
+      "en": 4
+    },
+    "checkedAt": "2026-10-12",
     "sourceIds": [
       "nuxt-npm",
       "nitropack-npm",
@@ -102,9 +107,9 @@
       "title": "Control access to Lambda function URLs",
       "checkedAt": "2026-10-11",
       "supports": [
-        "AuthType AWS_IAM authenticates and authorizes requests with IAM; NONE performs no authentication",
-        "Starting in October 2025, new function URLs require both lambda:InvokeFunctionUrl and lambda:InvokeFunction",
-        "Without those permissions in the resource-based policy, callers get 403 Forbidden"
+        "AuthType is AWS_IAM or NONE",
+        "With AWS_IAM, a caller in the same account needs lambda:InvokeFunctionUrl and lambda:InvokeFunction in an identity policy or in the function's resource-based policy",
+        "With NONE, anyone with the URL can invoke the function once the resource-based policy grants public access"
       ]
     },
     {
@@ -145,12 +150,11 @@
       "title": "Response streaming for Lambda functions",
       "checkedAt": "2026-10-11",
       "supports": [
-        "Streaming is available through function URLs, InvokeWithResponseStream, and the API Gateway proxy integration",
-        "Streamed responses can be up to 200 MB; buffered ones up to 6 MB",
-        "The first 6 MB is uncapped; the rest is limited to 2 MBps",
-        "Managed Node.js runtimes support streaming",
-        "A streamed response is not stopped when the client disconnects; the full duration is billed",
-        "Function URLs do not support response streaming inside a VPC"
+        "Streaming is available through function URLs, InvokeWithResponseStream, and API Gateway proxy integrations",
+        "A streamed response is not interrupted when the client disconnects, and the full function duration is billed",
+        "Node.js managed runtimes support response streaming natively",
+        "Streamed payloads can be up to 200 MB; the first 6 MB is not rate limited",
+        "Function URLs do not support response streaming for a function in a VPC"
       ]
     },
     {
@@ -634,14 +638,26 @@
           "quantity": 0.0143,
           "basis": "50,000 x 0.3 KB, in GB"
         },
-        { "priceId": "logs.storage", "quantity": 0.0033, "basis": "0.0143 GB x 7/30, in GB-month" },
+        {
+          "priceId": "logs.storage",
+          "quantity": 0.0033,
+          "basis": "0.0143 GB x 7/30, in GB-month"
+        },
         {
           "priceId": "s3.request.tier2",
           "quantity": 30000,
           "basis": "one tenth of 300,000 asset requests reach S3 as GET"
         },
-        { "priceId": "s3.request.tier1", "quantity": 200, "basis": "10 publishes x 20 PUTs" },
-        { "priceId": "s3.standard.storage", "quantity": 0.005, "basis": "5 MB, in GB-month" }
+        {
+          "priceId": "s3.request.tier1",
+          "quantity": 200,
+          "basis": "10 publishes x 20 PUTs"
+        },
+        {
+          "priceId": "s3.standard.storage",
+          "quantity": 0.005,
+          "basis": "5 MB, in GB-month"
+        }
       ]
     }
   ],

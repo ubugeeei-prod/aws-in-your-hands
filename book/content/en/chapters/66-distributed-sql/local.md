@@ -56,7 +56,7 @@ The flag files used here come from the same functions as those for EC2. Open `.y
 
 One caution. `yb-tserver` starts PostgreSQL inside itself, and PostgreSQL uses System V shared memory. Inside a sandbox that does not allow shared memory, `initdb` failed and `yb-tserver` exited. In an ordinary terminal this does not happen.
 
-A cluster with TLS can be made as well. The certificates are made with `openssl`, so `openssl` must be on PATH. The Nix shell does not provide one, so the one that ships with macOS, or one you installed, is used.
+A cluster with TLS can be made as well. The certificates are made with `openssl`, which the devShell (Nix) provides at version 3.5.8.
 
 ```bash
 vp run distsql:local:destroy

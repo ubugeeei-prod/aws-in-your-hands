@@ -72,7 +72,7 @@ vp run ready:check
 
 このタスクは `infra:synth` に依存していて、本のすべてのスタックを合成してから、全部の `cdk.out` を読みます。通過は求めません。練習用のスタックに指摘があるのは、わざとそうしてあるからです。
 
-次の出力は、02章から 24章までのスタックと、本のサイトのスタックの、合わせて 27 個を読んだときのものです（2026-10-13）。25章以降のスタックと、この章の 2 つは含んでいません。25章以降はこの章と同じ時期に書かれていたので、手元で実行すると、スタックの数と件数はこれより増えます。
+次の出力は、タスクとして実行したときのものです（2026-10-13）。読んだテンプレートは 73 個で、スタックを持つすべての章と本のサイトのものです。章でいうと、02章から 36章、38章から 44章、46章、47章、49章から 64章、66章から 68章で、この章の 2 つのスタックも入っています。01章、37章、45章、48章にはスタックがありません。
 
 ```text
 note AihAsync
@@ -94,29 +94,35 @@ note AihAsync
 ```text
 findings by rule (chapter that does the work):
     0  bucket-public      ch.07  Objects meant for signed-in users can be read by anyone who has the URL.
-    0  iam-wildcard       ch.21  A hole in one function reaches every resource the wildcard covers.
-    0  function-url-auth  ch.09  The function answers requests that never passed the CDN, the WAF or sign-in.
+   43  iam-wildcard       ch.21  A hole in one function reaches every resource the wildcard covers.
+    1  function-url-auth  ch.09  The function answers requests that never passed the CDN, the WAF or sign-in.
     0  api-throttle       ch.04  One client can spend the account's whole request quota, and the bill with it.
-    8  table-pitr         ch.22  A bad write or delete cannot be undone: there is no earlier state to restore.
-   49  stateful-delete    ch.22  Destroying the stack, or an update that replaces the resource, deletes the data.
+   27  table-pitr         ch.22  A bad write or delete cannot be undone: there is no earlier state to restore.
+  135  stateful-delete    ch.22  Destroying the stack, or an update that replaces the resource, deletes the data.
     1  log-retention      ch.19  Logs pile up for ever, or live in a log group nobody set a retention on.
-   21  function-alarm     ch.19  The function fails for hours and the first report comes from a user.
-    2  alarm-recipient    ch.19  The alarm goes to ALARM and no one is told.
+   50  function-alarm     ch.19  The function fails for hours and the first report comes from a user.
+   15  alarm-recipient    ch.19  The alarm goes to ALARM and no one is told.
     0  queue-dlq          ch.08  A message that always fails is retried until it expires, then is gone.
 
-27 templates, 81 findings, 7 waived
+73 templates, 272 findings, 9 waived
 report only: no stack was asked to pass (--gate <stack>)
 ```
 
-81 件のうち 49 件が `stateful-delete` です。この本のスタックは、片付けたときに何も残らないように、データを持つリソースをすべて `DESTROY` にしてきました。その方針がそのまま数字になっています。27 個のうち指摘のないスタックは 5 つで、ネットワークだけのスタック、ECR のリポジトリだけのスタック、CI のロール、web ACL、そして [24章](/ja/chapters/24-celld.md)のスタックです。24章のバケットは、最初から `Retain` で作られていました。
+272 件のうち 135 件が `stateful-delete` です。この本のスタックは、片付けたときに何も残らないように、データを持つリソースをすべて `DESTROY` にしてきました。その方針がそのまま数字になっています。73 個のうち指摘のないスタックは 13 個です。24章までのスタックでは、ネットワークだけのスタック、ECR のリポジトリだけのスタック、CI のロール、web ACL、そして [24章](/ja/chapters/24-celld.md)のスタックの 5 つで、24章のバケットは最初から `Retain` で作られていました。残りの 8 つは、この章の本番向けのスタックと、34章、41章、42章のエッジ側、52章、63章、64章、66章のスタックです。
 
-`function-alarm` の 21 件は、アラームを持つスタックが 19章の 1 つしかないことを表しています。関数は 22 個あり、アラームのどれかが見ているのは 19章の 1 個だけです。`table-pitr` の 8 件も同じで、9 つのテーブルのうち PITR が有効なのは 22章の 1 つです。どちらも、1 つの章で一度だけ扱い、ほかの章では省いてきたものです。
+`function-alarm` の 50 件は、アラームを持つスタックが少ないことを表しています。関数は 57 個あり、アラームのどれかが見ているのは 7 個です。19章、31章、32章、54章、61章のスタックに 1 個ずつ、この章の 2 つのスタックに 1 個ずつあります。`table-pitr` の 27 件も同じで、30 個のテーブルのうち PITR が有効なのは、22章、28章、この章の本番向けのスタックの 3 つです。どちらも、主題にした章でだけ設定し、ほかの章では省いてきたものです。
 
-0 件が並んでいる 4 つのルールにも意味があります。公開されたバケット、認証のない関数 URL、スロットリングのない API、デッドレターキューのないキューは、この本のどのスタックにもありません。これらは「本番にするなら」に回さず、最初から入れてきた設定です。誰でも呼べる入口を公開する章は、受け付ける量をその章の中で絞る、という [01章](/ja/chapters/01-account.md)の方針が、ここに表れています。`iam-wildcard` の 0 件は、21章が理由を書いた 7 件が例外として数えられているからで、出力の `7 waived` がそれです。
+`alarm-recipient` の 15 件は 2 種類に分かれます。7 件は、通知先のトピックに購読がないアラームで、19章、54章、この章の練習用のスタックにあります。残りの 8 件は、アクションをまったく持たないアラームで、31章、32章、43章、46章、59章、61章にあります。
+
+0 件が並んでいる 3 つのルールにも意味があります。公開されたバケット、スロットリングのない API、デッドレターキューのないキューは、この本のどのスタックにもありません。これらは「本番にするなら」に回さず、最初から入れてきた設定です。誰でも呼べる入口を公開する章は、受け付ける量をその章の中で絞る、という [01章](/ja/chapters/01-account.md)の方針が、ここに表れています。
+
+`function-url-auth` の 1 件は、[62章](/ja/chapters/62-ci-runners/build.md)の webhook を受ける関数です。GitHub は IAM の署名を付けられないので、62章は関数 URL の認証を `NONE` にして、リクエストの署名をコードで確かめています。その確認はテンプレートには現れないので、検査からは認証のない入口に見えます。
+
+`iam-wildcard` は 43 件です。24章までのスタックが 0 件なのは、21章が理由を書いた 7 件が例外として数えられているからです。出力の `9 waived` は、その 7 件と、この章の本番向けのスタックの 2 件を足したものです。43 件のうち 2 件はこの章の練習用のスタックのもので、残りの 41 件は 25章以降の 12 個のスタックにあります。多いのは、53章と 59章の関数のロールにある、ネットワークインターフェースを扱う `ec2:` のアクションの 18 件と、47章のステートマシンのロールにある `logs:` のアクションの 10 件です。この 41 件には、この検査の例外としての理由を書いていません。本番に持っていくなら、21章の lint と同じように、1 件ずつ理由を書くか、範囲を絞ります。
 
 `log-retention` の 1 件は、[10章](/ja/chapters/10-edge.md)の Lambda@Edge の関数です。ロググループをスタックで作っていません。Lambda のドキュメントによると、関数は既定で、最初に呼ばれたときに `/aws/lambda/<関数名>` というロググループを自動で作ります。CloudWatch Logs のドキュメントによると、ログは既定では無期限に保存されます。
 
-指摘が 81 件あるからといって、この本のスタックを 81 か所直すべきだ、ということにはなりません。練習用のスタックとしては、いまの形が正しい設定です。この出力は、同じスタックを本番に持っていくとしたら、どこから手を付けるかの一覧として読んでください。
+指摘が 272 件あるからといって、この本のスタックを 272 か所直すべきだ、ということにはなりません。練習用のスタックとしては、いまの形が正しい設定です。この出力は、同じスタックを本番に持っていくとしたら、どこから手を付けるかの一覧として読んでください。
 
 ## 検査が見えないもの
 

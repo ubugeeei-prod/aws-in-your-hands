@@ -1,6 +1,6 @@
 ---
 title: "16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch"
-revision: 2
+revision: 3
 ---
 
 # 16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch
@@ -9,7 +9,7 @@ revision: 2
 
 この章では、15 分に収まらないかもしれない仕事を最後まで動かします。題材は全ノートのエクスポートで、テーブルのノートをすべて読み、S3 にファイルとして書き出します。途中で止まっても、最初からやり直すのではなく、続きから再開できるようにします。
 
-使う道具は Step Functions ですが、話の中心は 08章と同じところにあります。ステップは 2 回走ることがあり、応答が届かないことも、止まったはずのワーカーが後から書き込むこともあります。それでも出力が 1 つになるように作るのは自分の仕事で、ワークフローのサービスが肩代わりしてくれるわけではありません。
+使う道具は Step Functions ですが、話の中心は 08章と同じところにあります。ステップは 2 回走ることがあり、応答が届かないことも、止まったはずのワーカーが後から書き込むこともあります。それでも出力が 1 つになるように作るのは自分の仕事で、ワークフローのサービスが肩代わりしてくれるわけではありません。サービスの API を直接呼ぶ統合、外からの返事を待つステップ、Standard と Express の使い分けなど、Step Functions そのものは [47章](/ja/chapters/47-step-functions.md)で扱います。
 
 前提は 08章（冪等性、Scheduler）と [12章](/ja/chapters/12-containers.md)（コンテナ）です。コードは `examples/16-long-jobs/` にあります。既定のスタックは、置いてあるだけなら料金がほぼかかりません。金額は[費用のページ](/ja/chapters/16-long-jobs/wrap.md)にまとめました。
 

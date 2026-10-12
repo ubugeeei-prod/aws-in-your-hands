@@ -1,6 +1,6 @@
 ---
 title: "67 Firecracker: The MicroVM under Lambda and Fargate"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 67 Firecracker: The MicroVM under Lambda and Fargate

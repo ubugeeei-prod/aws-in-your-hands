@@ -136,6 +136,8 @@ vp run ecs:image:run v1
 
 <<< @/examples/12-containers/src/config.ts{schema}
 
+スキーマにある `imageDigest` は、同じイメージをタグではなくダイジェストで指定するための設定です。使い方は[デプロイ](/ja/chapters/12-containers/deploy.md)のページに書きます。
+
 ライフサイクルの規則は、新しいほうから 10 個を残して、古いイメージを消します。置いたままのイメージにも保存料金がかかるからです。
 
 ### デプロイを 2 回に分ける理由

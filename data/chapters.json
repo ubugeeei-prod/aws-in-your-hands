@@ -24,9 +24,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -75,9 +75,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-11",
       "sourceIds": [
@@ -178,9 +178,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 6,
+      "sourceRevision": 7,
       "translatedRevision": {
-        "en": 6
+        "en": 7
       },
       "checkedAt": "2026-10-12",
       "sourceIds": [
@@ -359,9 +359,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 4,
+      "sourceRevision": 5,
       "translatedRevision": {
-        "en": 4
+        "en": 5
       },
       "checkedAt": "2026-10-12"
     },
@@ -408,9 +408,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -596,9 +596,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 4,
+      "sourceRevision": 5,
       "translatedRevision": {
-        "en": 4
+        "en": 5
       },
       "checkedAt": "2026-10-12"
     },
@@ -680,9 +680,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 5,
+      "sourceRevision": 6,
       "translatedRevision": {
-        "en": 5
+        "en": 6
       },
       "checkedAt": "2026-10-12"
     },
@@ -923,9 +923,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-12"
     },
@@ -975,15 +975,16 @@
         "lambda-pricing",
         "aws-price-list-lambda",
         "aws-price-list-cloudwatch",
-        "cdkd-npm"
+        "cdkd-npm",
+        "bedrock-model-card-claude-haiku-5-5"
       ],
       "writing": {
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-12"
     },
@@ -1106,9 +1107,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 5,
+      "sourceRevision": 6,
       "translatedRevision": {
-        "en": 5
+        "en": 6
       },
       "checkedAt": "2026-10-12"
     },
@@ -1182,9 +1183,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 4,
+      "sourceRevision": 5,
       "translatedRevision": {
-        "en": 4
+        "en": 5
       },
       "checkedAt": "2026-10-12"
     },
@@ -1271,15 +1272,18 @@
         "aws-sdk-security-clients",
         "cloudflare-workers-secrets",
         "cloudflare-waf-managed-rules",
-        "cloudflare-rate-limiting-rules"
+        "cloudflare-rate-limiting-rules",
+        "shield-cloudfront-blocked-free",
+        "shield-cloudfront-flat-rate-plans",
+        "shield-waf-rate-based-settings"
       ],
       "writing": {
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-12"
     },
@@ -1323,9 +1327,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 3,
+      "sourceRevision": 4,
       "translatedRevision": {
-        "en": 3
+        "en": 4
       },
       "checkedAt": "2026-10-12"
     },
@@ -1419,9 +1423,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 2,
+      "sourceRevision": 3,
       "translatedRevision": {
-        "en": 2
+        "en": 3
       },
       "checkedAt": "2026-10-12"
     },
@@ -2118,9 +2122,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-13"
     },
@@ -2197,9 +2201,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-13"
     },
@@ -3490,9 +3494,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-13"
     },
@@ -3836,9 +3840,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-13"
     },
@@ -4397,9 +4401,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-13"
     },
@@ -4455,9 +4459,9 @@
         "ja": "complete",
         "en": "complete"
       },
-      "sourceRevision": 1,
+      "sourceRevision": 2,
       "translatedRevision": {
-        "en": 1
+        "en": 2
       },
       "checkedAt": "2026-10-13"
     },

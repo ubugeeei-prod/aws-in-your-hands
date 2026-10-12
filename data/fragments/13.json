@@ -4,8 +4,8 @@
     "id": "13",
     "slug": "sql",
     "title": {
-      "ja": "D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2",
-      "en": "SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
+      "ja": "SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2",
+      "en": "SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
     },
     "prerequisites": ["04"],
     "services": [
@@ -21,9 +21,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 5,
+    "sourceRevision": 6,
     "translatedRevision": {
-      "en": 5
+      "en": 6
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [
@@ -602,10 +602,13 @@
     {
       "id": "cloudflare-d1-time-travel",
       "url": "https://developers.cloudflare.com/d1/reference/time-travel/",
-      "title": "Cloudflare D1: Time Travel",
-      "checkedAt": "2026-10-11",
+      "title": "Cloudflare D1: Time Travel and backups",
+      "checkedAt": "2026-10-12",
       "supports": [
-        "Time Travel restores a database to any minute within the last 30 days without scheduled backups"
+        "Time Travel is always on and restores a database to any minute within the last 30 days (7 days on the Workers Free plan)",
+        "Database history and restoring incur no additional cost",
+        "A restore is destructive and overwrites the database in place; in-flight queries are cancelled; the restore returns a bookmark that undoes it",
+        "Time Travel cannot yet clone or fork a database into a new copy"
       ]
     },
     {

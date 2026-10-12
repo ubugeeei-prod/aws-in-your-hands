@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 1,
+    "sourceRevision": 2,
     "translatedRevision": {
-      "en": 1
+      "en": 2
     },
     "checkedAt": "2026-10-13",
     "sourceIds": [
@@ -1415,8 +1415,8 @@
         "status": "not-run",
         "ranAt": null,
         "note": {
-          "ja": "kubectl は Nix の shell に無く、クラスターも無い。マニフェストは API サーバーに一度も渡していない",
-          "en": "kubectl is not in the Nix shell, and there is no cluster. The manifests were never given to an API server"
+          "ja": "クラスターが無い。kubectl は devShell に入ったが、マニフェストは API サーバーに一度も渡していない",
+          "en": "There is no cluster. kubectl is now in the devShell, but the manifests were never given to an API server"
         }
       },
       {
@@ -1428,6 +1428,17 @@
         "note": {
           "ja": "実行していない",
           "en": "Not run"
+        }
+      },
+      {
+        "scope": "34",
+        "command": "kubectl version --client",
+        "kind": "local",
+        "status": "passed",
+        "ranAt": "2026-10-13",
+        "note": {
+          "ja": "flake.nix の devShell に `pkgs.kubectl` を足し、`nix develop` の中で実行した。Client Version は v1.37.1、Kustomize は v5.8.1。スタックのクラスターは 1.37 なので、1 マイナーバージョン以内に入っている。クラスターには接続していない",
+          "en": "`pkgs.kubectl` was added to the devShell in flake.nix and the command was run inside `nix develop`. Client Version v1.37.1, Kustomize v5.8.1. The stack's cluster is 1.37, so the client is within one minor version. No cluster was contacted"
         }
       }
     ],
@@ -1457,17 +1468,24 @@
       {
         "id": "34-flake-kubectl",
         "summary": {
-          "ja": "Nix の devShell に kubectl が無い。34章のデプロイの手順は、kubectl を別に用意する前提で書いてある。",
-          "en": "The Nix devShell has no kubectl. The deploy steps of chapter 34 assume it is provided some other way."
+          "ja": "devShell の kubectl（1.37.1）は flake.lock が固定する nixpkgs のもので、34章のクラスターのバージョン（1.37）とは別々に変わる。nixpkgs の固定かクラスターのバージョンのどちらかを更新すると、1 マイナーバージョン以内でなくなることがある。この kubectl をクラスターに対して使ったことはない。",
+          "en": "The devShell's kubectl (1.37.1) comes from the nixpkgs that flake.lock pins, and it changes independently of chapter 34's cluster version (1.37). Updating either the nixpkgs pin or the cluster version can take the two more than one minor version apart. This kubectl has never been used against a cluster."
         },
         "resume": {
-          "ja": "flake.nix の devShell に `pkgs.kubectl` を足すかどうかを著者が決める。足す場合は、クラスターのバージョン（1.37）と 1 マイナーバージョン以内であることを `kubectl version --client` で確かめ、34章の deploy のページの断り書きを直す。",
-          "en": "The author decides whether to add `pkgs.kubectl` to the devShell in flake.nix. If so, check with `kubectl version --client` that it is within one minor version of the cluster (1.37), and update the note on chapter 34's deploy page."
+          "ja": "flake.lock かクラスターのバージョンを更新したら、`nix develop -c sh -c 'kubectl version --client'` の結果とクラスターのバージョンを比べ、34章の deploy のページの版と `data/fragments/34.json` の toolchain を直す。",
+          "en": "After updating flake.lock or the cluster version, compare the output of `nix develop -c sh -c 'kubectl version --client'` with the cluster version, and update the version on chapter 34's deploy page and the toolchain entry in `data/fragments/34.json`."
         }
       }
     ]
   },
-  "toolchain": [],
+  "toolchain": [
+    {
+      "name": "kubectl",
+      "version": "1.37.1 (Kustomize 5.8.1)",
+      "providedBy": "nixpkgs kubectl",
+      "pinnedIn": "flake.lock"
+    }
+  ],
   "tasks": {
     "snippet": "      // ---- chapter 34: Kubernetes on EKS ---------------------------------\n      // Fails when k8s/ is not what the generators produce; --write rewrites it. No cluster, no AWS.\n      \"eks:render\": fresh(\"node scripts/render.ts\", { cwd: \"examples/34-eks\" }),\n      // BILLED BY THE HOUR once deployed: the EKS control plane, then nodes and a load balancer.\n      ...infra(\"eks\", \"examples/34-eks\", \"AihEks\"),\n      // Prints the manifests with the stacks' outputs filled in, for `kubectl apply -f -`. Reads only.\n      \"eks:manifests\": live(\"node --env-file-if-exists=../../.env scripts/manifests.ts\", { cwd: \"examples/34-eks\" }),",
     "synth": ["eks:infra:synth"],

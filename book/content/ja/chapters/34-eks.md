@@ -1,6 +1,6 @@
 ---
 title: "34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB"
-revision: 1
+revision: 2
 ---
 
 # 34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB

@@ -33,7 +33,7 @@ The API specification is `src/firecracker/swagger/firecracker.yaml` in the repos
 
 <<< @/examples/67-firecracker/src/spec.ts{pinned}
 
-The pinned release is v1.17.0, published on September 10, 2026. The whole specification is 64 KB, and most of it describes operations this chapter does not use: the balloon, memory hotplug, MMDS and others. What is committed is a JSON file with the nine operations above and the definitions they refer to (`spec/firecracker-v1.17.0.subset.json`). This function cuts it out.
+The pinned release is v1.17.0, published on September 10, 2026. The whole specification is 64 KB, and most of it describes operations this chapter does not use: the balloon, memory hotplug, MMDS and others. What is committed is a JSON file with the nine operations above and the definitions they refer to (`spec/firecracker-v1.17.0.subset.json`). The specification is published under the Apache License 2.0, so the license text and `NOTICE` sit in the same directory. This function cuts it out.
 
 <<< @/examples/67-firecracker/src/spec.ts{extract}
 

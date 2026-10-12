@@ -1,6 +1,6 @@
 ---
 title: "33 Production Readiness: 本番に出す前の点検"
-revision: 1
+revision: 2
 ---
 
 # 33 Production Readiness: 本番に出す前の点検

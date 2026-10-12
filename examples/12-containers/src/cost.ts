@@ -1,4 +1,4 @@
-import { type ContainersConfig, SERVICE, TASK } from "./config.ts";
+import { type ContainersConfig, imageOf, SERVICE, TASK } from "./config.ts";
 
 // #region billable
 /** The book's month. data/pricing/scenarios.json uses the same number. */
@@ -26,7 +26,7 @@ export function fixedMonthlyItems(
   tasks: number = SERVICE.desiredCount,
   hours: number = MONTH_HOURS,
 ): FixedItem[] {
-  if (config.imageTag === undefined) {
+  if (imageOf(config) === undefined) {
     // Only the repository exists. Its storage is billed by size, not by the hour.
     return [];
   }

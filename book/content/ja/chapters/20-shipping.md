@@ -1,6 +1,6 @@
 ---
 title: "20 CI/CD: OIDC、環境、preview、rollback、drift"
-revision: 4
+revision: 5
 ---
 
 # 20 CI/CD: OIDC、環境、preview、rollback、drift

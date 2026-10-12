@@ -9,7 +9,7 @@ import type { Construct } from "constructs";
 
 import { importNetwork } from "@aih/example-11-network/infra/lib/import-network.ts";
 
-import { type ContainersConfig, SERVICE, TASK } from "../../src/config.ts";
+import { type ContainersConfig, imageOf, SERVICE, TASK } from "../../src/config.ts";
 import { timing } from "../../src/timing.ts";
 
 export type ContainersStackProps = StackProps & { config: ContainersConfig };
@@ -31,7 +31,8 @@ export class ContainersStack extends Stack {
     new CfnOutput(this, "RepositoryUri", { value: repository.repositoryUri });
 
     // No image yet, so nothing that could run one. And nothing billed by the hour.
-    if (config.imageTag === undefined) {
+    const image = imageOf(config);
+    if (image === undefined) {
       return;
     }
     // #endregion repository
@@ -67,14 +68,15 @@ export class ContainersStack extends Stack {
     });
     taskDefinition.addContainer("api", {
       // Grants the execution role the pull on this repository, and no other.
-      image: ecs.ContainerImage.fromEcrRepository(repository, config.imageTag),
+      // A value that starts with "sha256:" is joined to the URI with "@", any other with ":".
+      image: ecs.ContainerImage.fromEcrRepository(repository, image),
       portMappings: [{ containerPort: TASK.containerPort }],
       environment: {
         PORT: String(TASK.containerPort),
         ALLOWED_ORIGIN: config.allowedOrigin,
         LOG_LEVEL: "info",
         STAGE: "dev",
-        APP_VERSION: config.imageTag,
+        APP_VERSION: image,
       },
       logging: ecs.LogDrivers.awsLogs({ logGroup, streamPrefix: "api" }),
       // The server gives up at timing.shutdownDeadline. SIGKILL has to come after that.

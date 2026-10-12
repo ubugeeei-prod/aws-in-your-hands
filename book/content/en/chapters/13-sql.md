@@ -1,6 +1,6 @@
 ---
 title: "13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
-sourceRevision: 5
+sourceRevision: 6
 ---
 
 # 13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2
@@ -86,13 +86,14 @@ This chapter is built around Aurora DSQL because it is the easiest of the three 
 
 There are also clear cases where DSQL does not fit.
 
-- You need PostgreSQL's features as they are. If you use triggers, PL/pgSQL, extensions, or temporary tables, or want an existing PostgreSQL application or ORM to run unchanged, RDS is the straightforward choice because it is PostgreSQL itself (how far Aurora matches it was not checked for this chapter)
+- You need PostgreSQL's features as they are. If you use triggers, PL/pgSQL, extensions, or temporary tables, or want an existing PostgreSQL application or ORM to run unchanged, RDS is the straightforward choice because it is PostgreSQL itself (how far Aurora matches it was not checked for this chapter). [Chapter 59](/en/chapters/59-rds.md) covers what you decide when the database is an RDS instance
 - One transaction writes a large number of rows. A bulk update of more than 3,000 rows, or work that takes more than 5 minutes, does not fit on DSQL unless you can split it
 - Writes concentrate on the same row. When many transactions update one counter or one stock row at once, DSQL fails them instead of making them wait, and you end up retrying constantly
+- You plan to move the data with AWS DMS. Aurora DSQL is in neither the list of DMS sources nor the list of targets (checked by [chapter 39](/en/chapters/39-database-migration.md) on 2026-10-13). Chapter 39 also reads the DMS documentation as saying that a `text` primary key, which this chapter's schema has, is treated as a LOB and cannot be replicated. That reading was not confirmed by running DMS, so run the DMS premigration assessment before you migrate
 
 Choosing RDS or Aurora brings a VPC with it. A database instance lives inside a VPC, so the Lambda function has to go into the VPC as well, with subnets and security groups. [Chapter 11](/en/chapters/11-network.md) covered VPCs, so this chapter builds none.
 
-Aurora Serverless v2 pauses only under certain conditions. With a minimum capacity of 0 ACUs, the instance pauses after a period with no user connections (5 minutes by default, one day at most), and the instance charge drops to zero. A single open connection keeps it running, though. So does an attached RDS Proxy, because the proxy holds connections open, and so do logical replication and zero-ETL integrations. The first connection after a pause waits about 15 seconds for the resume, and can wait 30 seconds or longer if the pause lasted more than 24 hours. Storage is still charged while the instance is paused.
+Aurora Serverless v2 pauses only under certain conditions. With a minimum capacity of 0 ACUs, the instance pauses after a period with no user connections (5 minutes by default, one day at most), and the instance charge drops to zero. A single open connection keeps it running, though. So does an attached RDS Proxy, because the proxy holds connections open, and so do logical replication and zero-ETL integrations. The first connection after a pause waits about 15 seconds for the resume, and can wait 30 seconds or longer if the pause lasted more than 24 hours. Storage is still charged while the instance is paused. [Chapter 60](/en/chapters/60-aurora.md) covers how Aurora works and how to write code that does not corrupt data when an instance is replaced.
 
 Aurora also has Data API, which accepts SQL over HTTP. With Data API the Lambda function stays out of the VPC, but the database credentials then live in Secrets Manager. Which Regions and engine versions offer Data API was not checked for this chapter.
 

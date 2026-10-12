@@ -70,79 +70,17 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 10 | `vp run edge:infra:diff / deploy / drift / destroy, edge:publish / unpublish` | AWS | not run | - | Creates an S3 bucket, a CloudFront distribution, a function, and a key value store |
 | 10 | `vp run edge:kvs:plan / edge:kvs:sync` | AWS | not run | - | Needs the deployed key value store. API operations cost USD 1 per 1,000 |
 | 10 | `vp run edge:body:infra:deploy / destroy` | AWS | not run | - | Creates a Lambda function, a version, and an IAM role in us-east-1 |
-| 13 | `vp run test:unit (examples/13-sql)` | local | passed | 2026-10-11 | Transaction retries, the repository on PGlite (quota, versions, owner isolation, constraints), injected COMMIT conflicts, migration lint and resuming after an interruption, grant statement checks, the API, and infrastructure assertions |
-| 13 | `vp run sql:db:reset:local / sql:db:migrate:local / sql:db:seed:local, vp run dev:sql + curl (NOTES_DB=pglite)` | local | passed | 2026-10-11 | Applied the migrations and the seed, saw a second run change nothing, and checked create, update, the 409 for a stale version, the 404 for a non-UUID id, delete, and that reset is refused while the dev server runs |
-| 13 | `vp run sql:infra:synth` | local | passed | 2026-10-11 | Builds a CommonJS bundle with node-postgres and the AWS SDK signer using esbuild. The bundle was loaded in Node.js 24 and answered the routes that do not touch the database (GET /health and a non-UUID id) |
-| 13 | `vp run sql:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an Aurora DSQL cluster. cdkd handles AWS::DSQL::Cluster through Cloud Control API |
-| 13 | `vp run sql:db:migrate / sql:db:grant / sql:db:seed` | AWS | not run | - | Connects to the cluster as admin and creates the schema, the database role, and the seed |
-| 13 | `vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)` | AWS | not run | - | Needs the deployed API and cluster |
 | 07 | `vp run test:unit (examples/07-uploads)` | local | passed | 2026-10-11 | Authorization (another user's note is a 404; the key comes only from the token), permit contents, finishing with its deadline and limit, the state of S3 and DynamoDB when stopped partway, the sweep, the replay of a form, the POST policy and presigned GET the SDK produces (signed with made-up credentials only), the shape of DynamoDB requests, and infrastructure assertions |
 | 07 | `vp run dev:uploads:api + vp run dev:uploads:web + ブラウザの自動操作 / browser automation` | local | passed | 2026-10-11 | Checked sign-in, creating a note, choosing a file and seeing the image, a 404 for another user's permit, list, and finish, refusal of an oversized file, another type, and another key, finishing twice, and the image URL no longer loading after a delete and after deleting the note. The store was the in-memory implementation, not S3 |
 | 07 | `vp run uploads:infra:synth / build:uploads:web / typecheck:uploads:web / lint:uploads:web / typecheck` | local | passed | 2026-10-11 | The same 19 resource types as chapter 06. The Cognito code path and scripts/ are type-checked only |
 | 07 | `S3 互換のローカル実装での確認 / a run against an S3-compatible local implementation` | local | not run | - | No task is provided. It needs a Docker daemon, which was not running where this was written |
 | 07 | `vp run uploads:infra:diff / deploy / drift / destroy, uploads:user:create, uploads:publish, uploads:smoke:web, uploads:smoke:api, uploads:sweep, uploads:empty, uploads:unpublish` | AWS | not run | - | Creates two buckets, a user pool, a distribution, and a table. The presigned POST to S3, the lifecycle rules, CORS, and attachment records in DynamoDB are all unconfirmed in AWS |
-| 09 | `vp run test:unit (examples/09-ssr)` | local | passed | 2026-10-11 | The cache decision, the leak replayed through a shared cache, sessions, the publish plan, the smoke verdicts, and the CDK assertions |
-| 09 | `vp run typecheck / typecheck:ssr / lint:ssr` | local | passed | 2026-10-11 | tsc over core, server, infra, scripts, and test; Vize over the .vue files in app. A type error introduced on purpose made vize check fail |
-| 09 | `vp run ssr:check:output (runs build:ssr first)` | local | passed | 2026-10-11 | Called the buffered Lambda handler built by Nuxt 4.6.1 and nitropack 2.13.4 with function URL shaped events and checked headers, sign-in, and the replay through a shared cache. /feed and the HTML were each written in one write. Not run on Lambda |
-| 09 | `vp run ssr:check:output:stream (runs build:ssr:stream first)` | local | passed | 2026-10-11 | Called the streaming handler with the awslambda global replaced by a recording fake. /feed was written in three writes about 300 ms apart, the HTML in one. The Lambda runtime, a function URL, and CloudFront were not involved |
-| 09 | `vp run ssr:infra:synth` | local | passed | 2026-10-11 | Synthesized with cdkd. The template has the function URL (AWS_IAM), the OAC, two Lambda::Permission resources, the cache policy, and the response headers policy |
-| 09 | `nuxt dev on port 3909 (the command behind dev:ssr, started directly) + HTTP requests` | local | passed | 2026-10-11 | Started with AIH_SSR_SIGN_IN=dev and checked public pages, the 404, /me, sign-in, sign-out, the 403 for a cross-site POST, and /feed arriving in three chunks. Not exercised in a browser |
-| 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | not run | - | Creates a distribution, a Lambda function with a function URL, and a bucket |
-| 19 | `vp run test:unit (examples/19-observability)` | local | passed | 2026-10-12 | The shape and size of the lines really written, log queries and the metric filter condition evaluated on real lines, traceparent and X-Ray trace ID conversion, cross-references between spans and log lines, the attribute allow-list, unsampled requests and a lost span reproduced, the alarm conditions, the pricing inputs, and infrastructure assertions |
-| 19 | `vp run dev:obs + curl` | local | passed | 2026-10-12 | Ran the curl commands from the chapter: log lines carry a traceId, spans are printed to the console, a request with traceparent continues that trace ID, and with TRACE_SAMPLE_RATIO=0 no span is printed while the log line remains |
-| 19 | `vp run obs:query:print` | local | passed | 2026-10-12 | Prints the text of a Logs Insights query. Makes no call to AWS |
-| 19 | `vp run obs:infra:synth` | local | passed | 2026-10-12 | Bundles the function, the OpenTelemetry API included, with esbuild. Also synthesized with -c otelLayerArn. Makes no call to AWS |
-| 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table, a Lambda function, an HTTP API, an SNS topic, two alarms, a dashboard and a metric filter. cdkd handles the dashboard and the metric filter through Cloud Control API |
-| 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | not run | - | Need the deployed stack. obs:smoke creates and deletes one note. obs:query is billed by the amount of log data scanned |
-| 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | not run | - | The configuration with the AWS Lambda Layer for OpenTelemetry. The Node.js 24 runtime is not in the layer's list of supported runtimes |
 | 14 | `vp run test:unit (examples/14-kv-cache)` | local | passed | 2026-10-12 | Rate limiter boundaries and concurrency, the store contracts (memory), the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, TTL jitter, the IAM auth token signature, the app, and stack assertions |
 | 14 | `vp run kv:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout and `-c store=valkey`, including the esbuild bundle |
 | 14 | `vp run dev:kv` | local | passed | 2026-10-12 | Started with KV_STORE set to memory, valkey, and dynamodb and ran the curl commands from the chapter; valkey and dynamodb against the local servers of the next row |
 | 14 | `node scripts/test-local.ts (examples/14-kv-cache; the command behind vp run kv:test:local)` | local | passed | 2026-10-12 | Ran the 22 store contract tests against valkey-server 9.1.2 from nixpkgs and DynamoDB Local 3.3.1 as distributed by AWS (the jar on a JRE 21). With no Docker daemon available, both ran as plain processes, not containers |
 | 14 | `vp run kv:local:start / kv:local:stop` | local | not run | - | Not run: no Docker daemon. The images valkey/valkey:9.0.6-alpine and amazon/dynamodb-local:3.3.1 were neither pulled nor started |
 | 14 | `vp run kv:infra:diff / deploy / drift / destroy, kv:smoke, kv:logs` | AWS | not run | - | Creates a DynamoDB table, a Lambda function, and an HTTP API; with `-c store=valkey` also an ElastiCache Serverless cache, which is billed for as long as it exists |
-| 20 | `vp run test:unit (examples/20-shipping, tools/src/drift)` | local | passed | 2026-10-12 | CloudFormation drift polling, classification, and gate (clean, drifted, deleted, unchecked, nested stack, failed detection, missing stack, timeout, stale result, inconsistency, malformed response), the call order through a substituted SDK client, OIDC trust policies and role permissions, per-stage stacks, CDK CLI arguments, the next step for every stack status, preview listing, and the workflow YAML |
-| 20 | `vp run ship:cfn:synth` | local | passed | 2026-10-12 | Synthesized with the pinned AWS CDK CLI 2.1145.0 and no credentials. Checked that cdk.out holds the AihShipApi and AihShipCi templates and that AihShipApi has no AWS::IAM::Policy or AWS::CDK::Metadata. Also run with -c stage=prod and -c stage=pr-12 |
-| 20 | `vp run ship:cfn:deploy -c stage=staging / vp run ship:ci:deploy (no AWS call)` | local | passed | 2026-10-12 | Checked that an unknown stage, and a deploy of the CI roles without a repository, stop before any AWS call |
-| 20 | `vp run check:all` | local | passed | 2026-10-12 | Format, lint, type check, all tests, synthesis of every CDK app, the book build, and the link check |
-| 20 | `vp run ship:cfn:bootstrap` | AWS | not run | - | Creating the CDKToolkit stack was not run. What it creates is described from `cdk bootstrap --show-template` of the pinned CLI |
-| 20 | `vp run ship:cfn:diff / ship:cfn:deploy / ship:smoke / ship:cfn:status / ship:cfn:destroy` | AWS | not run | - | The CloudFormation path was not deployed or checked. That the integration works through the alias, and what a rollback looks like, are unconfirmed |
-| 20 | `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` | AWS | not run | - | The OIDC provider and four roles were not created. That IAM accepts the trust policies and that the bootstrap roles can be assumed are unconfirmed |
-| 20 | `vp run ship:cfn:drift (and the drift lab)` | AWS | not run | - | Drift detection was not run against a real stack. The fixtures were written from the API reference and the SDK types, not captured |
-| 20 | `vp run ship:preview:list` | AWS | not run | - | Listing preview stacks was not run |
-| 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | not run | - | None of the four workflows has run on GitHub Actions. That the Nix devShell works on an x86_64-linux runner is also unconfirmed |
-| 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | not run | - | Moving a stack between cdkd and CloudFormation was not run. The description comes from the pinned version's help output |
-| 12 | `vp run test:unit (examples/12-containers)` | local | passed | 2026-10-12 | The child-process SIGTERM test, graceful shutdown, old and new versions side by side, the timing rules, settings, the docker command lines, pricing, and stack assertions |
-| 12 | `vp run ecs:infra:synth` | local | passed | 2026-10-12 | Synthesized three ways: without an image tag, with `-c imageTag=v1`, and with `-c imageTag=v1 -c taskSubnets=private` |
-| 12 | `vp run ecs:bundle / ecs:bundle:check` | local | passed | 2026-10-12 | Built dist/server.mjs, started it where no node_modules exists, called /health, and saw exit code 0 on SIGTERM |
-| 12 | `vp run dev:ecs` | local | passed | 2026-10-12 | Started it, ran the chapter's curl commands, and saw the draining and stopped log lines on Ctrl-C (SIGINT) |
-| 12 | `vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push` | local | passed | 2026-10-12 | Printed the commands with --dry-run, and saw the task explain itself and exit with 1 when no daemon answers |
-| 12 | `vp run ecs:watch --url http://localhost:8099 --for 3` | local | passed | 2026-10-12 | Pointed at a server started locally, and saw the per-version summary. Not pointed at a deployed service |
-| 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | local | not run | - | No Docker daemon was running, so the image has never been built |
-| 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an ECR repository and, given an image tag, a load balancer and two Fargate tasks, which are billed by the hour |
-| 12 | `vp run ecs:watch / ecs:logs` | AWS | not run | - | Tasks that only read the deployed service |
-| 08 | `vp run test:unit (examples/08-async)` | local | passed | 2026-10-12 | Duplicate delivery (the same message, the same event under another ID, two workers at once), reordering (an older create, a late delete), interruption (before and after the record), a partly failed batch, moving to the DLQ and back, the S3 test event, the repair of chapter 07's gap (a form sent twice), housekeeping run again, run concurrently, and interrupted, image type and size detection (real files written by sips and cwebp), the shape of requests to DynamoDB and S3, and infrastructure assertions. Two conditions were also broken on purpose to confirm that tests fail |
-| 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | local | passed | 2026-10-12 | Checked through /local/queue: sign-in, creating a note, a form upload, the worker's record (ok, 1x1), finishing, the record turning to rejected after the same form sent HTML, a housekeeping dry run, and the record disappearing on delete. The queue and the bucket were the in-memory stand-ins, not SQS or S3 |
-| 08 | `vp run async:infra:synth / typecheck` | local | passed | 2026-10-12 | Chapter 07's 19 resource types plus five (SQS::Queue, SQS::QueuePolicy, Lambda::EventSourceMapping, Lambda::EventInvokeConfig, Scheduler::Schedule): 24 in all, and no Custom:: resource. scripts/ is type-checked only |
-| 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | not run | - | Creates two queues, two functions, one schedule, and everything of chapter 07 (two buckets, a user pool, a distribution, a table). S3 notifications, SQS, the event source mapping, Scheduler, and the conditional writes to DynamoDB are all unconfirmed in AWS |
-| 23 | `vp run test:unit (examples/23-ec2)` | local | passed | 2026-10-12 | The file-backed repository under power loss at each step, behavior on SIGTERM over a real socket, generation of user data and the unit with injection refused, the data volume script run by bash, Run Command arguments, the model of the path to SSM, pricing inputs, and stack assertions |
-| 23 | `vp run ec2:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout and `-c placement=public`, `-c dataOnDestroy=snapshot`, `-c dataSnapshotId=snap-0123456789abcdef0`, and `-c amiId=ami-0123456789abcdef0` |
-| 23 | `vp run ec2:plan / ec2:render / ec2:app:build` | local | passed | 2026-10-12 | ec2:plan ran with the defaults, `placement=public`, a network without the endpoints, and invalid settings. ec2:render confirmed deploy/ matches the generators. ec2:app:build produces a single ESM file |
-| 23 | `vp run dev:ec2 + curl, SIGTERM` | local | passed | 2026-10-12 | Started both the built dist/server.mjs and src/server.ts on Node.js 24. Checked create, list, that notes survive a restart, that SIGTERM ends with exit code 0, and that a damaged notes.json is refused at startup |
-| 23 | `vp run ec2:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an EC2 instance (billed by the hour), an EBS volume, and an S3 bucket. Needs the chapter 11 stack first |
-| 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | not run | - | Reaches the instance through Systems Manager, ships a release, and checks it. ec2:session and ec2:forward need the Session Manager plugin, which the devShell does not include |
-| 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | not run | - | Runs dnf on the instance, unmounts and mounts the data volume, and deletes release objects |
-| 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | not run | - | The procedure in the text was not run. The flags were checked against the help of AWS CLI 2.35.11 in the devShell |
-| 16 | `vp run test:unit (examples/16-long-jobs)` | local | passed | 2026-10-12 | A step that runs again (the same step twice, the table changing after a lost answer, a failure in the middle of a call, a failed read), two workers (a stalled worker writing late, two runs of the same export overlapping), the same output whatever the checkpoint size, the manifest and the compensation (a missing part, an interrupted discard, never deleting a finished export), the workflow definition run by the local runner (a lost answer, retries running out and a resume, a restart from the beginning, a discard), the requests sent to S3 and DynamoDB, the durable-function variant (the SDK's LocalDurableTestRunner), and stack assertions. Two conditions were also broken on purpose; each made two tests fail |
-| 16 | `vp run export:local` | local | passed | 2026-10-12 | Ran the default (250 notes), `--notes 450 --lose 2 --break 4` (a lost answer, then retries running out and a resume), and `--notes 1000 --pages-per-call 20`, and checked that the manifest's line count and distinct note count equal the number of notes. The stores were in memory: not Step Functions, S3, or DynamoDB |
-| 16 | `vp run export:infra:synth / typecheck` | local | passed | 2026-10-12 | Synthesized the default layout and `-c durable=true`, including the esbuild bundles (the durable variant bundles the SDK too). The default has nine resource types, each with a dedicated provider in cdkd 0.296.28; the durable variant adds Lambda::Version and Lambda::Alias, which go through Cloud Control API. scripts/ is type-checked only |
-| 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | not run | - | Creates a bucket, a table, three functions, a state machine, and a schedule; with `-c durable=true` also a durable function, a version, and an alias. Step Functions, the start from Scheduler, S3 conditional writes, the DynamoDB Scan, and the durable function are all unconfirmed in AWS |
-| 22 | `vp run test:unit (examples/22-recovery)` | local | passed | 2026-10-12 | Detection and repair with the table and the bucket restored to different points (same point, table only, before an upload, after an overwrite, no version left); repair as a dry run, run twice, and interrupted; chapter 08's leftover inspection records; the object restore plan and its re-run; version numbers rolled back and the fence; the PITR plan; the drill record; item classification; chapter 05's repository contract; the requests sent to DynamoDB and S3; and stack assertions |
-| 22 | `vp run recovery:demo` | local | passed | 2026-10-12 | Ran, on the in-memory table and bucket, the accident, the table restore, the check (4 findings), the bucket restore, the second check (0), and the fence. The output quoted in the chapter is from this run |
-| 22 | `vp run recovery:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout, including the esbuild bundle. `-c table`, `-c protect=on`, `-c backup=on`, and `-c replica=on` were synthesized inside the tests and by passing context to `node infra/bin/app.ts` |
-| 22 | `vp run recovery:drill new / mark / set / summary` | local | passed | 2026-10-12 | Created a record file, stamped moments and counts, saw an overwrite refused, and printed the summary. The values were for checking the tool, not measurements of a drill, and the file was deleted |
-| 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table with PITR, an S3 bucket with versioning, and a Lambda function; `-c backup=on` adds an AWS Backup vault and plan, `-c replica=on` a second bucket and a replication configuration |
-| 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | not run | - | The steps of the drill. None was run against AWS, and there are no measured RPO or RTO values |
 | 24 | `vp run test:unit (examples/24-celld)` | local | passed | 2026-10-12 | Failures injected at each step of the update ordering (no waiting), the ledger judged against a toy fleet, the probe script run by bash and curl, the install script's arguments and its checksum refusal, generation of the unit and user data, reading diagnose output, backup and restore plans, pricing inputs, and stack assertions |
 | 24 | `vp run celld:infra:synth` | local | passed | 2026-10-12 | Synthesized the default (no node) and `-c nodes=1`, `-c nodes=3`, `-c nodes=2 -c stateOnDestroy=delete`, and `-c nodes=2 -c dataSnapshots=a:snap-0123456789abcdef0` |
 | 24 | `vp run celld:plan / vp run celld:render` | local | passed | 2026-10-12 | The plan and fixed cost per fleet size, and that deploy/ matches what the generators produce |
@@ -152,24 +90,6 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 24 | `vp run celld:rollout / celld:drain / celld:stop-all` | AWS | not run | - | Draining and the rolling update from v0.6.1 to v0.6.2 were not run on real nodes. The ordering was checked against a local stand-in only |
 | 24 | `vp run celld:loss-check` | AWS | not run | - | The check that loses a node and judges the invariant has never been pointed at a real celld fleet |
 | 24 | `vp run celld:backup / celld:restore` | AWS | not run | - | Backup and restore of a stopped fleet were not run. Whether a fleet restored from the bucket copy and the snapshots starts correctly is unconfirmed |
-| 17 | `vp run test:unit (examples/17-ai)` | local | passed | 2026-10-12 | 59 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, the SSE frame, the function URL adapter run with a stand-in for awslambda, and the CDK assertions |
-| 17 | `vp run typecheck (examples/17-ai)` | local | passed | 2026-10-12 | Includes scripts/ and infra/ |
-| 17 | `vp run ai:infra:synth` | local | passed | 2026-10-12 | Includes the esbuild bundle (no Docker); 5 resources |
-| 17 | `vp run dev:ai + curl` | local | passed | 2026-10-12 | Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway (curl cut off at 0.5 s; durationMs 501), and the error event with AI_FIXTURE=truncated |
-| 17 | `vp run check:all` | local | passed | 2026-10-11 | Passed with chapter 17 added |
-| 17 | `vp run dev:ai (AI_BACKEND=bedrock)` | AWS | not run | - | The local server calling real Bedrock; billed |
-| 17 | `vp run ai:hello / ai:test:live` | AWS | not run | - | Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here |
-| 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a Lambda function, a function URL, an IAM role, and a log group |
-| 17 | `vp run ai:smoke / ai:logs` | AWS | not run | - | Needs the deployed function URL; billed |
-| 21 | `vp run test:unit (examples/21-security)` | local | passed | 2026-10-12 | Token signing and verification; the key cache across a rotation (an environment with a stale cache, two rotations, a flood of made-up version ids, Secrets Manager down, concurrent requests); the rotation procedure (a rerun after a lost response, a second rotation too soon, a reused version id); reading the secret through a substituted SDK client; the wildcard lint and its reasoned exceptions; the lint applied to chapter 20's CI roles; the SCP JSON and the evaluation model; waiting for IAM propagation; the posture verdicts; stack assertions (by default only one secret has a monthly fee; the key and the web ACL are opt-in) |
-| 21 | `vp run sec:infra:synth` | local | passed | 2026-10-12 | Synthesized with the pinned cdkd 0.296.28 and no credentials. Checked that cdk.out holds the AihSecurity and AihSecurityWaf templates, that -c cmk=on and -c webAclArn=... change the template, and that a malformed webAclArn stops the synth |
-| 21 | `vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)` | local | passed | 2026-10-12 | This chapter's two templates pass with no exceptions. The result of passing every chapter's cdk.out after `vp run infra:synth` is as written in the chapter's "Running it over the whole book" |
-| 21 | `vp run dev:sec` | local | passed | 2026-10-12 | Checked /health, /token, and /verify on the local server with curl. The key exists only in memory; AWS is not called |
-| 21 | `vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy` | AWS | not run | - | Not run. Behavior through CloudFront, the function URL, and Secrets Manager; whether a 503 appears right after a deploy; that no secret remains after destroy |
-| 21 | `vp run sec:secret:versions / sec:secret:rotate` | AWS | not run | - | Not run. How the staging labels move after PutSecretValue, a rerun with the same version id, and an environment with a stale cache accepting new tokens after a rotation |
-| 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | not run | - | Not run. Creating the web ACL in us-east-1, associating it with the distribution, how long the rate-based rule takes to start blocking, and what the counted rule group records |
-| 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | not run | - | Not run. Encrypting the secret with a customer managed key, the function reading it under the kms:ViaService condition, and the state of the key after destroy |
-| 21 | `vp run sec:posture / sec:trail:iam` | AWS | not run | - | Not run. The actual responses of the read APIs of six services, and the output when a permission is missing |
 | 30 | `vp run modeling:test:local (DynamoDB Local 3.3.1)` | local | passed | 2026-10-13 | Ran the 14 table rules and the 21 notebook rules against DynamoDB Local 3.3.1, started directly from the jar AWS distributes with Java 21 (port 8030, -inMemory -sharedDb -disableTelemetry) and not through Docker; the table was created by `scripts/local-db.ts reset`. The stream consumer and the migration were not run on DynamoDB Local |
 | 33 | `node examples/33-production-readiness/scripts/check.ts` | local | passed | 2026-10-13 | Ran the script behind `vp run ready:check` directly, without its `infra:synth` dependency (other chapters were being written in the same tree, so every stack could not be synthesized again). It read the 27 templates of chapters 02 to 24 and the book site that were already in cdk.out, plus this chapter's 2. The counts in the chapter are from this run and do not include the stacks of chapters 25 to 32 and 34 to 36 |
 | 46 | `node examples/46-shield/scripts/origins.ts --gate AihShield examples/46-shield/cdk.out` | local | passed | 2026-10-13 | What shield:origins:gate runs. The function URL of AihShield is closed |
@@ -253,22 +173,6 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 32 | `vp run limits:cost` | AWS | not run | - | Cost Explorer was not called (USD 0.01 a run) |
 | 32 | `vp run limits:infra:drift` | AWS | not run | - | Not run |
 | 32 | `vp run limits:infra:destroy` | AWS | not run | - | Not run |
-| 33 | `vp test run examples/33-production-readiness` | local | passed | 2026-10-13 | 5 files, 110 tests. Reading a template (refusing what is not one, following references, telling a literal from an intrinsic), a passing and a failing case for each of the 10 rules, waivers (a reason is required, unused waivers, chapter 21's exceptions taken in), the verdict (reported stacks, gated stacks, a gate that read nothing), the two fixtures, the review items (every rule is placed, every task exists), the synth and the check result of the practice and production twins, and the aspect reaching a table added later. The code was also broken on purpose in 11 places to confirm that tests fail (one did not at first, which exposed a bucket policy array that was never read) |
-| 33 | `tsc --noEmit -p examples/33-production-readiness` | local | passed | 2026-10-13 | Type check of the sample, its scripts, tests, and CDK code |
-| 33 | `vp run ready:infra:synth` | local | passed | 2026-10-13 | Wrote the two templates, AihReadyPractice and AihReadyProduction, to cdk.out. It asks AWS nothing |
-| 33 | `vp run ready:gate` | local | passed | 2026-10-13 | The practice stack reported 7 findings and the production stack passed with 2 reasoned waivers. The output quoted in the chapter is from this run |
-| 33 | `vp run ready:review` | local | passed | 2026-10-13 | Printed the list: 8 areas, 32 items |
-| 33 | `node examples/33-production-readiness/scripts/check.ts <cdk.out of chapters 02-24 and book/infra>` | local | passed | 2026-10-13 | Ran the script behind `vp run ready:check` directly, without its `infra:synth` dependency (other chapters were being written in the same tree, so every stack could not be synthesized again). It read the 27 templates of chapters 02 to 24 and the book site that were already in cdk.out: 81 findings and 7 waived. The counts in the chapter are from this run and do not include the stacks of chapters 25 to 32 and 34 to 36 |
-| 33 | `vp run ready:check` | local | not run | - | Not run as a task: it depends on `infra:synth`, which synthesizes every stack of the book again |
-| 33 | `account:whoami, sec:posture, sec:trail:iam, sec:secret:versions, sec:secret:rotate, obs:alarms, ship:cfn:diff, ship:cfn:drift, recovery:status, account:budget:create` | AWS | not run | - | The tasks the review points at that read or change the account. None was run for this chapter |
-| 34 | `vp test run examples/34-eks` | local | passed | 2026-10-13 | The manifest schemas and reference checks, k8s/ against the generators, the arithmetic of rolling updates, disruption budgets and drains, the timing rules, support windows, pricing, and stack assertions |
-| 34 | `tsc --noEmit -p examples/34-eks` | local | passed | 2026-10-13 | Type check |
-| 34 | `vp run eks:infra:synth` | local | passed | 2026-10-13 | Synthesized twice: without context and with `-c deployRoleArn=arn:aws:iam::123456789012:role/aih-deploy`. Nothing was asked of AWS |
-| 34 | `vp run eks:render` | local | passed | 2026-10-13 | k8s/cluster.json and k8s/app.json match what the generators produce |
-| 34 | `vp run eks:manifests cluster --node-role ... --security-group ... ; vp run eks:manifests app --image ...` | local | passed | 2026-10-13 | Printed the manifests with every value given as a flag, reading nothing from AWS |
-| 34 | `vp run eks:infra:deploy` | AWS | not run | - | No cluster was created. Whether cdkd 0.296.28 can create AWS::EKS::Cluster, AccessEntry, and PodIdentityAssociation through Cloud Control API is unverified |
-| 34 | `kubectl apply -f - (vp run eks:manifests cluster / app)` | AWS | not run | - | kubectl is not in the Nix shell, and there is no cluster. The manifests were never given to an API server |
-| 34 | `vp run eks:infra:destroy` | AWS | not run | - | Not run |
 | 35 | `vp test run examples/35-lambda-managed-instances` | local | passed | 2026-10-13 | 8 files, 52 tests. Two requests in flight swapping request IDs with module scope and not with AsyncLocalStorage, replayed in a fixed order both as function calls and over real sockets. Two worker threads each holding their own Map. Settings validation, the model of the path to CloudWatch Logs, pricing inputs, the break-even arithmetic, and stack assertions |
 | 35 | `tsc --noEmit -p examples/35-lambda-managed-instances` | local | passed | 2026-10-13 | Type check |
 | 35 | `vp run lmi:infra:synth` | local | passed | 2026-10-13 | Synthesized the defaults and `-c instanceType=m7g.large`, `-c minExecutionEnvironments=0 -c maxExecutionEnvironments=0`, and `-c maxVCpuCount=16`. esbuild bundles the handler. Nothing is asked of AWS |
@@ -427,14 +331,6 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 51 | `vp run build:calls:web` | local | passed | 2026-10-13 | The page build. The chunk containing amazon-chime-sdk-js is 1,325.59 kB (294.80 kB gzipped) and is loaded only on joining |
 | 51 | `node --env-file=.env.example api/src/dev.ts と vp dev --port 5193（dev:calls:api、dev:calls:web と同じコマンド）` | local | passed | 2026-10-13 | Against the development API with curl: creating a room, 404 for a non-member, 401 without a token, adding a member, joining, leaving, closing. In a browser: sign-in, creating a room, joining, leaving and closing shown on screen, and session.ts (amazon-chime-sdk-js) loading. Port 5173 was in use, so the page ran on 5193 |
 | 51 | `vp run calls:infra:diff / deploy / drift / destroy, calls:user:create, calls:config, preview:calls:web, calls:end` | AWS | not run | - | Creates the user pool, table, function and HTTP API, and makes a call in a Chime SDK meeting. A real call cannot be checked without AWS |
-| 52 | `vp test run examples/52-ecr` | local | passed | 2026-10-13 | 60 tests: writing and reading references, wildcards, the four values of the tag setting, the two ways a moved tag breaks the invariant and the two repairs (on the repository model), the documentation's six examples reproduced, this chapter's policy, policies the schema refuses, the deploy decision, reading describe-images, the comparison with a preview, and the stack's assertions (the template's lifecycle policy equals the tested one, the push role's trust policy and exact list of actions, no deleting or configuring action, the resource types used) |
-| 52 | `tsc --noEmit -p examples/52-ecr` | local | passed | 2026-10-13 | Type check |
-| 52 | `vp run ecr:lifecycle:preview` | local | passed | 2026-10-13 | On the 46 images of the fixture, rule 1 expires 2, rule 2 expires 1, rule 3 expires 8, and 35 are kept. This is the chapter's evaluator, not ECR's preview |
-| 52 | `vp run ecr:infra:synth` | local | passed | 2026-10-13 | The templates of the default layout (the repository alone) and of the layout with -c githubRepository=example/notes -c pullThroughCache=on are synthesized without asking AWS anything |
-| 52 | `vp run ecr:infra:deploy` | AWS | not run | - | Not deployed. The repository, the push role and the pull-through cache rule were not created on AWS |
-| 52 | `docker build / docker push` | local | not run | - | The Nix shell has no Docker daemon. No image was built or pushed |
-| 52 | `vp run ecr:lifecycle:compare` | AWS | not run | - | ECR's lifecycle policy preview was not run. The evaluator has not been compared with ECR |
-| 52 | `vp run ecr:scan:gate` | AWS | not run | - | No real scan result was read |
 | 53 | `vp test run examples/53-efs` | local | passed | 2026-10-13 | 53 tests. The one-file-per-note repository interrupted at each step of a write. On a real file system (macOS, APFS): an in-place write shows half a note, rename into place shows only the old or the new content at every step, two copies of chapter 23's repository lose an acknowledged note, and a model of append. The chapter 04 API on top, IDs that climb out of the directory refused, and stack assertions |
 | 53 | `tsc --noEmit -p examples/53-efs` | local | passed | 2026-10-13 | Type check |
 | 53 | `vp run efs:infra:synth` | local | passed | 2026-10-13 | Synthesized the default layout and `-c dataOnDestroy=retain -c backup=true` without asking AWS anything (esbuild bundling included) |
@@ -472,14 +368,6 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 57 | `vp run polly:listen` | AWS | not run | - | Not run. Polly was never called. Billed: about 70 characters a run |
 | 57 | `vp run polly:empty --yes` | AWS | not run | - | Not run |
 | 57 | `vp run polly:infra:destroy` | AWS | not run | - | Not run |
-| 58 | `vp test run examples/58-ledger` | local | passed | 2026-10-13 | 83 passed, 1 skipped (the one for DynamoDB Local). The pinned hash, reading rows back, a race for the next number and a lost response, the journal rules on the in-memory model, taking and refusing a digest, detection of changed, removed, swapped and cut-off entries, attacks on the digest, the Object Lock model, the shape of requests to DynamoDB and S3, the function, the purge plan, and stack assertions |
-| 58 | `tsc --noEmit -p examples/58-ledger` | local | passed | 2026-10-13 | Type check, no errors |
-| 58 | `vp run ledger:demo` | local | passed | 2026-10-13 | Appends, a digest, a rewrite of history and an audit, in memory. The output in the page is from this run |
-| 58 | `vp run ledger:db:reset:local && vp run ledger:test:local (DynamoDB Local 3.3.1)` | local | passed | 2026-10-13 | Ran the 5 journal rules through both the PartiQL INSERT and the conditional PutItem, plus one run from append to digest to audit, against DynamoDB Local 3.3.1 (11 tests), started directly from the jar AWS distributes with Java 21 (port 8058, -inMemory -sharedDb -disableTelemetry) and not through Docker; the tasks were given `DYNAMODB_ENDPOINT=http://localhost:8058` in the environment. The duplicate INSERT was answered with the name `DuplicateItem`. The digest store was the in-memory model |
-| 58 | `vp run ledger:infra:synth` | local | passed | 2026-10-13 | Synthesized the template: 12 resources, with the function bundle including the AWS SDK. No AWS lookups |
-| 58 | `vp run ledger:infra:deploy` | AWS | not run | - | Not deployed |
-| 58 | `vp run ledger:append / ledger:digest / ledger:verify` | AWS | not run | - | Not run |
-| 58 | `vp run ledger:infra:destroy / ledger:purge` | AWS | not run | - | Not run |
 | 59 | `vp test run examples/59-rds` | local | passed | 2026-10-13 | 48 tests. Parsing and comparing LSNs, the real positions PGlite reports, read-your-writes and reads that never go back on the model of a primary and a replica, the write lost when a lagging replica is promoted, the API's headers and CORS, the operations function (creating roles, chapter 13's migrations, what notes_api may do, idempotency, input checks), configuration and environment, and 15 stack assertions over three synthesized variants |
 | 59 | `tsc --noEmit -p examples/59-rds` | local | passed | 2026-10-13 | Type check of src, infra, test, and scripts |
 | 59 | `vp run rds:infra:synth` | local | passed | 2026-10-13 | Writes the template (32 resources, 8 outputs) and two bundles to cdk.out. Asks AWS nothing. Both bundles were loaded under Node.js 24.21.0: the API function answered GET /health with 200, and the operations function refused an unknown command before opening a connection |
@@ -527,17 +415,44 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 64 | `vp run isolates:smoke` | AWS | not run | - | Not run |
 | 64 | `vp run isolates:infra:drift` | AWS | not run | - | Not run |
 | 64 | `vp run isolates:infra:destroy` | AWS | not run | - | Not run |
+| 68 | `vp test run examples/68-nitro` | local | passed | 2026-10-13 | Reading instance type names, finding a device from a volume ID, PCR3 and PCR4 (matching the user guide's example values), the key policy and its evaluator, the model of parent, enclave and KMS with its invariant, pricing inputs, and stack assertions |
+| 68 | `tsc --noEmit -p examples/68-nitro` | local | passed | 2026-10-13 | Type check |
+| 68 | `vp run nitro:infra:synth` | local | passed | 2026-10-13 | Synthesized the default layout and `-c measurement=<96 hex digits>`, `-c instanceType=m6g.large` |
+| 68 | `vp run nitro:demo` | local | passed | 2026-10-13 | On the model: sealing and opening a note, the parent's direct Decrypt refused, a replayed document, and debug mode refused |
+| 68 | `vp run nitro:names` | local | passed | 2026-10-13 | Read the six default names |
+| 68 | `vp run nitro:prices` | local | passed | 2026-10-13 | Printed the arm64 and x86 unit prices and the stack's idle cost |
+| 68 | `vp run nitro:infra:deploy` | AWS | not run | - | Not deployed |
+| 68 | `nitro-cli build-enclave / run-enclave` | AWS | not run | - | No enclave image was built and no enclave was started. This machine is macOS without Docker |
+| 68 | `vp run nitro:infra:destroy` | AWS | not run | - | Nothing was deployed, so nothing was destroyed |
+| 33 | `vp test run examples/33-production-readiness` | local | passed | 2026-10-13 | 5 files, 110 tests. Reading a template (refusing what is not one, following references, telling a literal from an intrinsic), a passing and a failing case for each of the 10 rules, waivers (a reason is required, unused waivers, chapter 21's exceptions taken in), the verdict (reported stacks, gated stacks, a gate that read nothing), the two fixtures, the review items (every rule is placed, every task exists), the synth and the check result of the practice and production twins, and the aspect reaching a table added later. The code was also broken on purpose in 11 places to confirm that tests fail (one did not at first, which exposed a bucket policy array that was never read) |
+| 33 | `tsc --noEmit -p examples/33-production-readiness` | local | passed | 2026-10-13 | Type check of the sample, its scripts, tests, and CDK code |
+| 33 | `vp run ready:infra:synth` | local | passed | 2026-10-13 | Wrote the two templates, AihReadyPractice and AihReadyProduction, to cdk.out. It asks AWS nothing |
+| 33 | `vp run ready:gate` | local | passed | 2026-10-13 | The practice stack reported 7 findings and the production stack passed with 2 reasoned waivers. The output quoted in the chapter is from this run |
+| 33 | `vp run ready:review` | local | passed | 2026-10-13 | Printed the list: 8 areas, 32 items |
+| 33 | `node examples/33-production-readiness/scripts/check.ts <cdk.out of chapters 02-24 and book/infra>` | local | passed | 2026-10-13 | Before chapters 25 onward were written, the script behind `vp run ready:check` was run directly, without `infra:synth`. It read the 27 templates of chapters 02 to 24 and the book site: 81 findings and 7 waived. The counts in the chapter were replaced by those of `vp run ready:check`, run as a task on the same day |
+| 33 | `vp run ready:check` | local | passed | 2026-10-13 | Run as a task. Its `infra:synth` dependency synthesized every stack of the book again, and the check read 73 templates (chapters 02 to 36, 38 to 44, 46, 47, 49 to 64, 66 to 68, and the book site; chapters 01, 37, 45 and 48 have no stack). 272 findings and 9 waived: bucket-public 0, iam-wildcard 43, function-url-auth 1, api-throttle 0, table-pitr 27, stateful-delete 135, log-retention 1, function-alarm 50, alarm-recipient 15, queue-dlq 0. 13 stacks have no finding. The counts in the chapter are from this run |
+| 33 | `account:whoami, sec:posture, sec:trail:iam, sec:secret:versions, sec:secret:rotate, obs:alarms, ship:cfn:diff, ship:cfn:drift, recovery:status, account:budget:create` | AWS | not run | - | The tasks the review points at that read or change the account. None was run for this chapter |
+| 34 | `vp test run examples/34-eks` | local | passed | 2026-10-13 | The manifest schemas and reference checks, k8s/ against the generators, the arithmetic of rolling updates, disruption budgets and drains, the timing rules, support windows, pricing, and stack assertions |
+| 34 | `tsc --noEmit -p examples/34-eks` | local | passed | 2026-10-13 | Type check |
+| 34 | `vp run eks:infra:synth` | local | passed | 2026-10-13 | Synthesized twice: without context and with `-c deployRoleArn=arn:aws:iam::123456789012:role/aih-deploy`. Nothing was asked of AWS |
+| 34 | `vp run eks:render` | local | passed | 2026-10-13 | k8s/cluster.json and k8s/app.json match what the generators produce |
+| 34 | `vp run eks:manifests cluster --node-role ... --security-group ... ; vp run eks:manifests app --image ...` | local | passed | 2026-10-13 | Printed the manifests with every value given as a flag, reading nothing from AWS |
+| 34 | `vp run eks:infra:deploy` | AWS | not run | - | No cluster was created. Whether cdkd 0.296.28 can create AWS::EKS::Cluster, AccessEntry, and PodIdentityAssociation through Cloud Control API is unverified |
+| 34 | `kubectl apply -f - (vp run eks:manifests cluster / app)` | AWS | not run | - | There is no cluster. kubectl is now in the devShell, but the manifests were never given to an API server |
+| 34 | `vp run eks:infra:destroy` | AWS | not run | - | Not run |
+| 34 | `kubectl version --client` | local | passed | 2026-10-13 | `pkgs.kubectl` was added to the devShell in flake.nix and the command was run inside `nix develop`. Client Version v1.37.1, Kustomize v5.8.1. The stack's cluster is 1.37, so the client is within one minor version. No cluster was contacted |
 | 66 | `vp test run examples/66-distributed-sql` | local | passed | 2026-10-13 | Flag file generation and validation, failover between nodes, the quorum model (every loss of one node, the loss of two, the write that asynchronous replication loses), chapter 13's retry loop given YugabyteDB's errors on PGlite, the files a node gets, certificate arguments, pricing, and the stack assertions. 7 files, 73 tests |
 | 66 | `tsc --noEmit -p examples/66-distributed-sql` | local | passed | 2026-10-13 | Type check |
 | 66 | `vp run distsql:infra:synth` | local | passed | 2026-10-13 | Synth with the default settings (no nodes, 10 resources) and with `-c nodes=3` (19 resources). Asks AWS nothing |
 | 66 | `vp run distsql:render` | local | passed | 2026-10-13 | The files in deploy/ match what the generators produce |
 | 66 | `vp run distsql:fetch` | local | passed | 2026-10-13 | On macOS 26.6 (arm64): fetched yugabyte-2025.2.7.0-b107-darwin-arm64.tar.gz (130,180,590 bytes) from software.yugabyte.com. Its SHA-256 matched the .sha published next to it (4a6a23f6…edde49). Unpacked into .yugabyte/ |
 | 66 | `vp run distsql:local:start, then vp run distsql:local:verify (no TLS, 2 runs)` | local | passed | 2026-10-13 | Three pairs of yb-master and yb-tserver on 127.0.0.1 (PostgreSQL 15.12-YB-2025.2.7.0-b0). Chapter 13's four migrations and its repository ran unchanged. Twelve creates at once through three nodes against a quota of 3: in both runs 3 created, 9 quota_exceeded, note_count and the rows agreeing at 3. 16 and 4 retries after 40001. After SIGKILL of node b, a and c returned all 40 acknowledged notes, and the next 20 creates took 1.1 s and 0.9 s. With b and c down, the one node left acknowledged no write (no answer for 20 s; a timeout on connect); with them back, all 40 acknowledged notes were there. The unacknowledged write was there after the first run and not after the second. In the second run a ysql_dump fed into another database held all 40 |
-| 66 | `vp run distsql:local:certs, vp run distsql:local:start --tls, then vp run distsql:local:verify (TLS, 5 runs, 1 failed)` | local | passed | 2026-10-13 | With a CA and a certificate for 127.0.0.1 made by openssl (Homebrew's 3.6.1; the Nix shell has none), and TLS and password authentication on, the same verification ran five times. A client without TLS was refused. 12, 12, 12, 26, and 29 retries after 40001. The 20 creates after losing b took 1.1 s to 4.3 s. The one create with two nodes lost was never acknowledged, and was there afterwards in 2 runs of 5. The third run ended in failure: the CREATE DATABASE right after the two nodes returned failed with "current transaction is expired or aborted". The two runs after a retry was added to the backup block passed. A ysql_dump fed into another database held everything in 4 runs. yb-admin answered list_all_masters and modify_placement_info with --certs_dir_name, and without it gave up after 60 s without finding the leader. After the verification, distsql:local:destroy stopped every process |
+| 66 | `vp run distsql:local:certs, vp run distsql:local:start --tls, then vp run distsql:local:verify (TLS, 5 runs, 1 failed)` | local | passed | 2026-10-13 | With a CA and a certificate for 127.0.0.1 made by openssl (Homebrew's 3.6.1; the Nix shell had none at the time of this run), and TLS and password authentication on, the same verification ran five times. A client without TLS was refused. 12, 12, 12, 26, and 29 retries after 40001. The 20 creates after losing b took 1.1 s to 4.3 s. The one create with two nodes lost was never acknowledged, and was there afterwards in 2 runs of 5. The third run ended in failure: the CREATE DATABASE right after the two nodes returned failed with "current transaction is expired or aborted". The two runs after a retry was added to the backup block passed. A ysql_dump fed into another database held everything in 4 runs. yb-admin answered list_all_masters and modify_placement_info with --certs_dir_name, and without it gave up after 60 s without finding the leader. After the verification, distsql:local:destroy stopped every process |
 | 66 | `vp run distsql:fetch --nodes` | local | not run | - | The archive for the nodes (el8-aarch64, 479,462,171 bytes) was not downloaded. Its SHA-256 is copied from the published .sha |
 | 66 | `vp run distsql:infra:deploy -c nodes=3` | AWS | not run | - | Nothing was created in AWS |
 | 66 | `vp run distsql:artifact / distsql:install / distsql:certs / distsql:configure / distsql:start / distsql:status / distsql:health / distsql:logs / distsql:stop / distsql:session` | AWS | not run | - | No task that touches the nodes was run |
 | 66 | `vp run distsql:infra:destroy` | AWS | not run | - | Not run |
+| 66 | `vp run distsql:local:certs (devShell openssl 3.5.8)` | local | passed | 2026-10-13 | Run inside `nix develop` after `pkgs.openssl` was added to the devShell in flake.nix. `openssl version` printed OpenSSL 3.5.8. `.yugabyte/ca` and `.yugabyte/certs` still held the certificates of an earlier run, so the task made nothing and exited 0. Separately, `caArgs`, `requestArgs`, `extensionsFor` and `signArgs` of `src/certs.ts` were run in the same order with the devShell's openssl against an empty directory outside the repository: `openssl verify` answered OK, and the certificate has the subject CN=127.0.0.1 and the subjectAltName IP Address:127.0.0.1. No cluster was started |
 | 67 | `vp test run examples/67-firecracker` | local | passed | 2026-10-13 | 5 files, 67 tests. The check against the specification, validation of the configuration, the order of requests, the client over a Unix domain socket, no start after a refused configuration, the lost answer to InstanceStart, the precondition of a snapshot, how boot time is measured, the assertions on the stack |
 | 67 | `tsc --noEmit -p examples/67-firecracker` | local | passed | 2026-10-13 | Type check |
 | 67 | `vp run firecracker:plan` | local | passed | 2026-10-13 | Printed the five requests of a boot as curl commands; the output quoted in the chapter is from this run |
@@ -550,15 +465,104 @@ Environment: macOS 26 (Darwin 25.6.0), arm64 (aarch64-darwin), Nix 2.25.3 (2026-
 | 67 | `node book/theme/figure-cli.ts (67章の図のある 4 ページ)` | local | passed | 2026-10-13 | 6 figures, 0 problems |
 | 67 | `bash deploy/prepare.sh; sudo bash deploy/tap.sh up; sudo work/firecracker --api-sock ...; sudo work/node/bin/node boot.mjs` | local | not run | - | macOS has no KVM; Firecracker was never started |
 | 67 | `vp run firecracker:infra:deploy -c run=true / firecracker:kit:publish / firecracker:kit:empty / firecracker:infra:destroy` | AWS | not run | - | Nothing was run against AWS |
-| 68 | `vp test run examples/68-nitro` | local | passed | 2026-10-13 | Reading instance type names, finding a device from a volume ID, PCR3 and PCR4 (matching the user guide's example values), the key policy and its evaluator, the model of parent, enclave and KMS with its invariant, pricing inputs, and stack assertions |
-| 68 | `tsc --noEmit -p examples/68-nitro` | local | passed | 2026-10-13 | Type check |
-| 68 | `vp run nitro:infra:synth` | local | passed | 2026-10-13 | Synthesized the default layout and `-c measurement=<96 hex digits>`, `-c instanceType=m6g.large` |
-| 68 | `vp run nitro:demo` | local | passed | 2026-10-13 | On the model: sealing and opening a note, the parent's direct Decrypt refused, a replayed document, and debug mode refused |
-| 68 | `vp run nitro:names` | local | passed | 2026-10-13 | Read the six default names |
-| 68 | `vp run nitro:prices` | local | passed | 2026-10-13 | Printed the arm64 and x86 unit prices and the stack's idle cost |
-| 68 | `vp run nitro:infra:deploy` | AWS | not run | - | Not deployed |
-| 68 | `nitro-cli build-enclave / run-enclave` | AWS | not run | - | No enclave image was built and no enclave was started. This machine is macOS without Docker |
-| 68 | `vp run nitro:infra:destroy` | AWS | not run | - | Nothing was deployed, so nothing was destroyed |
+| 67 | `curl https://raw.githubusercontent.com/firecracker-microvm/firecracker/v1.17.0/{LICENSE,NOTICE}` | local | passed | 2026-10-13 | The LICENSE and NOTICE of Firecracker at the tag v1.17.0 were placed, unmodified, beside the reduced specification (`examples/67-firecracker/spec/`). The SHA-256 of LICENSE is cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30, byte for byte the same as https://www.apache.org/licenses/LICENSE-2.0.txt fetched on the same day. The SHA-256 of NOTICE is 0f443af83ca8226c7ec44e2ade3a09fa3eed8c9b923b6c014b6d439816b6f1c2. The THIRD-PARTY file that NOTICE mentions was not copied |
+| 08 | `vp run test:unit (examples/08-async)` | local | passed | 2026-10-12 | Duplicate delivery (the same message, the same event under another ID, two workers at once), reordering (an older create, a late delete), interruption (before and after the record), a partly failed batch, moving to the DLQ and back, the S3 test event, the repair of chapter 07's gap (a form sent twice), housekeeping run again, run concurrently, and interrupted, image type and size detection (real files written by sips and cwebp), the shape of requests to DynamoDB and S3, and infrastructure assertions. Two conditions were also broken on purpose to confirm that tests fail |
+| 08 | `vp run dev:async + スクリプトによる HTTP の操作 / driven over HTTP by a script` | local | passed | 2026-10-12 | Checked through /local/queue: sign-in, creating a note, a form upload, the worker's record (ok, 1x1), finishing, the record turning to rejected after the same form sent HTML, a housekeeping dry run, and the record disappearing on delete. The queue and the bucket were the in-memory stand-ins, not SQS or S3 |
+| 08 | `vp run async:infra:synth / typecheck` | local | passed | 2026-10-12 | Chapter 07's 19 resource types plus five (SQS::Queue, SQS::QueuePolicy, Lambda::EventSourceMapping, Lambda::EventInvokeConfig, Scheduler::Schedule): 24 in all, and no Custom:: resource. scripts/ is type-checked only |
+| 08 | `vp run async:infra:diff / deploy / drift / destroy, async:smoke, async:queue, async:logs, async:housekeeping, async:publish, async:smoke:web, async:user:create, async:empty, async:unpublish` | AWS | not run | - | Creates two queues, two functions, one schedule, and everything of chapter 07 (two buckets, a user pool, a distribution, a table). S3 notifications, SQS, the event source mapping, Scheduler, and the conditional writes to DynamoDB are all unconfirmed in AWS |
+| 09 | `vp run test:unit (examples/09-ssr)` | local | passed | 2026-10-11 | The cache decision, the leak replayed through a shared cache, sessions, the publish plan, the smoke verdicts, and the CDK assertions |
+| 09 | `vp run typecheck / typecheck:ssr / lint:ssr` | local | passed | 2026-10-11 | tsc over core, server, infra, scripts, and test; Vize over the .vue files in app. A type error introduced on purpose made vize check fail |
+| 09 | `vp run ssr:check:output (runs build:ssr first)` | local | passed | 2026-10-11 | Called the buffered Lambda handler built by Nuxt 4.6.1 and nitropack 2.13.4 with function URL shaped events and checked headers, sign-in, and the replay through a shared cache. /feed and the HTML were each written in one write. Not run on Lambda |
+| 09 | `vp run ssr:check:output:stream (runs build:ssr:stream first)` | local | passed | 2026-10-11 | Called the streaming handler with the awslambda global replaced by a recording fake. /feed was written in three writes about 300 ms apart, the HTML in one. The Lambda runtime, a function URL, and CloudFront were not involved |
+| 09 | `vp run ssr:infra:synth` | local | passed | 2026-10-11 | Synthesized with cdkd. The template has the function URL (AWS_IAM), the OAC, two Lambda::Permission resources, the cache policy, and the response headers policy |
+| 09 | `nuxt dev on port 3909 (the command behind dev:ssr, started directly) + HTTP requests` | local | passed | 2026-10-11 | Started with AIH_SSR_SIGN_IN=dev and checked public pages, the 404, /me, sign-in, sign-out, the 403 for a cross-site POST, and /feed arriving in three chunks. Not exercised in a browser |
+| 09 | `vp run ssr:infra:diff / deploy / drift / destroy, ssr:assets:plan, ssr:assets:publish, ssr:smoke, ssr:unpublish` | AWS | not run | - | Creates a distribution, a Lambda function with a function URL, and a bucket |
+| 12 | `vp run test:unit (examples/12-containers)` | local | passed | 2026-10-13 | The child-process SIGTERM test, graceful shutdown, old and new versions side by side, the timing rules, settings, the docker command lines, pricing, and stack assertions. Includes naming the image by digest and refusing a malformed digest |
+| 12 | `vp run ecs:infra:synth` | local | passed | 2026-10-13 | Synthesized four ways: without an image tag, with `-c imageTag=v1`, with `-c imageTag=v1 -c taskSubnets=private`, and with `-c imageDigest=sha256:...`. Also saw a digest that is too short, and a digest given together with imageTag, refused |
+| 12 | `vp run ecs:bundle / ecs:bundle:check` | local | passed | 2026-10-12 | Built dist/server.mjs, started it where no node_modules exists, called /health, and saw exit code 0 on SIGTERM |
+| 12 | `vp run dev:ecs` | local | passed | 2026-10-12 | Started it, ran the chapter's curl commands, and saw the draining and stopped log lines on Ctrl-C (SIGINT) |
+| 12 | `vp run ecs:image:build v1 --dry-run / ecs:image:run / ecs:image:push` | local | passed | 2026-10-12 | Printed the commands with --dry-run, and saw the task explain itself and exit with 1 when no daemon answers |
+| 12 | `vp run ecs:watch --url http://localhost:8099 --for 3` | local | passed | 2026-10-12 | Pointed at a server started locally, and saw the per-version summary. Not pointed at a deployed service |
+| 12 | `vp run ecs:image:build / ecs:image:run / ecs:image:push` | local | not run | - | No Docker daemon was running, so the image has never been built |
+| 12 | `vp run ecs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an ECR repository and, given an image tag, a load balancer and two Fargate tasks, which are billed by the hour |
+| 12 | `vp run ecs:watch / ecs:logs` | AWS | not run | - | Tasks that only read the deployed service |
+| 13 | `vp run test:unit (examples/13-sql)` | local | passed | 2026-10-11 | Transaction retries, the repository on PGlite (quota, versions, owner isolation, constraints), injected COMMIT conflicts, migration lint and resuming after an interruption, grant statement checks, the API, and infrastructure assertions |
+| 13 | `vp run sql:db:reset:local / sql:db:migrate:local / sql:db:seed:local, vp run dev:sql + curl (NOTES_DB=pglite)` | local | passed | 2026-10-11 | Applied the migrations and the seed, saw a second run change nothing, and checked create, update, the 409 for a stale version, the 404 for a non-UUID id, delete, and that reset is refused while the dev server runs |
+| 13 | `vp run sql:infra:synth` | local | passed | 2026-10-11 | Builds a CommonJS bundle with node-postgres and the AWS SDK signer using esbuild. The bundle was loaded in Node.js 24 and answered the routes that do not touch the database (GET /health and a non-UUID id) |
+| 13 | `vp run sql:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an Aurora DSQL cluster. cdkd handles AWS::DSQL::Cluster through Cloud Control API |
+| 13 | `vp run sql:db:migrate / sql:db:grant / sql:db:seed` | AWS | not run | - | Connects to the cluster as admin and creates the schema, the database role, and the seed |
+| 13 | `vp run sql:smoke / sql:logs, vp run dev:sql (NOTES_DB=dsql)` | AWS | not run | - | Needs the deployed API and cluster |
+| 16 | `vp run test:unit (examples/16-long-jobs)` | local | passed | 2026-10-12 | A step that runs again (the same step twice, the table changing after a lost answer, a failure in the middle of a call, a failed read), two workers (a stalled worker writing late, two runs of the same export overlapping), the same output whatever the checkpoint size, the manifest and the compensation (a missing part, an interrupted discard, never deleting a finished export), the workflow definition run by the local runner (a lost answer, retries running out and a resume, a restart from the beginning, a discard), the requests sent to S3 and DynamoDB, the durable-function variant (the SDK's LocalDurableTestRunner), and stack assertions. Two conditions were also broken on purpose; each made two tests fail |
+| 16 | `vp run export:local` | local | passed | 2026-10-12 | Ran the default (250 notes), `--notes 450 --lose 2 --break 4` (a lost answer, then retries running out and a resume), and `--notes 1000 --pages-per-call 20`, and checked that the manifest's line count and distinct note count equal the number of notes. The stores were in memory: not Step Functions, S3, or DynamoDB |
+| 16 | `vp run export:infra:synth / typecheck` | local | passed | 2026-10-12 | Synthesized the default layout and `-c durable=true`, including the esbuild bundles (the durable variant bundles the SDK too). The default has nine resource types, each with a dedicated provider in cdkd 0.296.28; the durable variant adds Lambda::Version and Lambda::Alias, which go through Cloud Control API. scripts/ is type-checked only |
+| 16 | `vp run export:infra:diff / deploy / drift / destroy, export:seed, export:start, export:status, export:logs, export:empty, export:durable:start` | AWS | not run | - | Creates a bucket, a table, three functions, a state machine, and a schedule; with `-c durable=true` also a durable function, a version, and an alias. Step Functions, the start from Scheduler, S3 conditional writes, the DynamoDB Scan, and the durable function are all unconfirmed in AWS |
+| 17 | `vp run test:unit (examples/17-ai)` | local | passed | 2026-10-12 | 59 tests: fixture streams (complete, maxTokens, cut midway, throttled midway, throttled at open), cancellation and timeout, the client, the SSE frame, the function URL adapter run with a stand-in for awslambda, and the CDK assertions |
+| 17 | `vp run typecheck (examples/17-ai)` | local | passed | 2026-10-12 | Includes scripts/ and infra/ |
+| 17 | `vp run ai:infra:synth` | local | passed | 2026-10-12 | Includes the esbuild bundle (no Docker); 5 resources |
+| 17 | `vp run dev:ai + curl` | local | passed | 2026-10-12 | Started with AI_BACKEND=fixture. Checked /health, a streamed summary, the 400 for invalid input, the `cancelled` log line after disconnecting midway (curl cut off at 0.5 s; durationMs 501), and the error event with AI_FIXTURE=truncated |
+| 17 | `vp run check:all` | local | passed | 2026-10-11 | Passed with chapter 17 added |
+| 17 | `vp run dev:ai (AI_BACKEND=bedrock)` | AWS | not run | - | The local server calling real Bedrock; billed |
+| 17 | `vp run ai:hello / ai:test:live` | AWS | not run | - | Calls a real model; billed. The model ID, the permissions, and the real event shapes can only be checked here |
+| 17 | `vp run ai:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a Lambda function, a function URL, an IAM role, and a log group |
+| 17 | `vp run ai:smoke / ai:logs` | AWS | not run | - | Needs the deployed function URL; billed |
+| 19 | `vp run test:unit (examples/19-observability)` | local | passed | 2026-10-12 | The shape and size of the lines really written, log queries and the metric filter condition evaluated on real lines, traceparent and X-Ray trace ID conversion, cross-references between spans and log lines, the attribute allow-list, unsampled requests and a lost span reproduced, the alarm conditions, the pricing inputs, and infrastructure assertions |
+| 19 | `vp run dev:obs + curl` | local | passed | 2026-10-12 | Ran the curl commands from the chapter: log lines carry a traceId, spans are printed to the console, a request with traceparent continues that trace ID, and with TRACE_SAMPLE_RATIO=0 no span is printed while the log line remains |
+| 19 | `vp run obs:query:print` | local | passed | 2026-10-12 | Prints the text of a Logs Insights query. Makes no call to AWS |
+| 19 | `vp run obs:infra:synth` | local | passed | 2026-10-12 | Bundles the function, the OpenTelemetry API included, with esbuild. Also synthesized with -c otelLayerArn. Makes no call to AWS |
+| 19 | `vp run obs:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table, a Lambda function, an HTTP API, an SNS topic, two alarms, a dashboard and a metric filter. cdkd handles the dashboard and the metric filter through Cloud Control API |
+| 19 | `vp run obs:smoke / obs:query / obs:alarms` | AWS | not run | - | Need the deployed stack. obs:smoke creates and deletes one note. obs:query is billed by the amount of log data scanned |
+| 19 | `vp run obs:infra:deploy -c otelLayerArn=...` | AWS | not run | - | The configuration with the AWS Lambda Layer for OpenTelemetry. The Node.js 24 runtime is not in the layer's list of supported runtimes |
+| 20 | `vp run test:unit (examples/20-shipping, tools/src/drift)` | local | passed | 2026-10-12 | CloudFormation drift polling, classification, and gate (clean, drifted, deleted, unchecked, nested stack, failed detection, missing stack, timeout, stale result, inconsistency, malformed response), the call order through a substituted SDK client, OIDC trust policies and role permissions, per-stage stacks, CDK CLI arguments, the next step for every stack status, preview listing, and the workflow YAML |
+| 20 | `vp run ship:cfn:synth` | local | passed | 2026-10-12 | Synthesized with the pinned AWS CDK CLI 2.1145.0 and no credentials. Checked that cdk.out holds the AihShipApi and AihShipCi templates and that AihShipApi has no AWS::IAM::Policy or AWS::CDK::Metadata. Also run with -c stage=prod and -c stage=pr-12 |
+| 20 | `vp run ship:cfn:deploy -c stage=staging / vp run ship:ci:deploy (no AWS call)` | local | passed | 2026-10-12 | Checked that an unknown stage, and a deploy of the CI roles without a repository, stop before any AWS call |
+| 20 | `vp run check:all` | local | passed | 2026-10-12 | Format, lint, type check, all tests, synthesis of every CDK app, the book build, and the link check |
+| 20 | `vp run ship:cfn:bootstrap` | AWS | not run | - | Creating the CDKToolkit stack was not run. What it creates is described from `cdk bootstrap --show-template` of the pinned CLI |
+| 20 | `vp run ship:cfn:diff / ship:cfn:deploy / ship:smoke / ship:cfn:status / ship:cfn:destroy` | AWS | not run | - | The CloudFormation path was not deployed or checked. That the integration works through the alias, and what a rollback looks like, are unconfirmed |
+| 20 | `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` | AWS | not run | - | The OIDC provider and four roles were not created. That IAM accepts the trust policies and that the bootstrap roles can be assumed are unconfirmed |
+| 20 | `vp run ship:cfn:drift (and the drift lab)` | AWS | not run | - | Drift detection was not run against a real stack. The fixtures were written from the API reference and the SDK types, not captured |
+| 20 | `vp run ship:preview:list` | AWS | not run | - | Listing preview stacks was not run |
+| 20 | `examples/20-shipping/workflows/*.yml on GitHub Actions` | AWS | not run | - | None of the four workflows has run on GitHub Actions. That the Nix devShell works on an x86_64-linux runner is also unconfirmed |
+| 20 | `cdkd export / cdkd import --migrate-from-cloudformation` | AWS | not run | - | Moving a stack between cdkd and CloudFormation was not run. The description comes from the pinned version's help output |
+| 21 | `vp run test:unit (examples/21-security)` | local | passed | 2026-10-12 | Token signing and verification; the key cache across a rotation (an environment with a stale cache, two rotations, a flood of made-up version ids, Secrets Manager down, concurrent requests); the rotation procedure (a rerun after a lost response, a second rotation too soon, a reused version id); reading the secret through a substituted SDK client; the wildcard lint and its reasoned exceptions; the lint applied to chapter 20's CI roles; the SCP JSON and the evaluation model; waiting for IAM propagation; the posture verdicts; stack assertions (by default only one secret has a monthly fee; the key and the web ACL are opt-in) |
+| 21 | `vp run sec:infra:synth` | local | passed | 2026-10-12 | Synthesized with the pinned cdkd 0.296.28 and no credentials. Checked that cdk.out holds the AihSecurity and AihSecurityWaf templates, that -c cmk=on and -c webAclArn=... change the template, and that a malformed webAclArn stops the synth |
+| 21 | `vp run sec:iam:lint (own cdk.out, and every chapter's cdk.out)` | local | passed | 2026-10-12 | This chapter's two templates pass with no exceptions. The result of passing every chapter's cdk.out after `vp run infra:synth` is as written in the chapter's "Running it over the whole book" |
+| 21 | `vp run dev:sec` | local | passed | 2026-10-12 | Checked /health, /token, and /verify on the local server with curl. The key exists only in memory; AWS is not called |
+| 21 | `vp run sec:infra:deploy / sec:smoke / sec:infra:drift / sec:infra:destroy` | AWS | not run | - | Not run. Behavior through CloudFront, the function URL, and Secrets Manager; whether a 503 appears right after a deploy; that no secret remains after destroy |
+| 21 | `vp run sec:secret:versions / sec:secret:rotate` | AWS | not run | - | Not run. How the staging labels move after PutSecretValue, a rerun with the same version id, and an environment with a stale cache accepting new tokens after a rotation |
+| 21 | `vp run sec:waf:infra:deploy / sec:infra:deploy -c webAclArn=... / sec:waf:infra:destroy` | AWS | not run | - | Not run. Creating the web ACL in us-east-1, associating it with the distribution, how long the rate-based rule takes to start blocking, and what the counted rule group records |
+| 21 | `vp run sec:infra:deploy -c cmk=on` | AWS | not run | - | Not run. Encrypting the secret with a customer managed key, the function reading it under the kms:ViaService condition, and the state of the key after destroy |
+| 21 | `vp run sec:posture / sec:trail:iam` | AWS | not run | - | Not run. The actual responses of the read APIs of six services, and the output when a permission is missing |
+| 22 | `vp run test:unit (examples/22-recovery)` | local | passed | 2026-10-12 | Detection and repair with the table and the bucket restored to different points (same point, table only, before an upload, after an overwrite, no version left); repair as a dry run, run twice, and interrupted; chapter 08's leftover inspection records; the object restore plan and its re-run; version numbers rolled back and the fence; the PITR plan; the drill record; item classification; chapter 05's repository contract; the requests sent to DynamoDB and S3; and stack assertions |
+| 22 | `vp run recovery:demo` | local | passed | 2026-10-12 | Ran, on the in-memory table and bucket, the accident, the table restore, the check (4 findings), the bucket restore, the second check (0), and the fence. The output quoted in the chapter is from this run |
+| 22 | `vp run recovery:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout, including the esbuild bundle. `-c table`, `-c protect=on`, `-c backup=on`, and `-c replica=on` were synthesized inside the tests and by passing context to `node infra/bin/app.ts` |
+| 22 | `vp run recovery:drill new / mark / set / summary` | local | passed | 2026-10-12 | Created a record file, stamped moments and counts, saw an overwrite refused, and printed the summary. The values were for checking the tool, not measurements of a drill, and the file was deleted |
+| 22 | `vp run recovery:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates a DynamoDB table with PITR, an S3 bucket with versioning, and a Lambda function; `-c backup=on` adds an AWS Backup vault and plan, `-c replica=on` a second bucket and a replication configuration |
+| 22 | `vp run recovery:status / seed / accident / restore:table / restore:objects / diff / verify / repair / protect / audit / drop-table / empty` | AWS | not run | - | The steps of the drill. None was run against AWS, and there are no measured RPO or RTO values |
+| 23 | `vp run test:unit (examples/23-ec2)` | local | passed | 2026-10-12 | The file-backed repository under power loss at each step, behavior on SIGTERM over a real socket, generation of user data and the unit with injection refused, the data volume script run by bash, Run Command arguments, the model of the path to SSM, pricing inputs, and stack assertions |
+| 23 | `vp run ec2:infra:synth` | local | passed | 2026-10-12 | Synthesized the default layout and `-c placement=public`, `-c dataOnDestroy=snapshot`, `-c dataSnapshotId=snap-0123456789abcdef0`, and `-c amiId=ami-0123456789abcdef0` |
+| 23 | `vp run ec2:plan / ec2:render / ec2:app:build` | local | passed | 2026-10-12 | ec2:plan ran with the defaults, `placement=public`, a network without the endpoints, and invalid settings. ec2:render confirmed deploy/ matches the generators. ec2:app:build produces a single ESM file |
+| 23 | `vp run dev:ec2 + curl, SIGTERM` | local | passed | 2026-10-12 | Started both the built dist/server.mjs and src/server.ts on Node.js 24. Checked create, list, that notes survive a restart, that SIGTERM ends with exit code 0, and that a damaged notes.json is refused at startup |
+| 23 | `vp run ec2:infra:diff / deploy / drift / destroy` | AWS | not run | - | Creates an EC2 instance (billed by the hour), an EBS volume, and an S3 bucket. Needs the chapter 11 stack first |
+| 23 | `vp run ec2:status / ec2:session / ec2:forward / ec2:app:release / ec2:app:rollback / ec2:smoke / ec2:logs` | AWS | not run | - | Reaches the instance through Systems Manager, ships a release, and checks it. ec2:session and ec2:forward need the Session Manager plugin, which the devShell does not include |
+| 23 | `vp run ec2:patch:check / ec2:patch:apply / ec2:data:unmount / ec2:data:mount / ec2:releases:empty` | AWS | not run | - | Runs dnf on the instance, unmounts and mounts the data volume, and deletes release objects |
+| 23 | `aws ec2 create-snapshot / create-volume / detach-volume / attach-volume（snapshot と restore の手順）` | AWS | not run | - | The procedure in the text was not run. The flags were checked against the help of AWS CLI 2.35.11 in the devShell |
+| 58 | `vp test run examples/58-ledger` | local | passed | 2026-10-13 | 83 passed, 1 skipped (the one for DynamoDB Local). The pinned hash, reading rows back, a race for the next number and a lost response, the journal rules on the in-memory model, taking and refusing a digest, detection of changed, removed, swapped and cut-off entries, attacks on the digest, the Object Lock model, the shape of requests to DynamoDB and S3, the function, the purge plan, and stack assertions |
+| 58 | `tsc --noEmit -p examples/58-ledger` | local | passed | 2026-10-13 | Type check, no errors |
+| 58 | `vp run ledger:demo` | local | passed | 2026-10-13 | Appends, a digest, a rewrite of history and an audit, in memory. The output in the page is from this run |
+| 58 | `vp run ledger:db:reset:local && vp run ledger:test:local (DynamoDB Local 3.3.1)` | local | passed | 2026-10-13 | Ran the 5 journal rules through both the PartiQL INSERT and the conditional PutItem, plus one run from append to digest to audit, against DynamoDB Local 3.3.1 (11 tests), started directly from the jar AWS distributes with Java 21 (port 8058, -inMemory -sharedDb -disableTelemetry) and not through Docker; the tasks were given `DYNAMODB_ENDPOINT=http://localhost:8058` in the environment. The duplicate INSERT was answered with the name `DuplicateItem`. The digest store was the in-memory model |
+| 58 | `vp run ledger:infra:synth` | local | passed | 2026-10-13 | Synthesized the template: 12 resources, with the function bundle including the AWS SDK. No AWS lookups |
+| 58 | `vp run ledger:infra:deploy` | AWS | not run | - | Not deployed |
+| 58 | `vp run ledger:append / ledger:digest / ledger:verify` | AWS | not run | - | Not run |
+| 58 | `vp run ledger:infra:destroy / ledger:purge` | AWS | not run | - | Not run |
+| 52 | `vp test run examples/52-ecr` | local | passed | 2026-10-13 | 60 tests: writing and reading references, wildcards, the four values of the tag setting, the two ways a moved tag breaks the invariant and the two repairs (on the repository model), the documentation's six examples reproduced, this chapter's policy, policies the schema refuses, the deploy decision, reading describe-images, the comparison with a preview, and the stack's assertions (the template's lifecycle policy equals the tested one, the push role's trust policy and exact list of actions, no deleting or configuring action, the resource types used) |
+| 52 | `tsc --noEmit -p examples/52-ecr` | local | passed | 2026-10-13 | Type check |
+| 52 | `vp run ecr:lifecycle:preview` | local | passed | 2026-10-13 | On the 46 images of the fixture, rule 1 expires 2, rule 2 expires 1, rule 3 expires 8, and 35 are kept. This is the chapter's evaluator, not ECR's preview |
+| 52 | `vp run ecr:infra:synth` | local | passed | 2026-10-13 | The templates of the default layout (the repository alone) and of the layout with -c githubRepository=example/notes -c pullThroughCache=on are synthesized without asking AWS anything |
+| 52 | `vp run ecr:infra:deploy` | AWS | not run | - | Not deployed. The repository, the push role and the pull-through cache rule were not created on AWS |
+| 52 | `docker build / docker push` | local | not run | - | The Nix shell has no Docker daemon. No image was built or pushed |
+| 52 | `vp run ecr:lifecycle:compare` | AWS | not run | - | ECR's lifecycle policy preview was not run. The evaluator has not been compared with ECR |
+| 52 | `vp run ecr:scan:gate` | AWS | not run | - | No real scan result was read |
+| 68 | `vp run check:all` | local | passed | 2026-10-13 | Passed with chapters 00 to 68 in place (there is no 65). Format and lint (awscdk-lint included), type check, 5,044 tests (5 more skipped because their conditions were not met), synthesis of every CDK app, 54 bundles loaded, the book build, and the link check over 668 pages. Nothing touched AWS |
 
 ## Open items and how to resume
 
@@ -718,24 +722,6 @@ Whether cdkd 0.296.28 can create, update, and delete AWS::CloudFront::KeyValueSt
 
 To resume: Run AIH_AWS_REGION=us-east-1 vp run infra:bootstrap, then vp run edge:body:infra:deploy. Pass the BodyDigestVersionArn output to vp run edge:infra:deploy with -c bodyDigestVersionArn=..., and check /digest with curl -X POST. If it fails, record how and ask the author for a decision; do not substitute another tool.
 
-### dsql-real-cluster
-
-The chapter 13 code has never been connected to a real Aurora DSQL cluster. Unconfirmed: that the four migrations are accepted (CREATE SCHEMA IF NOT EXISTS, the foreign key, the CHECKs, CREATE INDEX ASYNC IF NOT EXISTS), that job_id can be read from the response to CREATE INDEX ASYNC and sys.jobs polled, that AWS IAM GRANT plus the schema GRANTs let notes_api read and write, that the token passes through the function given to node-postgres as password, that a conflict shows up as code 40001 on node-postgres's error, and how a dropped connection looks in an execution environment that was frozen. The local stand-in is PGlite (PostgreSQL 18.3), a different version from DSQL (PostgreSQL 16 compatible).
-
-To resume: In a practice account run vp run sql:infra:deploy, sql:db:migrate, sql:db:grant, and sql:smoke in that order. Put concurrent updates on one note and look for "transaction retry" lines and 40001 with sql:logs. Call again after more than 15 minutes and watch the reconnect. Record the results in data/validation.json and remove everything with vp run sql:infra:destroy.
-
-### cdkd-dsql-cluster
-
-cdkd 0.296.28 has no dedicated provider for AWS::DSQL::Cluster and handles it through Cloud Control API. Whether create, Ref returning the cluster identifier, drift read-back, and delete work in practice is unconfirmed. The chapter 13 stack builds the endpoint and the ARN from Ref.
-
-To resume: After vp run sql:infra:deploy, check that the ClusterEndpoint output has the form <26-character id>.dsql.ap-northeast-1.on.aws and that the function's environment variable and the IAM policy's Resource point at the same cluster. Record the results of vp run sql:infra:drift and sql:infra:destroy as well.
-
-### dsql-dpu-estimate
-
-The chapter 13 cost scenario borrows its DPUs per request from the documentation's worked examples. They were not measured on this chapter's queries.
-
-To resume: On a deployed cluster use EXPLAIN ANALYZE VERBOSE, or the ComputeDPU, ReadDPU, and WriteDPU metrics in CloudWatch, to measure the DPUs of one create, one update, and one list. Correct the scenarios in data/fragments/13.json and apply it again.
-
 ### uploads-s3-post-policy
 
 Chapter 07: the presigned POST has never been sent to real S3. In particular, whether S3 accepts the form's tagging field under the policy condition {"tagging": ...} is unconfirmed, because the table of POST policy conditions does not list tagging. Refusal by content-length-range and Content-Type, the bucket's CORS, and HeadObject right after the POST are unconfirmed too.
@@ -760,60 +746,6 @@ Chapter 07: replaying the same form within the permit's lifetime (5 minutes) aft
 
 To resume: Switch to a presigned PUT with If-None-Match (after confirming on real S3 that a signed Content-Length pins the size), or add a step that removes the tag again after the permit expires.
 
-### ssr-aws-path
-
-The chapter 09 setup has never run in AWS. Unconfirmed: that Nitro's handler runs on the Node.js 24 runtime behind a function URL, that the function URL accepts OAC-signed requests and refuses direct ones, that the cache policy and the response headers policy behave as intended, the real values of the x-cache and age headers the smoke test reads, and the response to a method that is not allowed.
-
-To resume: Run vp run build:ssr, ssr:infra:deploy, ssr:assets:publish, and ssr:smoke in that order. If the smoke test fails, record whether the verdict (examples/09-ssr/scripts/smoke-spec.ts) or the real headers differ before changing anything. Finish with ssr:unpublish --yes and ssr:infra:destroy.
-
-### ssr-streaming-path
-
-Whether a streamed response arrives piece by piece across Lambda, the function URL (RESPONSE_STREAM), CloudFront, and a browser is unconfirmed. So are CloudFront not compressing a streamed response and what is returned when the handler's shape and InvokeMode disagree. Only the number and timing of the Nitro handler's writes were checked locally.
-
-To resume: After vp run ssr:check:output:stream, ssr:assets:publish, and ssr:infra:deploy, fetch /feed with curl -sN and / with curl -s -o /dev/null -D - --compressed, and record the spacing of the lines and the content-encoding. Go through the distribution, not the function URL directly.
-
-### ssr-cdkd-cloudfront-policies
-
-cdkd 0.296.28 has no dedicated implementation for AWS::CloudFront::CachePolicy or AWS::CloudFront::ResponseHeadersPolicy and handles them through Cloud Control API. Whether create, update, drift read-back, and delete work in practice is unconfirmed, as is whether a cache policy with minTtl and defaultTtl of 0 and maxTtl of 60 accepts the compression settings.
-
-To resume: Run vp run ssr:infra:deploy and ssr:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool.
-
-### ssr-bff-deployed
-
-Chapter 09's BFF (sign-in, sessions, holding the token) works only locally: sessions sit in process memory, sign-in is a POST, and a function URL with OAC does not pass a browser form POST as it is. That a deployed environment returns each cookie holder their own page was not checked.
-
-To resume: The author decides the approach (for example, sessions in DynamoDB and API Gateway as the POST entry point). Once decided, implement it in examples/09-ssr and add a check with a real session to ssr:smoke.
-
-### obs-lambda-json-log-shape
-
-Not checked in AWS: that under Lambda's JSON log format the JSON line the application passes to console.log reaches CloudWatch Logs unchanged. The metric filter's JSON pattern and the field names in the Logs Insights queries depend on it.
-
-To resume: After vp run obs:infra:deploy and vp run obs:smoke, run vp run obs:query --name request --id <x-request-id>. Check that the lines are found with fields such as status, and that NoteConflicts gets a data point. If the shape differs, write through process.stdout in src/compose.ts or change the field names in the queries.
-
-### obs-otel-layer-node24
-
-The configuration with the AWS Lambda Layer for OpenTelemetry on a Node.js 24 function has not been run. The ADOT documentation lists runtimes up to Node.js 22. Also unconfirmed for an ESM function bundled by esbuild: whether hand-written spans reach the layer's SDK, whether the AWS SDK auto-instrumentation takes effect, and whether xray:PutTraceSegments on the execution role is enough.
-
-To resume: Take the Tokyo layer ARN from the Node.js table in the ADOT documentation and run vp run obs:infra:deploy -c otelLayerArn=<ARN>. After vp run obs:smoke, check in the X-Ray console that notes.* spans appear under Lambda's segment. If not, look for layer errors in the function's log and compare with the nodejs22.x runtime.
-
-### obs-alarm-behavior
-
-The alarms' real state changes have not been observed. That the metric math IF expression is accepted, that 5xx and Count have no data points while there are no requests, and that the SNS notification arrives are read from the documentation.
-
-To resume: After vp run obs:infra:deploy -c alarmEmail=<your address>, confirm the subscription mail and check the states with vp run obs:alarms. To cause 5xx responses, deploy a change that temporarily removes the table permission, from another branch and in a practice account.
-
-### obs-cdkd-cloud-control
-
-cdkd 0.296.28 handles AWS::CloudWatch::Dashboard and AWS::Logs::MetricFilter through Cloud Control API. Whether create, update and drift read-back work in practice is unconfirmed.
-
-To resume: Run vp run obs:infra:deploy and vp run obs:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool.
-
-### obs-pricing-gaps
-
-Not confirmed: the price of a dashboard beyond the third, the size of the system log lines Lambda writes in the JSON format, and whether spans sent through the layer are billed as X-Ray traces.
-
-To resume: Open the pricing page in a browser that runs JavaScript and read the dashboard price. After deploying, measure the total bytes of @message per request with Logs Insights and correct the assumption in data/fragments/19.json. A few days later, look at the usage types in Cost Explorer.
-
 ### 14-deploy
 
 The chapter 14 stack has never been deployed. Unconfirmed: that the conditional `ADD` loses no concurrent increment on the real service, how long TTL really takes to delete an item, how the memory variant behaves once Lambda runs several execution environments, and creation and deletion through cdkd 0.296.28.
@@ -831,168 +763,6 @@ To resume: Knowing that it is billed, run `vp run kv:infra:deploy -c store=valke
 `vp run kv:local:start` and `kv:local:stop`, which start and stop Valkey and DynamoDB Local in Docker containers, were not run. The contract tests themselves passed against the same DynamoDB Local version and a Valkey 9.1.2 process.
 
 To resume: Start a Docker daemon, copy `examples/14-kv-cache/.env.example` to `.env`, and run `vp run kv:local:start`, `vp run kv:local:migrate`, `vp run kv:test:local`, and `vp run kv:local:stop` in that order.
-
-### 20-cfn-deploy
-
-The CloudFormation path (bootstrap, diff, deploy, smoke, status, destroy) has not been run in a real account
-
-To resume: After `vp run ship:cfn:bootstrap`, run `vp run ship:cfn:diff`, `ship:cfn:deploy`, `ship:smoke`, `ship:cfn:status`, and `ship:cfn:destroy` in order. Record that `ship:smoke` gets a 200 through the alias and that `cdk diff --method template` works with the lookup role alone. Compare what the CDKToolkit stack created with the table in the chapter
-
-### 20-oidc-roles
-
-The OIDC roles have not been assumed from GitHub Actions
-
-To resume: Run `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` and put the four output ARNs and the account ID into the repository's variables. Copy the four files in workflows/ to .github/workflows/ and run a pull request, a push to main, and a manual drift run once each. Record that assuming from another branch or repository is refused, whether the repository's sub uses the immutable format, and that the plan job does not run for a fork's pull request
-
-### 20-drift-role-permissions
-
-The DriftRole's read permissions were derived from resource type schemas; whether they suffice for a real detection is unconfirmed
-
-To resume: Run `vp run ship:cfn:drift -c stage=prod` as the DriftRole. If it ends `failed` or `incomplete`, add the action named in the report's reason to examples/20-shipping/infra/lib/ci-stack.ts and update the list in the test. If it suffices, check CloudTrail for actions that were never used and remove them
-
-### 20-drift-live
-
-No real CloudFormation drift response has been captured. Coverage (whether the Integration is left unchecked, whether an inline policy change shows as drift on the Role) is unconfirmed
-
-To resume: Run the 'Break it on purpose' procedure in the chapter. At each step keep reports/drift/AihShipApi.json and the output of `aws cloudformation describe-stack-resource-drifts` at the same moment, and compare their shape with the fixtures in tools/src/drift/fixtures/cloudformation/. Run against a stack name that does not exist and confirm the error's name and message are `ValidationError` and `does not exist`. Compare the resource types left unchecked with the two lists in examples/20-shipping/src/drift-coverage.ts
-
-### 20-rollback-live
-
-A failed deploy's rollback, moving the alias, and `cdk rollback` have not been observed in a real account
-
-To resume: Deploy a change that fails on purpose (for example a Lambda memorySize above the limit) and record the statuses `vp run ship:cfn:status` reports until UPDATE_ROLLBACK_COMPLETE. Deploy twice successfully and confirm the older version remains, and that versions are gone once the stack is deleted
-
-### 20-tool-migration
-
-Moving a stack between cdkd and CloudFormation (`cdkd export`, `cdkd import --migrate-from-cloudformation`) has not been run
-
-To resume: Deploy a practice stack with cdkd, read the plan from `cdkd export <stack> --dry-run`, then run it. Record whether it stops on a resource type that cannot be imported, and that afterwards cdkd's state is gone and `cdk diff` on the CloudFormation stack is empty. Try the reverse direction on the same stack
-
-### 12-image-build
-
-The chapter 12 Dockerfile has never been built. Unverified: that the .dockerignore exception leaves only dist/server.mjs in the context, that the image starts on the arm64 variant of node:24-bookworm-slim, that it runs with --read-only, and how large the image is.
-
-To resume: Start a Docker daemon, then run `vp run ecs:bundle`, `vp run ecs:image:build v1`, and `vp run ecs:image:run v1`. Call `curl http://localhost:8080/health` from another terminal, press Ctrl-C, and check for the `stopped` log line and exit code 0. Read the size from `docker image ls aih-notes`.
-
-### 12-deploy
-
-The chapter 12 stack has never been deployed. Unverified: that cdkd 0.296.28 creates and deletes the ECR, ECS, and ALB resources, that it reads the chapter 11 VPC through Fn::ImportValue, that the three types routed through Cloud Control API (ScalableTarget, ScalingPolicy, SecurityGroupEgress) work, that tasks in public subnets can pull the image, and that the load balancer's DNS name answers.
-
-To resume: Run `vp run net:infra:deploy`, `vp run ecs:infra:deploy`, `vp run ecs:image:push v1`, and `vp run ecs:infra:deploy -c imageTag=v1` in that order, then `curl` the `ServiceUrl` output. After `vp run ecs:infra:drift`, remove everything with `vp run ecs:infra:destroy` and `vp run net:infra:destroy` (hourly charges).
-
-### 12-rolling-update
-
-A rolling update has not been observed on AWS. Unverified: that no request fails during one, that old and new versions answer alternately, that SIGTERM arrives only after the target has been deregistered, that the circuit breaker rolls back when given a broken image, and what cdkd's --full-wait reports when it does.
-
-To resume: With v1 deployed, run `vp run ecs:watch` in a second terminal, then `vp run ecs:image:push v2` and `vp run ecs:infra:deploy -c imageTag=v2`. Read the summary of `ecs:watch` and the times of the `draining` and `stopped` lines in `vp run ecs:logs`. Then deploy a tag that does not exist and record `rolloutState` from `aws ecs describe-services` and cdkd's exit code.
-
-### 12-private-subnets
-
-The `-c taskSubnets=private` layout has not been run on AWS. Unverified: that tasks pull the image and ship logs through a NAT gateway and through interface endpoints, and that egress on port 443 alone is enough.
-
-To resume: Deploy chapter 11 with `-c egress=nat`, deploy chapter 12 with `-c imageTag=v1 -c taskSubnets=private`, and check `ServiceUrl`. Then redeploy chapter 11 with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`, replace the tasks by deploying a new tag, and check again. Destroy right afterwards.
-
-### 12-alb-idle-lcu
-
-What a load balancer's LCU usage is with no requests (whether health checks count) was not confirmed from a primary source. The cost tables leave LCUs out of the idle figures.
-
-To resume: Deploy, wait a day, and read the quantity of `APN1-LCUUsage` in Cost Explorer or the bill.
-
-### async-s3-event-shape
-
-Chapter 08: whether a create event from a form (ObjectCreated:Post) and a delete event from a lifecycle rule (LifecycleExpiration:Delete) carry a sequencer is unconfirmed. The documentation says it is "only used with PUT and DELETE requests". The worker fails a create event without one, which sends it to the DLQ, and accepts a delete event without one while doing nothing.
-
-To resume: After vp run async:infra:deploy, run vp run async:smoke with AIH_ACCESS_TOKEN set. If no record appears for the form upload, look at the DLQ with vp run async:queue. If POST events have no sequencer, order by eventTime and eTag instead, or route S3 notifications through EventBridge.
-
-### async-notification-deploy
-
-Chapter 08: that fixing the bucket's name to avoid a cycle with the queue policy actually deploys with cdkd is unconfirmed. So are: S3 validating that it can send to the queue when the notification is configured, S3 sending to a queue encrypted with SQS-managed keys (SSE-SQS), Lambda validating the role's permissions when the event source mapping is created, and GetObject answering 412 for an If-Match with a quoted ETag.
-
-To resume: Run vp run async:infra:deploy. If creating the bucket fails with "Unable to validate the following destination configurations", check that the queue policy was created first. Then run vp run async:smoke.
-
-### async-idle-polling-cost
-
-Chapter 08: the documentation does not say how often Lambda long-polls an empty queue, so the number of SQS requests in an idle month cannot be estimated.
-
-To resume: Deploy, wait a day, read the SQS metric NumberOfEmptyReceives in CloudWatch, and report it as an observation.
-
-### async-housekeeping-scale
-
-Chapter 08: one housekeeping run looks at every object in the bucket and reads DynamoDB four times per image, in sequence. Its duration has not been measured. As the count grows it runs into both the function's timeout (15 minutes) and the cost of reads.
-
-To resume: Read the duration in the REPORT line with vp run async:logs --function housekeeping. If it is too long for the number of images, run less often, look only at recent objects, or use S3 Inventory as the input.
-
-### async-inspection-orphans
-
-Chapter 08: there are two ways an inspection record can be left without its object. A worker handling a create event is about to write when another worker finishes the delete event for the same key. Or a lifecycle delete event arrives without a sequencer. Neither is visible to users, but the record stays.
-
-To resume: Instead of deleting the record on a delete event, write a tombstone carrying the sequencer under the same condition, and let DynamoDB's TTL remove it.
-
-### 23-deploy
-
-The chapter 23 stack has never been deployed. Unverified: that cdkd 0.296.28 creates the instance, instance profile, and security group with its own providers and the volume and attachment through Cloud Control API, that the AMI ID resolves from the SSM-typed parameter, and that the chapter 11 outputs are read through `Fn::ImportValue`.
-
-To resume: After `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`, run `vp run ec2:infra:deploy`, `vp run ec2:status`, and `vp run ec2:infra:drift`. Then delete everything in the order of the cleanup section (hourly charges).
-
-### 23-first-boot
-
-The user data has not run on a real Amazon Linux 2023. Unverified: that dnf reaches the repositories from a private subnet through the S3 gateway endpoint alone (that they are in S3 was inferred from host names in sample output in the documentation), that `nodejs24` and `xfsprogs` install, that the `/dev/sdf` link appears, that the wait loop outlasts the attachment, that the unit's directives (such as `AssertPathIsMountPoint`) are accepted by the systemd on AL2023, and the size of the root volume (pricing assumes 8 GiB).
-
-To resume: After deploying, run `vp run ec2:status` to see the cloud-init result, the service state, and the mount. If it failed, connect with `vp run ec2:session` and read `/var/log/cloud-init-output.log`. Check the root volume with `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>`; if it is not 8 GiB, fix `ASSUMED_ROOT_GIB` in `src/cost.ts` and the amounts in the text.
-
-### 23-ssm-endpoints
-
-Whether all three interface endpoints are needed was not checked. The Systems Manager documentation says SSM Agent 3.3.40.0 and later prefers ssmmessages, but does not say the ec2messages endpoint can be omitted. The agent version in the AMI was not looked at either.
-
-To resume: Redeploy the chapter 11 stack with `-c interfaceEndpoints=ssm,ssmmessages`, reboot the instance, and see whether `vp run ec2:status` reports Online and `vp run ec2:smoke` passes. If so, the monthly cost drops by USD 20.44.
-
-### 23-release
-
-The release path (upload to S3, Run Command, `notes-release` on the instance, restart, and the `/health` check) and that a restart lets a request in flight finish have not been run on a real instance. Session Manager and port forwarding were not run either (the plugin is not in the devShell).
-
-To resume: Run `vp run ec2:app:release`, `vp run ec2:smoke`, and `vp run ec2:logs`. Release again, then go back with `vp run ec2:app:rollback <version>`. Install the Session Manager plugin, run `vp run ec2:forward`, and call `curl http://localhost:8787/health` from your machine.
-
-### 23-replace-and-restore
-
-Not run: that the data volume survives and is reattached when the instance is replaced, restoring from a snapshot, and what happens to the volume attachment on destroy. In the cdkd source, a change to `UserData` is not applied to the instance and a change to `ImageId` replaces it. How the attachment behaves during a replacement (detached from the old instance and attached to the new, or failing midway) could not be determined from the source.
-
-To resume: Create one note, run `vp run ec2:data:unmount`, then deploy with `-c amiId=<the previous AMI>` to force a replacement. On the new instance run `vp run ec2:status`, `vp run ec2:app:release`, and `vp run ec2:smoke`, and see whether the note is still there. Then go through the snapshot and restore procedure.
-
-### 23-patch
-
-`ec2:patch:check` and `ec2:patch:apply` have not been run on a real instance. Patch Manager (`AWS-RunPatchBaseline`) is described only; there is no task for it.
-
-To resume: Deploy with an AMI a few weeks old through `-c amiId=...`, confirm that `vp run ec2:patch:check` lists a newer release, and run `vp run ec2:patch:apply <releasever>`. If the kernel was updated, reboot with `aws ec2 reboot-instances` and run `vp run ec2:smoke`.
-
-### 16-deploy
-
-The chapter 16 stack has never been deployed. Unconfirmed: that cdkd 0.296.28 creates the state machine from an inline DefinitionString (an Fn::Join); that the trust policy conditions on the state machine's role are accepted; that Scheduler calls StartExecution with `<aws.scheduler.scheduled-time>` replaced in the input; the input and output of a Task whose Resource is a function ARN; that the name of a Lambda exception matches the `ExportCorrupt` catcher; that S3 answers 412 to `If-None-Match: *` and the SDK throws it as an exception with status 412; that HeadObject returns metadata keys in lower case; whether the Lambda function keeps running after a Task times out; and the real number of state transitions.
-
-To resume: Run `vp run export:infra:deploy`, `vp run export:seed --notes 250`, and `vp run export:start --id check-1 --wait`, then look at the manifest and the history count with `vp run export:status`. Run `export:start` again with the same ID and check for ExecutionAlreadyExists. For the failure paths, delete one part in the S3 console during a run, or shorten the ExportPages function's timeout for a while. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy`.
-
-### 16-durable
-
-The Lambda durable function has never been deployed. Unconfirmed: that it is available in ap-northeast-1 (the only evidence is the Tokyo SKUs in the Price List); that cdkd 0.296.28 creates a function with DurableConfig, and Lambda::Version and Lambda::Alias through Cloud Control API; that the execution role's permissions (CheckpointDurableExecution and GetDurableExecutionState on `function:<name>:*`) are enough; that SDK 2.6.0 bundled by esbuild runs on nodejs24.x; that `DurableExecutionName` prevents a duplicate start; what really happens when one invocation hits the function timeout; and the real number of durable operations and their cost.
-
-To resume: Run `vp run export:infra:deploy -c durable=true`, then `vp run export:seed` and `vp run export:durable:start --id check-1`, and follow it in the Durable executions tab of the Lambda console and with `vp run export:logs --function durable`. Start the same ID again and check that no new execution appears. Check the manifest with `vp run export:status`. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy -c durable=true`.
-
-### 16-containers
-
-Running a step as an ECS task (`ecs:runTask.sync`) or an AWS Batch job is described in prose only; there is no code and no test. The IAM, the networking, how a task's exit code is handled, and the measured cost are unconfirmed.
-
-To resume: Package the export worker as an image the way chapter 12 does (immutable tags, no `fromAsset`) and replace the ExportPages state with `arn:aws:states:::ecs:runTask.sync`. Progress then has to live in S3, since a task returns no value. This needs a Docker daemon.
-
-### 22-drill
-
-The chapter 22 recovery drill has never been run on AWS. Unconfirmed: how long a PITR restore takes, the real lag of `LatestRestorableDateTime`, which settings a restored table does and does not inherit (deletion protection and PITR included), the ETag, `LastModified`, and notifications after removing a delete marker or copying a version on top in S3, the order of versions that share a timestamp in `ListObjectVersions`, and any measured RPO or RTO.
-
-To resume: After `vp run recovery:infra:deploy`, follow the chapter's drill section: `recovery:drill new`, `recovery:seed --apply`, `recovery:accident --apply`, `recovery:restore:table --apply`, `recovery:restore:objects --at <time> --apply`, `recovery:verify --table <restored table> --frozen`, `recovery:repair`, then record what `recovery:drill summary` prints in a copy of `examples/22-recovery/drill/TEMPLATE.md`. Finish with the three cleanup tasks.
-
-### 22-cutover
-
-The cutover to a restored table was not tried on AWS. Unconfirmed: that deploying with `-c table=<name>` changes only the function's environment and IAM policy, that cdkd's drift check does not report the restored table, that `cdkd orphan` and `cdkd import --resource` can swap the stack's table, what destroying a `-c protect=on` stack with cdkd does, and creating and deleting `-c backup=on` (through Cloud Control API) and `-c replica=on`.
-
-To resume: Continuing the drill, read the diff from `vp run recovery:infra:diff -c table=<restored table>`, deploy, then run `vp run recovery:audit` and `vp run recovery:infra:drift`. To try the import, first read the output of `cdkd orphan AihRecovery/Notes --dry-run` and `cdkd import AihRecovery --resource <logical ID>=<restored table> --dry-run` in `examples/22-recovery`.
 
 ### 24-deploy
 
@@ -1065,60 +835,6 @@ To resume: After deploying, force the alarm with `aws cloudwatch set-alarm-state
 A list of notes returns at most 20 summaries and never a body. Tests confirm that it stays at or under 20 KiB with the largest notes the contract accepts; a deployed API's response has not been checked. The SPAs of chapters 06 and 07 were type-checked and passed their existing tests, but have not been driven in a browser since this change.
 
 To resume: Create 20 largest notes on a deployed API and confirm `curl -s <url>/notes | wc -c` is at most 20,480. Open the SPA with `vp run dev:app` and confirm a note opens from the list.
-
-### 17-live-inference
-
-Chapter 17 has never called real Bedrock. That the model IDs (such as jp.amazon.nova-2-lite-v1:0) can be called from Tokyo, that real ConverseStream events fit the schema in src/converse-stream.ts, and that the fixtures match the real shapes are all unconfirmed.
-
-To resume: Prepare examples/17-ai/.env, run vp run ai:hello and then vp run ai:test:live (billed). If the event shapes differ, fix the schema and the fixtures.
-
-### 17-deployed-streaming
-
-The chapter 17 stack has not been deployed. Unconfirmed: that this chapter's adapter (src/function-url.ts) delivers the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda reads the keys passed to awslambda.HttpResponseStream.from (statusCode, headers, cookies) as written; whether a disconnect makes a write to the response stream fail; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url.
-
-To resume: Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delta arrived), vp run ai:logs, vp run ai:infra:drift, and vp run ai:infra:destroy, in that order.
-
-### 17-bedrock-billing-details
-
-How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region.
-
-To resume: Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics.
-
-### 21-deploy
-
-The default stack (CloudFront, the function URL, Secrets Manager) has not been run in a real account
-
-To resume: After `vp run sec:infra:deploy`, run `vp run sec:smoke` immediately and record the N in "after N refusals". Check that a direct curl of the function URL gets 403, record the result of `vp run sec:infra:drift`, and after `vp run sec:infra:destroy` confirm in the Secrets Manager console that no secret remains, not even as scheduled for deletion
-
-### 21-rotation
-
-Rotating the secret has not been tried in a real account
-
-To resume: After deploying, run `vp run sec:smoke`, `vp run sec:secret:rotate`, and `vp run sec:smoke` again. Record that a token issued with the old key version verifies right after the rotation, that `sec:secret:versions` shows AWSCURRENT and AWSPREVIOUS, that a rerun with the same `--version-id` reports already-rotated, and that a second rotation within ten minutes stops with too-soon. Also check whether GetSecretValue on a secret with no AWSPREVIOUS fails with ResourceNotFoundException
-
-### 21-waf
-
-The web ACL has not been created, and the rate-based rule has not been observed
-
-To resume: Pass the WebAclArn output of `vp run sec:waf:infra:deploy` to `vp run sec:infra:deploy -c webAclArn=<ARN>`. Send more than 300 requests in five minutes from one IP address and record how long, and how many requests, it takes before 403s begin. Confirm in the WAF console that AwsCommonRules records matches as counts. Check on the bill whether the usage type is Global-* or USE1-*. Afterwards detach with `sec:infra:deploy` (no webAclArn), then `vp run sec:waf:infra:destroy`
-
-### 21-cmk
-
-The customer managed key variant has not been tried in a real account
-
-To resume: Run `vp run sec:infra:deploy -c cmk=on`, then `vp run sec:smoke`. Confirm the function reads the secret with only kms:Decrypt under the kms:ViaService condition. After `vp run sec:infra:destroy`, record that the key is pending deletion in the KMS console and due to disappear in 7 days, and whether the bill shows a key charge for that period
-
-### 21-iam-propagation
-
-The delay before an IAM change takes effect has not been observed
-
-To resume: Record over several deploys whether `vp run sec:smoke` right after a deploy reports 0 refusals. Then delete ReadSigningKey from HandlerRole in the console, wait for a new execution environment, call `/token` repeatedly, and record how long it takes to get a 503 and whether a 200 appears again after the first 503. Afterwards check the difference with `vp run sec:infra:drift` and revert
-
-### 21-posture
-
-`sec:posture` and `sec:trail:iam` have not been run against a real account, and GuardDuty, Inspector, Config, a trail, and Organizations have not been enabled
-
-To resume: Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU
 
 ### events-pipe-to-bus
 
@@ -1341,42 +1057,6 @@ To resume: After activating the tag and using the stack for a few days, run vp r
 Could not determine from primary sources whether a load test sent from outside AWS (a laptop) against your own API needs notice or has a threshold. The EC2 testing policy is about tests from EC2, and the penetration testing policy prohibits request flooding. This chapter's load generator refuses anything but localhost.
 
 To resume: Before load testing a deployed API, read the two policy pages again and, if in doubt, tell AWS Support the plan and ask.
-
-### 33-live-account
-
-Chapter 33's check reads synthesized templates only. Its findings were never compared with the real settings of a deployed account. AihReadyProduction was not deployed, so PITR, deletion protection, Retain and the 90-day retention set by the aspect were not seen at work. No stack deletion and no replacing update was run, with CloudFormation or with cdkd.
-
-To resume: Deploy a stack with the production settings to a practice account through chapter 20's path (the CDK CLI, as `ship:cfn:*` uses it), confirm the settings with `aws dynamodb describe-continuous-backups` and `aws logs describe-log-groups`, then delete the stack and record that the table and the log group remain, and how to remove them.
-
-### 33-sibling-chapters
-
-Chapter 33 refers to chapters 25 to 32 and 34 to 36 by their stated scope only. Their text was not read, and the check results do not include their stacks.
-
-To resume: Once every chapter is in, run `vp run ready:check` and compare the counts in the chapter's section on the book's stacks, and what each area's section says about the chapters it points at.
-
-### 33-other-platforms
-
-Whether Cloudflare publishes a list comparable to Vercel's production checklist was not confirmed. For Cloudflare, only the retention limit of Workers Logs was read. AWS Config managed rules, cdk-nag and CloudFormation Guard were read about, not run.
-
-To resume: Look in Cloudflare's documentation for a page of pre-launch checks. Run cdk-nag on one stack and compare what it reports with this chapter's 10 rules.
-
-### 34-cluster-deploy
-
-The chapter 34 stack has never been deployed. cdkd 0.296.28 has no provider of its own for AWS::EKS types and goes through Cloud Control API. Unverified: creating and deleting the cluster, the access entries, the Pod Identity association, and Fn::ImportValue from another app's stack.
-
-To resume: Run `vp run net:infra:deploy`, `vp run eks:infra:diff`, and `vp run eks:infra:deploy` in that order, then check with `aws eks describe-cluster --name aih-eks` that the status is ACTIVE and that computeConfig, accessConfig, and upgradePolicy are what the template says. Finish with `vp run eks:infra:destroy`.
-
-### 34-manifests-on-a-cluster
-
-The manifests in k8s/ were never given to an API server. Unverified: that nodes of the custom NodeClass (public subnets, associatePublicIPAddress) start and join, that t4g.medium is what gets launched, that the load balancer's subnets can be chosen by the Name tag, that the Ingress annotations take effect under Auto Mode, that 15 seconds of preStop are enough, and that Pod Identity credentials reach the pod.
-
-To resume: Deploy the cluster, get kubectl, and run `aws eks update-kubeconfig --name aih-eks --region ap-northeast-1`, `vp run eks:manifests cluster | kubectl apply -f -`, and `vp run eks:manifests app --tag v1 | kubectl apply -f -`. Look at `kubectl get nodes -o wide` and `kubectl -n notes get pods,ingress`, and send `curl -si .../health` to the Ingress host name. During `kubectl -n notes rollout restart deployment/notes-api`, watch with chapter 12's `vp run ecs:watch --url http://<host>` that no request fails.
-
-### 34-flake-kubectl
-
-The Nix devShell has no kubectl. The deploy steps of chapter 34 assume it is provided some other way.
-
-To resume: The author decides whether to add `pkgs.kubectl` to the devShell in flake.nix. If so, check with `kubectl version --client` that it is within one minor version of the cluster (1.37), and update the note on chapter 34's deploy page.
 
 ### 35-deploy
 
@@ -1828,36 +1508,6 @@ Chapter 51: what CreateMeeting returns for a repeated ClientRequestToken, and Cr
 
 To resume: After deploying, call aws chime-sdk-meetings create-meeting twice with the same --client-request-token and compare the MeetingId. Call create-attendee twice with the same --external-user-id and compare AttendeeId and JoinToken. Then delete-meeting.
 
-### ecr-lifecycle-not-previewed
-
-The lifecycle policy was never evaluated by ECR. The evaluator in src/lifecycle.ts is written from the documented evaluation rules and six worked examples; it reproduces the examples, which does not make it ECR's implementation. The boundary of "older than N days", the order of images pushed at the same instant, manifest lists and reference artifacts are not implemented or not confirmed.
-
-To resume: After vp run ecr:infra:deploy, push a few dozen images, tagged and untagged, and run vp run ecr:lifecycle:compare. It reports whether start-lifecycle-policy-preview and the evaluator agree, digest by digest and rule by rule. On a difference, fix src/lifecycle.ts and add that input to test/lifecycle.test.ts.
-
-### ecr-nothing-pushed
-
-No image was built or pushed. Not confirmed: that the immutable repository refuses a second push of a tag, that a second tag can be added to the same digest, whether a tag can be reused after its image is deleted, that docker push succeeds with the push role's permissions, and the real size of an image.
-
-To resume: With a Docker daemon, build an image with chapter 12's vp run ecs:image:build <tag> and push it to AihEcr's RepositoryUri following chapter 12's deploy page. Check that pushing another image under the same tag fails with ImageTagAlreadyExistsException, read imageSizeInBytes from aws ecr describe-images, and push from GitHub Actions with the push role.
-
-### ecr-scan-not-observed
-
-No scan result was observed. Not confirmed: that scan on push runs, the shape of findingSeverityCounts when there are no findings (an empty object or absent), how long a scan takes, and whether chapter 12's image (node:24-bookworm-slim) is an operating system basic scanning supports.
-
-To resume: After pushing an image, run vp run ecr:scan:gate --digest <digest>. If the schema refuses the response, fix src/scan.ts to the shape that came back.
-
-### ecr-cache-not-deployed
-
-The pull-through cache rule was not deployed. Not confirmed: that cdkd 0.296.28 creates AWS::ECR::PullThroughCacheRule through the Cloud Control API, that the first pull through the cache creates the repository, and that the push role's permissions are enough for it.
-
-To resume: Deploy with vp run ecr:infra:deploy -c pullThroughCache=on -c githubRepository=<owner/repo>, then docker pull <registry>/ecr-public/docker/library/node:24-bookworm-slim. Check that ecr-public/docker/library/node appears in aws ecr describe-repositories. Delete that repository by hand when cleaning up.
-
-### ecr-ecs-rollback-digest
-
-The documentation says ECS resolves tags to digests per deployment. Whether a circuit breaker rollback reuses the digests of the earlier deployment or resolves the tag again was not confirmed.
-
-To resume: Read the ECS documentation on service revisions to see whether the revision rolled back to carries digests. On a mutable repository, move a tag, force a rollback, and read imageDigest from aws ecs describe-tasks.
-
 ### 53-deploy
 
 The chapter 53 stack has never been deployed. Unverified: that cdkd 0.296.28's EFS provider creates the file system, mount targets, and access point; that the function finds the mount targets at creation; that a file system policy made only of a Deny statement is accepted; that Lambda can mount under it (the statement that Lambda mounts over TLS was found only in an official blog post from 2020); and that the access point's root directory is created on first mount.
@@ -1971,12 +1621,6 @@ To resume: After deploying, change the Resource in the role's policy to arn:aws:
 src/player.ts was not run in a browser. It was tested against a stand-in for the audio element only; that an audio element plays the presigned URLs, and how the joins between parts sound, are unconfirmed.
 
 To resume: Add a button to the note view of chapter 06's web app that calls requestSpeech and playInOrder(urls, (url) => new Audio(url)). Listen to the joins with a note long enough to become two or more parts.
-
-### 58-aws
-
-The chapter 58 stack has never run on AWS. Unconfirmed: that the real DynamoDB answers a duplicate PartiQL INSERT with DuplicateItemException (DynamoDB Local 3.3.1 used the name DuplicateItem), that a role with only dynamodb:PartiQLInsert and dynamodb:Query can append and cannot overwrite, the units a PartiQL INSERT is billed in, that PutObject into a bucket with only a default retention needs just s3:PutObject and comes out locked, that the checksum the SDK adds satisfies PutObject under Object Lock, the 412 for If-None-Match, the shape of the ListObjectVersions answer, the 403 for deleting a locked version, lifting governance mode, the error name GetObjectRetention gives for a version with no lock, the price of the hourly rule, that cdkd can really create the bucket with Object Lock, the rule and the Lambda permission, and that cdkd destroy leaves the retained bucket. The QLDB developer guide answered 404, so what QLDB offered rests on two AWS blog posts only.
-
-To resume: Run `vp run ledger:infra:diff`, `vp run ledger:infra:deploy`, `vp run ledger:append` twice, `vp run ledger:digest`, then `vp run ledger:verify`. The function's logs are in the log group named by the `DigestLogGroupName` output. Note the `DigestBucketName` output, then run `vp run ledger:infra:destroy`. Once the retention period (one day by default) is over, delete the bucket with `vp run ledger:purge --bucket <name> --apply`.
 
 ### rds59-never-deployed
 
@@ -2158,6 +1802,66 @@ The `workerd` npm package has a postinstall script, which pnpm 10 does not run w
 
 To resume: Add `workerd` to `ignoredBuiltDependencies` in `pnpm-workspace.yaml` (the script is not needed, for the same reason as esbuild's).
 
+### 68-deploy
+
+The chapter 68 stack has never been deployed. The installed cdkd 0.296.28 does not wire `EnclaveOptions` in its EC2 provider and routes an instance that sets it through Cloud Control API. Unverified: that this route creates an enclave-enabled instance, that KMS accepts the key policy, and that the listed administrative actions are enough for cdkd to create and delete the key.
+
+To resume: After deploying chapter 11, run `vp run nitro:infra:deploy`, check that `aws ec2 describe-instances --query 'Reservations[].Instances[].EnclaveOptions'` returns `Enabled: true`, and run `vp run nitro:infra:drift`. Then `vp run nitro:infra:destroy` (the instance is billed by the hour).
+
+### 68-enclave
+
+No enclave was ever started. Unverified: that the hello sample runs on a 2-vCPU Graviton instance with the allocator set to 1 vCPU and `--cpu-count 1`, that the default root volume holds the Docker images and the image file, and whether the user guide's parent container can read credentials from IMDSv2 with a hop limit of 1.
+
+To resume: After the deploy, enter with Session Manager and follow the page's steps in order: `dnf install`, the allocator setting, `docker build`, `nitro-cli build-enclave`, `run-enclave --debug-mode`, `console`, `terminate-enclave`.
+
+### 68-attestation
+
+KMS attestation was never exercised. That Decrypt and GenerateDataKey succeed from inside the enclave and are refused from the parent under this chapter's key policy is known only from the documentation and from the book's own evaluator. The part that would turn the TypeScript vault (`src/enclave/vault.ts`) into an enclave image (a vsock listener, the attestation document from the NSM, the call to `kmstool_enclave_cli`) is not in this repository.
+
+To resume: Follow the user guide's "Connect the parent instance with an enclave by using virtio-vsock" and "Connect an enclave with AWS KMS" as written. Pass the PCR0 printed by `nitro-cli build-enclave` with `vp run nitro:infra:deploy -c measurement=<PCR0>`, then check that `kmstool_enclave_cli decrypt` succeeds from an enclave started without debug mode, that `aws kms decrypt` on the parent is denied, and what CloudTrail records under `additionalEventData.recipient`.
+
+### 68-lsblk
+
+`lsblk --json --nodeps --output NAME,SERIAL` was not run on an instance. The test input was written by hand from the util-linux 2.40.2 source and was not compared with what Amazon Linux 2023 prints.
+
+To resume: On the chapter 23 instance run `lsblk --json --nodeps --output NAME,SERIAL`, pass the output to `findDevice`, and check that it returns the device of the volume ID that `vp run ec2:status` shows.
+
+### 33-live-account
+
+Chapter 33's check reads synthesized templates only. Its findings were never compared with the real settings of a deployed account. AihReadyProduction was not deployed, so PITR, deletion protection, Retain and the 90-day retention set by the aspect were not seen at work. No stack deletion and no replacing update was run, with CloudFormation or with cdkd.
+
+To resume: Deploy a stack with the production settings to a practice account through chapter 20's path (the CDK CLI, as `ship:cfn:*` uses it), confirm the settings with `aws dynamodb describe-continuous-backups` and `aws logs describe-log-groups`, then delete the stack and record that the table and the log group remain, and how to remove them.
+
+### 33-sibling-chapters
+
+Chapter 33's deploy page refers to the chapters from 25 onward from their stated scope or their opening page only (chapters 25 to 32 and 34 to 36 by scope; 40, 42, 44, 46, 48, 52, 55, 58, 59, 60, 62 and 63 by opening page). Their full text was not read. `vp run ready:check` has been run over every stack, but the 41 iam-wildcard findings and the one function-url-auth finding (the webhook function URL of chapter 62) in the stacks from chapter 25 onward have no reason written as waivers of this check.
+
+To resume: Read the chapters the deploy page refers to and check each one-line reference against what the chapter says. For the 42 findings from chapter 25 onward, decide whether to copy the reasons given in each chapter's text and tests into `examples/33-production-readiness/readiness/waivers.json` or to leave them as a report, and write the decision into the section on the book's stacks.
+
+### 33-other-platforms
+
+Whether Cloudflare publishes a list comparable to Vercel's production checklist was not confirmed. For Cloudflare, only the retention limit of Workers Logs was read. AWS Config managed rules, cdk-nag and CloudFormation Guard were read about, not run.
+
+To resume: Look in Cloudflare's documentation for a page of pre-launch checks. Run cdk-nag on one stack and compare what it reports with this chapter's 10 rules.
+
+### 34-cluster-deploy
+
+The chapter 34 stack has never been deployed. cdkd 0.296.28 has no provider of its own for AWS::EKS types and goes through Cloud Control API. Unverified: creating and deleting the cluster, the access entries, the Pod Identity association, and Fn::ImportValue from another app's stack.
+
+To resume: Run `vp run net:infra:deploy`, `vp run eks:infra:diff`, and `vp run eks:infra:deploy` in that order, then check with `aws eks describe-cluster --name aih-eks` that the status is ACTIVE and that computeConfig, accessConfig, and upgradePolicy are what the template says. Finish with `vp run eks:infra:destroy`.
+
+### 34-manifests-on-a-cluster
+
+The manifests in k8s/ were never given to an API server. Unverified: that nodes of the custom NodeClass (public subnets, associatePublicIPAddress) start and join, that t4g.medium is what gets launched, that the load balancer's subnets can be chosen by the Name tag, that the Ingress annotations take effect under Auto Mode, that 15 seconds of preStop are enough, and that Pod Identity credentials reach the pod.
+
+To resume: Deploy the cluster, get kubectl, and run `aws eks update-kubeconfig --name aih-eks --region ap-northeast-1`, `vp run eks:manifests cluster | kubectl apply -f -`, and `vp run eks:manifests app --tag v1 | kubectl apply -f -`. Look at `kubectl get nodes -o wide` and `kubectl -n notes get pods,ingress`, and send `curl -si .../health` to the Ingress host name. During `kubectl -n notes rollout restart deployment/notes-api`, watch with chapter 12's `vp run ecs:watch --url http://<host>` that no request fails.
+
+### 34-flake-kubectl
+
+The devShell's kubectl (1.37.1) comes from the nixpkgs that flake.lock pins, and it changes independently of chapter 34's cluster version (1.37). Updating either the nixpkgs pin or the cluster version can take the two more than one minor version apart. This kubectl has never been used against a cluster.
+
+To resume: After updating flake.lock or the cluster version, compare the output of `nix develop -c sh -c 'kubectl version --client'` with the cluster version, and update the version on chapter 34's deploy page and the toolchain entry in `data/fragments/34.json`.
+
 ### 66-nothing-on-aws
 
 The chapter 66 stack was never deployed. YugabyteDB was never started on EC2.
@@ -2184,9 +1888,9 @@ To resume: Open https://docs.yugabyte.com/stable/deploy/manual-deployment/start-
 
 ### 66-openssl-not-in-nix
 
-`distsql:local:certs` and `distsql:certs` use the openssl on PATH. The Nix devShell does not provide one (Homebrew's 3.6.1 was used here).
+OpenSSL 3.5.8 was added to the devShell, and the arguments of `distsql:local:certs` were confirmed to produce a certificate authority and a certificate with it. The verification of a cluster with TLS (5 runs) used certificates made by Homebrew's OpenSSL 3.6.1; no cluster was started with certificates made by 3.5.8. `distsql:certs` (for the nodes on AWS) was not run.
 
-To resume: Decide whether to add openssl to the flake's devShell. If not, check that the same arguments work with the /usr/bin/openssl (LibreSSL) that macOS ships.
+To resume: After `vp run distsql:local:destroy`, delete `examples/66-distributed-sql/.yugabyte/ca` and `.yugabyte/certs`, then run `vp run distsql:local:certs`, `vp run distsql:local:start --tls` and `vp run distsql:local:verify` inside the devShell and record the result.
 
 ### 66-deadlock-and-rotation
 
@@ -2236,26 +1940,326 @@ Whether the official Node.js binary runs in the root file system of Firecracker'
 
 To resume: After prepare.sh, run sudo chroot work/squashfs-root /opt/node/bin/node --version. If it fails, find the missing libraries with ldd and add an apt step to prepare.sh.
 
-### 68-deploy
+### async-s3-event-shape
 
-The chapter 68 stack has never been deployed. The installed cdkd 0.296.28 does not wire `EnclaveOptions` in its EC2 provider and routes an instance that sets it through Cloud Control API. Unverified: that this route creates an enclave-enabled instance, that KMS accepts the key policy, and that the listed administrative actions are enough for cdkd to create and delete the key.
+Chapter 08: whether a create event from a form (ObjectCreated:Post) and a delete event from a lifecycle rule (LifecycleExpiration:Delete) carry a sequencer is unconfirmed. The documentation says it is "only used with PUT and DELETE requests". The worker fails a create event without one, which sends it to the DLQ, and accepts a delete event without one while doing nothing.
 
-To resume: After deploying chapter 11, run `vp run nitro:infra:deploy`, check that `aws ec2 describe-instances --query 'Reservations[].Instances[].EnclaveOptions'` returns `Enabled: true`, and run `vp run nitro:infra:drift`. Then `vp run nitro:infra:destroy` (the instance is billed by the hour).
+To resume: After vp run async:infra:deploy, run vp run async:smoke with AIH_ACCESS_TOKEN set. If no record appears for the form upload, look at the DLQ with vp run async:queue. If POST events have no sequencer, order by eventTime and eTag instead, or route S3 notifications through EventBridge.
 
-### 68-enclave
+### async-notification-deploy
 
-No enclave was ever started. Unverified: that the hello sample runs on a 2-vCPU Graviton instance with the allocator set to 1 vCPU and `--cpu-count 1`, that the default root volume holds the Docker images and the image file, and whether the user guide's parent container can read credentials from IMDSv2 with a hop limit of 1.
+Chapter 08: that fixing the bucket's name to avoid a cycle with the queue policy actually deploys with cdkd is unconfirmed. So are: S3 validating that it can send to the queue when the notification is configured, S3 sending to a queue encrypted with SQS-managed keys (SSE-SQS), Lambda validating the role's permissions when the event source mapping is created, and GetObject answering 412 for an If-Match with a quoted ETag.
 
-To resume: After the deploy, enter with Session Manager and follow the page's steps in order: `dnf install`, the allocator setting, `docker build`, `nitro-cli build-enclave`, `run-enclave --debug-mode`, `console`, `terminate-enclave`.
+To resume: Run vp run async:infra:deploy. If creating the bucket fails with "Unable to validate the following destination configurations", check that the queue policy was created first. Then run vp run async:smoke.
 
-### 68-attestation
+### async-idle-polling-cost
 
-KMS attestation was never exercised. That Decrypt and GenerateDataKey succeed from inside the enclave and are refused from the parent under this chapter's key policy is known only from the documentation and from the book's own evaluator. The part that would turn the TypeScript vault (`src/enclave/vault.ts`) into an enclave image (a vsock listener, the attestation document from the NSM, the call to `kmstool_enclave_cli`) is not in this repository.
+Chapter 08: the documentation does not say how often Lambda long-polls an empty queue, so the number of SQS requests in an idle month cannot be estimated.
 
-To resume: Follow the user guide's "Connect the parent instance with an enclave by using virtio-vsock" and "Connect an enclave with AWS KMS" as written. Pass the PCR0 printed by `nitro-cli build-enclave` with `vp run nitro:infra:deploy -c measurement=<PCR0>`, then check that `kmstool_enclave_cli decrypt` succeeds from an enclave started without debug mode, that `aws kms decrypt` on the parent is denied, and what CloudTrail records under `additionalEventData.recipient`.
+To resume: Deploy, wait a day, read the SQS metric NumberOfEmptyReceives in CloudWatch, and report it as an observation.
 
-### 68-lsblk
+### async-housekeeping-scale
 
-`lsblk --json --nodeps --output NAME,SERIAL` was not run on an instance. The test input was written by hand from the util-linux 2.40.2 source and was not compared with what Amazon Linux 2023 prints.
+Chapter 08: one housekeeping run looks at every object in the bucket and reads DynamoDB four times per image, in sequence. Its duration has not been measured. As the count grows it runs into both the function's timeout (15 minutes) and the cost of reads.
 
-To resume: On the chapter 23 instance run `lsblk --json --nodeps --output NAME,SERIAL`, pass the output to `findDevice`, and check that it returns the device of the volume ID that `vp run ec2:status` shows.
+To resume: Read the duration in the REPORT line with vp run async:logs --function housekeeping. If it is too long for the number of images, run less often, look only at recent objects, or use S3 Inventory as the input.
+
+### async-inspection-orphans
+
+Chapter 08: there are two ways an inspection record can be left without its object. A worker handling a create event is about to write when another worker finishes the delete event for the same key. Or a lifecycle delete event arrives without a sequencer. Neither is visible to users, but the record stays.
+
+To resume: Instead of deleting the record on a delete event, write a tombstone carrying the sequencer under the same condition, and let DynamoDB's TTL remove it.
+
+### ssr-aws-path
+
+The chapter 09 setup has never run in AWS. Unconfirmed: that Nitro's handler runs on the Node.js 24 runtime behind a function URL, that the function URL accepts OAC-signed requests and refuses direct ones, that the cache policy and the response headers policy behave as intended, the real values of the x-cache and age headers the smoke test reads, and the response to a method that is not allowed.
+
+To resume: Run vp run build:ssr, ssr:infra:deploy, ssr:assets:publish, and ssr:smoke in that order. If the smoke test fails, record whether the verdict (examples/09-ssr/scripts/smoke-spec.ts) or the real headers differ before changing anything. Finish with ssr:unpublish --yes and ssr:infra:destroy.
+
+### ssr-streaming-path
+
+Whether a streamed response arrives piece by piece across Lambda, the function URL (RESPONSE_STREAM), CloudFront, and a browser is unconfirmed. So are CloudFront not compressing a streamed response and what is returned when the handler's shape and InvokeMode disagree. Only the number and timing of the Nitro handler's writes were checked locally.
+
+To resume: After vp run ssr:check:output:stream, ssr:assets:publish, and ssr:infra:deploy, fetch /feed with curl -sN and / with curl -s -o /dev/null -D - --compressed, and record the spacing of the lines and the content-encoding. Go through the distribution, not the function URL directly.
+
+### ssr-cdkd-cloudfront-policies
+
+cdkd 0.296.28 has no dedicated implementation for AWS::CloudFront::CachePolicy or AWS::CloudFront::ResponseHeadersPolicy and handles them through Cloud Control API. Whether create, update, drift read-back, and delete work in practice is unconfirmed, as is whether a cache policy with minTtl and defaultTtl of 0 and maxTtl of 60 accepts the compression settings.
+
+To resume: Run vp run ssr:infra:deploy and ssr:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool.
+
+### ssr-bff-deployed
+
+Chapter 09's BFF (sign-in, sessions, holding the token) works only locally: sessions sit in process memory, sign-in is a POST, and a function URL with OAC does not pass a browser form POST as it is. That a deployed environment returns each cookie holder their own page was not checked.
+
+To resume: The author decides the approach (for example, sessions in DynamoDB and API Gateway as the POST entry point). Once decided, implement it in examples/09-ssr and add a check with a real session to ssr:smoke.
+
+### 12-image-build
+
+The chapter 12 Dockerfile has never been built. Unverified: that the .dockerignore exception leaves only dist/server.mjs in the context, that the image starts on the arm64 variant of node:24-bookworm-slim, that it runs with --read-only, and how large the image is.
+
+To resume: Start a Docker daemon, then run `vp run ecs:bundle`, `vp run ecs:image:build v1`, and `vp run ecs:image:run v1`. Call `curl http://localhost:8080/health` from another terminal, press Ctrl-C, and check for the `stopped` log line and exit code 0. Read the size from `docker image ls aih-notes`.
+
+### 12-deploy
+
+The chapter 12 stack has never been deployed. Unverified: that cdkd 0.296.28 creates and deletes the ECR, ECS, and ALB resources, that it reads the chapter 11 VPC through Fn::ImportValue, that the three types routed through Cloud Control API (ScalableTarget, ScalingPolicy, SecurityGroupEgress) work, that tasks in public subnets can pull the image, and that the load balancer's DNS name answers.
+
+To resume: Run `vp run net:infra:deploy`, `vp run ecs:infra:deploy`, `vp run ecs:image:push v1`, and `vp run ecs:infra:deploy -c imageTag=v1` in that order, then `curl` the `ServiceUrl` output. After `vp run ecs:infra:drift`, remove everything with `vp run ecs:infra:destroy` and `vp run net:infra:destroy` (hourly charges).
+
+### 12-rolling-update
+
+A rolling update has not been observed on AWS. Unverified: that no request fails during one, that old and new versions answer alternately, that SIGTERM arrives only after the target has been deregistered, that the circuit breaker rolls back when given a broken image, and what cdkd's --full-wait reports when it does.
+
+To resume: With v1 deployed, run `vp run ecs:watch` in a second terminal, then `vp run ecs:image:push v2` and `vp run ecs:infra:deploy -c imageTag=v2`. Read the summary of `ecs:watch` and the times of the `draining` and `stopped` lines in `vp run ecs:logs`. Then deploy a tag that does not exist and record `rolloutState` from `aws ecs describe-services` and cdkd's exit code.
+
+### 12-private-subnets
+
+The `-c taskSubnets=private` layout has not been run on AWS. Unverified: that tasks pull the image and ship logs through a NAT gateway and through interface endpoints, and that egress on port 443 alone is enough.
+
+To resume: Deploy chapter 11 with `-c egress=nat`, deploy chapter 12 with `-c imageTag=v1 -c taskSubnets=private`, and check `ServiceUrl`. Then redeploy chapter 11 with `-c interfaceEndpoints=ecr.api,ecr.dkr,logs`, replace the tasks by deploying a new tag, and check again. Destroy right afterwards.
+
+### 12-alb-idle-lcu
+
+What a load balancer's LCU usage is with no requests (whether health checks count) was not confirmed from a primary source. The cost tables leave LCUs out of the idle figures.
+
+To resume: Deploy, wait a day, and read the quantity of `APN1-LCUUsage` in Cost Explorer or the bill.
+
+### dsql-real-cluster
+
+The chapter 13 code has never been connected to a real Aurora DSQL cluster. Unconfirmed: that the four migrations are accepted (CREATE SCHEMA IF NOT EXISTS, the foreign key, the CHECKs, CREATE INDEX ASYNC IF NOT EXISTS), that job_id can be read from the response to CREATE INDEX ASYNC and sys.jobs polled, that AWS IAM GRANT plus the schema GRANTs let notes_api read and write, that the token passes through the function given to node-postgres as password, that a conflict shows up as code 40001 on node-postgres's error, and how a dropped connection looks in an execution environment that was frozen. The local stand-in is PGlite (PostgreSQL 18.3), a different version from DSQL (PostgreSQL 16 compatible).
+
+To resume: In a practice account run vp run sql:infra:deploy, sql:db:migrate, sql:db:grant, and sql:smoke in that order. Put concurrent updates on one note and look for "transaction retry" lines and 40001 with sql:logs. Call again after more than 15 minutes and watch the reconnect. Record the results in data/validation.json and remove everything with vp run sql:infra:destroy.
+
+### cdkd-dsql-cluster
+
+cdkd 0.296.28 has no dedicated provider for AWS::DSQL::Cluster and handles it through Cloud Control API. Whether create, Ref returning the cluster identifier, drift read-back, and delete work in practice is unconfirmed. The chapter 13 stack builds the endpoint and the ARN from Ref.
+
+To resume: After vp run sql:infra:deploy, check that the ClusterEndpoint output has the form <26-character id>.dsql.ap-northeast-1.on.aws and that the function's environment variable and the IAM policy's Resource point at the same cluster. Record the results of vp run sql:infra:drift and sql:infra:destroy as well.
+
+### dsql-dpu-estimate
+
+The chapter 13 cost scenario borrows its DPUs per request from the documentation's worked examples. They were not measured on this chapter's queries.
+
+To resume: On a deployed cluster use EXPLAIN ANALYZE VERBOSE, or the ComputeDPU, ReadDPU, and WriteDPU metrics in CloudWatch, to measure the DPUs of one create, one update, and one list. Correct the scenarios in data/fragments/13.json and apply it again.
+
+### 16-deploy
+
+The chapter 16 stack has never been deployed. Unconfirmed: that cdkd 0.296.28 creates the state machine from an inline DefinitionString (an Fn::Join); that the trust policy conditions on the state machine's role are accepted; that Scheduler calls StartExecution with `<aws.scheduler.scheduled-time>` replaced in the input; the input and output of a Task whose Resource is a function ARN; that the name of a Lambda exception matches the `ExportCorrupt` catcher; that S3 answers 412 to `If-None-Match: *` and the SDK throws it as an exception with status 412; that HeadObject returns metadata keys in lower case; whether the Lambda function keeps running after a Task times out; and the real number of state transitions.
+
+To resume: Run `vp run export:infra:deploy`, `vp run export:seed --notes 250`, and `vp run export:start --id check-1 --wait`, then look at the manifest and the history count with `vp run export:status`. Run `export:start` again with the same ID and check for ExecutionAlreadyExists. For the failure paths, delete one part in the S3 console during a run, or shorten the ExportPages function's timeout for a while. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy`.
+
+### 16-durable
+
+The Lambda durable function has never been deployed. Unconfirmed: that it is available in ap-northeast-1 (the only evidence is the Tokyo SKUs in the Price List); that cdkd 0.296.28 creates a function with DurableConfig, and Lambda::Version and Lambda::Alias through Cloud Control API; that the execution role's permissions (CheckpointDurableExecution and GetDurableExecutionState on `function:<name>:*`) are enough; that SDK 2.6.0 bundled by esbuild runs on nodejs24.x; that `DurableExecutionName` prevents a duplicate start; what really happens when one invocation hits the function timeout; and the real number of durable operations and their cost.
+
+To resume: Run `vp run export:infra:deploy -c durable=true`, then `vp run export:seed` and `vp run export:durable:start --id check-1`, and follow it in the Durable executions tab of the Lambda console and with `vp run export:logs --function durable`. Start the same ID again and check that no new execution appears. Check the manifest with `vp run export:status`. Finish with `vp run export:empty --yes` and `vp run export:infra:destroy -c durable=true`.
+
+### 16-containers
+
+Running a step as an ECS task (`ecs:runTask.sync`) or an AWS Batch job is described in prose only; there is no code and no test. The IAM, the networking, how a task's exit code is handled, and the measured cost are unconfirmed.
+
+To resume: Package the export worker as an image the way chapter 12 does (immutable tags, no `fromAsset`) and replace the ExportPages state with `arn:aws:states:::ecs:runTask.sync`. Progress then has to live in S3, since a task returns no value. This needs a Docker daemon.
+
+### 17-live-inference
+
+Chapter 17 has never called real Bedrock. That the model IDs (such as jp.amazon.nova-2-lite-v1:0) can be called from Tokyo, that real ConverseStream events fit the schema in src/converse-stream.ts, and that the fixtures match the real shapes are all unconfirmed.
+
+To resume: Prepare examples/17-ai/.env, run vp run ai:hello and then vp run ai:test:live (billed). If the event shapes differ, fix the schema and the fixtures.
+
+### 17-deployed-streaming
+
+The chapter 17 stack has not been deployed. Unconfirmed: that this chapter's adapter (src/function-url.ts) delivers the response piece by piece on the Node.js 24 Lambda runtime through a function URL (RESPONSE_STREAM, AWS_IAM); that Lambda reads the keys passed to awslambda.HttpResponseStream.from (statusCode, headers, cookies) as written; whether a disconnect makes a write to the response stream fail; that an unsigned request answers 403; that ConverseStream passes with the IAM policy scoped to the inference profile; and that cdkd applies InvokeMode on AWS::Lambda::Url.
+
+To resume: Run vp run ai:infra:deploy, vp run ai:smoke (it prints when each delta arrived), vp run ai:logs, vp run ai:infra:drift, and vp run ai:infra:destroy, in that order.
+
+### 17-bedrock-billing-details
+
+How many tokens are billed for a ConverseStream call that is aborted midway was not confirmed from a primary source. Neither were a free allowance for Bedrock or the quota values in the Tokyo Region.
+
+To resume: Check the Bedrock pricing page and Service Quotas. For aborted calls, stop ai:test:live midway and compare the bill with the CloudWatch metrics.
+
+### obs-lambda-json-log-shape
+
+Not checked in AWS: that under Lambda's JSON log format the JSON line the application passes to console.log reaches CloudWatch Logs unchanged. The metric filter's JSON pattern and the field names in the Logs Insights queries depend on it.
+
+To resume: After vp run obs:infra:deploy and vp run obs:smoke, run vp run obs:query --name request --id <x-request-id>. Check that the lines are found with fields such as status, and that NoteConflicts gets a data point. If the shape differs, write through process.stdout in src/compose.ts or change the field names in the queries.
+
+### obs-otel-layer-node24
+
+The configuration with the AWS Lambda Layer for OpenTelemetry on a Node.js 24 function has not been run. The ADOT documentation lists runtimes up to Node.js 22. Also unconfirmed for an ESM function bundled by esbuild: whether hand-written spans reach the layer's SDK, whether the AWS SDK auto-instrumentation takes effect, and whether xray:PutTraceSegments on the execution role is enough.
+
+To resume: Take the Tokyo layer ARN from the Node.js table in the ADOT documentation and run vp run obs:infra:deploy -c otelLayerArn=<ARN>. After vp run obs:smoke, check in the X-Ray console that notes.* spans appear under Lambda's segment. If not, look for layer errors in the function's log and compare with the nodejs22.x runtime.
+
+### obs-alarm-behavior
+
+The alarms' real state changes have not been observed. That the metric math IF expression is accepted, that 5xx and Count have no data points while there are no requests, and that the SNS notification arrives are read from the documentation.
+
+To resume: After vp run obs:infra:deploy -c alarmEmail=<your address>, confirm the subscription mail and check the states with vp run obs:alarms. To cause 5xx responses, deploy a change that temporarily removes the table permission, from another branch and in a practice account.
+
+### obs-cdkd-cloud-control
+
+cdkd 0.296.28 handles AWS::CloudWatch::Dashboard and AWS::Logs::MetricFilter through Cloud Control API. Whether create, update and drift read-back work in practice is unconfirmed.
+
+To resume: Run vp run obs:infra:deploy and vp run obs:infra:drift. If they fail, record how and ask the author for a decision; do not substitute another tool.
+
+### obs-pricing-gaps
+
+Not confirmed: the price of a dashboard beyond the third, the size of the system log lines Lambda writes in the JSON format, and whether spans sent through the layer are billed as X-Ray traces.
+
+To resume: Open the pricing page in a browser that runs JavaScript and read the dashboard price. After deploying, measure the total bytes of @message per request with Logs Insights and correct the assumption in data/fragments/19.json. A few days later, look at the usage types in Cost Explorer.
+
+### 20-cfn-deploy
+
+The CloudFormation path (bootstrap, diff, deploy, smoke, status, destroy) has not been run in a real account
+
+To resume: After `vp run ship:cfn:bootstrap`, run `vp run ship:cfn:diff`, `ship:cfn:deploy`, `ship:smoke`, `ship:cfn:status`, and `ship:cfn:destroy` in order. Record that `ship:smoke` gets a 200 through the alias and that `cdk diff --method template` works with the lookup role alone. Compare what the CDKToolkit stack created with the table in the chapter
+
+### 20-oidc-roles
+
+The OIDC roles have not been assumed from GitHub Actions
+
+To resume: Run `vp run ship:ci:deploy -c githubRepository=<owner>/<repo>` and put the four output ARNs and the account ID into the repository's variables. Copy the four files in workflows/ to .github/workflows/ and run a pull request, a push to main, and a manual drift run once each. Record that assuming from another branch or repository is refused, whether the repository's sub uses the immutable format, and that the plan job does not run for a fork's pull request
+
+### 20-drift-role-permissions
+
+The DriftRole's read permissions were derived from resource type schemas; whether they suffice for a real detection is unconfirmed
+
+To resume: Run `vp run ship:cfn:drift -c stage=prod` as the DriftRole. If it ends `failed` or `incomplete`, add the action named in the report's reason to examples/20-shipping/infra/lib/ci-stack.ts and update the list in the test. If it suffices, check CloudTrail for actions that were never used and remove them
+
+### 20-drift-live
+
+No real CloudFormation drift response has been captured. Coverage (whether the Integration is left unchecked, whether an inline policy change shows as drift on the Role) is unconfirmed
+
+To resume: Run the 'Break it on purpose' procedure in the chapter. At each step keep reports/drift/AihShipApi.json and the output of `aws cloudformation describe-stack-resource-drifts` at the same moment, and compare their shape with the fixtures in tools/src/drift/fixtures/cloudformation/. Run against a stack name that does not exist and confirm the error's name and message are `ValidationError` and `does not exist`. Compare the resource types left unchecked with the two lists in examples/20-shipping/src/drift-coverage.ts
+
+### 20-rollback-live
+
+A failed deploy's rollback, moving the alias, and `cdk rollback` have not been observed in a real account
+
+To resume: Deploy a change that fails on purpose (for example a Lambda memorySize above the limit) and record the statuses `vp run ship:cfn:status` reports until UPDATE_ROLLBACK_COMPLETE. Deploy twice successfully and confirm the older version remains, and that versions are gone once the stack is deleted
+
+### 20-tool-migration
+
+Moving a stack between cdkd and CloudFormation (`cdkd export`, `cdkd import --migrate-from-cloudformation`) has not been run
+
+To resume: Deploy a practice stack with cdkd, read the plan from `cdkd export <stack> --dry-run`, then run it. Record whether it stops on a resource type that cannot be imported, and that afterwards cdkd's state is gone and `cdk diff` on the CloudFormation stack is empty. Try the reverse direction on the same stack
+
+### 21-deploy
+
+The default stack (CloudFront, the function URL, Secrets Manager) has not been run in a real account
+
+To resume: After `vp run sec:infra:deploy`, run `vp run sec:smoke` immediately and record the N in "after N refusals". Check that a direct curl of the function URL gets 403, record the result of `vp run sec:infra:drift`, and after `vp run sec:infra:destroy` confirm in the Secrets Manager console that no secret remains, not even as scheduled for deletion
+
+### 21-rotation
+
+Rotating the secret has not been tried in a real account
+
+To resume: After deploying, run `vp run sec:smoke`, `vp run sec:secret:rotate`, and `vp run sec:smoke` again. Record that a token issued with the old key version verifies right after the rotation, that `sec:secret:versions` shows AWSCURRENT and AWSPREVIOUS, that a rerun with the same `--version-id` reports already-rotated, and that a second rotation within ten minutes stops with too-soon. Also check whether GetSecretValue on a secret with no AWSPREVIOUS fails with ResourceNotFoundException
+
+### 21-waf
+
+The web ACL has not been created, and the rate-based rule has not been observed
+
+To resume: Pass the WebAclArn output of `vp run sec:waf:infra:deploy` to `vp run sec:infra:deploy -c webAclArn=<ARN>`. Send more than 300 requests in five minutes from one IP address and record how long, and how many requests, it takes before 403s begin. Confirm in the WAF console that AwsCommonRules records matches as counts. Check on the bill whether the usage type is Global-* or USE1-*. Afterwards detach with `sec:infra:deploy` (no webAclArn), then `vp run sec:waf:infra:destroy`
+
+### 21-cmk
+
+The customer managed key variant has not been tried in a real account
+
+To resume: Run `vp run sec:infra:deploy -c cmk=on`, then `vp run sec:smoke`. Confirm the function reads the secret with only kms:Decrypt under the kms:ViaService condition. After `vp run sec:infra:destroy`, record that the key is pending deletion in the KMS console and due to disappear in 7 days, and whether the bill shows a key charge for that period
+
+### 21-iam-propagation
+
+The delay before an IAM change takes effect has not been observed
+
+To resume: Record over several deploys whether `vp run sec:smoke` right after a deploy reports 0 refusals. Then delete ReadSigningKey from HandlerRole in the console, wait for a new execution environment, call `/token` repeatedly, and record how long it takes to get a 503 and whether a 200 appears again after the first 503. Afterwards check the difference with `vp run sec:infra:drift` and revert
+
+### 21-posture
+
+`sec:posture` and `sec:trail:iam` have not been run against a real account, and GuardDuty, Inspector, Config, a trail, and Organizations have not been enabled
+
+To resume: Run `vp run sec:posture` and confirm all six reads succeed, and that an account outside any organization answers AWSOrganizationsNotInUseException. Enable GuardDuty in the console, confirm the line turns to on, and record the estimate the console's usage page shows during the 30-day trial. With `vp run sec:trail:iam`, confirm the CreateRole from a deploy appears in the us-east-1 event history. Try the SCP only if you can set up a practice organization and OU: attach `policies/scp-guardrails.json` to the OU
+
+### 22-drill
+
+The chapter 22 recovery drill has never been run on AWS. Unconfirmed: how long a PITR restore takes, the real lag of `LatestRestorableDateTime`, which settings a restored table does and does not inherit (deletion protection and PITR included), the ETag, `LastModified`, and notifications after removing a delete marker or copying a version on top in S3, the order of versions that share a timestamp in `ListObjectVersions`, and any measured RPO or RTO.
+
+To resume: After `vp run recovery:infra:deploy`, follow the chapter's drill section: `recovery:drill new`, `recovery:seed --apply`, `recovery:accident --apply`, `recovery:restore:table --apply`, `recovery:restore:objects --at <time> --apply`, `recovery:verify --table <restored table> --frozen`, `recovery:repair`, then record what `recovery:drill summary` prints in a copy of `examples/22-recovery/drill/TEMPLATE.md`. Finish with the three cleanup tasks.
+
+### 22-cutover
+
+The cutover to a restored table was not tried on AWS. Unconfirmed: that deploying with `-c table=<name>` changes only the function's environment and IAM policy, that cdkd's drift check does not report the restored table, that `cdkd orphan` and `cdkd import --resource` can swap the stack's table, what destroying a `-c protect=on` stack with cdkd does, and creating and deleting `-c backup=on` (through Cloud Control API) and `-c replica=on`.
+
+To resume: Continuing the drill, read the diff from `vp run recovery:infra:diff -c table=<restored table>`, deploy, then run `vp run recovery:audit` and `vp run recovery:infra:drift`. To try the import, first read the output of `cdkd orphan AihRecovery/Notes --dry-run` and `cdkd import AihRecovery --resource <logical ID>=<restored table> --dry-run` in `examples/22-recovery`.
+
+### 23-deploy
+
+The chapter 23 stack has never been deployed. Unverified: that cdkd 0.296.28 creates the instance, instance profile, and security group with its own providers and the volume and attachment through Cloud Control API, that the AMI ID resolves from the SSM-typed parameter, and that the chapter 11 outputs are read through `Fn::ImportValue`.
+
+To resume: After `vp run net:infra:deploy -c interfaceEndpoints=ssm,ssmmessages,ec2messages`, run `vp run ec2:infra:deploy`, `vp run ec2:status`, and `vp run ec2:infra:drift`. Then delete everything in the order of the cleanup section (hourly charges).
+
+### 23-first-boot
+
+The user data has not run on a real Amazon Linux 2023. Unverified: that dnf reaches the repositories from a private subnet through the S3 gateway endpoint alone (that they are in S3 was inferred from host names in sample output in the documentation), that `nodejs24` and `xfsprogs` install, that the `/dev/sdf` link appears, that the wait loop outlasts the attachment, that the unit's directives (such as `AssertPathIsMountPoint`) are accepted by the systemd on AL2023, and the size of the root volume (pricing assumes 8 GiB).
+
+To resume: After deploying, run `vp run ec2:status` to see the cloud-init result, the service state, and the mount. If it failed, connect with `vp run ec2:session` and read `/var/log/cloud-init-output.log`. Check the root volume with `aws ec2 describe-volumes --filters Name=attachment.instance-id,Values=<instance id>`; if it is not 8 GiB, fix `ASSUMED_ROOT_GIB` in `src/cost.ts` and the amounts in the text.
+
+### 23-ssm-endpoints
+
+Whether all three interface endpoints are needed was not checked. The Systems Manager documentation says SSM Agent 3.3.40.0 and later prefers ssmmessages, but does not say the ec2messages endpoint can be omitted. The agent version in the AMI was not looked at either.
+
+To resume: Redeploy the chapter 11 stack with `-c interfaceEndpoints=ssm,ssmmessages`, reboot the instance, and see whether `vp run ec2:status` reports Online and `vp run ec2:smoke` passes. If so, the monthly cost drops by USD 20.44.
+
+### 23-release
+
+The release path (upload to S3, Run Command, `notes-release` on the instance, restart, and the `/health` check) and that a restart lets a request in flight finish have not been run on a real instance. Session Manager and port forwarding were not run either (the plugin is not in the devShell).
+
+To resume: Run `vp run ec2:app:release`, `vp run ec2:smoke`, and `vp run ec2:logs`. Release again, then go back with `vp run ec2:app:rollback <version>`. Install the Session Manager plugin, run `vp run ec2:forward`, and call `curl http://localhost:8787/health` from your machine.
+
+### 23-replace-and-restore
+
+Not run: that the data volume survives and is reattached when the instance is replaced, restoring from a snapshot, and what happens to the volume attachment on destroy. In the cdkd source, a change to `UserData` is not applied to the instance and a change to `ImageId` replaces it. How the attachment behaves during a replacement (detached from the old instance and attached to the new, or failing midway) could not be determined from the source.
+
+To resume: Create one note, run `vp run ec2:data:unmount`, then deploy with `-c amiId=<the previous AMI>` to force a replacement. On the new instance run `vp run ec2:status`, `vp run ec2:app:release`, and `vp run ec2:smoke`, and see whether the note is still there. Then go through the snapshot and restore procedure.
+
+### 23-patch
+
+`ec2:patch:check` and `ec2:patch:apply` have not been run on a real instance. Patch Manager (`AWS-RunPatchBaseline`) is described only; there is no task for it.
+
+To resume: Deploy with an AMI a few weeks old through `-c amiId=...`, confirm that `vp run ec2:patch:check` lists a newer release, and run `vp run ec2:patch:apply <releasever>`. If the kernel was updated, reboot with `aws ec2 reboot-instances` and run `vp run ec2:smoke`.
+
+### 58-aws
+
+The chapter 58 stack has never run on AWS. Unconfirmed: that the real DynamoDB answers a duplicate PartiQL INSERT with DuplicateItemException (DynamoDB Local 3.3.1 used the name DuplicateItem), that a role with only dynamodb:PartiQLInsert and dynamodb:Query can append and cannot overwrite, the units a PartiQL INSERT is billed in, that PutObject into a bucket with only a default retention needs just s3:PutObject and comes out locked, that the checksum the SDK adds satisfies PutObject under Object Lock, the 412 for If-None-Match, the shape of the ListObjectVersions answer, the 403 for deleting a locked version, lifting governance mode, the error name GetObjectRetention gives for a version with no lock, the price of the hourly rule, that cdkd can really create the bucket with Object Lock, the rule and the Lambda permission, and that cdkd destroy leaves the retained bucket. The QLDB developer guide answered 404, so what QLDB offered rests on two AWS blog posts only.
+
+To resume: Run `vp run ledger:infra:diff`, `vp run ledger:infra:deploy`, `vp run ledger:append` twice, `vp run ledger:digest`, then `vp run ledger:verify`. The function's logs are in the log group named by the `DigestLogGroupName` output. Note the `DigestBucketName` output, then run `vp run ledger:infra:destroy`. Once the retention period (one day by default) is over, delete the bucket with `vp run ledger:purge --bucket <name> --apply`.
+
+### ecr-lifecycle-not-previewed
+
+The lifecycle policy was never evaluated by ECR. The evaluator in src/lifecycle.ts is written from the documented evaluation rules and six worked examples; it reproduces the examples, which does not make it ECR's implementation. The boundary of "older than N days", the order of images pushed at the same instant, manifest lists and reference artifacts are not implemented or not confirmed.
+
+To resume: After vp run ecr:infra:deploy, push a few dozen images, tagged and untagged, and run vp run ecr:lifecycle:compare. It reports whether start-lifecycle-policy-preview and the evaluator agree, digest by digest and rule by rule. On a difference, fix src/lifecycle.ts and add that input to test/lifecycle.test.ts.
+
+### ecr-nothing-pushed
+
+No image was built or pushed. Not confirmed: that the immutable repository refuses a second push of a tag, that a second tag can be added to the same digest, whether a tag can be reused after its image is deleted, that docker push succeeds with the push role's permissions, and the real size of an image.
+
+To resume: With a Docker daemon, build an image with chapter 12's vp run ecs:image:build <tag> and push it to AihEcr's RepositoryUri following chapter 12's deploy page. Check that pushing another image under the same tag fails with ImageTagAlreadyExistsException, read imageSizeInBytes from aws ecr describe-images, and push from GitHub Actions with the push role.
+
+### ecr-scan-not-observed
+
+No scan result was observed. Not confirmed: that scan on push runs, the shape of findingSeverityCounts when there are no findings (an empty object or absent), how long a scan takes, and whether chapter 12's image (node:24-bookworm-slim) is an operating system basic scanning supports.
+
+To resume: After pushing an image, run vp run ecr:scan:gate --digest <digest>. If the schema refuses the response, fix src/scan.ts to the shape that came back.
+
+### ecr-cache-not-deployed
+
+The pull-through cache rule was not deployed. Not confirmed: that cdkd 0.296.28 creates AWS::ECR::PullThroughCacheRule through the Cloud Control API, that the first pull through the cache creates the repository, and that the push role's permissions are enough for it.
+
+To resume: Deploy with vp run ecr:infra:deploy -c pullThroughCache=on -c githubRepository=<owner/repo>, then docker pull <registry>/ecr-public/docker/library/node:24-bookworm-slim. Check that ecr-public/docker/library/node appears in aws ecr describe-repositories. Delete that repository by hand when cleaning up.
+
+### ecr-ecs-rollback-digest
+
+The documentation says ECS resolves tags to digests per deployment. Whether a circuit breaker rollback reuses the digests of the earlier deployment or resolves the tag again was not confirmed.
+
+To resume: Read the ECS documentation on service revisions to see whether the revision rolled back to carries digests. On a mutable repository, move a tag, force a rollback, and read imageDigest from aws ecs describe-tasks.

@@ -1,6 +1,6 @@
 ---
 title: "09 SSR: A BFF, and Nuxt on Regional Lambda"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 09 SSR: A BFF, and Nuxt on Regional Lambda

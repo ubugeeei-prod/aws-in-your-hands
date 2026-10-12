@@ -116,7 +116,7 @@ Synthesizing the template from this code produces one parameter of type `AWS::SS
 
 Arriving at this code took two failed attempts with the pinned version, aws-cdk-lib 2.273.0.
 
-First, the commonly shown `MachineImage.latestAmazonLinux2023()` ignores the `kernel` option and uses the parameter for the 6.1 kernel. According to the Amazon Linux documentation, `kernel-default` has meant 6.18 since August 2026. Second, when you use `AmazonLinux2023ImageSsmParameter` directly instead, it tries by default to look the AMI up during synthesis, and synthesis fails for a stack that has no account specified. `cachedInContext: false` avoids that.
+First, the commonly shown `MachineImage.latestAmazonLinux2023()` ignores the `kernel` option and uses the parameter for the 6.1 kernel. According to the Amazon Linux documentation, `kernel-default` has meant 6.18 since August 2026. Second, when you use `AmazonLinux2023ImageSsmParameter` directly instead, it tries by default to look the AMI up during synthesis, and synthesis fails for a stack that has no account specified. `cachedInContext: false` avoids that. Note that kernel 6.18 is outside what the AWS Elastic Disaster Recovery documentation supports for Amazon Linux 2023, which is up to 6.12 (checked by [chapter 40](/en/chapters/40-disaster-recovery.md) on 2026-10-13).
 
 ### "Latest" causes replacements
 

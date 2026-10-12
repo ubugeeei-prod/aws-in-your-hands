@@ -15,7 +15,7 @@ Cloudflare Workers のデプロイと比べると、次の点が違います。
 | | Cloudflare Workers | この章 |
 | --- | --- | --- |
 | デプロイ | `wrangler deploy` が version を作り、すぐ 100% に切り替える | synth して、CloudFormation がテンプレートの差分を 1 つずつ反映する |
-| 版と切り替え | version と deployment。2 つの version に割合で振り分けられる | Lambda のバージョンとエイリアス。重み付けはできるが、この章では未実装 |
+| 版と切り替え | version と deployment。2 つの version に割合で振り分けられる | Lambda のバージョンとエイリアス。重み付けはできるが、この章では未実装（[31章](/ja/chapters/31-progressive-delivery.md)で実装する） |
 | 戻す | `wrangler rollback`。直近 100 個の version まで | 失敗時は CloudFormation が自動で戻す。あとから戻すなら、コードを戻してデプロイ |
 | CI の認証 | ドキュメントの手順は、API トークンを CI のシークレットに置く | OIDC で、1 時間だけ有効な認証情報を受け取る。保存する秘密は無い |
 | 戻らないもの | KV、R2、D1 などの中身は version に含まれない | データ、スキーマ、外に出たもの |
@@ -61,7 +61,7 @@ GitHub Actions の料金は、AWS の請求には含まれません。GitHub の
 - アカウントを分ける。dev、プレビュー、prod を同じアカウントに置くかぎり、分かれているのは名前だけです
 - プレビューは、信用できるブランチだけに限る。上の 2 つのどちらも無いままプレビューを有効にすると、**ブランチを push できる人の全員が、アカウントの管理者になれます**
 - `production` environment に保護を付ける。デプロイできるブランチを main に限り、承認を必須にします。信頼ポリシーが信用しているのは、この environment の名前です
-- エラー率で止める仕組みを足してから、段階的に切り替える。エイリアスの重み付けと CodeDeploy は、アラーム（[19章](/ja/chapters/19-observability.md)）と組にして使います
+- エラー率で止める仕組みを足してから、段階的に切り替える。エイリアスの重み付けと CodeDeploy は、アラーム（[19章](/ja/chapters/19-observability.md)）と組にして使います。重み付きのエイリアスをアラームにつないで進める実装は、[31章](/ja/chapters/31-progressive-delivery.md)にあります
 - ドリフトの report を、人が見る場所に流す。失敗したジョブの通知だけに頼らないでください。定期実行は止まることがあります
 - アセットを片付ける。固定した版の CLI には `cdk gc` があります。この章では試していません
 - OIDC provider と CI のロールも、ドリフトを見る。この章の DriftRole は、`AihShipApi` で始まるスタックしか読めません。`AihShipCi` を誰かが書き換えても、気づけません

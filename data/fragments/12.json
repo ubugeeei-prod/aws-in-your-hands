@@ -4,8 +4,8 @@
     "id": "12",
     "slug": "containers",
     "title": {
-      "ja": "コンテナを動かす: ECR、ECS/Fargate、ALB",
-      "en": "Run Containers: ECR, ECS/Fargate, and ALB"
+      "ja": "Containers: ECR、ECS/Fargate、ALB",
+      "en": "Containers: ECR, ECS/Fargate, and ALB"
     },
     "prerequisites": ["11"],
     "services": ["ECR", "ECS", "Fargate", "ALB"],
@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 4,
+    "sourceRevision": 5,
     "translatedRevision": {
-      "en": 4
+      "en": 5
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [
@@ -1478,10 +1478,10 @@
         "command": "vp run test:unit (examples/12-containers)",
         "kind": "local",
         "status": "passed",
-        "ranAt": "2026-10-12",
+        "ranAt": "2026-10-13",
         "note": {
-          "ja": "SIGTERM を送る子プロセスのテスト、graceful shutdown、新旧の版の同居、時間の関係、設定、docker コマンドの組み立て、料金、stack の assertion",
-          "en": "The child-process SIGTERM test, graceful shutdown, old and new versions side by side, the timing rules, settings, the docker command lines, pricing, and stack assertions"
+          "ja": "SIGTERM を送る子プロセスのテスト、graceful shutdown、新旧の版の同居、時間の関係、設定、docker コマンドの組み立て、料金、stack の assertion。digest での指定と、不正な digest の拒否を含む",
+          "en": "The child-process SIGTERM test, graceful shutdown, old and new versions side by side, the timing rules, settings, the docker command lines, pricing, and stack assertions. Includes naming the image by digest and refusing a malformed digest"
         }
       },
       {
@@ -1489,10 +1489,10 @@
         "command": "vp run ecs:infra:synth",
         "kind": "local",
         "status": "passed",
-        "ranAt": "2026-10-12",
+        "ranAt": "2026-10-13",
         "note": {
-          "ja": "image tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private` の 3 通りで synth した",
-          "en": "Synthesized three ways: without an image tag, with `-c imageTag=v1`, and with `-c imageTag=v1 -c taskSubnets=private`"
+          "ja": "image tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`、`-c imageDigest=sha256:...` の 4 通りで synth した。桁の足りない digest と、imageTag との同時指定が拒否されることも確かめた",
+          "en": "Synthesized four ways: without an image tag, with `-c imageTag=v1`, with `-c imageTag=v1 -c taskSubnets=private`, and with `-c imageDigest=sha256:...`. Also saw a digest that is too short, and a digest given together with imageTag, refused"
         }
       },
       {

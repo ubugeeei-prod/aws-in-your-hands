@@ -38,7 +38,7 @@ The last few lines set a limit on how many invocations run at once (reserved con
 
 In chapter 04 you put a limit on requests per second in API Gateway. A function URL behind CloudFront has no free setting that does the same, so every request that misses the cache runs the function, however many arrive. Reserved concurrency puts a limit on that number, and requests beyond the limit are refused without running the function.
 
-It is not the default because it can make the deploy fail. Reserved concurrency sets N aside from the account's total concurrency. A new account can have a small total, and then the reservation itself is refused. This book cannot check what happens in your account. When to turn it on is covered, with the amounts, under "When it gets hammered" on [the costs page](/en/chapters/09-ssr/wrap.md).
+It is not the default because it can make the deploy fail. Reserved concurrency sets N aside from the account's total concurrency. A new account can have a small total, and then the reservation itself is refused. You can reserve up to the account's concurrency quota minus 100, because 100 must stay unreserved for functions that have no reservation ([chapter 32](/en/chapters/32-limits.md)). When to turn it on is covered, with the amounts, under "When it gets hammered" on [the costs page](/en/chapters/09-ssr/wrap.md).
 
 ### Don't leave the function URL public
 

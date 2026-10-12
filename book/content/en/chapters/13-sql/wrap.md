@@ -28,7 +28,7 @@ D1's read replicas receive copies from the primary asynchronously, so a replica 
 
 A single-Region Aurora DSQL cluster writes synchronously to three AZs. Whatever was committed is visible to every transaction that follows, so you never have to think about sessions or bookmarks. In exchange, a cluster in Tokyo is in Tokyo. This setup has nothing like D1's read replicas, which place copies near distant readers.
 
-This is why the start of the chapter said that DSQL is not a distributed D1. D1 is a database that you write to in one place and can read from far away, and DSQL is a database in which you see the same data wherever you write within one Region. Multi-Region clusters exist too, but only within a set of Regions in the same area (for Tokyo, Osaka and Seoul among others), and this chapter does not cover them.
+This is why the start of the chapter said that DSQL is not a distributed D1. D1 is a database that you write to in one place and can read from far away, and DSQL is a database in which you see the same data wherever you write within one Region. Multi-Region clusters exist too, but only within a set of Regions in the same area (for Tokyo, Osaka and Seoul among others), and this chapter does not cover them. [Chapter 66](/en/chapters/66-distributed-sql.md) shows what you take on when you run a distributed database of the same kind yourself.
 
 Transactions are written differently as well. D1's `batch()` takes all of its statements up front, so you cannot look at a result partway through and branch. On DSQL you can read, decide, and write between `BEGIN` and `COMMIT`. The quota handling on the [Design and Build](/en/chapters/13-sql/build.md) page is an example. The price of that freedom is that you write the retry yourself.
 

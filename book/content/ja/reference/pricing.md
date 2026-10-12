@@ -383,102 +383,6 @@ ID: `edge-small` / 章: [10 Edge: CloudFront Functions、KeyValueStore、Lambda@
 - 毎月の無料枠適用後の小計: **USD 0.21** / 月
 - 無料枠を確認できず、何も引いていない単価: `cloudfront.kvs.api`, `s3.request.tier2`
 
-## Aurora DSQL: 1 GB のデータを置いて、誰も問い合わせない月
-
-ID: `sql-dsql-idle` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
-
-前提:
-
-- 問い合わせゼロ。DPU は発生しない
-- データは 1 GB
-- backup なし
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `dsql.dpu` | 0 | DPU | no database activity | 0 | 100,000 | 0 |
-| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
-
-- 定価の小計: **USD 0.40** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## Aurora DSQL: 月 100 万リクエストのノート API（DB の分だけ）
-
-ID: `sql-dsql-small` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
-
-前提:
-
-- 読み取り 90 万件、書き込み 10 万件
-- 読み取り 1 件は 0.00675 DPU と仮定（公式ドキュメントの point lookup の計算例の値）
-- 書き込み 1 件は 0.18525 DPU と仮定（公式ドキュメントの 1 行 insert の計算例 0.06175 DPU の 3 倍。この章の作成は 3 行に書く）
-- この章の query で実測した値ではない
-- データは 1 GB
-- Lambda、API Gateway、ログ、backup は含めない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `dsql.dpu` | 24,600 | DPU | 900,000 x 0.00675 DPU + 100,000 x 0.18525 DPU | 0.25 | 100,000 | 0 |
-| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
-
-- 定価の小計: **USD 0.65** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## RDS for PostgreSQL: 最小構成を 730 時間動かす
-
-ID: `sql-rds-min` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
-
-前提:
-
-- db.t4g.micro、Single-AZ、止めずに 730 時間
-- gp3 を 20 GB（PostgreSQL での最小）
-- 問い合わせの量によらない
-- backup の超過分、データ転送、VPC の料金（11章）は含めない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `rds.postgres.t4g-micro.single-az` | 730 | Hrs | one instance for 730 hours | 18.25 | - | 18.25 |
-| `rds.postgres.gp3.storage` | 20 | GB-Mo | 20 GB provisioned for the month | 2.76 | - | 2.76 |
-
-- 定価の小計: **USD 21.01** / 月
-- 毎月の無料枠適用後の小計: **USD 21.01** / 月
-- 無料枠を確認できず、何も引いていない単価: `rds.postgres.t4g-micro.single-az`, `rds.postgres.gp3.storage`
-
-## Aurora Serverless v2: auto-pause なし、最小 0.5 ACU で 730 時間
-
-ID: `sql-aurora-min` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
-
-前提:
-
-- Aurora PostgreSQL、writer 1 台、最小容量 0.5 ACU のまま 730 時間
-- Aurora Standard（I/O は別料金。ここでは I/O ゼロ）
-- データは 1 GB
-- backup の超過分、データ転送、VPC の料金（11章）は含めない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `aurora.postgres.serverless-v2.acu` | 365 | ACU-Hr | 0.5 ACU x 730 hours | 54.75 | - | 54.75 |
-| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
-
-- 定価の小計: **USD 54.87** / 月
-- 毎月の無料枠適用後の小計: **USD 54.87** / 月
-
-## Aurora Serverless v2: auto-pause で 1 か月ずっと止まっていた場合
-
-ID: `sql-aurora-paused` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
-
-前提:
-
-- 最小容量 0 ACU。1 か月のあいだ一度も接続がなく、再開もしなかったと仮定
-- 実際には保守のために Aurora が instance を再開することがあり、その時間は課金される
-- データは 1 GB
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `aurora.postgres.serverless-v2.acu` | 0 | ACU-Hr | paused for all 730 hours | 0 | - | 0 |
-| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
-
-- 定価の小計: **USD 0.12** / 月
-- 毎月の無料枠適用後の小計: **USD 0.12** / 月
-
 ## 画像の添付: 月 10,000 枚のアップロード、100,000 回の表示
 
 ID: `uploads-small` / 章: [07 File Upload: presigned URL と S3](/ja/chapters/07-uploads.md)
@@ -510,166 +414,6 @@ ID: `uploads-small` / 章: [07 File Upload: presigned URL と S3](/ja/chapters/0
 - 定価の小計: **USD 11.76** / 月
 - 毎月の無料枠適用後の小計: **USD 11.67** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`, `s3.standard.storage`, `datatransfer.out.internet`, `s3.request.tier1`, `s3.request.tier2`
-
-## SSR: デプロイ済みで誰も来ない月
-
-ID: `ssr-idle` / 章: [09 SSR: BFF、Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
-
-前提:
-
-- リクエストゼロ、publish ゼロ
-- bucket に 5 MB の静的 asset
-- log は 1 週間で失効し、保存量ゼロ
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB stored for the month, in GB-month | 0.000125 | - | 0.000125 |
-
-- 定価の小計: **USD 0.00** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
-
-## SSR: 月 10 万ページビュー
-
-ID: `ssr-small` / 章: [09 SSR: BFF、Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
-
-前提:
-
-- 1 ページビューあたり CloudFront へ平均 4 リクエスト（HTML か API の JSON が 1、asset が平均 3）、合計 100 KB と仮定
-- すべて日本の edge から配信、HTTPS
-- HTML と API の 10 万リクエストのうち、半分が CloudFront の cache で返り、残り 5 万が Lambda に届くと仮定
-- Lambda は平均 200 ms、512 MB、arm64、buffered。200 ms は仮定で、計測値ではない
-- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く START/END/REPORT 行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
-- asset の 30 万リクエストのうち 1/10 が S3 に届くと仮定
-- publish は月 10 回、各 20 object を PUT。bucket に 5 MB
-- Lambda から CloudFront へのデータ転送、標準ログ、WAF、独自ドメインは含めていない（未算入）
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `cloudfront.jp.request.https` | 400,000 | Requests | 100,000 page views x 4 requests | 0.48 | 10,000,000 | 0 |
-| `cloudfront.jp.transfer` | 9.537 | GB | 100,000 page views x 100 KB, in GB | 1.09 | 1,024 | 0 |
-| `lambda.request.arm` | 50,000 | Requests | half of 100,000 HTML and API requests | 0.01 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 5,000 | Lambda-GB-Second | 50,000 x 0.2 s x 0.5 GB, in GB-seconds | 0.07 | 400,000 | 0 |
-| `logs.ingest.standard` | 0.014 | GB | 50,000 x 0.3 KB, in GB | 0.01 | 5 | 0 |
-| `logs.storage` | 0.003 | GB-Mo | 0.0143 GB x 7/30, in GB-month | 0.000109 | 5 | 0 |
-| `s3.request.tier2` | 30,000 | Requests | one tenth of 300,000 asset requests reach S3 as GET | 0.01 | - | 0.01 |
-| `s3.request.tier1` | 200 | Requests | 10 publishes x 20 PUTs | 0.000940 | - | 0.000940 |
-| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB, in GB-month | 0.000125 | - | 0.000125 |
-
-- 定価の小計: **USD 1.67** / 月
-- 毎月の無料枠適用後の小計: **USD 0.01** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
-
-## 監視つきノート API: デプロイ済みで呼ばれない月
-
-ID: `obs-idle` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
-
-前提:
-
-- リクエストゼロ。ログ、trace、custom metric のデータ点はどれも発生しない
-- アラーム 2 つが参照するメトリクスは合計 3 つ（5xx の率が Count と 5xx、遅さが Latency）
-- ダッシュボード 1 つは無料枠（3 つまで、各 50 メトリクスまで）の内と仮定。4 つ目からの単価は確認できていないため、金額に含めていない
-- API、Lambda、DynamoDB そのものの料金は 04章と 05章の計算のとおりで、ここには含めていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
-
-- 定価の小計: **USD 0.30** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## 監視つきノート API: 月 100 万リクエストの観測の料金
-
-ID: `obs-small` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
-
-前提:
-
-- 1 リクエストあたりログ 1 KB。アプリの 1 行は実測で 255 バイト（trace の項目つき）、残りは Lambda が書く行で、JSON 形式での大きさは未計測の仮定
-- ログの保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定
-- リクエストが一定の間隔で届くと仮定。毎秒 0.38 件で、Lambda の既定の sampling（毎秒最初の 1 件と残りの 5%）では全件が trace になる。これは上限で、実際の到着が偏れば減る
-- 1 つの trace に含まれる span の数は料金に影響しない（trace 単位の課金）と仮定
-- trace を画面で開くのは月 10,000 件、Logs Insights で調べるログは月 1 GB
-- custom metric は NoteConflicts の 1 つ、アラームが参照するメトリクスは 3 つ
-- ダッシュボードは無料枠の内と仮定。SNS の通知、API・Lambda・DynamoDB そのものの料金は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `logs.ingest.standard` | 0.954 | GB | 1,000,000 x 1,024 bytes, in GB | 0.72 | 5 | 0 |
-| `logs.storage` | 0.223 | GB-Mo | 0.953674 GB x 7/30, in GB-month | 0.01 | 5 | 0 |
-| `logs.insights.scanned` | 1 | GB | 1 GB scanned by queries | 0.01 | 5 | 0 |
-| `cloudwatch.metric.custom` | 1 | Metrics | NoteConflicts | 0.30 | 10 | 0 |
-| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
-| `xray.trace.recorded` | 1,000,000 | traces | every request traced at 0.38 requests per second | 5.00 | 100,000 | 4.50 |
-| `xray.trace.retrieved` | 10,000 | traces | 10,000 traces opened | 0.01 | 1,000,000 | 0 |
-
-- 定価の小計: **USD 6.34** / 月
-- 毎月の無料枠適用後の小計: **USD 4.50** / 月
-
-## ログを 1 行増やす: 月 100 万リクエスト
-
-ID: `obs-one-more-line` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
-
-前提:
-
-- 増やす 1 行はリクエストの行と同じ 167 バイト（実測。trace の項目なし）
-- 保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `logs.ingest.standard` | 0.156 | GB | 1,000,000 x 167 bytes, in GB | 0.12 | 5 | 0 |
-| `logs.storage` | 0.036 | GB-Mo | 0.15553 GB x 7/30, in GB-month | 0.001198 | 5 | 0 |
-
-- 定価の小計: **USD 0.12** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## メトリクスを 1 つ増やす
-
-ID: `obs-one-more-metric` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
-
-前提:
-
-- dimension なしの custom metric を 1 つ、毎時間データ点が届く状態で 1 か月
-- dimension を付けると、値の組み合わせ 1 つごとに 1 メトリクスと数える
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `cloudwatch.metric.custom` | 1 | Metrics | 1 metric for a full month | 0.30 | 10 | 0 |
-
-- 定価の小計: **USD 0.30** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## Synthetics: 5 分ごとの canary 1 つ
-
-ID: `obs-canary-5min` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
-
-前提:
-
-- 730 時間 x 毎時 12 回 = 8,760 回の実行
-- canary が使う Lambda、S3、ログ、メトリクスの料金は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `cloudwatch.synthetics.run` | 8,760 | Runs | 730 h x 12 runs | 16.64 | 100 | 16.45 |
-
-- 定価の小計: **USD 16.64** / 月
-- 毎月の無料枠適用後の小計: **USD 16.45** / 月
-
-## RUM: 月 1 万回の訪問を全件収集
-
-ID: `obs-rum-small` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
-
-前提:
-
-- 1 回の訪問で 20 イベント（料金ページの計算例と同じ数）、session の収集率 100%
-- 初回の無料トライアル（100 万イベント、1 回限り）は引いていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `cloudwatch.rum.event` | 200,000 | Events | 10,000 visits x 20 events | 2.00 | - | 2.00 |
-
-- 定価の小計: **USD 2.00** / 月
-- 毎月の無料枠適用後の小計: **USD 2.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `cloudwatch.rum.event`
 
 ## KV と cache: 既定の stack（DynamoDB）を置いたまま、呼ばれない月
 
@@ -777,562 +521,6 @@ ID: `kv-used-valkey` / 章: [14 Cache: key-value、DynamoDB、ElastiCache/Valkey
 - 毎月の無料枠適用後の小計: **USD 8.69** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
 
-## 変更を届ける: stack と CI の role を置いて、誰も呼ばない月
-
-ID: `ship-idle` / 章: [20 CI/CD: OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
-
-前提:
-
-- API へのリクエストゼロ。log は失効して保存量ゼロ
-- CloudFormation は AWS:: の resource type に追加料金なし。IAM の role と OIDC provider は IAM の一部で、追加料金なし
-- deploy も drift 検出も 0 回
-- GitHub Actions の料金は AWS の請求ではないので含めていない
-
-- 定価の小計: **USD 0.00** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## 変更を届ける: 1 日 1 回のデプロイを 1 年続けて、asset を一度も片付けない
-
-ID: `ship-assets-year` / 章: [20 CI/CD: OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
-
-前提:
-
-- デプロイのたびにコードが変わり、新しい zip が CDK の asset bucket に 1 つ増える
-- zip は 1 つ 137 KB（この章の bundle 837 KB を手元で deflate した大きさ。CDK CLI が作る zip の実測ではない）
-- 365 個すべてが残っている月の保存料金。PUT のリクエスト料金は含めていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `s3.standard.storage` | 0.048 | GB-Mo | 365 x 137 KB, in GB | 0.001192 | - | 0.001192 |
-
-- 定価の小計: **USD 0.00** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
-
-## コンテナ: repository だけ（image tag なしで deploy）
-
-ID: `containers-repository-only` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
-
-前提:
-
-- `-c imageTag` を付けずに deploy した状態。ALB も task も無い
-- image 1 つぶんとして 0.1 GB を保存していると仮定（実際の image の大きさは build していないので未計測）
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
-
-- 定価の小計: **USD 0.01** / 月
-- 毎月の無料枠適用後の小計: **USD 0.01** / 月
-- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
-
-## コンテナ: 既定の構成を置いたまま 1 か月
-
-ID: `containers-idle` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
-
-前提:
-
-- task 2 つ（0.25 vCPU、0.5 GB、arm64）を public subnet で 730 時間
-- ALB 1 つを 730 時間。LCU は未算入（health check だけのときの LCU は確認していない）
-- public IPv4 アドレスは ALB の node 2 つと task 2 つで 4 つ。ALB が node を増やせば増える
-- repository に 0.1 GB（仮定）
-- ログ、データ転送、auto scaling で増えた task は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
-| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
-| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
-| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
-| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
-
-- 定価の小計: **USD 50.34** / 月
-- 毎月の無料枠適用後の小計: **USD 50.34** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
-
-## コンテナ: 既定の構成を 1 日
-
-ID: `containers-one-day` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
-
-前提:
-
-- `containers-idle` と同じ構成を 24 時間
-- repository の保存料金、ログ、データ転送、LCU は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `fargate.arm.vcpu.hour` | 12 | hours | 2 tasks x 0.25 vCPU x 24 hours | 0.49 | - | 0.49 |
-| `fargate.arm.memory.gb-hour` | 24 | hours | 2 tasks x 0.5 GB x 24 hours | 0.11 | - | 0.11 |
-| `alb.hour` | 24 | Hrs | 1 load balancer x 24 hours | 0.58 | - | 0.58 |
-| `vpc.public-ipv4.in-use.hour` | 96 | Hrs | (2 load balancer nodes + 2 tasks) x 24 hours | 0.48 | - | 0.48 |
-
-- 定価の小計: **USD 1.65** / 月
-- 毎月の無料枠適用後の小計: **USD 1.65** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`
-
-## コンテナ: 月 100 万リクエスト
-
-ID: `containers-small` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
-
-前提:
-
-- `containers-idle` の構成のまま、task は 2 つから増えないと仮定
-- LCU は新規接続の次元で数える。1 リクエスト 1 接続、月 100 万件は毎秒 0.38 件で 0.0152 LCU、730 時間で 11.1 LCU 時間
-- ログは 1 リクエスト 0.2 KB の 1 行（成功した health check は書かない）。保持 7 日、月平均の保存量を取込み量の 7/30 と仮定
-- 応答は 1 件 0.5 KB と仮定し、インターネットへのデータ転送を 0.477 GB
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
-| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
-| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
-| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
-| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
-| `alb.lcu.hour` | 11.1 | LCU-Hrs | 0.0152 LCU x 730 hours (assumption) | 0.09 | - | 0.09 |
-| `logs.ingest.standard` | 0.191 | GB | 1,000,000 x 0.2 KB, in GB | 0.15 | 5 | 0 |
-| `logs.storage` | 0.045 | GB-Mo | 0.191 GB x 7/30, in GB-month | 0.001485 | 5 | 0 |
-| `datatransfer.out.internet` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.05 | - | 0.05 |
-
-- 定価の小計: **USD 50.63** / 月
-- 毎月の無料枠適用後の小計: **USD 50.48** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `datatransfer.out.internet`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `alb.lcu.hour`, `ecr.storage`
-
-## コンテナ: task を private subnet に置き、NAT Gateway 1 つで出る
-
-ID: `containers-private-nat` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
-
-前提:
-
-- `-c taskSubnets=private`、11章を `-c egress=nat` で deploy
-- task は public IPv4 アドレスを持たない。ALB の node 2 つと NAT Gateway の Elastic IP アドレスで 3 つ
-- NAT Gateway を通るデータ（image の取得とログ）は月 2 GB と仮定
-- LCU、ログ、インターネットへのデータ転送は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
-| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
-| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
-| `vpc.public-ipv4.in-use.hour` | 2,190 | Hrs | (2 load balancer nodes + 1 NAT gateway) x 730 hours | 10.95 | - | 10.95 |
-| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
-| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
-| `nat.gateway.data` | 2 | GB | 2 GB processed (assumption) | 0.12 | - | 0.12 |
-
-- 定価の小計: **USD 92.07** / 月
-- 毎月の無料枠適用後の小計: **USD 92.07** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
-
-## コンテナ: task を private subnet に置き、interface endpoint 3 つで AWS に届く
-
-ID: `containers-private-endpoints` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
-
-前提:
-
-- `-c taskSubnets=private`、11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy
-- interface endpoint 3 つ × 2 AZ。image の layer は S3 の gateway endpoint（無料）を通る
-- interface endpoint を通るデータは月 1 GB と仮定
-- public IPv4 アドレスは ALB の node 2 つだけ
-- LCU、ログ、インターネットへのデータ転送は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
-| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
-| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
-| `vpc.public-ipv4.in-use.hour` | 1,460 | Hrs | 2 load balancer nodes x 730 hours | 7.30 | - | 7.30 |
-| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
-| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
-| `vpc.endpoint.interface.data` | 1 | GB | 1 GB processed (assumption) | 0.01 | - | 0.01 |
-
-- 定価の小計: **USD 104.37** / 月
-- 毎月の無料枠適用後の小計: **USD 104.37** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
-
-## 非同期の検査と掃除: デプロイ済みで、画像が 1 枚もない月
-
-ID: `async-idle` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
-
-前提:
-
-- 07章のアプリの料金に上乗せされる分だけを数える。アップロードはゼロ、bucket は空
-- schedule は 1 時間に 1 回、月 730 回、掃除の関数を起動する。1 回は 0.5 秒、256 MB、arm64 と仮定する
-- 掃除は 1 回につき bucket の一覧を 2 回読む。空なので 1 ページずつ
-- ログは 1 回の起動につき 1 KB（関数の 1 行と、Lambda が書く START、END、REPORT の行）
-- 未算入: Lambda が空の queue を long polling するときの SQS のリクエスト。頻度が公式ドキュメントに書かれていないため、数量を出せない。0 という意味ではない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
-| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB, in GB-seconds | 0.001217 | 400,000 | 0 |
-| `s3.request.tier1` | 1,460 | Requests | 730 runs x 2 LIST requests | 0.01 | - | 0.01 |
-| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
-| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
-
-- 定価の小計: **USD 0.01** / 月
-- 毎月の無料枠適用後の小計: **USD 0.01** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
-
-## 非同期の検査: 月 10,000 枚のアップロードと 1,000 回の削除
-
-ID: `async-pipeline-small` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
-
-前提:
-
-- 07章の例（月 10,000 枚のアップロード）に上乗せされる、イベントごとの分だけを数える。掃除の分は別の例
-- S3 のイベントは 11,000 件（作成 10,000、削除 1,000）。重複と再試行はゼロとする
-- SQS のリクエストは 1 メッセージにつき 3 回（S3 の SendMessage、Lambda の ReceiveMessage と DeleteMessage）と数える。空振りの ReceiveMessage は未算入（頻度が不明）
-- worker は 1 メッセージにつき 1 回起動するものとする（batch にまとまれば、これより少ない）。平均 200 ミリ秒、256 MB、arm64
-- worker の S3 へのリクエストは、作成イベントごとに GetObject が 1 回。tag を外すリクエストは請求されないものとする（07章と同じ）
-- DynamoDB は、作成イベントごとに書き込み 1 unit と強い整合性の読み取り 1 unit、削除イベントごとに書き込み 1 unit
-- ログは 1 イベントにつき 0.8 KB
-- 未算入: S3 から同じリージョンの Lambda へのデータ転送（料金を確認していない）
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `sqs.request.standard` | 33,000 | Requests | 11,000 messages x 3 requests | 0.01 | 1,000,000 | 0 |
-| `lambda.request.arm` | 11,000 | Requests | one invocation per message | 0.002200 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 550 | Lambda-GB-Second | 11,000 x 0.2 s x 0.25 GB, in GB-seconds | 0.01 | 400,000 | 0 |
-| `s3.request.tier2` | 10,000 | Requests | one GetObject per create event | 0.003700 | - | 0.003700 |
-| `dynamodb.write.on-demand` | 11,000 | WriteRequestUnits | one conditional write per event | 0.01 | - | 0.01 |
-| `dynamodb.read.on-demand` | 10,000 | ReadRequestUnits | one attachment lookup per create event | 0.001425 | - | 0.001425 |
-| `logs.ingest.standard` | 0.008 | GB | 11,000 x 0.8 KB, in GB | 0.01 | 5 | 0 |
-| `logs.storage` | 0.002 | GB-Mo | 0.0084 GB x 7/30, in GB-month | 0.000066 | 5 | 0 |
-
-- 定価の小計: **USD 0.04** / 月
-- 毎月の無料枠適用後の小計: **USD 0.01** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.request.tier2`
-
-## 定期的な掃除: 10,000 枚が置いてある bucket を 1 時間ごとに突き合わせる
-
-ID: `async-housekeeping-10k` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
-
-前提:
-
-- bucket には月を通して 10,000 枚の画像があり、すべて添付の記録がある
-- 掃除は月 730 回。1 回につき、bucket の一覧を 2 回読み（1,000 件ずつ 10 ページ）、画像 1 枚につき DynamoDB を 4 回読む（07章の掃除が記録とノート、この章の処理が記録と検査の結果）。すべて強い整合性の読み取りで、1 回 1 unit
-- 1 回の実行は 200 秒と仮定する（40,000 回の読み取りを 1 回 5 ミリ秒で順に実行）。256 MB、arm64。計測した値ではない
-- tag を外すリクエストは請求されないものとする。削除はゼロとする
-- ログは 1 回の起動につき 1 KB
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
-| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 36,500 | Lambda-GB-Second | 730 x 200 s x 0.25 GB, in GB-seconds | 0.49 | 400,000 | 0 |
-| `s3.request.tier1` | 14,600 | Requests | 730 runs x 2 passes x 10 LIST pages | 0.07 | - | 0.07 |
-| `dynamodb.read.on-demand` | 29,200,000 | ReadRequestUnits | 730 runs x 10,000 images x 4 reads | 4.16 | - | 4.16 |
-| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
-| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
-
-- 定価の小計: **USD 4.72** / 月
-- 毎月の無料枠適用後の小計: **USD 4.23** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
-
-## EC2: private subnet で 1 か月動かしたまま
-
-ID: `ec2-private-running` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
-
-前提:
-
-- 既定の構成。t4g.micro を 730 時間動かしたまま
-- 11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま
-- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
-- CPU credit は standard。baseline を超える分の課金は起きない設定
-- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
-- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
-| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
-| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
-
-- 定価の小計: **USD 70.74** / 月
-- 毎月の無料枠適用後の小計: **USD 70.74** / 月
-- 無料枠を確認できず、何も引いていない単価: `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
-
-## EC2: private subnet で 1 か月止めたまま
-
-ID: `ec2-private-stopped` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
-
-前提:
-
-- instance を停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている
-- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
-- CPU credit は standard。baseline を超える分の課金は起きない設定
-- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
-- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
-| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
-
-- 定価の小計: **USD 62.86** / 月
-- 毎月の無料枠適用後の小計: **USD 62.86** / 月
-- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
-
-## EC2: public subnet で 1 か月動かしたまま
-
-ID: `ec2-public-running` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
-
-前提:
-
-- `-c placement=public`。t4g.micro を 730 時間動かしたまま、自動で割り当てられた public IPv4 アドレス 1 つ
-- interface endpoint なし
-- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
-- CPU credit は standard。baseline を超える分の課金は起きない設定
-- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
-- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
-| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
-| `vpc.public-ipv4.in-use.hour` | 730 | Hrs | 1 public IPv4 address x 730 hours | 3.65 | - | 3.65 |
-
-- 定価の小計: **USD 13.07** / 月
-- 毎月の無料枠適用後の小計: **USD 13.07** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
-
-## EC2: public subnet で 1 か月止めたまま
-
-ID: `ec2-public-stopped` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
-
-前提:
-
-- `-c placement=public` の instance を停止したまま 730 時間。自動で割り当てられた public IPv4 アドレスは停止時に解放される。Elastic IP アドレスは使っていない
-- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
-- CPU credit は standard。baseline を超える分の課金は起きない設定
-- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
-- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
-
-- 定価の小計: **USD 1.54** / 月
-- 毎月の無料枠適用後の小計: **USD 1.54** / 月
-- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
-
-## 長い処理: デプロイ済みで、ノートが 1 件もない月
-
-ID: `export-idle` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
-
-前提:
-
-- schedule は 1 日 1 回、月 30 回 workflow を起動する。table は空
-- 1 回の実行は ExportPages、MorePages、Finish、Exported を 1 回ずつ通る。開始と終了を足して state transition は 6 と数える（料金ページの例の数え方。実測ではない）
-- 関数の呼び出しは 1 回の実行につき 2 回。それぞれ 0.5 秒、256 MB、arm64 と仮定
-- 空の Scan は 1 回につき読み取り 1 unit と多めに数える。S3 は LIST 1 回と manifest の PUT 1 回
-- ログは関数の呼び出し 1 回につき 1 KB
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
-| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
-| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 7.5 | Lambda-GB-Second | 60 x 0.5 s x 0.25 GB, in GB-seconds | 0.000100 | 400,000 | 0 |
-| `dynamodb.read.on-demand` | 30 | ReadRequestUnits | one empty Scan per run, counted as 1 unit | 0.000004 | - | 0.000004 |
-| `s3.request.tier1` | 60 | Requests | 30 runs x (1 LIST + 1 manifest PUT) | 0.000282 | - | 0.000282 |
-| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
-
-- 定価の小計: **USD 0.00** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
-
-## 長い処理: 10,000 件を毎日 export。1 回の呼び出しで全ページ（この章の既定）
-
-ID: `export-daily-10k-coarse` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
-
-前提:
-
-- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
-- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
-- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
-- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
-- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
-- state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない
-- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
-- ExportPages は 1 回の呼び出しで 100 ページを書き終える（20 秒）。state transition は 1 回の実行で 6
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
-| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
-| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (20 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
-| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
-| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
-| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
-| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
-
-- 定価の小計: **USD 0.03** / 月
-- 毎月の無料枠適用後の小計: **USD 0.02** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
-
-## 長い処理: 10,000 件を毎日 export。1 ページごとに workflow に戻る
-
-ID: `export-daily-10k-fine` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
-
-前提:
-
-- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
-- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
-- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
-- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
-- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
-- state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない
-- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
-- ExportPages は 1 ページ書くごとに戻る。1 回の実行で ExportPages と MorePages を 100 回ずつ通り、state transition は 204
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
-| `sfn.standard.transition` | 6,120 | StateTransitions | 30 executions x (100 x 2 + 4) transitions | 0.15 | 4,000 | 0.05 |
-| `lambda.request.arm` | 3,030 | Requests | 30 executions x (100 pages + 1 finish) | 0.000606 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (100 x 0.2 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
-| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
-| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
-| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
-| `logs.ingest.standard` | 0.003 | GB | 3,030 x 1 KB, in GB | 0.002196 | 5 | 0 |
-
-- 定価の小計: **USD 0.18** / 月
-- 毎月の無料枠適用後の小計: **USD 0.07** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
-
-## 長い処理: 10,000 件を毎日 export。durable function 版（`-c durable=true`）
-
-ID: `export-daily-10k-durable` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
-
-前提:
-
-- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
-- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
-- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
-- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
-- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
-- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
-- 1 日 1 回、手で（または別の schedule で）起動するものとする。Step Functions は通らない
-- step は 20 ページごとに 1 つで 5 つ、それに finish。実行の開始を足して durable operation は 1 回の実行で 7
-- 待機がないので、関数の呼び出しは 1 回の実行につき 1 回（21 秒）と仮定
-- checkpoint に書かれるのは進捗だけ。1 operation あたり 1 KB、保持は 1 日と仮定
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `lambda.durable.operation` | 210 | DurableOperations | 30 executions x (1 start + 5 page steps + 1 finish) | 0.002226 | - | 0.002226 |
-| `lambda.durable.written` | 0 | GigaBytes | 210 operations x 1 KB, in GB | 0.000066 | - | 0.000066 |
-| `lambda.durable.retained` | 0 | GigaBytesMonth | 0.0002 GB x 1/30, in GB-month | 0.000001 | - | 0.000001 |
-| `lambda.request.arm` | 30 | Requests | one invocation per execution | 0.000006 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x 21 s x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
-| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
-| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
-| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
-| `logs.ingest.standard` | 0 | GB | 30 x 1 KB, in GB | 0.000022 | 5 | 0 |
-
-- 定価の小計: **USD 0.03** / 月
-- 毎月の無料枠適用後の小計: **USD 0.02** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `lambda.durable.operation`, `lambda.durable.written`, `lambda.durable.retained`
-
-## 比較: 1 時間かかる step を、1 日 1 回 Fargate の task で動かす月
-
-ID: `export-step-fargate-1h` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
-
-前提:
-
-- この章の stack は作らない構成。料金の比較のためだけに計算
-- 0.25 vCPU、0.5 GB、arm64 の task を 1 日 1 回、1 時間。月 30 時間
-- public subnet で public IPv4 を付けて動かす（12章の構成）。task が動いている間だけ課金される
-- 未算入: image の保存（ECR）、ログ、データ転送、Step Functions の state transition
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `fargate.arm.vcpu.hour` | 7.5 | hours | 30 hours x 0.25 vCPU | 0.30 | - | 0.30 |
-| `fargate.arm.memory.gb-hour` | 15 | hours | 30 hours x 0.5 GB | 0.07 | - | 0.07 |
-| `vpc.public-ipv4.in-use.hour` | 30 | Hrs | one public IPv4 address for 30 hours | 0.15 | - | 0.15 |
-
-- 定価の小計: **USD 0.52** / 月
-- 毎月の無料枠適用後の小計: **USD 0.52** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
-
-## 復旧: 戻せる状態を 1 か月保つための上乗せ（table 1 GB、画像 10 GB）
-
-ID: `recovery-keep` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
-
-前提:
-
-- 既定の stack。table は 1 GB で、point-in-time recovery が有効
-- 画像は 10 GB。月に 1 GB ぶんが上書きか削除をされ、その古い version が 30 日残る（1 GB を 1 か月ぶんとして計算）
-- table と現行の画像そのものの保存料、リクエスト、Lambda は含めない。上乗せ分だけ
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `dynamodb.pitr.storage` | 1 | GB-Mo | 1 GB table under PITR, in GB-month | 0.23 | - | 0.23 |
-| `s3.standard.storage` | 1 | GB-Mo | 1 GB of noncurrent versions, in GB-month | 0.03 | - | 0.03 |
-
-- 定価の小計: **USD 0.25** / 月
-- 毎月の無料枠適用後の小計: **USD 0.25** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
-
-## 復旧: 1 GB の table を 1 回復元して検査する drill
-
-ID: `recovery-drill` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
-
-前提:
-
-- RestoreTableToPointInTime を 1 回。復元されるデータは 1 GB
-- 検査（table 全体の Scan、強い整合性）を 4 回。1 GB を 4 KB の item で数えて、1 回 262,144 read request unit
-- 復元した table を 1 か月置いたままにした場合の保存料（1 GB）を含む
-- S3 の一覧と復元のリクエスト、Lambda、ログは含めない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `dynamodb.restore` | 1 | GB | 1 GB restored | 0.17 | - | 0.17 |
-| `dynamodb.read.on-demand` | 1,048,576 | ReadRequestUnits | 4 full scans x 262,144 read request units | 0.15 | - | 0.15 |
-| `dynamodb.storage` | 1 | GB-Mo | the restored table, 1 GB for a month | 0 | - | 0 |
-
-- 定価の小計: **USD 0.32** / 月
-- 毎月の無料枠適用後の小計: **USD 0.32** / 月
-- 無料枠を確認できず、何も引いていない単価: `dynamodb.restore`
-
-## 復旧: `-c backup=on` で増える分（AWS Backup、1 GB の table）
-
-ID: `recovery-backup-optin` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
-
-前提:
-
-- 毎日 1 回の snapshot を 7 日保持。常に 7 つが warm storage にある
-- snapshot 1 つが table 全体（1 GB）として課金されると仮定。差分で取られるかどうかは確認していない
-- 復元はしていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `backup.dynamodb.warm` | 7 | GB-month | 7 snapshots x 1 GB, in GB-month | 0.80 | - | 0.80 |
-
-- 定価の小計: **USD 0.80** / 月
-- 毎月の無料枠適用後の小計: **USD 0.80** / 月
-- 無料枠を確認できず、何も引いていない単価: `backup.dynamodb.warm`
-
-## 復旧: `-c replica=on` で増える分（S3 Replication、画像 10 GB）
-
-ID: `recovery-replica-optin` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
-
-前提:
-
-- 複製先に、複製を有効にした後に置かれた画像 10 GB と、古い version 1 GB がある
-- 月に 10,000 個の object が複製される。複製の PUT を、通常の PUT と同じ単価（Tier 1）として計算
-- 同じリージョン内の複製。データ転送料は含めない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `s3.standard.storage` | 11 | GB-Mo | the second copy: 10 GB current + 1 GB noncurrent, in GB-month | 0.28 | - | 0.28 |
-| `s3.request.tier1` | 10,000 | Requests | 10,000 replication PUT requests | 0.05 | - | 0.05 |
-
-- 定価の小計: **USD 0.32** / 月
-- 毎月の無料枠適用後の小計: **USD 0.32** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
-
 ## celld: node 1 台を 1 か月動かしたまま
 
 ID: `celld-one-node-running` / 章: [24 Self-hosting: celld を AWS で動かす](/ja/chapters/24-celld.md)
@@ -1423,191 +611,6 @@ ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動
 - 定価の小計: **USD 2.30** / 月
 - 毎月の無料枠適用後の小計: **USD 2.30** / 月
 - 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
-
-## 要約 API: デプロイ済みで呼ばれない月
-
-ID: `ai-idle` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- リクエストゼロ
-- log は 1 週間で失効し、保存量ゼロ
-
-- 定価の小計: **USD 0.00** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-
-## 要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）
-
-ID: `ai-summaries-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- 月 1,000 件の要約
-- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
-- 出力は 1 件あたり 150 token と仮定（上限は 400）
-- Lambda は 256 MB、arm64、1 件あたり平均 4 秒と仮定（推論を待つ時間も課金される）
-- 1 件あたり log 1 KB と仮定
-- データ転送は未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
-| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
-| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
-| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
-
-- 定価の小計: **USD 1.30** / 月
-- 毎月の無料枠適用後の小計: **USD 1.29** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
-
-## 要約 API: 1,000 件すべてが出力の上限に達した場合の出力分
-
-ID: `ai-output-ceiling-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- 1,000 件すべてが maxTokens の 400 token まで出力
-- 出力 token の分だけ。入力と Lambda は含まない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
-
-- 定価の小計: **USD 1.32** / 月
-- 毎月の無料枠適用後の小計: **USD 1.32** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.output`
-
-## 要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）
-
-ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
-
-前提:
-
-- 月 1,000 件の要約
-- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
-- 出力は 1 件あたり 150 token と仮定（上限は 400）
-- token の数え方はモデルごとに違うので、同じ文章でも token 数は同じにならない。単価の比較のための仮定
-- 推論の分だけ。Lambda は含まない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
-| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
-
-- 定価の小計: **USD 3.03** / 月
-- 毎月の無料枠適用後の小計: **USD 3.03** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
-
-## 守り: 既定の stack を置いたまま、誰も呼ばない月
-
-ID: `sec-idle-default` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- `-c cmk=on` も `-c webAclArn=...` も付けていない。web ACL の stack（AihSecurityWaf）も作っていない
-- リクエストゼロ。関数が動かないので、Secrets Manager の API も呼ばれない
-- secret は 1 つを 730 時間。暗号化は aws/secretsmanager（月額なし）
-- CloudFront の distribution、Lambda、IAM の role は、呼ばれなければ料金がかからない。log は失効して保存量ゼロ
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-
-- 定価の小計: **USD 0.40** / 月
-- 毎月の無料枠適用後の小計: **USD 0.40** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`
-
-## 守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月
-
-ID: `sec-idle-cmk` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- 既定の stack に、customer managed key を 1 つ足したもの
-- 鍵は作ってから 1 年未満で、まだ一度も自動 rotation していない。rotation のたびに、2 回目まで月 USD 1 ずつ増える
-- リクエストゼロ
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
-
-- 定価の小計: **USD 1.40** / 月
-- 毎月の無料枠適用後の小計: **USD 1.40** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `kms.key`
-
-## 守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査
-
-ID: `sec-waf-month` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- web ACL 1 つと rule 3 つ（rate-based rule 1 つ、AWS managed rule group 2 つ。managed rule group は 1 つの rule として数える）
-- 合計 727 WCU で、基本料金に含まれる 1,500 WCU の内側
-- 検査するリクエストは月 100 万。0 なら月 USD 8.00
-- CloudFront 用の web ACL が Global-* の usage type で課金されるという対応は、請求では確かめていない。ap-northeast-1 と us-east-1 の単価も同じ値
-- この小計に、既定の stack の料金は含まない。WAF のログ、Bot Control などの追加機能は使っていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
-| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
-| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
-
-- 定価の小計: **USD 8.60** / 月
-- 毎月の無料枠適用後の小計: **USD 8.60** / 月
-- 無料枠を確認できず、何も引いていない単価: `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
-
-## 守り: 既定の stack で、token の発行と検証を月 10 万回ずつ
-
-ID: `sec-small` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- CloudFront へ 20 万リクエスト（HTTPS、日本の edge）。cache しないので、すべて Lambda に届く
-- 応答は 1 回あたり 0.5 KB と仮定
-- Lambda は平均 50 ms、256 MB、arm64。50 ms は仮定で、計測値ではない
-- 実行環境 1 つが 1 か月動き続け、5 分ごとに鍵を読み直すと仮定（730 時間 x 12 回 x GetSecretValue 2 回）。実行環境が増えれば、そのぶん増える
-- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
-- customer managed key、web ACL は無し。Lambda から CloudFront へのデータ転送は含めていない（未算入）
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
-| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
-| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
-| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
-| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
-| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
-| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
-
-- 定価の小計: **USD 0.86** / 月
-- 毎月の無料枠適用後の小計: **USD 0.49** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `secretsmanager.api`
-
-## 守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）
-
-ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
-
-前提:
-
-- 無料の試用期間が終わったあとの月
-- GuardDuty が分析する CloudTrail の management event を月 10 万件と仮定。実際の件数は、アカウントで何をしているかで決まる。この数字は計測値ではない
-- GuardDuty のほかの課金対象（VPC flow log と DNS log の分析量、S3、Lambda、Malware Protection などの protection plan）は含めていない。初めて有効にすると、既定ですべての protection plan が有効になる
-- Inspector は Lambda standard scanning だけで、関数 1 つを 730 時間。ECR の image と EC2 instance の検査は含めていない
-- AWS Config は連続記録で、月 500 件の configuration item と仮定。rule の評価と、記録を置く S3 の料金は含めていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
-| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
-| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
-
-- 定価の小計: **USD 2.34** / 月
-- 毎月の無料枠適用後の小計: **USD 2.34** / 月
-- 無料枠を確認できず、何も引いていない単価: `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
 
 ## イベントの配線: デプロイ済みで、ノートが 1 件も変わらない月
 
@@ -1849,7 +852,7 @@ ID: `search-month` / 章: [27 Search: 全文検索、ベクトル検索、RAG](/
 
 - 定価の小計: **USD 1.62** / 月
 - 毎月の無料枠適用後の小計: **USD 1.58** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`, `s3vectors.storage`, `s3vectors.put`, `s3vectors.query.request`, `s3vectors.query.processed.tier1`, `bedrock.titan-embed-text-v2.input`
+- 無料枠を確認できず、何も引いていない単価: `s3vectors.storage`, `s3vectors.put`, `s3vectors.query.request`, `s3vectors.query.processed.tier1`, `bedrock.titan-embed-text-v2.input`, `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
 
 ## 比較: OpenSearch Serverless の Classic コレクションを 1 か月置いた場合の最低額
 
@@ -2226,142 +1229,6 @@ ID: `limits-cost-report` / 章: [32 Limits: quota、throttling、retry、負荷�
 - 毎月の無料枠適用後の小計: **USD 0.30** / 月
 - 無料枠を確認できず、何も引いていない単価: `costexplorer.api.request`
 
-## 本番向けの設定がノート API に足す料金: 月 100 万リクエスト
-
-ID: `ready-added-small` / 章: [33 Production Readiness: 本番に出す前の点検](/ja/chapters/33-production-readiness.md)
-
-前提:
-
-- 19章の obs-small と同じ流量。ログは 1 リクエストあたり 1 KB で、月 0.953674 GB を取り込む
-- ログの保持を 7 日から 90 日に延ばす。月平均の保存量を、取り込み量の 90/30 と 7/30 の差と仮定
-- テーブルの大きさは 1 GB。PITR の保存量はテーブルと同じ 1 GB と仮定（変更の記録のぶんは未確認で、含めていない）
-- 削除保護、DeletionPolicy、UpdateReplacePolicy には、Price List に対応する項目がない
-- アラーム、メトリクス、トレースは 19章の計算のとおりで、ここには含めていない。通知先のメールの料金も含めていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `dynamodb.pitr.storage` | 1 | GB-Mo | 1 GB table, PITR storage assumed equal to it | 0.23 | - | 0.23 |
-| `logs.storage` | 2.638 | GB-Mo | 0.953674 GB x (90 - 7)/30, in GB-month | 0.09 | 5 | 0 |
-
-- 定価の小計: **USD 0.32** / 月
-- 毎月の無料枠適用後の小計: **USD 0.23** / 月
-
-## EKS: スタックだけをデプロイして 1 か月（マニフェストは未適用）
-
-ID: `eks-control-plane-only` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
-
-前提:
-
-- 標準サポートのバージョンのクラスター 1 つを 730 時間
-- 組み込みのノードプールを無効にしているので、ノードもロードバランサーも無い
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
-
-- 定価の小計: **USD 73.00** / 月
-- 毎月の無料枠適用後の小計: **USD 73.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `eks.cluster.hour`
-
-## EKS: 既定の構成でアプリを動かしたまま 1 か月
-
-ID: `eks-idle` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
-
-前提:
-
-- 標準サポートのバージョンのクラスター 1 つを 730 時間
-- ノードは t4g.medium（arm64、オンデマンド）が AZ ごとに 1 つで 2 つ。Auto Mode の管理料金を含む
-- ノードのエフェメラルストレージは 20 GB ずつで gp3 と仮定。ルートボリュームの大きさは確認できず、未算入
-- ALB 1 つを 730 時間。LCU は未算入
-- パブリック IPv4 アドレスは ALB のノード 2 つと EKS のノード 2 つで 4 つ
-- ログ、データ転送、T4g の CPU クレジットの超過分、12章のリポジトリの保存料金、ノードプールが増やしたノードは未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
-| `ec2.t4g-medium.linux.hour` | 1,460 | Hrs | 2 t4g.medium nodes x 730 hours | 63.07 | - | 63.07 |
-| `eks.auto.t4g-medium.hour` | 1,460 | hours | 2 nodes managed by Auto Mode x 730 hours | 7.56 | - | 7.56 |
-| `ebs.gp3.storage` | 40 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 3.84 | - | 3.84 |
-| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
-| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 nodes) x 730 hours | 14.60 | - | 14.60 |
-
-- 定価の小計: **USD 179.81** / 月
-- 毎月の無料枠適用後の小計: **USD 179.81** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `alb.hour`, `ebs.gp3.storage`, `eks.cluster.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`
-
-## EKS: 既定の構成でアプリを動かして 1 日
-
-ID: `eks-one-day` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
-
-前提:
-
-- eks-idle と同じ構成を 24 時間
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `eks.cluster.hour` | 24 | Hours | 1 cluster x 24 hours | 2.40 | - | 2.40 |
-| `ec2.t4g-medium.linux.hour` | 48 | Hrs | 2 t4g.medium nodes x 24 hours | 2.07 | - | 2.07 |
-| `eks.auto.t4g-medium.hour` | 48 | hours | 2 nodes managed by Auto Mode x 24 hours | 0.25 | - | 0.25 |
-| `ebs.gp3.storage` | 1.315 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 0.13 | - | 0.13 |
-| `alb.hour` | 24 | Hrs | 1 load balancer x 24 hours | 0.58 | - | 0.58 |
-| `vpc.public-ipv4.in-use.hour` | 96 | Hrs | (2 load balancer nodes + 2 nodes) x 24 hours | 0.48 | - | 0.48 |
-
-- 定価の小計: **USD 5.91** / 月
-- 毎月の無料枠適用後の小計: **USD 5.91** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `alb.hour`, `ebs.gp3.storage`, `eks.cluster.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`
-
-## EKS: ノードをプライベートサブネットに置き、NAT Gateway 1 つで出る
-
-ID: `eks-private-nodes` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
-
-前提:
-
-- `--node-subnets private`、11章を `-c egress=nat` でデプロイ
-- ノードは t4g.medium（arm64、オンデマンド）が AZ ごとに 1 つで 2 つ。Auto Mode の管理料金を含む
-- ノードのエフェメラルストレージは 20 GB ずつで gp3 と仮定。ルートボリュームの大きさは確認できず、未算入
-- ALB 1 つを 730 時間。LCU は未算入
-- ノードはパブリック IPv4 アドレスを持たない。ALB のノード 2 つと NAT Gateway の Elastic IP アドレスで 3 つ
-- NAT Gateway を通るデータは月 2 GB と仮定
-- ログ、データ転送、T4g の CPU クレジットの超過分、12章のリポジトリの保存料金、ノードプールが増やしたノードは未算入
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
-| `ec2.t4g-medium.linux.hour` | 1,460 | Hrs | 2 t4g.medium nodes x 730 hours | 63.07 | - | 63.07 |
-| `eks.auto.t4g-medium.hour` | 1,460 | hours | 2 nodes managed by Auto Mode x 730 hours | 7.56 | - | 7.56 |
-| `ebs.gp3.storage` | 40 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 3.84 | - | 3.84 |
-| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
-| `vpc.public-ipv4.in-use.hour` | 2,190 | Hrs | (2 load balancer nodes + 1 NAT gateway) x 730 hours | 10.95 | - | 10.95 |
-| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
-| `nat.gateway.data` | 2 | GB | 2 GB processed (assumption) | 0.12 | - | 0.12 |
-
-- 定価の小計: **USD 221.55** / 月
-- 毎月の無料枠適用後の小計: **USD 221.55** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `alb.hour`, `ebs.gp3.storage`, `eks.cluster.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`
-
-## EKS: 延長サポートに入ったバージョンのまま 1 か月
-
-ID: `eks-extended-support` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
-
-前提:
-
-- eks-idle と同じ構成
-- upgradePolicy が EXTENDED で、バージョンが標準サポートを過ぎている。時間あたり USD 0.50 が上乗せされる
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
-| `eks.cluster.extended-support.hour` | 730 | Hours | 1 cluster in extended support x 730 hours | 365.00 | - | 365.00 |
-| `ec2.t4g-medium.linux.hour` | 1,460 | Hrs | 2 t4g.medium nodes x 730 hours | 63.07 | - | 63.07 |
-| `eks.auto.t4g-medium.hour` | 1,460 | hours | 2 nodes managed by Auto Mode x 730 hours | 7.56 | - | 7.56 |
-| `ebs.gp3.storage` | 40 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 3.84 | - | 3.84 |
-| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
-| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 nodes) x 730 hours | 14.60 | - | 14.60 |
-
-- 定価の小計: **USD 544.81** / 月
-- 毎月の無料枠適用後の小計: **USD 544.81** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `alb.hour`, `ebs.gp3.storage`, `eks.cluster.hour`, `eks.cluster.extended-support.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`
-
 ## Lambda Managed Instances: 1 件も処理しないまま 1 か月
 
 ID: `lmi-idle` / 章: [35 Lambda Managed Instances: Lambda を自分の EC2 キャパシティで動かす](/ja/chapters/35-lambda-managed-instances.md)
@@ -2577,7 +1444,7 @@ ID: `bedrock-assistant-nova-2-lite` / 章: [36 Bedrock: tool use、構造化出�
 
 - 定価の小計: **USD 2.88** / 月
 - 毎月の無料枠適用後の小計: **USD 2.85** / 月
-- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`, `bedrock.guardrail.sensitive-information`
+- 無料枠を確認できず、何も引いていない単価: `bedrock.guardrail.sensitive-information`, `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
 
 ## prompt caching の損得: 2,000 token の同じ先頭を 4 回送る会話を月 1,000 回、キャッシュなし（Nova 2 Lite）
 
@@ -2786,7 +1653,7 @@ ID: `dbmig-week` / 章: [39 Database Migration: DMS、full load、CDC、切り�
 
 - 定価の小計: **USD 24.73** / 月
 - 毎月の無料枠適用後の小計: **USD 24.73** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `dms.serverless.dcu1.hour`
+- 無料枠を確認できず、何も引いていない単価: `dms.serverless.dcu1.hour`, `secretsmanager.secret`
 
 ## Database Migration: 切り替えのあと、レプリケーションを止め忘れた 1 か月
 
@@ -2806,7 +1673,7 @@ ID: `dbmig-forgotten` / 章: [39 Database Migration: DMS、full load、CDC、切
 
 - 定価の小計: **USD 104.76** / 月
 - 毎月の無料枠適用後の小計: **USD 104.76** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `dms.serverless.dcu1.hour`
+- 無料枠を確認できず、何も引いていない単価: `dms.serverless.dcu1.hour`, `secretsmanager.secret`
 
 ## Database Migration: 比較。レプリケーションインスタンス（dms.t3.micro）を置いただけの 1 か月
 
@@ -3117,7 +1984,7 @@ ID: `fwm-small-org` / 章: [42 Firewall Manager: 複数アカウントの WAF、
 
 - 定価の小計: **USD 226.04** / 月
 - 毎月の無料枠適用後の小計: **USD 226.04** / 月
-- 無料枠を確認できず、何も引いていない単価: `waf.global.webacl`, `waf.global.rule`, `waf.global.request`, `config.item.continuous`, `fms.policy.global.wafv2`, `fms.policy.apne1.sg-content-audit`, `config.use1.item.continuous`, `config.use1.rule.evaluation`, `config.rule.evaluation`
+- 無料枠を確認できず、何も引いていない単価: `fms.policy.global.wafv2`, `fms.policy.apne1.sg-content-audit`, `config.use1.item.continuous`, `config.use1.rule.evaluation`, `config.rule.evaluation`, `waf.global.webacl`, `waf.global.rule`, `waf.global.request`, `config.item.continuous`
 
 ## Firewall Manager: Network Firewall のポリシーが作るエンドポイント 1 つを 1 か月（桁をつかむための例）
 
@@ -3288,7 +2155,7 @@ ID: `shield-edge-month` / 章: [46 Shield: DDoS への備え、Standard と Adva
 
 - 定価の小計: **USD 6.10** / 月
 - 毎月の無料枠適用後の小計: **USD 6.10** / 月
-- 無料枠を確認できず、何も引いていない単価: `waf.global.webacl`, `waf.global.rule`, `cloudwatch.alarm.standard.use1`
+- 無料枠を確認できず、何も引いていない単価: `cloudwatch.alarm.standard.use1`, `waf.global.webacl`, `waf.global.rule`
 
 ## Shield Advanced を契約した 1 か月（データ転送なし）
 
@@ -3730,96 +2597,6 @@ ID: `calls-tab-left-open` / 章: [51 Chime SDK: 自分のアプリに音声と�
 - 毎月の無料枠適用後の小計: **USD 2.45** / 月
 - 無料枠を確認できず、何も引いていない単価: `chime.sdk.attendee-minute`
 
-## ECR: スタックを置いただけで、イメージが 1 つも無い月
-
-ID: `ecr-idle` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
-
-前提:
-
-- AihEcr を既定の設定（リポジトリだけ）でデプロイ済み
-- イメージを 1 つもプッシュしていない。保存量は 0
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ecr.storage` | 0 | GB-Mo | 0 GB stored | 0 | - | 0 |
-
-- 定価の小計: **USD 0.00** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
-
-## ECR: ライフサイクルポリシーが残す上限まで溜まった状態
-
-ID: `ecr-kept` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
-
-前提:
-
-- ポリシーが残すのは、リリース 20 個と、新しいほうから 30 個。重なりが無いとして 50 個
-- イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている
-- 取得は同じリージョンの Fargate からで、データ転送は USD 0
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ecr.storage` | 7.5 | GB-Mo | 50 images x 0.15 GB | 0.75 | - | 0.75 |
-
-- 定価の小計: **USD 0.75** / 月
-- 毎月の無料枠適用後の小計: **USD 0.75** / 月
-- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
-
-## ECR: ライフサイクルポリシーなしで 1 年たった時点の月額
-
-ID: `ecr-unpruned` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
-
-前提:
-
-- 平日に 1 日 5 回プッシュし、何も消さない。月 20 日で 12 か月、1,200 個
-- イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている
-- 1 年たった時点の 1 か月ぶん。それまでの月の合計ではない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ecr.storage` | 180 | GB-Mo | 1,200 images x 0.15 GB | 18.00 | - | 18.00 |
-
-- 定価の小計: **USD 18.00** / 月
-- 毎月の無料枠適用後の小計: **USD 18.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
-
-## ECR: enhanced scanning を有効にした月
-
-ID: `ecr-enhanced-scan` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
-
-前提:
-
-- 月に 100 回プッシュし、それぞれ最初の検査が 1 回
-- 残っている 50 個のイメージが、月に 4 回ずつ検査し直されると仮定。検査し直しが何回起きるかは新しい脆弱性の公開しだいで、この回数に根拠はない
-- Inspector の無料トライアルは引いていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `inspector.image.initial-scan` | 100 | Resource-assessment | 100 pushes | 11.00 | - | 11.00 |
-| `inspector.image.rescan` | 200 | Resource-assessment | 50 images x 4 re-scans (assumption) | 2.00 | - | 2.00 |
-
-- 定価の小計: **USD 13.00** / 月
-- 毎月の無料枠適用後の小計: **USD 13.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `inspector.image.initial-scan`, `inspector.image.rescan`
-
-## ECR: 大阪リージョンへ複製する月のデータ転送
-
-ID: `ecr-replicate-osaka` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
-
-前提:
-
-- 月に 100 回プッシュし、すべて大阪へ複製される
-- イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている
-- 大阪側の保存料金は含めていない（大阪の単価は確認していない）
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `datatransfer.tokyo-osaka` | 15 | GB | 100 images x 0.15 GB | 1.35 | - | 1.35 |
-
-- 定価の小計: **USD 1.35** / 月
-- 毎月の無料枠適用後の小計: **USD 1.35** / 月
-- 無料枠を確認できず、何も引いていない単価: `datatransfer.tokyo-osaka`
-
 ## EFS: デプロイして何も書かずに 1 か月
 
 ID: `efs-idle` / 章: [53 EFS: いくつもの実行環境から同時にマウントするファイルシステム](/ja/chapters/53-efs.md)
@@ -4198,59 +2975,6 @@ ID: `polly-month` / 章: [57 Polly: ノートを読み上げる](/ja/chapters/57
 - 毎月の無料枠適用後の小計: **USD 6.77** / 月
 - 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `datatransfer.out.internet`, `s3.request.tier1`, `s3.request.tier2`, `polly.neural.characters`
 
-## Ledger: デプロイ済みで追記のない月
-
-ID: `ledger-idle` / 章: [58 Ledger: QLDB のいまと、検証できる追記専用の台帳](/ja/chapters/58-ledger.md)
-
-前提:
-
-- 既定のスタック。台帳に 1,000 件、テーブルは 1 MB 未満。ダイジェストは 1 件だけあり、新しい追記はない
-- ダイジェストの関数は 1 時間に 1 回、月 730 回動く。1 回につき、バージョンの一覧 1 回、最新のダイジェストの取得 1 回、テーブルへの強整合の Query 1 回（4 KB 以下）。追記がないので PutObject はしない
-- 関数は 256 MB で 0.5 秒かかると仮定（計測値ではない）。ログは 1 回 300 バイト
-- 1 時間ごとのルールが関数を呼ぶこと自体の料金は、価格表のどの項目に当たるか確認できなかったので入れていない
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `dynamodb.storage` | 0.001 | GB-Mo | 1 MB in the table, in GB-month | 0 | - | 0 |
-| `dynamodb.read.on-demand` | 730 | ReadRequestUnits | 730 runs, one strongly consistent Query of 4 KB or less each: 1 unit | 0.000104 | - | 0.000104 |
-| `s3.request.tier1` | 730 | Requests | 730 ListObjectVersions requests | 0.003431 | - | 0.003431 |
-| `s3.request.tier2` | 730 | Requests | 730 GetObject requests for the newest digest | 0.000270 | - | 0.000270 |
-| `s3.standard.storage` | 0 | GB-Mo | One digest of about 150 bytes, rounded up to 1 KB | 0.000000 | - | 0.000000 |
-| `lambda.request.arm` | 730 | Requests | 730 scheduled invocations | 0.000146 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB | 0.001217 | 400,000 | 0 |
-| `logs.ingest.standard` | 0 | GB | 730 x 300 bytes | 0.000167 | 5 | 0 |
-
-- 定価の小計: **USD 0.01** / 月
-- 毎月の無料枠適用後の小計: **USD 0.00** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
-
-## Ledger: 月 10 万件の追記
-
-ID: `ledger-month` / 章: [58 Ledger: QLDB のいまと、検証できる追記専用の台帳](/ja/chapters/58-ledger.md)
-
-前提:
-
-- 月 10 万件の追記。1 件は 300 バイト前後で 1 KB 以下。追記 1 回は、末尾を読む強整合の Query 1 回（1 ユニット）と、書き込み 1 回（1 ユニット）。PartiQL の INSERT が PutItem と同じユニットで課金されるかは確認していない。番号の取り合いによるやり直しは 0 と仮定
-- ダイジェストは 1 時間ごとに 730 回。1 回に新しい 137 件（約 41 KB）を強整合で読むので 11 ユニット。S3 へは、バージョンの一覧 1 回、最新のダイジェストの取得 1 回、PutObject 1 回。一覧は月のあいだ 1 ページに収まる
-- 月に 1 回、全体を監査する。10 万件（30 MB）の読み取りで 7,500 ユニット、ダイジェスト 730 件の取得と一覧 1 回
-- 関数は 256 MB で 0.5 秒かかると仮定（計測値ではない）。ログは 1 回 300 バイト。テーブルは 30 MB、ダイジェストは合わせて 1 MB 未満
-
-| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
-| --- | ---: | --- | --- | ---: | ---: | ---: |
-| `dynamodb.write.on-demand` | 100,000 | WriteRequestUnits | 100,000 entries of 1 KB or less: 1 unit each | 0.07 | - | 0.07 |
-| `dynamodb.read.on-demand` | 115,530 | ReadRequestUnits | 100,000 tail reads at 1 unit, 730 digest runs at 11 units (8,030), one audit of 30 MB at 1 unit per 4 KB (7,500) | 0.02 | - | 0.02 |
-| `dynamodb.storage` | 0.03 | GB-Mo | 30 MB in the table, in GB-month | 0 | - | 0 |
-| `s3.request.tier1` | 1,461 | Requests | 730 ListObjectVersions and 730 PutObject from the function, one listing by the audit | 0.01 | - | 0.01 |
-| `s3.request.tier2` | 1,460 | Requests | 730 GetObject from the function, 730 from the audit | 0.000540 | - | 0.000540 |
-| `s3.standard.storage` | 0.001 | GB-Mo | 730 digests of about 150 bytes, rounded up to 1 MB | 0.000025 | - | 0.000025 |
-| `lambda.request.arm` | 730 | Requests | 730 scheduled invocations | 0.000146 | 1,000,000 | 0 |
-| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB | 0.001217 | 400,000 | 0 |
-| `logs.ingest.standard` | 0 | GB | 730 x 300 bytes | 0.000167 | 5 | 0 |
-
-- 定価の小計: **USD 0.10** / 月
-- 毎月の無料枠適用後の小計: **USD 0.10** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
-
 ## RDS: 既定のスタックを 730 時間置いておく
 
 ID: `rds-practice-month` / 章: [59 RDS: PostgreSQL を運用する](/ja/chapters/59-rds.md)
@@ -4316,7 +3040,7 @@ ID: `rds-production-month` / 章: [59 RDS: PostgreSQL を運用する](/ja/chapt
 
 - 定価の小計: **USD 42.52** / 月
 - 毎月の無料枠適用後の小計: **USD 42.42** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `rds.postgres.t4g-micro.multi-az`, `rds.postgres.gp3.storage.multi-az`
+- 無料枠を確認できず、何も引いていない単価: `rds.postgres.t4g-micro.multi-az`, `rds.postgres.gp3.storage.multi-az`, `secretsmanager.secret`
 
 ## RDS: リードレプリカを 1 台足して 730 時間
 
@@ -4469,7 +3193,7 @@ ID: `aurora-practice-month` / 章: [60 Aurora: storage と compute が分かれ�
 
 - 定価の小計: **USD 2.26** / 月
 - 毎月の無料枠適用後の小計: **USD 2.26** / 月
-- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `aurora.postgres.io`, `aurora.postgres.data-api`
+- 無料枠を確認できず、何も引いていない単価: `aurora.postgres.io`, `aurora.postgres.data-api`, `secretsmanager.secret`
 
 ## Aurora（60章の既定の構成）: 一度も止まらず、上限の 1 ACU のままだった月
 
@@ -4702,7 +3426,7 @@ ID: `agent-sandbox-job` / 章: [63 Agent Sandbox: コーディングエージェ
 
 - 定価の小計: **USD 1.43** / 月
 - 毎月の無料枠適用後の小計: **USD 1.43** / 月
-- 無料枠を確認できず、何も引いていない単価: `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`, `bedrock.claude-haiku-4-5.cache-read`, `bedrock.claude-haiku-4-5.cache-write`
+- 無料枠を確認できず、何も引いていない単価: `bedrock.claude-haiku-4-5.cache-read`, `bedrock.claude-haiku-4-5.cache-write`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
 
 ## Agent Sandbox の出口: インターフェースエンドポイントだけ
 
@@ -4892,6 +3616,186 @@ ID: `isolates-load-lambda` / 章: [64 Isolates: V8 isolate の実行環境を AW
 - 毎月の無料枠適用後の小計: **USD 22.15** / 月
 - 無料枠を確認できず、何も引いていない単価: `apigw.http.request`
 
+## Nitro: エンクレーブ対応のインスタンスと鍵を 1 か月置いたまま
+
+ID: `nitro-idle-running` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enclaves、Graviton](/ja/chapters/68-nitro.md)
+
+前提:
+
+- c6g.large 1 台を起動したまま 730 時間。エンクレーブは起動していてもいなくても同じ
+- ルートボリュームは 8 GiB の gp3（23章と同じ仮定。AMI が決める値で、確かめていない）
+- customer managed key が 1 つ。リクエストは 0 件
+- パブリックサブネットに置き、自動割り当てのパブリック IPv4 アドレスを 1 つ持つ
+- 11章のネットワークの料金、データ転送、KMS のリクエストは含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.c6g-large.linux.hour` | 730 | Hrs | 1 c6g.large x 730 hours | 62.49 | - | 62.49 |
+| `vpc.public-ipv4.in-use.hour` | 730 | Hrs | 1 public IPv4 address x 730 hours | 3.65 | - | 3.65 |
+| `ebs.gp3.storage` | 8 | GB-Mo | 8 GiB root (assumed), 730 of 730 hours | 0.77 | - | 0.77 |
+| `kms.key` | 1 | Keys | 1 customer managed key, 730 of 730 hours | 1.00 | - | 1.00 |
+
+- 定価の小計: **USD 67.91** / 月
+- 毎月の無料枠適用後の小計: **USD 67.91** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ec2.c6g-large.linux.hour`, `kms.key`, `ebs.gp3.storage`
+
+## Nitro: インスタンスを停止して 1 か月
+
+ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enclaves、Graviton](/ja/chapters/68-nitro.md)
+
+前提:
+
+- c6g.large 1 台を停止したまま 730 時間。エンクレーブは起動していてもいなくても同じ
+- ルートボリュームは 8 GiB の gp3（23章と同じ仮定。AMI が決める値で、確かめていない）
+- customer managed key が 1 つ。リクエストは 0 件
+- 自動割り当てのパブリック IPv4 アドレスは、停止すると解放される
+- 11章のネットワークの料金、データ転送、KMS のリクエストは含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 8 | GB-Mo | 8 GiB root (assumed), 730 of 730 hours | 0.77 | - | 0.77 |
+| `kms.key` | 1 | Keys | 1 customer managed key, 730 of 730 hours | 1.00 | - | 1.00 |
+
+- 定価の小計: **USD 1.77** / 月
+- 毎月の無料枠適用後の小計: **USD 1.77** / 月
+- 無料枠を確認できず、何も引いていない単価: `kms.key`, `ebs.gp3.storage`
+
+## 本番向けの設定がノート API に足す料金: 月 100 万リクエスト
+
+ID: `ready-added-small` / 章: [33 Production Readiness: 本番に出す前の点検](/ja/chapters/33-production-readiness.md)
+
+前提:
+
+- 19章の obs-small と同じ流量。ログは 1 リクエストあたり 1 KB で、月 0.953674 GB を取り込む
+- ログの保持を 7 日から 90 日に延ばす。月平均の保存量を、取り込み量の 90/30 と 7/30 の差と仮定
+- テーブルの大きさは 1 GB。PITR の保存量はテーブルと同じ 1 GB と仮定（変更の記録のぶんは未確認で、含めていない）
+- 削除保護、DeletionPolicy、UpdateReplacePolicy には、Price List に対応する項目がない
+- アラーム、メトリクス、トレースは 19章の計算のとおりで、ここには含めていない。通知先のメールの料金も含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.pitr.storage` | 1 | GB-Mo | 1 GB table, PITR storage assumed equal to it | 0.23 | - | 0.23 |
+| `logs.storage` | 2.638 | GB-Mo | 0.953674 GB x (90 - 7)/30, in GB-month | 0.09 | 5 | 0 |
+
+- 定価の小計: **USD 0.32** / 月
+- 毎月の無料枠適用後の小計: **USD 0.23** / 月
+
+## EKS: スタックだけをデプロイして 1 か月（マニフェストは未適用）
+
+ID: `eks-control-plane-only` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
+
+前提:
+
+- 標準サポートのバージョンのクラスター 1 つを 730 時間
+- 組み込みのノードプールを無効にしているので、ノードもロードバランサーも無い
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
+
+- 定価の小計: **USD 73.00** / 月
+- 毎月の無料枠適用後の小計: **USD 73.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `eks.cluster.hour`
+
+## EKS: 既定の構成でアプリを動かしたまま 1 か月
+
+ID: `eks-idle` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
+
+前提:
+
+- 標準サポートのバージョンのクラスター 1 つを 730 時間
+- ノードは t4g.medium（arm64、オンデマンド）が AZ ごとに 1 つで 2 つ。Auto Mode の管理料金を含む
+- ノードのエフェメラルストレージは 20 GB ずつで gp3 と仮定。ルートボリュームの大きさは確認できず、未算入
+- ALB 1 つを 730 時間。LCU は未算入
+- パブリック IPv4 アドレスは ALB のノード 2 つと EKS のノード 2 つで 4 つ
+- ログ、データ転送、T4g の CPU クレジットの超過分、12章のリポジトリの保存料金、ノードプールが増やしたノードは未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
+| `ec2.t4g-medium.linux.hour` | 1,460 | Hrs | 2 t4g.medium nodes x 730 hours | 63.07 | - | 63.07 |
+| `eks.auto.t4g-medium.hour` | 1,460 | hours | 2 nodes managed by Auto Mode x 730 hours | 7.56 | - | 7.56 |
+| `ebs.gp3.storage` | 40 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 3.84 | - | 3.84 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 nodes) x 730 hours | 14.60 | - | 14.60 |
+
+- 定価の小計: **USD 179.81** / 月
+- 毎月の無料枠適用後の小計: **USD 179.81** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `eks.cluster.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`, `alb.hour`, `ebs.gp3.storage`
+
+## EKS: 既定の構成でアプリを動かして 1 日
+
+ID: `eks-one-day` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
+
+前提:
+
+- eks-idle と同じ構成を 24 時間
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `eks.cluster.hour` | 24 | Hours | 1 cluster x 24 hours | 2.40 | - | 2.40 |
+| `ec2.t4g-medium.linux.hour` | 48 | Hrs | 2 t4g.medium nodes x 24 hours | 2.07 | - | 2.07 |
+| `eks.auto.t4g-medium.hour` | 48 | hours | 2 nodes managed by Auto Mode x 24 hours | 0.25 | - | 0.25 |
+| `ebs.gp3.storage` | 1.315 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 0.13 | - | 0.13 |
+| `alb.hour` | 24 | Hrs | 1 load balancer x 24 hours | 0.58 | - | 0.58 |
+| `vpc.public-ipv4.in-use.hour` | 96 | Hrs | (2 load balancer nodes + 2 nodes) x 24 hours | 0.48 | - | 0.48 |
+
+- 定価の小計: **USD 5.91** / 月
+- 毎月の無料枠適用後の小計: **USD 5.91** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `eks.cluster.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`, `alb.hour`, `ebs.gp3.storage`
+
+## EKS: ノードをプライベートサブネットに置き、NAT Gateway 1 つで出る
+
+ID: `eks-private-nodes` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
+
+前提:
+
+- `--node-subnets private`、11章を `-c egress=nat` でデプロイ
+- ノードは t4g.medium（arm64、オンデマンド）が AZ ごとに 1 つで 2 つ。Auto Mode の管理料金を含む
+- ノードのエフェメラルストレージは 20 GB ずつで gp3 と仮定。ルートボリュームの大きさは確認できず、未算入
+- ALB 1 つを 730 時間。LCU は未算入
+- ノードはパブリック IPv4 アドレスを持たない。ALB のノード 2 つと NAT Gateway の Elastic IP アドレスで 3 つ
+- NAT Gateway を通るデータは月 2 GB と仮定
+- ログ、データ転送、T4g の CPU クレジットの超過分、12章のリポジトリの保存料金、ノードプールが増やしたノードは未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
+| `ec2.t4g-medium.linux.hour` | 1,460 | Hrs | 2 t4g.medium nodes x 730 hours | 63.07 | - | 63.07 |
+| `eks.auto.t4g-medium.hour` | 1,460 | hours | 2 nodes managed by Auto Mode x 730 hours | 7.56 | - | 7.56 |
+| `ebs.gp3.storage` | 40 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 3.84 | - | 3.84 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,190 | Hrs | (2 load balancer nodes + 1 NAT gateway) x 730 hours | 10.95 | - | 10.95 |
+| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
+| `nat.gateway.data` | 2 | GB | 2 GB processed (assumption) | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 221.55** / 月
+- 毎月の無料枠適用後の小計: **USD 221.55** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `eks.cluster.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`, `alb.hour`, `ebs.gp3.storage`
+
+## EKS: 延長サポートに入ったバージョンのまま 1 か月
+
+ID: `eks-extended-support` / 章: [34 Kubernetes: EKS、Auto Mode、Pod Identity、ALB](/ja/chapters/34-eks.md)
+
+前提:
+
+- eks-idle と同じ構成
+- upgradePolicy が EXTENDED で、バージョンが標準サポートを過ぎている。時間あたり USD 0.50 が上乗せされる
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `eks.cluster.hour` | 730 | Hours | 1 cluster x 730 hours | 73.00 | - | 73.00 |
+| `eks.cluster.extended-support.hour` | 730 | Hours | 1 cluster in extended support x 730 hours | 365.00 | - | 365.00 |
+| `ec2.t4g-medium.linux.hour` | 1,460 | Hrs | 2 t4g.medium nodes x 730 hours | 63.07 | - | 63.07 |
+| `eks.auto.t4g-medium.hour` | 1,460 | hours | 2 nodes managed by Auto Mode x 730 hours | 7.56 | - | 7.56 |
+| `ebs.gp3.storage` | 40 | GB-Mo | 2 nodes x 20 GB of ephemeral storage (gp3 assumed) | 3.84 | - | 3.84 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 nodes) x 730 hours | 14.60 | - | 14.60 |
+
+- 定価の小計: **USD 544.81** / 月
+- 毎月の無料枠適用後の小計: **USD 544.81** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `eks.cluster.hour`, `eks.cluster.extended-support.hour`, `eks.auto.t4g-medium.hour`, `ec2.t4g-medium.linux.hour`, `alb.hour`, `ebs.gp3.storage`
+
 ## Distributed SQL: 既定のスタック（ノードなし）を 1 か月
 
 ID: `distsql-foundation` / 章: [66 Distributed SQL: 分散 DB を EC2 でセルフホストする](/ja/chapters/66-distributed-sql.md)
@@ -4930,7 +3834,7 @@ ID: `distsql-cluster-idle` / 章: [66 Distributed SQL: 分散 DB を EC2 でセ�
 
 - 定価の小計: **USD 194.66** / 月
 - 毎月の無料枠適用後の小計: **USD 194.66** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `ebs.gp3.storage`, `ec2.t4g-medium.linux.hour`
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `ec2.t4g-medium.linux.hour`, `ebs.gp3.storage`
 
 ## Distributed SQL: 3 ノードで、毎秒 10 件の書き込みを 1 か月
 
@@ -4957,7 +3861,7 @@ ID: `distsql-cluster-load` / 章: [66 Distributed SQL: 分散 DB を EC2 でセ�
 
 - 定価の小計: **USD 196.77** / 月
 - 毎月の無料枠適用後の小計: **USD 196.77** / 月
-- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `ebs.gp3.storage`, `ec2.t4g-medium.linux.hour`, `datatransfer.regional`
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `ec2.t4g-medium.linux.hour`, `datatransfer.regional`, `ebs.gp3.storage`
 
 ## Distributed SQL: スタックを消したあとに残るデータボリューム
 
@@ -5033,7 +3937,7 @@ ID: `firecracker-host-two-hours` / 章: [67 Firecracker: Lambda と Fargate の�
 
 - 定価の小計: **USD 0.24** / 月
 - 毎月の無料枠適用後の小計: **USD 0.24** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ebs.gp3.storage`, `ec2.c7i-large.linux.hour`
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ec2.c7i-large.linux.hour`, `ebs.gp3.storage`
 
 ## Firecracker を試すホスト: 消し忘れて 1 か月
 
@@ -5053,7 +3957,7 @@ ID: `firecracker-host-month` / 章: [67 Firecracker: Lambda と Fargate の下�
 
 - 定価の小計: **USD 87.20** / 月
 - 毎月の無料枠適用後の小計: **USD 87.20** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ebs.gp3.storage`, `ec2.c7i-large.linux.hour`
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ec2.c7i-large.linux.hour`, `ebs.gp3.storage`
 
 ## 参考: c5.metal で 2 時間
 
@@ -5072,49 +3976,1145 @@ ID: `firecracker-metal-two-hours` / 章: [67 Firecracker: Lambda と Fargate の
 - 毎月の無料枠適用後の小計: **USD 10.27** / 月
 - 無料枠を確認できず、何も引いていない単価: `ec2.c5-metal.linux.hour`
 
-## Nitro: エンクレーブ対応のインスタンスと鍵を 1 か月置いたまま
+## 非同期の検査と掃除: デプロイ済みで、画像が 1 枚もない月
 
-ID: `nitro-idle-running` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enclaves、Graviton](/ja/chapters/68-nitro.md)
+ID: `async-idle` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
 
 前提:
 
-- c6g.large 1 台を起動したまま 730 時間。エンクレーブは起動していてもいなくても同じ
-- ルートボリュームは 8 GiB の gp3（23章と同じ仮定。AMI が決める値で、確かめていない）
-- customer managed key が 1 つ。リクエストは 0 件
-- パブリックサブネットに置き、自動割り当てのパブリック IPv4 アドレスを 1 つ持つ
-- 11章のネットワークの料金、データ転送、KMS のリクエストは含まない
+- 07章のアプリの料金に上乗せされる分だけを数える。アップロードはゼロ、bucket は空
+- schedule は 1 時間に 1 回、月 730 回、掃除の関数を起動する。1 回は 0.5 秒、256 MB、arm64 と仮定する
+- 掃除は 1 回につき bucket の一覧を 2 回読む。空なので 1 ページずつ
+- ログは 1 回の起動につき 1 KB（関数の 1 行と、Lambda が書く START、END、REPORT の行）
+- 未算入: Lambda が空の queue を long polling するときの SQS のリクエスト。頻度が公式ドキュメントに書かれていないため、数量を出せない。0 という意味ではない
 
 | 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
 | --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ec2.c6g-large.linux.hour` | 730 | Hrs | 1 c6g.large x 730 hours | 62.49 | - | 62.49 |
+| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
+| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB, in GB-seconds | 0.001217 | 400,000 | 0 |
+| `s3.request.tier1` | 1,460 | Requests | 730 runs x 2 LIST requests | 0.01 | - | 0.01 |
+| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
+| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
+
+- 定価の小計: **USD 0.01** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
+
+## 非同期の検査: 月 10,000 枚のアップロードと 1,000 回の削除
+
+ID: `async-pipeline-small` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+
+前提:
+
+- 07章の例（月 10,000 枚のアップロード）に上乗せされる、イベントごとの分だけを数える。掃除の分は別の例
+- S3 のイベントは 11,000 件（作成 10,000、削除 1,000）。重複と再試行はゼロとする
+- SQS のリクエストは 1 メッセージにつき 3 回（S3 の SendMessage、Lambda の ReceiveMessage と DeleteMessage）と数える。空振りの ReceiveMessage は未算入（頻度が不明）
+- worker は 1 メッセージにつき 1 回起動するものとする（batch にまとまれば、これより少ない）。平均 200 ミリ秒、256 MB、arm64
+- worker の S3 へのリクエストは、作成イベントごとに GetObject が 1 回。tag を外すリクエストは請求されないものとする（07章と同じ）
+- DynamoDB は、作成イベントごとに書き込み 1 unit と強い整合性の読み取り 1 unit、削除イベントごとに書き込み 1 unit
+- ログは 1 イベントにつき 0.8 KB
+- 未算入: S3 から同じリージョンの Lambda へのデータ転送（料金を確認していない）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `sqs.request.standard` | 33,000 | Requests | 11,000 messages x 3 requests | 0.01 | 1,000,000 | 0 |
+| `lambda.request.arm` | 11,000 | Requests | one invocation per message | 0.002200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 550 | Lambda-GB-Second | 11,000 x 0.2 s x 0.25 GB, in GB-seconds | 0.01 | 400,000 | 0 |
+| `s3.request.tier2` | 10,000 | Requests | one GetObject per create event | 0.003700 | - | 0.003700 |
+| `dynamodb.write.on-demand` | 11,000 | WriteRequestUnits | one conditional write per event | 0.01 | - | 0.01 |
+| `dynamodb.read.on-demand` | 10,000 | ReadRequestUnits | one attachment lookup per create event | 0.001425 | - | 0.001425 |
+| `logs.ingest.standard` | 0.008 | GB | 11,000 x 0.8 KB, in GB | 0.01 | 5 | 0 |
+| `logs.storage` | 0.002 | GB-Mo | 0.0084 GB x 7/30, in GB-month | 0.000066 | 5 | 0 |
+
+- 定価の小計: **USD 0.04** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier2`
+
+## 定期的な掃除: 10,000 枚が置いてある bucket を 1 時間ごとに突き合わせる
+
+ID: `async-housekeeping-10k` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+
+前提:
+
+- bucket には月を通して 10,000 枚の画像があり、すべて添付の記録がある
+- 掃除は月 730 回。1 回につき、bucket の一覧を 2 回読み（1,000 件ずつ 10 ページ）、画像 1 枚につき DynamoDB を 4 回読む（07章の掃除が記録とノート、この章の処理が記録と検査の結果）。すべて強い整合性の読み取りで、1 回 1 unit
+- 1 回の実行は 200 秒と仮定する（40,000 回の読み取りを 1 回 5 ミリ秒で順に実行）。256 MB、arm64。計測した値ではない
+- tag を外すリクエストは請求されないものとする。削除はゼロとする
+- ログは 1 回の起動につき 1 KB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 730 | Invocations | one invocation an hour | 0 | - | 0 |
+| `lambda.request.arm` | 730 | Requests | one housekeeping run an hour | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 36,500 | Lambda-GB-Second | 730 x 200 s x 0.25 GB, in GB-seconds | 0.49 | 400,000 | 0 |
+| `s3.request.tier1` | 14,600 | Requests | 730 runs x 2 passes x 10 LIST pages | 0.07 | - | 0.07 |
+| `dynamodb.read.on-demand` | 29,200,000 | ReadRequestUnits | 730 runs x 10,000 images x 4 reads | 4.16 | - | 4.16 |
+| `logs.ingest.standard` | 0.001 | GB | 730 x 1 KB, in GB | 0.000532 | 5 | 0 |
+| `logs.storage` | 0 | GB-Mo | 0.0007 GB x 7/30, in GB-month | 0.000007 | 5 | 0 |
+
+- 定価の小計: **USD 4.72** / 月
+- 毎月の無料枠適用後の小計: **USD 4.23** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
+
+## SSR: デプロイ済みで誰も来ない月
+
+ID: `ssr-idle` / 章: [09 SSR: BFF、Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
+
+前提:
+
+- リクエストゼロ、publish ゼロ
+- bucket に 5 MB の静的 asset
+- log は 1 週間で失効し、保存量ゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB stored for the month, in GB-month | 0.000125 | - | 0.000125 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+
+## SSR: 月 10 万ページビュー
+
+ID: `ssr-small` / 章: [09 SSR: BFF、Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
+
+前提:
+
+- 1 ページビューあたり CloudFront へ平均 4 リクエスト（HTML か API の JSON が 1、asset が平均 3）、合計 100 KB と仮定
+- すべて日本の edge から配信、HTTPS
+- HTML と API の 10 万リクエストのうち、半分が CloudFront の cache で返り、残り 5 万が Lambda に届くと仮定
+- Lambda は平均 200 ms、512 MB、arm64、buffered。200 ms は仮定で、計測値ではない
+- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く START/END/REPORT 行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
+- asset の 30 万リクエストのうち 1/10 が S3 に届くと仮定
+- publish は月 10 回、各 20 object を PUT。bucket に 5 MB
+- Lambda から CloudFront へのデータ転送、標準ログ、WAF、独自ドメインは含めていない（未算入）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudfront.jp.request.https` | 400,000 | Requests | 100,000 page views x 4 requests | 0.48 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 9.537 | GB | 100,000 page views x 100 KB, in GB | 1.09 | 1,024 | 0 |
+| `lambda.request.arm` | 50,000 | Requests | half of 100,000 HTML and API requests | 0.01 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 5,000 | Lambda-GB-Second | 50,000 x 0.2 s x 0.5 GB, in GB-seconds | 0.07 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.014 | GB | 50,000 x 0.3 KB, in GB | 0.01 | 5 | 0 |
+| `logs.storage` | 0.003 | GB-Mo | 0.0143 GB x 7/30, in GB-month | 0.000109 | 5 | 0 |
+| `s3.request.tier2` | 30,000 | Requests | one tenth of 300,000 asset requests reach S3 as GET | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 200 | Requests | 10 publishes x 20 PUTs | 0.000940 | - | 0.000940 |
+| `s3.standard.storage` | 0.005 | GB-Mo | 5 MB, in GB-month | 0.000125 | - | 0.000125 |
+
+- 定価の小計: **USD 1.67** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
+
+## コンテナ: repository だけ（image tag なしで deploy）
+
+ID: `containers-repository-only` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `-c imageTag` を付けずに deploy した状態。ALB も task も無い
+- image 1 つぶんとして 0.1 GB を保存していると仮定（実際の image の大きさは build していないので未計測）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+
+- 定価の小計: **USD 0.01** / 月
+- 毎月の無料枠適用後の小計: **USD 0.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
+
+## コンテナ: 既定の構成を置いたまま 1 か月
+
+ID: `containers-idle` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- task 2 つ（0.25 vCPU、0.5 GB、arm64）を public subnet で 730 時間
+- ALB 1 つを 730 時間。LCU は未算入（health check だけのときの LCU は確認していない）
+- public IPv4 アドレスは ALB の node 2 つと task 2 つで 4 つ。ALB が node を増やせば増える
+- repository に 0.1 GB（仮定）
+- ログ、データ転送、auto scaling で増えた task は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+
+- 定価の小計: **USD 50.34** / 月
+- 毎月の無料枠適用後の小計: **USD 50.34** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
+## コンテナ: 既定の構成を 1 日
+
+ID: `containers-one-day` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `containers-idle` と同じ構成を 24 時間
+- repository の保存料金、ログ、データ転送、LCU は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 12 | hours | 2 tasks x 0.25 vCPU x 24 hours | 0.49 | - | 0.49 |
+| `fargate.arm.memory.gb-hour` | 24 | hours | 2 tasks x 0.5 GB x 24 hours | 0.11 | - | 0.11 |
+| `alb.hour` | 24 | Hrs | 1 load balancer x 24 hours | 0.58 | - | 0.58 |
+| `vpc.public-ipv4.in-use.hour` | 96 | Hrs | (2 load balancer nodes + 2 tasks) x 24 hours | 0.48 | - | 0.48 |
+
+- 定価の小計: **USD 1.65** / 月
+- 毎月の無料枠適用後の小計: **USD 1.65** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`
+
+## コンテナ: 月 100 万リクエスト
+
+ID: `containers-small` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `containers-idle` の構成のまま、task は 2 つから増えないと仮定
+- LCU は新規接続の次元で数える。1 リクエスト 1 接続、月 100 万件は毎秒 0.38 件で 0.0152 LCU、730 時間で 11.1 LCU 時間
+- ログは 1 リクエスト 0.2 KB の 1 行（成功した health check は書かない）。保持 7 日、月平均の保存量を取込み量の 7/30 と仮定
+- 応答は 1 件 0.5 KB と仮定し、インターネットへのデータ転送を 0.477 GB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,920 | Hrs | (2 load balancer nodes + 2 tasks) x 730 hours | 14.60 | - | 14.60 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `alb.lcu.hour` | 11.1 | LCU-Hrs | 0.0152 LCU x 730 hours (assumption) | 0.09 | - | 0.09 |
+| `logs.ingest.standard` | 0.191 | GB | 1,000,000 x 0.2 KB, in GB | 0.15 | 5 | 0 |
+| `logs.storage` | 0.045 | GB-Mo | 0.191 GB x 7/30, in GB-month | 0.001485 | 5 | 0 |
+| `datatransfer.out.internet` | 0.477 | GB | 1,000,000 x 0.5 KB, in GB | 0.05 | - | 0.05 |
+
+- 定価の小計: **USD 50.63** / 月
+- 毎月の無料枠適用後の小計: **USD 50.48** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `datatransfer.out.internet`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `alb.lcu.hour`, `ecr.storage`
+
+## コンテナ: task を private subnet に置き、NAT Gateway 1 つで出る
+
+ID: `containers-private-nat` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `-c taskSubnets=private`、11章を `-c egress=nat` で deploy
+- task は public IPv4 アドレスを持たない。ALB の node 2 つと NAT Gateway の Elastic IP アドレスで 3 つ
+- NAT Gateway を通るデータ（image の取得とログ）は月 2 GB と仮定
+- LCU、ログ、インターネットへのデータ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 2,190 | Hrs | (2 load balancer nodes + 1 NAT gateway) x 730 hours | 10.95 | - | 10.95 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `nat.gateway.hour` | 730 | Hrs | 1 NAT gateway x 730 hours | 45.26 | - | 45.26 |
+| `nat.gateway.data` | 2 | GB | 2 GB processed (assumption) | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 92.07** / 月
+- 毎月の無料枠適用後の小計: **USD 92.07** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
+## コンテナ: task を private subnet に置き、interface endpoint 3 つで AWS に届く
+
+ID: `containers-private-endpoints` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+
+前提:
+
+- `-c taskSubnets=private`、11章を `-c interfaceEndpoints=ecr.api,ecr.dkr,logs` で deploy
+- interface endpoint 3 つ × 2 AZ。image の layer は S3 の gateway endpoint（無料）を通る
+- interface endpoint を通るデータは月 1 GB と仮定
+- public IPv4 アドレスは ALB の node 2 つだけ
+- LCU、ログ、インターネットへのデータ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 365 | hours | 2 tasks x 0.25 vCPU x 730 hours | 14.76 | - | 14.76 |
+| `fargate.arm.memory.gb-hour` | 730 | hours | 2 tasks x 0.5 GB x 730 hours | 3.23 | - | 3.23 |
+| `alb.hour` | 730 | Hrs | 1 load balancer x 730 hours | 17.74 | - | 17.74 |
+| `vpc.public-ipv4.in-use.hour` | 1,460 | Hrs | 2 load balancer nodes x 730 hours | 7.30 | - | 7.30 |
+| `ecr.storage` | 0.1 | GB-Mo | 0.1 GB stored (assumption) | 0.01 | - | 0.01 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+| `vpc.endpoint.interface.data` | 1 | GB | 1 GB processed (assumption) | 0.01 | - | 0.01 |
+
+- 定価の小計: **USD 104.37** / 月
+- 毎月の無料枠適用後の小計: **USD 104.37** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`, `alb.hour`, `ecr.storage`
+
+## Aurora DSQL: 1 GB のデータを置いて、誰も問い合わせない月
+
+ID: `sql-dsql-idle` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- 問い合わせゼロ。DPU は発生しない
+- データは 1 GB
+- backup なし
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dsql.dpu` | 0 | DPU | no database activity | 0 | 100,000 | 0 |
+| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
+
+- 定価の小計: **USD 0.40** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## Aurora DSQL: 月 100 万リクエストのノート API（DB の分だけ）
+
+ID: `sql-dsql-small` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- 読み取り 90 万件、書き込み 10 万件
+- 読み取り 1 件は 0.00675 DPU と仮定（公式ドキュメントの point lookup の計算例の値）
+- 書き込み 1 件は 0.18525 DPU と仮定（公式ドキュメントの 1 行 insert の計算例 0.06175 DPU の 3 倍。この章の作成は 3 行に書く）
+- この章の query で実測した値ではない
+- データは 1 GB
+- Lambda、API Gateway、ログ、backup は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dsql.dpu` | 24,600 | DPU | 900,000 x 0.00675 DPU + 100,000 x 0.18525 DPU | 0.25 | 100,000 | 0 |
+| `dsql.storage` | 1 | GB-Month | 1 GB stored for the month | 0.40 | 1 | 0 |
+
+- 定価の小計: **USD 0.65** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## RDS for PostgreSQL: 最小構成を 730 時間動かす
+
+ID: `sql-rds-min` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- db.t4g.micro、Single-AZ、止めずに 730 時間
+- gp3 を 20 GB（PostgreSQL での最小）
+- 問い合わせの量によらない
+- backup の超過分、データ転送、VPC の料金（11章）は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `rds.postgres.t4g-micro.single-az` | 730 | Hrs | one instance for 730 hours | 18.25 | - | 18.25 |
+| `rds.postgres.gp3.storage` | 20 | GB-Mo | 20 GB provisioned for the month | 2.76 | - | 2.76 |
+
+- 定価の小計: **USD 21.01** / 月
+- 毎月の無料枠適用後の小計: **USD 21.01** / 月
+- 無料枠を確認できず、何も引いていない単価: `rds.postgres.t4g-micro.single-az`, `rds.postgres.gp3.storage`
+
+## Aurora Serverless v2: auto-pause なし、最小 0.5 ACU で 730 時間
+
+ID: `sql-aurora-min` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- Aurora PostgreSQL、writer 1 台、最小容量 0.5 ACU のまま 730 時間
+- Aurora Standard（I/O は別料金。ここでは I/O ゼロ）
+- データは 1 GB
+- backup の超過分、データ転送、VPC の料金（11章）は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `aurora.postgres.serverless-v2.acu` | 365 | ACU-Hr | 0.5 ACU x 730 hours | 54.75 | - | 54.75 |
+| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 54.87** / 月
+- 毎月の無料枠適用後の小計: **USD 54.87** / 月
+
+## Aurora Serverless v2: auto-pause で 1 か月ずっと止まっていた場合
+
+ID: `sql-aurora-paused` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+
+前提:
+
+- 最小容量 0 ACU。1 か月のあいだ一度も接続がなく、再開もしなかったと仮定
+- 実際には保守のために Aurora が instance を再開することがあり、その時間は課金される
+- データは 1 GB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `aurora.postgres.serverless-v2.acu` | 0 | ACU-Hr | paused for all 730 hours | 0 | - | 0 |
+| `aurora.postgres.storage` | 1 | GB-Mo | 1 GB stored for the month | 0.12 | - | 0.12 |
+
+- 定価の小計: **USD 0.12** / 月
+- 毎月の無料枠適用後の小計: **USD 0.12** / 月
+
+## 長い処理: デプロイ済みで、ノートが 1 件もない月
+
+ID: `export-idle` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- schedule は 1 日 1 回、月 30 回 workflow を起動する。table は空
+- 1 回の実行は ExportPages、MorePages、Finish、Exported を 1 回ずつ通る。開始と終了を足して state transition は 6 と数える（料金ページの例の数え方。実測ではない）
+- 関数の呼び出しは 1 回の実行につき 2 回。それぞれ 0.5 秒、256 MB、arm64 と仮定
+- 空の Scan は 1 回につき読み取り 1 unit と多めに数える。S3 は LIST 1 回と manifest の PUT 1 回
+- ログは関数の呼び出し 1 回につき 1 KB
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
+| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 7.5 | Lambda-GB-Second | 60 x 0.5 s x 0.25 GB, in GB-seconds | 0.000100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 30 | ReadRequestUnits | one empty Scan per run, counted as 1 unit | 0.000004 | - | 0.000004 |
+| `s3.request.tier1` | 60 | Requests | 30 runs x (1 LIST + 1 manifest PUT) | 0.000282 | - | 0.000282 |
+| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.request.tier1`
+
+## 長い処理: 10,000 件を毎日 export。1 回の呼び出しで全ページ（この章の既定）
+
+ID: `export-daily-10k-coarse` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
+- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
+- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
+- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
+- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
+- state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない
+- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
+- ExportPages は 1 回の呼び出しで 100 ページを書き終える（20 秒）。state transition は 1 回の実行で 6
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 180 | StateTransitions | 30 executions x 6 transitions | 0.004500 | 4,000 | 0 |
+| `lambda.request.arm` | 60 | Requests | 30 executions x 2 invocations | 0.000012 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (20 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0 | GB | 60 x 1 KB, in GB | 0.000043 | 5 | 0 |
+
+- 定価の小計: **USD 0.03** / 月
+- 毎月の無料枠適用後の小計: **USD 0.02** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
+
+## 長い処理: 10,000 件を毎日 export。1 ページごとに workflow に戻る
+
+ID: `export-daily-10k-fine` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
+- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
+- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
+- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
+- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
+- state transition は、料金ページの例の数え方（開始と終了も 1 つずつ）に合わせた見積もり。実測ではない
+- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
+- ExportPages は 1 ページ書くごとに戻る。1 回の実行で ExportPages と MorePages を 100 回ずつ通り、state transition は 204
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `scheduler.invocation` | 30 | Invocations | one start a day | 0 | - | 0 |
+| `sfn.standard.transition` | 6,120 | StateTransitions | 30 executions x (100 x 2 + 4) transitions | 0.15 | 4,000 | 0.05 |
+| `lambda.request.arm` | 3,030 | Requests | 30 executions x (100 pages + 1 finish) | 0.000606 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x (100 x 0.2 s + 1 s) x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0.003 | GB | 3,030 x 1 KB, in GB | 0.002196 | 5 | 0 |
+
+- 定価の小計: **USD 0.18** / 月
+- 毎月の無料枠適用後の小計: **USD 0.07** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
+
+## 長い処理: 10,000 件を毎日 export。durable function 版（`-c durable=true`）
+
+ID: `export-daily-10k-durable` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- table に 1 KB のノートが 10,000 件（10 MB）。1 日 1 回、月 30 回 export する
+- 1 ページ 100 件で、part は 1 回の export につき 100 個。1 個 120 KB、export 1 回で 12 MB と仮定
+- Scan は結果整合で、4 KB あたり 0.5 unit。10 MB で 1,280 unit
+- export は 7 日で消えるので、bucket に置いてあるのは常に 7 回分（84 MB）
+- 関数は arm64、256 MB。ページ 1 つあたり 200 ミリ秒、Finish は 1 秒と仮定。計測した値ではない
+- 未算入: 再試行、redrive、S3 と DynamoDB からのデータ転送
+- 1 日 1 回、手で（または別の schedule で）起動するものとする。Step Functions は通らない
+- step は 20 ページごとに 1 つで 5 つ、それに finish。実行の開始を足して durable operation は 1 回の実行で 7
+- 待機がないので、関数の呼び出しは 1 回の実行につき 1 回（21 秒）と仮定
+- checkpoint に書かれるのは進捗だけ。1 operation あたり 1 KB、保持は 1 日と仮定
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `lambda.durable.operation` | 210 | DurableOperations | 30 executions x (1 start + 5 page steps + 1 finish) | 0.002226 | - | 0.002226 |
+| `lambda.durable.written` | 0 | GigaBytes | 210 operations x 1 KB, in GB | 0.000066 | - | 0.000066 |
+| `lambda.durable.retained` | 0 | GigaBytesMonth | 0.0002 GB x 1/30, in GB-month | 0.000001 | - | 0.000001 |
+| `lambda.request.arm` | 30 | Requests | one invocation per execution | 0.000006 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 157.5 | Lambda-GB-Second | 30 x 21 s x 0.25 GB, in GB-seconds | 0.002100 | 400,000 | 0 |
+| `dynamodb.read.on-demand` | 38,400 | ReadRequestUnits | 30 runs x 10,240 KB scanned / 4 KB x 0.5 (eventually consistent) | 0.01 | - | 0.01 |
+| `s3.request.tier1` | 3,060 | Requests | 30 runs x (100 part PUTs + 1 manifest PUT + 1 LIST) | 0.01 | - | 0.01 |
+| `s3.standard.storage` | 0.082 | GB-Mo | 7 exports of 12 MB kept at any time, in GB-month | 0.002050 | - | 0.002050 |
+| `logs.ingest.standard` | 0 | GB | 30 x 1 KB, in GB | 0.000022 | 5 | 0 |
+
+- 定価の小計: **USD 0.03** / 月
+- 毎月の無料枠適用後の小計: **USD 0.02** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `lambda.durable.operation`, `lambda.durable.written`, `lambda.durable.retained`
+
+## 比較: 1 時間かかる step を、1 日 1 回 Fargate の task で動かす月
+
+ID: `export-step-fargate-1h` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+
+前提:
+
+- この章の stack は作らない構成。料金の比較のためだけに計算
+- 0.25 vCPU、0.5 GB、arm64 の task を 1 日 1 回、1 時間。月 30 時間
+- public subnet で public IPv4 を付けて動かす（12章の構成）。task が動いている間だけ課金される
+- 未算入: image の保存（ECR）、ログ、データ転送、Step Functions の state transition
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `fargate.arm.vcpu.hour` | 7.5 | hours | 30 hours x 0.25 vCPU | 0.30 | - | 0.30 |
+| `fargate.arm.memory.gb-hour` | 15 | hours | 30 hours x 0.5 GB | 0.07 | - | 0.07 |
+| `vpc.public-ipv4.in-use.hour` | 30 | Hrs | one public IPv4 address for 30 hours | 0.15 | - | 0.15 |
+
+- 定価の小計: **USD 0.52** / 月
+- 毎月の無料枠適用後の小計: **USD 0.52** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `fargate.arm.vcpu.hour`, `fargate.arm.memory.gb-hour`
+
+## 要約 API: デプロイ済みで呼ばれない月
+
+ID: `ai-idle` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- リクエストゼロ
+- log は 1 週間で失効し、保存量ゼロ
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）
+
+ID: `ai-summaries-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 月 1,000 件の要約
+- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
+- 出力は 1 件あたり 150 token と仮定（上限は 400）
+- Lambda は 256 MB、arm64、1 件あたり平均 4 秒と仮定（推論を待つ時間も課金される）
+- 1 件あたり log 1 KB と仮定
+- データ転送は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.input` | 2,000 | 1K tokens | 1,000 summaries x 2,000 input tokens, in 1K tokens | 0.79 | - | 0.79 |
+| `bedrock.nova-2-lite.output` | 150 | 1K tokens | 1,000 summaries x 150 output tokens, in 1K tokens | 0.50 | - | 0.50 |
+| `lambda.request.arm` | 1,000 | Requests | one invocation per summary | 0.000200 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 1,000 | Lambda-GB-Second | 1,000 x 4 s x 0.25 GB | 0.01 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.001 | GB | 1,000 x 1 KB, in GB | 0.000725 | 5 | 0 |
+
+- 定価の小計: **USD 1.30** / 月
+- 毎月の無料枠適用後の小計: **USD 1.29** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.input`, `bedrock.nova-2-lite.output`
+
+## 要約 API: 1,000 件すべてが出力の上限に達した場合の出力分
+
+ID: `ai-output-ceiling-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 1,000 件すべてが maxTokens の 400 token まで出力
+- 出力 token の分だけ。入力と Lambda は含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.nova-2-lite.output` | 400 | 1K tokens | 1,000 summaries x 400 output tokens, in 1K tokens | 1.32 | - | 1.32 |
+
+- 定価の小計: **USD 1.32** / 月
+- 毎月の無料枠適用後の小計: **USD 1.32** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.nova-2-lite.output`
+
+## 要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）
+
+ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+
+前提:
+
+- 月 1,000 件の要約
+- 入力は 1 件あたり 2,000 token と仮定（system prompt とノート。実際の値は応答の usage でわかる）
+- 出力は 1 件あたり 150 token と仮定（上限は 400）
+- token の数え方はモデルごとに違うので、同じ文章でも token 数は同じにならない。単価の比較のための仮定
+- 推論の分だけ。Lambda は含まない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `bedrock.claude-haiku-4-5.input` | 2 | 1M tokens | 1,000 summaries x 2,000 input tokens, in 1M tokens | 2.20 | - | 2.20 |
+| `bedrock.claude-haiku-4-5.output` | 0.15 | 1M tokens | 1,000 summaries x 150 output tokens, in 1M tokens | 0.82 | - | 0.82 |
+
+- 定価の小計: **USD 3.03** / 月
+- 毎月の無料枠適用後の小計: **USD 3.03** / 月
+- 無料枠を確認できず、何も引いていない単価: `bedrock.claude-haiku-4-5.input`, `bedrock.claude-haiku-4-5.output`
+
+## 監視つきノート API: デプロイ済みで呼ばれない月
+
+ID: `obs-idle` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- リクエストゼロ。ログ、trace、custom metric のデータ点はどれも発生しない
+- アラーム 2 つが参照するメトリクスは合計 3 つ（5xx の率が Count と 5xx、遅さが Latency）
+- ダッシュボード 1 つは無料枠（3 つまで、各 50 メトリクスまで）の内と仮定。4 つ目からの単価は確認できていないため、金額に含めていない
+- API、Lambda、DynamoDB そのものの料金は 04章と 05章の計算のとおりで、ここには含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
+
+- 定価の小計: **USD 0.30** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 監視つきノート API: 月 100 万リクエストの観測の料金
+
+ID: `obs-small` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 1 リクエストあたりログ 1 KB。アプリの 1 行は実測で 255 バイト（trace の項目つき）、残りは Lambda が書く行で、JSON 形式での大きさは未計測の仮定
+- ログの保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定
+- リクエストが一定の間隔で届くと仮定。毎秒 0.38 件で、Lambda の既定の sampling（毎秒最初の 1 件と残りの 5%）では全件が trace になる。これは上限で、実際の到着が偏れば減る
+- 1 つの trace に含まれる span の数は料金に影響しない（trace 単位の課金）と仮定
+- trace を画面で開くのは月 10,000 件、Logs Insights で調べるログは月 1 GB
+- custom metric は NoteConflicts の 1 つ、アラームが参照するメトリクスは 3 つ
+- ダッシュボードは無料枠の内と仮定。SNS の通知、API・Lambda・DynamoDB そのものの料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `logs.ingest.standard` | 0.954 | GB | 1,000,000 x 1,024 bytes, in GB | 0.72 | 5 | 0 |
+| `logs.storage` | 0.223 | GB-Mo | 0.953674 GB x 7/30, in GB-month | 0.01 | 5 | 0 |
+| `logs.insights.scanned` | 1 | GB | 1 GB scanned by queries | 0.01 | 5 | 0 |
+| `cloudwatch.metric.custom` | 1 | Metrics | NoteConflicts | 0.30 | 10 | 0 |
+| `cloudwatch.alarm.standard` | 3 | Alarms | 2 alarms listing 3 metrics | 0.30 | 10 | 0 |
+| `xray.trace.recorded` | 1,000,000 | traces | every request traced at 0.38 requests per second | 5.00 | 100,000 | 4.50 |
+| `xray.trace.retrieved` | 10,000 | traces | 10,000 traces opened | 0.01 | 1,000,000 | 0 |
+
+- 定価の小計: **USD 6.34** / 月
+- 毎月の無料枠適用後の小計: **USD 4.50** / 月
+
+## ログを 1 行増やす: 月 100 万リクエスト
+
+ID: `obs-one-more-line` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 増やす 1 行はリクエストの行と同じ 167 バイト（実測。trace の項目なし）
+- 保持は 7 日。月平均の保存量を取り込み量の 7/30 と仮定
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `logs.ingest.standard` | 0.156 | GB | 1,000,000 x 167 bytes, in GB | 0.12 | 5 | 0 |
+| `logs.storage` | 0.036 | GB-Mo | 0.15553 GB x 7/30, in GB-month | 0.001198 | 5 | 0 |
+
+- 定価の小計: **USD 0.12** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## メトリクスを 1 つ増やす
+
+ID: `obs-one-more-metric` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- dimension なしの custom metric を 1 つ、毎時間データ点が届く状態で 1 か月
+- dimension を付けると、値の組み合わせ 1 つごとに 1 メトリクスと数える
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.metric.custom` | 1 | Metrics | 1 metric for a full month | 0.30 | 10 | 0 |
+
+- 定価の小計: **USD 0.30** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## Synthetics: 5 分ごとの canary 1 つ
+
+ID: `obs-canary-5min` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 730 時間 x 毎時 12 回 = 8,760 回の実行
+- canary が使う Lambda、S3、ログ、メトリクスの料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.synthetics.run` | 8,760 | Runs | 730 h x 12 runs | 16.64 | 100 | 16.45 |
+
+- 定価の小計: **USD 16.64** / 月
+- 毎月の無料枠適用後の小計: **USD 16.45** / 月
+
+## RUM: 月 1 万回の訪問を全件収集
+
+ID: `obs-rum-small` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+
+前提:
+
+- 1 回の訪問で 20 イベント（料金ページの計算例と同じ数）、session の収集率 100%
+- 初回の無料トライアル（100 万イベント、1 回限り）は引いていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `cloudwatch.rum.event` | 200,000 | Events | 10,000 visits x 20 events | 2.00 | - | 2.00 |
+
+- 定価の小計: **USD 2.00** / 月
+- 毎月の無料枠適用後の小計: **USD 2.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `cloudwatch.rum.event`
+
+## 変更を届ける: stack と CI の role を置いて、誰も呼ばない月
+
+ID: `ship-idle` / 章: [20 CI/CD: OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
+
+前提:
+
+- API へのリクエストゼロ。log は失効して保存量ゼロ
+- CloudFormation は AWS:: の resource type に追加料金なし。IAM の role と OIDC provider は IAM の一部で、追加料金なし
+- deploy も drift 検出も 0 回
+- GitHub Actions の料金は AWS の請求ではないので含めていない
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+
+## 変更を届ける: 1 日 1 回のデプロイを 1 年続けて、asset を一度も片付けない
+
+ID: `ship-assets-year` / 章: [20 CI/CD: OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
+
+前提:
+
+- デプロイのたびにコードが変わり、新しい zip が CDK の asset bucket に 1 つ増える
+- zip は 1 つ 137 KB（この章の bundle 837 KB を手元で deflate した大きさ。CDK CLI が作る zip の実測ではない）
+- 365 個すべてが残っている月の保存料金。PUT のリクエスト料金は含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 0.048 | GB-Mo | 365 x 137 KB, in GB | 0.001192 | - | 0.001192 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+
+## 守り: 既定の stack を置いたまま、誰も呼ばない月
+
+ID: `sec-idle-default` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- `-c cmk=on` も `-c webAclArn=...` も付けていない。web ACL の stack（AihSecurityWaf）も作っていない
+- リクエストゼロ。関数が動かないので、Secrets Manager の API も呼ばれない
+- secret は 1 つを 730 時間。暗号化は aws/secretsmanager（月額なし）
+- CloudFront の distribution、Lambda、IAM の role は、呼ばれなければ料金がかからない。log は失効して保存量ゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+
+- 定価の小計: **USD 0.40** / 月
+- 毎月の無料枠適用後の小計: **USD 0.40** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`
+
+## 守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月
+
+ID: `sec-idle-cmk` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- 既定の stack に、customer managed key を 1 つ足したもの
+- 鍵は作ってから 1 年未満で、まだ一度も自動 rotation していない。rotation のたびに、2 回目まで月 USD 1 ずつ増える
+- リクエストゼロ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `kms.key` | 1 | Keys | 1 customer managed key, one key version | 1.00 | - | 1.00 |
+
+- 定価の小計: **USD 1.40** / 月
+- 毎月の無料枠適用後の小計: **USD 1.40** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `kms.key`
+
+## 守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査
+
+ID: `sec-waf-month` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- web ACL 1 つと rule 3 つ（rate-based rule 1 つ、AWS managed rule group 2 つ。managed rule group は 1 つの rule として数える）
+- 合計 727 WCU で、基本料金に含まれる 1,500 WCU の内側
+- 検査するリクエストは月 100 万。0 なら月 USD 8.00
+- CloudFront 用の web ACL が Global-* の usage type で課金されるという対応は、請求では確かめていない。ap-northeast-1 と us-east-1 の単価も同じ値
+- この小計に、既定の stack の料金は含まない。WAF のログ、Bot Control などの追加機能は使っていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `waf.global.webacl` | 1 | Month | 1 web ACL for the whole month | 5.00 | - | 5.00 |
+| `waf.global.rule` | 3 | Month | 3 rules for the whole month | 3.00 | - | 3.00 |
+| `waf.global.request` | 1,000,000 | Request | 1,000,000 requests inspected | 0.60 | - | 0.60 |
+
+- 定価の小計: **USD 8.60** / 月
+- 毎月の無料枠適用後の小計: **USD 8.60** / 月
+- 無料枠を確認できず、何も引いていない単価: `waf.global.webacl`, `waf.global.rule`, `waf.global.request`
+
+## 守り: 既定の stack で、token の発行と検証を月 10 万回ずつ
+
+ID: `sec-small` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- CloudFront へ 20 万リクエスト（HTTPS、日本の edge）。cache しないので、すべて Lambda に届く
+- 応答は 1 回あたり 0.5 KB と仮定
+- Lambda は平均 50 ms、256 MB、arm64。50 ms は仮定で、計測値ではない
+- 実行環境 1 つが 1 か月動き続け、5 分ごとに鍵を読み直すと仮定（730 時間 x 12 回 x GetSecretValue 2 回）。実行環境が増えれば、そのぶん増える
+- 1 回の呼び出しあたり log 0.3 KB（Lambda が書く行のみ）。保持 7 日で、月平均の保存量を取込み量の 7/30 と仮定
+- customer managed key、web ACL は無し。Lambda から CloudFront へのデータ転送は含めていない（未算入）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `secretsmanager.secret` | 1 | Secrets | 1 secret for the whole month | 0.40 | - | 0.40 |
+| `secretsmanager.api` | 17,520 | API Requests | 730 hours x 12 reloads x 2 GetSecretValue calls | 0.09 | - | 0.09 |
+| `cloudfront.jp.request.https` | 200,000 | Requests | 100,000 /token + 100,000 /verify | 0.24 | 10,000,000 | 0 |
+| `cloudfront.jp.transfer` | 0.095 | GB | 200,000 x 0.5 KB, in GB | 0.01 | 1,024 | 0 |
+| `lambda.request.arm` | 200,000 | Requests | every request reaches the function | 0.04 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 2,500 | Lambda-GB-Second | 200,000 x 0.05 s x 0.25 GB, in GB-seconds | 0.03 | 400,000 | 0 |
+| `logs.ingest.standard` | 0.057 | GB | 200,000 x 0.3 KB, in GB | 0.04 | 5 | 0 |
+| `logs.storage` | 0.013 | GB-Mo | 0.057220 GB x 7/30, in GB-month | 0.000441 | 5 | 0 |
+
+- 定価の小計: **USD 0.86** / 月
+- 毎月の無料枠適用後の小計: **USD 0.49** / 月
+- 無料枠を確認できず、何も引いていない単価: `secretsmanager.secret`, `secretsmanager.api`
+
+## 守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）
+
+ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+
+前提:
+
+- 無料の試用期間が終わったあとの月
+- GuardDuty が分析する CloudTrail の management event を月 10 万件と仮定。実際の件数は、アカウントで何をしているかで決まる。この数字は計測値ではない
+- GuardDuty のほかの課金対象（VPC flow log と DNS log の分析量、S3、Lambda、Malware Protection などの protection plan）は含めていない。初めて有効にすると、既定ですべての protection plan が有効になる
+- Inspector は Lambda standard scanning だけで、関数 1 つを 730 時間。ECR の image と EC2 instance の検査は含めていない
+- AWS Config は連続記録で、月 500 件の configuration item と仮定。rule の評価と、記録を置く S3 の料金は含めていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `guardduty.cloudtrail.event` | 100,000 | Events | 100,000 management events analyzed (assumed) | 0.47 | - | 0.47 |
+| `inspector.lambda.standard` | 730 | Hourly | 1 function x 730 hours | 0.36 | - | 0.36 |
+| `config.item.continuous` | 500 | APN1-ConfigurationItemRecorded | 500 configuration items (assumed) | 1.50 | - | 1.50 |
+
+- 定価の小計: **USD 2.34** / 月
+- 毎月の無料枠適用後の小計: **USD 2.34** / 月
+- 無料枠を確認できず、何も引いていない単価: `guardduty.cloudtrail.event`, `inspector.lambda.standard`, `config.item.continuous`
+
+## 復旧: 戻せる状態を 1 か月保つための上乗せ（table 1 GB、画像 10 GB）
+
+ID: `recovery-keep` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- 既定の stack。table は 1 GB で、point-in-time recovery が有効
+- 画像は 10 GB。月に 1 GB ぶんが上書きか削除をされ、その古い version が 30 日残る（1 GB を 1 か月ぶんとして計算）
+- table と現行の画像そのものの保存料、リクエスト、Lambda は含めない。上乗せ分だけ
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.pitr.storage` | 1 | GB-Mo | 1 GB table under PITR, in GB-month | 0.23 | - | 0.23 |
+| `s3.standard.storage` | 1 | GB-Mo | 1 GB of noncurrent versions, in GB-month | 0.03 | - | 0.03 |
+
+- 定価の小計: **USD 0.25** / 月
+- 毎月の無料枠適用後の小計: **USD 0.25** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`
+
+## 復旧: 1 GB の table を 1 回復元して検査する drill
+
+ID: `recovery-drill` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- RestoreTableToPointInTime を 1 回。復元されるデータは 1 GB
+- 検査（table 全体の Scan、強い整合性）を 4 回。1 GB を 4 KB の item で数えて、1 回 262,144 read request unit
+- 復元した table を 1 か月置いたままにした場合の保存料（1 GB）を含む
+- S3 の一覧と復元のリクエスト、Lambda、ログは含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.restore` | 1 | GB | 1 GB restored | 0.17 | - | 0.17 |
+| `dynamodb.read.on-demand` | 1,048,576 | ReadRequestUnits | 4 full scans x 262,144 read request units | 0.15 | - | 0.15 |
+| `dynamodb.storage` | 1 | GB-Mo | the restored table, 1 GB for a month | 0 | - | 0 |
+
+- 定価の小計: **USD 0.32** / 月
+- 毎月の無料枠適用後の小計: **USD 0.32** / 月
+- 無料枠を確認できず、何も引いていない単価: `dynamodb.restore`
+
+## 復旧: `-c backup=on` で増える分（AWS Backup、1 GB の table）
+
+ID: `recovery-backup-optin` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- 毎日 1 回の snapshot を 7 日保持。常に 7 つが warm storage にある
+- snapshot 1 つが table 全体（1 GB）として課金されると仮定。差分で取られるかどうかは確認していない
+- 復元はしていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `backup.dynamodb.warm` | 7 | GB-month | 7 snapshots x 1 GB, in GB-month | 0.80 | - | 0.80 |
+
+- 定価の小計: **USD 0.80** / 月
+- 毎月の無料枠適用後の小計: **USD 0.80** / 月
+- 無料枠を確認できず、何も引いていない単価: `backup.dynamodb.warm`
+
+## 復旧: `-c replica=on` で増える分（S3 Replication、画像 10 GB）
+
+ID: `recovery-replica-optin` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+
+前提:
+
+- 複製先に、複製を有効にした後に置かれた画像 10 GB と、古い version 1 GB がある
+- 月に 10,000 個の object が複製される。複製の PUT を、通常の PUT と同じ単価（Tier 1）として計算
+- 同じリージョン内の複製。データ転送料は含めない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `s3.standard.storage` | 11 | GB-Mo | the second copy: 10 GB current + 1 GB noncurrent, in GB-month | 0.28 | - | 0.28 |
+| `s3.request.tier1` | 10,000 | Requests | 10,000 replication PUT requests | 0.05 | - | 0.05 |
+
+- 定価の小計: **USD 0.32** / 月
+- 毎月の無料枠適用後の小計: **USD 0.32** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`
+
+## EC2: private subnet で 1 か月動かしたまま
+
+ID: `ec2-private-running` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+
+前提:
+
+- 既定の構成。t4g.micro を 730 時間動かしたまま
+- 11章の stack に interface endpoint を 3 つ（ssm、ssmmessages、ec2messages）、2 つの AZ に置いたまま
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- 定価の小計: **USD 70.74** / 月
+- 毎月の無料枠適用後の小計: **USD 70.74** / 月
+- 無料枠を確認できず、何も引いていない単価: `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
+
+## EC2: private subnet で 1 か月止めたまま
+
+ID: `ec2-private-stopped` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+
+前提:
+
+- instance を停止したまま 730 時間。volume と、11章の stack の interface endpoint は残っている
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
+| `vpc.endpoint.interface.hour` | 4,380 | Hrs | 3 interface endpoints x 2 zones x 730 hours | 61.32 | - | 61.32 |
+
+- 定価の小計: **USD 62.86** / 月
+- 毎月の無料枠適用後の小計: **USD 62.86** / 月
+- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
+
+## EC2: public subnet で 1 か月動かしたまま
+
+ID: `ec2-public-running` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+
+前提:
+
+- `-c placement=public`。t4g.micro を 730 時間動かしたまま、自動で割り当てられた public IPv4 アドレス 1 つ
+- interface endpoint なし
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ec2.t4g-micro.linux.hour` | 730 | Hrs | 1 t4g.micro x 730 hours | 7.88 | - | 7.88 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
 | `vpc.public-ipv4.in-use.hour` | 730 | Hrs | 1 public IPv4 address x 730 hours | 3.65 | - | 3.65 |
-| `ebs.gp3.storage` | 8 | GB-Mo | 8 GiB root (assumed), 730 of 730 hours | 0.77 | - | 0.77 |
-| `kms.key` | 1 | Keys | 1 customer managed key, 730 of 730 hours | 1.00 | - | 1.00 |
 
-- 定価の小計: **USD 67.91** / 月
-- 毎月の無料枠適用後の小計: **USD 67.91** / 月
-- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ebs.gp3.storage`, `kms.key`, `ec2.c6g-large.linux.hour`
+- 定価の小計: **USD 13.07** / 月
+- 毎月の無料枠適用後の小計: **USD 13.07** / 月
+- 無料枠を確認できず、何も引いていない単価: `vpc.public-ipv4.in-use.hour`, `ec2.t4g-micro.linux.hour`, `ebs.gp3.storage`
 
-## Nitro: インスタンスを停止して 1 か月
+## EC2: public subnet で 1 か月止めたまま
 
-ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enclaves、Graviton](/ja/chapters/68-nitro.md)
+ID: `ec2-public-stopped` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
 
 前提:
 
-- c6g.large 1 台を停止したまま 730 時間。エンクレーブは起動していてもいなくても同じ
-- ルートボリュームは 8 GiB の gp3（23章と同じ仮定。AMI が決める値で、確かめていない）
-- customer managed key が 1 つ。リクエストは 0 件
-- 自動割り当てのパブリック IPv4 アドレスは、停止すると解放される
-- 11章のネットワークの料金、データ転送、KMS のリクエストは含まない
+- `-c placement=public` の instance を停止したまま 730 時間。自動で割り当てられた public IPv4 アドレスは停止時に解放される。Elastic IP アドレスは使っていない
+- root volume は 8 GiB と仮定（大きさは AMI が決める。実際の値は確かめていない）。data volume は 8 GiB。どちらも gp3 で、IOPS と throughput は追加料金のない範囲
+- CPU credit は standard。baseline を超える分の課金は起きない設定
+- Session Manager と Run Command は、EC2 の instance に対しては追加料金なし
+- データ転送、snapshot、release 用の S3 bucket（1 MB 未満の file が数個）の料金は未算入
 
 | 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
 | --- | ---: | --- | --- | ---: | ---: | ---: |
-| `ebs.gp3.storage` | 8 | GB-Mo | 8 GiB root (assumed), 730 of 730 hours | 0.77 | - | 0.77 |
-| `kms.key` | 1 | Keys | 1 customer managed key, 730 of 730 hours | 1.00 | - | 1.00 |
+| `ebs.gp3.storage` | 16 | GB-Mo | 8 GiB root (assumed) + 8 GiB data, 730 of 730 hours | 1.54 | - | 1.54 |
 
-- 定価の小計: **USD 1.77** / 月
-- 毎月の無料枠適用後の小計: **USD 1.77** / 月
-- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`, `kms.key`
+- 定価の小計: **USD 1.54** / 月
+- 毎月の無料枠適用後の小計: **USD 1.54** / 月
+- 無料枠を確認できず、何も引いていない単価: `ebs.gp3.storage`
+
+## Ledger: デプロイ済みで追記のない月
+
+ID: `ledger-idle` / 章: [58 Ledger: QLDB のいまと、検証できる追記専用の台帳](/ja/chapters/58-ledger.md)
+
+前提:
+
+- 既定のスタック。台帳に 1,000 件、テーブルは 1 MB 未満。ダイジェストは 1 件だけあり、新しい追記はない
+- ダイジェストの関数は 1 時間に 1 回、月 730 回動く。1 回につき、バージョンの一覧 1 回、最新のダイジェストの取得 1 回、テーブルへの強整合の Query 1 回（4 KB 以下）。追記がないので PutObject はしない
+- 関数は 256 MB で 0.5 秒かかると仮定（計測値ではない）。ログは 1 回 300 バイト
+- 1 時間ごとのルールが関数を呼ぶこと自体の料金は、価格表のどの項目に当たるか確認できなかったので入れていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.storage` | 0.001 | GB-Mo | 1 MB in the table, in GB-month | 0 | - | 0 |
+| `dynamodb.read.on-demand` | 730 | ReadRequestUnits | 730 runs, one strongly consistent Query of 4 KB or less each: 1 unit | 0.000104 | - | 0.000104 |
+| `s3.request.tier1` | 730 | Requests | 730 ListObjectVersions requests | 0.003431 | - | 0.003431 |
+| `s3.request.tier2` | 730 | Requests | 730 GetObject requests for the newest digest | 0.000270 | - | 0.000270 |
+| `s3.standard.storage` | 0 | GB-Mo | One digest of about 150 bytes, rounded up to 1 KB | 0.000000 | - | 0.000000 |
+| `lambda.request.arm` | 730 | Requests | 730 scheduled invocations | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB | 0.001217 | 400,000 | 0 |
+| `logs.ingest.standard` | 0 | GB | 730 x 300 bytes | 0.000167 | 5 | 0 |
+
+- 定価の小計: **USD 0.01** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
+
+## Ledger: 月 10 万件の追記
+
+ID: `ledger-month` / 章: [58 Ledger: QLDB のいまと、検証できる追記専用の台帳](/ja/chapters/58-ledger.md)
+
+前提:
+
+- 月 10 万件の追記。1 件は 300 バイト前後で 1 KB 以下。追記 1 回は、末尾を読む強整合の Query 1 回（1 ユニット）と、書き込み 1 回（1 ユニット）。PartiQL の INSERT が PutItem と同じユニットで課金されるかは確認していない。番号の取り合いによるやり直しは 0 と仮定
+- ダイジェストは 1 時間ごとに 730 回。1 回に新しい 137 件（約 41 KB）を強整合で読むので 11 ユニット。S3 へは、バージョンの一覧 1 回、最新のダイジェストの取得 1 回、PutObject 1 回。一覧は月のあいだ 1 ページに収まる
+- 月に 1 回、全体を監査する。10 万件（30 MB）の読み取りで 7,500 ユニット、ダイジェスト 730 件の取得と一覧 1 回
+- 関数は 256 MB で 0.5 秒かかると仮定（計測値ではない）。ログは 1 回 300 バイト。テーブルは 30 MB、ダイジェストは合わせて 1 MB 未満
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `dynamodb.write.on-demand` | 100,000 | WriteRequestUnits | 100,000 entries of 1 KB or less: 1 unit each | 0.07 | - | 0.07 |
+| `dynamodb.read.on-demand` | 115,530 | ReadRequestUnits | 100,000 tail reads at 1 unit, 730 digest runs at 11 units (8,030), one audit of 30 MB at 1 unit per 4 KB (7,500) | 0.02 | - | 0.02 |
+| `dynamodb.storage` | 0.03 | GB-Mo | 30 MB in the table, in GB-month | 0 | - | 0 |
+| `s3.request.tier1` | 1,461 | Requests | 730 ListObjectVersions and 730 PutObject from the function, one listing by the audit | 0.01 | - | 0.01 |
+| `s3.request.tier2` | 1,460 | Requests | 730 GetObject from the function, 730 from the audit | 0.000540 | - | 0.000540 |
+| `s3.standard.storage` | 0.001 | GB-Mo | 730 digests of about 150 bytes, rounded up to 1 MB | 0.000025 | - | 0.000025 |
+| `lambda.request.arm` | 730 | Requests | 730 scheduled invocations | 0.000146 | 1,000,000 | 0 |
+| `lambda.duration.arm` | 91.25 | Lambda-GB-Second | 730 x 0.5 s x 0.25 GB | 0.001217 | 400,000 | 0 |
+| `logs.ingest.standard` | 0 | GB | 730 x 300 bytes | 0.000167 | 5 | 0 |
+
+- 定価の小計: **USD 0.10** / 月
+- 毎月の無料枠適用後の小計: **USD 0.10** / 月
+- 無料枠を確認できず、何も引いていない単価: `s3.standard.storage`, `s3.request.tier1`, `s3.request.tier2`
+
+## ECR: スタックを置いただけで、イメージが 1 つも無い月
+
+ID: `ecr-idle` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
+
+前提:
+
+- AihEcr を既定の設定（リポジトリだけ）でデプロイ済み
+- イメージを 1 つもプッシュしていない。保存量は 0
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ecr.storage` | 0 | GB-Mo | 0 GB stored | 0 | - | 0 |
+
+- 定価の小計: **USD 0.00** / 月
+- 毎月の無料枠適用後の小計: **USD 0.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
+
+## ECR: ライフサイクルポリシーが残す上限まで溜まった状態
+
+ID: `ecr-kept` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
+
+前提:
+
+- ポリシーが残すのは、リリース 20 個と、新しいほうから 30 個。重なりが無いとして 50 個
+- イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている
+- 取得は同じリージョンの Fargate からで、データ転送は USD 0
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ecr.storage` | 7.5 | GB-Mo | 50 images x 0.15 GB | 0.75 | - | 0.75 |
+
+- 定価の小計: **USD 0.75** / 月
+- 毎月の無料枠適用後の小計: **USD 0.75** / 月
+- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
+
+## ECR: ライフサイクルポリシーなしで 1 年たった時点の月額
+
+ID: `ecr-unpruned` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
+
+前提:
+
+- 平日に 1 日 5 回プッシュし、何も消さない。月 20 日で 12 か月、1,200 個
+- イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている
+- 1 年たった時点の 1 か月ぶん。それまでの月の合計ではない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `ecr.storage` | 180 | GB-Mo | 1,200 images x 0.15 GB | 18.00 | - | 18.00 |
+
+- 定価の小計: **USD 18.00** / 月
+- 毎月の無料枠適用後の小計: **USD 18.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `ecr.storage`
+
+## ECR: enhanced scanning を有効にした月
+
+ID: `ecr-enhanced-scan` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
+
+前提:
+
+- 月に 100 回プッシュし、それぞれ最初の検査が 1 回
+- 残っている 50 個のイメージが、月に 4 回ずつ検査し直されると仮定。検査し直しが何回起きるかは新しい脆弱性の公開しだいで、この回数に根拠はない
+- Inspector の無料トライアルは引いていない
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `inspector.image.initial-scan` | 100 | Resource-assessment | 100 pushes | 11.00 | - | 11.00 |
+| `inspector.image.rescan` | 200 | Resource-assessment | 50 images x 4 re-scans (assumption) | 2.00 | - | 2.00 |
+
+- 定価の小計: **USD 13.00** / 月
+- 毎月の無料枠適用後の小計: **USD 13.00** / 月
+- 無料枠を確認できず、何も引いていない単価: `inspector.image.initial-scan`, `inspector.image.rescan`
+
+## ECR: 大阪リージョンへ複製する月のデータ転送
+
+ID: `ecr-replicate-osaka` / 章: [52 ECR: tag と digest、lifecycle、scan、複製、pull through cache](/ja/chapters/52-ecr.md)
+
+前提:
+
+- 月に 100 回プッシュし、すべて大阪へ複製される
+- イメージ 1 つを 0.15 GB と仮定（イメージはビルドしていないので未計測）。イメージどうしで共有されるレイヤーが保存量にどう数えられるかは確認していないので、イメージごとに全量を数えている
+- 大阪側の保存料金は含めていない（大阪の単価は確認していない）
+
+| 単価 ID | 数量 | 単位 | 数量の根拠 | 定価 | 無料枠 | 無料枠適用後 |
+| --- | ---: | --- | --- | ---: | ---: | ---: |
+| `datatransfer.tokyo-osaka` | 15 | GB | 100 images x 0.15 GB | 1.35 | - | 1.35 |
+
+- 定価の小計: **USD 1.35** / 月
+- 毎月の無料枠適用後の小計: **USD 1.35** / 月
+- 無料枠を確認できず、何も引いていない単価: `datatransfer.tokyo-osaka`
 
 ## 単価
 
@@ -5159,58 +5159,10 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 | `cloudfront.kvs.api` | global | KeyValueStore-APIOperations | API Requests | 0 - ∞: 0.0010000000 | 2026-10-03 | 2026-10-11 |
 | `lambdaedge.jp.request` | global | APN1-Lambda-Edge-Request | Request | 0 - ∞: 0.0000006000 | 2026-10-03 | 2026-10-11 |
 | `lambdaedge.jp.duration` | global | APN1-Lambda-Edge-GB-Second | Lambda-GB-Second | 0 - ∞: 0.0000500100 | 2026-10-03 | 2026-10-11 |
-| `dsql.dpu` | ap-northeast-1 | APN1-DSQL-DistributedProcessingUnits | DPU | 0 - ∞: 0.0000100000 | 2026-09-11 | 2026-10-11 |
-| `dsql.storage` | ap-northeast-1 | APN1-DSQL-Storage-ByteHrs | GB-Month | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-11 |
-| `rds.postgres.t4g-micro.single-az` | ap-northeast-1 | APN1-InstanceUsage:db.t4g.micro | Hrs | 0 - ∞: 0.0250000000 | 2026-10-06 | 2026-10-11 |
-| `rds.postgres.gp3.storage` | ap-northeast-1 | APN1-RDS:GP3-Storage | GB-Mo | 0 - ∞: 0.1380000000 | 2026-10-06 | 2026-10-11 |
-| `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
-| `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
 | `datatransfer.out.internet` | ap-northeast-1 | APN1-DataTransfer-Out-Bytes | GB | 0 - 10,240: 0.1140000000<br>10,240 - 51,200: 0.0890000000<br>51,200 - 153,600: 0.0860000000<br>153,600 - ∞: 0.0840000000 | 2026-09-16 | 2026-10-11 |
-| `lambda.streaming.arm` | ap-northeast-1 | APN1-Lambda-Streaming-Response-Processed-Bytes-ARM | Processed-Gigabytes | 0 - ∞: 0.0080000000 | 2026-10-09 | 2026-10-11 |
-| `cloudwatch.metric.custom` | ap-northeast-1 | APN1-CW:MetricMonitorUsage | Metrics | 0 - 10,000: 0.3000000000<br>10,000 - 250,000: 0.1000000000<br>250,000 - 1,000,000: 0.0500000000<br>1,000,000 - ∞: 0.0200000000 | 2026-10-07 | 2026-10-12 |
-| `cloudwatch.alarm.standard` | ap-northeast-1 | APN1-CW:AlarmMonitorUsage | Alarms | 0 - ∞: 0.1000000000 | 2026-10-07 | 2026-10-12 |
-| `logs.insights.scanned` | ap-northeast-1 | APN1-DataScanned-Bytes | GB | 0 - ∞: 0.0076000000 | 2026-10-07 | 2026-10-12 |
-| `xray.trace.recorded` | ap-northeast-1 | APN1-XRay-TracesStored | traces | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
-| `xray.trace.retrieved` | ap-northeast-1 | APN1-XRay-TracesAccessed | traces | 0 - ∞: 0.0000005000 | 2026-09-11 | 2026-10-12 |
-| `cloudwatch.rum.event` | ap-northeast-1 | APN1-CW:RUM-events | Events | 0 - ∞: 0.0000100000 | 2026-10-07 | 2026-10-12 |
-| `cloudwatch.synthetics.run` | ap-northeast-1 | APN1-CW:Canary-runs | Runs | 0 - ∞: 0.0019000000 | 2026-10-07 | 2026-10-12 |
 | `elasticache.serverless.valkey.storage` | ap-northeast-1 | APN1-CachedData:Valkey | GB-Hours | 0 - ∞: 0.1010000000 | 2026-09-14 | 2026-10-12 |
 | `elasticache.serverless.valkey.ecpu` | ap-northeast-1 | APN1-ElastiCacheProcessingUnits:Valkey | ElastiCacheProcessingUnit | 0 - ∞: 0.0000000027 | 2026-09-14 | 2026-10-12 |
 | `elasticache.node.valkey.t4g-micro` | ap-northeast-1 | APN1-NodeUsage:cache.t4g.micro | Hrs | 0 - ∞: 0.0200000000 | 2026-09-14 | 2026-10-12 |
-| `fargate.arm.vcpu.hour` | ap-northeast-1 | APN1-Fargate-ARM-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0404500000 | 2026-09-11 | 2026-10-12 |
-| `fargate.arm.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-ARM-GB-Hours | hours | 0 - ∞: 0.0044200000 | 2026-09-11 | 2026-10-12 |
-| `fargate.x86.vcpu.hour` | ap-northeast-1 | APN1-Fargate-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0505600000 | 2026-09-11 | 2026-10-12 |
-| `fargate.x86.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-GB-Hours | hours | 0 - ∞: 0.0055300000 | 2026-09-11 | 2026-10-12 |
-| `alb.hour` | ap-northeast-1 | APN1-LoadBalancerUsage | Hrs | 0 - ∞: 0.0243000000 | 2026-09-11 | 2026-10-12 |
-| `alb.lcu.hour` | ap-northeast-1 | APN1-LCUUsage | LCU-Hrs | 0 - ∞: 0.0080000000 | 2026-09-11 | 2026-10-12 |
-| `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
-| `sqs.request.standard` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 100,000,000,000: 0.0000004000<br>100,000,000,000 - 200,000,000,000: 0.0000003500<br>200,000,000,000 - ∞: 0.0000003200 | 2026-09-11 | 2026-10-12 |
-| `scheduler.invocation` | ap-northeast-1 | APN1-ScheduledInvocation | Invocations | 0 - 14,000,000: 0.0000000000<br>14,000,000 - ∞: 0.0000012500 | 2026-09-24 | 2026-10-12 |
-| `ec2.t4g-micro.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.micro | Hrs | 0 - ∞: 0.0108000000 | 2026-10-09 | 2026-10-12 |
-| `ec2.t4g-small.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.small | Hrs | 0 - ∞: 0.0216000000 | 2026-10-09 | 2026-10-12 |
-| `ec2.t4g.cpu-credit` | ap-northeast-1 | APN1-CPUCredits:t4g | vCPU-Hours | 0 - ∞: 0.0400000000 | 2026-10-09 | 2026-10-12 |
-| `ebs.gp3.storage` | ap-northeast-1 | APN1-EBS:VolumeUsage.gp3 | GB-Mo | 0 - ∞: 0.0960000000 | 2026-10-09 | 2026-10-12 |
-| `ebs.snapshot.storage` | ap-northeast-1 | APN1-EBS:SnapshotUsage | GB-Mo | 0 - ∞: 0.0500000000 | 2026-10-09 | 2026-10-12 |
-| `sfn.standard.transition` | ap-northeast-1 | APN1-StateTransition | StateTransitions | 0 - ∞: 0.0000250000 | 2026-09-11 | 2026-10-12 |
-| `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
-| `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
-| `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
-| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
-| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
-| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
-| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
-| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
-| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
-| `secretsmanager.secret` | ap-northeast-1 | APN1-AWSSecretsManager-Secrets | Secrets | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-12 |
-| `secretsmanager.api` | ap-northeast-1 | APN1-AWSSecretsManagerAPIRequest | API Requests | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
-| `kms.key` | ap-northeast-1 | ap-northeast-1-KMS-Keys | Keys | 0 - ∞: 1.0000000000 | 2026-09-11 | 2026-10-12 |
-| `kms.request` | ap-northeast-1 | ap-northeast-1-KMS-Requests | Requests | 0 - ∞: 0.0000030000 | 2026-09-11 | 2026-10-12 |
-| `waf.global.webacl` | global | Global-WebACLV2 | Month | 0 - ∞: 5.0000000000 | 2026-09-14 | 2026-10-12 |
-| `waf.global.rule` | global | Global-RuleV2 | Month | 0 - ∞: 1.0000000000 | 2026-09-14 | 2026-10-12 |
-| `waf.global.request` | global | Global-RequestV2-Tier1 | Request | 0 - ∞: 0.0000006000 | 2026-09-14 | 2026-10-12 |
-| `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
-| `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
-| `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
 | `events.custom-event` | ap-northeast-1 | APN1-Event-64K-Chunks | 64K-Chunks | 0 - ∞: 0.0000010000 | 2026-09-24 | 2026-10-13 |
 | `events.pipe-request` | ap-northeast-1 | APN1-Request-64K-Chunks | 64K-Chunks | 0 - ∞: 0.0000005000 | 2026-09-24 | 2026-10-13 |
 | `events.archive.processing` | ap-northeast-1 | APN1-ArchivedEvents-Bytes | GigaBytes | 0 - ∞: 0.1300000000 | 2026-09-24 | 2026-10-13 |
@@ -5249,10 +5201,6 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 | `appconfig.request` | ap-northeast-1 | APN1-AppConfig-Requests | Configuration Requests | 0 - ∞: 0.0000002000 | 2026-10-08 | 2026-10-13 |
 | `appconfig.received` | ap-northeast-1 | APN1-AppConfig-Deployments | Configuration Received | 0 - ∞: 0.0008000000 | 2026-10-08 | 2026-10-13 |
 | `costexplorer.api.request` | us-east-1 | USE1-APIRequest | Request | 0 - ∞: 0.0100000000 | 2026-09-11 | 2026-10-13 |
-| `eks.cluster.hour` | ap-northeast-1 | APN1-AmazonEKS-Hours:perCluster | Hours | 0 - ∞: 0.1000000000 | 2026-09-28 | 2026-10-13 |
-| `eks.cluster.extended-support.hour` | ap-northeast-1 | APN1-AmazonEKS-Hours:extendedSupport | Hours | 0 - ∞: 0.5000000000 | 2026-09-28 | 2026-10-13 |
-| `eks.auto.t4g-medium.hour` | ap-northeast-1 | APN1-EKS-Auto:t4g.medium-management-hours | hours | 0 - ∞: 0.0051800000 | 2026-09-28 | 2026-10-13 |
-| `ec2.t4g-medium.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.medium | Hrs | 0 - ∞: 0.0432000000 | 2026-10-09 | 2026-10-13 |
 | `ec2.m6g-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:m6g.large | Hrs | 0 - ∞: 0.0990000000 | 2026-10-09 | 2026-10-13 |
 | `ec2.m7g-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:m7g.large | Hrs | 0 - ∞: 0.1054000000 | 2026-10-09 | 2026-10-13 |
 | `lambda.managed-instances.m6g-large.management.hour` | ap-northeast-1 | APN1-Lambda-Managed-Instances-m6g.large-Management-Hours | Hours | 0 - ∞: 0.0148500000 | 2026-10-09 | 2026-10-13 |
@@ -5309,11 +5257,6 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 | `agentcore.runtime.v2.vcpu.hour` | ap-northeast-1 | APN1-Runtime:Consumption-based:vCPU-v2 | vCPU-Hours | 0 - ∞: 0.1276000000 | 2026-10-06 | 2026-10-13 |
 | `agentcore.runtime.v2.memory.gb-hour` | ap-northeast-1 | APN1-Runtime:Consumption-based:Memory-v2 | GB-Hours | 0 - ∞: 0.0169000000 | 2026-10-06 | 2026-10-13 |
 | `chime.sdk.attendee-minute` | ap-northeast-1 | APN1-Chime-SDK-attendee-minutes | minutes | 0 - ∞: 0.0017000000 | 2026-09-11 | 2026-10-13 |
-| `ecr.storage.archive` | ap-northeast-1 | APN1-TimedStorage-Archive-ByteHrs | GB-Mo | 0 - 153,600: 0.1000000000<br>153,600 - ∞: 0.0700000000 | 2026-09-11 | 2026-10-13 |
-| `ecr.archive.retrieval` | ap-northeast-1 | APN1-Retrieval-Archive | GB | 0 - ∞: 0.0300000000 | 2026-09-11 | 2026-10-13 |
-| `ecr.signing` | ap-northeast-1 | APN1-AsyncActions-ImageSigning | Count | 0 - ∞: 0.0200000000 | 2026-09-11 | 2026-10-13 |
-| `inspector.image.initial-scan` | ap-northeast-1 | APN1-container-image-initial-scan | Resource-assessment | 0 - ∞: 0.1100000000 | 2026-09-11 | 2026-10-13 |
-| `inspector.image.rescan` | ap-northeast-1 | APN1-container-image-re-scan | Resource-assessment | 0 - ∞: 0.0100000000 | 2026-09-11 | 2026-10-13 |
 | `efs.standard.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.3600000000 | 2026-09-11 | 2026-10-13 |
 | `efs.onezone.storage` | ap-northeast-1 | APN1-TimedStorage-Z-ByteHrs | GB-Mo | 0 - ∞: 0.1920000000 | 2026-09-11 | 2026-10-13 |
 | `efs.ia.storage` | ap-northeast-1 | APN1-IATimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.0272000000 | 2026-09-11 | 2026-10-13 |
@@ -5362,14 +5305,71 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 | `codebuild.general1.small.minute` | ap-northeast-1 | APN1-Build-Min:Linux:g1.small | minutes | 0 - ∞: 0.0050000000 | 2026-09-11 | 2026-10-13 |
 | `network-firewall.endpoint.hour` | ap-northeast-1 | APN1-Endpoint-Hour | Hourly | 0 - ∞: 0.3950000000 | 2026-09-11 | 2026-10-13 |
 | `network-firewall.data.gb` | ap-northeast-1 | APN1-Traffic-GB-Processed | GB | 0 - ∞: 0.0650000000 | 2026-09-11 | 2026-10-13 |
-| `datatransfer.regional` | ap-northeast-1 | APN1-DataTransfer-Regional-Bytes | GB | 0 - ∞: 0.0100000000 | 2026-09-16 | 2026-10-13 |
-| `ec2.c7i-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c7i.large | Hrs | 0 - ∞: 0.1123500000 | 2026-10-09 | 2026-10-13 |
-| `ec2.c8i-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c8i.large | Hrs | 0 - ∞: 0.1179700000 | 2026-10-09 | 2026-10-13 |
-| `ec2.c5-metal.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c5.metal | Hrs | 0 - ∞: 5.1360000000 | 2026-10-09 | 2026-10-13 |
 | `ec2.t3-micro.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t3.micro | Hrs | 0 - ∞: 0.0136000000 | 2026-10-09 | 2026-10-13 |
 | `ec2.c6g-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c6g.large | Hrs | 0 - ∞: 0.0856000000 | 2026-10-09 | 2026-10-13 |
 | `ec2.c6i-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c6i.large | Hrs | 0 - ∞: 0.1070000000 | 2026-10-09 | 2026-10-13 |
 | `ec2.c6i-xlarge.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c6i.xlarge | Hrs | 0 - ∞: 0.2140000000 | 2026-10-09 | 2026-10-13 |
+| `eks.cluster.hour` | ap-northeast-1 | APN1-AmazonEKS-Hours:perCluster | Hours | 0 - ∞: 0.1000000000 | 2026-09-28 | 2026-10-13 |
+| `eks.cluster.extended-support.hour` | ap-northeast-1 | APN1-AmazonEKS-Hours:extendedSupport | Hours | 0 - ∞: 0.5000000000 | 2026-09-28 | 2026-10-13 |
+| `eks.auto.t4g-medium.hour` | ap-northeast-1 | APN1-EKS-Auto:t4g.medium-management-hours | hours | 0 - ∞: 0.0051800000 | 2026-09-28 | 2026-10-13 |
+| `ec2.t4g-medium.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.medium | Hrs | 0 - ∞: 0.0432000000 | 2026-10-09 | 2026-10-13 |
+| `datatransfer.regional` | ap-northeast-1 | APN1-DataTransfer-Regional-Bytes | GB | 0 - ∞: 0.0100000000 | 2026-09-16 | 2026-10-13 |
+| `ec2.c7i-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c7i.large | Hrs | 0 - ∞: 0.1123500000 | 2026-10-09 | 2026-10-13 |
+| `ec2.c8i-large.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c8i.large | Hrs | 0 - ∞: 0.1179700000 | 2026-10-09 | 2026-10-13 |
+| `ec2.c5-metal.linux.hour` | ap-northeast-1 | APN1-BoxUsage:c5.metal | Hrs | 0 - ∞: 5.1360000000 | 2026-10-09 | 2026-10-13 |
+| `sqs.request.standard` | ap-northeast-1 | APN1-Requests-Tier1 | Requests | 0 - 100,000,000,000: 0.0000004000<br>100,000,000,000 - 200,000,000,000: 0.0000003500<br>200,000,000,000 - ∞: 0.0000003200 | 2026-09-11 | 2026-10-12 |
+| `scheduler.invocation` | ap-northeast-1 | APN1-ScheduledInvocation | Invocations | 0 - 14,000,000: 0.0000000000<br>14,000,000 - ∞: 0.0000012500 | 2026-09-24 | 2026-10-12 |
+| `lambda.streaming.arm` | ap-northeast-1 | APN1-Lambda-Streaming-Response-Processed-Bytes-ARM | Processed-Gigabytes | 0 - ∞: 0.0080000000 | 2026-10-09 | 2026-10-11 |
+| `fargate.arm.vcpu.hour` | ap-northeast-1 | APN1-Fargate-ARM-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0404500000 | 2026-09-11 | 2026-10-12 |
+| `fargate.arm.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-ARM-GB-Hours | hours | 0 - ∞: 0.0044200000 | 2026-09-11 | 2026-10-12 |
+| `fargate.x86.vcpu.hour` | ap-northeast-1 | APN1-Fargate-vCPU-Hours:perCPU | hours | 0 - ∞: 0.0505600000 | 2026-09-11 | 2026-10-12 |
+| `fargate.x86.memory.gb-hour` | ap-northeast-1 | APN1-Fargate-GB-Hours | hours | 0 - ∞: 0.0055300000 | 2026-09-11 | 2026-10-12 |
+| `alb.hour` | ap-northeast-1 | APN1-LoadBalancerUsage | Hrs | 0 - ∞: 0.0243000000 | 2026-09-11 | 2026-10-12 |
+| `alb.lcu.hour` | ap-northeast-1 | APN1-LCUUsage | LCU-Hrs | 0 - ∞: 0.0080000000 | 2026-09-11 | 2026-10-12 |
+| `ecr.storage` | ap-northeast-1 | APN1-TimedStorage-ByteHrs | GB-Mo | 0 - ∞: 0.1000000000 | 2026-09-11 | 2026-10-12 |
+| `dsql.dpu` | ap-northeast-1 | APN1-DSQL-DistributedProcessingUnits | DPU | 0 - ∞: 0.0000100000 | 2026-09-11 | 2026-10-11 |
+| `dsql.storage` | ap-northeast-1 | APN1-DSQL-Storage-ByteHrs | GB-Month | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-11 |
+| `rds.postgres.t4g-micro.single-az` | ap-northeast-1 | APN1-InstanceUsage:db.t4g.micro | Hrs | 0 - ∞: 0.0250000000 | 2026-10-06 | 2026-10-11 |
+| `rds.postgres.gp3.storage` | ap-northeast-1 | APN1-RDS:GP3-Storage | GB-Mo | 0 - ∞: 0.1380000000 | 2026-10-06 | 2026-10-11 |
+| `aurora.postgres.serverless-v2.acu` | ap-northeast-1 | APN1-Aurora:ServerlessV2Usage | ACU-Hr | 0 - ∞: 0.1500000000 | 2026-10-06 | 2026-10-11 |
+| `aurora.postgres.storage` | ap-northeast-1 | APN1-Aurora:StorageUsage | GB-Mo | 0 - ∞: 0.1200000000 | 2026-10-06 | 2026-10-11 |
+| `sfn.standard.transition` | ap-northeast-1 | APN1-StateTransition | StateTransitions | 0 - ∞: 0.0000250000 | 2026-09-11 | 2026-10-12 |
+| `lambda.durable.operation` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Operations | DurableOperations | 0 - ∞: 0.0000106000 | 2026-10-09 | 2026-10-12 |
+| `lambda.durable.written` | ap-northeast-1 | APN1-Lambda-Durable-Execution-Written-Bytes | GigaBytes | 0 - ∞: 0.3300000000 | 2026-10-09 | 2026-10-12 |
+| `lambda.durable.retained` | ap-northeast-1 | APN1-Lambda-Durable-Execution-TimedStorage-ByteHrs | GigaBytesMonth | 0 - ∞: 0.2000000000 | 2026-10-09 | 2026-10-12 |
+| `bedrock.nova-2-lite.input` | ap-northeast-1 | APN1-Nova2.0Lite-input-tokens | 1K tokens | 0 - ∞: 0.0003960000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.nova-2-lite.output` | ap-northeast-1 | APN1-Nova2.0Lite-output-tokens | 1K tokens | 0 - ∞: 0.0033110000 | 2026-10-10 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.input` | ap-northeast-1 | APN1-MP:APN1_InputTokenCount-Units | 1M tokens | 0 - ∞: 1.1000000000 | 2026-10-08 | 2026-10-11 |
+| `bedrock.claude-haiku-4-5.output` | ap-northeast-1 | APN1-MP:APN1_OutputTokenCount-Units | 1M tokens | 0 - ∞: 5.5000000000 | 2026-10-08 | 2026-10-11 |
+| `cloudwatch.metric.custom` | ap-northeast-1 | APN1-CW:MetricMonitorUsage | Metrics | 0 - 10,000: 0.3000000000<br>10,000 - 250,000: 0.1000000000<br>250,000 - 1,000,000: 0.0500000000<br>1,000,000 - ∞: 0.0200000000 | 2026-10-07 | 2026-10-12 |
+| `cloudwatch.alarm.standard` | ap-northeast-1 | APN1-CW:AlarmMonitorUsage | Alarms | 0 - ∞: 0.1000000000 | 2026-10-07 | 2026-10-12 |
+| `logs.insights.scanned` | ap-northeast-1 | APN1-DataScanned-Bytes | GB | 0 - ∞: 0.0076000000 | 2026-10-07 | 2026-10-12 |
+| `xray.trace.recorded` | ap-northeast-1 | APN1-XRay-TracesStored | traces | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
+| `xray.trace.retrieved` | ap-northeast-1 | APN1-XRay-TracesAccessed | traces | 0 - ∞: 0.0000005000 | 2026-09-11 | 2026-10-12 |
+| `cloudwatch.rum.event` | ap-northeast-1 | APN1-CW:RUM-events | Events | 0 - ∞: 0.0000100000 | 2026-10-07 | 2026-10-12 |
+| `cloudwatch.synthetics.run` | ap-northeast-1 | APN1-CW:Canary-runs | Runs | 0 - ∞: 0.0019000000 | 2026-10-07 | 2026-10-12 |
+| `secretsmanager.secret` | ap-northeast-1 | APN1-AWSSecretsManager-Secrets | Secrets | 0 - ∞: 0.4000000000 | 2026-09-11 | 2026-10-12 |
+| `secretsmanager.api` | ap-northeast-1 | APN1-AWSSecretsManagerAPIRequest | API Requests | 0 - ∞: 0.0000050000 | 2026-09-11 | 2026-10-12 |
+| `kms.key` | ap-northeast-1 | ap-northeast-1-KMS-Keys | Keys | 0 - ∞: 1.0000000000 | 2026-09-11 | 2026-10-12 |
+| `kms.request` | ap-northeast-1 | ap-northeast-1-KMS-Requests | Requests | 0 - ∞: 0.0000030000 | 2026-09-11 | 2026-10-12 |
+| `waf.global.webacl` | global | Global-WebACLV2 | Month | 0 - ∞: 5.0000000000 | 2026-09-14 | 2026-10-12 |
+| `waf.global.rule` | global | Global-RuleV2 | Month | 0 - ∞: 1.0000000000 | 2026-09-14 | 2026-10-12 |
+| `waf.global.request` | global | Global-RequestV2-Tier1 | Request | 0 - ∞: 0.0000006000 | 2026-09-14 | 2026-10-12 |
+| `guardduty.cloudtrail.event` | ap-northeast-1 | APN1-PaidEventsAnalyzed | Events | 0 - ∞: 0.0000047200 | 2026-10-08 | 2026-10-12 |
+| `inspector.lambda.standard` | ap-northeast-1 | APN1-Lambda-Standard-Scanning | Hourly | 0 - ∞: 0.0005000000 | 2026-09-11 | 2026-10-12 |
+| `config.item.continuous` | ap-northeast-1 | APN1-ConfigurationItemRecorded | APN1-ConfigurationItemRecorded | 0 - ∞: 0.0030000000 | 2026-09-11 | 2026-10-12 |
+| `dynamodb.restore` | ap-northeast-1 | APN1-RestoreDataSize-Bytes | GB | 0 - ∞: 0.1710000000 | 2026-09-11 | 2026-10-12 |
+| `backup.dynamodb.warm` | ap-northeast-1 | APN1-WarmStorage-ByteHrs-DynamoDB | GB-month | 0 - ∞: 0.1140000000 | 2026-09-28 | 2026-10-12 |
+| `ec2.t4g-micro.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.micro | Hrs | 0 - ∞: 0.0108000000 | 2026-10-09 | 2026-10-12 |
+| `ec2.t4g-small.linux.hour` | ap-northeast-1 | APN1-BoxUsage:t4g.small | Hrs | 0 - ∞: 0.0216000000 | 2026-10-09 | 2026-10-12 |
+| `ec2.t4g.cpu-credit` | ap-northeast-1 | APN1-CPUCredits:t4g | vCPU-Hours | 0 - ∞: 0.0400000000 | 2026-10-09 | 2026-10-12 |
+| `ebs.gp3.storage` | ap-northeast-1 | APN1-EBS:VolumeUsage.gp3 | GB-Mo | 0 - ∞: 0.0960000000 | 2026-10-09 | 2026-10-12 |
+| `ebs.snapshot.storage` | ap-northeast-1 | APN1-EBS:SnapshotUsage | GB-Mo | 0 - ∞: 0.0500000000 | 2026-10-09 | 2026-10-12 |
+| `ecr.storage.archive` | ap-northeast-1 | APN1-TimedStorage-Archive-ByteHrs | GB-Mo | 0 - 153,600: 0.1000000000<br>153,600 - ∞: 0.0700000000 | 2026-09-11 | 2026-10-13 |
+| `ecr.archive.retrieval` | ap-northeast-1 | APN1-Retrieval-Archive | GB | 0 - ∞: 0.0300000000 | 2026-09-11 | 2026-10-13 |
+| `ecr.signing` | ap-northeast-1 | APN1-AsyncActions-ImageSigning | Count | 0 - ∞: 0.0200000000 | 2026-09-11 | 2026-10-13 |
+| `inspector.image.initial-scan` | ap-northeast-1 | APN1-container-image-initial-scan | Resource-assessment | 0 - ∞: 0.1100000000 | 2026-09-11 | 2026-10-13 |
+| `inspector.image.rescan` | ap-northeast-1 | APN1-container-image-re-scan | Resource-assessment | 0 - ∞: 0.0100000000 | 2026-09-11 | 2026-10-13 |
 
 出典はいずれも AWS Price List bulk API（`sourceUrl` は `data/pricing/unit-prices.json` に記録）。CloudFront の単価は日本の edge のものです。
 
@@ -5387,22 +5387,22 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 | `logs.storage` | 5 | `aws-price-list-cloudwatch` | GB-month. From the Global-TimedStorage-ByteHrs USD 0 tier. |
 | `cognito.essentials.mau` | 10,000 | `cognito-pricing` | MAUs per account or organization, shared with the Lite plan. Direct sign-in users only. |
 | `cloudfront.kvs.read` | 2,000,000 | `cloudfront-pricing-payg` | Already a USD 0 tier in the price list; listed so the worksheet shows it. Pay-as-you-go only. |
+| `glue.catalog.storage` | 1,000,000 | `aws-price-list-glue` | Objects. From the Global-Catalog-Storage USD 0 tier (0 to 1,000,000). |
+| `glue.catalog.request` | 1,000,000 | `aws-price-list-glue` | Requests. From the Global-Catalog-Request USD 0 tier (0 to 1,000,000). |
+| `sqs.request.fifo` | 1,000,000 | `sqs61-pricing-page` | The same 1 million requests a month that sqs.request.standard lists: the pricing page gives one allowance for standard and FIFO queues together (Price List: Global-Requests, queue type Any). A scenario with both kinds of request must not count it twice. |
+| `codebuild.arm1.small.minute` | 100 | `cir-cb-pricing` | 100 build minutes a month, shared between general1.small and arm1.small. The pricing page says it does not expire after 12 months. |
+| `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
+| `lambda.streaming.arm` | 100 | `lambda-pricing` | GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100). |
 | `dsql.dpu` | 100,000 | `dsql-pricing` | First 100,000 DPUs each month. The pricing page does not say whether it expires. |
 | `dsql.storage` | 1 | `dsql-pricing` | First GB of storage each month. The pricing page does not say whether it expires. |
-| `lambda.streaming.arm` | 100 | `lambda-pricing` | GB streamed beyond the first 6 MB of each request. From the pricing page and the Global-Lambda-Streaming-Response-Processed-Bytes USD 0 tier (0 to 100). |
+| `sfn.standard.transition` | 4,000 | `sfn-pricing` | 4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000). |
 | `cloudwatch.metric.custom` | 10 | `aws-price-list-cloudwatch-observability` | Metrics. From the Global-CW:MetricMonitorUsage USD 0 tier; the pricing page lists 10 custom and detailed monitoring metrics. |
 | `cloudwatch.alarm.standard` | 10 | `aws-price-list-cloudwatch-observability` | Alarm metrics. From the Global-CW:AlarmMonitorUsage USD 0 tier; standard-resolution alarms that list metrics directly. |
 | `logs.insights.scanned` | 5 | `aws-price-list-cloudwatch-observability` | GB. From the Global-DataScanned-Bytes USD 0 tier. |
 | `cloudwatch.synthetics.run` | 100 | `aws-price-list-cloudwatch-observability` | Runs. From the Global-CW:Canary-runs USD 0 tier. |
 | `xray.trace.recorded` | 100,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesStored USD 0 tier. |
 | `xray.trace.retrieved` | 1,000,000 | `aws-price-list-xray` | Traces. From the Global-XRay-TracesAccessed USD 0 tier, shared by retrieved and scanned traces. |
-| `sqs.request.standard` | 1,000,000 | `sqs-pricing` | 1 million requests a month for all customers, counted across all Regions and shared by every queue in the account. |
-| `sfn.standard.transition` | 4,000 | `sfn-pricing` | 4,000 state transitions a month. The pricing page says it does not expire and applies to existing and new customers; the Price List has a matching USD 0 tier (Global-StateTransition, 0 to 4,000). |
 | `kms.request` | 20,000 | `kms-pricing` | Calculated across all Regions. Requests on asymmetric keys and GenerateDataKeyPair are excluded. |
-| `glue.catalog.storage` | 1,000,000 | `aws-price-list-glue` | Objects. From the Global-Catalog-Storage USD 0 tier (0 to 1,000,000). |
-| `glue.catalog.request` | 1,000,000 | `aws-price-list-glue` | Requests. From the Global-Catalog-Request USD 0 tier (0 to 1,000,000). |
-| `sqs.request.fifo` | 1,000,000 | `sqs61-pricing-page` | The same 1 million requests a month that sqs.request.standard lists: the pricing page gives one allowance for standard and FIFO queues together (Price List: Global-Requests, queue type Any). A scenario with both kinds of request must not count it twice. |
-| `codebuild.arm1.small.minute` | 100 | `cir-cb-pricing` | 100 build minutes a month, shared between general1.small and arm1.small. The pricing page says it does not expire after 12 months. |
 
 確認できなかった無料枠（0 としてではなく「不明」として扱い、何も引かない）:
 
@@ -5413,37 +5413,9 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 - `vpc.public-ipv4.in-use.hour`: The VPC user guide gives Free Tier customers 750 hours of public IPv4 usage with the EC2 service. Whether a NAT gateway's Elastic IP address counts, and for how long the allowance lasts, was not confirmed; nothing is deducted.
 - `ses.outbound.message`: The SES pricing page describes Free Tier credits for new customers, whose terms depend on the account, and no monthly count of free messages. None is applied.
 - `cloudfront.kvs.api`: The pay-as-you-go pricing page lists no free allowance for KeyValueStore API operations; none is applied.
-- `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
-- `rds.postgres.gp3.storage`: The RDS free tier terms were not checked while writing chapter 13.
 - `datatransfer.out.internet`: The price list calls the first tier "beyond the global free tier". The size of that free tier, and whether it applies to every account, was not confirmed from a primary source, so none is applied.
 - `s3.request.tier1`: No always-free S3 request allowance was confirmed; none is applied.
 - `s3.request.tier2`: No always-free S3 request allowance was confirmed; none is applied.
-- `cloudwatch.rum.event`: The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied.
-- `fargate.arm.vcpu.hour`: The Fargate pricing page lists no free allowance; none is applied.
-- `fargate.arm.memory.gb-hour`: The Fargate pricing page lists no free allowance; none is applied.
-- `alb.hour`: The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
-- `alb.lcu.hour`: The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted.
-- `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.
-- `ec2.t4g-micro.linux.hour`: The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted.
-- `ebs.gp3.storage`: The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted.
-- `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
-- `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
-- `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.
-- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
-- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.
-- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
-- `secretsmanager.secret`: No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied.
-- `secretsmanager.api`: No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied.
-- `kms.key`: The KMS free tier covers requests, not keys; none is applied.
-- `waf.global.webacl`: No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans were not examined in this chapter.
-- `waf.global.rule`: No free allowance for rules was confirmed for the pay-as-you-go model; none is applied.
-- `waf.global.request`: No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied.
-- `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
-- `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
-- `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.
 - `events.custom-event`: No always-free allowance for custom events was found on the EventBridge pricing page (read 2026-10-13).
 - `events.pipe-request`: No always-free allowance for Pipes requests was found on the EventBridge pricing page (read 2026-10-13).
 - `events.archive.processing`: No always-free allowance for archive processing was found on the EventBridge pricing page (read 2026-10-13).
@@ -5464,10 +5436,6 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 - `appconfig.request`: The bulk price list has no USD 0 tier for AppConfig, and no free allowance was confirmed elsewhere; none is applied.
 - `appconfig.received`: The bulk price list has no USD 0 tier for AppConfig, and no free allowance was confirmed elsewhere; none is applied.
 - `costexplorer.api.request`: No free allowance for Cost Explorer API requests was found on the pricing page or in the Price List. None is applied.
-- `eks.cluster.hour`: The EKS pricing page lists no free allowance for the cluster hour; none is applied.
-- `eks.cluster.extended-support.hour`: The EKS pricing page lists no free allowance; none is applied.
-- `eks.auto.t4g-medium.hour`: The EKS pricing page lists no free allowance for Auto Mode; none is applied.
-- `ec2.t4g-medium.linux.hour`: Free tier offers for EC2 depend on when the account was created and on the instance type; none is applied.
 - `lambda.managed-instances.request.arm`: The Lambda pricing page does not say whether the monthly free tier of one million requests covers requests to functions on Managed Instances. Nothing is deducted.
 - `ec2.m6g-large.linux.hour`: No free tier statement for m6g.large was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
 - `ec2.m7g-large.linux.hour`: No free tier statement for m7g.large was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
@@ -5512,11 +5480,6 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 - `sfn.express.duration`: The pricing page names a free tier for state transitions only. No free allowance for Express duration was found on it (read 2026-10-13).
 - `athena.scanned`: Neither the Price List nor the pricing page shows a monthly free allowance for Athena SQL queries; none is applied.
 - `chime.sdk.attendee-minute`: The Amazon Chime SDK pricing page names no free allowance for WebRTC media, and the Price List has no zero-priced tier. Nothing is deducted.
-- `inspector.image.initial-scan`: Inspector has a free trial for new accounts, not a monthly allowance; none is applied.
-- `inspector.image.rescan`: Inspector has a free trial for new accounts, not a monthly allowance; none is applied.
-- `ecr.storage.archive`: No free allowance for archive storage was found; none is applied.
-- `ecr.archive.retrieval`: No free allowance for archive retrieval was found; none is applied.
-- `ecr.signing`: No free allowance for managed signing was found; none is applied.
 - `efs.standard.storage`: The EFS pricing page gives new customers 5 GB of Standard storage on a Regional file system for 12 months, and accounts created from July 15, 2025 Free Tier credits instead. Neither is an always-free allowance, and which applies to a given account was not confirmed; nothing is deducted.
 - `kinesis.shard-hour`: The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted.
 - `kinesis.put-payload-unit`: The Kinesis Data Streams pricing page says the service is not available in AWS Free Tier (read 2026-10-13); nothing is deducted.
@@ -5553,11 +5516,48 @@ ID: `nitro-idle-stopped` / 章: [68 Nitro: EC2 を支えるしくみ、Nitro Enc
 - `aurora.postgres.io`: Whether any free tier or credit applies to Aurora was not checked while writing chapter 60.
 - `aurora.postgres.data-api`: Whether any free tier or credit applies to the Data API was not checked while writing chapter 60.
 - `codebuild.general1.small.minute`: The 100 free build minutes are shared with arm1.small and are applied there; nothing is deducted here.
-- `datatransfer.regional`: The price list has a separate Global-DataTransfer-Regional-Bytes line at $0 "under the monthly global free tier" for the first GB. Whether and how it applies to a given account was not determined, so none is applied.
-- `ec2.c7i-large.linux.hour`: No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
-- `ec2.c8i-large.linux.hour`: No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
-- `ec2.c5-metal.linux.hour`: No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
 - `ec2.t3-micro.linux.hour`: Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only.
 - `ec2.c6g-large.linux.hour`: Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only.
 - `ec2.c6i-large.linux.hour`: Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only.
 - `ec2.c6i-xlarge.linux.hour`: Free Tier offers for EC2 depend on when the account was created and on the instance type; none is applied. List price only.
+- `eks.cluster.hour`: The EKS pricing page lists no free allowance for the cluster hour; none is applied.
+- `eks.cluster.extended-support.hour`: The EKS pricing page lists no free allowance; none is applied.
+- `eks.auto.t4g-medium.hour`: The EKS pricing page lists no free allowance for Auto Mode; none is applied.
+- `ec2.t4g-medium.linux.hour`: Free tier offers for EC2 depend on when the account was created and on the instance type; none is applied.
+- `datatransfer.regional`: The price list has a separate Global-DataTransfer-Regional-Bytes line at $0 "under the monthly global free tier" for the first GB. Whether and how it applies to a given account was not determined, so none is applied.
+- `ec2.c7i-large.linux.hour`: No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
+- `ec2.c8i-large.linux.hour`: No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
+- `ec2.c5-metal.linux.hour`: No free tier statement for this instance type was found, and Savings Plans or Reserved Instance rates depend on the commitment. List price only.
+- `fargate.arm.vcpu.hour`: The Fargate pricing page lists no free allowance; none is applied.
+- `fargate.arm.memory.gb-hour`: The Fargate pricing page lists no free allowance; none is applied.
+- `alb.hour`: The pricing page gives new AWS customers 750 load balancer hours a month. It is not an always-free allowance and does not apply to every account, so nothing is deducted.
+- `alb.lcu.hour`: The pricing page gives new AWS customers 15 LCUs. It is not an always-free allowance, so nothing is deducted.
+- `ecr.storage`: The pricing page gives new ECR customers 500 MB a month of private storage for one year. Not always-free, so nothing is deducted.
+- `rds.postgres.t4g-micro.single-az`: The RDS free tier terms were not checked while writing chapter 13.
+- `rds.postgres.gp3.storage`: The RDS free tier terms were not checked while writing chapter 13.
+- `lambda.durable.operation`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `lambda.durable.written`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `lambda.durable.retained`: The Lambda pricing page names no free allowance for durable execution; none is applied.
+- `bedrock.nova-2-lite.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.nova-2-lite.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.input`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `bedrock.claude-haiku-4-5.output`: No always-free allowance for Amazon Bedrock on-demand inference was confirmed from a primary source; none is applied.
+- `cloudwatch.rum.event`: The pricing page describes a one-time free trial of 1 million web RUM events per account, not a monthly allowance. None is applied.
+- `secretsmanager.secret`: No monthly free allowance for secrets was found on the pricing page or in the price list; none is applied.
+- `secretsmanager.api`: No monthly free allowance for Secrets Manager API requests was found on the pricing page or in the price list; none is applied.
+- `kms.key`: The KMS free tier covers requests, not keys; none is applied.
+- `waf.global.webacl`: No free allowance for web ACLs was confirmed for the pay-as-you-go model. CloudFront's flat-rate pricing plans cover the web ACL, its rules, and its request fees for the distribution in the plan (documentation read 2026-10-13); this chapter prices pay-as-you-go only.
+- `waf.global.rule`: No free allowance for rules was confirmed for the pay-as-you-go model; none is applied.
+- `waf.global.request`: No free allowance for inspected requests was confirmed for the pay-as-you-go model; none is applied.
+- `guardduty.cloudtrail.event`: GuardDuty has a 30-day free trial per account, not a monthly allowance; none is applied.
+- `inspector.lambda.standard`: Inspector has a 15-day free trial for new accounts, not a monthly allowance; none is applied.
+- `config.item.continuous`: No free allowance for configuration items was found on the pricing page; none is applied.
+- `dynamodb.restore`: No free allowance for restores was looked for or confirmed; none is applied.
+- `backup.dynamodb.warm`: No free allowance for AWS Backup storage was looked for or confirmed; none is applied.
+- `ec2.t4g-micro.linux.hour`: The EC2 user guide mentions Free Tier use of t4g.micro and t4g.small for accounts on the credit-based Free Tier. Which accounts qualify, and for how long, was not confirmed; nothing is deducted.
+- `ebs.gp3.storage`: The EBS pricing page mentions 30 GB of storage under the AWS Free Tier and, for accounts created from July 15, 2025, Free Tier credits instead. Which applies to a given account was not confirmed; nothing is deducted.
+- `inspector.image.initial-scan`: Inspector has a free trial for new accounts, not a monthly allowance; none is applied.
+- `inspector.image.rescan`: Inspector has a free trial for new accounts, not a monthly allowance; none is applied.
+- `ecr.storage.archive`: No free allowance for archive storage was found; none is applied.
+- `ecr.archive.retrieval`: No free allowance for archive retrieval was found; none is applied.
+- `ecr.signing`: No free allowance for managed signing was found; none is applied.

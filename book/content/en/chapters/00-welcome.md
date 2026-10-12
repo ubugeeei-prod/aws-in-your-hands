@@ -1,6 +1,6 @@
 ---
 title: "00 Introduction: What You Will Build and How to Read"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 00 Introduction: What You Will Build and How to Read
@@ -43,15 +43,33 @@ edge s3 -> sqs: 08 S3 event
 edge sqs -> lambda: 08
 ```
 
-All chapters, 00 through 24, are written.
+There are 68 chapters, numbered 00 through 68 with no chapter 65. All of them are written.
 
-The features are not stacked into one large sample, though. Each chapter has its own `examples/<chapter number>-<name>/` directory, which holds only what that chapter needs for its explanation. Four chapters can be worked through apart from the notes app: email ([chapter 15](/en/chapters/15-email.md)), AI ([chapter 17](/en/chapters/17-ai.md)), live streaming ([chapter 18](/en/chapters/18-live.md)), and celld ([chapter 24](/en/chapters/24-celld.md)).
+The features are not stacked into one large sample, though. Each chapter has its own `examples/<chapter number>-<name>/` directory, which holds only what that chapter needs for its explanation. Among the chapters up to 24, four can be worked through apart from the notes app: email ([chapter 15](/en/chapters/15-email.md)), AI ([chapter 17](/en/chapters/17-ai.md)), live streaming ([chapter 18](/en/chapters/18-live.md)), and celld ([chapter 24](/en/chapters/24-celld.md)).
 
 ## Reading order
 
 <!-- section: 00.paths -->
 
-The sidebar arranges the 25 chapters in seven groups: Get Ready (00-02), Build the App (03-08), Choose Where It Runs (09-12), Store Data (13-14), Add Features (15-18), Operate It (19-22), and Run Your Own Servers (23-24).
+Chapters 00 through 24 are written to be read in order. The sidebar arranges them in seven groups: Get Ready (00-02), Build the App (03-08), Choose Where It Runs (09-12), Store Data (13-14), Add Features (15-18), Operate It (19-22), and Run Your Own Servers (23-24).
+
+Chapters from 25 on stand on their own. Each one names the chapters it builds on at its start, so once you have read those you can take it out of numerical order. The sidebar groups these chapters by subject, not by number.
+
+| Sidebar group | Chapters from 25 on |
+| --- | --- |
+| Add Features | 51 |
+| Run Your Own Servers | 64, 66, 67, 68 |
+| Connect Services | 25, 61, 54, 47 |
+| Deeper into Data | 30, 59, 60, 39, 58, 53, 38 |
+| Analyze | 26, 49, 43, 27 |
+| Deeper into AI | 36, 56, 50, 57 |
+| Deeper into Compute | 29, 35, 41, 52, 34 |
+| Protect and Prepare | 42, 46, 44, 28, 40 |
+| Tune It | 31, 32, 55 |
+| Developer Tools | 48, 37, 45, 62, 63 |
+| Go to Production | 33 |
+
+Add Features and Run Your Own Servers are groups from the first 24 chapters, and chapters 51, 64, 66, 67, and 68 continue them. Of these, [chapter 67](/en/chapters/67-firecracker.md) and [chapter 68](/en/chapters/68-nitro.md) are about what runs underneath Lambda, Fargate, and EC2.
 
 The shortest path is to read chapters 00 through 08 in order and then add logs and metrics in chapter 19. Depending on what you want to build, one of the other paths in this table may suit you better.
 
@@ -65,6 +83,8 @@ The shortest path is to read chapters 00 through 08 in order and then add logs a
 Every path goes through chapters 01 and 02. Chapter 01 gets your account into a state that is safe to use, and chapter 02 builds the environment in which every command in this book runs.
 
 If you want to write SQL against your data, you don't have to force it into DynamoDB in chapter 05. Once you finish chapter 04, you can go straight to chapter 13. If you also want to try RDS or Aurora Serverless v2 there, you need the network from chapter 11 first.
+
+You can move on to a chapter from 25 on as soon as you have read the chapters it builds on. If you have finished the shortest path, for example, chapter 30 follows from chapter 05, chapters 61 and 25 from chapter 08, and chapter 29 from chapters 04 and 19. The review before going to production is in chapter 33, which builds on chapters 19 through 22.
 
 Paths for readers who know Cloudflare D1, Workers, and Workers AI are collected in [Coming from Cloudflare](/en/guides/cloudflare.md).
 

@@ -4,8 +4,8 @@
     "id": "22",
     "slug": "recovery",
     "title": {
-      "ja": "データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup",
-      "en": "Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup"
+      "ja": "Backup: PITR、snapshot、S3 versioning、AWS Backup",
+      "en": "Backup: PITR, Snapshots, S3 Versioning, and AWS Backup"
     },
     "prerequisites": ["05", "07"],
     "services": ["DynamoDB PITR", "S3 Versioning", "S3 Replication", "AWS Backup"],
@@ -14,9 +14,9 @@
       "ja": "complete",
       "en": "complete"
     },
-    "sourceRevision": 3,
+    "sourceRevision": 4,
     "translatedRevision": {
-      "en": 3
+      "en": 4
     },
     "checkedAt": "2026-10-12",
     "sourceIds": [

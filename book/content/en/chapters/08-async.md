@@ -1,6 +1,6 @@
 ---
 title: "08 Queue: SQS, DLQs, Idempotency, and Scheduler"
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 # 08 Queue: SQS, DLQs, Idempotency, and Scheduler
@@ -128,7 +128,7 @@ Between an image landing in the bucket and the worker running, a message passes 
 
 All three say "at least once", and none says "exactly once". The SQS documentation asks you to make applications idempotent, meaning that processing the same message twice does no harm. The Lambda documentation "strongly recommends" the same.
 
-SQS has another kind of queue, the FIFO queue, with a mechanism for removing duplicates. S3 event notifications cannot be sent to a FIFO queue, though. And even when a queue removes duplicates, a worker that stops halfway is handed the same message again.
+SQS has another kind of queue, the FIFO queue, with a mechanism for removing duplicates. S3 event notifications cannot be sent to a FIFO queue, though. And even when a queue removes duplicates, a worker that stops halfway is handed the same message again. [Chapter 61](/en/chapters/61-sqs.md) covers what a FIFO queue does and does not take on, the visibility timeout as a lease, and redrive.
 
 ### Receiving a message does not remove it
 

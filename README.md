@@ -10,7 +10,9 @@ An online book for developers who know TypeScript, HTTP, Git, and web developmen
 
 | | 状態 / State |
 | --- | --- |
-| 00〜24章（全 25 章） / Chapters 00–24 (all 25) | 日英の本文とサンプルあり。手元の検査（`vp run check:all`）は通過。**AWS に対しては、どの章も一度も deploy も実行もしていない** / Prose and examples in both languages. The local checks (`vp run check:all`) pass. **No chapter has ever been deployed to, or run against, AWS** |
+| 00〜68章（全 68 章、65 は欠番） / Chapters 00–68 (68 in all; there is no 65) | 日英の本文とサンプルあり。**AWS に対しては、どの章も一度も deploy も実行もしていない** / Prose and examples in both languages. **No chapter has ever been deployed to, or run against, AWS** |
+| 00〜24章 / Chapters 00–24 | 順に読む章。手元の検査（`vp run check:all`）は通過 / Meant to be read in order. The local checks (`vp run check:all`) pass |
+| 25〜68章 / Chapters 25–68 | 主題ごとに独立した章。章ごとにテストなどを手元で実行済み。68 章がそろった状態でも `check:all` は通過（2026-10-13、[`data/validation.json`](data/validation.json)） / Standalone chapters grouped by subject. Tests and other checks were run locally chapter by chapter. `check:all` also passes with all 68 chapters in place (2026-10-13, [`data/validation.json`](data/validation.json)) |
 | 本のサイト / Book site | ローカルでビルドできる。**未デプロイ、公開 URL なし** / Builds locally. **Not deployed; no public URL** |
 
 「書き上がった」は「動かして確かめた」ではありません。手元で何を確かめたかは章ごとに違い、各章の末尾の「この章の検証メモ」にあります。実行した検証と未解決事項は [`data/validation.json`](data/validation.json)（本の「検証記録」ページの生成元）にあります。
@@ -19,9 +21,9 @@ Written does not mean run and checked. What was checked locally differs by chapt
 
 ## セットアップ / Setup
 
-必要なのは [Nix](https://nixos.org/)（`nix-command` と `flakes` を有効にしたもの）だけです。Node.js、pnpm、AWS CLI、`vp` は Nix が固定した版で用意します。
+必要なのは [Nix](https://nixos.org/)（`nix-command` と `flakes` を有効にしたもの）だけです。Node.js、pnpm、AWS CLI、kubectl、OpenSSL、`vp` は Nix が固定した版で用意します。
 
-You need only [Nix](https://nixos.org/) with `nix-command` and `flakes` enabled. Nix supplies Node.js, pnpm, the AWS CLI, and `vp` at pinned versions.
+You need only [Nix](https://nixos.org/) with `nix-command` and `flakes` enabled. Nix supplies Node.js, pnpm, the AWS CLI, kubectl, OpenSSL, and `vp` at pinned versions.
 
 ```bash
 nix develop                      # 固定した版のツールが入った shell に入る / enter the pinned shell
@@ -99,9 +101,9 @@ Everything runs as `vp run <task>` from the repository root. All tasks are defin
 | 23 | `ec2` | `dev:ec2` |
 | 24 | `celld` | `celld:plan` |
 
-章ごとのタスクは、ここには全部は書いていません（08章の `async:queue`、22章の `recovery:restore:table`、24章の `celld:rollout` など）。名前なしの `vp run` で一覧が出ます。各章の「この章の検証メモ」にも、節ごとのタスクの表があります。
+この表は 24章までです。25章から先の章のタスクは、名前なしの `vp run` の一覧と、各章の「この章の検証メモ」にあります。24章までの章のタスクも、ここには全部は書いていません（08章の `async:queue`、22章の `recovery:restore:table`、24章の `celld:rollout` など）。名前なしの `vp run` で一覧が出ます。各章の「この章の検証メモ」にも、節ごとのタスクの表があります。
 
-Not every per-chapter task is listed here (`async:queue` in chapter 08, `recovery:restore:table` in chapter 22, `celld:rollout` in chapter 24, and so on). `vp run` with no name lists them all, and each chapter's verification notes have a table of tasks by section.
+The table stops at chapter 24. For the chapters from 25 on, see the list that `vp run` prints with no name, and each chapter's verification notes. Not every task of the earlier chapters is listed here either (`async:queue` in chapter 08, `recovery:restore:table` in chapter 22, `celld:rollout` in chapter 24, and so on). `vp run` with no name lists them all, and each chapter's verification notes have a table of tasks by section.
 
 AWS を読む・変えるタスクはすべて `cache: false` で、実行前に対象のアカウントとリージョンを表示します。AWS を変えるタスクは、`.env` の `AIH_AWS_ACCOUNT_ID` が認証情報のアカウントと一致しない限り実行を拒否します（[`.env.example`](.env.example)）。名前が smoke や seed でも、リソースの中身を書き換えるものがあります（`api:smoke` はノートを作って消します）。課金されるものもあります（17章の `ai:hello` と `ai:test:live` はモデルを呼び、15章の `mail:send` は実際にメールを送ります）。`vite.config.ts` のコメントに、タスクごとの注意が書いてあります。
 
@@ -118,7 +120,8 @@ book/infra/                     the book site's CDK app (S3 + CloudFront), manag
 examples/NN-name/               one directory per chapter, complete and runnable
 tools/                          task implementations: cdkd wrapper, drift gate, publish, smoke, checks, pricing
 data/                           chapter manifest, source registry, glossary, prices, section-to-source map, validation record
-docs/                           editorial policy, continuation prompts, CI examples
+data/fragments/NN.json          one chapter's additions to the shared files, applied with tools/src/fragments/apply.ts
+docs/                           editorial policy, chapter and prose briefs, continuation prompts, CI examples
 ```
 
 ## 執筆に参加する / Contributing
