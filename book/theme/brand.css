@@ -85,28 +85,36 @@ body {
   }
 }
 
-/* The cover's cloud, thin, behind the text. It sits under everything and takes no input. */
-.aih-ground {
-  position: fixed;
-  inset: 0;
+/* The cover's cloud, thin, behind the text. It sits under everything and takes no input.
+   .aih-veil is the strip of it behind a fixed bar, drawn again on the bar (client/ground.ts). */
+.aih-ground,
+.aih-veil {
   z-index: -1;
-  width: 100%;
-  height: 100%;
   pointer-events: none;
   opacity: 0;
   transition: opacity 1200ms ease;
 }
 
-.aih-ground.is-live {
+.aih-ground {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.aih-ground.is-live,
+.aih-veil.is-live {
   opacity: 0.22;
 }
 
 /* On paper the same cloud is turned over: the sky goes to white and the cloud becomes its shade. */
-:root[data-theme="light"] .aih-ground {
+:root[data-theme="light"] .aih-ground,
+:root[data-theme="light"] .aih-veil {
   filter: invert(1) hue-rotate(180deg);
 }
 
-:root[data-theme="light"] .aih-ground.is-live {
+:root[data-theme="light"] .aih-ground.is-live,
+:root[data-theme="light"] .aih-veil.is-live {
   opacity: 0.16;
 }
 
@@ -127,7 +135,8 @@ body:has(.aih-ground) {
 /* ---- header --------------------------------------------------------- */
 
 /* One ground from edge to edge: the bars are not surfaces of their own, and nothing is ruled off.
-   What scrolls under a bar is blurred into the ground, and the bar's far edge fades out. */
+   A bar covers what scrolls under it with the ground itself, the flat colour and then the cloud
+   over it, and both fade out at the bar's far edge, where the real ground takes over. */
 .header {
   background: none;
   border-bottom: 0;
@@ -139,20 +148,26 @@ body:has(.aih-ground) {
 }
 
 .header::before,
-.mobile-footer::before {
-  content: "";
+.mobile-footer::before,
+.aih-veil {
   position: absolute;
-  z-index: -1;
   inset: 0 0 calc(var(--aih-6) * -1);
-  background: color-mix(in srgb, var(--octc-color-bg) 82%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  width: 100%;
+  height: calc(100% + var(--aih-6));
   -webkit-mask: linear-gradient(#000 62%, transparent);
   mask: linear-gradient(#000 62%, transparent);
+}
+
+.header::before,
+.mobile-footer::before {
+  content: "";
+  z-index: -1;
+  background: var(--octc-color-bg);
   pointer-events: none;
 }
 
-.mobile-footer::before {
+.mobile-footer::before,
+.mobile-footer > .aih-veil {
   inset: calc(var(--aih-6) * -1) 0 0;
   -webkit-mask: linear-gradient(transparent, #000 38%);
   mask: linear-gradient(transparent, #000 38%);
@@ -263,8 +278,10 @@ body:has(.aih-ground) {
   font-size: 15px;
 }
 
+/* The default theme tints the sidebar when dark is chosen by hand, so that case is named too. */
 @media (min-width: 769px) {
-  .sidebar {
+  .sidebar,
+  [data-theme="dark"] .sidebar {
     background: none;
     border-right: 0;
     padding: var(--aih-8) var(--aih-6) var(--aih-16);
@@ -322,7 +339,8 @@ body:has(.aih-ground) {
   font-size: 14px;
 }
 
-.nav-link:hover {
+.nav-link:hover,
+[data-theme="dark"] .nav-link:not(.active):hover {
   background: none;
   text-decoration: underline;
   text-underline-offset: 0.3em;

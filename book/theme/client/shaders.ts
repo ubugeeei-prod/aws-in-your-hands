@@ -69,14 +69,15 @@ vec4 detail(vec3 cell) {
   return texture(uNoise, cell / CELLS);
 }
 
-// World position to the space the cloud lives in: drawn out a little along the wind.
+// World position to the space the cloud lives in. The wind leans the shapes only slightly:
+// drawn out far along it they read as streaks in a liquid, not as heaps of vapour.
 vec3 wind(vec3 p) {
-  vec3 q = vec3(dot(p, ALONG) * 0.34, dot(p, ACROSS) * 1.2, dot(p, INTO) * 1.05);
+  vec3 q = vec3(dot(p, ALONG) * 0.62, dot(p, ACROSS) * 0.86, dot(p, INTO) * 0.9);
   q += uSeed;
   q.x -= uTime * 0.016;
-  // Slow turbulence, so the shapes churn as they travel and never just slide.
-  vec3 churn = noise(q * 0.4 + vec3(0.0, uTime * 0.004, uTime * 0.006)).rgg - 0.5;
-  return q + churn * vec3(0.7, 0.8, 0.7);
+  // Slow turbulence, so the shapes roll over as they travel and never just slide.
+  vec3 churn = noise(q * 0.4 + vec3(0.0, uTime * 0.008, uTime * 0.011)).rgg - 0.5;
+  return q + churn * vec3(0.55, 0.6, 0.55);
 }
 
 // How much of the sky has cloud at all, over long distances.
@@ -91,7 +92,8 @@ float body(vec3 q, float amount) {
   // Gradient noise keeps close to its middle. Spread it out to use the whole range.
   float soft = clamp((a.r * 0.62 + b.g * 0.38 - 0.5) * 2.4 + 0.5, 0.0, 1.0);
   float billow = a.b * 0.62 + b.a * 0.38;
-  float form = remap(soft, (1.0 - billow) * 0.2, 1.0);
+  // The cellular noise cuts deep, so the mass comes out in rounded heaps, as vapour does.
+  float form = remap(soft, (1.0 - billow) * 0.46, 1.0);
   return remap(form, 1.0 - amount, 1.0);
 }
 
@@ -106,7 +108,7 @@ float cloud(vec3 p) {
   vec4 fine = detail(q * 4.3 + 2.1);
   vec4 finer = detail(q * 9.1 + 4.7);
   float wisps = fine.a * 0.6 + finer.b * 0.25 + finer.a * 0.15;
-  d = remap(d, (1.0 - wisps) * 0.3 * (1.0 - d * 0.5), 1.0);
+  d = remap(d, (1.0 - wisps) * 0.44 * (1.0 - d * 0.5), 1.0);
   return d * amount * 2.3;
 }
 

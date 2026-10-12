@@ -33,6 +33,8 @@ export type FluidCloudOptions = {
   maxPixels?: number;
   /** The element whose pointer moves push the fluid. Defaults to the canvas. False turns pushing off. */
   pointer?: HTMLElement | false;
+  /** Called after each picture is drawn, while the canvas still holds it. */
+  onDraw?: () => void;
 };
 
 export type FluidCloud = {
@@ -470,6 +472,7 @@ export function createFluidCloud(
     gpu.finish.set("uSceneTexel", 1 / scene.size.width, 1 / scene.size.height);
     gpu.finish.set("uPixelRatio", size.width / Math.max(1, canvas.clientWidth));
     pass(null, size.width, size.height);
+    options.onDraw?.();
   };
 
   const moving = (): boolean =>

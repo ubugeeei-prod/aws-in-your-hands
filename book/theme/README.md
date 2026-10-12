@@ -27,7 +27,8 @@ Three things happen each frame.
    real incompressible flow, in two dimensions.
 2. **The cloud is ray-marched** (`volumeFragment`). Its shape comes from a 3D noise texture
    built on the CPU (`noise.ts`): gradient noise for the large forms, cellular noise for the
-   billows. Light is absorbed on its way from the sun to each sample, with a second, gentler
+   billows. The cellular noise cuts deep and the wind leans the shapes only slightly, so the
+   mass comes out in rounded heaps: drawn out along the wind it reads as a liquid. Light is absorbed on its way from the sun to each sample, with a second, gentler
    falloff standing in for light that scatters many times. The cloud is looked up through the
    map the fluid carries, so a push moves the cloud itself.
 3. **The image is finished** (`finishFragment`): enlarged from the small ray-marched image,
@@ -38,6 +39,10 @@ What it is not: a 3D fluid simulation. Depth and lighting are an optical approxi
 Behind the reading pages the same cloud runs thin and slow. On paper it is turned over in CSS,
 so the sky goes to white and the cloud becomes its shade. A button in the header (and in the bar
 a phone shows) stops it, and the choice is kept across pages.
+
+The header and the phone's bar stay put while the text scrolls under them. They cover it with
+the ground itself: the strip of the cloud that lies behind each bar is drawn again on the bar
+after every frame (`onDraw`), so the cloud runs through them unbroken.
 
 It holds still for readers who ask for reduced motion, stops when the tab or the canvas is
 out of sight, and shrinks the ray-marched image when frames run slow (`quality.ts`). Without
