@@ -99,7 +99,7 @@ export function parseFigure(source: string): Figure {
       figure.steps.push({ kind: "note", note: { at: match[1] ?? "", label: match[2] ?? "" } });
     } else if (keyword === "group") {
       const match =
-        /^(\S+?):\s*(.+?)\s*=\s*(.+)$/.exec(rest) ?? fail(at, 'expected "group id: label = a, b"');
+        /^(\S+?):\s*(.+)\s=\s(.+)$/.exec(rest) ?? fail(at, 'expected "group id: label = a, b"');
       figure.groups.push({
         id: match[1] ?? "",
         label: match[2] ?? "",
@@ -184,13 +184,9 @@ function drawNode(node: Placed): string {
       ? `<text class="aih-figure__label" x="${cx}" y="${round(cy + 5)}">${escape(node.label)}</text>`
       : `<text class="aih-figure__label" x="${cx}" y="${round(cy - 2)}">${escape(node.label)}</text>` +
         `<text class="aih-figure__sub" x="${cx}" y="${round(cy + 15)}">${escape(node.sub)}</text>`;
-  // The orange square says "this is the one the chapter is about".
-  const mark = node.marked
-    ? `<rect class="aih-figure__mark" x="${round(node.x)}" y="${round(node.y)}" width="8" height="8"/>`
-    : "";
-  return `<rect class="aih-figure__node" x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}"/>${
-    mark
-  }${label}`;
+  // The node the chapter is about is drawn with a heavier outline.
+  const classes = node.marked ? "aih-figure__node aih-figure__node--marked" : "aih-figure__node";
+  return `<rect class="${classes}" x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}"/>${label}`;
 }
 
 /** A label that sits on a line needs the line cleared behind it. */

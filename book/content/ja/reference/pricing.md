@@ -13,7 +13,7 @@ generated: true
 
 ## 本のサイト: 公開済みで誰も読まない月
 
-ID: `book-site-idle` / 章: [03 SPA を公開する: private S3 origin と CloudFront](/ja/chapters/03-spa.md)
+ID: `book-site-idle` / 章: [03 Static Hosting: private S3 origin と CloudFront](/ja/chapters/03-spa.md)
 
 前提:
 
@@ -30,7 +30,7 @@ ID: `book-site-idle` / 章: [03 SPA を公開する: private S3 origin と Cloud
 
 ## 本のサイト: 月 2 万ページビュー
 
-ID: `book-site-small` / 章: [03 SPA を公開する: private S3 origin と CloudFront](/ja/chapters/03-spa.md)
+ID: `book-site-small` / 章: [03 Static Hosting: private S3 origin と CloudFront](/ja/chapters/03-spa.md)
 
 前提:
 
@@ -56,7 +56,7 @@ ID: `book-site-small` / 章: [03 SPA を公開する: private S3 origin と Clou
 
 ## HTTP API: デプロイ済みで呼ばれない月
 
-ID: `http-api-idle` / 章: [04 HTTP API を足す: Lambda と API Gateway HTTP API](/ja/chapters/04-http-api.md)
+ID: `http-api-idle` / 章: [04 HTTP API: Lambda と API Gateway HTTP API](/ja/chapters/04-http-api.md)
 
 前提:
 
@@ -68,7 +68,7 @@ ID: `http-api-idle` / 章: [04 HTTP API を足す: Lambda と API Gateway HTTP A
 
 ## HTTP API: 月 100 万リクエスト
 
-ID: `http-api-small` / 章: [04 HTTP API を足す: Lambda と API Gateway HTTP API](/ja/chapters/04-http-api.md)
+ID: `http-api-small` / 章: [04 HTTP API: Lambda と API Gateway HTTP API](/ja/chapters/04-http-api.md)
 
 前提:
 
@@ -92,7 +92,7 @@ ID: `http-api-small` / 章: [04 HTTP API を足す: Lambda と API Gateway HTTP 
 
 ## ノート API と table: デプロイ済みで呼ばれない月
 
-ID: `notes-idle` / 章: [05 ノートを保存する: DynamoDB](/ja/chapters/05-dynamodb.md)
+ID: `notes-idle` / 章: [05 NoSQL: DynamoDB](/ja/chapters/05-dynamodb.md)
 
 前提:
 
@@ -108,7 +108,7 @@ ID: `notes-idle` / 章: [05 ノートを保存する: DynamoDB](/ja/chapters/05-
 
 ## ノート API と table: 月 100 万リクエスト
 
-ID: `notes-small` / 章: [05 ノートを保存する: DynamoDB](/ja/chapters/05-dynamodb.md)
+ID: `notes-small` / 章: [05 NoSQL: DynamoDB](/ja/chapters/05-dynamodb.md)
 
 前提:
 
@@ -136,7 +136,7 @@ ID: `notes-small` / 章: [05 ノートを保存する: DynamoDB](/ja/chapters/05
 
 ## ノートアプリ（サインインあり）: 月 100 万リクエスト、100 MAU
 
-ID: `notes-app-small` / 章: [06 ログインを足す: Cognito と認可](/ja/chapters/06-auth.md)
+ID: `notes-app-small` / 章: [06 Auth: Cognito と認可](/ja/chapters/06-auth.md)
 
 前提:
 
@@ -162,7 +162,7 @@ ID: `notes-app-small` / 章: [06 ログインを足す: Cognito と認可](/ja/c
 
 ## ライブ配信: 月 4 回 × 2 時間、各回 100 人が半分ずつ視聴
 
-ID: `live-monthly-100` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+ID: `live-monthly-100` / 章: [18 Live Streaming: IVS](/ja/chapters/18-live.md)
 
 前提:
 
@@ -182,7 +182,7 @@ ID: `live-monthly-100` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters
 
 ## ライブ配信: 同じ配信を、各回 1,000 人が視聴
 
-ID: `live-monthly-1000` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+ID: `live-monthly-1000` / 章: [18 Live Streaming: IVS](/ja/chapters/18-live.md)
 
 前提:
 
@@ -199,7 +199,7 @@ ID: `live-monthly-1000` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapter
 
 ## 止め忘れ: BASIC の channel に 48 時間送り続けた
 
-ID: `live-left-on-weekend` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+ID: `live-left-on-weekend` / 章: [18 Live Streaming: IVS](/ja/chapters/18-live.md)
 
 前提:
 
@@ -215,7 +215,7 @@ ID: `live-left-on-weekend` / 章: [18 ライブ配信のレシピ: IVS](/ja/chap
 
 ## 止め忘れ: BASIC の channel に 1 か月送り続けた
 
-ID: `live-left-on-month-basic` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+ID: `live-left-on-month-basic` / 章: [18 Live Streaming: IVS](/ja/chapters/18-live.md)
 
 前提:
 
@@ -231,7 +231,7 @@ ID: `live-left-on-month-basic` / 章: [18 ライブ配信のレシピ: IVS](/ja/
 
 ## 止め忘れ: STANDARD の channel に 1 か月送り続けた
 
-ID: `live-left-on-month-standard` / 章: [18 ライブ配信のレシピ: IVS](/ja/chapters/18-live.md)
+ID: `live-left-on-month-standard` / 章: [18 Live Streaming: IVS](/ja/chapters/18-live.md)
 
 前提:
 
@@ -246,7 +246,7 @@ ID: `live-left-on-month-standard` / 章: [18 ライブ配信のレシピ: IVS](/
 
 ## ネットワーク: NAT Gateway を 1 つ足す
 
-ID: `network-nat-single` / 章: [11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
+ID: `network-nat-single` / 章: [11 Network: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
 
 前提:
 
@@ -268,7 +268,7 @@ ID: `network-nat-single` / 章: [11 本当に必要なネットワーク: VPC、
 
 ## ネットワーク: NAT Gateway を AZ ごとに足す
 
-ID: `network-nat-per-az` / 章: [11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
+ID: `network-nat-per-az` / 章: [11 Network: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
 
 前提:
 
@@ -289,7 +289,7 @@ ID: `network-nat-per-az` / 章: [11 本当に必要なネットワーク: VPC、
 
 ## ネットワーク: interface endpoint を 3 つ足す
 
-ID: `network-interface-endpoints` / 章: [11 本当に必要なネットワーク: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
+ID: `network-interface-endpoints` / 章: [11 Network: VPC、subnet、NAT、endpoint](/ja/chapters/11-network.md)
 
 前提:
 
@@ -308,7 +308,7 @@ ID: `network-interface-endpoints` / 章: [11 本当に必要なネットワー�
 
 ## 要約 API: デプロイ済みで呼ばれない月
 
-ID: `ai-idle` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+ID: `ai-idle` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
 
 前提:
 
@@ -320,7 +320,7 @@ ID: `ai-idle` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/j
 
 ## 要約 API: 月 1,000 件（Nova 2 Lite、jp. profile）
 
-ID: `ai-summaries-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+ID: `ai-summaries-nova-2-lite` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
 
 前提:
 
@@ -345,7 +345,7 @@ ID: `ai-summaries-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI �
 
 ## 要約 API: 1,000 件すべてが出力の上限に達した場合の出力分
 
-ID: `ai-output-ceiling-nova-2-lite` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+ID: `ai-output-ceiling-nova-2-lite` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
 
 前提:
 
@@ -362,7 +362,7 @@ ID: `ai-output-ceiling-nova-2-lite` / 章: [17 Workers AI に親しんだ人の 
 
 ## 要約 API: 同じ token 数を Claude Haiku 4.5 で（推論の分だけ）
 
-ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の AI 開発: Bedrock](/ja/chapters/17-ai.md)
+ID: `ai-summaries-claude-haiku-4-5` / 章: [17 AI: Bedrock](/ja/chapters/17-ai.md)
 
 前提:
 
@@ -383,7 +383,7 @@ ID: `ai-summaries-claude-haiku-4-5` / 章: [17 Workers AI に親しんだ人の 
 
 ## 通知メール: デプロイ済みで 1 通も送らない月
 
-ID: `email-idle` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
+ID: `email-idle` / 章: [15 Email: SES](/ja/chapters/15-email.md)
 
 前提:
 
@@ -399,7 +399,7 @@ ID: `email-idle` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
 
 ## 通知メール: 月 1 万通
 
-ID: `email-small` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
+ID: `email-small` / 章: [15 Email: SES](/ja/chapters/15-email.md)
 
 前提:
 
@@ -431,7 +431,7 @@ ID: `email-small` / 章: [15 メールを送る: SES](/ja/chapters/15-email.md)
 
 ## edge の例: 月 100 万リクエスト
 
-ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValueStore、Lambda@Edge](/ja/chapters/10-edge.md)
+ID: `edge-small` / 章: [10 Edge: CloudFront Functions、KeyValueStore、Lambda@Edge](/ja/chapters/10-edge.md)
 
 前提:
 
@@ -460,7 +460,7 @@ ID: `edge-small` / 章: [10 edge を理解する: CloudFront Functions、KeyValu
 
 ## Aurora DSQL: 1 GB のデータを置いて、誰も問い合わせない月
 
-ID: `sql-dsql-idle` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+ID: `sql-dsql-idle` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
 
 前提:
 
@@ -478,7 +478,7 @@ ID: `sql-dsql-idle` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL�
 
 ## Aurora DSQL: 月 100 万リクエストのノート API（DB の分だけ）
 
-ID: `sql-dsql-small` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+ID: `sql-dsql-small` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
 
 前提:
 
@@ -499,7 +499,7 @@ ID: `sql-dsql-small` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL
 
 ## RDS for PostgreSQL: 最小構成を 730 時間動かす
 
-ID: `sql-rds-min` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+ID: `sql-rds-min` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
 
 前提:
 
@@ -519,7 +519,7 @@ ID: `sql-rds-min` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、
 
 ## Aurora Serverless v2: auto-pause なし、最小 0.5 ACU で 730 時間
 
-ID: `sql-aurora-min` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+ID: `sql-aurora-min` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
 
 前提:
 
@@ -538,7 +538,7 @@ ID: `sql-aurora-min` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL
 
 ## Aurora Serverless v2: auto-pause で 1 か月ずっと止まっていた場合
 
-ID: `sql-aurora-paused` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
+ID: `sql-aurora-paused` / 章: [13 SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2](/ja/chapters/13-sql.md)
 
 前提:
 
@@ -556,7 +556,7 @@ ID: `sql-aurora-paused` / 章: [13 D1 に親しんだ人の SQL 開発: Aurora D
 
 ## 画像の添付: 月 10,000 枚のアップロード、100,000 回の表示
 
-ID: `uploads-small` / 章: [07 画像をアップロードする: presigned URL と S3](/ja/chapters/07-uploads.md)
+ID: `uploads-small` / 章: [07 File Upload: presigned URL と S3](/ja/chapters/07-uploads.md)
 
 前提:
 
@@ -588,7 +588,7 @@ ID: `uploads-small` / 章: [07 画像をアップロードする: presigned URL 
 
 ## SSR: デプロイ済みで誰も来ない月
 
-ID: `ssr-idle` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
+ID: `ssr-idle` / 章: [09 SSR: BFF、Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
 
 前提:
 
@@ -606,7 +606,7 @@ ID: `ssr-idle` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動�
 
 ## SSR: 月 10 万ページビュー
 
-ID: `ssr-small` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
+ID: `ssr-small` / 章: [09 SSR: BFF、Nuxt をリージョンの Lambda で動かす](/ja/chapters/09-ssr.md)
 
 前提:
 
@@ -637,7 +637,7 @@ ID: `ssr-small` / 章: [09 SSR と BFF: Nuxt をリージョンの Lambda で動
 
 ## 監視つきノート API: デプロイ済みで呼ばれない月
 
-ID: `obs-idle` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+ID: `obs-idle` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
 
 前提:
 
@@ -655,7 +655,7 @@ ID: `obs-idle` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry�
 
 ## 監視つきノート API: 月 100 万リクエストの観測の料金
 
-ID: `obs-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+ID: `obs-small` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
 
 前提:
 
@@ -682,7 +682,7 @@ ID: `obs-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry�
 
 ## ログを 1 行増やす: 月 100 万リクエスト
 
-ID: `obs-one-more-line` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+ID: `obs-one-more-line` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
 
 前提:
 
@@ -699,7 +699,7 @@ ID: `obs-one-more-line` / 章: [19 本番の挙動を見る: CloudWatch、OpenTe
 
 ## メトリクスを 1 つ増やす
 
-ID: `obs-one-more-metric` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+ID: `obs-one-more-metric` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
 
 前提:
 
@@ -715,7 +715,7 @@ ID: `obs-one-more-metric` / 章: [19 本番の挙動を見る: CloudWatch、Open
 
 ## Synthetics: 5 分ごとの canary 1 つ
 
-ID: `obs-canary-5min` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+ID: `obs-canary-5min` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
 
 前提:
 
@@ -731,7 +731,7 @@ ID: `obs-canary-5min` / 章: [19 本番の挙動を見る: CloudWatch、OpenTele
 
 ## RUM: 月 1 万回の訪問を全件収集
 
-ID: `obs-rum-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
+ID: `obs-rum-small` / 章: [19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics](/ja/chapters/19-observability.md)
 
 前提:
 
@@ -748,7 +748,7 @@ ID: `obs-rum-small` / 章: [19 本番の挙動を見る: CloudWatch、OpenTeleme
 
 ## KV と cache: 既定の stack（DynamoDB）を置いたまま、呼ばれない月
 
-ID: `kv-idle-dynamodb` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-idle-dynamodb` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -765,7 +765,7 @@ ID: `kv-idle-dynamodb` / 章: [14 key-value と cache を選ぶ: DynamoDB、Elas
 
 ## KV と cache: ElastiCache Serverless（Valkey）を置いたまま、呼ばれない月
 
-ID: `kv-idle-valkey-serverless` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-serverless` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -782,7 +782,7 @@ ID: `kv-idle-valkey-serverless` / 章: [14 key-value と cache を選ぶ: Dynamo
 
 ## 比較: node ベースの Valkey（cache.t4g.micro 1 台）を置いたままの月
 
-ID: `kv-idle-valkey-node` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-node` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -799,7 +799,7 @@ ID: `kv-idle-valkey-node` / 章: [14 key-value と cache を選ぶ: DynamoDB、E
 
 ## KV と cache: DynamoDB 版で月 100 万リクエスト
 
-ID: `kv-used-dynamodb` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-used-dynamodb` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -827,7 +827,7 @@ ID: `kv-used-dynamodb` / 章: [14 key-value と cache を選ぶ: DynamoDB、Elas
 
 ## KV と cache: ElastiCache Serverless（Valkey）版で月 100 万リクエスト
 
-ID: `kv-used-valkey` / 章: [14 key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
+ID: `kv-used-valkey` / 章: [14 KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定](/ja/chapters/14-kv-cache.md)
 
 前提:
 
@@ -854,7 +854,7 @@ ID: `kv-used-valkey` / 章: [14 key-value と cache を選ぶ: DynamoDB、Elasti
 
 ## 変更を届ける: stack と CI の role を置いて、誰も呼ばない月
 
-ID: `ship-idle` / 章: [20 変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
+ID: `ship-idle` / 章: [20 CI/CD: OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
 
 前提:
 
@@ -868,7 +868,7 @@ ID: `ship-idle` / 章: [20 変更を届ける: CI/CD、OIDC、環境、preview�
 
 ## 変更を届ける: 1 日 1 回のデプロイを 1 年続けて、asset を一度も片付けない
 
-ID: `ship-assets-year` / 章: [20 変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
+ID: `ship-assets-year` / 章: [20 CI/CD: OIDC、環境、preview、rollback、drift](/ja/chapters/20-shipping.md)
 
 前提:
 
@@ -886,7 +886,7 @@ ID: `ship-assets-year` / 章: [20 変更を届ける: CI/CD、OIDC、環境、pr
 
 ## コンテナ: repository だけ（image tag なしで deploy）
 
-ID: `containers-repository-only` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+ID: `containers-repository-only` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
 
 前提:
 
@@ -903,7 +903,7 @@ ID: `containers-repository-only` / 章: [12 コンテナを動かす: ECR、ECS/
 
 ## コンテナ: 既定の構成を置いたまま 1 か月
 
-ID: `containers-idle` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+ID: `containers-idle` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
 
 前提:
 
@@ -927,7 +927,7 @@ ID: `containers-idle` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、A
 
 ## コンテナ: 既定の構成を 1 日
 
-ID: `containers-one-day` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+ID: `containers-one-day` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
 
 前提:
 
@@ -947,7 +947,7 @@ ID: `containers-one-day` / 章: [12 コンテナを動かす: ECR、ECS/Fargate�
 
 ## コンテナ: 月 100 万リクエスト
 
-ID: `containers-small` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+ID: `containers-small` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
 
 前提:
 
@@ -974,7 +974,7 @@ ID: `containers-small` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、
 
 ## コンテナ: task を private subnet に置き、NAT Gateway 1 つで出る
 
-ID: `containers-private-nat` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+ID: `containers-private-nat` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
 
 前提:
 
@@ -999,7 +999,7 @@ ID: `containers-private-nat` / 章: [12 コンテナを動かす: ECR、ECS/Farg
 
 ## コンテナ: task を private subnet に置き、interface endpoint 3 つで AWS に届く
 
-ID: `containers-private-endpoints` / 章: [12 コンテナを動かす: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
+ID: `containers-private-endpoints` / 章: [12 Containers: ECR、ECS/Fargate、ALB](/ja/chapters/12-containers.md)
 
 前提:
 
@@ -1025,7 +1025,7 @@ ID: `containers-private-endpoints` / 章: [12 コンテナを動かす: ECR、EC
 
 ## 非同期の検査と掃除: デプロイ済みで、画像が 1 枚もない月
 
-ID: `async-idle` / 章: [08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+ID: `async-idle` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
 
 前提:
 
@@ -1050,7 +1050,7 @@ ID: `async-idle` / 章: [08 リクエストの外で処理する: SQS、DLQ、�
 
 ## 非同期の検査: 月 10,000 枚のアップロードと 1,000 回の削除
 
-ID: `async-pipeline-small` / 章: [08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+ID: `async-pipeline-small` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
 
 前提:
 
@@ -1080,7 +1080,7 @@ ID: `async-pipeline-small` / 章: [08 リクエストの外で処理する: SQS�
 
 ## 定期的な掃除: 10,000 枚が置いてある bucket を 1 時間ごとに突き合わせる
 
-ID: `async-housekeeping-10k` / 章: [08 リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
+ID: `async-housekeeping-10k` / 章: [08 Queue: SQS、DLQ、冪等性、Scheduler](/ja/chapters/08-async.md)
 
 前提:
 
@@ -1106,7 +1106,7 @@ ID: `async-housekeeping-10k` / 章: [08 リクエストの外で処理する: SQ
 
 ## EC2: private subnet で 1 か月動かしたまま
 
-ID: `ec2-private-running` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+ID: `ec2-private-running` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
 
 前提:
 
@@ -1129,7 +1129,7 @@ ID: `ec2-private-running` / 章: [23 制御したいときの EC2: SSM、EBS、�
 
 ## EC2: private subnet で 1 か月止めたまま
 
-ID: `ec2-private-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+ID: `ec2-private-stopped` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
 
 前提:
 
@@ -1150,7 +1150,7 @@ ID: `ec2-private-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、�
 
 ## EC2: public subnet で 1 か月動かしたまま
 
-ID: `ec2-public-running` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+ID: `ec2-public-running` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
 
 前提:
 
@@ -1173,7 +1173,7 @@ ID: `ec2-public-running` / 章: [23 制御したいときの EC2: SSM、EBS、�
 
 ## EC2: public subnet で 1 か月止めたまま
 
-ID: `ec2-public-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
+ID: `ec2-public-stopped` / 章: [23 VM: EC2、SSM、EBS、プロセス運用](/ja/chapters/23-ec2.md)
 
 前提:
 
@@ -1193,7 +1193,7 @@ ID: `ec2-public-stopped` / 章: [23 制御したいときの EC2: SSM、EBS、�
 
 ## 長い処理: デプロイ済みで、ノートが 1 件もない月
 
-ID: `export-idle` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+ID: `export-idle` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
 
 前提:
 
@@ -1219,7 +1219,7 @@ ID: `export-idle` / 章: [16 長い処理を動かす: ECS task、Step Functions
 
 ## 長い処理: 10,000 件を毎日 export。1 回の呼び出しで全ページ（この章の既定）
 
-ID: `export-daily-10k-coarse` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+ID: `export-daily-10k-coarse` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
 
 前提:
 
@@ -1249,7 +1249,7 @@ ID: `export-daily-10k-coarse` / 章: [16 長い処理を動かす: ECS task、St
 
 ## 長い処理: 10,000 件を毎日 export。1 ページごとに workflow に戻る
 
-ID: `export-daily-10k-fine` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+ID: `export-daily-10k-fine` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
 
 前提:
 
@@ -1279,7 +1279,7 @@ ID: `export-daily-10k-fine` / 章: [16 長い処理を動かす: ECS task、Step
 
 ## 長い処理: 10,000 件を毎日 export。durable function 版（`-c durable=true`）
 
-ID: `export-daily-10k-durable` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+ID: `export-daily-10k-durable` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
 
 前提:
 
@@ -1312,7 +1312,7 @@ ID: `export-daily-10k-durable` / 章: [16 長い処理を動かす: ECS task、S
 
 ## 比較: 1 時間かかる step を、1 日 1 回 Fargate の task で動かす月
 
-ID: `export-step-fargate-1h` / 章: [16 長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
+ID: `export-step-fargate-1h` / 章: [16 Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch](/ja/chapters/16-long-jobs.md)
 
 前提:
 
@@ -1333,7 +1333,7 @@ ID: `export-step-fargate-1h` / 章: [16 長い処理を動かす: ECS task、Ste
 
 ## 守り: 既定の stack を置いたまま、誰も呼ばない月
 
-ID: `sec-idle-default` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+ID: `sec-idle-default` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
 
 前提:
 
@@ -1352,7 +1352,7 @@ ID: `sec-idle-default` / 章: [21 守り、統制する: WAF、Inspector、Guard
 
 ## 守り: `-c cmk=on` を付けて置いたまま、誰も呼ばない月
 
-ID: `sec-idle-cmk` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+ID: `sec-idle-cmk` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
 
 前提:
 
@@ -1371,7 +1371,7 @@ ID: `sec-idle-cmk` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty
 
 ## 守り: web ACL（AihSecurityWaf）を 1 か月置いて、100 万リクエストを検査
 
-ID: `sec-waf-month` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+ID: `sec-waf-month` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
 
 前提:
 
@@ -1393,7 +1393,7 @@ ID: `sec-waf-month` / 章: [21 守り、統制する: WAF、Inspector、GuardDut
 
 ## 守り: 既定の stack で、token の発行と検証を月 10 万回ずつ
 
-ID: `sec-small` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+ID: `sec-small` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
 
 前提:
 
@@ -1421,7 +1421,7 @@ ID: `sec-small` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、
 
 ## 守り: GuardDuty、Inspector、AWS Config を小さなアカウントで 1 か月（桁をつかむための例）
 
-ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
+ID: `sec-detect-example` / 章: [21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations](/ja/chapters/21-security.md)
 
 前提:
 
@@ -1443,7 +1443,7 @@ ID: `sec-detect-example` / 章: [21 守り、統制する: WAF、Inspector、Gua
 
 ## 復旧: 戻せる状態を 1 か月保つための上乗せ（table 1 GB、画像 10 GB）
 
-ID: `recovery-keep` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+ID: `recovery-keep` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
 
 前提:
 
@@ -1462,7 +1462,7 @@ ID: `recovery-keep` / 章: [22 データとサービスを復旧する: PITR、s
 
 ## 復旧: 1 GB の table を 1 回復元して検査する drill
 
-ID: `recovery-drill` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+ID: `recovery-drill` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
 
 前提:
 
@@ -1483,7 +1483,7 @@ ID: `recovery-drill` / 章: [22 データとサービスを復旧する: PITR、
 
 ## 復旧: `-c backup=on` で増える分（AWS Backup、1 GB の table）
 
-ID: `recovery-backup-optin` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+ID: `recovery-backup-optin` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
 
 前提:
 
@@ -1501,7 +1501,7 @@ ID: `recovery-backup-optin` / 章: [22 データとサービスを復旧する: 
 
 ## 復旧: `-c replica=on` で増える分（S3 Replication、画像 10 GB）
 
-ID: `recovery-replica-optin` / 章: [22 データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
+ID: `recovery-replica-optin` / 章: [22 Backup: PITR、snapshot、S3 versioning、AWS Backup](/ja/chapters/22-recovery.md)
 
 前提:
 
@@ -1520,7 +1520,7 @@ ID: `recovery-replica-optin` / 章: [22 データとサービスを復旧する:
 
 ## celld: node 1 台を 1 か月動かしたまま
 
-ID: `celld-one-node-running` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+ID: `celld-one-node-running` / 章: [24 Self-hosting: celld を AWS で動かす](/ja/chapters/24-celld.md)
 
 前提:
 
@@ -1546,7 +1546,7 @@ ID: `celld-one-node-running` / 章: [24 発展ラボ: celld を AWS でセルフ
 
 ## celld: node 3 台を 1 か月動かしたまま
 
-ID: `celld-three-nodes-running` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+ID: `celld-three-nodes-running` / 章: [24 Self-hosting: celld を AWS で動かす](/ja/chapters/24-celld.md)
 
 前提:
 
@@ -1572,7 +1572,7 @@ ID: `celld-three-nodes-running` / 章: [24 発展ラボ: celld を AWS でセル
 
 ## celld: node 3 台を 1 か月止めたまま
 
-ID: `celld-three-nodes-stopped` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+ID: `celld-three-nodes-stopped` / 章: [24 Self-hosting: celld を AWS で動かす](/ja/chapters/24-celld.md)
 
 前提:
 
@@ -1593,7 +1593,7 @@ ID: `celld-three-nodes-stopped` / 章: [24 発展ラボ: celld を AWS でセル
 
 ## celld: stack を消した後に残る data volume（3 台分）
 
-ID: `celld-retained-after-destroy` / 章: [24 発展ラボ: celld を AWS でセルフホストする](/ja/chapters/24-celld.md)
+ID: `celld-retained-after-destroy` / 章: [24 Self-hosting: celld を AWS で動かす](/ja/chapters/24-celld.md)
 
 前提:
 

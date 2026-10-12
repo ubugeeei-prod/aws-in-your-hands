@@ -186,7 +186,7 @@ body {
   border-radius: 0;
   color: var(--octc-color-text-muted);
   line-height: 1.5;
-  padding: 4px 0 4px var(--aih-4);
+  padding: 4px 0;
   background: none;
   border: 0;
   margin: 0;
@@ -197,25 +197,13 @@ body {
   background: none;
 }
 
-/* The page you are on: bold, with the small orange square the guide uses for "you are here". */
+/* The page you are on is set in the text colour and in bold. Nothing is drawn beside it. */
 .nav-link.active,
 .nav-link[aria-current="page"] {
   color: var(--octc-color-text);
   font-weight: 700;
   background: none;
   box-shadow: none;
-  position: relative;
-}
-
-.nav-link.active::before,
-.nav-link[aria-current="page"]::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 1.05em;
-  width: 6px;
-  height: 6px;
-  background: var(--aih-orange);
 }
 
 /* ---- the outline ---------------------------------------------------- */
@@ -254,13 +242,13 @@ body {
   color: var(--octc-color-text-muted);
   border-radius: 0;
   line-height: 1.5;
-  padding: 4px 0 4px var(--aih-4);
+  padding: 4px 0;
   border: 0;
   background: none;
 }
 
 .toc-link--depth-3 {
-  padding-left: var(--aih-8);
+  padding-left: var(--aih-4);
   font-size: 13px;
 }
 
@@ -268,25 +256,13 @@ body {
   color: var(--octc-color-text);
 }
 
-/* Where you are reading: the same square, in pink. */
+/* The section being read, the same way. */
 .toc-link.active,
 .toc-link[aria-current] {
   color: var(--octc-color-text);
   font-weight: 700;
   box-shadow: none;
   background: none;
-  position: relative;
-}
-
-.toc-link.active::before,
-.toc-link[aria-current]::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 1.05em;
-  width: 6px;
-  height: 6px;
-  background: var(--aih-pink);
 }
 
 /* ---- the chapter's opening ------------------------------------------ */
@@ -754,8 +730,8 @@ body {
 
 /* ---- figures -------------------------------------------------------- */
 
-/* Drawn by theme/figure.ts. Thin navy lines on the page's own background;
-   the only colour is the orange square that marks what a chapter is about. */
+/* Drawn by theme/figure.ts. Thin lines in the text colour on the page's own background.
+   The box a chapter is about has a heavier outline. */
 .content .aih-figure {
   margin: var(--aih-8) 0;
   padding: 0;
@@ -793,8 +769,8 @@ body {
   stroke-width: 1;
 }
 
-.aih-figure__mark {
-  fill: var(--aih-orange);
+.aih-figure__node--marked {
+  stroke-width: 2.5;
 }
 
 .aih-figure__label {

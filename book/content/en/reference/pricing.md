@@ -13,7 +13,7 @@ Every price figure in this book is computed by `tools/src/pricing/calc.ts` from 
 
 ## Book site: published, but nobody reads it for a month
 
-ID: `book-site-idle` / chapter: [03 Publish a SPA: A Private S3 Origin and CloudFront](/en/chapters/03-spa.md)
+ID: `book-site-idle` / chapter: [03 Static Hosting: A Private S3 Origin and CloudFront](/en/chapters/03-spa.md)
 
 Assumptions:
 
@@ -30,7 +30,7 @@ Assumptions:
 
 ## Book site: 20,000 page views a month
 
-ID: `book-site-small` / chapter: [03 Publish a SPA: A Private S3 Origin and CloudFront](/en/chapters/03-spa.md)
+ID: `book-site-small` / chapter: [03 Static Hosting: A Private S3 Origin and CloudFront](/en/chapters/03-spa.md)
 
 Assumptions:
 
@@ -56,7 +56,7 @@ Assumptions:
 
 ## HTTP API: deployed, but never called for a month
 
-ID: `http-api-idle` / chapter: [04 Add an HTTP API: Lambda and API Gateway HTTP API](/en/chapters/04-http-api.md)
+ID: `http-api-idle` / chapter: [04 HTTP API: Lambda and API Gateway HTTP API](/en/chapters/04-http-api.md)
 
 Assumptions:
 
@@ -68,7 +68,7 @@ Assumptions:
 
 ## HTTP API: 1,000,000 requests a month
 
-ID: `http-api-small` / chapter: [04 Add an HTTP API: Lambda and API Gateway HTTP API](/en/chapters/04-http-api.md)
+ID: `http-api-small` / chapter: [04 HTTP API: Lambda and API Gateway HTTP API](/en/chapters/04-http-api.md)
 
 Assumptions:
 
@@ -92,7 +92,7 @@ Assumptions:
 
 ## Notes API and table: deployed, but never called for a month
 
-ID: `notes-idle` / chapter: [05 Persist Notes: DynamoDB](/en/chapters/05-dynamodb.md)
+ID: `notes-idle` / chapter: [05 NoSQL: DynamoDB](/en/chapters/05-dynamodb.md)
 
 Assumptions:
 
@@ -108,7 +108,7 @@ Assumptions:
 
 ## Notes API and table: 1,000,000 requests a month
 
-ID: `notes-small` / chapter: [05 Persist Notes: DynamoDB](/en/chapters/05-dynamodb.md)
+ID: `notes-small` / chapter: [05 NoSQL: DynamoDB](/en/chapters/05-dynamodb.md)
 
 Assumptions:
 
@@ -136,7 +136,7 @@ Assumptions:
 
 ## Notes app with sign-in: 1,000,000 requests and 100 MAUs a month
 
-ID: `notes-app-small` / chapter: [06 Add Login: Cognito and Authorization](/en/chapters/06-auth.md)
+ID: `notes-app-small` / chapter: [06 Auth: Cognito and Authorization](/en/chapters/06-auth.md)
 
 Assumptions:
 
@@ -162,7 +162,7 @@ Assumptions:
 
 ## Live streaming: four 2-hour streams a month, 100 viewers each watching half
 
-ID: `live-monthly-100` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+ID: `live-monthly-100` / chapter: [18 Live Streaming: IVS](/en/chapters/18-live.md)
 
 Assumptions:
 
@@ -182,7 +182,7 @@ Assumptions:
 
 ## Live streaming: the same streams with 1,000 viewers each
 
-ID: `live-monthly-1000` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+ID: `live-monthly-1000` / chapter: [18 Live Streaming: IVS](/en/chapters/18-live.md)
 
 Assumptions:
 
@@ -199,7 +199,7 @@ Assumptions:
 
 ## Left running: 48 hours of input to a BASIC channel
 
-ID: `live-left-on-weekend` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+ID: `live-left-on-weekend` / chapter: [18 Live Streaming: IVS](/en/chapters/18-live.md)
 
 Assumptions:
 
@@ -215,7 +215,7 @@ Assumptions:
 
 ## Left running: a month of input to a BASIC channel
 
-ID: `live-left-on-month-basic` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+ID: `live-left-on-month-basic` / chapter: [18 Live Streaming: IVS](/en/chapters/18-live.md)
 
 Assumptions:
 
@@ -231,7 +231,7 @@ Assumptions:
 
 ## Left running: a month of input to a STANDARD channel
 
-ID: `live-left-on-month-standard` / chapter: [18 A Live-Streaming Recipe: IVS](/en/chapters/18-live.md)
+ID: `live-left-on-month-standard` / chapter: [18 Live Streaming: IVS](/en/chapters/18-live.md)
 
 Assumptions:
 
@@ -246,7 +246,7 @@ Assumptions:
 
 ## Network: add one NAT gateway
 
-ID: `network-nat-single` / chapter: [11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
+ID: `network-nat-single` / chapter: [11 Network: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
 
 Assumptions:
 
@@ -268,7 +268,7 @@ Assumptions:
 
 ## Network: add a NAT gateway per zone
 
-ID: `network-nat-per-az` / chapter: [11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
+ID: `network-nat-per-az` / chapter: [11 Network: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
 
 Assumptions:
 
@@ -289,7 +289,7 @@ Assumptions:
 
 ## Network: add three interface endpoints
 
-ID: `network-interface-endpoints` / chapter: [11 The Network You Actually Need: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
+ID: `network-interface-endpoints` / chapter: [11 Network: VPC, Subnets, NAT, and Endpoints](/en/chapters/11-network.md)
 
 Assumptions:
 
@@ -308,7 +308,7 @@ Assumptions:
 
 ## Summary API: deployed, but never called for a month
 
-ID: `ai-idle` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+ID: `ai-idle` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
 
 Assumptions:
 
@@ -320,7 +320,7 @@ Assumptions:
 
 ## Summary API: 1,000 summaries a month (Nova 2 Lite, jp. profile)
 
-ID: `ai-summaries-nova-2-lite` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+ID: `ai-summaries-nova-2-lite` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
 
 Assumptions:
 
@@ -345,7 +345,7 @@ Assumptions:
 
 ## Summary API: output cost if all 1,000 summaries hit the output limit
 
-ID: `ai-output-ceiling-nova-2-lite` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+ID: `ai-output-ceiling-nova-2-lite` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
 
 Assumptions:
 
@@ -362,7 +362,7 @@ Assumptions:
 
 ## Summary API: the same token counts on Claude Haiku 4.5 (inference only)
 
-ID: `ai-summaries-claude-haiku-4-5` / chapter: [17 AI Development for Workers AI Users: Bedrock](/en/chapters/17-ai.md)
+ID: `ai-summaries-claude-haiku-4-5` / chapter: [17 AI: Bedrock](/en/chapters/17-ai.md)
 
 Assumptions:
 
@@ -383,7 +383,7 @@ Assumptions:
 
 ## Notification mail: deployed, but nothing sent for a month
 
-ID: `email-idle` / chapter: [15 Send Email: SES](/en/chapters/15-email.md)
+ID: `email-idle` / chapter: [15 Email: SES](/en/chapters/15-email.md)
 
 Assumptions:
 
@@ -399,7 +399,7 @@ Assumptions:
 
 ## Notification mail: 10,000 messages a month
 
-ID: `email-small` / chapter: [15 Send Email: SES](/en/chapters/15-email.md)
+ID: `email-small` / chapter: [15 Email: SES](/en/chapters/15-email.md)
 
 Assumptions:
 
@@ -431,7 +431,7 @@ Assumptions:
 
 ## Edge example: 1,000,000 requests a month
 
-ID: `edge-small` / chapter: [10 Understand the Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge](/en/chapters/10-edge.md)
+ID: `edge-small` / chapter: [10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge](/en/chapters/10-edge.md)
 
 Assumptions:
 
@@ -460,7 +460,7 @@ Assumptions:
 
 ## Aurora DSQL: 1 GB of data and no queries for a month
 
-ID: `sql-dsql-idle` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+ID: `sql-dsql-idle` / chapter: [13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
 
 Assumptions:
 
@@ -478,7 +478,7 @@ Assumptions:
 
 ## Aurora DSQL: a notes API at 1 million requests a month (database only)
 
-ID: `sql-dsql-small` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+ID: `sql-dsql-small` / chapter: [13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
 
 Assumptions:
 
@@ -499,7 +499,7 @@ Assumptions:
 
 ## RDS for PostgreSQL: the smallest configuration running for 730 hours
 
-ID: `sql-rds-min` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+ID: `sql-rds-min` / chapter: [13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
 
 Assumptions:
 
@@ -519,7 +519,7 @@ Assumptions:
 
 ## Aurora Serverless v2: no auto-pause, 0.5 ACU minimum for 730 hours
 
-ID: `sql-aurora-min` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+ID: `sql-aurora-min` / chapter: [13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
 
 Assumptions:
 
@@ -538,7 +538,7 @@ Assumptions:
 
 ## Aurora Serverless v2: auto-paused for the whole month
 
-ID: `sql-aurora-paused` / chapter: [13 SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
+ID: `sql-aurora-paused` / chapter: [13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2](/en/chapters/13-sql.md)
 
 Assumptions:
 
@@ -556,7 +556,7 @@ Assumptions:
 
 ## Image attachments: 10,000 uploads and 100,000 views a month
 
-ID: `uploads-small` / chapter: [07 Upload Images: Presigned URLs and S3](/en/chapters/07-uploads.md)
+ID: `uploads-small` / chapter: [07 File Upload: Presigned URLs and S3](/en/chapters/07-uploads.md)
 
 Assumptions:
 
@@ -588,7 +588,7 @@ Assumptions:
 
 ## SSR: deployed, but nobody visits for a month
 
-ID: `ssr-idle` / chapter: [09 SSR and a BFF: Nuxt on Regional Lambda](/en/chapters/09-ssr.md)
+ID: `ssr-idle` / chapter: [09 SSR: A BFF, and Nuxt on Regional Lambda](/en/chapters/09-ssr.md)
 
 Assumptions:
 
@@ -606,7 +606,7 @@ Assumptions:
 
 ## SSR: 100,000 page views a month
 
-ID: `ssr-small` / chapter: [09 SSR and a BFF: Nuxt on Regional Lambda](/en/chapters/09-ssr.md)
+ID: `ssr-small` / chapter: [09 SSR: A BFF, and Nuxt on Regional Lambda](/en/chapters/09-ssr.md)
 
 Assumptions:
 
@@ -637,7 +637,7 @@ Assumptions:
 
 ## Observed notes API: deployed, but never called for a month
 
-ID: `obs-idle` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+ID: `obs-idle` / chapter: [19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
 
 Assumptions:
 
@@ -655,7 +655,7 @@ Assumptions:
 
 ## Observed notes API: what observing 1,000,000 requests a month costs
 
-ID: `obs-small` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+ID: `obs-small` / chapter: [19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
 
 Assumptions:
 
@@ -682,7 +682,7 @@ Assumptions:
 
 ## One more log line per request: 1,000,000 requests a month
 
-ID: `obs-one-more-line` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+ID: `obs-one-more-line` / chapter: [19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
 
 Assumptions:
 
@@ -699,7 +699,7 @@ Assumptions:
 
 ## One more custom metric
 
-ID: `obs-one-more-metric` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+ID: `obs-one-more-metric` / chapter: [19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
 
 Assumptions:
 
@@ -715,7 +715,7 @@ Assumptions:
 
 ## Synthetics: one canary every 5 minutes
 
-ID: `obs-canary-5min` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+ID: `obs-canary-5min` / chapter: [19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
 
 Assumptions:
 
@@ -731,7 +731,7 @@ Assumptions:
 
 ## RUM: 10,000 visits a month, all collected
 
-ID: `obs-rum-small` / chapter: [19 See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
+ID: `obs-rum-small` / chapter: [19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics](/en/chapters/19-observability.md)
 
 Assumptions:
 
@@ -748,7 +748,7 @@ Assumptions:
 
 ## KV and cache: the default stack (DynamoDB), deployed but never called for a month
 
-ID: `kv-idle-dynamodb` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-idle-dynamodb` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -765,7 +765,7 @@ Assumptions:
 
 ## KV and cache: ElastiCache Serverless (Valkey), deployed but never called for a month
 
-ID: `kv-idle-valkey-serverless` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-serverless` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -782,7 +782,7 @@ Assumptions:
 
 ## For comparison: one node-based Valkey node (cache.t4g.micro) left running for a month
 
-ID: `kv-idle-valkey-node` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-idle-valkey-node` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -799,7 +799,7 @@ Assumptions:
 
 ## KV and cache: one million requests a month on DynamoDB
 
-ID: `kv-used-dynamodb` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-used-dynamodb` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -827,7 +827,7 @@ Assumptions:
 
 ## KV and cache: one million requests a month on ElastiCache Serverless (Valkey)
 
-ID: `kv-used-valkey` / chapter: [14 Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
+ID: `kv-used-valkey` / chapter: [14 KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration](/en/chapters/14-kv-cache.md)
 
 Assumptions:
 
@@ -854,7 +854,7 @@ Assumptions:
 
 ## Shipping: the stack and the CI roles in place, nobody calling for a month
 
-ID: `ship-idle` / chapter: [20 Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift](/en/chapters/20-shipping.md)
+ID: `ship-idle` / chapter: [20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift](/en/chapters/20-shipping.md)
 
 Assumptions:
 
@@ -868,7 +868,7 @@ Assumptions:
 
 ## Shipping: one deploy a day for a year, assets never cleaned up
 
-ID: `ship-assets-year` / chapter: [20 Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift](/en/chapters/20-shipping.md)
+ID: `ship-assets-year` / chapter: [20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift](/en/chapters/20-shipping.md)
 
 Assumptions:
 
@@ -886,7 +886,7 @@ Assumptions:
 
 ## Containers: the repository alone (deployed without an image tag)
 
-ID: `containers-repository-only` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+ID: `containers-repository-only` / chapter: [12 Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
 
 Assumptions:
 
@@ -903,7 +903,7 @@ Assumptions:
 
 ## Containers: the default layout left running for a month
 
-ID: `containers-idle` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+ID: `containers-idle` / chapter: [12 Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
 
 Assumptions:
 
@@ -927,7 +927,7 @@ Assumptions:
 
 ## Containers: the default layout for one day
 
-ID: `containers-one-day` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+ID: `containers-one-day` / chapter: [12 Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
 
 Assumptions:
 
@@ -947,7 +947,7 @@ Assumptions:
 
 ## Containers: 1,000,000 requests a month
 
-ID: `containers-small` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+ID: `containers-small` / chapter: [12 Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
 
 Assumptions:
 
@@ -974,7 +974,7 @@ Assumptions:
 
 ## Containers: tasks in private subnets, out through one NAT gateway
 
-ID: `containers-private-nat` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+ID: `containers-private-nat` / chapter: [12 Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
 
 Assumptions:
 
@@ -999,7 +999,7 @@ Assumptions:
 
 ## Containers: tasks in private subnets, reaching AWS through three interface endpoints
 
-ID: `containers-private-endpoints` / chapter: [12 Run Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
+ID: `containers-private-endpoints` / chapter: [12 Containers: ECR, ECS/Fargate, and ALB](/en/chapters/12-containers.md)
 
 Assumptions:
 
@@ -1025,7 +1025,7 @@ Assumptions:
 
 ## Asynchronous inspection and housekeeping: deployed, with no images, for a month
 
-ID: `async-idle` / chapter: [08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
+ID: `async-idle` / chapter: [08 Queue: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
 
 Assumptions:
 
@@ -1050,7 +1050,7 @@ Assumptions:
 
 ## Asynchronous inspection: 10,000 uploads and 1,000 deletes a month
 
-ID: `async-pipeline-small` / chapter: [08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
+ID: `async-pipeline-small` / chapter: [08 Queue: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
 
 Assumptions:
 
@@ -1080,7 +1080,7 @@ Assumptions:
 
 ## Scheduled housekeeping: reconciling a bucket of 10,000 images every hour
 
-ID: `async-housekeeping-10k` / chapter: [08 Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
+ID: `async-housekeeping-10k` / chapter: [08 Queue: SQS, DLQs, Idempotency, and Scheduler](/en/chapters/08-async.md)
 
 Assumptions:
 
@@ -1106,7 +1106,7 @@ Assumptions:
 
 ## EC2: a month running in a private subnet
 
-ID: `ec2-private-running` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+ID: `ec2-private-running` / chapter: [23 VM: EC2, SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
 
 Assumptions:
 
@@ -1129,7 +1129,7 @@ Assumptions:
 
 ## EC2: a month stopped in a private subnet
 
-ID: `ec2-private-stopped` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+ID: `ec2-private-stopped` / chapter: [23 VM: EC2, SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
 
 Assumptions:
 
@@ -1150,7 +1150,7 @@ Assumptions:
 
 ## EC2: a month running in a public subnet
 
-ID: `ec2-public-running` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+ID: `ec2-public-running` / chapter: [23 VM: EC2, SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
 
 Assumptions:
 
@@ -1173,7 +1173,7 @@ Assumptions:
 
 ## EC2: a month stopped in a public subnet
 
-ID: `ec2-public-stopped` / chapter: [23 EC2 When You Want Control: SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
+ID: `ec2-public-stopped` / chapter: [23 VM: EC2, SSM, EBS, and Process Management](/en/chapters/23-ec2.md)
 
 Assumptions:
 
@@ -1193,7 +1193,7 @@ Assumptions:
 
 ## Long jobs: deployed, with no notes at all, for a month
 
-ID: `export-idle` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+ID: `export-idle` / chapter: [16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
 
 Assumptions:
 
@@ -1219,7 +1219,7 @@ Assumptions:
 
 ## Long jobs: 10,000 notes exported daily, every page in one invocation (this chapter's default)
 
-ID: `export-daily-10k-coarse` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+ID: `export-daily-10k-coarse` / chapter: [16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
 
 Assumptions:
 
@@ -1249,7 +1249,7 @@ Assumptions:
 
 ## Long jobs: 10,000 notes exported daily, returning to the workflow after every page
 
-ID: `export-daily-10k-fine` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+ID: `export-daily-10k-fine` / chapter: [16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
 
 Assumptions:
 
@@ -1279,7 +1279,7 @@ Assumptions:
 
 ## Long jobs: 10,000 notes exported daily with the durable-function variant (`-c durable=true`)
 
-ID: `export-daily-10k-durable` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+ID: `export-daily-10k-durable` / chapter: [16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
 
 Assumptions:
 
@@ -1312,7 +1312,7 @@ Assumptions:
 
 ## For comparison: a step that takes an hour, run once a day as a Fargate task for a month
 
-ID: `export-step-fargate-1h` / chapter: [16 Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
+ID: `export-step-fargate-1h` / chapter: [16 Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch](/en/chapters/16-long-jobs.md)
 
 Assumptions:
 
@@ -1333,7 +1333,7 @@ Assumptions:
 
 ## Security: the default stack, deployed but never called for a month
 
-ID: `sec-idle-default` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+ID: `sec-idle-default` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
 
 Assumptions:
 
@@ -1352,7 +1352,7 @@ Assumptions:
 
 ## Security: with `-c cmk=on`, deployed but never called for a month
 
-ID: `sec-idle-cmk` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+ID: `sec-idle-cmk` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
 
 Assumptions:
 
@@ -1371,7 +1371,7 @@ Assumptions:
 
 ## Security: the web ACL (AihSecurityWaf) for a month, inspecting one million requests
 
-ID: `sec-waf-month` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+ID: `sec-waf-month` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
 
 Assumptions:
 
@@ -1393,7 +1393,7 @@ Assumptions:
 
 ## Security: the default stack, 100,000 tokens issued and 100,000 verified a month
 
-ID: `sec-small` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+ID: `sec-small` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
 
 Assumptions:
 
@@ -1421,7 +1421,7 @@ Assumptions:
 
 ## Security: GuardDuty, Inspector, and AWS Config on a small account for a month (an order-of-magnitude example)
 
-ID: `sec-detect-example` / chapter: [21 Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
+ID: `sec-detect-example` / chapter: [21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations](/en/chapters/21-security.md)
 
 Assumptions:
 
@@ -1443,7 +1443,7 @@ Assumptions:
 
 ## Recovery: what staying restorable adds for a month (1 GB table, 10 GB of images)
 
-ID: `recovery-keep` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+ID: `recovery-keep` / chapter: [22 Backup: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
 
 Assumptions:
 
@@ -1462,7 +1462,7 @@ Assumptions:
 
 ## Recovery: one drill that restores and checks a 1 GB table
 
-ID: `recovery-drill` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+ID: `recovery-drill` / chapter: [22 Backup: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
 
 Assumptions:
 
@@ -1483,7 +1483,7 @@ Assumptions:
 
 ## Recovery: what `-c backup=on` adds (AWS Backup, 1 GB table)
 
-ID: `recovery-backup-optin` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+ID: `recovery-backup-optin` / chapter: [22 Backup: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
 
 Assumptions:
 
@@ -1501,7 +1501,7 @@ Assumptions:
 
 ## Recovery: what `-c replica=on` adds (S3 Replication, 10 GB of images)
 
-ID: `recovery-replica-optin` / chapter: [22 Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
+ID: `recovery-replica-optin` / chapter: [22 Backup: PITR, Snapshots, S3 Versioning, and AWS Backup](/en/chapters/22-recovery.md)
 
 Assumptions:
 
@@ -1520,7 +1520,7 @@ Assumptions:
 
 ## celld: one node running for a month
 
-ID: `celld-one-node-running` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+ID: `celld-one-node-running` / chapter: [24 Self-hosting: celld on AWS](/en/chapters/24-celld.md)
 
 Assumptions:
 
@@ -1546,7 +1546,7 @@ Assumptions:
 
 ## celld: three nodes running for a month
 
-ID: `celld-three-nodes-running` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+ID: `celld-three-nodes-running` / chapter: [24 Self-hosting: celld on AWS](/en/chapters/24-celld.md)
 
 Assumptions:
 
@@ -1572,7 +1572,7 @@ Assumptions:
 
 ## celld: three nodes stopped for a month
 
-ID: `celld-three-nodes-stopped` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+ID: `celld-three-nodes-stopped` / chapter: [24 Self-hosting: celld on AWS](/en/chapters/24-celld.md)
 
 Assumptions:
 
@@ -1593,7 +1593,7 @@ Assumptions:
 
 ## celld: the data volumes left after destroying the stack (three nodes)
 
-ID: `celld-retained-after-destroy` / chapter: [24 Advanced Lab: Self-Hosting celld on AWS](/en/chapters/24-celld.md)
+ID: `celld-retained-after-destroy` / chapter: [24 Self-hosting: celld on AWS](/en/chapters/24-celld.md)
 
 Assumptions:
 

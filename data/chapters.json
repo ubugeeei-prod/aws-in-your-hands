@@ -14,8 +14,8 @@
       "id": "00",
       "slug": "welcome",
       "title": {
-        "ja": "ようこそ: 何を作り、どう読むか",
-        "en": "Welcome: What You Will Build and How to Read"
+        "ja": "Introduction: 何を作り、どう読むか",
+        "en": "Introduction: What You Will Build and How to Read"
       },
       "prerequisites": [],
       "services": [],
@@ -39,8 +39,8 @@
       "id": "01",
       "slug": "account",
       "title": {
-        "ja": "アカウント、一時認証情報、リージョン、予算、片付け",
-        "en": "Accounts, Temporary Credentials, Regions, Budgets, and Cleanup"
+        "ja": "Account: 一時認証情報、リージョン、予算、片付け",
+        "en": "Account: Temporary Credentials, Regions, Budgets, and Cleanup"
       },
       "prerequisites": ["00"],
       "services": ["IAM", "AWS Sign-In", "AWS Budgets", "AWS Billing"],
@@ -65,8 +65,8 @@
       "id": "02",
       "slug": "toolchain",
       "title": {
-        "ja": "再現できる TypeScript 開発: Nix、vp、CDK、cdkd、drift",
-        "en": "Reproducible TypeScript Development: Nix, vp, CDK, cdkd, and Drift"
+        "ja": "Toolchain: Nix、vp、CDK、cdkd、drift",
+        "en": "Toolchain: Nix, vp, CDK, cdkd, and Drift"
       },
       "prerequisites": ["01"],
       "services": ["AWS CDK", "CloudFormation", "S3"],
@@ -101,8 +101,8 @@
       "id": "03",
       "slug": "spa",
       "title": {
-        "ja": "SPA を公開する: private S3 origin と CloudFront",
-        "en": "Publish a SPA: A Private S3 Origin and CloudFront"
+        "ja": "Static Hosting: private S3 origin と CloudFront",
+        "en": "Static Hosting: A Private S3 Origin and CloudFront"
       },
       "prerequisites": ["02"],
       "services": ["S3", "CloudFront"],
@@ -134,8 +134,8 @@
       "id": "04",
       "slug": "http-api",
       "title": {
-        "ja": "HTTP API を足す: Lambda と API Gateway HTTP API",
-        "en": "Add an HTTP API: Lambda and API Gateway HTTP API"
+        "ja": "HTTP API: Lambda と API Gateway HTTP API",
+        "en": "HTTP API: Lambda and API Gateway HTTP API"
       },
       "prerequisites": ["02"],
       "services": ["Lambda", "API Gateway HTTP API", "CloudWatch Logs", "IAM"],
@@ -167,8 +167,8 @@
       "id": "05",
       "slug": "dynamodb",
       "title": {
-        "ja": "ノートを保存する: DynamoDB",
-        "en": "Persist Notes: DynamoDB"
+        "ja": "NoSQL: DynamoDB",
+        "en": "NoSQL: DynamoDB"
       },
       "prerequisites": ["04"],
       "services": ["DynamoDB", "Lambda", "API Gateway HTTP API", "IAM"],
@@ -200,8 +200,8 @@
       "id": "06",
       "slug": "auth",
       "title": {
-        "ja": "ログインを足す: Cognito と認可",
-        "en": "Add Login: Cognito and Authorization"
+        "ja": "Auth: Cognito と認可",
+        "en": "Auth: Cognito and Authorization"
       },
       "prerequisites": ["03", "05"],
       "services": [
@@ -239,8 +239,8 @@
       "id": "07",
       "slug": "uploads",
       "title": {
-        "ja": "画像をアップロードする: presigned URL と S3",
-        "en": "Upload Images: Presigned URLs and S3"
+        "ja": "File Upload: presigned URL と S3",
+        "en": "File Upload: Presigned URLs and S3"
       },
       "prerequisites": ["06"],
       "services": [
@@ -289,8 +289,8 @@
       "id": "08",
       "slug": "async",
       "title": {
-        "ja": "リクエストの外で処理する: SQS、DLQ、冪等性、Scheduler",
-        "en": "Move Work off the Request: SQS, DLQs, Idempotency, and Scheduler"
+        "ja": "Queue: SQS、DLQ、冪等性、Scheduler",
+        "en": "Queue: SQS, DLQs, Idempotency, and Scheduler"
       },
       "prerequisites": ["07"],
       "services": ["SQS", "Lambda", "EventBridge Scheduler", "S3 Event Notifications", "DynamoDB"],
@@ -368,8 +368,8 @@
       "id": "09",
       "slug": "ssr",
       "title": {
-        "ja": "SSR と BFF: Nuxt をリージョンの Lambda で動かす",
-        "en": "SSR and a BFF: Nuxt on Regional Lambda"
+        "ja": "SSR: BFF、Nuxt をリージョンの Lambda で動かす",
+        "en": "SSR: A BFF, and Nuxt on Regional Lambda"
       },
       "prerequisites": ["03", "04"],
       "services": ["Lambda", "Lambda function URLs", "CloudFront", "S3"],
@@ -417,8 +417,8 @@
       "id": "10",
       "slug": "edge",
       "title": {
-        "ja": "edge を理解する: CloudFront Functions、KeyValueStore、Lambda@Edge",
-        "en": "Understand the Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
+        "ja": "Edge: CloudFront Functions、KeyValueStore、Lambda@Edge",
+        "en": "Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
       },
       "prerequisites": ["03"],
       "services": ["CloudFront Functions", "CloudFront KeyValueStore", "Lambda@Edge"],
@@ -467,8 +467,8 @@
       "id": "11",
       "slug": "network",
       "title": {
-        "ja": "本当に必要なネットワーク: VPC、subnet、NAT、endpoint",
-        "en": "The Network You Actually Need: VPC, Subnets, NAT, and Endpoints"
+        "ja": "Network: VPC、subnet、NAT、endpoint",
+        "en": "Network: VPC, Subnets, NAT, and Endpoints"
       },
       "prerequisites": ["02"],
       "services": ["VPC", "NAT Gateway", "VPC endpoints"],
@@ -523,8 +523,8 @@
       "id": "12",
       "slug": "containers",
       "title": {
-        "ja": "コンテナを動かす: ECR、ECS/Fargate、ALB",
-        "en": "Run Containers: ECR, ECS/Fargate, and ALB"
+        "ja": "Containers: ECR、ECS/Fargate、ALB",
+        "en": "Containers: ECR, ECS/Fargate, and ALB"
       },
       "prerequisites": ["11"],
       "services": ["ECR", "ECS", "Fargate", "ALB"],
@@ -605,8 +605,8 @@
       "id": "13",
       "slug": "sql",
       "title": {
-        "ja": "D1 に親しんだ人の SQL 開発: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2",
-        "en": "SQL Development for D1 Users: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
+        "ja": "SQL: Aurora DSQL、RDS PostgreSQL、Aurora Serverless v2",
+        "en": "SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
       },
       "prerequisites": ["04"],
       "services": [
@@ -689,8 +689,8 @@
       "id": "14",
       "slug": "kv-cache",
       "title": {
-        "ja": "key-value と cache を選ぶ: DynamoDB、ElastiCache/Valkey、edge 設定",
-        "en": "Choose a Key-Value Store or Cache: DynamoDB, ElastiCache/Valkey, and Edge Configuration"
+        "ja": "KV Store: cache、DynamoDB、ElastiCache/Valkey、edge 設定",
+        "en": "KV Store: Caches, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
       },
       "prerequisites": ["05", "10", "11"],
       "services": [
@@ -772,8 +772,8 @@
       "id": "15",
       "slug": "email",
       "title": {
-        "ja": "メールを送る: SES",
-        "en": "Send Email: SES"
+        "ja": "Email: SES",
+        "en": "Email: SES"
       },
       "prerequisites": ["04"],
       "services": [
@@ -832,8 +832,8 @@
       "id": "16",
       "slug": "long-jobs",
       "title": {
-        "ja": "長い処理を動かす: ECS task、Step Functions、Lambda durable functions、AWS Batch",
-        "en": "Run Longer Jobs: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
+        "ja": "Workflow: ECS task、Step Functions、Lambda durable functions、AWS Batch",
+        "en": "Workflow: ECS Tasks, Step Functions, Lambda Durable Functions, and AWS Batch"
       },
       "prerequisites": ["08", "12"],
       "services": [
@@ -932,8 +932,8 @@
       "id": "17",
       "slug": "ai",
       "title": {
-        "ja": "Workers AI に親しんだ人の AI 開発: Bedrock",
-        "en": "AI Development for Workers AI Users: Bedrock"
+        "ja": "AI: Bedrock",
+        "en": "AI: Bedrock"
       },
       "prerequisites": ["04"],
       "services": [
@@ -989,8 +989,8 @@
       "id": "18",
       "slug": "live",
       "title": {
-        "ja": "ライブ配信のレシピ: IVS",
-        "en": "A Live-Streaming Recipe: IVS"
+        "ja": "Live Streaming: IVS",
+        "en": "Live Streaming: IVS"
       },
       "prerequisites": ["04"],
       "services": ["IVS", "EventBridge", "Lambda"],
@@ -1036,8 +1036,8 @@
       "id": "19",
       "slug": "observability",
       "title": {
-        "ja": "本番の挙動を見る: CloudWatch、OpenTelemetry、RUM、Synthetics",
-        "en": "See Production Behavior: CloudWatch, OpenTelemetry, RUM, and Synthetics"
+        "ja": "Observability: CloudWatch、OpenTelemetry、RUM、Synthetics",
+        "en": "Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
       },
       "prerequisites": ["04"],
       "services": [
@@ -1114,8 +1114,8 @@
       "id": "20",
       "slug": "shipping",
       "title": {
-        "ja": "変更を届ける: CI/CD、OIDC、環境、preview、rollback、drift",
-        "en": "Ship Changes: CI/CD, OIDC, Environments, Previews, Rollback, and Drift"
+        "ja": "CI/CD: OIDC、環境、preview、rollback、drift",
+        "en": "CI/CD: OIDC, Environments, Previews, Rollback, and Drift"
       },
       "prerequisites": ["02", "04"],
       "services": ["IAM OIDC", "CloudFormation", "AWS CDK"],
@@ -1190,8 +1190,8 @@
       "id": "21",
       "slug": "security",
       "title": {
-        "ja": "守り、統制する: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations",
-        "en": "Protect and Govern: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
+        "ja": "Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations",
+        "en": "Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
       },
       "prerequisites": ["06", "20"],
       "services": [
@@ -1285,8 +1285,8 @@
       "id": "22",
       "slug": "recovery",
       "title": {
-        "ja": "データとサービスを復旧する: PITR、snapshot、S3 versioning、AWS Backup",
-        "en": "Recover Data and Service: PITR, Snapshots, S3 Versioning, and AWS Backup"
+        "ja": "Backup: PITR、snapshot、S3 versioning、AWS Backup",
+        "en": "Backup: PITR, Snapshots, S3 Versioning, and AWS Backup"
       },
       "prerequisites": ["05", "07"],
       "services": ["DynamoDB PITR", "S3 Versioning", "S3 Replication", "AWS Backup"],
@@ -1331,8 +1331,8 @@
       "id": "23",
       "slug": "ec2",
       "title": {
-        "ja": "制御したいときの EC2: SSM、EBS、プロセス運用",
-        "en": "EC2 When You Want Control: SSM, EBS, and Process Management"
+        "ja": "VM: EC2、SSM、EBS、プロセス運用",
+        "en": "VM: EC2, SSM, EBS, and Process Management"
       },
       "prerequisites": ["11"],
       "services": ["EC2", "Systems Manager", "EBS"],
@@ -1427,8 +1427,8 @@
       "id": "24",
       "slug": "celld",
       "title": {
-        "ja": "発展ラボ: celld を AWS でセルフホストする",
-        "en": "Advanced Lab: Self-Hosting celld on AWS"
+        "ja": "Self-hosting: celld を AWS で動かす",
+        "en": "Self-hosting: celld on AWS"
       },
       "prerequisites": ["22", "23"],
       "services": ["EC2", "EBS", "S3", "VPC"],
