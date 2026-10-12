@@ -1,7 +1,8 @@
-import { defaultTheme, defineTheme, oxContent } from "@ox-content/vite-plugin";
+import { oxContent } from "@ox-content/vite-plugin";
 import { defineConfig } from "vite-plus";
 
-import { sidebar } from "./site.ts";
+import { brandAssets } from "./theme/assets.ts";
+import { brandTheme } from "./theme/theme.ts";
 
 const base = "/";
 
@@ -11,6 +12,7 @@ const siteUrl = process.env.AIH_BOOK_SITE_URL;
 export default defineConfig({
   base,
   plugins: [
+    brandAssets(base),
     oxContent({
       srcDir: "content",
       outDir: "dist",
@@ -40,11 +42,7 @@ export default defineConfig({
         readerChrome: true,
         localeSwitcher: true,
         notFound: true,
-        theme: defineTheme({
-          extends: defaultTheme,
-          aside: true,
-          sidebar,
-        }),
+        theme: brandTheme(base),
       },
     }),
   ],

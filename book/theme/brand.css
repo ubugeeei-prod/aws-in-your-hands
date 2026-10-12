@@ -1,0 +1,483 @@
+/* Open Current / Horizon, on top of the Ox Content default theme.
+   Reading surfaces are opaque, bounded by thin lines, with no shadows.
+   Orange and neon pink mark a position. They never sit under text. */
+
+:root {
+  --aih-orange: #ff8a00;
+  --aih-pink: #f300df;
+  --aih-navy: #101b2b;
+  --aih-display: var(--octc-font-display);
+  /* A 4 px rhythm. */
+  --aih-1: 4px;
+  --aih-2: 8px;
+  --aih-3: 12px;
+  --aih-4: 16px;
+  --aih-6: 24px;
+  --aih-8: 32px;
+  --aih-12: 48px;
+  --aih-16: 64px;
+  --octc-surface-noise-image: none;
+}
+
+/* ---- reading -------------------------------------------------------- */
+
+body {
+  font-size: 18px;
+  line-height: 1.85;
+  font-feature-settings: "palt" 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.content {
+  font-size: 1rem;
+}
+
+.content p,
+.content li {
+  line-height: 1.9;
+}
+
+:lang(en) .content p,
+:lang(en) .content li {
+  line-height: 1.7;
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4 {
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.35;
+  color: var(--octc-color-text);
+}
+
+.content h1 {
+  font-size: clamp(2rem, 1.3rem + 2.6vw, 3rem);
+  line-height: 1.25;
+  margin: 0 0 var(--aih-8);
+  padding-bottom: var(--aih-8);
+  border-bottom: 1px solid var(--octc-color-text);
+}
+
+.content h2 {
+  font-size: 1.6rem;
+  margin: var(--aih-16) 0 var(--aih-4);
+  padding-top: var(--aih-6);
+  border-top: 1px solid var(--octc-color-border);
+  border-bottom: 0;
+}
+
+.content h3 {
+  font-size: 1.2rem;
+  margin: var(--aih-12) 0 var(--aih-3);
+}
+
+.content strong {
+  font-weight: 700;
+}
+
+/* Links are text: navy on white, underlined. The underline does the pointing. */
+.content a:not(.header-anchor):not(.pager-link) {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.content a:not(.header-anchor):not(.pager-link):hover {
+  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
+}
+
+::selection {
+  background: var(--octc-color-text);
+  color: var(--octc-color-bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--octc-color-text);
+  outline-offset: 3px;
+  border-radius: 0;
+}
+
+.content hr {
+  border: 0;
+  border-top: 1px solid var(--octc-color-border);
+  margin: var(--aih-12) 0;
+}
+
+.content blockquote {
+  margin: var(--aih-6) 0;
+  padding: 0 0 0 var(--aih-6);
+  border-left: 1px solid var(--octc-color-text);
+  background: none;
+  color: var(--octc-color-text-muted);
+  border-radius: 0;
+}
+
+/* ---- code ----------------------------------------------------------- */
+
+.content code {
+  font-size: 0.86em;
+  border-radius: 0;
+  border: 1px solid var(--octc-color-border);
+  background: var(--octc-color-bg-alt);
+  padding: 0.1em 0.36em;
+}
+
+.content pre,
+.content pre.ox-code-block {
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  background: var(--octc-color-code-bg);
+  font-size: 14px;
+  line-height: 1.75;
+  margin: var(--aih-6) 0;
+}
+
+.content pre code {
+  font-size: 14px;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.content pre.ox-code-block[data-code-title]::before {
+  font-family: var(--octc-font-mono);
+  font-size: 13px;
+  background: var(--octc-color-code-bg);
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ---- tables --------------------------------------------------------- */
+
+.content table {
+  border: 0;
+  border-top: 1px solid var(--octc-color-text);
+  border-radius: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.content th,
+.content td {
+  border: 0;
+  border-bottom: 1px solid var(--octc-color-border);
+  background: none;
+  padding: var(--aih-3) var(--aih-4);
+  text-align: left;
+  vertical-align: top;
+}
+
+.content th {
+  font-weight: 700;
+  border-bottom-color: var(--octc-color-text);
+}
+
+/* ---- header --------------------------------------------------------- */
+
+.header {
+  background: var(--octc-color-bg);
+  border-bottom: 1px solid var(--octc-color-border);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.header-title {
+  font-family: var(--aih-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0;
+  color: var(--octc-color-text);
+  gap: var(--aih-3);
+}
+
+.header-logo {
+  border-radius: 0;
+}
+
+.search-button,
+.theme-toggle,
+.ox-header-select > button,
+.menu-toggle {
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 44px;
+}
+
+.search-button {
+  border: 1px solid var(--octc-color-border);
+  background: var(--octc-color-bg);
+  font-size: 14px;
+}
+
+.search-modal,
+.ox-header-select-menu {
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid var(--octc-color-text);
+}
+
+/* ---- navigation ----------------------------------------------------- */
+
+.sidebar {
+  background: var(--octc-color-bg);
+  border-right: 1px solid var(--octc-color-border);
+  font-size: 14px;
+}
+
+.nav-title {
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--octc-color-text-muted);
+}
+
+.nav-link {
+  border-radius: 0;
+  color: var(--octc-color-text-muted);
+  line-height: 1.5;
+  padding-block: var(--aih-2);
+  background: none;
+}
+
+.nav-link:hover {
+  color: var(--octc-color-text);
+  background: none;
+}
+
+/* The page you are on: bold, with the orange marker beside it. */
+.nav-link.active,
+.nav-link[aria-current="page"] {
+  color: var(--octc-color-text);
+  font-weight: 700;
+  background: none;
+  box-shadow: inset 2px 0 0 var(--aih-orange);
+}
+
+.toc {
+  font-size: 14px;
+  border-left: 1px solid var(--octc-color-border);
+}
+
+.toc-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--octc-color-text);
+}
+
+.toc-link {
+  color: var(--octc-color-text-muted);
+  border-radius: 0;
+  line-height: 1.5;
+}
+
+.toc-link:hover {
+  color: var(--octc-color-text);
+}
+
+.toc-link.active,
+.toc-link[aria-current] {
+  color: var(--octc-color-text);
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--aih-pink);
+  background: none;
+}
+
+.pager {
+  border-top: 1px solid var(--octc-color-text);
+}
+
+.pager-link {
+  border-radius: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  min-height: 44px;
+  color: var(--octc-color-text);
+}
+
+.pager-label {
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+  color: var(--octc-color-text-muted);
+}
+
+.pager-title {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+.last-updated {
+  font-family: var(--octc-font-mono);
+  font-size: 12px;
+}
+
+/* ---- the cover ------------------------------------------------------ */
+
+.aih-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  color: #ffffff;
+  /* What is there before the cloud, and instead of it without WebGL2. */
+  background:
+    radial-gradient(120% 90% at 78% 18%, rgba(170, 165, 190, 0.34), transparent 55%),
+    radial-gradient(90% 70% at 30% 78%, rgba(243, 0, 223, 0.42), transparent 60%),
+    radial-gradient(80% 80% at 12% 22%, rgba(101, 52, 223, 0.5), transparent 62%), #0b1420;
+  font-family: var(--octc-font-sans);
+}
+
+.aih-cover__field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+.aih-cover.is-live .aih-cover__field {
+  opacity: 1;
+}
+
+.aih-cover__kicker,
+.aih-cover__mark,
+.aih-cover__title,
+.aih-cover__motion,
+.aih-cover__enter {
+  position: absolute;
+  margin: 0;
+}
+
+.aih-cover__kicker {
+  top: clamp(24px, 6.4vh, 52px);
+  left: clamp(20px, 4vw, 52px);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.aih-cover__mark {
+  top: clamp(18px, 5.4vh, 44px);
+  right: clamp(20px, 4vw, 52px);
+  width: 40px;
+  height: 40px;
+}
+
+.aih-cover__mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* "AWS" and the two lines beside it share one optical height. */
+.content .aih-cover__title {
+  left: clamp(20px, 4vw, 52px);
+  right: clamp(20px, 4vw, 52px);
+  bottom: clamp(84px, 13vh, 112px);
+  display: flex;
+  align-items: flex-end;
+  gap: 0.16em;
+  font-family: var(--aih-display);
+  font-weight: 700;
+  font-size: min(21.4vw, 34vh);
+  line-height: 0.74;
+  letter-spacing: -0.035em;
+  border: 0;
+  padding: 0;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.aih-cover__rest {
+  font-size: 0.427em;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  /* Aligns the foot of "Hands" with the foot of "AWS". */
+  padding-bottom: 0.02em;
+}
+
+.content .aih-cover__motion,
+.content .aih-cover__enter a:not(.header-anchor):not(.pager-link) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: inherit;
+  font-size: 14px;
+  color: #ffffff;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.content .aih-cover__motion:hover,
+.content .aih-cover__enter a:not(.header-anchor):not(.pager-link):hover {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.aih-cover :focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+}
+
+.aih-cover__motion {
+  left: clamp(20px, 4vw, 52px);
+  bottom: clamp(12px, 3.4vh, 28px);
+}
+
+.aih-cover__enter {
+  right: clamp(20px, 4vw, 52px);
+  bottom: clamp(12px, 3.4vh, 28px);
+  display: flex;
+  gap: var(--aih-8);
+}
+
+/* A narrow screen stacks the name in three lines. */
+@media (max-aspect-ratio: 1 / 1) {
+  .content .aih-cover__title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.02em;
+    font-size: min(27vw, 17vh);
+    line-height: 0.8;
+  }
+
+  .aih-cover__rest {
+    font-size: 0.66em;
+    line-height: 0.9;
+    padding-bottom: 0;
+  }
+}
+
+/* The cover is the whole page: nothing scrolls behind it. */
+html:has(.aih-cover) {
+  overflow: hidden;
+}
+
+@media print {
+  .aih-cover {
+    position: static;
+    min-height: 60vh;
+  }
+
+  .aih-cover__field,
+  .aih-cover__motion {
+    display: none;
+  }
+}

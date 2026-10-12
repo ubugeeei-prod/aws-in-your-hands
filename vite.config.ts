@@ -940,7 +940,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["{book/infra,tools,examples}/**/*.test.ts"],
+    include: ["{book/infra,book/theme,tools,examples}/**/*.test.ts"],
     // CDK tests synthesize a stack and bundle with esbuild. 5 seconds is not enough on a busy machine.
     testTimeout: 30_000,
   },
