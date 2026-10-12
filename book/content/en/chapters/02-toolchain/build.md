@@ -12,6 +12,8 @@ This page picks up after you have entered the environment and installed the depe
 
 You run every command in this book as `vp run <task name>`. The book uses no Make and no other task runner. Tasks are defined in `vite.config.ts` at the root, and you run them from the root. Typing `vp run` with no task name prints the list of tasks.
 
+A task's name does not tell you what runs behind it. So under every code block that uses `vp run`, this book prints the command the task actually runs. The text is built from `vite.config.ts` and the code in `tools/`, so it cannot disagree with the definition. A task is shown once per page, where it first appears. A task that calls cdkd also prints the same command in your terminal when it runs, as `$ (cd ... && AWS_REGION=... cdkd ...)`.
+
 `vp` also has built-in commands such as `vp dev`, `vp build`, `vp test`, and `vp check`, which are features of Vite+. A command with `run` in it, such as `vp run build:book`, is a task this book defines. The names look alike, so take care not to mix them up.
 
 Tasks come in two kinds.

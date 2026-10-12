@@ -7,6 +7,7 @@ import type { MarkdownTransformer } from "@ox-content/vite-plugin";
 
 import { renderFigure } from "./figure.ts";
 import { importsFor } from "./imports.ts";
+import { calls, explain, renderExplanations } from "./tasks.ts";
 import { chapterParts, chapterTitle, openingPage } from "./title.ts";
 
 type Node = {
@@ -178,6 +179,10 @@ export const codeTitles: MarkdownTransformer = {
       if (!/\[.+\]/.test(block.meta ?? "")) {
         block.meta = `${block.meta ?? ""} [${origin.path}]`.trim();
       }
+      // `.env.example` ends in "example", which names no language.
+      if (/(^|\/)\.env(\.[\w-]+)*$/.test(origin.path)) {
+        block.lang = "dotenv";
+      }
       // A region cut from inside a class or a function keeps that depth. Shown alone, it starts at the margin.
       if (origin.region !== undefined && block.value !== undefined) {
         block.value = dedent(block.value);
@@ -218,6 +223,55 @@ export const figures: MarkdownTransformer = {
       node.children?.forEach(draw);
     };
     draw(ast as Node);
+    return ast;
+  },
+};
+
+/**
+ * Under every shell block that runs `vp run <task>`: the command behind the task, read from
+ * vite.config.ts. A task is shown once a page, where it first appears.
+ */
+export const taskCommands: MarkdownTransformer = {
+  name: "aih:task-commands",
+  transform(ast, context) {
+    const locale = /\/content\/en\//.test(context.filePath) ? "en" : "ja";
+    const shown = new Set<string>();
+    const visit = (node: Node): void => {
+      const children = node.children;
+      if (children === undefined) {
+        return;
+      }
+      for (let index = children.length - 1; index >= 0; index -= 1) {
+        visit(children[index] as Node);
+      }
+      // Front to back, so "first" means first on the page. Indexes shift as blocks go in.
+      for (let index = 0; index < children.length; index += 1) {
+        const child = children[index] as Node;
+        if (child.type !== "code" || !/^(bash|sh|shell)$/.test(child.lang ?? "")) {
+          continue;
+        }
+        const fresh = calls(child.value ?? "").filter((call) => {
+          const key = [call.prefix, call.task, ...call.args].join(" ");
+          return shown.has(key) ? false : Boolean(shown.add(key));
+        });
+        let html: string | undefined;
+        try {
+          html = renderExplanations(
+            fresh.map((call) => explain(call)),
+            locale,
+          );
+        } catch (error) {
+          throw new Error(
+            `${context.filePath}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+        if (html !== undefined) {
+          children.splice(index + 1, 0, { type: "html", value: html });
+          index += 1;
+        }
+      }
+    };
+    visit(ast as Node);
     return ast;
   },
 };

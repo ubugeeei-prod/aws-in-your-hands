@@ -3,7 +3,7 @@ import { defineConfig } from "vite-plus";
 
 import { brandAssets } from "./theme/assets.ts";
 import { brandTheme } from "./theme/theme.ts";
-import { chapterHead, codeTitles, figures } from "./theme/transform.ts";
+import { chapterHead, codeTitles, figures, taskCommands } from "./theme/transform.ts";
 
 const base = "/";
 
@@ -28,7 +28,7 @@ export default defineConfig({
       // Japanese has no spaces to break lines at. BudouX finds the phrase boundaries at build time.
       budoux: { language: "ja" },
       // codeTitles counts fences, so it has to see the figures while they are still fences.
-      transformers: [chapterHead, codeTitles, figures],
+      transformers: [chapterHead, codeTitles, taskCommands, figures],
       search: { placeholder: "Search / 検索" },
       // robots.txt and llms.txt, once the site has a URL to put in them.
       siteMaps: siteUrl === undefined ? false : { robots: true, llms: true },

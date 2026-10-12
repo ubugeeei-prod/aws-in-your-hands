@@ -6,17 +6,11 @@ import { dirname, resolve } from "node:path";
 
 import { preflight } from "../aws/preflight.ts";
 import { runCdkd } from "../infra/run-cdkd.ts";
+import { driftArgs, isMode, type Mode, MODES } from "./args.ts";
 import { buildReport, summarize } from "./report.ts";
 
-const MODES = ["check", "preview-revert", "revert", "accept"] as const;
-type Mode = (typeof MODES)[number];
-
 const [mode, appDirArg, stack, ...extra] = process.argv.slice(2);
-if (
-  !(MODES as readonly string[]).includes(mode ?? "") ||
-  appDirArg === undefined ||
-  stack === undefined
-) {
+if (!isMode(mode) || appDirArg === undefined || stack === undefined) {
   console.error(`usage: cli.ts <${MODES.join("|")}> <appDir> <stack>`);
   process.exit(64);
 }
@@ -40,7 +34,7 @@ async function check(): Promise<number> {
   const executedAt = new Date();
   const run = await runCdkd({
     appDir,
-    args: ["drift", stack as string, "--json"],
+    args: driftArgs("check", stack as string),
     region: target.region,
     capture: true,
   });
@@ -61,21 +55,15 @@ async function check(): Promise<number> {
 }
 
 async function remediate(kind: Exclude<Mode, "check">): Promise<number> {
-  // --accept rewrites the state only: the CDK source still has the old value.
-  // --revert writes the recorded values back to AWS.
-  const flags = {
-    "preview-revert": ["--revert", "--dry-run"],
-    revert: ["--revert"],
-    accept: ["--accept"],
-  }[kind];
+  const args = driftArgs(kind, stack as string);
   const { target } = await preflight({
     access: kind === "preview-revert" ? "observe" : "mutate",
-    action: `cdkd drift ${flags.join(" ")}`,
+    action: `cdkd ${args.filter((arg) => arg !== stack).join(" ")}`,
     stack,
   });
   const result = await runCdkd({
     appDir,
-    args: ["drift", stack as string, ...flags],
+    args,
     region: target.region,
     capture: false,
   });
