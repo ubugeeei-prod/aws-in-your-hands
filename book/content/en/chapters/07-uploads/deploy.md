@@ -40,6 +40,9 @@ The tests check the template for the following.
 - The lifecycle rules are the two above: the pending tag and multipart uploads
 - The function's S3 permissions are the six operations above, with no `*` action and no `*` resource
 - Every route except `/health`, the four new ones included, has the JWT authorizer and a scope
+- The stage has chapter 06's throttle (10 requests a second, 20 for a moment), and the table has the same request unit limits
+
+The throttle applies to the new routes as they are. Requests for a permit don't get through faster than 10 a second either.
 
 The resource types are the same 19 as in chapter 06. The uploads bucket adds no new type. The pinned cdkd has a dedicated implementation for `AWS::S3::Bucket`, and its package contains code that handles the lifecycle and CORS settings; we looked. The three types without a dedicated implementation (`AWS::CloudFront::Function`, `AWS::Cognito::UserPoolClient`, `AWS::Cognito::UserPoolDomain`) are the same as in chapter 06.
 

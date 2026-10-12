@@ -90,6 +90,29 @@ Lambda@Edge は、100 万リクエストあたり USD 0.60 と、1 GB 秒あた�
 
 無料枠は従量課金の場合のもので、アカウント全体で共有です。
 
+### 叩かれたら
+
+この distribution は、URL を知っていれば誰でも呼べます。bot が大量に叩いてきたら、何が止めてくれるでしょうか。
+
+静的なページとファイルを守っているのは、cache です。default の behavior は GET と HEAD だけを受けて、`CachingOptimized` の cache policy を使います。この policy は query string も cookie も cache key に入れません（CDK の型定義にそう書いてあります）。なので `?x=<乱数>` を付けて叩かれても、同じ cache が返るだけで、S3 には届きません。届くのは、存在しない path を次々に変えて叩かれた場合です。そのときは 1 回ごとに S3 への GET（100 万回あたり USD 0.37）が増えます。
+
+ただし、cache が止めるのは origin への到達だけです。cache から返したリクエストにも、料金はかかります。
+
+- CloudFront のリクエスト: 100 万回あたり USD 1.20
+- CloudFront Functions の実行: 100 万回あたり USD 0.10（全リクエストで動きます）
+- KVS の読み取り: 100 万回あたり USD 0.03。ファイルなら 1 回、ページなら 2 回、トップページなら 3 回
+- 読者への転送: 1 GB あたり USD 0.114
+
+そして、**リクエストの数そのものに上限はありません。** 04章の API Gateway には、秒あたりの上限を無料で付けられました。従量課金の CloudFront の distribution には、それに当たる設定がありません。たとえば 1 秒 1,000 回を 1 日続けられると 8,640 万回で、リクエストが USD 103.68、関数が USD 8.64、KVS の読み取り（1 回ずつ）が USD 2.59。1 回 20 KB の応答なら、転送が 1,648 GB で USD 187.87。合わせて USD 302.78 です（定価。月ごとの無料枠は引いていません）。これは「この速さなら」の計算で、もっと速ければ、そのぶん増えます。
+
+`/digest` を足した場合は、もう 1 段あります。POST 以外は、手前の関数が 405 で断るので、上と同じくリクエストと関数の実行だけ（100 万回あたり USD 1.30）。POST は 1 回ごとに Lambda@Edge が動いて、100 万回あたり USD 2.27 です。内訳は、CloudFront のリクエスト 1.20、関数 0.10、KVS の読み取り 2 回で 0.06、Lambda@Edge のリクエスト 0.60、実行時間 0.31（128 MB、50 ミリ秒という仮定）。Lambda@Edge には reserved concurrency を付けられないので、関数の側で絞る手もありません。各リージョンに書かれるログの料金は、ここに入れていません。
+
+足せるものは 3 つあります。
+
+- **AWS WAF の rate-based rule。** distribution に web ACL を付けて、同じ IP アドレスからの回数を絞ります。[21章](/ja/chapters/21-security.md)で作るものです。web ACL が月 USD 5、rule 1 つにつき月 USD 1、検査したリクエスト 100 万回あたり USD 0.60。置いてあるだけで月額がかかるので、この章では足していません。正確な上限ではなく「近くで絞る」ものだ、という話も 21章にあります
+- **CloudFront の定額プラン。** 料金ページには、月 USD 0（Free）、15（Pro）、200（Business）、1,000（Premium）のプランが載っています。どのプランに何が含まれるか、この章の構成（KVS、Lambda@Edge）で使えるかは、確認していません
+- **請求の通知。** 01章の budget です。止めてはくれませんが、気づけます。ただし届くのは 8〜12 時間後です
+
 ## ハマりどころ
 
 | こうなったら | ここを見る |
@@ -99,12 +122,14 @@ Lambda@Edge は、100 万リクエストあたり USD 0.60 と、1 GB 秒あた�
 | sync が「store is PROVISIONING」で止まる | KVS を作った直後です。`READY` になるまで待つ |
 | デプロイ後、redirect が全部効かない | KVS が空ではありませんか。作り直した直後の KVS は空です。`edge:kvs:sync` をもう一度 |
 | 手元のテストは通るのに、関数の作成が構文エラーになる | ドキュメントの一覧に無い構文を使っていませんか。Node.js は受け付けても、runtime 2.0 が受け付けないものがあります |
+| `/digest` が 405 を返す | POST 以外は、`edge-router.js` が Lambda@Edge の手前で断ります。`curl -X POST` で送っていますか |
 | `/digest` が 502 を返す | Lambda@Edge の応答が CloudFront の検査に通っていません。ログは `us-east-1` ではなく、実行されたリージョンの `/aws/lambda/us-east-1.aih-edge-body-digest` にあります |
 | Lambda@Edge の関数を消せない | 複製が残っています。distribution から外してから、消えるまで数時間かかります |
 | メンテナンスにしたのに、一部のページが見える | 伝播の途中か、ブラウザが前の応答を持っているかです。503 には `no-store` を付けているので、CloudFront の cache ではありません |
 
 ## 本番にするなら
 
+- **入口で回数を絞る。** 「叩かれたら」のとおり、この distribution にはリクエスト数の上限がありません。本番のトラフィックを受ける前に、AWS WAF の rate-based rule を付けます（[21章](/ja/chapters/21-security.md)）。`/digest` のように 1 回ごとにコードが動く path は、とくに
 - **KVS を書ける人を絞る。** `edge-data.json` を review して merge し、CI だけが sync する。コンソールからの直接の編集は、緊急時だけにします。この章の script は、直接の編集を次の `edge:kvs:plan` で差分として見せてくれます
 - **メンテナンスのスイッチを、唯一の防御にしない。** 伝播には遅れがあり、KVS が読めないあいだは効きません。データを守るための締め出しは、origin の側でも行います
 - **関数の指標を見る。** エラーと compute utilization です（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）。utilization が上限に近いなら、読み取りの回数や JSON の大きさを見直します
@@ -137,9 +162,9 @@ vp run edge:body:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** 関数（デプロイするファイルを `node:vm` で実行）、KVS の計画と同期、SDK の adapter、Lambda@Edge の handler、2 つの stack のユニットテスト。型検査。synth（esbuild の bundle 込み、`-c bodyDigestVersionArn` あり・なし）。`dev:edge` を起動して、本文の `curl` と、`edge-data.json` の flag の切り替えを実行。`dev:edge:cdkd`（cdkd の emulator、Docker なし）を起動して、同じ `curl` で同じ応答を確認。SDK の client が SigV4A の形式で署名すること（ネットワークには出ていません）。
+**手元で確かめたこと。** 関数（デプロイするファイルを `node:vm` で実行）、KVS の計画と同期、SDK の adapter、Lambda@Edge の handler、2 つの stack のユニットテスト。型検査。synth（esbuild の bundle 込み、`-c bodyDigestVersionArn` あり・なし）。`dev:edge` を起動して、本文の `curl` と、`edge-data.json` の flag の切り替えを実行。`dev:edge:cdkd`（cdkd の emulator、Docker なし）を起動して、同じ `curl` で同じ応答を確認。SDK の client が SigV4A の形式で署名すること（ネットワークには出ていません）。`/digest` への POST 以外を、関数が KVS を読まずに 405 で断ること（同じ `node:vm` のテスト）。
 
-**まだ確かめていないこと。** AWS では何も実行していません。とくに、次の点は実環境での確認待ちです。`edge-router.js` が runtime 2.0 で動くこと（構文、10 KB、2 MB、compute utilization、ID なしの `cf.kvs()`、無いキーで `get()` が reject すること）。KVS の更新が edge に届くまでの時間。古い `If-Match` に KVS の API が返すエラーの種類。`@aws-sdk/signature-v4a` の署名を AWS が受け付けること。cdkd が `AWS::CloudFront::KeyValueStore` と `AWS::CloudFront::Function`、`us-east-1` の stack の `AWS::Lambda::Version` を実際に扱えること、`us-east-1` での bootstrap が必要かどうか。Node.js 24 が Lambda@Edge で使えること。Lambda@Edge の複製の削除にかかる時間、log group が作られる場所。「ハマりどころ」の表の症状は、ドキュメントから組み立てたもので、実際に起こして確かめたものではありません。runtime 2.0 の一覧に無い構文が実際に拒否されるかも、試していません。
+**まだ確かめていないこと。** AWS では何も実行していません。とくに、次の点は実環境での確認待ちです。`edge-router.js` が runtime 2.0 で動くこと（構文、10 KB、2 MB、compute utilization、ID なしの `cf.kvs()`、無いキーで `get()` が reject すること）。KVS の更新が edge に届くまでの時間。古い `If-Match` に KVS の API が返すエラーの種類。`@aws-sdk/signature-v4a` の署名を AWS が受け付けること。cdkd が `AWS::CloudFront::KeyValueStore` と `AWS::CloudFront::Function`、`us-east-1` の stack の `AWS::Lambda::Version` を実際に扱えること、`us-east-1` での bootstrap が必要かどうか。Node.js 24 が Lambda@Edge で使えること。Lambda@Edge の複製の削除にかかる時間、log group が作られる場所。「ハマりどころ」の表の症状は、ドキュメントから組み立てたもので、実際に起こして確かめたものではありません。runtime 2.0 の一覧に無い構文が実際に拒否されるかも、試していません。`/digest` の 405 も同じです。CloudFront Functions が `allow` ヘッダーの付いた応答を受け付けること、POST 以外のリクエストで Lambda@Edge が実際に動かないことは、デプロイして確かめていません。「叩かれたら」の金額は単価からの計算で、請求で確かめたものではありません。
 
 **コードの場所。**
 

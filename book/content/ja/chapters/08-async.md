@@ -1,6 +1,6 @@
 ---
 title: "08 Queue: SQS、DLQ、冪等性、Scheduler"
-revision: 1
+revision: 2
 ---
 
 # 08 Queue: SQS、DLQ、冪等性、Scheduler

@@ -9,6 +9,9 @@ export const TASK = { cpuUnits: 256, memoryMiB: 512, containerPort: 8080 } as co
 
 /** How many tasks the service keeps, and how far auto scaling may go. The upper bound is also a bound on the bill. */
 export const SERVICE = { desiredCount: 2, maxCount: 4, targetCpuPercent: 60 } as const;
+
+/** Connections one task holds at once. Each may carry a 64 KiB body, so this bounds memory in flight. */
+export const MAX_CONNECTIONS = 512;
 // #endregion size
 
 // #region schema

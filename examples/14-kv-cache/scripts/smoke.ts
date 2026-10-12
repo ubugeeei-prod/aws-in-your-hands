@@ -3,7 +3,6 @@
 // Goes through API Gateway, Lambda, IAM, and the store. Writes a few counter
 // and cache entries, all of which expire on their own.
 
-import { randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
 
 import { preflight } from "@aih/tools/aws/preflight.ts";
@@ -35,13 +34,12 @@ try {
   const { store } = healthSchema.parse(await health.json());
   console.log(`ok   health (store ${store})`);
 
-  // A new client ID each run, so earlier runs do not count against this one.
-  const clientId = `smoke-${randomUUID()}`;
+  // Counted by source address: a run within a minute of the last one starts with part of the budget spent.
   let limit: number | undefined;
   let refusedAt: number | undefined;
   // A fixed window can end mid-run once, so 2 x limit + 1 requests always meet a refusal.
   for (let request = 1; request <= 2 * (limit ?? 5) + 1 && refusedAt === undefined; request++) {
-    const response = await fetch(`${url}/items`, { headers: { "x-client-id": clientId } });
+    const response = await fetch(`${url}/items`);
     const requestId = response.headers.get("x-request-id");
     if (response.status === 429) {
       refusedAt = request;

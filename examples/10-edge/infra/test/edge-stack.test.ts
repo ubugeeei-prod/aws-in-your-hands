@@ -105,7 +105,7 @@ describe("EdgeStack with the Lambda@Edge version", () => {
           Match.objectLike({
             PathPattern: "/digest",
             ViewerProtocolPolicy: "https-only",
-            // Still behind the maintenance switch.
+            // Still behind the router: the maintenance switch, and its refusal of anything but POST.
             FunctionAssociations: [Match.objectLike({ EventType: "viewer-request" })],
             LambdaFunctionAssociations: [
               { EventType: "origin-request", IncludeBody: true, LambdaFunctionARN: VERSION_ARN },

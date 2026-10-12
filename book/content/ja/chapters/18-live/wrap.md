@@ -48,6 +48,20 @@ EventBridge、Lambda、CloudWatch Logs の料金は、この表に入れてい�
 
 01章で作った予算の通知は、ここでも役に立ちます。ただ、あれは通知であって、止めてはくれません。止めるのは `stream:stop` と `streamKey=off` です。
 
+### URL が広まったとき
+
+もう 1 つ、逆向きの心配があります。配信ソフトではなく、見る側がメーターを回す場合です。
+
+この章の channel は `authorized: false` なので、playback URL を知っていれば誰でも再生できます。そしてその URL は視聴ページの `config.json` に入っていて、ページを開いた人なら誰でも読めます。秘密ではないんです。IVS から見れば、人が見ていても、script が映像を取り続けていても、同じ「届けた時間」です。
+
+いちばん悪い場合を計算してみましょう。同時視聴の既定の上限は、リージョン全体で 15,000 です。その全員が HD で見続けると、1 時間で 15,000 視聴時間。最初の段階の単価 0.092 を掛けて、**1 時間あたり USD 1,380** です。SD なら 690、Full HD で送っていれば 2,760。量が増えると単価は少し下がります（HD は、月 10,000 時間を超えた分が 0.084）が、桁は変わりません。2 時間の配信なら 2,600。各回 100 人のつもりなら 9.20 で済むはずだった回が、です。
+
+上限に達したあと、15,001 人目がどうなるかは、ここでは確かめていません。それに、上限は引き上げられる値で、リージョンにあるすべての channel の合計です。「これ以上は行かない」という保証ではなく、桁の目安として読んでください。
+
+救いは 2 つあります。まず、これは配信している間だけの話です。配信していなければ届ける映像がないので、URL を何万回叩かれても、出力は 0 のまま。次に、配信を止めればメーターも止まります。`stream:status` は同時視聴の数も表示するので、心当たりのない数字が出ていたら、「止まっている？」の節の `stream:stop` と `streamKey=off` が、そのままブレーキです。01章の予算の通知は 8〜12 時間おきにしか更新されないので、ここでは間に合いません。
+
+人を集める配信をするなら、先に足すものがあります。見られる人を署名つきの token で絞る private channel、国や origin で絞る playback restriction policy、そして同時視聴の数を見張って知らせる仕組みです。「本番にするなら」に並べました。private channel の手順と料金は、この本では確かめていません。
+
 ### 消した後
 
 stack を消せば、channel も stream key も消えて、IVS の料金は発生しなくなります。イベントのログも一緒に消えます。
@@ -92,9 +106,9 @@ Cloudflare でライブ配信をやったことがあるなら、Stream の Live
 
 ## 本番にするなら
 
-- **見られる人を絞る。** いまは URL を知っていれば誰でも見られます。IVS には、署名つきの token がないと再生できない private channel（`authorized: true`）と、国や origin で絞る playback restriction policy があります。この章では扱っていません
+- **見られる人を絞る。** いまは URL を知っていれば誰でも見られて、見られた時間はすべてあなたの請求になります（「URL が広まったとき」の計算です）。IVS には、署名つきの token がないと再生できない private channel（`authorized: true`）と、国や origin で絞る playback restriction policy があります。この章では扱っていません
 - **type を選び直す。** 視聴者の回線がばらばらなら、複数の rendition を作る `STANDARD` か `ADVANCED` に。入力の単価と相談です
-- **止め忘れを仕組みで防ぐ。** 予定の時間を過ぎても配信中なら通知する、鍵を配信のたびに発行して終わったら消す、など。「気をつける」は仕組みではありません
+- **止め忘れと見られすぎを仕組みで防ぐ。** 予定の時間を過ぎても配信中なら通知する、同時視聴が想定を超えたら通知する、鍵を配信のたびに発行して終わったら消す、など。「気をつける」は仕組みではありません
 - **stream key の置き場所を決める。** 配信者に渡す経路、作り直す手順、state の bucket を読める人
 - **上限を確かめる。** 同時視聴は、リージョン全体で既定 15,000、同時配信は 100。大きな配信の前に Service Quotas で引き上げを
 - **視聴ページを CDN に置く。** 03章の構成で。`.wasm` の Content-Type を忘れずに
@@ -131,7 +145,7 @@ channel、stream key、rule、関数、role、log group が消えます。ログ
 
 **手元で確かめたこと。** ユニットテスト（channel の設定、`GetStream` の解釈、イベントの検証と集計、視聴ページの判断、stack の assertion）。型検査（サンプル全体と、Vize による視聴ページ）。template の lint。synth（esbuild の bundle 込み。AWS への問い合わせなし）。視聴ページのビルドに player の worker と `.wasm` が含まれること。`dev:stream:web` を起動して、channel が未設定のときの表示をブラウザで確認。さらに、存在しない channel の playback URL を一時的に設定して、player が worker と WebAssembly を読み込み、IVS の配信ドメインから 404 を受け取って、ページが「offline」と表示し、再試行を予約するところまでを確認（認証情報は使っていません。確認後、設定は元に戻しました）。
 
-**まだ確かめていないこと。** 実際の配信と視聴は、一度も行っていません。`stream:infra:diff`、`deploy`、`drift`、`destroy`、`stream:key`、`stream:config`、`stream:status`、`stream:stop` は AWS に対して実行していません。具体的には、Cloud Control API 経由での `AWS::IVS::Channel` と `AWS::IVS::StreamKey` の作成と削除、cdkd の state に stream key の値が入るかどうか、`streamKey=off` を挟んだ鍵の作り直し、OBS からの接続、player での再生と遅延の値、timed metadata の表示、`GetStream` の実際の応答と `ChannelNotBroadcasting` の名前、EventBridge のイベントの実際の形、Lambda のログの行から `stream:status --events` がイベントを読み戻せること、配信中の channel の削除が失敗すること。OBS の手順は IVS のドキュメントに基づくもので、画面では確かめていません。図の遅延の秒数は説明のための作り物です。
+**まだ確かめていないこと。** 実際の配信と視聴は、一度も行っていません。`stream:infra:diff`、`deploy`、`drift`、`destroy`、`stream:key`、`stream:config`、`stream:status`、`stream:stop` は AWS に対して実行していません。具体的には、Cloud Control API 経由での `AWS::IVS::Channel` と `AWS::IVS::StreamKey` の作成と削除、cdkd の state に stream key の値が入るかどうか、`streamKey=off` を挟んだ鍵の作り直し、OBS からの接続、player での再生と遅延の値、timed metadata の表示、`GetStream` の実際の応答と `ChannelNotBroadcasting` の名前、EventBridge のイベントの実際の形、Lambda のログの行から `stream:status --events` がイベントを読み戻せること、配信中の channel の削除が失敗すること。OBS の手順は IVS のドキュメントに基づくもので、画面では確かめていません。同時視聴が上限の 15,000 に達したあとの挙動と、`StopStream` のあと出力の課金が止まるまでの時間も、確かめていません。「URL が広まったとき」の金額は、quota の既定値と Price List の単価を掛けた計算です。図の遅延の秒数は説明のための作り物です。
 
 **コードの場所。**
 

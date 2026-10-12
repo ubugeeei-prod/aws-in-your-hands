@@ -1,6 +1,6 @@
 ---
 title: "10 Edge: CloudFront Functions、KeyValueStore、Lambda@Edge"
-revision: 1
+revision: 2
 ---
 
 # 10 Edge: CloudFront Functions、KeyValueStore、Lambda@Edge
@@ -99,7 +99,7 @@ redirect が 3 件なら、関数のコードに直接書けば済みます。�
 
 <<< @/examples/10-edge/infra/functions/edge-router.js{handler}
 
-上から順に 3 段です。
+先頭の `/digest` の 3 行は、章の後半で足す Lambda@Edge のためのものです。そこで話します。それを除くと、上から順に 3 段です。
 
 メンテナンス中なら、ここで 503 を返して終わり。cache も origin も通りません。
 

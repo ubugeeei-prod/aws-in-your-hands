@@ -2,11 +2,11 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
-import { errorSchema, noteListSchema, noteSchema } from "../src/contract.ts";
+import { errorSchema, MAX_NOTES_PER_OWNER, noteListSchema, noteSchema } from "../src/contract.ts";
 import { InMemoryNoteRepository } from "../src/memory-repository.ts";
 import { createNoteService } from "../src/notes.ts";
 
-function setup() {
+function setup(maxNotesPerOwner?: number) {
   let clock = Date.UTC(2026, 9, 11);
   let suffix = 0;
   let requestId = 0;
@@ -18,7 +18,7 @@ function setup() {
       NOTES_STORE: "memory",
     },
     notes: createNoteService({
-      repository: new InMemoryNoteRepository(),
+      repository: new InMemoryNoteRepository(maxNotesPerOwner),
       // One second per call, so creation order and ID order agree.
       now: () => new Date((clock += 1000)),
       randomSuffix: () => String(++suffix).padStart(4, "0"),
@@ -83,6 +83,23 @@ describe("notes API with versions", () => {
     expect(response.status).toBe(409);
     expect(body.error.code).toBe("conflict");
     expect(body.error.current).toMatchObject({ version: 2, title: "from tab A" });
+  });
+
+  it("answers 409 quota_exceeded for note 101, and takes one again after a delete", async () => {
+    const { app, json } = setup(MAX_NOTES_PER_OWNER);
+    let first = "";
+    for (let count = 1; count <= MAX_NOTES_PER_OWNER; count++) {
+      const response = await json("POST", "/notes", { title: `note ${count}` });
+      expect(response.status).toBe(201);
+      first ||= noteSchema.parse(await response.json()).id;
+    }
+
+    const full = await json("POST", "/notes", { title: "one too many" });
+    expect(full.status).toBe(409);
+    expect(errorSchema.parse(await full.json()).error.code).toBe("quota_exceeded");
+
+    expect((await app.request(`/notes/${first}`, { method: "DELETE" })).status).toBe(204);
+    expect((await json("POST", "/notes", { title: "fits now" })).status).toBe(201);
   });
 
   it("requires expectedVersion", async () => {

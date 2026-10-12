@@ -40,6 +40,35 @@ For SPA delivery (CloudFront and S3), see the calculation in chapter 03.
 
 Delete the stack, and the user pool and the users in it go with it. As "Clean up" says, all that's left is the storage locations created by the cdkd bootstrap and the deployment files placed in them.
 
+### When it gets hammered
+
+This API's URL is public. What if a bot starts hitting it hard?
+
+Someone who isn't signed in can do exactly two things. Call `/health`, which goes all the way to the function. Or call any other route and be turned away by the authorizer, in which case the function doesn't run. Whether a refused request counts toward the API Gateway charge hasn't been confirmed, as noted above.
+
+A signed-in user can call every route. But nobody can register with this user pool on their own. The only users are the ones you created with `app:user:create`.
+
+Either way, there's a ceiling. The stage throttle is 10 requests a second. Over a month (30 days), that's 25.92 million requests at most. Suppose every one of them gets through and every one runs the function. Lambda and logs use the same assumptions as the example above (60 ms on average, 256 MB, 0.5 KB per call).
+
+| Item | Quantity | List price |
+| --- | --- | --- |
+| API Gateway | 25.92 million requests | 33.44 |
+| Lambda (requests and duration) | 25.92 million invocations, 388,800 GB-seconds | 10.37 |
+| Log ingestion and storage | 12.36 GB | 9.49 |
+| DynamoDB writes (at the table's limit) | 40 units a second, 103.68 million a month | 74.13 |
+| DynamoDB reads (at the table's limit) | 150 units a second, 388.8 million a month | 55.40 |
+| Subtotal | | **182.83** |
+
+Someone who isn't signed in reaches the first three rows and no further. The two DynamoDB rows are a signed-in user updating the largest possible note and listing, without a break, for a month. It will hardly ever get there, but it's the number it can't go above.
+
+This math takes the 10-a-second limit as one limit for the whole API. If each route is counted separately, the first three rows, as far as a signed-in user can reach them, multiply by the number of routes (seven in this chapter). Which it is hasn't been checked on a real API. The two DynamoDB rows don't change, because they're the table's own limit. Whether a request answered with 429 is billed hasn't been confirmed either.
+
+Data transfer for the responses isn't in this table. A list returns what it read from the table, so the table's read limit is also a limit on how much can be returned. 150 units a second is about 1.2 MB of eventually consistent reads. Kept up for a month that's about 2,966 GB, and at the price for transfer out to the internet (USD 0.114 per GB) it comes to around USD 338. Whether that price applies as it is to API Gateway responses hasn't been confirmed, as in chapter 04. Only a signed-in user can call the list.
+
+What piles up has a ceiling too. One person holds at most 100 notes, and a note is about 31 KB at its largest. That's around 3 MB a person.
+
+And this limit doesn't tell callers apart. On a route a bot keeps hitting, real users get 429 too. The bill is protected. Being usable is not. Protecting that takes something that limits each caller separately. An AWS WAF rate-based rule does, but as [chapter 21](/en/chapters/21-security.md) explains, it can't be attached to an HTTP API directly. You put CloudFront in front and attach it there (USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected). This book doesn't build that setup.
+
 ## Where people get stuck
 
 | If you see this | Look here |
@@ -51,13 +80,16 @@ Delete the stack, and the user pool and the users in it go with it. As "Clean up
 | The deployed API returns 401 even though you are signed in | Is the SPA sending an access token? Does `clientId` in `config.json` match the stack's `UserPoolClientId`? |
 | A 403 comes back | The token doesn't have the `openid` scope. Does the sign-in request send `scope=openid`? |
 | The browser console shows a CORS error | When API Gateway returns a 401 or 403, the response can lack CORS headers, and the browser can display it as a CORS error. Check the status code with `curl` first |
+| A 429 comes back | That's the stage throttle (10 requests a second). The limit isn't per user, so it also comes back when someone else has used it up. Wait a moment and try again |
+| Creating a note returns 409 `quota_exceeded` | That user has 100 notes. Waiting changes nothing. Delete one |
 | You disabled a user and they can still call the API | That's what "Disabled, and still getting through for a while" describes. The token passes until the access token expires |
 
 The body of a 401 or 403 returned by API Gateway is not in this book's error shape (`error.code`). The typed client treats it as `unauthenticated`.
 
 ## If you take this to production
 
-- **Enable MFA.** This chapter's user pool uses a password only
+- **Limit the rate per caller.** This chapter's throttle doesn't tell callers apart. As "When it gets hammered" says, either put CloudFront and AWS WAF in front, or count a per-user limit in the app
+- **Enable MFA.** This chapter's user pool uses a password only. If you add it, provide the step where a user registers an authenticator app as well. This chapter's SPA has no screen for that
 - **Remove the local origin.** Delete `http://localhost:5173` from the callback URLs and from CORS. Use a separate stack for development
 - **Use a custom domain.** While the sign-in page's domain is still `...amazoncognito.com`, it is harder for users to tell whether it is genuine
 - **Send email from SES.** Cognito's default sending is for small volumes ([chapter 15](/en/chapters/15-email.md))
@@ -83,9 +115,9 @@ All that's left is the storage locations created by the cdkd bootstrap (chapter 
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The API tests (authentication, authorization, the audit log), the tests for reading the identity, the development sign-in tests, the tests for the temporary PKCE storage, the infrastructure assertions, type checking, the SPA build, and synth. Also, with `dev:app:api` and `dev:app:web` started, the following was checked by driving a browser automatically: sign-in, creating a note, that fetching it as another user is a 404, that a request without a token is a 401, the conflict display and "Keep my text and save over it", and that sign-in is required after a reload.
+**Checked locally.** The API tests (authentication, authorization, the audit log), the tests for reading the identity, the development sign-in tests, the tests for the temporary PKCE storage, the infrastructure assertions, type checking, the SPA build, and synth. Also, with `dev:app:api` and `dev:app:web` started, the following was checked by driving a browser automatically: sign-in, creating a note, that fetching it as another user is a 404, that a request without a token is a 401, the conflict display and "Keep my text and save over it", and that sign-in is required after a reload. The limits added here were checked with tests: a user's 101st note is a 409, other users are unaffected, and deleting one gives the place back (through `composeApp` as well); the template has the throttle on the stage and the request unit limits on the table.
 
-**Not checked yet.** Sign-in with Cognito has never been run. `web/src/auth/cognito.ts` (the authorization code and PKCE round trip, and the token exchange) has only passed type checking and has not been run against a real user pool. This is the most important unverified part of this chapter. `app:infra:deploy`, `app:user:create`, `app:publish`, `app:smoke:web`, `app:smoke:api`, `app:infra:drift`, `app:unpublish`, and `app:infra:destroy` have not been run either. So the following have not been checked in a real environment: that the JWT authorizer rejects an ID token and an invalid token; that the Cognito token endpoint can be called directly from a browser (CORS); that the shapes of `Issuer` and `AuthDomain` written to `config.json` satisfy oauth4webapi's validation.
+**Not checked yet.** Sign-in with Cognito has never been run. `web/src/auth/cognito.ts` (the authorization code and PKCE round trip, and the token exchange) has only passed type checking and has not been run against a real user pool. This is the most important unverified part of this chapter. `app:infra:deploy`, `app:user:create`, `app:publish`, `app:smoke:web`, `app:smoke:api`, `app:infra:drift`, `app:unpublish`, and `app:infra:destroy` have not been run either. So the following have not been checked in a real environment: that the JWT authorizer rejects an ID token and an invalid token; that the Cognito token endpoint can be called directly from a browser (CORS); that the shapes of `Issuer` and `AuthDomain` written to `config.json` satisfy oauth4webapi's validation. The same goes for the limits. Whether cdkd 0.296.28 applies the stage's `DefaultRouteSettings` and the table's `OnDemandThroughput`. Whether the throttle is counted for the whole API or per route. Whether a 429, or a request the authorizer refused, is billed. That the conditional update that counts notes goes through on a real DynamoDB. The amounts in "When it gets hammered" are computed from unit prices and assumptions.
 
 **Where the code is.**
 

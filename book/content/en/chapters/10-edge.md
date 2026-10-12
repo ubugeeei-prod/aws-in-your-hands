@@ -1,6 +1,6 @@
 ---
 title: "10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 10 Edge: CloudFront Functions, KeyValueStore, and Lambda@Edge
@@ -99,7 +99,7 @@ Next, the handler.
 
 <<< @/examples/10-edge/infra/functions/edge-router.js{handler}
 
-Three steps, top to bottom.
+The three lines about `/digest` at the top are for the Lambda@Edge function added later in the chapter, and we'll get to them there. Apart from those, it's three steps, top to bottom.
 
 If the site is under maintenance, it returns 503 right here. Neither the cache nor the origin is involved.
 

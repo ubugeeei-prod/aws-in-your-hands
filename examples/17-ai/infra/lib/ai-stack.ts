@@ -6,10 +6,35 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
+import { z } from "zod";
 
 import { modelArns, type VerifiedProfileId } from "./models.ts";
 
-export type AiStackProps = StackProps & { profileId: VerifiedProfileId };
+export type AiStackProps = StackProps & {
+  profileId: VerifiedProfileId;
+  /** At most this many summaries run at once. From `-c reservedConcurrency=N`. */
+  reservedConcurrency?: number | undefined;
+};
+
+// #region reserved
+// Off unless asked for. Reserving takes N out of the account's concurrency, and an account
+// with a low limit refuses the deploy.
+const reservedConcurrencySchema = z.coerce
+  .number("must be a whole number such as 2")
+  .int("must be a whole number such as 2")
+  .min(1, "must be 1 or more: 0 would stop every summary")
+  .max(1000)
+  .optional();
+
+/** Reads `-c reservedConcurrency=N`. Absent means no reservation. */
+export function parseReservedConcurrency(value: unknown): number | undefined {
+  const result = reservedConcurrencySchema.safeParse(value);
+  if (!result.success) {
+    throw new Error(`reservedConcurrency ${result.error.issues[0]?.message ?? "is not valid"}`);
+  }
+  return result.data;
+}
+// #endregion reserved
 
 /** The app gives up on the model after this long. The function must outlive it to say so. */
 export const INFERENCE_TIMEOUT = Duration.seconds(30);
@@ -64,6 +89,10 @@ export class AiStack extends Stack {
       timeout: INFERENCE_TIMEOUT.plus(Duration.seconds(10)),
       role,
       logGroup,
+      // Nothing else limits how many callers run the model at once. Past it, Lambda refuses the call.
+      ...(props.reservedConcurrency === undefined
+        ? {}
+        : { reservedConcurrentExecutions: props.reservedConcurrency }),
       environment: {
         AI_BACKEND: "bedrock",
         BEDROCK_MODEL_ID: props.profileId,

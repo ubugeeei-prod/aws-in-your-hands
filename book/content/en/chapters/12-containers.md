@@ -1,6 +1,6 @@
 ---
 title: "12 Containers: ECR, ECS/Fargate, and ALB"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 12 Containers: ECR, ECS/Fargate, and ALB
@@ -82,9 +82,9 @@ Sizes and counts are decided here.
 
 <<< @/examples/12-containers/src/config.ts{size}
 
-256 is in "CPU units", where 1024 is one vCPU. Of the combinations Fargate offers, this uses 0.25 vCPU with 512 MiB.
+256 is in "CPU units", where 1024 is one vCPU. Of the combinations Fargate offers, this uses 0.25 vCPU with 512 MiB. `MAX_CONNECTIONS` caps how many connections one task holds at once. With only 512 MiB of memory, it is worth putting a lid on how much a task can be holding.
 
-One thing has not changed since chapter 04: the notes are still in memory. Two tasks means two `Map`s, and the load balancer routes round robin by default, so a note you created shows up every other time. Tasks are also replaced on every update, and each time everything is gone. It's the same story chapter 04 told about Lambda execution environments, only easier to see. Moving the data out of the task is the job of [chapter 05](/en/chapters/05-dynamodb.md) and [chapter 13](/en/chapters/13-sql.md). This chapter stays with the container around it.
+One thing has not changed since chapter 04: the notes are still in memory. Two tasks means two `Map`s, and the load balancer routes round robin by default, so a note you created shows up every other time. Tasks are also replaced on every update, and each time everything is gone. It's the same story chapter 04 told about Lambda execution environments, only easier to see. A task keeps at most 100 notes: the cap on chapter 04's repository applies here unchanged. Unlike a Lambda execution environment, a task keeps running, so without a cap its memory would fill up for as long as someone kept POSTing. Moving the data out of the task is the job of [chapter 05](/en/chapters/05-dynamodb.md) and [chapter 13](/en/chapters/13-sql.md). This chapter stays with the container around it.
 
 ## docker is two programs
 

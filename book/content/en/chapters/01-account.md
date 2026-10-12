@@ -1,6 +1,6 @@
 ---
 title: 01 Account: Temporary Credentials, Regions, Budgets, and Cleanup
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 01 Account: Temporary Credentials, Regions, Budgets, and Cleanup
@@ -151,6 +151,8 @@ When a chapter runs into a feature that is not offered in the Tokyo Region, that
 A budget is a mechanism that notifies you when spending passes, or is forecast to pass, a threshold. This is easy to misread, so to be clear: **it is not a cap that stops spending**.
 
 According to the official documentation, budget information is updated up to three times a day, with roughly 8 to 12 hours between updates. On top of that, there is a delay between using a resource and that usage appearing in billing. So by the time a notification arrives, spending may already be past the threshold. What a budget saves you from is first finding out on next month's bill. It does not prevent the overspending itself.
+
+That's why the chapters of this book that open an endpoint anyone can call (04, 05, 06, 07, 08, 09, 10, 12, 13, 14, 15, 17, 18, 19, 20, and 21) each put their own lid on what they accept. What each one bounds, how far, and what it leaves open is stated in that chapter. The budget notification is the last net: it's how you find out, some hours late, that one of those lids wasn't holding.
 
 Now let's create a budget of USD 10 per month. It is defined in this file:
 

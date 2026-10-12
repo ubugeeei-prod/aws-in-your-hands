@@ -1,6 +1,6 @@
 ---
 title: "15 Email: SES"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 15 Email: SES
@@ -55,6 +55,10 @@ The table is the owner of the state in this design. As you saw in chapter 04, no
 The API in chapter 04 could be called by anyone who knew the URL. Do that with an API that sends mail, and it becomes a relay: strangers get to send mail to whatever address they like.
 
 So every route in this chapter has IAM authorization. To call one, you have to sign the request with AWS credentials (SigV4). Nothing in a browser is meant to call it, and there's no CORS configuration. The thing that sends a notification is the code that shared the note, which is another backend.
+
+There is one brake on authorized callers too: throttling on the stage, 10 requests a second across the whole API with a burst of up to 20. If a script with the permission gets stuck in a loop, API Gateway refuses whatever goes past that with 429, and neither the function nor SES is called.
+
+One more thing you should know. `GET /share-notifications/{id}` returns the recipient's address along with the notification's state. The ID is a string the caller chose. So anyone who may call this API, and who knows or guesses an ID, can read whom that notification went to. The chapter does this on the assumption that the only caller is the backend that sent the notification. With several callers, stop returning the recipient.
 
 The JWT authorizer from [chapter 06](/en/chapters/06-auth.md) is another option. If you go that way, make sure the server decides the recipient. Otherwise you've built "anyone who is signed in can mail anyone".
 

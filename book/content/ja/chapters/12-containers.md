@@ -1,6 +1,6 @@
 ---
 title: "12 Containers: ECR、ECS/Fargate、ALB"
-revision: 1
+revision: 2
 ---
 
 # 12 Containers: ECR、ECS/Fargate、ALB
@@ -82,9 +82,9 @@ group t: task: 0.25 vCPU, 0.5 GB, arm64, network interface 1 つ = srv, exec, ro
 
 <<< @/examples/12-containers/src/config.ts{size}
 
-256 は「CPU ユニット」という単位で、1024 が 1 vCPU。Fargate で選べる組み合わせのうち、0.25 vCPU と 512 MiB を使っています。
+256 は「CPU ユニット」という単位で、1024 が 1 vCPU。Fargate で選べる組み合わせのうち、0.25 vCPU と 512 MiB を使っています。`MAX_CONNECTIONS` は、task 1 つが同時に持つ接続の数の上限です。メモリが 512 MiB しかないので、抱える量に蓋をしておきます。
 
-1 つ、04章から変わっていないことがあります。ノートはまだメモリの中です。task が 2 つあれば `Map` も 2 つあって、ALB は既定で順番に振り分けるので、作ったノートが 2 回に 1 回しか見えない、ということが起きます。しかも task は更新のたびに入れ替わるので、そのたびに全部消えます。04章で Lambda の実行環境について見たのと同じ話が、もっとはっきり見えるだけです。データを task の外に出すのは [05章](/ja/chapters/05-dynamodb.md)や[13章](/ja/chapters/13-sql.md)の仕事で、この章は「入れ物」のほうに集中します。
+1 つ、04章から変わっていないことがあります。ノートはまだメモリの中です。task が 2 つあれば `Map` も 2 つあって、ALB は既定で順番に振り分けるので、作ったノートが 2 回に 1 回しか見えない、ということが起きます。しかも task は更新のたびに入れ替わるので、そのたびに全部消えます。04章で Lambda の実行環境について見たのと同じ話が、もっとはっきり見えるだけです。置けるのは task ごとに 100 件まで。04章の repository の上限が、そのまま効いています。Lambda とちがって task はずっと動き続けるので、上限が無いと、POST され続けたぶんだけメモリが埋まっていきます。データを task の外に出すのは [05章](/ja/chapters/05-dynamodb.md)や[13章](/ja/chapters/13-sql.md)の仕事で、この章は「入れ物」のほうに集中します。
 
 ## docker は 2 つのプログラム
 

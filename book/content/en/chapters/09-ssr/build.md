@@ -30,6 +30,14 @@ The difference from chapter 04 is `code`. Instead of `NodejsFunction`, it hands 
 
 `timeout` is 10 seconds. CloudFront waits 30 seconds for an origin's response by default. Running longer than that means nobody is left to receive the answer.
 
+The last few lines are a ceiling on how many copies run at once (reserved concurrency). It's off by default. Pass something like `-c reservedConcurrency=5` at deploy time and it's on.
+
+<<< @/examples/09-ssr/infra/lib/ssr-stack.ts{reserved}
+
+In chapter 04 we put a requests-per-second limit on API Gateway. A function URL behind CloudFront has no free setting like that. Every request that misses the cache runs the function, however many arrive. This number is what can cap that. Whatever goes past it is refused without the function running.
+
+It's not the default because the deploy might fail. Reserved concurrency sets N aside out of the account's whole concurrency allowance. A brand-new account can have a small allowance, and then the reservation itself is refused. What happens in your account is something this book can't check. When to turn it on comes up under "What it costs", with numbers.
+
 ### Don't leave the function URL public
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{url}
@@ -80,7 +88,9 @@ Everything that varies per person goes under `/me`. That's the whole rule. Both 
 
 This is the cache policy for everything except `/me`. `cookieBehavior` and `headerBehavior` are `none`. In CloudFront, a value that isn't in the cache key isn't sent to the origin either. So the Lambda function that builds a public page never receives a cookie in the first place.
 
-This is what does the work. With no cookie, Lambda has no way of knowing who is looking. What it doesn't know, it can't write into the HTML. If someone later adds code that shows "Hello, Alice" on a public page, it works only on their machine; through CloudFront, no name appears. The accident falls on the side of "nothing is shown," not "it leaks."
+`queryStringBehavior` is `none` too. None of this chapter's pages reads a query string. Put it in the cache key and `/?x=1` and `/?x=2` are separate cache entries. Anyone could miss the cache every time just by appending a random number, and each miss runs the 512 MB function. Left out, the same path is the same cache entry whatever is appended. When you add a page that does read a query string, list only the names it reads, as in `cloudfront.CacheQueryStringBehavior.allowList("page")`.
+
+Back to cookies. This is what does the work. With no cookie, Lambda has no way of knowing who is looking. What it doesn't know, it can't write into the HTML. If someone later adds code that shows "Hello, Alice" on a public page, it works only on their machine; through CloudFront, no name appears. The accident falls on the side of "nothing is shown," not "it leaks."
 
 The three TTL numbers each mean something too.
 

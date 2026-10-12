@@ -3,7 +3,8 @@ import type { Note } from "./contract.ts";
 // #region interface
 export type Page = { notes: Note[]; nextCursor: string | null };
 
-export type CreateResult = "created" | "already_exists";
+// `quota_exceeded` comes only from a repository that was given a limit.
+export type CreateResult = "created" | "already_exists" | "quota_exceeded";
 export type UpdateResult =
   | { status: "updated"; note: Note }
   // `current` is what is stored now.

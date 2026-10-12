@@ -44,6 +44,31 @@ The free allowances are 1 million requests and 400,000 GB-seconds per month for 
 
 The data transfer charge for sending responses out to the internet isn't in this table (that doesn't mean it's 0; it's not counted). The 50-millisecond duration is an assumption too, and the `REPORT` lines in the logs will tell you the real value for your function.
 
+### If it gets hammered
+
+Anyone who knows the URL can call it, as often as they like. Two things stand in the way: the stage's throttling (10 requests a second for the whole API) and the cap on notes (100 per execution environment).
+
+Say those 10 a second keep coming for 30 days. That's 25.92 million requests. With the same assumptions as the table above, the list price comes to this.
+
+| Item | List price |
+| --- | --- |
+| API Gateway HTTP API requests (25.92 million) | 33.44 |
+| Lambda requests and duration (324,000 GB-seconds) | 9.50 |
+| CloudWatch Logs (12.36 GB) | 9.49 |
+| Total | **52.43** |
+
+About USD 52 a month. The budget notification from chapter 01 arrives somewhere along the way.
+
+But that's the ceiling on the number of requests. Here's what it leaves out, plainly.
+
+The big one is data transfer for the responses. Throttling counts requests, not bytes. `GET /notes` returns every note it holds. One note fits in a 64 KiB request, so 100 of them come to about 6 MB at most. Send that 10 times a second for 30 days and it's roughly 158,000 GB. At the unit price for data transfer from the Tokyo Region to the internet (USD 0.114 per GB for the first 10 TB), that works out to about USD 14,000. A different order of magnitude. Whether a response that large actually gets through, and whether that unit price applies as is to API Gateway responses, hasn't been checked. Still, remember that a lid on the request count doesn't close this hole.
+
+The duration is an assumption too. The table uses 50 milliseconds, but the ceiling the configuration allows is the 10-second timeout, and if every request ran that long, Lambda duration alone would be USD 864. Nothing in this chapter's app is that slow.
+
+Whether API Gateway charges for the 429s that throttling turns away hasn't been checked either.
+
+Before real users arrive, add authentication first (chapter 06). Then make the list smaller (pages, or no bodies in it). If you want to stop one IP address at a time, that's AWS WAF, but it can't be attached to an HTTP API, so you'd put CloudFront in front. The web ACL in [chapter 21](/en/chapters/21-security.md) costs USD 8.00 a month plus USD 0.60 per million requests. This book doesn't build that setup.
+
 Delete the stack and the charges for this chapter stop.
 
 ## Where people get stuck
@@ -56,6 +81,8 @@ Delete the stack and the charges for this chapter stop.
 | Only some responses are errors with no `x-request-id` header | The function timed out or went down partway. Check the duration in the `REPORT` line of the logs |
 | Calling from a browser gives a CORS error | Does the `allowedOrigin` from deploy time exactly match the caller's origin (down to scheme and port)? |
 | A note you created doesn't show up in `GET /notes` | A different box answered. It's what "Where do the notes live?" describes, and it's how this chapter is specified |
+| A 429 like `{"message":"Too Many Requests"}` comes back | That's the stage's throttling. The whole API went past 10 requests a second. It happens on somebody else's traffic too, not only yours |
+| `POST /notes` answers 409 with `quota_exceeded` | The execution environment that answered already holds 100 notes. Delete one and there's room |
 | A new account gets concurrency errors | New accounts have a fairly low limit on Lambda concurrent executions. Check it in Service Quotas |
 
 One tip. When an error comes back, first check whether the `x-request-id` header is there. If it is, the request made it to your app. If it isn't, the problem is before that (API Gateway, or the function starting up). That alone halves the places you have to look.
@@ -64,7 +91,8 @@ One tip. When an error comes back, first check whether the `x-request-id` header
 
 - **Add authentication and authorization.** Right now anyone can call it (chapter 06)
 - **Save the data.** Right now it disappears (chapter 05)
-- **Limit the request rate.** The stage of an HTTP API has throttling settings. A public API with no limit has no limit on its bill either
+- **Fit the rate limit to your API.** 10 a second is a value for practice. And throttling doesn't pick its targets, so stopping one caller at a time takes authentication, or CloudFront with AWS WAF
+- **Put a limit on response size.** Capping the count doesn't help if each one is large: the transfer still grows
 - **Set up alarms.** Keep watch on the share of 5xx responses and on slowness. This app catches exceptions and returns a 500, so Lambda's `Errors` does not go up. What you watch is API Gateway's `5xx` and `Latency` ([chapter 19](/en/chapters/19-observability.md))
 - **Decide how long to keep logs.** 7 days is a value for learning
 - **Make the deployment path the AWS CDK CLI and CloudFormation.** As we talked about in chapter 02
@@ -84,9 +112,9 @@ All that's left is the storage locations created by the cdkd bootstrap (chapter 
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The unit tests for the app, the client, and the infrastructure. Type checking. Synth (including the esbuild bundle). Starting `dev:api` and running the `curl` commands from the text.
+**Checked locally.** The unit tests for the app, the client, and the infrastructure. Type checking. Synth (including the esbuild bundle). Starting `dev:api` and running the `curl` commands from the text. Tests pin the cap on notes (note 101 gets a 409, and one fits again after a delete) and the throttling values on the stage in the template.
 
-**Not checked yet.** `dev:api:cdkd`, `api:infra:deploy`, `api:smoke`, `api:logs`, `api:infra:drift`, and `api:infra:destroy` have not been run against real AWS. In particular, these are still waiting to be confirmed in a real environment: that the bundle runs on the Node.js 24 Lambda runtime, the status codes and bodies of the errors API Gateway returns (such as the `Not Found` in "Where people get stuck"), the response the caller gets when the function times out, and what `api:smoke` prints when there is more than one box.
+**Not checked yet.** `dev:api:cdkd`, `api:infra:deploy`, `api:smoke`, `api:logs`, `api:infra:drift`, and `api:infra:destroy` have not been run against real AWS. In particular, these are still waiting to be confirmed in a real environment: that the bundle runs on the Node.js 24 Lambda runtime, the status codes and bodies of the errors API Gateway returns (such as the `Not Found` in "Where people get stuck"), the response the caller gets when the function times out, and what `api:smoke` prints when there is more than one box. The stage's throttling is in the same state. The source of the pinned cdkd (0.296.28) passes `DefaultRouteSettings` on to API Gateway, and that much was read. That it takes effect, the shape of the 429 body, and whether a 429 is charged for were not checked. The amounts in "If it gets hammered" are computed from unit prices and settings, not measured under load.
 
 **Where the code is.**
 

@@ -135,6 +135,16 @@ On the distribution side, the behavior is added only when a version ARN is given
 
 <<< @/examples/10-edge/infra/lib/edge-stack.ts{digest}
 
+This behavior has caching off and accepts every method. All it wants is POST, but CloudFront offers three choices, "GET and HEAD", "those plus OPTIONS", and "all", and POST is only in "all". Left like that, a GET or a DELETE would run Lambda@Edge, and be billed for it, on every request.
+
+So the CloudFront Function in front refuses anything but POST.
+
+<<< @/examples/10-edge/infra/functions/edge-router.js{digest}
+
+The three lines at the top of `handler` call this. It answers before reading KVS, so a refusal costs one CloudFront request and one function execution, and nothing else.
+
+POST is not stopped. Every POST that arrives runs Lambda@Edge. Nothing in this setup puts a ceiling on how many (the end of "The money part" comes back to this, with numbers). Once you're done trying it, the surest thing is to deploy again without `-c bodyDigestVersionArn` and take the whole behavior away.
+
 The ARN's shape is checked the moment it's handed to the stack.
 
 <<< @/examples/10-edge/infra/lib/edge-stack.ts{props}

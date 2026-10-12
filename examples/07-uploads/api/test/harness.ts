@@ -12,6 +12,7 @@ import { createAttachmentService } from "../src/attachments.ts";
 import { createAttachmentsClient, UploadError } from "../src/client.ts";
 import { createLocalStoreHandler } from "../src/local-store-http.ts";
 import { InMemoryObjectStore } from "../src/memory-object-store.ts";
+import { InMemoryPermitLedger } from "../src/permit-ledger.ts";
 import { sweep } from "../src/sweep.ts";
 
 const secret = "test-secret-that-is-at-least-32-chars";
@@ -70,6 +71,7 @@ export async function setup() {
       notes,
       attachments: records.proxy,
       objects: objects.proxy,
+      permits: new InMemoryPermitLedger(),
       now: () => new Date(++clock),
       randomSuffix,
       log,

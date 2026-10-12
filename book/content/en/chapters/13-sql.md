@@ -1,6 +1,6 @@
 ---
 title: "13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 13 SQL: Aurora DSQL, RDS PostgreSQL, and Aurora Serverless v2

@@ -66,6 +66,8 @@ ALB は、task との接続を使い回します（keep-alive）。`server.close
 
 `sweep` は、そのためのものです。暇になった接続を、短い間隔で閉じ続けます。締め切り（25 秒）を過ぎたら残りを切って、`forced` と報告する保険も付けました。終了コードも、`drained` なら 0、`forced` なら 1 に分けています。
 
+`maxConnections` は、止め方とは別の話です。task が同時に持つ接続を 512 本までにして、それを超えた接続は応答せずに閉じます。本文は 1 件 64 KiB までなので、受け取っている途中の本文は、多くても 32 MiB ほど。流量の制限ではなく、メモリの蓋です。いっぱいのあいだは ALB の health check も同じ枠を取り合うので、叩かれ続ければ task が不健全と判定されることもありえます。
+
 テストは、本当にプロセスを起動して、SIGTERM を送ります。Docker は使いません。
 
 <<< @/examples/12-containers/test/shutdown.test.ts{sigterm}

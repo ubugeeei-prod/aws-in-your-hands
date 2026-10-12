@@ -37,6 +37,39 @@ The free tier is 5 GB each for log ingestion, storage and queries, 10 custom met
 
 The dashboard is left out of the amounts on the assumption that it is one of the three free ones. The price from the fourth onward is not in the Tokyo price list, and I could not read it from the pricing page either, so it stays unknown.
 
+### When it's hammered
+
+This API has no authentication. Anyone who knows the URL can call it, and so can a bot. So what does a month of nonstop hammering come to?
+
+First, where it stops. The stage throttle is 10 requests a second (burst 20), so at most 25.92 million requests reach the function in 30 days. API Gateway answers the rest with a 429, and the function isn't invoked. The table takes up to 150 read request units and 40 write request units a second. Notes stop at 100, so storage doesn't keep growing.
+
+Here's the list price for a month pinned at those limits.
+
+| Item | Quantity | List price |
+| --- | --- | --- |
+| API Gateway | 25.92 million requests | 33.44 |
+| Lambda (assuming 60 ms, 256 MB) | 25.92 million invocations | 10.37 |
+| DynamoDB writes | the ceiling of 40 units a second | 74.13 |
+| DynamoDB reads | the ceiling of 150 units a second | 55.40 |
+| Log ingestion and storage | 24.7 GB | 18.98 |
+| Traces recorded | 3.76 million | 18.79 |
+| Total | | **211.11** |
+
+The observing part, logs and traces together, is 37.77. Traces grow less than you might expect, thanks to sampling: at 10 requests a second, what's recorded is "the first one, plus 5% of the other nine," 1.45 a second. The more traffic, the smaller the share that is traced. Logs don't shrink that way. Every request that arrives adds its lines.
+
+Whether API Gateway charges for requests it turns away with a 429 isn't something I've checked here. If it does, the first row of that table, and only that row, doesn't stop at 25.92 million.
+
+One more thing the table leaves out: data transfer for the responses. Here the table's read ceiling helps. At 150 units a second, eventually consistent reads return about 1.2 MB a second. That's just under 3,000 GB in 30 days, and at the unit price for transfer out to the internet (0.114 per GB) about 340. Whether that price applies as is to API Gateway responses hasn't been checked.
+
+So how does a flood look in what this chapter built?
+
+- **Top left of the dashboard.** The `4xx` line jumps. 429s land there, which is why the line is named `4xx (429 when throttled)`
+- **No alarm fires.** A 429 isn't a 5xx, and it comes back fast. For alarms placed only on symptoms that's the right behavior, but real users sharing the same 10 a second get 429s too
+- **Hit the table's ceiling, and one does.** DynamoDB throttles, and if the SDK's retries don't get through either, the application answers 500. `DynamoDB: throttled requests` climbs and the 5xx rate alarm fires. With a ceiling on the table, "too much traffic" shows up as an outage
+- **Logs and traces have no record of the 429s.** They never reached the function. That's what the access log under "For production" is for
+
+Before you let real users in, add authentication (chapter 06) and a per-IP limit at the entrance. AWS WAF can't be attached to an HTTP API directly, so that means putting CloudFront in front (chapter 21; the web ACL is 8.00 a month just for existing).
+
 ### What one more log line costs
 
 The request line measures 167 bytes (a test pins that number). Writing one more line of that size per request comes to 0.156 GB at 1,000,000 requests a month: **0.12 a month**.
@@ -100,6 +133,9 @@ On either platform, instrumenting with OpenTelemetry keeps the application code 
 | --- | --- |
 | An alarm stays in `INSUFFICIENT_DATA` | Normal right after a deploy. If it lasts while requests arrive, check that the metric's dimension (`ApiId`) matches the real API |
 | The alarm is in `ALARM` and no mail comes | The SNS subscription is still pending. Did you click the link in the confirmation mail? |
+| The alarm is in `ALARM`, the subscription is confirmed, and still no mail | Does the topic's policy still have the statement that lets CloudWatch publish? A topic with `enforceSSL` doesn't use the default policy |
+| You get a 429 | That's the stage throttle (10 a second, burst 20). Look at `4xx` on the dashboard. The application's log has nothing |
+| Creating a note answers 409 `quota_exceeded` | The limit of 100 notes. Delete one and it works |
 | Users get 500s and Lambda's `Errors` is 0 | Normal. The application catches the exception and returns a 500. Look at API Gateway's `5xx` |
 | `obs:query` finds no lines | Is the time range (`--minutes`) wide enough? Logs arrive a few seconds late. If still nothing, the log shape may differ from what was assumed (`obs-lambda-json-log-shape` in the verification notes) |
 | `NoteConflicts` has no data | A metric filter only applies to logs written after it was created. Also check that the logs are in the JSON format |
@@ -114,9 +150,10 @@ On either platform, instrumenting with OpenTelemetry keeps the application code 
 - **Add a probe from outside.** Synthetics, if there are hours with no users. It lets the alarms tell a quiet night from an outage nobody can get through
 - **Route notifications to whoever is on call.** One email is not read at night. Point the topic at chat or an on-call system
 - **Enable API Gateway access logs.** A request that never reached the function (throttled, timed out) leaves nothing in the application's log. The access log has it
+- **Reset the throttle and the ceilings to your own service's numbers.** 10 a second, 150 and 40 on the table, and 100 notes are practice bounds. As usage grows, revisit them before real users start getting 429s. If you put an alarm on `4xx`, look at what's normal before choosing the threshold
 - **Decide the log retention.** Seven days is a practice value
 - **Write the response steps into the alarm.** Put the first dashboard and query to open into `alarmDescription`, and nobody has to think when it fires
-- **Encrypt the topic, and check what a notification carries.** An alarm notification contains metric names and thresholds
+- **Encrypt the topic, and check what a notification carries.** An alarm notification contains metric names and thresholds. This chapter's topic goes as far as encryption in transit (`enforceSSL`) and names no key for encryption at rest
 - **Deploy through the AWS CDK CLI and CloudFormation**, as chapter 02 explained
 
 ## Cleaning up
@@ -154,13 +191,15 @@ The observability tools are a distributed system themselves. They deliver along 
 - That the metric math `IF` expression is accepted, that `Count` and `5xx` are missing while there are no requests, and the alarms' real state changes and SNS notifications
 - Everything about the AWS Lambda Layer for OpenTelemetry on a Node.js 24 function: whether it starts, whether hand-written spans arrive, whether auto-instrumentation works, whether the permissions suffice, whether the browser's `traceparent` is connected
 - That cdkd can create, update and read back the dashboard and the metric filter through Cloud Control API
+- That the bounds actually bite. Whether cdkd 0.296.28 applies the stage's `DefaultRouteSettings` (10 a second, burst 20) and the table's `OnDemandThroughput` (150 and 40). The pinned version's source has code that handles both properties, but it has not been run. Also unchecked: that 429s are counted in `4xx`, whether API Gateway charges for a 429, and how the SDK's retries play out before a request that hits the table's ceiling becomes a 500
+- That CloudWatch alarms can publish to a topic with `enforceSSL`. A test sees the allowing statement in the template, but not one notification has been sent
 - In pricing: the dashboard price from the fourth onward, the size of the system log lines Lambda writes in the JSON format (1 KB per request is an assumption), and how spans sent through the layer are billed
 
 **Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
-| The big picture | `examples/19-observability/infra/lib/observability-stack.ts` | |
+| The big picture | `examples/19-observability/infra/lib/observability-stack.ts`, `src/compose.ts`, `test/compose.test.ts`, `infra/test/observability-stack.test.ts` | `test:unit` |
 | Start with alarms on symptoms | `examples/19-observability/src/alarm-math.ts`, `test/alarm-math.test.ts`, `infra/lib/monitoring.ts` | `test:unit` |
 | The first numbers to look at | `examples/19-observability/infra/lib/monitoring.ts`, `infra/test/observability-stack.test.ts` | `test:unit`, `obs:infra:synth` |
 | Narrow it down to one request with logs | `examples/19-observability/src/log-shape.ts`, `src/conditions.ts`, `src/queries.ts`, `test/log-shape.test.ts`, `test/queries.test.ts`, `scripts/query.ts` | `test:unit`, `obs:query:print` |
@@ -175,7 +214,7 @@ The observability tools are a distributed system themselves. They deliver along 
 | What it costs | `examples/19-observability/src/cost-inputs.ts`, `test/cost-inputs.test.ts`, `data/pricing/` | `test:unit` |
 | Cleaning up | `tools/src/infra/` | `obs:infra:destroy` |
 
-**How cdkd (0.296.28) handles the types.** With a dedicated implementation in `src/provisioning/register-providers.ts`: `AWS::CloudWatch::Alarm`, `AWS::SNS::Topic`, `AWS::SNS::Subscription`, `AWS::Logs::LogGroup`, `AWS::Lambda::Function`, `AWS::Lambda::Permission`, `AWS::IAM::Role`, `AWS::IAM::Policy`, `AWS::DynamoDB::Table`, `AWS::ApiGatewayV2::*`. Without one, and so through Cloud Control API: `AWS::CloudWatch::Dashboard` and `AWS::Logs::MetricFilter` (in this chapter's stack), `AWS::RUM::AppMonitor` and `AWS::Synthetics::Canary` (not in this chapter's stack).
+**How cdkd (0.296.28) handles the types.** With a dedicated implementation in `src/provisioning/register-providers.ts`: `AWS::CloudWatch::Alarm`, `AWS::SNS::Topic`, `AWS::SNS::TopicPolicy`, `AWS::SNS::Subscription`, `AWS::Logs::LogGroup`, `AWS::Lambda::Function`, `AWS::Lambda::Permission`, `AWS::IAM::Role`, `AWS::IAM::Policy`, `AWS::DynamoDB::Table`, `AWS::ApiGatewayV2::*`. Without one, and so through Cloud Control API: `AWS::CloudWatch::Dashboard` and `AWS::Logs::MetricFilter` (in this chapter's stack), `AWS::RUM::AppMonitor` and `AWS::Synthetics::Canary` (not in this chapter's stack).
 
 **Primary sources** (all checked on 2026-10-12)
 

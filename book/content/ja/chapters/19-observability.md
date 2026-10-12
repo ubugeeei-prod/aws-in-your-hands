@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics"
-revision: 1
+revision: 2
 ---
 
 # 19 Observability: CloudWatch、OpenTelemetry、RUM、Synthetics
@@ -67,6 +67,14 @@ edge filter -> conflicts
 
 05章の `NotesStack` は、関数や API を外から触れる形で公開していません。アラームを付けるには関数の設定（trace と、ログの形式）も変えたいので、この章は同じ形の table と API を自分の stack に持ちます。インフラの定義は 60 行ほど重複しますが、アプリのコードは workspace の依存として 05章のものをそのまま読み込んでいます。監視の部分は `Monitoring` という construct に切り出してあるので、あなたの stack に持っていけます。
 
+同じ形なので、同じ歯止めも持たせています。この API も、URL を知っていれば誰でも呼べるからです。
+
+<<< @/examples/19-observability/infra/lib/observability-stack.ts{bounds}
+
+<<< @/examples/19-observability/infra/lib/observability-stack.ts{throttle}
+
+API は毎秒 10 件まで、table は毎秒の request unit に上限つき、ノートは 05章と同じく 100 件まで。超えたぶんは、請求ではなく 429 や 409 になります。これがダッシュボードでどう見えるか、いくらまでで止まるかは、「お金の話」の「叩かれたとき」で。
+
 ## まず、症状にアラームを付ける
 
 <!-- section: 19.alarms -->
@@ -115,6 +123,8 @@ stack はこの定数と式をそのまま使います。
 
 アラームは SNS の topic に通知し、topic がメールに配ります。メールアドレスは、デプロイのときに渡したときだけ購読されます。購読は、届いた確認メールのリンクを押すまで保留のままです。押し忘れると、アラームは鳴っているのに何も届きません。
 
+`enforceSSL` は、暗号化されていない経路での publish を断る設定です。これを付けると topic に policy が 1 つできます。そして policy を自分で持った topic は、既定の policy を使わなくなります。なので、「このアカウントの CloudWatch アラームは publish してよい」を、こちらで書き足しています。書き忘れると、アラームは鳴るのに通知が出ません。正直に言うと、この組み合わせはまだ実機で確かめられていません。
+
 復旧（OK に戻ったとき）も通知しています。障害がいつ終わったかも、知りたい情報だからです。
 
 ## 最初に見る数字
@@ -127,10 +137,10 @@ stack はこの定数と式をそのまま使います。
 
 サービスごとに、最初に見るものを並べます。
 
-**API Gateway HTTP API。** `Count`、`4xx`、`5xx`、`Latency`、`IntegrationLatency`。`Latency` は受け取ってから返すまで、`IntegrationLatency` はそのうち Lambda を待っていた時間です。2 つの差が大きければ、API Gateway の側で時間を使っています。route ごとの数字は、詳細メトリクスを有効にしないと出ません。
+**API Gateway HTTP API。** `Count`、`4xx`、`5xx`、`Latency`、`IntegrationLatency`。`Latency` は受け取ってから返すまで、`IntegrationLatency` はそのうち Lambda を待っていた時間です。2 つの差が大きければ、API Gateway の側で時間を使っています。route ごとの数字は、詳細メトリクスを有効にしないと出ません。stage の流量制限で断ったリクエストは 429 なので、`4xx` に入ります。ダッシュボードの線にも、そう書いておきました。
 
 **Lambda。** `Errors`、`Throttles`、`Duration`、`ConcurrentExecutions`。ここに罠があります。`Errors` が数えるのは、関数が例外で終わった呼び出しと、timeout です。このアプリは例外を捕まえて 500 の応答を返すので、利用者に 500 が返っていても、Lambda の `Errors` は 0 のままです。だから症状のアラームは API Gateway の `5xx` に付けました。逆に `Errors` が増えていたら、アプリの外（timeout、初期化の失敗、メモリ不足）を疑います。`Throttles` は `Invocations` にも `Errors` にも数えられないので、別に見ます。
 
-**DynamoDB。** `ThrottledRequests`、`SystemErrors`、それと `ConditionalCheckFailedRequests`。最後のは 05章の楽観ロックが働いた回数です。
+**DynamoDB。** `ThrottledRequests`、`SystemErrors`、それと `ConditionalCheckFailedRequests`。最後のは 05章の楽観ロックが働いた回数です。`ThrottledRequests` は、table に付けた上限に当たったときにも増えます。
 
 ダッシュボードは 1 つで、参照するメトリクスは 50 個以内に収めています。無料枠がそこまでだからです。テストがこの上限を見張っています。

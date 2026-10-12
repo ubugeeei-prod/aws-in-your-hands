@@ -12,7 +12,7 @@ This chapter's design worked because there were only two ways of reading. Dynamo
 
 - Queries that are added later and aren't decided in advance. Conditions such as "notes whose body contains a certain word" or "notes updated last month, for all owners" are not in the key, so they mean reading the whole table
 - Aggregations and joins across several kinds of data
-- Constraints that span several items. A rule such as "at most 100 notes per user" can't be kept by a conditional write on one item. There is a transaction feature, but it has limits on the number and size of items it can handle at once
+- Constraints that span several items. A rule such as "at most 100 notes per user" can't be kept by a conditional write on the note alone. This chapter got by with a count kept in a separate item, but because the place and the note are written separately, there is room for the two to drift. There is a transaction feature, but it has limits on the number and size of items it can handle at once
 
 There is also a limit of 400 KB per item. Large data such as images doesn't go in an item; it goes in S3 ([chapter 07](/en/chapters/07-uploads.md)).
 
@@ -55,7 +55,33 @@ The part of this calculation that is easiest to move is the list reads. Out of t
 
 An update that is rejected because of a conflict also consumes write request units. This calculation assumes no conflicts.
 
+Also, this table still counts the way it did before the limit on notes went in. A create and a delete each add one write to the item that holds the count. With this breakdown that's at most 100,000 more units, or USD 0.07.
+
 Two things are left out of this table: the data transfer charge for responses, and point-in-time recovery (when enabled, it adds a storage charge of USD 0.228 per GB per month; it is disabled in this chapter).
+
+### If it gets hammered
+
+Anyone who knows the URL can call it, as often as they like. Three things stand in the way: the stage's throttling (10 requests a second for the whole API), the table's caps (150 read units and 40 write units a second), and the number of notes (100).
+
+10 a second for 30 days is 25.92 million requests. With the same assumptions as the table above, the list price comes to this. The two DynamoDB request rows assume the table sits at its cap for the whole 30 days: the ceiling you'd reach if every read and write were of large notes.
+
+| Item | List price |
+| --- | --- |
+| API Gateway HTTP API requests (25.92 million) | 33.44 |
+| Lambda requests and duration (388,800 GB-seconds) | 10.37 |
+| CloudWatch Logs (12.36 GB) | 9.49 |
+| DynamoDB reads (388.8 million units) | 55.40 |
+| DynamoDB writes (103.68 million units) | 74.13 |
+| DynamoDB storage (100 notes) | 0.00 |
+| Total | **182.83** |
+
+About USD 183 a month. Even if the throttling turned out not to be in effect, the DynamoDB part stops at the bottom three rows, USD 129.53. The API Gateway and Lambda parts would not stop.
+
+What's left out is the same as in chapter 04. The big one is data transfer for the responses, and the ceiling the configuration allows is the same calculation as there (a response of 100 notes of 64 KiB, 10 times a second). In this chapter the table's read cap should bite first, since a 1 MB page can be read only about once a second, but what that comes to hasn't been measured. The 60-millisecond duration is an assumption as well. When the table's cap is hit, the SDK retries, and the duration grows by that much.
+
+The limit on notes comes with two caveats. Right now everyone is the same owner (`anonymous`), so 100 means "100 for the whole API". If somebody fills it, nobody else can create a note. And anyone can delete. The volume is bounded, but whose note is whose still isn't told apart. That's chapter 06's job.
+
+If you want to stop one IP address at a time, that's AWS WAF, but it can't be attached to an HTTP API, so you'd put CloudFront in front. The web ACL in [chapter 21](/en/chapters/21-security.md) costs USD 8.00 a month plus USD 0.60 per million requests. This book doesn't build that setup.
 
 Delete the stack and the table is deleted with it. Nothing remains.
 
@@ -70,13 +96,16 @@ Delete the stack and the table is deleted with it. Nothing remains.
 | Every update is a 409 | Is the `expectedVersion` you send the `version` of the note you received most recently? Use the value from the response to the last update, not from the creation response |
 | A note you created doesn't appear in the list right afterwards | This can happen with eventually consistent reads, as "Choose the read consistency" explains |
 | The list ends partway through | Are you reading until `nextCursor` is `null`? |
-| The logs show errors that indicate throttling | A new on-demand table has an initial limit on the traffic it can accept. Are you sending a large amount of traffic all at once? |
+| The logs show errors that indicate throttling | This stack caps the table (150 read units and 40 write units a second). Reading and writing large notes in a row will hit it. Separately, a new on-demand table has an initial limit on the traffic it can accept |
+| A 429 like `{"message":"Too Many Requests"}` comes back | That's the stage's throttling. The whole API went past 10 requests a second. It happens on somebody else's traffic too, not only yours |
+| `POST /notes` answers 409 with `quota_exceeded` | There are 100 notes. Delete one and there's room. If deleting doesn't help, the `noteCount` in the item that holds the count (`sk` is `QUOTA`) has ended up higher than the real number |
 
 ## If you take this to production
 
-- **Add authentication and separation between owners.** Right now everyone reads and writes the same notes (chapter 06)
+- **Add authentication and separation between owners.** Right now everyone reads and writes the same notes, and anyone can delete them (chapter 06)
 - **Protect the table.** Set `removalPolicy` to `RETAIN`, and enable deletion protection and point-in-time recovery. The procedure for restoring data deleted by accident is practiced in [chapter 22](/en/chapters/22-recovery.md)
-- **Set a limit on traffic.** An on-demand table lets you set maximum reads and writes per second. A public API with no limit has no limit on its cost either
+- **Fit the rate limits to your API.** The stage's 10 a second and the table's 150 and 40 are values for practice. When you raise them, redo the arithmetic in "If it gets hammered"
+- **Make the list smaller.** Fewer notes per page, or no bodies in the list. It helps the read charges and the response transfer alike
 - **Make creation idempotent.** This fixes the duplicates caused by retries. The caller sends a value such as an `Idempotency-Key`, and the server writes conditionally with that as the key. This book doesn't implement it. [Chapter 08](/en/chapters/08-async.md) uses the same idea in the worker that processes S3 events
 - **Watch throttling and failures.** Look at DynamoDB errors and the proportion of 409s ([chapter 19](/en/chapters/19-observability.md)). A high proportion of 409s is a signal to reconsider how the screen is built or how notes are divided up
 - **Deploy through the AWS CDK CLI and CloudFormation.** As discussed in chapter 02
@@ -98,11 +127,13 @@ All that remains is the storage locations created by the cdkd bootstrap (chapter
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The contract tests (in memory), the inspection of the requests sent to DynamoDB, the app and client tests, and the infrastructure assertions. Type checking. Synth (a bundle that includes the AWS SDK). Starting `dev:notes` in memory and running the `curl` commands from the text.
+**Checked locally.** The contract tests (in memory), the inspection of the requests sent to DynamoDB, the app and client tests, and the infrastructure assertions. Type checking. Synth (a bundle that includes the AWS SDK). Starting `dev:notes` in memory and running the `curl` commands from the text. After the limit on notes went in, the 15 tests in `test/dynamodb-local.test.ts` (10 for the repository's rules, 5 for the limit) were run against DynamoDB Local 3.3.1. Not in Docker: the jar AWS distributes was started directly with Java, and the table was created with `scripts/local-db.ts migrate`.
 
-**Not checked yet.** The tasks that use DynamoDB Local (`db:local:start`, `db:migrate:local`, `db:seed:local`, `db:reset:local`, `db:local:stop`, `test:local:dynamodb`) were not run, because a Docker daemon was not available at the time of writing. `notes:infra:diff`, `notes:infra:deploy`, `notes:smoke`, `notes:infra:drift`, and `notes:infra:destroy` have not been run against real AWS either.
+**Not checked yet.** The tasks that run DynamoDB Local in Docker (`db:local:start`, `db:local:stop`) were not run, because a Docker daemon was not available. `db:migrate:local`, `db:seed:local`, `db:reset:local`, and `test:local:dynamodb` were not run as tasks either. `notes:infra:diff`, `notes:infra:deploy`, `notes:smoke`, `notes:infra:drift`, and `notes:infra:destroy` have not been run against real AWS either.
 
-So the central claim of this chapter, that "a conditional write lets exactly one of several concurrent updates through", has never been checked on DynamoDB. What has been checked is that the right condition expressions are sent and that the in-memory implementation follows the same rules. The statements about DynamoDB's behavior are based on the official documentation.
+So the central claim of this chapter, that "a conditional write lets through exactly as many concurrent writes as it should", has never been checked on the real DynamoDB. What has been checked is that the right condition expressions are sent, and that the in-memory implementation and DynamoDB Local follow the same rules. The statements about DynamoDB's behavior are based on the official documentation.
+
+The rate caps are in the same state. Tests pin `OnDemandThroughput` and the stage's `DefaultRouteSettings` in the template, and the source of the pinned cdkd (0.296.28) passes both on to the AWS APIs: that much was read. That they take effect, the error returned when the table's cap is hit and how the SDK retries it, whether a single read or write larger than the cap gets through, and whether a 429 is charged for were not checked. The amounts in "If it gets hammered" are computed from unit prices and settings, not measured under load.
 
 **Where the code is.**
 
@@ -111,7 +142,7 @@ So the central claim of this chapter, that "a conditional write lets exactly one
 | Derive the keys from how you read | `examples/05-dynamodb/src/dynamodb-repository.ts`, `src/id.ts`, `src/notes.ts` | `test:unit` |
 | Add a version to the contract | `examples/05-dynamodb/src/contract.ts` | `test:unit` |
 | Swap the storage | `examples/05-dynamodb/src/repository.ts`, `src/memory-repository.ts`, `src/dynamodb-repository.ts`, `src/compose.ts` | `test:unit` |
-| Prevent overwrites: conditional writes | `examples/05-dynamodb/src/dynamodb-repository.ts`, `src/app.ts`, `test/repository-contract.ts`, `test/dynamodb-repository.test.ts` | `test:unit` |
+| Prevent overwrites: conditional writes; Put a limit on the count | `examples/05-dynamodb/src/dynamodb-repository.ts`, `src/memory-repository.ts`, `src/notes.ts`, `src/app.ts`, `src/contract.ts`, `test/repository-contract.ts`, `test/dynamodb-repository.test.ts` | `test:unit` |
 | Choose the read consistency | `examples/05-dynamodb/src/dynamodb-repository.ts`, `test/dynamodb-repository.test.ts` | `test:unit` |
 | Page through without dropping items | `examples/05-dynamodb/src/repository.ts`, `src/app.ts`, `src/contract.ts`, `test/app.test.ts` | `test:unit` |
 | When the response never arrives | `examples/05-dynamodb/src/client.ts`, `test/app.test.ts` | `test:unit` |

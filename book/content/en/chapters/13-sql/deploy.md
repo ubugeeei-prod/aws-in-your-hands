@@ -56,6 +56,12 @@ These two statements accept no `$1`, so the names have to go into the text. That
 
 The bundle format is CommonJS because node-postgres is CommonJS and loads Node.js's own modules with `require()`. The bundle from synth was loaded in a local Node.js 24, and the routes that do not touch the database answered. That is as far as it was checked.
 
+### A lid on what it accepts
+
+<<< @/examples/13-sql/infra/lib/sql-stack.ts{throttle}
+
+The same stage throttling as chapter 04. Up to 10 requests a second for the whole API, and API Gateway turns away the rest with a 429. Neither the function nor the database is called. This API has no authentication either, so without a lid, the DPUs from whatever gets thrown at it go straight onto the bill. The rows are already held by the quota from earlier: 100 per owner.
+
 ## Deploy, then run the migrations
 
 <!-- section: 13.deploy -->

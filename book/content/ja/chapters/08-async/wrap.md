@@ -63,6 +63,21 @@ R2 の通知のメッセージの例には、object の key、大きさ、ETag�
 
 stack を消すと、queue も、関数も、schedule も消えて、この章のぶんの料金は止まります。
 
+### 叩かれたら
+
+この章が足した部品には、外から直接呼べる入口がありません。queue に送れるのは S3 だけ、worker を呼ぶのは Lambda だけ、掃除を呼ぶのは schedule だけです。外から届くのは、07章の API と、07章の許可証を通ったアップロードです。API の側の天井は、07章に書いたとおりです。
+
+この章のぶんの天井は、こうなります。
+
+- **worker の実行時間。** 同時に 2 つまでなので、1 か月ずっと動き続けても 129.6 万 GB 秒、USD 17.28 です。イベントがどれだけ届いても、ここより上には行きません
+- **掃除の実行時間。** 1 時間に 1 回、最長 15 分。毎回 timeout まで動いても、月 164,250 GB 秒で USD 2.19 です
+- **DynamoDB。** worker も掃除も、07章と同じ table を読み書きします。table の上限（1 秒あたり読み取り 150 unit、書き込み 40 unit）は、API と合わせた全体の上限です。06章の表の 2 行（月 USD 129.53）より上には行きません
+- **イベント 1 件ごとの料金。** 上限がありません。上の例と同じ数え方で、100 万件あたり USD 3.89 です（SQS 1.20、worker 0.87、`GetObject` 0.37、DynamoDB 0.86、ログ 0.59）。そのイベントを起こすアップロードの POST が、100 万回あたり USD 4.70 かかります
+
+最後の行が、「queue が伸びる」で話した、同じ form の送り直しです。サインインした利用者にしかできませんが、回数を絞るものは、この構成にはありません。worker の行は 17.28 で止まるので、増え続けるのは SQS と S3 のリクエスト、そして worker が追いついたぶんのログです。
+
+table の上限は、1 つ気をつけることがあります。API、worker、掃除が、同じ上限を分け合います。掃除が大量に読んでいる最中は、API の読み取りが DynamoDB に断られることがあります。worker の書き込みが断られると、そのメッセージは queue に戻って、5 回目で DLQ に入ります。実際にどのくらいの枚数で起きるかは、計測していません。
+
 ## ハマりどころ
 
 | こうなったら | ここを見る |
@@ -77,11 +92,14 @@ stack を消すと、queue も、関数も、schedule も消えて、この章�
 | 成功したはずのメッセージが、何度も処理される | worker が返す `batchItemFailures` の形は合っていますか。batch にない ID や空の ID があると、全部が失敗の扱いになります |
 | 失敗したはずのメッセージが、消えている | event source mapping に `ReportBatchItemFailures` はありますか。無ければ、関数が返した一覧は使われないはずです |
 | DLQ に、中身の正しいメッセージが溜まる | worker が「もう済んでいる」を失敗として返していませんか |
+| worker や掃除のログに、DynamoDB の throttle のエラーが出る | table の request unit の上限（読み取り 150、書き込み 40）を、API、worker、掃除が分け合っています。掃除が読む量を減らすか、上限を上げます |
+| queue が伸び続けて、同じ key のイベントばかり届く | 同じ form が送り直されています。「queue が伸びる」と「叩かれたら」を見てください |
 | 掃除の関数が timeout する | object が多すぎます。「お金の話」と「本番にするなら」を見てください |
 
 ## 本番にするなら
 
 - **DLQ にアラームを付ける。** DLQ は、誰かが見なければ、ただのゴミ箱です。`ApproximateNumberOfMessagesVisible` が 0 でなくなったら知らせます。元の queue には、いちばん古いメッセージの年齢のアラームを付けます（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）
+- **入口で絞る。** queue は、届いたものを全部受け取ります。同じ form の送り直しを 07章の側で閉じて、アップロードの回数を数えます
 - **検査が済むまで、画像を見せない。** この章の API は、検査の結果を見ていません。「だめ」な画像も、掃除が消すまでは一覧に出ます。添付の一覧で検査の記録を見て、`ok` のものだけに URL を付けます
 - **掃除を、枚数に比例させない。** 全部を見るのをやめて、新しい object だけを見る。あるいは、S3 Inventory（bucket の中身の一覧を、S3 が定期的にファイルに書き出す機能）を入力にします。この章では、どちらも試していません
 - **sequencer を確かめる。** POST のイベントと lifecycle のイベントの形を実機で見てから、worker の前提を決め直します
@@ -108,9 +126,9 @@ vp run async:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** worker のテスト（同じメッセージの再配送、別の ID の同じイベント、2 つの worker の同時実行、古い作成イベント、先に届いた削除、遅れてきた削除、記録の前と後での中断、form の再送の修復、画像でないものの判定）。queue のまわりのテスト（batch の一部の失敗、DLQ への移動、関数が例外を投げた場合、S3 の test event、この章のものでない key、DLQ からの戻し）。掃除のテスト（「だめ」な添付の削除、古い判定を使わないこと、tag の外し直し、dry run、2 回の実行、同時の実行、途中での中断）。画像の種類と大きさの読み取り（`sips` と `cwebp` が書いた実ファイル）。イベントの JSON の解釈と sequencer の比較。DynamoDB と S3 へのリクエストの形。インフラの assertion。型検査と synth。それから、worker の条件を 2 か所わざと壊して、テストが 4 つ落ちることを確かめました。`dev:async` を起動して、スクリプトから HTTP で次を確かめました。サインイン、ノートの作成、form でのアップロード、worker の記録（`ok`、1×1）、完了、同じ form で HTML を送り直すと記録が `rejected` に変わること、掃除の dry run、削除で記録が消えること。
+**手元で確かめたこと。** worker のテスト（同じメッセージの再配送、別の ID の同じイベント、2 つの worker の同時実行、古い作成イベント、先に届いた削除、遅れてきた削除、記録の前と後での中断、form の再送の修復、画像でないものの判定）。queue のまわりのテスト（batch の一部の失敗、DLQ への移動、関数が例外を投げた場合、S3 の test event、この章のものでない key、DLQ からの戻し）。掃除のテスト（「だめ」な添付の削除、古い判定を使わないこと、tag の外し直し、dry run、2 回の実行、同時の実行、途中での中断）。画像の種類と大きさの読み取り（`sips` と `cwebp` が書いた実ファイル）。イベントの JSON の解釈と sequencer の比較。DynamoDB と S3 へのリクエストの形。インフラの assertion。型検査と synth。それから、worker の条件を 2 か所わざと壊して、テストが 4 つ落ちることを確かめました。`dev:async` を起動して、スクリプトから HTTP で次を確かめました。サインイン、ノートの作成、form でのアップロード、worker の記録（`ok`、1×1）、完了、同じ form で HTML を送り直すと記録が `rejected` に変わること、掃除の dry run、削除で記録が消えること。今回は、07章から受け継いだ throttle と table の上限が template にあることを、assertion で確かめました。
 
-**まだ確かめていないこと。** AWS に対しては、何も実行していません。`async:infra:diff`、`async:infra:deploy`、`async:smoke`、`async:queue`、`async:logs`、`async:housekeeping`、`async:publish`、`async:smoke:web`、`async:user:create`、`async:infra:drift`、`async:empty`、`async:unpublish`、`async:infra:destroy` のどれもです。したがって、次は実物で確かめていません。form（POST Object）で作られた object のイベントと、lifecycle rule による削除のイベントに sequencer が入ること（ドキュメントは「PUT と DELETE のリクエストでだけ使われる」と書いています）。bucket の名前を決めて循環を避けた template が、cdkd で通ること。S3 が通知の設定時に queue を検証すること。SQS が管理する鍵で暗号化した queue に S3 が送れること（S3 のドキュメントは、自分で管理する KMS の鍵の場合だけを説明しています）。`If-Match` に引用符つきの ETag を渡して、置き換えられた object に 412 が返ること。event source mapping と partial batch response の実際の動き。Scheduler が関数を起動すること。DynamoDB 用と S3 用の実装は、リクエストの形をテストで固定しただけで、実物には送っていません。Lambda が空の queue を読みにいく頻度と、掃除の実行時間は、計測していません。画像の形式のうち、JPEG の仕様書（ITU-T T.81）は読み直していません。実際の encoder が書いたファイルで動作を確かめただけです。
+**まだ確かめていないこと。** AWS に対しては、何も実行していません。`async:infra:diff`、`async:infra:deploy`、`async:smoke`、`async:queue`、`async:logs`、`async:housekeeping`、`async:publish`、`async:smoke:web`、`async:user:create`、`async:infra:drift`、`async:empty`、`async:unpublish`、`async:infra:destroy` のどれもです。したがって、次は実物で確かめていません。form（POST Object）で作られた object のイベントと、lifecycle rule による削除のイベントに sequencer が入ること（ドキュメントは「PUT と DELETE のリクエストでだけ使われる」と書いています）。bucket の名前を決めて循環を避けた template が、cdkd で通ること。S3 が通知の設定時に queue を検証すること。SQS が管理する鍵で暗号化した queue に S3 が送れること（S3 のドキュメントは、自分で管理する KMS の鍵の場合だけを説明しています）。`If-Match` に引用符つきの ETag を渡して、置き換えられた object に 412 が返ること。event source mapping と partial batch response の実際の動き。Scheduler が関数を起動すること。DynamoDB 用と S3 用の実装は、リクエストの形をテストで固定しただけで、実物には送っていません。Lambda が空の queue を読みにいく頻度と、掃除の実行時間は、計測していません。「queue が伸びる」と「叩かれたら」の数字も、単価と仮定（1 件 200 ミリ秒）からの計算です。worker が 1 秒に何件さばけるか、table の上限に当たったときに worker と掃除がどう動くか、S3 が同じ key への POST を 1 秒に何回受け付けるかは、確かめていません。画像の形式のうち、JPEG の仕様書（ITU-T T.81）は読み直していません。実際の encoder が書いたファイルで動作を確かめただけです。
 
 **コードの場所。**
 

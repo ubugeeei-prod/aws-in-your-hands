@@ -21,6 +21,7 @@ async function task(records: SharedRecords, version: string, format: RecordForma
     fetch: handle,
     port: 0,
     keepAliveTimeoutMs: 1_000,
+    maxConnections: 16,
     shutdownDeadlineMs: 1_000,
   });
   running.push(server);

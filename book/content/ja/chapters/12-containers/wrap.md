@@ -57,6 +57,18 @@ task の置き場所を変えると、こうです。
 
 無料枠について。Fargate の料金ページに、無料枠の記述は見つかりませんでした。ALB と ECR には新規の利用者向けの枠が書かれていますが、すべてのアカウントに当てはまるものではないので、引いていません。
 
+**叩かれたら。** ALB の URL は、知っていれば誰でも HTTP で呼べます。認証はありません。そして ALB には、API Gateway の stage の throttling にあたる、ただで付く流量制限がありません。来たリクエストは、全部 task まで届きます。
+
+止まるものと、止まらないものを分けておきます。
+
+- **固定費は止まる。** task は `maxCount` の 4 つまでしか増えません。4 つのまま 1 か月動いても、置いてあるだけのぶんは USD 75.62 です（Fargate 35.98、ALB 17.74、public IPv4 が 6 つで 21.90）
+- **メモリは止まる。** ノートは task ごとに 100 件まで。101 件目は 409 です。本文は最大 10,000 文字なので、1 つの task が抱えるノートは、多くて 100 万文字ほど。接続は task ごとに 512 本まで、本文は 1 件 64 KiB まで
+- **LCU、ログ、データ転送は止まらない。** どれも、来たぶんだけ増えます。上限はありません
+
+止まらないほうの大きさを、上の表と同じ仮定（1 リクエスト 1 接続、ログ 0.2 KB、応答 0.5 KB）で出してみます。1 秒に 100 件が 30 日続くと、2 億 5,920 万件。LCU が USD 23.04、ログの取り込みが USD 37.57、データ転送が USD 14.09 で、合わせて月 USD 74.70 です。1 秒に 1,000 件なら、その 10 倍。0.25 vCPU の task 4 つがその数に答えられるかどうかは、計っていません。答えられなかったリクエストも、ALB には届いています。それと、LCU は 4 つの数え方のうち、いちばん大きいものが採られます。大きな本文を送り続けられたときに、データ量のほうで何 LCU になるかは、計算していません。
+
+本物の利用者を迎える前に、入口に流量制限が要ります。AWS WAF は ALB に付けられます（[21章](/ja/chapters/21-security.md)）。ただし、この本が持っている WAF の単価は CloudFront 用のものです。東京リージョンの ALB に付ける web ACL の単価は、確かめていません。練習のあいだだけなら、ALB の security group を自分の IP アドレスだけに絞る手もあります（この章の stack は、そうしていません）。
+
 tag なしで deploy し直して repository だけにすれば、時間課金は止まり、残るのは image の保存料金だけです。
 
 時間で課金されるものの数え方は、コードにしてあります。
@@ -99,6 +111,7 @@ SIGTERM を受けて、進行中の仕事を終えてから止まる、という
 | ときどき 502 が返る | サーバーの keep-alive が ALB の idle timeout より短くなっていませんか。`src/timing.ts` の関係を確認 |
 | 更新のたびに、数件のリクエストが失敗する | SIGTERM を受けていない（`CMD` を配列で書いたか）、または deregistration delay より長いリクエストがある |
 | 作ったノートが、呼ぶたびに出たり消えたりする | task が 2 つあって、それぞれが自分の `Map` を持っています。この章の仕様です |
+| POST が 409 で `quota_exceeded` を返す | その task の `Map` が 100 件でいっぱいです。task ごとに数えるので、同じ POST が通ったり通らなかったりします。ノートを消すか、task が入れ替わると空きます |
 | `net:infra:destroy` が `StackHasActiveImportsError` で止まる | この章の stack が VPC を使っています。先に `ecs:infra:destroy` |
 | 使っていないのに請求がある | service が動いています。tag なしで deploy し直すか、destroy する |
 
@@ -108,6 +121,7 @@ SIGTERM を受けて、進行中の仕事を終えてから止まる、という
 
 - **HTTPS にする。** ドメイン名と証明書を用意して、listener を 443 番にします。いまは平文です
 - **認証と認可を足す。** 04章と同じで、URL を知っている人は誰でも呼べます（06章）
+- **入口に流量制限を置く。** ALB は、来たものを全部通します。AWS WAF の rate-based rule を ALB に付けます（21章。ALB 用の単価は、この本では確かめていません）
 - **データを task の外に置く。** いまは更新のたびに消えます（05章、13章）。そのとき、「新旧が同時に動く」の決まりが本物の制約になります
 - **task を private subnet に置く。** 出口を NAT にするか endpoint にするかは、11章の表で決めます
 - **秘密は環境変数に直接書かない。** task definition の `secrets` で、Secrets Manager などから起動時に渡します。読む権限は execution role に付けます（secret の扱いは [21章](/ja/chapters/21-security.md)。あちらは Lambda の例です）
@@ -157,7 +171,7 @@ aws ecr describe-repositories --region ap-northeast-1
 
 **手元で確かめたこと。** サーバーを子プロセスとして起動し、リクエストの途中で SIGTERM を送るテスト。graceful shutdown のテスト（`sweep` を外すと `drained` が `forced` になって落ちることも確認）。新旧 2 つの版を同時に立てるテスト。時間の関係、設定、`docker` コマンドの組み立て、料金、stack の assertion のユニットテスト。型検査。`ecs:infra:synth`（tag なし、`-c imageTag=v1`、`-c imageTag=v1 -c taskSubnets=private`。`-c imageTag=latest` が拒否されることも）。`ecs:bundle` と `ecs:bundle:check`。`dev:ecs` を起動して、本文の `curl` と、Ctrl-C のときのログを確認。`ecs:image:build`、`ecs:image:run`、`ecs:image:push` の `--dry-run` と、daemon なしで実行したときのメッセージ。`ecs:watch` を `--url` で手元のサーバーに向けて実行。`ecs.ContainerImage.fromAsset` を使った synth が、`docker` コマンドの無い PATH で通ること（aws-cdk-lib 2.273.0）。`docker` の flag は、Docker CLI 29.7.2 の help で確かめました。本文の金額は、Price List の単価から `tools/src/pricing/calc.ts` が計算した値で、`examples/12-containers/test/pricing.test.ts` が照合しています。
 
-**まだ確かめていないこと。** Docker の daemon が動いていなかったため、image を一度も build していません。したがって、Dockerfile が通ること、`.dockerignore` の例外指定が効くこと、arm64 の base image で起動すること、`--read-only` で動くこと、image の大きさ（料金の表の 0.1 GB は仮定）は未確認です。`ecs:infra:diff`、`ecs:infra:deploy`、`ecs:image:push`、`ecs:watch`、`ecs:logs`、`ecs:infra:drift`、`ecs:infra:destroy` は、実際の AWS では動かしていません。次はすべて実環境での確認待ちです。cdkd 0.296.28 がこの stack を作って消せること。別のアプリの stack から `Fn::ImportValue` で 11章の VPC を読めること。Cloud Control API 経由の 3 種類が通ること。public subnet の task が image を取得できること、443 番だけの egress で足りること。`-c taskSubnets=private` の 2 通りの経路。ALB の health check と fail open。rolling update の間にエラーが出ないこと。target の登録解除のあとに SIGTERM が届くという順序。circuit breaker の rollback と、そのときの cdkd の表示。auto scaling の増減。tag なしで deploy し直すと ALB と task だけが消えること。「ハマりどころ」の症状。
+**まだ確かめていないこと。** 接続の上限（`maxConnections`）は、手元の Node.js で、上限を超えた接続が応答なしで閉じられることを確かめただけです。ALB の後ろで、いっぱいになったときに利用者へ何が返るか、health check がどうなるかは、確かめていません。512 という数も、計って決めた値ではありません。Docker の daemon が動いていなかったため、image を一度も build していません。したがって、Dockerfile が通ること、`.dockerignore` の例外指定が効くこと、arm64 の base image で起動すること、`--read-only` で動くこと、image の大きさ（料金の表の 0.1 GB は仮定）は未確認です。`ecs:infra:diff`、`ecs:infra:deploy`、`ecs:image:push`、`ecs:watch`、`ecs:logs`、`ecs:infra:drift`、`ecs:infra:destroy` は、実際の AWS では動かしていません。次はすべて実環境での確認待ちです。cdkd 0.296.28 がこの stack を作って消せること。別のアプリの stack から `Fn::ImportValue` で 11章の VPC を読めること。Cloud Control API 経由の 3 種類が通ること。public subnet の task が image を取得できること、443 番だけの egress で足りること。`-c taskSubnets=private` の 2 通りの経路。ALB の health check と fail open。rolling update の間にエラーが出ないこと。target の登録解除のあとに SIGTERM が届くという順序。circuit breaker の rollback と、そのときの cdkd の表示。auto scaling の増減。tag なしで deploy し直すと ALB と task だけが消えること。「ハマりどころ」の症状。
 
 一次情報で確かめられなかったこと。リクエストが無いときの ALB の LCU。ECS と Application Auto Scaling の service-linked role が、そのアカウントでの最初の deploy で自動的に作られるかどうか。auto scaling が動いている service を deploy し直したとき、task の数が `desiredCount` の 2 に戻るかどうか。ALB が負荷に応じて node を増やしたときの public IPv4 アドレスの数。Docker Hub の `node:24-bookworm-slim` に arm64 版があることは、API の応答の先頭（amd64 の項目）しか読んでおらず、確かめていません。Cloudflare Containers は、ドキュメントを読んだだけです。
 

@@ -62,6 +62,17 @@ describe("NotesAppStack: who can call the API", () => {
     expect(api.CorsConfiguration.AllowOrigins).not.toContain("*");
     expect(api.CorsConfiguration.AllowHeaders).toContain("authorization");
   });
+
+  it("throttles every route on the stage, the open /health included", () => {
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      AutoDeploy: true,
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+      // A route with settings of its own would step around the stage's limit.
+      RouteSettings: Match.absent(),
+    });
+  });
 });
 
 describe("NotesAppStack: how users sign in", () => {
@@ -112,6 +123,13 @@ describe("NotesAppStack: how users sign in", () => {
 });
 
 describe("NotesAppStack: resources", () => {
+  it("caps the request units the table accepts each second, as chapter 05 does", () => {
+    template.hasResourceProperties("AWS::DynamoDB::Table", {
+      BillingMode: "PAY_PER_REQUEST",
+      OnDemandThroughput: { MaxReadRequestUnits: 150, MaxWriteRequestUnits: 40 },
+    });
+  });
+
   it("passes the client ID to the function", () => {
     template.hasResourceProperties("AWS::Lambda::Function", {
       Environment: {

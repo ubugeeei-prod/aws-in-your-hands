@@ -9,11 +9,13 @@ import {
   IMAGE_TYPES,
   MAX_ATTACHMENTS_PER_NOTE,
   MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY,
   type UploadPermit,
   type UploadRequest,
 } from "./contract.ts";
 import { isKeySegment, objectKey } from "./keys.ts";
 import type { ObjectStore } from "./object-store.ts";
+import { type PermitLedger, permitDay } from "./permit-ledger.ts";
 
 // #region timing
 export const UPLOAD_PERMIT_SECONDS = 5 * 60;
@@ -27,6 +29,8 @@ export type AttachmentDeps = {
   notes: Pick<NoteService, "get">;
   attachments: AttachmentRepository;
   objects: ObjectStore;
+  /** The API always has one. Operator scripts that build this service by hand may leave it out. */
+  permits?: PermitLedger;
   now: () => Date;
   randomSuffix: () => string;
   log: Logger;
@@ -77,6 +81,7 @@ export function createAttachmentService(deps: AttachmentDeps) {
       | { status: "permitted"; permit: UploadPermit }
       | { status: "note_not_found" }
       | { status: "limit" }
+      | { status: "quota" }
     > {
       // The note is looked up under the caller's own `sub`, so someone else's
       // note is "not found" here exactly as it is in chapter 06.
@@ -87,6 +92,13 @@ export function createAttachmentService(deps: AttachmentDeps) {
         return { status: "limit" };
       }
       const now = deps.now();
+      // Last of the checks, so a refusal above does not use up the day's allowance.
+      if (
+        deps.permits !== undefined &&
+        !(await deps.permits.take(owner, permitDay(now), MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY))
+      ) {
+        return { status: "quota" };
+      }
       const attachmentId = newNoteId(now, deps.randomSuffix());
       const upload = await deps.objects.presignUpload({
         key: objectKey({ owner, noteId, attachmentId }),
@@ -94,7 +106,7 @@ export function createAttachmentService(deps: AttachmentDeps) {
         maxBytes: MAX_UPLOAD_BYTES,
         expiresInSeconds: UPLOAD_PERMIT_SECONDS,
       });
-      // Nothing is written anywhere yet. A permit that is never used leaves no trace.
+      // No record and no object yet. A permit that is never used leaves only its count.
       return {
         status: "permitted",
         permit: {

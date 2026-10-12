@@ -1,6 +1,6 @@
 ---
 title: "06 Auth: Cognito と認可"
-revision: 2
+revision: 3
 ---
 
 # 06 Auth: Cognito と認可
@@ -91,6 +91,8 @@ access token と ID token は、どちらも JWT という形式で、同じ use
 <<< @/examples/06-auth/api/src/contract.ts{error}
 
 `unauthenticated`（401）は、「誰からの呼び出しか分からない」という意味です。
+
+`quota_exceeded`（409）は、05章の repository が数えている上限です。1 人が持てるノートは 100 件まで。05章では持ち主が 1 人（`anonymous`）だったので、全体で 100 件でした。この章からは持ち主が token の `sub` になるので、利用者ごとに 100 件です。この章で書いたのは、上限を repository に渡す 1 行（`api/src/compose.ts`）と、エラーを 409 にする数行（`api/src/app.ts`）だけ。数え方は 05章のままです。
 
 ノートについて「権限がない」（403）を表すエラーは、わざと作っていません。他人のノートを指定したときの答えは、存在しないノートを指定したときと同じ `not_found` にします。403 を返すと、「その ID のノートは存在する」と教えてしまうからです。
 

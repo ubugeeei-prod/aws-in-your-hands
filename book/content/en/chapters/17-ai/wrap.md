@@ -49,6 +49,14 @@ Lambda duration assumes 4 seconds per summary on average. The function is runnin
 
 About the ceiling. Output is at most 400 tokens per summary, so even if all 1,000 wrote up to the limit, the output part is USD 1.32. The input, as said above, is limited only by characters, so no such flat statement can be made for it.
 
+**If a script with the permission gets stuck in a loop.** Only a caller who can sign may call this URL. Lambda turns strangers away before the function. What there is to worry about is your own side running away.
+
+The worst case of one call can be stated. Output stops at 400 tokens, so on Nova 2 Lite that is USD 0.0013 (400 x 0.003311 / 1,000). The function stops at 40 seconds, so Lambda is USD 0.00013. Input stops at 10,000 characters, but what one character costs is something this book does not know.
+
+The number of calls has no limit by default. There is only the account's Bedrock quota, whose value was not checked. With `-c reservedConcurrency=2`, two run at a time. What that pins down is Lambda duration: two running non-stop for 30 days is USD 17.28.
+
+Inference cannot be pinned down the same way. Two at a time at 4 seconds each (the assumption in the table above) is 1.296 million calls in 30 days. If every one writes up to the limit, output alone is USD 1,716.42. At 2,000 input tokens each, add USD 1,026.43. Reserved concurrency is a brake on how many at once, not a budget. Stopping the count takes the per-user limit described under "Going to production".
+
 Change the model and the unit prices change. The same token counts on Claude Haiku 4.5 (Tokyo, USD 1.10 per million input tokens and USD 5.50 per million output tokens) come to USD 3.03 for inference alone, more than twice Nova 2 Lite. Tokenizers differ by model, though, so the same text does not give the same token count. Read it as a comparison of unit prices.
 
 Some things I could not confirm: whether Bedrock has a free allowance, and how many tokens are billed for a call that is aborted midway. Neither was confirmed from a primary source, so both stay unknown.
@@ -71,7 +79,7 @@ Deleting the stack stops the charges from this chapter.
 ## Going to production
 
 - **Let a browser call it.** The official documentation describes putting CloudFront in front of the function URL and having CloudFront sign requests with origin access control. The URL stays `AWS_IAM`. On its own, though, that lets anyone who knows the CloudFront URL call, so the app has to verify the access token from chapter 06. The documentation also says that for POST the SHA-256 of the body must be sent in the `x-amz-content-sha256` header. This chapter builds none of that
-- **Add a limit per user.** The only limit so far is per call. The same person calling 10,000 times is billed 10,000 times. A limit on the count needs authentication that tells users apart, and a place to keep the count
+- **Add a limit per user.** The only limits so far are per call and, if you ask for it, how many at once. The same person calling 10,000 times is billed 10,000 times. A limit on the count needs authentication that tells users apart, and a place to keep the count
 - **Check the account's quota.** Inference has a limit on token usage for each model. According to the documentation, the values actually applied to an account can be lower than the published defaults. Look up your own in Service Quotas (this chapter did not check the values)
 - **Add a budget notification.** That is Budgets, from chapter 01. A notification does not stop spending. The limits above do
 - **Decide where the data may go.** A `jp.` profile stays in Japan; `global.` is worldwide. Decide where the data may be processed before you choose a model
@@ -103,6 +111,7 @@ What remains is the storage created by cdkd's bootstrap (chapter 02) and the dep
 - That `ConverseStream` passes with the IAM policy narrowed to the inference profile (with the `bedrock:InferenceProfileArn` condition)
 - How the function and the model behave on Lambda after the caller disconnects. This is a conclusion from reading the documentation and Hono's source, not an observation
 - Billing for a call aborted midway, a free allowance for Bedrock, and the default quota values in the Tokyo Region
+- That a deploy with `-c reservedConcurrency=N` goes through, and what a function URL answers to a call past the limit. Only two things were checked: the template carries the value, and the source of cdkd 0.296.28 passes it to the Lambda API
 
 **Where the code is.**
 

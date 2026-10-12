@@ -3,7 +3,12 @@ import { describe, expect, it } from "vite-plus/test";
 import { createApp } from "../src/app.ts";
 import { errorSchema, noteListSchema, noteSchema } from "../src/contract.ts";
 import type { LogEntry } from "../src/log.ts";
-import { createNoteService, InMemoryNoteRepository, type NoteRepository } from "../src/notes.ts";
+import {
+  createNoteService,
+  InMemoryNoteRepository,
+  MAX_NOTES,
+  type NoteRepository,
+} from "../src/notes.ts";
 
 // Everything that would make a test depend on when or where it runs is passed
 // in: the clock, the ID generators, the repository, and the log sink.
@@ -68,6 +73,31 @@ describe("notes API", () => {
     const response = await post({ title: "big", body: "x".repeat(70_000) });
     expect(response.status).toBe(413);
     expect(errorSchema.parse(await response.json()).error.code).toBe("payload_too_large");
+  });
+
+  it("refuses note 101 with 409 and takes one again after a delete", async () => {
+    const { app, post } = setup();
+    for (let count = 1; count <= MAX_NOTES; count++) {
+      expect((await post({ title: `note ${count}` })).status).toBe(201);
+    }
+
+    const full = await post({ title: "one too many" });
+    expect(full.status).toBe(409);
+    expect(errorSchema.parse(await full.json()).error.code).toBe("quota_exceeded");
+    const list = noteListSchema.parse(await (await app.request("/notes")).json());
+    expect(list.notes).toHaveLength(MAX_NOTES);
+
+    expect((await app.request("/notes/note-1", { method: "DELETE" })).status).toBe(204);
+    expect((await post({ title: "fits now" })).status).toBe(201);
+  });
+
+  it("still replaces a note it already holds when full", async () => {
+    const repository = new InMemoryNoteRepository(1);
+    const note = { id: "a", title: "first", body: "", createdAt: "2026-10-11T00:00:00.000Z" };
+    await repository.put(note);
+    await repository.put({ ...note, title: "second" });
+    expect((await repository.get("a"))?.title).toBe("second");
+    await expect(repository.put({ ...note, id: "b" })).rejects.toThrow(/1 notes/);
   });
 
   it("answers 404 with the error shape for an unknown note and an unknown route", async () => {

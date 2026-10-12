@@ -9,6 +9,14 @@ export type NoteServiceDeps = {
   randomSuffix: () => string;
 };
 
+// Thrown, not returned: `create` keeps the return type later chapters build on.
+export class NoteQuotaError extends Error {
+  constructor() {
+    super("This owner has no room for another note.");
+    this.name = "NoteQuotaError";
+  }
+}
+
 // #region service
 // Chapter 06 replaces this with the signed-in user.
 export const SHARED_OWNER = "anonymous";
@@ -34,8 +42,12 @@ export function createNoteService(deps: NoteServiceDeps) {
           createdAt: timestamp,
           updatedAt: timestamp,
         };
-        if ((await deps.repository.create(owner, note)) === "created") {
+        const result = await deps.repository.create(owner, note);
+        if (result === "created") {
           return note;
+        }
+        if (result === "quota_exceeded") {
+          throw new NoteQuotaError();
         }
       }
       throw new Error("Could not allocate a note ID after 3 attempts");

@@ -30,6 +30,14 @@ function URL は、Lambda の関数 1 つに付く専用の HTTPS endpoint で�
 
 `timeout` は 10 秒にしました。CloudFront が origin の応答を待つのは、既定で 30 秒です。それより長く動かしても、受け取る相手がいません。
 
+最後の数行は、同時に動く数の上限（reserved concurrency）です。既定では付けません。デプロイのときに `-c reservedConcurrency=5` のように渡すと、付きます。
+
+<<< @/examples/09-ssr/infra/lib/ssr-stack.ts{reserved}
+
+04章の API Gateway には、秒あたりのリクエスト数の上限を付けました。function URL と CloudFront には、それに当たる無料の設定がありません。cache に当たらないリクエストは、来ただけ関数を動かします。それを頭打ちにできるのが、この数字です。上限を超えたぶんは、関数が動かずに断られます。
+
+既定にしていないのは、デプロイが失敗するかもしれないからです。reserved concurrency は、アカウント全体の同時実行数の枠から N を取り分けます。作ったばかりのアカウントは枠が小さいことがあり、その場合は取り分け自体を断られます。あなたのアカウントでどうなるかは、この本では確かめられません。いつ付けるかは「お金の話」で、数字と一緒に話します。
+
 ### function URL を公開のままにしない
 
 <<< @/examples/09-ssr/infra/lib/ssr-stack.ts{url}
@@ -80,7 +88,9 @@ CloudFront は、何も設定しなければ cookie を見ません。cookie だ
 
 `/me` 以外に使う cache policy です。`cookieBehavior` と `headerBehavior` が `none`。CloudFront では、cache key に入れなかった値は origin にも送られません。つまり公開ページを組み立てる Lambda には、cookie がそもそも届きません。
 
-これが効きます。cookie が届かなければ、Lambda は誰が見ているのか知りようがない。知らないものは、HTML に書けません。将来だれかが公開ページに「こんにちは、Alice さん」と出すコードを足しても、動くのは手元だけで、CloudFront を通すと名前が出ない。事故が「漏れる」ではなく「表示されない」の側に倒れます。
+`queryStringBehavior` も `none` です。この章のページは、query string を読みません。もし cache key に入れると、`/?x=1`、`/?x=2` は別々の cache になります。乱数を付けて叩くだけで毎回 cache を外せて、そのたびに 512 MB の関数が動きます。入れなければ、何を付けても同じ path は同じ cache です。query string を読むページを足すときは、`cloudfront.CacheQueryStringBehavior.allowList("page")` のように、読む名前だけを入れます。
+
+cookie の話に戻ります。これが効きます。cookie が届かなければ、Lambda は誰が見ているのか知りようがない。知らないものは、HTML に書けません。将来だれかが公開ページに「こんにちは、Alice さん」と出すコードを足しても、動くのは手元だけで、CloudFront を通すと名前が出ない。事故が「漏れる」ではなく「表示されない」の側に倒れます。
 
 TTL の 3 つの数字にも意味があります。
 

@@ -339,6 +339,24 @@ describe("AsyncStack: next to chapter 07's stack", () => {
   });
 });
 
+describe("AsyncStack: what bounds the stream of events", () => {
+  it("keeps chapter 07's throttle on the API, the only way an upload permit is handed out", () => {
+    expect(one("AWS::ApiGatewayV2::Stage", "Api").Properties["DefaultRouteSettings"]).toEqual({
+      ThrottlingRateLimit: 10,
+      ThrottlingBurstLimit: 20,
+    });
+  });
+});
+
+describe("AsyncStack: the table the worker and housekeeping share with the API", () => {
+  it("keeps chapter 07's ceiling on request units, whoever is reading or writing", () => {
+    expect(one("AWS::DynamoDB::Table", "Notes").Properties["OnDemandThroughput"]).toEqual({
+      MaxReadRequestUnits: 150,
+      MaxWriteRequestUnits: 40,
+    });
+  });
+});
+
 describe("AsyncStack: resources", () => {
   it("uses only resource types looked up in the pinned cdkd", () => {
     // Chapter 07's nineteen types and five new ones. cdkd 0.296.28 registers a

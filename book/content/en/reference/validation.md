@@ -676,3 +676,51 @@ To resume: After `vp run celld:infra:deploy -c nodes=3`, run `vp run celld:insta
 celld is beta, with a release roughly every week around the time of writing. The upgrade notes, defaults, CLI flags, and diagnose output format this chapter copied are those of v0.6.2.
 
 To resume: Before using a newer release, reread that tag's `docs/README.md` (Upgrade notes, Shut down and roll out a node, Environment variables), `docs/guarantees.md`, `docs/security.md`, and `docs/limitations.md`, then update the version, digests, upgrade notes, and defaults in `examples/24-celld/src/celld.ts` and run the tests.
+
+### bounds-applied-by-cdkd
+
+The bounds on public entry points (`DefaultRouteSettings` on HTTP API stages, `OnDemandThroughput` on DynamoDB tables, opt-in `ReservedConcurrentExecutions`) are pinned in templates by tests only. Whether cdkd 0.296.28 applies them has not been checked. Reading the pinned code, it passes all three to the AWS APIs.
+
+To resume: Deploy chapter 04 and read `DefaultRouteSettings` with `aws apigatewayv2 get-stage`; deploy chapter 05 and read `OnDemandThroughput` with `aws dynamodb describe-table`. Then send more than 10 requests a second and confirm a 429 comes back.
+
+### throttle-scope-and-billing
+
+Whether a stage's default throttle is one budget for the whole API or one per route has not been checked. If it is per route, the prose's "10 a second" multiplies by the number of routes (7 in chapter 06, 11 in chapters 07 and 08). Whether throttled 429s and requests refused by an authorizer are billed has not been checked either.
+
+To resume: Send 10 requests a second to each of two routes of a deployed API at once and see whether the total is held to 10. Check the bill a day later for charges on the 429s.
+
+### worst-case-amounts-computed
+
+The worst-case amounts in each chapter's "when it gets hammered" passage are computed from unit prices in the repository and the chapter's assumptions, not taken from a bill. Response data transfer is counted separately, and whether the internet transfer price applies to API Gateway responses has not been checked.
+
+To resume: After a load test, compare Cost Explorer with the chapter's table item by item.
+
+### limits-under-real-concurrency
+
+The per-owner note limit (chapter 05) and the per-day permit limit (chapter 07) count with conditional writes. In memory and on DynamoDB Local, concurrent creates never pass the limit; on real DynamoDB this has not been checked. How the SDK retries at the table's throughput cap, and when that becomes a 500, is also unchecked.
+
+To resume: Against a deployed chapter 05 API, send concurrent creates from just under the limit and confirm the 101st is a 409.
+
+### reserved-concurrency-on-new-accounts
+
+`-c reservedConcurrency=N` in chapters 09, 17 and 21 is only checked as far as the template. A new account's concurrency limit can be low enough that a reservation is refused at deploy, which is why it is not the default. What a function URL and CloudFront answer at the ceiling is unchecked.
+
+To resume: Read the limit with `aws service-quotas get-service-quota --service-code lambda --quota-code L-B99A9384`, then deploy with `-c reservedConcurrency=2`.
+
+### edge-and-cache-bounds
+
+Dropping query strings from the cache key in chapter 09 (`QueryStringBehavior: none`) and answering anything but POST on `/digest` with a 405 from the CloudFront Function in chapter 10 are checked in templates and in Node.js tests only. Whether CloudFront Functions accepts a 405 with an `allow` header, and that Lambda@Edge does not run for it, is unchecked.
+
+To resume: After deploying, send `curl -i 'https://<domain>/?x=1'` twice and confirm the second is served from cache. For chapter 10, confirm `curl -i https://<domain>/digest` answers 405.
+
+### ivs-viewer-flood
+
+The worst case in chapter 18's "when the URL gets around" comes from the default concurrent-views quota (15,000) and the per-viewer-hour price. What IVS does past the quota, and how quickly output billing stops after `StopStream`, is unchecked.
+
+To resume: Run `vp run stream:stop` while live and watch `vp run stream:status` until concurrent views reach 0.
+
+### alarm-topic-tls
+
+Chapter 19's alarm topic now requires TLS (`enforceSSL`) and carries an explicit statement that lets CloudWatch publish. That a CloudWatch alarm can publish under this policy is unchecked.
+
+To resume: After deploying, force the alarm with `aws cloudwatch set-alarm-state` and confirm the subscriber is notified.

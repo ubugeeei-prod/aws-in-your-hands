@@ -42,6 +42,16 @@ SES の無料枠は、不明としています。料金ページにあるのは�
 
 この表に入っていないものもあります。インターネットへのデータ転送、専用 IP（1 つにつき月 USD 24.95）、Virtual Deliverability Manager。どれも、この章の構成では使っていません。関数の実行時間（送信 300 ミリ秒、イベント 50 ミリ秒）も仮定で、実測ではありません。
 
+**権限を持った script が loop に入ったら。** この API を呼べるのは、`execute-api` の権限を持つ相手だけです。知らない人は、API Gateway が関数の手前で断ります。なので、心配するのは攻撃よりも、自分の側の暴走です。止めるものは 3 つあります。
+
+- **stage の throttling。** 1 秒に 10 件まで。30 日で、多くて 2,592 万件
+- **同じ `notificationId` は 1 通。** 同じ依頼を何回繰り返しても、送るのは 1 回です。ただし、毎回ちがう ID を付けてくる loop には効きません
+- **SES の上限。** sandbox の中なら、24 時間に 200 通、1 秒に 1 通、確認済みの宛先だけ。30 日で多くて 6,000 通、USD 0.60 です
+
+sandbox の中で、毎回ちがう ID の依頼が 1 秒に 10 件、30 日続いたとします。ほとんどは SES に断られますが、依頼のたびに API Gateway と関数は動き、table には 2 回書きます（先取りと、断られた記録）。上の表と同じ仮定（関数は 300 ミリ秒、ログは 0.5 KB）で、API Gateway が USD 33.44、Lambda が USD 31.10、DynamoDB が USD 38.91、ログが USD 9.39、SES が USD 0.60。合わせて月 USD 113 ほどです。
+
+sandbox の外では、話が変わります。上限はアカウントの送信の上限（`SendQuota`）になり、その値はこの本ではわかりません。上限が許せば、throttling いっぱいの 2,592 万通で、SES だけで USD 2,592 です。お金より先に、送信元としての評判を失います。sandbox を出る前に、「本番にするなら」の最初の 2 つを済ませてください。
+
 stack を消せば、この章のぶんの料金は止まります。
 
 ## ハマりどころ
@@ -50,6 +60,7 @@ stack を消せば、この章のぶんの料金は止まります。
 | --- | --- |
 | `dev:mail` が `Invalid environment` で止まる | `examples/15-email/.env` はありますか。`MAIL_MODE=local` になっていますか |
 | `mail:send` が、この本のエラーの形（`error.code`）ではない応答で失敗する | API Gateway が、関数を呼ぶ前に拒否しています。`vp run account:whoami` で、いまの認証情報が stack と同じアカウントのものか確認。API を呼ぶには `execute-api` の権限が要ります |
+| `mail:send` が 429 で失敗する | stage の throttling です。API 全体で 1 秒に 10 件を超えています。呼ぶ側が loop していませんか |
 | `send_rejected` が返る | SES が断りました。`vp run mail:logs` で `reason` を見ます。identity が未確認、sandbox で未確認の宛先に送った、流量制限、のどれかが多いはず |
 | ログの `reason` が権限のエラー（`AccessDenied` など） | 送信 role の policy が足りません。エラーに出る resource の ARN と、stack の policy を見比べてください |
 | `send_unknown` が返る | SES から答えが返りませんでした。同じ `notificationId` では、もう送られません。`mail:status` で状態を確かめ、`delivered` に進まなければ、新しい `notificationId` で送り直すかどうかを判断します |
@@ -63,7 +74,7 @@ stack を消せば、この章のぶんの料金は止まります。
 
 ## 本番にするなら
 
-- **呼べる相手を絞る。** IAM の認可は、「`execute-api` の権限を持つ誰か」までしか絞りません。その権限を、通知を送る処理の role にだけ持たせます
+- **呼べる相手を絞る。** IAM の認可は、「`execute-api` の権限を持つ誰か」までしか絞りません。その権限を、通知を送る処理の role にだけ持たせます。throttling の 1 秒に 10 件も、実際に要る数まで下げます
 - **API の前に queue を置く。** 呼ぶ側を SES の遅さから切り離して、流量制限に当たったら待ってやり直せます（[08章](/ja/chapters/08-async.md)）
 - **イベントの取りこぼしに備える。** 関数が 3 回とも失敗したイベントは、Lambda が捨てます。関数に dead-letter queue か、失敗時の送り先（on-failure destination）を付けて、取っておけるようにします（dead-letter queue の考え方は [08章](/ja/chapters/08-async.md)。あちらは SQS の queue に付けています）
 - **bounce と complaint の数を見張る。** 送信元としての評判に問題があると、SES はアカウントを審査中にしたり（`PROBATION`）、送信を止めたり（`SHUTDOWN`）します。いまの状態は `aws sesv2 get-account` の `EnforcementStatus` に出ます。読めなかったイベントのログと一緒に、アラームにします（アラームの組み立て方は [19章](/ja/chapters/19-observability.md)）
@@ -104,6 +115,7 @@ cdkd の bootstrap で作った保存場所（02章）と、そこに置かれ�
 - DynamoDB の条件付き書き込みが、同時の依頼を 1 つだけ通すこと。確かめたのは、送っている条件式と、メモリの実装が同じ規則に従うことだけです
 - cdkd が、SES の 3 種類のリソースを Cloud Control API 経由で作り、drift を検出し、消せること
 - 改行を含む件名や宛先を、SES がどう扱うか
+- stage の throttling が実際に効くこと。確かめたのは、template に値が入っていることと、cdkd 0.296.28 のソースがそれを AWS の API に渡していることだけです。throttling が返す 429 の形と、その課金も確かめていません
 - production access の申請の画面と、審査にかかる時間。本文の項目は、公式ドキュメントの記述です
 
 **コードの場所。**

@@ -1,6 +1,6 @@
 ---
 title: "07 File Upload: Presigned URLs and S3"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 07 File Upload: Presigned URLs and S3
@@ -139,3 +139,27 @@ The tests try to break it like this.
 - Bob writes Alice's name and a key of Alice's into the query, the headers, and the body, and the key that comes back still starts with `u/bob/`
 - Bob knows the ID of Alice's attachment and still cannot finish, list, or delete it
 - A `/`, a `..`, or an empty string in any part of a key makes the key builder throw
+
+### 100 permits a person, a day
+
+This is the last check in `requestUpload`.
+
+A permit puts nothing in the bucket until it's used. So the bucket can't tell you how many are out. Without a count, a signed-in user could ask for as many permits as they like and leave up to 5 MB with each one. S3 deletes whatever was never finished a day later, but until then it's billed as storage.
+
+So the permits handed out are counted.
+
+<<< @/examples/07-uploads/api/src/permit-ledger.ts{ledger}
+
+The count lives in the same table as the notes. No store was added.
+
+<<< @/examples/07-uploads/api/src/permit-ledger.ts{dynamodb}
+
+One item per date (UTC) in the owner's partition, and the number goes up by one. Adding one and checking that it's still under the limit are a single update. Two requests arriving together can't both take the last permit. It's the same shape as the note count in chapter 05.
+
+At the limit, the answer is 429 `upload_quota_exceeded`. The note count answered 409, but this one is 429, because waiting helps: when the date changes, it goes through again.
+
+What's counted is permits handed out, not permits used. One that was never used still counts. A request refused with 404, or by the ten-images-a-note limit, doesn't.
+
+With this, the unfinished objects one person can leave in a day stop at 100, or 500 MB. This chapter doesn't delete the per-date items. One small item stays behind for each day someone uploaded.
+
+One thing is still open. As said above, a permit can be used any number of times until it expires (5 minutes). It overwrites the same key, so the amount stored doesn't grow. But the number of requests to S3 isn't something this limit can hold down.

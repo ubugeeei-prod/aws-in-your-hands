@@ -68,11 +68,11 @@ vp run test:local:dynamodb
 
 | 層 | ファイル | 見ているもの | 見られないもの |
 | --- | --- | --- | --- |
-| contract（メモリ） | `test/repository-contract.ts`、`test/memory-repository.test.ts` | repository の規則。上書きの禁止、version、ページ送り、持ち主の分離 | DynamoDB の挙動 |
+| contract（メモリ） | `test/repository-contract.ts`、`test/memory-repository.test.ts` | repository の規則。上書きの禁止、version、ページ送り、持ち主の分離、件数の上限 | DynamoDB の挙動 |
 | リクエストの検査 | `test/dynamodb-repository.test.ts` | DynamoDB に送る条件式、key の形、整合性の指定。失敗した条件の扱い | DynamoDB がその依頼どおりに動くこと |
 | contract（DynamoDB Local） | `test/dynamodb-local.test.ts` | 同じ規則が、模擬実装の上で成り立つこと | IAM、流量の制限、実サービスの分散した挙動 |
-| アプリと client | `test/app.test.ts` | 409、ページ送り、偽の cursor の拒否、応答を失った後の再試行 | Lambda と API Gateway を通ったときの挙動 |
-| インフラ | `infra/test/notes-stack.test.ts` | 権限が 5 つの操作と 1 つの table に限られること、table の削除方針 | AWS がその template どおりに動くこと |
+| アプリと client | `test/app.test.ts` | 409、ページ送り、偽の cursor の拒否、応答を失った後の再試行、101 件目の拒否 | Lambda と API Gateway を通ったときの挙動 |
+| インフラ | `infra/test/notes-stack.test.ts` | 権限が 5 つの操作と 1 つの table に限られること、table の削除方針、table と stage の流量の上限 | AWS がその template どおりに動くこと |
 
 contract test は、規則を 1 回だけ書いて、実装ごとに実行します。
 
@@ -82,4 +82,6 @@ DynamoDB の実装のほうは、SDK の client の代用品を渡して、送�
 
 同時の書き込みについては、contract test に「同じ version を持つ 2 つの書き込みのうち、通るのはちょうど 1 つ」という検査があります。メモリの実装では、これは常に成り立ちます。1 つのプロセスの中で順に実行されるからです。
 
-ここは正直に書いておきます。本当に確かめたいのは DynamoDB の上でなのですが、それはまだ一度も実行できていません。つまり、この章の中心である「条件付き書き込みが同時の更新を 1 つだけ通す」ことは、DynamoDB 上では未確認です。確かめたのは、正しい条件式を送っていることと、メモリの実装が同じ規則に従うこと。DynamoDB の挙動についての記述は、公式ドキュメントに基づいています。
+件数の上限にも同じ検査があります。席が 3 つのところへ作成を 6 件同時に送って、通るのがちょうど 3 件であること。
+
+ここは正直に書いておきます。本当に確かめたいのは DynamoDB の上でなのですが、実際の DynamoDB では、まだ一度も実行できていません。DynamoDB Local（3.3.1）の上では、contract test の 15 件が通りました。ただ、模擬実装は 1 台で動くものです。つまり、この章の中心である「条件付き書き込みが同時の書き込みを決まった数だけ通す」ことは、実物の上では未確認です。DynamoDB の挙動についての記述は、公式ドキュメントに基づいています。

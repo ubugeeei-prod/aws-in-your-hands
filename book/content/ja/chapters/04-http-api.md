@@ -1,6 +1,6 @@
 ---
 title: "04 HTTP API: Lambda と API Gateway HTTP API"
-revision: 3
+revision: 4
 ---
 
 # 04 HTTP API: Lambda と API Gateway HTTP API
@@ -9,7 +9,7 @@ SPA は公開できました。次は API です。
 
 この章では、ノートを作って、読んで、消せる小さな HTTP API を書きます。まず手元で動かして、それから同じコードを Lambda にのせます。Docker は要りません。手元で試すぶんには AWS のアカウントも要りません。
 
-先に 2 つだけ。この章の API は、ノートをメモリに置くだけで保存しません（保存は [05章](/ja/chapters/05-dynamodb.md)）。認証もないので、URL を知っている人は誰でも呼べます（認証は [06章](/ja/chapters/06-auth.md)）。消えて困るもの、見られて困るものは入れないでくださいね。
+先に 2 つだけ。この章の API は、ノートをメモリに置くだけで保存しません（保存は [05章](/ja/chapters/05-dynamodb.md)）。認証もないので、URL を知っている人は誰でも呼べます（認証は [06章](/ja/chapters/06-auth.md)）。そのかわり、受けるリクエストは 1 秒に 10 件まで、置けるノートは 100 件までに絞ってあります。消えて困るもの、見られて困るものは入れないでくださいね。
 
 前提は [02章](/ja/chapters/02-toolchain.md)だけです。コードは `examples/04-http-api/` にあります。
 
@@ -113,7 +113,9 @@ HTTP の処理には Hono を使います。Web 標準の `Request` と `Respons
 
 <<< @/examples/04-http-api/src/notes.ts{repository}
 
-いまの中身はただの `Map` です。05章で DynamoDB に差し替えますが、この interface はそのまま使います。
+いまの中身はただの `Map` です。`Map` はメモリなので、誰でも `POST` できる API でそのままにしておくと、入れられただけ膨らみます。そこで 100 件で打ち切って、101 件目は `NoteLimitError` を投げます。アプリの `onError` がそれを 409 と `quota_exceeded` にして返します。待っても空かないので 429 ではなく、1 件消せば空くので 409 です。
+
+05章で DynamoDB に差し替えますが、この interface はそのまま使います。
 
 そして、本物の時刻や乱数や環境変数に触るのは、ここ 1 か所だけ。
 

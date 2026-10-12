@@ -20,6 +20,54 @@ const change = (expectedVersion: number, title = "changed") => ({
   updatedAt: "2026-10-11T01:00:00.000Z",
 });
 
+// The limit is a second contract: a repository built without one never refuses.
+export function describeQuotaContract(
+  name: string,
+  fresh: (maxNotesPerOwner: number) => Promise<{ repository: NoteRepository; owner: string }>,
+) {
+  describe(`NoteRepository quota: ${name}`, () => {
+    it("refuses the note after the last place, and stores nothing", async () => {
+      const { repository, owner } = await fresh(2);
+      expect(await repository.create(owner, note("a1"))).toBe("created");
+      expect(await repository.create(owner, note("a2"))).toBe("created");
+      expect(await repository.create(owner, note("a3"))).toBe("quota_exceeded");
+      expect(await repository.get(owner, "a3")).toBeUndefined();
+    });
+
+    it("lets only as many simultaneous creates through as there are places", async () => {
+      const { repository, owner } = await fresh(3);
+      const results = await Promise.all(
+        ["a1", "a2", "a3", "a4", "a5", "a6"].map((id) => repository.create(owner, note(id))),
+      );
+      expect(results.filter((result) => result === "created")).toHaveLength(3);
+      expect(results.filter((result) => result === "quota_exceeded")).toHaveLength(3);
+      expect((await repository.list(owner, { limit: 10 })).notes).toHaveLength(3);
+    });
+
+    it("gives the place back when a note is deleted, once", async () => {
+      const { repository, owner } = await fresh(1);
+      await repository.create(owner, note("a1"));
+      expect(await repository.delete(owner, "a1")).toBe(true);
+      expect(await repository.delete(owner, "a1")).toBe(false);
+      expect(await repository.create(owner, note("a2"))).toBe("created");
+      expect(await repository.create(owner, note("a3"))).toBe("quota_exceeded");
+    });
+
+    it("takes no place for a note that already exists", async () => {
+      const { repository, owner } = await fresh(2);
+      await repository.create(owner, note("a1"));
+      expect(await repository.create(owner, note("a1"))).toBe("already_exists");
+      expect(await repository.create(owner, note("a2"))).toBe("created");
+    });
+
+    it("counts each owner separately", async () => {
+      const { repository, owner } = await fresh(1);
+      await repository.create(owner, note("a1"));
+      expect(await repository.create(`${owner}-other`, note("a1"))).toBe("created");
+    });
+  });
+}
+
 // Written once, run against each implementation. `fresh` returns an empty
 // repository and an owner no other test uses.
 export function describeRepositoryContract(

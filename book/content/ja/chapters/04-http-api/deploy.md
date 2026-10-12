@@ -46,6 +46,18 @@ route を 1 つずつ並べています。「全部の path を Lambda に渡す
 
 CORS は、ブラウザが別の origin から API を呼ぶのを許す設定です。許す origin は 1 つだけ。既定は SPA の開発サーバーにしてあります。
 
+### 受ける量に蓋をする
+
+この API は誰でも呼べます。呼ばれたぶんだけ料金がかかるので、何もしないと、bot が叩いたぶんがそのまま請求になります。
+
+<<< @/examples/04-http-api/infra/lib/http-api-stack.ts{throttle}
+
+<<< @/examples/04-http-api/infra/lib/http-api-stack.ts{stage}
+
+stage の throttling です。1 秒に 10 件までで、瞬間的には 20 件まで。超えたぶんは API Gateway が 429 で断って、関数は呼ばれません。`HttpApi` の construct にはこの設定の口が無いので、construct が作った stage を取り出して、直接書いています。
+
+この数字は API 全体でひとつです。呼ぶ人ごとではありません。誰かが 1 秒 10 件を使い切っていたら、あなたのリクエストも 429 になります。守っているのは請求で、使い勝手ではないんです。10 件は練習用の値なので、本物の利用者を迎えるときは選び直してください。
+
 ## デプロイして呼ぶ
 
 <!-- section: 04.deploy -->

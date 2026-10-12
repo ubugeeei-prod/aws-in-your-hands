@@ -7,7 +7,12 @@ import {
 } from "@aih/example-06-auth/api/src/app.ts";
 
 import { type AttachmentService, withAttachmentCleanup } from "./attachments.ts";
-import { type ErrorBody, MAX_ATTACHMENTS_PER_NOTE, uploadRequestSchema } from "./contract.ts";
+import {
+  type ErrorBody,
+  MAX_ATTACHMENTS_PER_NOTE,
+  MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY,
+  uploadRequestSchema,
+} from "./contract.ts";
 
 export type AppDeps = NotesAppDeps & { attachments: AttachmentService };
 
@@ -83,6 +88,16 @@ export function createApp(deps: AppDeps) {
                   c.get("requestId"),
                 ),
                 409,
+              );
+            case "quota":
+              // 429: nothing is wrong with the request. It is one too many for today.
+              return c.json(
+                failure(
+                  "upload_quota_exceeded",
+                  `An account may start at most ${MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY} uploads a day.`,
+                  c.get("requestId"),
+                ),
+                429,
               );
           }
         },

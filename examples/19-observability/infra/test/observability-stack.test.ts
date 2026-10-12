@@ -3,7 +3,12 @@ import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
 
 import { errorRateRule, latencyRule } from "../../src/alarm-math.ts";
-import { ObservabilityStack, type ObservabilityStackProps } from "../lib/observability-stack.ts";
+import {
+  ObservabilityStack,
+  type ObservabilityStackProps,
+  TABLE_CAP,
+  THROTTLE,
+} from "../lib/observability-stack.ts";
 
 const LAYER = "arn:aws:lambda:ap-northeast-1:111122223333:layer:ExampleOtelLayer:1";
 
@@ -87,9 +92,29 @@ describe("alarms", () => {
 });
 
 describe("notification topic", () => {
-  it("has no policy that opens it to other accounts", () => {
+  it("lets only this account's alarms publish, and only over TLS", () => {
     template.resourceCountIs("AWS::SNS::Topic", 1);
-    template.resourceCountIs("AWS::SNS::TopicPolicy", 0);
+    const [policy] = Object.values(template.findResources("AWS::SNS::TopicPolicy"));
+    const statements = policy?.["Properties"].PolicyDocument.Statement as (Statement & {
+      Principal: unknown;
+      Condition: unknown;
+    })[];
+
+    const allows = statements.filter((statement) => statement.Effect === "Allow");
+    expect(allows).toHaveLength(1);
+    expect(allows[0]).toMatchObject({
+      Action: "sns:Publish",
+      Principal: { Service: "cloudwatch.amazonaws.com" },
+      Condition: { StringEquals: { "aws:SourceAccount": { Ref: "AWS::AccountId" } } },
+    });
+
+    // The statement `enforceSSL` adds. Without it, plain HTTP would be accepted.
+    const denies = statements.filter((statement) => statement.Effect === "Deny");
+    expect(denies).toHaveLength(1);
+    expect(denies[0]).toMatchObject({
+      Action: "sns:Publish",
+      Condition: { Bool: { "aws:SecureTransport": "false" } },
+    });
   });
 
   it("subscribes an address only when one is given", () => {
@@ -185,6 +210,32 @@ describe("permissions", () => {
   }
 });
 
+describe("bounds on a flood", () => {
+  it("throttles every route of the default stage", () => {
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+    });
+    expect(THROTTLE).toEqual({ rate: 10, burst: 20 });
+  });
+
+  it("caps what the on-demand table accepts per second", () => {
+    template.hasResourceProperties("AWS::DynamoDB::Table", {
+      BillingMode: "PAY_PER_REQUEST",
+      OnDemandThroughput: { MaxReadRequestUnits: 150, MaxWriteRequestUnits: 40 },
+    });
+    expect(TABLE_CAP).toEqual({ read: 150, write: 40 });
+  });
+
+  it("labels the 4xx line so a throttled flood can be read off the dashboard", () => {
+    const [dashboard] = Object.values(template.findResources("AWS::CloudWatch::Dashboard"));
+    expect(JSON.stringify(dashboard?.["Properties"].DashboardBody)).toContain(
+      "4xx (429 when throttled)",
+    );
+  });
+});
+
 describe("dashboard", () => {
   it("stays within the 50 metrics of a free dashboard", () => {
     const [dashboard] = Object.values(template.findResources("AWS::CloudWatch::Dashboard"));
@@ -227,6 +278,7 @@ describe("the stack as a whole", () => {
       // Cloud Control API in cdkd 0.296.28
       "AWS::Logs::MetricFilter",
       "AWS::SNS::Topic",
+      "AWS::SNS::TopicPolicy",
     ];
     expect(types(template)).toEqual(base);
     expect(types(withLayer)).toEqual([...base, "AWS::SNS::Subscription"].toSorted());

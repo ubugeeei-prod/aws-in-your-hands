@@ -24,6 +24,22 @@ describe("NotesStack", () => {
     });
   });
 
+  it("caps what the table accepts each second, reads and writes", () => {
+    template.hasResourceProperties("AWS::DynamoDB::Table", {
+      OnDemandThroughput: { MaxReadRequestUnits: 150, MaxWriteRequestUnits: 40 },
+    });
+  });
+
+  it("throttles every route at 10 requests a second, bursts to 20", () => {
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+      // A per-route setting would override the default and could lift it.
+      RouteSettings: Match.absent(),
+    });
+  });
+
   it("deletes the practice table with the stack", () => {
     // The first thing to change once the table holds data worth keeping.
     template.hasResource("AWS::DynamoDB::Table", {

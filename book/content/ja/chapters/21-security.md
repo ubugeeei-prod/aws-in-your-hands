@@ -1,6 +1,6 @@
 ---
 title: "21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations"
-revision: 1
+revision: 2
 ---
 
 # 21 Security: WAF、Inspector、GuardDuty、secret、KMS、CloudTrail、Config、Organizations
@@ -98,6 +98,8 @@ stack は 2 つです。
 <<< @/examples/21-security/infra/lib/config.ts{context}
 
 [14章](/ja/chapters/14-kv-cache.md)の `-c store=valkey` と同じ考え方ですね。何も付けなければ安いほう。`-c cmk=true` のような書き間違いは、「off として扱う」のではなく synth で止めます。お金のかかるスイッチが、黙って別の意味になるのは困るので。
+
+`reservedConcurrency` だけは、お金のかからないスイッチです。それでも既定で off にしているのは、新しいアカウントだと同時実行数の上限が低くて、予約しただけでデプロイが断られることがあるからです。いつ付けるかは、デプロイの節で話します。
 
 ## 権限を絞る
 

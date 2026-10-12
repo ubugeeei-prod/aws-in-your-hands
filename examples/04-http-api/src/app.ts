@@ -7,7 +7,7 @@ import { validator } from "hono/validator";
 import { createNoteSchema, type ErrorBody } from "./contract.ts";
 import type { Env } from "./env.ts";
 import type { Logger } from "./log.ts";
-import type { NoteService } from "./notes.ts";
+import { NoteLimitError, type NoteService } from "./notes.ts";
 
 export type AppDeps = {
   env: Env;
@@ -65,6 +65,13 @@ export function createApp(deps: AppDeps) {
       return c.json(
         failure("invalid_request", "The request body is not valid JSON.", requestId),
         400,
+      );
+    }
+    if (error instanceof NoteLimitError) {
+      // 409, not 429: waiting does not help. Deleting a note does.
+      return c.json(
+        failure("quota_exceeded", "The store is full. Delete a note first.", requestId),
+        409,
       );
     }
     // The stack trace goes to the log, never to the caller.

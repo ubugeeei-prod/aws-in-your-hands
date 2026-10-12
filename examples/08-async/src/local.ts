@@ -2,10 +2,12 @@ import type { Env } from "@aih/example-05-dynamodb/src/env.ts";
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
 import { InMemoryNoteRepository } from "@aih/example-05-dynamodb/src/memory-repository.ts";
 import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
+import { MAX_NOTES_PER_OWNER } from "@aih/example-06-auth/api/src/contract.ts";
 import { createLocalAuthenticator } from "@aih/example-06-auth/api/src/local-auth.ts";
 import { createApp } from "@aih/example-07-uploads/api/src/app.ts";
 import { InMemoryAttachmentRepository } from "@aih/example-07-uploads/api/src/attachment-repository.ts";
 import { createAttachmentService } from "@aih/example-07-uploads/api/src/attachments.ts";
+import { InMemoryPermitLedger } from "@aih/example-07-uploads/api/src/permit-ledger.ts";
 
 import { housekeep } from "./housekeeping.ts";
 import { InMemoryInspectionRepository } from "./inspection.ts";
@@ -48,7 +50,7 @@ export function createLocal(options: LocalOptions) {
       }
     },
   });
-  const noteRepository = new InMemoryNoteRepository();
+  const noteRepository = new InMemoryNoteRepository(MAX_NOTES_PER_OWNER);
   const attachmentRepository = wrap("attachments", new InMemoryAttachmentRepository());
   const inspections = new InMemoryInspectionRepository();
   const objects = wrap("bucket", bucket);
@@ -67,6 +69,7 @@ export function createLocal(options: LocalOptions) {
       notes,
       attachments: attachmentRepository,
       objects,
+      permits: new InMemoryPermitLedger(),
       now: options.now,
       randomSuffix: options.randomSuffix,
       log: options.log,

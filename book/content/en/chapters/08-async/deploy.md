@@ -136,6 +136,21 @@ Nothing fails. Messages just pile up on the queue. At most two workers run at on
 
 It can only take it on up to the retention period, though. This chapter's queue keeps a message for 4 days. A message still unprocessed after 4 days is gone. It does not go to the DLQ either. The number to watch is not the length of the queue but the age of its oldest message (`ApproximateAgeOfOldestMessage` in CloudWatch). How to put an alarm together is in [chapter 19](/en/chapters/19-observability.md).
 
+So what limits how much comes into the queue?
+
+Only S3 can send to this queue, and only about things that happened under `u/` in this one bucket. Putting an object there takes a permit. Permits come from chapter 07's API, which has a throttle of 10 requests a second and hands one person at most 100 a day. One message for the create, one more for the delete or the lifecycle expiration. In ordinary use, one person can cause a few hundred events a day, nowhere near what the worker can't keep up with.
+
+One way in isn't limited. As chapter 07 said, a permit works any number of times for 5 minutes. Each time the same form is sent again, S3 replaces the object and sends one more create event. None of that goes through the API, so neither the throttle nor the 100-a-day limit applies. If a signed-in user keeps sending the same form, the queue grows.
+
+When that happens, some things are protected and some aren't.
+
+- **The workers don't multiply.** Two at once, at most. At 200 ms a message, the assumption from "What it costs", they get through about 10 a second, around 860,000 a day
+- **Requests to DynamoDB don't multiply either.** With two workers, writes and reads go only as far as two workers take them. And the table has the same request unit limits as in chapter 07
+- **What they can't get to is gone after 4 days.** On the assumption above, 4 days is about 3.46 million messages. Anything queued beyond that is deleted without being processed. Those images were never inspected
+- **The bill follows the number of events that arrive.** Nothing stops them from being put on the queue
+
+A queue takes on the difference in flow. It doesn't limit the flow. That's the entrance's job.
+
 ### Looking at the DLQ
 
 ```bash

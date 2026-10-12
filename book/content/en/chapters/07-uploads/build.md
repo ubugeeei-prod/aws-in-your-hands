@@ -45,7 +45,7 @@ Once that's decided, the order follows by itself. Adding: object first, record s
 
 Records go into the same table as chapter 06, in the same owner's partition. The sort key has a different prefix, so they never show up in the note list (which asks for keys starting with `NOTE#`).
 
-There is no row for "upload in progress". Handing out a permit writes nothing anywhere. A permit that is never used leaves no trace.
+There is no row for "upload in progress". All that handing out a permit writes is the count of permits handed out today, from the previous page. Which permits were used is not written anywhere.
 
 ### Finishing
 

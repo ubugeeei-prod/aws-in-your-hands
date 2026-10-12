@@ -16,22 +16,13 @@ export const itemListSchema = z.object({
 export type ItemList = z.infer<typeof itemListSchema>;
 // #endregion list
 
-/** Who is being limited. Self-declared here; chapter 06 shows how to take it from a verified token. */
-export const clientIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
-
 export const healthSchema = z.object({
   status: z.literal("ok"),
   stage: z.string(),
   store: z.enum(["memory", "dynamodb", "valkey", "elasticache"]),
 });
 
-export const errorCodes = [
-  "invalid_request",
-  "rate_limited",
-  "unavailable",
-  "not_found",
-  "internal",
-] as const;
+export const errorCodes = ["rate_limited", "unavailable", "not_found", "internal"] as const;
 
 export const errorSchema = z.object({
   error: z.object({

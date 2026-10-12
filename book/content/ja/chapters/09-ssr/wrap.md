@@ -48,6 +48,36 @@ AWS のほうが、自分で決めることが多いです。この章で書い�
 
 Lambda から CloudFront へのデータ転送は、この表に入れていません（0 という意味ではなく、未算入です）。streaming を使う場合の料金は、「streaming は経路ぜんぶの話」に書いたとおりで、buffered のままなら発生しません。
 
+### 叩かれたら
+
+この distribution は、URL を知っていれば誰でも呼べます。サインインも要りません。bot が大量に叩いてきたら、何が止めてくれるでしょうか。
+
+公開ページを守っているのは、cache です。cache key は path だけ。cookie も、ヘッダーも、query string も入っていません。なので、同じページを何回叩かれても、`?x=<乱数>` を付けられても、関数が動くのは cache が切れたとき（60 秒に 1 回）だけです。`/feed` は 1 行ごとに 300 ミリ秒待つので、3 行で 0.6 秒かかる、この章でいちばん重い route ですが、これも 200 を返す公開の GET なので、同じように cache されます。
+
+cache が守ってくれないリクエストが、2 種類あります。
+
+- **`/me` と `/me/*`。** cache を切ってあるので、1 回ごとに関数が動きます
+- **存在しない path。** 404 には `no-store` を付けて返すので、`/a1`、`/a2`、… と path を変えて叩かれると、毎回関数が動きます（CloudFront が 404 をどのくらい保持するかは、確かめていません）
+
+この 2 つには、既定では上限がありません。止めるのは、アカウント全体の Lambda の同時実行数の上限だけです（あなたのアカウントの値は Service Quotas で見られます。この本では確かめていません）。同時実行 1 つが 1 か月動き続けると、512 MB なので 129.6 万 GB 秒、USD 17.28 です。上限が 100 なら USD 1,728、1,000 なら USD 17,280。これが実行時間だけの最悪の場合で、リクエスト料金とログが上に乗ります。
+
+`-c reservedConcurrency=5` を付けると、ここに天井ができます。
+
+| 対象 | 数量（1 か月、5 つがずっと動き続けた場合） | 定価 |
+| --- | --- | --- |
+| Lambda の実行時間 | 5 × 0.5 GB × 2,592,000 秒 = 648 万 GB 秒 | 86.40 |
+| Lambda のリクエスト | 1 回 200 ミリ秒として 6,480 万件 | 12.96 |
+| CloudWatch Logs の取り込みと保存 | 1 回 0.3 KB として 18.54 GB | 14.23 |
+| 小計 | | **113.59** |
+
+200 ミリ秒と 0.3 KB は、上の表と同じ仮定です。天井があるのは Lambda の側だけで、CloudFront のリクエスト料金（100 万回あたり USD 1.20）には上限がありません。断られたリクエストにも、CloudFront の料金はかかります。
+
+天井に当たっているあいだ、cache に無いページは、本物の読者にもエラーになります。料金は守れますが、サイトは守れません。叩くのが止まれば、元に戻ります。
+
+付けるのは、URL を人に教える前、そして数日以上置いておくときです。試してすぐ消すなら、無くてもかまいません。デプロイが同時実行数のエラーで失敗したら、あなたのアカウントの枠が足りていません。外してデプロイし直してください。
+
+その先に足せるものは、10章の「叩かれたら」と同じです。AWS WAF の rate-based rule（[21章](/ja/chapters/21-security.md)。web ACL が月 USD 5、rule 1 つにつき月 USD 1、検査 100 万回あたり USD 0.60）は、関数に届く前に、同じ IP アドレスからの回数を絞ります。function URL を直接呼べなくしてあるので、迂回もされません。CloudFront の定額プラン（月 USD 0、15、200、1,000）は、何が含まれるかを確認していません。
+
 ## ハマりどころ
 
 ここに書くのは、設定と一次情報から「こうなるはず」と読めるものです。実機で踏んで確かめたものではありません。
@@ -60,6 +90,9 @@ Lambda から CloudFront へのデータ転送は、この表に入れていま�
 | `/me` にいつ行ってもサインインしていない | デプロイした環境では、それが正しい動きです。練習用のサインインは手元だけ |
 | 公開ページに足した「ログイン中の名前」が、デプロイすると出ない | 公開側の behavior は cookie を Lambda に届けません。個人ごとの表示は `/me` の下か、ブラウザから `/me/` の API を呼んで出します |
 | form を足したら、送信が 403 | distribution は GET と HEAD だけを通します。OAC と POST の制約は「function URL を公開のままにしない」に |
+| `ssr:infra:deploy -c reservedConcurrency=5` が、同時実行数についてのエラーで失敗する | アカウントの同時実行数の枠が小さく、取り分けられません。`-c reservedConcurrency` を外してデプロイし、Service Quotas で枠を確認 |
+| `-c reservedConcurrency=...` で synth が止まる | 1 以上の整数ですか。0 は関数を止めてしまうので、受け付けません |
+| 人が増えた時間帯に、cache に無いページだけエラーになる | reserved concurrency の天井に当たっています。ログとメトリクスで throttle を確認して、数字を上げるか、cache する時間を延ばします |
 | 直したのに、古いページが出る | 60 秒待つか、invalidation を。edge ごとに切り替わる時刻は違います |
 | streaming に切り替えたのに、少しずつ届かない | `.output/nitro.json` の `streaming` と、template の `InvokeMode` を見比べる。合っていれば、次に疑うのは CloudFront です（まだ確かめられていない区間） |
 
@@ -68,8 +101,9 @@ Lambda から CloudFront へのデータ転送は、この表に入れていま�
 - **本物のサインインを足す。** session を DynamoDB に置き、06章の認可コードを BFF で token に交換します。POST の入口は、API Gateway を挟むか、ブラウザ側で本文の hash を付けるか、どちらかを選びます
 - **session cookie に `Secure` を必ず付ける。** 練習用のコードは、手元の `http://localhost` で動かすために、プロトコルを見て切り替えています
 - **cache する時間を、ページごとに決める。** 全部 60 秒は学習用の値です。ほとんど変わらないページはもっと長く、在庫のように古いと困るものは cache しない
-- **WAF を CloudFront に付ける。** function URL を直接呼べなくしてあるので、CloudFront に付けた WAF を迂回されません
-- **同時実行数を見る。** function URL は、関数の同時実行数の上限に達すると 429 を返します。cache に当たらないページへのアクセスが急に増えると、ここに届きます
+- **WAF を CloudFront に付ける。** function URL を直接呼べなくしてあるので、CloudFront に付けた WAF を迂回されません。rate-based rule が、`/me` と 404 の flood を関数の手前で絞ります
+- **同時実行数を決めて、見る。** `-c reservedConcurrency=N` の N を、実際のトラフィックから決めます。function URL は、関数の同時実行数の上限に達すると 429 を返します。cache に当たらないページへのアクセスが急に増えると、ここに届きます。throttle のメトリクスにアラームを付けておきます（[19章](/ja/chapters/19-observability.md)）
+- **404 を短く cache する。** いまは `no-store` なので、存在しない path は毎回関数を動かします。数秒でも cache すれば、同じ path の連打は止まります。path を変えられると効かないので、WAF の代わりにはなりません
 - **エラーページを用意する。** Lambda が落ちているときに CloudFront が返すページを、custom error response で決められます
 - **反映の経路を AWS CDK CLI と CloudFormation にする。** 02章で話したとおりです
 
@@ -88,7 +122,7 @@ cdkd は中身のある bucket を消せないので、先に asset を空にし
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ユニットテストと CDK の assertion（`test:unit`）。TypeScript の型検査（`typecheck`）と、Vize による `.vue` の型検査と lint（`typecheck:ssr`、`lint:ssr`）。わざと型エラーを入れて、`vize check` が失敗することも確認。`build:ssr` と `build:ssr:stream`（Nuxt 4.6.1、nitropack 2.13.4、`@vizejs/nuxt` 0.443.0）。ビルドした handler を呼ぶ検査（`ssr:check:output` と `ssr:check:output:stream`）。buffered では `/feed` が 1 回、streaming では 3 回（約 300 ミリ秒おき）に分けて書かれ、どちらでも HTML は 1 回で書かれた。`ssr:infra:synth`。`dev:ssr` を起動して、公開ページ、404、`/me`、サインイン、サインアウト、よそからの POST の拒否、`/feed` が少しずつ届くことを HTTP で確認。
+**手元で確かめたこと。** ユニットテストと CDK の assertion（`test:unit`）。TypeScript の型検査（`typecheck`）と、Vize による `.vue` の型検査と lint（`typecheck:ssr`、`lint:ssr`）。わざと型エラーを入れて、`vize check` が失敗することも確認。`build:ssr` と `build:ssr:stream`（Nuxt 4.6.1、nitropack 2.13.4、`@vizejs/nuxt` 0.443.0）。ビルドした handler を呼ぶ検査（`ssr:check:output` と `ssr:check:output:stream`）。buffered では `/feed` が 1 回、streaming では 3 回（約 300 ミリ秒おき）に分けて書かれ、どちらでも HTML は 1 回で書かれた。`ssr:infra:synth`。`dev:ssr` を起動して、公開ページ、404、`/me`、サインイン、サインアウト、よそからの POST の拒否、`/feed` が少しずつ届くことを HTTP で確認。cache policy が query string を cache key に入れないこと、`reservedConcurrency` を渡さなければ template に同時実行数の設定が出ず、渡せばその数が出ること、0 や整数でない値で synth が止まることは、CDK の assertion で確認。
 
 **まだ確かめていないこと。** AWS には何もデプロイしていません。`ssr:infra:diff`、`ssr:infra:deploy`、`ssr:assets:plan`、`ssr:assets:publish`、`ssr:smoke`、`ssr:infra:drift`、`ssr:unpublish`、`ssr:infra:destroy` は未実行です。とくに次の点は、実環境での確認待ちです。
 
@@ -101,6 +135,9 @@ cdkd は中身のある bucket を消せないので、先に asset を空にし
 - streaming の経路全体。function URL の `RESPONSE_STREAM`、CloudFront が stream を少しずつ流すこと、stream した応答が圧縮されないこと
 - handler の形と `InvokeMode` が食い違ったときの応答
 - 404 に `no-store` を付けたときの、CloudFront の error caching の動き
+- `QueryStringBehavior: none` の cache policy で、query string 付きのリクエストが同じ cache に当たること。query string が Lambda に届かないこと
+- `ReservedConcurrentExecutions` を付けたデプロイが、作ったばかりのアカウントで通るかどうか。cdkd 0.296.28 がこの property を反映すること。天井に当たったときに function URL と CloudFront が返す status と、その応答が cache されないこと
+- 「叩かれたら」の金額。単価と仮定からの計算で、請求で確かめたものではありません。アカウントの同時実行数の上限も確認していません
 - cdkd 0.296.28 が、`AWS::CloudFront::CachePolicy` と `AWS::CloudFront::ResponseHeadersPolicy` を Cloud Control API 経由で作成・更新・削除できること
 
 **cdkd が扱うリソースの種類。** npm の tarball（0.296.28）で、専用の実装が登録されていることを確かめたもの: `AWS::CloudFront::Distribution`、`AWS::CloudFront::OriginAccessControl`、`AWS::IAM::Policy`、`AWS::IAM::Role`、`AWS::Lambda::Function`、`AWS::Lambda::Permission`、`AWS::Lambda::Url`、`AWS::Logs::LogGroup`、`AWS::S3::Bucket`、`AWS::S3::BucketPolicy`。専用の実装がなく、Cloud Control API 経由になるもの: `AWS::CloudFront::CachePolicy`、`AWS::CloudFront::ResponseHeadersPolicy`。

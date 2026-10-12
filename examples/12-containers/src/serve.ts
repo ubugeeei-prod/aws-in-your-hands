@@ -16,6 +16,8 @@ export type ServeOptions = {
   /** 0 asks the OS for a free port. */
   port: number;
   keepAliveTimeoutMs: number;
+  /** Past this many open connections, new ones are closed unanswered. */
+  maxConnections: number;
   shutdownDeadlineMs: number;
 };
 
@@ -35,6 +37,8 @@ export function startServer(options: ServeOptions): Promise<RunningServer> {
       throw new Error("expected a plain HTTP/1.1 server");
     }
     server.once("error", reject);
+    // Without a number here, the only limit on open sockets is the task's memory.
+    server.maxConnections = options.maxConnections;
 
     let closing: Promise<ShutdownResult> | undefined;
     const shutdown = (): Promise<ShutdownResult> => {

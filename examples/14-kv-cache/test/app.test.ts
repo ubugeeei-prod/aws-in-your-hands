@@ -41,8 +41,13 @@ function setup(overrides: Partial<AppDeps> = {}) {
     now: () => clock.now,
     ...overrides,
   });
-  const items = (clientId: string | null = "client-1") =>
-    app.request("/items", clientId === null ? {} : { headers: { "x-client-id": clientId } });
+  // The event API Gateway hands the function, cut down to the one field the limiter reads.
+  const items = (sourceIp: string | null = "203.0.113.7", headers: Record<string, string> = {}) =>
+    app.request(
+      "/items",
+      { headers },
+      sourceIp === null ? {} : { requestContext: { http: { sourceIp } } },
+    );
   return { app, clock, logs, items, loads: () => loads };
 }
 
@@ -72,8 +77,8 @@ describe("GET /items", () => {
     expect(refused.status).toBe(429);
     expect(refused.headers.get("retry-after")).toBe("40");
     expect(errorSchema.parse(await refused.json()).error.code).toBe("rate_limited");
-    // Another client is unaffected.
-    expect((await items("client-2")).status).toBe(200);
+    // Another address is unaffected.
+    expect((await items("203.0.113.8")).status).toBe(200);
   });
 
   it("does not touch the cache or the source for a refused request", async () => {
@@ -84,11 +89,23 @@ describe("GET /items", () => {
     expect(loads()).toBe(1);
   });
 
-  it("requires a well-formed client ID before counting anything", async () => {
+  it("counts by the address API Gateway saw, whatever the caller says about itself", async () => {
     const { items } = setup();
-    expect((await items(null)).status).toBe(400);
-    expect((await items("a b")).status).toBe(400);
-    expect((await items("x".repeat(65))).status).toBe(400);
+    const claims = (name: string) => ({
+      "x-client-id": name,
+      "x-forwarded-for": `198.51.100.${name}`,
+    });
+    expect((await items("203.0.113.7", claims("1"))).status).toBe(200);
+    expect((await items("203.0.113.7", claims("2"))).status).toBe(200);
+    // A third name and a third forwarded address, the same caller: refused.
+    expect((await items("203.0.113.7", claims("3"))).status).toBe(429);
+  });
+
+  it("puts callers whose address is missing into one shared budget", async () => {
+    const { items } = setup();
+    expect((await items(null)).status).toBe(200);
+    expect((await items(null)).status).toBe(200);
+    expect((await items(null)).status).toBe(429);
   });
 });
 

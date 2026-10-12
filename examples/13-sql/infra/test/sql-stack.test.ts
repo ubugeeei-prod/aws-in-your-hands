@@ -75,6 +75,16 @@ describe("SqlStack", () => {
     ]);
   });
 
+  it("throttles every route at 10 requests a second, bursts to 20", () => {
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+      // A per-route setting would override the default and could lift it.
+      RouteSettings: Match.absent(),
+    });
+  });
+
   it("uses only resource types that were checked against the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
     expect(

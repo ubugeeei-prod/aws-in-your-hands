@@ -1,6 +1,6 @@
 ---
 title: "18 Live Streaming: IVS"
-revision: 1
+revision: 2
 ---
 
 # 18 Live Streaming: IVS
@@ -109,7 +109,7 @@ keyframe（IDR）の間隔も大事です。IVS の推奨は 2 秒。この間�
 
 固定している版の aws-cdk-lib には、IVS の高レベルの construct がありません。なので、CloudFormation のリソースにそのまま対応する `CfnChannel` を使っています。property が少ないので、困りません。
 
-`authorized: false` は、「playback URL を知っていれば誰でも見られる」という意味です。この章の配信は公開です。見られる人を絞りたくなったら「本番にするなら」へ。
+`authorized: false` は、「playback URL を知っていれば誰でも見られる」という意味です。この章の配信は公開です。そして、見られた時間の料金を払うのは配信する側です。URL が広まるといくらになるかは「お金の話」で計算します。見られる人を絞りたくなったら「本番にするなら」へ。
 
 `insecureIngest: false` は、暗号化なしの RTMP を受け付けない設定です。RTMP で送ると、stream key が平文でネットワークを流れます。
 

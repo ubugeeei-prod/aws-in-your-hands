@@ -2,7 +2,12 @@ import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vite-plus/test";
 
-import { AiStack, INFERENCE_TIMEOUT, MAX_OUTPUT_TOKENS } from "../lib/ai-stack.ts";
+import {
+  AiStack,
+  INFERENCE_TIMEOUT,
+  MAX_OUTPUT_TOKENS,
+  parseReservedConcurrency,
+} from "../lib/ai-stack.ts";
 import { modelArns, type VerifiedProfileId, verifiedProfiles } from "../lib/models.ts";
 
 // Synthesis bundles the handler with esbuild, so each stack is built once.
@@ -76,6 +81,32 @@ describe("AiStack", () => {
       MAX_OUTPUT_TOKENS: String(MAX_OUTPUT_TOKENS),
       INFERENCE_TIMEOUT_MS: String(INFERENCE_TIMEOUT.toMilliseconds()),
     });
+  });
+
+  it("reserves no concurrency unless asked, so a new account's low limit cannot fail the deploy", () => {
+    template.hasResourceProperties("AWS::Lambda::Function", {
+      ReservedConcurrentExecutions: Match.absent(),
+    });
+  });
+
+  it("caps how many summaries run at once when -c reservedConcurrency is given", () => {
+    const capped = Template.fromStack(
+      new AiStack(new App(), "AihAi", {
+        env: { region: "ap-northeast-1" },
+        profileId: "jp.amazon.nova-2-lite-v1:0",
+        reservedConcurrency: parseReservedConcurrency("2"),
+      }),
+    );
+    capped.hasResourceProperties("AWS::Lambda::Function", { ReservedConcurrentExecutions: 2 });
+  });
+
+  it("refuses a reservation that would stop the function or is not a number", () => {
+    expect(parseReservedConcurrency(undefined)).toBeUndefined();
+    expect(parseReservedConcurrency("3")).toBe(3);
+    expect(() => parseReservedConcurrency("0")).toThrow(/1 or more/);
+    expect(() => parseReservedConcurrency("many")).toThrow(/whole number/);
+    expect(() => parseReservedConcurrency("1.5")).toThrow(/whole number/);
+    expect(() => parseReservedConcurrency("5000")).toThrow(/reservedConcurrency/);
   });
 
   it("expires logs after a week and deletes the group with the stack", () => {

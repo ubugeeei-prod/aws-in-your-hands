@@ -1,6 +1,6 @@
 import { App } from "aws-cdk-lib";
 
-import { AiStack } from "../lib/ai-stack.ts";
+import { AiStack, parseReservedConcurrency } from "../lib/ai-stack.ts";
 import { defaultProfileId, isVerifiedProfileId, verifiedProfiles } from "../lib/models.ts";
 
 const app = new App();
@@ -19,4 +19,6 @@ new AiStack(app, "AihAi", {
   description:
     "AWS in Your Hands chapter 17: streaming note summaries (Lambda function URL + Amazon Bedrock)",
   profileId: requested,
+  // Optional: `-c reservedConcurrency=2` caps how many summaries run at once.
+  reservedConcurrency: parseReservedConcurrency(app.node.tryGetContext("reservedConcurrency")),
 });

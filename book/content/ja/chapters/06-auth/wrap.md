@@ -40,6 +40,35 @@ SPA の配信（CloudFront と S3）は、03章の計算を見てください。
 
 stack を消すと、user pool も中の利用者も一緒に消えます。残るのは「片付け」に書いたとおり、cdkd の bootstrap で作った保存場所と、そこに置かれたデプロイ用のファイルだけです。
 
+### 叩かれたら
+
+この API の URL は公開されています。bot が大量に叩いてきたら、どうなるでしょう。
+
+サインインしていない相手にできることは、2 つだけです。`/health` を呼ぶこと。これは関数まで届きます。それ以外の route を呼んで、authorizer に断られること。こちらは関数が動きません。断られたリクエストが API Gateway の料金に数えられるかは、上に書いたとおり確認していません。
+
+サインインした利用者は、全部の route を呼べます。ただし、この user pool は自分で登録できません。利用者は、あなたが `app:user:create` で作った人だけです。
+
+どちらにも、上限があります。stage の throttle が 1 秒 10 リクエスト。1 か月（30 日）で最大 2,592 万リクエストです。それが全部通って、全部が関数を動かしたとすると、こうなります。Lambda とログは、上の例と同じ仮定（平均 60 ミリ秒、256 MB、1 回 0.5 KB）です。
+
+| 対象 | 数量 | 定価 |
+| --- | --- | --- |
+| API Gateway | 2,592 万リクエスト | 33.44 |
+| Lambda（リクエストと実行時間） | 2,592 万回、388,800 GB 秒 | 10.37 |
+| ログの取り込みと保存 | 12.36 GB | 9.49 |
+| DynamoDB の書き込み（table の上限いっぱい） | 1 秒 40 unit、月 1 億 368 万 unit | 74.13 |
+| DynamoDB の読み取り（table の上限いっぱい） | 1 秒 150 unit、月 3 億 8,880 万 unit | 55.40 |
+| 小計 | | **182.83** |
+
+サインインしていない相手に届くのは、上の 3 行までです。DynamoDB の 2 行は、サインインした利用者が、いちばん大きいノートの更新と一覧を、1 か月休まず繰り返した場合。そこまで行くことはまずありませんが、「ここより上には行かない」という数字です。
+
+この計算は、1 秒 10 回という上限が API 全体で 1 つだとして出しています。route ごとに別々に数えられるなら、サインインした利用者が届く上の 3 行は、route の数（この章は 7 つ）だけ倍になります。どちらなのかは、実機で確かめていません。DynamoDB の 2 行は、table の上限なので変わりません。429 で返したリクエストに料金がかかるかどうかも、確認していません。
+
+この表には、応答のデータ転送を入れていません。一覧は table から読んだぶんを返すので、table の読み取りの上限が、返せる量の上限にもなります。1 秒 150 unit は、結果整合の読み取りで約 1.2 MB。1 か月続くと約 2,966 GB で、インターネットへの転送の単価（1 GB あたり USD 0.114）を当てはめると USD 338 ほどです。この単価が API Gateway の応答にそのまま当てはまるかは、04章と同じく確かめていません。一覧を呼べるのは、サインインした利用者だけです。
+
+溜まるほうにも上限があります。ノートは 1 人 100 件まで、1 件は大きくても約 31 KB。1 人あたり 3 MB ほどです。
+
+そして、この上限は呼ぶ相手を区別しません。bot が叩き続けている route では、本物の利用者も 429 を受け取ります。料金は守れても、使える状態は守れません。それを守るには、相手ごとに絞る部品が要ります。AWS WAF の rate-based rule がそれですが、[21章](/ja/chapters/21-security.md)で話すとおり、HTTP API には直接付けられません。手前に CloudFront を置いて、そこに付けます（web ACL が月 USD 5、rule 1 つにつき月 USD 1、検査 100 万回あたり USD 0.60）。この本では、その構成は実装していません。
+
 ## ハマりどころ
 
 | こうなったら | ここを見る |
@@ -51,13 +80,16 @@ stack を消すと、user pool も中の利用者も一緒に消えます。残�
 | デプロイした API が、サインイン済みでも 401 を返す | SPA が送っているのは access token ですか。`config.json` の `clientId` が、stack の `UserPoolClientId` と一致していますか |
 | 403 が返る | token に `openid` の scope がありません。サインインの依頼で `scope=openid` を送っていますか |
 | ブラウザのコンソールに CORS のエラーが出る | 401 や 403 を API Gateway が返すとき、応答に CORS のヘッダーが付かず、ブラウザが CORS のエラーとして表示することがあります。まず `curl` で状態コードを確かめてください |
+| 429 が返る | stage の throttle（1 秒 10 リクエスト）です。上限は利用者ごとではないので、ほかの誰かが使い切っても返ります。少し待って、もう一度 |
+| ノートの作成が 409 `quota_exceeded` を返す | その利用者のノートが 100 件あります。待っても変わりません。1 件消してください |
 | 利用者を無効にしたのに、まだ API を呼べる | 「無効にしても、しばらく通る」のとおりです。access token の期限まで通ります |
 
 API Gateway が返す 401 と 403 の本文は、この本のエラーの形（`error.code`）ではありません。型付きの client は、それを `unauthenticated` として扱います。
 
 ## 本番にするなら
 
-- **MFA を有効にする。** この章の user pool は、パスワードだけです
+- **相手ごとに流量を絞る。** この章の throttle は、呼ぶ相手を区別しません。「叩かれたら」のとおり、手前に CloudFront と AWS WAF を置くか、利用者ごとの上限をアプリで数えます
+- **MFA を有効にする。** この章の user pool は、パスワードだけです。足すなら、利用者が認証アプリを登録する手順も一緒に用意します。この章の SPA には、その画面がありません
 - **手元の origin を外す。** callback URL と CORS から `http://localhost:5173` を消します。開発用には別の stack を使います
 - **独自ドメインを使う。** サインイン画面のドメインが `...amazoncognito.com` のままだと、利用者にとって本物かどうか見分けにくくなります
 - **メールを SES から送る。** Cognito の既定の送信は、少量向けです（[15章](/ja/chapters/15-email.md)）
@@ -83,9 +115,9 @@ vp run app:infra:destroy
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** API のテスト（認証、認可、監査ログ）、identity の読み取りのテスト、開発用サインインのテスト、PKCE の一時保存のテスト、インフラの assertion、型検査、SPA のビルド、synth。それから、`dev:app:api` と `dev:app:web` を起動して、ブラウザを自動操作して次を確かめました。サインイン、ノートの作成、別の利用者からの取得が 404 になること、token なしが 401 になること、競合の表示と「自分の入力で保存し直す」、再読み込み後にサインインを求められること。
+**手元で確かめたこと。** API のテスト（認証、認可、監査ログ）、identity の読み取りのテスト、開発用サインインのテスト、PKCE の一時保存のテスト、インフラの assertion、型検査、SPA のビルド、synth。それから、`dev:app:api` と `dev:app:web` を起動して、ブラウザを自動操作して次を確かめました。サインイン、ノートの作成、別の利用者からの取得が 404 になること、token なしが 401 になること、競合の表示と「自分の入力で保存し直す」、再読み込み後にサインインを求められること。今回足した上限は、テストで確かめました。利用者ごとに 101 件目のノートが 409 になり、ほかの利用者には影響せず、消せば空きが戻ること（`composeApp` を通した場合も）。template の stage に throttle が、table に request unit の上限があること。
 
-**まだ確かめていないこと。** Cognito でのサインインは、一度も実行していません。`web/src/auth/cognito.ts`（authorization code と PKCE の往復、token の交換）は、型検査を通っただけで、実際の user pool に対して動かしていません。この章でもっとも重要な未検証の部分です。`app:infra:deploy`、`app:user:create`、`app:publish`、`app:smoke:web`、`app:smoke:api`、`app:infra:drift`、`app:unpublish`、`app:infra:destroy` も実行していません。したがって、次も実環境では確かめていません。JWT authorizer が ID token と不正な token を拒否すること。Cognito の token endpoint をブラウザから直接呼べること（CORS）。`config.json` に書き出す `Issuer` と `AuthDomain` の形が、oauth4webapi の検証に合うこと。
+**まだ確かめていないこと。** Cognito でのサインインは、一度も実行していません。`web/src/auth/cognito.ts`（authorization code と PKCE の往復、token の交換）は、型検査を通っただけで、実際の user pool に対して動かしていません。この章でもっとも重要な未検証の部分です。`app:infra:deploy`、`app:user:create`、`app:publish`、`app:smoke:web`、`app:smoke:api`、`app:infra:drift`、`app:unpublish`、`app:infra:destroy` も実行していません。したがって、次も実環境では確かめていません。JWT authorizer が ID token と不正な token を拒否すること。Cognito の token endpoint をブラウザから直接呼べること（CORS）。`config.json` に書き出す `Issuer` と `AuthDomain` の形が、oauth4webapi の検証に合うこと。上限まわりも同じです。cdkd 0.296.28 が stage の `DefaultRouteSettings` と table の `OnDemandThroughput` を反映するか。throttle が API 全体で数えられるのか、route ごとなのか。429 や、authorizer が断ったリクエストに料金がかかるか。ノートを数える条件付きの更新が、実際の DynamoDB で通ること。「叩かれたら」の金額は、単価と仮定からの計算です。
 
 **コードの場所。**
 

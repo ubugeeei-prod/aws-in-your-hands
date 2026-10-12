@@ -1,6 +1,6 @@
 ---
 title: "09 SSR: BFF、Nuxt をリージョンの Lambda で動かす"
-revision: 1
+revision: 2
 ---
 
 # 09 SSR: BFF、Nuxt をリージョンの Lambda で動かす

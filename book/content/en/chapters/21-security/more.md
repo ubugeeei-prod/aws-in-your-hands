@@ -19,6 +19,8 @@ It can't be attached just anywhere. This is the list in the official documentati
 
 Of the entry points this book has used, API Gateway HTTP APIs (chapter 04) and Lambda function URLs (chapters 09 and 17) are not on that list. If you want WAF there, you put CloudFront in front and attach it to CloudFront. That is why this chapter's setup starts at CloudFront.
 
+No WAF doesn't mean no bound. The chapters that use an HTTP API (from chapter 04 on) hold the whole API to 10 requests a second with stage throttling, which costs nothing. But that is one limit for everybody together; it doesn't separate callers by IP address. A function URL has no setting like it.
+
 Attaching it to CloudFront is not enough by itself, however. If a back entrance is open, people come in that way.
 
 <<< @/examples/21-security/infra/lib/security-stack.ts{entry}

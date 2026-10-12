@@ -85,7 +85,9 @@ export class EdgeStack extends Stack {
     if (bodyDigestVersionArn !== undefined) {
       distribution.addBehavior("/digest", origin, {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+        // POST exists only inside "all methods". The router refuses the other six before Lambda@Edge runs.
         allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        // Nothing is cached, so every POST that gets past the router is one Lambda@Edge invocation.
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
         // A CloudFront Function on the viewer side and Lambda@Edge on the origin side may share a behavior.
         functionAssociations: viewerRequest,

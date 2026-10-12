@@ -25,6 +25,9 @@ export type EmailStackProps = StackProps & {
   mailFromDomain?: string | undefined;
 };
 
+// Requests per second the API accepts, and how far a burst may go past it. Beyond that: 429.
+const THROTTLE = { rate: 10, burst: 20 } as const;
+
 export class EmailStack extends Stack {
   constructor(scope: Construct, id: string, props: EmailStackProps) {
     super(scope, id, props);
@@ -192,6 +195,12 @@ export class EmailStack extends Stack {
       integration,
       authorizer,
     });
+    // A signed caller stuck in a loop is still a loop. This is what stops it short of SES.
+    const stage = api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    stage.defaultRouteSettings = {
+      throttlingRateLimit: THROTTLE.rate,
+      throttlingBurstLimit: THROTTLE.burst,
+    };
     // #endregion api
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });

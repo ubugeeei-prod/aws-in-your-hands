@@ -4,6 +4,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 import { type App, createApp } from "./app.ts";
+import { MAX_NOTES_PER_OWNER } from "./contract.ts";
 import { DynamoDbNoteRepository } from "./dynamodb-repository.ts";
 import { type Env, parseEnv } from "./env.ts";
 import { createLogger } from "./log.ts";
@@ -12,9 +13,9 @@ import { createNoteService } from "./notes.ts";
 import type { NoteRepository } from "./repository.ts";
 
 // #region repository
-export function createRepository(env: Env): NoteRepository {
+export function createRepository(env: Env, maxNotesPerOwner?: number): NoteRepository {
   if (env.NOTES_STORE === "memory") {
-    return new InMemoryNoteRepository();
+    return new InMemoryNoteRepository(maxNotesPerOwner);
   }
   // No binding here: the table's name comes from configuration, and permission
   // from the execution role in AWS or your own credentials on a laptop.
@@ -28,7 +29,11 @@ export function createRepository(env: Env): NoteRepository {
           credentials: { accessKeyId: "local", secretAccessKey: "local" },
         },
   );
-  return new DynamoDbNoteRepository(DynamoDBDocumentClient.from(client), env.TABLE_NAME);
+  return new DynamoDbNoteRepository(
+    DynamoDBDocumentClient.from(client),
+    env.TABLE_NAME,
+    maxNotesPerOwner,
+  );
 }
 // #endregion repository
 
@@ -38,7 +43,7 @@ export function composeApp(source: Record<string, string | undefined>): App {
     env,
     log: createLogger(env.LOG_LEVEL),
     notes: createNoteService({
-      repository: createRepository(env),
+      repository: createRepository(env, MAX_NOTES_PER_OWNER),
       now: () => new Date(),
       randomSuffix: () => randomBytes(5).toString("hex"),
     }),

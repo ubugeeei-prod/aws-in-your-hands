@@ -65,6 +65,29 @@ RDS の内訳は、instance が 18.25、storage が 2.76。Aurora は、容量�
 
 この表は DB の分だけです。Lambda、API Gateway、ログは 04章と同じようにかかります。backup を取れば AWS Backup の料金が、やり直しが増えればそのぶんの DPU が乗ります。
 
+### 叩かれ続けたら
+
+URL を知っていれば、誰でも、何回でも呼べます。止めるものは 2 つです。stage の throttling（API 全体で 1 秒に 10 件）と、行の quota（持ち主 1 人 100 行）。
+
+1 秒 10 件が 30 日続くと、2,592 万件です。全部が書き込みだったとして、さっきの仮定（1 件 0.18525 DPU）を当てはめます。Lambda と API Gateway とログは、04章の仮定と単価のままです。
+
+| 対象 | 定価 |
+| --- | --- |
+| API Gateway HTTP API のリクエスト（2,592 万件） | 33.44 |
+| Lambda のリクエストと実行時間（324,000 GB 秒） | 9.50 |
+| CloudWatch Logs（12.36 GB） | 9.49 |
+| DPU（4,801,680） | 48.02 |
+| storage（100 行） | 0.00 |
+| 合計 | **100.45** |
+
+月に USD 100 ほど。ただ、この表は仮定の上に仮定を重ねています。DPU は測っていない値で、本文が 10,000 文字ある行は、計算例の 1 行より重いはずです。競合でやり直したぶんの DPU も入っていません。実行時間の 50 ミリ秒は 04章からの借り物で、DB を呼ぶこの章では、もっと長くなります。DSQL の側に、DPU を止める設定があるかどうかは、確かめていません。この章が掛けている蓋は、入口の件数だけです。
+
+応答のデータ転送も入っていません。`GET /notes` は 100 行を全部返すので、04章の「叩かれ続けたら」と同じ計算が、そのまま当てはまります。件数の蓋では塞がらない、いちばん大きな穴です。
+
+quota にも但し書きがあります。いまは全員が同じ持ち主（`anonymous`）なので、100 行は「API 全体で 100 行」です。誰かが埋めれば、ほかの人は作れません。そして、誰でも消せます。それを分けるのは 06章の認証です。
+
+IP アドレスごとに止めたいなら AWS WAF ですが、HTTP API には付けられないので、手前に CloudFront を置く構成になります。[21章](/ja/chapters/21-security.md)の web ACL は月 USD 8.00 と、リクエスト 100 万件あたり USD 0.60。その構成は、この本では作っていません。
+
 stack を消せば、この章のぶんの料金は止まります。
 
 ## ハマりどころ
@@ -76,6 +99,7 @@ stack を消せば、この章のぶんの料金は止まります。
 | デプロイ後、`/health` は 200 なのに `/notes` が 500 | `sql:db:migrate` と `sql:db:grant` は流しましたか。ログに `relation "app.notes" does not exist` や `permission denied` があるはず |
 | ログに `Wrong user to action mapping` | token の種類と database role が合っていません。`admin` には admin 用の token、それ以外にはふつうの token |
 | ログに `IAM authentication failed` や access denied | 実行 role に `dsql:DbConnect` がありますか。`sql:db:grant` は、いまの role の ARN で流しましたか（stack を作り直すと ARN が変わります） |
+| `{"message":"Too Many Requests"}` のような 429 が返る | stage の throttling です。API 全体で 1 秒に 10 件を超えました。自分が叩いていなくても、ほかの誰かのぶんで起きます |
 | 503 と `busy` が返る | 4 回やり直して、全部負けました。同じ行に書き込みが集中しています。`transaction retry` の行を数えて、どの行でぶつかっているかを見直す |
 | migration の直後だけ `40001` が出る | schema の変更で、古い schema を覚えていた接続が負けています（OC001）。やり直しで通るはず |
 | `use CREATE INDEX ASYNC instead` | index の文に `ASYNC` がありません。lint が通っているなら、runner の `dialect` を確認 |
@@ -88,7 +112,8 @@ stack を消せば、この章のぶんの料金は止まります。
 
 - **削除保護を入れて、stack を消しても cluster が残るようにする。** いまは逆です
 - **backup の計画を作って、restore を一度は練習する。** 新しい cluster への切り替えまで含めて
-- **認証を足す。** いまは owner が全員 `anonymous` です（[06章](/ja/chapters/06-auth.md)）
+- **認証を足す。** いまは owner が全員 `anonymous` で、誰でも消せます（[06章](/ja/chapters/06-auth.md)）
+- **流量の上限を、自分の API に合わせる。** 1 秒に 10 件は練習用の値です。上げるときは、「叩かれ続けたら」の計算をやり直してください。一覧に本文を載せない、という手も効きます
 - **競合の回数を見張る。** `transaction retry` の行と 503 の数にアラームを付けます（ログの行を数えてアラームにする方法は [19章](/ja/chapters/19-observability.md)）
 - **migration を、手元からではなく決まった経路で流す。** `dsql:DbConnectAdmin` を持つ人と場所を絞ります（CI の経路の作り方は [20章](/ja/chapters/20-shipping.md)）
 - **作成を、呼ぶ側からも安全に送り直せるようにする。** いまは ID をサーバーが決めるので、応答が届かなかった `POST` を送り直すと、2 件目ができます。呼ぶ側が決めた key を受け取る作りに変えます
@@ -113,7 +138,9 @@ cluster、関数、role、API、log group が消えます。ノートも、datab
 
 **手元で確かめたこと。** ユニットテスト（transaction の再試行、PGlite の上での repository、`COMMIT` の競合の注入、migration の lint と中断からの再開、grant の文、API、インフラ）。型検査。synth と、できた bundle を Node.js 24 で読み込んで `GET /health` と UUID でない ID の 404 が返ること。`sql:db:reset:local`、`sql:db:migrate:local`、`sql:db:seed:local` と、2 回目の実行で何も変わらないこと。`dev:sql` を起動して、本文の `curl`（作成、更新、古い `version` の 409）と削除。`dev:sql` の起動中に reset が拒否されること、サーバーを止めたあとは古い lock が引き継がれること。
 
-**まだ確かめていないこと。** 実際の Aurora DSQL には、一度もつないでいません。`sql:infra:deploy`、`sql:db:migrate`、`sql:db:grant`、`sql:db:seed`、`sql:smoke`、`sql:logs`、`sql:infra:drift`、`sql:infra:destroy`、`NOTES_DB=dsql` での `dev:sql` は未実行です。とくに次が確認待ちです。4 つの migration が DSQL に受け付けられること。`CREATE INDEX ASYNC` の応答から job の ID を読めて、`sys.jobs` で完了を待てること。`AWS IAM GRANT` と `GRANT` で `notes_api` が読み書きできること。`password` の関数で token が通ること。競合が node-postgres のエラーの `code` に `40001` として現れること。cdkd が Cloud Control API 経由で cluster を作り、`Ref` が identifier を返すこと。backup と restore。料金の DPU は仮定で、測っていません。RDS for PostgreSQL と Aurora Serverless v2 は、ドキュメントと Price List を読んだだけで、作っていません。
+**まだ確かめていないこと。** stage の throttling は、template に入っていることをテストで固定し、固定した版の cdkd（0.296.28）のソースが `DefaultRouteSettings` を API Gateway に渡していることを読んだだけです。実際に反映されること、429 の本文の形、429 に料金がかかるかどうかは確かめていません。「叩かれ続けたら」の金額は、単価と設定と仮定から計算しただけです。
+
+実際の Aurora DSQL には、一度もつないでいません。`sql:infra:deploy`、`sql:db:migrate`、`sql:db:grant`、`sql:db:seed`、`sql:smoke`、`sql:logs`、`sql:infra:drift`、`sql:infra:destroy`、`NOTES_DB=dsql` での `dev:sql` は未実行です。とくに次が確認待ちです。4 つの migration が DSQL に受け付けられること。`CREATE INDEX ASYNC` の応答から job の ID を読めて、`sys.jobs` で完了を待てること。`AWS IAM GRANT` と `GRANT` で `notes_api` が読み書きできること。`password` の関数で token が通ること。競合が node-postgres のエラーの `code` に `40001` として現れること。cdkd が Cloud Control API 経由で cluster を作り、`Ref` が identifier を返すこと。backup と restore。料金の DPU は仮定で、測っていません。RDS for PostgreSQL と Aurora Serverless v2 は、ドキュメントと Price List を読んだだけで、作っていません。
 
 **コードの場所。**
 

@@ -19,6 +19,14 @@ export type ObservabilityStackProps = StackProps & {
   otelLayerArn?: string | undefined;
 };
 
+// #region bounds
+// Requests per second the API accepts, and how far a burst may go past it. Beyond that: 429.
+export const THROTTLE = { rate: 10, burst: 20 } as const;
+// Request units per second the table accepts, as in chapter 05: just above the largest
+// single request (a 1 MB list page reads 128, a full-size note writes 31).
+export const TABLE_CAP = { read: 150, write: 40 } as const;
+// #endregion bounds
+
 export class ObservabilityStack extends Stack {
   constructor(scope: Construct, id: string, props: ObservabilityStackProps) {
     super(scope, id, props);
@@ -28,6 +36,9 @@ export class ObservabilityStack extends Stack {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      // On-demand has no ceiling of its own. Past these, DynamoDB throttles instead of billing.
+      maxReadRequestUnits: TABLE_CAP.read,
+      maxWriteRequestUnits: TABLE_CAP.write,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
@@ -129,6 +140,14 @@ export class ObservabilityStack extends Stack {
       methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE],
       integration,
     });
+
+    // #region throttle
+    const stage = api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    stage.defaultRouteSettings = {
+      throttlingRateLimit: THROTTLE.rate,
+      throttlingBurstLimit: THROTTLE.burst,
+    };
+    // #endregion throttle
 
     // #region monitoring
     const monitoring = new Monitoring(this, "Monitoring", {

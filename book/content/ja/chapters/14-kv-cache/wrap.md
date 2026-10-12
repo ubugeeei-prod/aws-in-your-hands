@@ -93,6 +93,29 @@ Valkey 版の ECPU は、1 リクエストあたり 10 ECPU と多めに置き�
 
 表に入れていないものもあります（0 という意味ではなく、未算入です）。応答をインターネットへ送るデータ転送。それと、public endpoint へのデータ転送で、料金ページによると、同じリージョンの中ではアプリの側に 1 GB あたり USD 0.01 がかかります。
 
+**叩かれ続けた月。** この API に認証はありません。URL を知っていれば、誰でも呼べます。止めるものは 3 つです。stage の throttling（全体で 1 秒に 10 件）、アプリの rate limit（アドレスごとに 1 分 5 回）、table の上限。
+
+throttling いっぱいの 1 秒 10 件が、30 日続いたとします。2,592 万件です。上の表と同じ仮定（平均 30 ミリ秒、ログ 0.5 KB）で、DynamoDB 版の定価はこうなります。
+
+| 対象 | 定価 |
+| --- | --- |
+| API Gateway HTTP API のリクエスト（2,592 万件） | 33.44 |
+| Lambda のリクエストと実行時間 | 7.78 |
+| CloudWatch Logs | 9.39 |
+| DynamoDB の書き込み（26,182,800 単位） | 18.72 |
+| DynamoDB の読み取り（13,003,800 単位） | 1.85 |
+| 合計（定価） | **71.18** |
+
+月に USD 71 ほど。throttling が効いているかぎり、これがこの stack の天井の目安です。アプリが 429 で断ったリクエストも、API Gateway と Lambda と、条件に失敗した書き込みの料金を払います。だから、ほとんどが 429 でも、この数字はあまり下がりません。throttling の 429 に API Gateway の料金がかかるかどうかは、確かめていません。応答のデータ転送も入れていません。
+
+アドレスを変えながら叩く相手には、アプリの rate limit は効きません。アドレスごとに新しい枠があるからです。そのとき増えるのは counter の item で、多くて 1 秒に 10 個。小さな item で、TTL が数日以内に消しますが、どこまで溜まるかは計っていません。
+
+throttling が効いていなかったら（デプロイして確かめるまで、わかりません）、残るのは table の上限です。1 秒に書き込み 40 単位、読み取り 60 単位。30 日ずっと張り付いても、DynamoDB のぶんは書き込み USD 74.13、読み取り USD 22.16 で止まります。API Gateway と Lambda のぶんは止まりません。デプロイしたら、コンソールで stage の throttling の値を一度見てください。
+
+Valkey 版は、数える先が ElastiCache に替わります。そちらの天井は `cacheUsageLimits` です。1 秒に 1,000 ECPU に 30 日張り付くと USD 7.00、保存量が上限の 1 GB のままだと 730 時間で USD 73.73。
+
+本物の利用者を迎える前に足すものは、認証（06章）と、要るなら AWS WAF です。ただし WAF は HTTP API には付けられないので、手前に CloudFront を置く構成になります。[21章](/ja/chapters/21-security.md)の web ACL（rule 3 つ）は月 USD 8.00 で、ほかにリクエスト 100 万件あたり USD 0.60。HTTP API を CloudFront の裏に置く構成は、この本では作っていません。
+
 stack を消せば、この章のぶんの料金は止まります。
 
 ## ハマりどころ
@@ -101,6 +124,8 @@ stack を消せば、この章のぶんの料金は止まります。
 | --- | --- |
 | `dev:kv` が `Invalid environment` で止まる | `examples/14-kv-cache/.env` はありますか。`KV_STORE` ごとに必要な変数が違います |
 | 手元では 6 回目で 429 なのに、デプロイ後はもっと通る | `KV_STORE=memory` のままデプロイしていませんか。実行環境ごとに数えています |
+| 429 なのに `ratelimit-limit` ヘッダーが付いていない | アプリではなく、API Gateway の throttling が断っています。API 全体で 1 秒に 10 件を超えました |
+| 自分はまだ 5 回呼んでいないのに 429 | 同じ出口の IP アドレスを使う誰かが、先に呼んでいます。数えているのは人ではなくアドレスです |
 | 期限を過ぎた item が、DynamoDB のコンソールに残っている | それで正常です。TTL の削除は数日遅れることがあります。読む側が期限を見ています |
 | `x-cache` がずっと `miss` | cache に書けていません。`vp run kv:logs` で `cache store failed` を探す |
 | ログに `WRONGPASS` | 公式の Troubleshooting によると、token の期限切れ、利用者名の違い、`elasticache:Connect` の不足、cache 名が小文字でない、のどれか |
@@ -111,8 +136,9 @@ stack を消せば、この章のぶんの料金は止まります。
 
 ## 本番にするなら
 
-- **利用者の ID を、検証済みのものにする。** `x-client-id` は自己申告です（06章）
-- **rate limit の手前にも守りを置く。** まずは HTTP API の stage の throttling。AWS WAF は HTTP API には付けられないので、要るなら構成から選び直しです（[04章](/ja/chapters/04-http-api.md)）。アプリの rate limit は、公平に配るためのもので、攻撃を受け止めるためのものではありません
+- **利用者を見分けるなら、検証済みの ID で数える。** IP アドレスは、同じ出口の全員をひとまとめにし、アドレスをたくさん持つ相手を別々に数えます（06章）
+- **throttling の数字を、自分の API に合わせる。** 1 秒に 10 件は、練習用の値です。上げるなら、table の上限も一緒に上げます。AWS WAF は HTTP API には付けられないので、要るなら構成から選び直しです（[04章](/ja/chapters/04-http-api.md)）。アプリの rate limit は、公平に配るためのもので、攻撃を受け止めるためのものではありません
+- **`RATE_ON_ERROR` を、守るものに合わせる。** 一覧なら `allow`、ログインの試行のように守りが外れると困るものなら `deny`
 - **table の `removalPolicy` を見直す。** この章の table は消えていいものしか入っていませんが、持ち主のデータと同じ table に置くなら `RETAIN` です
 - **TTL を、言葉で説明できる長さにする。** 「一覧は最大 36 秒古い」と言えますか（30 秒 + 揺らぎ 20%）
 - **cache の hit 率を見る。** `x-cache` をログに出してあります。ログから数えてアラームにする方法は [19章](/ja/chapters/19-observability.md)
@@ -151,17 +177,20 @@ vp run kv:local:stop
 守りたいことを、1 文ずつにしておきます。
 
 - **1 つの区間で通るリクエストは、同時に何件来ても上限まで。** 壊そうとするテスト: 「読んでから書く」store で 2 件を同時に通す。50 件を同時に本物の store へ送る
+- **誰の回数として数えるかを、呼ぶ側は選べない。** 壊そうとするテスト: 同じアドレスから、名乗る名前と `x-forwarded-for` を毎回変えて呼ぶ。読めないアドレスを渡す
 - **期限を過ぎた写しは、store に残っていても返さない。** 壊そうとするテスト: 期限切れの item を返す DynamoDB
 - **cache が無くても、遅くても、壊れていても、応答は元データと同じ。** 壊そうとするテスト: 読み書きが必ず失敗する store、読めない値が入った store、帰ってこない lock の持ち主
 - **写しの古さは、TTL を超えない。** 壊そうとするテスト: 更新と削除をまたぐ遅い読み取り
 
-4 つ目は、「古い値を返さない」ではないことに注意してください。返します。上限があるだけです。
+最後の 1 つは、「古い値を返さない」ではないことに注意してください。返します。上限があるだけです。
+
+2 つ目にも、但し書きがあります。選べないのは「どのアドレスから来たことにするか」で、アドレスをいくつも持つ相手は、そのぶんだけ枠を持ちます。全員の合計に蓋をしているのは、アプリではなく stage の throttling です。
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** ユニットテスト（rate limiter の境界と同時実行、store の contract、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、stampede、揺らぎ、token の署名、アプリ、stack の assertion）。型検査。synth（既定と `-c store=valkey`、esbuild の bundle 込み）。bundle した handler を Node.js で読み込み、API Gateway の形のイベントで呼び出し。store の contract 22 件を、Valkey 9.1.2 と DynamoDB Local 3.3.1 に対して実行。`dev:kv` を memory、valkey、dynamodb の 3 通りで起動して、本文の `curl` を実行。
+**手元で確かめたこと。** ユニットテスト（rate limiter の境界と同時実行、store の contract、DynamoDB と Valkey へ送るリクエストの形、TTL の読み取り側の判定、stale read、stampede、揺らぎ、token の署名、アプリ、stack の assertion）。型検査。synth（既定と `-c store=valkey`、esbuild の bundle 込み）。bundle した handler を Node.js で読み込み、API Gateway の形のイベントで呼び出し。store の contract 22 件を、Valkey 9.1.2 と DynamoDB Local 3.3.1 に対して実行。`dev:kv` を memory、valkey、dynamodb の 3 通りで起動して、本文の `curl` を実行。数える相手を送信元のアドレスに変えたあとは、memory で起動し直して、ヘッダーを変えても同じ枠で数えられることを確かめました（valkey と dynamodb では流し直していません）。
 
-**まだ確かめていないこと。** `kv:infra:deploy`、`kv:smoke`、`kv:logs`、`kv:infra:drift`、`kv:infra:destroy` は、実際の AWS では動かしていません。`kv:local:start` と `kv:local:stop` は、Docker の daemon が無く実行していません（Valkey と DynamoDB Local は、nixpkgs の `valkey-server` と AWS が配布する jar を、プロセスとして起動しました）。ElastiCache については、何も実機で確かめていません。内訳は、CloudFormation と Cloud Control API が `ConnectionType: public` と `UserGroupId: default.iam-user-group` を受け付けること、`CacheUsageLimits` の ECPU の上限 1,000 が有効な値であること（上限の最小値はドキュメントに見つからず、1,000 は公式の例が下限に使っている値です）、自作の SigV4 token が通ること、iovalkey の `Cluster` が public endpoint で cluster の構成を読めること、TLS 1.3 での接続、script の ECPU 消費、cache の作成と削除にかかる時間。DynamoDB については、TTL で item が消えるまでの実際の時間と、実物での応答時間。`@valkey/valkey-glide` は npm の情報を読んだだけで、インストールも実行もしていません。Durable Objects の料金は確かめていません。
+**まだ確かめていないこと。** `kv:infra:deploy`、`kv:smoke`、`kv:logs`、`kv:infra:drift`、`kv:infra:destroy` は、実際の AWS では動かしていません。stage の throttling と table の上限は、template に入っていることをテストで固定し、cdkd 0.296.28 のソースがそれを AWS の API に渡していることを読んだだけです。実際に反映されること、throttling が返す 429 の形とその課金、table の上限に当たったときの振る舞い、API Gateway のイベントに入る `sourceIp` の実際の値は、確かめていません。`kv:local:start` と `kv:local:stop` は、Docker の daemon が無く実行していません（Valkey と DynamoDB Local は、nixpkgs の `valkey-server` と AWS が配布する jar を、プロセスとして起動しました）。ElastiCache については、何も実機で確かめていません。内訳は、CloudFormation と Cloud Control API が `ConnectionType: public` と `UserGroupId: default.iam-user-group` を受け付けること、`CacheUsageLimits` の ECPU の上限 1,000 が有効な値であること（上限の最小値はドキュメントに見つからず、1,000 は公式の例が下限に使っている値です）、自作の SigV4 token が通ること、iovalkey の `Cluster` が public endpoint で cluster の構成を読めること、TLS 1.3 での接続、script の ECPU 消費、cache の作成と削除にかかる時間。DynamoDB については、TTL で item が消えるまでの実際の時間と、実物での応答時間。`@valkey/valkey-glide` は npm の情報を読んだだけで、インストールも実行もしていません。Durable Objects の料金は確かめていません。
 
 **コードの場所。**
 
@@ -177,7 +206,7 @@ vp run kv:local:stop
 | 期限切れの瞬間に、全員が殺到する | `examples/14-kv-cache/src/read-through.ts`、`test/read-through.test.ts` | `test:unit` |
 | Lambda のメモリも cache になる | `examples/14-kv-cache/src/memory-store.ts`、`src/lambda.ts`、`test/memory-store.test.ts` | `test:unit` |
 | edge の設定は、10章の KeyValueStore | `examples/10-edge/` | - |
-| 手元で動かす | `examples/14-kv-cache/src/app.ts`、`src/compose.ts`、`src/env.ts`、`src/dev.ts`、`scripts/local-stores.ts`、`scripts/test-local.ts`、`.env.example` | `dev:kv`、`kv:local:start`、`kv:local:migrate`、`kv:test:local`、`kv:local:stop` |
+| 手元で動かす | `examples/14-kv-cache/src/app.ts`、`src/caller.ts`、`test/caller.test.ts`、`src/compose.ts`、`src/env.ts`、`src/dev.ts`、`scripts/local-stores.ts`、`scripts/test-local.ts`、`.env.example` | `dev:kv`、`kv:local:start`、`kv:local:migrate`、`kv:test:local`、`kv:local:stop` |
 | AWS にのせる準備 | `examples/14-kv-cache/infra/lib/kv-cache-stack.ts`、`infra/bin/app.ts`、`infra/test/kv-cache-stack.test.ts`、`cdk.json` | `kv:infra:synth`、`test:unit` |
 | デプロイして確かめる | `examples/14-kv-cache/scripts/smoke.ts`、`scripts/logs.ts` | `kv:infra:diff`、`kv:infra:deploy`、`kv:smoke`、`kv:logs`、`kv:infra:drift` |
 | お金の話 | `data/pricing/` | `test:unit` |

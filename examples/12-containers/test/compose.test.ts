@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import { errorSchema } from "@aih/example-04-http-api/src/contract.ts";
 import type { LogEntry } from "@aih/example-04-http-api/src/log.ts";
+import { MAX_NOTES } from "@aih/example-04-http-api/src/notes.ts";
 
 import { composeServer, quietHealth, withVersion } from "../src/compose.ts";
 import { parseServerEnv } from "../src/env.ts";
@@ -28,6 +30,33 @@ describe("what the container adds around the chapter 04 app", () => {
     expect([missing.status, missing.headers.get("x-app-version")]).toEqual([404, "v7"]);
     // The app's own header survives the wrapper.
     expect(ok.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("stops taking notes at chapter 04's cap, so a task's memory cannot be filled by POSTs", async () => {
+    const { fetch } = composeServer({ ...base, LOG_LEVEL: "error" });
+    const post = (): Promise<Response> =>
+      Promise.resolve(
+        fetch(
+          new Request("http://task/notes", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ title: "note", body: "x".repeat(10_000) }),
+          }),
+        ),
+      );
+    for (let count = 0; count < MAX_NOTES; count++) {
+      expect((await post()).status).toBe(201);
+    }
+    const refused = await post();
+    expect(refused.status).toBe(409);
+    expect(errorSchema.parse(await refused.json()).error.code).toBe("quota_exceeded");
+    // Reading still works, and deleting one makes room for one.
+    const list = (await (await fetch(new Request("http://task/notes"))).json()) as {
+      notes: { id: string }[];
+    };
+    expect(list.notes).toHaveLength(MAX_NOTES);
+    await fetch(new Request(`http://task/notes/${list.notes[0]?.id}`, { method: "DELETE" }));
+    expect((await post()).status).toBe(201);
   });
 
   it("keeps successful health checks out of the log, and nothing else", () => {

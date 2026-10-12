@@ -17,6 +17,16 @@ export const securityConfigSchema = z.object({
   cmk: z.enum(["on", "off"]).default("off"),
   /** How the web ACL treats the core rule set. `count` only records what it would have blocked. */
   wafCommonRules: z.enum(["count", "block"]).default("count"),
+  /**
+   * At most this many copies of the function run at once. Costs nothing, but off by default:
+   * it comes out of the account's concurrency, and an account with a low limit refuses the deploy.
+   */
+  reservedConcurrency: z.coerce
+    .number("must be a whole number such as 5")
+    .int("must be a whole number such as 5")
+    .min(1, "must be 1 or more: 0 would stop the API")
+    .max(1000)
+    .optional(),
 });
 export type SecurityConfig = z.infer<typeof securityConfigSchema>;
 
@@ -25,6 +35,7 @@ export function parseSecurityConfig(context: (key: string) => unknown): Security
     webAclArn: context("webAclArn"),
     cmk: context("cmk"),
     wafCommonRules: context("wafCommonRules"),
+    reservedConcurrency: context("reservedConcurrency"),
   });
   if (!result.success) {
     const problems = result.error.issues.map(

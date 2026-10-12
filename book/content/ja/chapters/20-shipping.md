@@ -1,6 +1,6 @@
 ---
 title: "20 CI/CD: OIDC、環境、preview、rollback、drift"
-revision: 1
+revision: 2
 ---
 
 # 20 CI/CD: OIDC、環境、preview、rollback、drift
@@ -151,5 +151,9 @@ dev と prod を、1 つの stack の「モード」にはしません。別の 
 <<< @/examples/20-shipping/infra/lib/ship-api-stack.ts{protection}
 
 1 つは termination protection。stack の削除を、解除するまで拒否します。もう 1 つは、log group を stack と一緒に消さないこと。練習用と preview の stack は、消したら何も残りません。
+
+stage ごとに変えていないものも 1 つ。どの stack の API も、誰でも呼べる URL を 1 つ持ちます。なので 04章と同じ流量制限を、dev にも prod にも preview にも付けています。
+
+<<< @/examples/20-shipping/infra/lib/ship-api-stack.ts{throttle}
 
 ここで、名前で分けることの限界も書いておきます。stack を分けても、同じアカウントの中にいるかぎり、権限の壁はありません。さっき見たとおり、deploy role は「どの stack でも」更新できますし、cfn-exec role は管理者です。preview をデプロイできる job は、権限のうえでは prod も壊せます。本当に分けたいなら、アカウントを分けます。この本は 1 つのアカウントで通しているので、そこまでは実装していません。

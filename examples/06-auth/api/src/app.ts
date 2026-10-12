@@ -7,13 +7,14 @@ import type { z } from "zod";
 
 import type { Env } from "@aih/example-05-dynamodb/src/env.ts";
 import type { Logger } from "@aih/example-05-dynamodb/src/log.ts";
-import type { NoteService } from "@aih/example-05-dynamodb/src/notes.ts";
+import { NoteQuotaError, type NoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 import { InvalidCursorError } from "@aih/example-05-dynamodb/src/repository.ts";
 
 import {
   createNoteSchema,
   type ErrorBody,
   listQuerySchema,
+  MAX_NOTES_PER_OWNER,
   type Note,
   updateNoteSchema,
 } from "./contract.ts";
@@ -82,6 +83,17 @@ export function createApp(deps: AppDeps) {
     }
     if (error instanceof InvalidCursorError) {
       return c.json(failure("invalid_request", error.message, requestId), 400);
+    }
+    if (error instanceof NoteQuotaError) {
+      // 409, not 429: waiting does not help. Deleting a note does.
+      return c.json(
+        failure(
+          "quota_exceeded",
+          `An account holds at most ${MAX_NOTES_PER_OWNER} notes. Delete one first.`,
+          requestId,
+        ),
+        409,
+      );
     }
     deps.log({
       level: "error",

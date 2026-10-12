@@ -19,6 +19,8 @@ AWS WAF は、リクエストがアプリに届く前に検査して、止める
 
 この本で使ってきた入口のうち、API Gateway の HTTP API（04章）と、Lambda の function URL（09章、17章）は、この一覧にありません。付けたければ、手前に CloudFront を置いて、CloudFront に付けます。この章の構成が CloudFront から始まっているのは、そのためです。
 
+WAF が付かないからといって、歯止めが無いわけではありません。HTTP API を使う章（04章から）は、stage の流量制限で API 全体を毎秒 10 件に抑えています。料金はかかりません。ただ、あれは全員まとめての上限で、IP アドレスごとに分けてはくれません。function URL には、それにあたる設定がありません。
+
 ただし、CloudFront に付けただけでは足りません。裏の入口が開いていたら、そちらから入れます。
 
 <<< @/examples/21-security/infra/lib/security-stack.ts{entry}

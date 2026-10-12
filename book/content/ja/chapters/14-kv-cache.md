@@ -1,6 +1,6 @@
 ---
 title: "14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定"
-revision: 1
+revision: 2
 ---
 
 # 14 Cache: key-value、DynamoDB、ElastiCache/Valkey、edge 設定
@@ -45,7 +45,7 @@ Workers KV に慣れた人が「KV」と聞いて思い浮かべるのは、「�
 
 作るのは、小さな API が 1 本です。`GET /items` が商品の一覧を返します。これに 2 つの仕掛けを付けます。
 
-- **rate limit。** 利用者ごとに 1 分あたり 5 回まで。超えたら 429
+- **rate limit。** 呼び出し元の IP アドレスごとに 1 分あたり 5 回まで。超えたら 429
 - **一覧の cache。** 一覧の元データは遅い（という設定な）ので、30 秒だけ写しを持つ
 
 この 2 つは、性質が正反対です。rate limit の数は**正確でないと意味がない**。cache の写しは**無くなっても困らない**。同じ「KV に置くもの」でも、store に求めることが違います。

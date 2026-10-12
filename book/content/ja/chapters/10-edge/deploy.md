@@ -135,6 +135,16 @@ distribution の側は、version の ARN をもらったときだけ behavior �
 
 <<< @/examples/10-edge/infra/lib/edge-stack.ts{digest}
 
+この behavior は cache を切ってあって、すべてのメソッドを受け付けます。POST を通したいだけなのですが、CloudFront の選択肢は「GET と HEAD」「それに OPTIONS」「全部」の 3 つで、POST は「全部」にしか入っていません。そのままだと、GET でも DELETE でも、1 リクエストごとに Lambda@Edge が動いて料金がかかります。
+
+なので、手前の CloudFront Function で POST 以外を断ります。
+
+<<< @/examples/10-edge/infra/functions/edge-router.js{digest}
+
+`handler` の先頭にあった 3 行が、これを呼んでいます。KVS を読む前に返すので、断るのにかかるのは CloudFront のリクエスト料金と、関数の実行 1 回だけです。
+
+POST は止めません。POST が来れば、そのたびに Lambda@Edge が動きます。回数に上限を付ける部品は、この構成には入っていません（「お金の話」の最後で、数字と一緒に話します）。試し終わったら、`-c bodyDigestVersionArn` なしでデプロイし直して、この behavior ごと外しておくのがいちばん確実です。
+
 ARN の形は、stack に渡す時点で検査しています。
 
 <<< @/examples/10-edge/infra/lib/edge-stack.ts{props}

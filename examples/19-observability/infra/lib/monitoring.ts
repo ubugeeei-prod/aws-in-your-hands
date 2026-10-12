@@ -1,8 +1,9 @@
-import { Duration } from "aws-cdk-lib";
+import { Duration, Stack } from "aws-cdk-lib";
 import type * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as cwActions from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
 import type * as lambda from "aws-cdk-lib/aws-lambda";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as sns from "aws-cdk-lib/aws-sns";
@@ -36,7 +37,19 @@ export class Monitoring extends Construct {
     // #region topic
     this.topic = new sns.Topic(this, "Alarms", {
       displayName: "AWS in Your Hands: notes API alarms",
+      // Refuses a publish that arrives over plain HTTP.
+      enforceSSL: true,
     });
+    // Any topic policy replaces the default one, so the alarms' right to publish is spelled out.
+    this.topic.addToResourcePolicy(
+      new iam.PolicyStatement({
+        sid: "AlarmsOfThisAccount",
+        actions: ["sns:Publish"],
+        principals: [new iam.ServicePrincipal("cloudwatch.amazonaws.com")],
+        resources: [this.topic.topicArn],
+        conditions: { StringEquals: { "aws:SourceAccount": Stack.of(this).account } },
+      }),
+    );
     if (props.alarmEmail !== undefined) {
       this.topic.addSubscription(new subscriptions.EmailSubscription(props.alarmEmail));
     }
@@ -117,7 +130,12 @@ export class Monitoring extends Construct {
         [
           new cloudwatch.GraphWidget({
             title: "API: requests and errors",
-            left: [requests, api.metricClientError(sum), errors],
+            // Requests the stage throttle turns away are 429s: they show up here, and nowhere below.
+            left: [
+              requests,
+              api.metricClientError({ ...sum, label: "4xx (429 when throttled)" }),
+              errors,
+            ],
             width: 12,
           }),
           new cloudwatch.GraphWidget({

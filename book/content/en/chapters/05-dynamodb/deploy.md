@@ -12,6 +12,12 @@ title: "05 KV Store: Deploy"
 
 `billingMode` is on-demand. You are charged for the number of reads and writes and don't have to decide capacity in advance. The other option is provisioned, where you decide the read and write capacity per second and pay for the time it is provisioned. If traffic is steady and predictable, provisioned can be cheaper, but it also costs money during the time you don't use it. On-demand suits learning, and new apps whose traffic can't be predicted.
 
+`maxReadRequestUnits` and `maxWriteRequestUnits` cap what the table accepts in reads and writes each second. On-demand means you pay for what is used, so with nothing written here, whatever gets thrown at the table goes straight onto the bill. Past the cap, DynamoDB turns requests away.
+
+<<< @/examples/05-dynamodb/infra/lib/notes-stack.ts{limits}
+
+The API Gateway in front has the same throttling as chapter 04: 10 requests a second. The table's numbers sit just above the most this API can use in a single call. A list reads at most 1 MB at once, which is 128 units, and writing the largest note (a 10,000-character body) is about 31 units. Whether a smaller cap would keep a large note from ever getting through hasn't been checked, so the cap stays above it.
+
 `removalPolicy` is `DESTROY`. Delete the stack and the table goes with it, along with every note in it. That's because this is for practice. A test goes out of its way to check this setting, since it's the first place to change once you start storing data that has to be protected.
 
 <<< @/examples/05-dynamodb/infra/lib/notes-stack.ts{role}

@@ -8,9 +8,24 @@ export type NoteRepository = {
   delete(id: string): Promise<boolean>;
 };
 
+// A Map lives in memory, and anyone can POST. Past this, the repository refuses.
+export const MAX_NOTES = 100;
+
+export class NoteLimitError extends Error {
+  constructor(limit: number) {
+    super(`The store already holds ${limit} notes.`);
+    this.name = "NoteLimitError";
+  }
+}
+
 /** Notes in a Map. On Lambda that means one Map per execution environment. */
 export class InMemoryNoteRepository implements NoteRepository {
   readonly #notes = new Map<string, Note>();
+  readonly #maxNotes: number;
+
+  constructor(maxNotes: number = MAX_NOTES) {
+    this.#maxNotes = maxNotes;
+  }
 
   async list(): Promise<Note[]> {
     return [...this.#notes.values()].toSorted((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -21,6 +36,9 @@ export class InMemoryNoteRepository implements NoteRepository {
   }
 
   async put(note: Note): Promise<void> {
+    if (!this.#notes.has(note.id) && this.#notes.size >= this.#maxNotes) {
+      throw new NoteLimitError(this.#maxNotes);
+    }
     this.#notes.set(note.id, note);
   }
 

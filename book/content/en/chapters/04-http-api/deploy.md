@@ -46,6 +46,18 @@ The price is that the routes are now written in two places: the Hono app and thi
 
 CORS is the setting that lets a browser call the API from a different origin. Only one origin is allowed. The default is the SPA's development server.
 
+### A lid on what it accepts
+
+Anyone can call this API, and you pay for every call. Leave it as it is, and whatever a bot throws at it goes straight onto your bill.
+
+<<< @/examples/04-http-api/infra/lib/http-api-stack.ts{throttle}
+
+<<< @/examples/04-http-api/infra/lib/http-api-stack.ts{stage}
+
+This is the stage's throttling. Up to 10 requests a second, with bursts up to 20. API Gateway turns away the rest with a 429, and the function isn't invoked. The `HttpApi` construct has no option for this, so the code reaches for the stage the construct created and sets it there.
+
+The number is one number for the whole API, not one per caller. If somebody is using up the 10 a second, your requests get a 429 too. What this protects is your bill, not how pleasant the API is to use. And 10 is a value for practice: choose your own before real users arrive.
+
 ## Deploy it and call it
 
 <!-- section: 04.deploy -->

@@ -6,20 +6,35 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
+import { z } from "zod";
 
 import { SHARED_SECONDS } from "../../core/cache-control.ts";
 import { ASSET_PATH_PATTERN, PERSONAL_PATH_PATTERNS } from "../../core/routes.ts";
+
+// #region reserved
+// Off unless asked for. Reserving takes N out of the account's concurrency, and an account
+// with a low limit refuses the deploy.
+export const reservedConcurrencySchema = z.coerce
+  .number("must be a whole number such as 5")
+  .int("must be a whole number such as 5")
+  .min(1, "must be 1 or more: 0 would stop the site")
+  .max(1000)
+  .optional();
+// #endregion reserved
 
 export type SsrStackProps = StackProps & {
   /** The directory `nuxt build` wrote the Lambda handler to (.output/server). */
   serverDir: string;
   /** Which handler that build contains, read from .output/nitro.json. */
   responseStreaming: boolean;
+  /** At most this many requests render at once. From `-c reservedConcurrency=N`. */
+  reservedConcurrency?: unknown;
 };
 
 export class SsrStack extends Stack {
   constructor(scope: Construct, id: string, props: SsrStackProps) {
     super(scope, id, props);
+    const reservedConcurrency = reservedConcurrencySchema.parse(props.reservedConcurrency);
 
     // #region assets
     const assets = new s3.Bucket(this, "Assets", {
@@ -54,6 +69,10 @@ export class SsrStack extends Stack {
       role,
       logGroup,
       environment: { STAGE: "dev", AIH_SSR_SIGN_IN: "off" },
+      // The one bound on cache misses. Past it, Lambda throttles and CloudFront answers with an error.
+      ...(reservedConcurrency === undefined
+        ? {}
+        : { reservedConcurrentExecutions: reservedConcurrency }),
     });
     // #endregion function
 
@@ -83,7 +102,8 @@ export class SsrStack extends Stack {
       // Not in the cache key, and therefore not sent to the origin either.
       cookieBehavior: cloudfront.CacheCookieBehavior.none(),
       headerBehavior: cloudfront.CacheHeaderBehavior.none(),
-      queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
+      // No page reads a query string. In the key, `?x=<random>` would make every request a miss.
+      queryStringBehavior: cloudfront.CacheQueryStringBehavior.none(),
       enableAcceptEncodingGzip: true,
       enableAcceptEncodingBrotli: true,
     });

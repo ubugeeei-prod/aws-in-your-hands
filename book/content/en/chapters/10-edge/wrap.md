@@ -90,6 +90,29 @@ Lambda@Edge is USD 0.60 per million requests and USD 0.00005001 per GB-second. A
 
 The free allowances apply to pay-as-you-go and are shared across the account.
 
+### When it gets hammered
+
+Anyone who knows the URL can call this distribution. If a bot starts hitting it hard, what stops it?
+
+What protects the static pages and files is the cache. The default behavior accepts only GET and HEAD and uses the `CachingOptimized` cache policy. That policy puts neither query strings nor cookies in the cache key (CDK's type definitions say so). So a flood of `?x=<random>` gets the same cached copy back and never reaches S3. What does reach it is a flood of made-up paths, a different one each time. Each of those adds one GET to S3 (USD 0.37 per million).
+
+But all the cache stops is the trip to the origin. A request answered from the cache is still billed.
+
+- CloudFront requests: USD 1.20 per million
+- CloudFront Functions executions: USD 0.10 per million (it runs on every request)
+- KVS reads: USD 0.03 per million. One for a file, two for a page, three for the home page
+- Transfer to the reader: USD 0.114 per GB
+
+And **nothing caps the number of requests.** In chapter 04, API Gateway let us set a per-second limit for free. A pay-as-you-go CloudFront distribution has no setting like that. Say someone keeps up 1,000 requests a second for a day: that's 86.4 million, so USD 103.68 for requests, USD 8.64 for the function, USD 2.59 for KVS reads (one each). At 20 KB a response, transfer is 1,648 GB, USD 187.87. Together, USD 302.78 (list price, monthly free allowances not subtracted). That's the math "at this rate". Faster costs more.
+
+With `/digest` added, there's one more layer. Anything but POST is refused with 405 by the function in front, so it costs the same as above, a request and a function execution (USD 1.30 per million). Each POST runs Lambda@Edge: USD 2.27 per million. That's 1.20 for CloudFront requests, 0.10 for the function, 0.06 for two KVS reads, 0.60 for Lambda@Edge requests, and 0.31 for duration (assuming 128 MB and 50 ms). Lambda@Edge can't take reserved concurrency, so there's no squeezing it on the function's side either. The logs written in each Region aren't in these numbers.
+
+There are three things you can add.
+
+- **An AWS WAF rate-based rule.** Attach a web ACL to the distribution and limit how often one IP address may call. That's what [chapter 21](/en/chapters/21-security.md) builds. USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected. It costs money just sitting there, which is why this chapter doesn't add it. Chapter 21 also explains that it limits "near" the number you set, not exactly at it
+- **A CloudFront flat-rate plan.** The pricing page lists plans at USD 0 (Free), 15 (Pro), 200 (Business), and 1,000 (Premium) a month. What each plan includes, and whether this chapter's setup (KVS, Lambda@Edge) works on one, hasn't been checked
+- **A billing alert.** The budget from chapter 01. It won't stop anything, but you'll find out. It arrives 8 to 12 hours late, though
+
 ## Where people get stuck
 
 | If this happens | Look here |
@@ -99,12 +122,14 @@ The free allowances apply to pay-as-you-go and are shared across the account.
 | The sync stops with "store is PROVISIONING" | The KVS was just created. Wait until it's `READY` |
 | After a deploy, no redirect works | Is the KVS empty? A KVS that was just recreated is. Run `edge:kvs:sync` again |
 | Local tests pass, but creating the function fails with a syntax error | Are you using syntax that's not on the documented list? Some things Node.js accepts, runtime 2.0 doesn't |
+| `/digest` returns 405 | `edge-router.js` refuses anything but POST before Lambda@Edge. Are you sending it with `curl -X POST`? |
 | `/digest` returns 502 | The Lambda@Edge response didn't pass CloudFront's validation. The logs aren't in `us-east-1`; they're in `/aws/lambda/us-east-1.aih-edge-body-digest` in the Region where it ran |
 | You can't delete the Lambda@Edge function | Replicas remain. After removing it from the distribution, they take a few hours to go away |
 | You turned on maintenance, but some pages still show | Either propagation is still under way or the browser is holding an earlier response. The 503 carries `no-store`, so it's not CloudFront's cache |
 
 ## If you take this to production
 
+- **Limit the rate at the entrance.** As "When it gets hammered" says, nothing caps the number of requests to this distribution. Before it takes real traffic, attach an AWS WAF rate-based rule ([chapter 21](/en/chapters/21-security.md)). Above all for a path like `/digest`, where every request runs code
 - **Limit who can write to the KVS.** Review and merge `edge-data.json`, and let only CI run the sync. Keep direct edits in the console for emergencies. This chapter's script shows a direct edit as a diff on the next `edge:kvs:plan`
 - **Don't make the maintenance switch your only defense.** Propagation is delayed, and it doesn't work while KVS can't be read. A lockout that protects data has to happen at the origin as well
 - **Watch the function's metrics.** Errors and compute utilization (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md)). If utilization is close to the limit, revisit the number of reads and the size of the JSON
@@ -137,9 +162,9 @@ Three things remain after that.
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** Unit tests for the function (the deployed file run under `node:vm`), KVS planning and sync, the SDK adapter, the Lambda@Edge handler, and both stacks. Type checking. Synth (including the esbuild bundle, with and without `-c bodyDigestVersionArn`). Starting `dev:edge`, running the `curl` commands from the text, and flipping the flags in `edge-data.json`. Starting `dev:edge:cdkd` (cdkd's emulator, no Docker) and getting the same responses to the same `curl` commands. That the SDK client signs in the SigV4A form (without going out to the network).
+**Checked locally.** Unit tests for the function (the deployed file run under `node:vm`), KVS planning and sync, the SDK adapter, the Lambda@Edge handler, and both stacks. Type checking. Synth (including the esbuild bundle, with and without `-c bodyDigestVersionArn`). Starting `dev:edge`, running the `curl` commands from the text, and flipping the flags in `edge-data.json`. Starting `dev:edge:cdkd` (cdkd's emulator, no Docker) and getting the same responses to the same `curl` commands. That the SDK client signs in the SigV4A form (without going out to the network). That the function refuses anything but a POST to `/digest` with 405, without reading KVS (the same `node:vm` tests).
 
-**Not checked yet.** Nothing has been run in AWS. In particular, these are waiting to be confirmed in a real environment. That `edge-router.js` runs on runtime 2.0 (syntax, 10 KB, 2 MB, compute utilization, `cf.kvs()` without an ID, `get()` rejecting for a missing key). How long a KVS update takes to reach the edge. Which error the KVS API returns for a stale `If-Match`. That AWS accepts the signature from `@aws-sdk/signature-v4a`. That cdkd can actually handle `AWS::CloudFront::KeyValueStore`, `AWS::CloudFront::Function`, and the `AWS::Lambda::Version` in the `us-east-1` stack, and whether a bootstrap in `us-east-1` is needed. That Node.js 24 works on Lambda@Edge. How long Lambda@Edge replicas take to be deleted, and where the log groups are created. The symptoms in the "Where people get stuck" table were put together from the documentation, not reproduced. Whether syntax outside runtime 2.0's list is actually rejected hasn't been tried either.
+**Not checked yet.** Nothing has been run in AWS. In particular, these are waiting to be confirmed in a real environment. That `edge-router.js` runs on runtime 2.0 (syntax, 10 KB, 2 MB, compute utilization, `cf.kvs()` without an ID, `get()` rejecting for a missing key). How long a KVS update takes to reach the edge. Which error the KVS API returns for a stale `If-Match`. That AWS accepts the signature from `@aws-sdk/signature-v4a`. That cdkd can actually handle `AWS::CloudFront::KeyValueStore`, `AWS::CloudFront::Function`, and the `AWS::Lambda::Version` in the `us-east-1` stack, and whether a bootstrap in `us-east-1` is needed. That Node.js 24 works on Lambda@Edge. How long Lambda@Edge replicas take to be deleted, and where the log groups are created. The symptoms in the "Where people get stuck" table were put together from the documentation, not reproduced. Whether syntax outside runtime 2.0's list is actually rejected hasn't been tried either. The same goes for the 405 on `/digest`: that CloudFront Functions accepts a response carrying an `allow` header, and that Lambda@Edge really doesn't run for a request that isn't a POST, haven't been confirmed by deploying. The amounts in "When it gets hammered" are computed from unit prices, not read off a bill.
 
 **Where the code is.**
 

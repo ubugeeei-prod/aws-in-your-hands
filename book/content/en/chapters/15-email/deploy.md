@@ -52,6 +52,8 @@ This function can't send mail. It can't read the table either. Writing is all it
 
 On a route with `HttpIamAuthorizer`, API Gateway rejects a request that isn't signed, and the function is never invoked. A test checks that all three routes are `AWS_IAM`.
 
+The same block throttles the stage. `defaultRouteSettings` applies to every route of the default stage: 10 requests a second, with a burst of 20. A test checks that the template carries these values too. In the source of the pinned cdkd, the stage implementation passes this setting straight to the AWS API. Reading is all I did. Whether it takes effect is unknown until someone deploys and looks.
+
 ### cdkd and this stack
 
 This stack uses three SES resource types (`AWS::SES::EmailIdentity`, `AWS::SES::ConfigurationSet`, `AWS::SES::ConfigurationSetEventDestination`). Reading the source of the pinned cdkd (0.296.28), none of the three has a dedicated implementation. Types without one are created through Cloud Control API, a general-purpose AWS API. SNS, DynamoDB, Lambda, IAM, API Gateway, and logs do have dedicated implementations.

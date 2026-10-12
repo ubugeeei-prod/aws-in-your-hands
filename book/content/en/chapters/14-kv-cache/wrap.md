@@ -93,6 +93,29 @@ Compare the two subtotals. At a million requests a month, DynamoDB is far cheape
 
 Some things are not in the table (not zero, just not included): data transfer of the responses out to the internet, and data transfer to the public endpoint, which the pricing page puts at USD 0.01 per GB on the application side within the same Region.
 
+**A month of being hammered.** This API has no authentication. Anyone who knows the URL can call it. Three things stand in the way: the stage throttle (10 requests a second in total), the rate limit in the app (5 a minute per address), and the cap on the table.
+
+Suppose the full 10 requests a second arrive for 30 days. That is 25.92 million requests. Under the same assumptions as the table above (30 ms on average, 0.5 KB of logs), the list price of the DynamoDB variant comes to this.
+
+| Item | List price |
+| --- | --- |
+| API Gateway HTTP API requests (25.92 million) | 33.44 |
+| Lambda requests and duration | 7.78 |
+| CloudWatch Logs | 9.39 |
+| DynamoDB writes (26,182,800 units) | 18.72 |
+| DynamoDB reads (13,003,800 units) | 1.85 |
+| Total (list price) | **71.18** |
+
+About USD 71 a month. As long as the throttle holds, that is roughly this stack's ceiling. A request the app refuses with 429 still pays for API Gateway, for Lambda, and for the write whose condition failed, so the figure barely drops even if almost everything is a 429. Whether API Gateway bills a request it throttles with 429 has not been checked. Data transfer of the responses is not included either.
+
+Against a caller who keeps changing addresses, the rate limit in the app does nothing: every address has a fresh budget. What grows then is counter items, at most 10 a second. They are small and TTL deletes them within days, but how far they pile up has not been measured.
+
+If the throttle is not in effect (unknown until someone deploys and looks), what remains is the cap on the table: 40 write units and 60 read units a second. Pinned at the cap for 30 days, the DynamoDB part stops at USD 74.13 for writes and USD 22.16 for reads. The API Gateway and Lambda parts do not stop. After deploying, look at the stage's throttling values in the console once.
+
+In the Valkey variant the counting moves to ElastiCache, where the ceiling is `cacheUsageLimits`. Pinned at 1,000 ECPUs a second for 30 days, that is USD 7.00; with storage at its 1 GB maximum, USD 73.73 for 730 hours.
+
+Before real users arrive, add authentication (chapter 06) and, if you need it, AWS WAF. WAF cannot be attached to an HTTP API, so that means putting CloudFront in front. The web ACL of [chapter 21](/en/chapters/21-security.md), with its three rules, is USD 8.00 a month plus USD 0.60 per million requests. This book does not build an HTTP API behind CloudFront.
+
 Delete the stack and this chapter's charges stop.
 
 ## Where it goes wrong
@@ -101,6 +124,8 @@ Delete the stack and this chapter's charges stop.
 | --- | --- |
 | `dev:kv` stops with `Invalid environment` | Is there an `examples/14-kv-cache/.env`? Each `KV_STORE` needs different variables |
 | Locally the sixth call gets 429, deployed more get through | Did you deploy with `KV_STORE=memory`? Each execution environment counts on its own |
+| A 429 without a `ratelimit-limit` header | API Gateway's throttle refused it, not the app. The API as a whole went past 10 requests a second |
+| A 429 before you have made five calls | Someone behind the same exit IP address called first. The count is per address, not per person |
 | Expired items are still in the DynamoDB console | That is normal. TTL deletion can be days late. The reader checks the expiry |
 | `x-cache` stays `miss` | Nothing is being written to the cache. Search `vp run kv:logs` for `cache store failed` |
 | `WRONGPASS` in the logs | Per the official troubleshooting table: an expired token, the wrong user name, missing `elasticache:Connect`, or a cache name that is not lowercase |
@@ -111,8 +136,9 @@ Delete the stack and this chapter's charges stop.
 
 ## Before production
 
-- **Use a verified caller ID.** `x-client-id` is self-declared (chapter 06)
-- **Put protection in front of the rate limit too.** Start with throttling on the HTTP API stage. AWS WAF cannot be attached to an HTTP API, so needing it means choosing the layout again ([chapter 04](/en/chapters/04-http-api.md)). A rate limit in the app shares capacity fairly; it does not absorb an attack
+- **To tell users apart, count by a verified ID.** An IP address lumps together everyone behind one exit and counts a caller with many addresses separately (chapter 06)
+- **Fit the throttle to your API.** 10 requests a second is a practice value. Raise the cap on the table along with it. AWS WAF cannot be attached to an HTTP API, so needing it means choosing the layout again ([chapter 04](/en/chapters/04-http-api.md)). A rate limit in the app shares capacity fairly; it does not absorb an attack
+- **Fit `RATE_ON_ERROR` to what you protect.** `allow` for a list, `deny` for anything like login attempts where a missing guard hurts
 - **Reconsider the table's `removalPolicy`.** This chapter's table holds only disposable items, but in a table shared with data it owns, that is `RETAIN`
 - **Choose a TTL you can put into words.** Can you say "the list is at most 36 seconds old" (30 seconds plus 20% jitter)?
 - **Watch the hit rate.** `x-cache` is in the logs. For counting from logs and alarming on the result, see [chapter 19](/en/chapters/19-observability.md)
@@ -151,17 +177,20 @@ This chapter has two owners of state. The shared store (DynamoDB or Valkey) owns
 Here is what must hold, one sentence each.
 
 - **A window lets through at most the limit, however many requests arrive at once.** Tests that try to break it: two requests through a read-then-write store; 50 at once against a real store
+- **The caller does not choose whose count a request lands on.** Tests that try to break it: calls from one address under a different claimed name and `x-forwarded-for` each time; an address that cannot be read
 - **A copy past its expiry is never returned, even while the store still holds it.** Test that tries to break it: a DynamoDB that returns the expired item
 - **With the cache absent, slow, or broken, the response equals the source.** Tests that try to break it: a store whose reads and writes always fail, a store holding unreadable values, a lock holder that never returns
 - **A copy is never older than the TTL.** Test that tries to break it: a slow read that straddles an update and its invalidation
 
-Note that the fourth is not "never returns an old value". It does. There is a bound, that's all.
+Note that the last one is not "never returns an old value". It does. There is a bound, that's all.
+
+The second carries a caveat too. What the caller cannot choose is which address a request appears to come from; a caller with many addresses has that many budgets. The lid on everyone's total is the stage throttle, not the app.
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** Unit tests (rate limiter boundaries and concurrency, the store contracts, the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, jitter, the token signature, the app, stack assertions). Type checking. Synth (default and `-c store=valkey`, including the esbuild bundle). Loading the bundled handler in Node.js and invoking it with an API Gateway shaped event. The 22 store contract tests against Valkey 9.1.2 and DynamoDB Local 3.3.1. Starting `dev:kv` with memory, valkey, and dynamodb, and running the `curl` commands from the text.
+**Checked locally.** Unit tests (rate limiter boundaries and concurrency, the store contracts, the requests sent to DynamoDB and Valkey, the read-side TTL check, stale reads, stampedes, jitter, the token signature, the app, stack assertions). Type checking. Synth (default and `-c store=valkey`, including the esbuild bundle). Loading the bundled handler in Node.js and invoking it with an API Gateway shaped event. The 22 store contract tests against Valkey 9.1.2 and DynamoDB Local 3.3.1. Starting `dev:kv` with memory, valkey, and dynamodb, and running the `curl` commands from the text. After the count moved to the source address, I started it again with memory and confirmed that changing headers lands on the same budget (not rerun with valkey and dynamodb).
 
-**Not checked yet.** `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift`, and `kv:infra:destroy` have not been run against real AWS. `kv:local:start` and `kv:local:stop` were not run, for lack of a Docker daemon (Valkey and DynamoDB Local ran as processes, from nixpkgs' `valkey-server` and the jar AWS distributes). Nothing about ElastiCache was checked on a real cache: that CloudFormation and Cloud Control API accept `ConnectionType: public` with `UserGroupId: default.iam-user-group`; that 1,000 is a valid ECPU maximum in `CacheUsageLimits` (the documentation gives no smallest maximum, and 1,000 is the value its own example uses for a minimum); that the hand-signed SigV4 token is accepted; that iovalkey's `Cluster` can read the topology through a public endpoint; the TLS 1.3 connection; what a script costs in ECPUs; how long the cache takes to create and delete. For DynamoDB: how long TTL really takes to delete an item, and response times on the real service. `@valkey/valkey-glide` was only read about on npm, neither installed nor run. Durable Objects pricing was not checked.
+**Not checked yet.** `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift`, and `kv:infra:destroy` have not been run against real AWS. For the stage throttle and the table cap, a test pins that they are in the template, and I read that the source of cdkd 0.296.28 passes them to the AWS API; that is all. That they take effect, what a throttled 429 looks like and whether it is billed, what happens at the table cap, and the actual `sourceIp` in an API Gateway event are unchecked. `kv:local:start` and `kv:local:stop` were not run, for lack of a Docker daemon (Valkey and DynamoDB Local ran as processes, from nixpkgs' `valkey-server` and the jar AWS distributes). Nothing about ElastiCache was checked on a real cache: that CloudFormation and Cloud Control API accept `ConnectionType: public` with `UserGroupId: default.iam-user-group`; that 1,000 is a valid ECPU maximum in `CacheUsageLimits` (the documentation gives no smallest maximum, and 1,000 is the value its own example uses for a minimum); that the hand-signed SigV4 token is accepted; that iovalkey's `Cluster` can read the topology through a public endpoint; the TLS 1.3 connection; what a script costs in ECPUs; how long the cache takes to create and delete. For DynamoDB: how long TTL really takes to delete an item, and response times on the real service. `@valkey/valkey-glide` was only read about on npm, neither installed nor run. Durable Objects pricing was not checked.
 
 **Where the code is.**
 
@@ -177,7 +206,7 @@ Note that the fourth is not "never returns an old value". It does. There is a bo
 | The moment it expires, everyone arrives at once | `examples/14-kv-cache/src/read-through.ts`, `test/read-through.test.ts` | `test:unit` |
 | Lambda memory is a cache too | `examples/14-kv-cache/src/memory-store.ts`, `src/lambda.ts`, `test/memory-store.test.ts` | `test:unit` |
 | Edge configuration is chapter 10's KeyValueStore | `examples/10-edge/` | - |
-| Running it locally | `examples/14-kv-cache/src/app.ts`, `src/compose.ts`, `src/env.ts`, `src/dev.ts`, `scripts/local-stores.ts`, `scripts/test-local.ts`, `.env.example` | `dev:kv`, `kv:local:start`, `kv:local:migrate`, `kv:test:local`, `kv:local:stop` |
+| Running it locally | `examples/14-kv-cache/src/app.ts`, `src/caller.ts`, `test/caller.test.ts`, `src/compose.ts`, `src/env.ts`, `src/dev.ts`, `scripts/local-stores.ts`, `scripts/test-local.ts`, `.env.example` | `dev:kv`, `kv:local:start`, `kv:local:migrate`, `kv:test:local`, `kv:local:stop` |
 | Getting ready for AWS | `examples/14-kv-cache/infra/lib/kv-cache-stack.ts`, `infra/bin/app.ts`, `infra/test/kv-cache-stack.test.ts`, `cdk.json` | `kv:infra:synth`, `test:unit` |
 | Deploy and check | `examples/14-kv-cache/scripts/smoke.ts`, `scripts/logs.ts` | `kv:infra:diff`, `kv:infra:deploy`, `kv:smoke`, `kv:logs`, `kv:infra:drift` |
 | The money | `data/pricing/` | `test:unit` |

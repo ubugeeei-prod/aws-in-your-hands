@@ -4,7 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { ACKNOWLEDGED_UNCHECKED_TYPES, DRIFT_CHECKED_TYPES } from "../../src/drift-coverage.ts";
 import { apiStackName, type Stage, stageSchema } from "../lib/config.ts";
-import { ShipApiStack } from "../lib/ship-api-stack.ts";
+import { ShipApiStack, THROTTLE } from "../lib/ship-api-stack.ts";
 
 // Synthesis bundles the handler with esbuild, so each stage is synthesized once for the file.
 const synth = (stage: Stage) => {
@@ -17,6 +17,7 @@ const synth = (stage: Stage) => {
 };
 const dev = synth("dev");
 const prod = synth("prod");
+const preview = synth("pr-7").template;
 
 const resources = (template: Template) =>
   template.toJSON()["Resources"] as Record<string, { Type: string }>;
@@ -52,6 +53,16 @@ describe("stages", () => {
       Properties: { RetentionInDays: 7 },
       DeletionPolicy: "Delete",
     });
+  });
+
+  it.each(["dev", "prod", "pr-7"] as const)("throttles the public API of %s", (stage) => {
+    const template = stage === "dev" ? dev.template : stage === "prod" ? prod.template : preview;
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+    });
+    expect(THROTTLE).toEqual({ rate: 10, burst: 20 });
   });
 
   it("tells the function which stage it is", () => {

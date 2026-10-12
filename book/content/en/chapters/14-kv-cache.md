@@ -1,6 +1,6 @@
 ---
 title: "14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 14 Cache: Key-Value Stores, DynamoDB, ElastiCache/Valkey, and Edge Configuration
@@ -45,7 +45,7 @@ If Workers KV is what "KV" means to you, you are picturing something you can rea
 
 You'll build one small API. `GET /items` returns a list of products, with two mechanisms attached:
 
-- **A rate limit.** Five calls a minute per caller, then 429
+- **A rate limit.** Five calls a minute per source IP address, then 429
 - **A cache for the list.** The source of the list is slow (by design), so a copy is kept for 30 seconds
 
 The two are opposites. A rate limit's count is **worthless unless it is accurate**. A cached copy **may vanish at any time**. Both are "things you put in a KV", and they ask different things of the store.

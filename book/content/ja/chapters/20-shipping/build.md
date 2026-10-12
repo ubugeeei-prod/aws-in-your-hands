@@ -163,7 +163,21 @@ pull request ごとに stack を 1 つ作って、動く API をレビューで�
 
 pull request が開いたとき、push されたときに `AihShipApiPr<番号>` をデプロイし、閉じたときに消します。
 
-便利ですが、先に書いた限界がそのまま出ます。この job は、レビュー前のコードを、デプロイできる権限で動かします。PreviewRole が assume する deploy role は、同じアカウントのどの stack でも更新できます。workflow が `environment: preview` を指定しているのは、GitHub 側でこの environment に承認を必須にできるようにするためです。ただし、GitHub のドキュメントによると、Free、Pro、Team のプランでは、承認の必須化は public repository でしか使えません。承認を付けられないなら、preview は別のアカウントに分けるか、やめておくのが安全です。
+便利です。でも、有効にする前に、これが何を許すのかをはっきりさせておきましょう。
+
+**この repository に branch を push できる人は誰でも、pull request を開くだけで、自分のコードを AWS アカウントの管理者に近い権限で動かせます。** レビューも merge も要りません。道筋はこうです。pull request の中身（CDK のコードも、workflow のファイルそのものも）が job の中で動く。job は PreviewRole になる。PreviewRole は deploy role を assume できる。deploy role は CloudFormation に何でも頼めて、CloudFormation は cfn-exec role、つまり既定では `AdministratorAccess` で実行する。template に IAM の user を 1 つ書けば、それが作られます。stack の名前が `AihShipApiPr12` でも、prod を書き換える template は書けます。
+
+job の `if` は、fork からの pull request を止めています。止めているのは、それだけです。workflow のファイルは pull request の側のものが使われるので、`if` や手順を書き換えた pull request は、書き換えたとおりに動きます。AWS の側が信用しているのは `environment:preview` という名前だけなので、壁になるのは GitHub の environment の設定と、AWS の権限の 2 か所です。
+
+狭める手段は、効く順にこうです。
+
+- **preview を別のアカウントに置く。** 壊されても preview だけ、にできる唯一の方法です
+- **cfn-exec role を絞り、permissions boundary を付ける。** bootstrap の `--cloudformation-execution-policies` と `--custom-permissions-boundary` です。どちらも固定した版の CLI にありますが、この章では試していません。API と Lambda と log group が作れれば、preview には足ります
+- **`preview` environment に保護を付ける。** 承認を必須にするか、デプロイできる branch を信用できるものに限ります。workflow が `environment: preview` を指定しているのは、そのためです。ただし、GitHub のドキュメントによると、Free、Pro、Team のプランでは、承認の必須化は public repository でしか使えません。branch の制限がどのプランで使えるかは、確かめていません
+
+どれも付けられないなら、preview は有効にしないでください。この章の workflow は `.github/workflows/` ではなく `examples/` に置いてあるので、あなたが自分で移すまでは動きません。
+
+preview がもう 1 つ増やすのは、公開の URL です。pull request 1 つにつき、認証なしの API が 1 つ。流量制限は stack ごとなので、1 つあたりの料金の天井は「お金の話」のとおりで、開いている pull request の数だけ並びます。
 
 もう 1 つの問題は、片付け忘れです。「閉じたら消す」job は、失敗することがあります。workflow が無効になっていた、承認待ちのまま放置された、削除が途中で失敗した。AWS の側は、pull request が閉じたことを知りません。stack は、誰かが消すまで残ります。
 

@@ -14,7 +14,7 @@ import {
 } from "./contract.ts";
 import type { Env } from "./env.ts";
 import type { Logger } from "./log.ts";
-import { type NoteService, SHARED_OWNER } from "./notes.ts";
+import { NoteQuotaError, type NoteService, SHARED_OWNER } from "./notes.ts";
 import { InvalidCursorError } from "./repository.ts";
 
 export type AppDeps = {
@@ -76,6 +76,10 @@ export function createApp(deps: AppDeps) {
     }
     if (error instanceof InvalidCursorError) {
       return c.json(failure("invalid_request", error.message, requestId), 400);
+    }
+    if (error instanceof NoteQuotaError) {
+      // 409, not 429: waiting does not help. Deleting a note does.
+      return c.json(failure("quota_exceeded", error.message, requestId), 409);
     }
     deps.log({
       level: "error",

@@ -44,6 +44,19 @@ Cloudflare 側の監査ログや、アカウントをまたぐ統制の仕組み
 
 使ったとき。token の発行と検証を月 10 万回ずつ、という仮定で、定価の小計は月 USD 0.86、無料枠を引くと USD 0.49 でした。引いたあとに残るのは、secret の月額と、Secrets Manager の API 呼び出しです。実行環境 1 つが 5 分ごとに鍵を読み直すと、月に 17,520 回で USD 0.09。cache をやめて、リクエストのたびに 1 回読むと、20 万回で USD 1.00 になります。
 
+### 叩かれたとき
+
+既定の stack には流量の歯止めが無いので、「最大でいくら」は書けません。書けるのは単価です。同じ仮定（応答 0.5 KB、Lambda 50 ms、ログ 0.3 KB）で、**リクエスト 100 万件あたり USD 1.84**。内訳は CloudFront のリクエストが 1.20、データ転送が 0.05、Lambda が 0.37、ログが 0.22 です。仮に毎秒 1,000 件で 1 日叩かれると 8,640 万件で、USD 159。01章の予算の通知が更新されるのは 8〜12 時間おきなので、気づいたときには、もうかなり進んでいます。
+
+secret の読み取りも増えます。鍵の cache は実行環境ごとなので、フラッドで実行環境が増えると、そのぶん読み直しも増えます。でたらめな version id を送り続けられた場合、読み直しの間隔は最短の 30 秒まで詰まります。1 回の読み直しは `GetSecretValue` 2 回なので、実行環境 1 つにつき 30 日で 172,800 回、USD 0.86。同時実行数の既定の上限 1,000 まで広がると、USD 864 です。30 秒の下限が無ければ、ここがリクエストの数に比例していました。
+
+歯止めを付けると、こう変わります。
+
+- **`-c reservedConcurrency=5`（無料）。** 実行環境は同時に 5 つまで。secret の読み取りは最大で月 USD 4.32、Lambda の実行時間は、5 つが 30 日動きっぱなしでも USD 43.20 です。CloudFront のリクエスト料金（100 万件あたり 1.20）には、天井ができません
+- **web ACL（月 USD 8.00）。** 1 つの IP アドレスから届くのは 5 分で 300 件、ならして毎秒 1 件まで。30 日張り付かれても 1 つの IP につき 259 万件で、USD 4.77 です。検査の料金（100 万件あたり 0.60）は、止めたぶんにもかかります。たくさんの IP アドレスから来るフラッドは、IP の数だけ通ります。だから、この 2 つは一緒に付けるのがいちばん堅いです
+
+block したリクエストに CloudFront のリクエスト料金がかかるかどうかは、確かめていません。
+
 GuardDuty、Inspector、Config は、使い方しだいで桁が変わるので、単価だけ書きます。
 
 - GuardDuty: 分析した CloudTrail の event 100 万件あたり USD 4.72。ほかに、VPC flow log と DNS log の量、有効にした protection plan ごとの料金があります
@@ -64,6 +77,8 @@ Organizations と SCP、CloudTrail の event history、IAM は、追加料金な
 | --- | --- |
 | `sec:waf:infra:deploy` が、スコープやリージョンのエラーで失敗する | CloudFront 用の web ACL は us-east-1 にしか作れません。stack の `env` を変えていませんか |
 | `-c webAclArn=...` で synth が止まる | `arn:aws:wafv2:us-east-1:<アカウント>:global/webacl/<名前>/<id>` の形ですか。`regional` の ARN は CloudFront に付けられません |
+| `-c reservedConcurrency=5` を付けたデプロイが、同時実行数のエラーで断られる | アカウントの同時実行数の上限が低い状態です。Service Quotas で確認を。外してデプロイし、歯止めは web ACL に任せる手もあります |
+| ときどき 429 か 5xx が返る（`reservedConcurrency` を付けたあと） | 同時に動ける数を使い切っています。CloudFront がどの status で返すかは、確かめていません |
 | `/token` が 503 を返し続ける | 関数のログに `SecretAccessDenied` が出ていれば、role の権限です。`-c cmk=on` なら `kms:Decrypt` も要ります。デプロイ直後なら、少し待ってもう一度 |
 | CloudFront 経由のリクエストが 403 になる | function URL の resource policy に、この distribution からの `lambda:InvokeFunctionUrl` と `lambda:InvokeFunction` の両方がありますか（09章） |
 | `Authorization` ヘッダーで token を送ったら通らない | そのヘッダーは CloudFront が署名に使います。`x-aih-token` で送ります |
@@ -77,6 +92,7 @@ Organizations と SCP、CloudTrail の event history、IAM は、追加料金な
 - **GuardDuty を有効にする。** 守るものができたら、最初に足すのはこれです。試用期間の見積もりを見て、要らない protection plan は切ります
 - **finding を、人が見る場所に流す。** 有効にしただけの検出は、誰も見ません。19章の通知の経路につなぎます
 - **trail を作る。** 90 日より前のことを調べる必要は、だいたい 90 日を過ぎてから出てきます。Access Analyzer の policy generation にも要ります
+- **入口に歯止めを付けてから公開する。** web ACL と `reservedConcurrency` の両方を。そして `/token` の前に認証を置きます。いまは、誰にでも署名します
 - **web ACL のログを取る。** `count` の結果を見て、block に切り替えるかを決めます。この章の stack はログを設定していません
 - **secret の削除に猶予を持たせる。** この章の secret は stack と一緒にすぐ消えます。本番では `RemovalPolicy.RETAIN` にして、消すときは Secrets Manager の復旧期間（7〜30 日）を使います
 - **secret を読んだ記録を見る。** `GetSecretValue` は CloudTrail に残ります。想定していない role が読んでいないか
@@ -113,6 +129,7 @@ secret は、stack と一緒に消えます。固定した版の cdkd は、復�
 - デプロイ直後に、関数が secret を読めない時間があるのかどうか。権限を消したあと、いつまで読めるのか
 - `PutSecretValue` のあとの staging label の動き。`AWSPREVIOUS` が無い secret を読んだときのエラー名
 - web ACL の作成と関連付け。rate-based rule が block を始めるまでの時間。請求のうえでの usage type
+- `-c reservedConcurrency=N` を付けたデプロイ。cdkd 0.296.28 が `ReservedConcurrentExecutions` を反映すること（固定した版のソースには、作成後に `PutFunctionConcurrency` を呼ぶコードがあります。動かしてはいません）、新しいアカウントでどの値から断られるか、上限に達したときに CloudFront が返す status、block や throttle で断ったリクエストへの CloudFront の課金。「叩かれたとき」の金額は、この章の単価と仮定からの計算で、流したことはありません
 - customer managed key を使った構成。削除待ちの 7 日間の課金
 - `sec:posture` が呼ぶ 6 つの API の、実際の応答の形。権限が無いときのエラー名
 - GuardDuty、Inspector、AWS Config、trail、Organizations、SCP。どれも有効にしていません。SCP の JSON は、Organizations に受け付けられることを確かめていません

@@ -43,6 +43,24 @@ describe("KvCacheStack, default", () => {
     withDynamoDb.hasResourceProperties("AWS::DynamoDB::Table", { BillingMode: "PAY_PER_REQUEST" });
   });
 
+  it("caps what the on-demand table accepts per second, above what the throttle lets through", () => {
+    withDynamoDb.hasResourceProperties("AWS::DynamoDB::Table", {
+      OnDemandThroughput: { MaxWriteRequestUnits: 40, MaxReadRequestUnits: 60 },
+    });
+  });
+
+  it("throttles the stage in front of every route", () => {
+    withDynamoDb.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    withDynamoDb.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+    });
+    // The Valkey variant is the same API in front of a different store.
+    withValkey.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+    });
+  });
+
   it("turns on TTL for the attribute the stores write", () => {
     withDynamoDb.hasResourceProperties("AWS::DynamoDB::Table", {
       TimeToLiveSpecification: { AttributeName: "expiresAt", Enabled: true },

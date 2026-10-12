@@ -36,6 +36,18 @@ Storing tags is charged too, but a tag is on an object only until the upload is 
 
 Destroying the stack deletes the bucket and the images in it. What remains is listed under "Cleaning up".
 
+### When it gets hammered
+
+The API side is the same as in chapter 06. Someone who isn't signed in reaches `/health` and nothing else. The stage throttle is 10 requests a second, and the table has its request unit limits. The table under "When it gets hammered" in chapter 06 (USD 182.83 a month) is this chapter's ceiling for the API as well. What's added is the `HeadObject` that each finish call sends, and even if all 25.92 million requests were finish calls, that's USD 9.59.
+
+What this chapter adds is a way in that doesn't go through the API. Permits and view URLs go straight to S3. API Gateway's throttle does nothing there. One at a time:
+
+- **How much is stored.** There's a ceiling. Unfinished objects stop at 100 a person a day, 500 MB. They're gone a day later, so even if someone keeps it up at the limit every day, what sits there is around 0.5 GB, about USD 0.01 a month (more if S3 is late deleting). Images that were attached stop at 100 notes x 10 images x 5 MB a person: about 4.9 GB, USD 0.12 a month
+- **How many uploads.** No ceiling. A permit works any number of times for 5 minutes. It overwrites the same key, so the amount doesn't grow, but a POST to S3 is USD 4.70 per million. How many a second S3 accepts hasn't been checked in this book
+- **Reading images.** No ceiling. For 5 minutes, anyone holding a view URL can read it as often as they like. The cost is data transfer: one 5 MB image read 10,000 times is 48.8 GB, USD 5.57. This is what can grow largest in this chapter
+
+Only a signed-in user, or someone that user passed a URL or a form to, can use the last two. And the only users are the ones you created. A stranger doesn't get here out of nowhere. Still, if you turn this into an app that takes users in widely, these are ways in you'll want closed. Serve the images from CloudFront and the cache helps, and AWS WAF can be attached ([chapter 21](/en/chapters/21-security.md): USD 5 a month for the web ACL, USD 1 a month per rule, USD 0.60 per million requests inspected). This book doesn't build image delivery through CloudFront.
+
 ## Where it goes wrong
 
 | When this happens | Look here |
@@ -46,6 +58,7 @@ Destroying the stack deletes the bucket and the images in it. What remains is li
 | The POST to S3 shows up as a CORS error in the browser console | Does the SPA's origin match the bucket's CORS `AllowedOrigins` exactly? Look at the status code with `curl` first |
 | The finish call answers 409 `upload_missing` | Did the POST to S3 answer 204? If not, there is no object |
 | The finish call answers 500 and the log shows a 403 | Without `s3:ListBucket` on the execution role, `HeadObject` on a missing key answers 403 |
+| Asking for a permit answers 429 `upload_quota_exceeded` | That user has already been given 100 permits today (UTC). Unused ones count too. It goes through when the date changes |
 | The finish call answers 409 `upload_rejected` | More than 15 minutes passed since the upload. Send it again |
 | An image stops showing after a while | The URL's lifetime (5 minutes). The screen fetches the list again. If that doesn't help, the object is gone |
 | S3 answers `ExpiredToken` | The credentials that signed the URL have expired. Fetch the list again to get URLs signed with fresh ones |
@@ -57,7 +70,8 @@ Destroying the stack deletes the bucket and the images in it. What remains is li
 - **Inspect the content.** S3 does not look at whether a file really is an image. Add a check that runs after the upload
 - **Rethink delivery.** With many views, put CloudFront in front. Both the data transfer charges and the caching change
 - **Protect the bucket.** Set `removalPolicy` to `RETAIN` and consider versioning. With versioning on, lifecycle rules behave differently
-- **Set a limit per user.** This chapter's only limit is 10 images per note. Nothing limits how many notes one user creates
+- **Choose the limits again.** 10 images a note, 100 notes a person, 100 permits a person a day. All of them are numbers picked for an exercise. Choose yours from how your app is used. Delete the per-date permit counts with the table's TTL
+- **Close the ways straight into S3.** As "When it gets hammered" says, nothing caps the number of uploads or the reading of images
 - **Remove the local origin.** Take `http://localhost:5173` out of the bucket's CORS and the API's CORS
 - **Record access.** Who used a presigned URL does not appear in the API's logs. You need records on the S3 side (this book does not cover them)
 
@@ -79,16 +93,16 @@ What remains is the storage that cdkd's bootstrap created (chapter 02) and the d
 
 ::: details Verification notes for this chapter
 
-**Checked locally.** The API tests (authorization, what a permit contains, finishing, the deadline, the limit), the tests that stop partway (the six rows of the table above, the sweep, and the replay of a form), key building, the contents of the POST policy and the presigned GET that the SDK produces (signed with made-up credentials and never sent to S3), the shape of the DynamoDB requests, the infrastructure assertions, type checking, the SPA build, and synth. In addition, with `dev:uploads:api` and `dev:uploads:web` running, a browser was driven automatically to check the following: signing in, creating a note, choosing a file and seeing the image displayed, a 404 for another user's permit, list, and finish, refusal of a file that is too large, a different type, and a different key, the same result from calling finish twice, and the image URL no longer loading after a delete and after deleting the note.
+**Checked locally.** The API tests (authorization, what a permit contains, finishing, the deadline, the limit), the tests that stop partway (the six rows of the table above, the sweep, and the replay of a form), key building, the contents of the POST policy and the presigned GET that the SDK produces (signed with made-up credentials and never sent to S3), the shape of the DynamoDB requests, the infrastructure assertions, type checking, the SPA build, and synth. In addition, with `dev:uploads:api` and `dev:uploads:web` running, a browser was driven automatically to check the following: signing in, creating a note, choosing a file and seeing the image displayed, a 404 for another user's permit, list, and finish, refusal of a file that is too large, a different type, and a different key, the same result from calling finish twice, and the image URL no longer loading after a delete and after deleting the note. The limits added here were checked with tests: one person's 101st permit is a 429, other users are unaffected, it comes back when the date changes, and a request refused for another reason isn't counted; a 101st note is a 409 (both through `composeApp`); the template has the throttle on the stage and the request unit limits on the table.
 
-**Not checked yet.** Nothing has been run against AWS. None of `uploads:infra:deploy`, `uploads:user:create`, `uploads:publish`, `uploads:smoke:web`, `uploads:smoke:api`, `uploads:sweep`, `uploads:infra:drift`, `uploads:empty`, `uploads:unpublish`, or `uploads:infra:destroy`. So the following are unconfirmed on real S3: that S3 accepts a presigned POST with a `tagging` field. That S3 refuses on the `content-length-range` and `Content-Type` conditions, and with what response. That a POST from the browser passes the bucket's CORS rule. That `HeadObject` right after the POST finds the object (the statement on strong consistency names PUT and DELETE, and does not name POST Object). That the lifecycle rule deletes pending objects. That it leaves objects alone after `DeleteObjectTagging`. The DynamoDB implementation (`dynamodb-attachment-repository.ts`) has the shape of its requests pinned by tests and has been sent to neither DynamoDB Local nor the real service. The lifetime of the execution role's credentials could not be confirmed from the official documentation. No S3-compatible local implementation was used (the Docker daemon was not running).
+**Not checked yet.** Nothing has been run against AWS. None of `uploads:infra:deploy`, `uploads:user:create`, `uploads:publish`, `uploads:smoke:web`, `uploads:smoke:api`, `uploads:sweep`, `uploads:infra:drift`, `uploads:empty`, `uploads:unpublish`, or `uploads:infra:destroy`. So the following are unconfirmed on real S3: that S3 accepts a presigned POST with a `tagging` field. That S3 refuses on the `content-length-range` and `Content-Type` conditions, and with what response. That a POST from the browser passes the bucket's CORS rule. That `HeadObject` right after the POST finds the object (the statement on strong consistency names PUT and DELETE, and does not name POST Object). That the lifecycle rule deletes pending objects. That it leaves objects alone after `DeleteObjectTagging`. The DynamoDB implementation (`dynamodb-attachment-repository.ts`) has the shape of its requests pinned by tests and has been sent to neither DynamoDB Local nor the real service. The lifetime of the execution role's credentials could not be confirmed from the official documentation. No S3-compatible local implementation was used (the Docker daemon was not running). The limits haven't been checked against the real services either. The conditional update that counts permits (`permit-ledger.ts`) only has the shape of its request pinned by a test. Whether cdkd 0.296.28 applies the stage's `DefaultRouteSettings` and the table's `OnDemandThroughput`, and whether the throttle is counted for the whole API or per route (this chapter has 11 routes), are unconfirmed as in chapter 06. How many POSTs a second S3 accepts for one key wasn't looked up. The amounts in "When it gets hammered" are computed from unit prices and assumptions.
 
 **Where the code is.**
 
 | Section | Files | Tasks |
 | --- | --- | --- |
 | Writing the permit | `examples/07-uploads/api/src/contract.ts`, `api/src/object-store.ts`, `api/src/s3-object-store.ts`, `api/test/s3-object-store.test.ts` | `test:unit` |
-| The API decides the key | `examples/07-uploads/api/src/keys.ts`, `api/src/attachments.ts`, `api/src/app.ts`, `api/test/keys.test.ts`, `api/test/app.test.ts` | `test:unit` |
+| The API decides the key | `examples/07-uploads/api/src/keys.ts`, `api/src/attachments.ts`, `api/src/app.ts`, `api/src/permit-ledger.ts`, `api/test/keys.test.ts`, `api/test/app.test.ts`, `api/test/permit-ledger.test.ts`, `api/test/compose.test.ts` | `test:unit` |
 | Two stores, one order | `examples/07-uploads/api/src/attachments.ts`, `api/src/attachment-repository.ts`, `api/src/dynamodb-attachment-repository.ts`, `api/src/client.ts`, `api/test/partial-failure.test.ts`, `api/test/harness.ts` | `test:unit` |
 | Cleaning up what is left | `examples/07-uploads/api/src/sweep.ts`, `scripts/sweep.ts`, `infra/lib/uploads-stack.ts` | `test:unit`, `uploads:sweep` |
 | Showing the image | `examples/07-uploads/api/src/s3-object-store.ts`, `api/src/attachments.ts`, `api/src/lambda.ts` | `test:unit` |

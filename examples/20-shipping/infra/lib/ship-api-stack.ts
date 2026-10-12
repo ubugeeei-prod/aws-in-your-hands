@@ -13,6 +13,9 @@ import type { Stage } from "./config.ts";
 
 export type ShipApiStackProps = StackProps & { stage: Stage; allowedOrigin: string };
 
+// Requests per second the API accepts, and how far a burst may go past it. Beyond that: 429.
+export const THROTTLE = { rate: 10, burst: 20 } as const;
+
 /** The chapter 04 API, as its own stack per stage, deployed through CloudFormation. */
 export class ShipApiStack extends Stack {
   constructor(scope: Construct, id: string, props: ShipApiStackProps) {
@@ -100,6 +103,15 @@ export class ShipApiStack extends Stack {
       methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.DELETE],
       integration,
     });
+
+    // #region throttle
+    // Every stage gets its own public URL, previews included, so every stage gets the bound.
+    const stage = api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    stage.defaultRouteSettings = {
+      throttlingRateLimit: THROTTLE.rate,
+      throttlingBurstLimit: THROTTLE.burst,
+    };
+    // #endregion throttle
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "HandlerLogGroupName", { value: logGroup.logGroupName });

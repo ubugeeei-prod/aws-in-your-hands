@@ -101,6 +101,8 @@ vp run stream:status --expect-offline
 
 Delete the key, then cut the stream, and the reconnect is refused.
 
+These three lines aren't only for a forgotten stream. They're also the brake when viewers you can't account for are parked on the channel and the output charge is running. With no video coming in, there's nothing to deliver. The amounts are worked out under "When the URL gets around" in the Money section.
+
 By the way, IVS has two backstops of its own. If data from the encoder stops for 30 seconds, IVS disconnects. And a single stream lasts 48 hours at most. But an encoder set to reconnect starts a new stream after being cut at 48 hours. You can't count on it.
 
 ## Receiving state changes

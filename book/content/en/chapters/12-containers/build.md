@@ -66,6 +66,8 @@ The load balancer reuses its connections to a task (keep-alive). `server.close()
 
 That is what `sweep` is for. It keeps closing connections as they become idle, at short intervals. There is also a safety net: past a deadline (25 seconds) the rest is cut, and the result is reported as `forced`. The exit code differs as well: 0 for `drained`, 1 for `forced`.
 
+`maxConnections` is a separate matter from stopping. A task holds at most 512 connections at once and closes any beyond that without answering. A body is at most 64 KiB, so the bodies being received at any moment add up to about 32 MiB at most. It is a lid on memory, not a rate limit. While it is full, the load balancer's health checks compete for the same slots, so a task that keeps being hammered can end up judged unhealthy.
+
 The test really starts the process and sends it SIGTERM. No Docker.
 
 <<< @/examples/12-containers/test/shutdown.test.ts{sigterm}

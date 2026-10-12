@@ -40,6 +40,9 @@ lifecycle rule は 2 つ。1 つは、さっきの pending の掃除です。も
 - lifecycle rule が、pending の tag と multipart upload の 2 つである
 - 関数の S3 の権限が、上の 6 つの操作だけで、`*` の action も `*` の resource もない
 - `/health` 以外のすべての route に、足した 4 つも含めて、JWT authorizer と scope が付いている
+- stage に 06章と同じ throttle（1 秒 10 リクエスト、瞬間的に 20）が、table に同じ request unit の上限が付いている
+
+throttle は、足した route にもそのまま効きます。許可証を求めるリクエストも、1 秒 10 回より速くは通りません。
 
 使っているリソースの種類は、06章と同じ 19 種類です。アップロード用の bucket は、新しい種類を足しません。固定した版の cdkd は、`AWS::S3::Bucket` に専用の実装を持っていて、lifecycle と CORS の設定を扱うコードがあることを、パッケージの中で確かめました。専用の実装がない 3 種類（`AWS::CloudFront::Function`、`AWS::Cognito::UserPoolClient`、`AWS::Cognito::UserPoolDomain`）は、06章と同じです。
 

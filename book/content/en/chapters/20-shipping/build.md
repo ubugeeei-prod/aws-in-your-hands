@@ -163,7 +163,21 @@ One stack per pull request, so that a running API can be reviewed.
 
 It deploys `AihShipApiPr<number>` when the pull request is opened or pushed to, and deletes it when the pull request closes.
 
-It is convenient, and the limit described earlier shows up in full. This job runs unreviewed code with permission to deploy. The deploy role that the PreviewRole assumes can update any stack in the account. The workflow names `environment: preview` so that GitHub can require an approval for that environment. But according to GitHub's documentation, on the Free, Pro, and Team plans required reviewers are available only for public repositories. If you cannot require approval, the safe choices are a separate account for previews, or no previews.
+It is convenient. But before you enable it, be clear about what it allows.
+
+**Anyone who can push a branch to this repository can run their own code with close to administrator rights over the AWS account, just by opening a pull request.** No review and no merge are needed. Here is the path. The contents of the pull request (the CDK code, and the workflow file itself) run inside the job. The job becomes the PreviewRole. The PreviewRole can assume the deploy role. The deploy role can ask CloudFormation for anything, and CloudFormation carries it out as the cfn-exec role, which by default is `AdministratorAccess`. Write one IAM user into the template and it gets created. The stack may be named `AihShipApiPr12`, and its template can still rewrite prod.
+
+The job's `if` stops pull requests from forks. That is all it stops. The workflow file that runs is the pull request's own, so a pull request that rewrites the `if` or the steps runs as rewritten. What the AWS side trusts is only the name `environment:preview`, so there are two places a wall can stand: the GitHub environment's settings, and the AWS permissions.
+
+The ways to narrow it, most effective first.
+
+- **Put previews in a separate account.** The only way to make "the worst case is a broken preview" true
+- **Narrow the cfn-exec role and give it a permissions boundary.** That is `--cloudformation-execution-policies` and `--custom-permissions-boundary` at bootstrap. Both exist in the pinned CLI; this chapter has tried neither. A preview needs to create an API, a function, and a log group, and nothing more
+- **Protect the `preview` environment.** Require an approval, or limit the branches that may deploy to ones you trust. That is why the workflow names `environment: preview`. But according to GitHub's documentation, on the Free, Pro, and Team plans required reviewers are available only for public repositories. Which plans offer the branch limit has not been checked
+
+If you can add none of these, do not enable previews. This chapter's workflows sit under `examples/` and not `.github/workflows/`, so nothing runs until you move them yourself.
+
+The other thing a preview adds is a public URL. One unauthenticated API per pull request. The throttle is per stack, so the ceiling on what each one can cost is as in the Money section, once for every open pull request.
 
 The other problem is forgetting to clean up. The "delete on close" job can fail. The workflow was disabled, it sat waiting for an approval, the delete failed half-way. AWS does not know the pull request was closed. The stack stays until someone deletes it.
 

@@ -1,6 +1,6 @@
 ---
 title: "18 Live Streaming: IVS"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 18 Live Streaming: IVS
@@ -109,7 +109,7 @@ The keyframe (IDR) interval matters too. IVS recommends 2 seconds. It affects bo
 
 The pinned aws-cdk-lib has no higher-level construct for IVS. So this uses `CfnChannel`, which maps straight onto the CloudFormation resource. There are few properties, so it's no trouble.
 
-`authorized: false` means "anyone who knows the playback URL can watch." The broadcast in this chapter is public. When you want to restrict who can watch, see "If this were production."
+`authorized: false` means "anyone who knows the playback URL can watch." The broadcast in this chapter is public. And the one who pays for the time watched is the broadcaster. What it comes to when the URL gets around is worked out in the Money section. When you want to restrict who can watch, see "If this were production."
 
 `insecureIngest: false` refuses unencrypted RTMP. Over RTMP, the stream key would cross the network in plain text.
 

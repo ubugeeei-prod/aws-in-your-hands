@@ -24,6 +24,8 @@ export const healthSchema = z.object({ status: z.literal("ok"), stage: z.string(
 export const errorCodes = [
   "invalid_request",
   "not_found",
+  // The store is full. Delete a note, then try again.
+  "quota_exceeded",
   "payload_too_large",
   "internal",
 ] as const;

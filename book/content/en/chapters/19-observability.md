@@ -1,6 +1,6 @@
 ---
 title: "19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 19 Observability: CloudWatch, OpenTelemetry, RUM, and Synthetics
@@ -67,6 +67,14 @@ The order is: notice (alarms), narrow down (metrics and logs), follow (traces).
 
 Chapter 05's `NotesStack` doesn't expose its function or its API to the outside. To add alarms we also want to change the function's settings (tracing, and the log format), so this chapter has a table and an API of the same shape in its own stack. About 60 lines of infrastructure are repeated, but the application code is chapter 05's, loaded as a workspace dependency. The monitoring part is a construct of its own, `Monitoring`, so you can carry it into your stack.
 
+Same shape, so it gets the same bounds. This API, too, can be called by anyone who knows the URL.
+
+<<< @/examples/19-observability/infra/lib/observability-stack.ts{bounds}
+
+<<< @/examples/19-observability/infra/lib/observability-stack.ts{throttle}
+
+The API takes 10 requests a second, the table has a ceiling on request units per second, and notes stop at 100 as in chapter 05. Past those you get a 429 or a 409 and not a bill. How that looks on the dashboard, and where the cost stops, is under "When it's hammered" in the cost section.
+
 ## Start with alarms on symptoms
 
 <!-- section: 19.alarms -->
@@ -115,6 +123,8 @@ It watches p95, the 95th percentile, not the average. An average buries the slow
 
 The alarms notify an SNS topic, and the topic fans out to email. An address is subscribed only when you pass one at deploy time. The subscription stays pending until you click the link in the confirmation mail. Forget that, and the alarm fires while nothing arrives.
 
+`enforceSSL` refuses a publish that comes in over an unencrypted connection. Setting it gives the topic a policy of its own, and a topic with its own policy stops using the default one. So the stack also writes down "CloudWatch alarms of this account may publish." Leave that out and the alarm fires while no notification goes out. To be honest, this combination hasn't been checked against real AWS yet.
+
 Recovery (the return to OK) is notified too. When the incident ended is also something you want to know.
 
 ## The first numbers to look at
@@ -127,10 +137,10 @@ When an alarm fires, open the dashboard. The top row is symptoms; the rows below
 
 Service by service, here is what to look at first.
 
-**API Gateway HTTP API.** `Count`, `4xx`, `5xx`, `Latency`, `IntegrationLatency`. `Latency` runs from receiving the request to returning the response; `IntegrationLatency` is the part spent waiting for Lambda. A large gap between the two means the time is going on API Gateway's side. Per-route numbers appear only when detailed metrics are enabled.
+**API Gateway HTTP API.** `Count`, `4xx`, `5xx`, `Latency`, `IntegrationLatency`. `Latency` runs from receiving the request to returning the response; `IntegrationLatency` is the part spent waiting for Lambda. A large gap between the two means the time is going on API Gateway's side. Per-route numbers appear only when detailed metrics are enabled. Requests the stage throttle turns away are 429s, so they land in `4xx`. The line on the dashboard is labeled to say so.
 
 **Lambda.** `Errors`, `Throttles`, `Duration`, `ConcurrentExecutions`. Here's the catch. `Errors` counts invocations that ended in an exception, and timeouts. This application catches exceptions and returns a 500 response, so while users are getting 500s, Lambda's `Errors` stays at 0. That is why the symptom alarm sits on API Gateway's `5xx`. And when `Errors` does climb, suspect what is outside the application: a timeout, a failed initialization, memory. `Throttles` count as neither `Invocations` nor `Errors`, so they need their own look.
 
-**DynamoDB.** `ThrottledRequests`, `SystemErrors`, and `ConditionalCheckFailedRequests`. The last one is how often chapter 05's optimistic locking stepped in.
+**DynamoDB.** `ThrottledRequests`, `SystemErrors`, and `ConditionalCheckFailedRequests`. The last one is how often chapter 05's optimistic locking stepped in. `ThrottledRequests` also climbs when requests hit the ceiling set on the table.
 
 There is one dashboard, and it refers to no more than 50 metrics, because that is where the free tier ends. A test guards the limit.

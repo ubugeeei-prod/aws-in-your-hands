@@ -374,19 +374,21 @@ function renderFlow(figure: Figure): string {
     const twins = figure.edges.filter(
       (other) =>
         other.from !== other.to &&
-        ((other.from === edge.from && other.to === edge.to) || (other.from === edge.to && other.to === edge.from)),
+        ((other.from === edge.from && other.to === edge.to) ||
+          (other.from === edge.to && other.to === edge.from)),
     );
     const shift = (twins.indexOf(edge) - (twins.length - 1) / 2) * 18;
-    if (down !== (ra === rb)) {
-      ac.x += shift;
-      bc.x += shift;
-    } else {
+    if (down === (ra === rb)) {
       ac.y += shift;
       bc.y += shift;
+    } else {
+      ac.x += shift;
+      bc.x += shift;
     }
     // Several arrows arriving at one node would stack their labels there. Each keeps its label near its own start.
     const arriving = figure.edges.filter(
-      (other) => other.to === edge.to && other.from !== other.to && (rank.get(other.from) ?? 0) < rb,
+      (other) =>
+        other.to === edge.to && other.from !== other.to && (rank.get(other.from) ?? 0) < rb,
     ).length;
 
     if (edge.from === edge.to) {

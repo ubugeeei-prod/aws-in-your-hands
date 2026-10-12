@@ -92,6 +92,14 @@ describe("EmailStack", () => {
     template.hasResourceProperties("AWS::ApiGatewayV2::Api", { CorsConfiguration: Match.absent() });
   });
 
+  it("throttles the stage, so a signed caller in a loop is refused before the function runs", () => {
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+    });
+  });
+
   it("publishes bounces, complaints and deliveries to the topic, and nothing else", () => {
     template.hasResourceProperties("AWS::SES::ConfigurationSetEventDestination", {
       EventDestination: {

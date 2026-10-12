@@ -1,6 +1,6 @@
 ---
 title: "06 Auth: Cognito and Authorization"
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 # 06 Auth: Cognito and Authorization
@@ -91,6 +91,8 @@ The shape of a note is the same as in chapter 05. Two things are new.
 <<< @/examples/06-auth/api/src/contract.ts{error}
 
 `unauthenticated` (401) means "we don't know who this call comes from".
+
+`quota_exceeded` (409) is the limit chapter 05's repository counts. One person holds at most 100 notes. In chapter 05 there was a single owner (`anonymous`), so that meant 100 in total. From this chapter on the owner is the token's `sub`, so it's 100 per user. All this chapter wrote is one line that hands the limit to the repository (`api/src/compose.ts`) and a few lines that turn the error into a 409 (`api/src/app.ts`). The counting is chapter 05's, unchanged.
 
 There's no error for "not permitted" (403) on a note, and that's on purpose. Ask for someone else's note and you get `not_found`, the same answer as for a note that doesn't exist. A 403 would tell you that a note with that ID exists.
 

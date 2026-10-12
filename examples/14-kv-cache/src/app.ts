@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 
+import { rateSubject, sourceAddressOf } from "./caller.ts";
 import type { ItemSource } from "./catalog.ts";
-import { clientIdSchema, type ErrorBody, type Item, type ItemList } from "./contract.ts";
+import type { ErrorBody, Item, ItemList } from "./contract.ts";
 import type { Env } from "./env.ts";
 import type { Logger } from "./log.ts";
 import type { RateLimiter } from "./rate-limit.ts";
@@ -59,16 +60,14 @@ export function createApp(deps: AppDeps) {
   // #region limit
   app.use("/items", async (c, next) => {
     const requestId = c.get("requestId");
-    const clientId = clientIdSchema.safeParse(c.req.header("x-client-id"));
-    if (!clientId.success) {
-      return c.json(failure("invalid_request", "Send an x-client-id header.", requestId), 400);
-    }
+    // Counted by where the request came from. A header would be the caller's own choice.
+    const subject = rateSubject(sourceAddressOf(c.env));
     let decision;
     try {
-      decision = await deps.limiter.hit(clientId.data, deps.now());
+      decision = await deps.limiter.hit(subject, deps.now());
     } catch (error) {
-      // The counter store is down. Which way to fail is a product decision,
-      // so it is a setting and not something buried in a catch block.
+      // The counter store is down. Which way to fail is a product decision, so it is a setting.
+      // "allow" leaves the stage throttle in front of the API as the only limit.
       deps.log({ level: "error", message: "rate limiter failed", requestId, error: String(error) });
       if (deps.env.RATE_ON_ERROR === "deny") {
         return c.json(failure("unavailable", "The rate limiter is unavailable.", requestId), 503);

@@ -15,7 +15,9 @@ const WEB_ACL =
   "arn:aws:wafv2:us-east-1:111111111111:global/webacl/AihSecurityWaf/0f1e2d3c-4b5a-6978-8695-a4b3c2d1e0f9";
 
 // Synthesized once each: every synth bundles the function with esbuild.
-const synth = (props: Pick<SecurityStackProps, "webAclArn" | "customerManagedKey">) =>
+const synth = (
+  props: Pick<SecurityStackProps, "webAclArn" | "customerManagedKey" | "reservedConcurrency">,
+) =>
   Template.fromStack(
     new SecurityStack(new App({ analyticsReporting: false }), "AihSecurity", {
       env: { region: "ap-northeast-1" },
@@ -25,6 +27,7 @@ const synth = (props: Pick<SecurityStackProps, "webAclArn" | "customerManagedKey
 const plain = synth({ customerManagedKey: false });
 const withKey = synth({ customerManagedKey: true });
 const withWaf = synth({ customerManagedKey: false, webAclArn: WEB_ACL });
+const reserved = synth({ customerManagedKey: false, reservedConcurrency: 5 });
 
 const typesOf = (template: Template): string[] => {
   const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
@@ -238,8 +241,39 @@ describe("AihSecurity with -c webAclArn=...", () => {
   });
 });
 
+describe("AihSecurity with -c reservedConcurrency=5", () => {
+  it("has no bound on requests of its own by default", () => {
+    // What the chapter says where the reader deploys. If this changes, so must the prose.
+    plain.hasResourceProperties("AWS::Lambda::Function", {
+      ReservedConcurrentExecutions: Match.absent(),
+    });
+    plain.hasOutput("ReservedConcurrency", { Value: "none" });
+    plain.hasOutput("WebAcl", { Value: "none" });
+  });
+
+  it("caps how many copies of the function run, and adds no resource", () => {
+    reserved.hasResourceProperties("AWS::Lambda::Function", { ReservedConcurrentExecutions: 5 });
+    reserved.hasOutput("ReservedConcurrency", { Value: "5" });
+    expect(typesOf(reserved)).toEqual(DEFAULT_TYPES);
+  });
+});
+
 describe("CDK context", () => {
   const context = (values: Record<string, unknown>) => (key: string) => values[key];
+
+  it("reads reservedConcurrency as typed on the command line", () => {
+    expect(parseSecurityConfig(context({ reservedConcurrency: "5" })).reservedConcurrency).toBe(5);
+    expect(parseSecurityConfig(context({})).reservedConcurrency).toBeUndefined();
+  });
+
+  it.each(["0", "-1", "2.5", "five", "", "1001"])(
+    "refuses reservedConcurrency=%j instead of deploying without a bound",
+    (reservedConcurrency) => {
+      expect(() => parseSecurityConfig(context({ reservedConcurrency }))).toThrow(
+        "reservedConcurrency",
+      );
+    },
+  );
 
   it("turns every monthly fee off unless asked", () => {
     expect(parseSecurityConfig(context({}))).toEqual({ cmk: "off", wafCommonRules: "count" });

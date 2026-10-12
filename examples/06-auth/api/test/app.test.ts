@@ -5,7 +5,7 @@ import { createNoteService } from "@aih/example-05-dynamodb/src/notes.ts";
 
 import { createApp } from "../src/app.ts";
 import { ApiError, createNotesClient } from "../src/client.ts";
-import { errorSchema } from "../src/contract.ts";
+import { errorSchema, MAX_NOTES_PER_OWNER } from "../src/contract.ts";
 import { createLocalAuthenticator, signLocalToken } from "../src/local-auth.ts";
 
 const secret = "test-secret-that-is-at-least-32-chars";
@@ -22,7 +22,7 @@ async function setup() {
       NOTES_STORE: "memory",
     },
     notes: createNoteService({
-      repository: new InMemoryNoteRepository(),
+      repository: new InMemoryNoteRepository(MAX_NOTES_PER_OWNER),
       now: () => new Date((clock += 1000)),
       randomSuffix: () => String(++suffix).padStart(4, "0"),
     }),
@@ -55,6 +55,52 @@ const rejection = async (promise: Promise<unknown>) => {
   }
   return error;
 };
+
+describe("how many notes one user may hold", () => {
+  const fill = async (client: Awaited<ReturnType<typeof setup>>["alice"]) => {
+    const notes = [];
+    for (let count = 0; count < MAX_NOTES_PER_OWNER; count++) {
+      notes.push(await client.create({ title: `note ${count}`, body: "" }));
+    }
+    return notes;
+  };
+
+  it("refuses the note past the limit with 409, and stores nothing", async () => {
+    const { alice } = await setup();
+    await fill(alice);
+    expect(await rejection(alice.create({ title: "one too many", body: "" }))).toMatchObject({
+      status: 409,
+      code: "quota_exceeded",
+    });
+    expect((await alice.list({ limit: 100 })).notes).toHaveLength(MAX_NOTES_PER_OWNER);
+  });
+
+  it("counts each user separately: one full account does not close the others", async () => {
+    const { alice, bob } = await setup();
+    await fill(alice);
+    expect((await bob.create({ title: "bob's first", body: "" })).version).toBe(1);
+    expect(await rejection(alice.create({ title: "still full", body: "" }))).toMatchObject({
+      status: 409,
+    });
+  });
+
+  it("gives the place back when a note is deleted, and never for an update", async () => {
+    const { alice } = await setup();
+    const [first] = await fill(alice);
+    if (first === undefined) {
+      throw new Error("expected a note");
+    }
+    // Updating a note is not a way around the limit, and is not blocked by it either.
+    expect(
+      await alice.update(first.id, { title: "edited", body: "", expectedVersion: 1 }),
+    ).toMatchObject({ status: "updated" });
+    expect(await rejection(alice.create({ title: "no room", body: "" }))).toMatchObject({
+      status: 409,
+    });
+    await alice.remove(first.id);
+    expect((await alice.create({ title: "room again", body: "" })).title).toBe("room again");
+  });
+});
 
 describe("authentication", () => {
   it("answers 401 without a token, on every route", async () => {

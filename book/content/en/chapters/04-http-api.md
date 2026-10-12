@@ -1,6 +1,6 @@
 ---
 title: "04 HTTP API: Lambda and API Gateway HTTP API"
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 # 04 HTTP API: Lambda and API Gateway HTTP API
@@ -9,7 +9,7 @@ The SPA is live. Next up: an API.
 
 In this chapter you'll write a small HTTP API that creates, reads, and deletes notes. You'll run it on your machine first, then put the same code on Lambda. No Docker needed. And as long as you're only trying it locally, no AWS account either.
 
-Two things before we start. This chapter's API keeps notes in memory and doesn't save them (saving is [chapter 05](/en/chapters/05-dynamodb.md)). There's no authentication either, so anyone who knows the URL can call it (authentication is [chapter 06](/en/chapters/06-auth.md)). Please don't put in anything you'd mind losing, or anything you'd mind other people seeing.
+Two things before we start. This chapter's API keeps notes in memory and doesn't save them (saving is [chapter 05](/en/chapters/05-dynamodb.md)). There's no authentication either, so anyone who knows the URL can call it (authentication is [chapter 06](/en/chapters/06-auth.md)). To make up for that, it accepts at most 10 requests a second and holds at most 100 notes. Please don't put in anything you'd mind losing, or anything you'd mind other people seeing.
 
 The only prerequisite is [chapter 02](/en/chapters/02-toolchain.md). The code is in `examples/04-http-api/`.
 
@@ -113,7 +113,9 @@ Where notes are stored is an interface.
 
 <<< @/examples/04-http-api/src/notes.ts{repository}
 
-Right now what's behind it is a plain `Map`. Chapter 05 swaps in DynamoDB, but this interface stays as it is.
+Right now what's behind it is a plain `Map`. A `Map` is memory, and on an API anyone can `POST` to, it grows by whatever it's handed. So it stops at 100 notes: note 101 throws `NoteLimitError`, and the app's `onError` turns that into a 409 with `quota_exceeded`. Not a 429, because waiting doesn't free a place. Deleting a note does, hence the 409.
+
+Chapter 05 swaps in DynamoDB, but this interface stays as it is.
 
 And the real clock, real random numbers, and real environment variables are touched in this one place only.
 

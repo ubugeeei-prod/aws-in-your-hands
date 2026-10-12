@@ -8,6 +8,8 @@ export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 /** A soft limit: two uploads finishing at the same moment can both pass the count. */
 export const MAX_ATTACHMENTS_PER_NOTE = 10;
+// Each permit can leave up to MAX_UPLOAD_BYTES in the bucket for a day, whether or not it is finished.
+export const MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY = 100;
 // #endregion limits
 
 // #region upload
@@ -57,6 +59,8 @@ export const errorCodes = [
   // Something arrived, but too late, or it is not what the permit allowed.
   "upload_rejected",
   "attachment_limit",
+  // The owner has asked for as many upload permits as one day allows.
+  "upload_quota_exceeded",
 ] as const;
 
 export const errorSchema = z.object({

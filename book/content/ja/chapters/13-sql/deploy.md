@@ -56,6 +56,12 @@ TLS は `rejectUnauthorized: true`。証明書の連鎖とホスト名を、Node
 
 bundle の形式を CommonJS にしたのは、node-postgres が CommonJS で、Node.js の標準モジュールを `require()` で読むからです。synth でできた bundle を手元の Node.js 24 で読み込んで、DB に触らない route が応答するところまでは確かめました。
 
+### 受ける量に蓋をする
+
+<<< @/examples/13-sql/infra/lib/sql-stack.ts{throttle}
+
+04章と同じ、stage の throttling です。API 全体で 1 秒に 10 件までで、超えたぶんは API Gateway が 429 で断ります。関数も DB も呼ばれません。この API も認証が無いので、蓋が無いと、叩かれたぶんの DPU がそのまま請求になります。行のほうは、さっきの quota が持ち主 1 人 100 行で止めています。
+
 ## デプロイして、migration を流す
 
 <!-- section: 13.deploy -->

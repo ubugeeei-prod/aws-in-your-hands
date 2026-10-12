@@ -1,6 +1,6 @@
 ---
 title: "21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 21 Security: WAF, Inspector, GuardDuty, Secrets, KMS, CloudTrail, Config, and Organizations
@@ -98,6 +98,8 @@ There are two stacks.
 <<< @/examples/21-security/infra/lib/config.ts{context}
 
 It's the same thinking as `-c store=valkey` in [chapter 14](/en/chapters/14-kv-cache.md). Nothing specified means the cheap variant. A slip such as `-c cmk=true` is not "treated as off"; it stops the synth. A switch that costs money should never quietly mean something else.
+
+`reservedConcurrency` is the one switch that costs nothing. It is still off by default, because a new account can have a concurrency limit so low that reserving any gets the deploy refused. When to turn it on comes up in the deploy section.
 
 ## Narrowing permissions
 

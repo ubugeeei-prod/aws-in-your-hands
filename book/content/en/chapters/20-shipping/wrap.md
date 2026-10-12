@@ -34,6 +34,10 @@ GitHub Actions charges are not an AWS bill. According to GitHub's documentation,
 
 What a preview stack costs depends on what is in it, as the section above said.
 
+A word on being hammered, too. This chapter's API, in dev, prod, and every preview, has no authentication and can be called by anyone. What holds it back is the stage throttle: 10 requests a second (burst 20) per stack, and a 429 beyond that. Pinned there for 30 days is at most 25.92 million requests, which by chapter 04's arithmetic is **52.43 a month per stack** (API Gateway 33.44, Lambda 9.50, logs 9.49). With dev, prod, and three open previews, that's five times over, about 262. One more reason to delete stacks you aren't using.
+
+Notes live in chapter 04's in-memory repository, so they stop at 100 per execution environment. The hole where response size inflates the bill is the one described under "If it gets hammered" in chapter 04, unchanged. What to add before real users arrive is the same too: authentication (chapter 06), and AWS WAF with CloudFront in front (chapter 21; the web ACL is 8.00 a month).
+
 ## Where you get stuck
 
 These were not met by running anything. They are the places the documentation and the code say you are likely to get stuck.
@@ -51,8 +55,9 @@ These were not met by running anything. They are the places the documentation an
 
 ## Taking it to production
 
-- **Narrow the cfn-exec role.** The default is `AdministratorAccess`. Pass only the policies you need when bootstrapping
+- **Narrow the cfn-exec role.** The default is `AdministratorAccess`. Pass only the policies you need when bootstrapping, and add a permissions boundary. Every job that can use the deploy role reaches this far
 - **Separate the accounts.** As long as dev, preview, and prod share an account, only names keep them apart
+- **Previews for trusted branches only.** Enable previews with neither of the two above, and everyone who can push a branch can become an administrator of the account
 - **Protect the `production` environment.** Limit the branches that may deploy to main, and require approval. What the trust policy trusts is this environment's name
 - **Add something that stops on error rate, then shift gradually.** Alias weights and CodeDeploy go together with alarms ([chapter 19](/en/chapters/19-observability.md))
 - **Send the drift report somewhere people look.** Do not rely only on the notification of a failed job. Schedules can stop
@@ -90,6 +95,8 @@ This chapter changed nothing in cdkd's bootstrap (chapter 02) or in chapter 04's
 - That the integration goes unchecked, that a change to the inline policy shows as drift on the role, and that result times are at or after the detection's start time
 - What the rollback of a failed deploy looks like, and that old versions remain
 - That the Nix devShell works on an x86_64-linux runner
+- That the stage throttle (`DefaultRouteSettings`: 10 a second, burst 20) is applied through CloudFormation and that requests beyond it get a 429. A test sees it in the template. Whether drift detection compares this property is also unchecked
+- The path described in the preview section (that the pull request's own workflow file is the one that runs, and that the PreviewRole reaches as far as the cfn-exec role's permissions). It is read from GitHub's and the CDK's documentation and from this chapter's role definitions, not tried. For `--custom-permissions-boundary`, only its presence in the pinned CLI was confirmed
 
 **Relation to cdkd.** This chapter's two stacks are not deployed with cdkd, but the rule says to check, so we did. The pinned cdkd (0.296.28) registers no dedicated implementation for `AWS::Lambda::Alias`, `AWS::Lambda::Version`, or `AWS::IAM::OIDCProvider`. The other types (`AWS::ApiGatewayV2::*`, `AWS::IAM::Role`, `AWS::Lambda::Function`, `AWS::Lambda::Permission`, `AWS::Logs::LogGroup`) have one.
 

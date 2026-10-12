@@ -676,3 +676,51 @@ fleet（2〜3 台）での drain、rolling update、node の喪失、backup と 
 celld は beta で、調査から執筆までの間にも 1 週間に 1 回ほどの間隔で release が出ている。この章が写した upgrade notes、既定値、CLI の flag、diagnose の出力形式は v0.6.2 のもの。
 
 再開手順: 新しい release を使う前に、その tag の `docs/README.md`（Upgrade notes、Shut down and roll out a node、Environment variables）、`docs/guarantees.md`、`docs/security.md`、`docs/limitations.md` を読み直し、`examples/24-celld/src/celld.ts` の版、digest、upgrade notes、既定値を更新してテストを通す。
+
+### bounds-applied-by-cdkd
+
+公開の入口に入れた上限（HTTP API の stage の `DefaultRouteSettings`、DynamoDB の `OnDemandThroughput`、opt-in の `ReservedConcurrentExecutions`）は、template に出ることをテストで固定しただけで、cdkd 0.296.28 が実際に適用するかは確かめていない。固定した版のコードを読んだ限りでは、3 つとも AWS の API に渡している。
+
+再開手順: 04章をデプロイし、`aws apigatewayv2 get-stage` で `DefaultRouteSettings` を、05章をデプロイして `aws dynamodb describe-table` で `OnDemandThroughput` を見る。そのうえで毎秒 10 件を超えるリクエストを送り、429 が返ることを確かめる。
+
+### throttle-scope-and-billing
+
+stage の既定のスロットリングが API 全体で 1 つの枠なのか、route ごとの枠なのかを確かめていない。route ごとなら、本文の「毎秒 10 件」は route の数だけ増える（06章で 7 倍、07・08章で 11 倍）。スロットリングで返した 429 や、authorizer が拒否したリクエストが課金されるかも確かめていない。
+
+再開手順: デプロイした API の 2 つの route に同時に毎秒 10 件ずつ送り、合計で 10 件に抑えられるかを見る。翌日以降の請求明細で、429 の分の課金を確かめる。
+
+### worst-case-amounts-computed
+
+各章の「叩かれたら」に書いた最悪額は、リポジトリ内の単価と章の前提から計算した値で、請求から得た値ではない。レスポンスの転送量は別枠で、インターネット向けの転送単価が API Gateway のレスポンスに当てはまるかは確かめていない。
+
+再開手順: 負荷をかけたあとの Cost Explorer を、章の表と項目ごとに突き合わせる。
+
+### limits-under-real-concurrency
+
+05章の 1 人あたりの件数上限と 07章の 1 日あたりの許可証の上限は、条件付き書き込みで数えている。メモリと DynamoDB Local では、同時に作成しても上限を超えないことを確かめたが、実際の DynamoDB では確かめていない。table の上限に達したときに SDK がどう再試行し、どの時点で 500 になるかも未確認。
+
+再開手順: デプロイした 05章の API に、上限の手前から同時に作成を送り、101 件目が 409 になることを見る。
+
+### reserved-concurrency-on-new-accounts
+
+09・17・21章の `-c reservedConcurrency=N` は、template に出ることしか確かめていない。新しいアカウントは同時実行の枠が小さく、予約するとデプロイが拒否されるかもしれないので、既定にはしていない。上限に達したときに関数 URL と CloudFront が何を返すかも未確認。
+
+再開手順: `aws service-quotas get-service-quota --service-code lambda --quota-code L-B99A9384` で枠を見てから、`-c reservedConcurrency=2` でデプロイする。
+
+### edge-and-cache-bounds
+
+09章で cache の鍵からクエリ文字列を外したこと（`QueryStringBehavior: none`）と、10章で `/digest` への POST 以外を CloudFront Function が 405 で返すことは、template と Node.js 上のテストでしか確かめていない。CloudFront Functions が `allow` ヘッダー付きの 405 を受け付けるか、その場合に Lambda@Edge が動かないかは未確認。
+
+再開手順: デプロイ後に `curl -i 'https://<domain>/?x=1'` を 2 回送って 2 回目が cache から返ることを見る。10章は `curl -i https://<domain>/digest` が 405 を返すことを見る。
+
+### ivs-viewer-flood
+
+18章の「URL が広まったとき」の最悪額は、既定の同時視聴の上限（15,000）と視聴時間あたりの単価から計算した。上限を超えたときに IVS が何をするか、`StopStream` のあと課金がどれだけ早く止まるかは確かめていない。
+
+再開手順: 配信中に `vp run stream:stop` を実行し、`vp run stream:status` で視聴数が 0 になるまでの時間を見る。
+
+### alarm-topic-tls
+
+19章のアラームの通知先に TLS 必須（`enforceSSL`）を入れ、CloudWatch からの publish を許可する文を足した。この policy で CloudWatch のアラームが実際に publish できるかは確かめていない。
+
+再開手順: デプロイ後に `aws cloudwatch set-alarm-state` でアラームを ALARM にし、購読先に通知が届くことを見る。

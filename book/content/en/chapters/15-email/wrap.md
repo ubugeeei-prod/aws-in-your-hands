@@ -42,6 +42,16 @@ The SES free allowance is treated as unknown. What the pricing page has is a des
 
 Some things aren't in this table: data transfer out to the internet, dedicated IPs (USD 24.95 a month each), and Virtual Deliverability Manager. None of them is used in this chapter's setup. The function durations (300 ms to send, 50 ms per event) are assumptions too, not measurements.
 
+**If a script with the permission gets stuck in a loop.** Only a caller with `execute-api` permission can call this API. API Gateway turns strangers away before the function. So the thing to worry about is less an attack than your own side running away. Three things stop it.
+
+- **The stage throttle.** At most 10 requests a second: at most 25.92 million in 30 days
+- **One mail per `notificationId`.** Repeat the same request as often as you like and one mail is sent. A loop that makes up a new ID every time is not stopped by this
+- **The SES limits.** Inside the sandbox: 200 messages per 24 hours, one a second, verified recipients only. That is at most 6,000 messages in 30 days, USD 0.60
+
+Suppose that, inside the sandbox, requests with a new ID each arrive at 10 a second for 30 days. SES refuses most of them, but every request still runs API Gateway and the function and writes to the table twice (the claim, and the record of the refusal). Under the same assumptions as the table above (300 ms for the function, 0.5 KB of logs), that is USD 33.44 for API Gateway, USD 31.10 for Lambda, USD 38.91 for DynamoDB, USD 9.39 for logs, and USD 0.60 for SES: about USD 113 a month in all.
+
+Outside the sandbox it is a different story. The limit becomes the account's sending quota (`SendQuota`), and this book does not know its value. If the quota allows it, the full 25.92 million messages cost USD 2,592 for SES alone. You would lose your reputation as a sender before the money. Do the first two items of "If you take this to production" before leaving the sandbox.
+
 Delete the stack, and this chapter's charges stop.
 
 ## Where people get stuck
@@ -50,6 +60,7 @@ Delete the stack, and this chapter's charges stop.
 | --- | --- |
 | `dev:mail` stops with `Invalid environment` | Does `examples/15-email/.env` exist? Is it `MAIL_MODE=local`? |
 | `mail:send` fails with a response that isn't in this book's error shape (`error.code`) | API Gateway is rejecting it before the function is invoked. Use `vp run account:whoami` to check that your current credentials belong to the same account as the stack. Calling the API takes `execute-api` permission |
+| `mail:send` fails with 429 | That is the stage throttle. The API as a whole went past 10 requests a second. Is the caller in a loop? |
 | You get `send_rejected` | SES said no. Look at `reason` with `vp run mail:logs`. It's most often one of: the identity isn't verified, an unverified recipient while in the sandbox, or the rate limit |
 | The `reason` in the log is a permission error (`AccessDenied` or similar) | The sending role's policy is missing something. Compare the resource ARN in the error with the policy in the stack |
 | You get `send_unknown` | SES gave no answer. Nothing more will be sent for that `notificationId`. Check the state with `mail:status`, and if it doesn't move to `delivered`, decide whether to send again under a new `notificationId` |
@@ -63,7 +74,7 @@ Delete the stack, and this chapter's charges stop.
 
 ## If you take this to production
 
-- **Narrow who can call it.** IAM authorization narrows callers only to "anyone with `execute-api` permission". Give that permission to the role of the code that sends notifications, and to nothing else
+- **Narrow who can call it.** IAM authorization narrows callers only to "anyone with `execute-api` permission". Give that permission to the role of the code that sends notifications, and to nothing else. Lower the throttle's 10 requests a second to what you actually need, too
 - **Put a queue in front of the API.** It decouples callers from SES being slow, and lets you wait and retry when you hit the rate limit ([chapter 08](/en/chapters/08-async.md))
 - **Prepare for missed events.** An event the function fails on all three times is discarded by Lambda. Give the function a dead-letter queue or an on-failure destination so that it's kept (for the thinking behind a dead-letter queue, see [chapter 08](/en/chapters/08-async.md); there it is attached to an SQS queue)
 - **Watch the number of bounces and complaints.** When there's a problem with your reputation as a sender, SES puts the account under review (`PROBATION`) or pauses sending (`SHUTDOWN`). The current state is in `EnforcementStatus` from `aws sesv2 get-account`. Alarm on it, together with the log of unreadable events (for how to put an alarm together, see [chapter 19](/en/chapters/19-observability.md))
@@ -104,6 +115,7 @@ The storage created by cdkd's bootstrap (chapter 02), and the deployment files p
 - That DynamoDB's conditional write lets exactly one of several simultaneous requests through. Only the expression sent, and the in-memory implementation following the same rule, were checked
 - That cdkd can create the three SES resource types through Cloud Control API, detect drift on them, and delete them
 - What SES does with a subject or a recipient containing a line break
+- That the stage throttle takes effect. Only two things were checked: the template carries the values, and the source of cdkd 0.296.28 passes them to the AWS API. What a throttled 429 looks like, and whether it is billed, are unchecked as well
 - The production access request screen, and how long the review takes. The items in the text are what the official documentation describes
 
 **Where the code is.**

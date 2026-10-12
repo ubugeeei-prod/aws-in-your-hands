@@ -15,10 +15,15 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
 
+import { TABLE_LIMIT } from "@aih/example-05-dynamodb/infra/lib/notes-stack.ts";
+
 import { KEY_PREFIX } from "../../api/src/keys.ts";
 import { PENDING, STATE_TAG } from "../../api/src/object-store.ts";
 
 const LOCAL_SPA = "http://localhost:5173";
+
+// Requests per second the API accepts, and how far a burst may go past it. Beyond that: 429.
+const THROTTLE = { rate: 10, burst: 20 } as const;
 
 // The stack of chapter 06 with one more bucket, one more policy statement,
 // and four more routes. The regions below mark what is new.
@@ -139,6 +144,9 @@ export class UploadsStack extends Stack {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      // Chapter 05's ceiling on request units per second. Past it DynamoDB throttles instead of billing.
+      maxReadRequestUnits: TABLE_LIMIT.read,
+      maxWriteRequestUnits: TABLE_LIMIT.write,
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
@@ -265,6 +273,15 @@ export class UploadsStack extends Stack {
       ...signedIn,
     });
     // #endregion routes
+
+    // #region throttle
+    // On every route, /health included: the JWT check turns callers away but does not slow them down.
+    const stage = api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    stage.defaultRouteSettings = {
+      throttlingRateLimit: THROTTLE.rate,
+      throttlingBurstLimit: THROTTLE.burst,
+    };
+    // #endregion throttle
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "ContentBucketName", { value: content.bucketName });

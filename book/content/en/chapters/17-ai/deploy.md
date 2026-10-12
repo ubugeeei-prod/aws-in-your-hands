@@ -34,6 +34,20 @@ On the local development server, disconnecting produced `cancelled`. On Lambda i
 
 Three things do stop it: `maxTokens` (the output limit), the app's deadline (30 seconds), and the function's `timeout` (40 seconds). The function's `timeout` is longer than the deadline to leave the app time to send its `error` event and finish. A test guards that ordering.
 
+All three are brakes on a single call. Nothing stops how many run at once, or how many calls a month brings. If a script that can sign gets stuck in a loop, the only thing left is the account's Bedrock quota, and this book does not know its value.
+
+So a cap on how many run at once is there for the asking.
+
+<<< @/examples/17-ai/infra/lib/ai-stack.ts{reserved}
+
+```bash
+vp run ai:infra:deploy -c reservedConcurrency=2
+```
+
+This is Lambda's reserved concurrency. With 2, at most two summaries run at the same time. Lambda refuses the third without running the function.
+
+There is a reason it is not on by default. Reserving sets N aside out of the account's total concurrency. A new account can have a total so low that the reservation alone fails the deploy. That cannot be checked here, so it happens only when you ask. While you are the only caller, trying it by hand, leave it off. Turn it on before anything other than you calls the URL: another backend, a schedule, CI.
+
 ### The URL
 
 <<< @/examples/17-ai/infra/lib/ai-stack.ts{url}

@@ -7,12 +7,13 @@ import { describe, expect, it } from "vite-plus/test";
 import { SHARED_SECONDS } from "../../core/cache-control.ts";
 import { SsrStack } from "../lib/ssr-stack.ts";
 
-const synth = (responseStreaming = false): Template =>
+const synth = (responseStreaming = false, reservedConcurrency?: unknown): Template =>
   Template.fromStack(
     new SsrStack(new App(), "AihSsr", {
       env: { region: "ap-northeast-1" },
       serverDir: fileURLToPath(new URL("./fixtures/server", import.meta.url)),
       responseStreaming,
+      reservedConcurrency,
     }),
   );
 const template = synth();
@@ -61,6 +62,18 @@ describe("SsrStack: what may be cached", () => {
     // An origin request policy could forward cookies without putting them in the key.
     expect(distributionConfig.DefaultCacheBehavior.OriginRequestPolicyId).toBeUndefined();
     expect(distributionConfig.DefaultCacheBehavior.CachePolicyId).toHaveProperty("Ref");
+  });
+
+  it("keeps query strings out of the public cache key, so a random one cannot force a miss", () => {
+    template.hasResourceProperties("AWS::CloudFront::CachePolicy", {
+      CachePolicyConfig: {
+        ParametersInCacheKeyAndForwardedToOrigin: {
+          QueryStringsConfig: { QueryStringBehavior: "none" },
+        },
+      },
+    });
+    // An origin request policy could send them to the function all the same.
+    expect(distributionConfig.DefaultCacheBehavior.OriginRequestPolicyId).toBeUndefined();
   });
 
   it("lets the origin's no-store win, and caps what the origin may ask for", () => {
@@ -168,6 +181,31 @@ describe("SsrStack: who may reach the function", () => {
       Environment: { Variables: { AIH_SSR_SIGN_IN: "off" } },
     });
     expect(fn.Timeout).toBeLessThan(30);
+  });
+});
+
+describe("SsrStack: how many requests may render at once", () => {
+  const reserved = (template: Template): unknown =>
+    Object.values(template.findResources("AWS::Lambda::Function"))[0]?.["Properties"]
+      .ReservedConcurrentExecutions;
+
+  it("reserves nothing unless asked, so a small account limit cannot fail the deploy", () => {
+    expect(reserved(template)).toBeUndefined();
+  });
+
+  it("caps the function at the number given as context, which arrives as text", () => {
+    expect(reserved(synth(false, "5"))).toBe(5);
+    expect(reserved(synth(false, 2))).toBe(2);
+  });
+
+  it.each([
+    ["zero, which would stop the site", "0"],
+    ["a negative number", "-1"],
+    ["a fraction", "1.5"],
+    ["a word", "many"],
+    ["an empty value", ""],
+  ])("refuses %s before anything is synthesized", (_label, value) => {
+    expect(() => synth(false, value)).toThrow(/must be/);
   });
 });
 

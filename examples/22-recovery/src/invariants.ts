@@ -41,7 +41,7 @@ export async function takeSnapshot(
       snapshot.attachments.push({ owner: found.owner, attachment: found.attachment });
     } else if (found.kind === "inspection") {
       snapshot.inspections.push({ owner: found.owner, inspection: found.inspection });
-    } else {
+    } else if (found.kind !== "counter") {
       snapshot.unreadable.push({ pk: found.pk, sk: found.sk, reason: found.reason });
     }
   }

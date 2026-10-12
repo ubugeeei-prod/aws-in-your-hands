@@ -83,15 +83,21 @@ describe("laying a flow out", () => {
 describe("drawing a figure", () => {
   // Each arrow is one <path>; two that share their endpoints must not share their coordinates.
   it("draws two arrows between the same nodes side by side", () => {
-    const html = renderFigure("caption: c\nnode a: A\nnode b: B\nedge a -> b: ask\nedge b --> a: answer");
-    const paths = [...html.matchAll(/<path class="aih-figure__edge[^"]*" d="([^"]+)"/g)].map((match) => match[1]);
+    const html = renderFigure(
+      "caption: c\nnode a: A\nnode b: B\nedge a -> b: ask\nedge b --> a: answer",
+    );
+    const paths = [...html.matchAll(/<path class="aih-figure__edge[^"]*" d="([^"]+)"/g)].map(
+      (match) => match[1],
+    );
     expect(paths).toHaveLength(2);
     expect(paths[0]).not.toBe(paths[1]);
   });
 
   it("gives an arrow from a node to itself a line of its own", () => {
     const html = renderFigure("caption: c\nnode a: A\nedge a -> a: retry");
-    expect(html).toMatch(/<path class="aih-figure__edge" d="M[\d.]+ [\d.]+ H[\d.]+ V[\d.]+ H[\d.]+"/);
+    expect(html).toMatch(
+      /<path class="aih-figure__edge" d="M[\d.]+ [\d.]+ H[\d.]+ V[\d.]+ H[\d.]+"/,
+    );
   });
 
   it("gives the picture its caption twice: under it, and as its accessible name", () => {

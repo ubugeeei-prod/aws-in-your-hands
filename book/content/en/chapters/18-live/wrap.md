@@ -48,6 +48,20 @@ This is why the chapter chose `BASIC`. For the same mistake, the bill differs by
 
 The budget notification from chapter 01 helps here too. But it notifies; it doesn't stop anything. What stops things is `stream:stop` and `streamKey=off`.
 
+### When the URL gets around
+
+There's one more worry, and it points the other way: the meter being run not by your streaming software but by whoever is watching.
+
+This chapter's channel has `authorized: false`, so anyone who knows the playback URL can play it. And that URL sits in the player page's `config.json`, where anyone who opens the page can read it. It isn't a secret. From IVS's side, a person watching and a script that keeps pulling video are the same "time delivered."
+
+Let's work out the worst case. The default limit on concurrent views is 15,000 across a Region. If all of them keep watching in HD, that's 15,000 viewing hours in one hour. At the first-tier rate of 0.092, that comes to **USD 1,380 an hour**. In SD it's 690, and if you're sending Full HD it's 2,760. The rate drops a little with volume (for HD, hours past 10,000 in a month are 0.084), but the order of magnitude doesn't change. A 2-hour broadcast comes to 2,600. That's for a broadcast that would have cost 9.20 with the 100 viewers you planned for.
+
+What happens to viewer 15,001 once the limit is reached isn't something I've checked here. The limit is also adjustable, and it's the total across every channel in the Region. Read it as the size of the number, not as a guarantee that it stops there.
+
+Two things work in your favor. First, this only applies while you're live. With no broadcast there's no video to deliver, so the URL can be hit tens of thousands of times and output stays at 0. Second, stopping the stream stops the meter. `stream:status` prints the number of concurrent views too, so if you see a number you can't account for, `stream:stop` and `streamKey=off` from the section "Has it stopped?" are the brake, as they are. The budget notification from chapter 01 only updates every 8 to 12 hours, so it won't arrive in time for this.
+
+If you're going to gather a real audience, add a few things first: private channels, which restrict viewing with a signed token; playback restriction policies, which filter by country or origin; and something that watches the concurrent view count and tells you. They're listed under "If this were production." I haven't checked the procedure or the price of private channels for this book.
+
 ### After you delete it
 
 Delete the stack and the channel and the stream key are gone, and IVS charges no longer occur. The event logs go with them.
@@ -92,9 +106,9 @@ That Cloudflare page gave no latency figures, so I haven't compared latency. Whi
 
 ## If this were production
 
-- **Restrict who can watch.** Right now anyone with the URL can. IVS has private channels (`authorized: true`), which play only with a signed token, and playback restriction policies that filter by country or origin. This chapter doesn't cover them
+- **Restrict who can watch.** Right now anyone with the URL can, and every hour they watch is on your bill (the arithmetic is under "When the URL gets around"). IVS has private channels (`authorized: true`), which play only with a signed token, and playback restriction policies that filter by country or origin. This chapter doesn't cover them
 - **Reconsider the type.** If viewers' connections vary, use `STANDARD` or `ADVANCED`, which produce several renditions. Weigh that against the input rate
-- **Prevent forgotten streams with a mechanism.** Notify when a channel is still live past its scheduled time, or issue a key per broadcast and delete it afterwards. "Being careful" is not a mechanism
+- **Prevent forgotten streams and runaway audiences with a mechanism.** Notify when a channel is still live past its scheduled time, notify when concurrent views go past what you planned for, or issue a key per broadcast and delete it afterwards. "Being careful" is not a mechanism
 - **Decide where the stream key lives.** How it reaches the broadcaster, how it gets re-created, and who can read the state bucket
 - **Check the limits.** By default, 15,000 concurrent views across a Region and 100 concurrent streams. Raise them in Service Quotas before a big broadcast
 - **Put the player page on a CDN.** With chapter 03's setup. Don't forget the Content-Type for `.wasm`
@@ -131,7 +145,7 @@ What remains is the storage that cdkd's bootstrap created (chapter 02) and the d
 
 **Checked locally.** Unit tests (channel settings, interpreting `GetStream`, validating and folding events, the player page's decisions, stack assertions). Type checks (the whole example, and the player page with Vize). Template lint. Synth (including the esbuild bundle, with no request to AWS). That the player page build contains the player's worker and `.wasm`. Started `dev:stream:web` and confirmed in a browser what is shown when no channel is configured. Also, with the playback URL of a channel that does not exist set temporarily, confirmed that the player loads the worker and WebAssembly, receives a 404 from the IVS playback domain, and that the page shows "offline" and schedules a retry (no credentials were used, and the config was restored afterwards).
 
-**Not checked yet.** No real broadcast has been made or watched. `stream:infra:diff`, `deploy`, `drift`, `destroy`, `stream:key`, `stream:config`, `stream:status`, and `stream:stop` have not been run against AWS. Specifically: creating and deleting `AWS::IVS::Channel` and `AWS::IVS::StreamKey` through Cloud Control API, whether cdkd's state holds the stream key value, re-creating the key via `streamKey=off`, connecting from OBS, playback and the latency value in the player, displaying timed metadata, the real `GetStream` response and the name `ChannelNotBroadcasting`, the real shape of the EventBridge events, whether `stream:status --events` can read events back from Lambda's log lines, and that deleting a live channel fails. The OBS steps follow the IVS documentation and were not checked on screen. The latency seconds in the diagram are made up for illustration.
+**Not checked yet.** No real broadcast has been made or watched. `stream:infra:diff`, `deploy`, `drift`, `destroy`, `stream:key`, `stream:config`, `stream:status`, and `stream:stop` have not been run against AWS. Specifically: creating and deleting `AWS::IVS::Channel` and `AWS::IVS::StreamKey` through Cloud Control API, whether cdkd's state holds the stream key value, re-creating the key via `streamKey=off`, connecting from OBS, playback and the latency value in the player, displaying timed metadata, the real `GetStream` response and the name `ChannelNotBroadcasting`, the real shape of the EventBridge events, whether `stream:status --events` can read events back from Lambda's log lines, and that deleting a live channel fails. The OBS steps follow the IVS documentation and were not checked on screen. Neither checked: what happens once concurrent views reach the limit of 15,000, and how long output billing takes to stop after `StopStream`. The amounts under "When the URL gets around" are the default quota multiplied by the Price List rates. The latency seconds in the diagram are made up for illustration.
 
 **Where the code is.**
 

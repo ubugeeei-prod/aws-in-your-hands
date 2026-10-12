@@ -34,6 +34,10 @@ GitHub Actions の料金は、AWS の請求ではありません。GitHub のド
 
 preview の stack の料金は、中身しだいです。上の節に書いたとおりです。
 
+叩かれたときの話もしておきます。この章の API は、dev も prod も preview も、認証なしで誰でも呼べます。歯止めは stage の流量制限で、stack 1 つにつき毎秒 10 件（burst 20）。超えたぶんは 429 です。30 日張り付かれて最大 2,592 万件、04章と同じ計算で **stack 1 つあたり月 52.43**（API Gateway 33.44、Lambda 9.50、ログ 9.49）。dev と prod に preview が 3 つ開いていれば、5 倍の 262 ほどです。使っていない stack を消す理由が、ここにもあります。
+
+ノートは 04章のメモリ上の repository なので、実行環境 1 つにつき 100 件で止まります。応答の大きさで請求が膨らむ穴は、04章の「叩かれ続けたら」に書いたものをそのまま持っています。本物の利用者を迎える前に足すものも同じで、認証（06章）と、CloudFront を前に置いたうえでの AWS WAF（21章。web ACL は月 8.00）です。
+
 ## ハマりどころ
 
 実行して出会ったものではなく、ドキュメントとコードから「ここで詰まりそう」と分かっているものです。
@@ -51,8 +55,9 @@ preview の stack の料金は、中身しだいです。上の節に書いた�
 
 ## 本番にするなら
 
-- **cfn-exec role を絞る。** 既定は `AdministratorAccess` です。bootstrap のときに、必要な policy だけを渡します
+- **cfn-exec role を絞る。** 既定は `AdministratorAccess` です。bootstrap のときに、必要な policy だけを渡し、permissions boundary も付けます。deploy role を使える job は、どれもこの権限まで届きます
 - **アカウントを分ける。** dev、preview、prod を同じアカウントに置くかぎり、名前でしか分かれていません
+- **preview は、信用できる branch だけに。** 上の 2 つのどちらも無いまま preview を有効にすると、branch を push できる人の全員が、アカウントの管理者になれます
 - **`production` environment に保護を付ける。** デプロイできる branch を main に限り、承認を必須にします。trust policy が信用しているのは、この environment の名前です
 - **エラー率で止める仕組みを足してから、段階的に切り替える。** alias の重み付けと CodeDeploy は、アラーム（[19章](/ja/chapters/19-observability.md)）と組にして使います
 - **drift の report を、人が見る場所に流す。** 落ちた job の通知だけに頼らない。定期実行は止まることがあります
@@ -90,6 +95,8 @@ cdkd の bootstrap（02章）と、04章の `AihHttpApi` は、この章では�
 - integration が未検査になること、inline の policy の変更が role の drift として出ること、結果の時刻が検出の開始時刻以降になること
 - 失敗したデプロイの rollback の様子、古い version が残ること
 - x86_64-linux の runner で、Nix の devShell に入れること
+- stage の流量制限（`DefaultRouteSettings`。毎秒 10 件、burst 20）が CloudFormation 経由で反映され、超えたぶんが 429 になること。template にあることはテストで見ています。drift の検出がこの property を比べるかどうかも未確認です
+- preview の節に書いた道筋（pull request の側の workflow が使われること、PreviewRole から cfn-exec role の権限まで届くこと）。GitHub と CDK のドキュメントと、この章の role の定義からの読み取りで、試してはいません。`--custom-permissions-boundary` は、固定した版の CLI にあることだけを確かめました
 
 **cdkd との関係。** この章の 2 つの stack は cdkd ではデプロイしませんが、決まりなので確かめました。固定した版の cdkd（0.296.28）は、`AWS::Lambda::Alias`、`AWS::Lambda::Version`、`AWS::IAM::OIDCProvider` に専用の実装を登録していません。ほかの種類（`AWS::ApiGatewayV2::*`、`AWS::IAM::Role`、`AWS::Lambda::Function`、`AWS::Lambda::Permission`、`AWS::Logs::LogGroup`）には登録があります。
 

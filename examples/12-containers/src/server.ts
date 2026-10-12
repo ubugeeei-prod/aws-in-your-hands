@@ -1,4 +1,5 @@
 import { composeServer } from "./compose.ts";
+import { MAX_CONNECTIONS } from "./config.ts";
 import { startServer } from "./serve.ts";
 import { timing } from "./timing.ts";
 
@@ -9,6 +10,7 @@ const server = await startServer({
   fetch,
   port: env.PORT,
   keepAliveTimeoutMs: timing.serverKeepAlive * 1000,
+  maxConnections: MAX_CONNECTIONS,
   shutdownDeadlineMs: timing.shutdownDeadline * 1000,
 });
 log({ level: "info", message: "listening", port: server.port, version: env.APP_VERSION });

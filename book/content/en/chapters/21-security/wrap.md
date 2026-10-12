@@ -44,6 +44,19 @@ All of it is prorated by the hour. Try the default stack for an afternoon and de
 
 When used. Assuming 100,000 tokens issued and 100,000 verified a month, the list-price subtotal was USD 0.86 a month, and USD 0.49 after free allowances. What remains after the allowances is the secret's monthly fee and the Secrets Manager API calls. One execution environment reloading its keys every five minutes makes 17,520 calls a month, USD 0.09. Drop the cache and read once per request, and 200,000 calls come to USD 1.00.
 
+### When it's hammered
+
+The default stack has no bound on request rate, so there is no "at most" to write down. What can be written is a unit price. Under the same assumptions (0.5 KB responses, 50 ms of Lambda, 0.3 KB of logs), it is **USD 1.84 per million requests**: 1.20 for CloudFront requests, 0.05 for data transfer, 0.37 for Lambda, and 0.22 for logs. Say you're hit at 1,000 requests a second for a day: that's 86.4 million requests, USD 159. The budget notification from chapter 01 only updates every 8 to 12 hours, so by the time you notice, it has gone a long way.
+
+Secret reads go up too. The key cache is per execution environment, so when a flood fans out across more environments, the reloads multiply. If someone keeps sending made-up version ids, the gap between reloads shrinks to its floor of 30 seconds. One reload is two `GetSecretValue` calls, so one environment makes 172,800 calls in 30 days, USD 0.86. Spread across the default concurrency limit of 1,000, that's USD 864. Without the 30-second floor, this line would have scaled with the number of requests.
+
+With a bound in place, it changes like this.
+
+- **`-c reservedConcurrency=5` (free).** At most 5 execution environments at a time. Secret reads top out at USD 4.32 a month, and Lambda duration at USD 43.20 even with all 5 busy for 30 days. CloudFront's request fee (1.20 per million) gets no ceiling
+- **The web ACL (USD 8.00 a month).** One IP address gets 300 requests through in five minutes, 1 a second on average. Pinned there for 30 days, that's 2.59 million requests per IP, USD 4.77. The inspection fee (0.60 per million) is charged for the blocked ones as well. A flood from many IP addresses gets through once per address. So the firmest setup is both together
+
+Whether CloudFront's request fee is charged for requests the web ACL blocks hasn't been checked.
+
 For GuardDuty, Inspector, and Config, the order of magnitude depends on usage, so here are the unit prices only.
 
 - GuardDuty: USD 4.72 per million CloudTrail events analyzed. There are also charges for VPC flow log and DNS log volume, and for each protection plan you enable
@@ -64,6 +77,8 @@ These were not met by running things. They are the places the documentation and 
 | --- | --- |
 | `sec:waf:infra:deploy` fails with a scope or Region error | A web ACL for CloudFront can only be created in us-east-1. Did you change the stack's `env`? |
 | The synth stops on `-c webAclArn=...` | Is it shaped like `arn:aws:wafv2:us-east-1:<account>:global/webacl/<name>/<id>`? A `regional` ARN can't be attached to CloudFront |
+| A deploy with `-c reservedConcurrency=5` is refused with a concurrency error | The account's concurrency limit is low. Check Service Quotas. You can also deploy without it and leave the bounding to the web ACL |
+| An occasional 429 or 5xx (after adding `reservedConcurrency`) | All the copies allowed to run are busy. Which status CloudFront answers with hasn't been checked |
 | `/token` keeps answering 503 | If the function's log shows `SecretAccessDenied`, it's the role's permissions. With `-c cmk=on` it needs `kms:Decrypt` too. Right after a deploy, wait a little and try again |
 | Requests through CloudFront get 403 | Does the function URL's resource policy have both `lambda:InvokeFunctionUrl` and `lambda:InvokeFunction` from this distribution (chapter 09)? |
 | Sending the token in the `Authorization` header doesn't work | CloudFront uses that header for its signature. Send it in `x-aih-token` |
@@ -77,6 +92,7 @@ These were not met by running things. They are the places the documentation and 
 - **Enable GuardDuty.** Once you have something to protect, this is the first thing to add. Look at the trial's estimate and turn off the protection plans you don't need
 - **Send findings where people look.** Detection that is merely enabled gets read by nobody. Connect it to chapter 19's notification path
 - **Create a trail.** The need to look further back than 90 days tends to show up after 90 days. Access Analyzer's policy generation needs one as well
+- **Bound the entrance before you publish it.** Both the web ACL and `reservedConcurrency`. And put authentication in front of `/token`; today it signs for anyone
 - **Log the web ACL.** Look at what `count` recorded, then decide whether to switch to block. This chapter's stack sets up no logging
 - **Give secret deletion a grace period.** This chapter's secret disappears with the stack at once. In production use `RemovalPolicy.RETAIN`, and use Secrets Manager's recovery window (7 to 30 days) when you do delete
 - **Watch who reads the secret.** `GetSecretValue` is recorded in CloudTrail. Is a role you didn't expect reading it?
@@ -113,6 +129,7 @@ What this chapter's tasks did not create, they do not remove. GuardDuty or Inspe
 - Whether there is a time right after a deploy when the function can't read the secret, and how long it can still read after the permission is removed
 - How the staging labels move after `PutSecretValue`; the error name when reading a secret that has no `AWSPREVIOUS`
 - Creating and associating the web ACL; how long the rate-based rule takes to start blocking; the usage type on a bill
+- A deploy with `-c reservedConcurrency=N`: that cdkd 0.296.28 applies `ReservedConcurrentExecutions` (the pinned version's source has code that calls `PutFunctionConcurrency` after creating the function; it has not been run), from which value a new account refuses it, which status CloudFront answers with at the limit, and whether CloudFront charges for requests turned away by a block or a throttle. The amounts under "When it's hammered" are computed from this chapter's unit prices and assumptions; no traffic was sent
 - The customer managed key variant; billing during the 7 days pending deletion
 - The actual response shapes of the six APIs `sec:posture` calls, and the error names when a permission is missing
 - GuardDuty, Inspector, AWS Config, a trail, Organizations, and SCPs. None has been enabled. The SCP JSON has not been confirmed to be accepted by Organizations

@@ -9,6 +9,11 @@ import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
 
+// #region throttle
+// Requests per second the API accepts, and how far a burst may go past it. Beyond that: 429.
+export const THROTTLE = { rate: 10, burst: 20 } as const;
+// #endregion throttle
+
 export type HttpApiStackProps = StackProps & { allowedOrigin: string };
 
 export class HttpApiStack extends Stack {
@@ -88,6 +93,15 @@ export class HttpApiStack extends Stack {
       integration,
     });
     // #endregion api
+
+    // #region stage
+    // The HttpApi construct has no throttling option, so this reaches the stage it created.
+    const stage = api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    stage.defaultRouteSettings = {
+      throttlingRateLimit: THROTTLE.rate,
+      throttlingBurstLimit: THROTTLE.burst,
+    };
+    // #endregion stage
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "HandlerLogGroupName", { value: logGroup.logGroupName });

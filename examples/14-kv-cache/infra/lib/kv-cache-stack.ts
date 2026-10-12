@@ -23,6 +23,15 @@ const IAM_USER_GROUP = "default.iam-user-group";
 const IAM_USER = "default.iam-user";
 const CACHE_NAME = "aih-kv-cache";
 
+// #region bounds
+// Requests per second the API accepts, and how far a burst may go past it. Beyond that: 429.
+const THROTTLE = { rate: 10, burst: 20 } as const;
+// One second admits at most burst + rate requests. Each is one counter write, and a refill adds three.
+const BURST_SECOND = THROTTLE.rate + THROTTLE.burst;
+// Units per second the table accepts. Above what the throttle lets through, so it only bites if the throttle is gone.
+const TABLE_CAP = { writeUnits: BURST_SECOND + 10, readUnits: 2 * BURST_SECOND } as const;
+// #endregion bounds
+
 export class KvCacheStack extends Stack {
   constructor(scope: Construct, id: string, props: KvCacheStackProps) {
     super(scope, id, props);
@@ -32,6 +41,9 @@ export class KvCacheStack extends Stack {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      // On-demand has no ceiling of its own. Past these, DynamoDB throttles.
+      maxWriteRequestUnits: TABLE_CAP.writeUnits,
+      maxReadRequestUnits: TABLE_CAP.readUnits,
       // DynamoDB deletes items some time after this Unix-seconds attribute has passed.
       timeToLiveAttribute: TTL_ATTRIBUTE,
       // Counters and cached copies: nothing here is worth keeping.
@@ -69,6 +81,7 @@ export class KvCacheStack extends Stack {
       RATE_LIMIT: "5",
       RATE_WINDOW_SECONDS: "60",
       RATE_ALGORITHM: "fixed",
+      // A list is worth serving while the counters are down. The stage throttle still stands.
       RATE_ON_ERROR: "allow",
       CACHE_TTL_SECONDS: "30",
       SOURCE_DELAY_MS: "300",
@@ -152,6 +165,15 @@ export class KvCacheStack extends Stack {
     const integration = new integrations.HttpLambdaIntegration("Items", handler);
     api.addRoutes({ path: "/health", methods: [apigwv2.HttpMethod.GET], integration });
     api.addRoutes({ path: "/items", methods: [apigwv2.HttpMethod.GET], integration });
+
+    // #region throttle
+    // Refused here, a request reaches neither the function nor the table.
+    const stage = api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    stage.defaultRouteSettings = {
+      throttlingRateLimit: THROTTLE.rate,
+      throttlingBurstLimit: THROTTLE.burst,
+    };
+    // #endregion throttle
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "TableName", { value: table.tableName });

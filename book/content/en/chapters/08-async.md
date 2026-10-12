@@ -1,6 +1,6 @@
 ---
 title: "08 Queue: SQS, DLQs, Idempotency, and Scheduler"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 08 Queue: SQS, DLQs, Idempotency, and Scheduler

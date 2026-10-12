@@ -5,7 +5,7 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { describe, it } from "vite-plus/test";
 
 import { DynamoDbNoteRepository } from "../src/dynamodb-repository.ts";
-import { describeRepositoryContract } from "./repository-contract.ts";
+import { describeQuotaContract, describeRepositoryContract } from "./repository-contract.ts";
 
 // An emulator on one node: passing here says nothing about IAM, throttling,
 // or the real service's replication.
@@ -27,6 +27,10 @@ if (endpoint === undefined) {
   // One owner per test, so tests can share the table.
   describeRepositoryContract("DynamoDB Local", async () => ({
     repository: new DynamoDbNoteRepository(client, tableName),
+    owner: `test-${randomUUID()}`,
+  }));
+  describeQuotaContract("DynamoDB Local", async (maxNotesPerOwner) => ({
+    repository: new DynamoDbNoteRepository(client, tableName, maxNotesPerOwner),
     owner: `test-${randomUUID()}`,
   }));
 }

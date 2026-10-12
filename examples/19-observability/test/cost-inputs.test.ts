@@ -37,4 +37,10 @@ describe("traces recorded by Lambda's default sampling", () => {
     // 100,000,000 requests a month is about 38 per second.
     expect(tracesPerMonth(100_000_000)).toBe(7_496_600);
   });
+
+  it("records 1.45 a second when the stage throttle is the only thing holding a flood back", () => {
+    expect(sampledPerSecond(10)).toBeCloseTo(1.45);
+    // A 30-day month of that, the worst case in the chapter's money section.
+    expect(Math.round(sampledPerSecond(10) * 30 * 24 * 3600)).toBe(3_758_400);
+  });
 });

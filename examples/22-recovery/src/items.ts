@@ -25,6 +25,8 @@ export type Classified =
   | { kind: "note"; owner: string; note: Note }
   | { kind: "attachment"; owner: string; attachment: Attachment }
   | { kind: "inspection"; owner: string; inspection: Inspection }
+  /** A running count the app keeps for a limit: notes per owner (05), upload permits per day (07). */
+  | { kind: "counter"; owner: string; sk: string }
   /** An item this app cannot read. Reported, never repaired. */
   | { kind: "unknown"; pk: string; sk: string; reason: string };
 
@@ -66,6 +68,10 @@ export function classify(item: unknown): Classified {
       return unknown("not an inspection this app wrote");
     }
     return { kind: "inspection", owner, inspection: inspection.data };
+  }
+  // Counts are not data to recover: after a restore they may be off by a few, and the app only reads them as limits.
+  if (sk === "QUOTA" || sk.startsWith("PERMITS#")) {
+    return { kind: "counter", owner, sk };
   }
   return unknown("unknown sort key prefix");
 }

@@ -126,6 +126,7 @@ describe("startServer", () => {
       },
       port: 0,
       keepAliveTimeoutMs: 65_000,
+      maxConnections: 16,
       shutdownDeadlineMs: 5_000,
     });
 
@@ -148,6 +149,7 @@ describe("startServer", () => {
       fetch: () => new Response("ok"),
       port: 0,
       keepAliveTimeoutMs: 65_000,
+      maxConnections: 16,
       shutdownDeadlineMs: 5_000,
     });
     // The load balancer keeps connections open between requests, as this agent does.
@@ -165,6 +167,7 @@ describe("startServer", () => {
       fetch: () => new Promise<Response>(() => {}),
       port: 0,
       keepAliveTimeoutMs: 65_000,
+      maxConnections: 16,
       shutdownDeadlineMs: 150,
     });
     const answer = get(server.port).catch((error: NodeJS.ErrnoException) => error.code);
@@ -175,11 +178,41 @@ describe("startServer", () => {
     expect(await answer).toBe("ECONNRESET");
   });
 
+  it("closes a connection past the limit unanswered, and still answers the ones it holds", async () => {
+    let release = (): void => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let handling = 0;
+    server = await startServer({
+      fetch: async () => {
+        handling += 1;
+        await gate;
+        return new Response("done");
+      },
+      port: 0,
+      keepAliveTimeoutMs: 65_000,
+      maxConnections: 2,
+      shutdownDeadlineMs: 5_000,
+    });
+
+    const held = [get(server.port), get(server.port)];
+    while (handling < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    // The third socket is accepted by the OS and dropped by the server: no status line, no handler.
+    const refused = await get(server.port).catch((error: NodeJS.ErrnoException) => error.code);
+    expect(refused).toBe("ECONNRESET");
+    expect(handling).toBe(2);
+
+    release();
+    expect(await Promise.all(held)).toEqual([200, 200]);
+  });
+
   it("treats a second signal as the same shutdown", async () => {
     server = await startServer({
       fetch: () => new Response("ok"),
       port: 0,
       keepAliveTimeoutMs: 65_000,
+      maxConnections: 16,
       shutdownDeadlineMs: 5_000,
     });
     expect(server.shutdown()).toBe(server.shutdown());

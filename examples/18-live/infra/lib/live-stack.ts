@@ -26,7 +26,7 @@ export class LiveStack extends Stack {
       name: channelSettings.name,
       type: channelSettings.type,
       latencyMode: channelSettings.latencyMode,
-      // Playback needs no token: anyone with the playback URL can watch.
+      // Playback needs no token: anyone with the playback URL can watch, and each viewer-hour is billed.
       authorized: false,
       // RTMPS only. Plain RTMP would send the stream key unencrypted.
       insecureIngest: false,

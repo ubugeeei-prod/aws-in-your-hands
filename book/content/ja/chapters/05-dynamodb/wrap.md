@@ -12,7 +12,7 @@ title: "05 KV Store: 費用、注意点、片付け"
 
 - あとから増える、決まっていない検索。「本文に特定の語を含むノート」「先月更新されたノートを全員分」のような条件は、key に入っていないので、table を全部読むことになります
 - 複数の種類のデータをまたぐ集計や結合
-- 複数の item にまたがる制約。「この利用者のノートは 100 件まで」のような決まりは、1 件の条件付き書き込みでは守れません。transaction の機能はありますが、1 回に扱える item 数や大きさに上限があります
+- 複数の item にまたがる制約。「この利用者のノートは 100 件まで」のような決まりは、ノートへの条件付き書き込みだけでは守れません。この章は件数を別の item に持たせてしのぎましたが、席とノートを別々に書くぶん、ずれる余地が残りました。transaction の機能はありますが、1 回に扱える item 数や大きさに上限があります
 
 1 件の item は 400 KB まで、という上限もあります。画像のような大きなデータは item に入れず、S3 に置きます（[07章](/ja/chapters/07-uploads.md)）。
 
@@ -55,7 +55,33 @@ DynamoDB には、複数のリージョンに table の複製を置く global ta
 
 競合で拒否された更新も、write request unit を消費します。この計算は競合ゼロという仮定です。
 
+それと、この表は件数の上限を入れる前の数え方のままです。作成と削除は、席の item への書き込みが 1 回ずつ増えます。この内訳なら、多くても 10 万 unit、USD 0.07 の上乗せです。
+
 この表に入れていないものが 2 つあります。応答のデータ転送料金と、point-in-time recovery です（有効にすると、1 GB あたり月 USD 0.228 の保存料金がかかります。この章では無効です）。
+
+### 叩かれ続けたら
+
+URL を知っていれば、誰でも、何回でも呼べます。止めるものは 3 つです。stage の throttling（API 全体で 1 秒に 10 件）、table の上限（1 秒に読み取り 150 unit、書き込み 40 unit）、ノートの件数（100 件）。
+
+1 秒 10 件が 30 日続くと、2,592 万件です。上の表と同じ仮定で、定価はこうなります。DynamoDB の 2 行は、table の上限に 30 日ずっと張り付いた場合の値にしました。大きなノートばかりを読み書きされたときの天井です。
+
+| 対象 | 定価 |
+| --- | --- |
+| API Gateway HTTP API のリクエスト（2,592 万件） | 33.44 |
+| Lambda のリクエストと実行時間（388,800 GB 秒） | 10.37 |
+| CloudWatch Logs（12.36 GB） | 9.49 |
+| DynamoDB の読み取り（3 億 8,880 万 unit） | 55.40 |
+| DynamoDB の書き込み（1 億 368 万 unit） | 74.13 |
+| DynamoDB の保存（100 件） | 0.00 |
+| 合計 | **182.83** |
+
+月に USD 183 ほど。throttling が効いていなかったとしても、DynamoDB のぶんは下の 3 行の USD 129.53 で止まります。API Gateway と Lambda のぶんは止まりません。
+
+入っていないものは、04章と同じです。いちばん大きいのは応答のデータ転送で、設定のうえでの天井は 04章と同じ計算（100 件 × 64 KiB の応答を 1 秒に 10 回）になります。この章では table の読み取りの上限が先に効いて、1 MB のページは 1 秒に 1 回ほどしか読めないはずですが、それでいくらに収まるかは計っていません。実行時間の 60 ミリ秒も仮定です。table の上限に当たると SDK がやり直すので、そのぶん長くなります。
+
+件数の上限には、但し書きが 2 つあります。いまは全員が同じ持ち主（`anonymous`）なので、100 件は「API 全体で 100 件」です。誰かが埋めれば、ほかの人は作れません。そして、誰でも消せます。量は絞れても、誰のノートかは区別できていないんです。それは 06章の仕事です。
+
+IP アドレスごとに止めたいなら AWS WAF ですが、HTTP API には付けられないので、手前に CloudFront を置く構成になります。[21章](/ja/chapters/21-security.md)の web ACL は月 USD 8.00 と、リクエスト 100 万件あたり USD 0.60。その構成は、この本では作っていません。
 
 stack を消せば、table も一緒に消えます。残りません。
 
@@ -70,13 +96,16 @@ stack を消せば、table も一緒に消えます。残りません。
 | 更新が必ず 409 になる | 送っている `expectedVersion` は、直前に受け取ったノートの `version` ですか。作成の応答ではなく、最後の更新の応答の値を使います |
 | 作ったノートが直後の一覧に出ない | 結果整合の読み取りでは起こり得ます。「読み取りの整合性を選ぶ」のとおりです |
 | 一覧が途中で終わる | `nextCursor` が `null` になるまで読んでいますか |
-| ログに throttling を示すエラーが出る | 新しい on-demand の table が受けられる流量には、初期の上限があります。急に大量の流量をかけていませんか |
+| ログに throttling を示すエラーが出る | この stack は table に上限を付けています（1 秒に読み取り 150 unit、書き込み 40 unit）。大きなノートを続けて読み書きすると当たります。それとは別に、新しい on-demand の table が受けられる流量には、初期の上限があります |
+| `{"message":"Too Many Requests"}` のような 429 が返る | stage の throttling です。API 全体で 1 秒に 10 件を超えました。自分が叩いていなくても、ほかの誰かのぶんで起きます |
+| `POST /notes` が 409 と `quota_exceeded` | ノートが 100 件あります。1 件消すと空きます。消しても空かないなら、席の item（`sk` が `QUOTA`）の `noteCount` が実際の件数より多くなっています |
 
 ## 本番にするなら
 
-- **認証と、持ち主ごとの分離を足す。** いまは全員が同じノートを読み書きします（06章）
+- **認証と、持ち主ごとの分離を足す。** いまは全員が同じノートを読み書きして、誰でも消せます（06章）
 - **table を守る。** `removalPolicy` を `RETAIN` にして、削除保護と point-in-time recovery を有効にします。うっかり消したデータを戻す手順は [22章](/ja/chapters/22-recovery.md)で練習します
-- **流量の上限を決める。** on-demand の table には、1 秒あたりの読み書きの最大値を設定できます。上限のない公開 API は、料金の上限もありません
+- **流量の上限を、自分の API に合わせる。** stage の 1 秒 10 件も、table の 150 と 40 も、練習用の値です。上げるときは、「叩かれ続けたら」の計算をやり直してください
+- **一覧を小さくする。** 1 ページの件数を絞るか、一覧に本文を載せないようにします。読み取りの料金にも、応答の転送量にも効きます
 - **作成を冪等にする。** 再試行で重複する問題を直します。呼び出し側が `Idempotency-Key` のような値を送り、サーバーがそれを鍵に条件付きで書く形です。この本では実装していません。同じ考え方を、[08章](/ja/chapters/08-async.md)が S3 のイベントを処理する worker で使っています
 - **throttling と失敗を見張る。** DynamoDB のエラーと、409 の割合を見ます（[19章](/ja/chapters/19-observability.md)）。409 が多いなら、画面の作りか、ノートの分け方を見直す合図です
 - **反映の経路を AWS CDK CLI と CloudFormation にする。** 02章で話したとおりです
@@ -98,11 +127,13 @@ vp run db:local:stop
 
 ::: details この章の検証メモ
 
-**手元で確かめたこと。** contract test（メモリ）、DynamoDB へのリクエストの検査、アプリと client のテスト、インフラの assertion。型検査。synth（AWS SDK を含む bundle）。`dev:notes` をメモリで起動して、本文の `curl` を実行。
+**手元で確かめたこと。** contract test（メモリ）、DynamoDB へのリクエストの検査、アプリと client のテスト、インフラの assertion。型検査。synth（AWS SDK を含む bundle）。`dev:notes` をメモリで起動して、本文の `curl` を実行。件数の上限を入れたあと、`test/dynamodb-local.test.ts` の 15 件（repository の規則 10 件と、件数の上限 5 件）を DynamoDB Local 3.3.1 に対して実行しました。Docker ではなく、AWS が配布する jar を Java で直接起動し、table は `scripts/local-db.ts migrate` で作っています。
 
-**まだ確かめていないこと。** DynamoDB Local を使うタスク（`db:local:start`、`db:migrate:local`、`db:seed:local`、`db:reset:local`、`db:local:stop`、`test:local:dynamodb`）は、執筆時に Docker の daemon が使えなかったため、実行していません。`notes:infra:diff`、`notes:infra:deploy`、`notes:smoke`、`notes:infra:drift`、`notes:infra:destroy` も、実際の AWS では動かしていません。
+**まだ確かめていないこと。** DynamoDB Local を Docker で動かすタスク（`db:local:start`、`db:local:stop`）は、Docker の daemon が使えなかったため、実行していません。`db:migrate:local`、`db:seed:local`、`db:reset:local`、`test:local:dynamodb` も、タスクとしては流していません。`notes:infra:diff`、`notes:infra:deploy`、`notes:smoke`、`notes:infra:drift`、`notes:infra:destroy` も、実際の AWS では動かしていません。
 
-したがって、この章の中心である「条件付き書き込みが同時の更新を 1 つだけ通す」ことは、DynamoDB の上では一度も確かめていません。確かめたのは、正しい条件式を送っていることと、メモリの実装が同じ規則に従うことです。DynamoDB の挙動についての記述は、公式ドキュメントに基づきます。
+したがって、この章の中心である「条件付き書き込みが同時の書き込みを決まった数だけ通す」ことは、実際の DynamoDB の上では一度も確かめていません。確かめたのは、正しい条件式を送っていること、メモリの実装と DynamoDB Local が同じ規則に従うことです。DynamoDB の挙動についての記述は、公式ドキュメントに基づきます。
+
+流量の上限も同じです。template に `OnDemandThroughput` と stage の `DefaultRouteSettings` が入っていることはテストで固定し、固定した版の cdkd（0.296.28）のソースがどちらも AWS の API に渡していることは読みました。実際に反映されること、table の上限に当たったときに返るエラーと SDK のやり直し方、上限より大きな 1 回の読み書きが通るかどうか、429 に料金がかかるかどうかは、確かめていません。「叩かれ続けたら」の金額は、単価と設定から計算しただけで、負荷をかけて測った値ではありません。
 
 **コードの場所。**
 
@@ -111,7 +142,7 @@ vp run db:local:stop
 | 読み方から key を決める | `examples/05-dynamodb/src/dynamodb-repository.ts`、`src/id.ts`、`src/notes.ts` | `test:unit` |
 | 契約に version を足す | `examples/05-dynamodb/src/contract.ts` | `test:unit` |
 | 保存先を差し替える | `examples/05-dynamodb/src/repository.ts`、`src/memory-repository.ts`、`src/dynamodb-repository.ts`、`src/compose.ts` | `test:unit` |
-| 上書きを防ぐ: 条件付き書き込み | `examples/05-dynamodb/src/dynamodb-repository.ts`、`src/app.ts`、`test/repository-contract.ts`、`test/dynamodb-repository.test.ts` | `test:unit` |
+| 上書きを防ぐ: 条件付き書き込み、件数に上限を付ける | `examples/05-dynamodb/src/dynamodb-repository.ts`、`src/memory-repository.ts`、`src/notes.ts`、`src/app.ts`、`src/contract.ts`、`test/repository-contract.ts`、`test/dynamodb-repository.test.ts` | `test:unit` |
 | 読み取りの整合性を選ぶ | `examples/05-dynamodb/src/dynamodb-repository.ts`、`test/dynamodb-repository.test.ts` | `test:unit` |
 | 取りこぼさずにページを送る | `examples/05-dynamodb/src/repository.ts`、`src/app.ts`、`src/contract.ts`、`test/app.test.ts` | `test:unit` |
 | 応答が届かなかったら | `examples/05-dynamodb/src/client.ts`、`test/app.test.ts` | `test:unit` |

@@ -37,6 +37,39 @@ title: "19 Observability: 費用、注意点、片付け"
 
 ダッシュボードは、無料枠の 3 つに収まる前提で、金額に入れていません。4 つ目からの単価は、Price List の東京の一覧に見当たらず、料金ページでも読み取れなかったので、不明としておきます。
 
+### 叩かれたとき
+
+この API には認証がありません。URL を知っていれば、誰でも、bot でも呼べます。では、1 か月ずっと叩かれ続けたら、いくらになるでしょう。
+
+まず、どこで止まるか。stage の流量制限が毎秒 10 件（burst 20）なので、関数まで届くのは 30 日で最大 2,592 万件です。それを超えたぶんは API Gateway が 429 で返し、関数は呼ばれません。table は毎秒 150 read request unit、40 write request unit まで。ノートは 100 件で頭打ちなので、保存量は増え続けません。
+
+その上限に 1 か月張り付いたときの定価です。
+
+| 項目 | 数量 | 定価 |
+| --- | --- | --- |
+| API Gateway | 2,592 万リクエスト | 33.44 |
+| Lambda（60 ms、256 MB の仮定） | 2,592 万回 | 10.37 |
+| DynamoDB の書き込み | 上限の毎秒 40 unit | 74.13 |
+| DynamoDB の読み取り | 上限の毎秒 150 unit | 55.40 |
+| ログの取り込みと保存 | 24.7 GB | 18.98 |
+| trace の記録 | 376 万件 | 18.79 |
+| 合計 | | **211.11** |
+
+観測のぶんは、ログと trace を合わせて 37.77 です。trace が意外と増えないのは sampling のおかげで、毎秒 10 件なら記録されるのは「最初の 1 件と、残り 9 件の 5%」で毎秒 1.45 件。流量が増えるほど、trace の割合は下がります。ログは下がりません。届いたリクエストの数だけ、行が増えます。
+
+429 で断ったリクエストに API Gateway の料金がかかるかどうかは、ここでは確かめていません。かかるなら、上の表の 1 行目だけは 2,592 万件で止まりません。
+
+もう 1 つ、表に入れていないのが応答のデータ転送です。ここは table の読み取りの上限が効きます。毎秒 150 unit で読めるのは、結果整合の読み取りで毎秒 1.2 MB ほど。30 日で 3,000 GB 弱、インターネットへの転送の単価（1 GB あたり 0.114）を当てはめると 340 ほどです。この単価が API Gateway の応答にそのまま当てはまるかは、確かめていません。
+
+では、この章で作ったもので、フラッドはどう見えるか。
+
+- **ダッシュボードの左上。** `4xx` の線が跳ね上がります。429 はここに入るので、線の名前を `4xx (429 when throttled)` にしてあります
+- **アラームは鳴りません。** 429 は 5xx ではなく、返事も速いからです。症状にだけ付けたアラームとしては正しい動きですが、同じ毎秒 10 件を分け合っている本物の利用者も 429 を受け取ります
+- **table の上限に当たると、鳴ります。** DynamoDB が throttle して、SDK の再試行でも通らなければ、アプリは 500 を返します。`DynamoDB: throttled requests` が増えて、5xx の率のアラームが鳴る。上限の付いた table では、「流量が多すぎる」が障害として見える、ということです
+- **ログと trace には、429 が残りません。** 関数まで届いていないからです。「本番にするなら」に書いた access log が要るのは、このためです
+
+本物の利用者を迎える前に足すものは、認証（06章）と、入口での IP ごとの制限です。AWS WAF は HTTP API には直接付けられないので、前に CloudFront を置くことになります（21章。web ACL は、置いてあるだけで月 8.00）。
+
 ### ログを 1 行増やすといくらか
 
 リクエストの行は、測ると 167 バイトでした（テストがこの数字を固定しています）。同じ大きさの行をリクエストごとにもう 1 行書くと、月 100 万リクエストで 0.156 GB、**月 0.12** です。
@@ -100,6 +133,9 @@ Workers の料金には注意書きがあります。Workers Logs と trace は�
 | --- | --- |
 | アラームがずっと `INSUFFICIENT_DATA` | デプロイ直後は正常。リクエストが来ているのに続くなら、メトリクスの dimension（`ApiId`）が実際の API と合っているか |
 | アラームは `ALARM` なのにメールが来ない | SNS の購読が保留のままです。確認メールのリンクを押しましたか |
+| アラームは `ALARM` で購読も確認済みなのに、メールが来ない | topic の policy に、CloudWatch からの publish を許す statement が残っていますか。`enforceSSL` を付けた topic は、既定の policy を使いません |
+| 429 が返る | stage の流量制限（毎秒 10 件、burst 20）です。ダッシュボードの `4xx` を見る。アプリのログには残りません |
+| ノートを作ると 409 `quota_exceeded` | 100 件の上限です。1 件消すと作れます |
 | 500 が返っているのに Lambda の `Errors` が 0 | 正常です。アプリが例外を捕まえて 500 を返しています。API Gateway の `5xx` を見る |
 | `obs:query` で行が見つからない | 時間の範囲（`--minutes`）は足りていますか。ログは数秒遅れて届きます。それでも無ければ、ログの形が想定と違う可能性（検証メモの `obs-lambda-json-log-shape`） |
 | `NoteConflicts` にデータが出ない | metric filter は作成後のログにしか効きません。JSON 形式のログになっているかも確認 |
@@ -114,9 +150,10 @@ Workers の料金には注意書きがあります。Workers Logs と trace は�
 - **外からの監視を足す。** 利用者がいない時間帯があるなら Synthetics。アラームが「静かな夜」と「到達できない障害」を区別できるようになります
 - **通知先を人の当番につなぐ。** メール 1 通は、深夜には読まれません。SNS の先を、チャットや当番の仕組みにします
 - **API Gateway の access log を有効にする。** 関数が呼ばれなかったリクエスト（throttle、timeout）は、アプリのログに何も残りません。access log には残ります
+- **流量制限と上限を、自分のサービスの数字に直す。** 毎秒 10 件、table の 150 と 40、ノート 100 件は、練習用の歯止めです。利用者が増えたら、本物の利用者が 429 を受け取る前に見直します。`4xx` にアラームを付けるなら、閾値は普段の値を見てから
 - **ログの保持期間を決める。** 7 日は練習用の値です
 - **アラームに対応手順を書く。** `alarmDescription` に、最初に開くダッシュボードと query を書いておくと、鳴ったときに迷いません
-- **topic を暗号化する、通知に載る内容を確かめる。** アラームの通知には、メトリクスの名前と閾値が入ります
+- **topic を暗号化する、通知に載る内容を確かめる。** アラームの通知には、メトリクスの名前と閾値が入ります。この章の topic は、通信の暗号化（`enforceSSL`）までで、保存時の鍵は指定していません
 - **反映の経路を AWS CDK CLI と CloudFormation にする。** 02章で話したとおりです
 
 ## 片付け
@@ -154,13 +191,15 @@ stack と一緒に消えないものが 2 つあります。X-Ray に記録さ�
 - metric math の `IF` の式が受け付けられること、リクエストが無い間に `Count` と `5xx` が欠損になること、アラームの実際の状態遷移と SNS の通知
 - AWS Lambda Layer for OpenTelemetry を Node.js 24 の関数に付けた構成の全部（起動するか、手書きの span が届くか、自動計装が効くか、権限が足りるか、ブラウザの `traceparent` とつながるか）
 - cdkd が、ダッシュボードと metric filter を Cloud Control API 経由で作成・更新・読み戻しできること
+- 歯止めが実際に効くこと。stage の `DefaultRouteSettings`（毎秒 10 件、burst 20）と、table の `OnDemandThroughput`（150 と 40）を、cdkd 0.296.28 が反映するかどうか。固定した版のソースには、どちらの property も扱うコードがありますが、動かしてはいません。429 が `4xx` に数えられること、429 に API Gateway の料金がかかるかどうか、table の上限に当たったときに 500 になるまでの SDK の再試行の様子も未確認です
+- `enforceSSL` を付けた topic に、CloudWatch アラームが publish できること。許可の statement は template にあることをテストで見ていますが、通知は 1 通も送っていません
 - 料金のうち、ダッシュボードの 4 つ目からの単価、Lambda が JSON 形式で書くシステムのログの大きさ（1 リクエスト 1 KB は仮定）、layer 経由の span の課金のされ方
 
 **コードの場所。**
 
 | 節 | ファイル | タスク |
 | --- | --- | --- |
-| 全体像 | `examples/19-observability/infra/lib/observability-stack.ts` | |
+| 全体像 | `examples/19-observability/infra/lib/observability-stack.ts`、`src/compose.ts`、`test/compose.test.ts`、`infra/test/observability-stack.test.ts` | `test:unit` |
 | まず、症状にアラームを付ける | `examples/19-observability/src/alarm-math.ts`、`test/alarm-math.test.ts`、`infra/lib/monitoring.ts` | `test:unit` |
 | 最初に見る数字 | `examples/19-observability/infra/lib/monitoring.ts`、`infra/test/observability-stack.test.ts` | `test:unit`、`obs:infra:synth` |
 | ログで 1 件まで絞る | `examples/19-observability/src/log-shape.ts`、`src/conditions.ts`、`src/queries.ts`、`test/log-shape.test.ts`、`test/queries.test.ts`、`scripts/query.ts` | `test:unit`、`obs:query:print` |
@@ -175,7 +214,7 @@ stack と一緒に消えないものが 2 つあります。X-Ray に記録さ�
 | お金の話 | `examples/19-observability/src/cost-inputs.ts`、`test/cost-inputs.test.ts`、`data/pricing/` | `test:unit` |
 | 片付け | `tools/src/infra/` | `obs:infra:destroy` |
 
-**cdkd（0.296.28）での扱い。** `src/provisioning/register-providers.ts` に専用の実装があるもの: `AWS::CloudWatch::Alarm`、`AWS::SNS::Topic`、`AWS::SNS::Subscription`、`AWS::Logs::LogGroup`、`AWS::Lambda::Function`、`AWS::Lambda::Permission`、`AWS::IAM::Role`、`AWS::IAM::Policy`、`AWS::DynamoDB::Table`、`AWS::ApiGatewayV2::*`。専用の実装が無く Cloud Control API 経由になるもの: `AWS::CloudWatch::Dashboard`、`AWS::Logs::MetricFilter`（この章の stack にある）、`AWS::RUM::AppMonitor`、`AWS::Synthetics::Canary`（この章の stack には無い）。
+**cdkd（0.296.28）での扱い。** `src/provisioning/register-providers.ts` に専用の実装があるもの: `AWS::CloudWatch::Alarm`、`AWS::SNS::Topic`、`AWS::SNS::TopicPolicy`、`AWS::SNS::Subscription`、`AWS::Logs::LogGroup`、`AWS::Lambda::Function`、`AWS::Lambda::Permission`、`AWS::IAM::Role`、`AWS::IAM::Policy`、`AWS::DynamoDB::Table`、`AWS::ApiGatewayV2::*`。専用の実装が無く Cloud Control API 経由になるもの: `AWS::CloudWatch::Dashboard`、`AWS::Logs::MetricFilter`（この章の stack にある）、`AWS::RUM::AppMonitor`、`AWS::Synthetics::Canary`（この章の stack には無い）。
 
 **一次情報**（確認日はすべて 2026-10-12）
 

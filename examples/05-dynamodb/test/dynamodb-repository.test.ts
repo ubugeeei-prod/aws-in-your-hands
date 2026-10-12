@@ -11,7 +11,7 @@ import { encodeCursor } from "../src/repository.ts";
 // is what the DynamoDB Local and AWS runs are for.
 type Command = PutCommand | GetCommand | QueryCommand | UpdateCommand | DeleteCommand;
 
-function setup(respond: (command: Command) => unknown = () => ({})) {
+function setup(respond: (command: Command) => unknown = () => ({}), maxNotesPerOwner?: number) {
   const sent: Command[] = [];
   const client = {
     send: async (command: Command) => {
@@ -20,7 +20,7 @@ function setup(respond: (command: Command) => unknown = () => ({})) {
     },
   };
   // Only `send` is implemented, which is all the repository uses.
-  const repository = new DynamoDbNoteRepository(client as never, "notes-table");
+  const repository = new DynamoDbNoteRepository(client as never, "notes-table", maxNotesPerOwner);
   return { repository, sent };
 }
 
@@ -53,6 +53,81 @@ describe("DynamoDbNoteRepository requests", () => {
       throw conditionFailed();
     });
     expect(await repository.create("u1", stored)).toBe("already_exists");
+  });
+
+  it("writes only the note when it was given no limit", async () => {
+    const { repository, sent } = setup();
+    await repository.create("u1", stored);
+    await repository.delete("u1", "abc");
+    expect(sent.map((command) => command.constructor.name)).toEqual([
+      "PutCommand",
+      "DeleteCommand",
+    ]);
+  });
+
+  it("takes a place with one conditional update before it writes the note", async () => {
+    const { repository, sent } = setup(undefined, 100);
+    expect(await repository.create("u1", stored)).toBe("created");
+    expect(sent.map((command) => command.constructor.name)).toEqual([
+      "UpdateCommand",
+      "PutCommand",
+    ]);
+    expect(sent[0]?.input).toMatchObject({
+      Key: { pk: "OWNER#u1", sk: "QUOTA" },
+      UpdateExpression: "ADD noteCount :one",
+      ConditionExpression: "attribute_not_exists(noteCount) OR noteCount < :max",
+      ExpressionAttributeValues: { ":one": 1, ":max": 100 },
+    });
+  });
+
+  it("writes no note when no place is left", async () => {
+    const { repository, sent } = setup(() => {
+      throw conditionFailed();
+    }, 100);
+    expect(await repository.create("u1", stored)).toBe("quota_exceeded");
+    expect(sent).toHaveLength(1);
+  });
+
+  it("gives the place back when the key was taken", async () => {
+    const { repository, sent } = setup((command) => {
+      if (command instanceof PutCommand) {
+        throw conditionFailed();
+      }
+      return {};
+    }, 100);
+    expect(await repository.create("u1", stored)).toBe("already_exists");
+    expect(sent[2]?.input).toMatchObject({
+      Key: { pk: "OWNER#u1", sk: "QUOTA" },
+      UpdateExpression: "ADD noteCount :minusOne",
+      ConditionExpression: "noteCount > :zero",
+    });
+  });
+
+  it("keeps the place when it cannot tell whether the note was written", async () => {
+    const { repository, sent } = setup((command) => {
+      if (command instanceof PutCommand) {
+        throw new Error("socket hang up");
+      }
+      return {};
+    }, 100);
+    await expect(repository.create("u1", stored)).rejects.toThrow(/socket/);
+    expect(sent).toHaveLength(2);
+  });
+
+  it("gives a place back for a note it deleted, and none for a note that was not there", async () => {
+    const there = setup(
+      (command) => (command instanceof UpdateCommand ? {} : { Attributes: item }),
+      100,
+    );
+    expect(await there.repository.delete("u1", "abc")).toBe(true);
+    expect(there.sent.map((command) => command.constructor.name)).toEqual([
+      "DeleteCommand",
+      "UpdateCommand",
+    ]);
+
+    const gone = setup(() => ({}), 100);
+    expect(await gone.repository.delete("u1", "abc")).toBe(false);
+    expect(gone.sent).toHaveLength(1);
   });
 
   it("reads one note with a strongly consistent GetItem", async () => {

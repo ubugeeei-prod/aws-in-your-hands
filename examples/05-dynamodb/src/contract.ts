@@ -22,6 +22,9 @@ export const updateNoteSchema = createNoteSchema.extend({
   expectedVersion: z.number().int().positive(),
 });
 export type UpdateNote = z.infer<typeof updateNoteSchema>;
+
+// Anyone can POST, so an owner's notes stop here instead of growing with the bill.
+export const MAX_NOTES_PER_OWNER = 100;
 // #endregion note
 
 // #region list
@@ -49,6 +52,8 @@ export const errorCodes = [
   "invalid_request",
   "not_found",
   "conflict",
+  // The owner already holds MAX_NOTES_PER_OWNER notes.
+  "quota_exceeded",
   "payload_too_large",
   "internal",
 ] as const;

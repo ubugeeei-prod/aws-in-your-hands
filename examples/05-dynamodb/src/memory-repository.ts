@@ -4,6 +4,12 @@ import { decodeCursor, encodeCursor, type NoteRepository } from "./repository.ts
 // One process, no concurrency: this says nothing about DynamoDB under simultaneous writers.
 export class InMemoryNoteRepository implements NoteRepository {
   readonly #notes = new Map<string, Note>();
+  readonly #maxNotesPerOwner: number;
+
+  /** Without a limit, an owner's notes are not counted. */
+  constructor(maxNotesPerOwner: number = Number.POSITIVE_INFINITY) {
+    this.#maxNotesPerOwner = maxNotesPerOwner;
+  }
 
   #key = (owner: string, id: string): string => `${owner}/${id}`;
 
@@ -11,6 +17,10 @@ export class InMemoryNoteRepository implements NoteRepository {
     const key = this.#key(owner, note.id);
     if (this.#notes.has(key)) {
       return "already_exists" as const;
+    }
+    const held = [...this.#notes.keys()].filter((other) => other.startsWith(`${owner}/`)).length;
+    if (held >= this.#maxNotesPerOwner) {
+      return "quota_exceeded" as const;
     }
     this.#notes.set(key, note);
     return "created" as const;

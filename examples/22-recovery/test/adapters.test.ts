@@ -287,3 +287,19 @@ describe("nextSequencer", () => {
     expect(nextSequencer(`${"0".repeat(31)}9`) > `${"0".repeat(31)}9`).toBe(true);
   });
 });
+
+// Chapters 05 and 07 keep running counts in the same table to enforce their limits.
+describe("counts the app keeps for its limits", () => {
+  it("are recognised, so a restored table is not reported as holding unreadable items", () => {
+    expect(classify({ pk: "OWNER#u1", sk: "QUOTA", noteCount: 3 })).toEqual({
+      kind: "counter",
+      owner: "u1",
+      sk: "QUOTA",
+    });
+    expect(classify({ pk: "OWNER#u1", sk: "PERMITS#2026-10-12", permits: 2 }).kind).toBe("counter");
+  });
+
+  it("does not take any other unknown key for one", () => {
+    expect(classify({ pk: "OWNER#u1", sk: "QUOTAS" }).kind).toBe("unknown");
+  });
+});

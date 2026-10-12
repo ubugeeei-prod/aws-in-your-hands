@@ -55,6 +55,18 @@ Tests check the following against the template.
 
 Add a route and forget to attach the authorizer, and the first check fails.
 
+### Limit the rate at the entrance
+
+The authorizer turns away a request without a token. But all it does is turn it away. It doesn't slow anyone down. And `/health` reaches the function with no token at all. So the stage gets the same limit as in chapter 04.
+
+<<< @/examples/06-auth/infra/lib/notes-app-stack.ts{throttle}
+
+10 requests a second, 20 for a moment. Anything past that gets a 429 from API Gateway, and the function doesn't run.
+
+One thing to know: this limit is not per user. If one person uses it up, everyone else's requests get 429 too. It protects the bill, but it can't protect the other users from one heavy user. The setting works per stage and per route, not per caller.
+
+The table has chapter 05's limit as well (150 read units and 40 write units a second). DynamoDB refuses whatever goes past it, and doesn't bill for it. The tests check that both limits are in the template.
+
 ## Disabled, and still getting through for a while
 
 <!-- section: 06.revocation -->

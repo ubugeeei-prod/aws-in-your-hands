@@ -14,11 +14,15 @@ if (!existsSync(`${outputDir}/nitro.json`)) {
   );
 }
 
-new SsrStack(new App(), "AihSsr", {
+const app = new App();
+
+new SsrStack(app, "AihSsr", {
   env: { region: "ap-northeast-1" },
   description: "AWS in Your Hands chapter 09: Nuxt SSR on regional Lambda behind CloudFront",
   serverDir: `${outputDir}/server`,
   // The build decides, so the function URL cannot disagree with the handler it invokes.
   responseStreaming: readBuildInfo(outputDir).streaming,
+  // Optional: `-c reservedConcurrency=5` caps how many requests render at once.
+  reservedConcurrency: app.node.tryGetContext("reservedConcurrency"),
 });
 // #endregion app

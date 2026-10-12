@@ -68,11 +68,11 @@ The tests come in five layers. Each one looks at something different.
 
 | Layer | File | What it looks at | What it can't see |
 | --- | --- | --- | --- |
-| Contract (in memory) | `test/repository-contract.ts`, `test/memory-repository.test.ts` | The rules of the repository: no overwrites, the version, paging, separation between owners | DynamoDB's behavior |
+| Contract (in memory) | `test/repository-contract.ts`, `test/memory-repository.test.ts` | The rules of the repository: no overwrites, the version, paging, separation between owners, the limit on the count | DynamoDB's behavior |
 | Request inspection | `test/dynamodb-repository.test.ts` | The condition expressions, key shapes, and consistency settings sent to DynamoDB. Handling of a failed condition | That DynamoDB behaves as those requests ask |
 | Contract (DynamoDB Local) | `test/dynamodb-local.test.ts` | That the same rules hold on the simulation | IAM, throttling, the distributed behavior of the real service |
-| App and client | `test/app.test.ts` | 409, paging, rejection of a forged cursor, a retry after a lost response | Behavior when the request goes through Lambda and API Gateway |
-| Infrastructure | `infra/test/notes-stack.test.ts` | That the permissions are limited to five operations and one table, and the table's removal policy | That AWS behaves as the template says |
+| App and client | `test/app.test.ts` | 409, paging, rejection of a forged cursor, a retry after a lost response, refusal of note 101 | Behavior when the request goes through Lambda and API Gateway |
+| Infrastructure | `infra/test/notes-stack.test.ts` | That the permissions are limited to five operations and one table, the table's removal policy, and the rate caps on the table and the stage | That AWS behaves as the template says |
 
 The contract tests state the rules once and run them for each implementation.
 
@@ -82,4 +82,6 @@ The DynamoDB implementation gets a stand-in for the SDK client, and the tests in
 
 For concurrent writes, the contract tests include a check that "of two writes carrying the same version, exactly one goes through". In the in-memory implementation this always holds, because the writes run one after the other inside a single process.
 
-Let's be honest about this part. Where it really needs to be checked is on DynamoDB, and that has never been run. So the central claim of this chapter, that "a conditional write lets exactly one of several concurrent updates through", is unconfirmed on DynamoDB. What has been checked is that the right condition expressions are sent and that the in-memory implementation follows the same rules. The statements about DynamoDB's behavior are based on the official documentation.
+The limit on the count has the same kind of check: six creates sent at once where there are three places, and exactly three go through.
+
+Let's be honest about this part. Where it really needs to be checked is on DynamoDB, and on the real DynamoDB that has never been run. On DynamoDB Local (3.3.1), the 15 contract tests passed. But the simulation runs on one machine. So the central claim of this chapter, that "a conditional write lets through exactly as many concurrent writes as it should", is unconfirmed on the real thing. The statements about DynamoDB's behavior are based on the official documentation.

@@ -160,6 +160,17 @@ describe("UploadsStack: routes", () => {
     }
   });
 
+  it("throttles every route on the stage, so asking for upload permits has a ceiling too", () => {
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      AutoDeploy: true,
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+      // A route with settings of its own would step around the stage's limit.
+      RouteSettings: Match.absent(),
+    });
+  });
+
   it("uses a sign-in domain of its own", () => {
     template.hasResourceProperties("AWS::Cognito::UserPoolDomain", {
       Domain: { "Fn::Join": ["", ["aih-uploads-", { Ref: "AWS::AccountId" }]] },
@@ -168,6 +179,13 @@ describe("UploadsStack: routes", () => {
 });
 
 describe("UploadsStack: resources", () => {
+  it("caps the request units the table accepts each second, attachment records and permit counts included", () => {
+    template.hasResourceProperties("AWS::DynamoDB::Table", {
+      BillingMode: "PAY_PER_REQUEST",
+      OnDemandThroughput: { MaxReadRequestUnits: 150, MaxWriteRequestUnits: 40 },
+    });
+  });
+
   it("uses only resource types looked up in the pinned cdkd", () => {
     const resources = template.toJSON()["Resources"] as Record<string, { Type: string }>;
     // The same nineteen types as chapter 06: the uploads bucket adds no new type.

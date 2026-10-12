@@ -120,6 +120,42 @@ describe("edge-router: maintenance", () => {
   });
 });
 
+describe("edge-router: the path that runs Lambda@Edge", () => {
+  it.each(["GET", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS"])(
+    "refuses %s /digest before the store is read or the origin side runs",
+    async (method) => {
+      const { result, reads } = await run(shipped, viewerRequest("/digest", {}, method));
+      expect(result).toMatchObject({ statusCode: 405 });
+      expect(isGeneratedResponse(result) && result.headers?.["allow"]?.value).toBe("POST");
+      expect(isGeneratedResponse(result) && result.headers?.["cache-control"]?.value).toBe(
+        "no-store",
+      );
+      expect(reads).toEqual([]);
+    },
+  );
+
+  it("lets a POST to /digest through, still behind the maintenance switch", async () => {
+    expect((await run(shipped, viewerRequest("/digest", {}, "POST"))).result).toMatchObject({
+      uri: "/digest",
+      method: "POST",
+    });
+    const closed = withEntries({ "flag:maintenance": "on" });
+    expect((await run(closed, viewerRequest("/digest", {}, "POST"))).result).toMatchObject({
+      statusCode: 503,
+    });
+  });
+
+  it("leaves other methods alone on every other path", async () => {
+    // Only /digest accepts them at all; elsewhere CloudFront allows GET and HEAD only.
+    expect((await run(shipped, viewerRequest("/digest/", {}, "GET"))).result).toMatchObject({
+      uri: "/digest/index.html",
+    });
+    expect((await run(shipped, viewerRequest("/pricing/", {}, "HEAD"))).result).toMatchObject({
+      uri: "/pricing/index.html",
+    });
+  });
+});
+
 describe("edge-router: when the store does not answer", () => {
   it("keeps serving from an empty store", async () => {
     // The state right after the first deploy, before the first sync.

@@ -60,6 +60,16 @@ describe("HttpApiStack", () => {
     ]);
   });
 
+  it("throttles every route at 10 requests a second, bursts to 20", () => {
+    template.resourceCountIs("AWS::ApiGatewayV2::Stage", 1);
+    template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+      StageName: "$default",
+      DefaultRouteSettings: { ThrottlingRateLimit: 10, ThrottlingBurstLimit: 20 },
+      // A per-route setting would override the default and could lift it.
+      RouteSettings: Match.absent(),
+    });
+  });
+
   it("allows browser calls from the configured origin only", () => {
     template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
       CorsConfiguration: { AllowOrigins: ["https://d111.cloudfront.net"] },

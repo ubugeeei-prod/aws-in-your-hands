@@ -3,13 +3,21 @@ import { z } from "zod";
 import {
   createNoteSchema,
   listQuerySchema,
+  MAX_NOTES_PER_OWNER,
   noteListSchema,
   noteSchema,
   updateNoteSchema,
 } from "@aih/example-05-dynamodb/src/contract.ts";
 
-// The note shapes are chapter 05's, unchanged.
-export { createNoteSchema, listQuerySchema, noteListSchema, noteSchema, updateNoteSchema };
+// The note shapes are chapter 05's, unchanged. So is the limit, which now counts per signed-in user.
+export {
+  createNoteSchema,
+  listQuerySchema,
+  MAX_NOTES_PER_OWNER,
+  noteListSchema,
+  noteSchema,
+  updateNoteSchema,
+};
 export type {
   CreateNote,
   Note,
@@ -35,6 +43,8 @@ export const errorCodes = [
   "unauthenticated",
   "not_found",
   "conflict",
+  // The caller already holds MAX_NOTES_PER_OWNER notes.
+  "quota_exceeded",
   "payload_too_large",
   "internal",
 ] as const;

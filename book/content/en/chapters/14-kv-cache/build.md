@@ -45,7 +45,7 @@ A unit test pins this "add without reading" shape: exactly one `UpdateItem` is s
 
 Two things you should know.
 
-**A refused request is billed too.** A write whose condition fails still consumes one write unit. Someone hammering past the limit generates DynamoDB charges for every attempt. The place to absorb a flood is further out, such as API Gateway throttling, not here.
+**A refused request is billed too.** A write whose condition fails still consumes one write unit. Someone hammering past the limit generates DynamoDB charges for every attempt. The place to absorb a flood is further out, not here. This chapter's stack throttles the HTTP API stage and also caps the writes the table accepts per second. The numbers are in "Getting ready for AWS" and "The money".
 
 **The addition is not idempotent.** Suppose the write succeeds and the response is lost. The SDK retries and adds one more: a single request counted twice. For a rate limit that only means a caller loses one call, so the sample leaves it. Don't count money or stock this way. That needs the technique from chapter 05's "When the response never arrives": give the same operation the same ID.
 

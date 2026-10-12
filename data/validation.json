@@ -2658,6 +2658,94 @@
         "ja": "新しい release を使う前に、その tag の `docs/README.md`（Upgrade notes、Shut down and roll out a node、Environment variables）、`docs/guarantees.md`、`docs/security.md`、`docs/limitations.md` を読み直し、`examples/24-celld/src/celld.ts` の版、digest、upgrade notes、既定値を更新してテストを通す。",
         "en": "Before using a newer release, reread that tag's `docs/README.md` (Upgrade notes, Shut down and roll out a node, Environment variables), `docs/guarantees.md`, `docs/security.md`, and `docs/limitations.md`, then update the version, digests, upgrade notes, and defaults in `examples/24-celld/src/celld.ts` and run the tests."
       }
+    },
+    {
+      "id": "bounds-applied-by-cdkd",
+      "summary": {
+        "ja": "公開の入口に入れた上限（HTTP API の stage の `DefaultRouteSettings`、DynamoDB の `OnDemandThroughput`、opt-in の `ReservedConcurrentExecutions`）は、template に出ることをテストで固定しただけで、cdkd 0.296.28 が実際に適用するかは確かめていない。固定した版のコードを読んだ限りでは、3 つとも AWS の API に渡している。",
+        "en": "The bounds on public entry points (`DefaultRouteSettings` on HTTP API stages, `OnDemandThroughput` on DynamoDB tables, opt-in `ReservedConcurrentExecutions`) are pinned in templates by tests only. Whether cdkd 0.296.28 applies them has not been checked. Reading the pinned code, it passes all three to the AWS APIs."
+      },
+      "resume": {
+        "ja": "04章をデプロイし、`aws apigatewayv2 get-stage` で `DefaultRouteSettings` を、05章をデプロイして `aws dynamodb describe-table` で `OnDemandThroughput` を見る。そのうえで毎秒 10 件を超えるリクエストを送り、429 が返ることを確かめる。",
+        "en": "Deploy chapter 04 and read `DefaultRouteSettings` with `aws apigatewayv2 get-stage`; deploy chapter 05 and read `OnDemandThroughput` with `aws dynamodb describe-table`. Then send more than 10 requests a second and confirm a 429 comes back."
+      }
+    },
+    {
+      "id": "throttle-scope-and-billing",
+      "summary": {
+        "ja": "stage の既定のスロットリングが API 全体で 1 つの枠なのか、route ごとの枠なのかを確かめていない。route ごとなら、本文の「毎秒 10 件」は route の数だけ増える（06章で 7 倍、07・08章で 11 倍）。スロットリングで返した 429 や、authorizer が拒否したリクエストが課金されるかも確かめていない。",
+        "en": "Whether a stage's default throttle is one budget for the whole API or one per route has not been checked. If it is per route, the prose's \"10 a second\" multiplies by the number of routes (7 in chapter 06, 11 in chapters 07 and 08). Whether throttled 429s and requests refused by an authorizer are billed has not been checked either."
+      },
+      "resume": {
+        "ja": "デプロイした API の 2 つの route に同時に毎秒 10 件ずつ送り、合計で 10 件に抑えられるかを見る。翌日以降の請求明細で、429 の分の課金を確かめる。",
+        "en": "Send 10 requests a second to each of two routes of a deployed API at once and see whether the total is held to 10. Check the bill a day later for charges on the 429s."
+      }
+    },
+    {
+      "id": "worst-case-amounts-computed",
+      "summary": {
+        "ja": "各章の「叩かれたら」に書いた最悪額は、リポジトリ内の単価と章の前提から計算した値で、請求から得た値ではない。レスポンスの転送量は別枠で、インターネット向けの転送単価が API Gateway のレスポンスに当てはまるかは確かめていない。",
+        "en": "The worst-case amounts in each chapter's \"when it gets hammered\" passage are computed from unit prices in the repository and the chapter's assumptions, not taken from a bill. Response data transfer is counted separately, and whether the internet transfer price applies to API Gateway responses has not been checked."
+      },
+      "resume": {
+        "ja": "負荷をかけたあとの Cost Explorer を、章の表と項目ごとに突き合わせる。",
+        "en": "After a load test, compare Cost Explorer with the chapter's table item by item."
+      }
+    },
+    {
+      "id": "limits-under-real-concurrency",
+      "summary": {
+        "ja": "05章の 1 人あたりの件数上限と 07章の 1 日あたりの許可証の上限は、条件付き書き込みで数えている。メモリと DynamoDB Local では、同時に作成しても上限を超えないことを確かめたが、実際の DynamoDB では確かめていない。table の上限に達したときに SDK がどう再試行し、どの時点で 500 になるかも未確認。",
+        "en": "The per-owner note limit (chapter 05) and the per-day permit limit (chapter 07) count with conditional writes. In memory and on DynamoDB Local, concurrent creates never pass the limit; on real DynamoDB this has not been checked. How the SDK retries at the table's throughput cap, and when that becomes a 500, is also unchecked."
+      },
+      "resume": {
+        "ja": "デプロイした 05章の API に、上限の手前から同時に作成を送り、101 件目が 409 になることを見る。",
+        "en": "Against a deployed chapter 05 API, send concurrent creates from just under the limit and confirm the 101st is a 409."
+      }
+    },
+    {
+      "id": "reserved-concurrency-on-new-accounts",
+      "summary": {
+        "ja": "09・17・21章の `-c reservedConcurrency=N` は、template に出ることしか確かめていない。新しいアカウントは同時実行の枠が小さく、予約するとデプロイが拒否されるかもしれないので、既定にはしていない。上限に達したときに関数 URL と CloudFront が何を返すかも未確認。",
+        "en": "`-c reservedConcurrency=N` in chapters 09, 17 and 21 is only checked as far as the template. A new account's concurrency limit can be low enough that a reservation is refused at deploy, which is why it is not the default. What a function URL and CloudFront answer at the ceiling is unchecked."
+      },
+      "resume": {
+        "ja": "`aws service-quotas get-service-quota --service-code lambda --quota-code L-B99A9384` で枠を見てから、`-c reservedConcurrency=2` でデプロイする。",
+        "en": "Read the limit with `aws service-quotas get-service-quota --service-code lambda --quota-code L-B99A9384`, then deploy with `-c reservedConcurrency=2`."
+      }
+    },
+    {
+      "id": "edge-and-cache-bounds",
+      "summary": {
+        "ja": "09章で cache の鍵からクエリ文字列を外したこと（`QueryStringBehavior: none`）と、10章で `/digest` への POST 以外を CloudFront Function が 405 で返すことは、template と Node.js 上のテストでしか確かめていない。CloudFront Functions が `allow` ヘッダー付きの 405 を受け付けるか、その場合に Lambda@Edge が動かないかは未確認。",
+        "en": "Dropping query strings from the cache key in chapter 09 (`QueryStringBehavior: none`) and answering anything but POST on `/digest` with a 405 from the CloudFront Function in chapter 10 are checked in templates and in Node.js tests only. Whether CloudFront Functions accepts a 405 with an `allow` header, and that Lambda@Edge does not run for it, is unchecked."
+      },
+      "resume": {
+        "ja": "デプロイ後に `curl -i 'https://<domain>/?x=1'` を 2 回送って 2 回目が cache から返ることを見る。10章は `curl -i https://<domain>/digest` が 405 を返すことを見る。",
+        "en": "After deploying, send `curl -i 'https://<domain>/?x=1'` twice and confirm the second is served from cache. For chapter 10, confirm `curl -i https://<domain>/digest` answers 405."
+      }
+    },
+    {
+      "id": "ivs-viewer-flood",
+      "summary": {
+        "ja": "18章の「URL が広まったとき」の最悪額は、既定の同時視聴の上限（15,000）と視聴時間あたりの単価から計算した。上限を超えたときに IVS が何をするか、`StopStream` のあと課金がどれだけ早く止まるかは確かめていない。",
+        "en": "The worst case in chapter 18's \"when the URL gets around\" comes from the default concurrent-views quota (15,000) and the per-viewer-hour price. What IVS does past the quota, and how quickly output billing stops after `StopStream`, is unchecked."
+      },
+      "resume": {
+        "ja": "配信中に `vp run stream:stop` を実行し、`vp run stream:status` で視聴数が 0 になるまでの時間を見る。",
+        "en": "Run `vp run stream:stop` while live and watch `vp run stream:status` until concurrent views reach 0."
+      }
+    },
+    {
+      "id": "alarm-topic-tls",
+      "summary": {
+        "ja": "19章のアラームの通知先に TLS 必須（`enforceSSL`）を入れ、CloudWatch からの publish を許可する文を足した。この policy で CloudWatch のアラームが実際に publish できるかは確かめていない。",
+        "en": "Chapter 19's alarm topic now requires TLS (`enforceSSL`) and carries an explicit statement that lets CloudWatch publish. That a CloudWatch alarm can publish under this policy is unchecked."
+      },
+      "resume": {
+        "ja": "デプロイ後に `aws cloudwatch set-alarm-state` でアラームを ALARM にし、購読先に通知が届くことを見る。",
+        "en": "After deploying, force the alarm with `aws cloudwatch set-alarm-state` and confirm the subscriber is notified."
+      }
     }
   ]
 }

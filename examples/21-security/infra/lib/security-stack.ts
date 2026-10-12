@@ -16,6 +16,8 @@ export type SecurityStackProps = StackProps & {
   webAclArn?: string | undefined;
   /** Adds a customer managed KMS key, billed by the month for as long as it exists. */
   customerManagedKey: boolean;
+  /** At most this many execution environments, so at most this many caches reading the secret. */
+  reservedConcurrency?: number | undefined;
 };
 
 export class SecurityStack extends Stack {
@@ -100,6 +102,10 @@ export class SecurityStack extends Stack {
       timeout: Duration.seconds(10),
       role,
       logGroup,
+      // Without a web ACL this is the only bound: past it, Lambda throttles instead of scaling out.
+      ...(props.reservedConcurrency === undefined
+        ? {}
+        : { reservedConcurrentExecutions: props.reservedConcurrency }),
       environment: {
         LOG_LEVEL: "info",
         STAGE: "dev",
@@ -153,5 +159,8 @@ export class SecurityStack extends Stack {
     new CfnOutput(this, "SecretArn", { value: secret.secretArn });
     new CfnOutput(this, "HandlerLogGroupName", { value: logGroup.logGroupName });
     new CfnOutput(this, "WebAcl", { value: props.webAclArn ?? "none" });
+    new CfnOutput(this, "ReservedConcurrency", {
+      value: props.reservedConcurrency === undefined ? "none" : `${props.reservedConcurrency}`,
+    });
   }
 }

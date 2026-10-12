@@ -43,6 +43,22 @@ function maintenance() {
 }
 // #endregion maintenance
 
+// #region digest
+// The one path that runs Lambda@Edge, which bills per request. Anything but a POST stops here.
+const DIGEST_PATH = "/digest";
+
+function methodNotAllowed() {
+  return {
+    statusCode: 405,
+    statusDescription: "Method Not Allowed",
+    headers: {
+      allow: { value: "POST" },
+      "cache-control": { value: "no-store" },
+    },
+  };
+}
+// #endregion digest
+
 // #region redirect
 // The store can be edited from the console, so the value is checked again here.
 function parseRedirect(raw, uri) {
@@ -103,6 +119,11 @@ function redirect(rule, querystring) {
 async function handler(event) {
   const request = event.request;
   const uri = request.uri;
+
+  // Before the store is read: a refusal should cost as little as it can.
+  if (uri === DIGEST_PATH && request.method !== "POST") {
+    return methodNotAllowed();
+  }
 
   if ((await read("flag:maintenance")) === "on") {
     return maintenance();

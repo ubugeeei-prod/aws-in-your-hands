@@ -68,7 +68,7 @@ Creation uses the same mechanism.
 
 <<< @/examples/05-dynamodb/src/dynamodb-repository.ts{create}
 
-`PutItem` silently replaces an item that has the same key. With `attribute_not_exists(pk)`, it fails when the key is already in use.
+`PutItem` silently replaces an item that has the same key. With `attribute_not_exists(pk)`, it fails when the key is already in use. The few lines at the top that "take a place" are for the end of this section.
 
 The app returns `conflict` as an HTTP 409.
 
@@ -77,6 +77,24 @@ The app returns `conflict` as an HTTP 409.
 Written as one sentence, the invariant being kept is this.
 
 **Each time a save succeeds, the version increases by exactly 1, and an update based on an old version is rejected.**
+
+### Put a limit on the count
+
+Anyone can `POST` to this API. Left alone, the table grows by whatever it's handed. So one owner gets at most 100 notes.
+
+"Count how many there are, and write if it's under 100" is the same trap as before. Another create can slip in between the counting and the writing. If two arrive together, both count 99 and both write.
+
+So the count lives in an item of its own.
+
+<<< @/examples/05-dynamodb/src/dynamodb-repository.ts{quota}
+
+Each owner gets one item whose `sk` is `QUOTA`, and the count goes in there. A create first writes to that item, conditionally: "add 1 if it's under 100". Evaluating the condition and adding are one operation, so two callers can't both take the last place. With a place taken, the note is written. Without one, the repository returns `quota_exceeded` and the app turns it into a 409.
+
+Here's the catch: taking the place and writing the note are two separate requests. If the function stops between them, the place stays taken and there is no note. The count is then 1 higher than the truth. The opposite doesn't happen. So what this limit keeps is "never more than 100"; it doesn't promise that exactly 100 will fit. If it's off, it's off only toward fewer. Deletes go in the same order: delete the note, then give the place back.
+
+DynamoDB also has a transaction feature that writes two items in one go. This chapter doesn't use it.
+
+The limit is chosen in `composeApp`. A repository built without one doesn't count notes at all.
 
 ## Choose the read consistency
 

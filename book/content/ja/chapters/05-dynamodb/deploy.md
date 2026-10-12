@@ -12,6 +12,12 @@ title: "05 KV Store: デプロイ"
 
 `billingMode` は on-demand です。読み書きの回数に対して料金がかかり、容量を前もって決めなくて済みます。もう 1 つの選択肢は provisioned で、1 秒あたりの読み書きの容量を決めて、その時間ぶんを払います。流量が安定していて予測できるなら provisioned のほうが安くなることがありますが、使わない時間にも料金がかかります。学習用と、流量の読めない新しいアプリには on-demand が向いています。
 
+`maxReadRequestUnits` と `maxWriteRequestUnits` は、table が 1 秒に受ける読み書きの上限です。on-demand は使ったぶんだけ払う方式なので、何も書かなければ、叩かれたぶんがそのまま請求になります。上限を超えたぶんは、DynamoDB が断ります。
+
+<<< @/examples/05-dynamodb/infra/lib/notes-stack.ts{limits}
+
+入口の API Gateway にも、04章と同じ throttling を付けました。1 秒に 10 件です。table の数字は、この API が 1 回で使いうる最大より少し上にしてあります。一覧は 1 回で最大 1 MB を読むので 128 unit、いちばん大きなノート（本文 10,000 文字）を書くと 31 unit ほど。それより小さくして、大きなノートが 1 件も通らなくなるのかどうかを、確かめていないからです。
+
 `removalPolicy` は `DESTROY` です。stack を消すと、table もその中のノートもすべて消えます。練習用だからです。テストは、この設定をわざわざ確かめています。守るべきデータを入れるようになったら、最初に変えるべき場所なので。
 
 <<< @/examples/05-dynamodb/infra/lib/notes-stack.ts{role}

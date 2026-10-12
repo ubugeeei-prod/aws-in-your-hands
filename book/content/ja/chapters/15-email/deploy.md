@@ -52,6 +52,8 @@ identity は、SES に「これは自分のものだ」と確認してもらっ�
 
 `HttpIamAuthorizer` を付けた route は、署名の無いリクエストを API Gateway が拒否します。関数は起動しません。テストは、3 つの route すべてが `AWS_IAM` であることを見ています。
 
+同じ場所で、stage に throttling も付けています。`defaultRouteSettings` は、default stage のすべての route に効く設定です。1 秒に 10 件、burst は 20 件。テストは、この値が template に入っていることも見ています。固定している版の cdkd のソースでは、stage の実装がこの設定を AWS の API にそのまま渡していました。読んだだけです。実際に効くかどうかは、デプロイして確かめるまでわかりません。
+
 ### cdkd とこの stack
 
 この stack は、SES のリソースを 3 種類使います（`AWS::SES::EmailIdentity`、`AWS::SES::ConfigurationSet`、`AWS::SES::ConfigurationSetEventDestination`）。固定している版の cdkd（0.296.28）のソースを読むと、この 3 つには専用の実装がありません。専用の実装が無い種類は、Cloud Control API という AWS の汎用の API を通して作られます。SNS、DynamoDB、Lambda、IAM、API Gateway、ログのほうは、専用の実装があります。

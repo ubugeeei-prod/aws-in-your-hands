@@ -2,7 +2,12 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { FINISH_WITHIN_MS, UPLOAD_PERMIT_SECONDS, VIEW_URL_SECONDS } from "../src/attachments.ts";
 import { sendUpload } from "../src/client.ts";
-import { MAX_ATTACHMENTS_PER_NOTE, MAX_UPLOAD_BYTES, uploadPermitSchema } from "../src/contract.ts";
+import {
+  MAX_ATTACHMENTS_PER_NOTE,
+  MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY,
+  uploadPermitSchema,
+} from "../src/contract.ts";
 import { png, rejection, setup } from "./harness.ts";
 
 describe("upload permit", () => {
@@ -192,6 +197,57 @@ describe("attaching an image", () => {
       status: 409,
       code: "attachment_limit",
     });
+  });
+});
+
+describe("upload permits per day", () => {
+  const ask = (user: Awaited<ReturnType<typeof setup>>["alice"], noteId: string) =>
+    user.attachments.requestUpload(noteId, { contentType: "image/png" });
+
+  it("refuses one owner's permit past the day's allowance, used or not, and nobody else's", async () => {
+    const { alice, bob, objects } = await setup();
+    const note = await alice.notes.create({ title: "flood", body: "" });
+    // Never uploaded, never finished: nothing but the count knows these were handed out.
+    for (let count = 0; count < MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY; count++) {
+      await ask(alice, note.id);
+    }
+    expect(await rejection(ask(alice, note.id))).toMatchObject({
+      status: 429,
+      code: "upload_quota_exceeded",
+    });
+    // Another of her notes does not get around it.
+    const other = await alice.notes.create({ title: "second", body: "" });
+    expect(await rejection(ask(alice, other.id))).toMatchObject({ status: 429 });
+    const stored: unknown[] = [];
+    for await (const object of objects.list("u/")) {
+      stored.push(object);
+    }
+    expect(stored).toEqual([]);
+
+    const bobNote = await bob.notes.create({ title: "bob's", body: "" });
+    expect((await ask(bob, bobNote.id)).attachmentId).toBeTruthy();
+  });
+
+  it("starts again on the next UTC day", async () => {
+    const { alice, advance } = await setup();
+    const note = await alice.notes.create({ title: "flood", body: "" });
+    for (let count = 0; count < MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY; count++) {
+      await ask(alice, note.id);
+    }
+    expect(await rejection(ask(alice, note.id))).toMatchObject({ status: 429 });
+    advance(24 * 60 * 60 * 1000);
+    expect((await ask(alice, note.id)).attachmentId).toBeTruthy();
+  });
+
+  it("does not count a request that was refused for another reason", async () => {
+    const { alice, bob } = await setup();
+    const note = await alice.notes.create({ title: "trip", body: "" });
+    // Bob hammers a note that is not his: 404 every time, and none of it is charged to anyone.
+    for (let count = 0; count < MAX_UPLOAD_PERMITS_PER_OWNER_PER_DAY + 1; count++) {
+      expect(await rejection(ask(bob, note.id))).toMatchObject({ status: 404 });
+    }
+    const bobNote = await bob.notes.create({ title: "bob's", body: "" });
+    expect((await ask(bob, bobNote.id)).attachmentId).toBeTruthy();
   });
 });
 

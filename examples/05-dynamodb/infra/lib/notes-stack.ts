@@ -10,6 +10,15 @@ import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as logs from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
 
+// #region limits
+// Requests per second the API accepts, and how far a burst may go past it. Beyond that: 429.
+export const THROTTLE = { rate: 10, burst: 20 } as const;
+
+// Request units per second the table accepts. Past them DynamoDB throttles.
+// Just above the largest single request: a 1 MB list page (128 read), a full-size note (31 write).
+export const TABLE_LIMIT = { read: 150, write: 40 } as const;
+// #endregion limits
+
 export type NotesStackProps = StackProps & { allowedOrigin: string };
 
 export class NotesStack extends Stack {
@@ -23,6 +32,8 @@ export class NotesStack extends Stack {
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       // On-demand: billed per request, nothing to size in advance.
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      maxReadRequestUnits: TABLE_LIMIT.read,
+      maxWriteRequestUnits: TABLE_LIMIT.write,
       // Exercise data: every note is deleted with the stack. Real data wants RETAIN.
       removalPolicy: RemovalPolicy.DESTROY,
     });
@@ -113,6 +124,13 @@ export class NotesStack extends Stack {
       methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.PUT, apigwv2.HttpMethod.DELETE],
       integration,
     });
+
+    // The HttpApi construct has no throttling option, so this reaches the stage it created.
+    const stage = api.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    stage.defaultRouteSettings = {
+      throttlingRateLimit: THROTTLE.rate,
+      throttlingBurstLimit: THROTTLE.burst,
+    };
 
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "TableName", { value: table.tableName });

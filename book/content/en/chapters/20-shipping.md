@@ -1,6 +1,6 @@
 ---
 title: "20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift"
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 # 20 CI/CD: OIDC, Environments, Previews, Rollback, and Drift
@@ -151,5 +151,9 @@ Production differs in two ways.
 <<< @/examples/20-shipping/infra/lib/ship-api-stack.ts{protection}
 
 One is termination protection, which refuses to delete the stack until someone turns it off. The other is that the log group is not deleted with the stack. Practice and preview stacks leave nothing behind when deleted.
+
+One thing does not differ by stage. Every stack's API has one URL that anyone can call. So dev, prod, and previews all get the same throttle as chapter 04.
+
+<<< @/examples/20-shipping/infra/lib/ship-api-stack.ts{throttle}
 
 Here is the limit of separating by name. Separate stacks in one account have no permission wall between them. As we just saw, the deploy role can update any stack, and the cfn-exec role is an administrator. A job that can deploy a preview can, as far as permissions go, also break prod. If you really want them apart, use separate accounts. This book stays in one account, so that is not implemented.
